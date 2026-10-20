@@ -1,6 +1,6 @@
 # Hoard — Product Vision
 
-**Status:** Draft v0.1 · **Date:** 2026-10-19 · **Product name:** Hoard
+**Status:** Draft v0.2 · **Revised:** 2026-10-20 · **Product name:** Hoard
 
 ## Vision statement
 **Every dependency, one local destination.** Make package retrieval fast, predictable, and observable across programming ecosystems through an elegant open-source cache that developers can start in minutes and teams can share confidently.
@@ -18,6 +18,8 @@ Modern applications span multiple ecosystems, yet teams maintain a patchwork of 
 - **Dependable:** Verify complete artifacts, handle concurrency, and state clearly when data is stale or absent.
 - **Transparent:** Show what's cached, where it came from, why it was fetched, and what it saved.
 - **Open:** MIT licensing and independently deployable, without paid feature tiers.
+- **Composable:** Adopt just the package protocols, persistence, storage, and authentication capabilities needed for each installation.
+- **Extensible:** Stable, versioned provider contracts allow additional implementations without changes to the core engine.
 
 ## Experience principles
 ### Personal developer
@@ -39,6 +41,28 @@ An operator deploys the same software with persistent storage, an explicit netwo
 3. Native package-manager compatibility validated by automated real-client tests.
 4. Clear and helpful insight into cache behavior and bandwidth savings.
 5. A straight path from laptop to team infrastructure.
+6. Composable providers with a curated low-friction default distribution.
+7. Community-friendly, versioned extensions backed by conformance tests.
+
+## Ecosystem and extensibility vision
+
+Hoard is an **open, composable package-caching platform** that ships an approachable, curated default distribution. The user experience must remain simple even though the internal architecture permits independent providers. Operators choose their package ecosystems, metadata persistence, artifact store, and identity integration; choosing a provider must not require rewriting the caching engine.
+
+### Two paths to deployment
+- **Curated distribution:** a signed executable or container with officially bundled providers that are enabled through validated configuration, including a zero-external-dependency personal profile.
+- **Custom distribution:** an ASP.NET Core host composed at build time from independently published NuGet packages. Module registration and startup validation make incompatible or missing dependencies visible early.
+
+### Community extension model
+- Documented, versioned interfaces for protocol, persistence, storage, and identity providers; capabilities are advertised by enabled modules.
+- Shared provider conformance suites and native package-client interoperability tests guard behavior across implementations.
+- Clearly distinguish maintained official modules from independently maintained community packages. NuGet installation does not imply hot-loading or isolation: in-process extensions are trusted code and may require rebuilding the host.
+- Future behavioral extensions may support audit, notifications, and policies, but must not compromise artifact integrity or lightweight deployment.
+
+### Implementation approach
+Use an **ASP.NET Core modular monolith**, organizing administrative operations and protocol-specific request handlers as **vertical feature slices**. Keep the cache engine, streaming, artifact integrity, cache coordination, eviction invariants, and shared provider contracts as cohesive reusable services; do not duplicate them in feature slices. This is an internal architecture choice, not an obligation for users to configure extra services.
+
+### Ecosystem experience
+The management console should expose installed and enabled modules, their capabilities, status and safe configuration requirements, and help operators understand unsupported operations. Extensibility should be visible as choice, not added complexity at first run.
 
 ## Design direction
 **Mood:** Technical, precise, modern, fast, and calm; closer to a refined observability console than a legacy repository administrator.

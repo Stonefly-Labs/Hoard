@@ -1,6 +1,6 @@
 # Hoard — Product Specification
 
-**Status:** Draft v0.1 · **Date:** 2026-10-19 · **Product name:** Hoard · **License:** MIT
+**Status:** Draft v0.2 · **Revised:** 2026-10-20 · **Product name:** Hoard · **License:** MIT
 
 ## 1. Overview
 A self-hosted, pull-through package-cache service that presents ecosystem-native registry endpoints. The initial release supports NuGet v3 and is designed to add Go, Maven, npm, Python/PyPI, and Rust/Cargo via modular protocol adapters. One ASP.NET Core executable hosts registry APIs and management APIs and can serve a statically exported Next.js management console.
@@ -9,10 +9,34 @@ A self-hosted, pull-through package-cache service that presents ecosystem-native
 - **Backend:** .NET 10, ASP.NET Core Minimal APIs, dependency injection, typed `HttpClient` clients, background hosted services, OpenTelemetry.
 - **Frontend:** Next.js 16.4 as of 2026-10-19 (upgrade to latest supported stable at implementation), App Router, TypeScript, Tailwind CSS 4, shadcn/ui, Radix/Base UI choice finalized during design setup, Lucide, TanStack Table, Recharts, TanStack Query for client data.
 - **Bundling:** Next.js static export and .NET static-file hosting in the default distribution. No SSR, server actions, Next.js API routes, or other runtime-only features in bundled console; management API lives in .NET. Optional separate Next.js hosting may be introduced later.
-- **Persistence:** SQLite initially; PostgreSQL provider planned. EF Core for application metadata and migrations.
+- **Persistence:** SQLite initially; PostgreSQL provider planned. EF Core resides **inside relational persistence providers**, including migrations; `Hoard.Core` does not expose `DbContext` or depend on EF Core.
 - **Blob store:** Filesystem initially with SHA-256 content addressing; S3-compatible and Azure Blob later.
-- **Structure:** Modular monolith with registry adapters, cache orchestration, persistence/storage adapters, management APIs, and bundled UI.
+- **Structure:** Composable modular monolith with registry/protocol, metadata persistence, blob storage and identity provider packages, shared cache core, Vertical Slice Architecture for endpoint/use-case features, management APIs, and bundled UI.
 - **Background services:** Cleanup, stats aggregation, expired-entry maintenance, orphan blob reclamation.
+
+## 2A. Modular provider platform (normative v0.2)
+
+**Package topology:** `Hoard.Abstractions` defines stable contracts (minimal dependencies); `Hoard.Core` implements shared caching invariants against those contracts; `Hoard.Hosting` implements module registration/lifecycle and ASP.NET Core integration; `Hoard.Application` contains management vertical slices; `Hoard.Protocols.*`, `Hoard.Persistence.*`, `Hoard.Storage.*`, and `Hoard.Identity.*` are independently distributable provider packages; `Hoard.Host` is a concrete assembled executable. No core-to-concrete-provider references. The Next.js UI consumes APIs/capability descriptors and never references .NET modules.
+
+**Module descriptor:** Unique stable ID and category, module version, supported host/abstractions compatibility range, required/optional dependencies, configuration schema, declared capabilities, routes (where applicable), health/readiness metadata and provenance/support status. Duplicate IDs or incompatible dependencies fail startup with actionable errors.
+
+**Lifecycle:** Known packaged modules are discovered or explicitly registered during host composition; configuration allowlists/enables modules; validation and dependency ordering occur before activation; services/options and routes are wired during application build; initialization runs in a controlled startup phase; readiness remains false on required module failure; shutdown releases resources. Runtime install/uninstall without rebuilding and restarting is **not** promised. No automatic loading of arbitrary assemblies from disk.
+
+**Selection semantics:** Multiple protocol providers enabled concurrently. One authoritative metadata provider and one authoritative blob provider per initial deployment. Multiple auth schemes may coexist while authorization is normalized into Hoard permissions; package-manager clients use noninteractive credentials/API tokens independently of browser login. Policy and event-handler extension points are prospective and must not weaken cache invariants.
+
+**Storage boundaries:** Metadata providers own DB schemas/migrations, transaction and concurrency semantics, indexing and recovery. Artifact providers own staging/commit semantics, streaming, validation/visibility and deletion; filesystem/object-store durability and atomicity differ and must be expressed via capabilities. Cross-store consistency is coordinated by core. NoSQL is an exploratory family requiring contract-specific evaluation and cannot be assumed EF-compatible.
+
+**Distribution:** Curated default Docker/executable distribution bundles a supported set of providers and selects them using configuration without a rebuild. Custom hosts reference further provider NuGet packages and rebuild/redeploy. Disabled providers expose no endpoints or background jobs. Community modules execute as trusted in-process code and need explicit operator approval.
+
+**Compatibility:** Public abstraction/API versions follow documented semantic compatibility; module metadata declares supported platform ranges; startup detects version skew and unsupported required capabilities. Tests must validate default and alternative provider permutations as they become supported.
+
+## 2B. Vertical Slice Architecture (normative v0.2)
+
+A feature slice colocates endpoint mapping, request/response DTOs, validation, authorization requirements, handler/orchestration and focused tests. Organize management operations as `Features/Registries/CreateRegistry`, `Features/Packages/PurgePackage`, `Features/Cache/GetStatistics`, and similar. Protocol adapter modules may organize `Features/GetServiceIndex`, `Features/GetPackageVersions`, and `Features/DownloadPackage` as slices **inside their package**. Cross-slice communication uses explicit application/core contracts, not direct access to another slice's internals. ASP.NET Core Minimal APIs and DI are the default; neither MediatR nor CQRS is required.
+
+**Exceptions—intentionally shared and NOT reimplemented per slice:** HTTP cache lifecycle, canonical cache identities and auth variant partitioning, cache policies/freshness, integrity/hash verification, staged atomic publication, deduplication/single-flight, bounded streaming and backpressure, eviction/reference safety, transport SSRF policy, shared telemetry/audit foundations, provider abstractions and coordination. Their reusable implementations live in cohesive `Hoard.Core` / security / hosting services. Provider implementations share *contracts*, not their concrete EF/SDK classes.
+
+**Dependency rule:** `Host → Hosting/Application/Core + installed Providers`; `Application slices → Core/Abstractions`; `Protocol slices → Core/Abstractions`; `Core → Abstractions`; `Providers → Abstractions` (and only explicitly approved hosting contracts). Never `Core → SQLite`, `NuGet → Postgres` or `Feature A → Feature B` internals.
 
 ## 3. Core entities
 | Entity | Example fields / responsibility |
@@ -150,6 +174,7 @@ Use OpenAPI and generated TypeScript client types. API pagination should be curs
 - DB backups, data restore, migration procedures, and artifact verification command documented.
 
 ## 10. Configuration sketch (illustrative, not final schema)
+Configuration has separate `modules` enablement (installed/available provider descriptors), `metadata.provider`, `storage.type`, and `identity` scheme selection. Treat the example below as legacy-compatible shorthand until the final configuration schema is defined. Define precedence (command-line, environment, file, UI-managed state), secret resolution, schema validation, migrations and behavior when configured providers are missing. Module activation changes require restart; no in-flight hot swaps.
 ```yaml
 server:
   listen: 127.0.0.1:8484
@@ -171,29 +196,40 @@ policies:
 ```
 This is a target UX for configuration, not a promise that a parser or route shape already exists.
 
-## 11. Repository layout (proposal)
+## 11. Repository layout (v0.2 proposal)
 ```text
-/apps/web                  # Next.js console
-/src/Cache.Host            # ASP.NET Core host
-/src/Cache.Core            # cache orchestration and policies
-/src/Cache.Abstractions    # contracts
-/src/Cache.Persistence     # EF Core + SQLite/PostgreSQL
-/src/Cache.Storage.FileSystem
-/src/Cache.Storage.S3      # future
-/src/Cache.Registry.NuGet
-/src/Cache.Registry.Go
-/src/Cache.Registry.Maven
-/src/Cache.Registry.Npm
-/src/Cache.Registry.PyPI   # future
-/src/Cache.Registry.Cargo  # future
-/tests/unit
+/apps/web                             # Next.js console
+/src/Hoard.Host                       # prebuilt curated executable
+/src/Hoard.Hosting                    # composition, module lifecycle
+/src/Hoard.Abstractions               # stable provider/core contracts
+/src/Hoard.Core                       # central caching invariants
+/src/Hoard.Application/Features       # management vertical slices
+/src/Hoard.Protocols.NuGet/Features   # protocol-specific slices
+/src/Hoard.Protocols.Go/Features
+/src/Hoard.Protocols.Maven/Features
+/src/Hoard.Protocols.Npm/Features
+/src/Hoard.Persistence.Sqlite         # EF Core SQLite implementation
+/src/Hoard.Persistence.Postgres       # EF Core PostgreSQL implementation (later)
+/src/Hoard.Storage.FileSystem
+/src/Hoard.Storage.S3                 # later
+/src/Hoard.Identity.Local             # optional local credentials
+/src/Hoard.Identity.Oidc              # later
+/tests/contracts                      # shared provider conformance
 /tests/integration
-/tests/protocol
+/tests/protocol                       # real package manager client tests
+/tests/composition                    # provider combinations/version skew
 /deploy/docker
 /docs/adr
+/ARCHITECTURE.md
 ```
+Package naming and public API names are proposed; fix via ADRs before publishing stable packages.
 
 ## 12. Acceptance criteria — v0.1 NuGet slice
+- Core builds/tests without referencing concrete protocol, database, storage or identity implementations.
+- An official distribution starts with NuGet + SQLite + filesystem selected by configuration; disabling an optional protocol does not leave its routes active.
+- Unsupported module IDs, collisions, missing dependencies and compatibility conflicts yield actionable startup failure; capabilities endpoint accurately lists enabled/available providers.
+- Management and protocol endpoints are feature-oriented slices; shared cache invariants and provider contracts are centralized.
+- Every built provider passes its category conformance suite, including crash/failure cases; at least one custom host composition builds successfully.
 - From a clean environment, install/start one container with persistent volume and no external DB.
 - `/` serves the polished management console; health endpoint reflects initialization and disk/database readiness.
 - NuGet v3 source configuration points exclusively to local proxy discovery/resource endpoints.
@@ -237,3 +273,10 @@ This is a target UX for configuration, not a promise that a parser or route shap
 
 ---
 These documents are planning specifications, not claims of completed implementation. Routes and default policy values remain subject to ADRs and protocol tests. The product name is Hoard; legal and namespace clearance remains pending.
+
+## 16. Provider conformance & rollout decisions (v0.2)
+- **P0 required:** architecture/module contracts, startup activation validation, SQLite/filesystem/NuGet conformance, feature-slice conventions, secure default composition.
+- **Early validation, not necessarily MVP gate:** PostgreSQL and a second protocol adapter to prove contracts are truly implementation-neutral.
+- **Later optional providers:** SQL Server and MySQL relational backends; generic OIDC plus Entra convenience integration; Azure Blob and S3. NoSQL requires separate design and operational qualification.
+- **Deferred:** arbitrary dynamic assembly loading, runtime marketplace, remote code installation, provider process isolation, live database swaps and multi-store tiering.
+- **Reference documents:** `ARCHITECTURE.md`, `docs/adr/0001-modular-provider-architecture.md`, and `HOARD_SPECKIT_MASTER_BACKLOG.md`.
