@@ -1,14 +1,17 @@
 {
   "schema_version": 1,
-  "stage": "await_merge",
+  "stage": "specify",
   "status": "ready",
-  "branch": "feature/001-provider-contracts",
-  "active": {
-    "id": "F-01",
-    "feature_directory": "specs/001-provider-contracts",
-    "pr": 4
-  },
-  "completed": [],
+  "branch": null,
+  "active": null,
+  "completed": [
+    {
+      "id": "F-01",
+      "feature_directory": "specs/001-provider-contracts",
+      "pr": 4,
+      "merge_commit": "837fdf3edf51c3df34710184d018479683c194c2"
+    }
+  ],
   "history": [
     {
       "stage": "constitution",
@@ -93,6 +96,13 @@
       "branch": "feature/001-provider-contracts",
       "at": "2026-10-20T20:00:12.923566+00:00",
       "evidence": "F-01 finalize verified all 17 FRs/six SCs against implemented acceptance traceability, all 58 completed tasks, zero-gap follow-up convergence and existing implemented-graph/T058 hoard-architecture-review evidence. No implementation change since reviewed 54ace9b; no unresolved review finding or constitutional exception. Fresh bash scripts/validate-foundation.sh passed default locked acceptance, all 86 .NET tests (42 foundation, 41 architecture, three composition), zero failed/skipped, SDK formatting/analyzers, isolated Core, five independent packages/consumers, both hosts, source/hash provenance, eight real scans, ARCH-001..008, C-01..23 and declaration/registration/break proofs. Python tooling passed all 17 tests; dated NuGet advisory assessment covered seven projects with zero vulnerable entries/errors. Documentation audit passed 149 local links/anchors across 18 documents; 50 tracked project locks, all task bodies/markers and three checklist files unchanged; exact PR template structure and git diff --check passed. README/development, spec review status and plan acceptance updated; unaffected guides/baseline/diagrams/governance/backlog/IaC/release reasons recorded. PR #4 targets main; checkpoint records await_merge, ready, no completed feature/dependency unlock. No merge, runtime capability, publication, deployment, infrastructure or permissions action; next invocation waits for maintainer-authorized merge then publishes separate completion checkpoint."
+    },
+    {
+      "stage": "await_merge",
+      "spec_id": "F-01",
+      "branch": "chore/spec-progress-f-01",
+      "at": "2026-10-20T20:06:55.657136+00:00",
+      "evidence": "F-01 await_merge completed after GitHub confirmed PR #4 MERGED into main on 2026-10-20 at 837fdf3edf51c3df34710184d018479683c194c2. Fetched origin/main; verified finalization checkpoint/ratified constitution match merged main, prior feature commit is shared, merge commit is an ancestor of origin/main, and chore/spec-progress-f-01 starts at that merge. Helper independently verified merge ancestry and all 58 tasks complete before recording F-01 directory/PR/merge commit, clearing active feature and scheduling specify for dependency-ready F-02. No new specification or later stage executed; progress checkpoint must merge before F-02 begins. README/development/current spec status updated; historical finalization acceptance retained. Product/provider/custom-host guides, quickstart/contracts/research, baseline charter/specification/architecture/diagrams/ADR/governance/backlog, IaC and release docs unaffected because APIs, package graph, commands, runtime/support behavior and operational requirements are unchanged. Python tooling suite passed all 17 tests including merge-gate regression; 71 local file/anchor checks and git diff --check passed. Implementation, tooling, examples, tasks and reviewer-owned checklists unchanged from origin/main; no .NET or IaC rerun warranted for progress/docs-only scope. No self-approval, merge, package/release publication, infrastructure action, permissions change or deployment."
     }
   ]
 }
