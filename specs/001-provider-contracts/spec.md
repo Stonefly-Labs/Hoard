@@ -4,9 +4,12 @@
 
 **Created**: 2026-10-20
 
-**Status**: Ready for maintainer review; compile-only acceptance verified in
+**Status**: Merged via [PR #4](https://github.com/Stonefly-Labs/Hoard/pull/4)
+on 2026-10-20; compile-only acceptance verified in
 [finalization evidence](plan.md#finalization-acceptance-2026-10-20).
-Not merged or recorded as a completed backlog feature.
+The separate [completion checkpoint](../../.specify/hoard-flow.json) records
+F-01 as complete and must merge before the next specification starts.
+No runnable cache or working provider is claimed.
 
 **Input**: User description: "Specify an open extensibility foundation for Hoard that allows independent package-manager, metadata, artifact storage and identity providers without modifying the caching engine. Include versioned contracts, clean package boundaries, a small custom-host experience, extensibility constraints and acceptance checks that prevent concrete-provider coupling."
 

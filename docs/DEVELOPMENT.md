@@ -294,16 +294,22 @@ repeated the full locked foundation check and all 17 tooling tests, refreshed
 the dependency advisory assessment with no known vulnerable packages, and
 verified the acceptance traceability, documentation, and existing architecture
 reviews. The reviewed implementation, locks, tasks, and checklist markers
-remain unchanged. [PR #4](https://github.com/Stonefly-Labs/Hoard/pull/4) is ready
-for maintainer review, targeting `main`; the shared checkpoint records
-`await_merge` with that PR number and no completed feature.
+remain unchanged. At finalization,
+[PR #4](https://github.com/Stonefly-Labs/Hoard/pull/4) was ready for maintainer
+review, targeting `main`; the shared checkpoint recorded `await_merge` with
+that PR number and no completed feature.
 
-The next invocation may verify a maintainer-authorized feature merge; while
-the PR is open, that merge gate blocks progress. After merge, `await_merge`
-creates a separate `chore/spec-progress-f-01` branch from fetched main and
-publishes the completion checkpoint PR. That progress PR must also merge
-before another specification starts. Finalization neither merges F-01,
-unlocks dependent work, nor authorizes new runtime capabilities.
+PR #4 subsequently merged into `main` on 2026-10-20 at
+`837fdf3edf51c3df34710184d018479683c194c2`. The separate `await_merge` stage
+verified the GitHub merge state, merge ancestry in fetched `origin/main`, and
+all 58 completed tasks. It created `chore/spec-progress-f-01` from that main
+and records F-01 in the shared checkpoint's completed entries, retaining its
+directory, PR, and merge commit. The checkpoint now has no active feature and
+schedules `specify`; the first dependency-ready entry is
+[F-02: module registry, composition and lifecycle](HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-02).
+The progress checkpoint PR must also merge before a separate invocation may
+start that specification. No new feature directory, requirement, implementation,
+or runtime capability is introduced by this progress-only stage.
 
 ```mermaid
 flowchart TD

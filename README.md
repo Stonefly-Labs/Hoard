@@ -163,11 +163,14 @@ The follow-up convergence assessment found no remaining gaps across all
 the specification, plan, tasks, and reviewer-owned checklists stayed unchanged.
 Finalization acceptance is recorded in the
 [plan](specs/001-provider-contracts/plan.md#finalization-acceptance-2026-10-20);
-[PR #4](https://github.com/Stonefly-Labs/Hoard/pull/4) is ready for maintainer
-review. The next stage is `await_merge`, not more implementation. F-01 remains
-uncompleted until the feature merges and a separate progress checkpoint is
-published; that checkpoint must also merge before a new specification starts.
-No merge or dependent feature is authorized by finalization.
+[PR #4](https://github.com/Stonefly-Labs/Hoard/pull/4) merged into `main` on
+2026-10-20. The separate `await_merge` completion checkpoint records F-01 as
+complete, retaining its feature directory, PR, and verified merge commit.
+That progress checkpoint must also merge before a new specification starts.
+The next scheduled stage is `specify` for
+[F-02: module registry, composition and lifecycle](docs/HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-02),
+through a separate invocation after that merge gate. No F-02 specification or
+runtime lifecycle behavior is introduced by this checkpoint.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
