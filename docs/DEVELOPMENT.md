@@ -572,13 +572,38 @@ cleanup proof must await harmless global cancellation quiescence before
 advancing its virtual drain timer. That test now does so without weakening
 resource-retention assertions.
 
-The next separately authorized stage is fresh `converge`. Keep the feature
-PR draft: this implementation checkpoint does not itself establish convergence,
-finalization, merge, feature completion or dependency availability. README,
-provider/example/quickstart and lifecycle ownership documentation now describe
-the corrected path; product intent, baseline diagrams, governance, IaC and
-release guidance remain unaffected because no public API, dependency direction,
-product scope or operational action changed.
+The subsequent fresh convergence assessment checked all 22 functional
+requirements, seven buildable outcomes, 20 story scenarios, 12 edge cases,
+12 grouped plan decisions, all 73 existing tasks and eight constitutional
+principles. T073's lock-free notification, original deadline and pending-resource
+protection are implemented. One **HIGH partial** diagnostics gap remains:
+`StopCoreAsync` and `CancelPending` pass cancellation tasks to `Observe`
+without an owner, so callback exceptions are consumed without any diagnostic.
+An isolated public-API diagnostic registered a throwing worker stop-token
+callback. It executed once; both module cleanups completed and final lease
+release was complete, but module/final/snapshot diagnostics were all empty.
+Actual resource release does not excuse omission of the cancellation failure.
+
+[Phase 10 / T074](../specs/002-module-lifecycle/tasks.md#phase-10-convergence)
+appends safe cancellation-failure reporting and focused throwing/cooperative/
+late-fault regression work. Existing task bytes, spec, plan and all checklist
+markers remain unchanged. Fresh `bash scripts/validate-lifecycle.sh` passed
+129 source tests, nine boundary proofs and seven package-only journeys, including
+retained old-binary/new-source/framework proof. Fresh
+`bash scripts/validate-foundation.sh` passed 223 tests (42 foundation,
+49 architecture, 132 composition), zero failed/skipped, with all original
+eight scans retained. The tooling suite passed all 22 tests. Those suites
+do not exercise the newly reproduced cancellation-error path.
+
+The next separately authorized stage is `implement` for T074, then fresh
+convergence. Keep the feature PR draft; finalization, merge, feature completion
+and dependency availability remain blocked. README and this guide record the
+new finding; provider/example/quickstart contracts and implementation evidence
+remain unchanged because their intended error-reporting/resource semantics,
+APIs, dependency directions and commands did not change. Product intent,
+baseline diagrams/ADR, governance, master backlog, IaC and release guidance are
+unaffected: this stage assesses existing scope and appends remediation only,
+with no implementation, operational action or new capability.
 
 ```mermaid
 flowchart TD

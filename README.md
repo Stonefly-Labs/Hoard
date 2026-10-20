@@ -263,8 +263,16 @@ module/root resources. Deterministic regressions cover responsive snapshots,
 the original shutdown deadline, once-only cooperative cleanup, and incomplete
 cleanup without late retry/disposal. See the
 [follow-up evidence](specs/002-module-lifecycle/plan.md#t073-implementation-follow-up).
-The next separately authorized stage is fresh `converge`; F-02 is not yet
-converged, finalized or ready to merge.
+Fresh convergence verified the T073 notification/deadline/resource boundary but
+found one **HIGH** partial diagnostics gap: exceptions from supervised lifetime
+and timeout cancellation tasks are consumed without being reported. A
+public-API probe invoked a throwing stop-token callback once, yet module stop,
+final lease disposal and the final snapshot all contained zero diagnostics.
+[Phase 10 / T074](specs/002-module-lifecycle/tasks.md#phase-10-convergence)
+records the required safe error reporting and focused regression work.
+Fresh locked lifecycle/foundation acceptance and tooling checks pass, but do not
+cover this failure path. The next separately authorized stage is `implement`
+for T074, then fresh convergence; F-02 is not finalized or ready to merge.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
