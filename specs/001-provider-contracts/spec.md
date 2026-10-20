@@ -4,7 +4,9 @@
 
 **Created**: 2026-10-20
 
-**Status**: Draft
+**Status**: Ready for maintainer review; compile-only acceptance verified in
+[finalization evidence](plan.md#finalization-acceptance-2026-10-20).
+Not merged or recorded as a completed backlog feature.
 
 **Input**: User description: "Specify an open extensibility foundation for Hoard that allows independent package-manager, metadata, artifact storage and identity providers without modifying the caching engine. Include versioned contracts, clean package boundaries, a small custom-host experience, extensibility constraints and acceptance checks that prevent concrete-provider coupling."
 

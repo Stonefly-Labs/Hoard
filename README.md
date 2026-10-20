@@ -161,8 +161,13 @@ The follow-up convergence assessment found no remaining gaps across all
 17 requirements, six outcomes, acceptance scenarios, plan decisions, and
 58 tasks. Fresh locked acceptance passed all 86 .NET tests and 17 tooling tests;
 the specification, plan, tasks, and reviewer-owned checklists stayed unchanged.
-Finalization is next through a separate invocation; the feature PR remains draft.
-The feature is not complete or merged merely because implementation checks pass.
+Finalization acceptance is recorded in the
+[plan](specs/001-provider-contracts/plan.md#finalization-acceptance-2026-10-20);
+[PR #4](https://github.com/Stonefly-Labs/Hoard/pull/4) is ready for maintainer
+review. The next stage is `await_merge`, not more implementation. F-01 remains
+uncompleted until the feature merges and a separate progress checkpoint is
+published; that checkpoint must also merge before a new specification starts.
+No merge or dependent feature is authorized by finalization.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

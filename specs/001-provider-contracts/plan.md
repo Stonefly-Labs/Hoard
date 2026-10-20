@@ -420,6 +420,59 @@ unchanged. No new external dependency, migration, publication, deployment, or
 infrastructure action occurred. Rollback remains a reviewed source change with
 matching fixture locks.
 
-All 58 tasks are checked. The next stage is another separately authorized
-convergence assessment, not finalization or a clean-convergence/feature-complete
-claim.
+All 58 tasks were checked at that checkpoint. The next stage was another
+separately authorized convergence assessment, not finalization or a
+clean-convergence/feature-complete claim.
+
+### Finalization Acceptance (2026-10-20)
+
+The separately authorized follow-up convergence assessment found zero missing,
+partial, contradictory, or unrequested work at any severity. It assessed all
+17 functional requirements, six buildable success criteria, 15 story acceptance
+scenarios, nine edge cases, 12 grouped plan decisions, all 58 tasks, and eight
+constitutional principles. Its report is retained in
+[PR #4](https://github.com/Stonefly-Labs/Hoard/pull/4). No task was appended.
+Finalization verifies that resulting scope and evidence; it does not implement
+another feature or repeat a scheduled convergence stage.
+
+| Finalization gate | Evidence / result |
+| --- | --- |
+| Requirements and acceptance traceability | All 17 FRs and six SCs map to the implemented proofs in [Acceptance and traceability](#acceptance-and-traceability) and [tasks](tasks.md#requirement-and-acceptance-traceability); all 58 tasks remain complete. |
+| Independent contracts and Core | Fresh full acceptance builds Core with only Abstractions/BCL reachable, packs all five independent four-family fixtures, compiles their package-only consumers, and verifies local-feed source/SHA-512 provenance. |
+| Public composition and replacement | Both package-only hosts compile; only artifact composition and its derived lock change. Platform/unrelated-provider hashes remain unchanged. Registration and metadata inspection never construct the throwing provider. Neither host is run. |
+| Architecture and compatibility | All ARCH-001 through ARCH-008 rejection/permitted pairs, exactly eight real scans, inspection failures, C-01 through C-23, and intended source/binary break proofs pass. T058 accepts Identity through Hosting without masking direct/helper Core paths, in either edge order. |
+| Reviewer-owned requirements gate | Existing architecture 20/20 and compatibility 18/18 approvals remain unchanged. Finalization neither re-approves these checklists nor treats them as product certification. |
+| Required architecture review | The original implemented-graph review and its three resolved findings are recorded above. The scoped T058 review found no actionable finding or unresolved question. `git diff --exit-code 54ace9b..HEAD -- src tests scripts examples Directory.Build.props Directory.Packages.props Hoard.slnx global.json` passed before the finalization commit: no implementation change since that reviewed checkpoint requires another review. |
+| Support and constitutional limits | Fixtures remain compile-only, with Fixture provenance and no operational capability promises. All eight principles remain satisfied within F-01 scope; cache/network/console/store/identity behavior stays with its named later feature. No architectural exception or governance change is requested. |
+
+Fresh checks for finalization:
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-foundation.sh` | Passed default locked replay without lock updates: all 86 .NET tests (42 foundation, 41 architecture, three composition), zero failed/skipped; Release builds/analyzers, source/standalone SDK formatting, isolated Core, independent package/host and all architecture/compatibility/declaration/registration proofs. |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed all 17 tests. |
+| `dotnet list Hoard.slnx package --vulnerable --include-transitive --format json` | Seven source/test projects assessed; zero known vulnerable direct/transitive package entries and zero assessment errors. This dated result is not a future guarantee; dependency pins/licenses remain as recorded in research. |
+| `git diff --check` | Passed. |
+| Documentation/artifact audit | Passed 149 local file/anchor checks across 18 documents; all 50 project locks remain tracked, 58 task bodies/markers and all three checklist files are unchanged. PR headings/comments/checklist ordering follow the repository template. |
+
+Finalization updates README/development stage status, the specification's
+review status, this acceptance record, the shared checkpoint, and the PR
+handoff. Requirements, public APIs, dependency graph, task bodies, and checklist
+approvals do not change. Provider/source/test/custom-host guides, quickstart,
+declaration/API/architecture/compatibility contracts, and research are
+unaffected: their current commands, support boundaries, and implementation
+explanations remain accurate. Charter, product specification,
+architecture/diagrams, ADR-0001, constitution, backlog, reserved UI/provider
+guides, infrastructure, and release documentation need no edits because this
+handoff adds no product behavior, ownership/dependency change, governance,
+infrastructure, or release action.
+
+The checkpoint records `await_merge`, ready, with PR #4 targeting `main`;
+the PR is ready for maintainer review. F-01 is not marked complete, and no
+dependent work is unlocked. The next separately authorized invocation must
+verify that PR merged before publishing the progress-only completion checkpoint
+from fetched main; that checkpoint must also merge before a new specification
+begins. No merge, publication, deployment, IaC plan/apply, permissions change,
+or data/schema migration occurred. Rollback remains a reviewed source change
+with matching locks. Temporary acceptance directories were cleaned by the
+wrapper; no feed, cache, binary, credential, or evidence artifact is committed.

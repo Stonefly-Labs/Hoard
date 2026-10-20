@@ -162,15 +162,18 @@ The first generated feature is
 Its [built-in quality checklist](../specs/001-provider-contracts/checklists/requirements.md)
 validates the specification, not implementation or reviewer-owned custom
 checklist approval. Package contracts, custom-host compilation, and architecture
-checks described there are acceptance requirements, not existing product tools.
+checks described there were acceptance requirements at specification time;
+their current bounded implementation is described below.
 Its initial [clarification review](../specs/001-provider-contracts/spec.md#clarifications)
 records a no-question result with no scope changes; a later user-approved
 follow-up resolves the checklist review's optional-dependency ambiguity.
 Exact public signatures and
-build commands are now proposed in the
+build commands were proposed in the
 [implementation plan](../specs/001-provider-contracts/plan.md) and
 [public contracts](../specs/001-provider-contracts/contracts/public-api.md),
-not delivered APIs or tooling. The plan includes research, a declaration model,
+then delivered by the separately authorized implementation stage. The plan
+retains historical design alongside current evidence and includes research,
+a declaration model,
 compatibility/architecture acceptance contracts, and a
 [validation quickstart](../specs/001-provider-contracts/quickstart.md).
 The implementation now supplies the foundation commands in that quickstart;
@@ -285,10 +288,22 @@ tooling tests passed. The assessment left the spec, plan, tasks, and all
 reviewer-owned/built-in checklist bytes unchanged; no empty convergence phase
 or further implementation task was added. Its report is recorded in the draft
 feature PR and shared checkpoint.
-The next scheduled stage is finalization through a separate invocation, not
-more implementation or an authorized merge.
-The feature PR remains draft; convergence does not complete or merge F-01,
-unlock dependent work, or authorize new runtime capabilities.
+The separately authorized
+[finalization acceptance](../specs/001-provider-contracts/plan.md#finalization-acceptance-2026-10-20)
+repeated the full locked foundation check and all 17 tooling tests, refreshed
+the dependency advisory assessment with no known vulnerable packages, and
+verified the acceptance traceability, documentation, and existing architecture
+reviews. The reviewed implementation, locks, tasks, and checklist markers
+remain unchanged. [PR #4](https://github.com/Stonefly-Labs/Hoard/pull/4) is ready
+for maintainer review, targeting `main`; the shared checkpoint records
+`await_merge` with that PR number and no completed feature.
+
+The next invocation may verify a maintainer-authorized feature merge; while
+the PR is open, that merge gate blocks progress. After merge, `await_merge`
+creates a separate `chore/spec-progress-f-01` branch from fetched main and
+publishes the completion checkpoint PR. That progress PR must also merge
+before another specification starts. Finalization neither merges F-01,
+unlocks dependent work, nor authorizes new runtime capabilities.
 
 ```mermaid
 flowchart TD

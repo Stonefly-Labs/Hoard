@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "stage": "finalize",
+  "stage": "await_merge",
   "status": "ready",
   "branch": "feature/001-provider-contracts",
   "active": {
     "id": "F-01",
     "feature_directory": "specs/001-provider-contracts",
-    "pr": null
+    "pr": 4
   },
   "completed": [],
   "history": [
@@ -86,6 +86,13 @@
       "branch": "feature/001-provider-contracts",
       "at": "2026-10-20T19:51:30.424809+00:00",
       "evidence": "F-01 follow-up converge executed through installed speckit-converge in pinned specs/001-provider-contracts after T058. Outcome converged: zero missing/partial/contradicts/unrequested findings and zero findings at any severity. Present-code assessment covered all 17 FRs, six buildable SCs, 15 story acceptance scenarios, nine edge cases, 12 grouped plan decisions, all 58 existing tasks and eight constitutional principles. Verified permitted Identity -> Hosting -> Core and rejection of direct/helper Core paths even alongside Hosting, with both traversal orders; no remaining T058 gap. Fresh bash scripts/validate-foundation.sh passed all 86 .NET tests (42 foundation, 41 architecture, three composition), zero failures/skips, locked Core/package/host proofs, ARCH-001..008, C-01..23, declaration/registration checks, SDK formatting/analyzers. Python tooling suite passed all 17 tests. All 50 projects carry locks; all feature artifacts/spec/plan/tasks/checklists, application/test/tooling sources and lockfiles unchanged; no new convergence section or task, self-approval or extension hooks. README/development stage status synchronized; 61 local links/anchors, PR template fidelity and git diff --check passed. Draft PR #4 carries the assessment report; other guides/contracts/baseline architecture/diagrams/governance/backlog/IaC/release docs unaffected because APIs, dependency graph, commands, support/runtime boundaries and operational behavior did not change. Next stage finalize via separate invocation; finalization/feature completion/merge/dependency unlock not claimed; no publication, infrastructure action or deployment."
+    },
+    {
+      "stage": "finalize",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T20:00:12.923566+00:00",
+      "evidence": "F-01 finalize verified all 17 FRs/six SCs against implemented acceptance traceability, all 58 completed tasks, zero-gap follow-up convergence and existing implemented-graph/T058 hoard-architecture-review evidence. No implementation change since reviewed 54ace9b; no unresolved review finding or constitutional exception. Fresh bash scripts/validate-foundation.sh passed default locked acceptance, all 86 .NET tests (42 foundation, 41 architecture, three composition), zero failed/skipped, SDK formatting/analyzers, isolated Core, five independent packages/consumers, both hosts, source/hash provenance, eight real scans, ARCH-001..008, C-01..23 and declaration/registration/break proofs. Python tooling passed all 17 tests; dated NuGet advisory assessment covered seven projects with zero vulnerable entries/errors. Documentation audit passed 149 local links/anchors across 18 documents; 50 tracked project locks, all task bodies/markers and three checklist files unchanged; exact PR template structure and git diff --check passed. README/development, spec review status and plan acceptance updated; unaffected guides/baseline/diagrams/governance/backlog/IaC/release reasons recorded. PR #4 targets main; checkpoint records await_merge, ready, no completed feature/dependency unlock. No merge, runtime capability, publication, deployment, infrastructure or permissions action; next invocation waits for maintainer-authorized merge then publishes separate completion checkpoint."
     }
   ]
 }
