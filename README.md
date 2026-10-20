@@ -111,8 +111,9 @@ when a document is unaffected.
 The [contributor guide](CONTRIBUTING.md) covers setup and PR expectations.
 The [development workflow](docs/DEVELOPMENT.md) documents the checkpointed
 `hoard-speckit` skill, architecture reviewer, release skill, and quality gates.
-The first Spec Kit driver invocation creates the constitution; it does not
-start implementing the backlog.
+The initial [constitution](.specify/memory/constitution.md) is version 1.0.0;
+its adoption PR must merge before the driver starts the first feature spec.
+The constitution establishes governance only, not product implementation.
 
 ## 🚀 Releases are not deployments
 
@@ -130,6 +131,7 @@ See [release governance](docs/RELEASING.md) for the exact process.
 | [Product specification](docs/PRODUCT_SPEC.md) | Planned product behavior and constraints |
 | [Architecture](docs/ARCHITECTURE.md) | Boundaries, providers, and correctness invariants |
 | [Master backlog](docs/HOARD_SPECKIT_MASTER_BACKLOG.md) | Feature prompts, priorities, and dependencies |
+| [Constitution](.specify/memory/constitution.md) | Governing principles, compatibility, and quality gates |
 | [Development workflow](docs/DEVELOPMENT.md) | Branches, Spec Kit checkpoints, and PR handoff |
 | [Azure bootstrap](infra/bootstrap/README.md) | Passwordless deployment identity preparation |
 | [Release guide](docs/RELEASING.md) | Tag-driven source releases, separate from CI/CD |
