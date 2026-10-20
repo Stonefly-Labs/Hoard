@@ -160,6 +160,9 @@ Its [built-in quality checklist](../specs/001-provider-contracts/checklists/requ
 validates the specification, not implementation or reviewer-owned custom
 checklist approval. Package contracts, custom-host compilation, and architecture
 checks described there are acceptance requirements, not existing product tools.
+Its [clarification review](../specs/001-provider-contracts/spec.md#clarifications)
+records a no-question result with no scope changes; exact public signatures and
+build commands remain planning decisions, not delivered APIs or tooling.
 
 ```mermaid
 flowchart TD

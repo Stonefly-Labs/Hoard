@@ -10,6 +10,22 @@
 
 **Backlog**: [F-01](../../docs/HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-01)
 
+## Clarifications
+
+### Session 2026-10-20
+
+No critical ambiguities detected worth formal clarification. Zero questions
+were asked or answered; no requirements or scope decisions changed.
+
+The review found sufficient coverage of functional scope, domain/declaration
+concepts, author journeys, applicable quality attributes, integration boundaries,
+failure cases, constraints/tradeoffs, terminology, completion signals, and
+placeholders. Runtime performance, scale, recovery, UI states, and operational
+provider behavior are explicitly outside this compile-only foundation, not
+unspecified F-01 acceptance obligations. Exact public signatures, dependency
+versions, build layout, and commands remain planning decisions under the
+existing requirements. No consequential product decision blocks planning.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Extend Hoard Without Changing Its Engine (Priority: P1)

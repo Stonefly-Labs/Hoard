@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "clarify",
+  "stage": "plan",
   "status": "ready",
   "branch": "feature/001-provider-contracts",
   "active": {
@@ -23,6 +23,13 @@
       "branch": "feature/001-provider-contracts",
       "at": "2026-10-20T15:18:02.200096+00:00",
       "evidence": "F-01 specification created from exact backlog prompt at specs/001-provider-contracts/spec.md: 4 prioritized stories, 17 functional requirements, 6 measurable outcomes; built-in requirements checklist passed 16/16 criteria with no clarification markers. Constitution/ADR boundaries retained; lifecycle, runtime activation, store semantics and conformance deferred to named backlog features. README and development guide updated. python3 -m unittest discover -s tests/tooling -v passed (14 tests); specification artifact/link/pinned-context checks and git diff --check passed. Requirements only; no product scaffolding or custom reviewer approval. Next stage clarify."
+    },
+    {
+      "stage": "clarify",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T15:28:46.603459+00:00",
+      "evidence": "F-01 clarification completed through speckit-clarify using the pinned directory. Structured review covered all ten ambiguity categories; no critical ambiguities, zero questions, no requirement or scope changes, and no product decisions blocking planning. Recorded dated no-question review in spec; README and development guide link the result. Built-in requirements checklist revalidated unchanged at 16/16 to 16/16, no newly passing items, regressions, or unchecked items; no custom reviewer approval. No extension hooks configured. python3 -m unittest discover -s tests/tooling -v passed (14 tests); clarification artifact, unchanged-requirements, local-link and no-later-artifact checks passed; git diff --check passed. Next stage plan; no product implementation."
     }
   ]
 }

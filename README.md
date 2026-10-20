@@ -115,6 +115,8 @@ The initial [constitution](.specify/memory/constitution.md) is version 1.0.0;
 its adoption has merged. The first feature specification,
 [platform package boundaries and provider contracts](specs/001-provider-contracts/spec.md),
 defines requirements only, not implemented contracts or a runnable host.
+Its [clarification review](specs/001-provider-contracts/spec.md#clarifications)
+found no critical ambiguities requiring questions; planning remains a separate stage.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
