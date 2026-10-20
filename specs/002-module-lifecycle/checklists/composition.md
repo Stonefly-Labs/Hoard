@@ -41,7 +41,7 @@ the clarity of their handoffs and support limits.
 - [x] CHK011 Are route-ownership requirements complete for every enabled endpoint responsibility and relevant host endpoint, with unsupported or unowned matching explicitly distinguished from proven ambiguity? [Coverage, Spec §FR-010; Lifecycle contract §Owned Routes; Data model §Route Ownership]
 - [x] CHK012 Are ambiguous-route requirements precise about overlapping methods, equivalent parameter names/casing/separators, equal matching priority, and same-owner conflicts, without choosing a registration-order winner? [Clarity, Spec §FR-010; Spec §Edge Cases; Lifecycle contract §Owned Routes]
 - [x] CHK013 Are permitted routing counterparts documented alongside rejection rules, including disjoint methods/paths, a unique more-specific match, and an absent disabled claimant? [Coverage, Spec §FR-009, §FR-010, §FR-019; Lifecycle contract §Owned Routes]
-- [ ] CHK014 Are bundled selection changes, independent custom-package addition, invalid replacement, and explicit prior-composition recovery specified as distinct journeys with clear rebuild/redeploy/restart boundaries? [Recovery Coverage, Spec §FR-021, §FR-022; Spec §User Story 5 - Change a Distribution with Explicit Restart (Priority: P2)]
+- [x] CHK014 Are bundled selection changes, independent custom-package addition, invalid replacement, and explicit prior-composition recovery specified as distinct journeys with clear rebuild/redeploy/restart boundaries? [Recovery Coverage, Spec §FR-021, §FR-022; Spec §User Story 5 - Change a Distribution with Explicit Restart (Priority: P2)]
 
 ## Acceptance Criteria Quality
 
@@ -65,10 +65,10 @@ checklists and highlight concerns. Reviewed baseline: `c7ccde4`. This is
 requirements-quality evaluation, not independent human inspection, runtime
 evidence, implementation authorization, or a scheduled driver stage.
 
-**Result**: 19/20 composition criteria satisfied. CHK014 remains unchecked for
-RQ-02 below. Together with the lifecycle review, 38/40 criteria are satisfied;
-two remain unresolved, with no waivers. The earlier analysis remains historical
-evidence, not clearance to ignore these later review findings.
+**Initial result**: 19/20 composition criteria satisfied; CHK014 was left
+unchecked for RQ-02 below. Together with the lifecycle review, 38/40 criteria
+were satisfied at that baseline. The user subsequently approved the
+recommendations; the current re-evaluation is recorded below.
 
 | Criteria | Written evidence supporting the assessment |
 | --- | --- |
@@ -76,13 +76,13 @@ evidence, not clearance to ignore these later review findings.
 | CHK004-CHK007 | Spec FR-004..007/012, the version/capability model and F-01 policy distinguish disabled structure from active compatibility, unavailable from enabled optional dependencies, target-specific capability demands, ordinal ordering and required/enabled-optional cycles. |
 | CHK008-CHK010 | Public API preserves old inert registration/source/binary obligations and approved provider directions; model snapshots bind selection to its builder and require a fresh lifecycle after failure or selection change. |
 | CHK011-CHK013 | Owned-route contract and LC-18..19 cover every declared responsibility, relevant host endpoints, unsupported shapes, intersecting methods/equal precedence, renamed/case/slash equivalents, same-owner conflicts and permitted disjoint/more-specific counterparts. |
-| CHK014 | Not satisfied: the quickstart and task list disagree on which artifact packages the baseline host includes; RQ-02 records the needed alignment. |
-| CHK015-CHK017 | SC-001/006/007 and LC-01..14/35..40 supply measurable zero-activation/order/restart outcomes and distinguish source, retained old binary, independent packed graphs and fixture-only support. The journey recipe mismatch remains separately open under CHK014. |
+| CHK014 | Initially not satisfied: quickstart/task baseline package lists disagreed. Satisfied after the approved manifest alignment recorded below. |
+| CHK015-CHK017 | SC-001/006/007 and LC-01..14/35..40 supply measurable zero-activation/order/restart outcomes and distinguish source, retained old binary, independent packed graphs and fixture-only support. The initial recipe mismatch was tracked separately under CHK014. |
 | CHK018-CHK020 | Public API explicitly documents Hosting's proposed ASP.NET Core shared-framework dependency and packed-consumer proof. Spec assumptions and plan retain trusted-code/no-loader limits and later configuration, discovery, real-provider, conformance and native-client ownership. |
 
 ### RQ-02: Baseline and Custom Artifact Package Lists Disagree
 
-**Priority**: MEDIUM documentation/acceptance inconsistency, not a runtime defect.
+**Original priority**: MEDIUM documentation/acceptance inconsistency, not a runtime defect.
 
 **Evidence at baseline `c7ccde4`**:
 [quickstart.md:52-56](https://github.com/Stonefly-Labs/Hoard/blob/c7ccde4/specs/002-module-lifecycle/quickstart.md#L52-L56)
@@ -93,7 +93,7 @@ Journey B asks the author to add an independent artifact package without naming
 a third fixture. Following Journey A literally would already include both
 planned artifact packages and obscure the required absent-package proof.
 
-**Recommendation, not applied**: Use the simpler manifest already specified by
+**Original recommendation**: Use the simpler manifest already specified by
 T063/T065: baseline bundles Protocol.One, Protocol.Two, Metadata, Artifact.One
 and optional Identity; only the custom variant adds Artifact.Two and its host
 adapter. Journey A switches the two protocol choices without rebuilding.
@@ -101,14 +101,30 @@ Journey B explicitly adds Artifact.Two, rebuilds/redeploys and starts a new
 lifecycle. Keep independently packing all six fixtures; packing is not baseline
 inclusion. Align the quickstart and eventual host guide with these manifests.
 
-**Status**: Open. No journey requirement, quickstart, task, source, or driver
-checkpoint was changed by this review. Resolve separately, then re-evaluate
-CHK014 and run fresh cross-artifact analysis before implementation.
+**Status**: Resolved on 2026-10-20 after explicit user approval. The initial
+review changed no journey requirement or driver stage; this separately
+authorized follow-up applies the recommendation.
+
+**Resolution and re-evaluation**: The spec's approved follow-up, plan,
+acceptance manifest/LC-35..36, quickstart Journeys A/B and T063/T065 now agree:
+baseline includes the two protocols, Metadata, Artifact.One and optional
+Identity; only custom adds Artifact.Two and its host adapter. Independent
+packing of six fixtures is separate from baseline inclusion. T065 explicitly
+requires absence from baseline references/registrations and same-binary
+protocol switching. CHK014 is satisfied by these written obligations.
+Affected CHK009/010/015..020 were re-evaluated without regression; all other
+original satisfied criteria remain applicable. No public API/provider edge,
+runtime or package was implemented.
+
+**Current result**: 20/20 composition and 20/20 lifecycle criteria satisfied,
+40/40 total, no waivers or unchecked custom criteria. Fresh analysis remains
+a separate read-only check; requirements approval is not runtime evidence or
+permission to start implementation in this follow-up.
 
 ## Notes
 
 - All 20 items were generated unchecked. The current markers record the
-  explicitly requested review above; CHK014 remains open, not waived.
+  requested review and approved follow-up re-evaluation, not implementation.
 - Mark items `[x]` only after review confirms the requirement-quality criterion
   is satisfied. Leave unresolved or unevaluated criteria unchecked and record
   comments/findings inline.

@@ -13,6 +13,11 @@ host-side adapters own Hosting references. The two artifact choices use
 distinct IDs so both can be bundled, with only one enabled. At least two
 protocol choices support the without-rebuild selection journey.
 
+The baseline host includes Protocol.One, Protocol.Two, Metadata, Artifact.One
+and optional Identity, not Artifact.Two. The custom variant adds Artifact.Two
+and its host-owned adapter through rebuild/redeployment. Independently packing
+all six fixtures does not imply including all six in the baseline.
+
 Each adapter exposes test-only event counters and barriers for construction,
 each phase, request admission, worker work, readiness, external connection
 attempts, acquired resource release and cleanup. Synthetic external calls are
@@ -57,15 +62,15 @@ scheduler tolerance; virtual-time tests prove deadline arithmetic exactly.
 | LC-25 | Invalid/failing/timed-out readiness | Missing required health ID, unknown/duplicate IDs, inconsistent output, throwing or stalled probe never means ready |
 | LC-26 | Normal stop and drain | Ready false/admission closed before drain; no new request/RunAsync callback, in-flight request/worker cooperative completion then reverse-dependent cleanup; callback is the documented worker admission unit |
 | LC-27 | Partial-start cleanup | Every entered returned adapter including failed phase stops in reverse order; never-entered modules do not receive cleanup |
-| LC-28 | Cleanup error / timeout | Preserve primary plus extra cleanup failure; continue other safe cleanup; fixed outer deadline not multiplied by module count |
-| LC-29 | Exhausted budget / non-cooperation | Explicit timed-out/unattempted/unsafe statuses; barrier-held request/response stream beyond drain protects its owner, prerequisites and root disposal; pending phase/worker/build similarly prevents unsafe release, duplicate stop and late publication |
+| LC-28 | Cleanup error / timeout | Preserve primary plus extra cleanup failure; fixed outer deadline not multiplied. Hold A.StopAsync past its callback budget with A depending on B and unrelated C: preserve A TimedOut, no second stop, B/root protected while A still runs, C cleanup continues safely within the same outer budget |
+| LC-29 | Exhausted budget / non-cooperation | Explicit timed-out/unattempted/unsafe statuses; barrier-held request/response stream protects owner/prerequisites/root. Pending phase/worker/build and timed-out but executing StopAsync likewise prevent unsafe release; prerequisite omissions are UnsafePendingCallback and root NotAttemptedUnsafe. After the bounded stop result, release/observe the held cleanup task and assert no result rewrite, retry, deferred disposal or late publication |
 | LC-30 | Repeated/concurrent lifecycle calls | Shared start/stop outcomes, each phase and cleanup at most once; terminal instance cannot restart; cancelled waiter does not cancel another caller's shared operation |
 | LC-31 | Independent hosted-worker bypass | Reject module-added IHostedService/BackgroundService; owned worker faults close admission and request shutdown without silent retry |
 | LC-32 | Secret-safe diagnostics | Seed credentials, URLs, paths/options and arbitrary secrets in provider exceptions/identity/text; zero seeded values in captured normal logs/results/serialized errors; safe code/correlation/action retained |
 | LC-33 | Safe actionable rule coverage | Each invalid/failure row identifies safe module or ordinal, phase, rule/path and corrective action; bounded output/omitted counts, no raw inner exception |
 | LC-34 | Truthful inventory/state | Distinguish registered build inclusion, enabled, phase, ready/unready/failed/stopped; no inferred exhaustive installed inventory or production support |
-| LC-35 | Bundled restart journey | Same built fixture host switches explicit bundled selections only after new lifecycle, zero rebuild, old composition unchanged before stop |
-| LC-36 | Independent custom journey | Add independently packed artifact/registration/adapter, rebuild/redeploy/new start, zero Core or unrelated provider edits |
+| LC-35 | Bundled restart journey | Same built baseline host switches Protocol.One/Protocol.Two selections only after new lifecycle, zero rebuild, old composition unchanged before stop; Artifact.One remains the bundled artifact choice |
+| LC-36 | Independent custom journey | Artifact.Two absent from baseline references/registrations; add its independent package/registration/host adapter in custom variant, rebuild/redeploy/new start, zero Core or unrelated provider edits |
 | LC-37 | Invalid replacement and recovery | New invalid selection fails without silent rollback; explicit prior package/selection + new lifecycle recovers; no persistent rollback claim |
 | LC-38 | Architecture boundary proof | Actual project/packed/transitive/API graphs reject forbidden edges; Hosting HTTP/versioning allowed, Abstractions/Core remain provider-free, Metadata/Artifact have no Hosting edge |
 | LC-39 | Source/binary/package compatibility | Existing registration consumers/implementers still compile and old supported binaries still run registration paths; new framework dependency documented and packed framework-reference propagation verified |

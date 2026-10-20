@@ -40,7 +40,7 @@ recovery, management/UI, and certification are excluded except for clear limits.
 
 - [x] CHK011 Are failure and stop requirements specified at each activation boundary, including synchronous composition and host construction, with no later phase/admission and no late successful result from an abandoned lifecycle? [Exception Coverage, Spec §FR-008, §FR-012, §FR-015, §FR-018; Lifecycle contract §Ordered Startup, §Budgets and Non-Cooperative Code]
 - [x] CHK012 Are normal and partial-start cleanup requirements complete for entered versus never-entered modules, the partially failing module, reverse dependency order, and prerequisite availability during dependent cleanup? [Coverage, Spec §FR-015, §FR-016; Spec §User Story 3 - Fail and Stop Without Hiding Partial Startup (Priority: P1); Lifecycle contract §Stop, Drain and Cleanup]
-- [ ] CHK013 Are requirements explicit that cleanup failure, timeout, unsafe pending work, and budget-exhausted omission remain distinct from completion, preserve the primary failure, and do not skip other eligible cleanup? [Exception Coverage, Spec §FR-017; Data model §Readiness and Diagnostics; Lifecycle contract §Stop, Drain and Cleanup]
+- [x] CHK013 Are requirements explicit that cleanup failure, timeout, unsafe pending work, and budget-exhausted omission remain distinct from completion, preserve the primary failure, and do not skip other eligible cleanup? [Exception Coverage, Spec §FR-017; Data model §Readiness and Diagnostics; Lifecycle contract §Stop, Drain and Cleanup]
 - [x] CHK014 Are over-budget request/response, worker, activation, and host-construction activities covered by written resource-retention requirements for owners, prerequisites, and root disposal, while independent safe cleanup remains possible? [Edge Case Coverage, Spec §FR-015, §FR-016, §FR-017; Lifecycle contract §Stop, Drain and Cleanup, §Budgets and Non-Cooperative Code]
 
 ## Acceptance Criteria Quality
@@ -65,10 +65,10 @@ checklists and highlight concerns. Reviewed baseline: `c7ccde4`. This is
 requirements-quality evaluation, not independent human inspection, runtime
 evidence, implementation authorization, or a scheduled driver stage.
 
-**Result**: 19/20 lifecycle criteria satisfied. CHK013 remains unchecked for
-RQ-01 below. Together with the composition review, 38/40 criteria are satisfied;
-two remain unresolved, with no waivers. The earlier analysis remains historical
-evidence, not clearance to ignore these later review findings.
+**Initial result**: 19/20 lifecycle criteria satisfied; CHK013 was left
+unchecked for RQ-01 below. Together with the composition review, 38/40 criteria
+were satisfied at that baseline. The user subsequently approved the
+recommendations; the current re-evaluation is recorded below.
 
 | Criteria | Written evidence supporting the assessment |
 | --- | --- |
@@ -76,16 +76,16 @@ evidence, not clearance to ignore these later review findings.
 | CHK004-CHK005 | Model separates phase, status, liveness, admission, health and incomplete stop results; required/optional health observations, no-probe explicit status and invalid/stalled results are defined in the readiness model and LC-24..25/34. |
 | CHK006-CHK007 | Lifecycle contract admits the whole RunAsync callback, not internal iterations; six positive finite budgets share capped absolute deadlines with documented defaults and fake-time proof obligations. |
 | CHK008-CHK009 | Later health loss changes readiness only, while stop/fault permanently closes admission; model/contract share starts, assessments and stops, isolate waiter cancellation and reject terminal reuse with a stop-wins publication latch. |
-| CHK010-CHK012 | Public API assigns adapter versus DI/root ownership, constructor self-cleanup and one external lease; LC-20..23/26..27 cover pre-host failures, partial returned adapters and normal reverse cleanup. Timed-out cleanup's pending activity remains separately open under CHK013. |
-| CHK013 | Partially satisfied: result categories, original/additional errors, finite waiting and independent eligible cleanup are explicit, but a still-running timed-out StopAsync is not explicitly included in pending-activity retention; see RQ-01. |
-| CHK014 | Request/response, worker, activation and pending-build resource retention for owners/prerequisites/root is explicit in the contract and LC-29. This does not resolve the additional cleanup-callback edge in RQ-01. |
+| CHK010-CHK012 | Public API assigns adapter versus DI/root ownership, constructor self-cleanup and one external lease; LC-20..23/26..27 cover pre-host failures, partial returned adapters and normal reverse cleanup. Timed-out cleanup's pending activity was initially tracked separately under CHK013. |
+| CHK013 | Initially partially satisfied because a still-running timed-out StopAsync was not explicitly included in retention. Satisfied after the approved pending-cleanup rule, outcomes and proof obligations recorded below. |
+| CHK014 | Request/response, worker, activation and pending-build retention was already explicit; the approved RQ-01 follow-up also includes pending StopAsync in owner/prerequisite/root protection and LC-29. |
 | CHK015-CHK016 | SC-002..004, LC-15..17/20..30 and deterministic barriers/fake time define observable admission, event order, once-only calls and incomplete outcomes, not cancellation-as-release. |
 | CHK017-CHK018 | FR-020/SC-005, diagnostic catalogue and LC-32..33 require safe identity/ordinal, phase/rule/path/action/correlation, zero seeded secrets, fixed reason codes, 512-character messages, 32-ID paths, 100-entry collections and omission counts without raw payloads. |
 | CHK019-CHK020 | Spec assumptions, public HTTP surface and restart contract distinguish cooperative finite waiting/process recovery from forced termination, crash/schema rollback and transport/provider certification; no new anonymous management or host-policy bypass is authorized. |
 
 ### RQ-01: Explicitly Retain Resources for Timed-Out Cleanup Callbacks
 
-**Priority**: MEDIUM requirements ambiguity with resource-safety consequences;
+**Original priority**: MEDIUM requirements ambiguity with resource-safety consequences;
 not a demonstrated runtime defect or a claim that the design intends unsafe
 disposal.
 
@@ -112,7 +112,7 @@ Recording A as TimedOut does not mean A stopped. The contract needs to say
 unambiguously that B and root disposal remain protected, while an unrelated
 quiescent C may still clean up. A must not receive another stop attempt.
 
-**Recommendation, not applied**: Explicitly include non-completed StopAsync in
+**Original recommendation**: Explicitly include non-completed StopAsync in
 pending activity, resource/dependency retention and root quiescence. Preserve
 the callback's TimedOut result; mark affected prerequisite/root omissions
 unsafe, continue independent safe cleanup under the same outer budget, and
@@ -122,14 +122,35 @@ Add the barrier-held A -> B plus independent C regression to LC-28/29 and T048,
 with implementation obligations in T050..T053. Release/observe its test task
 after assertions; no process-level guarantee is introduced.
 
-**Status**: Open. No requirement, model, contract, acceptance row, task, source
-or driver checkpoint was changed by this review. Resolve separately, then
-re-evaluate CHK013 and run fresh cross-artifact analysis before implementation.
+**Status**: Resolved on 2026-10-20 after explicit user approval. The initial
+review changed no requirements or driver stage; this separately authorized
+follow-up applies the recommendation.
+
+**Resolution and re-evaluation**: FR-017 and its approved follow-up, the edge
+case, plan/research, model, public/lifecycle contracts and quickstart now
+explicitly include non-completed StopAsync as pending Phase activity. Record
+it before dispatch; timeout does not release its owner/prerequisites/root.
+Preserve TimedOut for that callback, UnsafePendingCallback for affected
+prerequisite omissions and NotAttemptedUnsafe for root disposal. Independent
+safe cleanup may proceed only within the original outer deadline.
+
+LC-28/29 and T048/T050..T053 require the barrier-held A -> B plus independent C
+case, retained resources/one attempt and bounded result, followed by safe
+observation of released test work with no returned-result mutation, retry or
+deferred dependency/root disposal. T055 retains the integrated proof duty.
+CHK013 is satisfied by these written obligations, not executed behavior.
+Affected CHK001/007/009..012/014/016/019 were re-evaluated without regression;
+all other original satisfied criteria remain applicable.
+
+**Current result**: 20/20 lifecycle and 20/20 composition criteria satisfied,
+40/40 total, no waivers or unchecked custom criteria. Fresh analysis remains
+a separate read-only check; requirements approval is not runtime evidence or
+permission to start implementation in this follow-up.
 
 ## Notes
 
 - All 20 items were generated unchecked. The current markers record the
-  explicitly requested review above; CHK013 remains open, not waived.
+  requested review and approved follow-up re-evaluation, not implementation.
 - Mark items `[x]` only after review confirms the requirement-quality criterion
   is satisfied. Leave unresolved or unevaluated criteria unchecked and record
   comments/findings inline.

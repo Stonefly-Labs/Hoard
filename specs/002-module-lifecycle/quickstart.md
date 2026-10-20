@@ -50,9 +50,12 @@ counts at implementation; do not pre-fill successful output.
 ## Journey A: Bundled Choices Without Rebuild
 
 Use the planned `examples/LifecycleHost` package-only fixture harness. It includes
-two protocol fixtures, one metadata, two distinct artifact fixtures, and optional
-identity, each with explicit registrations and lifecycle adapters. Its startup
-selection is an in-memory test input, not promised YAML/JSON/CLI configuration.
+Protocol.One, Protocol.Two, Metadata, Artifact.One and optional Identity, each
+with explicit registrations and lifecycle adapters. Artifact.Two is absent from
+baseline references/registrations and reserved for Journey B's custom rebuild.
+Independently packing all six fixtures does not include them all in this host.
+Its startup selection is an in-memory test input, not promised YAML/JSON/CLI
+configuration.
 
 1. Build once from packed packages; create a fresh host with one artifact and
    protocol choice selected. Validate before construction, compose services,
@@ -68,8 +71,9 @@ selection is an in-memory test input, not promised YAML/JSON/CLI configuration.
    connection counters remain zero.
 3. Change the caller's original selection while the first host runs; confirm
    the runtime selection does not change. Stop it, then create a new lifecycle
-   from the same already-built packages with the alternate bundled choice.
-   No rebuild occurs; new selection undergoes the complete gate.
+   from the same already-built packages with the alternate bundled protocol
+   choice, retaining Artifact.One. No rebuild occurs; new selection undergoes
+   the complete gate.
 
 This simulates curated selection semantics, not a runnable NuGet/SQLite/
 filesystem distribution. No TCP listener is needed; TestServer is not evidence
@@ -78,10 +82,11 @@ of transport-level drain or real package-manager support.
 ## Journey B: Add an Independent Custom Package
 
 Start from the package-only lifecycle example, not F-01's compile-only example.
-Add an independent artifact fixture package reference and Abstractions-only
-provider declaration; put its lifecycle adapter on the host side. Register both
-through the public boundaries, choose its ID explicitly, restore/build with
-reviewed locks, redeploy the test composition and create a new lifecycle.
+Add the independent Artifact.Two package reference and Abstractions-only
+provider declaration to the custom variant; put its lifecycle adapter on the
+host side. Register both through the public boundaries, choose its ID
+explicitly, restore/build with reviewed locks, redeploy the test composition
+and create a new lifecycle.
 
 Confirm zero engine/Core or unrelated provider edits and no provider-to-provider
 reference. The old running lifecycle cannot acquire the new package via selection
@@ -117,6 +122,11 @@ Use deterministic fixture barriers rather than a real unavailable service:
    and root disposal remain protected. A stalled build cannot return a late
    application; an in-flight worker is one admitted callback, not a promise
    of atomic per-iteration admission.
+7. Hold A.StopAsync past its callback budget, with A depending on B and unrelated
+   C, while outer stop time remains. A stays TimedOut, B/root remain protected
+   while it executes, and quiescent C cleans up under the same deadline.
+   After the bounded stop result, release/observe A and verify no second stop,
+   returned-result rewrite or deferred dependency/root disposal.
 
 Default coordination budgets are 120s total startup, 30s per activation
 callback, 5s aggregate readiness, and 30s total stop with 10s drain / 5s per

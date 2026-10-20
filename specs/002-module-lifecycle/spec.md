@@ -40,6 +40,21 @@ outside this bounded lifecycle feature as assigned in Assumptions. The existing
 security, trust, compatibility, and truthful-support constraints still apply;
 no consequential decision blocks planning.
 
+### Approved Follow-up: 2026-10-20
+
+After the requested checklist review, the user approved both recommendations.
+Cleanup budget expiry ends coordination waiting, not a still-running cleanup
+callback's resource use. Such a callback retains its owner's and prerequisites'
+resources and prevents root disposal; independent safe cleanup may continue
+within the same shutdown budget. Late completion does not retry cleanup or
+rewrite an already returned stop outcome.
+
+The fixture baseline bundles two protocol choices, metadata, one artifact
+choice and optional identity. The custom journey adds the second independent
+artifact package through rebuild/redeployment; the bundled journey switches
+protocol choices without rebuilding. This clarifies FR-017/FR-021/FR-022 and
+their existing proof obligations, not product scope or runtime delivery.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Start Only the Intended Modules (Priority: P1)
@@ -240,6 +255,8 @@ and FR-022.
   stopping takes precedence; the host cannot later transition to ready.
 - A callback ignores cancellation, a cleanup throws, or the process is forcibly
   terminated: bounded coordination must report incomplete work where possible;
+  a still-running timed-out cleanup retains owner/prerequisite resources and
+  blocks root disposal while independent safe cleanup may continue;
   trusted in-process code is not sandboxed, and crash cleanup is not guaranteed.
 - Provider options or exception text contain secrets: diagnostics must remain
   actionable without copying raw configuration or untrusted exception payloads.
@@ -330,6 +347,10 @@ and FR-022.
   budget, report failed/timed-out or unattempted cleanup explicitly, and retain
   the original failure alongside cleanup errors. It MUST NOT report that
   interrupted cleanup completed or that persistent provider changes rolled back.
+  A timed-out cleanup callback that is still executing MUST retain its owner's
+  and prerequisites' resources and prevent root disposal; independent safe
+  cleanup MAY continue within that same budget. Late completion MUST NOT retry
+  cleanup or rewrite an already returned stop outcome.
 - **FR-018**: Lifecycle coordination MUST prevent duplicate activation phases
   and duplicate cleanup for one host instance, including concurrent/repeated
   start or stop requests. Restart MUST be a new host lifecycle, not reactivation

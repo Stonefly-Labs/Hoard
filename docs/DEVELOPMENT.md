@@ -412,8 +412,9 @@ replay remain required evidence. Existing F-01 fixture/example sources and
 compile-only scenarios must stay intact; reviewed Hosting dependency/content
 changes may require affected lock refreshes, not silent hash bypasses.
 No test may skip a missing package input or accept an empty proof selection.
-The task-generation stage does not perform cross-artifact analysis, implement
-these obligations or evaluate the custom checklists; all 40 remain unchecked.
+The task-generation stage did not perform cross-artifact analysis, implement
+these obligations or evaluate the custom checklists; all 40 remained unchecked
+at that stage.
 
 The subsequent installed read-only cross-artifact analysis found no actionable
 duplication, ambiguity, underspecification, inconsistency, constitutional conflict
@@ -427,22 +428,39 @@ not orphan tasks. The analysis report is recorded in the draft feature PR,
 with completion evidence in the shared checkpoint. No feature artifact or
 built-in/custom checklist byte changed, and no remediation was needed.
 
-The later explicitly requested checklist review evaluates all 40 custom
+The later explicitly requested checklist review evaluated all 40 custom
 criteria at baseline `c7ccde4`: composition 19/20 and lifecycle 19/20, 38/40
-satisfied without waivers. Composition CHK014 remains open for
+satisfied without waivers. Composition CHK014 was left open for
 [RQ-02: inconsistent baseline/custom artifact manifests](../specs/002-module-lifecycle/checklists/composition.md#rq-02-baseline-and-custom-artifact-package-lists-disagree).
-Lifecycle CHK013 remains open for
+Lifecycle CHK013 was left open for
 [RQ-01: timed-out cleanup callback retention](../specs/002-module-lifecycle/checklists/lifecycle.md#rq-01-explicitly-retain-resources-for-timed-out-cleanup-callbacks).
-Both are MEDIUM written-requirements/documentation findings, not demonstrated
-runtime defects. The broader resource-safety rules already point toward safe
-cleanup intent, but the pending StopAsync case needs explicit treatment and
-proof; the quickstart's baseline package list also needs to match T063/T065.
-Criterion evidence and unapplied recommendations are recorded in the checklists.
-This requested review updates their markers, not the spec/design/tasks,
-built-in checklist, runtime sources or driver checkpoint. It is not a scheduled
-stage, an independent human inspection, or implementation authorization.
-The earlier no-findings analysis is retained as historical evidence; these
-later findings must not be ignored because that stage previously passed.
+Both were MEDIUM written-requirements/documentation findings, not demonstrated
+runtime defects. The initial review changed checklist markers only, not
+spec/design/tasks or the driver checkpoint.
+
+The user subsequently approved both recommendations. The follow-up explicitly
+tracks a non-completed StopAsync as pending Phase activity even after its wait
+times out: owner/prerequisite/root resources remain protected, independent safe
+cleanup shares the original deadline, and late completion after the bounded
+result cannot rewrite outcomes, retry or trigger deferred disposal. LC-28/29
+and T048/T050..T053/T055 retain the A -> B plus independent C regression duty.
+The baseline manifest now consistently includes the two protocols, Metadata,
+Artifact.One and optional Identity; only custom adds Artifact.Two and its host
+adapter. LC-35/36, T065 and the quickstart require baseline absence and
+same-binary bundled protocol switching; independent packing still covers six
+fixtures. All 40 custom criteria are now satisfied without waivers after
+re-evaluation; the built-in checklist remains 16/16.
+
+Fresh installed read-only cross-artifact analysis found zero actionable
+findings, with all 22 requirements/seven outcomes, 72 unchecked tasks, 40 LC
+cases, 20 scenarios and 12 edge cases retaining complete proof mappings and
+acyclic prerequisites. All feature bytes remained unchanged during that
+analysis. The bounded follow-up architecture review also found no actionable
+findings or unresolved design questions; actual runtime/package/graph proof
+remains an implementation obligation. The PR records both results.
+The approved follow-up is not a driver stage, independent human inspection,
+runtime implementation or acceptance. The checkpoint/history is byte-for-byte
+unchanged; no `begin`/`finish` or progress reset was used.
 
 Specification, clarification, planning, checklist and task generation create no
 lifecycle implementation, production executable/provider, configuration parser,
@@ -452,15 +470,15 @@ F-03 retains configuration sources,
 option/secret handling, and operator selection UX, while F-04 retains management
 discovery. Read-only analysis likewise supplies no runtime implementation or
 passing product evidence. The next scheduled stage is `implement` through a
-separate invocation, but its gate remains blocked on the two unresolved custom
-criteria. Resolve the findings in a separately authorized follow-up, re-evaluate
-CHK013/CHK014 in their respective checklists and run fresh cross-artifact
-analysis before implementation. Do not reset the checkpoint to fabricate a
-scheduled analysis rerun or interpret `implement` / `ready` as gate approval.
+separate invocation, with the custom checklist gate now satisfied and the
+approved findings resolved. This follow-up does not start implementation or
+mark any of its 72 tasks complete. Do not reset the checkpoint to fabricate a
+scheduled analysis rerun or infer runtime acceptance from `implement` / `ready`.
 Task generation and analysis do not require custom checklist approval, but the
 later implementation gate does require reviewer approval or explicit reviewer
-authorization; neither completed stage supplies it. No implementation
-authorization or feature-completion claim is implied.
+authorization; their initial generation/analysis did not supply it. The
+requested review and approved follow-up now satisfy that requirements gate,
+not a feature-completion or runtime-support claim.
 
 ```mermaid
 flowchart TD

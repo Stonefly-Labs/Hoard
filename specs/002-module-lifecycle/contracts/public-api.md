@@ -80,6 +80,10 @@ stop releases operational activity, not a second disposal of container-owned
 objects. Never add a preconstructed owned resource to DI and also dispose it
 as adapter-owned. Cleanup ownership and dependency availability must be
 documented in each adapter's proof.
+The coordinator tracks a non-completed StopAsync as pending Phase activity.
+Its wait timing out does not complete the callback or release its owner's,
+prerequisites' or root resources; independent safe cleanup may continue under
+the same stop deadline. Preserve TimedOut separately from unsafe omissions.
 
 ConfigureServices and MapEndpoints are synchronous, bounded composition
 callbacks, not permission to start ongoing work, external connections, or
@@ -130,10 +134,14 @@ app explicitly through its normal host APIs and retain the lease until stop.
 Do not independently call app disposal or `RunAsync` (which may dispose the
 host) around this ownership boundary. Lease disposal first coordinates stop,
 then disposes the app/root only when admitted requests, workers, build and
-activation callbacks are quiescent. If work remains, report root disposal
+activation/cleanup callbacks are quiescent, including StopAsync tasks whose
+coordination waits timed out. If work remains, report root disposal
 NotAttemptedUnsafe rather than destroying resources still in use. A disposer
 that itself stalls is supervised and reported incomplete; no forced termination
 is claimed.
+Observe late cleanup completion/fault without raw payloads; after the shared
+stop result is returned, do not rewrite its outcomes, retry cleanup, or start
+deferred dependency/root disposal.
 
 Failure before lease return is cleaned internally; failure afterward is covered
 by lease disposal, including the supervised build path.

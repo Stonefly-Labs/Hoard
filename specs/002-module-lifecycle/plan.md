@@ -18,6 +18,7 @@ routes after build; then initialize, assess readiness, admit work, and stop
 through one bounded coordinator. Never infer enablement from package presence.
 The explicit supervised build API and composition lease own application/root
 disposal; pending request/worker/phase/build activity prevents unsafe release.
+Phase includes a StopAsync still executing after its cleanup wait timed out.
 
 Reuse F-01's declaration shapes and compatibility policy without adding
 required members or changing registration behavior. Keep persistence/storage
@@ -216,6 +217,30 @@ per-iteration gate. LC-20/23/26/29 require the corresponding regression proof.
 These are design corrections, not executed runtime evidence or checklist
 approval. Implemented resource/admission/budget/API/packed-graph proofs and
 implementation architecture review remain outstanding.
+
+### Approved Checklist Follow-up
+
+The user approved RQ-01/RQ-02 from the requested checklist review. The updated
+spec/model/contracts explicitly retain a non-completed StopAsync as pending
+Phase activity: timeout ends waiting, not resource use. Protect its owner,
+prerequisites and root; preserve TimedOut and unsafe omissions, continue
+independent safe cleanup within the same deadline, and observe late faults
+without retry, returned-result mutation or deferred disposal. LC-28/29 and
+T048/T050..T053 require a barrier-held A -> B plus independent C proof.
+
+The quickstart and acceptance manifests now agree with T063/T065: baseline
+includes Protocol.One, Protocol.Two, Metadata, Artifact.One and optional
+Identity; custom adds Artifact.Two and its host adapter. The no-rebuild journey
+switches bundled protocols, while all six fixture packages remain independently
+packed. These approved design/documentation corrections create no runtime
+evidence, package dependency, new task or driver stage transition.
+
+A bounded `hoard-architecture-review` of the approved follow-up found no
+actionable findings or unresolved design questions. Pending-cleanup retention,
+same-deadline independent cleanup, once-only/late-result behavior, independent
+package manifests and unchanged public compatibility were reviewed as written
+obligations. Actual runtime, retained-binary/framework and implemented-graph
+proofs remain required; the reviewer ran no commands or tests.
 
 ## Complexity Tracking
 

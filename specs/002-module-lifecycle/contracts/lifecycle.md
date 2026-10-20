@@ -120,7 +120,9 @@ There is no atomic per-iteration promise for arbitrary trusted provider code.
 
 Attempt stop for every constructed/entered adapter in reverse validated order,
 including the adapter whose service/map/init callback failed. Keep successfully
-initialized dependencies alive until dependent cleanup has been attempted.
+initialized dependencies alive while dependent cleanup is still executing,
+including after its coordination wait times out; an attempted callback is not
+necessarily quiescent.
 Only entered modules need cleanup; a failed inert constructor has no returned
 adapter, and must release its own pre-return allocations.
 
@@ -131,10 +133,21 @@ adapters after an error. If the overall deadline expires, explicitly record
 NotAttemptedBudgetExhausted for remaining entries. Preserve the primary startup
 failure separately from additional cleanup errors.
 
+Record each StopAsync task as pending Phase activity before dispatch; Phase
+explicitly includes cleanup callbacks. A TimedOut wait does not remove a
+still-executing callback from that activity or release its resource leases.
+Preserve its TimedOut outcome, mark affected prerequisite omissions
+UnsafePendingCallback and root disposal NotAttemptedUnsafe while it remains
+active, and continue independent eligible cleanup within the same outer budget.
+For A depending on B and unrelated C, a barrier-held timed-out A.StopAsync
+protects A/B/root while quiescent C may clean up. A receives no second attempt.
+If safe completion is observed before the shared stop operation ends, remaining
+cleanup still uses the original deadline; no new cleanup round or budget begins.
+
 Do not run cleanup concurrently with a still-executing activation callback,
-worker, or admitted request that could use the same resources. Outstanding
-requests retain their owner's resource lease after drain expires, including
-streaming response-body completion, not just handler return. Mark the owner
+cleanup callback, worker, or admitted request that could use the same resources.
+Outstanding requests retain their owner's resource lease after drain expires,
+including streaming response-body completion, not just handler return. Mark the owner
 UnsafePendingCallback (with safe activity kind Request, Worker, Build or Phase)
 when cooperative quiescence failed. Independent safe cleanup may still run.
 A prerequisite whose dependent is still using it is also unsafe to release;
@@ -147,10 +160,17 @@ twice. Adapter-owned operational resources are tracked and released by its stop
 callback. The composition lease owns the built application and invokes root
 host/provider disposal only after module cleanup and global quiescence. If any
 request, worker, build or activation remains active, record root disposal
-NotAttemptedUnsafe. This retains resources rather than disposing them underneath
-in-flight work, and requires process-level recovery if it cannot quiesce.
+NotAttemptedUnsafe; this also applies to any still-executing StopAsync, even
+after its wait was recorded TimedOut. This retains resources rather than
+disposing them underneath in-flight work, and requires process-level recovery
+if it cannot quiesce.
 Supervise eligible root disposal with remaining shutdown time; a timeout is
 explicitly incomplete, not guaranteed termination of arbitrary disposal code.
+
+After the shared stop result is returned, observe late cleanup completion/fault
+through safe categories only. Do not rewrite the returned TimedOut/unsafe
+outcomes, retry stop, or launch deferred prerequisite/root disposal. An
+incomplete terminal lifecycle retains the documented process-recovery boundary.
 
 ## Budgets and Non-Cooperative Code
 

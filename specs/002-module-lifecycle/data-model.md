@@ -121,6 +121,14 @@ an object that was never returned cannot receive a stop callback.
 Successfully constructed adapters receive stop once even if service/map/init
 later fails. A non-cooperative pending phase is explicitly unsafe to clean
 concurrently and is reported incomplete, not successfully released.
+Phase activity includes the StopAsync task, recorded before dispatch and
+retained while executing even if its coordination wait is TimedOut. Its owner
+and prerequisites remain protected; mark affected prerequisite omissions
+UnsafePendingCallback and root disposal NotAttemptedUnsafe, not the timed-out
+callback as completed. Independent safe cleanup may continue within the same
+outer deadline. Track actual task completion separately from the immutable
+reported cleanup outcome; after returning the stop result, late completion/fault
+is safely observed without rewriting it, retrying cleanup or deferred disposal.
 Track admitted request/resource leases through response completion as well as
 worker and build activity. A timed-out drain retains those leases for the owner
 and its prerequisites; it does not permit resource release. A pending host build
@@ -176,6 +184,7 @@ NotEntered, Completed, Failed, TimedOut, NotAttemptedBudgetExhausted, or
 UnsafePendingCallback. Cleanup completed does not mean persistent changes
 rolled back. `Stopped` is a terminal coordination state, not a claim of
 resource release if any record is incomplete.
+In particular, TimedOut records bounded waiting, not StopAsync quiescence.
 Root disposal has a separate Completed, Failed, TimedOut,
 NotAttemptedBudgetExhausted or NotAttemptedUnsafe outcome. Unsafe activity
 records include only the safe kind and owner IDs, never request URLs/payloads.

@@ -207,7 +207,8 @@ and 40 acceptance cases to implementation and focused proof, with explicit
 prerequisites and file-disjoint parallel opportunities. Tests precede changed
 behavior; supervised build, response/resource retention, root disposal, old
 binary compatibility and package graphs remain proof obligations, not results.
-All 40 custom checklist items remain untouched and reviewer-owned.
+At task generation, all 40 custom checklist items remained untouched and
+reviewer-owned.
 The subsequent read-only cross-artifact analysis found no actionable duplication,
 ambiguity, underspecification, inconsistency, constitutional conflict or coverage
 gap. All 22 requirements and seven buildable outcomes have implementation and
@@ -215,22 +216,24 @@ proof assignments; all 72 tasks map to requirements or shared acceptance
 prerequisites. The complete acyclic prerequisite graph, 40 LC cases, 20 story
 scenarios and 12 edge cases were checked. The analysis report is recorded in
 the draft feature PR; feature artifacts and all checklist markers are unchanged.
-The later explicitly requested checklist review satisfies 19/20 composition
-and 19/20 lifecycle criteria, 38/40 total. Two remain open:
+The later explicitly requested checklist review initially satisfied 19/20
+composition and 19/20 lifecycle criteria, 38/40 total. It identified
 [timed-out cleanup resource retention](specs/002-module-lifecycle/checklists/lifecycle.md#rq-01-explicitly-retain-resources-for-timed-out-cleanup-callbacks)
-needs an explicit pending-callback rule and focused proof obligation, and
+as needing an explicit pending-callback rule and focused proof obligation, and
 [baseline/custom package manifests](specs/002-module-lifecycle/checklists/composition.md#rq-02-baseline-and-custom-artifact-package-lists-disagree)
-need consistent journey instructions. These are requirements/documentation
-findings, not demonstrated runtime defects; recommendations are not yet applied.
+as needing consistent journey instructions. The user approved both corrections;
+the spec, model, contracts, acceptance cases, tasks and quickstart now include
+pending StopAsync retention and consistent baseline/custom recipes. Re-evaluation
+satisfies all 40/40 custom criteria without waivers. Fresh read-only analysis
+and a bounded architecture review found no actionable findings; runtime proof
+remains outstanding.
 No lifecycle runtime, runnable product host, real provider, discovery API or UI
 is introduced by specification, planning, checklist, task generation or analysis.
-The requested review records checklist outcomes without changing requirements,
-design, tasks, runtime code or the driver checkpoint. No implementation
-authorization is implied. The next scheduled stage remains `implement` through a
-separate `hoard-speckit` invocation, blocked on the two unresolved criteria.
-Resolve the findings, re-evaluate those criteria and run fresh cross-artifact
-analysis before implementation. The earlier no-findings analysis does not
-override later review concerns or provide runtime proof.
+The approved follow-up changes written requirements/design/proof obligations,
+not runtime code or the driver checkpoint. The next scheduled stage remains
+`implement` through a separate `hoard-speckit` invocation, with the checklist
+gate now satisfied. This follow-up does not begin implementation, mark any
+implementation task complete or provide runtime evidence.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

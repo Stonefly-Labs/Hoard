@@ -128,6 +128,13 @@ never reuse its mutable services/router/selection. Avoid concurrent cleanup
 against a still-executing activation callback. Process exit, not safe module
 replacement, is the recovery boundary.
 
+The user-approved RQ-01 follow-up explicitly includes non-completed StopAsync
+as pending Phase activity after its wait times out. Preserve TimedOut for that
+callback, retain owner/prerequisite/root resources, and continue independent
+safe cleanup under the same deadline. Late completion/fault is observed safely;
+after the stop result returns it cannot rewrite outcomes, retry cleanup or
+launch deferred disposal. LC-28/29 and T048/T050..T053 retain this proof duty.
+
 Expose a supervised `BuildHoardApplicationAsync` boundary; merely acquiring an
 `await using` lease around a bare synchronous Build cannot bound a stalled
 build. The composition lease owns the returned app/root and supervises eligible
