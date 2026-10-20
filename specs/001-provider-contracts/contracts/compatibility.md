@@ -42,13 +42,41 @@ should use an exact prerelease or narrowly bounded interval.
 
 A prerelease module itself is experimental and must be described as such;
 its own version does not automatically allow prerelease hosts/abstractions.
-An absent optional module is allowed; a present required dependency must
-satisfy its declared range and prerelease flag. A present optional dependency
-cannot be used as supported if it is incompatible.
 
 These rules classify declarations, not package solver behavior. NuGet restore
 success alone does not prove a compatible Hoard composition. Do not assume the
 NuGet.Versioning interval comparison implements the explicit Hoard flag.
+
+### Dependency Availability and Optional Modules
+
+Installed means included as a referenced package in the build; registered means
+its declaration/type pairing has been recorded. Neither means enabled. Enabled
+means selected to participate in the startup composition, not already activated
+or ready. Selection and runtime validation belong to F-02/F-03, not F-01.
+
+For each enabled declaring module, classify its dependencies as follows:
+
+- A required target must be available and enabled, and satisfy its declared
+  version range and prerelease flag; otherwise the composition is unsupported.
+- An optional target that is absent or installed/registered but not enabled is
+  unavailable. This alone is allowed, but the declaring module cannot claim
+  that integration or capabilities supplied by the unavailable target.
+- An enabled optional target must satisfy its declared range and
+  `ModuleDependency.AllowPrerelease`, whether or not its author says the
+  integration is "used". An incompatible enabled target makes the entire
+  composition unsupported, just as a required dependency conflict does.
+
+Do not automatically disable a module or optional integration, ignore the
+dependency, or substitute a provider to turn an incompatible selected composition
+into a supported one. Operators must explicitly change selection or install a
+compatible version and revalidate. An unavailable optional target contributes no
+active dependency edge; it is not activated implicitly. Enabled targets still
+have their own host/abstractions compatibility obligations.
+
+F-01 classification examples must distinguish these outcomes. F-02/F-03 must
+reject unsupported selected compositions at startup with actionable, sanitized
+diagnostics identifying the declaring module, dependency, and range/prerelease
+conflict. F-01 registration neither enables modules nor performs this validation.
 
 ## Source, Binary, and Behavioral Compatibility
 
@@ -103,6 +131,11 @@ are assumed valid unless the row says otherwise.
 | C-16 behavioral break | Tighten required commit visibility while keeping signatures | Breaking; migration/qualification needed |
 | C-17 binary break | Previously supported compiled provider loses a referenced member | Breaking even if a recompiled consumer passes |
 | C-18 module prerelease | Provider 0.1.0-beta.1, host prerelease, host flag false | Unsupported host; provider suffix does not grant opt-in |
+| C-19 optional enabled compatible | Enabled A optionally requires B `[1.0.0,2.0.0)`; B 1.5.0 enabled | Compatible dependency; both modules still need valid platform ranges |
+| C-20 optional enabled incompatible | Enabled A optionally requires B `[1.0.0,2.0.0)`; B 2.0.0 enabled | Unsupported composition; no automatic module/integration disablement or substitution |
+| C-21 optional dependency prerelease denied | Enabled A optionally requires B `[1.0.0,2.0.0)`; B 1.5.0-rc.1 enabled; dependency flag false | Unsupported composition despite interval containment |
+| C-22 optional dependency prerelease allowed | Same interval/candidate and enablement as C-21; dependency flag true | Compatible dependency; still experimental, with other axes required to pass |
+| C-23 optional installed but disabled | Enabled A optionally requires B `[1.0.0,2.0.0)`; B 2.0.0 installed/registered but not enabled | Treat optional target as unavailable; absence alone is allowed, with no B integration/capability claim or active dependency edge |
 
 Automated examples in F-01 must classify interval/prerelease cases using these
 explicit rules; release-change classification examples must explain source,

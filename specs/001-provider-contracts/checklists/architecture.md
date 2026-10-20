@@ -65,8 +65,9 @@ authorized implementation. Reviewed baseline: `20c4a78`.
 
 **Result**: 20/20 architecture criteria satisfied; no architecture
 requirements-quality finding. The separate
-[compatibility review](compatibility.md#delegated-review-2026-10-20) has one
-unresolved criterion, so the combined custom-checklist gate is not satisfied.
+[compatibility review](compatibility.md#delegated-review-2026-10-20) initially
+left one criterion open; the user-approved resolution below now satisfies the
+combined requirements-quality checklist gate, not implementation acceptance.
 
 | Criteria | Written evidence supporting satisfaction |
 | --- | --- |
@@ -76,6 +77,14 @@ unresolved criterion, so the combined custom-checklist gate is not satisfied.
 | CHK010-CHK013 | Plan traceability and quickstart define the Core-only closure, five independent packages, two artifact compositions, permitted replacement edits, and complete self-contained example evidence. |
 | CHK014-CHK016 | ARCH-001 through ARCH-008 require isolated negatives and permitted counterparts, including packaged/transitive/private/same-assembly cases; incomplete inspection fails explicitly; registration retains duplicate/invalid compositions for later validation. |
 | CHK017-CHK020 | Spec FR-008/FR-009 and public API document build-time trusted code, not sandboxing; metadata avoids secrets/connections; family seams promise no storage/auth operations; named later features retain all shared invariants. |
+
+**Follow-up, 2026-10-20**: Re-evaluated the affected consistency and scope
+criteria (CHK007, CHK009, CHK016, CHK020) after the user-approved
+[RQ-01 resolution](compatibility.md#rq-01-incompatible-present-optional-dependency).
+The optional-dependency clarification adds no contract fields, changes no
+package direction, and keeps enablement/validation with F-02/F-03; it makes no
+runtime-readiness claim. Architecture remains 20/20 satisfied, compatibility is
+now 18/18, and tasks/analysis remain separate, unexecuted stages.
 
 ## Notes
 

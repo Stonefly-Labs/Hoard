@@ -115,8 +115,10 @@ The initial [constitution](.specify/memory/constitution.md) is version 1.0.0;
 its adoption has merged. The first feature specification,
 [platform package boundaries and provider contracts](specs/001-provider-contracts/spec.md),
 defines requirements only, not implemented contracts or a runnable host.
-Its [clarification review](specs/001-provider-contracts/spec.md#clarifications)
-found no critical ambiguities requiring questions. Its
+Its initial [clarification review](specs/001-provider-contracts/spec.md#clarifications)
+found no critical ambiguities requiring questions; a later
+[approved follow-up](specs/001-provider-contracts/spec.md#approved-follow-up-2026-10-20)
+resolves the optional-dependency ambiguity found during checklist review. Its
 [implementation plan](specs/001-provider-contracts/plan.md) now documents
 provider-neutral declarations, explicit registration, compatibility policy,
 and planned package-only composition and boundary checks. These are design
@@ -124,9 +126,10 @@ artifacts, not available APIs or passing product checks. The custom
 [architecture](specs/001-provider-contracts/checklists/architecture.md) and
 [compatibility](specs/001-provider-contracts/checklists/compatibility.md)
 requirements-quality checklists have received an explicitly requested delegated
-review: 37 of 38 criteria are satisfied. One
-[optional-dependency policy ambiguity](specs/001-provider-contracts/checklists/compatibility.md#rq-01-incompatible-present-optional-dependency)
-remains unchecked and needs resolution before implementation approval.
+review: all 38 criteria are satisfied after the user-approved
+[optional-dependency policy clarification](specs/001-provider-contracts/checklists/compatibility.md#rq-01-incompatible-present-optional-dependency).
+Enabled optional dependencies must be compatible; installed/registered but
+disabled targets are unavailable and confer no integration/capability support.
 This is requirements review, not implementation evidence or authorization;
 task generation remains the next stage.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized

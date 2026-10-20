@@ -160,8 +160,10 @@ Its [built-in quality checklist](../specs/001-provider-contracts/checklists/requ
 validates the specification, not implementation or reviewer-owned custom
 checklist approval. Package contracts, custom-host compilation, and architecture
 checks described there are acceptance requirements, not existing product tools.
-Its [clarification review](../specs/001-provider-contracts/spec.md#clarifications)
-records a no-question result with no scope changes; exact public signatures and
+Its initial [clarification review](../specs/001-provider-contracts/spec.md#clarifications)
+records a no-question result with no scope changes; a later user-approved
+follow-up resolves the checklist review's optional-dependency ambiguity.
+Exact public signatures and
 build commands are now proposed in the
 [implementation plan](../specs/001-provider-contracts/plan.md) and
 [public contracts](../specs/001-provider-contracts/contracts/public-api.md),
@@ -179,15 +181,18 @@ requirements-quality reviews: 20 and 18 criteria respectively.
 These standard-depth checklists are for maintainers and provider-contract
 reviewers before implementation authorization; they assess written requirements,
 not product behavior. At the user's explicit request, a delegated review
-evaluated all 38 criteria: architecture 20/20 and compatibility 17/18 satisfied.
-The remaining unchecked criterion records
+initially found architecture 20/20 and compatibility 17/18 satisfied.
+The user then approved the recommendation for
 [RQ-01: incompatible present optional dependencies](../specs/001-provider-contracts/checklists/compatibility.md#rq-01-incompatible-present-optional-dependency).
-It needs a deterministic policy and classification examples before
-implementation approval. The review records evidence without changing
-requirements, waiving the finding, or advancing the driver. The built-in
-specification checklist remains separate and unchanged. Task generation is
-still next; implementation remains gated by the open criterion and later
-read-only analysis.
+The spec, declaration model, and policy now classify an enabled incompatible
+optional target as an unsupported composition, without automatic disablement
+or substitution; installed/registered-but-disabled optional targets are
+unavailable and confer no integration/capability claim. Five new classification
+examples bring the written matrix to 23 cases. The delegated re-review closes
+CHK014: architecture 20/20 and compatibility 18/18, all 38 criteria satisfied
+without waivers. The built-in specification checklist and driver are unchanged.
+Task generation is still next; the checklist result neither executes the
+tasks/analysis stages nor authorizes implementation.
 
 ```mermaid
 flowchart TD

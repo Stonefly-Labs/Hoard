@@ -45,11 +45,19 @@ false unless explicitly opted in). Ranges use the bounded interval/exact
 syntax in [compatibility.md](contracts/compatibility.md).
 
 `ModuleDependency` has required `ModuleId`, `VersionRange`, `Optional`, and
-`AllowPrerelease` fields. An optional dependency may be absent; if present and
-used, it must be compatible. Duplicate declarations, self-references, and
-cycles are unsupported compositions, not automatically deduplicated edges.
-Dependencies are descriptive relationships between modules, not instructions
-to download NuGet packages or load assemblies.
+`AllowPrerelease` fields. For an enabled declaring module, an enabled optional
+target must satisfy its range and prerelease flag; otherwise the composition
+is unsupported, without automatic disablement or substitution. An optional
+target that is absent or only installed/registered but disabled is unavailable
+and confers no integration or capability support. Registration alone does not
+make a module enabled. The
+[dependency availability policy](contracts/compatibility.md#dependency-availability-and-optional-modules)
+defines these classifications without adding runtime state to this declaration.
+
+Duplicate declarations, self-references, and cycles are unsupported
+compositions, not automatically deduplicated edges. Dependencies are descriptive
+relationships between modules, not instructions to download NuGet packages or
+load assemblies. Selection and runtime enforcement remain F-02/F-03 work.
 
 ## Capability and Responsibility Metadata
 

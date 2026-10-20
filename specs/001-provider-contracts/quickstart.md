@@ -101,13 +101,18 @@ example guide. Never treat the planning commands as passing evidence today.
 | Custom-host baseline and replacement | Both compile; no platform edits, private APIs, or external service |
 | Declaration inspection/registration | Metadata and recorded types available; throwing provider constructor never called |
 | Architecture positives/negatives | Permitted graph passes; each `ARCH-001` through `ARCH-008` negative rejects with source/target/rule |
-| Compatibility examples | Every `C-01` through `C-18` case receives the documented classification |
+| Compatibility examples | Every `C-01` through `C-23` case receives the documented classification |
 | Documentation review | Every fixture/example is compile-only; no operational support or certification claim |
 
 See [architecture rules](contracts/architecture-rules.md) for transitive,
 signature, cycle, and same-assembly slice cases, and
 [compatibility policy](contracts/compatibility.md) for version interpretation.
 Reject missing inputs or unexpected classifications rather than skipping them.
+Cases C-19 through C-23 additionally distinguish enabled optional dependencies
+from unavailable installed/registered-but-disabled targets, reject enabled
+version/prerelease conflicts without automatic disablement, and preserve the
+explicit prerelease opt-in. These are written classification obligations, not
+evidence of runtime selection or enforcement.
 
 ## Composition and Support Limits
 

@@ -26,6 +26,17 @@ unspecified F-01 acceptance obligations. Exact public signatures, dependency
 versions, build layout, and commands remain planning decisions under the
 existing requirements. No consequential product decision blocks planning.
 
+### Approved Follow-up 2026-10-20
+
+The user approved the delegated checklist review's recommendation for RQ-01.
+For an enabled module, an enabled optional dependency must satisfy its declared
+version range and explicit prerelease policy or the composition is unsupported;
+there is no automatic disablement or substitution to make it pass. An absent
+or installed/registered-but-disabled optional target is unavailable and provides
+no integration or capability claim. This clarifies FR-012 and its acceptance
+examples only; runtime enforcement remains F-02/F-03 work. The follow-up does
+not rerun or advance a scheduled Spec Kit stage or authorize implementation.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Extend Hoard Without Changing Its Engine (Priority: P1)
@@ -152,6 +163,11 @@ FR-010 through FR-012, FR-015, and FR-017.
    protocol and identity schemes from single authoritative metadata and
    artifact selections, and reserve shared cache correctness and authorization
    decisions to centralized services.
+5. **Given** an enabled module with an optional dependency, **When** a maintainer
+   classifies a composition, **Then** an enabled target outside its range or
+   without required prerelease opt-in makes the composition unsupported, while
+   an absent or installed-but-disabled target is unavailable without a claim
+   to that integration or capability; incompatibility is not silently repaired.
 
 ### Edge Cases
 
@@ -163,6 +179,10 @@ FR-010 through FR-012, FR-015, and FR-017.
   classify it as breaking for existing implementers, even if consumers compile.
 - A prerelease provider or host falls outside the declared range: require
   explicit prerelease compatibility; do not infer support from a nearby release.
+- An optional dependency is enabled but incompatible: classify the composition
+  as unsupported, not implicitly disable the integration. A target that is
+  merely installed/registered but disabled is unavailable, not an active
+  dependency or an advertised integration.
 - Two modules declare the same stable ID, omit compatibility information, or
   declare mutually dependent modules: the contract must represent these inputs
   for later validation; F-01 does not implement the startup validator.
@@ -225,6 +245,11 @@ FR-010 through FR-012, FR-015, and FR-017.
   interpreted, require explicit prerelease opt-in, and require migration
   guidance for breaking changes. Unsupported, missing, or incompatible
   declarations MUST NOT be described as supported or silently substituted.
+  For each enabled module, enabled optional dependencies MUST satisfy their
+  declared version ranges and prerelease flags or the composition MUST be
+  classified as unsupported, without automatic disablement or substitution.
+  Absent or installed/registered-but-disabled optional targets MUST be treated
+  as unavailable and MUST NOT confer integration or capability support.
   Runtime enforcement is deferred to F-02/F-03.
 - **FR-013**: Acceptance evidence MUST include independently compiled fixture
   providers covering all four families, plus an engine-only build without

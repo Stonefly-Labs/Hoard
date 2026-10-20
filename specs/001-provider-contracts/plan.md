@@ -182,7 +182,7 @@ permitted counterpart is accepted; do not weaken checks to make fixtures pass.
 | FR-007, FR-013 / SC-002 | Two independent artifact fixtures | Swap only host package reference and registration type/declaration; rebuild both variants, verify no Core/unrelated source change |
 | FR-008, FR-009, FR-016 / SC-006 | Curated/custom and trust/compile-only documentation | Review all example/support text; no fixture described as functional or certified; no dynamic-loading/install API |
 | FR-010 | Immutable static declaration, separate registration | Inspect all descriptor fields without constructing fixture provider; constructor sentinel remains untouched |
-| FR-011, FR-012 / SC-005 | Compatibility policy and example matrix | Classify every documented version/change case, including binary and behavioral breaks and explicit prerelease gates |
+| FR-011, FR-012 / SC-005 | Compatibility policy and example matrix | Classify C-01 through C-23, including binary/behavioral breaks, prerelease gates, enabled optional conflicts, and unavailable installed/registered-but-disabled targets |
 | FR-015, FR-017 | Responsibility matrix and category declarations | Review all four seams for invariant ownership; no auth-to-permission, rename, transaction, or operational-support implication |
 
 ### Validation and documentation handoff
@@ -198,6 +198,17 @@ dependency/API compliance, independent package/replacement proofs, and runtime/
 console guarantees unverified until their implementation checks exist. No
 custom checklist was approved. The existing tooling suite passed all 14 tests;
 pinned feature-path resolution and whitespace checks passed.
+
+**Approved review follow-up, 2026-10-20**: After the checklist review found
+RQ-01, the user approved a fail-closed optional-dependency policy. FR-012, the
+declaration model, and the compatibility policy now require an enabled optional
+target to satisfy its range/prerelease flag or make the composition unsupported,
+without automatic disablement/substitution. Installed/registered-but-disabled
+targets are unavailable and confer no integration/capability claim. C-19 through
+C-23 add the classification obligations; the quickstart now requires all 23
+cases. This changes no signatures, package graph, or F-01 runtime scope.
+The [review record](checklists/compatibility.md#rq-01-incompatible-present-optional-dependency)
+tracks the criterion's re-evaluation separately from scheduled stage progress.
 
 At implementation, introduce the commands in the quickstart and require them to
 pass before claiming F-01 acceptance. Update README, `docs/DEVELOPMENT.md`,

@@ -42,7 +42,7 @@ qualification, or release authorization.
 ## Scenario and Edge Case Coverage
 
 - [x] CHK013 Are exact/inclusive/exclusive boundaries, prereleases below a stable lower bound, build metadata, label comparison, malformed intervals, and independent axis failures addressed explicitly in the policy? [Edge Case Coverage, Spec §FR-012, §SC-005; Compatibility policy §Range and Prerelease Interpretation, §Classification Acceptance Matrix]
-- [ ] CHK014 Are required versus optional dependency absence, incompatible present dependencies, dependency prereleases, and unavailable-capability claims specified without ambiguous fallback behavior? [Scenario Coverage, Spec §FR-010, §FR-012; Data model §CompatibilityDeclaration and ModuleDependency; Compatibility policy §Range and Prerelease Interpretation]
+- [x] CHK014 Are required versus optional dependency absence, incompatible present dependencies, dependency prereleases, and unavailable-capability claims specified without ambiguous fallback behavior? [Scenario Coverage, Spec §FR-010, §FR-012; Data model §CompatibilityDeclaration and ModuleDependency; Compatibility policy §Range and Prerelease Interpretation]
 - [x] CHK015 Are migration obligations defined for breaking source, binary, and behavioral changes, including affected contracts, old/new ranges, provider changes, qualification evidence, and rollback guidance? [Recovery Coverage, Spec §FR-011, §FR-012; Compatibility policy §Release and Migration Obligations]
 
 ## Non-Functional Requirements and Dependencies
@@ -61,9 +61,10 @@ checklist review and flag concerns. This is delegated requirements-quality
 evaluation, not a claim that the user independently inspected each item or
 authorized implementation. Reviewed baseline: `20c4a78`.
 
-**Result**: 17/18 compatibility criteria satisfied; CHK014 remains unchecked for
-RQ-01 below. Together with the architecture review, 37/38 custom criteria are
-satisfied. The combined custom-checklist gate is not satisfied.
+**Initial result**: 17/18 compatibility criteria satisfied; CHK014 was left
+unchecked for RQ-01 below. Together with the architecture review, 37/38 custom
+criteria were satisfied at that baseline. The user subsequently approved the
+resolution; the current result is recorded below.
 
 | Criteria | Written evidence supporting the assessment |
 | --- | --- |
@@ -71,28 +72,30 @@ satisfied. The combined custom-checklist gate is not satisfied.
 | CHK004-CHK006 | Stable major/pre-1.0 minor transitions and nonbreaking patches are explicit; each prerelease axis has its own flag; solver success, runtime enforcement, and qualification are distinct. |
 | CHK007-CHK009 | Spec FR-010 through FR-012, declaration fields, and policy agree on version meaning and breaking changes; unsupported inputs cannot be advertised as supported or silently substituted. |
 | CHK010-CHK013 | C-01 through C-18 have policy-derived classifications for the required SC-005 case set, including exact/build metadata, malformed ranges and independent flags; support claims remain compile-only. These existing examples do not cover RQ-01's optional-present case. |
-| CHK014 | Not satisfied: optional absence is defined, but the disposition of an incompatible present optional dependency is not deterministic; see RQ-01. |
+| CHK014 | Initially not satisfied: the incompatible-present outcome was undefined. Satisfied after the user-approved resolution of RQ-01, with explicit availability rules and cases C-19 through C-23 below. |
 | CHK015-CHK018 | Migration obligations include affected contracts/behaviors, version ranges, provider changes, qualification and rollback; support labels confer no certification; later enforcement remains separately scoped and cannot weaken safety invariants. |
 
 ### RQ-01: Incompatible Present Optional Dependency
 
-**Priority**: Medium requirements ambiguity; resolve before implementation
-approval. This is not a demonstrated runtime defect: no runtime exists yet.
+**Original priority**: Medium requirements ambiguity. This was not a demonstrated
+runtime defect: no runtime exists yet.
 
-**Evidence**: [data-model.md](../data-model.md#compatibilitydeclaration-and-moduledependency)
-lines 47-49 says an optional dependency must be compatible "if present and
-used". [The compatibility policy](../contracts/compatibility.md#range-and-prerelease-interpretation)
-lines 45-47 forbids using an incompatible present optional dependency as
-supported, but does not define the composition outcome or what determines
-"used". Matrix C-15, at line 102 of the policy, covers absence only.
+**Original evidence, baseline `20c4a78`**:
+[data-model.md:47-49](https://github.com/Stonefly-Labs/Hoard/blob/20c4a78/specs/001-provider-contracts/data-model.md#L47-L49)
+required an optional dependency to be compatible "if present and used".
+[The original policy:45-47](https://github.com/Stonefly-Labs/Hoard/blob/20c4a78/specs/001-provider-contracts/contracts/compatibility.md#L45-L47)
+forbade using an incompatible present optional dependency as supported, but did
+not define the composition outcome or what determined "used".
+[Original C-15:102](https://github.com/Stonefly-Labs/Hoard/blob/20c4a78/specs/001-provider-contracts/contracts/compatibility.md#L102)
+covered absence only.
 
 **Example**: Module A declares optional B in `[1.0.0,2.0.0)`; B `2.0.0` is
-present and enabled, with otherwise compatible platform ranges. The policy
-forbids the incompatible integration, but does not say whether the composition
-is rejected or whether that integration is explicitly disabled. Authors could
-produce different classifications while each claims not to use B.
+present and enabled, with otherwise compatible platform ranges. The original
+policy forbade the incompatible integration but did not say whether to reject
+the composition or explicitly disable the integration. Authors could produce
+different classifications while each claimed not to use B.
 
-**Attention needed**: Define the disposition for present/enabled versus merely
+**Original recommendation**: Define the disposition for present/enabled versus merely
 installed/disabled optional modules and add explicit classification examples,
 including dependency prerelease opt-in. The simplest recommendation is that an
 enabled optional dependency must satisfy its range/flag or the composition is
@@ -100,9 +103,36 @@ unsupported; absence remains allowed. If graceful integration disablement is
 intended instead, specify explicit selection/reporting rules rather than silent
 fallback. Runtime enforcement still belongs to F-02/F-03.
 
-**Status**: Open. No requirement or policy was changed during this review.
-Re-evaluate CHK014 after an explicitly authorized clarification resolves RQ-01;
-the current review does not waive this criterion or authorize implementation.
+**Status**: Resolved on 2026-10-20 after explicit user approval of the
+fail-closed recommendation. The initial review changed no policy; this separate
+authorized follow-up clarifies FR-012 and the policy without advancing a stage.
+
+**Resolution and re-evaluation**:
+The [approved spec follow-up](../spec.md#approved-follow-up-2026-10-20),
+[declaration model](../data-model.md#compatibilitydeclaration-and-moduledependency),
+and [dependency availability policy](../contracts/compatibility.md#dependency-availability-and-optional-modules)
+now agree: an enabled optional target must satisfy its version range and
+prerelease flag or the composition is unsupported. Automatic disablement,
+ignoring the conflict, and substitution are prohibited. Absent or
+installed/registered-but-disabled targets are unavailable, contribute no active
+optional edge, and confer no integration/capability claim.
+
+Cases C-19/C-20 distinguish compatible and incompatible enabled targets;
+C-21/C-22 distinguish denied and allowed dependency prereleases; C-23 covers an
+installed/registered-but-disabled target even when its version is outside the
+range. C-15 still covers absence. The plan and quickstart require all 23 cases.
+CHK014 is satisfied by these written obligations, not by runtime evidence.
+
+The affected consistency, example-classification, scope, and safety criteria
+(CHK007, CHK009-CHK011, CHK013, CHK017, CHK018) were re-evaluated against this
+clarification with no regression; all other original satisfied criteria remain
+applicable. No public signatures, package directions, or runtime behavior were
+implemented. Enforcement remains F-02/F-03 work.
+
+**Current result**: 18/18 compatibility and 20/20 architecture criteria
+satisfied, 38/38 total. No custom criterion is waived or unchecked. The
+requirements-quality checklist gate is satisfied; scheduled tasks and analysis
+are still outstanding, so this is not implementation authorization.
 
 ## Notes
 
