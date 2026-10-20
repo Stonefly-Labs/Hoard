@@ -195,6 +195,14 @@ through safe categories only. Do not rewrite the returned TimedOut/unsafe
 outcomes, retry stop, or launch deferred prerequisite/root disposal. An
 incomplete terminal lifecycle retains the documented process-recovery boundary.
 
+Shared lifetime and readiness/cleanup-timeout cancellation use one off-lock
+supervisor. Before releasing its tracked activity, report any callback-task
+fault once as safe additional CancellationFailure with its owner, originating
+phase, fixed action and correlation. Preserve the primary failure; completed
+faults are not still-running work and need not prevent otherwise safe cleanup.
+Faults after bounded stop/disposal appear only in later snapshots, never rewrite
+immutable results or trigger retries/deferred disposal.
+
 ## Budgets and Non-Cooperative Code
 
 | Budget | Default | Enforcement |

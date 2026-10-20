@@ -576,7 +576,7 @@ The subsequent fresh convergence assessment checked all 22 functional
 requirements, seven buildable outcomes, 20 story scenarios, 12 edge cases,
 12 grouped plan decisions, all 73 existing tasks and eight constitutional
 principles. T073's lock-free notification, original deadline and pending-resource
-protection are implemented. One **HIGH partial** diagnostics gap remains:
+protection are implemented. One **HIGH partial** diagnostics gap was found:
 `StopCoreAsync` and `CancelPending` pass cancellation tasks to `Observe`
 without an owner, so callback exceptions are consumed without any diagnostic.
 An isolated public-API diagnostic registered a throwing worker stop-token
@@ -595,15 +595,34 @@ retained old-binary/new-source/framework proof. Fresh
 eight scans retained. The tooling suite passed all 22 tests. Those suites
 do not exercise the newly reproduced cancellation-error path.
 
-The next separately authorized stage is `implement` for T074, then fresh
-convergence. Keep the feature PR draft; finalization, merge, feature completion
-and dependency availability remain blocked. README and this guide record the
-new finding; provider/example/quickstart contracts and implementation evidence
-remain unchanged because their intended error-reporting/resource semantics,
-APIs, dependency directions and commands did not change. Product intent,
-baseline diagrams/ADR, governance, master backlog, IaC and release guidance are
-unaffected: this stage assesses existing scope and appends remediation only,
-with no implementation, operational action or new capability.
+The separately authorized
+[T074 implementation follow-up](../specs/002-module-lifecycle/plan.md#t074-implementation-follow-up)
+now uses one off-lock cancellation supervisor for lifetime, readiness timeout
+and cleanup timeout. Callback faults generate safe additional
+`CancellationFailure` diagnostics with owner, originating phase, fixed action
+and lifecycle correlation before their tracked activity is released. The
+primary worker/startup/timeout finding remains separate. A completed fault does
+not falsely retain resources: cooperative work can still finish cleanup and
+root disposal, with the cancellation error reported.
+
+Held late-fault proof retains every module/root for lifetime cancellation under
+the original shutdown deadline. After bounded stop/disposal, releasing the
+callback adds one safe diagnostic to a later snapshot, not to frozen results;
+no cleanup retry or deferred disposal occurs. Throwing/cooperative timeout
+counterparts cover readiness and module cleanup, including known errors before
+result publication and zero seeded payloads in normal results/logs. The bounded
+implementation architecture review found no actionable findings; measured
+red/green, packed locks and complete acceptance evidence are in the plan.
+
+The next separately authorized stage is fresh `converge`. Keep the feature PR
+draft; finalization, merge, feature completion and dependency availability
+remain separate gates. README, provider/example guides, quickstart, lifecycle
+contract/model and implementation evidence document the correction. Spec,
+public API/acceptance contracts and reviewer-owned checklists are unchanged.
+Product intent, baseline diagrams/ADR, governance, master backlog, F-01
+sources/examples, IaC and release guidance are unaffected: existing diagnostic
+and resource invariants are restored without new APIs, dependencies, provider
+capabilities, permissions or operational actions.
 
 ```mermaid
 flowchart TD

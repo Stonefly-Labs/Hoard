@@ -78,6 +78,12 @@ before stop begins. A pending synchronous stopping notification or lifetime
 cancellation callback may use any module/root resource, so all remain protected
 while snapshots and bounded stop remain available. Releasing such a callback
 after the returned incomplete result does not trigger deferred cleanup/disposal.
+Throwing lifetime or readiness/cleanup-timeout cancellation callbacks report
+safe additional `CancellationFailure` diagnostics before tracked activity is
+released. They do not overwrite primary failures or imply that already released
+resources remain active. Late faults appear in a later snapshot, not in frozen
+stop/disposal results. Correct the named owner's cancellation handling before
+restarting; no provider exception payload is exposed.
 
 The [provider guide](../../docs/PROVIDERS.md#opt-in-lifecycle) documents APIs,
 route restrictions, safe diagnostic catalogue, status/readiness distinctions

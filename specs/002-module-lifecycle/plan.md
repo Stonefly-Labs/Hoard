@@ -536,3 +536,94 @@ No infrastructure, deployment, publication, tag, release or merge occurred.
 T001..T073 are now complete. This checkpoint completes only implement; a fresh
 convergence assessment is the next separately authorized stage. Keep the PR
 draft and do not infer finalization, merge readiness or dependency completion.
+
+### T074 implementation follow-up
+
+The separately authorized implementation resolves the HIGH cancellation-error
+reporting gap found by follow-up convergence. Lifetime, readiness-timeout and
+cleanup-timeout cancellation now share one off-lock supervisor. It records
+safe additional `CancellationFailure` diagnostics before releasing tracked
+activity, retaining the originating owner/phase, fixed corrective action and
+lifecycle correlation without copying exception/inner payloads. The existing
+bounded diagnostic catalogue owns publication; no second shutdown path, public
+signature, dependency, provider boundary or disposal owner is introduced.
+
+Primary startup/worker/timeout diagnostics remain separate. A completed fault
+is no longer pending resource use: otherwise cooperative modules/root may
+release successfully while reporting the cancellation problem. Pending
+callbacks still retain their owner/prerequisites/root, with composition-wide
+protection for lifetime cancellation. Late faults appear in later snapshots,
+not frozen module/lease results, and cannot retry cleanup or launch deferred
+disposal. The original absolute shutdown deadline remains unchanged. The
+existing disposed-source race is ignored only when its associated work has
+already completed; cancellation exceptions otherwise become safe diagnostics.
+
+#### Focused failure and correction evidence
+
+Seven new cases extend the existing cleanup/deadline/ownership test files:
+throwing/cooperative lifetime cancellation, throwing/cooperative readiness and
+cleanup timeout cancellation, and a held lifetime callback that faults after
+bounded stop/disposal following worker failure. Barriers/virtual time establish
+known errors before publication, retained resources during pending work,
+preserved primary errors, originating phase/owner/action/correlation, one
+diagnostic per failed cancellation operation, once-only cleanup/root disposal
+and no seeded payloads in captured normal logs/results. Every held test task is
+released/observed; repeated operations preserve immutable results.
+
+The nine-case targeted run before production changes failed four missing-error
+assertions; five cooperative/existing cases passed. An initial no-restore
+attempt instead found stale assets referencing a deleted prior acceptance
+cache. Locked restore repaired setup before the intended runtime red result.
+The first focused green run found one test-only ImmutableArray backing-array
+equality assertion; comparing diagnostic sequences corrected that oracle.
+All 32 focused cases then passed with the production correction.
+
+#### Bounded implementation architecture review
+
+Custom hoard-architecture-review (`t074-architecture`) reviewed the changed
+coordinator/catalogue and cleanup/deadline/ownership regressions with immediate
+tracker/planner/lease/deadline context. It found no actionable findings or
+unresolved design questions: safe reporting precedes activity release, callbacks
+do not hold Gate, original deadlines/centralized ownership and frozen outcomes
+remain intact. It ran no commands/tests. Its stated evidence gaps were refreshed
+packed-consumer locks and complete lifecycle/foundation/tooling acceptance;
+the subsequent measured runs below supply those proofs. The earlier T073
+direct host-notification-task fault-injection limitation remains unchanged;
+this follow-up directly exercises cancellation faults, not that separate path.
+
+#### Measured follow-up commands
+
+| Command | Result |
+| --- | --- |
+| `dotnet restore tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj --locked-mode -v quiet` | Passed; repaired missing local assets without lock changes |
+| `dotnet test tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj -c Release --no-restore --filter 'FullyQualifiedName~Lifetime_cancellation_fault_is_reported\|FullyQualifiedName~Timeout_cancellation_reports_additional_fault\|FullyQualifiedName~Worker_fault_retains_all_resources' -v minimal` | Intended red before production correction: four failed, five passed, zero skipped |
+| `dotnet test tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj -c Release --no-restore --filter 'FullyQualifiedName~LifecycleCleanupTests\|FullyQualifiedName~LifecycleDeadlineTests\|FullyQualifiedName~LifecycleOwnershipTests\|FullyQualifiedName~WorkerAdmissionTests\|FullyQualifiedName~LifecycleConcurrencyTests' -v minimal` | Passed after correction: 32 tests, zero failed/skipped |
+| `dotnet format Hoard.slnx --no-restore --verify-no-changes --verbosity quiet` | Passed; complete acceptance also verifies source/standalone formatting and analyzers |
+| `bash scripts/validate-lifecycle.sh --update-locks` | Passed: 136 source tests, nine boundary proofs, seven package-only journeys, six independent packages and retained old-binary/new-source/framework proof |
+| `bash scripts/validate-lifecycle.sh` | Independent default passed: same 136 tests, nine proofs and seven journeys, no lock mutation |
+| `bash scripts/validate-foundation.sh --update-locks` | Passed: 230 tests (42 foundation, 49 architecture, 139 composition), zero failed/skipped; affected packed Hosting consumer hashes refreshed |
+| `bash scripts/validate-foundation.sh` | Independent default passed: same 230 tests, zero failed/skipped; original eight scans, ARCH-001..008, C-01..23, isolated Core and compile-only hosts retained |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed: 22 tests |
+| `git diff --check` | Passed |
+
+A structured old/new comparison verifies exactly ten affected standalone locks
+and 16 changed contentHash fields for Hosting and dependent lifecycle
+protocol/identity fixture payloads. No version/dependency metadata changes;
+Abstractions-only fixtures, baseline old-binary lock and platform/test locks
+remain unchanged. Fresh independent default runs verify package provenance
+without hash bypass or rewriting locks.
+
+README, DEVELOPMENT, PROVIDERS, LifecycleHost guide, quickstart, lifecycle
+contract/model and task checkpoint document actual diagnostic semantics.
+Spec, public API/acceptance contracts, built-in/reviewer-owned checklists,
+F-01 sources/examples and Abstractions/Core/Application source are unchanged.
+Product charter/specification, baseline architecture/diagrams/ADR, governance,
+master backlog, IaC and release guides are unaffected: this restores existing
+diagnostic/resource invariants without changing product scope, dependencies,
+permissions or operational steps. No extension hooks are registered
+(`.specify/extensions.yml` is absent); no infrastructure, deployment,
+publication, tag, release or merge occurred.
+
+T001..T074 are complete. This finishes only implement; fresh convergence is
+the next separately authorized stage. Keep PR #6 draft without claiming
+finalization, merge readiness, feature completion or dependency availability.

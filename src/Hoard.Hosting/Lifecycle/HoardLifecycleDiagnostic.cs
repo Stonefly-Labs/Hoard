@@ -28,6 +28,7 @@ public sealed record HoardLifecycleDiagnostic
             "StaleComposition" => "Validate the current builder inputs and create a fresh lifecycle.",
             "Timeout" or "UnsafePendingCallback" or "LateCallbackFailure" => "Inspect trusted module cooperation; terminate and restart the process if resources remain in use.",
             "Cancelled" or "TerminalLifecycle" => "Create a fresh validated lifecycle; stopped or failed instances cannot restart.",
+            "CancellationFailure" => "Correct trusted module cancellation callbacks for the named phase before starting a fresh lifecycle.",
             "IndependentWorker" => "Use the lifecycle RunAsync callback instead of independent hosted services.",
             _ => "Correct the named composition or lifecycle rule and start a fresh validated instance."
         };

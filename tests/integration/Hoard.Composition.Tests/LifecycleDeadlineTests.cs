@@ -1,10 +1,109 @@
 using Hoard.Hosting.Composition;
 using Hoard.Hosting.Lifecycle;
+using Microsoft.AspNetCore.Builder;
 
 namespace Hoard.Composition.Tests;
 
 public class LifecycleDeadlineTests
 {
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task Timeout_cancellation_reports_additional_fault_before_cleanup_publication(bool cleanup, bool throwing)
+    {
+        LifecycleFixtures.Reset();
+        var clock = new LifecycleTestTimeProvider();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var cancelled = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var independentEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var independentRelease = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var callbacks = 0;
+        CancellationTokenRegistration registration = default;
+        async Task Pending(CancellationToken token)
+        {
+            registration = token.Register(() =>
+            {
+                Interlocked.Increment(ref callbacks);
+                cancelled.SetResult();
+                if (throwing) { throw new InvalidOperationException("seeded-secret", new Exception("seeded-late-secret")); }
+            });
+            entered.SetResult();
+            await release.Task;
+        }
+        if (cleanup) { LifecycleFixtures.For("metadata").Stop = Pending; }
+        else
+        {
+            LifecycleFixtures.For("metadata").Readiness = async token => { await Pending(token); return new(true, []); };
+        }
+        LifecycleFixtures.For("artifact").Stop = async _ => { independentEntered.SetResult(); await independentRelease.Task; };
+        var web = LifecycleFixtures.WebBuilder();
+        var builder = LifecycleFixtures.Registry(web.Services);
+        var lease = await builder.ComposeHoardModulesAsync(builder.ValidateComposition(LifecycleFixtures.Selection(),
+            LifecycleFixtures.Versions, new()
+            {
+                ReadinessTimeout = TimeSpan.FromSeconds(1),
+                ModuleCleanupTimeout = TimeSpan.FromSeconds(1)
+            }, clock).Composition!);
+        var app = await web.BuildHoardApplicationAsync(lease);
+        await app.MapHoardModulesAsync(lease);
+        if (cleanup) { await app.StartAsync(); }
+        var startup = cleanup ? null : lease.Lifecycle.StartAsync();
+        var stopping = cleanup ? lease.Lifecycle.StopAsync() : null;
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await LifecycleTestHarness.Until(() => clock.NextDelay == TimeSpan.FromSeconds(1));
+            clock.Advance(TimeSpan.FromSeconds(1));
+            await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            registration.Dispose();
+            release.SetResult();
+            await independentEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await LifecycleTestHarness.Until(() => !lease.Coordinator.Activities.Snapshot().Any(activity => activity.ModuleId == "metadata"));
+            var phase = cleanup ? HoardLifecyclePhase.CleaningUp : HoardLifecyclePhase.AssessingReadiness;
+            var snapshot = lease.Lifecycle.Snapshot;
+            Assert.Single(snapshot.Diagnostics, item => item.RuleCode == "Timeout" && item.ModuleId == "metadata"
+                && item.Phase == phase && item.Cleanup == cleanup);
+            if (throwing)
+            {
+                var diagnostic = Assert.Single(snapshot.Diagnostics, item => item.RuleCode == "CancellationFailure");
+                Assert.Equal("metadata", diagnostic.ModuleId);
+                Assert.Equal(phase, diagnostic.Phase);
+                Assert.True(diagnostic.Cleanup);
+                Assert.Equal(snapshot.CorrelationId, diagnostic.CorrelationId);
+            }
+            else { Assert.DoesNotContain(snapshot.Diagnostics, item => item.RuleCode == "CancellationFailure"); }
+            LifecycleFixtures.AssertSafe(snapshot.Diagnostics);
+            independentRelease.SetResult();
+            if (startup is not null) { Assert.False((await startup.WaitAsync(TimeSpan.FromSeconds(5))).Ready); }
+            var result = await (stopping ?? lease.Lifecycle.StopAsync()).WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(throwing ? 1 : 0, result.Diagnostics.Count(item => item.RuleCode == "CancellationFailure"));
+            Assert.Contains(result.Modules, module => module.ModuleId == "metadata"
+                && module.Outcome == (cleanup ? HoardCleanupOutcome.TimedOut : HoardCleanupOutcome.Completed));
+            Assert.Contains(result.Modules, module => module.ModuleId == "artifact" && module.Outcome == HoardCleanupOutcome.Completed);
+            Assert.Empty(result.UnsafeActivities);
+            Assert.Same(result, await lease.Lifecycle.StopAsync());
+            if (cleanup) { await Assert.ThrowsAsync<HoardLifecycleException>(() => lease.DisposeAsync().AsTask()); }
+            else { await lease.DisposeAsync(); }
+            Assert.Equal(HoardRootDisposalOutcome.Completed, lease.StopResult!.RootDisposal);
+            Assert.Equal(throwing ? 1 : 0, lease.StopResult.Diagnostics.Count(item => item.RuleCode == "CancellationFailure"));
+            Assert.Equal(1, callbacks);
+            Assert.All(LifecycleFixtures.Controls.Values, control => Assert.Equal(1, control.Calls.Count(call => call == "stop")));
+            Assert.DoesNotContain("seeded-secret", System.Text.Json.JsonSerializer.Serialize(lease.StopResult));
+        }
+        finally
+        {
+            release.TrySetResult();
+            independentRelease.TrySetResult();
+            if (startup is not null) { await startup.WaitAsync(TimeSpan.FromSeconds(5)); }
+            await (stopping ?? lease.Lifecycle.StopAsync()).WaitAsync(TimeSpan.FromSeconds(5));
+            await lease.Coordinator.Activities.WhenQuiescent.WaitAsync(TimeSpan.FromSeconds(5));
+            registration.Dispose();
+        }
+    }
+
     [Fact]
     public async Task Long_budgets_propagate_callback_timeout_faults_and_rearm_timer_slices()
     {

@@ -269,10 +269,16 @@ and timeout cancellation tasks are consumed without being reported. A
 public-API probe invoked a throwing stop-token callback once, yet module stop,
 final lease disposal and the final snapshot all contained zero diagnostics.
 [Phase 10 / T074](specs/002-module-lifecycle/tasks.md#phase-10-convergence)
-records the required safe error reporting and focused regression work.
-Fresh locked lifecycle/foundation acceptance and tooling checks pass, but do not
-cover this failure path. The next separately authorized stage is `implement`
-for T074, then fresh convergence; F-02 is not finalized or ready to merge.
+now records the separately authorized correction. Lifetime, readiness-timeout
+and cleanup-timeout cancellation share off-lock supervision that records safe
+additional `CancellationFailure` diagnostics before releasing tracked activity.
+Completed faults do not imply pending resource use; late faults appear only in
+later snapshots, without changing returned results or triggering deferred cleanup.
+Throwing/cooperative and held late-fault regressions preserve primary errors,
+deadlines and once-only ownership. See the
+[T074 evidence](specs/002-module-lifecycle/plan.md#t074-implementation-follow-up).
+The next separately authorized stage is fresh `converge`; F-02 remains draft,
+not finalized or ready to merge.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

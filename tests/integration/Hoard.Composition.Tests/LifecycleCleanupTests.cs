@@ -11,6 +11,70 @@ namespace Hoard.Composition.Tests;
 
 public class LifecycleCleanupTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Lifetime_cancellation_fault_is_reported_before_successful_resource_release(bool throwing)
+    {
+        LifecycleFixtures.Reset();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var callbacks = 0;
+        CancellationTokenRegistration registration = default;
+        LifecycleFixtures.For("artifact").Worker = async token =>
+        {
+            registration = token.Register(() =>
+            {
+                Interlocked.Increment(ref callbacks);
+                if (throwing) { throw new InvalidOperationException("seeded-secret", new Exception("seeded-late-secret")); }
+            });
+            entered.SetResult();
+            await Task.Delay(Timeout.InfiniteTimeSpan, token);
+        };
+        var web = LifecycleFixtures.WebBuilder();
+        var resource = new DisposalProbe();
+        web.Services.AddSingleton(_ => resource);
+        var builder = LifecycleFixtures.Registry(web.Services);
+        var lease = await builder.ComposeHoardModulesAsync(builder.ValidateComposition(
+            LifecycleFixtures.Selection(), LifecycleFixtures.Versions, new()).Composition!);
+        var app = await web.BuildHoardApplicationAsync(lease);
+        app.Services.GetRequiredService<DisposalProbe>();
+        await app.MapHoardModulesAsync(lease);
+        await app.StartAsync();
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            var result = await lease.Lifecycle.StopAsync().WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.All(result.Modules, module => Assert.Equal(HoardCleanupOutcome.Completed, module.Outcome));
+            Assert.Empty(result.UnsafeActivities);
+            Assert.Equal(HoardRootDisposalOutcome.NotAttemptedOwnerPending, result.RootDisposal);
+            if (throwing)
+            {
+                var diagnostic = Assert.Single(result.Diagnostics);
+                Assert.Equal("CancellationFailure", diagnostic.RuleCode);
+                Assert.Equal("composition", diagnostic.ModuleId);
+                Assert.Equal(HoardLifecyclePhase.Stopping, diagnostic.Phase);
+                Assert.True(diagnostic.Cleanup);
+                Assert.Equal(lease.Lifecycle.Snapshot.CorrelationId, diagnostic.CorrelationId);
+                LifecycleFixtures.AssertSafe(result.Diagnostics);
+            }
+            else { Assert.Empty(result.Diagnostics); }
+            await lease.DisposeAsync();
+            Assert.True(lease.StopResult!.Complete);
+            Assert.Equal(result.Diagnostics.ToArray(), lease.StopResult.Diagnostics.ToArray());
+            Assert.Same(result, await lease.Lifecycle.StopAsync());
+            await lease.DisposeAsync();
+            Assert.Equal(1, callbacks);
+            Assert.Equal(1, resource.Disposals);
+            Assert.All(LifecycleFixtures.Controls.Values, control => Assert.Equal(1, control.Calls.Count(call => call == "stop")));
+            Assert.DoesNotContain("seeded-secret", System.Text.Json.JsonSerializer.Serialize(lease.Lifecycle.Snapshot));
+        }
+        finally
+        {
+            await lease.DisposeAsync();
+            registration.Dispose();
+        }
+    }
+
     [Fact]
     public async Task Throwing_handler_keeps_ownership_until_its_response_completion_callbacks_finish()
     {

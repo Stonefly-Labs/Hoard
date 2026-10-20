@@ -124,15 +124,18 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
             }
         }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
-    private void CancelPending(CancellationTokenSource source, Task work, string owner)
+    private void CancelPending(CancellationTokenSource source, Task? work, string owner, HoardLifecyclePhase at)
     {
         var activity = Activities.Enter(owner, HoardActivityKind.Phase);
-        Task cancellation;
-        try { cancellation = source.CancelAsync(); }
-        catch (ObjectDisposedException) when (work.IsCompleted) { activity.Dispose(); return; }
-        Observe(cancellation);
-        _ = cancellation.ContinueWith(_ => activity.Dispose(), CancellationToken.None,
-            TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+        _ = Task.Run(async () =>
+        {
+            using (activity)
+            {
+                try { await source.CancelAsync().ConfigureAwait(false); }
+                catch (ObjectDisposedException) when (work?.IsCompleted == true) { return; }
+                catch (Exception) { Error("CancellationFailure", owner, at, true); }
+            }
+        });
     }
 
     internal void MarkMapped()
@@ -279,7 +282,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                 {
                     if (error is TimeoutException or OperationCanceledException)
                     {
-                        CancelPending(timeout, work, id);
+                        CancelPending(timeout, work, id, HoardLifecyclePhase.AssessingReadiness);
                     }
                     if (error is not HoardLifecycleException)
                     { Error(error is TimeoutException ? "Timeout" : error is OperationCanceledException ? "Cancelled" : "InvalidReadiness", id, HoardLifecyclePhase.AssessingReadiness); }
@@ -331,9 +334,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
     private async Task<HoardStopResult> StopCoreAsync()
     {
         var deadline = ShutdownDeadline!;
-        var cancellationActivity = Activities.Enter("composition", HoardActivityKind.Phase);
-        var cancel = Task.Run(async () => { using (cancellationActivity) { await lifetime.CancelAsync().ConfigureAwait(false); } });
-        Observe(cancel);
+        CancelPending(lifetime, null, "composition", HoardLifecyclePhase.Stopping);
         lock (Gate) { phase = HoardLifecyclePhase.Draining; }
         try { await deadline.WaitAsync(Activities.WhenQuiescent, Options.DrainTimeout, CancellationToken.None).ConfigureAwait(false); }
         catch (TimeoutException) { Error("Timeout", "composition", HoardLifecyclePhase.Draining, true); }
@@ -374,7 +375,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
             {
                 if (error is TimeoutException)
                 {
-                    CancelPending(timeout, task, id);
+                    CancelPending(timeout, task, id, HoardLifecyclePhase.CleaningUp);
                 }
                 var outcome = error is TimeoutException or OperationCanceledException ? HoardCleanupOutcome.TimedOut : HoardCleanupOutcome.Failed;
                 outcomes.Add(new(id, outcome));

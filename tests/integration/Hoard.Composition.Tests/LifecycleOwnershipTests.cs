@@ -9,9 +9,10 @@ namespace Hoard.Composition.Tests;
 public class LifecycleOwnershipTests
 {
     [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task Worker_fault_retains_all_resources_for_pending_host_notification_or_cancellation(bool cancellation)
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task Worker_fault_retains_all_resources_for_pending_host_notification_or_cancellation(bool cancellation, bool throwing)
     {
         LifecycleFixtures.Reset();
         var clock = new LifecycleTestTimeProvider();
@@ -31,6 +32,7 @@ public class LifecycleOwnershipTests
             Assert.Equal(0, resource.Disposals);
             Assert.All(LifecycleFixtures.Controls.Values, control => Assert.DoesNotContain("stop", control.Calls));
             finished.SetResult();
+            if (throwing) { throw new InvalidOperationException("seeded-late-secret"); }
         }
         CancellationTokenRegistration registration = default;
         LifecycleFixtures.For("artifact").Worker = async token =>
@@ -66,6 +68,7 @@ public class LifecycleOwnershipTests
             Assert.Equal(HoardRootDisposalOutcome.NotAttemptedUnsafe, result.RootDisposal);
             Assert.Single(result.Diagnostics, item => item.RuleCode == "WorkerFailure" && !item.Cleanup);
             Assert.Contains(result.Diagnostics, item => item.RuleCode == "UnsafePendingCallback" && item.Cleanup);
+            Assert.DoesNotContain(result.Diagnostics, item => item.RuleCode == "CancellationFailure");
             LifecycleFixtures.AssertSafe(result.Diagnostics);
             await Assert.ThrowsAsync<HoardLifecycleException>(() => lease.DisposeAsync().AsTask());
             var frozen = lease.StopResult;
@@ -73,6 +76,19 @@ public class LifecycleOwnershipTests
             release.SetResult();
             await finished.Task.WaitAsync(TimeSpan.FromSeconds(5));
             await lease.Coordinator.Activities.WhenQuiescent.WaitAsync(TimeSpan.FromSeconds(5));
+            var snapshot = lease.Lifecycle.Snapshot;
+            if (throwing)
+            {
+                var diagnostic = Assert.Single(snapshot.Diagnostics, item => item.RuleCode == "CancellationFailure");
+                Assert.Equal("composition", diagnostic.ModuleId);
+                Assert.Equal(HoardLifecyclePhase.Stopping, diagnostic.Phase);
+                Assert.True(diagnostic.Cleanup);
+                Assert.Equal(snapshot.CorrelationId, diagnostic.CorrelationId);
+            }
+            else { Assert.DoesNotContain(snapshot.Diagnostics, item => item.RuleCode == "CancellationFailure"); }
+            Assert.Single(snapshot.Diagnostics, item => item.RuleCode == "WorkerFailure" && !item.Cleanup);
+            LifecycleFixtures.AssertSafe(snapshot.Diagnostics);
+            Assert.DoesNotContain(frozen.Diagnostics, item => item.RuleCode == "CancellationFailure");
             Assert.Same(result, await lease.Lifecycle.StopAsync());
             await Assert.ThrowsAsync<HoardLifecycleException>(() => lease.DisposeAsync().AsTask());
             Assert.Same(frozen, lease.StopResult);

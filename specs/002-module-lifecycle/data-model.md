@@ -183,6 +183,13 @@ ID, and primary-versus-cleanup classification. No raw exception, arbitrary
 provider string, option value, private path, or URL field. Output fields and
 collections have documented truncation limits with explicit truncation markers.
 
+CancellationFailure is an additional cleanup diagnostic for lifetime or
+readiness/cleanup-timeout cancellation. Its owner/phase remain those of the
+originating cancellation, even after the lifecycle advances. Record it before
+releasing the supervised activity so quiescence/result publication cannot hide
+a known error. Late faults add only to later snapshots; a completed fault does
+not itself mean resources are still in use.
+
 `HoardStopResult` preserves primary startup/stop failure and per-module cleanup:
 NotEntered, Completed, Failed, TimedOut, NotAttemptedBudgetExhausted, or
 UnsafePendingCallback. Cleanup completed does not mean persistent changes

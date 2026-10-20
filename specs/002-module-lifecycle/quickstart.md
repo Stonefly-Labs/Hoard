@@ -137,6 +137,13 @@ Use deterministic fixture barriers rather than a real unavailable service:
    module and the root. Release/observe the callback after incomplete stop and
    confirm frozen outcomes with no retry/deferred disposal. A cooperative
    worker-fault counterpart cleans modules/root and notifies only once.
+9. Throw from lifetime and readiness/cleanup-timeout cancellation callbacks;
+   retain the primary failure plus one safe additional `CancellationFailure`
+   per failed cancellation operation, with owner/phase/action/correlation and
+   no seeded exception payloads in results/logs. Completed faults may coexist
+   with successful resource release. Hold a lifetime callback beyond bounded
+   stop/disposal, then release it to throw: only a later snapshot gains the
+   diagnostic, while returned results and cleanup/disposal attempts stay fixed.
 
 Default coordination budgets are 120s total startup, 30s per activation
 callback, 5s aggregate readiness, and 30s total stop with 10s drain / 5s per
@@ -166,6 +173,7 @@ option, URL or private path is copied. Output is bounded to 100 diagnostics and
 | StaleComposition, Cancelled, TerminalLifecycle | Create a fresh validated lifecycle; do not mutate/reactivate a failed or stopped instance |
 | PhaseFailure, WorkerFailure | Investigate the safe owner/phase/correlation and explicitly restart a coherent composition; no automatic retry |
 | CleanupFailure, HostStopFailure, RootDisposalFailure | Inspect separate module/root outcomes and retained ownership; cleanup does not imply rollback |
+| CancellationFailure | Correct the named owner's trusted cancellation callback for the originating phase before starting a fresh lifecycle; reported as an additional cleanup diagnostic, not proof of pending resource use |
 | Timeout, UnsafePendingCallback, LateCallbackFailure | Inspect trusted cooperation; incomplete retained resources may require process termination/restart |
 
 Returned stop outcomes never change after late completion/fault. A safely

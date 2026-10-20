@@ -187,6 +187,16 @@ collection to 1000. These are structural limits, not production scalability
 claims. Snapshots report IncludedByRegistration, fixed selection, phase and
 readiness, never exhaustive installed inventory or certified capabilities.
 
+Lifetime and readiness/cleanup-timeout cancellation faults use the safe
+`CancellationFailure` code, originating owner/phase, fixed corrective action
+and lifecycle correlation, classified as additional cleanup diagnostics.
+They preserve the primary failure and are recorded before cancellation activity
+is released. Correct the trusted module's cancellation callback before starting
+a fresh lifecycle. Completed faults are not still-running activity: successful
+resource release and a cancellation diagnostic can coexist. A fault after a
+bounded result appears in a later snapshot only; it cannot rewrite that result,
+retry cleanup or trigger deferred disposal.
+
 Changing a bundled choice needs a fresh validated lifecycle, not a rebuild.
 Adding an absent package needs reference, registration/adapter, rebuild,
 redeploy and restart. Invalid replacement never rolls back silently; explicitly
