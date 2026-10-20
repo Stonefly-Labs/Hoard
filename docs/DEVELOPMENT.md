@@ -34,6 +34,89 @@ and affected docs on the branch before merge; explicitly justify unaffected
 documents. Describe actual checks and operational/manual steps. Keep credentials,
 state, tfvars, plans, build output, and runtime data out of Git; retain lockfiles.
 
+## Local MCP servers
+
+The repository includes `.mcp.json` for Copilot CLI and `.vscode/mcp.json` for
+VS Code Copilot. Both describe the same seven servers; keep their definitions
+aligned when changing them. These settings apply to this checkout, not your
+user-level MCP configuration or a hosted coding agent.
+
+| Server | Connection | Purpose |
+| --- | --- | --- |
+| [Microsoft Learn](https://learn.microsoft.com/en-us/training/support/mcp) | Remote HTTP | Official .NET, ASP.NET Core, and Microsoft documentation and code samples |
+| [Context7](https://context7.com/docs/resources/all-clients) | Remote HTTP | Library-specific documentation and examples |
+| [Next.js DevTools](https://github.com/vercel/next-devtools-mcp) | Local stdio via `npx` | Connect to a future Next.js development server for runtime errors, routes, and logs |
+| [shadcn](https://ui.shadcn.com/docs/mcp) | Local stdio via `npx` | Discover components, examples, and registry items for the planned console |
+| [Playwright](https://github.com/microsoft/playwright-mcp) | Local stdio via `npx` | Browser interaction and accessibility snapshots with an isolated, nonpersistent profile |
+| [Azure MCP](https://learn.microsoft.com/en-us/azure/developer/azure-mcp-server/) | Local stdio via `npx` | Optional Azure resource inspection, with `--read-only` enabled |
+| [Docker MCP Gateway](https://docs.docker.com/ai/mcp-catalog-and-toolkit/mcp-gateway/) | Local stdio via `docker` | Connect to the MCP servers enabled in your local Docker MCP Toolkit |
+
+The HTTP servers need network access but no local Node installation. Context7
+can be used without a key, subject to anonymous rate limits. If authentication
+or a higher quota is needed, configure credentials privately in the client;
+never add keys or authorization headers to these tracked files. Documentation
+queries go to the respective remote service: do not send secrets or private
+source code.
+
+The full Node-based stdio setup needs Node.js 22+ (a supported LTS release)
+and npm on `PATH`; Azure MCP 3.0.0 requires Node.js 22 or newer. The servers run
+publisher packages through `npx -y`, which downloads and runs code in npm's cache
+on first start. The `@latest` packages can pick up
+updates later. Azure MCP is instead pinned to stable `3.0.0`: at setup time,
+its npm `latest` tag pointed to a prerelease. Review and trust the publishers
+before starting them. Next.js DevTools and Azure MCP telemetry are disabled in
+both configurations. No package manifest, local `node_modules`, or application
+scaffolding is required for this MCP setup.
+
+Playwright uses `--isolated`, so cookies and login state are not persisted or
+borrowed from your normal browser. It still needs an installed supported
+browser; follow its browser-install guidance if a browser launch reports one
+missing. Browser automation is not a substitute for committed end-to-end tests.
+
+Azure resource operations require your own authenticated Azure identity, for
+example through `az login`, and appropriate least-privilege RBAC. This setup
+does not sign in, select a subscription, or provision resources. The read-only
+flag prevents write operations; sensitive-data confirmation remains enabled.
+Do not remove that restriction or perform an Azure write without separate
+authorization. Azure remains optional for local Hoard development.
+
+The Azure entry is named `azure-mcp` to avoid collisions with an existing
+`azure` client plugin, which can take precedence over a same-named workspace
+entry. Its read-only restriction does not constrain separately installed Azure
+servers. If your client already provides Azure or another server listed here,
+choose which connection to use in the client to avoid duplicate tools; this
+repository does not disable or modify existing plugins.
+
+Docker Gateway requires a running Docker engine and the `docker mcp` CLI
+plugin, normally supplied by Docker Desktop with **MCP Toolkit** enabled.
+Check availability with `docker mcp version`. Use Docker Desktop's MCP Toolkit
+to select and configure the servers you actually need; no catalog servers are
+enabled by this repository. The gateway uses your existing local selection,
+so avoid enabling duplicate copies of servers already connected directly here.
+Credentials belong in Docker's secret storage, not Git. No TCP gateway port,
+all-server catalog flag, or relaxed security settings are configured. If Docker
+Desktop is stopped, the gateway cannot connect; start it before starting this
+MCP entry. This setup does not start Docker Desktop, change its catalog, or run
+Hoard containers.
+
+For Copilot CLI, start a new session from this checkout, review any workspace
+trust prompt, and use `/mcp` to inspect the servers. `copilot mcp list` also
+shows the loaded configuration and its source, but does not prove a server
+connection. For VS Code, open `.vscode/mcp.json` and use its **Start** actions;
+review server trust prompts and use **MCP: List Servers** for status. Existing
+client permission and trust controls still apply.
+
+Hoard has no runnable UI yet. Next.js runtime tools require a running Next.js
+16+ development server, and project-specific shadcn registry configuration
+belongs to the feature that creates `apps/web`. Do not scaffold an app or run
+component installation just to enable these servers. The default shadcn registry
+does not require a `components.json` file for discovery.
+
+To roll back, remove the server entries from both files and restart or stop
+the affected client connections. This does not alter global settings or npm's
+download cache. Product specifications and architecture diagrams are unaffected:
+MCP is contributor tooling, not a Hoard runtime capability.
+
 ## Checkpointed Spec Kit flow
 
 In a Copilot surface supporting repository skills, ask:

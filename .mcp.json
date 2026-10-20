@@ -1,0 +1,50 @@
+{
+  "mcpServers": {
+    "Microsoft-Learn": {
+      "type": "http",
+      "url": "https://learn.microsoft.com/api/mcp",
+      "tools": ["*"]
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "tools": ["*"]
+    },
+    "next-devtools": {
+      "type": "local",
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"],
+      "env": {
+        "NEXT_TELEMETRY_DISABLED": "1"
+      },
+      "tools": ["*"]
+    },
+    "shadcn": {
+      "type": "local",
+      "command": "npx",
+      "args": ["-y", "shadcn@latest", "mcp"],
+      "tools": ["*"]
+    },
+    "playwright": {
+      "type": "local",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest", "--isolated"],
+      "tools": ["*"]
+    },
+    "azure-mcp": {
+      "type": "local",
+      "command": "npx",
+      "args": ["-y", "@azure/mcp@3.0.0", "server", "start", "--read-only"],
+      "env": {
+        "AZURE_MCP_COLLECT_TELEMETRY": "false"
+      },
+      "tools": ["*"]
+    },
+    "MCP_DOCKER": {
+      "type": "local",
+      "command": "docker",
+      "args": ["mcp", "gateway", "run"],
+      "tools": ["*"]
+    }
+  }
+}
