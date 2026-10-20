@@ -374,13 +374,33 @@ unchanged. The ASP.NET Core shared-framework/versioning dependency impact,
 source/binary registration compatibility, deadline/admission/cleanup behavior
 and actual package graph still require implementation evidence.
 
-Specification, clarification and planning create no lifecycle implementation,
-production executable/provider, configuration parser, management discovery
-endpoint, UI, tasks, or conformance certification. F-02 can later prove lifecycle with explicit
-selections and instrumented fixtures; F-03 retains configuration sources,
+The subsequent checklist stage generated
+[composition](../specs/002-module-lifecycle/checklists/composition.md) and
+[lifecycle](../specs/002-module-lifecycle/checklists/lifecycle.md)
+requirements-quality reviews: 20 criteria each, all 40 unchecked and
+reviewer-owned. Standard-depth scope and audience are explicit: maintainer and
+provider PR review before implementation authorization. Composition covers
+registry/selection, compatibility/dependencies/capabilities, route ownership,
+unchanged registration compatibility, and bundled/custom restart journeys.
+Lifecycle covers disabled isolation, admission/readiness, finite coordination
+budgets, partial-start and normal cleanup, pending-resource protection,
+concurrency, and sanitized actionable diagnostics. The planning review's build,
+resource-retention, and worker-admission corrections remain written proof
+obligations; checklist generation neither evaluates them nor supplies runtime
+evidence. Requirements/design artifacts and the built-in 16/16 checklist remain
+unchanged; no custom criterion is approved or waived.
+
+Specification, clarification, planning and checklist generation create no
+lifecycle implementation, production executable/provider, configuration parser,
+management discovery endpoint, UI, tasks, or conformance certification. F-02 can
+later prove lifecycle with explicit selections and instrumented fixtures;
+F-03 retains configuration sources,
 option/secret handling, and operator selection UX, while F-04 retains management
-discovery. The next scheduled stage is `checklist` through a separate invocation;
-no implementation authorization or feature-completion claim is implied.
+discovery. The next scheduled stage is `tasks` through a separate invocation.
+Task generation and analysis do not require custom checklist approval, but the
+later implementation gate does require reviewer approval or explicit reviewer
+authorization; this generation stage supplies neither. No implementation
+authorization or feature-completion claim is implied.
 
 ```mermaid
 flowchart TD

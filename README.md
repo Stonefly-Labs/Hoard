@@ -191,10 +191,20 @@ Its research, in-memory model, public/lifecycle/acceptance contracts and
 cases. Architecture review led to explicit build supervision, protection of
 resources still used after drain timeout, and precise worker admission semantics.
 These are design obligations, not measured runtime evidence.
+The subsequent checklist stage generated separate
+[composition](specs/002-module-lifecycle/checklists/composition.md) and
+[lifecycle](specs/002-module-lifecycle/checklists/lifecycle.md)
+requirements-quality checklists with 20 criteria each. These standard-depth
+reviews are for maintainers and provider reviewers before implementation
+authorization; all 40 items remain unchecked and reviewer-owned. They cover
+selection/compatibility and route ownership, plus admission, readiness, bounded
+coordination, resource retention, cleanup, and safe diagnostics. Generation is
+not requirements approval or runtime evidence.
 No lifecycle runtime, runnable product host, real provider, discovery API or UI
-is introduced by planning. Existing registration APIs remain unchanged; no
-custom checklist approval or implementation authorization is implied. The next
-scheduled stage is `checklist`, through a separate `hoard-speckit` invocation.
+is introduced by specification, planning, or checklist generation. Existing
+registration APIs and feature requirements/design artifacts remain unchanged;
+no implementation authorization is implied. The next scheduled stage is
+`tasks`, through a separate `hoard-speckit` invocation.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
