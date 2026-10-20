@@ -390,13 +390,39 @@ obligations; checklist generation neither evaluates them nor supplies runtime
 evidence. Requirements/design artifacts and the built-in 16/16 checklist remain
 unchanged; no custom criterion is approved or waived.
 
-Specification, clarification, planning and checklist generation create no
+The subsequent [task-generation stage](../specs/002-module-lifecycle/tasks.md)
+produced 72 unchecked implementation tasks across eight phases: shared setup
+and safety primitives (13), US1 selection/start (14), US2 enabled/ready
+functionality (18), US3 failure/stop (10), US4 safe diagnostics/state (5),
+US5 distribution/restart (7), and cross-cutting acceptance (5).
+All 22 functional requirements, seven outcomes and 40 LC acceptance cases
+have implementation and focused proof assignments; all 20 story scenarios
+retain the acceptance contract's LC mapping. Explicit acyclic prerequisites
+serialize shared coordinator/lease/route/tooling edits, while 29 marked tasks
+identify scoped file-disjoint parallel opportunities after their prerequisites.
+The endpoint-free US1 fixture proof is the first bounded increment, not a
+shippable lifecycle or complete F-02.
+
+Tasks retain supervised synchronous build, single disposal ownership, pending
+request/response/worker/build protection, finite deadlines and once-only
+cleanup as implementation/regression obligations. Independent fixture packages,
+package-only host variants, retained old registration binaries, explicit
+framework-reference impact, initial reviewed locks and fresh default locked
+replay remain required evidence. Existing F-01 fixture/example sources and
+compile-only scenarios must stay intact; reviewed Hosting dependency/content
+changes may require affected lock refreshes, not silent hash bypasses.
+No test may skip a missing package input or accept an empty proof selection.
+The task-generation stage does not perform cross-artifact analysis, implement
+these obligations or evaluate the custom checklists; all 40 remain unchecked.
+
+Specification, clarification, planning, checklist and task generation create no
 lifecycle implementation, production executable/provider, configuration parser,
-management discovery endpoint, UI, tasks, or conformance certification. F-02 can
+management discovery endpoint, UI, or conformance certification. F-02 can
 later prove lifecycle with explicit selections and instrumented fixtures;
 F-03 retains configuration sources,
 option/secret handling, and operator selection UX, while F-04 retains management
-discovery. The next scheduled stage is `tasks` through a separate invocation.
+discovery. The next scheduled stage is read-only `analyze` through a separate
+invocation.
 Task generation and analysis do not require custom checklist approval, but the
 later implementation gate does require reviewer approval or explicit reviewer
 authorization; this generation stage supplies neither. No implementation

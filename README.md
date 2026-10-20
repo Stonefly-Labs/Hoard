@@ -200,11 +200,20 @@ authorization; all 40 items remain unchecked and reviewer-owned. They cover
 selection/compatibility and route ownership, plus admission, readiness, bounded
 coordination, resource retention, cleanup, and safe diagnostics. Generation is
 not requirements approval or runtime evidence.
+The subsequent [implementation task list](specs/002-module-lifecycle/tasks.md)
+contains 72 unchecked tasks across shared setup/safety primitives, five story
+phases and cross-cutting acceptance. It maps all 22 requirements, seven outcomes
+and 40 acceptance cases to implementation and focused proof, with explicit
+prerequisites and file-disjoint parallel opportunities. Tests precede changed
+behavior; supervised build, response/resource retention, root disposal, old
+binary compatibility and package graphs remain proof obligations, not results.
+All 40 custom checklist items remain untouched and reviewer-owned.
 No lifecycle runtime, runnable product host, real provider, discovery API or UI
-is introduced by specification, planning, or checklist generation. Existing
+is introduced by specification, planning, checklist or task generation. Existing
 registration APIs and feature requirements/design artifacts remain unchanged;
 no implementation authorization is implied. The next scheduled stage is
-`tasks`, through a separate `hoard-speckit` invocation.
+read-only `analyze`, through a separate `hoard-speckit` invocation. The later
+implementation gate still requires reviewer approval or explicit authorization.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
