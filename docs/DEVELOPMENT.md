@@ -140,11 +140,19 @@ In CLI, `/skills` shows available skills. Name `hoard-speckit` explicitly; exact
 slash-command spelling can vary by Copilot surface. The entry point is
 [its SKILL.md](../.github/skills/hoard-speckit/SKILL.md).
 
-The bootstrap **does not run** this flow or pre-ratify the constitution.
-The first invocation runs constitution only. After that PR is merged, the next
-invocation selects the first dependency-ready open specification from the
-[master inventory](HOARD_SPECKIT_MASTER_BACKLOG.md) and passes its exact prompt
-to the installed specify skill.
+The bootstrap did not run this flow or pre-ratify the constitution. The initial
+constitution stage establishes
+[version 1.0.0](../.specify/memory/constitution.md), covering product boundaries,
+provider composition, shared correctness/security, evidence, accessibility,
+operations, and governance. It creates no feature specification or product code.
+Templates remain unchanged; the installed stage skills read the constitution
+at runtime.
+
+The constitution adoption PR must merge before a new specification begins.
+After merge, the next invocation selects the first dependency-ready open
+specification from the [master inventory](HOARD_SPECKIT_MASTER_BACKLOG.md)
+and passes its exact prompt to the installed specify skill. The tracked
+checkpoint, rather than this guide, records current stage and merge progress.
 
 ```mermaid
 flowchart TD

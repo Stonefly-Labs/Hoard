@@ -9,8 +9,8 @@
 - Read `docs/PRODUCT_CHARTER.md`, `docs/PRODUCT_SPEC.md`,
   `docs/ARCHITECTURE.md`, `docs/adr/0001-modular-provider-architecture.md`,
   and the active `specs/<feature>/` artifacts.
-  The ratified `.specify/memory/constitution.md` governs once filled in.
-  The current constitution is deliberately a template until the first driver run.
+  `.specify/memory/constitution.md` defines project governance at v1.0.0.
+  Its initial adoption PR must merge before the first feature spec begins.
 - Prefer the simplest complete change. Do not turn planned APIs or dependencies
   in the design documents into implemented claims.
 

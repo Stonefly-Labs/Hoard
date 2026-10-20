@@ -1,9 +1,17 @@
 {
   "schema_version": 1,
-  "stage": "constitution",
+  "stage": "specify",
   "status": "ready",
   "branch": null,
   "active": null,
   "completed": [],
-  "history": []
+  "history": [
+    {
+      "stage": "constitution",
+      "spec_id": null,
+      "branch": "chore/constitution",
+      "at": "2026-10-20T15:07:22.228692+00:00",
+      "evidence": "Initial constitution v1.0.0, dated 2026-10-20, validated against master prompt, charter, product spec, architecture and ADR-0001; eight principles, no placeholders or TODOs; templates unchanged; README/workflow guidance synchronized; python3 -m unittest discover -s tests/tooling -v passed (14 tests); git diff --check passed. Governance only; first spec blocked until adoption PR merges."
+    }
+  ]
 }
