@@ -1,0 +1,67 @@
+# Operating systems and editors
+.DS_Store
+Thumbs.db
+.idea/
+.vs/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+*.user
+*.suo
+
+# .NET
+**/[Bb]in/
+**/[Oo]bj/
+TestResults/
+*.nupkg
+*.snupkg
+
+# Web tooling
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+
+# Local configuration, credentials, and runtime data
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+*.pfx
+*.p12
+*.log
+*.db
+*.db-shm
+*.db-wal
+/.data/
+/artifacts/
+
+# OpenTofu: commit dependency locks, never state, plans, or real inputs
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+
+# Repository scripts
+__pycache__/
+*.py[cod]
+.venv/
+*.tmp

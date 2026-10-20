@@ -210,7 +210,7 @@ Blob payloads belong in storage providers; metadata providers store references. 
 
 ## 13. ADRs and unresolved decisions
 
-**Accepted for design planning:** ADR-0001 (see `docs/adr/0001-modular-provider-architecture.md`).
+**Accepted for design planning:** [ADR-0001: Composable modular monolith with vertical feature slices](adr/0001-modular-provider-architecture.md).
 
 **To decide before stable API release:** exact public module registration signatures; `Hoard.Abstractions` split threshold; EF migrations operational policy; capabilities schema version; custom module version ranges; NuGet request adapter contract; explicit source-of-truth for provider settings; default identity/token posture; multi-tenant cache isolation; exact licensing/provenance acceptance requirements.
 

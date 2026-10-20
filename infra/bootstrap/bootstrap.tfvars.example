@@ -1,0 +1,8 @@
+# Copy to bootstrap.tfvars (ignored), then replace with your explicit choices.
+subscription_id = "00000000-0000-0000-0000-000000000000"
+location        = "REPLACE_WITH_YOUR_AZURE_REGION"
+environment     = "dev"
+
+# Override these only for a fork/renamed repository.
+github_owner      = "Stonefly-Labs"
+github_repository = "Hoard"

@@ -1,0 +1,36 @@
+name: Bug report
+description: Report a reproducible problem in currently available behavior.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Hoard is currently foundation-only. Please distinguish repository/tooling
+        bugs from planned product behavior. Never include secrets or private data.
+        Report vulnerabilities privately rather than through this public form.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Include the expected behavior and the actual result.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Minimal steps and sanitized commands/configuration.
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Commit/tag, OS, relevant tool versions, and deployment profile if applicable.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized logs or screenshots
+      description: Remove credentials, authorization headers, identifiers, and private registry URLs.

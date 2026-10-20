@@ -111,5 +111,5 @@ No feature paywalls, no separate codebase.
 - **Platform composition**: NuGet-distributed .NET providers supply protocols, metadata persistence, artifact storage, authentication, and later optional behaviors. A deployment enables installed providers through startup configuration.
 - **Deployment flavors**: an official, curated, prebuilt runtime needs no rebuild for bundled providers; a custom distribution references additional provider packages, builds once and starts with validated config.
 - **VSA applicability**: management API use cases and protocol-specific HTTP operations are feature slices. Cache key isolation, streaming, content verification, atomic publication, concurrency coordination, retention safety, audit/security primitives and provider contracts remain shared services.
-- **Source of truth**: see `ARCHITECTURE.md` and `docs/adr/0001-modular-provider-architecture.md` for dependency/lifecycle/contract rules.
+- **Source of truth**: see [ARCHITECTURE.md](ARCHITECTURE.md) and [ADR-0001](adr/0001-modular-provider-architecture.md) for dependency/lifecycle/contract rules.
 - **MVP restraint**: full runtime assembly plugin installation, third-party code isolation, arbitrary NoSQL support and an extension marketplace are deferred.

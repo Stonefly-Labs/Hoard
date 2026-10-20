@@ -1,0 +1,23 @@
+name: Feature or improvement
+description: Propose a user outcome, documentation improvement, or foundation change.
+title: "[Feature]: "
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Problem and desired outcome
+      description: Who benefits, and what should they be able to do?
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and acceptance criteria
+      description: Include non-goals and observable examples of success.
+    validations:
+      required: true
+  - type: textarea
+    id: backlog
+    attributes:
+      label: Related specification / alternatives
+      description: Link a master backlog ID if relevant; describe alternatives and compatibility impact.
