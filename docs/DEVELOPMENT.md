@@ -37,7 +37,7 @@ state, tfvars, plans, build output, and runtime data out of Git; retain lockfile
 ## Local MCP servers
 
 The repository includes `.mcp.json` for Copilot CLI and `.vscode/mcp.json` for
-VS Code Copilot. Both describe the same seven servers; keep their definitions
+VS Code Copilot. Both describe the same eight servers; keep their definitions
 aligned when changing them. These settings apply to this checkout, not your
 user-level MCP configuration or a hosted coding agent.
 
@@ -50,6 +50,7 @@ user-level MCP configuration or a hosted coding agent.
 | [Playwright](https://github.com/microsoft/playwright-mcp) | Local stdio via `npx` | Browser interaction and accessibility snapshots with an isolated, nonpersistent profile |
 | [Azure MCP](https://learn.microsoft.com/en-us/azure/developer/azure-mcp-server/) | Local stdio via `npx` | Optional Azure resource inspection, with `--read-only` enabled |
 | [Docker MCP Gateway](https://docs.docker.com/ai/mcp-catalog-and-toolkit/mcp-gateway/) | Local stdio via `docker` | Connect to the MCP servers enabled in your local Docker MCP Toolkit |
+| [NuGet MCP](https://learn.microsoft.com/en-us/nuget/concepts/nuget-mcp-server) | Local stdio via `dnx` | Official NuGet package discovery, upgrade planning, and dependency vulnerability guidance |
 
 The HTTP servers need network access but no local Node installation. Context7
 can be used without a key, subject to anonymous rate limits. If authentication
@@ -98,6 +99,18 @@ all-server catalog flag, or relaxed security settings are configured. If Docker
 Desktop is stopped, the gateway cannot connect; start it before starting this
 MCP entry. This setup does not start Docker Desktop, change its catalog, or run
 Hoard containers.
+
+NuGet MCP requires the .NET 10 SDK or later, including `dnx` on `PATH`.
+It downloads and runs the official `NuGet.Mcp.Server` package from nuget.org
+using the publisher's recommended `--source` and `--yes` arguments. No
+prerelease version is requested; an unversioned package name follows stable
+updates. Review the publisher before starting the server. No project, package
+reference, or tool manifest is created by this configuration. Project-specific
+dependency analysis awaits the feature introducing the .NET projects, and any
+package changes must remain within the explicitly requested task and normal
+client permissions. If `dnx` cannot load the service index, check network and
+trusted proxy access to `https://api.nuget.org/v3/index.json` before retrying;
+do not disable TLS or certificate validation to make the server start.
 
 For Copilot CLI, start a new session from this checkout, review any workspace
 trust prompt, and use `/mcp` to inspect the servers. `copilot mcp list` also

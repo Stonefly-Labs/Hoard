@@ -81,8 +81,8 @@ are needed only when working on the [Azure bootstrap](infra/bootstrap/README.md)
 there is intentionally no application build or install command yet.
 
 Repository-scoped [MCP settings](docs/DEVELOPMENT.md#local-mcp-servers) connect
-Copilot CLI and VS Code to Microsoft Learn, Context7, Next.js DevTools, and
-shadcn, plus Playwright, read-only Azure MCP, and Docker MCP Gateway. These are
+Copilot CLI and VS Code to Microsoft Learn, Context7, Next.js DevTools, shadcn,
+Playwright, read-only Azure MCP, Docker MCP Gateway, and NuGet MCP. These are
 optional contributor tools, not application dependencies; no global MCP
 settings are changed.
 

@@ -45,6 +45,12 @@
       "command": "docker",
       "args": ["mcp", "gateway", "run"],
       "tools": ["*"]
+    },
+    "nuget": {
+      "type": "local",
+      "command": "dnx",
+      "args": ["NuGet.Mcp.Server", "--source", "https://api.nuget.org/v3/index.json", "--yes"],
+      "tools": ["*"]
     }
   }
 }
