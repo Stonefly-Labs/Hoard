@@ -119,7 +119,7 @@ Each subprocess has a ten-minute timeout; no child invokes the orchestrator.
 | Four families plus second artifact fixture | Five packages compile independently against public package APIs |
 | Custom-host baseline and replacement | Both compile; no platform edits, private APIs, or external service |
 | Declaration inspection/registration | Metadata and recorded types available; throwing provider constructor never called |
-| Architecture positives/negatives | Permitted graph passes; each `ARCH-001` through `ARCH-008` negative rejects with source/target/rule |
+| Architecture positives/negatives | Permitted graph and actual Identity/Hosting package composition pass; each `ARCH-001` through `ARCH-008` negative rejects with source/target/rule, including direct and helper-mediated Identity-to-Core paths even with Hosting present |
 | Compatibility examples | Every `C-01` through `C-23` case receives the documented classification |
 | Documentation review | Every fixture/example is compile-only; no operational support or certification claim |
 

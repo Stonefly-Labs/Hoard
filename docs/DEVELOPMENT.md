@@ -254,20 +254,27 @@ The support-claim audit is complete. The subsequent installed convergence stage
 assessed all 17 functional requirements, six buildable success criteria, 15
 story acceptance scenarios, nine edge cases, 12 grouped plan decisions, all 57
 implementation tasks, and eight constitutional principles against current
-scoped code. It found one HIGH-severity partial gap: the graph inspector rejects
+scoped code. It found one HIGH-severity partial gap: the graph inspector rejected
 the permitted `Identity -> Hosting -> Core` closure under ARCH-008, although
 identity providers may use the approved Hosting API and Hosting references Core.
 A temporary diagnostic invoking the current compiled graph inspector reproduced
-that false rejection; the existing permitted fixtures do not cover this path.
+that false rejection; the original permitted fixtures did not cover this path.
 [Phase 8 / T058](../specs/001-provider-contracts/tasks.md#phase-8-convergence)
-records the correction and a permitted-graph regression while retaining
-rejection of direct unapproved edges and other forbidden dependencies.
-Only that new task section was appended; the original 57 tasks, spec, plan,
-and reviewer-owned checklists remain unchanged. Fresh default locked acceptance
-passed all 81 existing .NET tests, and the tooling suite passed all 17 tests;
-those passing cases do not resolve the uncovered path.
-The next scheduled stage is another implementation invocation, followed by
-convergence again. Finalization remains blocked on resolving the finding.
+recorded the correction and regression work. That convergence invocation
+appended only the new task section; its passing baseline of 81 .NET tests
+and 17 tooling tests did not resolve the uncovered path.
+
+The separately authorized T058 implementation now tracks Identity paths whose
+first edge reaches Hosting separately from other paths to the same dependency.
+Core is permitted through that approved Hosting composition, not directly or
+through an unrelated SDK-owned helper. A package-only fixture uses the actual
+Hosting registration API; isolated negatives retain both forbidden routes even
+when Hosting is also referenced, with normal/reversed edge-order checks.
+All four new fixture projects carry locks. No platform API, provider package,
+runtime behavior, or reviewer-owned checklist changed. See the
+[follow-up evidence](../specs/001-provider-contracts/plan.md#t058-implementation-follow-up-2026-10-20).
+The next scheduled stage is convergence again through a separate invocation;
+finalization remains gated on that assessment.
 The feature PR remains draft; convergence does not complete or merge F-01,
 unlock dependent work, or authorize new runtime capabilities.
 

@@ -134,32 +134,36 @@ internal static class DependencyGraphInspector
         var result = Cycles(evidence.Edges);
         foreach (var source in evidence.Nodes.Values.Where(n => n.Boundary is not (BoundaryOwnership.Bcl or BoundaryOwnership.Http)))
         {
-            var queue = new Queue<(string Id, string[] Path)>();
-            queue.Enqueue((source.Id, [source.Id]));
+            var queue = new Queue<(string Id, string[] Path, bool ViaHosting)>();
+            queue.Enqueue((source.Id, [source.Id], false));
             var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { source.Id };
+            var seenViaHosting = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             while (queue.TryDequeue(out var current))
             {
                 foreach (var edge in evidence.Edges.Where(e => e.Source == current.Id))
                 {
-                    if (!seen.Add(edge.Target))
+                    var target = evidence.Nodes[edge.Target];
+                    var viaHosting = current.ViaHosting || (source.Boundary == BoundaryOwnership.Identity
+                        && current.Path.Length == 1 && target.Boundary == BoundaryOwnership.Hosting);
+                    // A permitted Hosting path must not hide another route to the same dependency.
+                    if (!(viaHosting ? seenViaHosting : seen).Add(edge.Target))
                     {
                         continue;
                     }
                     var path = current.Path.Append(edge.Target).ToArray();
-                    var target = evidence.Nodes[edge.Target];
-                    var rule = Rule(source.Boundary, target.Boundary, path.Length);
+                    var rule = Rule(source.Boundary, target.Boundary, path.Length, viaHosting);
                     if (rule is not null)
                     {
                         result.Add(new(rule, source.Id, target.Id, $"{edge.Kind}: {edge.Location}", string.Join(" -> ", path)));
                     }
-                    queue.Enqueue((target.Id, path));
+                    queue.Enqueue((target.Id, path, viaHosting));
                 }
             }
         }
         return result;
     }
 
-    private static string? Rule(BoundaryOwnership source, BoundaryOwnership target, int length)
+    private static string? Rule(BoundaryOwnership source, BoundaryOwnership target, int length, bool viaHosting)
     {
         if (target == BoundaryOwnership.Bcl)
         {
@@ -177,7 +181,8 @@ internal static class DependencyGraphInspector
             BoundaryOwnership.Hosting when target is not (BoundaryOwnership.Abstractions or BoundaryOwnership.Core or BoundaryOwnership.Di) => "ARCH-008",
             BoundaryOwnership.Metadata or BoundaryOwnership.Artifact
                 when target is not (BoundaryOwnership.Abstractions or BoundaryOwnership.Sdk) => "ARCH-008",
-            BoundaryOwnership.Identity when target is not (BoundaryOwnership.Abstractions or BoundaryOwnership.Hosting or BoundaryOwnership.Di or BoundaryOwnership.Sdk) => "ARCH-008",
+            BoundaryOwnership.Identity when target is not (BoundaryOwnership.Abstractions or BoundaryOwnership.Hosting or BoundaryOwnership.Di or BoundaryOwnership.Sdk)
+                && !(target == BoundaryOwnership.Core && viaHosting) => "ARCH-008",
             _ => null
         };
     }

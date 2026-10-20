@@ -19,6 +19,8 @@ public class ArchitectureRuleTests
     [InlineData("bcl-connection", "ARCH-004")]
     [InlineData("provider-unrelated", "ARCH-005")]
     [InlineData("provider-same-family", "ARCH-005")]
+    [InlineData("identity-direct-core", "ARCH-008")]
+    [InlineData("identity-transitive-core", "ARCH-008")]
     [InlineData("slice-private", "ARCH-008")]
     [InlineData("slice-same-assembly", "ARCH-007")]
     [InlineData("slice-async", "ARCH-007")]
@@ -57,6 +59,31 @@ public class ArchitectureRuleTests
             Assert.Contains(matches, v => v.Path.Contains("DbTransaction", StringComparison.Ordinal));
         }
         Assert.Empty(ArchitectureInspection.Inspect(cases.GetProperty("permitted")));
+    }
+
+    [Fact]
+    public void Identity_can_use_approved_hosting_with_its_transitive_core_dependency()
+    {
+        var graph = FoundationEvidence.Load().GetProperty("architecture").GetProperty("identity-hosting");
+        Assert.Empty(ArchitectureInspection.Inspect(graph));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Approved_hosting_path_does_not_hide_an_alternate_forbidden_core_path(bool reverse)
+    {
+        var graph = FoundationEvidence.Load().GetProperty("architecture").GetProperty("identity-transitive-core");
+        using var evidence = InspectionEvidence.Load(graph);
+        DependencyGraphInspector.Read(evidence);
+        if (reverse)
+        {
+            evidence.Edges.Reverse();
+        }
+        Assert.Contains(DependencyGraphInspector.Inspect(evidence), violation =>
+            violation.RuleId == "ARCH-008" && violation.Source == "TransitiveIdentityCore"
+            && violation.Target == "Hoard.Core"
+            && violation.Path == "TransitiveIdentityCore -> IdentityCoreHelper -> Hoard.Core");
     }
 
     [Fact]

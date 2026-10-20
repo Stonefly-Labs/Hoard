@@ -25,6 +25,11 @@ framework dependencies are permitted inside the appropriate provider, never
 as leaked public slice/shared contract types. Tests may inspect every boundary
 but are never a runtime dependency. No provider references another concrete
 provider, even of the same family; swaps are separate compositions.
+An Identity provider's approved Hosting reference includes Hosting's transitive
+Core dependency. This does not authorize direct Identity-to-Core references or
+Core reached through an unrelated SDK/helper. Inspect Hosting-mediated and
+other paths separately so an allowed route cannot hide a forbidden route to
+the same node.
 The BCL allowance does not permit `IQueryable`, `IDbConnection`/`IDbTransaction`,
 or `DbConnection`/`DbTransaction` in shared public surfaces, including recursive
 generic signatures.

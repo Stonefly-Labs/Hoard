@@ -26,6 +26,14 @@
   "ExternalSlice": "Application",
   "OtherSlice": "Application",
   "PermittedSlices": "Application",
+  "PermittedIdentity": "Identity",
+  "DirectIdentityCore": "Identity",
+  "TransitiveIdentityCore": "Identity",
+  "IdentityCoreHelper": "Sdk",
+  "Hoard.Abstractions": "Abstractions",
+  "Hoard.Core": "Core",
+  "Hoard.Hosting": "Hosting",
+  "Microsoft.Extensions.DependencyInjection.Abstractions": "Di",
   "Hoard.Fixtures.Arch.Sdk": "Sdk",
   "Hoard.Fixtures.Arch.Helper": "Helper"
 }

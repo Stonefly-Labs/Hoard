@@ -361,3 +361,65 @@ untracked. No source release, NuGet publication, cloud apply, or merge is
 authorized. Passing this implementation does not certify provider behavior,
 prove native-client restoration, or complete the feature: convergence,
 finalization, authorized merge, and the merged progress checkpoint remain.
+
+### T058 Implementation Follow-up (2026-10-20)
+
+The first convergence assessment found one HIGH partial gap against FR-004,
+FR-014, US2/AC1 and SC-003: the dependency inspector rejected the permitted
+`Identity -> Hosting -> Core` closure. T058 now corrects that acceptance-tool
+behavior; no platform library, public API, runtime dependency, or provider
+operation changed.
+
+Identity-rooted traversal records whether its first edge reaches Hosting and
+keeps that visit state separate from other paths to the same node. Core is
+allowed through the approved Hosting composition, not directly or through an
+unrelated SDK/helper. Other rules still apply throughout both traversals;
+concrete-provider targets, forbidden Core dependencies, and cycles remain
+rejected. Separating visit states prevents the permitted route from hiding an
+alternative forbidden route.
+
+The permitted fixture consumes the actual local `Hoard.Hosting` package and
+calls its approved registration API. Two isolated negatives include Hosting
+alongside either a direct Core package reference or an SDK-owned helper that
+references Core. Five added architecture cases cover the positive, both
+negatives, and normal/reversed edge-order assertions for the forbidden helper
+path. The four new fixture projects carry generated/reviewed locks; all 50
+projects now have locks, and existing project locks/platform package hashes
+are unchanged.
+
+- `bash scripts/validate-foundation.sh --phase architecture --update-locks`
+  before the inspector correction: expected regression failure, three failed
+  and 29 passed, zero skipped. The positive reported ARCH-008 for the approved
+  Hosting path; both order checks exposed the hidden helper path. Fixture
+  lock bootstrap/replay completed before those intended test failures.
+- `bash scripts/validate-foundation.sh` after correction: passed fresh default
+  locked acceptance, all 86 .NET tests (42 foundation, 41 architecture, three
+  composition), zero failed/skipped, source/standalone formatting and analyzers,
+  isolated Core, five independent providers, both hosts, all eight architecture
+  rules, and all 23 compatibility cases.
+- `python3 -m unittest discover -s tests/tooling -v`: passed all 17 tests.
+- `git diff --check`: passed.
+- Task/lock/document audit: all 58 tasks complete with unchanged task bodies,
+  specification, reviewer checklists, platform sources and existing locks;
+  all 50 projects carry locks; 108 local links across eight affected Markdown
+  files resolve.
+
+A narrowly scoped read-only `hoard-architecture-review` found no actionable
+findings or unresolved T058 design questions. It confirmed the restricted
+Hosting path and independent visited states; execution evidence is the parent
+acceptance run above, not a claim by the reviewer.
+
+README, development/provider/test guides, the quickstart and architecture
+acceptance contract describe the corrected rule. The specification, public
+API/declaration/compatibility contracts, research, original task bodies and all
+reviewer-owned checklists are unchanged. Charter, product specification,
+architecture/diagrams, ADR, constitution, backlog, source/custom-host guides,
+and infrastructure/release guidance need no changes: ownership, product
+packages, registration APIs, trust/operational limits, and workflows are
+unchanged. No new external dependency, migration, publication, deployment, or
+infrastructure action occurred. Rollback remains a reviewed source change with
+matching fixture locks.
+
+All 58 tasks are checked. The next stage is another separately authorized
+convergence assessment, not finalization or a clean-convergence/feature-complete
+claim.

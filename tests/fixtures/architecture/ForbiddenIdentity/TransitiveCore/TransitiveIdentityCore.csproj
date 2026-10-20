@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Hoard.Hosting" Version="[0.1.0]" />
+    <ProjectReference Include="../Helper/IdentityCoreHelper.csproj" />
+  </ItemGroup>
+</Project>

@@ -32,6 +32,11 @@ Architecture checks protect declared/resolved metadata, signatures and IL;
 reflection strings and malicious trusted code are not sandboxed or exhaustively
 analyzed. Synthetic SDK types exercise leakage without introducing EF or a
 real vendor dependency into the product.
+The permitted Identity fixture consumes the actual local Hosting package/API.
+Its transitive Core dependency must pass, while direct Identity-to-Core and
+SDK-helper-to-Core paths still fail even with Hosting present. Normal/reversed
+edge-order regressions protect the distinct path states from visitation-order
+shortcuts.
 
 `conformance/` and `protocols/` remain reserved. Provider conformance must
 eventually exercise every advertised implementation; protocol tests must use

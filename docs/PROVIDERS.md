@@ -124,5 +124,9 @@ using explicit ownership; they neither execute providers nor certify their
 behavior. Unused framework references still count as dependencies; being a BCL
 type does not make query/connection/transaction objects valid shared contracts.
 All eight named platform/provider/host scans are required, not just a nonempty
-scan manifest. Native-client restore, crash recovery, HTTP lifecycle,
+scan manifest. Identity providers may reference the approved Hosting API,
+including its transitive Core dependency. That does not permit a direct
+Identity-to-Core reference or an unrelated SDK-mediated path; the scanner
+tracks those paths separately even when both reach the same assembly.
+Native-client restore, crash recovery, HTTP lifecycle,
 performance, and production deployment are separate acceptance work.

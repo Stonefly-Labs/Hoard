@@ -204,6 +204,9 @@ def architecture(root, work, config, update):
         canonicalize_acceptance_archive(work / "feed" / f"Hoard.Fixtures.Arch.{name}.0.1.0.nupkg")
     cases = {
         "permitted": "Permitted/Permitted",
+        "identity-hosting": "Permitted/Identity/PermittedIdentity",
+        "identity-direct-core": "ForbiddenIdentity/DirectCore/DirectIdentityCore",
+        "identity-transitive-core": "ForbiddenIdentity/TransitiveCore/TransitiveIdentityCore",
         "abstractions-sdk": "ForbiddenAbstractions/ForbiddenAbstractions",
         "abstractions-http": "ForbiddenAbstractions/Http/ForbiddenHttp",
         "abstractions-unused-http": "ForbiddenAbstractions/UnusedHttp/UnusedHttp",

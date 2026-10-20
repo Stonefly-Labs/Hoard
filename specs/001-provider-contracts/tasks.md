@@ -7,8 +7,9 @@
 [architecture rules](contracts/architecture-rules.md), and
 [quickstart.md](quickstart.md).
 
-**Status**: All 57 implementation tasks are complete, including architecture
-review corrections and the final support-claim audit (T056-T057). Checked tasks
+**Status**: All 58 implementation tasks are complete: the original 57, including
+architecture review and support-claim audit (T056-T057), plus convergence
+remediation T058. Checked tasks
 record actual bounded implementation evidence, never feature merge/completion.
 The reviewer-owned architecture and compatibility checklists already record
 38/38 satisfied requirements-quality criteria; they are not implementation
@@ -422,4 +423,4 @@ engine or automatic agent fleet is requested.
 
 ## Phase 8: Convergence
 
-- [ ] T058 [US2] Fix HIGH-severity rejection of the permitted identity-to-Hosting dependency closure in `tests/architecture/Hoard.Architecture.Tests/DependencyGraphInspector.cs`: an Identity provider may reference the approved Hosting API, whose actual project graph reaches Core, but the current transitive traversal reports ARCH-008 for `Identity -> Hosting -> Core`. Add a permitted identity/Hosting fixture under `tests/fixtures/architecture/Permitted/`, wire its ownership/build evidence in `tests/fixtures/architecture/ownership.json` and `scripts/foundation_evidence.py` as needed, and cover the allowed closure in `tests/architecture/Hoard.Architecture.Tests/ArchitectureRuleTests.cs`; retain rejection of direct unapproved Identity-to-Core edges, unrelated concrete providers, and forbidden transitive dependencies rather than broadly allowing every Core path. Generate/review any affected fixture locks and require `bash scripts/validate-foundation.sh` to pass with the new regression per FR-004, FR-014, US2/AC1, SC-003, and plan: approved identity Hosting composition (partial).
+- [X] T058 [US2] Fix HIGH-severity rejection of the permitted identity-to-Hosting dependency closure in `tests/architecture/Hoard.Architecture.Tests/DependencyGraphInspector.cs`: an Identity provider may reference the approved Hosting API, whose actual project graph reaches Core, but the current transitive traversal reports ARCH-008 for `Identity -> Hosting -> Core`. Add a permitted identity/Hosting fixture under `tests/fixtures/architecture/Permitted/`, wire its ownership/build evidence in `tests/fixtures/architecture/ownership.json` and `scripts/foundation_evidence.py` as needed, and cover the allowed closure in `tests/architecture/Hoard.Architecture.Tests/ArchitectureRuleTests.cs`; retain rejection of direct unapproved Identity-to-Core edges, unrelated concrete providers, and forbidden transitive dependencies rather than broadly allowing every Core path. Generate/review any affected fixture locks and require `bash scripts/validate-foundation.sh` to pass with the new regression per FR-004, FR-014, US2/AC1, SC-003, and plan: approved identity Hosting composition (partial).
