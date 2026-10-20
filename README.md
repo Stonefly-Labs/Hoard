@@ -157,8 +157,11 @@ Identity-to-Hosting references when Hosting transitively reaches Core.
 [Task T058](specs/001-provider-contracts/tasks.md#phase-8-convergence) corrects
 that check using distinct Hosting-mediated and other dependency paths, with
 positive and negative regressions preserving forbidden-edge detection.
-Convergence is next through a separate invocation; this correction does not
-skip that assessment or authorize finalization.
+The follow-up convergence assessment found no remaining gaps across all
+17 requirements, six outcomes, acceptance scenarios, plan decisions, and
+58 tasks. Fresh locked acceptance passed all 86 .NET tests and 17 tooling tests;
+the specification, plan, tasks, and reviewer-owned checklists stayed unchanged.
+Finalization is next through a separate invocation; the feature PR remains draft.
 The feature is not complete or merged merely because implementation checks pass.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
