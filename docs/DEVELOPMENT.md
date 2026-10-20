@@ -525,9 +525,36 @@ responses/workers and non-cooperative callbacks remain supervised. A bounded
 wait is not forced termination: incomplete resources may require process exit.
 Later health loss changes readiness only; stop/fault closes admission.
 
-Convergence and finalization remain separately authorized stages; implementation
-is not feature completion, PR readiness, merge or permission to begin a
-dependent feature. Reviewer-owned checklist bytes remain unchanged.
+The subsequent installed convergence assessment checked all 22 functional
+requirements, seven buildable outcomes, 20 story scenarios, 12 edge cases,
+12 grouped plan decisions, all 72 implementation tasks and eight constitutional
+principles against current scoped code. It found one **CRITICAL** contradiction
+of bounded coordination: the worker-fault branch calls
+`IHostApplicationLifetime.StopApplication()` while holding the coordinator's
+state lock. Synchronous `ApplicationStopping` callbacks can therefore block
+stop coordination and safe state inspection indefinitely.
+
+An isolated public-API/TestServer diagnostic held such a callback after worker
+failure: neither stop nor snapshot access completed after 1,001 ms despite a
+200 ms shutdown budget. The diagnostic released and observed its pending work.
+Fresh default locked lifecycle acceptance passed 126 source tests, nine boundary
+proofs and seven package-only journeys; foundation passed 220 .NET tests and
+tooling passed 22 tests. Those passing suites do not cover the reproduced
+notification path or establish compliance for it.
+
+[Phase 9 / T073](../specs/002-module-lifecycle/tasks.md#phase-9-convergence)
+appends the required lock-free supervised notification, resource-retention and
+deterministic regression/review work. The existing task prefix, spec, plan and
+all built-in/custom checklist bytes remain unchanged. No application code was
+modified by convergence. README and this guide record the blocker; provider/
+example/quickstart contracts, product intent, diagrams, governance, IaC and
+release guides are unaffected because no API, intended behavior, dependency or
+operational action changed. Existing implementation evidence remains historical,
+not proof of the newly uncovered path.
+
+The next separately authorized stage is `implement` for T073, followed by a
+fresh convergence assessment. Keep the feature PR draft: finalization, merge,
+feature completion and dependent work remain blocked by this finding.
 
 ```mermaid
 flowchart TD

@@ -252,6 +252,14 @@ for exact acceptance results and review limits. Fixtures prove neither real
 providers/native clients nor TCP/TLS/proxy drain. Configuration/secrets,
 management discovery, caching, conformance, a curated product host and UI remain
 later work. Convergence and finalization are separate driver stages.
+The subsequent F-02 convergence assessment found one **CRITICAL** shutdown
+coordination gap: worker failure invokes synchronous host-stop notification
+while holding the lifecycle state lock. A held `ApplicationStopping` callback
+blocked both stop and snapshot access beyond the configured shutdown budget.
+[Phase 9 / T073](specs/002-module-lifecycle/tasks.md#phase-9-convergence)
+records the required bounded-notification correction and regression proof.
+Existing acceptance passes but does not cover this path; F-02 is not converged
+or ready to merge. The next separately authorized stage is `implement`.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
