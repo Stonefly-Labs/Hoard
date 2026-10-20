@@ -427,6 +427,23 @@ not orphan tasks. The analysis report is recorded in the draft feature PR,
 with completion evidence in the shared checkpoint. No feature artifact or
 built-in/custom checklist byte changed, and no remediation was needed.
 
+The later explicitly requested checklist review evaluates all 40 custom
+criteria at baseline `c7ccde4`: composition 19/20 and lifecycle 19/20, 38/40
+satisfied without waivers. Composition CHK014 remains open for
+[RQ-02: inconsistent baseline/custom artifact manifests](../specs/002-module-lifecycle/checklists/composition.md#rq-02-baseline-and-custom-artifact-package-lists-disagree).
+Lifecycle CHK013 remains open for
+[RQ-01: timed-out cleanup callback retention](../specs/002-module-lifecycle/checklists/lifecycle.md#rq-01-explicitly-retain-resources-for-timed-out-cleanup-callbacks).
+Both are MEDIUM written-requirements/documentation findings, not demonstrated
+runtime defects. The broader resource-safety rules already point toward safe
+cleanup intent, but the pending StopAsync case needs explicit treatment and
+proof; the quickstart's baseline package list also needs to match T063/T065.
+Criterion evidence and unapplied recommendations are recorded in the checklists.
+This requested review updates their markers, not the spec/design/tasks,
+built-in checklist, runtime sources or driver checkpoint. It is not a scheduled
+stage, an independent human inspection, or implementation authorization.
+The earlier no-findings analysis is retained as historical evidence; these
+later findings must not be ignored because that stage previously passed.
+
 Specification, clarification, planning, checklist and task generation create no
 lifecycle implementation, production executable/provider, configuration parser,
 management discovery endpoint, UI, or conformance certification. F-02 can
@@ -435,8 +452,11 @@ F-03 retains configuration sources,
 option/secret handling, and operator selection UX, while F-04 retains management
 discovery. Read-only analysis likewise supplies no runtime implementation or
 passing product evidence. The next scheduled stage is `implement` through a
-separate invocation, but its gate remains blocked on reviewer approval of the
-40 unchecked custom criteria or explicit reviewer authorization.
+separate invocation, but its gate remains blocked on the two unresolved custom
+criteria. Resolve the findings in a separately authorized follow-up, re-evaluate
+CHK013/CHK014 in their respective checklists and run fresh cross-artifact
+analysis before implementation. Do not reset the checkpoint to fabricate a
+scheduled analysis rerun or interpret `implement` / `ready` as gate approval.
 Task generation and analysis do not require custom checklist approval, but the
 later implementation gate does require reviewer approval or explicit reviewer
 authorization; neither completed stage supplies it. No implementation

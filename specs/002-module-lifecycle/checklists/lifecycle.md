@@ -19,49 +19,117 @@ recovery, management/UI, and certification are excluded except for clear limits.
 
 ## Requirement Completeness
 
-- [ ] CHK001 Are lifecycle phases and their entry/completion boundaries fully specified from validation through construction, composition, initialization, readiness, admission, and stop, including failures before a usable host exists? [Completeness, Spec §FR-008, §FR-015; Lifecycle contract §Ordered Startup; Public API §Host Composition Boundary]
-- [ ] CHK002 Are disabled-module requirements complete for construction, every lifecycle/probe/stop callback, routes, workers, and external connection attempts, without equating descriptive registration with enablement? [Completeness, Spec §FR-009, §FR-019, §SC-002; Spec §User Story 2 - Expose Only Enabled and Ready Functionality (Priority: P1)]
-- [ ] CHK003 Are all explicitly enabled modules required to initialize and satisfy readiness before normal traffic or ongoing work, with delayed, failed, cancelled, timed-out, and worker-fault outcomes defined without degraded success or retry? [Completeness, Spec §FR-010, §FR-011, §FR-012, §FR-013; Lifecycle contract §Ordered Startup]
+- [x] CHK001 Are lifecycle phases and their entry/completion boundaries fully specified from validation through construction, composition, initialization, readiness, admission, and stop, including failures before a usable host exists? [Completeness, Spec §FR-008, §FR-015; Lifecycle contract §Ordered Startup; Public API §Host Composition Boundary]
+- [x] CHK002 Are disabled-module requirements complete for construction, every lifecycle/probe/stop callback, routes, workers, and external connection attempts, without equating descriptive registration with enablement? [Completeness, Spec §FR-009, §FR-019, §SC-002; Spec §User Story 2 - Expose Only Enabled and Ready Functionality (Priority: P1)]
+- [x] CHK003 Are all explicitly enabled modules required to initialize and satisfy readiness before normal traffic or ongoing work, with delayed, failed, cancelled, timed-out, and worker-fault outcomes defined without degraded success or retry? [Completeness, Spec §FR-010, §FR-011, §FR-012, §FR-013; Lifecycle contract §Ordered Startup]
 
 ## Requirement Clarity
 
-- [ ] CHK004 Are process liveness, startup admission, current aggregate readiness, and terminal lifecycle state defined separately enough that a live or stopped host cannot imply successful initialization or resource release? [Clarity, Spec §FR-002, §FR-013, §FR-017; Data model §Runtime State and Phase Ledger, §Readiness and Diagnostics]
-- [ ] CHK005 Are initial and later readiness obligations explicit for required/optional observations, missing or inconsistent results, failed or timed-out assessment, and the same selected composition's recovery? [Clarity, Spec §FR-013, §FR-014; Data model §Readiness and Diagnostics; Lifecycle contract §Admission and Readiness After Start]
-- [ ] CHK006 Is the scope of worker admission precisely defined, including already admitted work during stop, without implying atomic control of arbitrary internal iterations? [Clarity, Spec §FR-011, §FR-016; Lifecycle contract §Stop, Drain and Cleanup]
-- [ ] CHK007 Are finite startup, phase, readiness, drain, cleanup, and overall shutdown budgets quantified with positive-duration rules, shared outer deadlines, and explicit handling of exhausted remaining time? [Clarity, Spec §FR-011, §FR-016, §FR-017; Lifecycle contract §Budgets and Non-Cooperative Code]
+- [x] CHK004 Are process liveness, startup admission, current aggregate readiness, and terminal lifecycle state defined separately enough that a live or stopped host cannot imply successful initialization or resource release? [Clarity, Spec §FR-002, §FR-013, §FR-017; Data model §Runtime State and Phase Ledger, §Readiness and Diagnostics]
+- [x] CHK005 Are initial and later readiness obligations explicit for required/optional observations, missing or inconsistent results, failed or timed-out assessment, and the same selected composition's recovery? [Clarity, Spec §FR-013, §FR-014; Data model §Readiness and Diagnostics; Lifecycle contract §Admission and Readiness After Start]
+- [x] CHK006 Is the scope of worker admission precisely defined, including already admitted work during stop, without implying atomic control of arbitrary internal iterations? [Clarity, Spec §FR-011, §FR-016; Lifecycle contract §Stop, Drain and Cleanup]
+- [x] CHK007 Are finite startup, phase, readiness, drain, cleanup, and overall shutdown budgets quantified with positive-duration rules, shared outer deadlines, and explicit handling of exhausted remaining time? [Clarity, Spec §FR-011, §FR-016, §FR-017; Lifecycle contract §Budgets and Non-Cooperative Code]
 
 ## Requirement Consistency
 
-- [ ] CHK008 Are later readiness loss and recovery consistently described as health changes, not automatic admission closure, draining, replacement, disablement, or restart of the selected modules? [Consistency, Spec §FR-014; Spec §Assumptions; Lifecycle contract §Admission and Readiness After Start]
-- [ ] CHK009 Are stop precedence and at-most-once phase/cleanup requirements consistent across initialization/readiness races, concurrent/repeated callers, cancelled individual waits, and terminal-instance reuse? [Consistency, Spec §FR-016, §FR-018; Data model §Runtime State and Phase Ledger; Lifecycle contract §Concurrency and Diagnostics]
-- [ ] CHK010 Are adapter-owned and host/container-owned resources assigned unambiguous cleanup ownership, including constructor failure, partial composition, and protection against duplicate or recursive disposal? [Consistency, Spec §FR-015, §FR-017, §FR-018; Public API §Adapter Registration and Callbacks, §Host Composition Boundary]
+- [x] CHK008 Are later readiness loss and recovery consistently described as health changes, not automatic admission closure, draining, replacement, disablement, or restart of the selected modules? [Consistency, Spec §FR-014; Spec §Assumptions; Lifecycle contract §Admission and Readiness After Start]
+- [x] CHK009 Are stop precedence and at-most-once phase/cleanup requirements consistent across initialization/readiness races, concurrent/repeated callers, cancelled individual waits, and terminal-instance reuse? [Consistency, Spec §FR-016, §FR-018; Data model §Runtime State and Phase Ledger; Lifecycle contract §Concurrency and Diagnostics]
+- [x] CHK010 Are adapter-owned and host/container-owned resources assigned unambiguous cleanup ownership, including constructor failure, partial composition, and protection against duplicate or recursive disposal? [Consistency, Spec §FR-015, §FR-017, §FR-018; Public API §Adapter Registration and Callbacks, §Host Composition Boundary]
 
 ## Scenario and Edge Case Coverage
 
-- [ ] CHK011 Are failure and stop requirements specified at each activation boundary, including synchronous composition and host construction, with no later phase/admission and no late successful result from an abandoned lifecycle? [Exception Coverage, Spec §FR-008, §FR-012, §FR-015, §FR-018; Lifecycle contract §Ordered Startup, §Budgets and Non-Cooperative Code]
-- [ ] CHK012 Are normal and partial-start cleanup requirements complete for entered versus never-entered modules, the partially failing module, reverse dependency order, and prerequisite availability during dependent cleanup? [Coverage, Spec §FR-015, §FR-016; Spec §User Story 3 - Fail and Stop Without Hiding Partial Startup (Priority: P1); Lifecycle contract §Stop, Drain and Cleanup]
+- [x] CHK011 Are failure and stop requirements specified at each activation boundary, including synchronous composition and host construction, with no later phase/admission and no late successful result from an abandoned lifecycle? [Exception Coverage, Spec §FR-008, §FR-012, §FR-015, §FR-018; Lifecycle contract §Ordered Startup, §Budgets and Non-Cooperative Code]
+- [x] CHK012 Are normal and partial-start cleanup requirements complete for entered versus never-entered modules, the partially failing module, reverse dependency order, and prerequisite availability during dependent cleanup? [Coverage, Spec §FR-015, §FR-016; Spec §User Story 3 - Fail and Stop Without Hiding Partial Startup (Priority: P1); Lifecycle contract §Stop, Drain and Cleanup]
 - [ ] CHK013 Are requirements explicit that cleanup failure, timeout, unsafe pending work, and budget-exhausted omission remain distinct from completion, preserve the primary failure, and do not skip other eligible cleanup? [Exception Coverage, Spec §FR-017; Data model §Readiness and Diagnostics; Lifecycle contract §Stop, Drain and Cleanup]
-- [ ] CHK014 Are over-budget request/response, worker, activation, and host-construction activities covered by written resource-retention requirements for owners, prerequisites, and root disposal, while independent safe cleanup remains possible? [Edge Case Coverage, Spec §FR-015, §FR-016, §FR-017; Lifecycle contract §Stop, Drain and Cleanup, §Budgets and Non-Cooperative Code]
+- [x] CHK014 Are over-budget request/response, worker, activation, and host-construction activities covered by written resource-retention requirements for owners, prerequisites, and root disposal, while independent safe cleanup remains possible? [Edge Case Coverage, Spec §FR-015, §FR-016, §FR-017; Lifecycle contract §Stop, Drain and Cleanup, §Budgets and Non-Cooperative Code]
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK015 Are admission and isolation outcomes objectively measurable for enabled/disabled, delayed, failed, cancelled, timed-out, stopping, and later readiness-loss/recovery scenarios, including permitted counterparts? [Measurability, Spec §FR-019, §SC-002, §SC-003; Acceptance §Outcome and Story Coverage]
-- [ ] CHK016 Are cleanup outcomes measurable about event order, at-most-once phases, finite coordination waiting, and explicit incomplete work, without treating cancellation delivery or terminal state as successful release? [Measurability, Spec §FR-017, §FR-018, §SC-004; Acceptance §Acceptance Matrix; Lifecycle contract §Budgets and Non-Cooperative Code]
-- [ ] CHK017 Are diagnostic outcomes defined for every rejection/failure class with safe identity, phase, constraint/path, corrective action, and correlation, and an objective zero-seeded-secret criterion for normal results/logs? [Measurability, Spec §FR-020, §SC-005; Spec §User Story 4 - Correct a Composition from Safe Diagnostics (Priority: P2); Acceptance §Acceptance Matrix]
+- [x] CHK015 Are admission and isolation outcomes objectively measurable for enabled/disabled, delayed, failed, cancelled, timed-out, stopping, and later readiness-loss/recovery scenarios, including permitted counterparts? [Measurability, Spec §FR-019, §SC-002, §SC-003; Acceptance §Outcome and Story Coverage]
+- [x] CHK016 Are cleanup outcomes measurable about event order, at-most-once phases, finite coordination waiting, and explicit incomplete work, without treating cancellation delivery or terminal state as successful release? [Measurability, Spec §FR-017, §FR-018, §SC-004; Acceptance §Acceptance Matrix; Lifecycle contract §Budgets and Non-Cooperative Code]
+- [x] CHK017 Are diagnostic outcomes defined for every rejection/failure class with safe identity, phase, constraint/path, corrective action, and correlation, and an objective zero-seeded-secret criterion for normal results/logs? [Measurability, Spec §FR-020, §SC-005; Spec §User Story 4 - Correct a Composition from Safe Diagnostics (Priority: P2); Acceptance §Acceptance Matrix]
 
 ## Non-Functional Requirements and Assumptions
 
-- [ ] CHK018 Are safe identity fallbacks, bounded text/paths/collections, omission indicators, and excluded provider payloads specified without relying on arbitrary free-text redaction or leaking unsafe details through secondary errors? [Security, Spec §FR-020; Lifecycle contract §Concurrency and Diagnostics; Data model §Readiness and Diagnostics]
-- [ ] CHK019 Are cooperative cancellation limits, incomplete cleanup, process-level recovery, and the absence of guaranteed forced termination, crash cleanup, or provider schema/data rollback explicitly documented? [Recovery Coverage, Spec §FR-017, §FR-022; Spec §Assumptions; Lifecycle contract §Restart and Recovery]
+- [x] CHK018 Are safe identity fallbacks, bounded text/paths/collections, omission indicators, and excluded provider payloads specified without relying on arbitrary free-text redaction or leaking unsafe details through secondary errors? [Security, Spec §FR-020; Lifecycle contract §Concurrency and Diagnostics; Data model §Readiness and Diagnostics]
+- [x] CHK019 Are cooperative cancellation limits, incomplete cleanup, process-level recovery, and the absence of guaranteed forced termination, crash cleanup, or provider schema/data rollback explicitly documented? [Recovery Coverage, Spec §FR-017, §FR-022; Spec §Assumptions; Lifecycle contract §Restart and Recovery]
 
 ## Dependencies, Assumptions and Scope Conflicts
 
-- [ ] CHK020 Are lifecycle evidence and operational security boundaries clear about fixture-only application admission/drain, no production-provider or transport certification, and no new anonymous management or host-policy bypass? [Scope Consistency, Spec §FR-019, §FR-022, §SC-007; Spec §Assumptions; Public API §HTTP Surface; Acceptance §Evidence Gates and Limits]
+- [x] CHK020 Are lifecycle evidence and operational security boundaries clear about fixture-only application admission/drain, no production-provider or transport certification, and no new anonymous management or host-policy bypass? [Scope Consistency, Spec §FR-019, §FR-022, §SC-007; Spec §Assumptions; Public API §HTTP Surface; Acceptance §Evidence Gates and Limits]
+
+## Delegated Review: 2026-10-20
+
+Copilot evaluated all 20 criteria at the user's explicit request to review the
+checklists and highlight concerns. Reviewed baseline: `c7ccde4`. This is
+requirements-quality evaluation, not independent human inspection, runtime
+evidence, implementation authorization, or a scheduled driver stage.
+
+**Result**: 19/20 lifecycle criteria satisfied. CHK013 remains unchecked for
+RQ-01 below. Together with the composition review, 38/40 criteria are satisfied;
+two remain unresolved, with no waivers. The earlier analysis remains historical
+evidence, not clearance to ignore these later review findings.
+
+| Criteria | Written evidence supporting the assessment |
+| --- | --- |
+| CHK001-CHK003 | Spec FR-008..013/015 and ordered startup define metadata-only validation, supervised construction/composition/build/map, initialization, complete readiness and worker admission; LC-15..23/31 cover disabled zero callbacks and failure without degraded success. |
+| CHK004-CHK005 | Model separates phase, status, liveness, admission, health and incomplete stop results; required/optional health observations, no-probe explicit status and invalid/stalled results are defined in the readiness model and LC-24..25/34. |
+| CHK006-CHK007 | Lifecycle contract admits the whole RunAsync callback, not internal iterations; six positive finite budgets share capped absolute deadlines with documented defaults and fake-time proof obligations. |
+| CHK008-CHK009 | Later health loss changes readiness only, while stop/fault permanently closes admission; model/contract share starts, assessments and stops, isolate waiter cancellation and reject terminal reuse with a stop-wins publication latch. |
+| CHK010-CHK012 | Public API assigns adapter versus DI/root ownership, constructor self-cleanup and one external lease; LC-20..23/26..27 cover pre-host failures, partial returned adapters and normal reverse cleanup. Timed-out cleanup's pending activity remains separately open under CHK013. |
+| CHK013 | Partially satisfied: result categories, original/additional errors, finite waiting and independent eligible cleanup are explicit, but a still-running timed-out StopAsync is not explicitly included in pending-activity retention; see RQ-01. |
+| CHK014 | Request/response, worker, activation and pending-build resource retention for owners/prerequisites/root is explicit in the contract and LC-29. This does not resolve the additional cleanup-callback edge in RQ-01. |
+| CHK015-CHK016 | SC-002..004, LC-15..17/20..30 and deterministic barriers/fake time define observable admission, event order, once-only calls and incomplete outcomes, not cancellation-as-release. |
+| CHK017-CHK018 | FR-020/SC-005, diagnostic catalogue and LC-32..33 require safe identity/ordinal, phase/rule/path/action/correlation, zero seeded secrets, fixed reason codes, 512-character messages, 32-ID paths, 100-entry collections and omission counts without raw payloads. |
+| CHK019-CHK020 | Spec assumptions, public HTTP surface and restart contract distinguish cooperative finite waiting/process recovery from forced termination, crash/schema rollback and transport/provider certification; no new anonymous management or host-policy bypass is authorized. |
+
+### RQ-01: Explicitly Retain Resources for Timed-Out Cleanup Callbacks
+
+**Priority**: MEDIUM requirements ambiguity with resource-safety consequences;
+not a demonstrated runtime defect or a claim that the design intends unsafe
+disposal.
+
+**Evidence at baseline `c7ccde4`**:
+[lifecycle.md:121-150](https://github.com/Stonefly-Labs/Hoard/blob/c7ccde4/specs/002-module-lifecycle/contracts/lifecycle.md#L121-L150)
+says to keep dependencies alive until dependent cleanup has been "attempted",
+record a timed-out StopAsync, and continue eligible cleanup. Its explicit
+pending-activity and root-disposal lists name requests, workers, build and
+activation, not a still-executing cleanup callback.
+[public-api.md:131-136](https://github.com/Stonefly-Labs/Hoard/blob/c7ccde4/specs/002-module-lifecycle/contracts/public-api.md#L131-L136)
+uses the same activation-only list.
+[LC-28..29](../contracts/acceptance.md#acceptance-matrix) and
+[T048/T050..T053](../tasks.md#tests-for-user-story-3) do not expressly require a
+barrier-held StopAsync to retain its prerequisites and root after timeout.
+
+The broader "still using it" and "global quiescence" rules point toward the
+safe intent. The unresolved point is whether cleanup is tracked as pending
+Phase activity after its wait expires, rather than treating the recorded
+TimedOut result as the end of its resource usage.
+
+**Example**: A depends on B. A's StopAsync ignores cancellation and continues
+using B beyond its per-module budget, while overall stop time remains.
+Recording A as TimedOut does not mean A stopped. The contract needs to say
+unambiguously that B and root disposal remain protected, while an unrelated
+quiescent C may still clean up. A must not receive another stop attempt.
+
+**Recommendation, not applied**: Explicitly include non-completed StopAsync in
+pending activity, resource/dependency retention and root quiescence. Preserve
+the callback's TimedOut result; mark affected prerequisite/root omissions
+unsafe, continue independent safe cleanup under the same outer budget, and
+observe late completion/fault safely without retry or late publication. Name
+cleanup explicitly, whether represented by Phase or a dedicated internal kind.
+Add the barrier-held A -> B plus independent C regression to LC-28/29 and T048,
+with implementation obligations in T050..T053. Release/observe its test task
+after assertions; no process-level guarantee is introduced.
+
+**Status**: Open. No requirement, model, contract, acceptance row, task, source
+or driver checkpoint was changed by this review. Resolve separately, then
+re-evaluate CHK013 and run fresh cross-artifact analysis before implementation.
 
 ## Notes
 
-- All 20 items are newly generated and remain unchecked; no evaluation,
-  reviewer approval, or implementation authorization is recorded here.
+- All 20 items were generated unchecked. The current markers record the
+  explicitly requested review above; CHK013 remains open, not waived.
 - Mark items `[x]` only after review confirms the requirement-quality criterion
   is satisfied. Leave unresolved or unevaluated criteria unchecked and record
   comments/findings inline.

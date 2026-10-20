@@ -215,13 +215,22 @@ proof assignments; all 72 tasks map to requirements or shared acceptance
 prerequisites. The complete acyclic prerequisite graph, 40 LC cases, 20 story
 scenarios and 12 edge cases were checked. The analysis report is recorded in
 the draft feature PR; feature artifacts and all checklist markers are unchanged.
+The later explicitly requested checklist review satisfies 19/20 composition
+and 19/20 lifecycle criteria, 38/40 total. Two remain open:
+[timed-out cleanup resource retention](specs/002-module-lifecycle/checklists/lifecycle.md#rq-01-explicitly-retain-resources-for-timed-out-cleanup-callbacks)
+needs an explicit pending-callback rule and focused proof obligation, and
+[baseline/custom package manifests](specs/002-module-lifecycle/checklists/composition.md#rq-02-baseline-and-custom-artifact-package-lists-disagree)
+need consistent journey instructions. These are requirements/documentation
+findings, not demonstrated runtime defects; recommendations are not yet applied.
 No lifecycle runtime, runnable product host, real provider, discovery API or UI
 is introduced by specification, planning, checklist, task generation or analysis.
-Existing registration APIs and feature requirements/design artifacts remain unchanged;
-no implementation authorization is implied. The next scheduled stage is
-`implement`, through a separate `hoard-speckit` invocation, but its gate remains
-blocked on reviewer approval of the 40 unchecked custom criteria or explicit
-reviewer authorization. Analysis supplies neither that approval nor runtime proof.
+The requested review records checklist outcomes without changing requirements,
+design, tasks, runtime code or the driver checkpoint. No implementation
+authorization is implied. The next scheduled stage remains `implement` through a
+separate `hoard-speckit` invocation, blocked on the two unresolved criteria.
+Resolve the findings, re-evaluate those criteria and run fresh cross-artifact
+analysis before implementation. The earlier no-findings analysis does not
+override later review concerns or provide runtime proof.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

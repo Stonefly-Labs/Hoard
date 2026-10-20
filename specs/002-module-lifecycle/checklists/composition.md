@@ -19,49 +19,96 @@ the clarity of their handoffs and support limits.
 
 ## Requirement Completeness
 
-- [ ] CHK001 Are explicit build inclusion, registration, selection, and operational readiness defined separately, including the limits of inventory for installed but unregistered packages? [Completeness, Spec §FR-001, §FR-002; Data model §Registration and Adapter Association]
-- [ ] CHK002 Are all registry-wide structural rejection requirements specified, including duplicate identities across disabled entries, malformed declarations, family disagreement, and invalid lifecycle associations? [Completeness, Spec §FR-004, §FR-008; Spec §Edge Cases; Data model §Registration and Adapter Association]
-- [ ] CHK003 Are unknown selections, unavailable required targets, authoritative-provider identity/cardinality, and permitted multiple protocol/identity selections covered without implicit enablement, defaults, or substitution? [Completeness, Spec §FR-003, §FR-006; Spec §User Story 1 - Start Only the Intended Modules (Priority: P1)]
+- [x] CHK001 Are explicit build inclusion, registration, selection, and operational readiness defined separately, including the limits of inventory for installed but unregistered packages? [Completeness, Spec §FR-001, §FR-002; Data model §Registration and Adapter Association]
+- [x] CHK002 Are all registry-wide structural rejection requirements specified, including duplicate identities across disabled entries, malformed declarations, family disagreement, and invalid lifecycle associations? [Completeness, Spec §FR-004, §FR-008; Spec §Edge Cases; Data model §Registration and Adapter Association]
+- [x] CHK003 Are unknown selections, unavailable required targets, authoritative-provider identity/cardinality, and permitted multiple protocol/identity selections covered without implicit enablement, defaults, or substitution? [Completeness, Spec §FR-003, §FR-006; Spec §User Story 1 - Start Only the Intended Modules (Priority: P1)]
 
 ## Requirement Clarity
 
-- [ ] CHK004 Is the distinction between structural validity for every registered entry and active compatibility for selected entries explicit, including a disabled module with incompatible platform ranges? [Clarity, Spec §FR-004, §FR-005, §FR-009; Spec §Edge Cases]
-- [ ] CHK005 Are version, prerelease, and required-capability obligations stated precisely enough to exclude package-restore success, another module's capability, or range widening as evidence of compatibility? [Clarity, Spec §FR-005; Data model §Startup Selection and Platform Versions; Public API §Ownership and Package Graph]
-- [ ] CHK006 Is an absent/disabled optional dependency clearly distinguished from an enabled compatible or incompatible target, including ordering edges, integration claims, and failure of an explicitly enabled module? [Clarity, Spec §FR-006, §FR-012; Spec §Assumptions]
-- [ ] CHK007 Are prerequisite ordering, the stable unrelated-module tie-break, and involved-path diagnostics defined independently of registration order, including self-dependencies and enabled optional cycles? [Clarity, Spec §FR-007, §FR-020; Data model §Validated Composition and Dependencies]
+- [x] CHK004 Is the distinction between structural validity for every registered entry and active compatibility for selected entries explicit, including a disabled module with incompatible platform ranges? [Clarity, Spec §FR-004, §FR-005, §FR-009; Spec §Edge Cases]
+- [x] CHK005 Are version, prerelease, and required-capability obligations stated precisely enough to exclude package-restore success, another module's capability, or range widening as evidence of compatibility? [Clarity, Spec §FR-005; Data model §Startup Selection and Platform Versions; Public API §Ownership and Package Graph]
+- [x] CHK006 Is an absent/disabled optional dependency clearly distinguished from an enabled compatible or incompatible target, including ordering edges, integration claims, and failure of an explicitly enabled module? [Clarity, Spec §FR-006, §FR-012; Spec §Assumptions]
+- [x] CHK007 Are prerequisite ordering, the stable unrelated-module tie-break, and involved-path diagnostics defined independently of registration order, including self-dependencies and enabled optional cycles? [Clarity, Spec §FR-007, §FR-020; Data model §Validated Composition and Dependencies]
 
 ## Requirement Consistency
 
-- [ ] CHK008 Are the written pre-construction validation boundary and unchanged registration-only compatibility commitments consistent across the specification and design, without introducing activation into old consumers? [Consistency, Spec §FR-001, §FR-008, §FR-022; Public API §Existing Surface and Compatibility]
-- [ ] CHK009 Are adapter and provider ownership requirements consistent with F-01 dependency directions, including host-owned integration for metadata/artifact packages and centralized cache/security responsibilities? [Consistency, Spec §FR-022; Spec §Assumptions; Public API §Ownership and Package Graph; Plan §Constitution Check]
-- [ ] CHK010 Are fixed-selection and validated-snapshot requirements consistent about later input/registration changes, a running composition, and the requirement for a fresh lifecycle rather than in-place replacement? [Consistency, Spec §FR-003, §FR-018, §FR-021; Data model §Startup Selection and Platform Versions]
+- [x] CHK008 Are the written pre-construction validation boundary and unchanged registration-only compatibility commitments consistent across the specification and design, without introducing activation into old consumers? [Consistency, Spec §FR-001, §FR-008, §FR-022; Public API §Existing Surface and Compatibility]
+- [x] CHK009 Are adapter and provider ownership requirements consistent with F-01 dependency directions, including host-owned integration for metadata/artifact packages and centralized cache/security responsibilities? [Consistency, Spec §FR-022; Spec §Assumptions; Public API §Ownership and Package Graph; Plan §Constitution Check]
+- [x] CHK010 Are fixed-selection and validated-snapshot requirements consistent about later input/registration changes, a running composition, and the requirement for a fresh lifecycle rather than in-place replacement? [Consistency, Spec §FR-003, §FR-018, §FR-021; Data model §Startup Selection and Platform Versions]
 
 ## Scenario and Edge Case Coverage
 
-- [ ] CHK011 Are route-ownership requirements complete for every enabled endpoint responsibility and relevant host endpoint, with unsupported or unowned matching explicitly distinguished from proven ambiguity? [Coverage, Spec §FR-010; Lifecycle contract §Owned Routes; Data model §Route Ownership]
-- [ ] CHK012 Are ambiguous-route requirements precise about overlapping methods, equivalent parameter names/casing/separators, equal matching priority, and same-owner conflicts, without choosing a registration-order winner? [Clarity, Spec §FR-010; Spec §Edge Cases; Lifecycle contract §Owned Routes]
-- [ ] CHK013 Are permitted routing counterparts documented alongside rejection rules, including disjoint methods/paths, a unique more-specific match, and an absent disabled claimant? [Coverage, Spec §FR-009, §FR-010, §FR-019; Lifecycle contract §Owned Routes]
+- [x] CHK011 Are route-ownership requirements complete for every enabled endpoint responsibility and relevant host endpoint, with unsupported or unowned matching explicitly distinguished from proven ambiguity? [Coverage, Spec §FR-010; Lifecycle contract §Owned Routes; Data model §Route Ownership]
+- [x] CHK012 Are ambiguous-route requirements precise about overlapping methods, equivalent parameter names/casing/separators, equal matching priority, and same-owner conflicts, without choosing a registration-order winner? [Clarity, Spec §FR-010; Spec §Edge Cases; Lifecycle contract §Owned Routes]
+- [x] CHK013 Are permitted routing counterparts documented alongside rejection rules, including disjoint methods/paths, a unique more-specific match, and an absent disabled claimant? [Coverage, Spec §FR-009, §FR-010, §FR-019; Lifecycle contract §Owned Routes]
 - [ ] CHK014 Are bundled selection changes, independent custom-package addition, invalid replacement, and explicit prior-composition recovery specified as distinct journeys with clear rebuild/redeploy/restart boundaries? [Recovery Coverage, Spec §FR-021, §FR-022; Spec §User Story 5 - Change a Distribution with Explicit Restart (Priority: P2)]
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK015 Are invalid-composition and valid-counterpart outcomes objectively defined in terms of zero pre-validation activation, unchanged selection, and deterministic prerequisite-first ordering? [Measurability, Spec §FR-008, §FR-019, §SC-001; Acceptance §Requirement Coverage]
-- [ ] CHK016 Are distribution outcomes measurable about zero rebuilds for bundled choices, zero engine changes for an independent provider, and immutability of the already running selection? [Measurability, Spec §FR-021, §SC-006; Acceptance §Outcome and Story Coverage]
-- [ ] CHK017 Are source compatibility, already-compiled consumer compatibility, package/dependency-boundary evidence, and fixture-only support claims distinguished as separate acceptance obligations rather than inferred from one successful build? [Acceptance Criteria, Spec §FR-001, §FR-019, §FR-022, §SC-007; Public API §Existing Surface and Compatibility; Acceptance §Evidence Gates and Limits]
+- [x] CHK015 Are invalid-composition and valid-counterpart outcomes objectively defined in terms of zero pre-validation activation, unchanged selection, and deterministic prerequisite-first ordering? [Measurability, Spec §FR-008, §FR-019, §SC-001; Acceptance §Requirement Coverage]
+- [x] CHK016 Are distribution outcomes measurable about zero rebuilds for bundled choices, zero engine changes for an independent provider, and immutability of the already running selection? [Measurability, Spec §FR-021, §SC-006; Acceptance §Outcome and Story Coverage]
+- [x] CHK017 Are source compatibility, already-compiled consumer compatibility, package/dependency-boundary evidence, and fixture-only support claims distinguished as separate acceptance obligations rather than inferred from one successful build? [Acceptance Criteria, Spec §FR-001, §FR-019, §FR-022, §SC-007; Public API §Existing Surface and Compatibility; Acceptance §Evidence Gates and Limits]
 
 ## Non-Functional Requirements and Assumptions
 
-- [ ] CHK018 Are new runtime/distribution dependency obligations and their compatibility impact documented without presenting unchanged public signatures as proof that deployment prerequisites are unchanged? [Dependency, Spec §FR-022; Public API §Ownership and Package Graph; Plan §Technical Context]
-- [ ] CHK019 Are trusted in-process code, metadata inspection without operational I/O, and the absence of arbitrary loading, downloads, sandboxing, or hot replacement stated as explicit limits rather than implied protections? [Security, Spec §FR-001, §FR-009, §FR-021; Spec §Assumptions]
+- [x] CHK018 Are new runtime/distribution dependency obligations and their compatibility impact documented without presenting unchanged public signatures as proof that deployment prerequisites are unchanged? [Dependency, Spec §FR-022; Public API §Ownership and Package Graph; Plan §Technical Context]
+- [x] CHK019 Are trusted in-process code, metadata inspection without operational I/O, and the absence of arbitrary loading, downloads, sandboxing, or hot replacement stated as explicit limits rather than implied protections? [Security, Spec §FR-001, §FR-009, §FR-021; Spec §Assumptions]
 
 ## Ambiguities and Scope Conflicts
 
-- [ ] CHK020 Are F-03 configuration/secret resolution, F-04 authorized discovery/UI, real provider operations, conformance, and native-client evidence explicitly separated from this feature without deferring its own composition safety requirements? [Scope Consistency, Spec §FR-019, §FR-022, §SC-007; Spec §Assumptions; Plan §Phase 1: Design and Contracts]
+- [x] CHK020 Are F-03 configuration/secret resolution, F-04 authorized discovery/UI, real provider operations, conformance, and native-client evidence explicitly separated from this feature without deferring its own composition safety requirements? [Scope Consistency, Spec §FR-019, §FR-022, §SC-007; Spec §Assumptions; Plan §Phase 1: Design and Contracts]
+
+## Delegated Review: 2026-10-20
+
+Copilot evaluated all 20 criteria at the user's explicit request to review the
+checklists and highlight concerns. Reviewed baseline: `c7ccde4`. This is
+requirements-quality evaluation, not independent human inspection, runtime
+evidence, implementation authorization, or a scheduled driver stage.
+
+**Result**: 19/20 composition criteria satisfied. CHK014 remains unchecked for
+RQ-02 below. Together with the lifecycle review, 38/40 criteria are satisfied;
+two remain unresolved, with no waivers. The earlier analysis remains historical
+evidence, not clearance to ignore these later review findings.
+
+| Criteria | Written evidence supporting the assessment |
+| --- | --- |
+| CHK001-CHK003 | Spec FR-001..004/006 and the registration/selection model separate build inclusion, registration, selection and health; reject malformed/duplicate/orphan associations, unavailable required targets and wrong cardinality without construction or fallback. |
+| CHK004-CHK007 | Spec FR-004..007/012, the version/capability model and F-01 policy distinguish disabled structure from active compatibility, unavailable from enabled optional dependencies, target-specific capability demands, ordinal ordering and required/enabled-optional cycles. |
+| CHK008-CHK010 | Public API preserves old inert registration/source/binary obligations and approved provider directions; model snapshots bind selection to its builder and require a fresh lifecycle after failure or selection change. |
+| CHK011-CHK013 | Owned-route contract and LC-18..19 cover every declared responsibility, relevant host endpoints, unsupported shapes, intersecting methods/equal precedence, renamed/case/slash equivalents, same-owner conflicts and permitted disjoint/more-specific counterparts. |
+| CHK014 | Not satisfied: the quickstart and task list disagree on which artifact packages the baseline host includes; RQ-02 records the needed alignment. |
+| CHK015-CHK017 | SC-001/006/007 and LC-01..14/35..40 supply measurable zero-activation/order/restart outcomes and distinguish source, retained old binary, independent packed graphs and fixture-only support. The journey recipe mismatch remains separately open under CHK014. |
+| CHK018-CHK020 | Public API explicitly documents Hosting's proposed ASP.NET Core shared-framework dependency and packed-consumer proof. Spec assumptions and plan retain trusted-code/no-loader limits and later configuration, discovery, real-provider, conformance and native-client ownership. |
+
+### RQ-02: Baseline and Custom Artifact Package Lists Disagree
+
+**Priority**: MEDIUM documentation/acceptance inconsistency, not a runtime defect.
+
+**Evidence at baseline `c7ccde4`**:
+[quickstart.md:52-56](https://github.com/Stonefly-Labs/Hoard/blob/c7ccde4/specs/002-module-lifecycle/quickstart.md#L52-L56)
+includes two artifact fixtures in the baseline bundled host. In contrast,
+[T063/T065](../tasks.md#implementation-for-user-story-5) include only Artifact.One
+in the baseline and add Artifact.Two through the custom rebuild. The quickstart's
+Journey B asks the author to add an independent artifact package without naming
+a third fixture. Following Journey A literally would already include both
+planned artifact packages and obscure the required absent-package proof.
+
+**Recommendation, not applied**: Use the simpler manifest already specified by
+T063/T065: baseline bundles Protocol.One, Protocol.Two, Metadata, Artifact.One
+and optional Identity; only the custom variant adds Artifact.Two and its host
+adapter. Journey A switches the two protocol choices without rebuilding.
+Journey B explicitly adds Artifact.Two, rebuilds/redeploys and starts a new
+lifecycle. Keep independently packing all six fixtures; packing is not baseline
+inclusion. Align the quickstart and eventual host guide with these manifests.
+
+**Status**: Open. No journey requirement, quickstart, task, source, or driver
+checkpoint was changed by this review. Resolve separately, then re-evaluate
+CHK014 and run fresh cross-artifact analysis before implementation.
 
 ## Notes
 
-- All 20 items are newly generated and remain unchecked; no evaluation,
-  reviewer approval, or implementation authorization is recorded here.
+- All 20 items were generated unchecked. The current markers record the
+  explicitly requested review above; CHK014 remains open, not waived.
 - Mark items `[x]` only after review confirms the requirement-quality criterion
   is satisfied. Leave unresolved or unevaluated criteria unchecked and record
   comments/findings inline.
