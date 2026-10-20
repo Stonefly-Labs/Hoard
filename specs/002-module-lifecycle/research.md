@@ -1,6 +1,7 @@
 # F-02 Research and Decisions
 
-**Date**: 2026-10-20 | **Status**: Planning, not implemented proof.
+**Date**: 2026-10-20 | **Status**: Historical design rationale with implementation
+dependency assessment below; measured runtime evidence is in plan.md.
 **Inputs**: [specification](spec.md), ratified constitution, existing F-01
 source APIs/declarations and [compatibility policy](../001-provider-contracts/contracts/compatibility.md).
 All planning unknowns are resolved below; package patch selection at
@@ -197,9 +198,27 @@ tests while ignoring packed Hosting's new shared-framework requirements
 
 ## Resolved Decisions and Research Limits
 
-This research selects signatures/ownership, route scope, ordering and budget
+### T001 dependency assessment (implementation)
+
+Selected stable Microsoft.AspNetCore.TestHost 10.0.13 from nuget.org (published
+2026-10-13), aligned with the existing 10.0.13 framework libraries. TestHost
+uses MIT; NuGet.Versioning 7.9.0 declares Apache-2.0 (compatible dependency,
+with upstream package license retained). Hosting now references the
+Microsoft.AspNetCore.App shared framework and internal NuGet.Versioning;
+the redundant DI.Abstractions package reference was removed after NU1510
+correctly rejected it under warnings-as-errors. Public registration signatures
+are unchanged; packed/non-web consumers now need the ASP.NET Core framework.
+`dotnet restore Hoard.slnx --force-evaluate -v quiet` and subsequent locked
+restore passed. `dotnet list Hoard.slnx package --vulnerable --include-transitive
+--format json` reported no known vulnerable packages. SDK and unrelated central
+versions are unchanged. The completed Hosting/fixture payloads now have reviewed
+standalone hashes/locks and packed/non-web/retained-binary proof in plan.md.
+
+At planning, this research selected signatures/ownership, route scope, ordering and budget
 defaults without changing the specification. It uses current repository
 constraints and first-party framework documentation, including one bounded
 documentation research delegation. It makes no empirical claim about code not
 yet implemented and no assertion of complete arbitrary-route analysis.
-No runtime packages were installed or version locks changed.
+No runtime packages or version locks changed during planning; T001's separately
+authorized implementation assessment and source/standalone locks are described
+above.

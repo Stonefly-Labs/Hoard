@@ -1,7 +1,7 @@
-# F-02 Proposed Public Library Contract
+# F-02 Public Library Contract
 
-**Status**: Planned additive APIs, not implemented methods or published
-packages. No full implementation bodies are specified here.
+**Status**: Implemented additive, fixture-tested APIs; no packages published.
+Measured evidence and implementation adjustments are in [the plan](../plan.md#implementation-evidence).
 
 ## Existing Surface and Compatibility
 
@@ -21,7 +21,7 @@ compatibility evidence.
 
 ## Ownership and Package Graph
 
-| Owner | Proposed surface / dependency |
+| Owner | Surface / dependency |
 | --- | --- |
 | Abstractions | Existing BCL-only descriptors/markers unchanged; no DI/HTTP/task callbacks added |
 | Hosting | Selection, validation result/composition, budgets, adapter association/interface, owned routes, coordinator/snapshots, HTTP/Generic Host bridge |
@@ -30,7 +30,7 @@ compatibility evidence.
 | Metadata/Artifact fixtures | Abstractions-only; host-side adapters reference their public provider APIs |
 | LifecycleHost | Hosting plus explicit fixture packages; owns metadata/artifact adapters and explicit selection |
 
-Hosting will use an ASP.NET Core framework reference and `NuGet.Versioning`.
+Hosting uses an ASP.NET Core framework reference and internal `NuGet.Versioning`.
 Do not leak version-library types in its public input/result records: version
 and interval strings retain the F-01 policy. Document that operational Hosting
 consumers need the ASP.NET Core shared framework, and test framework-reference
@@ -108,7 +108,7 @@ work to drain. The contract does not claim atomic per-iteration admission.
 
 ## Host Composition Boundary
 
-Proposed public extensions/results, all in Hosting:
+Public extensions/results, all in Hosting:
 
 | API | Agreement |
 | --- | --- |
@@ -116,8 +116,9 @@ Proposed public extensions/results, all in Hosting:
 | `ComposeHoardModulesAsync(composition, cancellationToken)` on `HoardBuilder` | Before host build, verify unchanged registry, construct enabled adapters and configure services under supervision; return single-use `HoardServiceComposition` or throw sanitized `HoardLifecycleException` after cleanup |
 | `BuildHoardApplicationAsync(serviceComposition, cancellationToken)` on `WebApplicationBuilder` | Supervise this builder's one host build against the existing startup deadline; record pending build activity and safe failures, never publish a late/poisoned result |
 | `MapHoardModulesAsync(serviceComposition, cancellationToken)` on `WebApplication` | After build and before start, map/inspect owned routes and install startup/stop admission protection; failure triggers coordinated cleanup; no initialization/traffic yet |
+| `StopHoardApplicationAsync(serviceComposition, cancellationToken)` on `WebApplication` | Shares one actual framework-stop task with lease disposal, including synchronous ApplicationStopped notifications; caller cancellation cancels only its wait |
 | `HoardServiceComposition : IAsyncDisposable` | Owns the lifecycle lease from first adapter construction and the application returned by supervised build; disposal shares stop, then supervises root disposal only if safe |
-| `IHoardLifecycle` resolved from built DI | Read-only snapshot, cancellation-aware `AssessReadinessAsync`, shared `StartAsync` / `StopAsync` results; Generic Host bridge is the normal caller |
+| `IHoardLifecycle` resolved from built DI | Read-only snapshot, cancellation-aware `AssessReadinessAsync`, shared `StartAsync` / module-only `StopAsync` results; Generic Host bridge is the normal caller |
 
 Acquire the composition with `await using`, then call the supervised build
 extension instead of bare `builder.Build()`. The extension verifies builder/
@@ -130,15 +131,23 @@ safely; pending build usage prevents concurrent unsafe cleanup/disposal.
 Compose registers the single framework bridge and shared lease as an externally
 owned DI instance before build. The lease alone owns application/root disposal;
 container disposal must not recursively own the lease. Start/stop the returned
-app explicitly through its normal host APIs and retain the lease until stop.
-Do not independently call app disposal or `RunAsync` (which may dispose the
-host) around this ownership boundary. Lease disposal first coordinates stop,
-then disposes the app/root only when admitted requests, workers, build and
+app with normal `StartAsync` and the explicit `StopHoardApplicationAsync(lease)`
+wrapper, retaining the lease until stop. The wrapper invokes normal framework
+stop exactly once. Do not independently call bare app `StopAsync`, app disposal
+or `RunAsync` around this ownership boundary: notification-token cancellation
+does not prove framework stop and its synchronous callbacks have finished.
+Lease disposal shares module stop and actual framework stop, then disposes
+the app/root only when admitted requests, workers, build and
 activation/cleanup callbacks are quiescent, including StopAsync tasks whose
 coordination waits timed out. If work remains, report root disposal
 NotAttemptedUnsafe rather than destroying resources still in use. A disposer
 that itself stalls is supervised and reported incomplete; no forced termination
 is claimed.
+The module-only immutable stop result reports `NotAttemptedOwnerPending` when
+root disposal still belongs to the external owner; it is not complete root
+release. `lease.StopResult` is the separate final immutable outcome after
+disposal. Incomplete lease disposal throws sanitized `HoardLifecycleException`
+while retaining this result; repeated concurrent disposal shares one operation.
 Observe late cleanup completion/fault without raw payloads; after the shared
 stop result is returned, do not rewrite its outcomes, retry cleanup, or start
 deferred dependency/root disposal.

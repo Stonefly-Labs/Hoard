@@ -1,7 +1,7 @@
 # F-02 Composition and Lifecycle Model
 
-**Status**: Proposed in-memory models; not implemented APIs or a persistence
-schema. Existing [F-01 shapes](../001-provider-contracts/data-model.md) are
+**Status**: Implemented in-memory models, not a persistence schema.
+Existing [F-01 shapes](../001-provider-contracts/data-model.md) are
 unchanged. Public Hosting types use immutable records/collections where they
 describe snapshots; mutable execution bookkeeping stays internal.
 
@@ -185,6 +185,11 @@ UnsafePendingCallback. Cleanup completed does not mean persistent changes
 rolled back. `Stopped` is a terminal coordination state, not a claim of
 resource release if any record is incomplete.
 In particular, TimedOut records bounded waiting, not StopAsync quiescence.
-Root disposal has a separate Completed, Failed, TimedOut,
+Root disposal has a separate Completed, Failed, TimedOut, NotAttemptedOwnerPending,
 NotAttemptedBudgetExhausted or NotAttemptedUnsafe outcome. Unsafe activity
 records include only the safe kind and owner IDs, never request URLs/payloads.
+Module-only stop reports NotAttemptedOwnerPending until safe external-owner
+disposal. The lease's final immutable StopResult is separate; root release
+waits for the shared actual framework-stop task, not its notification token.
+Use StopHoardApplicationAsync with the lease rather than bare application stop
+or disposal. Concurrent calls share the same framework stop and root disposer.

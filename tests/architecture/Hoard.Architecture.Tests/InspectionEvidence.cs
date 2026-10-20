@@ -3,7 +3,8 @@ using Mono.Cecil;
 
 namespace Hoard.Architecture.Tests;
 
-internal sealed record InspectionNode(string Id, BoundaryOwnership Boundary, string Assembly, string Identity);
+internal sealed record InspectionNode(string Id, BoundaryOwnership Boundary, string Assembly, string Identity,
+    bool IsFramework = false);
 internal sealed record DependencyEdge(string Source, string Target, string Kind, string Location);
 internal sealed record ArchitectureViolation(string RuleId, string Source, string Target, string Location, string Path);
 internal sealed class InspectionException(string message) : Exception($"INSPECTION: {message}");
@@ -75,10 +76,13 @@ internal sealed class InspectionEvidence : IDisposable
                 var package = reference.TryGetProperty("NuGetPackageId", out var p) ? p.GetString() : null;
                 if (framework is "Microsoft.NETCore.App" or "Microsoft.AspNetCore.App"
                     && package == $"{framework}.Ref"
-                    && assets.RootElement.GetProperty("project").GetProperty("frameworks").GetProperty("net10.0")
-                        .GetProperty("frameworkReferences").TryGetProperty(framework, out _))
+                    && (assets.RootElement.GetProperty("project").GetProperty("frameworks").GetProperty("net10.0")
+                        .GetProperty("frameworkReferences").TryGetProperty(framework, out _)
+                        || assets.RootElement.GetProperty("targets").GetProperty("net10.0").EnumerateObject().Any(library =>
+                            library.Value.TryGetProperty("frameworkReferences", out var transitive)
+                            && transitive.EnumerateArray().Any(item => item.GetString() == framework))))
                 {
-                    Add(name, framework == "Microsoft.NETCore.App" ? BoundaryOwnership.Bcl : BoundaryOwnership.Http, file);
+                    Add(name, framework == "Microsoft.NETCore.App" ? BoundaryOwnership.Bcl : BoundaryOwnership.Http, file, true);
                 }
                 else if (package is not null && ownership.TryGetValue(package, out var owner))
                 {
@@ -120,7 +124,7 @@ internal sealed class InspectionEvidence : IDisposable
         }
     }
 
-    private void Add(string id, BoundaryOwnership boundary, string path)
+    private void Add(string id, BoundaryOwnership boundary, string path, bool isFramework = false)
     {
         if (!File.Exists(path))
         {
@@ -147,7 +151,7 @@ internal sealed class InspectionEvidence : IDisposable
             assembly.Dispose();
             throw new InspectionException($"Duplicate assembly ownership: {name}.");
         }
-        Nodes.Add(id, new(id, boundary, path, assembly.Name.FullName));
+        Nodes.Add(id, new(id, boundary, path, assembly.Name.FullName, isFramework));
         Assemblies.Add(id, assembly);
     }
 

@@ -1,6 +1,7 @@
 # F-02 Lifecycle, Route and Admission Contract
 
-**Status**: Planned operational behavior, not implemented evidence.
+**Status**: Implemented fixture-only behavior; [measured evidence](../plan.md#implementation-evidence)
+is separate from the acceptance obligations below.
 Inputs and states are defined in [data-model.md](../data-model.md);
 library entry points are in [public-api.md](public-api.md).
 
@@ -126,7 +127,7 @@ necessarily quiescent.
 Only entered modules need cleanup; a failed inert constructor has no returned
 adapter, and must release its own pre-return allocations.
 
-Each adapter's StopAsync is attempted at most once with a linked cancellation
+Each adapter's StopAsync is attempted at most once with a deadline-governed cancellation
 token and the smaller of its cleanup sub-budget/remaining overall stop time.
 Record Completed, Failed or TimedOut accurately; continue to other eligible
 adapters after an error. If the overall deadline expires, explicitly record
@@ -158,7 +159,12 @@ through safe categories, with no raw payload. No lifecycle instance is reused.
 DI-owned services retain DI disposal ownership; adapters must not dispose them
 twice. Adapter-owned operational resources are tracked and released by its stop
 callback. The composition lease owns the built application and invokes root
-host/provider disposal only after module cleanup and global quiescence. If any
+host/provider disposal only after module cleanup, global quiescence and actual
+framework-stop task completion (including ApplicationStopped notifications).
+Use `app.StopHoardApplicationAsync(lease)`; it shares one normal framework stop
+with lease disposal. Bare app StopAsync/RunAsync/independent disposal bypasses
+this ownership contract and is unsupported. A canceled notification token is
+not proof its callbacks or framework stop have returned. If any
 request, worker, build or activation remains active, record root disposal
 NotAttemptedUnsafe; this also applies to any still-executing StopAsync, even
 after its wait was recorded TimedOut. This retains resources rather than
@@ -166,6 +172,13 @@ disposing them underneath in-flight work, and requires process-level recovery
 if it cannot quiesce.
 Supervise eligible root disposal with remaining shutdown time; a timeout is
 explicitly incomplete, not guaranteed termination of arbitrary disposal code.
+
+`IHoardLifecycle.StopAsync` returns immutable module coordination results, with
+root `NotAttemptedOwnerPending` when safe root disposal still belongs to the
+external lease. Only the lease's separate final `StopResult` reports its actual
+root outcome. Incomplete lease disposal throws sanitized `HoardLifecycleException`
+without losing the result. Root disposal failure/stall and framework-stop
+failure/stall are supervised under the same original shutdown deadline.
 
 After the shared stop result is returned, observe late cleanup completion/fault
 through safe categories only. Do not rewrite the returned TimedOut/unsafe
@@ -185,6 +198,8 @@ incomplete terminal lifecycle retains the documented process-recovery boundary.
 
 Configuration must supply positive finite durations; no infinite sentinel or
 zero success path. Inject `TimeProvider` for deadline calculations/testing.
+Long durations are split into supported timer slices without expanding either
+deadline or swallowing a supervised operation's own TimeoutException.
 Startup includes time between composition, host build and bridge start; a caller
 that pauses too long must receive an expired-start result rather than a fresh
 budget. Host integration must supervise host build and synchronous composition

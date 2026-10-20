@@ -93,16 +93,22 @@ internal static class DependencyGraphInspector
                     {
                         Edge(evidence, source, dependency, "packed nuspec", packagePath);
                     }
+                    var packedFrameworks = metadata.Descendants().Where(e => e.Name.LocalName == "frameworkReference")
+                        .Select(e => e.Attribute("name")!.Value).Distinct().Order().ToArray();
+                    var resolvedFrameworks = library.Value.TryGetProperty("frameworkReferences", out var frameworks)
+                        ? frameworks.EnumerateArray().Select(item => item.GetString()!).Order().ToArray() : [];
+                    if (!packedFrameworks.SequenceEqual(resolvedFrameworks))
+                    { throw new InspectionException($"Packed/resolved framework disagreement: {source}."); }
                 }
             }
         }
-        foreach (var pair in evidence.Assemblies.Where(a =>
-            evidence.Nodes[a.Key].Boundary is not (BoundaryOwnership.Bcl or BoundaryOwnership.Http)))
+        foreach (var pair in evidence.Assemblies.Where(a => !evidence.Nodes[a.Key].IsFramework))
         {
             foreach (var reference in pair.Value.MainModule.AssemblyReferences)
             {
                 if (!evidence.AssemblyOwners.TryGetValue(reference.Name, out var owner)
-                    || evidence.Nodes[owner].Identity != reference.FullName)
+                    || (evidence.Nodes[owner].Identity != reference.FullName
+                        && !FrameworkCompatible(evidence.Nodes[owner], reference, evidence.Assemblies[owner].Name)))
                 {
                     throw new InspectionException($"Unresolved compiled reference: {pair.Key} -> {reference.FullName}.");
                 }
@@ -110,6 +116,12 @@ internal static class DependencyGraphInspector
             }
         }
     }
+
+    internal static bool FrameworkCompatible(InspectionNode node, Mono.Cecil.AssemblyNameReference requested,
+        Mono.Cecil.AssemblyNameReference resolved) =>
+        node.IsFramework && node.Boundary is BoundaryOwnership.Bcl or BoundaryOwnership.Http && requested.Name == resolved.Name
+        && requested.Culture == resolved.Culture && requested.Version <= resolved.Version
+        && requested.PublicKeyToken.SequenceEqual(resolved.PublicKeyToken);
 
     private static void Require(InspectionEvidence evidence, string id)
     {
@@ -132,7 +144,7 @@ internal static class DependencyGraphInspector
     internal static List<ArchitectureViolation> Inspect(InspectionEvidence evidence)
     {
         var result = Cycles(evidence.Edges);
-        foreach (var source in evidence.Nodes.Values.Where(n => n.Boundary is not (BoundaryOwnership.Bcl or BoundaryOwnership.Http)))
+        foreach (var source in evidence.Nodes.Values.Where(n => !n.IsFramework))
         {
             var queue = new Queue<(string Id, string[] Path, bool ViaHosting)>();
             queue.Enqueue((source.Id, [source.Id], false));
@@ -143,7 +155,7 @@ internal static class DependencyGraphInspector
                 foreach (var edge in evidence.Edges.Where(e => e.Source == current.Id))
                 {
                     var target = evidence.Nodes[edge.Target];
-                    var viaHosting = current.ViaHosting || (source.Boundary == BoundaryOwnership.Identity
+                    var viaHosting = current.ViaHosting || (source.Boundary is BoundaryOwnership.Identity or BoundaryOwnership.Protocol or BoundaryOwnership.Application
                         && current.Path.Length == 1 && target.Boundary == BoundaryOwnership.Hosting);
                     // A permitted Hosting path must not hide another route to the same dependency.
                     if (!(viaHosting ? seenViaHosting : seen).Add(edge.Target))
@@ -163,7 +175,7 @@ internal static class DependencyGraphInspector
         return result;
     }
 
-    private static string? Rule(BoundaryOwnership source, BoundaryOwnership target, int length, bool viaHosting)
+    internal static string? Rule(BoundaryOwnership source, BoundaryOwnership target, int length, bool viaHosting)
     {
         if (target == BoundaryOwnership.Bcl)
         {
@@ -176,13 +188,14 @@ internal static class DependencyGraphInspector
             BoundaryOwnership.Protocol or BoundaryOwnership.Metadata or BoundaryOwnership.Artifact or BoundaryOwnership.Identity
                 when target is BoundaryOwnership.Protocol or BoundaryOwnership.Metadata or BoundaryOwnership.Artifact or BoundaryOwnership.Identity => "ARCH-005",
             BoundaryOwnership.Application or BoundaryOwnership.Protocol
-                when target is not (BoundaryOwnership.Abstractions or BoundaryOwnership.Core or BoundaryOwnership.Hosting)
+                when target is not (BoundaryOwnership.Abstractions or BoundaryOwnership.Core or BoundaryOwnership.Hosting or BoundaryOwnership.Http)
+                    && !(target == BoundaryOwnership.Versioning && viaHosting)
                     && !(target == BoundaryOwnership.Di && length > 2) => "ARCH-008",
-            BoundaryOwnership.Hosting when target is not (BoundaryOwnership.Abstractions or BoundaryOwnership.Core or BoundaryOwnership.Di) => "ARCH-008",
+            BoundaryOwnership.Hosting when target is not (BoundaryOwnership.Abstractions or BoundaryOwnership.Core or BoundaryOwnership.Di or BoundaryOwnership.Http or BoundaryOwnership.Versioning) => "ARCH-008",
             BoundaryOwnership.Metadata or BoundaryOwnership.Artifact
                 when target is not (BoundaryOwnership.Abstractions or BoundaryOwnership.Sdk) => "ARCH-008",
-            BoundaryOwnership.Identity when target is not (BoundaryOwnership.Abstractions or BoundaryOwnership.Hosting or BoundaryOwnership.Di or BoundaryOwnership.Sdk)
-                && !(target == BoundaryOwnership.Core && viaHosting) => "ARCH-008",
+            BoundaryOwnership.Identity when target is not (BoundaryOwnership.Abstractions or BoundaryOwnership.Hosting or BoundaryOwnership.Di or BoundaryOwnership.Sdk or BoundaryOwnership.Http)
+                && !(target is BoundaryOwnership.Core or BoundaryOwnership.Versioning && viaHosting) => "ARCH-008",
             _ => null
         };
     }

@@ -14,6 +14,7 @@ internal enum BoundaryOwnership
     Identity,
     Host,
     Di,
+    Versioning,
     Sdk,
     Helper
 }

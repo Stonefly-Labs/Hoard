@@ -1,8 +1,8 @@
 # F-02 Lifecycle Validation Quickstart
 
-**Status**: Proposed implementation acceptance guide. F-02 runtime APIs,
-fixtures, lifecycle example and lifecycle validation script do not exist yet.
-Do not run future commands as though planning delivered them.
+**Status**: Implemented fixture-only acceptance guide. Measured results are in
+[the plan](plan.md#implementation-evidence); no operational provider/cache or
+published package is implied.
 
 ## Current Prerequisites and Checks
 
@@ -14,42 +14,45 @@ python3 -m unittest discover -s tests/tooling -v
 bash scripts/validate-foundation.sh
 ```
 
-The first tests repository tools; the second builds/packs/tests the F-01
-foundation and never starts a server. Neither proves F-02 lifecycle behavior.
+The first tests repository tools; the second retains F-01 build/package proofs
+and runs current solution tests, including source-level TestServer lifecycle
+regressions. It does not supply LC-38's separate lifecycle manifest, package-only
+journeys or retained-old-binary proof, so it is not full F-02 acceptance.
 Do not run standalone foundation tests without the prepared evidence manifest.
 No Azure account, Node runtime, database, identity provider or infrastructure
 application is needed.
 
-## Future Implementation Validation Command
-
-After the implementation stage adds and documents the script:
+## Lifecycle Validation Command
 
 ```bash
-# FUTURE: not present at planning time
 bash scripts/validate-lifecycle.sh
 ```
 
-The default script must restore/build locked, verify SDK formatting/analyzers,
-prepare independently packed lifecycle fixtures/platform packages, compile
+The default script restores/builds locked, verifies SDK formatting/analyzers,
+prepares independently packed lifecycle fixtures/platform packages, compiles
 source/binary registration compatibility consumers, run composition/unit/
-architecture tests with prepared evidence, and execute the fixture-only
+architecture tests with prepared evidence, and executes the fixture-only
 package host journeys below. Use bounded subprocesses and a private temporary
 directory; remove that directory on exit. No test recursively starts the
 orchestrator or silently skips missing evidence.
 
-The script must document a deliberate `--update-locks` path for initial/new
-dependency locks, followed by an independent default locked replay. Keep tracked
+For intentional dependency/payload changes, run
+`bash scripts/validate-lifecycle.sh --update-locks`, review the changed tracked
+locks, then run the default command independently. Keep tracked
 locks (including standalone packed hosts/consumers), reviewed framework/versioning
 dependencies and package provenance. It must not modify F-01's compile-only
 example/providers or call infrastructure/package-publication operations.
 
-Expected outcomes are [LC-01..LC-40](contracts/acceptance.md), not a particular
-test count selected during planning. Capture exact commands/results and test
-counts at implementation; do not pre-fill successful output.
+`--filter FILTER`, `--packages-only` and `--journeys-only` are explicitly partial,
+never full LC-01..40 acceptance. Every subprocess has a ten-minute backstop;
+ordinary tests use virtual time/barriers with five-second scheduler backstops.
+Hosting locks internal NuGet.Versioning 7.9.0 (Apache-2.0); test-only TestHost
+10.0.13 (MIT) does not upgrade the installed runtime. Hosting consumers need
+the ASP.NET Core shared framework, even non-web registration consumers.
 
 ## Journey A: Bundled Choices Without Rebuild
 
-Use the planned `examples/LifecycleHost` package-only fixture harness. It includes
+Use the [package-only fixture harness](../../examples/LifecycleHost/README.md). It includes
 Protocol.One, Protocol.Two, Metadata, Artifact.One and optional Identity, each
 with explicit registrations and lifecycle adapters. Artifact.Two is absent from
 baseline references/registrations and reserved for Journey B's custom rebuild.
@@ -61,9 +64,10 @@ configuration.
    protocol choice selected. Validate before construction, compose services,
    acquire the lifecycle lease with `await using`, use the supervised
    `BuildHoardApplicationAsync` boundary, map routes, then explicitly start/stop
-   through normal host APIs and the coordinator bridge. The lease alone owns
-   application disposal; do not use bare Build, independent app disposal or
-   a RunAsync helper that bypasses that boundary. Every selected module must
+   through normal StartAsync and `StopHoardApplicationAsync(lease)`, sharing
+   framework stop with lease disposal. The lease alone owns application
+   disposal; do not use bare Build/StopAsync, independent app disposal or a
+   RunAsync helper that bypasses that boundary. Every selected module must
    become ready.
 2. Send a request through the in-process test pipeline to the enabled test
    route; observe one response and worker admission only after complete ready.
@@ -93,7 +97,7 @@ reference. The old running lifecycle cannot acquire the new package via selectio
 or disk scanning. Missing package/registration/adapter is an actionable startup
 error, never an automatic download or fallback.
 
-Build and run this bounded fixture journey as part of future validation.
+The default command builds and runs this bounded fixture journey.
 It is not a community provider SDK, production artifact store or certification.
 
 ## Failure, Readiness and Shutdown Exercises
@@ -134,6 +138,34 @@ module cleanup caps. Tests use short explicit values or fake time; they do not
 wait minutes. Details and trusted-code limitations are in
 [lifecycle.md](contracts/lifecycle.md#budgets-and-non-cooperative-code).
 
+## Safe Diagnostic Catalogue
+
+Normal results expose RuleCode, safe ModuleId (or registration ordinal),
+Phase, bounded DependencyPath, fixed CorrectiveAction, CorrelationId and
+primary/cleanup classification. No provider exception, inner exception, secret
+option, URL or private path is copied. Output is bounded to 100 diagnostics and
+32 path IDs with explicit omitted counts; fixed action/message text is at most
+512 characters. See the provider guide for structural input limits.
+
+| Rule codes | Corrective action |
+| --- | --- |
+| MalformedRegistry, DuplicateModule, InvalidSelection, InvalidLifecycleAdapter | Correct explicit declaration/identity/selection/adapter structure and revalidate; never choose an override by registration order |
+| InvalidBudget | Supply positive finite durations; inner budgets do not expand outer time |
+| UnknownSelection, MissingLifecycleAdapter, MissingDependency | Include/register/associate the explicitly selected and required modules; no download or auto-enablement |
+| UnsupportedPlatform, UnsupportedDependency, UnsupportedCapability | Install compatible versions or explicitly correct the selected target/range/prerelease policy |
+| DependencyCycle, InvalidCardinality | Remove active cycle or choose exactly one authoritative metadata/artifact provider |
+| UnsupportedRouteShape, AmbiguousRoute, MissingEndpoint, MissingMapping | Use the supported route language, declared responsibilities and supervised map boundary before start |
+| IndependentWorker | Use the one admitted RunAsync callback, not independent hosted services |
+| InvalidReadiness, NotReady | Correct explicit status and required declared observations; enabled does not mean ready |
+| StaleComposition, Cancelled, TerminalLifecycle | Create a fresh validated lifecycle; do not mutate/reactivate a failed or stopped instance |
+| PhaseFailure, WorkerFailure | Investigate the safe owner/phase/correlation and explicitly restart a coherent composition; no automatic retry |
+| CleanupFailure, HostStopFailure, RootDisposalFailure | Inspect separate module/root outcomes and retained ownership; cleanup does not imply rollback |
+| Timeout, UnsafePendingCallback, LateCallbackFailure | Inspect trusted cooperation; incomplete retained resources may require process termination/restart |
+
+Returned stop outcomes never change after late completion/fault. A safely
+observed late callback failure may appear in a **new** snapshot, not rewrite an
+earlier immutable stop result or trigger deferred cleanup.
+
 ## Explicit Recovery and Documentation
 
 An invalid replacement start must fail, not silently restore its predecessor.
@@ -143,10 +175,19 @@ releases resources; no schema/data rollback or crash cleanup is promised.
 Non-cooperative trusted code may require process termination; bounded coordinator
 waiting cannot forcibly stop it or prove all resources released.
 
-At implementation, update README, development/provider guides and the new
-example with actual APIs/commands, framework requirements, phase/resource
-ownership, safe diagnostics, budgets, readiness/liveness and restart semantics.
-Retain F-01 example's compile-only label. Document unaffected product diagrams,
+README, development/provider guides and the example document actual APIs,
+framework requirements, phase/resource ownership, diagnostics, budgets and
+restart semantics. `IHoardLifecycle.StopAsync` reports module coordination,
+with `NotAttemptedOwnerPending` until eligible external-owner root disposal.
+Inspect the separate final `lease.StopResult`; incomplete disposal throws a
+sanitized lifecycle exception, without retrying cleanup or rewriting outcomes.
+Pending cancellation callbacks and their linked-token deregistration are also
+supervised activity, not synchronous unbounded waits.
+
+The [provider guide](../../docs/PROVIDERS.md#opt-in-lifecycle) lists diagnostic
+codes/actions, bounded structural/output fields and trust limits. Normal
+diagnostics never carry provider exception/inner text, options or URLs.
+F-01 remains compile-only. The implementation evidence records unaffected product diagrams,
 configuration, management/UI, storage, protocol, IaC and release boundaries
 explicitly. No new management HTTP surface, auth permission, live service,
 deployment, publication, or persistent-data migration is required by this guide.

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "implement",
+  "stage": "converge",
   "status": "ready",
   "branch": "feature/002-module-lifecycle",
   "active": {
@@ -149,6 +149,13 @@
       "branch": "feature/002-module-lifecycle",
       "at": "2026-10-20T21:13:05.795119+00:00",
       "evidence": "Installed speckit-analyze read-only report: https://github.com/Stonefly-Labs/Hoard/pull/6#issuecomment-6301596408. Zero actionable findings; 22 FR + 7 buildable SC mapped to implementation/proof; 72 tasks mapped including shared prerequisites; complete acyclic graph, 40 LC cases, 20 scenarios, 12 edge cases and eight principles checked. Feature/F-01/checklist/product/tooling/dependency bytes unchanged; 17 tooling tests and diff check passed. README/development guide updated. Next implement remains gated on reviewer approval of 40 unchecked custom criteria or explicit reviewer authorization; no implementation approval or runtime proof."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-02",
+      "branch": "feature/002-module-lifecycle",
+      "at": "2026-10-20T22:49:25.701389+00:00",
+      "evidence": "F-02 implement completed via installed speckit-implement; all T001..T072 checked. Hosting-only opt-in metadata validation, deterministic selected lifecycle, supervised service/build/route/init/readiness, request/worker admission and bounded reverse cleanup delivered; F-01 APIs and Abstractions/Core/Application source unchanged. Actual architecture reviews identified ownership, route supervision, cancellation, long-timer and framework-provenance gaps; corrected with failing runtime regressions and focused proofs, documented in plan.md. Explicit StopHoardApplicationAsync shares actual framework stop with sole lease root disposal; immutable module StopAsync distinguishes NotAttemptedOwnerPending, frozen unsafe outcomes never retry or rewrite. Final lifecycle update-locks plus independent default passed 126 source tests, 9 boundary proofs, 7 package-only journeys, six independent fixtures, retained F-01 binary/new-source/non-web framework proof. Foundation affected-lock refresh plus independent default passed 220 tests (42 foundation, 49 architecture, 129 composition), zero failed/skipped; original eight scans retained. Formatting/analyzers passed; 22 tooling tests, 171 local links and git diff --check passed. README/affected guides/examples/contracts/evidence updated with explicit unaffected-document/support limits; reviewer-owned checklists unchanged. No product provider/cache/UI/configuration, publication, infrastructure action, release or merge. Next stage converge via separate invocation; no blockers."
     }
   ]
 }

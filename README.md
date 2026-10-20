@@ -21,8 +21,8 @@ dependency management into another full-time job.
 
 > [!IMPORTANT]
 > **Foundation only.** This repository currently contains product/design documents,
-> development workflows, repository tooling, compile-only .NET provider contracts
-> and composition proofs, and an operator-run Azure identity bootstrap.
+> development workflows, repository tooling, .NET provider contracts and a tested
+> fixture-only module lifecycle, plus an operator-run Azure identity bootstrap.
 > There is no runnable cache, working provider, UI, container, or published package.
 > Everything in the product overview below describes the planned experience.
 
@@ -75,8 +75,11 @@ git switch -c chore/your-change
 # Standard-library tests for the repository tools; no application build.
 python3 -m unittest discover -s tests/tooling -v
 
-# .NET 10 compile/package/boundary acceptance; never starts a server.
+# .NET 10 foundation/solution acceptance; old package examples stay compile-only.
 bash scripts/validate-foundation.sh
+
+# Fixture-only lifecycle, in-process HTTP, package/restart and compatibility proof.
+bash scripts/validate-lifecycle.sh
 ```
 
 For repository work, use Git, GitHub CLI, Python 3.11+, and a stable .NET 10 SDK
@@ -84,7 +87,9 @@ matching `global.json`. The foundation check restores pinned dependencies from
 nuget.org and builds temporary local packages; it requires network access.
 OpenTofu and Azure CLI
 are needed only when working on the [Azure bootstrap](infra/bootstrap/README.md).
-There is no runnable application or Node project yet. See the
+There is no runnable cache or Node project yet. The lifecycle harness uses only
+in-memory TestServer, never a listening product service. Hosting consumers now
+require the ASP.NET Core shared framework. See the
 [foundation quickstart](specs/001-provider-contracts/quickstart.md) and
 [provider author guide](docs/PROVIDERS.md) for the exact supported scope.
 
@@ -107,6 +112,7 @@ specs/               Reviewable feature specifications; not delivered capabiliti
 src/                 Four platform library boundaries; production Host/providers reserved
 tests/               Tooling, foundation unit/architecture/composition checks, fixtures
 examples/CustomHost/ Package-only compile proof; never starts a host
+examples/LifecycleHost/ Package-only lifecycle fixtures; in-process TestServer only
 ```
 
 ## 🤝 Build with us
@@ -227,13 +233,25 @@ pending StopAsync retention and consistent baseline/custom recipes. Re-evaluatio
 satisfies all 40/40 custom criteria without waivers. Fresh read-only analysis
 and a bounded architecture review found no actionable findings; runtime proof
 remains outstanding.
-No lifecycle runtime, runnable product host, real provider, discovery API or UI
-is introduced by specification, planning, checklist, task generation or analysis.
-The approved follow-up changes written requirements/design/proof obligations,
-not runtime code or the driver checkpoint. The next scheduled stage remains
-`implement` through a separate `hoard-speckit` invocation, with the checklist
-gate now satisfied. This follow-up does not begin implementation, mark any
-implementation task complete or provide runtime evidence.
+Those specification/design/review stages introduced no lifecycle runtime.
+The subsequent authorized implementation adds opt-in metadata validation,
+ordinal dependency ordering, supervised composition/build/initialization,
+owned route checks, readiness, worker/request admission and bounded cleanup in
+Hosting. Old `AddHoard`/`AddModule` calls remain inert. Six independent fixture
+packages and the [lifecycle example](examples/LifecycleHost/README.md) exercise
+bundled protocol changes, custom artifact addition, explicit recovery and
+retained-old-binary registration compatibility.
+
+The external composition lease alone stops the framework host and disposes its
+root, after module cleanup and quiescence. `IHoardLifecycle.StopAsync` reports
+module coordination; `NotAttemptedOwnerPending` does not claim root release.
+Inspect the lease's final `StopResult`. A timeout is bounded waiting, not forced
+termination: outstanding work retains resources and can require process exit.
+See the [implementation evidence](specs/002-module-lifecycle/plan.md#implementation-evidence)
+for exact acceptance results and review limits. Fixtures prove neither real
+providers/native clients nor TCP/TLS/proxy drain. Configuration/secrets,
+management discovery, caching, conformance, a curated product host and UI remain
+later work. Convergence and finalization are separate driver stages.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

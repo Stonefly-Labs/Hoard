@@ -4,8 +4,10 @@
 **Spec**: [spec.md](spec.md) | **Backlog**: F-02
 
 **Input**: `specs/002-module-lifecycle/spec.md`, including its no-question
-clarification review. This is a proposed implementation design, not delivered
-lifecycle behavior. The existing F-01 libraries remain registration-only.
+clarification review. Historical planning decisions below are retained; the
+separately authorized implementation and its measured evidence are recorded
+under [Implementation evidence](#implementation-evidence). Old F-01 registration
+calls remain inert; lifecycle is explicitly opt-in.
 
 ## Summary
 
@@ -249,3 +251,188 @@ and a restricted owned-route API are necessary to keep DI/HTTP dependencies
 out of persistence/storage while enforcing disabled isolation and startup
 safety. Do not add a plugin bus, generic orchestration framework, distributed
 lifecycle, general route theorem prover, or configuration subsystem.
+
+## Implementation evidence
+
+### Delivered boundary and necessary adjustments
+
+Production behavior is confined to Hosting's Composition/Lifecycle/Routing
+directories. Abstractions/Core/Application and F-01 public registration source,
+markers and descriptors are unchanged. There is no product executable, real
+provider, configuration/secret parser, operational cache/security mechanism,
+management HTTP endpoint or UI.
+
+One coordinator owns initialization, readiness assessment and worker supervision.
+T025/T041/T042/T053's proposed separate HoardInitializationRunner,
+HoardReadinessAssessor and HoardWorkerSupervisor files were deliberately
+consolidated into HoardLifecycleCoordinator rather than adding pass-through
+classes or separate state/locks. HoardReadinessEvaluator, ActivationLedger,
+HoardActivityTracker, LifecycleDeadline and HoardCleanupPlanner retain their
+focused responsibilities. Tests exercise behavior, not hypothetical file names.
+
+The implemented ownership boundary corrects a planning ambiguity:
+IHoardLifecycle.StopAsync shares immutable **module-only** coordination.
+NotAttemptedOwnerPending explicitly distinguishes eligible root disposal that
+still belongs to the external composition lease. Only lease disposal owns
+framework-stop completion and root disposal; its final StopResult is separate
+and remains available when incomplete disposal throws a sanitized exception.
+Repeated/concurrent disposal shares one task. No unsafe frozen result is
+retried or changed because a held callback finishes later.
+
+Use normal app.StartAsync, then StopHoardApplicationAsync(lease), then lease
+disposal. This additive stop wrapper shares the **actual** normal framework
+StopAsync task, including synchronous ApplicationStopped notifications, with
+the owner. Bare application StopAsync/RunAsync/independent disposal is outside
+the supported ownership boundary. A canceled notification token does not prove
+notification callbacks or framework stop finished. This supersedes planning's
+unqualified normal-stop wording without changing F-01 APIs.
+
+Startup/activation/readiness defaults remain 120s/30s/5s; shutdown/drain/cleanup
+30s/10s/5s. The shutdown deadline begins at the stop latch. All positive finite
+TimeSpan values are accepted, including durations beyond a .NET timer's maximum:
+bounded timer slices preserve both deadlines and propagate a callback's own
+TimeoutException. Timeout is bounded coordination, never forced termination.
+Cancellation callbacks and linked-token deregistration remain tracked activity.
+Readiness source disposal waits for its probe tasks, off the evaluator's return
+path; cancellation cannot be lost by unregistering a pending probe too early.
+
+Hosting now has an ASP.NET Core framework reference and internal
+NuGet.Versioning 7.9.0; test-only TestHost is stable 10.0.13. Licenses/advisories
+and the removed redundant DI package are recorded in research.md. SDK and
+unrelated dependency versions are unchanged. Even non-web registration-only
+Hosting consumers now need ASP.NET Core's shared framework: a deployment
+prerequisite change, not a registration source/binary API break.
+
+### Architecture review and corrections
+
+Actual implementation review by custom `hoard-architecture-review`
+`cbe146d7-63db-4227-b2bb-0a38e8aa411e` identified three HIGH and one MEDIUM
+issues: root disposal overlapping framework shutdown, unsupervised/locked route
+finalization, early handler-error lease release, and ignored mid-operation
+compose/build/map cancellation. Corrections separate root ownership, supervise
+route finalization/revalidation outside the lifecycle lock, retain request
+leases through response completion, and latch/recheck caller cancellation.
+LifecycleOwnershipTests, LifecycleCleanupTests and WorkerAdmissionTests exercise
+these paths.
+
+A bounded corrective review by `hoard-architecture-review`
+(`lifecycle-correction-review`) identified two HIGH and two MEDIUM issues:
+linked-CTS disposal could block readiness return; ApplicationStopped was not a
+framework-stop completion barrier; long timer-slice waits could swallow the
+operation's own timeout; and external HTTP packages inherited framework-only
+identity exemptions. All four were corrected with focused regressions:
+barrier-held cancellation/deregistration returns boundedly; concurrent stop/
+disposal retains root through stopped notifications; long-budget faults
+propagate without spinning; and InspectionNode.IsFramework records verified
+reference-pack provenance independently of architectural ownership.
+
+Readiness-stop regression additionally exposed lost cancellation when linked
+sources were disposed before a still-running probe completed. Disposal now
+waits for probe completion off-path, while cancellation is explicitly requested
+and tracked. Virtual-time regression coordination now waits for the intended
+timer's next delay, not an unrelated startup timer. These were actual failing
+runtime cases before correction, not inferred success from cancellation delivery.
+Reviewers ran no commands/tests and did not approve custom checklist markers;
+the final corrections are substantiated by the automated regressions below,
+not claimed as a new independent human approval.
+
+Graph inspection retains all ARCH-001..008 rules, F-01's exact eight scan IDs,
+and the permitted Identity -> Hosting -> Core path separately from forbidden
+direct/alternative paths. Framework roll-forward requires verified known
+reference-pack provenance, identical name/culture/key, and a nondecreasing
+version. External packages, including TestHost (Sdk ownership), retain strict
+identities and compiled-reference inspection. Packed framework references must
+equal resolved references. Public HTTP/Hosting types are allowed only in
+approved families; NuGet.Versioning never becomes a public contract.
+
+### Acceptance traceability
+
+The existing acceptance matrix maps all 22 FRs, seven SCs and 20 story scenarios
+to LC-01..40; the following table identifies the executed implementation or
+explicit documentation proof. The 12 specification edge cases correspond to
+the registry, platform, missing/optional dependency, cardinality, route,
+partial-phase, selected failure, stop-race, non-cooperation, diagnostic and
+duplicate-registration rows below. No requirement is implemented by a second
+configuration/selection path.
+
+| Cases | Concrete proof |
+| --- | --- |
+| LC-01 | SelectedStartupTests reverses real registration records, records monotonic actual initialization/cleanup events, checks completed prerequisites and the same ordinal order |
+| LC-02..05, LC-14 | RegistryValidationTests and LifecycleContractTests reject malformed/unknown/duplicate/orphan/missing inputs before construction; valid disabled incompatible registration remains inert |
+| LC-06..12 | RuntimeCompatibilityTests and SelectionGraphTests cover both platform axes, interval/prerelease policy, missing/disabled required and optional targets, active cycles, target-specific capabilities and exact cardinality with permitted multiple protocols/identities |
+| LC-13 | CompositionSnapshotTests, LifecycleRestartTests and package journeys reject stale/different builders and retain the original running selection |
+| LC-15..17 | EnabledDisabledLifecycleTests uses actual TestServer dispatch, including concurrent Generic Host startup: early 503, no worker, ready handler, disabled 404 and post-stop 503; package counters prove zero disabled connection attempts |
+| LC-18..19 | OwnedRouteTests covers parameter/case/slash/method/literal conflicts, missing/undeclared responsibilities, constraints/defaults/optional/complex/catch-all routes, custom sources/policies/order, unowned overlap and preserved fallback authorization |
+| LC-20..21, LC-27 | LifecyclePhaseFailureTests, SelectedStartupTests and LifecycleOwnershipTests cover constructor self-cleanup, services/map/init/readiness/build failure, each initialization position, partial adapters and no later work |
+| LC-22..23 | LifecycleConcurrencyTests, LifecycleDeadlineTests and LifecycleOwnershipTests cover stop during init/readiness, canceled waiters, build/finalization cancellation and virtual-time expiry, startup pause, aggregate deadline, no late application/publication |
+| LC-24..25 | LifecycleReadinessTests plus deadline/cancellation tests cover later loss/recovery, shared assessment, required/optional observations, unknown/duplicate/invalid/missing observations and blocked cancellation |
+| LC-26..31 | LifecycleCleanupTests/ConcurrencyTests/OwnershipTests/WorkerAdmissionTests cover request completion, worker/callback/build retention, reverse cleanup, A -> B plus independent C, fixed outer exhaustion, shared once-only operations, hosted-worker bypass, worker fault and root failure/stall |
+| LC-32..33 | Captured normal framework logs and safe diagnostic assertions are shared across registry/selection/route/phase/worker/root failures; LifecycleDiagnosticTests checks bounded action/path/list omission; held cleanup later faults safely without rewriting the returned result |
+| LC-34 | LifecycleInventoryTests and readiness/failure/cleanup snapshots distinguish IncludedByRegistration, disabled/enabled/phase/ready/stopped/incomplete state without inventory/support inference |
+| LC-35..37 | Package-only baseline/custom Program.cs executes seven nonempty self-checking journeys, bundled protocol selection with no intervening rebuild, absent-baseline Artifact.Two addition and explicit prior-set recovery |
+| LC-38 | LifecycleBoundaryTests requires ten exact actual platform/provider/baseline/custom/registration graph IDs; full foundation retains eight original scans, negative/permitted pairs and Identity path distinctions |
+| LC-39 | Isolated merged-F-01 package build, retained consumer DLL hash/run against new runtime, separate new-source compilation, non-web runtimeconfig and packed nuspec/framework/restore provenance |
+| LC-40 | README, DEVELOPMENT, PROVIDERS, quickstart and LifecycleHost guide document current APIs, budgets, diagnostics, ownership/recovery and fixture-only support limits |
+
+### Measured commands
+
+Initial missing tooling/contracts/validation/composition/route APIs produced
+intended red failures, then focused primitives (5), validator/startup (47), and
+HTTP/readiness/worker (21) tests passed. Subsequent corrective regressions
+exposed the concrete cancellation/deadline failures above before their fixes.
+An earlier focused run failed after foundation cleanup because its assets
+pointed into the deleted private cache; the focused runner now restores its
+project locked before --no-restore testing. Compile/import corrections and
+virtual timer-selection fixes were rerun rather than recorded as passing proof.
+Partial filters always label themselves partial, never full acceptance.
+
+| Command | Result |
+| --- | --- |
+| `dotnet restore Hoard.slnx --locked-mode -v quiet` | Passed; no source/test lock mutation |
+| `dotnet format Hoard.slnx --no-restore -v quiet` | Passed; SDK formatting applied, full acceptance verifies no changes |
+| `dotnet format whitespace tests/fixtures/lifecycle --folder -v quiet` | Passed |
+| `dotnet format whitespace examples/LifecycleHost --folder -v quiet` | Passed |
+| `bash scripts/validate-lifecycle.sh --update-locks` | Passed: 126 source tests, nine boundary proofs, seven package-only journeys; six independent fixture packages, retained old binary/new source/framework proof |
+| `bash scripts/validate-lifecycle.sh` | Passed independently with unchanged locks: 126 source tests, nine boundary proofs, seven package-only journeys; six independent packages and retained old binary verified |
+| `bash scripts/validate-foundation.sh --update-locks` | Passed: 220 .NET tests (42 foundation, 49 architecture, 129 composition), zero failed/skipped; affected F-01 consumer locks refreshed/replayed |
+| `bash scripts/validate-foundation.sh` | Passed independently: same 220 tests, zero failed/skipped, original eight real graph scans and compile-only package/host proofs retained |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed: 22 tests |
+| `git diff --check` | Passed before the implementation checkpoint |
+
+The final documentation audit passed 171 local file/anchor links and verified
+exactly T001..T072 checked, with no unchecked implementation task. The spec,
+all built-in/custom checklist bytes, F-01 artifacts and Abstractions/Core/
+Application sources remain unchanged; original fixture/example sources are
+preserved, apart from explicitly permitted affected locks.
+
+Local packs normalize unsigned archive envelope metadata and source paths using
+the existing foundation helper; package payload/source/nuspec bytes and hashes
+are not bypassed. Standalone package locks are tracked; source/project imports,
+stale/nonlocal packages, missing/empty/skipped evidence or failed/timed-out
+subprocesses fail explicitly. Private temporary directories are removed only
+through their resolved owner registry. No build output/feed/cache is committed.
+
+### Support and unaffected-document audit
+
+All fixtures retain Fixture provenance and non-production names. TestServer
+proves application-level routing/admission/drain only, not a TCP/TLS/proxy
+listener, production latency, native-client restore, real provider behavior,
+crash recovery or conformance certification. Disabled inclusion never means
+active integration/support. Bounded waits cannot kill trusted code; incomplete
+terminal lifecycles may require process termination. Cleanup is neither schema/
+data rollback nor automatic restoration of a prior configuration.
+
+Product charter/specification, baseline architecture diagrams, ADR-0001,
+constitution and master backlog are unaffected: this delivers their existing
+Hosting/provider directions without changing product scope, shared cache/
+security invariants, governance or dependency completion. F-01 fixture/example
+sources and compile-only README remain unchanged; only necessarily affected
+consumer locks were refreshed. LifecycleHost is separate and explicitly
+fixture-only. F-03 owns configuration/secrets/operator selection, F-04 discovery/
+UI, later features real protocol/store/identity/cache operations, conformance
+and native clients. IaC/release guides are unaffected: no plan/apply, permissions,
+deployment, package publication, tag, release or merge occurred.
+
+Requirements/custom checklist bytes remain reviewer-owned and unchanged.
+Implementation does not run convergence/finalization, ready or merge the draft
+PR, finish F-02's dependency checkpoint, or authorize a dependent feature.

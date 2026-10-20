@@ -1,6 +1,7 @@
-# F-02 Planned Acceptance and Traceability
+# F-02 Acceptance and Traceability
 
-**Status**: Proof obligations, not executed tests. Every fixture must use
+**Status**: Proof obligations with [implementation evidence](../plan.md#implementation-evidence).
+This matrix alone is not passing proof. Every fixture must use
 Fixture provenance and lifecycle-only wording; real NuGet/storage/identity,
 cache behavior, native clients and F-07 certification are outside these proofs.
 
@@ -140,7 +141,7 @@ scheduler tolerance; virtual-time tests prove deadline arithmetic exactly.
 
 ## Evidence Gates and Limits
 
-Use current existing checks plus the proposed lifecycle command in
+Use the existing foundation and implemented lifecycle commands in
 [quickstart.md](../quickstart.md). Introduced behavior needs regressions that
 fail without the behavior, not tests merely restating constants or declarations.
 No skipped assertion, missing packed input or empty test selection may yield

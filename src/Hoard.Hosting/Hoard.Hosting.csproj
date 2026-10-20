@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <IsPackable>true</IsPackable>
-    <Description>Explicit declaration and type registration, without activation or validation.</Description>
+    <Description>Explicit provider registration and opt-in validated module composition, lifecycle and HTTP admission.</Description>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../Hoard.Abstractions/Hoard.Abstractions.csproj" />
     <ProjectReference Include="../Hoard.Core/Hoard.Core.csproj" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="NuGet.Versioning" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 </Project>

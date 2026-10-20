@@ -4,8 +4,9 @@
 
 The bootstrap established contributor tools and reserved architecture boundaries.
 F-01 adds four .NET library projects, immutable provider declarations, explicit
-registration, and compile/package/boundary acceptance tooling. Core and
-Application remain empty boundaries: no caching engine, management endpoints,
+registration, and compile/package/boundary acceptance tooling. F-02 adds
+opt-in fixture-tested lifecycle in Hosting. Core and Application remain empty
+boundaries: no caching engine, management endpoints,
 working providers, curated executable, UI, product CI/CD, or deployment exists.
 Azure identity provisioning is a
 separate, explicitly authorized [operator action](../infra/bootstrap/README.md).
@@ -227,7 +228,10 @@ current APIs and limits. `bash scripts/validate-foundation.sh` restores/builds
 with locks, checks SDK formatting/analyzers, builds Core in isolation, packs
 four local platform libraries and five independent fixtures, compiles family
 consumers and both hosts, and executes architecture/compatibility/registration
-acceptance. The host is never run. Every subprocess has a ten-minute timeout.
+acceptance. The F-01 host is never run. Current solution tests also include
+in-process lifecycle regressions; the dedicated lifecycle graph/distribution/
+old-binary proof still requires validate-lifecycle.sh. No listener starts.
+Every subprocess has a ten-minute timeout.
 A Python standard-library helper owns copying, hashes, metadata manifests, and
 explicit subprocess errors; Bash owns prerequisites and private-directory cleanup.
 Tests consume the prepared evidence, never recursively invoke the orchestrator,
@@ -469,7 +473,7 @@ later prove lifecycle with explicit selections and instrumented fixtures;
 F-03 retains configuration sources,
 option/secret handling, and operator selection UX, while F-04 retains management
 discovery. Read-only analysis likewise supplies no runtime implementation or
-passing product evidence. The next scheduled stage is `implement` through a
+passing product evidence. The next scheduled stage was `implement` through a
 separate invocation, with the custom checklist gate now satisfied and the
 approved findings resolved. This follow-up does not start implementation or
 mark any of its 72 tasks complete. Do not reset the checkpoint to fabricate a
@@ -479,6 +483,51 @@ later implementation gate does require reviewer approval or explicit reviewer
 authorization; their initial generation/analysis did not supply it. The
 requested review and approved follow-up now satisfy that requirements gate,
 not a feature-completion or runtime-support claim.
+
+### Implemented F-02 lifecycle boundary
+
+The separately authorized implementation adds metadata-only registry/selection/
+version/capability validation, deterministic dependency ordering, inert opt-in
+adapter association, supervised service/build/route/init phases, readiness,
+worker/request admission and bounded reverse cleanup in Hosting. Abstractions,
+Core and Application source stay unchanged. F-03 must feed the same validator;
+F-04 still owns authorized discovery/UI, not an automatically exposed health
+endpoint.
+
+```bash
+bash scripts/validate-lifecycle.sh
+```
+
+This separate ten-minute-per-subprocess orchestrator packs six independent
+fixtures, verifies private-feed/hash/lock provenance, runs TestServer's seven
+baseline/custom distribution journeys, retains/runs an old registration binary,
+and inspects ten exact project/packed/transitive/API graphs. Source-only filters,
+`--packages-only` and `--journeys-only` explicitly report partial proof.
+Intentional payload changes use `--update-locks`, reviewed locks and an
+independent default replay. The existing foundation command retains its eight
+mandatory real scans and original compile-only fixture/example sources. It
+excludes only LC-38's separate prepared lifecycle manifest test; lifecycle
+acceptance supplies that mandatory proof.
+
+Hosting now propagates the ASP.NET Core shared-framework prerequisite even to
+non-web registration-only consumers. Old AddHoard/AddModule APIs remain inert
+and source/binary-compatible. NuGet.Versioning is internal; TestHost is test-only
+and never classified as verified shared-framework provenance. See
+[measured evidence and implementation adjustments](../specs/002-module-lifecycle/plan.md#implementation-evidence).
+
+The [provider guide](PROVIDERS.md#opt-in-lifecycle) and
+[example](../examples/LifecycleHost/README.md) document actual APIs and limits.
+Use normal app StartAsync, explicit StopHoardApplicationAsync(lease), and sole
+external lease disposal. Module-only stop can report NotAttemptedOwnerPending;
+only the final lease StopResult reports root release. Shared framework stop,
+synchronous notification callbacks, cancellation/deregistration, outstanding
+responses/workers and non-cooperative callbacks remain supervised. A bounded
+wait is not forced termination: incomplete resources may require process exit.
+Later health loss changes readiness only; stop/fault closes admission.
+
+Convergence and finalization remain separately authorized stages; implementation
+is not feature completion, PR readiness, merge or permission to begin a
+dependent feature. Reviewer-owned checklist bytes remain unchanged.
 
 ```mermaid
 flowchart TD
