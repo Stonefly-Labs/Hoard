@@ -17,47 +17,97 @@ qualification, or release authorization.
 
 ## Requirement Completeness
 
-- [ ] CHK001 Are module, host, and abstractions versions given separate meanings and compatibility responsibilities, including the version axis constrained by module dependencies? [Completeness, Spec §FR-010, §FR-011; Compatibility policy §Three Separate Version Axes]
-- [ ] CHK002 Does the policy define supported range syntax, endpoint inclusion, exact versions, normalization, and invalid or omitted declarations without relying on implicit support assumptions? [Completeness, Spec §FR-012; Compatibility policy §Range and Prerelease Interpretation]
-- [ ] CHK003 Are source, binary, and behavioral compatibility obligations defined for both consumers and provider implementers rather than inferred from one successful compilation? [Completeness, Spec §FR-011; Compatibility policy §Source, Binary, and Behavioral Compatibility]
+- [x] CHK001 Are module, host, and abstractions versions given separate meanings and compatibility responsibilities, including the version axis constrained by module dependencies? [Completeness, Spec §FR-010, §FR-011; Compatibility policy §Three Separate Version Axes]
+- [x] CHK002 Does the policy define supported range syntax, endpoint inclusion, exact versions, normalization, and invalid or omitted declarations without relying on implicit support assumptions? [Completeness, Spec §FR-012; Compatibility policy §Range and Prerelease Interpretation]
+- [x] CHK003 Are source, binary, and behavioral compatibility obligations defined for both consumers and provider implementers rather than inferred from one successful compilation? [Completeness, Spec §FR-011; Compatibility policy §Source, Binary, and Behavioral Compatibility]
 
 ## Requirement Clarity
 
-- [ ] CHK004 Are stable major-version and pre-1.0 minor-version breaking transitions distinguished clearly, including the requirement that patch changes remain nonbreaking? [Clarity, Spec §FR-011; Compatibility policy §Source, Binary, and Behavioral Compatibility]
-- [ ] CHK005 Is prerelease opt-in specified independently for host, abstractions, and module dependencies, without inferring permission from range text or the provider's own prerelease label? [Clarity, Spec §FR-012; Compatibility policy §Range and Prerelease Interpretation]
-- [ ] CHK006 Are compatibility declarations, package resolution, runtime enforcement, and operational qualification explicitly distinguished so none is mistaken for proof of the others? [Clarity, Spec §FR-012, §FR-016; Compatibility policy §Range and Prerelease Interpretation, §Release and Migration Obligations]
+- [x] CHK004 Are stable major-version and pre-1.0 minor-version breaking transitions distinguished clearly, including the requirement that patch changes remain nonbreaking? [Clarity, Spec §FR-011; Compatibility policy §Source, Binary, and Behavioral Compatibility]
+- [x] CHK005 Is prerelease opt-in specified independently for host, abstractions, and module dependencies, without inferring permission from range text or the provider's own prerelease label? [Clarity, Spec §FR-012; Compatibility policy §Range and Prerelease Interpretation]
+- [x] CHK006 Are compatibility declarations, package resolution, runtime enforcement, and operational qualification explicitly distinguished so none is mistaken for proof of the others? [Clarity, Spec §FR-012, §FR-016; Compatibility policy §Range and Prerelease Interpretation, §Release and Migration Obligations]
 
 ## Requirement Consistency
 
-- [ ] CHK007 Are version/range and prerelease requirements consistent between the specification, declaration model, written policy, and planned classification examples? [Consistency, Spec §FR-010, §FR-011, §FR-012; Data model §CompatibilityDeclaration and ModuleDependency; Compatibility policy §Classification Acceptance Matrix]
-- [ ] CHK008 Are added required members/fields, tightened behavioral guarantees, and binary-surface changes classified consistently as breaking even when some consumers remain source-compatible? [Consistency, Spec §FR-011; Spec §Edge Cases; Compatibility policy §Source, Binary, and Behavioral Compatibility]
-- [ ] CHK009 Are unsupported, missing, and incompatible declarations consistently excluded from support claims without silent provider substitution, while runtime rejection remains assigned to later features? [Consistency, Spec §FR-012; Spec §Assumptions; Compatibility policy §Release and Migration Obligations]
+- [x] CHK007 Are version/range and prerelease requirements consistent between the specification, declaration model, written policy, and planned classification examples? [Consistency, Spec §FR-010, §FR-011, §FR-012; Data model §CompatibilityDeclaration and ModuleDependency; Compatibility policy §Classification Acceptance Matrix]
+- [x] CHK008 Are added required members/fields, tightened behavioral guarantees, and binary-surface changes classified consistently as breaking even when some consumers remain source-compatible? [Consistency, Spec §FR-011; Spec §Edge Cases; Compatibility policy §Source, Binary, and Behavioral Compatibility]
+- [x] CHK009 Are unsupported, missing, and incompatible declarations consistently excluded from support claims without silent provider substitution, while runtime rejection remains assigned to later features? [Consistency, Spec §FR-012; Spec §Assumptions; Compatibility policy §Release and Migration Obligations]
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK010 Is the compatibility example set explicit and bounded, with an expected classification for every stable-compatible, out-of-range, missing-range, breaking, pre-1.0, and prerelease case required by the outcome? [Measurability, Spec §SC-005; Compatibility policy §Classification Acceptance Matrix]
-- [ ] CHK011 Can the written policy alone determine each example's result, including which version axis or compatibility dimension makes a composition or release proposal unsupported? [Acceptance Criteria, Spec §User Story 4 - Understand Compatibility Before Adoption (Priority: P2), §SC-005; Compatibility policy §Classification Acceptance Matrix]
-- [ ] CHK012 Are support-statement acceptance criteria scoped to every delivered example and declaration, with a clear distinction between compile-only evidence, descriptive capability metadata, and qualified operational support? [Measurability, Spec §FR-010, §FR-016, §SC-006; Data model §Capability and Responsibility Metadata]
+- [x] CHK010 Is the compatibility example set explicit and bounded, with an expected classification for every stable-compatible, out-of-range, missing-range, breaking, pre-1.0, and prerelease case required by the outcome? [Measurability, Spec §SC-005; Compatibility policy §Classification Acceptance Matrix]
+- [x] CHK011 Can the written policy alone determine each example's result, including which version axis or compatibility dimension makes a composition or release proposal unsupported? [Acceptance Criteria, Spec §User Story 4 - Understand Compatibility Before Adoption (Priority: P2), §SC-005; Compatibility policy §Classification Acceptance Matrix]
+- [x] CHK012 Are support-statement acceptance criteria scoped to every delivered example and declaration, with a clear distinction between compile-only evidence, descriptive capability metadata, and qualified operational support? [Measurability, Spec §FR-010, §FR-016, §SC-006; Data model §Capability and Responsibility Metadata]
 
 ## Scenario and Edge Case Coverage
 
-- [ ] CHK013 Are exact/inclusive/exclusive boundaries, prereleases below a stable lower bound, build metadata, label comparison, malformed intervals, and independent axis failures addressed explicitly in the policy? [Edge Case Coverage, Spec §FR-012, §SC-005; Compatibility policy §Range and Prerelease Interpretation, §Classification Acceptance Matrix]
+- [x] CHK013 Are exact/inclusive/exclusive boundaries, prereleases below a stable lower bound, build metadata, label comparison, malformed intervals, and independent axis failures addressed explicitly in the policy? [Edge Case Coverage, Spec §FR-012, §SC-005; Compatibility policy §Range and Prerelease Interpretation, §Classification Acceptance Matrix]
 - [ ] CHK014 Are required versus optional dependency absence, incompatible present dependencies, dependency prereleases, and unavailable-capability claims specified without ambiguous fallback behavior? [Scenario Coverage, Spec §FR-010, §FR-012; Data model §CompatibilityDeclaration and ModuleDependency; Compatibility policy §Range and Prerelease Interpretation]
-- [ ] CHK015 Are migration obligations defined for breaking source, binary, and behavioral changes, including affected contracts, old/new ranges, provider changes, qualification evidence, and rollback guidance? [Recovery Coverage, Spec §FR-011, §FR-012; Compatibility policy §Release and Migration Obligations]
+- [x] CHK015 Are migration obligations defined for breaking source, binary, and behavioral changes, including affected contracts, old/new ranges, provider changes, qualification evidence, and rollback guidance? [Recovery Coverage, Spec §FR-011, §FR-012; Compatibility policy §Release and Migration Obligations]
 
 ## Non-Functional Requirements and Dependencies
 
-- [ ] CHK016 Are provenance/support labels and capability descriptions defined so author declarations, experimental versions, fixtures, and maintainer support are not confused with certification or runtime health? [Clarity, Spec §FR-010, §FR-016; Data model §Capability and Responsibility Metadata; Compatibility policy §Range and Prerelease Interpretation]
-- [ ] CHK017 Are future lifecycle/configuration enforcement and conformance dependencies documented without treating them as prerequisites for this compile-only foundation or implying that compatibility approval authorizes a release? [Dependency, Spec §FR-012, §FR-016; Spec §Assumptions; Plan §Compatibility and rollback]
+- [x] CHK016 Are provenance/support labels and capability descriptions defined so author declarations, experimental versions, fixtures, and maintainer support are not confused with certification or runtime health? [Clarity, Spec §FR-010, §FR-016; Data model §Capability and Responsibility Metadata; Compatibility policy §Range and Prerelease Interpretation]
+- [x] CHK017 Are future lifecycle/configuration enforcement and conformance dependencies documented without treating them as prerequisites for this compile-only foundation or implying that compatibility approval authorizes a release? [Dependency, Spec §FR-012, §FR-016; Spec §Assumptions; Plan §Compatibility and rollback]
 
 ## Ambiguities and Scope Conflicts
 
-- [ ] CHK018 Do compatibility and migration requirements explicitly preserve mandatory shared safety/authorization invariants rather than allowing an obsolete provider's claimed support to weaken them? [Conflict, Spec §FR-011, §FR-015, §FR-017; Compatibility policy §Source, Binary, and Behavioral Compatibility]
+- [x] CHK018 Do compatibility and migration requirements explicitly preserve mandatory shared safety/authorization invariants rather than allowing an obsolete provider's claimed support to weaken them? [Conflict, Spec §FR-011, §FR-015, §FR-017; Compatibility policy §Source, Binary, and Behavioral Compatibility]
+
+## Delegated Review: 2026-10-20
+
+Copilot evaluated these criteria at the user's explicit request to perform the
+checklist review and flag concerns. This is delegated requirements-quality
+evaluation, not a claim that the user independently inspected each item or
+authorized implementation. Reviewed baseline: `20c4a78`.
+
+**Result**: 17/18 compatibility criteria satisfied; CHK014 remains unchecked for
+RQ-01 below. Together with the architecture review, 37/38 custom criteria are
+satisfied. The combined custom-checklist gate is not satisfied.
+
+| Criteria | Written evidence supporting the assessment |
+| --- | --- |
+| CHK001-CHK003 | Policy defines three version axes, bounded/exact range syntax and invalid declarations, plus source/binary/behavioral compatibility for consumers and implementers. |
+| CHK004-CHK006 | Stable major/pre-1.0 minor transitions and nonbreaking patches are explicit; each prerelease axis has its own flag; solver success, runtime enforcement, and qualification are distinct. |
+| CHK007-CHK009 | Spec FR-010 through FR-012, declaration fields, and policy agree on version meaning and breaking changes; unsupported inputs cannot be advertised as supported or silently substituted. |
+| CHK010-CHK013 | C-01 through C-18 have policy-derived classifications for the required SC-005 case set, including exact/build metadata, malformed ranges and independent flags; support claims remain compile-only. These existing examples do not cover RQ-01's optional-present case. |
+| CHK014 | Not satisfied: optional absence is defined, but the disposition of an incompatible present optional dependency is not deterministic; see RQ-01. |
+| CHK015-CHK018 | Migration obligations include affected contracts/behaviors, version ranges, provider changes, qualification and rollback; support labels confer no certification; later enforcement remains separately scoped and cannot weaken safety invariants. |
+
+### RQ-01: Incompatible Present Optional Dependency
+
+**Priority**: Medium requirements ambiguity; resolve before implementation
+approval. This is not a demonstrated runtime defect: no runtime exists yet.
+
+**Evidence**: [data-model.md](../data-model.md#compatibilitydeclaration-and-moduledependency)
+lines 47-49 says an optional dependency must be compatible "if present and
+used". [The compatibility policy](../contracts/compatibility.md#range-and-prerelease-interpretation)
+lines 45-47 forbids using an incompatible present optional dependency as
+supported, but does not define the composition outcome or what determines
+"used". Matrix C-15, at line 102 of the policy, covers absence only.
+
+**Example**: Module A declares optional B in `[1.0.0,2.0.0)`; B `2.0.0` is
+present and enabled, with otherwise compatible platform ranges. The policy
+forbids the incompatible integration, but does not say whether the composition
+is rejected or whether that integration is explicitly disabled. Authors could
+produce different classifications while each claims not to use B.
+
+**Attention needed**: Define the disposition for present/enabled versus merely
+installed/disabled optional modules and add explicit classification examples,
+including dependency prerelease opt-in. The simplest recommendation is that an
+enabled optional dependency must satisfy its range/flag or the composition is
+unsupported; absence remains allowed. If graceful integration disablement is
+intended instead, specify explicit selection/reporting rules rather than silent
+fallback. Runtime enforcement still belongs to F-02/F-03.
+
+**Status**: Open. No requirement or policy was changed during this review.
+Re-evaluate CHK014 after an explicitly authorized clarification resolves RQ-01;
+the current review does not waive this criterion or authorize implementation.
 
 ## Notes
 
-- All 18 items are generated and unchecked; no reviewer evaluation or approval
-  is recorded. Questions identify review criteria, not confirmed defects.
+- All 18 items were initially generated unchecked. The markers above record
+  the explicitly requested delegated review, not implementation completion.
 - Mark items `[x]` only after reviewer evaluation of requirements quality.
   Leave unresolved or unevaluated criteria unchecked and record findings inline.
 - `/speckit-implement` reads checklist state as a gate and must not modify markers.

@@ -175,12 +175,19 @@ tasks, scaffold projects, or authorize implementation. The subsequent checklist
 stage generated separate
 [architecture](../specs/001-provider-contracts/checklists/architecture.md) and
 [compatibility](../specs/001-provider-contracts/checklists/compatibility.md)
-requirements-quality reviews: 20 and 18 unchecked criteria respectively.
+requirements-quality reviews: 20 and 18 criteria respectively.
 These standard-depth checklists are for maintainers and provider-contract
 reviewers before implementation authorization; they assess written requirements,
-not product behavior. No item has been reviewed or approved. The built-in
-specification checklist remains separate and unchanged. Task generation is next;
-implementation must still wait for the reviewer-owned gate after analysis.
+not product behavior. At the user's explicit request, a delegated review
+evaluated all 38 criteria: architecture 20/20 and compatibility 17/18 satisfied.
+The remaining unchecked criterion records
+[RQ-01: incompatible present optional dependencies](../specs/001-provider-contracts/checklists/compatibility.md#rq-01-incompatible-present-optional-dependency).
+It needs a deterministic policy and classification examples before
+implementation approval. The review records evidence without changing
+requirements, waiving the finding, or advancing the driver. The built-in
+specification checklist remains separate and unchanged. Task generation is
+still next; implementation remains gated by the open criterion and later
+read-only analysis.
 
 ```mermaid
 flowchart TD
