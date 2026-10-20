@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Sdk/Sdk.csproj" />
+    <Compile Remove="Http/**/*.cs" />
+    <Compile Remove="UnusedHttp/**/*.cs" />
+  </ItemGroup>
+</Project>

@@ -2,7 +2,7 @@
 
 **Date**: 2026-10-20
 
-**Scope**: Planning only; no dependencies installed or product projects created.
+**Scope**: Planning decisions, with the implementation assessment below.
 
 The specification, clarification review, constitution, architecture, and
 ADR-0001 determine product scope. Public upstream documentation was researched
@@ -189,3 +189,43 @@ performance claim to measure in F-01.
 
 **Alternatives considered**: Running invented product commands or scaffolding
 projects during planning would misrepresent evidence and violate stage limits.
+
+## Implementation dependency and tooling assessment (2026-10-20)
+
+All six approved pins restored unchanged. NuGet Audit via
+`dotnet list Hoard.slnx package --vulnerable --include-transitive --format json`
+reported no known vulnerable direct or transitive packages at assessment time;
+that is a dated feed result, not a future guarantee. Actual package `.nuspec`
+metadata identifies DI abstractions, the test SDK/TestHost/ObjectModel/
+CodeCoverage, and Mono.Cecil as MIT; NuGet.Versioning and xUnit's runner,
+analyzers, assertions/core/extensibility packages are Apache-2.0.
+The older xunit.abstractions 2.0.3 uses a legacy license URL rather than an
+SPDX expression; its declared
+[upstream license](https://raw.githubusercontent.com/xunit/xunit/master/license.txt)
+was reviewed as Apache-2.0 (with separately identified MIT imports).
+These licenses permit the local acceptance use. No third-party source or
+binary is vendored; retain applicable notices for any later distribution.
+None of the test-only inspection/versioning/test dependencies enters runtime packs.
+
+The installed stable SDK 10.0.203 satisfies the 10.0.100/latestFeature policy.
+Fresh locked replay exposed nonreproducible SDK ZIP timestamps and random OPC
+metadata relationship IDs even with `Deterministic=true`; repeated packs had
+identical DLL/nuspec payloads but different archive hashes. The bounded local
+orchestrator therefore canonicalizes **only unsigned local Hoard acceptance
+archive envelopes** before restore. It fixes ZIP metadata and OPC relationship
+IDs/metadata paths, preserving nuspec, core-property and assembly payload bytes.
+Three focused Python regressions prove cross-envelope equality/payload
+preservation and rejection of signed/external or incomplete inputs.
+External packages are never rewritten; content hashes, source mapping,
+fresh-cache locked restore, and local-package SHA-512 provenance stay enforced.
+This is not a production release/signing/packaging pipeline. Compiler/SDK
+changes that alter actual payloads still require reviewed lock regeneration.
+
+Additional implementation decisions: normalize compiled source paths and omit
+Git revision stamps from local acceptance packages; disable SDK package pruning
+in the compile-only web example so complete packed dependencies remain
+inspectable. Neither changes the approved dependency pins or runtime scope.
+The Python helper uses only the standard library for copying, hashing, ZIP/XML/
+JSON evidence, and fail-fast timed subprocesses; Bash owns prerequisites and
+private-directory cleanup. No product package, deployment, or runtime activation
+dependency was added.

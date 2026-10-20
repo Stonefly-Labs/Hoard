@@ -1,6 +1,6 @@
 # F-01 Compatibility Policy
 
-**Status**: Planned public contract policy and acceptance examples. F-01 has
+**Status**: Public contract policy with implemented test-only acceptance examples. F-01 has
 no production runtime compatibility evaluator; enforcement belongs to F-03.
 There is no implication of current published packages or supported deployments.
 

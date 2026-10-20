@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Hoard management boundary. No endpoints or handlers in F-01.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Hoard.Abstractions/Hoard.Abstractions.csproj" />
+    <ProjectReference Include="../Hoard.Core/Hoard.Core.csproj" />
+  </ItemGroup>
+</Project>

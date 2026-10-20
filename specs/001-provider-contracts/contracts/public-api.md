@@ -1,6 +1,7 @@
 # F-01 Public Library Contracts
 
-**Status**: Proposed signatures for implementation, not APIs available today.
+**Status**: Implemented source APIs at local acceptance version `0.1.0`, not
+published packages.
 This contract is a declaration/composition foundation, not a provider SDK with
 working cache operations. [Data shapes](../data-model.md) and
 [compatibility policy](compatibility.md) are part of this contract.
@@ -26,7 +27,7 @@ HTTP integration, a provider SDK, real storage, or another concrete provider.
 
 ## Family Interfaces
 
-Planned namespace: `Hoard.Abstractions.Providers`.
+Namespace: `Hoard.Abstractions.Providers`.
 
 ```csharp
 public interface IHoardProvider { }
@@ -52,7 +53,7 @@ assumption that all `0.x` packages interoperate.
 
 ## Declarative Metadata
 
-Planned namespace: `Hoard.Abstractions.Modules`.
+Namespace: `Hoard.Abstractions.Modules`.
 
 The following named shapes are public and owned once by Abstractions:
 `ModuleDescriptor`, `ModuleCategory`, `CompatibilityDeclaration`,
@@ -81,7 +82,7 @@ not replaced with a permissive success result.
 
 ## Registration-Only Hosting API
 
-Planned namespace: `Hoard.Hosting`.
+Namespace: `Hoard.Hosting`.
 
 ```csharp
 public static HoardBuilder AddHoard(this IServiceCollection services);
@@ -123,7 +124,7 @@ is enabled, validated, or ready merely because its registration was recorded.
 
 ## Compile-Only Custom Host
 
-The future `examples/CustomHost` references Hosting plus the four fixture
+The compile-only `examples/CustomHost` references Hosting plus the four fixture
 packages through package references and uses ASP.NET Core's shared framework
 for `WebApplication.CreateBuilder`. Its short entry point calls `AddHoard`
 and four explicit generic `AddModule` registrations. It never calls

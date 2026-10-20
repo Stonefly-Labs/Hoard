@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "abstractions": {
+        "type": "Project"
+      },
+      "Hoard.Fixtures.Arch.Sdk": {
+        "type": "Project"
+      }
+    }
+  }
+}

@@ -1,6 +1,7 @@
 # F-01 Architecture Acceptance Contract
 
-**Status**: Planned architecture checks, not an existing executable tool.
+**Status**: Implemented bounded source/package/metadata/IL checks exercised by
+`bash scripts/validate-foundation.sh`; not runtime validation or a sandbox.
 Names classify ownership; checks must inspect actual resolved relationships.
 
 ## Allowed Graph
@@ -24,6 +25,9 @@ framework dependencies are permitted inside the appropriate provider, never
 as leaked public slice/shared contract types. Tests may inspect every boundary
 but are never a runtime dependency. No provider references another concrete
 provider, even of the same family; swaps are separate compositions.
+The BCL allowance does not permit `IQueryable`, `IDbConnection`/`IDbTransaction`,
+or `DbConnection`/`DbTransaction` in shared public surfaces, including recursive
+generic signatures.
 
 ## Inspection Inputs and Completeness
 
@@ -31,7 +35,9 @@ Use SDK-resolved restore graph/project metadata and `project.assets.json` for
 the exact target/configuration, plus compiled assemblies read with test-only
 Mono.Cecil. Inspect packed `.nuspec` dependencies and the independent consumers'
 resolved assets too: a clean source graph does not prove a clean package.
-Include declared project edges even if the compiler emits no assembly use.
+Include declared project and resolved framework edges even if the compiler
+emits no assembly use. Declared framework references require matching resolved
+framework evidence.
 
 Assign projects, packages, and assemblies explicit boundary ownership. Validate
 identity rather than trusting prefixes or namespaces. Framework assemblies
@@ -54,6 +60,9 @@ unmapped slice roots, or incomplete scans fail with actionable errors, not
 empty success results. Limit the claim to the documented source/metadata/IL
 checks: arbitrary reflection strings and malicious trusted code are not
 sandboxed or exhaustively analyzed.
+The real scan set must contain exactly the platform graph, all five independent
+provider graphs, and both host graphs, with unique explicit scan identities.
+Omitting any required scan is an inspection error.
 
 ## Rule and Negative-Evidence Matrix
 

@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Provider-neutral Hoard declarations and family markers; no operational provider API.</Description>
+  </PropertyGroup>
+</Project>

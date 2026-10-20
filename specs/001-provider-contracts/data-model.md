@@ -1,8 +1,9 @@
 # F-01 Declaration and Evidence Model
 
-**Status**: Planned public shapes, not implemented APIs or a database schema.
-All owning packages target `net10.0`. Names below are the proposed F-01 names
-to implement and verify, not published package claims.
+**Status**: Implemented declaration shapes at local acceptance version `0.1.0`,
+not a database schema or published API release.
+All owning packages target `net10.0`. Names below are implemented F-01 source
+names, not published package claims.
 
 ## ModuleDescriptor
 

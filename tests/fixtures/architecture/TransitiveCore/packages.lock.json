@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "Hoard.Fixtures.Arch.Sdk": {
+        "type": "Transitive",
+        "resolved": "0.1.0",
+        "contentHash": "Jz8ZgRkz8afIOy8E7h9/gaJ9n7c1MLg+ggBIlQ3FOd6+HQcRD7aWpyKqnzPHeEu9Wyt4Yu0sc6B5j9bKSj3FSQ=="
+      },
+      "Hoard.Fixtures.Arch.Helper": {
+        "type": "Project",
+        "dependencies": {
+          "Hoard.Fixtures.Arch.Sdk": "[0.1.0, 0.1.0]"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="Core/Core.csproj" />
+    <ProjectReference Include="Metadata/Metadata.csproj" />
+    <ProjectReference Include="Slices/PermittedSlices.csproj" />
+    <ProjectReference Include="../Storage/Storage.csproj" />
+    <Compile Remove="**/*.cs" />
+  </ItemGroup>
+</Project>

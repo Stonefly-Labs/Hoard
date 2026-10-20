@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Explicit declaration and type registration, without activation or validation.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Hoard.Abstractions/Hoard.Abstractions.csproj" />
+    <ProjectReference Include="../Hoard.Core/Hoard.Core.csproj" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+</Project>

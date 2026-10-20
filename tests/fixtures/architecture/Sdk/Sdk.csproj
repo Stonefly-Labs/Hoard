@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>Hoard.Fixtures.Arch.Sdk</PackageId>
+  </PropertyGroup>
+</Project>

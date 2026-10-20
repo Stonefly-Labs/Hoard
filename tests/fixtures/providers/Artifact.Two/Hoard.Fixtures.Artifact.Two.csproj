@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Version>0.1.0</Version>
+    <PathMap>$(MSBuildProjectDirectory)=/_/</PathMap>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <Description>Independent compile-only artifact fixture Two. No byte-store operations.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Abstractions" Version="[0.1.0]" />
+  </ItemGroup>
+</Project>

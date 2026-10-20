@@ -2,9 +2,12 @@
 
 ## Foundation boundary
 
-The bootstrap establishes contributor tools and an empty architecture-aligned
-layout. Product code, build manifests, runtime packaging, application CI/CD,
-and cloud hosting are future feature work. Azure identity provisioning is a
+The bootstrap established contributor tools and reserved architecture boundaries.
+F-01 adds four .NET library projects, immutable provider declarations, explicit
+registration, and compile/package/boundary acceptance tooling. Core and
+Application remain empty boundaries: no caching engine, management endpoints,
+working providers, curated executable, UI, product CI/CD, or deployment exists.
+Azure identity provisioning is a
 separate, explicitly authorized [operator action](../infra/bootstrap/README.md).
 
 Current technical intent is defined by the [charter](PRODUCT_CHARTER.md),
@@ -170,8 +173,8 @@ build commands are now proposed in the
 not delivered APIs or tooling. The plan includes research, a declaration model,
 compatibility/architecture acceptance contracts, and a
 [validation quickstart](../specs/001-provider-contracts/quickstart.md).
-Product commands in that quickstart are explicitly future implementation work;
-the existing Python tooling suite remains the applicable executable check.
+The implementation now supplies the foundation commands in that quickstart;
+they prove compilation and package boundaries, not product behavior.
 Planning did not generate or approve custom reviewer-owned checklists, create
 tasks, scaffold projects, or authorize implementation. The subsequent checklist
 stage generated separate
@@ -209,9 +212,46 @@ acyclic, including serialized shared-script edits. All feature artifacts and
 reviewer-owned checklist markers remained unchanged. The analysis report is
 recorded in the draft feature PR, with its completion evidence in the shared
 checkpoint; no remediation or implementation occurred. The next scheduled
-stage is implementation through a separate `hoard-speckit` invocation, with the
+stage was implementation through a separate `hoard-speckit` invocation, with the
 existing reviewer-owned 38/38 checklist gate satisfied. Artifact analysis is
 not passing product evidence or permission to skip the remaining stages.
+
+The completed implementation stage delivers declaration-only Abstractions,
+provider-free Core/Application, and metadata/type registration in Hosting.
+The [provider guide](PROVIDERS.md) and
+[compile-only custom-host guide](../examples/CustomHost/README.md) describe
+current APIs and limits. `bash scripts/validate-foundation.sh` restores/builds
+with locks, checks SDK formatting/analyzers, builds Core in isolation, packs
+four local platform libraries and five independent fixtures, compiles family
+consumers and both hosts, and executes architecture/compatibility/registration
+acceptance. The host is never run. Every subprocess has a ten-minute timeout.
+A Python standard-library helper owns copying, hashes, metadata manifests, and
+explicit subprocess errors; Bash owns prerequisites and private-directory cleanup.
+Tests consume the prepared evidence, never recursively invoke the orchestrator,
+and deliberately fail when evidence is missing.
+
+Default runs do not rewrite lockfiles. After an intentional contract/dependency
+change, `bash scripts/validate-foundation.sh --update-locks` regenerates and
+replays standalone locks; review and commit them before the default locked run.
+Local acceptance packages omit Git revision stamps and normalize source paths,
+so fresh temporary locations and checkpoint commits do not invalidate their
+content hashes. This is local proof tooling, not release/package publication.
+The helper also canonicalizes unsigned local SDK archive envelopes (ZIP
+metadata and OPC relationship IDs/paths) without changing nuspec/assembly/core
+property bytes. Focused regressions protect reproducibility and reject signed/
+external inputs; no published/external package is rewritten and locked hashes
+are never bypassed. Compiler/SDK changes affecting payloads need reviewed locks.
+SDK package pruning is disabled in the example so its complete explicit packed
+dependency graph remains available for inspection even with ASP.NET's shared
+framework. Framework ownership comes from resolved reference-pack metadata,
+not trusted namespace/name prefixes.
+The implemented-graph architecture review identified three proof gaps, now
+corrected with focused regressions: unused framework references create real
+dependency edges, prohibited BCL query/connection/transaction shapes cannot
+bypass public-surface checks, and all eight named platform/provider/host scans
+are mandatory. See the [review and measured evidence](../specs/001-provider-contracts/plan.md#necessary-implementation-details-and-review).
+The support-claim audit is complete; convergence is the next scheduled stage,
+not part of this implementation invocation.
 
 ```mermaid
 flowchart TD
@@ -310,14 +350,23 @@ required for simple doc or repository-tool changes.
 
 ```bash
 python3 -m unittest discover -s tests/tooling -v
+bash scripts/validate-foundation.sh
+dotnet restore Hoard.slnx --locked-mode
+dotnet build Hoard.slnx --configuration Release --no-restore
+dotnet format Hoard.slnx --verify-no-changes --no-restore
 tofu -chdir=infra/bootstrap fmt -check
 tofu -chdir=infra/bootstrap init -backend=false
 tofu -chdir=infra/bootstrap validate
 tofu -chdir=infra/bootstrap test
 ```
 
-The OpenTofu tests mock Azure/GitHub; they do not provision anything. There is no
-application build command or CI pipeline in this bootstrap. Later features
+The OpenTofu tests mock Azure/GitHub; they do not provision anything. The .NET
+commands build libraries only; no runnable application or product CI exists.
+`dotnet test` requires the temporary `HOARD_FOUNDATION_EVIDENCE` manifest prepared
+by the full script; a solution build/test alone is not package independence proof.
+Partial script selectors `--phase declarations`, `--phase packages`,
+`--phase architecture`, and `--phase hosts` cover their named bounded checkpoints,
+never full acceptance. Later features
 must introduce and document focused backend/UI format/type/unit checks,
 architecture tests, provider contract suites, and real-client protocol tests.
 

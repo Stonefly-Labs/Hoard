@@ -1,11 +1,10 @@
 # F-01 Validation Quickstart
 
-**Design-stage guide**: Product commands and paths below are planned, not
-available now. Run them only after the implementation stage introduces them.
+**Implemented compile-only foundation**: Commands and paths below now exist.
 Successful compilation proves contract usability, not a runnable cache,
 production provider, protocol compatibility, activation, or certification.
 
-## Current Planning Check
+## Repository Tool Check
 
 The existing repository-tool check is:
 
@@ -14,12 +13,12 @@ python3 -m unittest discover -s tests/tooling -v
 git diff --check
 ```
 
-No product solution, .NET build, provider, or host exists at this checkpoint.
-Do not scaffold one merely to execute the future commands.
+Four .NET platform libraries and three test projects now exist in `Hoard.slnx`.
+Core/Application are empty boundaries. There is no runnable cache or provider.
 
-## Planned Prerequisites
+## Prerequisites
 
-Use Git, Python 3.11+, Bash, and a stable .NET 10 SDK satisfying the planned
+Use Git, Python 3.11+, Bash, and a stable .NET 10 SDK satisfying the
 `global.json` baseline/roll-forward policy. On Windows use a Bash-capable shell
 for the orchestration script; the .NET projects themselves are not Bash-specific.
 The first external tool/test dependency restore needs access to nuget.org.
@@ -30,15 +29,15 @@ Node runtime, or production NuGet package publishing is needed.
 Track exact direct pins centrally and applicable restore lockfiles; do not
 commit build output or local feed/cache contents.
 
-## Planned Full Foundation Check
+## Full Foundation Check
 
-The implementation must introduce one bounded orchestration entry point:
+The bounded orchestration entry point is:
 
 ```bash
 bash scripts/validate-foundation.sh
 ```
 
-It must fail on any failed subprocess and report which proof failed, preserve
+It fails on any failed subprocess and reports which proof failed, preserving
 diagnostics without secrets, and clean only its own temporary paths. Its
 documented steps are:
 
@@ -61,11 +60,12 @@ documented steps are:
 6. Build a second copied host after changing only the artifact fixture package
    reference and registration type/declaration from One to Two. Confirm the
    platform and unrelated provider source inputs are unchanged.
-7. Run unit, architecture, compatibility, and composition acceptance tests.
+7. Build source/binary breaking-change inputs and run unit, architecture,
+   compatibility, and composition acceptance tests.
    Show every isolated forbidden case is rejected for the intended rule, while
    the permitted graph and both host variants pass.
 
-Standalone fixture and example projects must carry their own complete build/
+Standalone fixture and example projects carry their own complete build/
 dependency settings; no `Directory.Build.props` imports, friend assembly grants,
 source links, absolute platform paths, or ProjectReferences may mask missing
 package assets. Their ordinary packages may have their normal SDK dependencies
@@ -73,24 +73,43 @@ only where the architecture allows; these simple fixtures need none.
 Track/replay locks for consumers where applicable and compare packed dependency
 metadata with their resolved closure.
 
-## Planned Focused Commands
+## Focused Commands
 
-After implementation, the normal source-graph checks are:
+The normal source-graph checks are:
 
 ```bash
 dotnet restore Hoard.slnx --locked-mode
 dotnet build Hoard.slnx --configuration Release --no-restore
 dotnet format Hoard.slnx --verify-no-changes --no-restore
-dotnet test Hoard.slnx --configuration Release --no-build --no-restore
 ```
 
 These commands alone do not prove package independence or replacement; the
 orchestrator additionally performs the isolated pack/consumer scenarios above.
 It also verifies formatting for standalone fixture/example projects, which
 are deliberately outside the source-graph solution.
-The implementation must document its exact local feed configuration, package
-IDs, copy/build commands, output paths, and rerun/cleanup procedure in the
-example guide. Never treat the planning commands as passing evidence today.
+Tests require the temporary `HOARD_FOUNDATION_EVIDENCE` manifest; plain
+`dotnet test` without it deliberately fails instead of scanning nothing.
+The [example guide](../../examples/CustomHost/README.md) documents exact local
+feed/source mapping, package IDs, copy/build commands, output paths, optional
+manual evidence inspection, and cleanup. Within that helper-prepared shell:
+
+```bash
+HOARD_FOUNDATION_EVIDENCE="$work/evidence.json" \
+  dotnet test Hoard.slnx --configuration Release --no-build --no-restore
+```
+
+For partial checkpoints use `--phase declarations`, `--phase packages`,
+`--phase architecture`, or `--phase hosts` on the Bash script. None reports
+full acceptance. Default runs are locked; after intentional source/dependency
+changes use `--update-locks`, review/commit changed locks, then require the
+default locked run to pass. Packages normalize source paths and omit Git
+revision stamps to keep local `0.1.0` proof hashes stable between clean runs.
+Unsigned local archive envelopes also have canonical ZIP metadata and OPC
+relationship IDs; regression checks preserve every nuspec/assembly payload.
+External/signed packages are never rewritten. Compiler changes affecting actual
+payloads still require reviewed lock regeneration.
+The example disables package pruning to retain its explicit inspectable graph.
+Each subprocess has a ten-minute timeout; no child invokes the orchestrator.
 
 ## Expected Evidence
 
@@ -116,7 +135,7 @@ evidence of runtime selection or enforcement.
 
 ## Composition and Support Limits
 
-The future example explicitly registers already referenced fixture packages
+The example explicitly registers already referenced fixture packages
 through [the public Hosting API](contracts/public-api.md). It must not call
 `Build`, `Run`, `Start`, or map routes, and must not promise initialization or
 safe package downloads. The artifact replacement proves independent contract
@@ -140,6 +159,7 @@ cleaned automatically. Keep lockfiles tracked and secrets/build/feed contents
 untracked. There is no data migration, infrastructure plan/apply, release, or
 deployment to roll back.
 
-At planning completion, the next stage is custom requirements-quality checklist
-generation. Task generation, read-only analysis, reviewer-owned checklist
-approval, implementation, convergence, and finalization remain separate gates.
+Implementation hands off to a separate convergence invocation, then finalization
+and merge checkpoints. Passing these bounded checks does not complete/merge
+the feature or unlock dependent backlog entries. The existing reviewer-owned
+checklists remain unchanged.
