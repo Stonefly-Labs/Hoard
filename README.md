@@ -176,9 +176,14 @@ and explicit restart/custom-distribution journeys. Its
 [built-in quality checklist](specs/002-module-lifecycle/checklists/requirements.md)
 passes all 16 specification-quality criteria, not implementation or
 reviewer-owned approval.
+The [clarification review](specs/002-module-lifecycle/spec.md#clarifications)
+found no critical ambiguities across all ten review categories: zero questions
+and no requirement or scope changes. The built-in checklist remains 16/16;
+exact lifecycle APIs, finite budget defaults, and ordering details remain
+planning decisions under the existing requirements.
 No lifecycle runtime, runnable host, real provider, discovery API, or UI is
-introduced by specification. The next scheduled stage is `clarify`, through
-a separate `hoard-speckit` invocation.
+introduced by specification or clarification. The next scheduled stage is
+`plan`, through a separate `hoard-speckit` invocation.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

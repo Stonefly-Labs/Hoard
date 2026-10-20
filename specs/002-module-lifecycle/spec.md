@@ -13,6 +13,33 @@ by this specification stage.
 
 **Feature Directory**: `specs/002-module-lifecycle`
 
+## Clarifications
+
+### Session 2026-10-20
+
+No critical ambiguities detected worth formal clarification. Zero questions
+were asked or answered; no requirements, acceptance criteria, or scope decisions
+changed.
+
+The review found sufficient coverage across all ten ambiguity categories:
+functional scope and behavior, domain and data model, interaction and operator
+journeys, applicable quality attributes, integration and external dependencies,
+edge cases and failure handling, constraints and tradeoffs, terminology and
+consistency, completion signals, and placeholders. Explicit selection,
+pre-construction validation, enabled optional dependencies, disabled-module
+isolation, readiness admission and later health changes, cancellation and finite
+budgets, partial-start cleanup, safe diagnostics, and restart/rebuild behavior
+already have observable requirements and acceptance outcomes.
+
+Exact lifecycle signatures and state representation, route-conflict inspection,
+finite budget defaults, and the stable ordering tie-break remain planning
+decisions under those requirements, not unresolved product choices. Production
+latency/scale targets, real-provider data recovery and conformance, configuration
+sources and secrets, management discovery, and UI/accessibility behavior remain
+outside this bounded lifecycle feature as assigned in Assumptions. The existing
+security, trust, compatibility, and truthful-support constraints still apply;
+no consequential decision blocks planning.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Start Only the Intended Modules (Priority: P1)

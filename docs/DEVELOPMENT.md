@@ -328,12 +328,24 @@ markers. It is not a custom reviewer-owned approval or runtime acceptance
 result. The bounded architecture review found no actionable requirement-level
 findings; its operational proof obligations remain future work.
 
-This stage creates no lifecycle implementation, production executable/provider,
-configuration parser, management discovery endpoint, UI, plan, tasks, or
-conformance certification. F-02 can later prove lifecycle with explicit
+The subsequent
+[clarification review](../specs/002-module-lifecycle/spec.md#clarifications)
+found no critical ambiguities across all ten review categories. Zero questions
+were asked or answered, and no requirements, acceptance criteria, or scope
+decisions changed. The built-in specification-quality checklist was revalidated
+at 16/16 to 16/16: no newly passing items, regressions, or unchecked items.
+Its bytes and historical specification-stage notes remain unchanged; no custom
+reviewer-owned approval is implied. Exact lifecycle APIs and state
+representation, route-conflict inspection, finite budget defaults, and the stable
+ordering tie-break remain planning decisions under the existing requirements.
+No consequential product decision blocks planning.
+
+Specification and clarification create no lifecycle implementation, production
+executable/provider, configuration parser, management discovery endpoint, UI,
+plan, tasks, or conformance certification. F-02 can later prove lifecycle with explicit
 selections and instrumented fixtures; F-03 retains configuration sources,
 option/secret handling, and operator selection UX, while F-04 retains management
-discovery. The next scheduled stage is `clarify` through a separate invocation;
+discovery. The next scheduled stage is `plan` through a separate invocation;
 no implementation authorization or feature-completion claim is implied.
 
 ```mermaid
