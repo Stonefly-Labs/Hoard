@@ -191,8 +191,15 @@ unavailable and confer no integration/capability claim. Five new classification
 examples bring the written matrix to 23 cases. The delegated re-review closes
 CHK014: architecture 20/20 and compatibility 18/18, all 38 criteria satisfied
 without waivers. The built-in specification checklist and driver are unchanged.
-Task generation is still next; the checklist result neither executes the
-tasks/analysis stages nor authorizes implementation.
+The subsequent [task-generation stage](../specs/001-provider-contracts/tasks.md)
+produced 57 unchecked tasks: shared setup/declarations, four story phases, and
+cross-cutting acceptance/documentation work. All 17 requirements and six
+outcomes are mapped to implementation and focused proof tasks. The dependency
+graph serializes the shared validation script while allowing independent
+fixture/test/inspector work; architecture negatives and all 23 compatibility
+classifications remain future proof obligations. No product scaffolding or
+implementation occurred. Read-only analysis is next; task generation and the
+satisfied checklist do not skip that gate or authorize implementation.
 
 ```mermaid
 flowchart TD

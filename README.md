@@ -131,7 +131,11 @@ review: all 38 criteria are satisfied after the user-approved
 Enabled optional dependencies must be compatible; installed/registered but
 disabled targets are unavailable and confer no integration/capability support.
 This is requirements review, not implementation evidence or authorization;
-task generation remains the next stage.
+the [implementation task list](specs/001-provider-contracts/tasks.md) now maps
+all 17 requirements and six outcomes to 57 unchecked, dependency-ordered tasks
+across the four stories. It includes isolated architecture rejection cases,
+all 23 compatibility classifications, and package-only composition proofs;
+none have been implemented. Read-only analysis is next, not implementation.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
