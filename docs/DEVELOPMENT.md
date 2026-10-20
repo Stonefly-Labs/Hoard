@@ -170,8 +170,17 @@ compatibility/architecture acceptance contracts, and a
 [validation quickstart](../specs/001-provider-contracts/quickstart.md).
 Product commands in that quickstart are explicitly future implementation work;
 the existing Python tooling suite remains the applicable executable check.
-Planning does not generate or approve custom reviewer-owned checklists, create
-tasks, scaffold projects, or authorize implementation.
+Planning did not generate or approve custom reviewer-owned checklists, create
+tasks, scaffold projects, or authorize implementation. The subsequent checklist
+stage generated separate
+[architecture](../specs/001-provider-contracts/checklists/architecture.md) and
+[compatibility](../specs/001-provider-contracts/checklists/compatibility.md)
+requirements-quality reviews: 20 and 18 unchecked criteria respectively.
+These standard-depth checklists are for maintainers and provider-contract
+reviewers before implementation authorization; they assess written requirements,
+not product behavior. No item has been reviewed or approved. The built-in
+specification checklist remains separate and unchanged. Task generation is next;
+implementation must still wait for the reviewer-owned gate after analysis.
 
 ```mermaid
 flowchart TD

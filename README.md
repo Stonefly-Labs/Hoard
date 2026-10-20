@@ -120,8 +120,12 @@ found no critical ambiguities requiring questions. Its
 [implementation plan](specs/001-provider-contracts/plan.md) now documents
 provider-neutral declarations, explicit registration, compatibility policy,
 and planned package-only composition and boundary checks. These are design
-artifacts, not available APIs or passing product checks; custom checklist
-generation is the next stage.
+artifacts, not available APIs or passing product checks. The custom
+[architecture](specs/001-provider-contracts/checklists/architecture.md) and
+[compatibility](specs/001-provider-contracts/checklists/compatibility.md)
+requirements-quality checklists contain 38 generated, unchecked criteria for
+maintainer/provider-contract review. Generation is not reviewer approval or
+implementation authorization; task generation is the next stage.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
