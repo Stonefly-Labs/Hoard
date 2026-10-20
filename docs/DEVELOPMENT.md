@@ -340,12 +340,46 @@ representation, route-conflict inspection, finite budget defaults, and the stabl
 ordering tie-break remain planning decisions under the existing requirements.
 No consequential product decision blocks planning.
 
-Specification and clarification create no lifecycle implementation, production
-executable/provider, configuration parser, management discovery endpoint, UI,
-plan, tasks, or conformance certification. F-02 can later prove lifecycle with explicit
+The subsequent [implementation plan](../specs/002-module-lifecycle/plan.md)
+defines opt-in Hosting lifecycle adapters on F-01's unchanged registration
+boundary. Persistence/artifact providers retain Abstractions-only dependencies
+through host-side adapters. Metadata validation precedes all construction;
+enabled modules follow deterministic dependency ordering, service composition,
+supervised host build, owned-route analysis, initialization and complete
+readiness before traffic/worker admission. Startup/stop coordination has finite
+deadlines and reports incomplete cleanup rather than pretending cancellation
+forcibly stops trusted in-process code.
+
+The [research](../specs/002-module-lifecycle/research.md),
+[in-memory model](../specs/002-module-lifecycle/data-model.md),
+[public API](../specs/002-module-lifecycle/contracts/public-api.md),
+[lifecycle](../specs/002-module-lifecycle/contracts/lifecycle.md) and
+[acceptance](../specs/002-module-lifecycle/contracts/acceptance.md) contracts
+resolve planning details and map all 22 requirements, seven outcomes and
+20 story scenarios to 40 fixture-only proof cases. The restricted owned-route
+language rejects unsupported shapes instead of claiming to analyze arbitrary
+constraints. The bounded architecture review identified a missing build
+supervision boundary and two resource/worker semantics questions; the plan
+corrects all three with an explicit supervised build API, retained request/
+dependency resource leases and protected root disposal after drain timeout,
+and whole-callback worker admission. LC-20/23/26/29 retain those proof duties.
+No runtime results or repeat approval are inferred from those design corrections.
+
+The [validation quickstart](../specs/002-module-lifecycle/quickstart.md)
+distinguishes current foundation/tooling commands from a proposed lifecycle
+validation script, independent packed fixtures and a separate lifecycle-only
+host example. Neither that script nor new runtime APIs/projects/dependencies
+are created in planning. F-01's compile-only example and all checklists remain
+unchanged. The ASP.NET Core shared-framework/versioning dependency impact,
+source/binary registration compatibility, deadline/admission/cleanup behavior
+and actual package graph still require implementation evidence.
+
+Specification, clarification and planning create no lifecycle implementation,
+production executable/provider, configuration parser, management discovery
+endpoint, UI, tasks, or conformance certification. F-02 can later prove lifecycle with explicit
 selections and instrumented fixtures; F-03 retains configuration sources,
 option/secret handling, and operator selection UX, while F-04 retains management
-discovery. The next scheduled stage is `plan` through a separate invocation;
+discovery. The next scheduled stage is `checklist` through a separate invocation;
 no implementation authorization or feature-completion claim is implied.
 
 ```mermaid

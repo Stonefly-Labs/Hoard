@@ -180,10 +180,21 @@ The [clarification review](specs/002-module-lifecycle/spec.md#clarifications)
 found no critical ambiguities across all ten review categories: zero questions
 and no requirement or scope changes. The built-in checklist remains 16/16;
 exact lifecycle APIs, finite budget defaults, and ordering details remain
-planning decisions under the existing requirements.
-No lifecycle runtime, runnable host, real provider, discovery API, or UI is
-introduced by specification or clarification. The next scheduled stage is
-`plan`, through a separate `hoard-speckit` invocation.
+planning decisions under the existing requirements at that review.
+The subsequent [F-02 implementation plan](specs/002-module-lifecycle/plan.md)
+now proposes an opt-in Hosting adapter, metadata-only validation, deterministic
+ordering, owned-route conflict checks, supervised build/initialization and
+bounded cleanup, safe readiness/results, and fixed-selection restart journeys.
+Its research, in-memory model, public/lifecycle/acceptance contracts and
+[validation quickstart](specs/002-module-lifecycle/quickstart.md) map all
+22 requirements, seven outcomes and 20 story scenarios to 40 fixture-only proof
+cases. Architecture review led to explicit build supervision, protection of
+resources still used after drain timeout, and precise worker admission semantics.
+These are design obligations, not measured runtime evidence.
+No lifecycle runtime, runnable product host, real provider, discovery API or UI
+is introduced by planning. Existing registration APIs remain unchanged; no
+custom checklist approval or implementation authorization is implied. The next
+scheduled stage is `checklist`, through a separate `hoard-speckit` invocation.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
