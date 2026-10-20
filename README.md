@@ -95,7 +95,7 @@ apps/web/            Reserved for the statically exported management console
 docs/                Product intent, architecture, workflow, and release guidance
 infra/bootstrap/     Operator-run Azure OIDC identity + GitHub environment setup
 scripts/             Small, dependency-free repository tools
-specs/               Reserved for generated, reviewable feature specifications
+specs/               Reviewable feature specifications; not delivered capabilities
 src/                 Reserved .NET package/host boundaries; no projects yet
 tests/               Repository-tool tests and reserved product test categories
 ```
@@ -112,8 +112,11 @@ The [contributor guide](CONTRIBUTING.md) covers setup and PR expectations.
 The [development workflow](docs/DEVELOPMENT.md) documents the checkpointed
 `hoard-speckit` skill, architecture reviewer, release skill, and quality gates.
 The initial [constitution](.specify/memory/constitution.md) is version 1.0.0;
-its adoption PR must merge before the driver starts the first feature spec.
-The constitution establishes governance only, not product implementation.
+its adoption has merged. The first feature specification,
+[platform package boundaries and provider contracts](specs/001-provider-contracts/spec.md),
+defines requirements only, not implemented contracts or a runnable host.
+The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
+stage; constitution and specification artifacts are not product implementation.
 
 ## 🚀 Releases are not deployments
 

@@ -1,9 +1,13 @@
 {
   "schema_version": 1,
-  "stage": "specify",
+  "stage": "clarify",
   "status": "ready",
-  "branch": null,
-  "active": null,
+  "branch": "feature/001-provider-contracts",
+  "active": {
+    "id": "F-01",
+    "feature_directory": "specs/001-provider-contracts",
+    "pr": null
+  },
   "completed": [],
   "history": [
     {
@@ -12,6 +16,13 @@
       "branch": "chore/constitution",
       "at": "2026-10-20T15:07:22.228692+00:00",
       "evidence": "Initial constitution v1.0.0, dated 2026-10-20, validated against master prompt, charter, product spec, architecture and ADR-0001; eight principles, no placeholders or TODOs; templates unchanged; README/workflow guidance synchronized; python3 -m unittest discover -s tests/tooling -v passed (14 tests); git diff --check passed. Governance only; first spec blocked until adoption PR merges."
+    },
+    {
+      "stage": "specify",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T15:18:02.200096+00:00",
+      "evidence": "F-01 specification created from exact backlog prompt at specs/001-provider-contracts/spec.md: 4 prioritized stories, 17 functional requirements, 6 measurable outcomes; built-in requirements checklist passed 16/16 criteria with no clarification markers. Constitution/ADR boundaries retained; lifecycle, runtime activation, store semantics and conformance deferred to named backlog features. README and development guide updated. python3 -m unittest discover -s tests/tooling -v passed (14 tests); specification artifact/link/pinned-context checks and git diff --check passed. Requirements only; no product scaffolding or custom reviewer approval. Next stage clarify."
     }
   ]
 }

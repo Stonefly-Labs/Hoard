@@ -154,6 +154,13 @@ specification from the [master inventory](HOARD_SPECKIT_MASTER_BACKLOG.md)
 and passes its exact prompt to the installed specify skill. The tracked
 checkpoint, rather than this guide, records current stage and merge progress.
 
+The first generated feature is
+[F-01: platform package boundaries and provider contracts](../specs/001-provider-contracts/spec.md).
+Its [built-in quality checklist](../specs/001-provider-contracts/checklists/requirements.md)
+validates the specification, not implementation or reviewer-owned custom
+checklist approval. Package contracts, custom-host compilation, and architecture
+checks described there are acceptance requirements, not existing product tools.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
