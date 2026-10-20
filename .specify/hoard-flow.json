@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "converge",
+  "stage": "implement",
   "status": "ready",
   "branch": "feature/001-provider-contracts",
   "active": {
@@ -65,6 +65,13 @@
       "branch": "feature/001-provider-contracts",
       "at": "2026-10-20T17:37:56.153071+00:00",
       "evidence": "F-01 implement completed through installed speckit-implement in pinned specs/001-provider-contracts; all 57 tasks checked. Four compile-only .NET 10 libraries, immutable declarations/family markers, registration without activation, five independently packed provider fixtures and package-only baseline/replacement hosts delivered. All 17 FRs/six SCs traced; ARCH-001..008, C-01..23, isolated Core, local source/SHA-512 provenance and source/binary break proofs passed. Required hoard-architecture-review found three medium proof gaps; unused-framework edges, prohibited BCL query/connection/transaction shapes and exact eight-scan coverage fixed with regressions; no unresolved findings. bash scripts/validate-foundation.sh --update-locks and independent default locked replay passed all 81 .NET tests (42 foundation, 36 architecture, 3 composition), zero failures/skips; formatting/analyzers and 46 project locks passed. Python tooling suite passed 17 tests; no known NuGet advisories at assessment; git diff --check and 117 local file/anchor checks passed. Reviewer-owned/built-in checklists unchanged; no extension hooks. README/affected guides/examples/spec evidence and SC-006 support audit updated with unaffected-document reasons. No runtime providers/cache, publication, infrastructure apply, deployment or merge. Next stage converge, separate invocation; no feature completion claim."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T17:51:51.464000+00:00",
+      "evidence": "F-01 converge resumed in recorded directory through installed speckit-converge; no begin/generator rerun. Assessed current scoped code against 17 FRs, six buildable SCs, 15 acceptance scenarios, nine edge cases, 12 grouped plan decisions, all 57 original tasks and eight constitutional principles. Outcome tasks_appended: one HIGH partial gap, F1, FR-004/FR-014/US2-AC1/SC-003. Current DependencyGraphInspector incorrectly rejects permitted Identity -> Hosting -> Core under ARCH-008; direct invocation of compiled inspector reproduced exactly one unexpected violation (expected zero). Appended only Phase 8/T058 for path-aware correction and permitted-graph regression without weakening forbidden-edge rejection. Existing 57 tasks, spec, plan and all checklist bytes unchanged; no application edits or reviewer self-approval. Fresh bash scripts/validate-foundation.sh passed 81 existing .NET tests (42/36/3), zero failures/skips, locked package/Core/host proofs and formatting; Python tooling passed 17 tests. Those baselines omit the uncovered path and do not resolve T058. Append-only integrity, README/development local links and git diff --check passed; no extension hooks. README/development status corrected; other guides/baseline documents unaffected because no API/package graph/runtime change. Draft PR #4 retained. Next stage implement T058, then reconverge; finalization blocked; no merge/publication/deployment."
     }
   ]
 }

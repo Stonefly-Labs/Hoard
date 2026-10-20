@@ -152,7 +152,12 @@ Registration records metadata/types without constructing, enabling, validating,
 or activating providers. These are local compile proofs, not released packages,
 working stores/protocols/authentication, native-client evidence, or certification.
 The implementation stage is complete, including architecture-review corrections
-and the support-claim audit. Convergence is next; finalization remains separate.
+and the support-claim audit. The subsequent convergence assessment found one
+remaining architecture-check gap: the permitted Identity-to-Hosting reference
+is rejected when Hosting transitively reaches Core. [Task T058](specs/001-provider-contracts/tasks.md#phase-8-convergence)
+records the correction and positive regression needed without weakening
+forbidden-edge checks. The next stage is another implementation invocation;
+finalization remains gated on resolving this finding and reconverging.
 The feature is not complete or merged merely because implementation checks pass.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

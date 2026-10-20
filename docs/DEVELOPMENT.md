@@ -250,8 +250,26 @@ corrected with focused regressions: unused framework references create real
 dependency edges, prohibited BCL query/connection/transaction shapes cannot
 bypass public-surface checks, and all eight named platform/provider/host scans
 are mandatory. See the [review and measured evidence](../specs/001-provider-contracts/plan.md#necessary-implementation-details-and-review).
-The support-claim audit is complete; convergence is the next scheduled stage,
-not part of this implementation invocation.
+The support-claim audit is complete. The subsequent installed convergence stage
+assessed all 17 functional requirements, six buildable success criteria, 15
+story acceptance scenarios, nine edge cases, 12 grouped plan decisions, all 57
+implementation tasks, and eight constitutional principles against current
+scoped code. It found one HIGH-severity partial gap: the graph inspector rejects
+the permitted `Identity -> Hosting -> Core` closure under ARCH-008, although
+identity providers may use the approved Hosting API and Hosting references Core.
+A temporary diagnostic invoking the current compiled graph inspector reproduced
+that false rejection; the existing permitted fixtures do not cover this path.
+[Phase 8 / T058](../specs/001-provider-contracts/tasks.md#phase-8-convergence)
+records the correction and a permitted-graph regression while retaining
+rejection of direct unapproved edges and other forbidden dependencies.
+Only that new task section was appended; the original 57 tasks, spec, plan,
+and reviewer-owned checklists remain unchanged. Fresh default locked acceptance
+passed all 81 existing .NET tests, and the tooling suite passed all 17 tests;
+those passing cases do not resolve the uncovered path.
+The next scheduled stage is another implementation invocation, followed by
+convergence again. Finalization remains blocked on resolving the finding.
+The feature PR remains draft; convergence does not complete or merge F-01,
+unlock dependent work, or authorize new runtime capabilities.
 
 ```mermaid
 flowchart TD
