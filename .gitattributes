@@ -1,0 +1,19 @@
+* text=auto eol=lf
+
+*.sh text eol=lf
+*.ps1 text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.md text diff=markdown
+*.svg text
+*.tf text
+*.hcl text
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.zip binary
+*.nupkg binary

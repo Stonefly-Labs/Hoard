@@ -1,0 +1,134 @@
+<p align="center">
+  <img src="docs/assets/hoard-banner.svg" alt="Hoard — Fetch once. Build forever. A local home for your dependencies." width="880">
+</p>
+
+<p align="center">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-34d399.svg"></a>
+  <img alt="Status: foundation, not yet runnable" src="https://img.shields.io/badge/status-foundation-fbbf24.svg">
+  <a href="docs/ARCHITECTURE.md"><img alt="Planned backend: .NET 10" src="https://img.shields.io/badge/planned-.NET%2010-8b5cf6.svg"></a>
+  <a href="CONTRIBUTING.md"><img alt="Contributions welcome" src="https://img.shields.io/badge/contributions-welcome-38bdf8.svg"></a>
+</p>
+
+# Hoard
+
+### Fetch once. Build forever. 📦
+
+**One local destination for the dependencies your tools already use.**
+Hoard is an MIT-licensed, self-hosted pull-through package cache being designed
+for developer laptops, shared teams, and CI runners. Native package managers,
+less repeated downloading, and a clear view of what's cached—without turning
+dependency management into another full-time job.
+
+> [!IMPORTANT]
+> **Foundation only.** This repository currently contains product/design documents,
+> development workflows, repository tooling, and an operator-run Azure identity
+> bootstrap. There is no runnable cache, UI, container, or published package yet.
+> Everything in the product overview below describes the planned experience.
+
+[Explore the vision](docs/PRODUCT_VISION.md) ·
+[Read the architecture](docs/ARCHITECTURE.md) ·
+[Follow the backlog](docs/HOARD_SPECKIT_MASTER_BACKLOG.md) ·
+[Contribute](CONTRIBUTING.md)
+
+## ✨ The idea
+
+| For your laptop | For your team |
+| --- | --- |
+| SQLite + filesystem, with no required cloud account | The same product, with explicit TLS and authentication |
+| Loopback-first defaults and a lightweight runtime | A shared cache for developer machines and CI |
+| Native package-manager configuration | Provider choices without a separate enterprise edition |
+
+**NuGet comes first.** Go, Maven, npm, PyPI, and Cargo follow the
+[dependency-ordered specification backlog](docs/HOARD_SPECKIT_MASTER_BACKLOG.md).
+Hoard is a cache, **not a private package publishing registry**.
+
+## 🧭 How it will fit together
+
+```mermaid
+flowchart LR
+    Client["Native package clients"] --> Protocol["Protocol providers<br/>NuGet first"]
+    Console["Static Next.js console"] --> API["ASP.NET Core<br/>management slices"]
+    Protocol --> Core["Shared cache engine<br/>integrity · freshness · streaming"]
+    API --> Core
+    Core --> Metadata["Metadata provider<br/>SQLite first"]
+    Core --> Artifacts["Artifact provider<br/>filesystem first"]
+    Core --> Upstream["Approved upstream registries"]
+```
+
+The planned implementation is a **.NET 10 / ASP.NET Core composable modular
+monolith** with independently distributed NuGet providers. Management workflows
+and protocol endpoints use vertical slices; shared correctness invariants stay
+in the cache engine. The **Next.js App Router / TypeScript / Tailwind / shadcn/ui**
+console is statically exported and served by .NET—no mandatory Node server.
+
+Read the [architecture](docs/ARCHITECTURE.md) for dependency boundaries,
+module lifecycle, trust boundaries, and deferred capabilities.
+
+## 🛠️ Start here today
+
+```bash
+git clone https://github.com/Stonefly-Labs/Hoard.git
+cd Hoard
+git switch -c chore/your-change
+
+# Standard-library tests for the repository tools; no application build.
+python3 -m unittest discover -s tests/tooling -v
+```
+
+For repository work, use Git, GitHub CLI, and Python 3.11+. OpenTofu and Azure CLI
+are needed only when working on the [Azure bootstrap](infra/bootstrap/README.md).
+.NET and Node dependency manifests will be introduced by the relevant specs;
+there is intentionally no application build or install command yet.
+
+### Repository map
+
+```text
+.github/             Copilot instructions/skills/agents, templates, tag releases
+.specify/            Installed Spec Kit and shared Hoard flow checkpoint
+apps/web/            Reserved for the statically exported management console
+docs/                Product intent, architecture, workflow, and release guidance
+infra/bootstrap/     Operator-run Azure OIDC identity + GitHub environment setup
+scripts/             Small, dependency-free repository tools
+specs/               Reserved for generated, reviewable feature specifications
+src/                 Reserved .NET package/host boundaries; no projects yet
+tests/               Repository-tool tests and reserved product test categories
+```
+
+## 🤝 Build with us
+
+All work happens on `chore/`, `feature/`, `bugfix/`, `docs/`, or another
+purpose-named branch—not directly on `main`. Commit coherent changes, **push
+after each commit**, and open a PR when the work is ready. Update the README
+and affected documentation **before merging**, with an explicit explanation
+when a document is unaffected.
+
+The [contributor guide](CONTRIBUTING.md) covers setup and PR expectations.
+The [development workflow](docs/DEVELOPMENT.md) documents the checkpointed
+`hoard-speckit` skill, architecture reviewer, release skill, and quality gates.
+The first Spec Kit driver invocation creates the constitution; it does not
+start implementing the backlog.
+
+## 🚀 Releases are not deployments
+
+Pushing a reviewed `vMAJOR.MINOR.PATCH` or prerelease tag publishes a GitHub
+Release with generated notes and GitHub's source archives. It does **not**
+build, publish packages/images, provision Azure, or deploy anything.
+See [release governance](docs/RELEASING.md) for the exact process.
+
+## 📚 Project documents
+
+| Document | What it answers |
+| --- | --- |
+| [Product charter](docs/PRODUCT_CHARTER.md) | Why Hoard exists, scope, and non-goals |
+| [Product vision](docs/PRODUCT_VISION.md) | Intended experience and design direction |
+| [Product specification](docs/PRODUCT_SPEC.md) | Planned product behavior and constraints |
+| [Architecture](docs/ARCHITECTURE.md) | Boundaries, providers, and correctness invariants |
+| [Master backlog](docs/HOARD_SPECKIT_MASTER_BACKLOG.md) | Feature prompts, priorities, and dependencies |
+| [Development workflow](docs/DEVELOPMENT.md) | Branches, Spec Kit checkpoints, and PR handoff |
+| [Azure bootstrap](infra/bootstrap/README.md) | Passwordless deployment identity preparation |
+| [Release guide](docs/RELEASING.md) | Tag-driven source releases, separate from CI/CD |
+
+## License
+
+[MIT](LICENSE) © Stonefly Labs. No required SaaS service, proprietary feature
+tiers, or cloud dependency for personal use are planned.

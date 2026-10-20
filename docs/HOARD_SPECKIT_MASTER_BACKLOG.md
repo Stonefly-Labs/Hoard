@@ -6,6 +6,12 @@
 
 ## How to use this document
 
+**Checkpointed entry point:** Use the repository's `hoard-speckit` skill to run
+one stage per invocation. [Development workflow](DEVELOPMENT.md#checkpointed-spec-kit-flow)
+defines the order, review/merge gates, and recovery. The tracked
+`.specify/hoard-flow.json` records active/merged completion status; rows below
+remain the source of prompts and dependencies, not claims of delivered features.
+
 1. Initialize GitHub Spec Kit in the Hoard repository and create the project constitution **once**. Review the existing Hoard charter, vision, and product spec before generating features.
 2. Work in dependency order. Paste **one** prompt at a time into your coding agent using `/speckit.specify` (the block includes the command). Don't paste the entire backlog as a single feature.
 3. Review the generated spec and clarify unclear requirements before generating a plan and tasks. Use `/speckit.plan`, `/speckit.tasks`, `/speckit.implement` and quality gates as appropriate. `/speckit.specify` focuses on user outcomes, not implementation details. See [GitHub Spec Kit quickstart](https://github.com/github/spec-kit/blob/main/docs/quickstart.md).
