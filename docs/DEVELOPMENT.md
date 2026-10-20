@@ -162,7 +162,16 @@ checklist approval. Package contracts, custom-host compilation, and architecture
 checks described there are acceptance requirements, not existing product tools.
 Its [clarification review](../specs/001-provider-contracts/spec.md#clarifications)
 records a no-question result with no scope changes; exact public signatures and
-build commands remain planning decisions, not delivered APIs or tooling.
+build commands are now proposed in the
+[implementation plan](../specs/001-provider-contracts/plan.md) and
+[public contracts](../specs/001-provider-contracts/contracts/public-api.md),
+not delivered APIs or tooling. The plan includes research, a declaration model,
+compatibility/architecture acceptance contracts, and a
+[validation quickstart](../specs/001-provider-contracts/quickstart.md).
+Product commands in that quickstart are explicitly future implementation work;
+the existing Python tooling suite remains the applicable executable check.
+Planning does not generate or approve custom reviewer-owned checklists, create
+tasks, scaffold projects, or authorize implementation.
 
 ```mermaid
 flowchart TD

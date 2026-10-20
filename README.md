@@ -116,7 +116,12 @@ its adoption has merged. The first feature specification,
 [platform package boundaries and provider contracts](specs/001-provider-contracts/spec.md),
 defines requirements only, not implemented contracts or a runnable host.
 Its [clarification review](specs/001-provider-contracts/spec.md#clarifications)
-found no critical ambiguities requiring questions; planning remains a separate stage.
+found no critical ambiguities requiring questions. Its
+[implementation plan](specs/001-provider-contracts/plan.md) now documents
+provider-neutral declarations, explicit registration, compatibility policy,
+and planned package-only composition and boundary checks. These are design
+artifacts, not available APIs or passing product checks; custom checklist
+generation is the next stage.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "plan",
+  "stage": "checklist",
   "status": "ready",
   "branch": "feature/001-provider-contracts",
   "active": {
@@ -30,6 +30,13 @@
       "branch": "feature/001-provider-contracts",
       "at": "2026-10-20T15:28:46.603459+00:00",
       "evidence": "F-01 clarification completed through speckit-clarify using the pinned directory. Structured review covered all ten ambiguity categories; no critical ambiguities, zero questions, no requirement or scope changes, and no product decisions blocking planning. Recorded dated no-question review in spec; README and development guide link the result. Built-in requirements checklist revalidated unchanged at 16/16 to 16/16, no newly passing items, regressions, or unchecked items; no custom reviewer approval. No extension hooks configured. python3 -m unittest discover -s tests/tooling -v passed (14 tests); clarification artifact, unchanged-requirements, local-link and no-later-artifact checks passed; git diff --check passed. Next stage plan; no product implementation."
+    },
+    {
+      "stage": "plan",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T15:57:12.049966+00:00",
+      "evidence": "F-01 planning completed through speckit-plan with pinned specs/001-provider-contracts. Generated plan, research, declaration model, validation quickstart and three public/compatibility/architecture contracts; all 17 FRs and six outcomes traced, eight architecture rejection rules and 18 compatibility cases specified. BCL-only abstractions, registration without activation, five independent fixture packages and compile-only replacement proof planned; later-feature operations preserved. hoard-architecture-review found no violations or unresolved F-01 questions; implementation evidence explicitly outstanding. README/development guide synchronized; no extension hooks. python3 -m unittest discover -s tests/tooling -v passed (14 tests); pinned path, local links/anchors, artifact/traceability/stage-isolation assertions and git diff --check passed. No product scaffolding, later-stage tasks or custom checklist approval. Next stage checklist."
     }
   ]
 }
