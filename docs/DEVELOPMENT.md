@@ -304,12 +304,37 @@ PR #4 subsequently merged into `main` on 2026-10-20 at
 verified the GitHub merge state, merge ancestry in fetched `origin/main`, and
 all 58 completed tasks. It created `chore/spec-progress-f-01` from that main
 and records F-01 in the shared checkpoint's completed entries, retaining its
-directory, PR, and merge commit. The checkpoint now has no active feature and
-schedules `specify`; the first dependency-ready entry is
+directory, PR, and merge commit. At that point the checkpoint had no active
+feature and scheduled `specify`; the first dependency-ready entry was
 [F-02: module registry, composition and lifecycle](HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-02).
-The progress checkpoint PR must also merge before a separate invocation may
-start that specification. No new feature directory, requirement, implementation,
-or runtime capability is introduced by this progress-only stage.
+The progress checkpoint merged through
+[PR #5](https://github.com/Stonefly-Labs/Hoard/pull/5), satisfying the gate for
+the subsequent specification stage.
+
+[F-02: module registry, composition and lifecycle](../specs/002-module-lifecycle/spec.md)
+now has its own requirements at `specs/002-module-lifecycle`, on
+`feature/002-module-lifecycle`. Five prioritized stories, 22 functional
+requirements, and seven measurable outcomes cover explicit registered-module
+selection, pre-activation dependency/compatibility checks, deterministic ordering,
+disabled-route/worker/connection isolation, readiness, bounded initialization,
+partial-start cleanup and shutdown, sanitized diagnostics, and restart versus
+custom rebuild behavior. The existing F-01 optional-dependency policy is
+preserved: absent/disabled optional targets confer no integration; enabled
+incompatible targets fail composition. All explicitly enabled modules must
+initialize successfully; optional dependency does not mean degraded startup.
+The [built-in requirements checklist](../specs/002-module-lifecycle/checklists/requirements.md)
+passes all 16 specification-quality criteria, with no unresolved clarification
+markers. It is not a custom reviewer-owned approval or runtime acceptance
+result. The bounded architecture review found no actionable requirement-level
+findings; its operational proof obligations remain future work.
+
+This stage creates no lifecycle implementation, production executable/provider,
+configuration parser, management discovery endpoint, UI, plan, tasks, or
+conformance certification. F-02 can later prove lifecycle with explicit
+selections and instrumented fixtures; F-03 retains configuration sources,
+option/secret handling, and operator selection UX, while F-04 retains management
+discovery. The next scheduled stage is `clarify` through a separate invocation;
+no implementation authorization or feature-completion claim is implied.
 
 ```mermaid
 flowchart TD

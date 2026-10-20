@@ -166,11 +166,19 @@ Finalization acceptance is recorded in the
 [PR #4](https://github.com/Stonefly-Labs/Hoard/pull/4) merged into `main` on
 2026-10-20. The separate `await_merge` completion checkpoint records F-01 as
 complete, retaining its feature directory, PR, and verified merge commit.
-That progress checkpoint must also merge before a new specification starts.
-The next scheduled stage is `specify` for
-[F-02: module registry, composition and lifecycle](docs/HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-02),
-through a separate invocation after that merge gate. No F-02 specification or
-runtime lifecycle behavior is introduced by this checkpoint.
+The progress checkpoint merged through
+[PR #5](https://github.com/Stonefly-Labs/Hoard/pull/5), satisfying the next-spec
+merge gate. The subsequent
+[F-02 specification: module registry, composition and lifecycle](specs/002-module-lifecycle/spec.md)
+defines startup selection and dependency validation, disabled-module isolation,
+route ownership, readiness, bounded initialization/cleanup, safe diagnostics,
+and explicit restart/custom-distribution journeys. Its
+[built-in quality checklist](specs/002-module-lifecycle/checklists/requirements.md)
+passes all 16 specification-quality criteria, not implementation or
+reviewer-owned approval.
+No lifecycle runtime, runnable host, real provider, discovery API, or UI is
+introduced by specification. The next scheduled stage is `clarify`, through
+a separate `hoard-speckit` invocation.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
