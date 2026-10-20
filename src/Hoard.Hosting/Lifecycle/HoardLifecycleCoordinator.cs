@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Hoard.Hosting.Composition;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 namespace Hoard.Hosting.Lifecycle;
@@ -193,9 +194,21 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                                         Entries[id].Status = HoardModuleStatus.Failed;
                                         ready = admission = false;
                                         Error("WorkerFailure", id, HoardLifecyclePhase.Running);
+                                        var notificationActivity = Activities.Enter("composition", HoardActivityKind.Phase);
                                         _ = StopAsync();
-                                        if (Lease.Application!.Services.GetService(typeof(IHostApplicationLifetime)) is IHostApplicationLifetime hostLifetime)
-                                        { hostLifetime.StopApplication(); }
+                                        var notification = Task.Run(() =>
+                                        {
+                                            using (notificationActivity)
+                                            {
+                                                try
+                                                {
+                                                    Lease.Application!.Services.GetRequiredService<IHostApplicationLifetime>().StopApplication();
+                                                }
+                                                catch (Exception)
+                                                { throw Error("HostStopFailure", "composition", HoardLifecyclePhase.Stopping, true); }
+                                            }
+                                        });
+                                        Observe(notification, "composition", HoardLifecyclePhase.Stopping);
                                     }
                                 }
                             }

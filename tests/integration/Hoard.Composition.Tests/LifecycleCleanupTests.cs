@@ -111,7 +111,8 @@ public class LifecycleCleanupTests
         try
         {
             await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            await LifecycleTestHarness.Until(() => clock.NextDelay == TimeSpan.FromSeconds(1));
+            await LifecycleTestHarness.Until(() => clock.NextDelay == TimeSpan.FromSeconds(1)
+                && !lease.Coordinator.Activities.Snapshot().Any(activity => activity.ModuleId == "composition"));
             clock.Advance(TimeSpan.FromSeconds(1));
             var result = await stopping.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.Contains(result.Modules, item => item.ModuleId == "protocol"

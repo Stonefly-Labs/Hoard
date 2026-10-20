@@ -552,9 +552,33 @@ release guides are unaffected because no API, intended behavior, dependency or
 operational action changed. Existing implementation evidence remains historical,
 not proof of the newly uncovered path.
 
-The next separately authorized stage is `implement` for T073, followed by a
-fresh convergence assessment. Keep the feature PR draft: finalization, merge,
-feature completion and dependent work remain blocked by this finding.
+The separately authorized
+[T073 implementation follow-up](../specs/002-module-lifecycle/plan.md#t073-implementation-follow-up)
+now records the worker failure and stop latch atomically, registers global
+pending Phase activity before drain scheduling, and dispatches host lifetime
+resolution/notification outside the state lock. Pending notification or
+cancellation protects every module and the root. The existing tracker,
+cleanup planner and sole composition owner provide that retention without new
+APIs, dependencies or a second shutdown path.
+
+Barrier/virtual-time regressions prove responsive snapshots, a 200 ms original
+shutdown deadline, unsafe incomplete cleanup while a notification/cancellation
+is held, frozen repeated results and no deferred cleanup after release.
+The cooperative counterpart proves once-only notification, module cleanup and
+root disposal. The bounded implementation architecture review found no
+actionable findings; its static review and runtime proof limits are recorded
+in the plan. A full run exposed a test synchronization race: the independent
+cleanup proof must await harmless global cancellation quiescence before
+advancing its virtual drain timer. That test now does so without weakening
+resource-retention assertions.
+
+The next separately authorized stage is fresh `converge`. Keep the feature
+PR draft: this implementation checkpoint does not itself establish convergence,
+finalization, merge, feature completion or dependency availability. README,
+provider/example/quickstart and lifecycle ownership documentation now describe
+the corrected path; product intent, baseline diagrams, governance, IaC and
+release guidance remain unaffected because no public API, dependency direction,
+product scope or operational action changed.
 
 ```mermaid
 flowchart TD

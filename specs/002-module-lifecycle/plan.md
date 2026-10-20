@@ -436,3 +436,103 @@ deployment, package publication, tag, release or merge occurred.
 Requirements/custom checklist bytes remain reviewer-owned and unchanged.
 Implementation does not run convergence/finalization, ready or merge the draft
 PR, finish F-02's dependency checkpoint, or authorize a dependent feature.
+
+### T073 implementation follow-up
+
+The separately authorized follow-up resolves the CRITICAL worker-fault
+notification path found by convergence. WorkerFailure, failed owner state,
+closed readiness/admission and the once-only stop latch remain atomic under
+Gate. Register composition-wide Phase activity before scheduling stop, then
+resolve IHostApplicationLifetime and invoke synchronous StopApplication on a
+supervised task outside that lock. Retain the activity until notification
+returns; translate notification-task errors to safe HostStopFailure and use
+the existing late-fault observer. Do not start another shutdown budget.
+
+The existing HoardActivityTracker, HoardCleanupPlanner and composition lease
+already retain all module/root resources for composition-wide activity.
+No tracker, planner, disposal-owner, public API, project or dependency change
+is needed. A held host-stopping notification or lifetime-cancellation callback
+therefore yields explicit UnsafePendingCallback / NotAttemptedUnsafe rather
+than disposing resources it can still use. Late completion cannot rewrite
+the immutable module/lease results, retry cleanup or trigger deferred disposal.
+
+#### Focused failure and correction evidence
+
+WorkerAdmissionTests adds a barrier-held ApplicationStopping notification:
+snapshot access stays responsive; virtual stop time advances 199 ms without
+completion, then the final 1 ms exhausts the original 200 ms shutdown budget.
+WorkerFailure remains primary, with safe additional Timeout diagnostics.
+LifecycleOwnershipTests independently holds host notification and lifetime
+cancellation: after the one-second drain cap, nine seconds of the original
+ten-second shutdown budget remain, all modules/root are retained, and global
+Phase activity remains explicit. Repeated stop/disposal returns the same frozen
+outcomes; releasing/observing the callback triggers no cleanup/root disposal.
+The cooperative worker-fault counterpart now asserts one notification, one
+cleanup per module and one root disposal across concurrent disposal callers.
+
+Before the product change, the three new cases produced two runtime failures
+(held notification/snapshot and held notification/ownership) and one passing
+cancellation counterpart. An initial no-restore attempt instead encountered
+stale assets from a deleted prior acceptance cache; locked restore corrected
+setup before recording the intended runtime failures.
+
+The first full lifecycle run subsequently exposed a virtual-time scheduling
+race in the existing independent-cleanup regression: advancing drain expiry
+while harmless global cancellation was still pending correctly made every
+module unsafe, contradicting that test's expectation of quiescent independent
+cleanup. The test now waits for that global activity to finish before advancing
+time, without releasing the deliberately held worker or weakening its
+owner/prerequisite/root assertions. The pair passed five consecutive Release
+replays, then both complete acceptance commands passed.
+
+#### Bounded implementation architecture review
+
+Custom hoard-architecture-review (`t073-architecture`) reviewed the changed
+coordinator and worker/ownership regressions with immediate tracker/planner/
+lease/deadline/bridge context. It found no actionable findings or unresolved
+design questions: activity precedes drain scheduling, service resolution and
+notification do not hold Gate, ownership remains centralized and outcomes
+remain frozen. The reviewer ran no commands/tests. Its evidence limitations
+were pending full acceptance, the not-yet-rerun strengthened cooperative case,
+and no direct notification-task fault injection for HostStopFailure /
+LateCallbackFailure. Subsequent focused/full runs below address the first two;
+the latter remains a focused test-scope limitation, not a claimed injection
+result. Existing cleanup late-fault and safe-diagnostic regressions remain.
+The later test-only synchronization correction changes no production ownership.
+
+#### Measured follow-up commands
+
+| Command | Result |
+| --- | --- |
+| `dotnet restore tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj --locked-mode --verbosity quiet` | Passed; restored missing local assets without lock changes |
+| `dotnet test tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj --no-restore --filter 'FullyQualifiedName~Held_worker_fault_notification\|FullyQualifiedName~Worker_fault_retains_all_resources' --verbosity quiet` | Intended red before product fix: two failed, one passed, zero skipped |
+| `dotnet test tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj -c Release --no-restore --filter 'FullyQualifiedName~WorkerAdmissionTests\|FullyQualifiedName~LifecycleOwnershipTests\|FullyQualifiedName~LifecycleCleanupTests\|FullyQualifiedName~LifecycleConcurrencyTests' --verbosity quiet` | Passed after correction: 21 tests, zero failed/skipped, including strengthened cooperative case |
+| `dotnet test tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj -c Release --no-build --no-restore --filter 'FullyQualifiedName~LifecycleCleanupTests.Timed_out_cleanup_or_worker' --verbosity quiet` | Passed five consecutive replays: two tests each, zero failed/skipped |
+| `dotnet format Hoard.slnx --no-restore --verify-no-changes --verbosity quiet` | Passed; complete acceptance also verifies formatting/analyzers for source and standalone consumers |
+| `bash scripts/validate-lifecycle.sh --update-locks` | Passed after test synchronization correction: 129 source tests, nine boundary proofs, seven package-only journeys; six independent packages and retained old binary/new-source/framework proof |
+| `bash scripts/validate-lifecycle.sh` | Passed independently with unchanged locks: same 129 tests, nine proofs and seven journeys |
+| `bash scripts/validate-foundation.sh --update-locks` | Passed: 223 .NET tests (42 foundation, 49 architecture, 132 composition), zero failed/skipped; affected packed Hosting consumer hashes refreshed |
+| `bash scripts/validate-foundation.sh` | Passed independently: same 223 tests, zero failed/skipped; original eight scans, ARCH-001..008, C-01..23, isolated Core and compile-only hosts retained |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed: 22 tests |
+| `git diff --check` | Passed |
+
+Exactly ten affected standalone locks change only contentHash fields for the
+new Hosting payload and its dependent lifecycle protocol/identity fixture
+packages. Package versions, dependency metadata, baseline old-binary lock,
+Abstractions-only fixtures and platform/test locks remain unchanged. A structured
+old/new comparison verifies that scope; default lifecycle and foundation
+replays use fresh private feeds/caches without hash bypass or lock mutation.
+
+README, DEVELOPMENT, PROVIDERS, LifecycleHost guide, quickstart, lifecycle
+contract and in-memory model document the corrected notification ownership.
+Spec, public API contract, acceptance obligations, all built-in/reviewer-owned
+checklists, F-01 source/examples and Abstractions/Core/Application source stay
+unchanged. Product intent, baseline diagrams/ADR, governance, master backlog,
+IaC and release guidance are unaffected: this corrects the existing invariant
+without changing product scope, dependencies, permissions or operational steps.
+No extension hooks are registered (`.specify/extensions.yml` is absent).
+No infrastructure, deployment, publication, tag, release or merge occurred.
+
+T001..T073 are now complete. This checkpoint completes only implement; a fresh
+convergence assessment is the next separately authorized stage. Keep the PR
+draft and do not infer finalization, merge readiness or dependency completion.

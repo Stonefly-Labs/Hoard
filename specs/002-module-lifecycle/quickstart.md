@@ -131,6 +131,12 @@ Use deterministic fixture barriers rather than a real unavailable service:
    while it executes, and quiescent C cleans up under the same deadline.
    After the bounded stop result, release/observe A and verify no second stop,
    returned-result rewrite or deferred dependency/root disposal.
+8. Fail a worker while a synchronous host-stopping notification or lifetime
+   cancellation callback is held. Snapshot access stays responsive and stop
+   uses its original absolute deadline; global Phase activity protects every
+   module and the root. Release/observe the callback after incomplete stop and
+   confirm frozen outcomes with no retry/deferred disposal. A cooperative
+   worker-fault counterpart cleans modules/root and notifies only once.
 
 Default coordination budgets are 120s total startup, 30s per activation
 callback, 5s aggregate readiness, and 30s total stop with 10s drain / 5s per

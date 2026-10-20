@@ -132,7 +132,11 @@ is safely observed without rewriting it, retrying cleanup or deferred disposal.
 Track admitted request/resource leases through response completion as well as
 worker and build activity. A timed-out drain retains those leases for the owner
 and its prerequisites; it does not permit resource release. A pending host build
-protects all potentially used resources. The composition lease is the single
+protects all potentially used resources. Worker-failure host notification and
+lifetime cancellation are composition-wide Phase activity, registered before
+drain scheduling and retained until their callbacks return. They protect every
+module/root resource; host lifetime resolution and notification run outside the
+state lock so snapshots/stop remain bounded. The composition lease is the single
 owner of the built application's root disposal and records unsafe omission
 instead of allowing concurrent disposal underneath active work.
 

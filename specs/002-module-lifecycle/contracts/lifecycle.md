@@ -107,6 +107,16 @@ traffic merely because health changed. Existing handlers remain responsible
 for safe operational errors and centralized auth/cache boundaries. Stop or
 worker failure closes admission permanently for this lifecycle.
 
+Worker failure records its primary diagnostic and latches stop atomically.
+Register composition-wide Phase activity before drain can begin, then dispatch
+host lifetime resolution and synchronous `StopApplication` notification outside
+the coordinator state lock. Pending notification and lifetime-cancellation
+callbacks may use any module/root resource: protect all of them, not just the
+failed worker's dependencies. Snapshot access and stop waiting remain bounded
+by the existing shutdown deadline; notification does not receive a fresh budget.
+Notification-task failures use safe additional diagnostics. Late completion
+cannot rewrite returned outcomes or trigger retry/deferred disposal.
+
 ## Stop, Drain and Cleanup
 
 Latch stop atomically, make readiness false, close new module request and worker

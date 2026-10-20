@@ -257,9 +257,14 @@ coordination gap: worker failure invokes synchronous host-stop notification
 while holding the lifecycle state lock. A held `ApplicationStopping` callback
 blocked both stop and snapshot access beyond the configured shutdown budget.
 [Phase 9 / T073](specs/002-module-lifecycle/tasks.md#phase-9-convergence)
-records the required bounded-notification correction and regression proof.
-Existing acceptance passes but does not cover this path; F-02 is not converged
-or ready to merge. The next separately authorized stage is `implement`.
+records the separately authorized correction: host notification now runs outside
+the state lock, tracked before stop begins so pending callbacks protect all
+module/root resources. Deterministic regressions cover responsive snapshots,
+the original shutdown deadline, once-only cooperative cleanup, and incomplete
+cleanup without late retry/disposal. See the
+[follow-up evidence](specs/002-module-lifecycle/plan.md#t073-implementation-follow-up).
+The next separately authorized stage is fresh `converge`; F-02 is not yet
+converged, finalized or ready to merge.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

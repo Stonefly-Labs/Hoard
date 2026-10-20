@@ -73,6 +73,11 @@ and root. TimedOut means waiting ended, not that trusted code stopped.
 Unsafe/budget-exhausted omissions are explicit; independent safe cleanup may
 continue, but incomplete terminal lifecycles may require process termination.
 Nothing rolls back provider schemas/data or proves crash cleanup.
+Worker-failure host notification runs outside the state lock and is tracked
+before stop begins. A pending synchronous stopping notification or lifetime
+cancellation callback may use any module/root resource, so all remain protected
+while snapshots and bounded stop remain available. Releasing such a callback
+after the returned incomplete result does not trigger deferred cleanup/disposal.
 
 The [provider guide](../../docs/PROVIDERS.md#opt-in-lifecycle) documents APIs,
 route restrictions, safe diagnostic catalogue, status/readiness distinctions

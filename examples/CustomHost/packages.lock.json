@@ -42,7 +42,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "CiwnJn33EGUbaYB1LkIJsbKKpoU6J1W0QrhQHSYl8zgqJrZ7Kc9F5fF5jI1rCfYLKIFpoKRdW1g7KbpAQ6kJpg==",
+        "contentHash": "VHLM6qtGpvn7L05wScwUCEHGW4Q2fnWV2Fmn1uaZ8XjvNwxIXd57PkLhho+tSJu2MQidpyw/3a1nu2cdNwH0LQ==",
         "dependencies": {
           "Hoard.Abstractions": "0.1.0",
           "Hoard.Core": "0.1.0",

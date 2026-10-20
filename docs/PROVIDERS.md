@@ -132,7 +132,11 @@ Adapters own phase-acquired resources, including partial failures; throwing
 constructors clean their own pre-return allocations. DI retains its own
 resource ownership. RunAsync is one admitted callback after complete selected
 readiness, not a per-iteration scheduler; no-worker completion is valid.
-Worker faults close admission and request shutdown, without retry.
+Worker faults atomically close admission and request shutdown, without retry.
+Host lifetime resolution and synchronous stopping notifications run outside the
+lifecycle state lock. They are tracked before stop begins as global Phase
+activity: a pending notification or lifetime-cancellation callback protects all
+module resources and the root while snapshot/stop coordination remains bounded.
 
 Map declared responsibilities through
 `routes.Map(responsibilityId, pattern, methods, RequestDelegate)`.
