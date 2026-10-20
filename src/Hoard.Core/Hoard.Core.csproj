@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Provider-free Hoard engine boundary. No cache implementation in F-01.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../Hoard.Abstractions/Hoard.Abstractions.csproj" />
+  </ItemGroup>
+</Project>

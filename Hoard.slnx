@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Hoard.Abstractions/Hoard.Abstractions.csproj" />
+    <Project Path="src/Hoard.Application/Hoard.Application.csproj" />
+    <Project Path="src/Hoard.Core/Hoard.Core.csproj" />
+    <Project Path="src/Hoard.Hosting/Hoard.Hosting.csproj" />
+  </Folder>
+  <Folder Name="/tests/" />
+  <Folder Name="/tests/architecture/">
+    <Project Path="tests/architecture/Hoard.Architecture.Tests/Hoard.Architecture.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/integration/">
+    <Project Path="tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tests/unit/">
+    <Project Path="tests/unit/Hoard.Foundation.Tests/Hoard.Foundation.Tests.csproj" />
+  </Folder>
+</Solution>

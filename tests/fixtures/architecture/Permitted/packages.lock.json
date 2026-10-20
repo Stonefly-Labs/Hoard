@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "abstractions": {
+        "type": "Project"
+      },
+      "core": {
+        "type": "Project",
+        "dependencies": {
+          "Abstractions": "[0.1.0, )"
+        }
+      },
+      "Hoard.Fixtures.Arch.Sdk": {
+        "type": "Project"
+      },
+      "metadata": {
+        "type": "Project",
+        "dependencies": {
+          "Abstractions": "[0.1.0, )",
+          "Hoard.Fixtures.Arch.Sdk": "[0.1.0, )"
+        }
+      },
+      "permittedslices": {
+        "type": "Project",
+        "dependencies": {
+          "Core": "[0.1.0, )"
+        }
+      },
+      "storage": {
+        "type": "Project"
+      }
+    }
+  }
+}

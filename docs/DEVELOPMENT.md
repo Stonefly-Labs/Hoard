@@ -2,9 +2,12 @@
 
 ## Foundation boundary
 
-The bootstrap establishes contributor tools and an empty architecture-aligned
-layout. Product code, build manifests, runtime packaging, application CI/CD,
-and cloud hosting are future feature work. Azure identity provisioning is a
+The bootstrap established contributor tools and reserved architecture boundaries.
+F-01 adds four .NET library projects, immutable provider declarations, explicit
+registration, and compile/package/boundary acceptance tooling. Core and
+Application remain empty boundaries: no caching engine, management endpoints,
+working providers, curated executable, UI, product CI/CD, or deployment exists.
+Azure identity provisioning is a
 separate, explicitly authorized [operator action](../infra/bootstrap/README.md).
 
 Current technical intent is defined by the [charter](PRODUCT_CHARTER.md),
@@ -154,6 +157,154 @@ specification from the [master inventory](HOARD_SPECKIT_MASTER_BACKLOG.md)
 and passes its exact prompt to the installed specify skill. The tracked
 checkpoint, rather than this guide, records current stage and merge progress.
 
+The first generated feature is
+[F-01: platform package boundaries and provider contracts](../specs/001-provider-contracts/spec.md).
+Its [built-in quality checklist](../specs/001-provider-contracts/checklists/requirements.md)
+validates the specification, not implementation or reviewer-owned custom
+checklist approval. Package contracts, custom-host compilation, and architecture
+checks described there were acceptance requirements at specification time;
+their current bounded implementation is described below.
+Its initial [clarification review](../specs/001-provider-contracts/spec.md#clarifications)
+records a no-question result with no scope changes; a later user-approved
+follow-up resolves the checklist review's optional-dependency ambiguity.
+Exact public signatures and
+build commands were proposed in the
+[implementation plan](../specs/001-provider-contracts/plan.md) and
+[public contracts](../specs/001-provider-contracts/contracts/public-api.md),
+then delivered by the separately authorized implementation stage. The plan
+retains historical design alongside current evidence and includes research,
+a declaration model,
+compatibility/architecture acceptance contracts, and a
+[validation quickstart](../specs/001-provider-contracts/quickstart.md).
+The implementation now supplies the foundation commands in that quickstart;
+they prove compilation and package boundaries, not product behavior.
+Planning did not generate or approve custom reviewer-owned checklists, create
+tasks, scaffold projects, or authorize implementation. The subsequent checklist
+stage generated separate
+[architecture](../specs/001-provider-contracts/checklists/architecture.md) and
+[compatibility](../specs/001-provider-contracts/checklists/compatibility.md)
+requirements-quality reviews: 20 and 18 criteria respectively.
+These standard-depth checklists are for maintainers and provider-contract
+reviewers before implementation authorization; they assess written requirements,
+not product behavior. At the user's explicit request, a delegated review
+initially found architecture 20/20 and compatibility 17/18 satisfied.
+The user then approved the recommendation for
+[RQ-01: incompatible present optional dependencies](../specs/001-provider-contracts/checklists/compatibility.md#rq-01-incompatible-present-optional-dependency).
+The spec, declaration model, and policy now classify an enabled incompatible
+optional target as an unsupported composition, without automatic disablement
+or substitution; installed/registered-but-disabled optional targets are
+unavailable and confer no integration/capability claim. Five new classification
+examples bring the written matrix to 23 cases. The delegated re-review closes
+CHK014: architecture 20/20 and compatibility 18/18, all 38 criteria satisfied
+without waivers. The built-in specification checklist and driver are unchanged.
+The subsequent [task-generation stage](../specs/001-provider-contracts/tasks.md)
+produced 57 unchecked tasks: shared setup/declarations, four story phases, and
+cross-cutting acceptance/documentation work. All 17 requirements and six
+outcomes are mapped to implementation and focused proof tasks. The dependency
+graph serializes the shared validation script while allowing independent
+fixture/test/inspector work; architecture negatives and all 23 compatibility
+classifications remain future proof obligations. No product scaffolding or
+implementation occurred.
+
+The subsequent read-only cross-artifact analysis found no actionable
+duplication, ambiguity, underspecification, inconsistency, constitutional
+conflict, or coverage gap. All 17 functional requirements and six buildable
+outcomes have implementation/proof tasks; all 57 tasks map to requirements or
+shared acceptance prerequisites. The prerequisite graph is complete and
+acyclic, including serialized shared-script edits. All feature artifacts and
+reviewer-owned checklist markers remained unchanged. The analysis report is
+recorded in the draft feature PR, with its completion evidence in the shared
+checkpoint; no remediation or implementation occurred. The next scheduled
+stage was implementation through a separate `hoard-speckit` invocation, with the
+existing reviewer-owned 38/38 checklist gate satisfied. Artifact analysis is
+not passing product evidence or permission to skip the remaining stages.
+
+The completed implementation stage delivers declaration-only Abstractions,
+provider-free Core/Application, and metadata/type registration in Hosting.
+The [provider guide](PROVIDERS.md) and
+[compile-only custom-host guide](../examples/CustomHost/README.md) describe
+current APIs and limits. `bash scripts/validate-foundation.sh` restores/builds
+with locks, checks SDK formatting/analyzers, builds Core in isolation, packs
+four local platform libraries and five independent fixtures, compiles family
+consumers and both hosts, and executes architecture/compatibility/registration
+acceptance. The host is never run. Every subprocess has a ten-minute timeout.
+A Python standard-library helper owns copying, hashes, metadata manifests, and
+explicit subprocess errors; Bash owns prerequisites and private-directory cleanup.
+Tests consume the prepared evidence, never recursively invoke the orchestrator,
+and deliberately fail when evidence is missing.
+
+Default runs do not rewrite lockfiles. After an intentional contract/dependency
+change, `bash scripts/validate-foundation.sh --update-locks` regenerates and
+replays standalone locks; review and commit them before the default locked run.
+Local acceptance packages omit Git revision stamps and normalize source paths,
+so fresh temporary locations and checkpoint commits do not invalidate their
+content hashes. This is local proof tooling, not release/package publication.
+The helper also canonicalizes unsigned local SDK archive envelopes (ZIP
+metadata and OPC relationship IDs/paths) without changing nuspec/assembly/core
+property bytes. Focused regressions protect reproducibility and reject signed/
+external inputs; no published/external package is rewritten and locked hashes
+are never bypassed. Compiler/SDK changes affecting payloads need reviewed locks.
+SDK package pruning is disabled in the example so its complete explicit packed
+dependency graph remains available for inspection even with ASP.NET's shared
+framework. Framework ownership comes from resolved reference-pack metadata,
+not trusted namespace/name prefixes.
+The implemented-graph architecture review identified three proof gaps, now
+corrected with focused regressions: unused framework references create real
+dependency edges, prohibited BCL query/connection/transaction shapes cannot
+bypass public-surface checks, and all eight named platform/provider/host scans
+are mandatory. See the [review and measured evidence](../specs/001-provider-contracts/plan.md#necessary-implementation-details-and-review).
+The support-claim audit is complete. The subsequent installed convergence stage
+assessed all 17 functional requirements, six buildable success criteria, 15
+story acceptance scenarios, nine edge cases, 12 grouped plan decisions, all 57
+implementation tasks, and eight constitutional principles against current
+scoped code. It found one HIGH-severity partial gap: the graph inspector rejected
+the permitted `Identity -> Hosting -> Core` closure under ARCH-008, although
+identity providers may use the approved Hosting API and Hosting references Core.
+A temporary diagnostic invoking the current compiled graph inspector reproduced
+that false rejection; the original permitted fixtures did not cover this path.
+[Phase 8 / T058](../specs/001-provider-contracts/tasks.md#phase-8-convergence)
+recorded the correction and regression work. That convergence invocation
+appended only the new task section; its passing baseline of 81 .NET tests
+and 17 tooling tests did not resolve the uncovered path.
+
+The separately authorized T058 implementation now tracks Identity paths whose
+first edge reaches Hosting separately from other paths to the same dependency.
+Core is permitted through that approved Hosting composition, not directly or
+through an unrelated SDK-owned helper. A package-only fixture uses the actual
+Hosting registration API; isolated negatives retain both forbidden routes even
+when Hosting is also referenced, with normal/reversed edge-order checks.
+All four new fixture projects carry locks. No platform API, provider package,
+runtime behavior, or reviewer-owned checklist changed. See the
+[follow-up evidence](../specs/001-provider-contracts/plan.md#t058-implementation-follow-up-2026-10-20).
+The separately authorized follow-up convergence assessment found no actionable
+gaps: missing 0, partial 0, contradicts 0, unrequested 0, with zero findings at
+any severity. It checked all 17 functional requirements, six buildable success
+criteria, 15 story acceptance scenarios, nine edge cases, 12 grouped plan
+decisions, all 58 tasks (including T058), and eight constitutional principles.
+Fresh default locked acceptance passed all 86 .NET tests (42 foundation,
+41 architecture, three composition), zero failed/skipped, including the
+permitted Identity/Hosting path and both forbidden alternatives. All 17 Python
+tooling tests passed. The assessment left the spec, plan, tasks, and all
+reviewer-owned/built-in checklist bytes unchanged; no empty convergence phase
+or further implementation task was added. Its report is recorded in the draft
+feature PR and shared checkpoint.
+The separately authorized
+[finalization acceptance](../specs/001-provider-contracts/plan.md#finalization-acceptance-2026-10-20)
+repeated the full locked foundation check and all 17 tooling tests, refreshed
+the dependency advisory assessment with no known vulnerable packages, and
+verified the acceptance traceability, documentation, and existing architecture
+reviews. The reviewed implementation, locks, tasks, and checklist markers
+remain unchanged. [PR #4](https://github.com/Stonefly-Labs/Hoard/pull/4) is ready
+for maintainer review, targeting `main`; the shared checkpoint records
+`await_merge` with that PR number and no completed feature.
+
+The next invocation may verify a maintainer-authorized feature merge; while
+the PR is open, that merge gate blocks progress. After merge, `await_merge`
+creates a separate `chore/spec-progress-f-01` branch from fetched main and
+publishes the completion checkpoint PR. That progress PR must also merge
+before another specification starts. Finalization neither merges F-01,
+unlocks dependent work, nor authorizes new runtime capabilities.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
@@ -251,14 +402,23 @@ required for simple doc or repository-tool changes.
 
 ```bash
 python3 -m unittest discover -s tests/tooling -v
+bash scripts/validate-foundation.sh
+dotnet restore Hoard.slnx --locked-mode
+dotnet build Hoard.slnx --configuration Release --no-restore
+dotnet format Hoard.slnx --verify-no-changes --no-restore
 tofu -chdir=infra/bootstrap fmt -check
 tofu -chdir=infra/bootstrap init -backend=false
 tofu -chdir=infra/bootstrap validate
 tofu -chdir=infra/bootstrap test
 ```
 
-The OpenTofu tests mock Azure/GitHub; they do not provision anything. There is no
-application build command or CI pipeline in this bootstrap. Later features
+The OpenTofu tests mock Azure/GitHub; they do not provision anything. The .NET
+commands build libraries only; no runnable application or product CI exists.
+`dotnet test` requires the temporary `HOARD_FOUNDATION_EVIDENCE` manifest prepared
+by the full script; a solution build/test alone is not package independence proof.
+Partial script selectors `--phase declarations`, `--phase packages`,
+`--phase architecture`, and `--phase hosts` cover their named bounded checkpoints,
+never full acceptance. Later features
 must introduce and document focused backend/UI format/type/unit checks,
 architecture tests, provider contract suites, and real-client protocol tests.
 

@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <PackageReference Include="Hoard.Fixtures.Arch.Helper" Version="[0.1.0]" />
+  </ItemGroup>
+</Project>

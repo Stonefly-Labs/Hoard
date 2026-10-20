@@ -1,9 +1,13 @@
 {
   "schema_version": 1,
-  "stage": "specify",
+  "stage": "await_merge",
   "status": "ready",
-  "branch": null,
-  "active": null,
+  "branch": "feature/001-provider-contracts",
+  "active": {
+    "id": "F-01",
+    "feature_directory": "specs/001-provider-contracts",
+    "pr": 4
+  },
   "completed": [],
   "history": [
     {
@@ -12,6 +16,83 @@
       "branch": "chore/constitution",
       "at": "2026-10-20T15:07:22.228692+00:00",
       "evidence": "Initial constitution v1.0.0, dated 2026-10-20, validated against master prompt, charter, product spec, architecture and ADR-0001; eight principles, no placeholders or TODOs; templates unchanged; README/workflow guidance synchronized; python3 -m unittest discover -s tests/tooling -v passed (14 tests); git diff --check passed. Governance only; first spec blocked until adoption PR merges."
+    },
+    {
+      "stage": "specify",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T15:18:02.200096+00:00",
+      "evidence": "F-01 specification created from exact backlog prompt at specs/001-provider-contracts/spec.md: 4 prioritized stories, 17 functional requirements, 6 measurable outcomes; built-in requirements checklist passed 16/16 criteria with no clarification markers. Constitution/ADR boundaries retained; lifecycle, runtime activation, store semantics and conformance deferred to named backlog features. README and development guide updated. python3 -m unittest discover -s tests/tooling -v passed (14 tests); specification artifact/link/pinned-context checks and git diff --check passed. Requirements only; no product scaffolding or custom reviewer approval. Next stage clarify."
+    },
+    {
+      "stage": "clarify",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T15:28:46.603459+00:00",
+      "evidence": "F-01 clarification completed through speckit-clarify using the pinned directory. Structured review covered all ten ambiguity categories; no critical ambiguities, zero questions, no requirement or scope changes, and no product decisions blocking planning. Recorded dated no-question review in spec; README and development guide link the result. Built-in requirements checklist revalidated unchanged at 16/16 to 16/16, no newly passing items, regressions, or unchecked items; no custom reviewer approval. No extension hooks configured. python3 -m unittest discover -s tests/tooling -v passed (14 tests); clarification artifact, unchanged-requirements, local-link and no-later-artifact checks passed; git diff --check passed. Next stage plan; no product implementation."
+    },
+    {
+      "stage": "plan",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T15:57:12.049966+00:00",
+      "evidence": "F-01 planning completed through speckit-plan with pinned specs/001-provider-contracts. Generated plan, research, declaration model, validation quickstart and three public/compatibility/architecture contracts; all 17 FRs and six outcomes traced, eight architecture rejection rules and 18 compatibility cases specified. BCL-only abstractions, registration without activation, five independent fixture packages and compile-only replacement proof planned; later-feature operations preserved. hoard-architecture-review found no violations or unresolved F-01 questions; implementation evidence explicitly outstanding. README/development guide synchronized; no extension hooks. python3 -m unittest discover -s tests/tooling -v passed (14 tests); pinned path, local links/anchors, artifact/traceability/stage-isolation assertions and git diff --check passed. No product scaffolding, later-stage tasks or custom checklist approval. Next stage checklist."
+    },
+    {
+      "stage": "checklist",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T16:07:53.598663+00:00",
+      "evidence": "F-01 checklist stage completed through speckit-checklist with pinned specs/001-provider-contracts. Created architecture.md (20 items) and compatibility.md (18 items), standard-depth requirements-quality questions for maintainer/provider-contract PR review. All 38 items remain unchecked and reviewer-owned; generation is not approval or implementation authorization. Structural checks passed: sequential file-scoped IDs, question/quality format, 100% specification traceability, all 17 FRs and six outcomes referenced, local links/anchors resolved. Existing spec, plan, contracts, quickstart and built-in requirements checklist unchanged; no tasks, product scaffolding or extension hooks. README/development guidance synchronized; charter, product spec, architecture/diagrams, ADR, governance, backlog and reserved guides unaffected because requirements and implementation scope are unchanged. python3 -m unittest discover -s tests/tooling -v passed (14 tests); git diff --check passed. Next stage tasks; reviewer-owned checklist approval remains a later implementation gate."
+    },
+    {
+      "stage": "tasks",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T16:34:13.386728+00:00",
+      "evidence": "F-01 tasks completed through installed speckit-tasks with pinned specs/001-provider-contracts. Generated 57 unchecked sequential tasks across seven phases: shared 18, US1 11, US2 13, US3 8, US4 7; 23 scoped parallel tasks, explicit acyclic prerequisites and serialized shared-script edits. All 17 FRs and six SCs mapped to implementation/proof tasks, including five independent provider packages, provider-free Core, eight architecture rules with isolated negatives/permitted counterparts, two compile-only host variants and all 23 compatibility classifications. Model constraints retained; initial lock generation precedes locked replay. Format/dependency/traceability/stage-isolation assertions and 60 local-link/anchor checks passed. Existing spec/plan/contracts and all checklist markers byte-for-byte unchanged; reviewer-owned 38/38 approval preserved, not self-approved. No extension hooks, product scaffolding, later-stage analysis or implementation. README/development guide synchronized; baseline product/governance/architecture/diagrams and reserved guides unaffected because design/scope unchanged. python3 -m unittest discover -s tests/tooling -v passed all 14 tests; git diff --check passed. Next stage analyze; no task-generation blocker."
+    },
+    {
+      "stage": "analyze",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T16:40:09.640326+00:00",
+      "evidence": "F-01 analyze completed through installed speckit-analyze with explicitly pinned specs/001-provider-contracts. Read-only review of spec, plan, tasks and supporting declaration/compatibility/architecture contracts against constitution v1.0.0 found zero actionable findings across duplication, ambiguity, underspecification, consistency, coverage and constitutional alignment; no remediation required. All 17 FRs and six buildable SCs have implementation and focused proof tasks (23/23, 100%); 57 tasks remain unchecked, 23 parallel, zero semantically unmapped, complete acyclic prerequisites and serialized shared-script edits. T001-T012 are shared prerequisites; T053 maps through isolated lockfile replay/standalone formatting. All eight architecture rules and 23 compatibility cases retain proof obligations, including the approved optional-dependency policy. Feature artifacts and all built-in/custom checklist markers are byte-for-byte unchanged; existing reviewer-owned approval preserved at 38/38, not self-approved. No extension hooks, product scaffolding or implementation. Structured analysis report emitted for draft PR #4. README/development status updated; baseline product/architecture/diagrams/ADR/governance and reserved guides unaffected because no requirement, design, API, package graph or runtime behavior changed. python3 -m unittest discover -s tests/tooling -v passed all 14 tests; read-only coverage/dependency/scope assertions and git diff --check passed. Next stage implement via a separate invocation; no analysis blocker or product acceptance claim."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T17:37:56.153071+00:00",
+      "evidence": "F-01 implement completed through installed speckit-implement in pinned specs/001-provider-contracts; all 57 tasks checked. Four compile-only .NET 10 libraries, immutable declarations/family markers, registration without activation, five independently packed provider fixtures and package-only baseline/replacement hosts delivered. All 17 FRs/six SCs traced; ARCH-001..008, C-01..23, isolated Core, local source/SHA-512 provenance and source/binary break proofs passed. Required hoard-architecture-review found three medium proof gaps; unused-framework edges, prohibited BCL query/connection/transaction shapes and exact eight-scan coverage fixed with regressions; no unresolved findings. bash scripts/validate-foundation.sh --update-locks and independent default locked replay passed all 81 .NET tests (42 foundation, 36 architecture, 3 composition), zero failures/skips; formatting/analyzers and 46 project locks passed. Python tooling suite passed 17 tests; no known NuGet advisories at assessment; git diff --check and 117 local file/anchor checks passed. Reviewer-owned/built-in checklists unchanged; no extension hooks. README/affected guides/examples/spec evidence and SC-006 support audit updated with unaffected-document reasons. No runtime providers/cache, publication, infrastructure apply, deployment or merge. Next stage converge, separate invocation; no feature completion claim."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T17:51:51.464000+00:00",
+      "evidence": "F-01 converge resumed in recorded directory through installed speckit-converge; no begin/generator rerun. Assessed current scoped code against 17 FRs, six buildable SCs, 15 acceptance scenarios, nine edge cases, 12 grouped plan decisions, all 57 original tasks and eight constitutional principles. Outcome tasks_appended: one HIGH partial gap, F1, FR-004/FR-014/US2-AC1/SC-003. Current DependencyGraphInspector incorrectly rejects permitted Identity -> Hosting -> Core under ARCH-008; direct invocation of compiled inspector reproduced exactly one unexpected violation (expected zero). Appended only Phase 8/T058 for path-aware correction and permitted-graph regression without weakening forbidden-edge rejection. Existing 57 tasks, spec, plan and all checklist bytes unchanged; no application edits or reviewer self-approval. Fresh bash scripts/validate-foundation.sh passed 81 existing .NET tests (42/36/3), zero failures/skips, locked package/Core/host proofs and formatting; Python tooling passed 17 tests. Those baselines omit the uncovered path and do not resolve T058. Append-only integrity, README/development local links and git diff --check passed; no extension hooks. README/development status corrected; other guides/baseline documents unaffected because no API/package graph/runtime change. Draft PR #4 retained. Next stage implement T058, then reconverge; finalization blocked; no merge/publication/deployment."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T18:07:01.781858+00:00",
+      "evidence": "F-01 implement follow-up completed through installed speckit-implement in pinned specs/001-provider-contracts; T058 checked, all 58 tasks complete. Corrected test-only inspector to permit Identity -> Hosting -> Core only on Identity-rooted first-hop Hosting paths, with independent visited state preserving alternate forbidden routes. Added actual local Hosting-package/API positive, direct Core plus Hosting and SDK-helper Core plus Hosting negatives, and both edge-order assertions. Before correction, bash scripts/validate-foundation.sh --phase architecture --update-locks generated/replayed four new fixture locks then produced intended red regression (3 failed/29 passed). Fresh default bash scripts/validate-foundation.sh passed all 86 .NET tests (42 foundation, 41 architecture, 3 composition), zero failures/skips, all locked package/Core/host proofs, formatting/analyzers and ARCH-001..008/C-01..23. Python tooling passed 17 tests. Scoped hoard-architecture-review found no actionable findings or unresolved T058 design questions. Fifty projects locked; existing locks/platform sources/public APIs/spec/task bodies/all reviewer checklists unchanged. README/affected guides/architecture acceptance contract and plan evidence updated; unaffected-document reasons recorded. Task/lock integrity, 108 local links across eight Markdown files and git diff --check passed; no extension hooks. No runtime/provider/dependency-version change, publication, infrastructure action, deployment or merge. Draft PR #4 retained; next stage converge again, separate invocation; no clean-convergence or feature-completion claim."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T19:51:30.424809+00:00",
+      "evidence": "F-01 follow-up converge executed through installed speckit-converge in pinned specs/001-provider-contracts after T058. Outcome converged: zero missing/partial/contradicts/unrequested findings and zero findings at any severity. Present-code assessment covered all 17 FRs, six buildable SCs, 15 story acceptance scenarios, nine edge cases, 12 grouped plan decisions, all 58 existing tasks and eight constitutional principles. Verified permitted Identity -> Hosting -> Core and rejection of direct/helper Core paths even alongside Hosting, with both traversal orders; no remaining T058 gap. Fresh bash scripts/validate-foundation.sh passed all 86 .NET tests (42 foundation, 41 architecture, three composition), zero failures/skips, locked Core/package/host proofs, ARCH-001..008, C-01..23, declaration/registration checks, SDK formatting/analyzers. Python tooling suite passed all 17 tests. All 50 projects carry locks; all feature artifacts/spec/plan/tasks/checklists, application/test/tooling sources and lockfiles unchanged; no new convergence section or task, self-approval or extension hooks. README/development stage status synchronized; 61 local links/anchors, PR template fidelity and git diff --check passed. Draft PR #4 carries the assessment report; other guides/contracts/baseline architecture/diagrams/governance/backlog/IaC/release docs unaffected because APIs, dependency graph, commands, support/runtime boundaries and operational behavior did not change. Next stage finalize via separate invocation; finalization/feature completion/merge/dependency unlock not claimed; no publication, infrastructure action or deployment."
+    },
+    {
+      "stage": "finalize",
+      "spec_id": "F-01",
+      "branch": "feature/001-provider-contracts",
+      "at": "2026-10-20T20:00:12.923566+00:00",
+      "evidence": "F-01 finalize verified all 17 FRs/six SCs against implemented acceptance traceability, all 58 completed tasks, zero-gap follow-up convergence and existing implemented-graph/T058 hoard-architecture-review evidence. No implementation change since reviewed 54ace9b; no unresolved review finding or constitutional exception. Fresh bash scripts/validate-foundation.sh passed default locked acceptance, all 86 .NET tests (42 foundation, 41 architecture, three composition), zero failed/skipped, SDK formatting/analyzers, isolated Core, five independent packages/consumers, both hosts, source/hash provenance, eight real scans, ARCH-001..008, C-01..23 and declaration/registration/break proofs. Python tooling passed all 17 tests; dated NuGet advisory assessment covered seven projects with zero vulnerable entries/errors. Documentation audit passed 149 local links/anchors across 18 documents; 50 tracked project locks, all task bodies/markers and three checklist files unchanged; exact PR template structure and git diff --check passed. README/development, spec review status and plan acceptance updated; unaffected guides/baseline/diagrams/governance/backlog/IaC/release reasons recorded. PR #4 targets main; checkpoint records await_merge, ready, no completed feature/dependency unlock. No merge, runtime capability, publication, deployment, infrastructure or permissions action; next invocation waits for maintainer-authorized merge then publishes separate completion checkpoint."
     }
   ]
 }

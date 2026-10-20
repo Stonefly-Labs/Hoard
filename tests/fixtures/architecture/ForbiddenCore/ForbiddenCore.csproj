@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="../Storage/Storage.csproj" />
+    <Compile Remove="UnusedHttp/**/*.cs" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,4 @@
+{
+  "project": [["Fixture.One", "Fixture.Two"], ["Fixture.Two", "Fixture.One"]],
+  "package": [["Package.One/0.1.0", "Package.Two/0.1.0"], ["Package.Two/0.1.0", "Package.One/0.1.0"]]
+}

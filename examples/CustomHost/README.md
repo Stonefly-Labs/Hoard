@@ -1,0 +1,120 @@
+# Compile-only custom host
+
+This example proves public package references and explicit registration.
+It never calls `Build`, `Run`, `Start`, or route mapping. **Do not run it as a
+cache**: the four providers are fixtures, not functional implementations.
+
+## Prerequisites and packages
+
+Use Git, Python 3.11+, Bash, and a stable .NET 10 SDK satisfying the repository's
+`global.json`. Package restore needs trusted access to nuget.org. No external
+database, cloud, Docker, Node, upstream registry service, or credentials are needed.
+
+The example explicitly references `Hoard.Hosting`, `Hoard.Fixtures.Protocol`,
+`Hoard.Fixtures.Metadata`, `Hoard.Fixtures.Artifact.One`, and
+`Hoard.Fixtures.Identity`, all exact `[0.1.0]` local acceptance packages.
+`Hoard.Abstractions` and `Hoard.Core` are transitive platform dependencies;
+Hosting also brings DI abstractions 10.0.13. `Hoard.Fixtures.Artifact.Two` is an
+independently built alternative, not a dependency of One.
+These packages are not published. The project has no ProjectReference, source
+imports, or friend access and carries complete independent settings and a lock.
+SDK package pruning is disabled to preserve the explicit packed dependencies
+for this acceptance inspection, even when ASP.NET supplies equivalent assemblies.
+
+## Reproduce the proof
+
+From the repository root:
+
+```bash
+bash scripts/validate-foundation.sh
+# Focused registration/host/package/boundary checkpoint, not full acceptance:
+bash scripts/validate-foundation.sh --phase hosts
+```
+
+The Bash wrapper creates a private, resolved `hoard-foundation.*` temporary
+directory and removes only that directory on exit, including failures.
+The Python helper copies source inputs without `bin`/`obj`, builds Core with
+only Abstractions reachable, packs four platform libraries into `feed/`, and
+copies/builds/packs each of five provider fixtures separately. Family-typed
+consumers use those packages, not source. Private `source-cache/`, `cache/`,
+and per-project replay caches prevent stale published packages satisfying proof.
+
+The generated `NuGet.Config` clears inherited sources and explicitly defines
+the private `feed/` and `https://api.nuget.org/v3/index.json`. Source mapping sends
+`Hoard.*` only to the local feed, with `*` on nuget.org for external dependencies.
+Tests compare actual package cache source metadata and SHA-512 hashes against
+the freshly packed local archives. Source paths and Git revision stamps do not
+change these local acceptance package identities between clean runs.
+The helper also canonicalizes ZIP timestamps/attributes and OPC metadata
+relationship IDs/paths in unsigned local archives while preserving nuspec,
+core-property, and assembly payload bytes. It refuses signed/external packages.
+This local proof step is not a release packaging/signing pipeline. SDK/compiler
+changes affecting payloads still require reviewed lock updates.
+
+To retain evidence temporarily for manual inspection, use the same helper in
+your own bounded shell, with explicit cleanup:
+
+```bash
+work="$(mktemp -d "${TMPDIR:-/tmp}/hoard-foundation.XXXXXXXX")"
+work="$(cd "$work" && pwd -P)"
+trap 'python3 -c "import shutil,sys; shutil.rmtree(sys.argv[1])" "$work"' EXIT
+python3 scripts/foundation_evidence.py "$PWD" "$work"
+```
+
+The helper's baseline steps copy `examples/CustomHost/` to `hosts/One/` outside
+repository build-prop inheritance, then execute:
+
+```bash
+export NUGET_PACKAGES="$work/cache"
+dotnet restore "$work/hosts/One/CustomHost.csproj" \
+  --configfile "$work/NuGet.Config" --locked-mode
+dotnet build "$work/hosts/One/CustomHost.csproj" \
+  --configuration Release --no-restore
+```
+
+The output is `hosts/One/bin/Release/net10.0/CustomHost.dll`; the replacement
+is `hosts/Two/bin/Release/net10.0/CustomHost.dll`.
+Each host has `obj/project.assets.json` and `packages.lock.json`.
+`evidence.json` records assemblies, package/restore inputs, and before/after
+platform/unrelated-provider source hashes for tests. Tests consume the
+`HOARD_FOUNDATION_EVIDENCE` path set by the helper. Nothing is published or run.
+When the shell exits, the trap removes this named temporary directory.
+
+## Replace the artifact fixture
+
+The second copied host changes only:
+
+1. `Hoard.Fixtures.Artifact.One` to `Hoard.Fixtures.Artifact.Two` in the project.
+2. The using namespace and `ArtifactOneProvider` registration/declaration to
+   `ArtifactTwoProvider` in `Program.cs`.
+3. Its derived lockfile, explicitly regenerated for the new PackageReference
+   and then replayed in locked mode.
+
+Both declarations use the logical module ID `fixture.artifact`, Artifact category,
+and compatible platform ranges. They belong in **separate** compositions,
+never together. Neither package references the other. No Core or unrelated
+provider source changes. This proves composition, not equivalent byte-store
+behavior. After intentional source/dependency changes use
+`bash scripts/validate-foundation.sh --update-locks`, review the changed locks,
+then require the default locked run to pass. Never skip lock/provenance failures.
+
+## Registration and support limits
+
+`Program.cs` calls `WebApplication.CreateBuilder`, `AddHoard`, and four generic
+`AddModule` registrations. Hosting records declarations/types in DI without
+constructing providers, mapping HTTP, enabling modules, validating compatibility,
+selecting stores, resolving secrets, or reporting readiness.
+The unit acceptance uses a throwing provider constructor to protect that boundary.
+
+A future curated runtime configures already bundled providers. Adding a provider
+to a custom operational runtime requires explicit package reference/registration,
+rebuild, redeploy, and restart. Trusted in-process modules are not sandboxed:
+no arbitrary assembly loading, runtime package installation, hot swap, or
+marketplace exists. Compilation is not protocol/native-client compatibility,
+store integrity, operational support, or certification.
+See the [provider guide](../../docs/PROVIDERS.md).
+
+There are no migrations, runtime state, infrastructure changes, permissions,
+release tags, or deployments here. Roll back source and matching locks together
+through a reviewed change; the script's feeds, caches, binaries, and manifests
+are temporary and must not be committed.

@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "Hoard.Fixtures.Arch.Helper": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "Sq+1Bo3vhVs4AbaJMFp0Z++ST0i2+89Omc3Dm8G4v4c9eomRkPdHMe48V0F+1yVi/PifSKCn/O3+XR4n4gPvjg==",
+        "dependencies": {
+          "Hoard.Fixtures.Arch.Sdk": "[0.1.0]"
+        }
+      },
+      "Hoard.Fixtures.Arch.Sdk": {
+        "type": "Transitive",
+        "resolved": "0.1.0",
+        "contentHash": "Jz8ZgRkz8afIOy8E7h9/gaJ9n7c1MLg+ggBIlQ3FOd6+HQcRD7aWpyKqnzPHeEu9Wyt4Yu0sc6B5j9bKSj3FSQ=="
+      }
+    }
+  }
+}

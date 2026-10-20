@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreEnablePackagePruning>false</RestoreEnablePackagePruning>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <Version>0.1.0</Version>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Hosting" Version="[0.1.0]" />
+    <PackageReference Include="Hoard.Fixtures.Protocol" Version="[0.1.0]" />
+    <PackageReference Include="Hoard.Fixtures.Metadata" Version="[0.1.0]" />
+    <PackageReference Include="Hoard.Fixtures.Artifact.One" Version="[0.1.0]" />
+    <PackageReference Include="Hoard.Fixtures.Identity" Version="[0.1.0]" />
+  </ItemGroup>
+</Project>

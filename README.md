@@ -21,8 +21,9 @@ dependency management into another full-time job.
 
 > [!IMPORTANT]
 > **Foundation only.** This repository currently contains product/design documents,
-> development workflows, repository tooling, and an operator-run Azure identity
-> bootstrap. There is no runnable cache, UI, container, or published package yet.
+> development workflows, repository tooling, compile-only .NET provider contracts
+> and composition proofs, and an operator-run Azure identity bootstrap.
+> There is no runnable cache, working provider, UI, container, or published package.
 > Everything in the product overview below describes the planned experience.
 
 [Explore the vision](docs/PRODUCT_VISION.md) ·
@@ -73,12 +74,19 @@ git switch -c chore/your-change
 
 # Standard-library tests for the repository tools; no application build.
 python3 -m unittest discover -s tests/tooling -v
+
+# .NET 10 compile/package/boundary acceptance; never starts a server.
+bash scripts/validate-foundation.sh
 ```
 
-For repository work, use Git, GitHub CLI, and Python 3.11+. OpenTofu and Azure CLI
+For repository work, use Git, GitHub CLI, Python 3.11+, and a stable .NET 10 SDK
+matching `global.json`. The foundation check restores pinned dependencies from
+nuget.org and builds temporary local packages; it requires network access.
+OpenTofu and Azure CLI
 are needed only when working on the [Azure bootstrap](infra/bootstrap/README.md).
-.NET and Node dependency manifests will be introduced by the relevant specs;
-there is intentionally no application build or install command yet.
+There is no runnable application or Node project yet. See the
+[foundation quickstart](specs/001-provider-contracts/quickstart.md) and
+[provider author guide](docs/PROVIDERS.md) for the exact supported scope.
 
 Repository-scoped [MCP settings](docs/DEVELOPMENT.md#local-mcp-servers) connect
 Copilot CLI and VS Code to Microsoft Learn, Context7, Next.js DevTools, shadcn,
@@ -95,9 +103,10 @@ apps/web/            Reserved for the statically exported management console
 docs/                Product intent, architecture, workflow, and release guidance
 infra/bootstrap/     Operator-run Azure OIDC identity + GitHub environment setup
 scripts/             Small, dependency-free repository tools
-specs/               Reserved for generated, reviewable feature specifications
-src/                 Reserved .NET package/host boundaries; no projects yet
-tests/               Repository-tool tests and reserved product test categories
+specs/               Reviewable feature specifications; not delivered capabilities
+src/                 Four platform library boundaries; production Host/providers reserved
+tests/               Tooling, foundation unit/architecture/composition checks, fixtures
+examples/CustomHost/ Package-only compile proof; never starts a host
 ```
 
 ## 🤝 Build with us
@@ -112,8 +121,55 @@ The [contributor guide](CONTRIBUTING.md) covers setup and PR expectations.
 The [development workflow](docs/DEVELOPMENT.md) documents the checkpointed
 `hoard-speckit` skill, architecture reviewer, release skill, and quality gates.
 The initial [constitution](.specify/memory/constitution.md) is version 1.0.0;
-its adoption PR must merge before the driver starts the first feature spec.
-The constitution establishes governance only, not product implementation.
+its adoption has merged. The first feature specification,
+[platform package boundaries and provider contracts](specs/001-provider-contracts/spec.md),
+defines the compile-only foundation, not a runnable cache.
+Its initial [clarification review](specs/001-provider-contracts/spec.md#clarifications)
+found no critical ambiguities requiring questions; a later
+[approved follow-up](specs/001-provider-contracts/spec.md#approved-follow-up-2026-10-20)
+resolves the optional-dependency ambiguity found during checklist review. Its
+[implementation plan](specs/001-provider-contracts/plan.md) now documents
+provider-neutral declarations, explicit registration, compatibility policy,
+and package-only composition and boundary acceptance evidence. Its historical
+design is retained separately from measured implementation results. The custom
+[architecture](specs/001-provider-contracts/checklists/architecture.md) and
+[compatibility](specs/001-provider-contracts/checklists/compatibility.md)
+requirements-quality checklists have received an explicitly requested delegated
+review: all 38 criteria are satisfied after the user-approved
+[optional-dependency policy clarification](specs/001-provider-contracts/checklists/compatibility.md#rq-01-incompatible-present-optional-dependency).
+Enabled optional dependencies must be compatible; installed/registered but
+disabled targets are unavailable and confer no integration/capability support.
+This is requirements review, not implementation evidence or authorization;
+the [implementation task list](specs/001-provider-contracts/tasks.md) maps
+all 17 requirements and six outcomes to dependency-ordered work.
+F-01 now provides immutable declarations and family markers in
+`Hoard.Abstractions`, empty provider-free Core/Application boundaries, and
+registration-only Hosting APIs. The acceptance command builds five independent
+fixture packages, four family consumers plus the second artifact consumer,
+and both [custom-host variants](examples/CustomHost/README.md). It exercises
+all eight architecture rejection rules and 23 compatibility classifications.
+Registration records metadata/types without constructing, enabling, validating,
+or activating providers. These are local compile proofs, not released packages,
+working stores/protocols/authentication, native-client evidence, or certification.
+The original implementation includes architecture-review corrections and the
+support-claim audit. Convergence then identified a false rejection of permitted
+Identity-to-Hosting references when Hosting transitively reaches Core.
+[Task T058](specs/001-provider-contracts/tasks.md#phase-8-convergence) corrects
+that check using distinct Hosting-mediated and other dependency paths, with
+positive and negative regressions preserving forbidden-edge detection.
+The follow-up convergence assessment found no remaining gaps across all
+17 requirements, six outcomes, acceptance scenarios, plan decisions, and
+58 tasks. Fresh locked acceptance passed all 86 .NET tests and 17 tooling tests;
+the specification, plan, tasks, and reviewer-owned checklists stayed unchanged.
+Finalization acceptance is recorded in the
+[plan](specs/001-provider-contracts/plan.md#finalization-acceptance-2026-10-20);
+[PR #4](https://github.com/Stonefly-Labs/Hoard/pull/4) is ready for maintainer
+review. The next stage is `await_merge`, not more implementation. F-01 remains
+uncompleted until the feature merges and a separate progress checkpoint is
+published; that checkpoint must also merge before a new specification starts.
+No merge or dependent feature is authorized by finalization.
+The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
+stage; constitution and specification artifacts are not product implementation.
 
 ## 🚀 Releases are not deployments
 
