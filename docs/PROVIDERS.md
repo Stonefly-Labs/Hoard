@@ -259,6 +259,15 @@ Composition failures retain a closed CompositionRule, known registered owner,
 effective selection-source provenance and a bounded DependencyPath. Unknown
 IDs/path elements become generated categories, even if their syntax is valid;
 raw versions/capability targets and collaborator messages are never forwarded.
+Active option-rule rejections retain `CheckFailure` plus a separately validated
+`OptionRule` from that owner's declared rule IDs, canonical field and its
+winning source. CorrectiveAction is host-owned text, never a provider message.
+Malformed/undeclared field or rule results become `InvalidCheckResult` without
+reflecting the supplied identity. Unsupported active option versions identify
+`modules:<owner>:optionsversion` and its effective source. Secret resolution,
+timeout, cancellation notification and late faults retain the originating
+registered owner/field/source; locators and secret values remain private.
+Returned reports stay frozen; eventual faults appear only in live Supervision.
 
 `HoardConfigurationInput` takes explicit Defaults, optional file, arguments and
 an environment dictionary/read adapter. Inputs and owner options have redacted

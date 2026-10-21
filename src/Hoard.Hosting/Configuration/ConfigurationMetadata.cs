@@ -64,7 +64,7 @@ internal static class ConfigurationMetadata
             { supervisor.Reject(HoardConfigurationRule.InvalidConfigurationContract, HoardConfigurationPhase.Composition); }
             result.Add(declaration.Id, association);
             supervisor.Known(declaration.Id, contract.Fields.Select(field => $"modules:{declaration.Id}:options:{ConfigurationNames.Canonical(field.Key)}")
-                .Concat([$"modules:{declaration.Id}:optionsversion", $"modules:{declaration.Id}:options"]));
+                .Concat([$"modules:{declaration.Id}:optionsversion", $"modules:{declaration.Id}:options"]), contract.RuleIds);
         }
         return result.ToImmutable();
     }

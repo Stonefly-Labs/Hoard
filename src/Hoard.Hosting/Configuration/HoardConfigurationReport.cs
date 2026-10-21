@@ -27,11 +27,12 @@ public sealed record HoardConfigurationDiagnostic
     internal HoardConfigurationDiagnostic(HoardConfigurationRule rule, HoardConfigurationPhase phase,
         HoardConfigurationSource source, string owner, string setting, Guid correlation,
         HoardConfigurationCompositionRule? compositionRule = null, ImmutableArray<string> dependencyPath = default,
-        int omittedPathCount = 0)
+        int omittedPathCount = 0, string? optionRule = null)
     {
         Rule = rule; Phase = phase; Source = source; Owner = owner; Setting = setting; CorrelationId = correlation;
         CompositionRule = compositionRule; DependencyPath = dependencyPath.IsDefault ? [] : dependencyPath;
         OmittedPathCount = omittedPathCount;
+        OptionRule = optionRule;
     }
     public HoardConfigurationRule Rule { get; }
     public HoardConfigurationPhase Phase { get; }
@@ -42,12 +43,17 @@ public sealed record HoardConfigurationDiagnostic
     public HoardConfigurationCompositionRule? CompositionRule { get; }
     public ImmutableArray<string> DependencyPath { get; }
     public int OmittedPathCount { get; }
+    public string? OptionRule { get; }
     public string CorrectiveAction => Rule switch
     {
         HoardConfigurationRule.Timeout or HoardConfigurationRule.LateCheckFailure =>
             "Inspect trusted callback cooperation; terminate the process if pending inputs cannot be released.",
         HoardConfigurationRule.Cancelled => "Evaluate a fresh explicit configuration before starting.",
         HoardConfigurationRule.SecretUnavailable => "Provide a valid supported secret reference for the selected owner.",
+        HoardConfigurationRule.CheckFailure when OptionRule is not null =>
+            "Correct the named setting to satisfy the declared option rule and evaluate the complete configuration again.",
+        HoardConfigurationRule.UnsupportedVersion =>
+            "Supply the supported configuration or option version; review explicit conversion before restarting.",
         HoardConfigurationRule.StaleConfiguration => "Reevaluate the current builder and consume a fresh proof once.",
         HoardConfigurationRule.InvalidBudget => "Supply positive finite trusted configuration budgets and supported input limits.",
         HoardConfigurationRule.CompositionRejected => CompositionRule switch

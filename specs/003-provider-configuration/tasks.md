@@ -7,11 +7,13 @@
 [Hosting API](contracts/hosting-api.md),
 [acceptance matrix](contracts/acceptance.md), and [quickstart.md](quickstart.md).
 
-**Implementation-stage status**: All 69 tasks are complete. The initial
+**Implementation-stage status**: All 71 tasks, including the separately
+authorized T070/T071 diagnostic follow-up, are complete. The initial
 T001..T020 source-resolution increment is historical; see the
 [complete implementation evidence](plan.md#complete-implementation) for actual
-results, grouped-file placement, review corrections and platform limitations.
-This checkpoint ends at `converge / ready`; convergence, finalization, PR
+results, grouped-file placement, review corrections and platform limitations,
+and the [diagnostic follow-up evidence](plan.md#diagnostic-implementation-follow-up).
+This checkpoint ends at fresh `converge / ready`; convergence, finalization, PR
 readiness, merge and backlog completion remain separate authorizations.
 The built-in requirements
 checklist remains 16/16; the separately requested assisted requirements review
@@ -19,7 +21,7 @@ of [configuration](checklists/configuration.md) and [safety](checklists/safety.m
 remains 20/20 each. Their reviewer-owned bytes and all specification/design
 artifacts were unchanged by task generation. That stage neither approved
 checklists nor authorized implementation. Read-only analysis subsequently
-passed; the current invocation completes only implementation.
+passed; the current invocation completes only the diagnostic implementation follow-up.
 
 **Tests**: Explicitly required by FR-026, SC-001..SC-008, every story's independent
 test, and CFG-01..CFG-36. Write focused paired permitted/rejected tests first,
@@ -510,5 +512,5 @@ Execute T070 before T071 to serialize shared supervisor/report and acceptance
 inventory edits. Finalization requires implementation and a fresh convergence
 assessment, not just the existing passing test counts.
 
-- [ ] T070 Preserve the known canonical secret setting through active env/file dispatch and originating failure, timeout, cancellation-notification and late-fault diagnostics in `src/Hoard.Hosting/Configuration/ConfigurationSecretResolver.cs` and `ConfigurationSupervisor.cs`; retain the actual winning source and registered owner without exposing values, locators or raw errors. Add focused paired regressions in `tests/integration/Hoard.Composition.Tests/ConfigurationSecretTests.cs` and `ConfigurationCoordinationTests.cs` that distinguish multiple known fields, cover unavailable and pending outcomes, keep returned reports frozen and release/observe held work; require the new scenario identities in `scripts/configuration_evidence.py`. Record intended red/green and safe-output evidence during implementation per FR-024, US3/AC2, SC-004, CFG-13..14/17..20 and T034/T040 (partial, HIGH).
-- [ ] T071 Preserve effective setting-source provenance and the validated declared option-rule identity in active option diagnostics in `src/Hoard.Hosting/Configuration/ConfigurationOptionChecker.cs`, `ConfigurationSupervisor.cs` and `HoardConfigurationReport.cs`, using bounded known metadata and host-owned corrective-action text rather than provider messages; do not collapse a declared `paired` rejection into an unnamed generic check or label a CLI-supplied failing field as Defaults. Cover public and secret-dependent rule rejections, explicit option-version provenance and malformed/unknown rule counterparts in `tests/integration/Hoard.Composition.Tests/ConfiguredCompositionTests.cs` and `ConfigurationSecretTests.cs`, and require the new scenario identities in `scripts/configuration_evidence.py`. Preserve fail-before-activation ordering, redaction, diagnostic bounds and F-02 authority; update affected diagnostic guidance/evidence and record intended red/green during implementation per FR-024, US2/AC3, SC-004, CFG-10/12/17/26 and T022/T034/T040 (partial, HIGH).
+- [X] T070 Preserve the known canonical secret setting through active env/file dispatch and originating failure, timeout, cancellation-notification and late-fault diagnostics in `src/Hoard.Hosting/Configuration/ConfigurationSecretResolver.cs` and `ConfigurationSupervisor.cs`; retain the actual winning source and registered owner without exposing values, locators or raw errors. Add focused paired regressions in `tests/integration/Hoard.Composition.Tests/ConfigurationSecretTests.cs` and `ConfigurationCoordinationTests.cs` that distinguish multiple known fields, cover unavailable and pending outcomes, keep returned reports frozen and release/observe held work; require the new scenario identities in `scripts/configuration_evidence.py`. Record intended red/green and safe-output evidence during implementation per FR-024, US3/AC2, SC-004, CFG-13..14/17..20 and T034/T040 (partial, HIGH).
+- [X] T071 Preserve effective setting-source provenance and the validated declared option-rule identity in active option diagnostics in `src/Hoard.Hosting/Configuration/ConfigurationOptionChecker.cs`, `ConfigurationSupervisor.cs` and `HoardConfigurationReport.cs`, using bounded known metadata and host-owned corrective-action text rather than provider messages; do not collapse a declared `paired` rejection into an unnamed generic check or label a CLI-supplied failing field as Defaults. Cover public and secret-dependent rule rejections, explicit option-version provenance and malformed/unknown rule counterparts in `tests/integration/Hoard.Composition.Tests/ConfiguredCompositionTests.cs` and `ConfigurationSecretTests.cs`, and require the new scenario identities in `scripts/configuration_evidence.py`. Preserve fail-before-activation ordering, redaction, diagnostic bounds and F-02 authority; update affected diagnostic guidance/evidence and record intended red/green during implementation per FR-024, US2/AC3, SC-004, CFG-10/12/17/26 and T022/T034/T040 (partial, HIGH).

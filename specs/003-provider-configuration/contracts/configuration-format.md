@@ -200,6 +200,14 @@ No values, raw versions/names, file paths, reference targets, hashes of secrets,
 parser text, arbitrary validator result messages or exception/inner exception.
 Reports include at most 100 diagnostics plus omitted count; normal telemetry
 uses bounded category labels, never per-secret or per-correlation metric labels.
+For a declared option-check rejection, `Rule` remains `CheckFailure` and
+`OptionRule` identifies the validated declared rule, for example `paired`;
+Setting and Source identify the effective field, not its discarded lower source.
+Unknown/malformed callback identities become InvalidCheckResult without reflection.
+Active option-version errors name `modules:<owner>:optionsversion`.
+Secret failure/timeout/cancellation and eventual notification/check faults retain
+their original registered field/source without exposing the target. Returned
+reports never change; live Supervision can append bounded eventual diagnostics.
 
 ## Explicit Conversion and Recovery
 

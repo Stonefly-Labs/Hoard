@@ -16,8 +16,14 @@ internal static class ConfigurationOptionChecker
             var contract = registration.Contract;
             if (!contract.Fields.IsEmpty)
             {
-                if (!effective.TryGet($"modules:{id}:optionsversion", out var version) || version is not 1L)
-                { supervisor.Reject(HoardConfigurationRule.UnsupportedVersion, HoardConfigurationPhase.PublicOptions, owner: id); }
+                var versionSetting = $"modules:{id}:optionsversion";
+                if (!effective.TryGet(versionSetting, out var version) || version is not 1L)
+                {
+                    var source = effective.Assignments.TryGetValue(versionSetting, out var assignment)
+                        ? assignment.Source : HoardConfigurationSource.Defaults;
+                    supervisor.Reject(HoardConfigurationRule.UnsupportedVersion, HoardConfigurationPhase.PublicOptions,
+                        source, id, versionSetting);
+                }
                 var adapter = composition.Adapters.Single(a => a.ProviderType == registration.ProviderType);
                 if (!typeof(IHoardConfiguredModule).IsAssignableFrom(adapter.ModuleType))
                 { supervisor.Reject(HoardConfigurationRule.MissingConfigurationAdapter, HoardConfigurationPhase.PublicOptions, owner: id); }
@@ -77,6 +83,11 @@ internal static class ConfigurationOptionChecker
                 || !registration.Contract.RuleIds.Contains(v.Rule, StringComparer.Ordinal)))
         { supervisor.Reject(HoardConfigurationRule.InvalidCheckResult, at, owner: id); }
         foreach (var violation in result.Violations)
-        { supervisor.Reject(HoardConfigurationRule.CheckFailure, at, owner: id, setting: $"modules:{id}:options:{violation.Field}"); }
+        {
+            var setting = $"modules:{id}:options:{violation.Field}";
+            var source = effective.Assignments.TryGetValue(setting, out var assignment)
+                ? assignment.Source : HoardConfigurationSource.Defaults;
+            supervisor.Reject(HoardConfigurationRule.CheckFailure, at, source, id, setting, violation.Rule);
+        }
     }
 }

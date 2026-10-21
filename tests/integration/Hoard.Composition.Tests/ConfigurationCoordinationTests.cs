@@ -1,9 +1,93 @@
+using System.Text.Json;
 using Hoard.Hosting.Configuration;
 
 namespace Hoard.Composition.Tests;
 
 public sealed class ConfigurationCoordinationTests
 {
+    [Theory]
+    [InlineData("credential", "env", false)]
+    [InlineData("alternate", "env", false)]
+    [InlineData("credential", "file", false)]
+    [InlineData("alternate", "file", false)]
+    [InlineData("credential", "env", true)]
+    [InlineData("alternate", "env", true)]
+    [InlineData("credential", "file", true)]
+    [InlineData("alternate", "file", true)]
+    public async Task Pending_secret_diagnostics_keep_origin_through_timeout_cancellation_and_late_fault(
+        string field, string kind, bool cancelled)
+    {
+        ConfiguredFixtures.Reset();
+        await using var harness = new ConfigurationTestHarness();
+        using var caller = new CancellationTokenSource();
+        var clock = new LifecycleTestTimeProvider();
+        var entered = harness.Barrier();
+        var notified = harness.Barrier();
+        var notificationRelease = harness.Barrier();
+        var workRelease = harness.Barrier();
+        async ValueTask<string> Read(CancellationToken token)
+        {
+            using var registration = token.Register(() =>
+            {
+                notified.TrySetResult();
+                notificationRelease.Task.GetAwaiter().GetResult();
+                throw new InvalidOperationException(ConfigurationTestHarness.Credential);
+            });
+            entered.TrySetResult();
+            await workRelease.Task;
+            throw new IOException(ConfigurationTestHarness.Credential);
+        }
+        var work = ConfigurationSecretTests.TwoSecretRegistry().EvaluateConfigurationAsync(new(ConfiguredFixtures.Defaults,
+            arguments: ConfigurationSecretTests.SecretArguments(field, kind),
+            readEnvironment: async (_, token) => await Read(token),
+            readFile: (_, token) => Read(token)), LifecycleFixtures.Versions, new(),
+            new() { TimeProvider = clock, OperationTimeoutMilliseconds = 50 }, caller.Token);
+        harness.Observe(work);
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            if (cancelled) { caller.Cancel(); }
+            else
+            {
+                await ConfigurationTestHarness.Until(() => clock.NextDelay == TimeSpan.FromMilliseconds(50));
+                clock.Advance(TimeSpan.FromMilliseconds(50));
+            }
+            await notified.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await using var result = await work.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(cancelled ? HoardConfigurationOutcome.Cancelled : HoardConfigurationOutcome.TimedOut, result.Outcome);
+            Assert.Null(result.Configuration);
+            var frozen = JsonSerializer.Serialize(result.Report);
+            var failure = Assert.Single(result.Report.Diagnostics);
+            Assert.Equal(cancelled ? HoardConfigurationRule.Cancelled : HoardConfigurationRule.Timeout, failure.Rule);
+            AssertOrigin(failure);
+            await result.DisposeAsync();
+            Assert.True(result.Supervision.PendingCount >= 2);
+            notificationRelease.TrySetResult();
+            await ConfigurationTestHarness.Until(() => result.Supervision.Diagnostics.Any(
+                d => d.Rule == HoardConfigurationRule.CancellationFailure));
+            workRelease.TrySetResult();
+            await ConfigurationTestHarness.Until(() => result.Supervision.PendingCount == 0);
+            AssertOrigin(Assert.Single(result.Supervision.Diagnostics.Where(d => d.Rule == HoardConfigurationRule.CancellationFailure)));
+            AssertOrigin(Assert.Single(result.Supervision.Diagnostics.Where(d => d.Rule == HoardConfigurationRule.LateCheckFailure)));
+            Assert.Equal(frozen, JsonSerializer.Serialize(result.Report));
+            Assert.Empty(LifecycleFixtures.Controls);
+            var output = JsonSerializer.Serialize(result);
+            Assert.DoesNotContain(ConfigurationTestHarness.Credential, output);
+            Assert.DoesNotContain(ConfigurationTestHarness.Locator, output);
+            Assert.DoesNotContain("/invented/configuration-secret", output);
+            harness.AssertNoPayload("/invented/configuration-secret");
+        }
+        finally { notificationRelease.TrySetResult(); workRelease.TrySetResult(); }
+
+        void AssertOrigin(HoardConfigurationDiagnostic diagnostic)
+        {
+            Assert.Equal("protocol", diagnostic.Owner);
+            Assert.Equal($"modules:protocol:options:{field}", diagnostic.Setting);
+            Assert.Equal(HoardConfigurationSource.CommandLine, diagnostic.Source);
+            Assert.Equal(HoardConfigurationPhase.Secrets, diagnostic.Phase);
+        }
+    }
+
     [Fact]
     public async Task Entire_synchronous_callback_is_supervised_and_late_fault_is_observed()
     {

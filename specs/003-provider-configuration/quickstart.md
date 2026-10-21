@@ -138,6 +138,12 @@ files and explicit references. Valid selected owners receive fixed values only;
 ordinary report/telemetry capture contains neither those values nor locators.
 Pair missing/empty/denied/malformed/raw-literal/credential-address input with
 safe action/correlation diagnostics, no fallback.
+Assert the exact known field/owner and winning source for unavailable env/file
+references and pending timeout/cancellation faults. For public/secret-dependent
+option rejection, inspect the validated `OptionRule` alongside `CheckFailure`,
+the effective field/source and host-owned action. Invalid callback identities
+must yield InvalidCheckResult, never reflected fields/rules. An unsupported
+active optionsversion must identify its version setting and actual source.
 
 Use deterministic barriers and virtual time to hold synchronous/async checks,
 reads and cancellation callbacks. Assert the original absolute budget, no

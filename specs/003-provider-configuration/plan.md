@@ -671,3 +671,111 @@ APFS, Linux, network-share or power-loss support.
 The implementation checkpoint ends at **`converge / ready`** with draft PR #8.
 It neither runs convergence/finalization nor marks the PR ready, merges,
 unlocks backlog dependencies, applies infrastructure or publishes a release.
+
+## Diagnostic implementation follow-up
+
+The separately authorized `implement` invocation executes only the convergence
+tasks T070/T071, in that order. All 71 tasks are now complete; this is not a
+fresh convergence assessment or finalization. The original 69 task descriptions,
+specification, constitution and reviewer-owned checklist approvals are unchanged.
+No pre/post implementation extension hooks are registered.
+
+### Corrections and red-before-green proof
+
+T070 passes the canonical secret setting into the existing supervisor's dispatch
+context. Originating failures, timeout/caller cancellation, separately supervised
+cancellation notification and eventual faults use the captured owner/setting/
+source/phase. A failure raised internally by the resolver now records that
+context before the bounded result; an already recorded parser rejection is not
+duplicated. Resource retention, serial dispatch, absolute deadlines and frozen
+reports/outcomes remain unchanged.
+
+T071 validates callback field/rule identities before mapping the effective
+field's source into a rejection. `Rule` remains CheckFailure; the additive
+nullable `HoardConfigurationDiagnostic.OptionRule` contains only the declared
+owner rule. The supervisor independently checks that rule against validated
+owner metadata, while host-owned text supplies the corrective action. Malformed/
+unknown callback results remain InvalidCheckResult without reflecting supplied
+identities. Unsupported active option versions name their own canonical setting
+and effective source. Neither provider messages nor source values/locators are
+added to reports or metric labels.
+
+| Focused command | Executable red | Green |
+| --- | --- | --- |
+| `bash scripts/validate-configuration.sh --filter 'FullyQualifiedName~Known_secret_failures_keep\|FullyQualifiedName~Pending_secret_diagnostics_keep'` | 16 executed: 12 failed with known fields reported as unknown-setting; four permitted counterparts passed | All 16 passed |
+| `bash scripts/validate-configuration.sh --filter 'FullyQualifiedName~Declared_option_rules_keep\|FullyQualifiedName~Unsupported_active_option_version_keeps\|FullyQualifiedName~Secret_option_rules_keep'` | 17 executed: 12 failed on missing OptionRule, Defaults instead of effective source, or unknown-setting instead of optionsversion; five safe/accepted counterparts passed | All 17 passed |
+
+Actual red/green TRX and closed partial status were retained through each
+command's optional fresh private `--evidence-directory`. Two earlier test
+authoring compiler errors were corrected before the executable red runs; they
+are not evidence of the diagnostic defects.
+The 33 new cases distinguish two known secret fields and env/file readers,
+paired available/unavailable reads, timeout/caller cancellation, held throwing
+notification and late faults, all four public-option source levels, ordinary/
+secret-dependent rules, explicit environment/CLI option versions and malformed/
+undeclared callback results. Held work is released and observed. Returned reports
+stay byte-identical while live supervision appends safe eventual faults.
+Public rejection prevents all secret reads; no rejection constructs providers.
+Seeded values/locators are absent from serialized results and captured telemetry.
+
+The exact five new scenario identities are mandatory in the corresponding
+CFG-10/12/13/14/17/18/19/20/26 inventories. Tooling regression removes each one
+individually and requires acceptance rejection despite unrelated passing methods.
+No existing scenario, graph, binary, publication or package proof is waived.
+
+### Architecture review and compatibility
+
+The required bounded read-only `hoard-architecture-review` found no actionable
+findings or unresolved design questions in T070/T071. It inspected origin
+propagation, declared-rule validation, provenance/actions, diagnostic bounds,
+frozen results and focused proof inventory. It ran no commands/tests, did not
+independently rehash binaries or inspect compiled API/package graphs, and did
+not assess the then-pending final locked and retained-suite runs. It is a
+static follow-up review, not an exploit audit or fresh convergence.
+
+Only the safe nullable OptionRule public diagnostic member is added. Existing
+F-01/F-02 signatures, Abstractions/Core/Application, provider dependency
+directions and production package dependencies remain unchanged. The evaluator
+still feeds the actual F-02 composition authority and transfers inputs through
+the same single-use proof/lease; it adds no activation or cleanup path.
+Local packed Hosting/rebuilt-fixture content changes require explicit reviewed
+contentHash updates and independent default locked replays, not version/edge
+changes or lock bypasses.
+
+README, development/provider/example diagnostic guidance, model/contracts and
+quickstart reflect the implemented context and safe OptionRule field.
+Baseline product intent/architecture/diagrams/ADR, governance/backlog,
+predecessor artifacts, IaC and release guides are unaffected: no grammar,
+listener, provider operation, data migration, deployment, permission or platform
+support guarantee changes. Publication remains measured Darwin/local-device
+behavior, not certified Linux/network-filesystem/power-loss support.
+
+### Follow-up acceptance and checkpoint
+
+| Command | Result |
+| --- | --- |
+| `bash scripts/validate-configuration.sh` | Passed literal default command: 201 configuration tests, six boundary proofs, nine package-only journeys, five actual Darwin interruption barriers, all CFG-01..36, formatting/analyzers and 38 tooling tests; no lock mutation |
+| `bash scripts/validate-lifecycle.sh --update-locks` | Passed: 369 tests, nine boundary proofs, seven package-only journeys, six independent packages and retained old binary |
+| `bash scripts/validate-foundation.sh --update-locks` | Passed: 42 unit, 54 architecture and 372 composition tests, zero failed/skipped; retained Core/package/host/declaration/registration proofs |
+| `bash scripts/validate-lifecycle.sh` | Passed independent default locked replay with the same 369/9/7 results |
+| `bash scripts/validate-foundation.sh` | Passed independent default locked replay with the same 42/54/372 results |
+| `python3 -m unittest discover -s tests/tooling -v` | All 38 tests passed, including removal of each new required diagnostic scenario |
+| `dotnet format Hoard.slnx --verify-no-changes --no-restore -v quiet` | Passed |
+| `git diff --check` | Passed |
+
+Complete configuration lock refresh and independent locked acceptance also
+retained separate actual package/graph/binary/TRX/publication workspaces through
+`--evidence-directory`; both passed the same 201/6/9/5 obligations with closed
+passed/fullAcceptance status. The literal default command above used no optional
+flags. No production C# or runtime-test changes followed these results.
+
+Structural review of 14 affected locks found exactly 26 changed contentHash
+entries: Hosting (14), rebuilt lifecycle Identity (4), Protocol.One (4) and
+Protocol.Two (4). Package IDs, versions, dependency edges and original Baseline
+locks are unchanged. Default locked replays neither refresh nor bypass locks.
+Source/package/API and old-binary proof remains fixture-only; no platform,
+production provider, native-client or conformance certification is inferred.
+
+The implementation checkpoint schedules **fresh `converge / ready`** and keeps
+PR #8 draft. It does not execute convergence/finalize, mark the feature complete,
+unlock dependents, merge, deploy, apply infrastructure or publish packages/releases.

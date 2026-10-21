@@ -430,10 +430,15 @@ The F-03 convergence assessment reproduced two **HIGH** diagnostic gaps despite
 passing existing acceptance: secret failures lose their known setting identity,
 and option-check failures discard the declared rule and winning source.
 [Phase 9 / T070–T071](specs/003-provider-configuration/tasks.md#phase-9-convergence)
-records the remaining work without changing the original 69 tasks, spec, plan
-or reviewer-owned checklists. Both failures still block activation; no credential
-disclosure or activation bypass was observed. The next stage is `implement`,
-then a fresh convergence assessment; finalization remains blocked.
+records the follow-up without changing the original 69 tasks, specification
+or reviewer-owned checklists. The separately authorized implementation now
+preserves each secret's canonical setting/source through failure, cancellation
+and late faults. Option rejections expose only a validated declared `OptionRule`,
+the effective field's source and host-owned guidance; unsupported active option
+versions identify their own setting/source. No values, locators or provider
+messages are exposed, and F-02 remains the sole activation authority.
+The next stage is fresh `converge`; finalization remains blocked pending that
+separate assessment.
 See the [convergence checkpoint](docs/DEVELOPMENT.md#f-03-convergence-diagnostic-follow-up)
 for evidence and scope. Maintainer-authorized merge remains a separate gate.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized

@@ -20,8 +20,8 @@ and [library contract](contracts/hosting-api.md).
 | ResolvedOwnerOptions | fixed typed ordinary values and secret handles for one owner | No whole-host access; no reread; no public automatic serialization or value-bearing ToString |
 | ConfigurationEvaluation | operation ID, terminal outcome, safe report, live safe supervision snapshot | Success only after all checks; failure has no composition proof; frozen returned outcome |
 | ValidatedConfiguration | private composition, exact builder/service/contract snapshot, fixed owner inputs, single-use flag | Not publicly constructible; consumption atomic; stale/failed/disposed proof cannot activate |
-| ConfigurationDiagnostic | bounded safe identity/category/source/phase/rule/action/correlation | Host-owned codes/templates; no raw strings from collaborators, source data or errors |
-| PendingConfigurationActivity | owner/phase/task, held input/CTS/stream lease, safe observation | Outlives bounded wait when necessary; never represented as terminated/released |
+| ConfigurationDiagnostic | bounded safe identity/category/source/phase/rule/declared OptionRule/action/correlation | OptionRule must match validated owner metadata; source follows the effective field; host-owned codes/templates, no raw collaborator/source/error strings |
+| PendingConfigurationActivity | owner/setting/source/phase/task, held input/CTS/stream lease, safe observation | Origin retained through notification/late faults; outlives bounded wait when necessary, never represented as terminated/released |
 | ConversionSession | private original/proposal bytes and digests, registry/mapping identity, opaque session ID, safe changes | Preview does not resolve secrets; no public digest/locator; single approved apply |
 | ConversionPublication | new destination, private same-directory staging handle, terminal publication outcome | Never overwrite source/destination; complete file or no final file; original retained |
 

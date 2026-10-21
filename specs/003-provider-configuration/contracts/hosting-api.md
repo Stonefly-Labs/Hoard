@@ -148,6 +148,16 @@ ConfigurationRequired/ConversionRejected/PublicationFailed.
 Host templates supply corrective actions; provider rule IDs select reviewed
 templates, never free-form messages. Do not retain raw inner exceptions in
 public errors, failure objects, log calls or emitted telemetry.
+Implemented active rule failures retain `Rule: CheckFailure` with a separate
+nullable `OptionRule`, populated only after validating the field/rule result
+against that owner's metadata. The canonical setting determines the effective
+source, rather than labeling every callback rejection Defaults. The corrective
+action is the host-owned declared-rule template; unknown/malformed results
+remain InvalidCheckResult without a reflected OptionRule. Active option-version
+errors name their own canonical version setting and effective source.
+Secret dispatch captures owner, setting and source before the callback, retaining
+them through originating failure, timeout/cancellation, notification failure and
+late-fault observation. Report and outcome remain frozen.
 
 Only evaluation-owned safe events are emitted. Existing host logging must not
 dump IConfiguration/argv/environment/private objects; fixture capture covers

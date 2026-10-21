@@ -78,7 +78,7 @@ internal static class ConfigurationSecretResolver
                         }
                         catch (OperationCanceledException) { throw; }
                         catch (Exception) { throw new ConfigurationFailure(HoardConfigurationRule.SecretUnavailable); }
-                    }).ConfigureAwait(false);
+                    }, setting).ConfigureAwait(false);
                 var secretValue = new HoardSecretValue(text);
                 var secretOptions = new HoardModuleOptions(new Dictionary<string, object> { [key] = secretValue });
                 supervisor.Hold(new OwnerOptionsLease(secretOptions));

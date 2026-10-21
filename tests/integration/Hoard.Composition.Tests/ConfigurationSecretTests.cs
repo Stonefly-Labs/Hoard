@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
@@ -13,6 +14,23 @@ namespace Hoard.Composition.Tests;
 
 public sealed class ConfigurationSecretTests
 {
+    internal static HoardBuilder TwoSecretRegistry() => ConfiguredFixtures.Registry()
+        .AddModule<LifecycleFixtures.ProtocolProvider>(LifecycleFixtures.Declaration("protocol",
+            Hoard.Abstractions.Modules.ModuleCategory.Protocol) with
+        {
+            Configuration = new[] { "credential", "alternate" }.Select(key => new Hoard.Abstractions.Modules.ConfigurationRequirement
+            { Key = key, Required = false, SecretReference = true, Description = "Fixture secret" }).ToImmutableArray()
+        })
+        .AddModuleLifecycle<LifecycleFixtures.ProtocolProvider, ConfiguredFixtures.ConfiguredProtocolModule>()
+        .AddModuleConfiguration<LifecycleFixtures.ProtocolProvider>(new(1,
+            [new("credential", HoardOptionType.Secret), new("alternate", HoardOptionType.Secret)]));
+
+    internal static string[] SecretArguments(string field, string kind) =>
+        ["""--hoard:enabledmodules=["metadata","artifact","protocol"]""",
+         "--hoard:modules:protocol:optionsversion=1",
+         $"--hoard:modules:protocol:options:{field}=" +
+            JsonSerializer.Serialize(new { kind, target = kind == "env" ? ConfigurationTestHarness.Locator : "/invented/configuration-secret" })];
+
     internal static string Document(string kind = "env", string target = ConfigurationTestHarness.Locator)
     {
         var root = JsonNode.Parse(ConfiguredFixtures.Defaults)!;
@@ -78,6 +96,108 @@ public sealed class ConfigurationSecretTests
         Assert.Equal(1, reads);
         Assert.Empty(LifecycleFixtures.Controls);
         Assert.DoesNotContain(ConfigurationTestHarness.Credential, JsonSerializer.Serialize(result));
+    }
+
+    [Theory]
+    [InlineData("credential", "env", true)]
+    [InlineData("credential", "env", false)]
+    [InlineData("alternate", "env", true)]
+    [InlineData("alternate", "env", false)]
+    [InlineData("credential", "file", true)]
+    [InlineData("credential", "file", false)]
+    [InlineData("alternate", "file", true)]
+    [InlineData("alternate", "file", false)]
+    public async Task Known_secret_failures_keep_the_exact_field_owner_and_winning_source(string field, string kind, bool available)
+    {
+        ConfiguredFixtures.Reset();
+        await using var harness = new ConfigurationTestHarness();
+        var reads = 0;
+        string? Read()
+        {
+            reads++;
+            if (!available) { throw new IOException(ConfigurationTestHarness.Credential); }
+            return ConfigurationTestHarness.Credential;
+        }
+        await using var result = await TwoSecretRegistry().EvaluateConfigurationAsync(new(ConfiguredFixtures.Defaults,
+            arguments: SecretArguments(field, kind),
+            readEnvironment: (_, _) => ValueTask.FromResult(Read()),
+            readFile: (_, _) => ValueTask.FromResult(Read()!)), LifecycleFixtures.Versions, new());
+        Assert.Equal(available ? HoardConfigurationOutcome.Validated : HoardConfigurationOutcome.Failed, result.Outcome);
+        Assert.Equal(1, reads);
+        if (!available)
+        {
+            Assert.Null(result.Configuration);
+            var diagnostic = Assert.Single(result.Report.Diagnostics);
+            Assert.Equal(HoardConfigurationRule.SecretUnavailable, diagnostic.Rule);
+            Assert.Equal(HoardConfigurationPhase.Secrets, diagnostic.Phase);
+            Assert.Equal(HoardConfigurationSource.CommandLine, diagnostic.Source);
+            Assert.Equal("protocol", diagnostic.Owner);
+            Assert.Equal($"modules:protocol:options:{field}", diagnostic.Setting);
+            Assert.Contains("secret reference", diagnostic.CorrectiveAction, StringComparison.Ordinal);
+        }
+        Assert.Empty(LifecycleFixtures.Controls);
+        var output = JsonSerializer.Serialize(result);
+        Assert.DoesNotContain(ConfigurationTestHarness.Credential, output);
+        Assert.DoesNotContain(ConfigurationTestHarness.Locator, output);
+        Assert.DoesNotContain("/invented/configuration-secret", output);
+        harness.AssertNoPayload("/invented/configuration-secret");
+    }
+
+    [Theory]
+    [InlineData("label", "declared")]
+    [InlineData("credential", "declared")]
+    [InlineData("label", "accepted")]
+    [InlineData("credential", "accepted")]
+    [InlineData("label", "unknown-rule")]
+    [InlineData("credential", "unknown-field")]
+    [InlineData("credential", "malformed")]
+    public async Task Secret_option_rules_keep_effective_source_and_reject_undeclared_results(string field, string resultKind)
+    {
+        ConfiguredFixtures.Reset();
+        await using var harness = new ConfigurationTestHarness();
+        var calls = new List<HoardOptionCheckPhase>();
+        var builder = ConfiguredFixtures.Registry((context, _) =>
+        {
+            calls.Add(context.Phase);
+            if (context.Phase == HoardOptionCheckPhase.Public) { return ValueTask.FromResult(HoardOptionCheckResult.Accepted); }
+            Assert.Equal(ConfigurationTestHarness.Credential, context.Options.GetSecret("credential").Reveal());
+            return ValueTask.FromResult(resultKind switch
+            {
+                "accepted" => HoardOptionCheckResult.Accepted,
+                "malformed" => null!,
+                _ => new HoardOptionCheckResult([new(resultKind == "unknown-field" ? ConfigurationTestHarness.Credential : field,
+                    resultKind == "unknown-rule" ? ConfigurationTestHarness.Locator : "paired")])
+            });
+        });
+        await using var result = await builder.EvaluateConfigurationAsync(new(ConfiguredFixtures.Defaults,
+            environment: harness.Environment, arguments:
+            ["--hoard:modules:metadata:options:label=\"second\"",
+             "--hoard:modules:metadata:options:credential=" +
+                JsonSerializer.Serialize(new { kind = "env", target = ConfigurationTestHarness.Locator })]),
+            LifecycleFixtures.Versions, new());
+        Assert.Equal(resultKind == "accepted" ? HoardConfigurationOutcome.Validated : HoardConfigurationOutcome.Failed, result.Outcome);
+        Assert.Equal(new[] { HoardOptionCheckPhase.Public, HoardOptionCheckPhase.Secrets }, calls);
+        if (resultKind != "accepted")
+        {
+            Assert.Null(result.Configuration);
+            var diagnostic = Assert.Single(result.Report.Diagnostics);
+            Assert.Equal(HoardConfigurationPhase.SecretOptions, diagnostic.Phase);
+            Assert.Equal("metadata", diagnostic.Owner);
+            if (resultKind == "declared")
+            {
+                Assert.Equal(HoardConfigurationRule.CheckFailure, diagnostic.Rule);
+                Assert.Equal(HoardConfigurationSource.CommandLine, diagnostic.Source);
+                Assert.Equal($"modules:metadata:options:{field}", diagnostic.Setting);
+                Assert.Equal("paired", JsonSerializer.SerializeToElement(diagnostic).GetProperty("OptionRule").GetString());
+                Assert.Contains("declared option rule", diagnostic.CorrectiveAction, StringComparison.Ordinal);
+            }
+            else { Assert.Equal(HoardConfigurationRule.InvalidCheckResult, diagnostic.Rule); }
+        }
+        Assert.Empty(LifecycleFixtures.Controls);
+        var output = JsonSerializer.Serialize(result);
+        Assert.DoesNotContain(ConfigurationTestHarness.Credential, output);
+        Assert.DoesNotContain(ConfigurationTestHarness.Locator, output);
+        harness.AssertNoPayload();
     }
 
     [Theory]

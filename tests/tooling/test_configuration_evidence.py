@@ -47,6 +47,11 @@ class ConfigurationEvidenceTests(unittest.TestCase):
                 "ConfigurationSecretTests.Concurrent_consume_dispose_mutation_and_legacy_attempts_have_one_secret_release_authority",
                 "ConfigurationSecretTests.Blocked_configured_delivery_keeps_transferred_secrets_and_prerequisites_without_late_services",
                 "ConfigurationSecretTests.Pending_F02_notification_or_cancellation_retains_secrets_and_root_without_deferred_cleanup",
+                "ConfigurationSecretTests.Known_secret_failures_keep_the_exact_field_owner_and_winning_source",
+                "ConfigurationCoordinationTests.Pending_secret_diagnostics_keep_origin_through_timeout_cancellation_and_late_fault",
+                "ConfiguredCompositionTests.Declared_option_rules_keep_effective_field_source_and_safe_action",
+                "ConfiguredCompositionTests.Unsupported_active_option_version_keeps_its_explicit_setting_source",
+                "ConfigurationSecretTests.Secret_option_rules_keep_effective_source_and_reject_undeclared_results",
                 "ConfigurationConversionTests.Committed_publication_remains_published_while_post_commit_work_times_out"):
             with self.subTest(scenario=missing):
                 with self.assertRaisesRegex(RuntimeError, "configuration case"):

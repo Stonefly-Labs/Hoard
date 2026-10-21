@@ -23,6 +23,7 @@ internal sealed class ConfigurationSupervisor
     private readonly List<IDisposable> resources = [];
     private readonly HashSet<string> knownOwners = new(StringComparer.Ordinal);
     private readonly HashSet<string> knownSettings = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, HashSet<string>> knownOptionRules = new(StringComparer.Ordinal);
     private int omitted;
     private int pending;
     private bool terminal;
@@ -33,6 +34,7 @@ internal sealed class ConfigurationSupervisor
     private HoardConfigurationPhase currentPhase = HoardConfigurationPhase.Sources;
     private HoardConfigurationSource currentSource;
     private string currentOwner = "configuration";
+    private string currentSetting = "configuration";
     internal Guid Correlation { get; } = Guid.NewGuid();
     internal ImmutableArray<HoardSettingProvenance> Provenance { get; set; } = [];
     internal HoardConfigurationOutcome Outcome { get; private set; } = HoardConfigurationOutcome.Failed;
@@ -53,12 +55,13 @@ internal sealed class ConfigurationSupervisor
             return value > TimeSpan.Zero ? value : TimeSpan.Zero;
         }
     }
-    internal void Known(string owner, IEnumerable<string> settings)
+    internal void Known(string owner, IEnumerable<string> settings, IEnumerable<string>? optionRules = null)
     {
         lock (gate)
         {
             knownOwners.Add(owner);
             foreach (var setting in settings) { knownSettings.Add(setting); }
+            if (optionRules is not null) { knownOptionRules[owner] = optionRules.ToHashSet(StringComparer.Ordinal); }
         }
     }
     internal void Hold(IDisposable resource)
@@ -75,20 +78,22 @@ internal sealed class ConfigurationSupervisor
     private void Error(HoardConfigurationRule rule, HoardConfigurationPhase phase,
         HoardConfigurationSource source, string owner, string setting = "configuration",
         HoardConfigurationCompositionRule? compositionRule = null, ImmutableArray<string> dependencyPath = default,
-        int omittedPathCount = 0)
+        int omittedPathCount = 0, string? optionRule = null)
     {
         var safeOwner = knownOwners.Contains(owner) ? owner : "configuration";
         var safeSetting = knownSettings.Contains(setting) ? setting : "unknown-setting";
+        var safeOptionRule = optionRule is not null && knownOptionRules.TryGetValue(safeOwner, out var rules)
+            && rules.Contains(optionRule) ? optionRule : null;
         if (diagnostics.Count < options.MaximumDiagnostics)
-        { diagnostics.Add(new(rule, phase, source, safeOwner, safeSetting, Correlation, compositionRule, dependencyPath, omittedPathCount)); }
+        { diagnostics.Add(new(rule, phase, source, safeOwner, safeSetting, Correlation, compositionRule, dependencyPath, omittedPathCount, safeOptionRule)); }
         else { omitted++; }
     }
     [DoesNotReturn]
     internal void Reject(HoardConfigurationRule rule, HoardConfigurationPhase phase,
         HoardConfigurationSource source = HoardConfigurationSource.Defaults,
-        string owner = "configuration", string setting = "configuration")
+        string owner = "configuration", string setting = "configuration", string? optionRule = null)
     {
-        lock (gate) { Error(rule, phase, source, owner, setting); }
+        lock (gate) { Error(rule, phase, source, owner, setting, optionRule: optionRule); }
         throw new ConfigurationFailure(rule);
     }
     [DoesNotReturn]
@@ -136,7 +141,7 @@ internal sealed class ConfigurationSupervisor
             Outcome = rule == HoardConfigurationRule.Cancelled ? HoardConfigurationOutcome.Cancelled
                 : rule == HoardConfigurationRule.Timeout ? HoardConfigurationOutcome.TimedOut : HoardConfigurationOutcome.Failed;
             if (diagnostics.Count == 0 || rule is HoardConfigurationRule.Cancelled or HoardConfigurationRule.Timeout)
-            { Error(rule, currentPhase, currentSource, currentOwner); }
+            { Error(rule, currentPhase, currentSource, currentOwner, currentSetting); }
             if (!notified && pending > 0)
             {
                 notified = true;
@@ -144,11 +149,12 @@ internal sealed class ConfigurationSupervisor
                 var phase = currentPhase;
                 var source = currentSource;
                 var owner = currentOwner;
+                var setting = currentSetting;
                 _ = Task.Run(async () =>
                 {
                     try { await collaborator.CancelAsync().ConfigureAwait(false); }
                     catch (Exception)
-                    { lock (gate) { Error(HoardConfigurationRule.CancellationFailure, phase, source, owner); } }
+                    { lock (gate) { Error(HoardConfigurationRule.CancellationFailure, phase, source, owner, setting); } }
                     finally { ReleaseActivity(); }
                 });
             }
@@ -156,7 +162,7 @@ internal sealed class ConfigurationSupervisor
         }
     }
     internal async Task<T> RunAsync<T>(HoardConfigurationPhase phase, HoardConfigurationSource source,
-        string owner, Func<CancellationToken, ValueTask<T>> callback)
+        string owner, Func<CancellationToken, ValueTask<T>> callback, string setting = "configuration")
     {
         Task<T> work;
         TimeSpan cap;
@@ -167,6 +173,7 @@ internal sealed class ConfigurationSupervisor
             currentPhase = phase;
             currentSource = source;
             currentOwner = owner;
+            currentSetting = setting;
             cap = TimeSpan.FromMilliseconds(options.OperationTimeoutMilliseconds);
             if (Remaining < cap) { cap = Remaining; }
             operationStarted = clock.GetTimestamp();
@@ -185,7 +192,8 @@ internal sealed class ConfigurationSupervisor
                     {
                         var rule = terminal ? HoardConfigurationRule.LateCheckFailure
                             : error is ConfigurationFailure failure ? failure.Rule : HoardConfigurationRule.CheckFailure;
-                        if (error is not ConfigurationFailure || terminal) { Error(rule, phase, source, owner); }
+                        if (error is not ConfigurationFailure || terminal || diagnostics.Count == 0)
+                        { Error(rule, phase, source, owner, setting); }
                         throw new ConfigurationFailure(rule);
                     }
                 }

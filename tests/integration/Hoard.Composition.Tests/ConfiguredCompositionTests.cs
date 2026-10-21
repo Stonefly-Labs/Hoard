@@ -12,6 +12,115 @@ namespace Hoard.Composition.Tests;
 
 public sealed class ConfiguredCompositionTests
 {
+    [Theory]
+    [InlineData("label", HoardConfigurationSource.Defaults)]
+    [InlineData("label", HoardConfigurationSource.File)]
+    [InlineData("label", HoardConfigurationSource.Environment)]
+    [InlineData("label", HoardConfigurationSource.CommandLine)]
+    [InlineData("count", HoardConfigurationSource.Defaults)]
+    [InlineData("count", HoardConfigurationSource.File)]
+    [InlineData("count", HoardConfigurationSource.Environment)]
+    [InlineData("count", HoardConfigurationSource.CommandLine)]
+    public async Task Declared_option_rules_keep_effective_field_source_and_safe_action(string field, HoardConfigurationSource source)
+    {
+        ConfiguredFixtures.Reset();
+        await using var harness = new ConfigurationTestHarness();
+        foreach (var rejected in new[] { true, false })
+        {
+            var calls = 0;
+            var reads = 0;
+            var builder = ConfiguredFixtures.Registry((context, _) =>
+            {
+                calls++;
+                Assert.Equal(HoardOptionCheckPhase.Public, context.Phase);
+                return ValueTask.FromResult(rejected ? new HoardOptionCheckResult([new(field, "paired")])
+                    : HoardOptionCheckResult.Accepted);
+            });
+            var defaults = JsonNode.Parse(ConfiguredFixtures.Defaults)!;
+            defaults["modules"]!["metadata"]!["options"]!["credential"] =
+                new JsonObject { ["kind"] = "env", ["target"] = ConfigurationTestHarness.Locator };
+            var overlay = new JsonObject
+            {
+                ["modules"] = new JsonObject
+                {
+                    ["metadata"] = new JsonObject
+                    {
+                        ["options"] = new JsonObject
+                        { [field] = field == "label" ? JsonValue.Create("second") : JsonValue.Create(4) }
+                    }
+                }
+            };
+            if (source == HoardConfigurationSource.Defaults)
+            { defaults["modules"]!["metadata"]!["options"]![field] = overlay["modules"]!["metadata"]!["options"]![field]!.DeepClone(); }
+            if (source == HoardConfigurationSource.File) { overlay["configurationversion"] = 1; }
+            var environment = source == HoardConfigurationSource.Environment
+                ? new Dictionary<string, string> { ["HOARD_CONFIG"] = overlay.ToJsonString() } : [];
+            var arguments = source == HoardConfigurationSource.CommandLine
+                ? new[] { $"--hoard:modules:metadata:options:{field}=" + overlay["modules"]!["metadata"]!["options"]![field]!.ToJsonString() } : [];
+            await using var result = await builder.EvaluateConfigurationAsync(new(defaults.ToJsonString(),
+                explicitFile: source == HoardConfigurationSource.File ? "/invented/options-file" : null,
+                environment: environment, arguments: arguments, readFile: (_, _) => ValueTask.FromResult(overlay.ToJsonString()),
+                readEnvironment: (_, _) => { reads++; return ValueTask.FromResult<string?>(null); }), LifecycleFixtures.Versions, new());
+            Assert.Equal(HoardConfigurationOutcome.Failed, result.Outcome);
+            Assert.Null(result.Configuration);
+            Assert.Equal(1, calls);
+            if (rejected)
+            {
+                Assert.Equal(0, reads);
+                var diagnostic = Assert.Single(result.Report.Diagnostics);
+                Assert.Equal(HoardConfigurationRule.CheckFailure, diagnostic.Rule);
+                Assert.Equal(HoardConfigurationPhase.PublicOptions, diagnostic.Phase);
+                Assert.Equal("metadata", diagnostic.Owner);
+                Assert.Equal($"modules:metadata:options:{field}", diagnostic.Setting);
+                Assert.Equal(source, diagnostic.Source);
+                Assert.Equal("paired", JsonSerializer.SerializeToElement(diagnostic).GetProperty("OptionRule").GetString());
+                Assert.Contains("declared option rule", diagnostic.CorrectiveAction, StringComparison.Ordinal);
+            }
+            else
+            {
+                Assert.Equal(1, reads);
+                Assert.Contains(result.Report.Diagnostics, d => d.Rule == HoardConfigurationRule.SecretUnavailable);
+            }
+            Assert.Empty(LifecycleFixtures.Controls);
+            Assert.DoesNotContain(ConfigurationTestHarness.Credential, JsonSerializer.Serialize(result));
+            Assert.DoesNotContain(ConfigurationTestHarness.Locator, JsonSerializer.Serialize(result));
+            harness.AssertNoPayload("/invented/options-file");
+        }
+    }
+
+    [Theory]
+    [InlineData(HoardConfigurationSource.Environment)]
+    [InlineData(HoardConfigurationSource.CommandLine)]
+    public async Task Unsupported_active_option_version_keeps_its_explicit_setting_source(HoardConfigurationSource source)
+    {
+        ConfiguredFixtures.Reset();
+        foreach (var version in new[] { 2, 1 })
+        {
+            var calls = 0;
+            var builder = ConfiguredFixtures.Registry((_, _) =>
+            { calls++; return ValueTask.FromResult(HoardOptionCheckResult.Accepted); });
+            var environment = source == HoardConfigurationSource.Environment
+                ? new Dictionary<string, string>
+                { ["HOARD_CONFIG"] = JsonSerializer.Serialize(new { modules = new { metadata = new { optionsversion = version } } }) } : [];
+            var arguments = source == HoardConfigurationSource.CommandLine
+                ? new[] { $"--hoard:modules:metadata:optionsversion={version}" } : [];
+            await using var result = await builder.EvaluateConfigurationAsync(new(ConfiguredFixtures.Defaults,
+                environment: environment, arguments: arguments), LifecycleFixtures.Versions, new());
+            Assert.Equal(version == 1 ? HoardConfigurationOutcome.Validated : HoardConfigurationOutcome.Failed, result.Outcome);
+            if (version == 2)
+            {
+                Assert.Equal(0, calls);
+                var diagnostic = Assert.Single(result.Report.Diagnostics);
+                Assert.Equal(HoardConfigurationRule.UnsupportedVersion, diagnostic.Rule);
+                Assert.Equal("modules:metadata:optionsversion", diagnostic.Setting);
+                Assert.Equal(source, diagnostic.Source);
+                Assert.Equal("metadata", diagnostic.Owner);
+                Assert.Null(result.Configuration);
+            }
+            Assert.Empty(LifecycleFixtures.Controls);
+        }
+    }
+
     [Fact]
     public async Task Accepted_owner_values_enter_the_existing_lease_before_services()
     {

@@ -1313,6 +1313,35 @@ guidance/evidence changes belong to the implementation follow-up. Existing
 architecture-review evidence remains historical; this append-only task/docs
 checkpoint changes no provider boundary or shared lifecycle invariant.
 
+### F-03 diagnostic implementation follow-up
+
+The separately authorized `speckit-implement` follow-up corrects T070/T071
+without changing the original 69 tasks or reviewer-owned checklist approvals.
+Secret env/file dispatch now captures the known canonical field alongside
+owner/phase/winning source. Failure, timeout, caller cancellation, cancellation
+notification failure and eventual check faults keep that context; pending
+inputs remain retained and returned reports/outcomes stay frozen.
+
+Public and secret-dependent rule rejection retains `CheckFailure` and a
+separate nullable `OptionRule`, validated against the owner's finite declared
+rule metadata. The effective violated field supplies its winning source.
+Malformed/unknown callback results still fail InvalidCheckResult without
+reflecting their identities; correction text is host-owned. Unsupported active
+option versions report their canonical version setting and actual source.
+No values, locators, raw exceptions or new metric dimensions are added.
+F-02 remains the only activation/lifecycle owner; no dependency is added.
+
+Executable red/green evidence and complete acceptance/review disposition are
+recorded in the [follow-up plan evidence](../specs/003-provider-configuration/plan.md#diagnostic-implementation-follow-up).
+The next scheduled stage is fresh `converge`, not finalize. PR #8 remains
+draft; no feature completion, dependency unlock or merge occurs here.
+README, provider/example diagnostic guidance, model/contracts and quickstart
+are updated. Product intent, baseline architecture/diagrams/ADR, governance,
+backlog, predecessor artifacts, IaC and release guides are unaffected because
+no provider support, grammar, listener, API endpoint, dependency direction,
+platform guarantee, deployment, permission or provider-data operation changes.
+The only additive public member is the safe diagnostic `OptionRule`.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

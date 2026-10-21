@@ -92,6 +92,13 @@ callbacks, reads, constructors, routes, workers or connections. Zero-field
 metadata/artifact adapters keep empty owner mappings rather than inventing
 operational settings.
 
+Troubleshoot with the safe report's canonical Setting, Owner, Source and Rule.
+Declared option-check failures additionally expose OptionRule with host-owned
+corrective guidance; malformed/unknown rule IDs are never reflected. Secret
+read and pending-work diagnostics preserve the originating field/source without
+revealing the reference target. Observe eventual faults in Supervision rather
+than expecting a returned Report to change.
+
 Source/environment/file/secret-target edits do not change active inputs.
 Stop/dispose the F-02 lease, create fresh inputs/builder, evaluate and start
 again. Switching bundled protocols uses the same built binary. Adding the
