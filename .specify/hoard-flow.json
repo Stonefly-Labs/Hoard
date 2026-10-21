@@ -1,9 +1,13 @@
 {
   "schema_version": 1,
-  "stage": "specify",
+  "stage": "clarify",
   "status": "ready",
-  "branch": null,
-  "active": null,
+  "branch": "feature/005-metadata-persistence",
+  "active": {
+    "id": "F-05",
+    "feature_directory": "specs/005-metadata-persistence",
+    "pr": null
+  },
   "completed": [
     {
       "id": "F-01",
@@ -417,6 +421,13 @@
       "branch": "chore/spec-progress-f-04",
       "at": "2026-10-21T21:22:31.434236+00:00",
       "evidence": "Verified PR #10 merged into fetched origin/main at 287c7b65a068b50e672d92f2d535ef79c910ac0b; all 80 tasks complete and existing requirements/discovery/management approvals unchanged (16/16, 20/20, 20/20). Tooling: python3 -m unittest discover -s tests/tooling -v passed 61 tests; release.py v0.0.4-alpha --check-main passed. Annotated remote v0.0.4-alpha peels to that exact merge commit; Source release run https://github.com/Stonefly-Labs/Hoard/actions/runs/39678124349 succeeded. Verified non-draft prerelease https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.4-alpha, generated notes, downloaded ZIP/TAR.GZ inventories and exact source contents (ZIP commit metadata matches merge SHA). Progress PR #12 must merge before another spec. No new product implementation, package publication, infrastructure or deployment."
+    },
+    {
+      "stage": "specify",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-21T21:37:48.338609+00:00",
+      "evidence": "Installed speckit-specify completed F-05 in pinned specs/005-metadata-persistence using exact master prompt and resolved template. Reviewed five journeys, 23 scenarios, 14 edges, 24 requirements, ten entities and eight outcomes; built-in quality checklist 16/16, no unresolved markers. Bounded SQLite qualification distinguished from later production SPEC-03; alternative fixture does not imply durable support. README/development updated; no hooks registered, custom approval, plan or implementation. Tooling unittest suite 61/61 passed; artifact/context/local-link checks and git diff --check passed. Next: clarify in separate invocation."
     }
   ]
 }

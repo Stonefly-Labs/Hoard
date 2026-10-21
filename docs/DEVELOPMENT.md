@@ -2108,6 +2108,64 @@ is backfilled with release metadata. This stage starts no new specification,
 implements no feature, merges no PR, publishes no binary/package/image and
 performs no infrastructure, deployment, governance change or OpenTofu plan/apply.
 
+### F-05 metadata persistence specification
+
+The F-04 completion checkpoint merged through
+[PR #13](https://github.com/Stonefly-Labs/Hoard/pull/13). The separately invoked
+`specify` stage fetches `origin/main`, verifies the merged checkpoint and ratified
+constitution, and starts `feature/005-metadata-persistence` from current main.
+The driver pins the exact master F-05 prompt and independent directory
+`specs/005-metadata-persistence`; the installed `speckit-specify` uses that explicit
+directory and the resolved specification template. No extension hook is
+registered, and only one specification is created.
+
+The [specification](../specs/005-metadata-persistence/spec.md) defines five
+independently testable journeys: retained identity-isolated state, atomic and
+concurrent changes, artifact-reference/lease ownership, controlled durable
+upgrades and recovery, and alternative-provider qualification. It includes
+23 acceptance scenarios, 14 edge cases, 24 functional requirements, ten logical
+entity descriptions and eight measurable outcomes. Story independent tests
+cover every requirement. The built-in
+[requirements checklist](../specs/005-metadata-persistence/checklists/requirements.md)
+passes all 16 specification-quality criteria, with no unresolved clarification
+markers. This is generation-time quality review, not the scheduled clarification
+stage or reviewer-owned custom checklist approval.
+
+The specification preserves registry/request/authorization identity partitions,
+all-or-nothing metadata visibility, consistent grouped reads, conditional
+revisions, reconcilable uncertain commits, finite work and safe errors. Artifact
+commit evidence comes from shared publication coordination; metadata cannot
+establish cross-store atomicity or authorize physical deletion by itself.
+Leases reject expired owners without claiming distributed coordination.
+Schema compatibility, controlled upgrades, single-upgrader admission, interrupted
+recovery and verified backup restoration remain explicit proof obligations.
+Provider-private schemas/migrations/frameworks must not leak into consumers.
+
+The master F-05 SQLite acceptance focus is retained as a bounded, real durable
+qualification adapter during later implementation, distinct from production
+SQLite delivery in original SPEC-03. An independent alternative fixture proves
+logical interchangeability, not durable production support for another engine.
+Generic certification remains F-07; production PostgreSQL, arbitrary NoSQL,
+cross-engine transfer, HA, artifact storage and shared cache algorithms are not
+implemented or promised here. Exact signatures, value limits, finite budgets,
+schema paths and proof mechanics remain constrained planning decisions.
+
+Only the specification, built-in quality checklist, README, this guide and
+shared driver checkpoint change; the ignored local feature pointer is restored.
+Provider/example guides, predecessor artifacts, charter/product specification,
+architecture/ADR/diagrams, constitution/backlog, package/version policy, runtime
+and test source, IaC and release procedures are unaffected because this stage
+changes no existing API, dependency, command, operational procedure or supported
+capability. No new architecture review is required for this requirements-only
+change; substantial contract implementation/design still needs the normal gate.
+Existing tooling checks validate the driver; product acceptance and OpenTofu
+checks are not rerun for this documentation/checkpoint-only stage.
+
+The checkpoint schedules **`clarify / ready`** for a separate invocation. The
+feature PR remains draft. No plan, tasks, custom review, implementation,
+qualification, schema upgrade, release, merge, infrastructure or deployment is
+performed by this stage.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

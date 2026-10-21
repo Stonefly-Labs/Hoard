@@ -583,10 +583,23 @@ at that exact commit, including generated notes and both source archives.
 It records F-04 complete with its feature directory, PR, merge commit and release
 evidence. [PR #12](https://github.com/Stonefly-Labs/Hoard/pull/12) merged the
 running checkpoint before the completion changes were committed. The follow-up
-completion-checkpoint PR must merge before the next separately invoked
-**`specify`** stage.
+completion checkpoint merged through
+[PR #13](https://github.com/Stonefly-Labs/Hoard/pull/13), satisfying the next-spec
+merge gate.
 No new specification, implementation, package publication or deployment ran
 in this completion stage; the prerelease contains source only.
+The subsequent [F-05 specification: metadata persistence provider
+contract](specs/005-metadata-persistence/spec.md) defines isolated durable state,
+atomic related changes, explicit concurrency/retry outcomes, reference and lease
+safety, controlled schema upgrades, backup/recovery and provider-neutral
+qualification. Five journeys, 23 scenarios, 24 requirements and eight measurable
+outcomes pass the 16-item [built-in specification-quality
+checklist](specs/005-metadata-persistence/checklists/requirements.md).
+These are future acceptance obligations: bounded SQLite durability proof and
+an independent alternative fixture do not claim the later production provider,
+generic certification, cross-store transactions or multi-node safety.
+No persistence code, schema or new validation command exists from this stage;
+**`clarify`** is next through a separate invocation.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
