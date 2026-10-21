@@ -503,8 +503,20 @@ management 20/20 satisfied**, with no unresolved finding, waiver or decision
 requiring maintainer attention. Criterion-level evidence is in each checklist.
 The specification, planning artifacts and built-in 16/16 checklist are
 unchanged. This satisfies requirements-quality review only, not runtime
-acceptance or implementation completion. The next separately authorized stage
-remains `tasks`; no task list or implementation is created by this review.
+acceptance or implementation completion. No task list or implementation was
+created by that review.
+The subsequent [task-generation stage](specs/004-module-discovery/tasks.md)
+produces **78 unchecked tasks**: shared setup/publication primitives, five
+story phases and cross-cutting acceptance/documentation work. All 22
+requirements, eight outcomes and 40 paired cases have implementation and proof
+assignments, with explicit prerequisites and file-disjoint parallel groups.
+The work preserves inherited composition/lifecycle authorities, introduces both
+HTTP routes only with shared protection, and requires actual binding evidence,
+JSON-consumer decisions, loopback exposure adapters, bounded observations and
+package/retained-binary proofs. These are future obligations, not passing runtime
+results. Existing specification/design/checklist bytes remain unchanged.
+The next separately authorized stage is read-only `analyze`, not implementation;
+the proposed discovery runner still does not exist.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

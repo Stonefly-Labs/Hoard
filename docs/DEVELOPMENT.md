@@ -1716,6 +1716,60 @@ because the assisted review changes no requirements, contract, runtime,
 dependency or operational procedure. No additional architecture review or
 product/.NET/UI/IaC acceptance is warranted for marker/evidence-only changes.
 
+### F-04 module discovery task generation
+
+The separately authorized `tasks` stage runs the installed `speckit-tasks`
+with `SPECIFY_FEATURE_DIRECTORY=specs/004-module-discovery` on the recorded
+feature branch. Its [implementation task list](../specs/004-module-discovery/tasks.md)
+contains **78 unchecked tasks across eight phases**: four setup tasks,
+eight frozen-metadata/publication prerequisites, five story phases of
+8/11/16/9/10 tasks, and 12 cross-cutting tasks. Twenty-eight tasks identify
+file-disjoint parallel opportunities after explicit prerequisites; the complete
+task graph serializes shared coordinator/composition/source/encoding/helper
+and lockfile edits.
+
+All 22 requirements, eight outcomes and D01..D40 have implementation and focused
+proof assignments. The unchanged acceptance contract supplies the complete
+22-scenario/13-edge mapping. Tasks quote model invariants and preserve numeric
+schema/collection/text/UTF-8 bounds. Tests precede changed behavior, with actual
+negative runtime evidence required beyond initial missing-API compile failures.
+The inventory MVP is in-process; it does not expose an unsecured route while
+waiting for the management story. Both fixed HTTP slices are introduced together
+with explicit read policy/posture, exact app/lease/source ownership, safe
+bounded encoding and protected API description.
+
+Actual route/effective owner-service evidence, sole-authority coherent
+publication, disabled zero-side-effect inspection, loopback Kestrel/raw-peer/TLS
+adapters, separate execution permission, safe full-surface diagnostics, JSON-only
+consumer decisions, publication/cancellation races and the specified local
+100-read workload remain future proof obligations. Pre-F-04 binaries must be
+compiled and retained before platform changes; package-only bundled/custom
+journeys, non-web framework propagation and all existing foundation/lifecycle/
+configuration proofs remain mandatory. An incomplete proof inventory fails,
+never skips into acceptance. Semantic consumer output is not rendered WCAG
+evidence, and fixture/adapter evidence is not production qualification.
+
+The built-in checklist and both assisted reviewer-owned 20/20 approvals remain
+byte-for-byte unchanged, as do the specification and all nine design artifacts.
+No extension hooks are configured. This stage creates no product/test source,
+project/lock change, runner, listener, console, provider, infrastructure,
+publication or merge. `bash scripts/validate-discovery.sh` is still proposed
+and is not run or reported as passing.
+
+README and this guide link the task list and next gate. Provider/example guides,
+predecessor artifacts, baseline product/architecture/diagrams/ADR, constitution,
+backlog, IaC and release guidance are unaffected because task generation changes
+no requirement, design contract, current API, dependency graph, command,
+runtime/support behavior or operational procedure. Implementation tasks require
+their affected guides to be updated when new APIs actually exist. No additional
+architecture review or product/.NET/UI/IaC acceptance is warranted for this
+task-artifact/documentation/checkpoint-only change.
+
+The next separately authorized stage is read-only `analyze`. The satisfied
+custom requirements-quality gate does not bypass it or authorize implementation,
+convergence, finalization or feature completion. Draft
+[PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10) remains incomplete.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
