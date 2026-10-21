@@ -8,4 +8,5 @@ public sealed class HoardBuilder
 
     public IServiceCollection Services { get; }
     internal object ConfigurationGate { get; } = new();
+    internal bool ConfigurationConsumed { get; set; }
 }

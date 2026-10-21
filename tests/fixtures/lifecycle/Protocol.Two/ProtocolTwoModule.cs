@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using Hoard.Abstractions.Modules;
 using Hoard.Abstractions.Providers;
+using Hoard.Hosting.Configuration;
 using Hoard.Hosting.Lifecycle;
 using Hoard.Hosting.Routing;
 using Microsoft.AspNetCore.Http;
@@ -18,15 +19,21 @@ public sealed class ProtocolTwoProvider : IProtocolProvider
         Compatibility = new() { HostRange = "[0.1.0,0.2.0)", AbstractionsRange = "[0.1.0,0.2.0)", AllowPrereleaseHost = false, AllowPrereleaseAbstractions = false },
         Dependencies = [],
         Capabilities = [],
-        Configuration = [],
+        Configuration =
+        [
+            new() { Key = "label", Description = "Fixture label.", Required = true, SecretReference = false },
+            new() { Key = "credential", Description = "Optional fixture reference.", Required = false, SecretReference = true }
+        ],
         Health = [],
         Endpoints = [new() { Id = "lifecycle-test", Description = "Fixture-only handler; no package protocol." }],
         Provenance = new() { Publisher = "Hoard lifecycle acceptance", SupportStatus = ModuleSupportStatus.Fixture }
     };
 }
 
-public sealed class ProtocolTwoModule : IHoardModule
+public sealed class ProtocolTwoModule : IHoardModule, IHoardConfiguredModule
 {
+    public static HoardModuleOptions? LastOptions { get; private set; }
+    public void ConfigureOptions(HoardModuleOptions options) { LastOptions = options; Events.Enqueue("options"); }
     private bool acquired;
     public static int ConnectionAttempts;
     public static int ResourceAcquisitions;

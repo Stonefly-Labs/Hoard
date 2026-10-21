@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using System.Diagnostics.Metrics;
+using Hoard.Hosting.Lifecycle;
 
 namespace Hoard.Hosting.Configuration;
 
@@ -8,6 +9,8 @@ internal sealed class ConfigurationSupervisor
 {
     private static readonly Meter Meter = new("Hoard.Configuration");
     private static readonly Counter<long> Events = Meter.CreateCounter<long>("hoard.configuration.events");
+    internal static void PublicationEvent(string category) => Events.Add(1,
+        new("phase", "Publication"), new("category", category), new("source", "File"));
     private readonly object gate = new();
     private readonly HoardConfigurationOptions options;
     private readonly TimeProvider clock;
@@ -31,6 +34,7 @@ internal sealed class ConfigurationSupervisor
     private HoardConfigurationSource currentSource;
     private string currentOwner = "configuration";
     internal Guid Correlation { get; } = Guid.NewGuid();
+    internal ImmutableArray<HoardSettingProvenance> Provenance { get; set; } = [];
     internal HoardConfigurationOutcome Outcome { get; private set; } = HoardConfigurationOutcome.Failed;
 
     internal ConfigurationSupervisor(HoardConfigurationOptions options, CancellationToken caller)
@@ -69,12 +73,14 @@ internal sealed class ConfigurationSupervisor
     { get { lock (gate) { return new(pending, diagnostics.ToImmutableArray(), omitted); } } }
 
     private void Error(HoardConfigurationRule rule, HoardConfigurationPhase phase,
-        HoardConfigurationSource source, string owner, string setting = "configuration")
+        HoardConfigurationSource source, string owner, string setting = "configuration",
+        HoardConfigurationCompositionRule? compositionRule = null, ImmutableArray<string> dependencyPath = default,
+        int omittedPathCount = 0)
     {
         var safeOwner = knownOwners.Contains(owner) ? owner : "configuration";
         var safeSetting = knownSettings.Contains(setting) ? setting : "unknown-setting";
         if (diagnostics.Count < options.MaximumDiagnostics)
-        { diagnostics.Add(new(rule, phase, source, safeOwner, safeSetting, Correlation)); }
+        { diagnostics.Add(new(rule, phase, source, safeOwner, safeSetting, Correlation, compositionRule, dependencyPath, omittedPathCount)); }
         else { omitted++; }
     }
     [DoesNotReturn]
@@ -84,6 +90,28 @@ internal sealed class ConfigurationSupervisor
     {
         lock (gate) { Error(rule, phase, source, owner, setting); }
         throw new ConfigurationFailure(rule);
+    }
+    [DoesNotReturn]
+    internal void RejectComposition(ImmutableArray<HoardLifecycleDiagnostic> failures, int omittedCount, EffectiveConfiguration effective)
+    {
+        lock (gate)
+        {
+            foreach (var failure in failures)
+            {
+                var rule = Enum.TryParse<HoardConfigurationCompositionRule>(failure.RuleCode, out var parsed)
+                    && Enum.IsDefined(parsed) ? parsed : HoardConfigurationCompositionRule.Unknown;
+                var setting = rule == HoardConfigurationCompositionRule.UnsupportedCapability
+                    ? "requiredcapabilities" : "enabledmodules";
+                var source = effective.Assignments.TryGetValue(setting, out var assignment)
+                    ? assignment.Source : HoardConfigurationSource.Defaults;
+                var path = failure.DependencyPath.Select((id, index) => knownOwners.Contains(id)
+                    ? id : $"unknown-module-{index + 1}").ToImmutableArray();
+                Error(HoardConfigurationRule.CompositionRejected, HoardConfigurationPhase.Composition, source,
+                    failure.ModuleId, setting, rule, path, failure.OmittedPathCount);
+            }
+            omitted += omittedCount;
+        }
+        throw new ConfigurationFailure(HoardConfigurationRule.CompositionRejected);
     }
     internal void Check()
     {
@@ -211,6 +239,17 @@ internal sealed class ConfigurationSupervisor
     internal void Dispose()
     {
         lock (gate) { disposed = true; ReleaseResources(); }
+    }
+    internal ImmutableArray<IDisposable> TransferResources()
+    {
+        lock (gate)
+        {
+            if (!completed || Outcome != HoardConfigurationOutcome.Validated || pending != 0 || disposed)
+            { throw new ConfigurationFailure(HoardConfigurationRule.StaleConfiguration); }
+            var result = resources.ToImmutableArray();
+            resources.Clear();
+            return result;
+        }
     }
     private void ReleaseActivity()
     { lock (gate) { pending--; ReleaseResources(); } }

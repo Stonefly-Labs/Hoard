@@ -1,11 +1,9 @@
 # F-03 Validation Quickstart
 
-**Status**: In-progress validation guide. F-03 has a source-only metadata/parser/
-supervision MVP, not configured activation, secret resolution or conversion.
-The complete scenarios below remain acceptance obligations; only explicitly
-partial configuration commands currently run.
-No full implementation code, product host, external provider or cloud account
-is required.
+**Status**: Implemented fixture-backed validation guide. Hosting supplies
+configured activation, explicit local secret references and synthetic-only
+conversion. This is a library/TestServer example, not a product executable,
+real provider, native-client or conformance claim. No cloud account is needed.
 
 ## Prerequisites and Existing Baseline
 
@@ -30,20 +28,34 @@ bash scripts/validate-lifecycle.sh
 bash scripts/validate-foundation.sh
 ```
 
-These remain F-01/F-02 fixture acceptance, not F-03 evidence before its cases
-exist. They must still pass after implementation. A bare `dotnet test` is not
+These retain F-01/F-02 fixture acceptance alongside F-03. A bare `dotnet test` is not
 a substitute for the scripts' actual package/graph proof inputs.
 
-## Focused Command (Partial)
+## Full Acceptance and Focused Commands
 
-`scripts/validate-configuration.sh` currently offers these partial modes:
+Run complete locked configuration acceptance:
 
 ```bash
-bash scripts/validate-configuration.sh --filter 'FullyQualifiedName~Configuration'
+bash scripts/validate-configuration.sh
+```
+
+It runs the [CFG-01..36 obligations](contracts/acceptance.md), format/analyzer
+checks, actual source/project/packed/API/assets graphs, independent baseline/
+custom package hosts, retained old binaries and the real child interruption
+matrix. Prepared distribution/graph tests reject missing proof manifests.
+See the [measured evidence](plan.md#complete-implementation) for actual counts,
+review disposition and the measured macOS local-volume scope. Linux and other
+filesystems require their own real acceptance run before a support claim.
+
+These modes remain explicitly partial:
+
+```bash
+bash scripts/validate-configuration.sh \
+  --filter '(FullyQualifiedName~Configuration|FullyQualifiedName~ConfiguredComposition)&FullyQualifiedName!~Prepared_configuration'
 bash scripts/validate-configuration.sh --baseline-only
 ```
 
-The first runs nonempty source/metadata/coordination regressions under a bounded
+The first runs nonempty ordinary configuration regressions under a bounded
 runner; the second compiles independent fixture sources against pinned merged
 pre-F-03 packages and verifies their baseline locks/hashes. To explicitly
 generate the new baseline locks, use `--baseline-only --update-locks`, then
@@ -51,16 +63,17 @@ review and replay without that flag. An optional `--retain-baseline` fresh
 private directory retains the actual old binaries/assets outside Git.
 Neither mode runs configured package journeys or proves new binary compatibility.
 An optional `--evidence-directory /absolute/fresh/private/directory` retains
-actual TRX/closed status for either a failing red run or passing green run;
-failures still exit nonzero and do not claim their own intended cause.
-
-Default `bash scripts/validate-configuration.sh` deliberately exits with
-`Incomplete configuration acceptance` until the remaining work exists.
-It must eventually use locked restore and run
-the [CFG-01..36 obligations](contracts/acceptance.md), formatting/analyzers,
-actual independent package consumers, retained binary compatibility,
-TestServer journeys and local-filesystem conversion tests. It must fail for
-missing/empty proof selections, never skip absent manifests.
+actual TRX/closed status for either a failing red run or passing green run.
+For full acceptance it retains the complete private package/graph/binary/
+publication workspace for independent inspection. Failures still exit nonzero
+and never set fullAcceptance or infer their own intended red cause.
+Full-run `--retained-baseline /absolute/private/baseline-directory` reuses the
+verified original binary bytes without rebuilding/replacing them.
+Locked package restore uses the reproducible pre-F-03 provider build in either
+mode. After restore/build, each configured host receives the verified retained
+provider DLL; actual runtime hashes are checked before/after all journeys.
+This separates original-binary compatibility from deterministic package hashes
+without changing locks during replay.
 
 Use the existing scripts' explicit `--update-locks` pattern only if adding or
 changing a manifest makes initial lock generation necessary; inspect lock diffs
@@ -72,12 +85,24 @@ also require reviewed content-hash lock updates, not dependency/version changes.
 snapshots and an optional file/read adapter; it does not capture ambient
 developer credentials. Snapshot scan ceilings are 4,096 arguments/environment
 entries, with one-MiB Defaults/overlay/reserved-argument text. The current public
-`EvaluateConfigurationAsync` returns `Failed / IncompleteConfiguration` after
-valid structural resolution; safe provenance is inspectable, but no successful
-proof, active semantics, secret read or configured lifecycle is available.
-See [measured MVP evidence](plan.md#source-resolution-mvp-implementation).
+`EvaluateConfigurationAsync` returns a safe report and a single-use
+`Configuration` proof only after composition, active public checks, local
+secret resolution and secret-dependent checks pass. Consume it once with
+`builder.ComposeHoardModulesAsync(evaluation.Configuration, token)` and use
+the existing F-02 lease build/map/start/stop/dispose sequence. Dispose unused
+evaluations/proofs; transferred inputs instead belong to the lease. Never use
+source parsing or a conversion result as startup approval.
 
 ## 1. Source Resolution Without Construction
+
+The [baseline JSON](../../examples/LifecycleHost/Configuration/baseline.json)
+uses the configured example's registered fixture inventory and invented
+environment-reference names. Supply only an explicit dictionary/read adapter
+containing invented values; the runner creates secret snapshots in memory and never
+captures a personal process environment. The
+[custom JSON](../../examples/LifecycleHost/Configuration/custom.json) additionally
+selects the custom-only artifact. JSON is reference input for the public
+library APIs; the self-checking example is not a general-purpose operator CLI.
 
 Prepare isolated fixture Defaults/file documents in the
 [version 1 grammar](contracts/configuration-format.md), a copied `HOARD_CONFIG`
@@ -142,14 +167,40 @@ released compatibility promise. Call preview from the fixture harness: original
 bytes stay unchanged, selected values/reference meaning remain preserved,
 no secret read/provider construction, safe categories without private proposal.
 
-Approve the exact private session and a fresh owner-restricted output
-destination. Apply repeats full validation and writes complete version 1
+The [synthetic example](../../examples/LifecycleHost/Configuration/synthetic-fixture-v0.json)
+is not a released format. Use an explicit source file and fresh destination
+in an already owner-restricted directory:
+
+```csharp
+await using var preview = await builder.PreviewConfigurationConversionAsync(
+    sourcePath, destinationPath, platformVersions, lifecycleOptions,
+    readEnvironment: (name, _) => ValueTask.FromResult(
+        suppliedSecrets.TryGetValue(name, out var value) ? value : null),
+    cancellationToken: token);
+if (preview.Session is null)
+{
+    throw new InvalidOperationException("Configuration preview rejected; inspect the safe report.");
+}
+preview.Session.Approve();
+await using var applied = await builder.ApplyConfigurationConversionAsync(
+    preview.Session, token);
+```
+
+Import `Hoard.Hosting.Configuration.Conversion`. Inspect both safe reports and
+the apply outcome; approval is explicit and single-use. No ambient
+HOARD_CONFIG/CLI/default overlays participate. Only the supplied local reader
+is used for secret lookups at apply, not preview.
+
+Apply repeats full validation and writes complete version 1
 references without resolved secrets. Reused/unapproved session, changed input,
 invalid target, unknown version or missing secret must leave no published
 replacement. Existing/racing destinations remain untouched.
 Cancellation at the publication boundary must report the actual complete-file
 outcome or explicit `PublicationPending` while the OS operation is unresolved,
 never promise rollback because only its wait was cancelled.
+`applied.Publication.Status` and `applied.Supervision` expose later safe
+observation; the original result/report remain frozen. Full apply does not
+activate providers; next startup must evaluate fresh inputs separately.
 
 Inject failure and terminate a child fixture process at staged/write/flush/
 pre-/post-publication barriers on each claimed local platform. The original
@@ -165,7 +216,7 @@ or stored artifact changes; fixtures do not prove real provider recovery.
 ## Recording Evidence
 
 Record exact commands/results and cases/platforms in the implementation plan/
-PR when they exist. Preserve F-01/F-02 artifacts and reviewer-owned approvals.
+PR. Preserve F-01/F-02 artifacts and reviewer-owned approvals.
 Update README, development/provider/example guides and actual command support.
 Run the required bounded architecture review on real API/package/ownership
 changes. Passing fixture checks never claims a runnable cache, real provider,

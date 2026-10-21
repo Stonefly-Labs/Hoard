@@ -19,6 +19,7 @@
     <PackageReference Include="Hoard.Fixtures.Lifecycle.Identity" Version="[0.1.0]" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" Version="[10.0.13]" />
     <Compile Include="Program.cs" />
+    <Compile Include="ConfigurationJourneys.cs" />
     <Compile Include="Adapters/MetadataModule.cs" />
     <Compile Include="Adapters/ArtifactOneModule.cs" />
   </ItemGroup>

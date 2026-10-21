@@ -26,6 +26,7 @@ public sealed class HoardModuleOptions
     public bool GetBoolean(string key) => Get<bool>(key);
     public long GetInteger(string key) => Get<long>(key);
     public HoardSecretValue GetSecret(string key) => Get<HoardSecretValue>(key);
+    internal ImmutableDictionary<string, object> Values => values;
     private T Get<T>(string key) => values.TryGetValue(key, out var value) && value is T typed ? typed
         : throw new InvalidOperationException("The owner option is absent or has a different declared type.");
     internal void Release()

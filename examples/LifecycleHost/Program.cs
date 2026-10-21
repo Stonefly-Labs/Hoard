@@ -15,6 +15,11 @@ using Hoard.Fixtures.Lifecycle.Artifact.Two;
 #endif
 
 using var bound = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+if (args.SequenceEqual(["--configuration-fixtures"]))
+{
+    await ConfigurationJourneys.RunAsync(bound.Token);
+    return;
+}
 var journeys = new List<object>();
 await Journey("bundled-one", "fixture.protocol.one", "fixture.artifact.one");
 await Journey("bundled-two-same-binary", "fixture.protocol.two", "fixture.artifact.one");

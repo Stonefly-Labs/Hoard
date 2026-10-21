@@ -374,7 +374,7 @@ authorization or runtime acceptance. The specification, design and built-in
 16/16 checklist remain unchanged. That review did not start task generation
 or implementation.
 The subsequent [implementation task list](specs/003-provider-configuration/tasks.md)
-contains 69 unchecked tasks: shared setup/bounded ownership primitives, five
+originally contained 69 unchecked tasks: shared setup/bounded ownership primitives, five
 story phases and cross-cutting acceptance. Source inspection is the first MVP;
 composition, secrets, restart/distribution and synthetic conversion follow with
 paired tests. Every requirement, outcome and planned CFG-01..36 proof case has
@@ -397,26 +397,36 @@ At that checkpoint, the next separately authorized stage was `implement`, with
 the existing 40/40 custom requirements-review gate satisfied. Analysis is not
 runtime acceptance.
 
-The current implementation invocation delivers only the task-defined
-**source-resolution MVP**, not the complete F-03 feature. Hosting now has inert
-option metadata, private copied inputs, bounded callback supervision, strict
-versioned JSON parsing and deterministic per-setting provenance. Same-source
-canonical duplicates, unknown names, malformed disabled/discarded input and
-unsafe reference/address representations fail explicitly. Selections replace
-whole lists; unrelated option fields remain. No secret is resolved and no
-provider is constructed.
+F-03 now implements strict versioned JSON sources, inert option metadata,
+active ordinary checks and local environment/mounted-file secret references.
+`EvaluateConfigurationAsync` delegates selection to F-02 and returns a private
+single-use proof only after every active check succeeds. Configured adapters
+receive fixed owner-only values immediately before service configuration;
+legacy compose cannot bypass an enabled opt-in registration. Disabled modules
+perform no operational checks or secret reads. No ambient process credentials,
+hidden defaults, reload, provider download or fallback are introduced.
 
-`EvaluateConfigurationAsync` intentionally returns **Failed /
-IncompleteConfiguration** after valid source resolution, with no successful
-proof. Configured lifecycle integration, active option checks, local secret
-resolution, restart/distribution and conversion remain unfinished. The new
-`validate-configuration.sh` supports explicitly partial `--filter` and
-`--baseline-only` checks; its default full-acceptance mode deliberately fails.
-The [implementation evidence](specs/003-provider-configuration/plan.md#source-resolution-mvp-implementation)
-records the scoped architecture review, corrections and retained checks.
-The checkpoint stays **`implement / running`**, and
-[PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) stays draft. Resume the
-same stage/directory; do not rerun `begin` or advance to convergence.
+Explicit synthetic `fixture-v0` conversion offers secret-free preview, exact
+session approval, full validation and complete fresh-file publication without
+overwriting the original or an existing/racing destination. A pending bounded
+wait is not a rollback guarantee. This is not support for a released old format,
+illustrative product YAML, provider-data migration or universal filesystem
+power-loss recovery.
+
+`bash scripts/validate-configuration.sh` runs the complete fixture acceptance:
+source/option/ownership tests, real packed graphs, unchanged old binaries,
+package-only TestServer restart/custom-distribution journeys and actual child
+interruption at publication boundaries. Partial `--filter`/`--baseline-only`
+modes remain explicitly partial. See the
+[implementation evidence](specs/003-provider-configuration/plan.md#complete-implementation),
+[provider API guide](docs/PROVIDERS.md#f-03-configuration-boundary) and
+[quickstart](specs/003-provider-configuration/quickstart.md).
+Publication is measured on this macOS local volume; Linux and other
+filesystems are not certified by that run. No runnable cache, production
+provider, native-client or conformance claim follows.
+
+[PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) stays draft.
+Convergence, finalization and maintainer-authorized merge remain separate gates.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

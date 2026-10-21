@@ -1,9 +1,8 @@
 # F-03 Operator Configuration Contract
 
-**Status**: Complete version 1 target grammar. The
-[source-only MVP](../plan.md#source-resolution-mvp-implementation) implements
-structural parsing/merging, not active semantics, secret resolution, conversion
-or an operator executable. This is not support for illustrative product YAML.
+**Status**: Implemented version 1 library grammar and explicitly synthetic
+conversion, backed by [fixture evidence](../plan.md#complete-implementation).
+There is no operator executable or support for illustrative product YAML.
 Examples contain fixture IDs and invented reference targets, not credentials.
 
 ## Documents and Sources

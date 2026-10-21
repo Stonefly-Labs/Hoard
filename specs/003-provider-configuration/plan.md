@@ -6,10 +6,11 @@
 
 **Status**: Historical Phase 0/1 design, generated through the installed
 `speckit-plan` skill with the recorded feature directory explicitly pinned.
-The design below remains the complete feature target. The appended
-[source-resolution MVP evidence](#source-resolution-mvp-implementation) records
-the current partial implementation; activation, secrets, conversion and full
-F-03 acceptance remain unfinished. Planning itself produced no implementation.
+The design below remains the feature target. The appended
+[complete implementation evidence](#complete-implementation) records the actual
+fixture-backed behavior and measured scope; the earlier
+[source-resolution MVP](#source-resolution-mvp-implementation) is historical.
+Planning itself produced no implementation.
 
 ## Summary
 
@@ -255,6 +256,11 @@ introducing a generic schema engine, extension loader or new package family.
 
 ## Source-resolution MVP implementation
 
+**Historical checkpoint**: The following describes committed `cbca13c`, not
+the current complete implementation below. Its partial command counts,
+unimplemented obligations and running-stage state are retained as evidence of
+that increment, not present limitations.
+
 The installed `speckit-implement` stage began on the recorded branch/directory
 after the pushed analysis checkpoint and satisfied 16/16 built-in plus 20/20
 and 20/20 reviewer-owned requirements gates. No extension hooks exist.
@@ -400,3 +406,268 @@ These checks preserve the delivered F-01/F-02 scope and this source-only
 increment on the current macOS host. They do not establish configured lifecycle,
 secret resolution, new-runtime compatibility of the retained F-03 fixtures,
 conversion, publication/interruption, Linux or complete CFG-01..CFG-36 support.
+
+## Complete implementation
+
+The same `implement / running` invocation resumed after `cbca13c`; it did not
+rerun `begin`, regenerate requirements or approve reviewer checklists. This
+section supersedes the historical MVP's current-support statements. The
+implementation remains fixture-backed Hosting library behavior, not a product
+Host/cache, operational provider, listener, UI, native client or conformance
+qualification. Convergence, finalization and merge are separate authorizations.
+
+### Delivered behavior and placement
+
+The shared evaluator now runs bounded metadata/source resolution, the actual
+F-02 `ValidateComposition`, exact enabled-identity agreement, active ordinary
+rules and all Public callbacks, then active local secret resolution and Secrets
+callbacks. It checks the exact service snapshot and cancellation/deadline before
+creating a private single-use proof. Disabled fields still receive structural
+validation but no operational compatibility/options callbacks, reads or
+construction. No defaults or previous successful values are revived.
+
+Atomic proof consumption/disposal and configuration-association registration
+use the builder gate. Arbitrary concurrent external IServiceCollection mutation
+is unsupported trusted-host behavior, not a thread-safe collection/sandbox claim.
+Foreign/stale/disposed/used proofs reject before construction; configured and
+legacy attempts cannot both own an enabled opt-in activation. F-02 remains the
+only service ledger, root, readiness and stop owner. ConfigureOptions immediately
+precedes ConfigureServices in the same supervised ComposingServices phase.
+Owner inputs survive bounded delivery, notification and root work until actual
+quiescence; releasing them later never retries provider/root cleanup.
+
+Environment lookup uses only explicitly supplied snapshots/read adapters and OS
+name semantics. Mounted files use real bounded strict UTF-8 reads, permitted
+deployment symlinks and documented BOM/NUL/newline/size rules. Actual regular
+file, symlink, device, directory and FIFO counterparts run on this host. Each
+selected owner/field resolves independently; shared references are not an atomic
+cross-owner rotation mechanism. Public reports/displays/telemetry retain no
+resolved values, locators, source/proposal text or collaborator exception text.
+Managed strings cannot promise memory zeroization or sandbox malicious modules.
+
+Explicit `fixture-v0` preview pins private source/proposal/builder/destination
+context, runs shared public validation without secrets or activation, and
+requires explicit one-use session approval. Apply rechecks freshness and full
+ordinary/secret rules without ambient config/CLI overlays, then publishes only
+the reference-bearing proposal. Conversion rejects unsupported explicit option
+versions even on disabled entries; ordinary startup deliberately skips disabled
+version semantics. Existing/racing destinations and aliases are never replaced.
+Exclusive same-directory 0600 staging is written, flushed and closed before
+no-clobber publication. A bounded unresolved wait reports PublicationPending;
+live publication/supervision observation does not rewrite the returned result.
+
+Related types remain grouped in cohesive files instead of every planned
+ancillary filename: proof/ownership in HoardConfigurationEvaluation, env/file
+readers in ConfigurationSecretResolver, conversion preview/apply results in
+ConfigurationConversionResults, and corresponding tests in five focused
+configuration test classes. No production dependencies or Abstractions/Core/
+Application API/source changes were needed. Metadata/artifact fixtures retain
+empty mappings where they have no fields; the option-bearing unchanged old
+metadata binary plus both protocols prove real ordinary/secret mapping instead
+of inventing operational fields on empty providers.
+
+### Red-before-green and architecture-review disposition
+
+Before their implementation, configured composition and conversion tests failed
+to compile with missing interfaces/APIs; secret and prepared-distribution tests
+then failed executably with missing resolution/proof inputs. Those failures
+identify absent behavior, not safety by themselves. Subsequent focused runs
+proved 16 configured cases, 107 combined source/configured/secret cases and
+20 conversion cases. The first complete locked run passed 131 configuration
+tests, six actual graph/boundary proofs, nine package journeys and five real
+process-interruption barriers. It was not accepted as final coverage merely
+because those counts passed.
+
+The required complete `hoard-architecture-review` independently read governing
+contracts, current Hosting/F-02 integration and focused tests/runner, selected
+retained graph/project records and extracted nuspecs. It inspected the recorded
+131/6 TRX summaries and manifest, but did not execute suites, independently hash
+retained binaries or run fresh compiled-API inspection. It found four MEDIUM
+completion blockers, corrected as follows:
+
+| Finding | Regression/evidence | Correction |
+| --- | --- | --- |
+| Two publication-status reads could miss a concurrent commit | Controlled actual post-commit observer remains held through virtual timeout; result is Published, output parses, outcome/report freeze | Capture one status snapshot before outcome classification. The exact two-getter interleaving was code-inspected, not dynamically reproduced; the controlled counterpart passed before and after |
+| F-02 failures lost actionable closed reason/known context | Three executable cases failed with generic Defaults/configuration/unknown-setting for version, cardinality and dependency | Preserve closed CompositionRule, registered owner, effective selection source and bounded path; unknown regex-valid path elements become generated ordinals; preserve upstream omitted count; no duplicate graph algorithm |
+| Disabled unsupported option versions passed conversion | Explicit disabled version 99 returned Validated before correction; paired version 99 rejection/version 1 full apply now pass without disabled work | Check every explicitly supplied conversion option version, leaving ordinary startup's disabled exemption intact |
+| Class-only inventory could certify absent scenarios | One unrelated passed method per class incorrectly certified all 36 cases; deleting required pipe/race/delivery/notification/commit scenarios now fails | Require explicit Class.Method scenario sets plus exact graphs, journeys, packages, binary provenance and real publication barriers |
+
+The newly required blocked-delivery test found an additional tightly coupled
+defect: after timed-out ConfigureOptions eventually returned, ConfigureServices
+still ran. The executable red recorded construct/options/services. The existing
+coordinator now rechecks admission before calling ConfigureServices; the green
+case records no late services, activation, prerequisite cleanup or root disposal.
+This is the same F-02 phase/ledger, not a new lifecycle authority.
+
+Expanded proof includes simultaneous configured consumers/proof disposal/
+contract mutation/legacy attempts with real secret handles, held delivery and
+prerequisites, and real TestServer stopping/cancellation notifications protecting
+secrets/root until actual completion. Every test-held activity is released and
+observed. Nine direct-F-02/configured paired cases additionally cover optional
+targets, compatibility, cycles, prerelease policy and malformed declarations;
+multiple protocols/identities retain the actual activation order. Effective
+allowed-value/range tests distinguish discarded semantic errors from structural
+errors. Environment OS-case and independently resolved shared-owner references
+have explicit counterparts.
+
+Python tooling additionally reproduces malformed retained-manifest failure and
+acceptance of duplicated/missing graphs/journeys/binaries/packages or changed
+bytes before hardening. It now checks exact inventories and real local artifact
+hashes, contains retained inputs to their private root, and copies only known
+runtime artifacts, not unrelated files. These synthetic tooling tests do not
+recursively execute acceptance. All 37 tooling tests pass.
+
+### Actual package, compatibility and platform provenance
+
+The runner first builds the pinned pre-F-03 baseline and reproducibly packs
+LegacyOptions with `--no-build`. Optional original privately retained DLL/PDB
+bytes are substituted only after packing, without recompiling/replacing those
+originals. Configured hosts restore/build against the same reviewed package
+locks in both modes, then receive the verified retained provider DLL in their
+runtime outputs. Actual provider hashes are checked before/after execution and
+required in every journey record. It compiles the new lifecycle consumer,
+executes the unchanged old lifecycle binary with new dependencies and preserves
+the separate retained F-01 registration binary proof.
+Both original hashes in the historical table remain unchanged. Source-only
+formatting of the fixture consumer does not change the retained binary.
+
+Configured baseline/custom projects are standalone package consumers, not
+product solution members or hidden ProjectReferences. Their exact four/five
+journeys use the same built distribution for bundled switching and explicit
+recovery; only custom references/registers Artifact.Two. The old provider
+actually accepts ordinary/secret values through its new host adapter. The
+distributed baseline/custom JSON is read during these journeys; the synthetic
+JSON is previewed with zero secret reads. Original three/four F-02 inventories
+remain unchanged.
+
+All 13 actual scans are required: platform, Protocol.One/Two, Metadata,
+Artifact.One/Two, Identity, configured-baseline/custom, old-provider,
+lifecycle-consumer, registration and conversion-process. Source/project/packed/
+compiled API/assets/runtimeconfig checks retain the original direction and
+shared-framework proofs. Local packages and old binaries are verified by
+content hash; default replay cannot refresh locks or accept missing manifests.
+
+Real child processes are terminated by specific PID at staged, partial-write,
+flush, pre-publish and post-publish barriers. The original remains byte-identical;
+final output is absent or complete valid version 1; staging/output permissions
+are inspected and only identified harness files are removed.
+Measured scope is **Darwin on the current local device**, recorded as
+`tested-local-device-<st_dev>`, not a verified APFS-family claim. Linux code is
+present but unmeasured here; Windows publication is explicitly rejected.
+Network shares, hostile same-user directory attacks, power loss and universal
+durability remain unclaimed.
+
+### Requirement/case and documentation audit
+
+The task/acceptance matrices retain FR-001..026, SC-001..008, all 22 scenarios
+and 13 edge cases. `REQUIRED_TESTS` now maps each CFG-01..36 to explicit actual
+passed scenario names, not a passing class. The manifest records actual TRX
+identities and separately verified exact journey/graph/binary/publication proof.
+CFG-31/34 also rely on this manual documentation/support audit; unrelated
+runtime methods are not treated as proof of prose correctness.
+
+README, development/provider/example guides, quickstart, model/contract status
+and actual JSON examples now document implemented signatures, supplied-source
+grammar, owner-only secrets, finite budgets/pending retention, restart versus
+custom rebuild, explicit approval/publication/recovery and measured scope.
+Audit found no unresolved production/native-client/conformance claims, safe-output
+values/locators, hidden fallback/listener/security keys, automatic download/
+assembly loading or configuration-restores-data promise. Examples intentionally
+show invented reference names as inputs, never as normal diagnostic outputs.
+
+Product charter/specification, baseline architecture/diagrams/ADR, constitution,
+backlog, predecessor specs, reviewer checklists, infrastructure and release
+guides are unaffected: the same provider/module/lifecycle boundary remains;
+no real provider operation, listener, UI, cloud permissions, schema/data migration,
+deployment or release is added. Original specification/research statements
+describe what their originating design stages produced, not a current runtime
+support banner. Reviewer-owned approvals remain byte-identical.
+
+### Complete acceptance commands
+
+The corrected full explicit lock-refresh and subsequent locked replay passed
+158 configuration tests, six boundary proofs, nine package journeys, five
+actual Darwin interruption barriers, formatting/analyzers and 37 tooling tests.
+Both runs reused the original retained baseline. Their private full workspaces
+retain actual packages/graphs/binaries, TRX and passed/fullAcceptance results
+for independent review, not just console counts; no private outputs are in Git.
+Final retained suite results and review follow-up disposition are recorded below.
+
+The same architecture reviewer inspected the live corrections, associated
+runtime/tooling tests, retained initial failures and actual 158/6 manifest/TRX
+records. All four original findings and the additional late-service defect are
+**closed**, with no newly introduced actionable issue or unresolved design
+question in that bounded follow-up. It did not rerun suites, independently
+hash packages/binaries or repeat compiled-API inspection, and did not certify
+the then-pending fresh retained-suite gates. The exact two-status-read race
+remains a code-inspected finding, not an invented dynamic red result.
+
+A final task audit added eight non-production I/O counterparts: actual source/
+hardlink/symlink aliases, nonprivate/direct-symlink publication parents,
+pre-dispatch cancelled apply and source/services changes after full validation
+but before atomic publication. These add no production behavior. Their exact
+scenario identities are required by CFG-28..30; no test count substitutes for
+those cases or for the separate documentation audit.
+
+### Final default replay, correction and stage boundary
+
+The final runtime additions pair held prepublication and actual postcommit work
+with both caller cancellation and timeout. Before commit, unresolved work remains
+PublicationPending until observed; after commit, both paths remain Published.
+The invalid-replacement package journey records its actual diagnostic count,
+not an invented positive event count. The full retained run then passed
+168 configuration tests, six boundary proofs, nine journeys and five barriers;
+the separate lifecycle/foundation/tooling gates also passed.
+
+The literal no-argument configuration replay subsequently found a real proof
+tooling defect: NU1403 rejected LegacyOptions because its standalone baseline
+project lacked path normalization. Substituting one original private binary
+before packing had hidden that newly compiled DLL's location-dependent package
+hash. No lock/hash validation was bypassed. The fixture now uses the existing
+deterministic PathMap convention, and original-byte runtime delivery happens
+after reproducible packing and locked host restore/build as described above.
+The original retained files remain byte-identical. A new executable Python
+counterexample first failed because host hashes alone accepted missing or
+different runtime-provider bytes; every journey now requires actual retained
+provider provenance. The tooling suite consequently contains 38 tests.
+
+| Exact public command | Final measured result |
+| --- | --- |
+| `bash scripts/validate-configuration.sh` | Passed with no optional arguments: independent fresh locked replay, same 168/6/9/5 results, no lock mutation |
+| `bash scripts/validate-lifecycle.sh` | Passed: 336 tests, nine boundary proofs, seven package-only journeys, six independent packages and unchanged old registration binary |
+| `bash scripts/validate-foundation.sh` | Passed: 42 unit, 54 architecture and 339 composition tests, zero failed/skipped; isolated Core, five independent providers, both compile-only hosts and original architecture/registration proofs |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed: 38 tests, including actual runtime-provider provenance regression |
+| `dotnet format Hoard.slnx --verify-no-changes --no-restore -v quiet` | Passed; complete configuration acceptance additionally checks standalone projects |
+| `git diff --check` | Passed |
+
+The successful `bash scripts/validate-configuration.sh --update-locks` invocation
+also supplied a fresh private `--evidence-directory`; only intended local
+payload hashes were refreshed.
+A subsequent full locked run supplied `--retained-baseline` with the original
+private inputs and another fresh `--evidence-directory`; it independently
+passed the same 168/6/9/5 obligations with all 38 tooling tests. Both retained
+complete workspaces have passed/fullAcceptance results, actual TRX, packages,
+graphs and runtime-provider hashes. The intervening literal default command
+used neither optional flag. These are three real distinct executions, not
+claims inferred from an explicit-retained-only run.
+
+The last lifecycle/foundation suites preceded only the narrow proof-tooling/
+standalone fixture correction; no production C# or runtime-test behavior changed
+after those suites. Configuration acceptance rebuilt and checked the corrected
+fixture in all three executions. Earlier explicit lifecycle/foundation
+`--update-locks` runs and their locked replays remain historical evidence.
+An intermediate test build's CA1416 diagnostic was corrected with an explicit
+Windows guard, not an analyzer suppression or skipped test.
+
+All T001..T069 are reconciled against the delivered behavior, grouped placement,
+case/requirement matrices and measured outcomes above. Reviewer-owned checklists,
+specification, research, constitution and predecessor artifacts remain unchanged.
+Post-implementation hooks are absent. The four architecture-review findings and
+late-service defect remain closed; the later standalone reproducibility fix is
+proof-tooling-only and makes no new production boundary claim. Publication
+support remains Darwin on the measured current local device, not certified
+APFS, Linux, network-share or power-loss support.
+
+The implementation checkpoint ends at **`converge / ready`** with draft PR #8.
+It neither runs convergence/finalization nor marks the PR ready, merges,
+unlocks backlog dependencies, applies infrastructure or publishes a release.

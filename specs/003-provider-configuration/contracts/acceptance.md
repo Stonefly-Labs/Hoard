@@ -1,7 +1,9 @@
 # F-03 Acceptance and Traceability
 
-**Status**: Planned proof obligations, not passing results. Use independent
-non-production fixtures; retain F-01/F-02 compatibility and locked acceptance.
+**Status**: Acceptance obligations; actual passing evidence and review
+disposition are recorded in the [implementation plan](../plan.md#complete-implementation),
+not inferred from this matrix. Use independent non-production fixtures;
+retain F-01/F-02 compatibility and locked acceptance.
 Each rejection needs a paired permitted case with observable differences.
 
 ## Harness Rules

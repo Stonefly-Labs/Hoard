@@ -1,9 +1,8 @@
 # F-03 Configuration Model
 
-**Status**: Complete design target, not storage entities. Some source/metadata/
-supervision primitives are now implemented in the
-[partial MVP](plan.md#source-resolution-mvp-implementation); configured activation,
-secret resolution and conversion remain planned. See [format](contracts/configuration-format.md)
+**Status**: Implemented Hosting model, not storage entities. See the
+[complete fixture evidence](plan.md#complete-implementation) and historical
+[source MVP](plan.md#source-resolution-mvp-implementation), [format](contracts/configuration-format.md)
 and [library contract](contracts/hosting-api.md).
 
 ## Entities and Relationships

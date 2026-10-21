@@ -22,20 +22,18 @@ public static class HoardConfigurationExtensions
                     HoardConfigurationSource.Defaults, "configuration", "configuration", id)], 0, []));
         }
         var supervisor = new ConfigurationSupervisor(options, cancellationToken);
-        EffectiveConfiguration? effective = null;
+        HoardValidatedConfiguration? proof = null;
         try
         {
-            if (input.InputError is { } inputError)
-            { supervisor.Reject(inputError, HoardConfigurationPhase.Sources, input.InputErrorSource); }
-            var metadata = await supervisor.RunAsync(HoardConfigurationPhase.Composition, HoardConfigurationSource.Defaults,
-                "configuration", _ => ValueTask.FromResult(ConfigurationMetadata.Validate(builder, options, supervisor))).ConfigureAwait(false);
-            effective = await ConfigurationSourceResolution.ResolveAsync(input, metadata, options, supervisor).ConfigureAwait(false);
-            supervisor.Reject(HoardConfigurationRule.IncompleteConfiguration, HoardConfigurationPhase.Sources);
+            var data = await ConfigurationEvaluator.RunAsync(builder, input, platformVersions, lifecycleOptions,
+                options, supervisor).ConfigureAwait(false);
+            supervisor.Complete(true);
+            proof = new(data.Composition, data.Owners, supervisor.TransferResources());
         }
         catch (ConfigurationFailure failure) { supervisor.Fail(failure.Rule); }
-        supervisor.Complete(false);
+        if (proof is null) { supervisor.Complete(false); }
         var snapshot = supervisor.Snapshot;
         return new(supervisor.Outcome, new(supervisor.Correlation, snapshot.Diagnostics, snapshot.OmittedCount,
-            effective?.Provenance ?? []), supervisor);
+            supervisor.Provenance), supervisor, proof);
     }
 }

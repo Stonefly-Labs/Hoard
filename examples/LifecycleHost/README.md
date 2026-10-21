@@ -1,6 +1,7 @@
 # Fixture-only lifecycle host
 
-This package-only example validates F-02 Hosting APIs. It is not a cache, native
+This package-only example validates F-02 lifecycle and opt-in F-03 configuration
+APIs. It is not a cache, native
 package protocol, database, blob store, identity service or curated distribution.
 It runs bounded in-process TestServer journeys, never a listener. No cloud,
 Node runtime, external service or provider publication is needed.
@@ -43,10 +44,79 @@ invalid replacement, then explicitly restore the prior coherent selection in
 a new lifecycle. Seven nonempty successful journeys are required in total.
 The tool also compares platform/unrelated-provider source hashes.
 
+## Configured package variants
+
+```bash
+bash scripts/validate-configuration.sh
+```
+
+The separate `Configuration/LifecycleHost.Configuration.csproj` and
+`Configuration/Custom/LifecycleHost.Configuration.Custom.csproj` are standalone
+package-only builds. Both include the unchanged option-bearing pre-F-03
+LegacyOptions metadata binary, configured by a host-owned adapter. The first
+has one artifact package; only the custom project/registration adds
+Artifact.Two. Metadata/artifact dependencies remain Abstractions-only.
+These are local proof packages, never public-feed downloads or a curated
+production distribution.
+
+`--configuration-fixtures` selects the self-checking configured TestServer mode.
+No raw Hoard arguments are passed to generic-host setup (`Args` is empty).
+The ordinary F-02 mode and its three/four journey inventories remain unchanged.
+Configured baseline has four journeys: Protocol.One, Protocol.Two in the same
+binary, invalid replacement, explicit recovery. Custom repeats those four and
+adds Artifact.Two, for nine total. The orchestrator additionally runs unchanged
+old lifecycle/registration binaries against new runtime dependencies and a new
+source consumer; it verifies actual assets, dependency directions and binary
+hashes, not just a successful recompile.
+
+[baseline.json](Configuration/baseline.json),
+[custom.json](Configuration/custom.json) and
+[synthetic-fixture-v0.json](Configuration/synthetic-fixture-v0.json) document
+the actual configured inventory. Use the first two with the public evaluation
+API; the package journeys read these baseline/custom files over isolated
+Defaults and preview the supplied synthetic file without reading secrets.
+Other restart inputs are constructed in memory; this is not a general-purpose
+config-file CLI. Provide
+`INVENTED_CONFIGURATION_SECRET` only through an explicit invented dictionary
+or secret-read adapter. No secret value or personal environment is committed.
+For a mounted-file counterpart, create a private local UTF-8 file in a private
+test directory and replace the reference with
+`{"kind":"file","target":"/absolute/private/fixture-secret"}`.
+Do not put a resolved credential in JSON, CLI, logs or a rollback copy.
+
+Evaluation checks source structure, the actual existing composition gate, every
+active public option and then local secrets. The enabled protocol receives
+`label` and its own fixed credential; the old metadata binary actually accepts
+the mapped ordinary/secret inputs. Disabled protocol/identity fixtures have no
+callbacks, reads, constructors, routes, workers or connections. Zero-field
+metadata/artifact adapters keep empty owner mappings rather than inventing
+operational settings.
+
+Source/environment/file/secret-target edits do not change active inputs.
+Stop/dispose the F-02 lease, create fresh inputs/builder, evaluate and start
+again. Switching bundled protocols uses the same built binary. Adding the
+absent artifact requires package reference, registration/adapter, rebuild,
+redeploy and a fresh evaluated restart; it is not hot loading.
+An invalid replacement never revives previous settings or switches stores.
+Recovery explicitly restores a coherent host/provider/config/reference set,
+then validates a new start. Check provider/schema/data compatibility, backups
+and real provider restore procedures separately: configuration restoration
+cannot reverse data changes.
+
+Synthetic conversion supports only explicit `fixture-v0` preview, private
+session approval and full-validation fresh-file apply, with no ambient
+overlays. It never activates providers or overwrites the source/destination.
+Owner-private staging and actual child-interruption proof are measured on this
+macOS local volume only; cancellation may report PublicationPending rather than
+rollback. See the [conversion/recovery guide](../../docs/PROVIDERS.md#explicit-synthetic-conversion)
+for safe observation and targeted staging cleanup. No released old format,
+YAML, Linux/filesystem certification or power-loss guarantee is claimed.
+
 ## Public boundary and ownership
 
-`Program.cs` uses explicit immutable in-memory selection, not a configuration
-parser. The sequence is registration, adapter association, metadata validation,
+Ordinary F-02 mode uses explicit immutable in-memory selection. Configured mode
+uses versioned explicit inputs, safe evaluation and its private single-use
+proof, then joins the same sequence: registration, adapter association, validation,
 `await using` composition lease, supervised build, owned mapping, normal
 `app.StartAsync`, `app.StopHoardApplicationAsync(lease)`, then lease disposal. Old registration
 consumers still work without opting into lifecycle. The acceptance harness
@@ -108,7 +178,7 @@ and virtual time, with five-second real scheduler backstops, not production
 performance claims. Later health loss changes readiness only; stop/fault closes
 admission. Host middleware/access policy still applies.
 
-F-03 owns configuration/secrets UX, F-04 authorized discovery/UI, and later
+F-03 supplies the fixture-backed configuration boundary; F-04 owns authorized discovery/UI, and later
 features own real provider/cache operations and conformance. TestServer does
 not certify TCP/proxy/TLS drain, native-client restore or production safety.
 No infrastructure apply, deployment, release or package publication occurs.

@@ -1149,16 +1149,14 @@ compatibility and local-platform publication/interruption still need measured
 implementation evidence and the later required architecture review; this
 analysis supplies none of that runtime acceptance.
 
-### F-03 in-progress source-resolution MVP
+### F-03 configuration implementation
 
-The current implementation invocation follows the task list's incremental
-source-resolution checkpoint. T001..T020 supply the test harness, fail-closed
-evidence scaffolding, pinned pre-F-03 baseline fixtures, inert option contracts,
-private typed options/safe records, bounded supervision and strict source
-resolution. The implementation stage is **not complete**; T021..T069 remain.
-The shared checkpoint stays `implement / running` and PR #8 remains draft.
-Resume this feature and stage without another `begin`; no `finish` or
-convergence/finalization/merge is justified by this partial increment.
+The initial T001..T020 source-resolution checkpoint is historical; subsequent
+implementation adds active selection/options, local secrets, configured
+lifecycle handoff, restart/distribution and explicit synthetic conversion.
+The [complete evidence](../specs/003-provider-configuration/plan.md#complete-implementation)
+records actual commands, review disposition and support boundaries. PR #8
+remains draft; convergence/finalization/merge are separate authorizations.
 
 The input explicitly supplies Defaults, optional file, argument enumerable and
 an environment dictionary/read adapter. It does not inspect developer process
@@ -1166,8 +1164,8 @@ credentials, appsettings, user-secrets or UI state. Snapshotting scans at most
 4,096 arguments and 4,096 environment entries, retaining only reserved Hoard
 arguments and names eligible for the documented environment-reference grammar.
 Defaults/overlay/reserved-argument text is bounded before copying/parsing;
-secret strings are immutable references and are not examined as operational
-values in this increment. Hosts must supply finite in-memory inputs; trusted
+secret strings are immutable references, resolved only after every active
+public check passes. Hosts must supply finite in-memory inputs; trusted
 enumerators/clock implementations are not a sandbox.
 
 Each explicit document requires version 1; overlays cannot repair document
@@ -1185,43 +1183,90 @@ bounded disposal, with safe eventual diagnostics and frozen results. Expired
 monotonic dispatch caps reject even if timeout notification arrives late.
 Metric listeners run within supervised callback work, not under the state lock.
 
-Use the current **partial** commands:
+Use full fixture acceptance and retained compatibility checks:
 
 ```bash
-bash scripts/validate-configuration.sh --filter 'FullyQualifiedName~Configuration'
-bash scripts/validate-configuration.sh --baseline-only
+bash scripts/validate-configuration.sh
+bash scripts/validate-lifecycle.sh
+bash scripts/validate-foundation.sh
 python3 -m unittest discover -s tests/tooling -v
+```
+
+The configuration runner prepares real package/graph inputs for its two
+`Prepared_configuration...` proof tests. Ordinary source/primitive/lifecycle
+tests need no such manifest; retained foundation/lifecycle runners exclude
+only those configuration-specific preparation tests, not the ordinary
+regressions. No missing manifest is treated as a passing proof.
+
+Explicit partial modes are:
+
+```bash
+bash scripts/validate-configuration.sh \
+  --filter '(FullyQualifiedName~Configuration|FullyQualifiedName~ConfiguredComposition)&FullyQualifiedName!~Prepared_configuration'
+bash scripts/validate-configuration.sh --baseline-only
 ```
 
 An explicit `--baseline-only --update-locks` creates/replays the two new
 standalone Baseline locks. `--baseline-only --retain-baseline /absolute/fresh/private/directory`
 retains the verified old binaries/assets/hashes outside Git without overwriting
-an existing destination. These switches do not execute configured package
-journeys or establish old-binary compatibility against new configuration.
+an existing destination. These partial switches alone do not execute configured
+package journeys or establish old-binary compatibility against new configuration.
 `--evidence-directory /absolute/fresh/private/directory` optionally retains
-the partial runner's real TRX and closed passed/failed status, including failure
-without converting it into success. It does not infer a failure's intended
-cause; record that separately with the red regression and later green result.
-Default `bash scripts/validate-configuration.sh` refuses full acceptance until
-the remaining runtime/package/platform proofs are implemented.
+the partial runner's real TRX and status, including failed red runs. For a full
+run it retains the complete owner-private workspace, actual package/graph/
+binary/platform evidence, results and final status for independent review;
+this can be large. Only fully verified acceptance sets `fullAcceptance: true`.
+An optional full-run `--retained-baseline /absolute/private/baseline-directory`
+reuses the earlier verified binaries without changing/recompiling their bytes.
+The old-provider package is built reproducibly against pre-F-03 Abstractions
+with normalized source paths before any optional retained-byte substitution.
+Both configured hosts restore/build with the same reviewed package locks, then
+receive the verified retained provider DLL in their runtime output. Each journey
+records and rechecks that actual DLL hash before/after execution; original
+retained bytes never determine a different package hash or bypass locked restore.
+Neither option accepts an existing output directory or publishes artifacts.
+Intentional dependency/payload changes use explicit `--update-locks`, reviewed
+lock diffs and a separate default locked replay. Unit tooling tests use
+synthetic inputs; they never recursively run these acceptance suites.
 
-The public evaluator always returns `Failed / IncompleteConfiguration` after
-valid source inspection; its private proof type cannot be constructed.
-No active option validator, secret reader or configured lifecycle handoff runs.
-The existing F-02 lifecycle APIs remain unchanged, including their opt-out
-behavior: registering descriptive option metadata is not yet an enforceable
-configured activation gate.
+Evaluation succeeds only after the existing F-02 graph gate, enabled-only
+required/type/range/allowed-value/address/version checks, every public callback,
+local env/file resolution and secret-dependent callbacks. Invalid effective
+input never restores a previous value. Proof consumption/disposal uses one
+builder ownership gate and rejects stale/foreign/used/disposed proofs before
+construction. Configured `ConfigureOptions` shares F-02's ComposingServices
+phase, lease, ledger and root; it introduces no second lifecycle authority.
+Inputs survive pending delivery/notification/root work, even after bounded
+disposal. Legacy F-02 callers without opt-in keep their original APIs/behavior.
 
-See the [measured source-increment evidence](../specs/003-provider-configuration/plan.md#source-resolution-mvp-implementation)
-for checks, the scoped architecture review and its three corrected findings.
+Conversion lives in `Hoard.Hosting.Configuration.Conversion`: preview pins
+explicit original/proposal/builder/destination context without resolving
+secrets; `Session.Approve()` authorizes one full-validation apply, never
+activation. No environment/CLI overlays apply during conversion; an explicit
+read adapter may supply local secret values during apply. Output preserves
+references, not resolved credentials. Exclusive same-directory private staging,
+flush/close and no-clobber publication preserve the original. Observe
+`Publication.Status` after `PublicationPending`; the returned outcome/report
+remain frozen. Remove only identified staging files after their originating
+process/work is known to have ended. Do not promise rollback from cancellation.
+
+Actual publication/interruption evidence covers the current macOS local
+volume, not Linux, network shares, hostile same-user races or hardware power
+loss. Run the same real child matrix on any newly claimed platform.
+Configuration restoration never reverses provider schema/artifact changes;
+coherent versions, reference targets and provider-owned backups/restore remain
+separate recovery prerequisites.
+
+See the [historical MVP evidence](../specs/003-provider-configuration/plan.md#source-resolution-mvp-implementation)
+for its earlier scoped review and three corrected findings.
 Source/option/diagnostic/ownership types are grouped into cohesive files rather
 than one file per ancillary type; there is no new package, runtime dependency
 or second lifecycle authority. README, provider guide and the active
-plan/quickstart/status banners reflect this partial scope. Existing lifecycle
-examples, F-01/F-02 artifacts and checklists, product intent, diagrams/ADR,
-constitution, backlog, IaC and release documentation are otherwise unaffected:
-no working provider, listener, management/API/UI, deployment, permission,
-provider-data operation or supported conversion is introduced.
+plan/quickstart/status banners distinguish fixture support from planned product
+features. F-01/F-02 artifacts and reviewer checklists, product intent,
+baseline diagrams/ADR, constitution, backlog, infrastructure and release guides
+are otherwise unaffected: no real provider, listener, management/API/UI,
+deployment, permission or provider-data operation is introduced.
 
 ```mermaid
 flowchart TD
