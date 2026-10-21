@@ -930,6 +930,36 @@ parser, resolver, converter, executable, management endpoint, UI or new runtime
 API. No extension hooks are configured. The next scheduled stage is `clarify`
 through a separate invocation, not planning or implementation.
 
+### F-03 configuration clarification
+
+The subsequent [clarification review](../specs/003-provider-configuration/spec.md#clarifications)
+found no critical ambiguities across all ten review categories. Zero questions
+were asked or answered; no requirement, acceptance criterion or scope decision
+changed. Source precedence and canonical conflicts, effective versus structural
+validation, explicit selection through F-02's gate, disabled isolation,
+secret ownership/redaction, bounded pending-work safety, fixed-state restart
+and interruption-safe conversion already have observable acceptance obligations.
+
+Exact configuration/reference syntax, canonical names, option-contract ownership
+and representation, supported version mappings, safe report layout and finite
+budgets remain planning decisions under the existing requirements. Management/UI,
+production scale targets, real-provider data recovery and cloud integrations
+remain separately scoped; synthetic conversions cannot imply released-format
+compatibility. No consequential product choice blocks planning.
+
+The built-in requirements checklist was revalidated at 16/16 before and after,
+with no newly passing items, regressions or unchecked items; its bytes are
+unchanged. No custom reviewer-owned approval, implementation or runtime
+acceptance is implied. No extension hooks are configured.
+
+README, this guide and the specification record the result. Provider/example
+guides, F-01/F-02 artifacts/checklists, product intent, baseline architecture/
+diagrams/ADR, governance, master backlog, IaC and release guides are unaffected:
+no requirement, API, dependency, provider support, command, permission or
+operational behavior changed. No plan, tasks, parser, resolver, converter,
+executable, endpoint or UI was created. The next scheduled stage is `plan`
+through a separate invocation.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

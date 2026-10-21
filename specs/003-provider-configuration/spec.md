@@ -13,6 +13,38 @@ this specification stage.
 
 **Feature Directory**: `specs/003-provider-configuration`
 
+## Clarifications
+
+### Session 2026-10-20
+
+No critical ambiguities detected worth formal clarification. Zero questions
+were asked or answered; no requirements, acceptance criteria or scope decisions
+changed.
+
+All ten review categories are clear for this bounded feature: functional scope
+and behavior, domain and data model, interaction and operator journeys,
+applicable non-functional quality attributes, integration and external
+dependencies, edge cases and failure handling, constraints and tradeoffs,
+terminology and consistency, completion signals, and placeholders.
+
+The existing requirements distinguish structural checks from effective-value
+validation, whole-selection replacement from keyed option merging, and disabled
+declarations from active compatibility and secret resolution. They preserve the
+existing lifecycle gate, prohibit fallback, fix settings and resolved secrets
+until restart, and require bounded coordination with pending-resource retention
+and safe late-fault observation. Version conversion separates the private
+replacement from the sanitized preview, retains the original on interruption,
+and does not claim to reverse provider-owned data changes.
+
+Exact configuration/reference syntax, canonical naming rules, option-contract
+representation and ownership, supported version mappings, safe report layout
+and finite budget values remain planning decisions under these observable
+requirements. Production throughput/scale targets, management/UI behavior,
+real-provider data recovery and cloud secret integrations remain outside this
+feature as assigned in Assumptions. Synthetic conversion fixtures cannot imply
+released-format compatibility. No consequential product decision blocks
+planning; no custom checklist approval or runtime evidence is implied.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Know Which Configuration Will Be Used (Priority: P1)

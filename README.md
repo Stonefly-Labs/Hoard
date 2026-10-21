@@ -335,7 +335,13 @@ passing 16/16 criteria; the bounded architecture review found no actionable
 findings. These are requirements only: no configuration parser, resolver,
 migration tool, new runtime API, discovery endpoint or UI was implemented.
 Custom reviewer approval and runtime proof remain later gates.
-The next scheduled stage is `clarify`, through a separate invocation.
+The subsequent [clarification review](specs/003-provider-configuration/spec.md#clarifications)
+found no critical ambiguities across all ten review categories: zero questions,
+with requirements, acceptance criteria and scope unchanged. The built-in
+checklist remains 16/16, with no newly passing, regressed or unchecked items.
+Exact syntax, option contracts, version mappings and finite budget values remain
+planning decisions under the specified behavior.
+The next scheduled stage is `plan`, through a separate invocation.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
