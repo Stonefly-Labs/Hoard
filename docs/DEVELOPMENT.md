@@ -1342,6 +1342,70 @@ no provider support, grammar, listener, API endpoint, dependency direction,
 platform guarantee, deployment, permission or provider-data operation changes.
 The only additive public member is the safe diagnostic `OptionRule`.
 
+### F-03 clean convergence
+
+The subsequent installed `speckit-converge` assesses the present scoped code
+against the spec, plan and every task, not checkbox completion or a branch diff.
+Its outcome is **converged**, with zero missing, partial, contradicting or
+unrequested findings and zero findings at any severity. It checks all 26 FRs,
+eight buildable SCs, 22 story scenarios, 13 edge cases, 12 grouped plan
+decisions, all 71 tasks including T070/T071, and eight constitutional principles.
+No empty convergence phase is appended. All feature artifacts, task bytes,
+built-in/custom checklists and constitution remain byte-for-byte unchanged.
+
+The assessment traces source structure/precedence/bounds, actual F-02 composition
+and disabled isolation, active option contracts/checks, local owner-only secrets,
+finite supervision and retained inputs, single-use proof transfer, configured
+delivery, restart/distribution, synthetic conversion and private publication
+to their implementation and focused proofs. The twelve plan groups cover
+Hosting/dependency compatibility; strict source parsing; merge/fixed provenance;
+the existing composition gate; public option checks; local secret ownership;
+finite supervision; proof/transfer ownership; sole F-02 delivery/lifecycle;
+restart/distribution; synthetic preview/approval; and no-clobber publication.
+Documentation and support claims are checked against the actual APIs, example
+journeys and measured limits, not inferred from a passing test count.
+
+T070's env/file failures now retain the exact known field, owner and source
+through timeout, caller cancellation, notification failure and late faults.
+T071's public/secret-dependent rejection retains only the validated declared
+OptionRule, effective field/source and host-owned action; explicit active
+option-version errors retain their own setting/source. Malformed/unknown
+callback identities remain sanitized InvalidCheckResult failures. No activation
+bypass, new dependency/lifecycle owner or normal-output payload was observed.
+
+| Validation entry point | Fresh result |
+| --- | --- |
+| `bash scripts/validate-configuration.sh` with a fresh private `--evidence-directory` | Passed full locked acceptance: 201 configuration tests, six boundary proofs, nine package-only journeys, five actual Darwin interruption barriers, CFG-01..36, formatting/analyzers and 38 tooling tests; no lock mutation |
+
+The optional evidence-directory flag only retains the complete owner-private
+workspace; it is not a partial selector. Actual TRX records show 201/201 and
+6/6 passed with zero failed, skipped or unexecuted tests. The closed result is
+passed/fullAcceptance; the manifest has all 36 cases, 13 actual graph scans,
+nine exact journeys, six independent packages and both retained pre-F-03
+binaries with verified runtime-provider provenance. Evidence paths are local
+artifacts, not committed binaries or a prerequisite for another checkout:
+the documented default command prepares equivalent fresh proof inputs.
+
+Publication remains measured Darwin on local device `16777232`, not a verified
+filesystem-family, Linux, network-share or power-loss guarantee. The prior
+implementation's lifecycle/foundation runs and architecture review remain
+historical evidence; this convergence does not claim to rerun them or constitute
+an exploit-focused security review. No runtime source, test, dependency or
+operational behavior changes in this stage.
+
+Only README, this guide and the driver checkpoint change. Provider/example/
+quickstart guidance, product charter/specification, baseline architecture/
+diagrams/ADR, backlog/governance, predecessor artifacts, infrastructure and
+release guides are unaffected: their APIs, support boundaries, procedures and
+intent remain accurate. Existing architecture-review evidence is sufficient
+for this documentation/progress-only handoff; finalization retains its own
+acceptance/documentation/review gate.
+
+The checkpoint schedules **`finalize / ready`**. PR #8 remains draft; no further
+implementation pass is needed for the assessed scope. This invocation does not
+finalize, request a merge, complete F-03, unlock dependencies, deploy, apply
+infrastructure or publish packages/releases.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
