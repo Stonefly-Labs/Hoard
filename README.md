@@ -515,8 +515,19 @@ HTTP routes only with shared protection, and requires actual binding evidence,
 JSON-consumer decisions, loopback exposure adapters, bounded observations and
 package/retained-binary proofs. These are future obligations, not passing runtime
 results. Existing specification/design/checklist bytes remain unchanged.
-The next separately authorized stage is read-only `analyze`, not implementation;
-the proposed discovery runner still does not exist.
+At task generation, the next separately authorized stage was read-only
+`analyze`, not implementation; the proposed discovery runner still does not exist.
+The subsequent installed read-only analysis found no actionable inconsistencies,
+ambiguities, coverage gaps or constitutional conflicts. All 22 requirements and
+eight buildable outcomes have implementation and focused proof assignments;
+all 78 tasks map to requirements or shared acceptance prerequisites. The complete
+dependency graph is acyclic, including ordered shared-file edits, and all
+40 cases, 22 scenarios and 13 edge cases retain their proof obligations.
+The report is recorded in draft
+[PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10). All 14 feature files,
+including task checkboxes and existing 40/40 custom checklist approvals, remain
+unchanged. The next separately authorized stage is `implement`; analysis
+introduces no runtime behavior or passing product evidence.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

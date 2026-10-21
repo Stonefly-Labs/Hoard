@@ -1765,10 +1765,54 @@ their affected guides to be updated when new APIs actually exist. No additional
 architecture review or product/.NET/UI/IaC acceptance is warranted for this
 task-artifact/documentation/checkpoint-only change.
 
-The next separately authorized stage is read-only `analyze`. The satisfied
+At task generation, the next separately authorized stage was read-only
+`analyze`. The satisfied
 custom requirements-quality gate does not bypass it or authorize implementation,
 convergence, finalization or feature completion. Draft
 [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10) remains incomplete.
+
+### F-04 module discovery cross-artifact analysis
+
+The subsequent installed `speckit-analyze` runs read-only with
+`SPECIFY_FEATURE_DIRECTORY=specs/004-module-discovery` on the recorded branch.
+It assesses the specification, plan, tasks and supporting model/contracts
+against constitution v1.0.0. No actionable duplication, ambiguity,
+underspecification, inconsistency, coverage gap or constitutional conflict is
+identified; no remediation is required.
+
+All 22 functional requirements and eight buildable outcomes have implementation
+and focused proof assignments. All 78 unchecked tasks map to requirements or
+shared acceptance prerequisites; the complete prerequisite graph is acyclic,
+every task reaches final closure, and shared-file edit chains are ordered.
+The 40 paired cases, 22 story scenarios and 13 edge cases retain their proof
+obligations, including actual route/service correspondence, lifecycle publication
+races, protected descriptions, real private loopback adapters, JSON-only consumer
+decisions, bounded performance and package/retained-binary compatibility.
+Traceability is not proof that any of those future cases pass.
+
+The structured report and coverage table are recorded in draft
+[PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10), with stage evidence in
+the shared checkpoint. All 14 feature files, including the specification, nine
+design artifacts, task bodies/checkboxes and three checklists, remain unchanged.
+The built-in 16/16 and existing assisted reviewer-owned 40/40 approvals are
+preserved, not reapproved by analysis. No extension hooks are configured.
+The repository tooling suite passes all 44 tests.
+
+README and this guide record the analysis and next gate. Provider/example
+guides, predecessor artifacts, baseline product/architecture/diagrams/ADR,
+constitution, backlog, IaC and release guidance are unaffected: analysis changes
+no requirement, design, implemented API, package graph, command, runtime/support
+claim or operational procedure. No additional architecture review or product/
+.NET/UI/IaC acceptance is warranted for this read-only analysis and documentation/
+checkpoint-only change. The proposed discovery runner still does not exist
+and is not run or reported as passing.
+
+The checkpoint schedules **`implement / ready`** through a separate invocation,
+with the existing custom requirements-quality gate satisfied. That invocation
+must complete every remaining task and its checks unless genuinely blocked.
+Analysis starts no implementation, listener, console, provider, infrastructure
+operation, release or merge, and does not bypass convergence/finalization or
+mark F-04 complete.
 
 ```mermaid
 flowchart TD
