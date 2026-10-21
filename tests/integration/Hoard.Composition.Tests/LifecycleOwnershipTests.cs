@@ -1,6 +1,11 @@
+using Hoard.Abstractions.Modules;
+using Hoard.Hosting;
 using Hoard.Hosting.Composition;
 using Hoard.Hosting.Lifecycle;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -8,6 +13,99 @@ namespace Hoard.Composition.Tests;
 
 public class LifecycleOwnershipTests
 {
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task Cooperative_response_completion_releases_one_request_only_after_all_host_and_handler_callbacks(bool handledError, bool completionFault)
+    {
+        LifecycleFixtures.Reset();
+        var clock = new LifecycleTestTimeProvider();
+        var entered = Enumerable.Range(0, 3).Select(_ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously)).ToArray();
+        var release = Enumerable.Range(0, 3).Select(_ => new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously)).ToArray();
+        var completions = new int[3];
+        var web = LifecycleFixtures.WebBuilder();
+        var root = new LifecycleCleanupTests.DisposalProbe();
+        web.Services.AddSingleton(_ => root);
+        HoardServiceComposition? lease = null;
+        async Task CompleteAsync(int position)
+        {
+            Interlocked.Increment(ref completions[position]);
+            entered[position].SetResult();
+            await release[position].Task;
+            Assert.Equal(0, root.Disposals);
+            Assert.DoesNotContain("stop", LifecycleFixtures.For("protocol").Calls);
+            Assert.DoesNotContain("stop", LifecycleFixtures.For("artifact").Calls);
+            Assert.Equal(new HoardUnsafeActivity("protocol", HoardActivityKind.Request),
+                Assert.Single(lease!.Coordinator.Activities.Snapshot().Where(item => item.Kind == HoardActivityKind.Request)));
+            if (completionFault && position == 2) { throw new InvalidOperationException("Fixture completion failure."); }
+        }
+        web.Services.AddSingleton<IStartupFilter>(new LifecycleCleanupTests.CompletionFilter(() => CompleteAsync(0)));
+        var builder = LifecycleFixtures.Registry(web.Services);
+        builder.AddModule<LifecycleFixtures.ProtocolProvider>(LifecycleFixtures.Declaration("protocol", ModuleCategory.Protocol) with
+        {
+            Endpoints = [new() { Id = "test", Description = "Fixture" }],
+            Dependencies = [new() { ModuleId = "artifact", VersionRange = "[0.1.0]", Optional = false, AllowPrerelease = false }]
+        }).AddModuleLifecycle<LifecycleFixtures.ProtocolProvider, LifecycleFixtures.ProtocolModule>();
+        LifecycleFixtures.For("protocol").Map = routes => routes.Map("test", "/fixture", ["GET"], context =>
+        {
+            context.Response.OnCompleted(() => CompleteAsync(2));
+            if (handledError) { throw new InvalidOperationException("Fixture handled failure."); }
+            return context.Response.WriteAsync("Fixture response.");
+        });
+        lease = await builder.ComposeHoardModulesAsync(builder.ValidateComposition(
+            LifecycleFixtures.Selection("protocol"), LifecycleFixtures.Versions, new(), clock).Composition!);
+        var app = await web.BuildHoardApplicationAsync(lease);
+        app.Services.GetRequiredService<LifecycleCleanupTests.DisposalProbe>();
+        var hostCalls = 0;
+        app.Use(async (context, next) =>
+        {
+            Interlocked.Increment(ref hostCalls);
+            context.Response.OnCompleted(() => CompleteAsync(1));
+            try { await next(context); }
+            catch (InvalidOperationException) { context.Response.StatusCode = 500; }
+        });
+        await app.MapHoardModulesAsync(lease);
+        await app.StartAsync();
+        using var client = app.GetTestClient();
+        var response = client.GetAsync("/fixture");
+        Task<HoardStopResult>? stopping = null;
+        try
+        {
+            await entered[2].Task.WaitAsync(TimeSpan.FromSeconds(5));
+            stopping = lease.Lifecycle.StopAsync();
+            await LifecycleTestHarness.Until(() => lease.Lifecycle.Snapshot.Phase == HoardLifecyclePhase.Draining);
+            for (var position = 2; position >= 0; position--)
+            {
+                await entered[position].Task.WaitAsync(TimeSpan.FromSeconds(5));
+                Assert.False(stopping.IsCompleted);
+                Assert.Single(lease.Coordinator.Activities.Snapshot(), item => item.Kind == HoardActivityKind.Request);
+                release[position].SetResult();
+            }
+            var result = await stopping.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.All(result.Modules, module => Assert.Equal(HoardCleanupOutcome.Completed, module.Outcome));
+            Assert.Empty(result.UnsafeActivities);
+            Assert.Empty(result.Diagnostics);
+            Assert.Equal(HoardRootDisposalOutcome.NotAttemptedOwnerPending, result.RootDisposal);
+            Assert.Same(result, await lease.Lifecycle.StopAsync());
+            await lease.DisposeAsync();
+            await lease.DisposeAsync();
+            Assert.True(lease.StopResult!.Complete);
+            Assert.Equal(1, root.Disposals);
+            Assert.Equal(1, hostCalls);
+            Assert.All(completions, calls => Assert.Equal(1, calls));
+            Assert.All(LifecycleFixtures.Controls.Values, control => Assert.Equal(1, control.Calls.Count(call => call == "stop")));
+        }
+        finally
+        {
+            foreach (var barrier in release) { barrier.TrySetResult(); }
+            using var completedResponse = await response.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(handledError ? 500 : 200, (int)completedResponse.StatusCode);
+            if (stopping is not null) { await stopping.WaitAsync(TimeSpan.FromSeconds(5)); }
+            await lease.Coordinator.Activities.WhenQuiescent.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+    }
+
     [Fact]
     public async Task Budget_expiry_between_framework_stop_and_root_dispatch_leaves_disposal_unattempted()
     {

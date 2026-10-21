@@ -298,12 +298,16 @@ finishes: a held callback had no tracked request activity while protocol and
 prerequisite cleanup already reported Completed. The paired callback registered
 inside the handler correctly retained those resources.
 [Phase 12 / T076](specs/002-module-lifecycle/tasks.md#phase-12-convergence)
-records the required completion-boundary correction and deterministic regression
-work; no application code was changed. Fresh locked lifecycle/foundation and
-tooling baselines pass but do not cover this reproduced path. Spec, plan,
-existing tasks and all checklist bytes remain unchanged. The next separately
-authorized stage is `implement` for T076, then fresh convergence; F-02 remains
-draft, not finalized or ready to merge.
+now records the separately authorized correction. Supervised host build installs
+the request-completion boundary before host startup filters and middleware;
+admission transfers the request lease to that boundary instead of releasing it
+from an endpoint-registered callback. Normal and handled-error regressions prove
+owner/prerequisite/root retention after drain expiry, independent safe cleanup,
+and cooperative once-only release through all host/handler completion callbacks,
+including a throwing callback. Host middleware and access policy still apply.
+See the [T076 evidence](specs/002-module-lifecycle/plan.md#t076-implementation-follow-up).
+The next separately authorized stage is fresh `converge`; F-02 remains draft,
+not finalized or ready to merge.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

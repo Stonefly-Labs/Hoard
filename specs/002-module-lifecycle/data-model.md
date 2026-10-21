@@ -130,7 +130,12 @@ outer deadline. Track actual task completion separately from the immutable
 reported cleanup outcome; after returning the stop result, late completion/fault
 is safely observed without rewriting it, retrying cleanup or deferred disposal.
 Track admitted request/resource leases through response completion as well as
-worker and build activity. A timed-out drain retains those leases for the owner
+worker and build activity. The internal first startup filter establishes one
+per-request completion boundary before host middleware/filter callbacks can
+register. Endpoint admission transfers each existing per-owner tracker lease
+to that boundary; reverse-order completion releases them last, once. No lease
+is released on handler return, including handled errors, and host access policy
+remains in the ordinary pipeline. A timed-out drain retains those leases for the owner
 and its prerequisites; it does not permit resource release. A pending host build
 protects all potentially used resources. Worker-failure host notification and
 lifetime cancellation are composition-wide Phase activity, registered before

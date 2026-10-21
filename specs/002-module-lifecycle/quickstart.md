@@ -154,6 +154,16 @@ Use deterministic fixture barriers rather than a real unavailable service:
     cancellation adds no new fault. Fault a worker during drain and after
     bounded stop without requesting shutdown again. Expire the original budget
     between framework stop and root dispatch: disposal remains unattempted.
+11. Hold response-completion callbacks registered by host startup filters or
+    middleware before admission, and by the handler afterward, on normal and
+    handled-error responses. Expire the virtual drain budget: owner/prerequisite/
+    root remain protected while independent safe cleanup may proceed. Release
+    after bounded stop/disposal and prove frozen results with no retry/deferred
+    disposal. Cooperatively release all three callbacks in reverse order:
+    one request activity remains until the last returns, then cleanup/root
+    disposal run once. Include a throwing handler-completion callback; remaining
+    host callbacks still precede release in TestServer. Supervised build installs
+    this boundary automatically without bypassing host middleware/access policy.
 
 Default coordination budgets are 120s total startup, 30s per activation
 callback, 5s aggregate readiness, and 30s total stop with 10s drain / 5s per

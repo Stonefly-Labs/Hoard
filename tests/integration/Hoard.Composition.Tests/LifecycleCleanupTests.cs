@@ -3,6 +3,7 @@ using Hoard.Hosting;
 using Hoard.Hosting.Composition;
 using Hoard.Hosting.Lifecycle;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
@@ -198,8 +199,14 @@ public class LifecycleCleanupTests
         }
     }
 
-    [Fact]
-    public async Task Throwing_handler_keeps_ownership_until_its_response_completion_callbacks_finish()
+    [Theory]
+    [InlineData("middleware", false)]
+    [InlineData("middleware", true)]
+    [InlineData("filter", false)]
+    [InlineData("filter", true)]
+    [InlineData("handler", false)]
+    [InlineData("handler", true)]
+    public async Task Response_completion_retains_owner_prerequisite_and_root_after_drain_expiry(string registration, bool handledError)
     {
         LifecycleFixtures.Reset();
         var clock = new LifecycleTestTimeProvider();
@@ -207,6 +214,17 @@ public class LifecycleCleanupTests
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var finished = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var web = LifecycleFixtures.WebBuilder();
+        var root = new DisposalProbe();
+        web.Services.AddSingleton(_ => root);
+        var completions = 0;
+        async Task CompleteAsync()
+        {
+            Interlocked.Increment(ref completions);
+            entered.SetResult();
+            await release.Task;
+            finished.SetResult();
+        }
+        if (registration == "filter") { web.Services.AddSingleton<IStartupFilter>(new CompletionFilter(CompleteAsync)); }
         var builder = LifecycleFixtures.Registry(web.Services);
         builder.AddModule<LifecycleFixtures.ProtocolProvider>(LifecycleFixtures.Declaration("protocol", ModuleCategory.Protocol) with
         {
@@ -215,15 +233,18 @@ public class LifecycleCleanupTests
         }).AddModuleLifecycle<LifecycleFixtures.ProtocolProvider, LifecycleFixtures.ProtocolModule>();
         LifecycleFixtures.For("protocol").Map = routes => routes.Map("test", "/fixture", ["GET"], context =>
         {
-            context.Response.OnCompleted(async () => { entered.SetResult(); await release.Task; finished.SetResult(); });
-            throw new InvalidOperationException("Fixture handled failure.");
+            if (registration == "handler") { context.Response.OnCompleted(CompleteAsync); }
+            if (handledError) { throw new InvalidOperationException("Fixture handled failure."); }
+            return context.Response.WriteAsync("Fixture response.");
         });
         var lease = await builder.ComposeHoardModulesAsync(builder.ValidateComposition(
             LifecycleFixtures.Selection("protocol"), LifecycleFixtures.Versions,
             new() { DrainTimeout = TimeSpan.FromSeconds(1) }, clock).Composition!);
         var app = await web.BuildHoardApplicationAsync(lease);
+        app.Services.GetRequiredService<DisposalProbe>();
         app.Use(async (context, next) =>
         {
+            if (registration == "middleware") { context.Response.OnCompleted(CompleteAsync); }
             try { await next(context); }
             catch (InvalidOperationException) { context.Response.StatusCode = 500; }
         });
@@ -231,28 +252,59 @@ public class LifecycleCleanupTests
         await app.StartAsync();
         using var client = app.GetTestClient();
         var response = client.GetAsync("/fixture");
+        Task<HoardStopResult>? stop = null;
         try
         {
             await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            var stop = lease.Lifecycle.StopAsync();
-            await LifecycleTestHarness.Until(() => lease.Lifecycle.Snapshot.Phase == HoardLifecyclePhase.Draining && clock.PendingTimers > 0);
+            stop = lease.Lifecycle.StopAsync();
+            await LifecycleTestHarness.Until(() => clock.NextDelay == TimeSpan.FromSeconds(1)
+                && !lease.Coordinator.Activities.Snapshot().Any(activity => activity.ModuleId == "composition"));
             clock.Advance(TimeSpan.FromSeconds(1));
             var result = await stop.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(TimeSpan.FromSeconds(29), lease.Coordinator.ShutdownDeadline!.Remaining);
             Assert.Contains(result.Modules, module => module.ModuleId == "protocol" && module.Outcome == HoardCleanupOutcome.UnsafePendingCallback);
             Assert.Contains(result.Modules, module => module.ModuleId == "artifact" && module.Outcome == HoardCleanupOutcome.UnsafePendingCallback);
             Assert.Contains(result.Modules, module => module.ModuleId == "metadata" && module.Outcome == HoardCleanupOutcome.Completed);
+            Assert.Equal(new HoardUnsafeActivity("protocol", HoardActivityKind.Request), Assert.Single(result.UnsafeActivities));
+            Assert.Equal(HoardRootDisposalOutcome.NotAttemptedUnsafe, result.RootDisposal);
+            LifecycleFixtures.AssertSafe(result.Diagnostics);
+            await Assert.ThrowsAsync<HoardLifecycleException>(() => lease.DisposeAsync().AsTask());
+            var frozen = lease.StopResult;
+            Assert.Equal(HoardRootDisposalOutcome.NotAttemptedUnsafe, frozen!.RootDisposal);
             release.TrySetResult();
             await finished.Task.WaitAsync(TimeSpan.FromSeconds(5));
             await lease.Coordinator.Activities.WhenQuiescent.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.Same(result, await lease.Lifecycle.StopAsync());
             await Assert.ThrowsAsync<HoardLifecycleException>(() => lease.DisposeAsync().AsTask());
+            Assert.Same(frozen, lease.StopResult);
+            Assert.Equal(0, root.Disposals);
+            Assert.Equal(1, completions);
+            Assert.DoesNotContain("stop", LifecycleFixtures.For("protocol").Calls);
+            Assert.DoesNotContain("stop", LifecycleFixtures.For("artifact").Calls);
+            Assert.Equal(1, LifecycleFixtures.For("metadata").Calls.Count(call => call == "stop"));
         }
         finally
         {
             release.TrySetResult();
             await finished.Task.WaitAsync(TimeSpan.FromSeconds(5));
             using var completedResponse = await response.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.Equal(handledError ? 500 : 200, (int)completedResponse.StatusCode);
+            if (stop is not null) { await stop.WaitAsync(TimeSpan.FromSeconds(5)); }
+            await lease.Coordinator.Activities.WhenQuiescent.WaitAsync(TimeSpan.FromSeconds(5));
         }
+    }
+
+    internal sealed class CompletionFilter(Func<Task> complete) : IStartupFilter
+    {
+        public Action<IApplicationBuilder> Configure(Action<IApplicationBuilder> next) => app =>
+        {
+            app.Use(async (context, nextRequest) =>
+            {
+                context.Response.OnCompleted(complete);
+                await nextRequest(context);
+            });
+            next(app);
+        };
     }
 
     [Theory]

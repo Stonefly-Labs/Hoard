@@ -742,9 +742,38 @@ product intent, diagrams/ADR, governance, master backlog, F-01 sources/examples,
 IaC and release guidance are unaffected: convergence changes no API, intended
 behavior, dependency, permission or operational action. Implementation evidence
 remains historical, not acceptance of this uncovered path. Keep PR #6 draft;
-the next separately authorized stage is `implement` for T076, followed by fresh
-convergence. Finalization, merge, feature completion and dependency availability
-remain separate gates.
+that convergence checkpoint scheduled `implement` for T076. Finalization,
+merge, feature completion and dependency availability remain separate gates.
+
+The separately authorized
+[T076 implementation follow-up](../specs/002-module-lifecycle/plan.md#t076-implementation-follow-up)
+installs an internal first startup filter during supervised host build. Its
+middleware registers the request-completion boundary before host filters and
+middleware, so reverse-order completion releases admitted leases last, not on
+handler return. Admission still uses the existing coordinator/tracker and
+executes through normal host middleware/access policy; there is no new public
+API, dependency, admission authority or disposal owner.
+
+Barrier/virtual-time regressions cover callbacks registered by startup filters,
+host middleware and handlers, for normal and handled-error responses. Pending
+completion keeps the protocol, its artifact prerequisite and root protected
+after the original drain budget expires; independent metadata cleanup completes.
+Releasing pending work after bounded stop/disposal neither rewrites frozen
+results nor retries cleanup/disposal. Cooperative callbacks release one request
+activity only after all three registration sites finish, then modules and root
+clean up once. A throwing handler-completion callback still runs the earlier
+host callbacks before release in TestServer; this is not transport certification.
+
+The bounded architecture review found no confirmed violations or unresolved
+design questions. Its throwing-completion proof gap is covered by the added
+counterpart; full locked acceptance and reviewed payload-only lock changes are
+recorded in the plan. README, provider/example guides, lifecycle contract/model,
+quickstart and task evidence describe the corrected boundary. Requirements,
+public API/acceptance contracts and reviewer-owned checklists remain unchanged.
+Product intent, baseline diagrams/ADR, governance, backlog, F-01 sources/examples,
+IaC and release guidance are unaffected: no public API, dependency, product
+capability, permission or operational action changes. This completes only
+implementation; fresh `converge` is next and PR #6 remains draft.
 
 ```mermaid
 flowchart TD

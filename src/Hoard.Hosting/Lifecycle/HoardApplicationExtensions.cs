@@ -1,5 +1,7 @@
 using Hoard.Hosting.Routing;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Hoard.Hosting.Lifecycle;
 
@@ -29,6 +31,8 @@ public static class HoardApplicationExtensions
             { throw coordinator.Error("StaleComposition", "composition", HoardLifecyclePhase.BuildingHost); }
             await coordinator.InvokeStartupAsync("composition", HoardLifecyclePhase.BuildingHost, _ =>
             {
+                builder.Services.Insert(0,
+                    ServiceDescriptor.Singleton<IStartupFilter>(new HoardModuleAdmissionMiddleware(coordinator)));
                 serviceComposition.Application = builder.Build();
                 return Task.CompletedTask;
             }).ConfigureAwait(false);

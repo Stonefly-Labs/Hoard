@@ -73,6 +73,13 @@ and root. TimedOut means waiting ended, not that trusted code stopped.
 Unsafe/budget-exhausted omissions are explicit; independent safe cleanup may
 continue, but incomplete terminal lifecycles may require process termination.
 Nothing rolls back provider schemas/data or proves crash cleanup.
+The supervised build installs the request-completion boundary before host
+startup filters/middleware. A request lease remains active through their
+response-completion callbacks as well as handler callbacks, including handled
+errors; it does not release when the handler returns. Pending completion after
+drain expiry retains owner/prerequisite/root resources. Releasing it after the
+bounded result cannot retry cleanup or trigger deferred disposal. Normal host
+middleware and access policy still apply without extra caller wiring.
 Worker-failure host notification runs outside the state lock and is tracked
 before stop begins. A pending synchronous stopping notification or lifetime
 cancellation callback may use any module/root resource, so all remain protected

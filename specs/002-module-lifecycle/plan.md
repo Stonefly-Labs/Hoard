@@ -740,3 +740,113 @@ completion remain separate gates; PR #6 stays draft.
 
 T001..T075 are complete. This finishes only implement; fresh convergence is
 the next separately authorized stage, not finalization or dependency completion.
+
+### T076 implementation follow-up
+
+The separately authorized implementation resolves the CRITICAL request-ownership
+contradiction found by convergence. Supervised BuildHoardApplicationAsync inserts
+an internal IStartupFilter first in the service collection immediately before
+build, after host/module configuration. Its outer middleware registers one
+per-request completion boundary before other startup-filter/host middleware
+callbacks. Since response completion runs callbacks in reverse registration
+order, this boundary releases admitted resource leases last. Endpoint dispatch
+transfers the existing coordinator/tracker lease to that boundary rather than
+registering an endpoint-local release callback.
+
+The internal boundary serializes admission against completion, releases each
+lease once and refuses admission after completion. It can retain multiple
+admissions if the same host request is re-executed; that is bookkeeping, not
+another admission authority. It never releases on handler return or exception.
+The existing coordinator, tracker, cleanup dependency propagation, immutable
+results and sole external root owner are unchanged. Host middleware and required
+access policy still run normally. No public API or dependency changes.
+
+#### Focused failure and correction evidence
+
+The previous handler-only handled-error test now covers six cases: callbacks
+registered by host middleware, a host startup filter or the handler, each on
+normal and handled-error responses. With completion held, fake time expires
+the one-second drain cap under the original 30-second stop deadline. The
+protocol and its artifact prerequisite remain UnsafePendingCallback, metadata
+cleans safely once, the protocol Request stays tracked, and module/final root
+outcomes are NotAttemptedUnsafe. Dispose before releasing completion, then
+release and observe the held task: repeated stop/disposal preserves frozen
+outcomes, no retry/deferred cleanup occurs, and root disposal stays unattempted.
+
+Two cooperative normal/handled-error cases hold all three callback registration
+sites in reverse order. A single Request activity remains through each callback;
+none can observe owner/prerequisite/root cleanup while using those resources.
+Once all callbacks return, activity drains and module cleanup/root disposal
+complete exactly once. The initial eight-case pre-fix run failed six intended
+assertions and passed the two handler-only counterparts: four earlier host
+callbacks allowed unsafe Completed outcomes, and both cooperative cases lost
+request activity before the host callbacks ran. Direct runner output confirmed
+the exact assertion failures, not setup or compiler failures.
+
+The post-fix focused cleanup/ownership/worker/route suite passed 64 tests. The
+architecture review identified a material proof gap for completion-callback
+exceptions. An added third cooperative row throws from the handler's completion
+callback, then holds both earlier host callbacks. TestServer still executes
+those callbacks before boundary release; all callbacks run once and safe
+cleanup/root disposal complete without a new lifecycle fault or second owner.
+The resulting focused suite passes 65 tests. Every held task is released and
+observed with deterministic barriers/virtual time and scheduler backstops;
+there is no listener, observer sleep or transport-conformance claim.
+
+#### Bounded implementation architecture review
+
+Custom hoard-architecture-review (`t076-architecture`) reviewed the modified
+application/admission integration and regressions with immediate tracker,
+coordinator, dependency-cleanup and sole-lease ownership context. No confirmed
+actionable architecture violation or unresolved design question was found.
+It verified by inspection that first filter registration covers earlier host
+callbacks without dispatching around host middleware/authorization, and the
+completion/admission locks have no reverse tracker dependency or provider
+callback invocation.
+
+The reviewer ran no commands/tests. Its two material evidence gaps were
+throwing-completion-callback coverage (supplied by the subsequent regression)
+and full packed-lock acceptance (supplied below). No production correction was
+required after review, and no independent re-review of that added test is
+claimed. The earlier direct host-notification-task fault-injection limitation
+remains unchanged; this follow-up does not newly claim that distinct proof.
+
+#### Measured follow-up commands
+
+| Command | Result |
+| --- | --- |
+| `SPECIFY_FEATURE_DIRECTORY=specs/002-module-lifecycle .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks` | Passed; pinned directory, all reviewer-owned/built-in checklists passed unchanged (20/20, 20/20, 16/16) |
+| `bash scripts/validate-lifecycle.sh --filter 'FullyQualifiedName~Response_completion_retains_owner_prerequisite_and_root_after_drain_expiry\|FullyQualifiedName~Cooperative_response_completion_releases_one_request_only_after_all_host_and_handler_callbacks'` | Intended pre-fix red: six failed, two passed, zero skipped; direct no-build runner confirmed unsafe cleanup/premature activity-release assertions |
+| `bash scripts/validate-lifecycle.sh --filter 'FullyQualifiedName~LifecycleCleanupTests\|FullyQualifiedName~LifecycleOwnershipTests\|FullyQualifiedName~WorkerAdmissionTests\|FullyQualifiedName~OwnedRouteTests'` | Passed after correction and throwing-completion counterpart: 65 tests, zero failed/skipped; host fallback authorization proof retained |
+| `dotnet format Hoard.slnx --no-restore --include src/Hoard.Hosting/Routing/HoardModuleAdmissionMiddleware.cs src/Hoard.Hosting/Lifecycle/HoardApplicationExtensions.cs tests/integration/Hoard.Composition.Tests/LifecycleCleanupTests.cs tests/integration/Hoard.Composition.Tests/LifecycleOwnershipTests.cs --verbosity quiet` | Passed; complete acceptance also verifies source/standalone SDK formatting and analyzers |
+| `bash scripts/validate-lifecycle.sh --update-locks` | Passed: 169 source tests, nine boundary proofs, seven package-only journeys; six independent packages and retained old-binary/new-source/framework proof |
+| `bash scripts/validate-lifecycle.sh` | Independent default passed: same 169 tests, nine proofs and seven journeys; provenance verified without lock mutation |
+| `bash scripts/validate-foundation.sh --update-locks` | Passed: 263 tests (42 foundation, 49 architecture, 172 composition), zero failed/skipped; affected packed Hosting consumer hashes refreshed |
+| `bash scripts/validate-foundation.sh` | Independent default passed: same 263 tests, zero failed/skipped; original eight scans, ARCH-001..008, C-01..23, isolated Core and both compile-only hosts retained |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed: 22 tests |
+| `git diff --check` | Passed |
+
+A structured old/new comparison verifies ten affected standalone locks with
+16 contentHash-only changes for Hosting and dependent lifecycle protocol/identity
+fixture payloads. No version/dependency metadata change; Abstractions-only
+fixtures, retained old-binary baseline and platform/test locks are unchanged.
+Independent defaults use fresh private feeds/caches without hash bypass or
+lock rewriting.
+The documentation audit resolves 156 local file/anchor links across nine
+changed Markdown files; task-body/previous-marker and PR-template fidelity
+checks pass, alongside whitespace and protected-artifact checks.
+
+README, DEVELOPMENT, PROVIDERS, LifecycleHost guide, quickstart, lifecycle
+contract/model and task checkpoint document the corrected completion boundary.
+Spec, public API/acceptance contracts, built-in/reviewer-owned checklists,
+F-01 source/example scenarios and Abstractions/Core/Application source remain
+unchanged. Product charter/specification, baseline architecture/diagrams/ADR,
+governance, master backlog, IaC and release guides are unaffected: the existing
+request/resource invariant is restored without new product scope, APIs,
+dependencies, permissions or operational steps. No extension hooks are
+registered (`.specify/extensions.yml` is absent); no infrastructure plan/apply,
+deployment, publication, tag, release or merge occurred.
+
+T001..T076 are complete. This finishes only implement; fresh convergence is
+the next separately authorized stage. Keep PR #6 draft, without claiming
+clean convergence, finalization, merge readiness or dependency completion.

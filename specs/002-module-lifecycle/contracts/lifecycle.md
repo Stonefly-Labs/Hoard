@@ -166,6 +166,17 @@ propagate this classification along active edges. This is explicit incomplete
 cleanup, not silence or successful stop. Eventual task faults are observed
 through safe categories, with no raw payload. No lifecycle instance is reused.
 
+Supervised host build installs the internal request-completion startup filter
+before host filters/middleware. Its middleware registers the lease-release
+boundary first, so reverse-order response completion runs host and handler
+callbacks before releasing admitted ownership. The endpoint transfers its
+existing tracker lease to that boundary; it does not bypass host middleware or
+access policy, release on handler return, or create another admission/disposal
+authority. Normal and handled-error responses use the same boundary. A callback
+fault does not justify releasing before the remaining completion callbacks;
+TestServer's throwing-callback counterpart verifies that ordering, not arbitrary
+server/transport implementations.
+
 DI-owned services retain DI disposal ownership; adapters must not dispose them
 twice. Adapter-owned operational resources are tracked and released by its stop
 callback. The composition lease owns the built application and invokes root

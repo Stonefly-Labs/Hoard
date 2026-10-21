@@ -171,7 +171,12 @@ TimedOut, NotAttemptedBudgetExhausted and UnsafePendingCallback remain distinct
 from Completed/NotEntered. Root outcomes additionally distinguish framework/
 owner pending, unsafe omission, budget exhaustion, failure and timeout.
 Outstanding requests retain ownership through response completion (including
-handled errors); workers, build, activation, cleanup and cancellation callbacks
+handled errors). Supervised build installs the internal completion boundary
+before host startup filters/middleware. Admitted leases release only after
+their response-completion callbacks and handler callbacks finish, in reverse
+registration order, not on handler return. Host middleware/access policy still
+applies; no caller-installed admission middleware is needed.
+Workers, build, activation, cleanup and cancellation callbacks
 retain resources they may still use. A timed-out StopAsync does not release its
 owner/prerequisites/root. Independent safe cleanup may continue under the same
 deadline. Late completion cannot rewrite returned outcomes, retry or trigger
