@@ -1,10 +1,11 @@
 import json
 import shutil
+import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import call, patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts"))
 import speckit_flow as flow
@@ -123,6 +124,37 @@ class FlowTests(unittest.TestCase):
         flow.finish(self.root, self.state, "All acceptance gaps closed")
         self.assertEqual(self.state["stage"], "finalize")
 
+    def test_implementation_cannot_finish_after_only_a_task_batch(self):
+        self.active("implement", (
+            "## Phase 1\n- [x] T001 Setup\n- [x] T002 Implement\n"
+            "## Phase 2\n- [ ] T003 Validate and document\n"
+        ))
+        flow.save_state(self.root, self.state)
+        with self.assertRaisesRegex(ValueError, "unchecked tasks"):
+            flow.finish(self.root, self.state, "First phase complete")
+        resumed = flow.load_state(self.root)
+        self.assertEqual(resumed["status"], "running")
+        self.assertEqual(resumed["history"], [])
+        self.write("specs/001-contracts/tasks.md", (
+            "## Phase 1\n- [x] T001 Setup\n- [x] T002 Implement\n"
+            "## Phase 2\n- [x] T003 Validate and document\n"
+        ))
+        flow.finish(self.root, resumed, "All phases implemented and validated")
+        self.assertEqual(flow.load_state(self.root)["stage"], "converge")
+
+    def test_release_number_uses_directory_prefix_not_backlog_id(self):
+        self.active("await_merge")
+        for prefix, patch_number in (("001", 1), ("002", 2), ("010", 10), ("1000", 1000)):
+            with self.subTest(prefix=prefix):
+                self.state["active"]["feature_directory"] = f"specs/{prefix}-contracts"
+                self.assertEqual(
+                    flow.status(self.root, self.state)["release_tag"],
+                    f"v0.0.{patch_number}-alpha",
+                )
+        for directory in ("specs/000-contracts", "../001-contracts"):
+            with self.subTest(directory=directory), self.assertRaises(ValueError):
+                flow.spec_release_tag(self.root, directory)
+
     def test_finalize_requires_actual_feature_pr_and_does_not_complete_spec(self):
         self.active("finalize")
         with patch.object(flow, "pull_request", return_value={
@@ -141,20 +173,108 @@ class FlowTests(unittest.TestCase):
     def test_completion_requires_merge_and_origin_main_ancestry(self):
         self.active("await_merge")
         self.state["active"]["pr"] = 42
-        with patch.object(flow, "pull_request", return_value={"state": "OPEN", "mergeCommit": None}):
+        with patch.object(flow, "pull_request", return_value={
+            "state": "OPEN", "mergeCommit": None,
+        }), patch.object(flow, "command") as command:
             with self.assertRaisesRegex(ValueError, "not merged"):
                 flow.finish(self.root, self.state, "Still open")
+        command.assert_not_called()
         self.assertEqual(self.state["completed"], [])
         with patch.object(flow, "pull_request", return_value={
             "state": "MERGED", "mergeCommit": {"oid": "abc123"},
-        }), patch.object(flow, "command") as command:
+        }), patch.object(flow, "command", side_effect=[
+            "",
+            "tag-object\trefs/tags/v0.0.1-alpha\nabc123\trefs/tags/v0.0.1-alpha^{}",
+            json.dumps({
+                "tagName": "v0.0.1-alpha", "isDraft": False, "isPrerelease": True,
+                "url": "https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.1-alpha",
+            }),
+        ]) as command:
             flow.finish(self.root, self.state, "Merged PR #42, acceptance verified")
-        command.assert_called_once_with(
-            self.root, "git", "merge-base", "--is-ancestor", "abc123", "origin/main",
-        )
+        self.assertEqual(command.call_args_list, [
+            call(self.root, "git", "merge-base", "--is-ancestor", "abc123", "origin/main"),
+            call(self.root, "git", "ls-remote", "--tags", "origin",
+                 "refs/tags/v0.0.1-alpha", "refs/tags/v0.0.1-alpha^{}"),
+            call(self.root, "gh", "release", "view", "v0.0.1-alpha",
+                 "--json", "tagName,isDraft,isPrerelease,url"),
+        ])
         self.assertEqual(self.state["stage"], "specify")
         self.assertEqual(self.state["completed"][0]["id"], "F-01")
+        self.assertEqual(self.state["completed"][0]["release_tag"], "v0.0.1-alpha")
+        self.assertTrue(self.state["completed"][0]["release_url"].endswith("/v0.0.1-alpha"))
         self.assertIsNone(self.state["active"])
+
+    def test_release_requires_annotated_remote_tag_at_exact_merge_not_later_main(self):
+        for refs in (
+            "",
+            "abc123\trefs/tags/v0.0.1-alpha",
+            "tag-object\trefs/tags/v0.0.1-alpha\nlater-main\trefs/tags/v0.0.1-alpha^{}",
+        ):
+            with self.subTest(refs=refs), patch.object(flow, "command", return_value=refs) as command:
+                with self.assertRaisesRegex(ValueError, "annotated remote tag"):
+                    flow.published_release(self.root, "specs/001-contracts", "abc123")
+                self.assertEqual(command.call_count, 1)
+
+    def test_release_gate_rejects_draft_stable_wrong_tag_and_missing_url(self):
+        release = {
+            "tagName": "v0.0.1-alpha", "isDraft": False, "isPrerelease": True,
+            "url": "https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.1-alpha",
+        }
+        for change in (
+            {"isDraft": True}, {"isPrerelease": False},
+            {"tagName": "v0.0.2-alpha"}, {"url": ""}, {"isDraft": None},
+        ):
+            with self.subTest(change=change), patch.object(flow, "command", side_effect=[
+                "tag-object\trefs/tags/v0.0.1-alpha\nabc123\trefs/tags/v0.0.1-alpha^{}",
+                json.dumps(dict(release, **change)),
+            ]):
+                with self.assertRaisesRegex(ValueError, "published GitHub prerelease"):
+                    flow.published_release(self.root, "specs/001-contracts", "abc123")
+
+    def test_missing_release_keeps_stage_running_and_resume_records_it_once(self):
+        self.active("await_merge")
+        self.state["active"]["pr"] = 42
+        flow.save_state(self.root, self.state)
+        original = (self.root / flow.STATE).read_bytes()
+        with patch.object(flow, "pull_request", return_value={
+            "state": "MERGED", "mergeCommit": {"oid": "abc123"},
+        }), patch.object(flow, "command", side_effect=[
+            "",
+            "tag-object\trefs/tags/v0.0.1-alpha\nabc123\trefs/tags/v0.0.1-alpha^{}",
+            subprocess.CalledProcessError(1, ["gh", "release", "view"], stderr="release not found"),
+        ]):
+            with self.assertRaises(subprocess.CalledProcessError):
+                flow.finish(self.root, self.state, "Tag pushed but publication pending")
+        self.assertEqual((self.root / flow.STATE).read_bytes(), original)
+        resumed = flow.load_state(self.root)
+        self.assertEqual(resumed["status"], "running")
+        self.assertEqual(resumed["completed"], [])
+        with patch.object(flow, "pull_request", return_value={
+            "state": "MERGED", "mergeCommit": {"oid": "abc123"},
+        }), patch.object(flow, "command", side_effect=[
+            "",
+            "tag-object\trefs/tags/v0.0.1-alpha\nabc123\trefs/tags/v0.0.1-alpha^{}",
+            json.dumps({
+                "tagName": "v0.0.1-alpha", "isDraft": False, "isPrerelease": True,
+                "url": "https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.1-alpha",
+            }),
+        ]):
+            flow.finish(self.root, resumed, "Existing release verified without retagging")
+        self.assertEqual(len(flow.load_state(self.root)["completed"]), 1)
+        with self.assertRaisesRegex(ValueError, "Run begin"):
+            flow.finish(self.root, resumed, "Do not duplicate completion")
+
+    def test_pre_release_policy_completions_load_without_retroactive_releases(self):
+        self.state.update(stage="specify", completed=[{
+            "id": "F-01", "feature_directory": "specs/001-contracts",
+            "pr": 42, "merge_commit": "abc123",
+        }])
+        flow.save_state(self.root, self.state)
+        with patch.object(flow, "command") as command:
+            result = flow.status(self.root, flow.load_state(self.root))
+        command.assert_not_called()
+        self.assertEqual(result["selected"]["id"], "F-02")
+        self.assertNotIn("release_tag", result["completed"][0])
 
     def test_corrupt_checkpoint_and_unknown_dependencies_fail_explicitly(self):
         self.write(flow.STATE, json.dumps({"schema_version": 1, "stage": "plan"}))
