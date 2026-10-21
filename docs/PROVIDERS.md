@@ -197,6 +197,17 @@ resource release and a cancellation diagnostic can coexist. A fault after a
 bounded result appears in a later snapshot only; it cannot rewrite that result,
 retry cleanup or trigger deferred disposal.
 
+Supervised startup, readiness, cleanup, framework-stop and root-disposal faults
+are recorded once with their originating owner/phase before tracked activity
+is released. A fault after its bounded wait is abandoned reports additional
+`LateCallbackFailure`, even before shared stop completes; directly awaited
+faults keep their normal category without duplication. Worker faults during
+shutdown are also additional diagnostics, not a second shutdown request.
+Cooperative cancellation is not a new eventual fault. Late reporting never
+revises returned resource outcomes or starts deferred disposal. The lease
+rechecks the original deadline after framework stop; if exhausted, root
+disposal remains NotAttemptedBudgetExhausted rather than being dispatched.
+
 Changing a bundled choice needs a fresh validated lifecycle, not a rebuild.
 Adding an absent package needs reference, registration/adapter, rebuild,
 redeploy and restart. Invalid replacement never rolls back silently; explicitly

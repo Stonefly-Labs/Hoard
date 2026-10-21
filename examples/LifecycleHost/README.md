@@ -85,6 +85,14 @@ resources remain active. Late faults appear in a later snapshot, not in frozen
 stop/disposal results. Correct the named owner's cancellation handling before
 restarting; no provider exception payload is exposed.
 
+Startup/readiness/cleanup and framework-stop/root-disposal faults likewise
+report once before releasing tracked activity. Faults after an abandoned wait,
+including worker faults during shutdown, add safe `LateCallbackFailure`
+diagnostics even if shared stop is still running. Direct failures are not
+duplicated; cooperative cancellation is not a new fault. Frozen results and
+once-only ownership remain unchanged. An expired budget after framework stop
+leaves root disposal NotAttemptedBudgetExhausted, without dispatch or retry.
+
 The [provider guide](../../docs/PROVIDERS.md#opt-in-lifecycle) documents APIs,
 route restrictions, safe diagnostic catalogue, status/readiness distinctions
 and defaults: startup 120s, callback 30s, aggregate readiness 5s; shutdown 30s,

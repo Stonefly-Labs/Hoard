@@ -144,6 +144,16 @@ Use deterministic fixture barriers rather than a real unavailable service:
    with successful resource release. Hold a lifetime callback beyond bounded
    stop/disposal, then release it to throw: only a later snapshot gains the
    diagnostic, while returned results and cleanup/disposal attempts stay fixed.
+10. Fault a callback after its readiness or cleanup wait times out. Hold an
+    independent cleanup open to prove known eventual faults are reported before
+    shared stop completes; release a callback after bounded results to prove
+    only later snapshots change. Startup, framework-stop and root-disposal
+    counterparts retain safe owner/phase/action/correlation and once-only
+    diagnostics. Direct awaited exceptions, including their own TimeoutException,
+    preserve normal categories/outcomes without duplication; cooperative
+    cancellation adds no new fault. Fault a worker during drain and after
+    bounded stop without requesting shutdown again. Expire the original budget
+    between framework stop and root dispatch: disposal remains unattempted.
 
 Default coordination budgets are 120s total startup, 30s per activation
 callback, 5s aggregate readiness, and 30s total stop with 10s drain / 5s per

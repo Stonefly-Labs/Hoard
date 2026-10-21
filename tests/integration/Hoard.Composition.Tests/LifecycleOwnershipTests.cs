@@ -8,6 +8,145 @@ namespace Hoard.Composition.Tests;
 
 public class LifecycleOwnershipTests
 {
+    [Fact]
+    public async Task Budget_expiry_between_framework_stop_and_root_dispatch_leaves_disposal_unattempted()
+    {
+        LifecycleFixtures.Reset();
+        var clock = new InterPhaseClock();
+        var resource = new LifecycleCleanupTests.DisposalProbe();
+        var web = LifecycleFixtures.WebBuilder();
+        web.Services.AddSingleton(_ => resource);
+        var builder = LifecycleFixtures.Registry(web.Services);
+        var lease = await builder.ComposeHoardModulesAsync(builder.ValidateComposition(LifecycleFixtures.Selection(),
+            LifecycleFixtures.Versions, new() { ShutdownTimeout = TimeSpan.FromSeconds(2) }, clock).Composition!);
+        var app = await web.BuildHoardApplicationAsync(lease);
+        app.Services.GetRequiredService<LifecycleCleanupTests.DisposalProbe>();
+        await app.MapHoardModulesAsync(lease);
+        await app.StartAsync();
+        await app.StopHoardApplicationAsync(lease);
+        clock.AdvanceAfterRead = TimeSpan.FromSeconds(2);
+        await Assert.ThrowsAsync<HoardLifecycleException>(() => lease.DisposeAsync().AsTask());
+        await lease.Coordinator.Activities.WhenQuiescent.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(HoardRootDisposalOutcome.NotAttemptedBudgetExhausted, lease.StopResult!.RootDisposal);
+        Assert.Equal(0, resource.Disposals);
+        var frozen = lease.StopResult;
+        await Assert.ThrowsAsync<HoardLifecycleException>(() => lease.DisposeAsync().AsTask());
+        Assert.Same(frozen, lease.StopResult);
+        Assert.Equal(0, resource.Disposals);
+    }
+
+    private sealed class InterPhaseClock : TimeProvider
+    {
+        private readonly LifecycleTestTimeProvider clock = new();
+        internal TimeSpan AdvanceAfterRead;
+        public override long TimestampFrequency => clock.TimestampFrequency;
+        public override long GetTimestamp()
+        {
+            var timestamp = clock.GetTimestamp();
+            var advance = AdvanceAfterRead;
+            AdvanceAfterRead = TimeSpan.Zero;
+            clock.Advance(advance);
+            return timestamp;
+        }
+        public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period) =>
+            clock.CreateTimer(callback, state, dueTime, period);
+    }
+
+    [Theory]
+    [InlineData(false, false, true, false)]
+    [InlineData(false, true, true, false)]
+    [InlineData(false, true, false, false)]
+    [InlineData(true, false, true, false)]
+    [InlineData(true, true, true, false)]
+    [InlineData(true, true, false, false)]
+    [InlineData(false, false, true, true)]
+    [InlineData(true, false, true, true)]
+    public async Task Framework_stop_and_root_disposal_report_faults_once_before_releasing_activity(bool root, bool held, bool throwing, bool timeout)
+    {
+        LifecycleFixtures.Reset();
+        var clock = new LifecycleTestTimeProvider();
+        var resource = new FaultingHostResource(root, held, throwing, timeout);
+        var web = LifecycleFixtures.WebBuilder();
+        web.Services.AddSingleton(_ => resource);
+        if (!root) { web.Services.AddSingleton<IHostedService>(resource); }
+        var builder = LifecycleFixtures.Registry(web.Services);
+        var lease = await builder.ComposeHoardModulesAsync(builder.ValidateComposition(LifecycleFixtures.Selection(),
+            LifecycleFixtures.Versions, new() { ShutdownTimeout = TimeSpan.FromSeconds(2) }, clock).Composition!);
+        var app = await web.BuildHoardApplicationAsync(lease);
+        app.Services.GetRequiredService<FaultingHostResource>();
+        await app.MapHoardModulesAsync(lease);
+        await app.StartAsync();
+        var disposal = lease.DisposeAsync().AsTask();
+        try
+        {
+            await resource.Entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            if (held)
+            {
+                await LifecycleTestHarness.Until(() => clock.NextDelay == TimeSpan.FromSeconds(2));
+                clock.Advance(TimeSpan.FromSeconds(2));
+            }
+            await Assert.ThrowsAsync<HoardLifecycleException>(() => disposal.WaitAsync(TimeSpan.FromSeconds(5)));
+            var frozen = lease.StopResult;
+            Assert.Equal(root ? held || timeout ? HoardRootDisposalOutcome.TimedOut : HoardRootDisposalOutcome.Failed
+                : HoardRootDisposalOutcome.NotAttemptedUnsafe, frozen!.RootDisposal);
+            if (held) { Assert.DoesNotContain(frozen.Diagnostics, item => item.RuleCode == "LateCallbackFailure"); }
+            resource.Release.TrySetResult();
+            await resource.Finished.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await lease.Coordinator.Activities.WhenQuiescent.WaitAsync(TimeSpan.FromSeconds(5));
+            var snapshot = lease.Lifecycle.Snapshot;
+            var code = held ? "LateCallbackFailure" : timeout ? "Timeout" : root ? "RootDisposalFailure" : "HostStopFailure";
+            if (throwing)
+            {
+                var diagnostic = Assert.Single(snapshot.Diagnostics, item => item.RuleCode == code);
+                Assert.Equal("composition", diagnostic.ModuleId);
+                Assert.Equal(root ? HoardLifecyclePhase.CleaningUp : HoardLifecyclePhase.Stopping, diagnostic.Phase);
+                Assert.True(diagnostic.Cleanup);
+                Assert.Equal(snapshot.CorrelationId, diagnostic.CorrelationId);
+                Assert.Single(snapshot.Diagnostics, item => item.RuleCode is "LateCallbackFailure" or "RootDisposalFailure" or "HostStopFailure"
+                    || timeout && item.RuleCode == "Timeout");
+            }
+            else { Assert.DoesNotContain(snapshot.Diagnostics, item => item.RuleCode == "LateCallbackFailure"); }
+            LifecycleFixtures.AssertSafe(snapshot.Diagnostics);
+            await Assert.ThrowsAsync<HoardLifecycleException>(() => lease.DisposeAsync().AsTask());
+            Assert.Same(frozen, lease.StopResult);
+            Assert.Equal(1, resource.Attempts);
+            Assert.All(LifecycleFixtures.Controls.Values, control => Assert.Equal(1, control.Calls.Count(call => call == "stop")));
+            if (held) { Assert.DoesNotContain(frozen.Diagnostics, item => item.RuleCode == "LateCallbackFailure"); }
+        }
+        finally
+        {
+            resource.Release.TrySetResult();
+            await resource.Finished.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await lease.Coordinator.Activities.WhenQuiescent.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+    }
+
+    private sealed class FaultingHostResource(bool root, bool held, bool throwing, bool timeout) : IHostedService, IAsyncDisposable
+    {
+        internal int Attempts;
+        internal readonly TaskCompletionSource Entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        internal readonly TaskCompletionSource Release = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        internal readonly TaskCompletionSource Finished = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public Task StartAsync(CancellationToken token) => Task.CompletedTask;
+        public Task StopAsync(CancellationToken token) => root ? Task.CompletedTask : InvokeAsync();
+        public ValueTask DisposeAsync() => root ? new(InvokeAsync()) : ValueTask.CompletedTask;
+        private async Task InvokeAsync()
+        {
+            Interlocked.Increment(ref Attempts);
+            Entered.TrySetResult();
+            try
+            {
+                if (held) { await Release.Task; }
+                if (throwing)
+                {
+                    throw timeout ? new TimeoutException("root-secret")
+                        : new InvalidOperationException("root-secret", new Exception("seeded-late-secret"));
+                }
+            }
+            finally { Finished.TrySetResult(); }
+        }
+    }
+
     [Theory]
     [InlineData(false, false)]
     [InlineData(true, false)]

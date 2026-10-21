@@ -16,6 +16,29 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
         internal ImmutableArray<HoardHealthObservation> Health { get; set; } = [];
     }
 
+    internal sealed class CallbackObservation(HoardLifecycleCoordinator coordinator, string owner,
+        HoardLifecyclePhase at, string failureCode, bool cleanup = false)
+    {
+        private int abandoned;
+        internal void Abandon() => Volatile.Write(ref abandoned, 1);
+        internal static bool IsTimeout(Exception error) => error is TimeoutException
+            || error is HoardLifecycleException failure && failure.Diagnostics.Any(item => item.RuleCode == "Timeout");
+
+        internal async Task<T> RunAsync<T>(Func<Task<T>> callback)
+        {
+            try { return await callback().ConfigureAwait(false); }
+            catch (Exception error) when (error is not HoardLifecycleException and not OperationCanceledException)
+            {
+                var late = Volatile.Read(ref abandoned) != 0;
+                throw coordinator.Error(late ? "LateCallbackFailure" :
+                    error is TimeoutException ? "Timeout" : failureCode, owner, at, cleanup || late);
+            }
+        }
+
+        internal Task RunAsync(Func<Task> callback) => RunAsync(async () =>
+        { await callback().ConfigureAwait(false); return true; });
+    }
+
     internal object Gate { get; } = new();
     internal HoardActivityTracker Activities { get; } = new();
     internal ActivationLedger Ledger { get; } = new();
@@ -86,6 +109,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
         TimeSpan? cap = null)
     {
         Task work;
+        var observation = new CallbackObservation(this, owner, at, "PhaseFailure");
         lock (Gate)
         {
             CheckCanDispatch(owner, at);
@@ -97,9 +121,9 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
             work = Task.Run(async () =>
             {
                 using (activity)
-                { await callback(token).ConfigureAwait(false); }
+                { await observation.RunAsync(() => callback(token)).ConfigureAwait(false); }
             });
-            Observe(work, owner, at);
+            Observe(work);
         }
         try
         {
@@ -109,19 +133,17 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
         catch (HoardLifecycleException) { throw; }
         catch (Exception error)
         {
-            throw Error(error is TimeoutException ? "Timeout" : error is OperationCanceledException ? "Cancelled" : "PhaseFailure", owner, at);
+            observation.Abandon();
+            throw Error(error is TimeoutException ? "Timeout" :
+                error is OperationCanceledException ? "Cancelled" : "PhaseFailure", owner, at);
         }
     }
 
-    internal void Observe(Task task, string? owner = null, HoardLifecyclePhase? at = null) =>
+    // Callback diagnostics are recorded before their tracked activity is released.
+    internal static void Observe(Task task) =>
         _ = task.ContinueWith(completed =>
         {
             _ = completed.Exception;
-            lock (Gate)
-            {
-                if (owner is not null && stop?.IsCompleted == true)
-                { Error("LateCallbackFailure", owner, at ?? phase, true); }
-            }
         }, CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
 
     private void CancelPending(CancellationTokenSource source, Task? work, string owner, HoardLifecyclePhase at)
@@ -192,7 +214,8 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                             {
                                 lock (Gate)
                                 {
-                                    if (!stopping)
+                                    if (stopping) { Error("LateCallbackFailure", id, HoardLifecyclePhase.Running, true); }
+                                    else
                                     {
                                         Entries[id].Status = HoardModuleStatus.Failed;
                                         ready = admission = false;
@@ -211,13 +234,13 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                                                 { throw Error("HostStopFailure", "composition", HoardLifecyclePhase.Stopping, true); }
                                             }
                                         });
-                                        Observe(notification, "composition", HoardLifecyclePhase.Stopping);
+                                        Observe(notification);
                                     }
                                 }
                             }
                         }
                     });
-                    Observe(work, id, HoardLifecyclePhase.AssessingReadiness);
+                    Observe(work);
                 }
                 return new(true, diagnostics.ToImmutableArray());
             }
@@ -253,6 +276,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
             foreach (var id in Composition.ActivationOrder)
             {
                 Task<HoardModuleReadiness> work;
+                var observation = new CallbackObservation(this, id, HoardLifecyclePhase.AssessingReadiness, "InvalidReadiness");
                 lock (Gate)
                 {
                     if (stopping) { return Snapshot; }
@@ -265,7 +289,10 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                     var activity = Activities.Enter(id, HoardActivityKind.Phase);
                     work = Task.Run(async () =>
                     {
-                        using (activity) { return await Entries[id].Module!.CheckReadinessAsync(linked.Token).ConfigureAwait(false); }
+                        using (activity)
+                        {
+                            return await observation.RunAsync(() => Entries[id].Module!.CheckReadinessAsync(linked.Token).AsTask()).ConfigureAwait(false);
+                        }
                     });
                     Observe(work);
                     probes.Add(work);
@@ -280,7 +307,8 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                 }
                 catch (Exception error)
                 {
-                    if (error is TimeoutException or OperationCanceledException)
+                    observation.Abandon();
+                    if (CallbackObservation.IsTimeout(error) || error is OperationCanceledException)
                     {
                         CancelPending(timeout, work, id, HoardLifecyclePhase.AssessingReadiness);
                     }
@@ -306,12 +334,21 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
         finally
         {
             var activity = Activities.Enter("composition", HoardActivityKind.Phase);
+            var observation = new CallbackObservation(this, "composition", HoardLifecyclePhase.AssessingReadiness, "CleanupFailure", true);
             var disposal = Task.WhenAll(probes).ContinueWith(completed =>
             {
                 _ = completed.Exception;
-                using (activity) { linked.Dispose(); timeout.Dispose(); }
-            }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default);
+                return DisposeSourcesAsync();
+            }, CancellationToken.None, TaskContinuationOptions.None, TaskScheduler.Default).Unwrap();
             Observe(disposal);
+            async Task DisposeSourcesAsync()
+            {
+                using (activity)
+                {
+                    await observation.RunAsync(() =>
+                    { linked.Dispose(); timeout.Dispose(); return Task.CompletedTask; }).ConfigureAwait(false);
+                }
+            }
         }
     }
 
@@ -358,13 +395,15 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
             }
             var activity = Activities.Enter(id, HoardActivityKind.Phase);
             var timeout = new CancellationTokenSource();
+            var observation = new CallbackObservation(this, id, HoardLifecyclePhase.CleaningUp, "CleanupFailure", true);
             Ledger.Enter(id, HoardLifecyclePhase.CleaningUp);
             var task = Task.Run(async () =>
             {
                 using (activity)
-                using (timeout) { await entry.Module.StopAsync(timeout.Token).ConfigureAwait(false); }
+                using (timeout)
+                { await observation.RunAsync(() => entry.Module.StopAsync(timeout.Token).AsTask()).ConfigureAwait(false); }
             });
-            Observe(task, id, HoardLifecyclePhase.CleaningUp);
+            Observe(task);
             try
             {
                 await deadline.WaitAsync(task, Options.ModuleCleanupTimeout, CancellationToken.None).ConfigureAwait(false);
@@ -373,13 +412,16 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
             }
             catch (Exception error)
             {
-                if (error is TimeoutException)
+                observation.Abandon();
+                if (CallbackObservation.IsTimeout(error))
                 {
                     CancelPending(timeout, task, id, HoardLifecyclePhase.CleaningUp);
                 }
-                var outcome = error is TimeoutException or OperationCanceledException ? HoardCleanupOutcome.TimedOut : HoardCleanupOutcome.Failed;
+                var outcome = CallbackObservation.IsTimeout(error) || error is OperationCanceledException
+                    ? HoardCleanupOutcome.TimedOut : HoardCleanupOutcome.Failed;
                 outcomes.Add(new(id, outcome));
-                Error(outcome == HoardCleanupOutcome.TimedOut ? "Timeout" : "CleanupFailure", id, phase, true);
+                if (error is not HoardLifecycleException)
+                { Error(outcome == HoardCleanupOutcome.TimedOut ? "Timeout" : "CleanupFailure", id, HoardLifecyclePhase.CleaningUp, true); }
             }
         }
         var root = !Activities.Snapshot().IsEmpty || outcomes.Any(item => item.Outcome == HoardCleanupOutcome.UnsafePendingCallback)

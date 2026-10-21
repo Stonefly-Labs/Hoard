@@ -7,6 +7,75 @@ namespace Hoard.Composition.Tests;
 public class LifecycleDeadlineTests
 {
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Timed_out_startup_reports_eventual_fault_without_late_cleanup_or_admission(bool throwing)
+    {
+        LifecycleFixtures.Reset();
+        var clock = new LifecycleTestTimeProvider();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        LifecycleFixtures.For("artifact").Initialize = async token =>
+        {
+            entered.SetResult();
+            await release.Task;
+            if (throwing) { throw new InvalidOperationException("seeded-secret", new Exception("seeded-late-secret")); }
+            token.ThrowIfCancellationRequested();
+        };
+        var web = LifecycleFixtures.WebBuilder();
+        var builder = LifecycleFixtures.Registry(web.Services);
+        var lease = await builder.ComposeHoardModulesAsync(builder.ValidateComposition(LifecycleFixtures.Selection(),
+            LifecycleFixtures.Versions, new()
+            {
+                StartupTimeout = TimeSpan.FromSeconds(1),
+                DrainTimeout = TimeSpan.FromSeconds(1)
+            }, clock).Composition!);
+        var app = await web.BuildHoardApplicationAsync(lease);
+        await app.MapHoardModulesAsync(lease);
+        var startup = lease.Lifecycle.StartAsync();
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await LifecycleTestHarness.Until(() => clock.NextDelay == TimeSpan.FromSeconds(1));
+            clock.Advance(TimeSpan.FromSeconds(1));
+            await LifecycleTestHarness.Until(() => lease.Lifecycle.Snapshot.Phase == HoardLifecyclePhase.Draining
+                && clock.NextDelay == TimeSpan.FromSeconds(1));
+            clock.Advance(TimeSpan.FromSeconds(1));
+            var start = await startup.WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.False(start.Ready);
+            await Assert.ThrowsAsync<HoardLifecycleException>(() => lease.DisposeAsync().AsTask());
+            var frozen = lease.StopResult;
+            release.SetResult();
+            await lease.Coordinator.Activities.WhenQuiescent.WaitAsync(TimeSpan.FromSeconds(5));
+            var snapshot = lease.Lifecycle.Snapshot;
+            if (throwing)
+            {
+                var diagnostic = Assert.Single(snapshot.Diagnostics, item => item.RuleCode == "LateCallbackFailure");
+                Assert.Equal("artifact", diagnostic.ModuleId);
+                Assert.Equal(HoardLifecyclePhase.Initializing, diagnostic.Phase);
+                Assert.True(diagnostic.Cleanup);
+                Assert.Equal(snapshot.CorrelationId, diagnostic.CorrelationId);
+            }
+            else { Assert.DoesNotContain(snapshot.Diagnostics, item => item.RuleCode == "LateCallbackFailure"); }
+            LifecycleFixtures.AssertSafe(snapshot.Diagnostics);
+            Assert.DoesNotContain(start.Diagnostics, item => item.RuleCode == "LateCallbackFailure");
+            Assert.DoesNotContain(frozen!.Diagnostics, item => item.RuleCode == "LateCallbackFailure");
+            await Assert.ThrowsAsync<HoardLifecycleException>(() => lease.DisposeAsync().AsTask());
+            Assert.Same(frozen, lease.StopResult);
+            Assert.False(snapshot.StartupAdmission);
+            Assert.DoesNotContain("initialize", LifecycleFixtures.For("metadata").Calls);
+            Assert.DoesNotContain("stop", LifecycleFixtures.For("artifact").Calls);
+            Assert.Equal(1, LifecycleFixtures.For("metadata").Calls.Count(call => call == "stop"));
+        }
+        finally
+        {
+            release.TrySetResult();
+            await startup.WaitAsync(TimeSpan.FromSeconds(5));
+            await lease.Coordinator.Activities.WhenQuiescent.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+    }
+
+    [Theory]
     [InlineData(false, false)]
     [InlineData(false, true)]
     [InlineData(true, false)]

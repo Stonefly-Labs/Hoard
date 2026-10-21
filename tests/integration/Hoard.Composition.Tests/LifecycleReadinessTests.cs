@@ -5,6 +5,100 @@ namespace Hoard.Composition.Tests;
 
 public class LifecycleReadinessTests
 {
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task Timed_out_readiness_reports_eventual_fault_once_without_rewriting_assessment(bool initial, bool throwing)
+    {
+        LifecycleFixtures.Reset();
+        var clock = new LifecycleTestTimeProvider();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var web = LifecycleFixtures.WebBuilder();
+        var builder = LifecycleFixtures.Registry(web.Services);
+        var lease = await builder.ComposeHoardModulesAsync(builder.ValidateComposition(LifecycleFixtures.Selection(),
+            LifecycleFixtures.Versions, new()
+            {
+                ReadinessTimeout = TimeSpan.FromSeconds(1),
+                DrainTimeout = TimeSpan.FromSeconds(1)
+            }, clock).Composition!);
+        var app = await web.BuildHoardApplicationAsync(lease);
+        await app.MapHoardModulesAsync(lease);
+        if (!initial) { await app.StartAsync(); }
+        LifecycleFixtures.For("artifact").Readiness = async token =>
+        {
+            entered.SetResult();
+            await release.Task;
+            if (throwing) { throw new InvalidOperationException("seeded-secret", new Exception("seeded-late-secret")); }
+            token.ThrowIfCancellationRequested();
+            return new(true, []);
+        };
+        var startup = initial ? lease.Lifecycle.StartAsync() : null;
+        var assessment = initial ? null : lease.Lifecycle.AssessReadinessAsync();
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+            await LifecycleTestHarness.Until(() => clock.NextDelay == TimeSpan.FromSeconds(1));
+            clock.Advance(TimeSpan.FromSeconds(1));
+            HoardLifecycleSnapshot frozen;
+            HoardStopResult? final = null;
+            if (initial)
+            {
+                await LifecycleTestHarness.Until(() => lease.Lifecycle.Snapshot.Phase == HoardLifecyclePhase.Draining
+                    && clock.NextDelay == TimeSpan.FromSeconds(1));
+                clock.Advance(TimeSpan.FromSeconds(1));
+                Assert.False((await startup!.WaitAsync(TimeSpan.FromSeconds(5))).Ready);
+                await Assert.ThrowsAsync<HoardLifecycleException>(() => lease.DisposeAsync().AsTask());
+                final = lease.StopResult;
+                Assert.Equal(HoardRootDisposalOutcome.NotAttemptedUnsafe, final!.RootDisposal);
+                frozen = lease.Lifecycle.Snapshot;
+            }
+            else { frozen = await assessment!.WaitAsync(TimeSpan.FromSeconds(5)); }
+            Assert.False(frozen.Ready);
+            Assert.DoesNotContain(frozen.Diagnostics, item => item.RuleCode == "LateCallbackFailure");
+            release.SetResult();
+            await lease.Coordinator.Activities.WhenQuiescent.WaitAsync(TimeSpan.FromSeconds(5));
+            var snapshot = lease.Lifecycle.Snapshot;
+            if (throwing)
+            {
+                var diagnostic = Assert.Single(snapshot.Diagnostics, item => item.RuleCode == "LateCallbackFailure");
+                Assert.Equal("artifact", diagnostic.ModuleId);
+                Assert.Equal(HoardLifecyclePhase.AssessingReadiness, diagnostic.Phase);
+                Assert.True(diagnostic.Cleanup);
+                Assert.Equal(snapshot.CorrelationId, diagnostic.CorrelationId);
+            }
+            else { Assert.DoesNotContain(snapshot.Diagnostics, item => item.RuleCode == "LateCallbackFailure"); }
+            LifecycleFixtures.AssertSafe(snapshot.Diagnostics);
+            Assert.False(snapshot.Ready);
+            Assert.Equal(!initial, snapshot.StartupAdmission);
+            Assert.DoesNotContain(frozen.Diagnostics, item => item.RuleCode == "LateCallbackFailure");
+            if (initial)
+            {
+                await Assert.ThrowsAsync<HoardLifecycleException>(() => lease.DisposeAsync().AsTask());
+                Assert.Same(final, lease.StopResult);
+                Assert.DoesNotContain(final!.Diagnostics, item => item.RuleCode == "LateCallbackFailure");
+                Assert.All(LifecycleFixtures.Controls.Values, control => Assert.DoesNotContain("stop", control.Calls));
+            }
+            else
+            {
+                await lease.DisposeAsync();
+                Assert.True(lease.StopResult!.Complete);
+                Assert.Equal(throwing ? 1 : 0, lease.StopResult.Diagnostics.Count(item => item.RuleCode == "LateCallbackFailure"));
+                Assert.All(LifecycleFixtures.Controls.Values, control => Assert.Equal(1, control.Calls.Count(call => call == "stop")));
+            }
+            Assert.DoesNotContain("seeded-secret", System.Text.Json.JsonSerializer.Serialize(lease.Lifecycle.Snapshot));
+        }
+        finally
+        {
+            release.TrySetResult();
+            if (startup is not null) { await startup.WaitAsync(TimeSpan.FromSeconds(5)); }
+            if (assessment is not null) { await assessment.WaitAsync(TimeSpan.FromSeconds(5)); }
+            await lease.Coordinator.Activities.WhenQuiescent.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+    }
+
     [Fact]
     public void Optional_unhealthy_observation_does_not_override_explicit_module_status()
     {

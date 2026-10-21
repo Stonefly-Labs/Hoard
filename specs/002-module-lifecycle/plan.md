@@ -627,3 +627,116 @@ publication, tag, release or merge occurred.
 T001..T074 are complete. This finishes only implement; fresh convergence is
 the next separately authorized stage. Keep PR #6 draft without claiming
 finalization, merge readiness, feature completion or dependency availability.
+
+### T075 implementation follow-up
+
+The separately authorized implementation resolves the HIGH eventual-fault
+diagnostic omission found by convergence. A small internal CallbackObservation
+binds each supervised operation to its owner, originating phase and safe normal
+failure category. It records failures inside tracked activity, before release,
+then throws only a sanitized HoardLifecycleException. Once a bounded wait is
+abandoned, a later non-cancellation fault becomes additional LateCallbackFailure
+without depending on whether shared stop has completed. Normal awaited paths
+recognize already reported safe exceptions and do not duplicate diagnostics.
+Callback-thrown TimeoutException retains Timeout and existing cleanup/root
+TimedOut classification rather than being mistaken for an ordinary failure.
+
+Startup construction/service/build/map/initialization, initial/later readiness,
+cleanup, actual framework stop and root disposal use this same mechanism.
+Readiness linked-source disposal is safely observed too. The remaining task
+continuation only consumes already categorized task exceptions; it is not the
+diagnostic publication mechanism. T074's off-lock cancellation supervisor stays
+unchanged. Cooperative cancellation is not a new eventual fault. Root disposal
+uses the existing composition-wide activity tracker and sole lease owner.
+
+Known faults are published before quiescence, so the shared stop/final result
+can include them. A fault after a bounded result adds only to a later snapshot;
+it cannot rewrite immutable outcomes, retry cleanup or start deferred disposal.
+Completed faults do not falsely retain resources. Pending work still protects
+its owner/prerequisites/root under the original absolute deadlines. There is
+no public API, dependency, provider boundary or second shutdown path change.
+
+#### Focused failure and correction evidence
+
+The first six-case run reproduced the original readiness/cleanup omissions:
+three missing-diagnostic assertions failed and three cooperative counterparts
+passed. The expanded 19-case pre-fix run failed six missing-diagnostic
+assertions, with 13 passing counterparts/direct-failure cases and zero skipped.
+It also exercised initial readiness, startup, framework-stop and root-disposal
+faults after bounded results. Existing directly awaited phase/cleanup cases now
+assert once-only categories; added callback-thrown TimeoutException cases
+preserve normal timeout classifications.
+
+The focused suite also covers cleanup faulting while independent cleanup keeps
+shared stop open: the original callback remains TimedOut, prerequisite and
+independent cleanup complete once when safe, and final root disposal completes.
+Initial/later readiness and post-result startup/cleanup/framework/root cases
+assert safe owner/phase/action/correlation, frozen results, no retry/deferred
+disposal and zero seeded exception payloads in normal logs/results. All held
+work is released and observed with barriers/fake time and bounded scheduler
+backstops, not observer sleeps. A test-only compile syntax error and two test
+oracles were corrected during development: Timeout plus LateCallbackFailure
+are separate findings, and a direct cleanup timeout waits for its supervised
+cancellation to quiesce before claiming otherwise safe root release.
+
+#### Bounded implementation architecture review
+
+Custom hoard-architecture-review (`t075-architecture`) reviewed the changed
+coordinator/lease and immediate tracker/deadline/planner/bridge context with
+the focused regressions. It found two related confirmed gaps, both reproduced
+and corrected within this implementation:
+
+| Finding | Correction and focused proof |
+| --- | --- |
+| HIGH: worker faults after stop was latched were swallowed before activity release | Record one safe additional LateCallbackFailure with owner/Running phase during drain or after bounded stop; never request shutdown again. Both timings now have barrier-held regressions, plus cooperative late-worker counterparts and unchanged frozen outcomes. |
+| MEDIUM: root disposal could be dispatched after time expired while resuming from successful framework stop | Recheck the same absolute deadline immediately before root dispatch; return NotAttemptedBudgetExhausted without invoking disposal. An injected inter-phase clock advances time after the preceding timestamp read and proves zero disposer calls across repeated disposal. |
+
+Before these corrections, the six-case review follow-up failed three intended
+assertions (worker during drain, worker after bounded stop, root budget boundary)
+and passed three counterparts. The complete focused suite after correction
+passed 69 tests with zero failures/skips. The reviewer ran no commands/tests
+and did not independently re-review these corrections; their resolution is
+supported by the failing-then-passing regressions and full acceptance below,
+not a fabricated clean re-review. Its remaining evidence gaps were pending full
+packed-lock acceptance and the previously acknowledged absence of a direct
+host-notification-task exception injection. This change exercises actual
+framework-stop faults, not that distinct notification-task injection.
+
+#### Measured follow-up commands
+
+| Command | Result |
+| --- | --- |
+| `bash scripts/validate-lifecycle.sh --filter 'FullyQualifiedName~Timed_out_readiness_reports_eventual_fault_once\|FullyQualifiedName~Timed_out_cleanup_reports_eventual_fault_before'` | Intended red before product correction: three failed, three passed, zero skipped; direct runner output confirmed the missing diagnostic assertions |
+| `dotnet test tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj -c Release --no-restore --filter 'FullyQualifiedName~reports_eventual_fault\|FullyQualifiedName~Framework_stop_and_root_disposal_report_faults_once\|FullyQualifiedName~Entered_failure_preserves_safe_primary\|FullyQualifiedName~Cleanup_exception_does_not_skip' -v minimal` | Expanded pre-fix red: six failed, 13 passed, zero skipped |
+| `dotnet test tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj -c Release --no-restore --filter 'FullyQualifiedName~Worker_fault_during_drain\|FullyQualifiedName~Timed_out_cleanup_or_worker\|FullyQualifiedName~Budget_expiry_between_framework_stop' -v minimal` | Review findings red before correction: three failed, three passed, zero skipped |
+| `dotnet test tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj -c Release --no-restore --filter 'FullyQualifiedName~LifecycleReadinessTests\|FullyQualifiedName~LifecycleDeadlineTests\|FullyQualifiedName~LifecycleCleanupTests\|FullyQualifiedName~LifecycleOwnershipTests\|FullyQualifiedName~LifecyclePhaseFailureTests\|FullyQualifiedName~WorkerAdmissionTests\|FullyQualifiedName~LifecycleConcurrencyTests' -v minimal` | Passed after all corrections: 69 tests, zero failed/skipped |
+| `dotnet format Hoard.slnx --no-restore --verbosity quiet` | Passed; SDK formatting applied before packed acceptance |
+| `bash scripts/validate-lifecycle.sh --update-locks` | Passed: 161 source tests, nine boundary proofs, seven package-only journeys, six independent packages and retained old-binary/new-source/framework proof |
+| `bash scripts/validate-lifecycle.sh` | Independent default passed: same 161 tests, nine proofs and seven journeys; source/standalone SDK formatting/analyzers and package provenance verified without lock mutation |
+| `bash scripts/validate-foundation.sh --update-locks` | Passed: 255 tests (42 foundation, 49 architecture, 164 composition), zero failed/skipped; affected packed Hosting consumer hashes refreshed |
+| `bash scripts/validate-foundation.sh` | Independent default passed: same 255 tests, zero failed/skipped; original eight scans, ARCH-001..008, C-01..23, isolated Core and both compile-only hosts retained |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed: 22 tests |
+
+A structured old/new lock comparison verifies ten affected standalone files
+and 16 contentHash-only changes for Hosting and dependent lifecycle
+protocol/identity fixture payloads. No versions or dependency metadata change;
+Abstractions-only fixtures, baseline old-binary and platform/test locks remain
+unchanged. Both independent defaults use fresh private feeds/caches without
+hash bypass or lock rewriting. Whitespace, local documentation links and
+protected-artifact checks pass before the shared checkpoint.
+
+README, DEVELOPMENT, PROVIDERS, LifecycleHost guide, quickstart, lifecycle
+contract/model and task checkpoint document actual diagnostic/deadline
+semantics. Spec, public API/acceptance contracts, built-in/reviewer-owned
+checklists, F-01 sources/examples and Abstractions/Core/Application source are
+unchanged. Product charter/specification, baseline architecture/diagrams/ADR,
+governance, master backlog, IaC and release guides are unaffected: these
+corrections restore existing fault/deadline/resource invariants without new
+product scope, APIs, dependencies, permissions or operational actions.
+No extension hooks are registered (`.specify/extensions.yml` is absent).
+No infrastructure plan/apply, deployment, publication, tag, release or merge
+occurred. Implementation, fresh convergence, finalization and dependency
+completion remain separate gates; PR #6 stays draft.
+
+T001..T075 are complete. This finishes only implement; fresh convergence is
+the next separately authorized stage, not finalization or dependency completion.

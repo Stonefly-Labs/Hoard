@@ -7,19 +7,24 @@ namespace Hoard.Composition.Tests;
 public class LifecyclePhaseFailureTests
 {
     [Theory]
-    [InlineData("services")]
-    [InlineData("map")]
-    [InlineData("initialize")]
-    [InlineData("readiness")]
-    public async Task Entered_failure_preserves_safe_primary_error_and_cleans_once(string phase)
+    [InlineData("services", false)]
+    [InlineData("map", false)]
+    [InlineData("initialize", false)]
+    [InlineData("readiness", false)]
+    [InlineData("services", true)]
+    [InlineData("map", true)]
+    [InlineData("initialize", true)]
+    [InlineData("readiness", true)]
+    public async Task Entered_failure_preserves_safe_primary_error_and_cleans_once(string phase, bool timeout)
     {
         LifecycleFixtures.Reset();
         await using var capture = new LifecycleTestHarness();
         var control = LifecycleFixtures.For("artifact");
-        if (phase == "services") { control.Configure = _ => throw new InvalidOperationException("seeded-secret"); }
-        if (phase == "map") { control.Map = _ => throw new InvalidOperationException("seeded-secret"); }
-        if (phase == "initialize") { control.Initialize = _ => throw new InvalidOperationException("seeded-secret"); }
-        if (phase == "readiness") { control.Readiness = _ => throw new InvalidOperationException("seeded-secret"); }
+        Exception Fault() => timeout ? new TimeoutException("seeded-secret") : new InvalidOperationException("seeded-secret");
+        if (phase == "services") { control.Configure = _ => throw Fault(); }
+        if (phase == "map") { control.Map = _ => throw Fault(); }
+        if (phase == "initialize") { control.Initialize = _ => throw Fault(); }
+        if (phase == "readiness") { control.Readiness = _ => throw Fault(); }
         var web = LifecycleFixtures.WebBuilder();
         web.Logging.AddProvider(capture);
         var builder = LifecycleFixtures.Registry(web.Services);
@@ -45,6 +50,8 @@ public class LifecyclePhaseFailureTests
         Assert.DoesNotContain("seeded-secret", error.ToString());
         Assert.DoesNotContain("seeded-secret", string.Join("\n", capture.Logs));
         LifecycleFixtures.AssertSafe(error.Diagnostics);
+        Assert.Single(error.Diagnostics, item => item.RuleCode == (timeout ? "Timeout" : phase == "readiness" ? "InvalidReadiness" : "PhaseFailure"));
+        Assert.DoesNotContain(error.Diagnostics, item => item.RuleCode == "LateCallbackFailure");
         Assert.DoesNotContain("worker", control.Calls);
         Assert.Equal(1, control.Calls.Count(item => item == "stop"));
     }

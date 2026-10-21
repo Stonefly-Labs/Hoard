@@ -203,6 +203,17 @@ faults are not still-running work and need not prevent otherwise safe cleanup.
 Faults after bounded stop/disposal appear only in later snapshots, never rewrite
 immutable results or trigger retries/deferred disposal.
 
+Supervised startup, readiness, cleanup, framework-stop and root-disposal
+callbacks record faults inside their tracked activity before releasing it.
+Normal awaited failures retain their safe category exactly once. After a wait
+is abandoned, eventual faults report additional LateCallbackFailure with the
+originating owner/phase, whether shared stop is pending or complete; cooperative
+cancellation is not a new fault. Worker faults during shutdown likewise report
+additional failures without another stop request. Already returned results
+remain immutable. After successful framework stop, recheck the same shutdown
+deadline before dispatching root disposal; an exhausted budget leaves it
+NotAttemptedBudgetExhausted, not a dispatched TimedOut operation.
+
 ## Budgets and Non-Cooperative Code
 
 | Budget | Default | Enforcement |

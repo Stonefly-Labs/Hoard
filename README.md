@@ -284,10 +284,16 @@ cleanup fault is also omitted if it occurs before the shared stop completes.
 Two isolated public-API probes confirmed the missing safe failure categories,
 without changing resource-release outcomes or exposing provider payloads.
 [Phase 11 / T075](specs/002-module-lifecycle/tasks.md#phase-11-convergence)
-records once-only, owner-aware observation and deterministic regression work.
-Existing tasks, spec, plan and reviewer-owned checklists remain unchanged.
-The next separately authorized stage is `implement` for T075, then fresh
-convergence; F-02 remains draft, not finalized or ready to merge.
+now records the separately authorized correction. Supervised callbacks publish
+one safe owner/phase diagnostic before releasing tracked activity, regardless
+of whether stop has finished. Direct failures are not duplicated; late faults
+do not rewrite returned outcomes or retry cleanup. The implementation review
+also identified and corrected omitted worker faults during shutdown and root
+disposal dispatch after budget expiry, with failing-then-passing regressions.
+See the [T075 evidence](specs/002-module-lifecycle/plan.md#t075-implementation-follow-up).
+Spec and reviewer-owned checklists remain unchanged. Fresh `converge` is the
+next separately authorized stage; F-02 remains draft, not finalized or ready
+to merge.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

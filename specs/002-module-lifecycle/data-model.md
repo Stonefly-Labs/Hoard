@@ -190,6 +190,16 @@ releasing the supervised activity so quiescence/result publication cannot hide
 a known error. Late faults add only to later snapshots; a completed fault does
 not itself mean resources are still in use.
 
+Supervised callback observation retains its safe owner, originating phase and
+normal failure category, plus whether bounded waiting was abandoned. Record
+faults before releasing tracked activity: normal awaited faults have one safe
+diagnostic, while eventual faults after abandonment add LateCallbackFailure
+independently of terminal stop state. Cooperative cancellation adds no eventual
+fault. Worker faults during stop use the same additional diagnostic semantics
+without another shutdown request. Root-disposal activity uses the existing
+composition tracker and sole lease owner; a deadline recheck after framework
+stop prevents dispatch when its original budget has expired.
+
 `HoardStopResult` preserves primary startup/stop failure and per-module cleanup:
 NotEntered, Completed, Failed, TimedOut, NotAttemptedBudgetExhausted, or
 UnsafePendingCallback. Cleanup completed does not mean persistent changes

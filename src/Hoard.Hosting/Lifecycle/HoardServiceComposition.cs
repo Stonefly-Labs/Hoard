@@ -35,14 +35,18 @@ public sealed class HoardServiceComposition : IAsyncDisposable
         if (deadline.Remaining <= TimeSpan.Zero)
         { throw Coordinator.Error("Timeout", "composition", HoardLifecyclePhase.Stopping, true); }
         var activity = Coordinator.Activities.Enter("composition", HoardActivityKind.Phase);
+        var observation = new HoardLifecycleCoordinator.CallbackObservation(Coordinator,
+            "composition", HoardLifecyclePhase.Stopping, "HostStopFailure", true);
         var work = Task.Run(async () =>
         {
-            using (activity) { await Application!.StopAsync().ConfigureAwait(false); }
+            using (activity) { await observation.RunAsync(() => Application!.StopAsync()).ConfigureAwait(false); }
         });
-        Coordinator.Observe(work);
+        HoardLifecycleCoordinator.Observe(work);
         try { await deadline.WaitAsync(work, deadline.Remaining, CancellationToken.None).ConfigureAwait(false); }
         catch (Exception error)
         {
+            observation.Abandon();
+            if (error is HoardLifecycleException) { throw; }
             throw Coordinator.Error(error is TimeoutException ? "Timeout" : "HostStopFailure",
                 "composition", HoardLifecyclePhase.Stopping, true);
         }
@@ -70,17 +74,33 @@ public sealed class HoardServiceComposition : IAsyncDisposable
             try
             {
                 await StopApplicationAsync().ConfigureAwait(false);
-                var root = Task.Run(async () => await Application.DisposeAsync().ConfigureAwait(false));
-                Coordinator.Observe(root);
-                try
+                if (deadline.Remaining <= TimeSpan.Zero) { outcome = HoardRootDisposalOutcome.NotAttemptedBudgetExhausted; }
+                else
                 {
-                    await deadline.WaitAsync(root, deadline.Remaining, CancellationToken.None).ConfigureAwait(false);
-                    outcome = HoardRootDisposalOutcome.Completed;
-                }
-                catch (Exception error)
-                {
-                    outcome = error is TimeoutException ? HoardRootDisposalOutcome.TimedOut : HoardRootDisposalOutcome.Failed;
-                    Coordinator.Error(error is TimeoutException ? "Timeout" : "RootDisposalFailure", "composition", HoardLifecyclePhase.CleaningUp, true);
+                    var activity = Coordinator.Activities.Enter("composition", HoardActivityKind.Phase);
+                    var observation = new HoardLifecycleCoordinator.CallbackObservation(Coordinator,
+                        "composition", HoardLifecyclePhase.CleaningUp, "RootDisposalFailure", true);
+                    var root = Task.Run(async () =>
+                    {
+                        using (activity) { await observation.RunAsync(() => Application.DisposeAsync().AsTask()).ConfigureAwait(false); }
+                    });
+                    HoardLifecycleCoordinator.Observe(root);
+                    try
+                    {
+                        await deadline.WaitAsync(root, deadline.Remaining, CancellationToken.None).ConfigureAwait(false);
+                        outcome = HoardRootDisposalOutcome.Completed;
+                    }
+                    catch (Exception error)
+                    {
+                        observation.Abandon();
+                        outcome = HoardLifecycleCoordinator.CallbackObservation.IsTimeout(error)
+                            ? HoardRootDisposalOutcome.TimedOut : HoardRootDisposalOutcome.Failed;
+                        if (error is not HoardLifecycleException)
+                        {
+                            Coordinator.Error(error is TimeoutException ? "Timeout" : "RootDisposalFailure",
+                                "composition", HoardLifecyclePhase.CleaningUp, true);
+                        }
+                    }
                 }
             }
             catch (HoardLifecycleException)

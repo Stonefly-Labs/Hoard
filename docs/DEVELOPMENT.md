@@ -669,6 +669,35 @@ The next separately authorized stage is `implement` for T075, followed by fresh
 convergence. Keep PR #6 draft: finalization, merge, feature completion and
 dependency availability remain separate gates.
 
+The separately authorized
+[T075 implementation follow-up](../specs/002-module-lifecycle/plan.md#t075-implementation-follow-up)
+now binds fault observation to each supervised callback's owner and originating
+phase. Safe normal failures or additional `LateCallbackFailure` diagnostics
+are recorded inside tracked activity before release, not in a continuation
+conditioned on terminal stop. Startup, readiness, cleanup, framework stop and
+root disposal share the mechanism; directly awaited faults are not duplicated,
+and cooperative cancellation does not become a new eventual fault. Known
+errors can appear in the shared stop result; faults after bounded results
+appear only in later snapshots, without outcome changes, retry or deferred
+disposal. T074 cancellation supervision and the sole lease owner remain intact.
+
+The bounded architecture review found a HIGH omitted worker-fault path during
+shutdown and a MEDIUM missing deadline recheck between framework stop and root
+disposal. Focused red regressions reproduced both. Workers now record safe
+additional failures during drain or after bounded stop, without requesting a
+second shutdown. Root disposal is explicitly NotAttemptedBudgetExhausted when
+the existing deadline expires before dispatch. Review scope, the corrections'
+proof, package locks and full acceptance are recorded in the plan; the review
+itself ran no tests and did not re-review the corrections.
+
+README, provider/example guides, quickstart, lifecycle contract/model and task
+checkpoint document the corrected behavior. Requirements, public API/acceptance
+contracts and reviewer-owned checklist bytes remain unchanged; product intent,
+baseline diagrams/ADR, governance, backlog, F-01 sources/examples, IaC and release
+guidance are unaffected because no public API, dependency, product capability,
+permission or operational action changes. This finishes only implementation;
+fresh `converge` is next, and PR #6 remains draft.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
