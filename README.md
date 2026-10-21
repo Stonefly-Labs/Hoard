@@ -370,8 +370,19 @@ configuration 20/20 and safety 20/20 satisfied, with no unresolved writing gaps
 or decisions needing user attention. Both checklists record the evidence.
 This satisfies the custom requirements-review gate only, not implementation
 authorization or runtime acceptance. The specification, design and built-in
-16/16 checklist remain unchanged. The next scheduled stage is `tasks` through
-a separate invocation.
+16/16 checklist remain unchanged. That review did not start task generation
+or implementation.
+The subsequent [implementation task list](specs/003-provider-configuration/tasks.md)
+contains 69 unchecked tasks: shared setup/bounded ownership primitives, five
+story phases and cross-cutting acceptance. Source inspection is the first MVP;
+composition, secrets, restart/distribution and synthetic conversion follow with
+paired tests. Every requirement, outcome and planned CFG-01..36 proof case has
+task assignments, including retained binaries, atomic ownership races and
+platform publication/interruption. Independent tests/readers may run in parallel;
+shared evaluator/lifecycle/orchestrator edits are ordered explicitly.
+Specification/design and all checklist bytes remain unchanged. No configuration
+API, parser, resolver, converter or validation command is implemented by task
+generation. The next separately authorized stage is read-only `analyze`.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

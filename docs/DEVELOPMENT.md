@@ -1068,6 +1068,53 @@ gate is now satisfied. The next separately authorized stage is `tasks`, followed
 by read-only analysis; implementation is not started by this review and still
 requires the remaining scheduled gates and a separate invocation.
 
+### F-03 configuration task generation
+
+The subsequent installed `speckit-tasks` stage pins the recorded feature
+directory and produces the
+[implementation task list](../specs/003-provider-configuration/tasks.md):
+69 unchecked tasks across eight phases. Setup has four tasks, shared bounded
+ownership/metadata primitives have eight, the five story phases have
+8/11/11/7/12 respectively, and cross-cutting acceptance has eight.
+
+The source-resolution MVP inspects safe winners/provenance without construction
+or secret reads; it cannot produce a successful activation proof. Later
+increments add secret-free composition through the actual F-02 gate, local
+owner-scoped secrets, restart/bundled/custom journeys and explicit synthetic
+conversion. All 26 requirements, eight outcomes and 36 planned CFG proof cases
+have implementation/integration and focused evidence assignments, retaining the
+acceptance contract's mappings for all 22 scenarios and 13 edge cases.
+
+Task-level prerequisites order shared parser/evaluator/proof/lifecycle and
+orchestrator edits. Disjoint tests, local env/file readers and conversion
+mapping/publication work have explicit parallel groups; US4/US5 can develop
+after the secure secret increment, with shared runner edits serialized.
+Every task names destinations and required outcomes, including finite budgets
+and size limits, unknown-identity remapping, atomic proof/disposal/input-transfer
+races, retained option-bearing provider/lifecycle binaries, actual package
+graphs and platform-specific no-clobber/interruption proof. Test instructions
+require intended red-before-green evidence and release/observation of held work.
+
+The specification, seven design artifacts and all built-in/custom checklist
+bytes remain unchanged. Task generation neither evaluates those checklists
+again nor supplies runtime acceptance. The existing assisted 40/40
+requirements-quality review remains satisfied. No extension hooks are configured.
+No parser, resolver, converter, runtime API, package/example change, dependency,
+lockfile or `validate-configuration.sh` is created by this stage.
+
+README and this guide link the generated work and next gate. Provider/example
+guides, product charter/specification, baseline architecture/diagrams/ADR,
+constitution, backlog, predecessor artifacts, IaC and release documentation are
+unaffected: no implemented API, graph, support claim, command, listener,
+permission or operational procedure changes. Their actual configuration and
+recovery additions remain implementation tasks. No infrastructure plan/apply,
+deployment, publication or merge occurs.
+
+The next separately authorized invocation runs read-only `analyze`; do not
+start implementation or silently remediate analysis findings in that stage.
+The reviewed custom checklists do not bypass analysis or authorize another
+scheduled stage in this invocation.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
