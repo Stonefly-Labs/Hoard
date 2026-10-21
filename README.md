@@ -22,7 +22,7 @@ dependency management into another full-time job.
 > [!IMPORTANT]
 > **Foundation only.** This repository currently contains product/design documents,
 > development workflows, repository tooling, .NET provider contracts and a tested
-> fixture-only module lifecycle, an in-progress source-only configuration boundary,
+> fixture-only module lifecycle and configuration boundaries,
 > plus an operator-run Azure identity bootstrap.
 > There is no runnable cache, working provider, UI, container, or published package.
 > Everything in the product overview below describes the planned experience.
@@ -426,7 +426,16 @@ filesystems are not certified by that run. No runnable cache, production
 provider, native-client or conformance claim follows.
 
 [PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) stays draft.
-Convergence, finalization and maintainer-authorized merge remain separate gates.
+The F-03 convergence assessment reproduced two **HIGH** diagnostic gaps despite
+passing existing acceptance: secret failures lose their known setting identity,
+and option-check failures discard the declared rule and winning source.
+[Phase 9 / T070–T071](specs/003-provider-configuration/tasks.md#phase-9-convergence)
+records the remaining work without changing the original 69 tasks, spec, plan
+or reviewer-owned checklists. Both failures still block activation; no credential
+disclosure or activation bypass was observed. The next stage is `implement`,
+then a fresh convergence assessment; finalization remains blocked.
+See the [convergence checkpoint](docs/DEVELOPMENT.md#f-03-convergence-diagnostic-follow-up)
+for evidence and scope. Maintainer-authorized merge remains a separate gate.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

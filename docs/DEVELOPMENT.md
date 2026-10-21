@@ -1268,6 +1268,51 @@ baseline diagrams/ADR, constitution, backlog, infrastructure and release guides
 are otherwise unaffected: no real provider, listener, management/API/UI,
 deployment, permission or provider-data operation is introduced.
 
+### F-03 convergence: diagnostic follow-up
+
+The installed `speckit-converge` assessed the present scoped implementation
+against all 26 FRs, eight buildable SCs, 22 story scenarios, 13 edge cases,
+12 grouped plan decisions, 69 original tasks and eight constitutional principles.
+Its outcome is **tasks_appended**, with two HIGH partial diagnostic-fidelity
+findings and no missing, contradicting or unrequested findings:
+
+| Finding | Current evidence | Remaining task |
+| --- | --- | --- |
+| F1: known secret setting lost | A public-API probe supplies a CLI reference for `modules:metadata:options:credential`; missing resolution reports `SecretUnavailable`, owner `metadata`, source `CommandLine`, but setting `unknown-setting` | T070: retain safe setting context through resolution and supervised failures |
+| F2: option rule/source lost | A public validator returns the declared field/rule `label`/`paired` after a CLI override; the report has the canonical field but only `CheckFailure`, source `Defaults`, no `paired` identity and generic correction | T071: retain the validated declared rule and effective source with host-owned action text |
+
+The probes use current compiled Hosting APIs and existing instrumented fixtures
+in a session-private harness, not application changes or personal credentials.
+Both failures return no activation proof. No credential disclosure, activation
+bypass or new lifecycle authority was observed. These are feature diagnostic
+gaps, not a claim that a passing suite proves every requirement.
+
+Fresh exact acceptance commands passed:
+
+| Command | Result |
+| --- | --- |
+| `bash scripts/validate-configuration.sh` | 168 configuration tests, six boundary proofs, nine package-only journeys, five actual Darwin child interruption barriers; CFG-01..36, formatting/analyzers and tooling passed; locks unchanged |
+| `bash scripts/validate-lifecycle.sh` | 336 tests, nine boundary proofs, seven journeys, six independent packages and retained old registration binary passed |
+| `bash scripts/validate-foundation.sh` | 42 unit, 54 architecture and 339 composition tests passed, zero failures/skips; retained package/Core/host/rejection proofs passed |
+| `python3 -m unittest discover -s tests/tooling -v` | All 38 tests passed |
+
+The stage appends only [Phase 9 / T070–T071](../specs/003-provider-configuration/tasks.md#phase-9-convergence).
+All original task bytes/markers, spec, plan, contracts and reviewer checklists
+remain unchanged; the earlier implementation-stage status in the task list
+is historical, not completion of the two new tasks. No extension hooks exist.
+The shared checkpoint returns to `implement / ready`, then requires a fresh
+convergence assessment. PR #8 remains draft; finalization and merge are blocked
+until the gaps are resolved. No feature completion or dependency unlock occurs.
+
+README and this guide update only current foundation/stage status. Provider/
+example/quickstart guidance, baseline product/architecture diagrams/ADR,
+governance/backlog, predecessor artifacts, infrastructure and release guides
+are otherwise unaffected: no API, dependency, grammar, command, runtime behavior,
+platform support, permission or operational procedure changed. Diagnostic
+guidance/evidence changes belong to the implementation follow-up. Existing
+architecture-review evidence remains historical; this append-only task/docs
+checkpoint changes no provider boundary or shared lifecycle invariant.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

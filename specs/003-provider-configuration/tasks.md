@@ -496,3 +496,19 @@ SC outcomes have explicit assignments as well; counts do not prove acceptance.
   commit. Keep the feature PR draft until separately authorized finalization.
 - No infrastructure plan/apply, deployment, package/release publication or merge
   is authorized by these tasks.
+
+## Phase 9: Convergence
+
+The present-code assessment found two HIGH partial diagnostic-fidelity gaps.
+All original T001..T069 remain unchanged. Public-API probes against the current
+binaries reproduce both gaps despite passing existing CFG-01..36 acceptance:
+a missing CLI-supplied secret reports `unknown-setting`, and a declared
+`paired` option-rule rejection on a CLI-overridden field reports only
+`CheckFailure` with source `Defaults`. Both paths still reject without an
+activation proof; no credential disclosure or activation bypass was observed.
+Execute T070 before T071 to serialize shared supervisor/report and acceptance
+inventory edits. Finalization requires implementation and a fresh convergence
+assessment, not just the existing passing test counts.
+
+- [ ] T070 Preserve the known canonical secret setting through active env/file dispatch and originating failure, timeout, cancellation-notification and late-fault diagnostics in `src/Hoard.Hosting/Configuration/ConfigurationSecretResolver.cs` and `ConfigurationSupervisor.cs`; retain the actual winning source and registered owner without exposing values, locators or raw errors. Add focused paired regressions in `tests/integration/Hoard.Composition.Tests/ConfigurationSecretTests.cs` and `ConfigurationCoordinationTests.cs` that distinguish multiple known fields, cover unavailable and pending outcomes, keep returned reports frozen and release/observe held work; require the new scenario identities in `scripts/configuration_evidence.py`. Record intended red/green and safe-output evidence during implementation per FR-024, US3/AC2, SC-004, CFG-13..14/17..20 and T034/T040 (partial, HIGH).
+- [ ] T071 Preserve effective setting-source provenance and the validated declared option-rule identity in active option diagnostics in `src/Hoard.Hosting/Configuration/ConfigurationOptionChecker.cs`, `ConfigurationSupervisor.cs` and `HoardConfigurationReport.cs`, using bounded known metadata and host-owned corrective-action text rather than provider messages; do not collapse a declared `paired` rejection into an unnamed generic check or label a CLI-supplied failing field as Defaults. Cover public and secret-dependent rule rejections, explicit option-version provenance and malformed/unknown rule counterparts in `tests/integration/Hoard.Composition.Tests/ConfiguredCompositionTests.cs` and `ConfigurationSecretTests.cs`, and require the new scenario identities in `scripts/configuration_evidence.py`. Preserve fail-before-activation ordering, redaction, diagnostic bounds and F-02 authority; update affected diagnostic guidance/evidence and record intended red/green during implementation per FR-024, US2/AC3, SC-004, CFG-10/12/17/26 and T022/T034/T040 (partial, HIGH).
