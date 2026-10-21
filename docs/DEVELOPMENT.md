@@ -775,6 +775,47 @@ IaC and release guidance are unaffected: no public API, dependency, product
 capability, permission or operational action changes. This completes only
 implementation; fresh `converge` is next and PR #6 remains draft.
 
+### F-02 clean convergence
+
+The subsequent installed `speckit-converge` assessment found no actionable gaps
+in the current implementation against the spec, plan and all 76 tasks,
+including the resulting T073..T076 corrections. It checked 22 functional
+requirements, seven buildable outcomes, all 20 story scenarios, 12 edge cases
+and 40 LC cases, plus 20 buildable plan obligations and the eight constitutional
+principles as applicable to this bounded feature.
+
+The plan obligations cover additive registration compatibility, metadata-only
+validation, immutable selection, deterministic dependencies, host-owned
+adapters, one coordinator, supervised build, analyzable owned routes, admission,
+initial/later readiness, worker supervision, absolute budgets, reverse cleanup,
+pending-resource retention, sole root ownership, safe diagnostics, independent
+fixtures, restart/custom journeys, source/binary/framework compatibility, and
+locked acceptance with architecture review and honest documentation. Current
+source and focused proof paths were inspected; checked task boxes alone were
+not evidence. There were zero missing, partial, contradictory or unrequested
+findings, so `tasks.md` remains byte-for-byte unchanged without an empty phase.
+Spec, plan, contracts, all checklist bytes, product/test/tooling sources and
+tracked locks also remain unchanged.
+
+| Fresh command | Result |
+| --- | --- |
+| `bash scripts/validate-lifecycle.sh` | Passed: 169 tests, nine boundary proofs, seven package-only journeys; six independent packages, retained old binary, new-source/shared-framework proof, formatting/analyzers and unchanged locks |
+| `bash scripts/validate-foundation.sh` | Passed: 263 tests (42 foundation, 49 architecture, 172 composition), zero failed/skipped; original eight graph scans, ARCH-001..008, C-01..23, isolated Core, five original fixture packages and both compile-only hosts |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed: 22 tests |
+
+The earlier direct host-notification-task exception-injection limitation
+remains explicitly scoped in the implementation evidence, not a newly claimed
+proof. No new runtime change requires another implementation architecture
+review. README and this guide record convergence; provider/example/quickstart
+contracts, product intent, diagrams/ADR, governance, backlog, IaC and release
+guidance are unaffected because no API, behavior, dependency, operational step
+or supported capability changes. No extension hooks are registered.
+
+The checkpoint schedules `finalize` for a separate invocation. Keep PR #6
+draft: clean convergence is not finalization, merge readiness, feature
+completion or dependency availability. No infrastructure plan/apply, deployment,
+publication, tag, release or merge occurred.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
