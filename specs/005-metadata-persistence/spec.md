@@ -13,6 +13,38 @@ provider qualification or product runtime is delivered by this stage.
 
 **Feature Directory**: `specs/005-metadata-persistence`
 
+## Clarifications
+
+### Session 2026-10-21
+
+No critical ambiguities detected worth formal clarification. Zero questions
+were asked or answered; no requirements, acceptance criteria or scope decisions
+changed.
+
+All ten review categories are clear for this bounded feature: functional scope
+and behavior, domain and data model, interaction and UX flow, applicable
+non-functional quality attributes, integration and external dependencies,
+edge cases and failure handling, constraints and tradeoffs, terminology and
+consistency, completion signals, and miscellaneous/placeholders.
+
+Caller-supplied canonical identities, atomic metadata groups, consistent grouped
+reads, revision conflicts and uncertain-commit reconciliation have explicit
+observable outcomes. Shared publication authority supplies artifact evidence;
+metadata reference checks never authorize physical deletion alone. Ownership
+guards reject expired lease holders without promising distributed coordination.
+Controlled schema admission, single-upgrader exclusion and tested recovery
+preserve committed state without silent reset or fallback.
+
+Real SQLite durability qualification and an independent alternative fixture are
+required, but neither implies production provider delivery or generic F-07
+certification. Exact operation signatures, common value and page limits,
+timestamp precision, finite budgets, reconciliation lifetime, supported schema
+paths and proof mechanics remain planning decisions under the existing
+requirements. No throughput target, production service-level promise, rendered
+UI, cross-engine transfer or multi-node support is in scope. No consequential
+product decision blocks planning; this review does not approve custom checklists
+or establish runtime evidence.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Retain Correctly Isolated Cache State (Priority: P1)

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "clarify",
+  "stage": "plan",
   "status": "ready",
   "branch": "feature/005-metadata-persistence",
   "active": {
@@ -428,6 +428,13 @@
       "branch": "feature/005-metadata-persistence",
       "at": "2026-10-21T21:37:48.338609+00:00",
       "evidence": "Installed speckit-specify completed F-05 in pinned specs/005-metadata-persistence using exact master prompt and resolved template. Reviewed five journeys, 23 scenarios, 14 edges, 24 requirements, ten entities and eight outcomes; built-in quality checklist 16/16, no unresolved markers. Bounded SQLite qualification distinguished from later production SPEC-03; alternative fixture does not imply durable support. README/development updated; no hooks registered, custom approval, plan or implementation. Tooling unittest suite 61/61 passed; artifact/context/local-link checks and git diff --check passed. Next: clarify in separate invocation."
+    },
+    {
+      "stage": "clarify",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-21T21:51:07.213179+00:00",
+      "evidence": "F-05 clarification via installed speckit-clarify: zero questions; all ten categories clear; no requirement/acceptance/scope changes. Dated Clarifications section added; built-in checklist revalidated 16/16 to 16/16, zero newly passing/regressions/unchecked and bytes unchanged. Explicit pinned prerequisite paths passed; no pre/post hooks configured. README and DEVELOPMENT updated; baseline/provider/example/release/IaC docs unaffected because no API/runtime/operational changes. python3 -m unittest discover -s tests/tooling -v passed 61 tests; git diff --check passed. Draft PR #14 retained; planning only next invocation."
     }
   ]
 }

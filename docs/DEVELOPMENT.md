@@ -2166,6 +2166,44 @@ feature PR remains draft. No plan, tasks, custom review, implementation,
 qualification, schema upgrade, release, merge, infrastructure or deployment is
 performed by this stage.
 
+### F-05 metadata persistence clarification
+
+The separately invoked `clarify` stage uses the recorded
+`feature/005-metadata-persistence` branch and explicitly pinned
+`specs/005-metadata-persistence`, retaining draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14).
+Fetched main contains no new commits requiring branch reconciliation. The
+installed `speckit-clarify` resolves the existing specification without
+rerunning its generator or creating another feature. No extension hooks are
+configured.
+
+The [dated review](../specs/005-metadata-persistence/spec.md#clarifications)
+finds all ten ambiguity/coverage categories clear: zero questions and no
+requirement, acceptance or scope changes. Identity isolation, atomic groups,
+consistent reads, revision conflicts, reconcilable uncertain commits,
+artifact-evidence authority, reference/lease safety and controlled schema
+recovery remain explicit. SQLite durable qualification and alternative-fixture
+semantics remain distinct from production support and generic certification.
+Exact signatures, value/page limits, timestamp precision, finite budgets,
+reconciliation lifetime, schema paths and proof mechanics are constrained
+planning decisions, not unresolved product decisions.
+
+Built-in specification-quality revalidation remains **16/16 to 16/16**:
+zero newly passing items, regressions or unchecked items. All checklist bytes
+remain unchanged; no reviewer-owned custom approval or runtime evidence is
+claimed. Only the spec's clarification section, README, this guide and shared
+checkpoint change. Provider/example guides, predecessor artifacts, baseline
+charter/product specification/architecture/ADR/diagrams, constitution/backlog,
+compatibility policy and release/IaC guidance are unaffected: no existing API,
+dependency, supported behavior, command or operational procedure changes.
+No new architecture-agent review is required for this documentation-only stage;
+product/.NET and OpenTofu acceptance are not rerun.
+
+The checkpoint schedules **`plan / ready`** through a separate invocation.
+PR #14 remains draft. No design artifacts, tasks, custom review, persistence
+implementation, schema upgrade, qualification, release, merge, infrastructure
+or deployment are produced by this clarification stage.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

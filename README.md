@@ -599,7 +599,13 @@ These are future acceptance obligations: bounded SQLite durability proof and
 an independent alternative fixture do not claim the later production provider,
 generic certification, cross-store transactions or multi-node safety.
 No persistence code, schema or new validation command exists from this stage;
-**`clarify`** is next through a separate invocation.
+the subsequent [clarification review](specs/005-metadata-persistence/spec.md#clarifications)
+finds all ten review categories clear, with zero questions and no requirement,
+acceptance or scope changes. The built-in quality checklist remains 16/16 with
+no marker changes; this is not custom reviewer approval or runtime evidence.
+Exact operation shapes, limits, budgets, reconciliation lifetime and schema
+paths remain constrained planning decisions. **`plan`** is next through a
+separate invocation.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
