@@ -870,9 +870,9 @@ with its directory, PR and merge commit.
 The completion checkpoint clears the active feature and schedules `specify`;
 the next dependency-ready entry is
 [F-03: provider configuration and activation validation](HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-03).
-This progress-only PR must merge before a new specification begins from main.
-No new specification or later stage ran, and no implementation, test, lock,
-task or reviewer-owned checklist changed.
+That progress-only PR had to merge before a new specification could begin from
+main. No new specification or later stage ran during that completion invocation,
+and no implementation, test, lock, task or reviewer-owned checklist changed.
 
 README, this guide and the specification's current status reflect completion;
 historical finalization evidence remains unchanged. Provider/example guides,
@@ -883,6 +883,52 @@ runtime/support behavior or operational requirement. No new architecture review,
 .NET acceptance or IaC run is warranted for this progress/docs-only scope.
 The stage performs no merge, publication, deployment, infrastructure action,
 tag, release or permission change.
+
+### F-03 configuration specification
+
+The F-02 completion checkpoint merged through
+[PR #7](https://github.com/Stonefly-Labs/Hoard/pull/7). The subsequent
+specification stage started `feature/003-provider-configuration` from fetched
+`origin/main`, verified the shared checkpoint and ratified constitution, and
+pinned [F-03](../specs/003-provider-configuration/spec.md) to
+`specs/003-provider-configuration` using the exact backlog prompt.
+
+Five prioritized stories, 22 acceptance scenarios, 26 functional requirements
+and eight outcomes cover command line > environment > one file > documented
+defaults, canonical-key conflicts, whole-selection replacement, provider option
+validation and disabled-module isolation. Configuration must consume F-02's
+existing pre-construction composition gate and F-01's compatibility policy,
+including incompatible enabled optional targets. Explicit validated defaults
+are not fallback from an invalid override. Environment/mounted-file secret
+references require no cloud service; safe diagnostics exclude values, locators
+and untrusted error payloads. Configuration work has finite coordination budgets,
+protects pending resources, observes late faults and cannot activate after failure.
+Settings and resolved secrets remain fixed until explicit restart.
+
+Safe configuration evolution requires a supported version, a sanitized preview,
+retained original, explicit approval and a complete validated replacement.
+The private replacement may preserve secret references, but reports never expose
+their locators or resolved credentials. Acceptance must include a representative
+and interrupted conversion; synthetic old versions cannot be advertised as
+released-format support. Configuration rollback never claims to reverse
+provider-owned schema/data changes.
+
+The [built-in requirements checklist](../specs/003-provider-configuration/checklists/requirements.md)
+passes all 16 specification-quality criteria, with no unresolved clarification
+markers. The bounded architecture review found no actionable findings or
+consequential unanswered requirement choices. Exact option-contract ownership/
+compatibility, actual lifecycle integration and pending-work retention, and
+migration interruption/recovery remain later proof obligations. This review
+does not generate or approve custom reviewer-owned checklists.
+
+README and this guide now link the requirements. Provider/example guides,
+F-01/F-02 artifacts/checklists, product intent, baseline architecture/diagrams/
+ADR, governance, master backlog, IaC and release guides are unaffected: this
+stage changes no API, dependency, implemented configuration behavior, provider
+support claim, permission or operational command. The specification creates no
+parser, resolver, converter, executable, management endpoint, UI or new runtime
+API. No extension hooks are configured. The next scheduled stage is `clarify`
+through a separate invocation, not planning or implementation.
 
 ```mermaid
 flowchart TD

@@ -321,10 +321,21 @@ gates and implementation architecture-review evidence in the
 2026-10-21 (UTC) at `b80c69fc386541be4f56f6ef2edeca40f43a0e1c`.
 The separate `await_merge` stage verified that merge in fetched main and all
 76 completed tasks, then recorded F-02 as complete with its directory, PR and
-merge commit. This completion checkpoint must also merge before another
-specification starts. The next scheduled stage is `specify` for
-[F-03: provider configuration and activation validation](docs/HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-03);
-no F-03 specification or later stage ran in this invocation.
+merge commit. The completion checkpoint merged through
+[PR #7](https://github.com/Stonefly-Labs/Hoard/pull/7), satisfying the next-spec
+gate. The subsequent
+[F-03 specification: provider configuration and activation validation](specs/003-provider-configuration/spec.md)
+defines deterministic source precedence, explicit provider choices, active option
+validation, disabled-module isolation, environment/file secret references, safe
+diagnostics, fixed-state restart and reviewed configuration conversion/recovery.
+It consumes the existing lifecycle composition gate rather than creating another
+activation path. Five prioritized stories, 26 requirements and eight outcomes
+have a [built-in specification-quality checklist](specs/003-provider-configuration/checklists/requirements.md)
+passing 16/16 criteria; the bounded architecture review found no actionable
+findings. These are requirements only: no configuration parser, resolver,
+migration tool, new runtime API, discovery endpoint or UI was implemented.
+Custom reviewer approval and runtime proof remain later gates.
+The next scheduled stage is `clarify`, through a separate invocation.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
