@@ -1446,13 +1446,38 @@ release guidance otherwise remain accurate: finalization changes no API,
 dependency, runtime, grammar, support scope, permission or operational procedure.
 Task bodies/markers and reviewer-owned checklist bytes are preserved.
 
-[PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) targets `main` and is ready
-for maintainer review. The shared checkpoint records **`await_merge / ready`**
-with PR 8; F-03 remains active, not completed, and dependent work stays locked.
-After maintainer merge, a separate invocation must verify merge ancestry in
-fetched main and publish its completion checkpoint; that checkpoint must merge
-before starting another specification. No merge, infrastructure plan/apply,
-deployment, package/release publication, tag or permission change occurs here.
+At finalization, [PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) targeted
+`main` and was ready for maintainer review. The shared checkpoint recorded
+`await_merge / ready`, with F-03 still active and dependent work locked.
+Finalization itself performed no merge, infrastructure plan/apply, deployment,
+package/release publication, tag or permission change.
+
+### F-03 merge completion checkpoint
+
+PR #8 subsequently merged into `main` on 2026-10-21 (UTC) at
+`7fd73267a5154583363c94e9e85b9bac7d4a16b3`. The separate `await_merge` stage
+verified GitHub's merged state, merge ancestry in fetched `origin/main`, the
+shared finalization checkpoint and ratified constitution, and all 71 completed
+tasks. It started `chore/spec-progress-f-03` at that merge, and the helper
+independently checked merge ancestry and task completion before recording F-03
+with its directory, PR and merge commit.
+
+The completion checkpoint clears the active feature and schedules `specify`;
+the next dependency-ready entry is
+[F-04: module capabilities and management discovery API](HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-04).
+This progress-only PR must merge before a new specification begins from main.
+No new specification or later stage ran during this completion invocation,
+and no implementation, test, lock, task or reviewer-owned checklist changed.
+
+README, this guide and the specification's current status reflect completion;
+historical finalization evidence remains unchanged. Provider/example guides,
+quickstart/contracts/model/research and plan acceptance, baseline product
+intent/architecture/diagrams/ADR, governance, backlog, predecessor artifacts,
+IaC and release guidance are unaffected because this checkpoint changes no API,
+package graph, command, runtime/support behavior or operational requirement.
+No new architecture review, .NET acceptance or IaC run is warranted for this
+progress/docs-only scope. The stage performs no merge, publication, deployment,
+infrastructure action, tag, release or permission change.
 
 ```mermaid
 flowchart TD
