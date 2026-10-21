@@ -63,8 +63,11 @@
 
 - **`hoard-speckit`** (`.github/skills/hoard-speckit/SKILL.md`): use when asked
   to advance/resume the backlog. Exactly one stage per invocation, durable
-  checkpoint, dependency-aware selection. Never start it merely because
-  bootstrap/doc work mentions Spec Kit.
+  checkpoint, dependency-aware selection. Implementation continues through all
+  spec tasks without per-task approval unless blocked. After feature merge,
+  `await_merge` publishes the authorized `v0.0.X-alpha` source prerelease
+  (X = numeric spec-directory prefix) before recording completion. Never start
+  the flow merely because bootstrap/doc work mentions Spec Kit.
 - Delegate each Spec Kit stage to its existing `speckit-*` skill; do not
   reimplement the command prompts. `speckit-analyze` stays read-only and
   custom checklist review stays reviewer-owned.
@@ -73,8 +76,9 @@
   module composition, or shared cache invariants before PR handoff.
   Not required for simple documentation/tooling changes.
 - **`hoard-release`** (`.github/skills/hoard-release/SKILL.md`): use for an
-  explicitly requested release. Validate tag and main ancestry; tags publish
-  source releases only, never deployment.
+  explicitly requested release or the authorized Spec Kit post-merge handoff.
+  Validate tag and main ancestry; tags publish source releases only, never
+  deployment. Spec Kit tags target the exact feature merge commit.
 - Read `docs/DEVELOPMENT.md` for invocation, stage gates, recovery, and handoff.
   Do not launch fleets or multi-agent workflow engines as part of these skills.
 

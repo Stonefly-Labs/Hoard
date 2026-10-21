@@ -147,6 +147,8 @@ def status(root, state):
     if state["active"] and not selected:
         raise ValueError("Active spec no longer exists in the backlog.")
     result = dict(state, selected=selected)
+    if state["active"]:
+        result["release_tag"] = spec_release_tag(root, state["active"]["feature_directory"])
     if state["stage"] == "constitution":
         text = (root / BACKLOG).read_text()
         prompt = re.search(r"```text\s*\n(/speckit\.constitution .*?)\n```", text, re.DOTALL)
@@ -165,6 +167,14 @@ def feature_path(root, value):
     if not re.fullmatch(r"\d{3,}-[a-z0-9-]+", path.name):
         raise ValueError("Feature directory must use Spec Kit's sequential NNN-short-name format.")
     return path.as_posix()
+
+
+def spec_release_tag(root, directory):
+    directory = feature_path(root, directory)
+    number = int(Path(directory).name.split("-", 1)[0])
+    if number < 1:
+        raise ValueError("Spec release numbering requires a positive feature directory prefix.")
+    return f"v0.0.{number}-alpha"
 
 
 def begin(root, state, directory=None):
@@ -207,6 +217,29 @@ def pull_request(root, number):
         root, "gh", "pr", "view", str(number),
         "--json", "number,state,headRefName,baseRefName,mergeCommit",
     ))
+
+
+def published_release(root, directory, merge_commit):
+    tag = spec_release_tag(root, directory)
+    reference = f"refs/tags/{tag}"
+    remote = command(root, "git", "ls-remote", "--tags", "origin", reference, f"{reference}^{{}}")
+    refs = {ref: oid for oid, ref in (line.split() for line in remote.splitlines())}
+    if reference not in refs or refs.get(f"{reference}^{{}}") != merge_commit:
+        raise ValueError(f"Expected annotated remote tag {tag} at merged commit {merge_commit}.")
+    release = json.loads(command(
+        root, "gh", "release", "view", tag,
+        "--json", "tagName,isDraft,isPrerelease,url",
+    ))
+    if (
+        not isinstance(release, dict)
+        or release.get("tagName") != tag
+        or release.get("isDraft") is not False
+        or release.get("isPrerelease") is not True
+        or not isinstance(release.get("url"), str)
+        or not release["url"].strip()
+    ):
+        raise ValueError(f"Expected a published GitHub prerelease for {tag}, with its release URL.")
+    return {"release_tag": tag, "release_url": release["url"]}
 
 
 def finish(root, state, evidence, pr_number=None):
@@ -255,7 +288,8 @@ def finish(root, state, evidence, pr_number=None):
         command(root, "git", "merge-base", "--is-ancestor", merge_commit, "origin/main")
         if unfinished_tasks(root, directory):
             raise ValueError("Merged feature still has unchecked tasks.")
-        state["completed"].append(dict(state["active"], merge_commit=merge_commit))
+        release = published_release(root, directory, merge_commit)
+        state["completed"].append(dict(state["active"], merge_commit=merge_commit, **release))
     state["history"].append({
         "stage": stage,
         "spec_id": state["active"]["id"] if state["active"] else None,
