@@ -1,13 +1,9 @@
 {
   "schema_version": 1,
-  "stage": "await_merge",
-  "status": "running",
-  "branch": "chore/spec-progress-f-04",
-  "active": {
-    "id": "F-04",
-    "feature_directory": "specs/004-module-discovery",
-    "pr": 10
-  },
+  "stage": "specify",
+  "status": "ready",
+  "branch": null,
+  "active": null,
   "completed": [
     {
       "id": "F-01",
@@ -26,6 +22,14 @@
       "feature_directory": "specs/003-provider-configuration",
       "pr": 8,
       "merge_commit": "7fd73267a5154583363c94e9e85b9bac7d4a16b3"
+    },
+    {
+      "id": "F-04",
+      "feature_directory": "specs/004-module-discovery",
+      "pr": 10,
+      "merge_commit": "287c7b65a068b50e672d92f2d535ef79c910ac0b",
+      "release_tag": "v0.0.4-alpha",
+      "release_url": "https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.4-alpha"
     }
   ],
   "history": [
@@ -406,6 +410,13 @@
       "branch": "feature/004-module-discovery",
       "at": "2026-10-21T21:17:11.308705+00:00",
       "evidence": "Finalization gates passed: all 80 tasks checked; requirements 16/16 and existing reviewer-owned discovery/management approvals 20/20 each unchanged. Two fresh locked discovery runs pass 137 exact tests with no skips, D01-D40, nine package journeys, 18 graph scans, 12 runtime mutations, SDK formatting/analyzers and 61 tooling tests; second run replays original hash-identical pre-F-04 lifecycle/configuration/options DLLs without recompiling them. All 311 input hashes match clean convergence; no locks or production/test/tooling source changed. Seven-project direct/transitive advisory check has no known vulnerable entries/errors. 283 documentation targets and 84 anchors plus task/checklist/template invariants pass. Prior production/evidence architecture reviews remain applicable. README and affected spec/plan/tasks/quickstart/development statuses updated; unaffected-document reasons and run/hash evidence in specs/004-module-discovery/plan.md#finalization-acceptance. PR #10 targets main; ready-for-review handoff follows this pushed checkpoint. No merge, tag, release, package publication, deployment or IaC operation."
+    },
+    {
+      "stage": "await_merge",
+      "spec_id": "F-04",
+      "branch": "chore/spec-progress-f-04",
+      "at": "2026-10-21T21:22:31.434236+00:00",
+      "evidence": "Verified PR #10 merged into fetched origin/main at 287c7b65a068b50e672d92f2d535ef79c910ac0b; all 80 tasks complete and existing requirements/discovery/management approvals unchanged (16/16, 20/20, 20/20). Tooling: python3 -m unittest discover -s tests/tooling -v passed 61 tests; release.py v0.0.4-alpha --check-main passed. Annotated remote v0.0.4-alpha peels to that exact merge commit; Source release run https://github.com/Stonefly-Labs/Hoard/actions/runs/39678124349 succeeded. Verified non-draft prerelease https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.4-alpha, generated notes, downloaded ZIP/TAR.GZ inventories and exact source contents (ZIP commit metadata matches merge SHA). Progress PR #12 must merge before another spec. No new product implementation, package publication, infrastructure or deployment."
     }
   ]
 }

@@ -2062,6 +2062,52 @@ authorized `v0.0.4-alpha` source prerelease before recording completion.
 This invocation does not merge, tag, release, publish packages, deploy or run
 OpenTofu plan/apply.
 
+### F-04 merge completion and alpha source release
+
+[PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10) merged on 2026-10-21 at
+`287c7b65a068b50e672d92f2d535ef79c910ac0b`. The separately invoked
+`await_merge` stage verifies that exact commit in fetched `origin/main`, the
+unchanged ratified constitution/finalization checkpoint, all 80 completed tasks
+and existing 16/16 requirements, 20/20 discovery and 20/20 management approvals.
+Historical product acceptance and architecture reviews remain unchanged;
+this documentation/progress-only stage does not rerun product acceptance or
+require a new architecture review.
+
+Under the bounded Spec Kit standing authorization, `hoard-release` publishes
+the annotated `v0.0.4-alpha` tag at that exact feature merge commit, not the
+progress branch tip. `python3 -m unittest discover -s tests/tooling -v` passes
+all 61 tests; `python3 scripts/release.py v0.0.4-alpha` and
+`python3 scripts/release.py v0.0.4-alpha --check-main` pass. The
+[Source release run](https://github.com/Stonefly-Labs/Hoard/actions/runs/39678124349)
+succeeds and the [published source prerelease](https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.4-alpha)
+is non-draft and prerelease-classified, with generated notes. Both automatic
+ZIP and TAR.GZ archives are downloaded and verified: identical file inventories,
+selected source/checkpoint files matching the merge commit, and exact merge SHA
+in the ZIP metadata. The annotated remote tag independently peels to that SHA.
+Downloaded verification archives are removed; no release artifact enters Git.
+
+Only after publication verification does the helper independently check the
+remote annotated tag and GitHub prerelease and record F-04 complete with
+`release_tag` and `release_url`. The running checkpoint was first pushed in
+draft [PR #12](https://github.com/Stonefly-Labs/Hoard/pull/12), preserving a
+clean-worktree release and durable recovery point. PR #12 merged that running
+checkpoint before the completion changes were committed, so it did not record
+F-04 complete on `main`. The completion changes are preserved on
+`chore/spec-progress-f-04-complete` for a follow-up progress-only PR. The next
+scheduled stage is `specify / ready`, but a new specification remains gated on
+that follow-up completion checkpoint merging. The existing source release is
+unchanged; no tag or release is recreated.
+
+README and this guide record the verified merge/release handoff. Feature
+artifacts preserve historical finalization evidence; provider/example guides,
+normative contracts, research/model, charter/product specification/architecture/
+ADR/diagrams, constitution/backlog, predecessor artifacts, IaC and release
+procedures are unaffected: no API, support scope, dependency, command,
+permission, transport or restart/rollback change occurs. No older completion
+is backfilled with release metadata. This stage starts no new specification,
+implements no feature, merges no PR, publishes no binary/package/image and
+performs no infrastructure, deployment, governance change or OpenTofu plan/apply.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
