@@ -575,9 +575,18 @@ and fresh locked acceptance. A second fresh run replays the originally frozen
 pre-F-04 lifecycle/configuration/options binaries without recompiling them.
 README, affected guides and feature statuses now reflect the accepted
 fixture-backed scope. [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10)
-is ready for maintainer review and merge; the next stage is **`await_merge`**.
-F-04 remains incomplete until the separately invoked post-merge source-release
-and completion checkpoint. No merge, tag, release or deployment ran.
+merged into `main` on 2026-10-21 at
+`287c7b65a068b50e672d92f2d535ef79c910ac0b`.
+The separate `await_merge` stage verified that merge, all 80 completed tasks
+and the published [v0.0.4-alpha source prerelease](https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.4-alpha)
+at that exact commit, including generated notes and both source archives.
+It records F-04 complete with its feature directory, PR, merge commit and release
+evidence. [PR #12](https://github.com/Stonefly-Labs/Hoard/pull/12) merged the
+running checkpoint before the completion changes were committed. The follow-up
+completion-checkpoint PR must merge before the next separately invoked
+**`specify`** stage.
+No new specification, implementation, package publication or deployment ran
+in this completion stage; the prerelease contains source only.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
