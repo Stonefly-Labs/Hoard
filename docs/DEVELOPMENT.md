@@ -614,15 +614,60 @@ result publication and zero seeded payloads in normal results/logs. The bounded
 implementation architecture review found no actionable findings; measured
 red/green, packed locks and complete acceptance evidence are in the plan.
 
-The next separately authorized stage is fresh `converge`. Keep the feature PR
-draft; finalization, merge, feature completion and dependency availability
-remain separate gates. README, provider/example guides, quickstart, lifecycle
+That implementation checkpoint schedules fresh `converge`. README,
+provider/example guides, quickstart, lifecycle
 contract/model and implementation evidence document the correction. Spec,
 public API/acceptance contracts and reviewer-owned checklists are unchanged.
 Product intent, baseline diagrams/ADR, governance, master backlog, F-01
 sources/examples, IaC and release guidance are unaffected: existing diagnostic
 and resource invariants are restored without new APIs, dependencies, provider
 capabilities, permissions or operational actions.
+
+The subsequent installed convergence assessment checked all 22 functional
+requirements, seven buildable outcomes, 20 story scenarios, 12 edge cases,
+12 grouped plan decisions, all 74 existing tasks and eight constitutional
+principles. T074's cancellation-failure reporting is implemented. One **HIGH
+partial** gap remains in eventual-fault observation:
+`HoardLifecycleCoordinator.Observe` reports only when given an owner and the
+shared stop task has already completed. Readiness supplies no owner; timed-out
+cleanup faults before stop completes also receive no safe diagnostic.
+
+Two isolated public-API probes reproduced those omissions without a listener
+or repository source changes. A readiness callback faulted after the bounded
+assessment returned not ready: later snapshots and final diagnostics retained
+only Timeout/NotReady. A protocol cleanup faulted after its callback timeout
+while independent metadata cleanup held the shared stop open: final diagnostics
+contained only Timeout. All three cleanup callbacks ran once, the protocol's
+outcome stayed TimedOut, the remaining module cleanups and root disposal
+completed, and no seeded payload appeared in snapshots. The diagnostic used
+real-time budgets and a 200 ms observer grace; deterministic barrier/virtual-time
+regressions belong to the implementation follow-up, not this assessment.
+
+[Phase 11 / T075](../specs/002-module-lifecycle/tasks.md#phase-11-convergence)
+appends once-only owner-aware eventual-fault reporting and its focused proof.
+The task also requires auditing existing supervised startup/readiness/cleanup
+and framework-stop/root-disposal observers for the same timing/ownership
+omission, without claiming those additional paths were dynamically reproduced.
+Normal awaited failures must not become duplicate diagnostics; eventual faults
+must not rewrite results, retry cleanup or trigger deferred disposal.
+
+Fresh `bash scripts/validate-lifecycle.sh` passed 136 source tests, nine boundary
+proofs and seven package-only journeys, with six independent packages and
+retained old-binary/new-source/shared-framework proof. Fresh
+`bash scripts/validate-foundation.sh` passed 230 tests (42 foundation,
+49 architecture, 139 composition), zero failed/skipped, retaining the original
+eight scans. The tooling suite passed 22 tests. Those passing baselines do not
+exercise the newly reproduced omissions and do not resolve F1.
+
+Only the new Phase 11/T075 section was appended to tasks; all previous task
+bytes, spec, plan and built-in/custom checklists remain unchanged. No
+implementation or checklist approval occurred. README and this guide record
+the blocker; provider/example/quickstart contracts, product intent, diagrams,
+governance, F-01 sources/examples, IaC and release guidance are unaffected
+because no API, intended behavior, dependency or operational action changed.
+The next separately authorized stage is `implement` for T075, followed by fresh
+convergence. Keep PR #6 draft: finalization, merge, feature completion and
+dependency availability remain separate gates.
 
 ```mermaid
 flowchart TD

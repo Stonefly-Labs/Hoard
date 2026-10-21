@@ -277,8 +277,17 @@ later snapshots, without changing returned results or triggering deferred cleanu
 Throwing/cooperative and held late-fault regressions preserve primary errors,
 deadlines and once-only ownership. See the
 [T074 evidence](specs/002-module-lifecycle/plan.md#t074-implementation-follow-up).
-The next separately authorized stage is fresh `converge`; F-02 remains draft,
-not finalized or ready to merge.
+The subsequent fresh convergence assessment verified T074 but found one
+**HIGH** partial gap in eventual-fault reporting. A readiness callback that
+faults after its assessment times out has no diagnostic owner; a timed-out
+cleanup fault is also omitted if it occurs before the shared stop completes.
+Two isolated public-API probes confirmed the missing safe failure categories,
+without changing resource-release outcomes or exposing provider payloads.
+[Phase 11 / T075](specs/002-module-lifecycle/tasks.md#phase-11-convergence)
+records once-only, owner-aware observation and deterministic regression work.
+Existing tasks, spec, plan and reviewer-owned checklists remain unchanged.
+The next separately authorized stage is `implement` for T075, then fresh
+convergence; F-02 remains draft, not finalized or ready to merge.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
