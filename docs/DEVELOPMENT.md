@@ -1528,8 +1528,9 @@ architecture findings or unresolved design questions; route/service truth,
 coherent observations, access/redaction and reference-consumer behavior still
 require future implementation evidence.
 This invocation generates no plan, tasks, custom checklists, endpoint, product
-console, provider, package/dependency change or infrastructure. The next stage
-is `clarify` through a separate invocation.
+console, provider, package/dependency change or infrastructure. At the
+specification checkpoint, the next stage was `clarify` through a separate
+invocation.
 
 README and this guide reflect the specification. Provider/example guides,
 predecessor artifacts, baseline charter/product specification/architecture/
@@ -1537,6 +1538,52 @@ diagrams/ADR, constitution, master backlog, IaC and release guidance are
 unaffected because this stage changes no current API, dependency graph,
 validation command, runtime/support behavior or operational procedure. Their
 planned discovery/static-console boundaries remain in force.
+
+### F-04 module discovery clarification
+
+The separately authorized `clarify` stage resumes the recorded
+`feature/004-module-discovery` branch and `specs/004-module-discovery`, preserving
+the completed specification in draft
+[PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10).
+Before beginning, the branch incorporates merged workflow/release-policy
+[PR #11](https://github.com/Stonefly-Labs/Hoard/pull/11) from fetched
+`origin/main`, retaining its active feature checkpoint and pushing the merge.
+The specification generator is not rerun and no second feature is created.
+
+The installed `speckit-clarify` uses explicitly pinned feature context. The
+[dated clarification review](../specs/004-module-discovery/spec.md#clarifications)
+finds no critical ambiguities: zero questions, no changed requirements,
+acceptance criteria or scope decisions. All ten review categories are clear:
+functional scope/behavior, domain/data, interaction/UX, applicable quality
+attributes, integration/dependencies, edge cases/failure handling,
+constraints/tradeoffs, terminology/consistency, completion signals and
+miscellaneous/placeholders.
+
+The review preserves operation-scoped support and availability, the existing
+configuration/lifecycle authorities, management-read versus execution permission,
+sanitized metadata, coherent bounded observations and unknown/stale consumer
+rules. Exact contract shapes, endpoints, limits, finite budgets, safe reason
+vocabulary and observation mechanics remain planning decisions. Reference
+consumer evidence stays in F-04; rendered screens and production identity
+providers stay in their separately scoped workstreams.
+
+Revalidation of the
+[built-in specification-quality checklist](../specs/004-module-discovery/checklists/requirements.md)
+remains **16/16 to 16/16**: zero newly passing items, regressions or unchecked
+items, with every marker and all other checklist bytes unchanged. This is not
+custom reviewer approval or runtime evidence. No extension hooks are configured.
+The next separately authorized stage is `plan`; this invocation creates no
+design artifacts, tasks, custom checklist, endpoint, console or provider.
+
+README, this guide and the spec's clarification section are updated with the
+checkpoint. Provider/example guides, predecessor artifacts, baseline
+charter/product specification/architecture/diagrams/ADR, constitution, backlog,
+IaC and release guidance are unaffected: clarification changes no requirement,
+public API, dependency graph, current command, runtime/support behavior or
+operational procedure. The existing specification-stage architecture review
+remains relevant; no new provider contract, composition or shared invariant
+change warrants another architecture review. Product/.NET, frontend and IaC
+acceptance are not rerun for this documentation/checkpoint-only stage.
 
 ```mermaid
 flowchart TD

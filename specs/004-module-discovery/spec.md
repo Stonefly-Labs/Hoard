@@ -13,6 +13,34 @@ production provider or new runtime behavior is delivered by this stage.
 
 **Feature Directory**: `specs/004-module-discovery`
 
+## Clarifications
+
+### Session 2026-10-21
+
+No critical ambiguities detected worth formal clarification. Zero questions
+were asked or answered; no requirements, acceptance criteria or scope decisions
+changed.
+
+All ten review categories are clear for this bounded feature: functional scope
+and behavior, domain and data model, interaction and UX flow, applicable
+non-functional quality attributes, integration and external dependencies,
+edge cases and failure handling, constraints and tradeoffs, terminology and
+consistency, completion signals, and miscellaneous/placeholders.
+
+Known inclusion, registration, enablement, support and observed readiness are
+separate. Operation-scoped availability consumes existing lifecycle authorities
+without activation or extra probes; it never grants execution permission.
+Management-read protection, safe metadata, coherent observations and fail-closed
+unknown/stale consumer behavior are explicit. Reference-consumer proof belongs
+to F-04; rendered product screens and production identity providers do not.
+
+Exact contract shapes, endpoint paths, response/text limits, finite budget
+values, safe reason vocabulary and observation mechanics remain planning
+decisions under the existing observable requirements. Production-scale service
+targets, continuous health monitoring and later console/identity work remain
+out of scope. No consequential product decision blocks planning; this review
+does not approve custom checklists or establish runtime evidence.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Inspect the Actual Distribution and Running Selection (Priority: P1)

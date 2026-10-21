@@ -475,7 +475,12 @@ The [built-in quality checklist](specs/004-module-discovery/checklists/requireme
 passes all 16 specification-quality criteria with no unresolved clarification
 markers. This is requirements review only, not custom reviewer approval,
 implementation authorization, a discovery endpoint or a delivered UI.
-The next separately authorized stage is `clarify`; no later stage ran.
+The [clarification review](specs/004-module-discovery/spec.md#clarifications)
+found no critical ambiguities across all ten review categories: zero questions
+and no requirement or scope changes. The built-in checklist remains 16/16;
+exact contract shapes, limits and observation mechanics remain planning
+decisions. The next separately authorized stage is `plan`; no planning or
+implementation ran.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
