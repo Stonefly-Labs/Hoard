@@ -615,8 +615,16 @@ separate SQLite durability from independent memory-fixture semantics.
 The [validation quickstart](specs/005-metadata-persistence/quickstart.md) clearly
 labels new commands as future implementation work. Bounded architecture review
 found no design findings; no API, fixture, schema, qualification or production
-support is delivered by planning. **`checklist`** is next through a separate
-invocation, with custom requirements review still reviewer-owned.
+support is delivered by planning. The subsequent checklist stage adds standard-depth
+[metadata contract](specs/005-metadata-persistence/checklists/metadata.md) and
+[recovery](specs/005-metadata-persistence/checklists/recovery.md)
+requirements-quality checklists, with 20 criteria each for maintainer/provider
+reviewers. At the user's request, an assisted assessment finds written coverage
+for all 40 criteria, with no unresolved finding or decision needing maintainer
+attention. Generated markers remain unchecked: the assessment is not formal
+checklist approval or implementation evidence. **`tasks`** is next through a
+separate invocation; reviewer approval or explicit authorization is still
+required before implementation.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

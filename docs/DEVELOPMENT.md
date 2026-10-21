@@ -2270,6 +2270,53 @@ The checkpoint schedules **`checklist / ready`**, retaining draft
 approval, tasks, implementation, schema operation, qualification, source release,
 merge, infrastructure or deployment occurs in planning.
 
+### F-05 metadata persistence requirements-quality checklists
+
+The separately invoked installed `speckit-checklist` uses the recorded branch
+and explicit `SPECIFY_FEATURE_DIRECTORY=specs/005-metadata-persistence`, after
+the driver begins `checklist / running`. No extension hooks are configured.
+It creates two standard-depth requirements-quality checklists for maintainer
+and provider reviewers before implementation authorization:
+[metadata contract](../specs/005-metadata-persistence/checklists/metadata.md)
+and [recovery](../specs/005-metadata-persistence/checklists/recovery.md),
+20 criteria each. They evaluate the written requirements, not delivered behavior.
+
+Metadata scope covers canonical identity and authorization partitions, common
+values, final-graph relationships, atomic groups/reads, concurrent revisions,
+publication authority, reference generations, leases, pages, secret handling
+and compatibility/qualification boundaries. Recovery scope covers operation
+tickets and uncertain outcomes, finite budgets and retained work ownership,
+schema admission, controlled upgrades, real crash boundaries, coherent backups,
+restoration and attributable durability limits.
+
+The user explicitly requests Copilot's assisted review and identification of
+anything needing maintainer judgment. The assessment compares all 40 criteria
+with the specification and seven design artifacts: each has written coverage,
+with no unresolved requirements-quality finding, waiver or product decision
+needing maintainer attention. Evidence is recorded in draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14). This is not independent
+human inspection, formal checklist approval or passing implementation evidence.
+All generated custom markers remain unchecked as required by the checklist
+stage; the built-in 16/16 checklist and all existing design artifacts are
+unchanged. Later implementation still requires reviewer approval or explicit
+reviewer authorization; tasks and analysis may proceed without that approval.
+
+Late native-call/guard ownership, reference/lease/ticket interleavings,
+unchanged-consumer/old-binary compatibility and real SQLite crash/upgrade/restore
+proof remain explicit implementation obligations, not unresolved design choices
+or current support claims. README and this guide link the new artifacts and
+record the assisted-review result. Provider/example guides, baseline product/
+architecture/ADR/diagrams, constitution/backlog, compatibility/release policy,
+existing feature artifacts, runtime/test/tooling sources, dependencies/locks
+and IaC are unaffected: no API, behavior, package graph, command or operational
+procedure changes. No new architecture review is required for checklist and
+status-documentation additions; the planning review remains historical evidence.
+
+The checkpoint schedules **`tasks / ready`**, retaining draft PR #14.
+No task generation, analysis, implementation, formal custom checklist approval,
+schema operation, qualification, release, merge, infrastructure or deployment
+occurs in this invocation.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
