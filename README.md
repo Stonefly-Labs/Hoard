@@ -603,9 +603,20 @@ the subsequent [clarification review](specs/005-metadata-persistence/spec.md#cla
 finds all ten review categories clear, with zero questions and no requirement,
 acceptance or scope changes. The built-in quality checklist remains 16/16 with
 no marker changes; this is not custom reviewer approval or runtime evidence.
-Exact operation shapes, limits, budgets, reconciliation lifetime and schema
-paths remain constrained planning decisions. **`plan`** is next through a
-separate invocation.
+The subsequent [implementation plan](specs/005-metadata-persistence/plan.md),
+[logical model](specs/005-metadata-persistence/data-model.md) and
+[public contract](specs/005-metadata-persistence/contracts/metadata-api.md)
+resolve operation shapes, common limits/budgets, 24-hour operation tickets,
+publication guards, reference generations and fenced leases without changing
+existing provider markers. The [recovery design](specs/005-metadata-persistence/contracts/recovery.md)
+defines controlled schema admission, real process-crash boundaries and verified
+backup restoration; [48 planned proof cases](specs/005-metadata-persistence/contracts/acceptance.md)
+separate SQLite durability from independent memory-fixture semantics.
+The [validation quickstart](specs/005-metadata-persistence/quickstart.md) clearly
+labels new commands as future implementation work. Bounded architecture review
+found no design findings; no API, fixture, schema, qualification or production
+support is delivered by planning. **`checklist`** is next through a separate
+invocation, with custom requirements review still reviewer-owned.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

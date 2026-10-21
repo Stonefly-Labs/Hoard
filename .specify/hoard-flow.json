@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "plan",
+  "stage": "checklist",
   "status": "ready",
   "branch": "feature/005-metadata-persistence",
   "active": {
@@ -435,6 +435,13 @@
       "branch": "feature/005-metadata-persistence",
       "at": "2026-10-21T21:51:07.213179+00:00",
       "evidence": "F-05 clarification via installed speckit-clarify: zero questions; all ten categories clear; no requirement/acceptance/scope changes. Dated Clarifications section added; built-in checklist revalidated 16/16 to 16/16, zero newly passing/regressions/unchecked and bytes unchanged. Explicit pinned prerequisite paths passed; no pre/post hooks configured. README and DEVELOPMENT updated; baseline/provider/example/release/IaC docs unaffected because no API/runtime/operational changes. python3 -m unittest discover -s tests/tooling -v passed 61 tests; git diff --check passed. Draft PR #14 retained; planning only next invocation."
+    },
+    {
+      "stage": "plan",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-21T22:11:30.848018+00:00",
+      "evidence": "F-05 plan completed through installed speckit-plan with explicit specs/005-metadata-persistence pin. Seven Phase 0/1 artifacts define BCL-only opt-in metadata interfaces alongside unchanged markers, common value/budget/page limits, 24-hour persisted tickets and atomic receipts, shared-authority publication guards, reference generations/fenced leases, and private SQLite plus independent immutable-memory qualification. Controlled read-only schema inspection, v1-to-v2 upgrade, process-crash boundaries, exclusive store admission and verified backup/restore preserve existing lifecycle/configuration ownership. All 24 FRs/eight SCs, 23 scenarios and 14 edge cases mapped to 48 planned cases (39 logical, nine durable); no product acceptance claim. Required bounded hoard-architecture-review found no violations or unresolved blocking design questions; binary/ownership/interleaving/recovery/dependency environment proof remains implementation work. README/development synchronized with unaffected-document reasons. python3 -m unittest discover -s tests/tooling -v passed 61 tests; git diff --check passed; seven-artifact, traceability, 228 local file/anchor, pinned-context and exact ten-file stage-isolation checks passed. Existing spec/built-in checklist byte-for-byte unchanged; no hooks, custom approval, tasks, source/dependency changes, .NET/IaC run, schema operation, release or merge. Retain draft PR #14; next stage checklist, separate invocation."
     }
   ]
 }

@@ -2204,6 +2204,72 @@ PR #14 remains draft. No design artifacts, tasks, custom review, persistence
 implementation, schema upgrade, qualification, release, merge, infrastructure
 or deployment are produced by this clarification stage.
 
+### F-05 metadata persistence planning
+
+The separately invoked installed `speckit-plan` uses the same recorded branch
+and explicit `SPECIFY_FEATURE_DIRECTORY=specs/005-metadata-persistence`.
+The driver begins `plan / running` before setup. No generator or prior stage
+is repeated, and no extension hooks are configured. Existing specification
+and built-in checklist bytes remain unchanged.
+
+The [plan](../specs/005-metadata-persistence/plan.md),
+[research](../specs/005-metadata-persistence/research.md),
+[logical model](../specs/005-metadata-persistence/data-model.md),
+[API contract](../specs/005-metadata-persistence/contracts/metadata-api.md),
+[recovery contract](../specs/005-metadata-persistence/contracts/recovery.md),
+[acceptance matrix](../specs/005-metadata-persistence/contracts/acceptance.md)
+and [validation quickstart](../specs/005-metadata-persistence/quickstart.md)
+resolve the constrained planning details. BCL-only operational interfaces are
+opt-in additions alongside the unchanged metadata marker, not new members on
+existing providers. Typed atomic groups, snapshot reads, binary canonical keys,
+conditional revisions, 24-hour persisted operation tickets and atomic receipts
+prevent partial state and blind replay after reconciliation expiry.
+
+Artifact publication requires a host-injected shared authority guard retained
+until transaction settlement; metadata neither verifies bytes nor authorizes
+physical deletion. Reference generations and lease tombstones protect stale
+decisions, while the persisted time floor and final guarded decision define
+expiry. Work/result/queue/receipt bounds and finite monotonic deadlines include
+explicit uncertainty and retained ownership for non-preemptible native calls.
+
+The proposed file-backed SQLite qualification adapter uses private
+`Microsoft.Data.Sqlite`, parameterized SQL and checked WAL/FULL/foreign-key
+settings. The private driver version/locks will be selected and assessed during
+implementation; no dependency is added now. A separately implemented immutable
+memory fixture proves only logical semantics. Host-side adapters reuse F-02
+admission/cleanup and F-03 owner options without provider-to-Hosting references,
+new Core behavior or a second lifecycle authority.
+
+The 48 acceptance cases trace all 24 FRs, eight SCs, 23 story scenarios and
+14 edge cases. They cover unchanged package-only consumer/old-marker binaries,
+real child-process termination, one explicit v1-to-v2 upgrade, read-only
+incompatible-schema inspection, single-upgrader/store exclusion and verified
+quiescent backup/restore. The future metadata command is clearly labelled
+unimplemented; SQLite process-crash evidence cannot establish power-loss
+certification, production provider support, another engine, HA or generic F-07
+qualification. Existing validation commands are regression obligations at
+implementation, not product evidence from planning.
+
+The required bounded `hoard-architecture-review` found no confirmed design
+violations or unresolved implementation-blocking questions. It identifies
+future binary, ownership/interleaving, crash/recovery and exact environment/
+dependency evidence gaps; it ran no commands. Constitution checks pass before
+research and after design without exceptions.
+
+README and this guide reflect design status. Provider/example guides, existing
+feature artifacts, baseline charter/product specification/architecture/ADR/
+diagrams, constitution/backlog, compatibility policy, runtime/test/tooling
+source, dependency manifests/locks, IaC and release procedures are unaffected:
+this stage changes no existing API, command, package graph, supported behavior
+or operational procedure. Their implementation updates remain later work.
+Only existing repository-tool checks and design/link/scope checks are relevant
+now; .NET product acceptance and mock OpenTofu checks are not rerun.
+
+The checkpoint schedules **`checklist / ready`**, retaining draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14). No custom checklist
+approval, tasks, implementation, schema operation, qualification, source release,
+merge, infrastructure or deployment occurs in planning.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
