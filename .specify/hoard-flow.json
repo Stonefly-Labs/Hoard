@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "tasks",
+  "stage": "analyze",
   "status": "ready",
   "branch": "feature/005-metadata-persistence",
   "active": {
@@ -449,6 +449,13 @@
       "branch": "feature/005-metadata-persistence",
       "at": "2026-10-21T22:19:39.443698+00:00",
       "evidence": "Created metadata.md and recovery.md custom requirements-quality checklists, 20 criteria each, standard depth for maintainer/provider reviewers. User-requested assisted assessment found written coverage for all 40 with no unresolved findings or maintainer decisions: https://github.com/Stonefly-Labs/Hoard/pull/14#issuecomment-6327801159. All generated markers remain unchecked; no formal approval or implementation evidence. Existing spec/design/built-in checklist unchanged. README and DEVELOPMENT updated; 38 local links and checklist structure/traceability checks passed. python3 -m unittest discover -s tests/tooling -v: 61 passed; git diff --check passed. No hooks configured, tasks, product/schema/dependency/IaC or release changes."
+    },
+    {
+      "stage": "tasks",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-21T22:32:35.400734+00:00",
+      "evidence": "Generated 83 unchecked implementation tasks via installed speckit-tasks with pinned F-05 context; US1=11 US2=13 US3=11 US4=15 US5=10, shared=23. Mapped all 24 FRs, eight SCs, 23 scenarios, 14 edge cases and 48 MP cases; validated task syntax/paths/story labels, all 83 explicit prerequisite nodes with no forward edges/cycles, and 224 local file links. Repository tooling passed 61 tests; git diff --check passed. Existing spec, seven design artifacts, constitution and checklist bytes unchanged; all 40 custom markers remain unchecked. README/development updated; no hooks, analysis, implementation or qualification executed. Draft PR #14 retained; next read-only analyze, with reviewer approval/authorization still required before implementation."
     }
   ]
 }

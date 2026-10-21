@@ -2317,6 +2317,54 @@ No task generation, analysis, implementation, formal custom checklist approval,
 schema operation, qualification, release, merge, infrastructure or deployment
 occurs in this invocation.
 
+### F-05 metadata persistence task generation
+
+The separately invoked installed `speckit-tasks` uses the recorded
+`feature/005-metadata-persistence` branch and explicit
+`SPECIFY_FEATURE_DIRECTORY=specs/005-metadata-persistence`, after the driver
+begins `tasks / running`. Its setup resolves the absolute feature directory
+and canonical task template. No before/after task extension hooks are configured.
+
+The [task list](../specs/005-metadata-persistence/tasks.md) contains 83 unchecked
+tasks: six setup, 11 foundational, 11 US1 retention/isolation, 13 US2 atomicity/
+reconciliation, 11 US3 publication/reference/lease, 15 US4 upgrade/recovery,
+ten US5 independent qualification, and six cross-cutting acceptance tasks.
+All 24 FRs, eight SCs, 23 story scenarios, 14 edge cases and 48 MP cases have
+implementation/focused-proof mappings. Direct prerequisites form an explicit
+acyclic graph, including serialized evidence-helper/shared-file edits and
+pre-change retained-binary provenance. File-disjoint test and independent
+SQLite/memory lanes are identified; story dependencies are not disguised as
+parallel work.
+
+US1 is the suggested bounded record/identity/page MVP, not full qualification
+or a runnable cache. Full F-05 implementation requires every story. Tests must
+record intended red before accepted behavior, then attributable green;
+concurrency and late ownership use controlled barriers, while durable cases
+require actual parent-terminated children, confirmed exit and reopened state.
+All 39 logical cases run against each independent fixture; SQLite additionally
+requires nine durable cases. Memory reports those nine as explicitly
+non-durable NotApplicable, never passing or waiving a logical obligation.
+
+The existing specification, seven planning artifacts and built-in/custom
+checklist bytes are unchanged. All 40 custom review markers remain unchecked;
+the earlier assisted assessment is not formal approval. Task generation does
+not evaluate/approve those checklists, perform cross-artifact analysis or
+execute implementation/qualification. Read-only **`analyze`** is the next
+separately authorized stage; implementation additionally waits for reviewer
+approval or explicit reviewer authorization.
+
+README and this guide link the task artifact and next gate. Provider/example/
+quickstart guides, product/architecture/ADR/diagrams, compatibility/release
+policy, constitution/backlog, prior features, runtime/test/tooling sources,
+dependencies/locks and IaC are unaffected: this stage changes only planned work,
+status documentation and checkpoint, not APIs, package edges, operational
+behavior or supported capabilities. Implementation tasks explicitly update
+their affected surfaces and require a fresh architecture review; the historical
+planning review is not implementation acceptance. Draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete.
+No schema operation, product scaffolding, release, package publication, merge,
+infrastructure plan/apply or deployment occurs in task generation.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

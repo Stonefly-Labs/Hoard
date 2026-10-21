@@ -622,9 +622,15 @@ requirements-quality checklists, with 20 criteria each for maintainer/provider
 reviewers. At the user's request, an assisted assessment finds written coverage
 for all 40 criteria, with no unresolved finding or decision needing maintainer
 attention. Generated markers remain unchecked: the assessment is not formal
-checklist approval or implementation evidence. **`tasks`** is next through a
-separate invocation; reviewer approval or explicit authorization is still
-required before implementation.
+checklist approval or implementation evidence. The subsequent
+[task-generation stage](specs/005-metadata-persistence/tasks.md) defines 83
+unchecked tasks: shared setup/foundation, five story increments and cross-cutting
+acceptance. All 24 requirements, eight outcomes, 23 scenarios, 14 edge cases and
+48 planned proof cases map to implementation and focused checks, with explicit
+prerequisites and independent provider lanes. Existing specification/design and
+checklist bytes remain unchanged; no product implementation or qualification
+occurs. **Read-only `analyze`** is next through a separate invocation; reviewer
+approval or explicit authorization is still required before implementation.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
