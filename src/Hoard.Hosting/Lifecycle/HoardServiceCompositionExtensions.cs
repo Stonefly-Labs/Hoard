@@ -68,6 +68,14 @@ public static class HoardServiceCompositionExtensions
                     entry.Module!.ConfigureServices(builder.Services);
                     if (builder.Services.Except(before).Any(descriptor => descriptor.ServiceType == typeof(IHostedService)))
                     { throw coordinator.Error("IndependentWorker", id, HoardLifecyclePhase.ComposingServices); }
+                    if (lease.Discovery is not null)
+                    {
+                        lock (coordinator.Gate)
+                        {
+                            coordinator.CheckCanDispatch(id, HoardLifecyclePhase.ComposingServices);
+                            lease.Bindings.Record(id, builder.Services, before);
+                        }
+                    }
                     return Task.CompletedTask;
                 }).ConfigureAwait(false);
             }

@@ -22,7 +22,7 @@ dependency management into another full-time job.
 > [!IMPORTANT]
 > **Foundation only.** This repository currently contains product/design documents,
 > development workflows, repository tooling, .NET provider contracts and a tested
-> fixture-only module lifecycle and configuration boundaries,
+> fixture-only module lifecycle, configuration, and protected discovery boundaries,
 > plus an operator-run Azure identity bootstrap.
 > There is no runnable cache, working provider, UI, container, or published package.
 > Everything in the product overview below describes the planned experience.
@@ -84,6 +84,9 @@ bash scripts/validate-lifecycle.sh
 
 # Fixture-only configuration, local secrets and original-preserving conversion.
 bash scripts/validate-configuration.sh
+
+# Protected discovery, JSON consumer, private loopback adapters and compatibility.
+bash scripts/validate-discovery.sh
 ```
 
 For repository work, use Git, GitHub CLI, Python 3.11+, and a stable .NET 10 SDK
@@ -92,7 +95,9 @@ nuget.org and builds temporary local packages; it requires network access.
 OpenTofu and Azure CLI
 are needed only when working on the [Azure bootstrap](infra/bootstrap/README.md).
 There is no runnable cache or Node project yet. The lifecycle harness uses only
-in-memory TestServer, never a listening product service. Hosting consumers now
+in-memory TestServer, never a listening product service. Dedicated discovery
+adapter tests additionally open and close private ephemeral loopback Kestrel/TLS
+listeners. Hosting and Application consumers now
 require the ASP.NET Core shared framework. See the
 [foundation quickstart](specs/001-provider-contracts/quickstart.md) and
 [provider author guide](docs/PROVIDERS.md) for the exact supported scope.
@@ -456,9 +461,123 @@ evidence. [PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) merged into
 `7fd73267a5154583363c94e9e85b9bac7d4a16b3`. The separate `await_merge` stage
 verified that merge in fetched main and all 71 completed tasks, then recorded
 F-03 as complete with its directory, PR and merge commit. The progress-only
-completion checkpoint must merge before the next specification can start:
-[F-04: module capabilities and management discovery API](docs/HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-04).
-No new specification or implementation ran in this completion stage.
+completion checkpoint merged through
+[PR #9](https://github.com/Stonefly-Labs/Hoard/pull/9), satisfying the next-spec
+merge gate. No new specification or implementation ran in that completion stage.
+
+The subsequent [F-04 specification: module capabilities and management
+discovery](specs/004-module-discovery/spec.md) defines read-only inspection of
+known distribution inventory, registration, enablement, support and observed
+readiness. Five journeys, 22 functional requirements and eight measurable
+outcomes require truthful route/service capability claims, management-read
+protection, secret-free descriptive metadata, coherent bounded observations and
+safe unavailable-state guidance. Its presentation contract distinguishes
+unsupported, disabled, unknown, stale and temporarily not-ready states and
+constrains consumer action eligibility without treating capability availability
+as execution permission. Reference-consumer proof is in scope; rendered product
+screens remain later console work.
+The [built-in quality checklist](specs/004-module-discovery/checklists/requirements.md)
+passes all 16 specification-quality criteria with no unresolved clarification
+markers. This is requirements review only, not custom reviewer approval,
+implementation authorization, a discovery endpoint or a delivered UI.
+The [clarification review](specs/004-module-discovery/spec.md#clarifications)
+found no critical ambiguities across all ten review categories: zero questions
+and no requirement or scope changes. The built-in checklist remains 16/16;
+exact contract shapes, limits and observation mechanics remain planning
+decisions. The subsequent
+[F-04 implementation plan](specs/004-module-discovery/plan.md) proposes an
+explicit public catalog, atomic lifecycle observations, actual route/service
+binding evidence and two protected read-only management routes in Application.
+Its research, model, OpenAPI/library/presentation contracts and
+[validation guide](specs/004-module-discovery/quickstart.md) map all requirements
+and outcomes to 40 future fixture proof cases, including a JSON-only reference
+consumer and bounded loopback exposure-adapter tests. Architecture review led
+to explicit failure context and a Hosting-owned app/lease/source guard.
+These are design obligations, not implemented endpoints or passing runtime
+evidence. The subsequent requirements-quality checklist stage generates
+[discovery](specs/004-module-discovery/checklists/discovery.md) and
+[management](specs/004-module-discovery/checklists/management.md) reviews with
+20 criteria each. These standard-depth reviews are for maintainers,
+provider/composition reviewers and management-API/consumer reviewers before
+implementation authorization. They cover inventory/support truth, coherent
+bounded observations, protected disclosure and safe presentation/action rules.
+All **40 criteria were generated unchecked and reviewer-owned**; generation
+neither evaluates requirements nor supplies runtime evidence. At the user's
+explicit follow-up request, the assisted review records **discovery 20/20 and
+management 20/20 satisfied**, with no unresolved finding, waiver or decision
+requiring maintainer attention. Criterion-level evidence is in each checklist.
+The specification, planning artifacts and built-in 16/16 checklist are
+unchanged. This satisfies requirements-quality review only, not runtime
+acceptance or implementation completion. No task list or implementation was
+created by that review.
+The subsequent [task-generation stage](specs/004-module-discovery/tasks.md)
+produces **78 unchecked tasks**: shared setup/publication primitives, five
+story phases and cross-cutting acceptance/documentation work. All 22
+requirements, eight outcomes and 40 paired cases have implementation and proof
+assignments, with explicit prerequisites and file-disjoint parallel groups.
+The work preserves inherited composition/lifecycle authorities, introduces both
+HTTP routes only with shared protection, and requires actual binding evidence,
+JSON-consumer decisions, loopback exposure adapters, bounded observations and
+package/retained-binary proofs. These are future obligations, not passing runtime
+results. Existing specification/design/checklist bytes remain unchanged.
+At task generation, the next separately authorized stage was read-only
+`analyze`, not implementation; the proposed discovery runner still does not exist.
+The subsequent installed read-only analysis found no actionable inconsistencies,
+ambiguities, coverage gaps or constitutional conflicts. All 22 requirements and
+eight buildable outcomes have implementation and focused proof assignments;
+all 78 tasks map to requirements or shared acceptance prerequisites. The complete
+dependency graph is acyclic, including ordered shared-file edits, and all
+40 cases, 22 scenarios and 13 edge cases retain their proof obligations.
+The report is recorded in draft
+[PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10). All 14 feature files,
+including task checkboxes and existing 40/40 custom checklist approvals, remain
+unchanged. At that checkpoint the next separately authorized stage was `implement`; analysis
+introduces no runtime behavior or passing product evidence.
+
+F-04 now implements opt-in immutable discovery catalogs, the lifecycle owner's
+atomic observations, actual route/service binding evidence and protected
+`GET /api/v1/discovery` and `GET /api/v1/discovery/openapi.json` slices in
+Application. Registration precedes configuration/composition snapshots;
+`BindHoardDiscovery` verifies the exact retained app/root/lease and
+`MapHoardDiscovery` precedes module mapping. Explicit verified direct-local or
+authenticated TLS/trusted-proxy posture is mandatory. Metadata is allowlisted;
+reads never resolve secrets, activate providers or refresh readiness.
+The BCL-only reference consumer exercises semantic state/action/freshness rules,
+not a delivered console.
+Usability never grants execution permission.
+See the [implemented validation guide](specs/004-module-discovery/quickstart.md)
+and [evidence report](specs/004-module-discovery/plan.md#implementation-evidence).
+The implementation checkpoint was distinct from convergence, finalization,
+merge and release; [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10)
+remained draft at that stage.
+The resumed convergence review identified two consumer gaps:
+[Phase 9 / T079-T080](specs/004-module-discovery/tasks.md#phase-9-convergence).
+Unknown or terminal owner/dependency phases can leave actions enabled when
+other fields still claim readiness/usability; fixture evidence text also
+replaces the distinct supported/unsupported/unverified label. The follow-up
+implementation completes both tasks: owner/dependency phases must be
+`assessing-readiness` or `running` alongside ready state, and support text
+precedes a separate evidence-scope label. Paired wire regressions reproduce
+the original failures and now pass; locked discovery acceptance includes all
+15 added scenarios without lock changes. That checkpoint scheduled fresh
+`converge`; specification and reviewer approvals remained unchanged.
+The subsequent [clean convergence assessment](docs/DEVELOPMENT.md#f-04-clean-convergence)
+finds no remaining gaps across all 22 requirements, eight outcomes, 22 scenarios,
+13 edge cases and 80 tasks, including both consumer corrections. Fresh locked
+discovery acceptance passes 137 tests, all 40 cases, nine package journeys,
+18 graph scans and 12 runtime mutations, with no skips or lock changes.
+The specification, plan, tasks and reviewer-owned checklists remain unchanged.
+That convergence checkpoint scheduled **`finalize`**, not merge, and kept
+[PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10) draft.
+F-04 [finalization](docs/DEVELOPMENT.md#f-04-finalization) now verifies all
+80 completed tasks, unchanged reviewer approvals, prior architecture reviews
+and fresh locked acceptance. A second fresh run replays the originally frozen
+pre-F-04 lifecycle/configuration/options binaries without recompiling them.
+README, affected guides and feature statuses now reflect the accepted
+fixture-backed scope. [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10)
+is ready for maintainer review and merge; the next stage is **`await_merge`**.
+F-04 remains incomplete until the separately invoked post-merge source-release
+and completion checkpoint. No merge, tag, release or deployment ran.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

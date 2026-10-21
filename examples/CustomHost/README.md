@@ -114,6 +114,14 @@ marketplace exists. Compilation is not protocol/native-client compatibility,
 store integrity, operational support, or certification.
 See the [provider guide](../../docs/PROVIDERS.md).
 
+F-04 does not change this example's compile-only purpose or enable discovery
+implicitly. The separate [LifecycleHost discovery variants](../LifecycleHost/README.md#protected-discovery-variants)
+exercise protected reads, same-binary restart and a rebuilt custom distribution
+through local packages. Application consumers additionally require the
+ASP.NET Core shared framework; non-web package propagation is tested separately.
+Adding a package or marker here supplies no tested support, readiness or
+execution permission and does not turn this host into a runnable product.
+
 There are no migrations, runtime state, infrastructure changes, permissions,
 release tags, or deployments here. Roll back source and matching locks together
 through a reviewed change; the script's feeds, caches, binaries, and manifests

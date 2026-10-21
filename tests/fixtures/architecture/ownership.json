@@ -6,6 +6,8 @@
   "Core": "Core",
   "Metadata": "Metadata",
   "Permitted": "Host",
+  "PermittedApplication": "Host",
+  "ForbiddenProvider": "Metadata",
   "ForbiddenAbstractions": "Abstractions",
   "ForbiddenHttp": "Abstractions",
   "UnusedHttp": "Abstractions",

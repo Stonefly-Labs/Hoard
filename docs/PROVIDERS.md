@@ -3,8 +3,8 @@
 F-01 supplies source-level .NET 10 declarations and registration-only composition
 at local acceptance package version `0.1.0`. Nothing is published to nuget.org.
 There is no working cache, protocol, persistence, byte store, authentication,
-or certification. F-02 now adds opt-in fixture-tested module lifecycle in
-Hosting; this does not implement provider operations. Start with the
+or certification. F-02 adds opt-in fixture-tested module lifecycle in
+Hosting; F-04 adds protected metadata/observations, not provider operations. Start with the
 [compile-only host](../examples/CustomHost/README.md) and
 [validation quickstart](../specs/001-provider-contracts/quickstart.md).
 For lifecycle use, see the [package-only lifecycle host](../examples/LifecycleHost/README.md).
@@ -15,8 +15,9 @@ For lifecycle use, see the [package-only lifecycle host](../examples/LifecycleHo
 `Hoard.Abstractions.Modules` and the `IHoardProvider`, `IProtocolProvider`,
 `IMetadataProvider`, `IArtifactProvider`, and `IIdentityProvider` markers in
 `Hoard.Abstractions.Providers`. All are BCL-only. Markers grant no operations or
-permissions. Core references Abstractions only; Core/Application have no
-operational members yet. Hosting owns DI/HTTP integration and internally uses
+permissions. Core references Abstractions only and has no operational members.
+Application owns the two discovery slices and references Hosting/framework,
+never concrete providers or another slice's internals. Hosting owns DI/HTTP integration and internally uses
 NuGet.Versioning; its package propagates the ASP.NET Core shared-framework
 requirement, including to non-web registration-only consumers. This is a
 deployment prerequisite change, not a change to the old registration signatures.
@@ -69,6 +70,52 @@ shared audit/telemetry remain centralized Core/security/Hosting responsibilities
 Markers never authorize a provider to bypass or duplicate these invariants.
 No rename, portable transaction, NoSQL interchangeability, or cross-store
 atomicity guarantee follows from a marker.
+
+## Safe discovery metadata and observations
+
+Register `AddHoardDiscovery(catalog, options)` on the same `HoardBuilder` before
+`EvaluateConfigurationAsync` or `ValidateComposition`. Frozen immutable
+inclusion records are explicit knowledge, not assembly scanning. Complete
+inventory can establish absence; a partial catalog cannot. Registration,
+enablement, selected authority, provenance, tested support and observed readiness
+remain separate dimensions. Existing provider markers/descriptors/interfaces
+and discovery-free registration/configuration/lifecycle signatures are unchanged.
+
+Descriptions, ordinary public defaults/choices and publisher labels need
+separate host-approved plain-text publication records. Raw provider descriptions,
+URLs, private option values/sources and secret locators are not public defaults.
+Secret fields omit defaults/choices/examples. A declaration or healthy startup
+does not establish support: contributions need exact capability/version/operation/
+owners/evidence scope plus actual sealed route/method and/or effective unkeyed
+owner-added service evidence. Factories are never resolved to establish it.
+Multi-owner contributions emit once; unrelated not-ready modules do not veto
+an independent operation.
+
+`lease.BindHoardDiscovery(app)` returns only the exact composition's safe source.
+`Capture` reads one immutable published revision with its actual assessment
+time; it never probes or repairs providers. Reassess only through the inherited
+explicit lifecycle operation. Readiness loss does not itself remove routes or
+close admission; shutdown always overrides old readiness. Stop/start a fresh
+lifecycle to change fixed selection. Discovery cancellation owns only its
+request buffers, not provider resources.
+
+Map `app.MapHoardDiscovery(lease)` before `MapHoardModulesAsync`. Both GET-only
+data/description routes require the same management-read policy and verified
+exposure posture; no anonymous static document is served. Direct-local mode
+requires verified loopback, a direct/no-proxy assertion and no forwarding.
+Secured-network mode requires authenticated read permission and HTTPS or the
+explicit trusted immediate-proxy/TLS topology. Production verification supports
+Kestrel with explicit `UseUrls(...).PreferHostingUrls(true)`, not arbitrary
+`Listen` overrides/unknown servers. Configure usable authentication defaults
+or explicit existing schemes on the read policy. Host authentication, proxy
+isolation and request logging remain deployment responsibilities: discovery-owned
+diagnostics are sanitized, not a guarantee that framework logs redact queries.
+
+The [quickstart](../specs/004-module-discovery/quickstart.md) covers public
+wiring, bounds, refresh rules and fixture-only acceptance. A usable operation
+still needs its own execution policy; management-read grants none. Reference
+consumer decisions do not certify production protocols/providers, F-07
+conformance, external proxies, authentication or rendered accessibility.
 
 ## Compatibility and release obligations
 

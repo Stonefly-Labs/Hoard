@@ -9,6 +9,8 @@
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" PrivateAssets="all" />
     <ProjectReference Include="../../../src/Hoard.Hosting/Hoard.Hosting.csproj" />
+    <ProjectReference Include="../../../src/Hoard.Application/Hoard.Application.csproj" />
+    <ProjectReference Include="../../fixtures/discovery/ReferenceConsumer/ReferenceConsumer.csproj" />
     <Compile Include="../../FoundationEvidence.cs" Link="FoundationEvidence.cs" />
     <Using Include="Xunit" />
   </ItemGroup>

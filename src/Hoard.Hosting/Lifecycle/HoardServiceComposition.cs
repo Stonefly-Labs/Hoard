@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using Hoard.Hosting.Composition;
 using Hoard.Hosting.Configuration;
+using Hoard.Hosting.Discovery;
 using Microsoft.AspNetCore.Builder;
 
 namespace Hoard.Hosting.Lifecycle;
@@ -13,7 +14,14 @@ public sealed class HoardServiceComposition : IAsyncDisposable
         Composition = composition;
         OwnerOptions = ownerOptions ?? ImmutableDictionary<string, HoardModuleOptions>.Empty;
         this.resources = resources.IsDefault ? [] : resources;
+        if (composition.Builder.DiscoveryRegistration is { } registration)
+        { Publication = new(registration, composition.Identity); }
         Coordinator = new(this);
+        if (composition.Builder.DiscoveryRegistration is { } discovery)
+        {
+            Discovery = new HoardDiscoverySource(this, discovery);
+            composition.Builder.DiscoverySource = (HoardDiscoverySource)Discovery;
+        }
     }
 
     private readonly ImmutableArray<IDisposable> resources;
@@ -29,8 +37,16 @@ public sealed class HoardServiceComposition : IAsyncDisposable
     }
     internal HoardValidatedComposition Composition { get; }
     internal HoardLifecycleCoordinator Coordinator { get; }
+    internal DiscoveryLifecyclePublication? Publication { get; }
+    internal DiscoveryBindingLedger Bindings { get; } = new();
+    internal IHoardDiscoverySource? Discovery { get; }
     internal WebApplication? Application { get; set; }
     public IHoardLifecycle Lifecycle => Coordinator;
+    public IHoardDiscoverySource BindHoardDiscovery(WebApplication application)
+    {
+        ArgumentNullException.ThrowIfNull(application);
+        return DiscoveryOwnership.Bind(this, application);
+    }
     public HoardStopResult? StopResult { get; internal set; }
     private readonly object gate = new();
     private Task<HoardStopResult>? disposal;

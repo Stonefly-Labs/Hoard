@@ -1,4 +1,5 @@
 using Hoard.Hosting.Composition;
+using Hoard.Hosting.Discovery;
 using Hoard.Hosting.Lifecycle;
 
 namespace Hoard.Hosting.Configuration;
@@ -13,6 +14,7 @@ public static class HoardConfigurationExtensions
         ArgumentNullException.ThrowIfNull(input);
         ArgumentNullException.ThrowIfNull(platformVersions);
         ArgumentNullException.ThrowIfNull(lifecycleOptions);
+        HoardDiscoveryExtensions.Freeze(builder);
         var options = configurationOptions ?? new();
         if (!options.IsValid)
         {

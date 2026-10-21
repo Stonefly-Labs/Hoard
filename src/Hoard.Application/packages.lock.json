@@ -10,6 +10,20 @@
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0, )"
         }
+      },
+      "hoard.hosting": {
+        "type": "Project",
+        "dependencies": {
+          "Hoard.Abstractions": "[0.1.0, )",
+          "Hoard.Core": "[0.1.0, )",
+          "NuGet.Versioning": "[7.9.0, )"
+        }
+      },
+      "NuGet.Versioning": {
+        "type": "CentralTransitive",
+        "requested": "[7.9.0, )",
+        "resolved": "7.9.0",
+        "contentHash": "r4sZuVpVqwSBLe4qYDrnpScqdyctlRXg0HSF5OoCGkeBc8b+o8BBYHuI/u1RoWYX78PbieijU13TBt71/Xf3lw=="
       }
     }
   }

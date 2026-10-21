@@ -1,3 +1,4 @@
+using Hoard.Hosting.Discovery;
 using Hoard.Hosting.Routing;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -29,12 +30,17 @@ public static class HoardApplicationExtensions
             cancellationToken.ThrowIfCancellationRequested();
             if (!ReferenceEquals(builder.Services, serviceComposition.Composition.Builder.Services))
             { throw coordinator.Error("StaleComposition", "composition", HoardLifecyclePhase.BuildingHost); }
-            await coordinator.InvokeStartupAsync("composition", HoardLifecyclePhase.BuildingHost, _ =>
+            await coordinator.InvokeStartupAsync("composition", HoardLifecyclePhase.BuildingHost, async _ =>
             {
+                if (serviceComposition.Composition.Builder.DiscoveryRegistration?.Frozen is { } discovery)
+                { serviceComposition.Bindings.SealServices(discovery, builder.Services); }
                 builder.Services.Insert(0,
                     ServiceDescriptor.Singleton<IStartupFilter>(new HoardModuleAdmissionMiddleware(coordinator)));
+                if (serviceComposition.Discovery is not null)
+                { builder.Services.Insert(1, ServiceDescriptor.Singleton<IStartupFilter, DiscoveryRawPeerStartupFilter>()); }
                 serviceComposition.Application = builder.Build();
-                return Task.CompletedTask;
+                if (serviceComposition.Composition.Builder.DiscoveryRegistration is { } registration)
+                { await DiscoveryExposureVerifier.ValidateAsync(builder, serviceComposition.Application, registration.Options).ConfigureAwait(false); }
             }).ConfigureAwait(false);
             lock (coordinator.Gate)
             {
@@ -84,6 +90,7 @@ public static class HoardApplicationExtensions
             {
                 coordinator.CheckCanDispatch("composition", HoardLifecyclePhase.ComposingRoutes);
                 HoardRouteOwnershipValidator.Publish(app, routes, coordinator);
+                if (serviceComposition.Discovery is not null) { serviceComposition.Bindings.SealRoutes(routes); }
                 coordinator.VerifyRoutes = () => HoardRouteOwnershipValidator.Validate(app, routes, coordinator);
                 coordinator.MarkMapped();
             }
