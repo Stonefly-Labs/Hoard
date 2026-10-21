@@ -37,11 +37,13 @@ public static class PresentationProjector
                 var supported = known && capability.Support == "supported";
                 var ownersReady = capability.Owners.Concat(capability.Dependencies).All(id =>
                     observation.Modules.Any(owner => owner.Id == id && owner.Understood
-                        && owner.Registered && owner.Enabled && owner.Readiness == "ready"));
+                        && owner.Registered && owner.Enabled && owner.Readiness == "ready"
+                        && owner.Phase is "assessing-readiness" or "running"));
                 var enabled = supported && current && observation.HostPhase == "running" && observation.StartupAdmission
                     && ownersReady && capability.Reasons.IsEmpty && capability.Availability == "usable"
                     && executionPermissions.Contains(capability.OperationId);
-                Line($"{capability.OperationId} support", capability.EvidenceScope == "fixture" ? PresentationText.Fixture : capability.Support);
+                Line($"{capability.OperationId} support", capability.Support);
+                Line($"{capability.OperationId} evidence scope", capability.EvidenceScope == "fixture" ? PresentationText.Fixture : capability.EvidenceScope);
                 Line($"{capability.OperationId} availability", capability.Availability);
                 foreach (var reason in capability.Reasons) { Line($"{capability.OperationId}: {reason.Code}", reason.CorrectiveAction); }
                 return new ConsumerAction(capability.OperationId, $"{module.Id}: {capability.OperationId}", !supported, enabled,

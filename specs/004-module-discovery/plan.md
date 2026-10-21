@@ -475,3 +475,64 @@ qualifications were not expanded. No OpenTofu/apply, cloud resources, package
 publication, tag, release, merge or dependent feature was authorized/executed.
 The draft feature PR remains incomplete until separately invoked convergence
 and finalization; this implementation invocation stops before `converge`.
+
+## Convergence Follow-up Implementation
+
+The subsequent `implement` stage completes the two append-only convergence
+tasks T079-T080. No requirement, normative contract, public provider API,
+dependency, production lifecycle or reviewer-owned approval changes.
+
+T079 is corrected at the existing JSON consumer's eligibility boundary:
+every required owner/dependency must have ready state and a serving-compatible
+last-entered phase (`assessing-readiness` or `running`). It still requires
+current observation, exact known supported operation, host admission, usable
+availability, no capability reasons and separate execution permission.
+Unknown/future and stopping/draining/cleaning-up/stopped phases cannot override
+this gate through conflicting ready/usable fields. Public JSON regressions
+retain the genuine assessed-ready counterpart, inventory and descriptive
+terminal phase; they do not invoke actions or depend on Hosting model objects.
+
+T080 keeps explicit `supported`/`unsupported`/`unverified` text, adds a separate
+evidence-scope line and retains fixture qualification, availability, contextual
+reading order and actual unsupported/unverified corrective reasons. Supported
+fixture controls remain permission-gated; unsupported/unverified actions remain
+hidden. The example's semantic reading order now includes evidence scope.
+
+### Follow-up validation evidence
+
+Private session evidence IDs are `f04-consumer/consumer-red.trx`,
+`f04-consumer/consumer-green.trx`, `f04-consumer/tooling.log` and
+`f04-consumer/discovery-locked/discovery-evidence.json`; logs/TRX/runtime data
+are not committed. Commands below elide only the private results-directory
+argument values, not test selectors or validation scope.
+
+| Command | Result |
+| --- | --- |
+| `dotnet test tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj -c Release --no-restore --filter 'FullyQualifiedName~DiscoveryPresentationTests\|FullyQualifiedName~DiscoveryConsumerCompatibilityTests' --logger 'trx;LogFileName=consumer-red.trx' --results-directory <private-directory> -v minimal` | Before the fix: 13 intended runtime assertion failures (eight terminal, two unknown, three support labels); 21 passes including future-phase rejection and genuinely ready controls; zero skips |
+| `dotnet test tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj -c Release --no-restore --filter 'FullyQualifiedName~DiscoveryPresentationTests\|FullyQualifiedName~DiscoveryConsumerCompatibilityTests\|FullyQualifiedName~DiscoveryConsumerRefreshTests' --logger 'trx;LogFileName=consumer-green.trx' --results-directory <private-directory> -v minimal` | Passed all 36 tests, zero skips, including 15 added wire scenarios |
+| `dotnet format Hoard.slnx --verify-no-changes --no-restore --include tests/fixtures/discovery/ReferenceConsumer/PresentationProjector.cs tests/integration/Hoard.Composition.Tests/DiscoveryPresentationTests.cs tests/integration/Hoard.Composition.Tests/DiscoveryConsumerCompatibilityTests.cs` | Passed |
+| `bash scripts/validate-discovery.sh --evidence-directory <fresh-private-directory>` | Passed locked acceptance: 137 exact declared/executed tests, D01..D40, ten suites, nine journeys, seven wire observations, 18 real graphs, 12 existing runtime mutations, retained binaries, JSON-only consumer and full SDK formatting/analyzers; zero skips or lock mutation |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed all 61 tests, independently and within acceptance |
+
+The first new-test build found a nullable dereference in its assertion; this
+was corrected before collecting runtime red evidence and is not counted as a
+behavioral failure. New methods are mandatory in the D16/D25/D26/D28/D30 case
+inventory, preserving all earlier case/suite/scenario and mutation obligations.
+This closes the specific FR-015/017/018, SC-005 and US4-1..3 follow-up tasks,
+not the separately scheduled full convergence/finalization gates.
+
+Environment remains macOS 26.5.0, .NET SDK 10.0.203. The complete 100-module x
+10-contribution workload makes 100 authorized reads at concurrency 10 with p95
+**0.029193 seconds**, 615,887..615,888-byte bodies and zero constructor, probe,
+secret-read, service-call, connection or active-resource deltas. This remains
+local fixture evidence, not production or native-client qualification.
+
+README, development/example guidance, semantic examples, quickstart and task
+status reflect the correction. Provider/custom-host guides, charter/product
+specification, architecture/ADR/diagrams, governance, predecessor artifacts,
+IaC and release docs are unaffected because APIs, dependencies, composition,
+transport, provider behavior, restart/rollback and product scope are unchanged.
+No new architecture review is warranted for this isolated reference-consumer
+correction; previous production/evidence reviews remain above. All 80 tasks
+are now checked. Draft PR #10 remains draft; next is fresh `converge`, not
+merge, release or a new specification.

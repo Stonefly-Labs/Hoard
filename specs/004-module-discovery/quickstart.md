@@ -143,7 +143,11 @@ not execution permission. Reassess only through the existing lifecycle API.
 The JSON-only `ReferenceConsumer` executable reads stdin, not a filename.
 It caps input at 4 MiB/depth 32 and recognizes actions only for its exact
 synthetic capability/version/operation/owner tuple. Unknown semantics cannot
-enable actions. Refresh generations/revisions reject old or duplicate terminal
+enable actions. Owners/dependencies must be ready in `assessing-readiness` or
+`running`; unknown or terminal phases override conflicting ready/usable claims.
+Support state, evidence scope and availability have separate contextual semantic
+lines, including explicit fixture qualification and unsupported/unverified
+corrective guidance. Refresh generations/revisions reject old or duplicate terminal
 responses; denial discards data, failure immediately stales it, and monotonic
 receipt age over 30 seconds expires actions (exactly 30 seconds is current).
 Textual labels and reading order are semantic proof, not DOM/ARIA/browser/WCAG

@@ -1917,6 +1917,46 @@ convergence. Draft [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10)
 must remain draft; finalization and merge are blocked by these two gaps.
 No implementation, merge, release, publication or infrastructure operation ran.
 
+### F-04 convergence follow-up implementation
+
+The next `implement` invocation completes T079-T080 without changing the
+specification, contracts or reviewer-owned approvals. Reference-consumer
+eligibility now requires every owner/dependency to be ready in
+`assessing-readiness` or `running`, in addition to existing currentness,
+support, availability, admission and independent permission checks. Unknown,
+future and terminal phases cannot revive an action merely by retaining
+`ready`/`usable` fields. The actual last-entered `assessing-readiness` control
+remains eligible. Capability support has its own contextual semantic line,
+followed by evidence scope and availability; fixture qualification no longer
+replaces supported/unsupported/unverified text or safe corrective reasons.
+
+Fifteen added wire scenarios establish the gaps before correction: 13 intended
+runtime assertion failures, with future-phase rejection and genuine ready
+controls already passing. All 36 focused consumer/presentation/refresh tests
+then pass. Fresh `bash scripts/validate-discovery.sh --evidence-directory
+<fresh-private-directory>` passes 137 declared/executed tests with no skips,
+D01..D40, ten suites, nine package journeys, seven wire observations, 18 graph
+scans, 12 existing runtime mutations and retained-binary/JSON-consumer checks.
+No lock changed. The 100-read local fixture workload records p95 0.029193s
+and zero extra provider activity/resources. Focused SDK formatting and all
+61 tooling tests pass; full SDK formatting/analyzers also pass in acceptance.
+Private TRX/log/manifest references and requirement mappings are in the
+[follow-up evidence](../specs/004-module-discovery/plan.md#convergence-follow-up-implementation).
+Prior configuration/lifecycle/foundation results remain historical; this
+consumer-only change does not rerun or expand their qualification.
+
+README, this guide, the example's semantic reading order/guide and the active
+plan/tasks/quickstart are updated. Provider/custom-host guides, product
+charter/specification/architecture/ADR/diagrams, governance/backlog,
+predecessor artifacts, IaC and release guidance are unaffected: provider APIs,
+dependencies, composition, transport, operations, restart/rollback and product
+scope do not change. No new architecture review is required for this isolated
+reference-consumer/evidence correction; the prior reviews remain in the plan.
+All 80 tasks are checked, but draft
+[PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10) remains draft and F-04
+remains incomplete. Next is separately invoked fresh **`converge`**. No merge,
+tag, release, package publication, deployment or infrastructure operation ran.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

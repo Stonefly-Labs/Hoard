@@ -73,4 +73,29 @@ public sealed class DiscoveryConsumerCompatibilityTests
         Assert.False(PresentationProjector.Project(parsed.Observation!, true, new HashSet<string> { "inspect" })
             .Single(module => module.Id == "protocol").Actions.Single().Enabled);
     }
+
+    [Theory]
+    [InlineData("protocol", "unknown")]
+    [InlineData("protocol", "future-phase")]
+    [InlineData("metadata", "unknown")]
+    [InlineData("metadata", "future-phase")]
+    public async Task Unknown_owner_or_dependency_phases_preserve_inventory_but_never_enable_actions(string moduleId, string phase)
+    {
+        var root = JsonNode.Parse(await DiscoveryPresentationTests.Body())!;
+        DiscoveryPresentationTests.Protocol(root)["capabilities"]![0]!["dependencies"] = new JsonArray("metadata");
+        var current = DiscoveryJsonReader.Read(DiscoveryPresentationTests.Bytes(root));
+        Assert.True(current.Compatible);
+        Assert.Equal("assessing-readiness", DiscoveryPresentationTests.Module(root, moduleId)["lifecyclePhase"]!.GetValue<string>());
+        Assert.True(PresentationProjector.Project(current.Observation!, true, new HashSet<string> { "inspect" })
+            .Single(module => module.Id == "protocol").Actions.Single().Enabled);
+
+        DiscoveryPresentationTests.Module(root, moduleId)["lifecyclePhase"] = phase;
+        var changed = DiscoveryJsonReader.Read(DiscoveryPresentationTests.Bytes(root));
+        Assert.True(changed.Compatible);
+        Assert.Equal(current.Observation!.Modules.Select(module => module.Id), changed.Observation!.Modules.Select(module => module.Id));
+        Assert.Equal("ready", changed.Observation.Modules.Single(module => module.Id == moduleId).Readiness);
+        Assert.Equal("usable", changed.Observation.Modules.Single(module => module.Id == "protocol").Capabilities.Single().Availability);
+        Assert.False(PresentationProjector.Project(changed.Observation, true, new HashSet<string> { "inspect" })
+            .Single(module => module.Id == "protocol").Actions.Single().Enabled);
+    }
 }

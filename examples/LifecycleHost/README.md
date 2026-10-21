@@ -148,7 +148,11 @@ The partial catalog includes an explicitly unregistered module, while disabled
 registered entries remain visible without activation. Support is labelled
 fixture-only. The [presentation examples](Discovery/presentation-examples.json)
 and standalone BCL consumer prove textual labels/order/action/freshness rules,
-not a browser UI or WCAG result.
+not a browser UI or WCAG result. Operation support, evidence scope and
+availability have separate contextual lines: fixture qualification never
+replaces supported/unsupported/unverified text. Even a ready/usable claim
+cannot enable actions when an owner/dependency has an unknown or terminal
+phase; ready `assessing-readiness` remains a valid last-entered phase.
 
 Registration freezes before evaluation. After supervised build, map both
 protected discovery routes before module mapping and normal start. Production

@@ -543,22 +543,25 @@ Application. Registration precedes configuration/composition snapshots;
 authenticated TLS/trusted-proxy posture is mandatory. Metadata is allowlisted;
 reads never resolve secrets, activate providers or refresh readiness.
 The BCL-only reference consumer exercises semantic state/action/freshness rules,
-not a delivered console; the convergence findings below identify remaining gaps.
+not a delivered console.
 Usability never grants execution permission.
 See the [implemented validation guide](specs/004-module-discovery/quickstart.md)
 and [evidence report](specs/004-module-discovery/plan.md#implementation-evidence).
 The implementation checkpoint remains distinct from convergence, finalization,
 merge and release; draft [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10)
 is not ready for merge.
-The resumed convergence review reproduces two consumer gaps:
+The resumed convergence review identified two consumer gaps:
 [Phase 9 / T079-T080](specs/004-module-discovery/tasks.md#phase-9-convergence).
 Unknown or terminal owner/dependency phases can leave actions enabled when
 other fields still claim readiness/usability; fixture evidence text also
-replaces the distinct supported/unsupported/unverified label. Existing locked
-acceptance passes but does not cover these cases. The checkpoint returns to
-`implement` for focused red/green regressions and corrections, followed by fresh
-convergence. Finalization and merge remain blocked; no runtime fix or checklist
-approval is claimed by this assessment.
+replaces the distinct supported/unsupported/unverified label. The follow-up
+implementation completes both tasks: owner/dependency phases must be
+`assessing-readiness` or `running` alongside ready state, and support text
+precedes a separate evidence-scope label. Paired wire regressions reproduce
+the original failures and now pass; locked discovery acceptance includes all
+15 added scenarios without lock changes. The checkpoint schedules fresh
+`converge`, not finalization or merge. Specification and reviewer approvals
+are unchanged.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

@@ -1,6 +1,8 @@
 {
   "scope": "Fixture-only semantic text and reading order; no rendered accessibility claim",
-  "readingOrder": ["module identity", "inclusion", "registration", "enablement", "observed readiness", "authority phase", "captured", "published", "assessed", "reasons", "operation support", "operation availability"],
+  "readingOrder": ["module identity", "inclusion", "registration", "enablement", "observed readiness", "authority phase", "captured", "published", "assessed", "reasons", "operation support", "operation evidence scope", "operation availability"],
+  "operationSupport": ["supported", "unsupported", "unverified"],
+  "fixtureEvidence": "Fixture-tested only; not production, native-client or conformance qualification.",
   "statuses": ["loading", "refreshing", "empty", "denied", "error", "stale", "current"],
   "guidance": {
     "bundled": "Edit the bundled selection, validate configuration, and restart. Running selection does not change.",
@@ -8,6 +10,7 @@
     "runtime": "Investigate dependencies and the existing lifecycle report, then explicitly reassess readiness.",
     "rollback": "Remove discovery opt-in and restart. This does not roll back cached data.",
     "permission": "Management-read permission does not grant execution permission.",
-    "freshness": "Receipt age over 30 seconds or failed refresh disables retained actions."
+    "freshness": "Receipt age over 30 seconds or failed refresh disables retained actions.",
+    "phase": "Every owner and dependency must be ready in assessing-readiness or running; unknown or terminal phases disable actions even if availability still claims usable."
   }
 }
