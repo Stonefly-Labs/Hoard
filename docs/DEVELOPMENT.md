@@ -1110,10 +1110,44 @@ permission or operational procedure changes. Their actual configuration and
 recovery additions remain implementation tasks. No infrastructure plan/apply,
 deployment, publication or merge occurs.
 
-The next separately authorized invocation runs read-only `analyze`; do not
-start implementation or silently remediate analysis findings in that stage.
-The reviewed custom checklists do not bypass analysis or authorize another
-scheduled stage in this invocation.
+At the task-generation checkpoint, the next separately authorized stage was
+read-only `analyze`; task generation did not start implementation or authorize
+remediation. Reviewed custom checklists do not bypass the analysis gate.
+
+### F-03 configuration cross-artifact analysis
+
+The subsequent installed `speckit-analyze` stage uses the recorded feature
+directory and reviews the specification, plan, tasks and supporting contracts
+without changing them. It found no actionable duplication, ambiguity,
+underspecification, inconsistency, constitution conflict or coverage gap.
+All 26 functional requirements and eight buildable outcomes have implementation
+and focused proof assignments; all 36 planned CFG cases preserve coverage of
+the 22 scenarios and 13 edge cases. All 69 tasks map to requirements or shared
+acceptance prerequisites, including the shared harness/primitive proofs in
+T001/T012. The complete prerequisite graph is acyclic, the 30 parallel markers
+refer to independent ready groups, and shared-file edits are ordered.
+
+The structured report is recorded in
+[draft PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8), with completion
+evidence in the shared checkpoint. All 12 feature artifacts, the constitution
+and existing 16/16 built-in plus 20/20 and 20/20 custom checklist bytes remain
+unchanged. No remediation or new checklist approval occurred; no extension
+hooks are configured. The existing tooling suite passes all 22 tests.
+
+README and this guide record the analysis and next gate. Provider/example
+guides, predecessor artifacts, product charter/specification, baseline
+architecture/diagrams/ADR, constitution, backlog, IaC and release documentation
+are unaffected: analysis changes no implemented API, graph, support claim,
+command, listener, permission or operational procedure. No parser, resolver,
+converter, runtime/test/tooling/dependency/lock change, infrastructure action,
+deployment, publication or merge occurs.
+
+The next separately authorized invocation runs `implement`, with the existing
+40/40 custom requirements-review gate satisfied. All 69 implementation tasks
+remain unchecked. Actual safe output, bounded ownership, retained-binary
+compatibility and local-platform publication/interruption still need measured
+implementation evidence and the later required architecture review; this
+analysis supplies none of that runtime acceptance.
 
 ```mermaid
 flowchart TD
