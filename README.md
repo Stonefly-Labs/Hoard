@@ -547,9 +547,9 @@ not a delivered console.
 Usability never grants execution permission.
 See the [implemented validation guide](specs/004-module-discovery/quickstart.md)
 and [evidence report](specs/004-module-discovery/plan.md#implementation-evidence).
-The implementation checkpoint remains distinct from convergence, finalization,
-merge and release; draft [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10)
-is not ready for merge.
+The implementation checkpoint was distinct from convergence, finalization,
+merge and release; [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10)
+remained draft at that stage.
 The resumed convergence review identified two consumer gaps:
 [Phase 9 / T079-T080](specs/004-module-discovery/tasks.md#phase-9-convergence).
 Unknown or terminal owner/dependency phases can leave actions enabled when
@@ -567,9 +567,17 @@ finds no remaining gaps across all 22 requirements, eight outcomes, 22 scenarios
 discovery acceptance passes 137 tests, all 40 cases, nine package journeys,
 18 graph scans and 12 runtime mutations, with no skips or lock changes.
 The specification, plan, tasks and reviewer-owned checklists remain unchanged.
-The checkpoint now schedules **`finalize`**, not merge; draft
-[PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10) remains draft and F-04
-is not yet complete.
+That convergence checkpoint scheduled **`finalize`**, not merge, and kept
+[PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10) draft.
+F-04 [finalization](docs/DEVELOPMENT.md#f-04-finalization) now verifies all
+80 completed tasks, unchanged reviewer approvals, prior architecture reviews
+and fresh locked acceptance. A second fresh run replays the originally frozen
+pre-F-04 lifecycle/configuration/options binaries without recompiling them.
+README, affected guides and feature statuses now reflect the accepted
+fixture-backed scope. [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10)
+is ready for maintainer review and merge; the next stage is **`await_merge`**.
+F-04 remains incomplete until the separately invoked post-merge source-release
+and completion checkpoint. No merge, tag, release or deployment ran.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

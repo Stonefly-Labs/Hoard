@@ -18,7 +18,9 @@ assisted review of [discovery](checklists/discovery.md) and
 does not change their reviewer-owned approvals or the specification's meaning.
 All 80 tasks, including convergence follow-up T079-T080, are complete with
 [follow-up evidence](plan.md#convergence-follow-up-implementation).
-Next is separately invoked fresh convergence, then finalization and maintainer merge.
+Clean convergence and [finalization](plan.md#finalization-acceptance) pass.
+Next is maintainer merge, then separately invoked `await_merge`; the feature
+and backlog entry are not yet complete.
 
 **Tests**: Explicitly required by FR-022, SC-001..SC-008, each story's independent
 test and D01..D40. Write paired permitted/rejected checks first, record their

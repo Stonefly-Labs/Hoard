@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "stage": "finalize",
+  "stage": "await_merge",
   "status": "ready",
   "branch": "feature/004-module-discovery",
   "active": {
     "id": "F-04",
     "feature_directory": "specs/004-module-discovery",
-    "pr": null
+    "pr": 10
   },
   "completed": [
     {
@@ -399,6 +399,13 @@
       "branch": "feature/004-module-discovery",
       "at": "2026-10-21T19:26:09.107765+00:00",
       "evidence": "F-04 fresh converge executed through installed speckit-converge in pinned specs/004-module-discovery after T079-T080. Outcome converged: zero missing/partial/contradicts/unrequested findings at every severity across 22 FRs, eight buildable SCs, 22 story scenarios, 13 edges, all 80 tasks, ten grouped plan decisions and eight constitutional principles. Verified unknown/future/terminal owner and dependency phase rejection with genuine assessed-ready controls and independent support/evidence semantic labels. Fresh bash scripts/validate-discovery.sh --evidence-directory <fresh-private-directory> passed 137 exact declared/executed tests, zero skips, D01..D40, ten suites, nine package journeys, seven wire observations, 18 real graphs, 11 local feed packages, 12 runtime mutations, retained binaries, JSON consumer, SDK format/analyzers and 61 tooling tests; no lock mutation. Private run a15d7e55-e599-470a-a26e-ba28dc32da90, macOS 26.5.0/.NET 10.0.203, 100 complete 100x10-contribution reads at concurrency ten, p95 0.0265445s and zero provider activity/resource deltas. No feature artifacts/spec/plan/tasks/contracts/checklists, product/test/tooling/dependencies or locks changed; no empty phase, self-approval or extension hooks. README/development status updated; full assessment for draft PR #10. Other guides/examples/baseline architecture/diagrams/governance/backlog/IaC/release docs unaffected because APIs, support scope, boundaries, commands, transport and operations/restart/rollback are unchanged. Prior configuration/lifecycle/foundation and architecture reviews remain implementation evidence, not rerun claims. Next finalize via separate invocation; PR remains draft, F-04 active, no merge/dependency unlock/release/publication/infrastructure/deployment."
+    },
+    {
+      "stage": "finalize",
+      "spec_id": "F-04",
+      "branch": "feature/004-module-discovery",
+      "at": "2026-10-21T21:17:11.308705+00:00",
+      "evidence": "Finalization gates passed: all 80 tasks checked; requirements 16/16 and existing reviewer-owned discovery/management approvals 20/20 each unchanged. Two fresh locked discovery runs pass 137 exact tests with no skips, D01-D40, nine package journeys, 18 graph scans, 12 runtime mutations, SDK formatting/analyzers and 61 tooling tests; second run replays original hash-identical pre-F-04 lifecycle/configuration/options DLLs without recompiling them. All 311 input hashes match clean convergence; no locks or production/test/tooling source changed. Seven-project direct/transitive advisory check has no known vulnerable entries/errors. 283 documentation targets and 84 anchors plus task/checklist/template invariants pass. Prior production/evidence architecture reviews remain applicable. README and affected spec/plan/tasks/quickstart/development statuses updated; unaffected-document reasons and run/hash evidence in specs/004-module-discovery/plan.md#finalization-acceptance. PR #10 targets main; ready-for-review handoff follows this pushed checkpoint. No merge, tag, release, package publication, deployment or IaC operation."
     }
   ]
 }

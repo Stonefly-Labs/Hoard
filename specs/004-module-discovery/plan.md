@@ -536,3 +536,75 @@ No new architecture review is warranted for this isolated reference-consumer
 correction; previous production/evidence reviews remain above. All 80 tasks
 are now checked. Draft PR #10 remains draft; next is fresh `converge`, not
 merge, release or a new specification.
+
+## Finalization Acceptance
+
+Finalization on 2026-10-21 verifies all 80 completed tasks, the clean convergence
+assessment and existing architecture-review corrections. Requirements and
+normative contracts are unchanged. The built-in checklist remains 16/16;
+the previously requested assisted reviewer-owned discovery and management
+approvals remain 20/20 each, not newly self-approved. No production Hosting/
+Application, provider/dependency or shared lifecycle change followed the
+reviewed implementation; the consumer follow-up is isolated presentation/proof.
+No new architecture review is warranted for this documentation-only stage.
+
+### Fresh commands and results
+
+Directory arguments below elide only private retained/evidence workspace paths.
+The first run builds consumers against immutable merged pre-F-04 revision
+`7fd73267a5154583363c94e9e85b9bac7d4a16b3`, freezes them and replays current
+packages. The second imports the originally frozen binaries and their original
+baseline dependency/assets provenance instead; it does not recompile them.
+Both runs pass independently with unchanged locked inputs.
+
+| Command | Finalization result |
+| --- | --- |
+| `bash scripts/validate-discovery.sh --evidence-directory <fresh-private-directory>` | Passed 137 exact declared/executed tests, zero skips, D01..D40, ten suites, nine package journeys, seven wire observations, 18 actual graph scans, 11 local feed packages, 12 intended runtime-red mutations with passing counterparts, retained binaries, JSON consumer and full SDK formatting/analyzers; no lock mutation |
+| `bash scripts/validate-discovery.sh --retained-baseline <original-private-baseline-directory> --evidence-directory <second-fresh-private-directory>` | Passed the same complete acceptance gates using the original hash-identical lifecycle/configuration/options binaries; no consumer recompilation or lock mutation |
+| `python3 -m unittest discover -s tests/tooling -v` (executed within each acceptance run with the absolute test path) | Passed all 61 tests |
+| `dotnet list Hoard.slnx package --vulnerable --include-transitive --format json` | Passed; seven solution projects, no known vulnerable direct/transitive entries or assessment errors at assessment time; not an exploit audit or future guarantee |
+
+Private evidence IDs are `f04-finalize-evidence/discovery-evidence.json`
+(run `4dce5c36-f0d4-43c8-8cf5-1ea9080eeedd`, manifest SHA256
+`9726f753c7b16f105d563b6b791f35aafd8e737bf9c801f40f1921564d67425b`)
+and `f04-finalize-original-binaries/discovery-evidence.json`
+(run `6d30161f-b7f4-4e33-8431-2f43ff3d068a`, manifest SHA256
+`67adace9afec263fae3a9bb76ac288f6fbfcdbf64864b2e899141df3310d4dd1`).
+Their logs/TRX/payloads/binaries stay outside Git. All 311 acceptance input
+hashes match the clean-convergence inputs. The original binaries retain:
+
+| Binary | Original and replayed SHA256 |
+| --- | --- |
+| RetainedLifecycle | `8bbd529178abd6c7c106ca0c4bf8b64d15d987c8a7c915f4657efebbdf772981` |
+| RetainedConfiguration | `5b556883aa8542fbea90ef693b720f0853ff7c668981a00dec9c2ba6966c3ce8` |
+| LegacyOptions | `744043a957806145d8065186eefdfc5af1d8fe2d85df5104b143ef89a60eba66` |
+
+On macOS 26.5.0/.NET SDK 10.0.203, the exact-original-binary run performs
+100 complete authorized reads of 100 modules x 10 contributions at concurrency
+10: p95 **0.034034 seconds**, 615,888..615,889-byte bodies and zero constructor,
+probe, secret-read, service-call, connection or active-resource deltas.
+The first run's p95 is 0.0481795 seconds with 615,887..615,888-byte bodies.
+These are local fixture results, not production performance qualification.
+Historical configuration/lifecycle/foundation full-run results above are not
+claimed as fresh finalization reruns.
+
+### Documentation and merge handoff
+
+README, development guide and spec/tasks/quickstart status now distinguish
+accepted fixture-backed scope from a delivered product. Normative contracts,
+reviewer-owned approvals and task bodies/checkmarks are unchanged. Provider
+and example guides, research/model, charter/product specification/architecture/
+ADR/diagrams, constitution/backlog, predecessor artifacts, IaC and release
+guidance need no edit: API wiring, support scope, dependencies, operational
+commands, permissions, transport and restart/rollback procedures do not change.
+Production authentication, external proxies, framework request-log redaction,
+native protocols/provider conformance and rendered accessibility remain
+unqualified.
+
+Finalization makes PR #10 ready for maintainer review/merge. The checkpoint
+schedules `await_merge / ready` with PR #10 recorded; F-04 remains incomplete
+and dependent features remain locked. The next invocation after maintainer
+merge verifies that exact merge commit and performs the authorized
+`v0.0.4-alpha` source-release handoff before recording completion.
+No merge, tag, release, package publication, deployment, governance change
+or OpenTofu plan/apply occurs in finalization.

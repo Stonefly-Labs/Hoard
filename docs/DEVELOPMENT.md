@@ -2011,6 +2011,57 @@ The checkpoint schedules **`finalize / ready`** for a separate invocation.
 convergence does not finalize or complete F-04, request a merge, unlock
 dependencies, publish a source release/package, deploy or apply infrastructure.
 
+### F-04 finalization
+
+Finalization verifies the clean convergence result, all 80 checked tasks,
+the unchanged 16/16 requirements checklist and the existing reviewer-owned
+20/20 discovery and 20/20 management approvals. No requirement, contract,
+task body, approval, product/test/tooling source, dependency or lock changes.
+The previous production/evidence architecture reviews remain applicable:
+Hosting/Application composition and shared lifecycle ownership are unchanged;
+the subsequent consumer correction is isolated to reference presentation
+and its proof. No new architecture review is warranted for finalization docs.
+
+Fresh locked discovery acceptance passes 137 exact declared/executed tests,
+zero skips, D01..D40, ten suites, nine package journeys, seven wire observations,
+18 actual graph scans, 11 local feed packages, 12 intended runtime-red mutations
+with passing counterparts, JSON consumer and full SDK formatting/analyzers.
+All 61 tooling tests pass within acceptance. A second fresh run uses
+`--retained-baseline` to import and replay the originally frozen pre-F-04
+lifecycle/configuration/options DLLs, with their original hashes, baseline
+dependency/assets provenance and no consumer recompilation. This is distinct
+from the first run's freshly built immutable merged-baseline consumers.
+Commands, run IDs, manifest digests and original binary hashes are in the
+[finalization evidence](../specs/004-module-discovery/plan.md#finalization-acceptance).
+
+The exact-original-binary run records 100 complete authorized reads of
+100 modules x 10 contributions at concurrency 10, p95 **0.034034 seconds**,
+615,888..615,889-byte bodies and zero constructor, probe, secret-read,
+service-call, connection or active-resource deltas on macOS 26.5.0/.NET SDK
+10.0.203. This is local fixture evidence, not a production SLA.
+`dotnet list Hoard.slnx package --vulnerable --include-transitive --format json`
+reports no known vulnerable direct/transitive entries or assessment errors
+across seven solution projects; it is not an exploit audit or future guarantee.
+Previous foundation/lifecycle/configuration full-run results remain historical,
+not new finalization rerun claims.
+
+README, this guide and the active spec/plan/tasks/quickstart now record accepted
+scope and the merge handoff. Provider and example guides, normative contracts,
+research/model, charter/product specification/architecture/ADR/diagrams,
+constitution/backlog, predecessor artifacts, IaC and release guidance are
+unaffected: public APIs, support limits, commands, dependency boundaries,
+transport, permissions, restart/rollback and operational procedures do not change.
+Production identity, external proxies, framework request-log redaction,
+native protocols/provider conformance and rendered accessibility remain unqualified.
+
+Finalization makes [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10)
+ready for maintainer review/merge and schedules **`await_merge / ready`**.
+F-04 is not yet complete and dependencies remain locked. A separate invocation
+after the maintainer merges verifies the exact merge commit and publishes the
+authorized `v0.0.4-alpha` source prerelease before recording completion.
+This invocation does not merge, tag, release, publish packages, deploy or run
+OpenTofu plan/apply.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

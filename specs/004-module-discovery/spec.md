@@ -4,8 +4,11 @@
 
 **Created**: 2026-10-21
 
-**Status**: Draft requirements only; no discovery endpoint, management screen,
-production provider or new runtime behavior is delivered by this stage.
+**Status**: Implemented and finalized fixture-backed library/API foundation;
+[acceptance evidence](plan.md#finalization-acceptance) is recorded. Awaiting
+maintainer merge and the separate post-merge completion stage. Protected
+discovery endpoints and a JSON-only reference consumer are implemented,
+not a runnable cache, production provider or rendered management console.
 
 **Input**: User description: "Specify a management experience where users can inspect installed, enabled and healthy Hoard modules, what each supports, and why a capability is unavailable. Include secure API discovery, UI representation, actionable diagnostics and truthful feature advertisement."
 

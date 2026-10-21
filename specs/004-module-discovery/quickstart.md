@@ -3,7 +3,9 @@
 **Status**: Implemented fixture-backed library/API acceptance, not a runnable
 cache, production provider or rendered console. The
 [implementation evidence](plan.md#implementation-evidence) records measured
-results and boundaries; convergence/finalization remain separate stages.
+results and boundaries. Clean convergence and
+[finalization](plan.md#finalization-acceptance) pass; maintainer merge and the
+separately invoked post-merge completion stage remain pending.
 
 ## Prerequisites and Current Checks
 
