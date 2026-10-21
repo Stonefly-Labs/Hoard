@@ -269,6 +269,7 @@ def real_architecture(root, work, evidence):
     ownership = {
         "Hoard.Abstractions": "Abstractions", "Hoard.Core": "Core", "Hoard.Hosting": "Hosting",
         "Hoard.Application": "Application", "Microsoft.Extensions.DependencyInjection.Abstractions": "Di",
+        "NuGet.Versioning": "Versioning",
         "Hoard.Fixtures.Protocol": "Protocol", "Hoard.Fixtures.Metadata": "Metadata",
         "Hoard.Fixtures.Artifact.One": "Artifact", "Hoard.Fixtures.Artifact.Two": "Artifact",
         "Hoard.Fixtures.Identity": "Identity", "CustomHost": "Host"
@@ -354,7 +355,7 @@ def main():
     if args.phase == "architecture":
         run("dotnet", "test", str(args.root / "tests/architecture/Hoard.Architecture.Tests/Hoard.Architecture.Tests.csproj"),
             "-c", "Release", "--no-build", "--no-restore", "--filter",
-            "FullyQualifiedName!~Actual_platform_provider_packages_and_both_hosts&FullyQualifiedName!~Omitting_any_required_real_scan",
+            "FullyQualifiedName!~Actual_platform_provider_packages_and_both_hosts&FullyQualifiedName!~Omitting_any_required_real_scan&FullyQualifiedName!~Prepared_lifecycle_graphs",
             "-v", "minimal")
         print("Isolated architecture rejection/permitted pairs passed (partial foundation check).")
         return
@@ -366,7 +367,7 @@ def main():
     if args.phase == "hosts":
         for project in ("unit/Hoard.Foundation.Tests", "architecture/Hoard.Architecture.Tests",
                         "integration/Hoard.Composition.Tests"):
-            selection = ["--filter", "FullyQualifiedName~ModuleRegistrationTests|FullyQualifiedName~DeclarationContractTests"] if project.startswith("unit/") else []
+            selection = ["--filter", "FullyQualifiedName~ModuleRegistrationTests|FullyQualifiedName~DeclarationContractTests"] if project.startswith("unit/") else ["--filter", "FullyQualifiedName!~Prepared_lifecycle_graphs"]
             run("dotnet", "test", str(args.root / f"tests/{project}/{project.split('/')[-1]}.csproj"),
                 "-c", "Release", "--no-build", "--no-restore", *selection, "-v", "minimal")
         print("Registration, package-only host swap and real boundary scans passed (partial foundation check).")
@@ -381,7 +382,8 @@ def main():
                 contract = "RequiredContract" if project.stem == "RequiredConsumer" else "BinaryContract"
                 environment = {"ContractAssembly": str(project.parent.parent / f"Old/bin/Release/net10.0/{contract}.dll")}
             run("dotnet", "format", str(project), "--verify-no-changes", "--no-restore", "-v", "quiet", env=environment)
-    result = run("dotnet", "test", str(args.root / "Hoard.slnx"), "-c", "Release", "--no-build", "--no-restore", "-v", "minimal")
+    result = run("dotnet", "test", str(args.root / "Hoard.slnx"), "-c", "Release", "--no-build", "--no-restore",
+                 "--filter", "FullyQualifiedName!~Prepared_lifecycle_graphs", "-v", "minimal")
     print(result.stdout)
     print("Foundation acceptance passed: isolated Core, five independent providers, both hosts, "
           "ARCH-001..008 rejection/permitted pairs, C-01..23, declaration and registration proofs. "

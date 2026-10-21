@@ -3,9 +3,11 @@
 F-01 supplies source-level .NET 10 declarations and registration-only composition
 at local acceptance package version `0.1.0`. Nothing is published to nuget.org.
 There is no working cache, protocol, persistence, byte store, authentication,
-provider activation, or certification. Start with the
+or certification. F-02 now adds opt-in fixture-tested module lifecycle in
+Hosting; this does not implement provider operations. Start with the
 [compile-only host](../examples/CustomHost/README.md) and
 [validation quickstart](../specs/001-provider-contracts/quickstart.md).
+For lifecycle use, see the [package-only lifecycle host](../examples/LifecycleHost/README.md).
 
 ## Public ownership and authoring
 
@@ -14,7 +16,10 @@ provider activation, or certification. Start with the
 `IMetadataProvider`, `IArtifactProvider`, and `IIdentityProvider` markers in
 `Hoard.Abstractions.Providers`. All are BCL-only. Markers grant no operations or
 permissions. Core references Abstractions only; Core/Application have no
-operational members yet. Hosting alone references DI abstractions.
+operational members yet. Hosting owns DI/HTTP integration and internally uses
+NuGet.Versioning; its package propagates the ASP.NET Core shared-framework
+requirement, including to non-web registration-only consumers. This is a
+deployment prerequisite change, not a change to the old registration signatures.
 
 The [public API contract](../specs/001-provider-contracts/contracts/public-api.md)
 and [declaration model](../specs/001-provider-contracts/data-model.md) specify
@@ -88,7 +93,131 @@ and prerelease flag, even if the integration is allegedly unused. Incompatibilit
 makes the composition unsupported. Never silently disable a module/integration,
 ignore a dependency, fall back, or substitute another provider. Operators must
 explicitly change selection or install a compatible version and revalidate.
-F-01 classifies test examples; runtime enforcement is future F-02/F-03 work.
+F-01 classifies examples; F-02's explicit validator now enforces these rules.
+F-03 will resolve configuration into that same gate, not duplicate it.
+
+## Opt-in lifecycle
+
+Add `AddModuleLifecycle<TProvider, TModule>()` after the provider registration.
+It records types only. `IHoardModule` in `Hoard.Hosting.Lifecycle` explicitly
+implements ConfigureServices, MapEndpoints, InitializeAsync,
+CheckReadinessAsync, RunAsync and StopAsync. Constructors are parameterless and
+inert. Metadata/artifact packages remain Abstractions-only; their adapters live
+in the host. Protocol/identity packages may use approved Hosting APIs.
+
+Supply `HoardStartupSelection`, `HoardPlatformVersions` and
+`HoardLifecycleOptions` to `ValidateComposition`. No IDs/defaults are inferred:
+exactly one enabled Metadata and Artifact must equal their authoritative IDs;
+zero or more protocols/identity schemes are permitted. Registry structure is
+checked even for disabled declarations; active compatibility applies only to
+selected entries. Validation runs no constructors, factories, callbacks or I/O.
+Malformed records, unavailable required targets, incompatible enabled optional
+targets, cycles and unsatisfied target-specific capabilities fail explicitly.
+
+Acquire `ComposeHoardModulesAsync` with `await using`, call
+`BuildHoardApplicationAsync`, then `MapHoardModulesAsync`, then normal
+`app.StartAsync` / `app.StopHoardApplicationAsync(lease)`. Do not independently
+call bare app StopAsync, dispose the app or use app.RunAsync. One external lease
+shares the actual framework-stop task and owns root disposal; a canceled
+ApplicationStopped token does not prove its callbacks finished.
+`IHoardLifecycle.StopAsync` shares module cleanup only; its root outcome is
+`NotAttemptedOwnerPending` until external-owner disposal when safe. Inspect
+`lease.StopResult` after disposal; incomplete disposal throws a sanitized
+`HoardLifecycleException` and preserves that result. Repeated disposal shares
+one operation, not a second cleanup attempt.
+
+ConfigureServices/MapEndpoints are bounded composition, not worker/I/O hooks.
+Do not build nested containers or register independent `IHostedService`s.
+Adapters own phase-acquired resources, including partial failures; throwing
+constructors clean their own pre-return allocations. DI retains its own
+resource ownership. RunAsync is one admitted callback after complete selected
+readiness, not a per-iteration scheduler; no-worker completion is valid.
+Worker faults atomically close admission and request shutdown, without retry.
+Host lifetime resolution and synchronous stopping notifications run outside the
+lifecycle state lock. They are tracked before stop begins as global Phase
+activity: a pending notification or lifetime-cancellation callback protects all
+module resources and the root while snapshot/stop coordination remains bounded.
+
+Map declared responsibilities through
+`routes.Map(responsibilityId, pattern, methods, RequestDelegate)`.
+Only absolute literals and required unconstrained whole-segment parameters,
+explicit uppercase standard methods (HEAD explicit), and default order are
+supported. All declared responsibilities need mappings. Equal framework
+precedence with intersecting paths/methods fails, including same-owner,
+renamed-parameter, case and trailing-slash equivalents. Disjoint methods/paths
+and a unique more-specific literal pass. Constraints, defaults, optional/
+complex/catch-all paths, dynamic/custom matching and unowned ambiguity fail.
+Host middleware and access policy remain outside and apply normally; no
+management/health endpoint or anonymous policy is added. Finalized routes must
+not be changed while the lifecycle runs.
+
+Readiness is neither liveness nor startup admission. All enabled modules must
+initialize and explicitly report ready, including required health observations,
+before workers/owned requests are admitted. Disabled modules have no callbacks,
+routes or synthetic connection attempts. Later assessment can report health
+loss/recovery for the fixed selection without automatically closing admission,
+draining, replacing or disabling modules. Caller cancellation only cancels an
+individual shared-operation wait; compose/build/map cancellation latches failed
+startup. Stop permanently closes admission before cancellation/drain/cleanup.
+
+Defaults are 120s absolute startup, 30s activation callback, 5s aggregate
+readiness, and 30s total shutdown including at most 10s drain and 5s per module
+cleanup. All durations must be positive/finite; inner waits never expand the
+remaining outer budget, including synchronous callbacks/build and inter-phase
+pauses. `TimeProvider` supplies monotonic deadlines.
+
+Cleanup is reverse dependency order, once per returned adapter. Failed,
+TimedOut, NotAttemptedBudgetExhausted and UnsafePendingCallback remain distinct
+from Completed/NotEntered. Root outcomes additionally distinguish framework/
+owner pending, unsafe omission, budget exhaustion, failure and timeout.
+Outstanding requests retain ownership through response completion (including
+handled errors). Supervised build installs the internal completion boundary
+before host startup filters/middleware. Admitted leases release only after
+their response-completion callbacks and handler callbacks finish, in reverse
+registration order, not on handler return. Host middleware/access policy still
+applies; no caller-installed admission middleware is needed.
+Workers, build, activation, cleanup and cancellation callbacks
+retain resources they may still use. A timed-out StopAsync does not release its
+owner/prerequisites/root. Independent safe cleanup may continue under the same
+deadline. Late completion cannot rewrite returned outcomes, retry or trigger
+deferred disposal. Trusted non-cooperative code may require process termination.
+
+Diagnostics expose fixed rule/action codes, safe IDs or registration ordinals,
+phase, correlation and primary/cleanup classification, not provider exception
+text, inner exceptions, options or URLs. Messages/actions are at most 512
+characters; paths at most 32 IDs; diagnostic lists at most 100 with explicit
+omitted counts. IDs are bounded to 128 characters, versions/publishers/option
+keys to 256, ranges to 512, descriptions/URLs to 2048, and each nested descriptor
+collection to 1000. These are structural limits, not production scalability
+claims. Snapshots report IncludedByRegistration, fixed selection, phase and
+readiness, never exhaustive installed inventory or certified capabilities.
+
+Lifetime and readiness/cleanup-timeout cancellation faults use the safe
+`CancellationFailure` code, originating owner/phase, fixed corrective action
+and lifecycle correlation, classified as additional cleanup diagnostics.
+They preserve the primary failure and are recorded before cancellation activity
+is released. Correct the trusted module's cancellation callback before starting
+a fresh lifecycle. Completed faults are not still-running activity: successful
+resource release and a cancellation diagnostic can coexist. A fault after a
+bounded result appears in a later snapshot only; it cannot rewrite that result,
+retry cleanup or trigger deferred disposal.
+
+Supervised startup, readiness, cleanup, framework-stop and root-disposal faults
+are recorded once with their originating owner/phase before tracked activity
+is released. A fault after its bounded wait is abandoned reports additional
+`LateCallbackFailure`, even before shared stop completes; directly awaited
+faults keep their normal category without duplication. Worker faults during
+shutdown are also additional diagnostics, not a second shutdown request.
+Cooperative cancellation is not a new eventual fault. Late reporting never
+revises returned resource outcomes or starts deferred disposal. The lease
+rechecks the original deadline after framework stop; if exhausted, root
+disposal remains NotAttemptedBudgetExhausted rather than being dispatched.
+
+Changing a bundled choice needs a fresh validated lifecycle, not a rebuild.
+Adding an absent package needs reference, registration/adapter, rebuild,
+redeploy and restart. Invalid replacement never rolls back silently; explicitly
+restore the prior coherent set and start a new instance. Stop is not schema/data
+rollback, crash recovery or forced termination.
 
 Assess source compatibility for **consumers and implementers**, binary
 compatibility for previously compiled supported modules, and behavioral
@@ -111,8 +240,8 @@ package publication or replace later behavior/conformance qualification.
 
 | Feature | Reserved work |
 | --- | --- |
-| F-02 | Module registry, service wiring, activation, disabled behavior, readiness/shutdown |
-| F-03 | Configuration precedence, secret references/resolution, semantic compatibility, category/cardinality validation |
+| F-02 | Implemented bounded, fixture-only module composition/lifecycle; no operational provider |
+| F-03 | Configuration precedence and secret references/resolution feeding the existing validator |
 | F-04 | Sanitized management capability discovery |
 | F-05 | Metadata operations, concurrency, transactions, schema/recovery |
 | F-06 | Artifact streaming, staging, commit visibility, read/delete guarantees |
@@ -128,5 +257,6 @@ scan manifest. Identity providers may reference the approved Hosting API,
 including its transitive Core dependency. That does not permit a direct
 Identity-to-Core reference or an unrelated SDK-mediated path; the scanner
 tracks those paths separately even when both reach the same assembly.
-Native-client restore, crash recovery, HTTP lifecycle,
-performance, and production deployment are separate acceptance work.
+Native-client restore, crash recovery, transport-level HTTP drain,
+performance, operational provider conformance and production deployment remain
+separate acceptance work. F-02 tests only application-level TestServer behavior.

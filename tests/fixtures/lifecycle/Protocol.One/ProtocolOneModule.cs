@@ -1,0 +1,64 @@
+using System.Collections.Concurrent;
+using Hoard.Abstractions.Modules;
+using Hoard.Abstractions.Providers;
+using Hoard.Hosting.Lifecycle;
+using Hoard.Hosting.Routing;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Hoard.Fixtures.Lifecycle.Protocol.One;
+
+public sealed class ProtocolOneProvider : IProtocolProvider
+{
+    public static ModuleDescriptor Declaration => new()
+    {
+        Id = "fixture.protocol.one",
+        Category = ModuleCategory.Protocol,
+        Version = "0.1.0",
+        Compatibility = new() { HostRange = "[0.1.0,0.2.0)", AbstractionsRange = "[0.1.0,0.2.0)", AllowPrereleaseHost = false, AllowPrereleaseAbstractions = false },
+        Dependencies = [],
+        Capabilities = [],
+        Configuration = [],
+        Health = [],
+        Endpoints = [new() { Id = "lifecycle-test", Description = "Fixture-only handler; no NuGet behavior." }],
+        Provenance = new() { Publisher = "Hoard lifecycle acceptance", SupportStatus = ModuleSupportStatus.Fixture }
+    };
+}
+
+public sealed class ProtocolOneModule : IHoardModule
+{
+    private bool acquired;
+    public static int ConnectionAttempts;
+    public static int ResourceAcquisitions;
+    public static int ResourceReleases;
+    public static ConcurrentQueue<string> Events { get; } = new();
+    public static Func<CancellationToken, Task>? Initialize { get; set; }
+    public static Func<CancellationToken, Task>? Worker { get; set; }
+    public static Func<CancellationToken, Task>? Cleanup { get; set; }
+    public static bool Ready { get; set; } = true;
+    public ProtocolOneModule() => Events.Enqueue("construct");
+    public void ConfigureServices(IServiceCollection services) => Events.Enqueue("services");
+    public void MapEndpoints(HoardModuleEndpointBuilder routes)
+    {
+        Events.Enqueue("map");
+        routes.Map("lifecycle-test", "/fixture/one", ["GET"], context =>
+        { Events.Enqueue("request"); return context.Response.WriteAsync("lifecycle-one"); });
+    }
+    public async ValueTask InitializeAsync(IServiceProvider services, CancellationToken token)
+    {
+        Events.Enqueue("initialize");
+        Interlocked.Increment(ref ConnectionAttempts);
+        Interlocked.Increment(ref ResourceAcquisitions);
+        acquired = true;
+        if (Initialize is { } callback) { await callback(token); }
+    }
+    public ValueTask<HoardModuleReadiness> CheckReadinessAsync(CancellationToken token)
+    { Events.Enqueue("readiness"); return ValueTask.FromResult(new HoardModuleReadiness(Ready, [])); }
+    public Task RunAsync(CancellationToken token) { Events.Enqueue("worker"); return Worker?.Invoke(token) ?? Task.CompletedTask; }
+    public async ValueTask StopAsync(CancellationToken token)
+    {
+        Events.Enqueue("stop");
+        if (Cleanup is { } callback) { await callback(token); }
+        if (acquired) { Interlocked.Increment(ref ResourceReleases); acquired = false; }
+    }
+}

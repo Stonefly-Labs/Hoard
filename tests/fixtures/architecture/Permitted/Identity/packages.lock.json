@@ -6,11 +6,11 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "c/bD48QOLW/RfWTUQXcWZH25I8SD9Z1N8d2G9XX1qtMBR6WhXGI6dJnDeTH3K0fI/9o/9HX2GcWcdvEejsk0NQ==",
+        "contentHash": "WGlX9sNlNvsWHCwsfI1ZR9A6XLnaU9kytZGArVsbJkNAA9u1PExh54EcCWGWAAsmkWTptmBYDNWmHuNbvXeenA==",
         "dependencies": {
           "Hoard.Abstractions": "0.1.0",
           "Hoard.Core": "0.1.0",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.13"
+          "NuGet.Versioning": "7.9.0"
         }
       },
       "Hoard.Abstractions": {
@@ -26,10 +26,10 @@
           "Hoard.Abstractions": "0.1.0"
         }
       },
-      "Microsoft.Extensions.DependencyInjection.Abstractions": {
+      "NuGet.Versioning": {
         "type": "Transitive",
-        "resolved": "10.0.13",
-        "contentHash": "G2GrGWNAPZBsii2F6AU8n+JT2tC1/I0Ml/e9ZyNCgPjf3hZqronP7o0X91aAynCmVeae8KkSIUNXXeXCNRmdVQ=="
+        "resolved": "7.9.0",
+        "contentHash": "r4sZuVpVqwSBLe4qYDrnpScqdyctlRXg0HSF5OoCGkeBc8b+o8BBYHuI/u1RoWYX78PbieijU13TBt71/Xf3lw=="
       }
     }
   }

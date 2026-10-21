@@ -93,7 +93,8 @@ internal static class PublicSurfaceInspector
     {
         var result = new List<ArchitectureViolation>();
         foreach (var node in evidence.Nodes.Values.Where(n => n.Boundary is BoundaryOwnership.Abstractions
-                     or BoundaryOwnership.Core or BoundaryOwnership.Hosting or BoundaryOwnership.Application or BoundaryOwnership.Protocol))
+                     or BoundaryOwnership.Core or BoundaryOwnership.Hosting or BoundaryOwnership.Application or BoundaryOwnership.Protocol
+                     or BoundaryOwnership.Metadata or BoundaryOwnership.Artifact or BoundaryOwnership.Identity))
         {
             var assembly = evidence.Assemblies[node.Id];
             Check(Attributes(assembly), "<assembly>");
@@ -130,6 +131,9 @@ internal static class PublicSurfaceInspector
                         || (node.Boundary is BoundaryOwnership.Hosting or BoundaryOwnership.Application or BoundaryOwnership.Protocol
                             && target.Boundary is BoundaryOwnership.Core or BoundaryOwnership.Hosting)
                         || (node.Boundary == BoundaryOwnership.Hosting && target.Boundary == BoundaryOwnership.Di));
+                    allowed |= node.Boundary == BoundaryOwnership.Identity && target.Boundary == BoundaryOwnership.Hosting;
+                    allowed |= !prohibited && target.Boundary == BoundaryOwnership.Http
+                        && node.Boundary is BoundaryOwnership.Hosting or BoundaryOwnership.Application or BoundaryOwnership.Protocol or BoundaryOwnership.Identity;
                     if (!allowed)
                     {
                         result.Add(new("ARCH-004", node.Id, owner, location, $"{node.Id} -> {type.FullName} ({owner})"));

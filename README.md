@@ -21,8 +21,8 @@ dependency management into another full-time job.
 
 > [!IMPORTANT]
 > **Foundation only.** This repository currently contains product/design documents,
-> development workflows, repository tooling, compile-only .NET provider contracts
-> and composition proofs, and an operator-run Azure identity bootstrap.
+> development workflows, repository tooling, .NET provider contracts and a tested
+> fixture-only module lifecycle, plus an operator-run Azure identity bootstrap.
 > There is no runnable cache, working provider, UI, container, or published package.
 > Everything in the product overview below describes the planned experience.
 
@@ -75,8 +75,11 @@ git switch -c chore/your-change
 # Standard-library tests for the repository tools; no application build.
 python3 -m unittest discover -s tests/tooling -v
 
-# .NET 10 compile/package/boundary acceptance; never starts a server.
+# .NET 10 foundation/solution acceptance; old package examples stay compile-only.
 bash scripts/validate-foundation.sh
+
+# Fixture-only lifecycle, in-process HTTP, package/restart and compatibility proof.
+bash scripts/validate-lifecycle.sh
 ```
 
 For repository work, use Git, GitHub CLI, Python 3.11+, and a stable .NET 10 SDK
@@ -84,7 +87,9 @@ matching `global.json`. The foundation check restores pinned dependencies from
 nuget.org and builds temporary local packages; it requires network access.
 OpenTofu and Azure CLI
 are needed only when working on the [Azure bootstrap](infra/bootstrap/README.md).
-There is no runnable application or Node project yet. See the
+There is no runnable cache or Node project yet. The lifecycle harness uses only
+in-memory TestServer, never a listening product service. Hosting consumers now
+require the ASP.NET Core shared framework. See the
 [foundation quickstart](specs/001-provider-contracts/quickstart.md) and
 [provider author guide](docs/PROVIDERS.md) for the exact supported scope.
 
@@ -107,6 +112,7 @@ specs/               Reviewable feature specifications; not delivered capabiliti
 src/                 Four platform library boundaries; production Host/providers reserved
 tests/               Tooling, foundation unit/architecture/composition checks, fixtures
 examples/CustomHost/ Package-only compile proof; never starts a host
+examples/LifecycleHost/ Package-only lifecycle fixtures; in-process TestServer only
 ```
 
 ## 🤝 Build with us
@@ -166,11 +172,156 @@ Finalization acceptance is recorded in the
 [PR #4](https://github.com/Stonefly-Labs/Hoard/pull/4) merged into `main` on
 2026-10-20. The separate `await_merge` completion checkpoint records F-01 as
 complete, retaining its feature directory, PR, and verified merge commit.
-That progress checkpoint must also merge before a new specification starts.
-The next scheduled stage is `specify` for
-[F-02: module registry, composition and lifecycle](docs/HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-02),
-through a separate invocation after that merge gate. No F-02 specification or
-runtime lifecycle behavior is introduced by this checkpoint.
+The progress checkpoint merged through
+[PR #5](https://github.com/Stonefly-Labs/Hoard/pull/5), satisfying the next-spec
+merge gate. The subsequent
+[F-02 specification: module registry, composition and lifecycle](specs/002-module-lifecycle/spec.md)
+defines startup selection and dependency validation, disabled-module isolation,
+route ownership, readiness, bounded initialization/cleanup, safe diagnostics,
+and explicit restart/custom-distribution journeys. Its
+[built-in quality checklist](specs/002-module-lifecycle/checklists/requirements.md)
+passes all 16 specification-quality criteria, not implementation or
+reviewer-owned approval.
+The [clarification review](specs/002-module-lifecycle/spec.md#clarifications)
+found no critical ambiguities across all ten review categories: zero questions
+and no requirement or scope changes. The built-in checklist remains 16/16;
+exact lifecycle APIs, finite budget defaults, and ordering details remain
+planning decisions under the existing requirements at that review.
+The subsequent [F-02 implementation plan](specs/002-module-lifecycle/plan.md)
+now proposes an opt-in Hosting adapter, metadata-only validation, deterministic
+ordering, owned-route conflict checks, supervised build/initialization and
+bounded cleanup, safe readiness/results, and fixed-selection restart journeys.
+Its research, in-memory model, public/lifecycle/acceptance contracts and
+[validation quickstart](specs/002-module-lifecycle/quickstart.md) map all
+22 requirements, seven outcomes and 20 story scenarios to 40 fixture-only proof
+cases. Architecture review led to explicit build supervision, protection of
+resources still used after drain timeout, and precise worker admission semantics.
+These are design obligations, not measured runtime evidence.
+The subsequent checklist stage generated separate
+[composition](specs/002-module-lifecycle/checklists/composition.md) and
+[lifecycle](specs/002-module-lifecycle/checklists/lifecycle.md)
+requirements-quality checklists with 20 criteria each. These standard-depth
+reviews are for maintainers and provider reviewers before implementation
+authorization; all 40 items remain unchecked and reviewer-owned. They cover
+selection/compatibility and route ownership, plus admission, readiness, bounded
+coordination, resource retention, cleanup, and safe diagnostics. Generation is
+not requirements approval or runtime evidence.
+The subsequent [implementation task list](specs/002-module-lifecycle/tasks.md)
+contains 72 unchecked tasks across shared setup/safety primitives, five story
+phases and cross-cutting acceptance. It maps all 22 requirements, seven outcomes
+and 40 acceptance cases to implementation and focused proof, with explicit
+prerequisites and file-disjoint parallel opportunities. Tests precede changed
+behavior; supervised build, response/resource retention, root disposal, old
+binary compatibility and package graphs remain proof obligations, not results.
+At task generation, all 40 custom checklist items remained untouched and
+reviewer-owned.
+The subsequent read-only cross-artifact analysis found no actionable duplication,
+ambiguity, underspecification, inconsistency, constitutional conflict or coverage
+gap. All 22 requirements and seven buildable outcomes have implementation and
+proof assignments; all 72 tasks map to requirements or shared acceptance
+prerequisites. The complete acyclic prerequisite graph, 40 LC cases, 20 story
+scenarios and 12 edge cases were checked. The analysis report is recorded in
+the draft feature PR; feature artifacts and all checklist markers are unchanged.
+The later explicitly requested checklist review initially satisfied 19/20
+composition and 19/20 lifecycle criteria, 38/40 total. It identified
+[timed-out cleanup resource retention](specs/002-module-lifecycle/checklists/lifecycle.md#rq-01-explicitly-retain-resources-for-timed-out-cleanup-callbacks)
+as needing an explicit pending-callback rule and focused proof obligation, and
+[baseline/custom package manifests](specs/002-module-lifecycle/checklists/composition.md#rq-02-baseline-and-custom-artifact-package-lists-disagree)
+as needing consistent journey instructions. The user approved both corrections;
+the spec, model, contracts, acceptance cases, tasks and quickstart now include
+pending StopAsync retention and consistent baseline/custom recipes. Re-evaluation
+satisfies all 40/40 custom criteria without waivers. Fresh read-only analysis
+and a bounded architecture review found no actionable findings; runtime proof
+remains outstanding.
+Those specification/design/review stages introduced no lifecycle runtime.
+The subsequent authorized implementation adds opt-in metadata validation,
+ordinal dependency ordering, supervised composition/build/initialization,
+owned route checks, readiness, worker/request admission and bounded cleanup in
+Hosting. Old `AddHoard`/`AddModule` calls remain inert. Six independent fixture
+packages and the [lifecycle example](examples/LifecycleHost/README.md) exercise
+bundled protocol changes, custom artifact addition, explicit recovery and
+retained-old-binary registration compatibility.
+
+The external composition lease alone stops the framework host and disposes its
+root, after module cleanup and quiescence. `IHoardLifecycle.StopAsync` reports
+module coordination; `NotAttemptedOwnerPending` does not claim root release.
+Inspect the lease's final `StopResult`. A timeout is bounded waiting, not forced
+termination: outstanding work retains resources and can require process exit.
+See the [implementation evidence](specs/002-module-lifecycle/plan.md#implementation-evidence)
+for exact acceptance results and review limits. Fixtures prove neither real
+providers/native clients nor TCP/TLS/proxy drain. Configuration/secrets,
+management discovery, caching, conformance, a curated product host and UI remain
+later work. Convergence and finalization are separate driver stages.
+The subsequent F-02 convergence assessment found one **CRITICAL** shutdown
+coordination gap: worker failure invokes synchronous host-stop notification
+while holding the lifecycle state lock. A held `ApplicationStopping` callback
+blocked both stop and snapshot access beyond the configured shutdown budget.
+[Phase 9 / T073](specs/002-module-lifecycle/tasks.md#phase-9-convergence)
+records the separately authorized correction: host notification now runs outside
+the state lock, tracked before stop begins so pending callbacks protect all
+module/root resources. Deterministic regressions cover responsive snapshots,
+the original shutdown deadline, once-only cooperative cleanup, and incomplete
+cleanup without late retry/disposal. See the
+[follow-up evidence](specs/002-module-lifecycle/plan.md#t073-implementation-follow-up).
+Fresh convergence verified the T073 notification/deadline/resource boundary but
+found one **HIGH** partial diagnostics gap: exceptions from supervised lifetime
+and timeout cancellation tasks are consumed without being reported. A
+public-API probe invoked a throwing stop-token callback once, yet module stop,
+final lease disposal and the final snapshot all contained zero diagnostics.
+[Phase 10 / T074](specs/002-module-lifecycle/tasks.md#phase-10-convergence)
+now records the separately authorized correction. Lifetime, readiness-timeout
+and cleanup-timeout cancellation share off-lock supervision that records safe
+additional `CancellationFailure` diagnostics before releasing tracked activity.
+Completed faults do not imply pending resource use; late faults appear only in
+later snapshots, without changing returned results or triggering deferred cleanup.
+Throwing/cooperative and held late-fault regressions preserve primary errors,
+deadlines and once-only ownership. See the
+[T074 evidence](specs/002-module-lifecycle/plan.md#t074-implementation-follow-up).
+The subsequent fresh convergence assessment verified T074 but found one
+**HIGH** partial gap in eventual-fault reporting. A readiness callback that
+faults after its assessment times out has no diagnostic owner; a timed-out
+cleanup fault is also omitted if it occurs before the shared stop completes.
+Two isolated public-API probes confirmed the missing safe failure categories,
+without changing resource-release outcomes or exposing provider payloads.
+[Phase 11 / T075](specs/002-module-lifecycle/tasks.md#phase-11-convergence)
+now records the separately authorized correction. Supervised callbacks publish
+one safe owner/phase diagnostic before releasing tracked activity, regardless
+of whether stop has finished. Direct failures are not duplicated; late faults
+do not rewrite returned outcomes or retry cleanup. The implementation review
+also identified and corrected omitted worker faults during shutdown and root
+disposal dispatch after budget expiry, with failing-then-passing regressions.
+See the [T075 evidence](specs/002-module-lifecycle/plan.md#t075-implementation-follow-up).
+The subsequent fresh convergence assessment verified T073..T075 but found one
+**CRITICAL** response-completion ownership gap. The admission endpoint releases
+its request lease before an earlier host-middleware `OnCompleted` callback
+finishes: a held callback had no tracked request activity while protocol and
+prerequisite cleanup already reported Completed. The paired callback registered
+inside the handler correctly retained those resources.
+[Phase 12 / T076](specs/002-module-lifecycle/tasks.md#phase-12-convergence)
+now records the separately authorized correction. Supervised host build installs
+the request-completion boundary before host startup filters and middleware;
+admission transfers the request lease to that boundary instead of releasing it
+from an endpoint-registered callback. Normal and handled-error regressions prove
+owner/prerequisite/root retention after drain expiry, independent safe cleanup,
+and cooperative once-only release through all host/handler completion callbacks,
+including a throwing callback. Host middleware and access policy still apply.
+See the [T076 evidence](specs/002-module-lifecycle/plan.md#t076-implementation-follow-up).
+The subsequent fresh convergence assessment found no actionable gaps across
+all 22 requirements, seven outcomes, 20 story scenarios, 12 edge cases,
+40 acceptance cases, 20 plan obligations and 76 tasks under the eight
+constitutional principles. No convergence tasks were appended; the spec, plan,
+tasks and reviewer-owned checklists remain unchanged. The next separately
+authorized stage at that checkpoint was `finalize`. See the
+[convergence checkpoint](docs/DEVELOPMENT.md#f-02-clean-convergence)
+for the assessment.
+Finalization now verifies the bounded acceptance, unchanged reviewer-owned
+gates and implementation architecture-review evidence in the
+[plan](specs/002-module-lifecycle/plan.md#finalization-acceptance-2026-10-21-utc).
+[PR #6](https://github.com/Stonefly-Labs/Hoard/pull/6) is ready for maintainer
+review, not merged. The next stage is `await_merge`; F-02 is not recorded as
+complete and no dependent feature is unlocked. After the feature merges, a
+separate invocation must publish its completion checkpoint from fetched main;
+that checkpoint must also merge before another specification starts.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

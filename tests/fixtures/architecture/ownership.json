@@ -33,6 +33,7 @@
   "Hoard.Abstractions": "Abstractions",
   "Hoard.Core": "Core",
   "Hoard.Hosting": "Hosting",
+  "NuGet.Versioning": "Versioning",
   "Microsoft.Extensions.DependencyInjection.Abstractions": "Di",
   "Hoard.Fixtures.Arch.Sdk": "Sdk",
   "Hoard.Fixtures.Arch.Helper": "Helper"
