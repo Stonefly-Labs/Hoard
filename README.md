@@ -130,6 +130,9 @@ when a document is unaffected.
 The [contributor guide](CONTRIBUTING.md) covers setup and PR expectations.
 The [development workflow](docs/DEVELOPMENT.md) documents the checkpointed
 `hoard-speckit` skill, architecture reviewer, release skill, and quality gates.
+Each implementation invocation completes all remaining spec tasks without
+per-task or per-phase approval, unless blocked by a question, required approval,
+failure, or interruption. The one-stage boundary still applies.
 The initial [constitution](.specify/memory/constitution.md) is version 1.0.0;
 its adoption has merged. The first feature specification,
 [platform package boundaries and provider contracts](specs/001-provider-contracts/spec.md),
@@ -481,6 +484,11 @@ stage; constitution and specification artifacts are not product implementation.
 Pushing a reviewed `vMAJOR.MINOR.PATCH` or prerelease tag publishes a GitHub
 Release with generated notes and GitHub's source archives. It does **not**
 build, publish packages/images, provision Azure, or deploy anything.
+The Spec Kit flow has standing authorization to publish `v0.0.X-alpha` after
+each feature PR merges, where X is the numeric spec-directory prefix (`001`
+becomes `1`). It verifies publication at the exact feature merge commit before
+recording completion; the completion checkpoint must then merge before starting
+the next spec. Previously completed specs are not retroactively released.
 See [release governance](docs/RELEASING.md) for the exact process.
 
 ## 📚 Project documents

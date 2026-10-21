@@ -1548,24 +1548,47 @@ flowchart TD
     Checklist --> Tasks["Tasks"]
     Tasks --> Analyze["Read-only analysis"]
     Analyze --> Gate["Reviewer checklist gate"]
-    Gate --> Implement["Implement"]
+    Gate --> Implement["Implement all remaining tasks"]
     Implement --> Converge["Converge"]
     Converge -->|gaps appended| Implement
     Converge -->|no gaps| Finalize["Validate + docs + feature PR"]
     Finalize --> Merged["Wait for feature merge"]
-    Merged --> Progress["Completion checkpoint PR"]
+    Merged --> Release["Publish v0.0.X-alpha at feature merge commit"]
+    Release --> Progress["Completion checkpoint PR"]
     Progress -->|checkpoint merged| Specify
 ```
 
 Each box representing a scheduled stage is **one invocation**, not a command
 to run the entire backlog. Clarification is before planning; checklist generation
 can use the plan, tasks precede analysis, and analysis precedes implementation.
-Convergence is the installed post-implementation gap check.
+Convergence is the installed post-implementation gap check. The implementation
+invocation covers every remaining task, including tests and documentation:
+successful tasks, batches, stories, phases, validation checkpoints, and
+commit/push boundaries do not require another approval or invocation. Continue
+until all tasks and checks pass, including when resuming or implementing
+convergence-added tasks. Genuine blockers, unresolved questions, required
+approvals, or user interruption can stop it with the stage still running.
+Reviewer-owned checklist approval is not implicit. Completion still stops before
+the separately invoked `converge` stage.
+
+`await_merge` includes the post-merge source release, not a second scheduled
+stage. The maintainer's standing authorization allows `hoard-speckit` to invoke
+`hoard-release` and push the exact `v0.0.X-alpha` tag without another prompt.
+X is the pinned feature directory's positive decimal prefix, not its backlog
+ID: `specs/001-...` maps to `v0.0.1-alpha`, `002` to `v0.0.2-alpha`, and `010`
+to `v0.0.10-alpha`. The tag must be annotated and target the recorded feature
+PR's exact merge commit in `origin/main`, even if main has advanced.
+Publication must be verified before recording completion or selecting the next
+spec. Merges still require explicit authorization; this does not authorize
+other release versions, package publication, infrastructure, or deployment.
 
 ### Checkpoint contract
 
 - `.specify/hoard-flow.json` is **tracked shared progress**: stage, ready/running
   status, branch, active backlog ID/directory/PR, merged completions, and history.
+  `status` also derives `release_tag` for the active directory without network
+  calls or checkpoint writes. New completions include the verified
+  `release_tag` and `release_url`.
 - `.specify/feature.json` is an **ignored local pointer** used by Spec Kit.
   Restore it from the active shared checkpoint when resuming in another checkout.
 - The master backlog owns prompts/dependencies; the checkpoint's `completed`
@@ -1579,7 +1602,9 @@ Convergence is the installed post-implementation gap check.
   the stage's artifacts. Do not run two driver invocations concurrently.
 - Constitution and completion checkpoints must be merged before a new feature
   starts from main. There is intentionally a progress-only PR after each feature
-  merge: it avoids declaring a feature complete in its own still-unmerged PR.
+  merge and verified alpha release: it avoids declaring a feature complete in
+  its own still-unmerged PR. Previously recorded completions without releases
+  remain valid historical records; this policy does not backfill releases.
 
 Inspect without modifying anything:
 
@@ -1598,6 +1623,7 @@ python3 scripts/speckit_flow.py begin
 # Execute the scheduled installed skill and verify the actual stage gate first.
 python3 scripts/speckit_flow.py finish --evidence "Stage result and review/check references"
 # At finalize only: add --pr NUMBER.
+# At await_merge: first verify the derived source prerelease was published.
 ```
 
 **Interrupted stage:** `running` means inspect and resume the same artifacts.
@@ -1605,6 +1631,24 @@ Never reset JSON to `ready`, rerun specify into another directory, or invent
 successful evidence. A failed stage stays running. A successful stage that
 failed to push must be pushed before continuing. Restore corrupted checkpoints
 from reviewed Git history and reconcile artifacts; do not silently default.
+Already-open feature branches must incorporate merged workflow/tooling updates
+from main to use the new release gate; preserve their feature checkpoints and
+shared history when reconciling, rather than resetting them to main's state.
+
+**Post-merge release recovery:** start `chore/spec-progress-<id>` from fetched
+main before `begin`; commit/push that running checkpoint and open/update its
+draft PR before invoking the release skill, so tagging uses a clean worktree.
+Verify the `Source release` run, generated notes, source archives, exact tag
+commit, and published prerelease. A successful tag push alone is not completion.
+The helper's `finish` independently requires an annotated remote tag at the
+feature merge commit and a non-draft GitHub prerelease with the expected tag and
+URL. Missing publication, collisions, wrong commits, drafts, non-prereleases,
+or failed checks leave `await_merge` running.
+On retry, reuse only the correct existing tag/release after verification; watch
+or rerun the specific failed workflow run when appropriate, never retag,
+overwrite, or silently edit a release. Once verified, finish and commit/push
+the release-bearing completion checkpoint, then make its PR ready. The next
+spec still waits for that checkpoint PR to merge. See [release governance](RELEASING.md).
 
 **Human gates:** requirements-quality custom checklists are reviewer-owned.
 Generating them does not approve them. Analysis is read-only; remediation must
@@ -1624,7 +1668,7 @@ some artifacts; the agent/reviewer must assess semantic correctness.
 | `speckit-implement`, `speckit-converge` | Build tasks, then append genuine remaining gaps |
 | `speckit-taskstoissues` | Only when explicitly asked to publish tasks as GitHub issues |
 | `hoard-architecture-review` agent | Substantial project-reference/provider-contract/composition/shared-invariant changes before PR handoff |
-| `hoard-release` | Explicitly requested tag-driven source release; never deploy |
+| `hoard-release` | Explicit release request or authorized Spec Kit post-merge alpha release; never deploy |
 
 The architecture agent is read-only and returns concrete `path:line` findings,
 not implementation or a blanket approval. Select it in Copilot's agent selector
