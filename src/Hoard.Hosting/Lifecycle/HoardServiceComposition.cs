@@ -1,16 +1,32 @@
+using System.Collections.Immutable;
 using Hoard.Hosting.Composition;
+using Hoard.Hosting.Configuration;
 using Microsoft.AspNetCore.Builder;
 
 namespace Hoard.Hosting.Lifecycle;
 
 public sealed class HoardServiceComposition : IAsyncDisposable
 {
-    internal HoardServiceComposition(HoardValidatedComposition composition)
+    internal HoardServiceComposition(HoardValidatedComposition composition,
+        ImmutableDictionary<string, HoardModuleOptions>? ownerOptions = null, ImmutableArray<IDisposable> resources = default)
     {
         Composition = composition;
+        OwnerOptions = ownerOptions ?? ImmutableDictionary<string, HoardModuleOptions>.Empty;
+        this.resources = resources.IsDefault ? [] : resources;
         Coordinator = new(this);
     }
 
+    private readonly ImmutableArray<IDisposable> resources;
+    private int releasingInputs;
+    internal ImmutableDictionary<string, HoardModuleOptions> OwnerOptions { get; }
+    internal void ReleaseInputsWhenQuiescent()
+    {
+        if (Interlocked.Exchange(ref releasingInputs, 1) != 0) { return; }
+        _ = Coordinator.Activities.WhenQuiescent.ContinueWith(_ =>
+        {
+            foreach (var resource in resources) { resource.Dispose(); }
+        }, CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+    }
     internal HoardValidatedComposition Composition { get; }
     internal HoardLifecycleCoordinator Coordinator { get; }
     internal WebApplication? Application { get; set; }
@@ -63,7 +79,7 @@ public sealed class HoardServiceComposition : IAsyncDisposable
     private async Task<HoardStopResult> DisposeCoreAsync()
     {
         var result = await Coordinator.StopAsync().ConfigureAwait(false);
-        if (Application is null) { return result; }
+        if (Application is null) { ReleaseInputsWhenQuiescent(); return result; }
         var deadline = Coordinator.ShutdownDeadline!;
         HoardRootDisposalOutcome outcome;
         if (!result.UnsafeActivities.IsEmpty || result.Modules.Any(module => module.Outcome == HoardCleanupOutcome.UnsafePendingCallback))
@@ -108,6 +124,7 @@ public sealed class HoardServiceComposition : IAsyncDisposable
                 outcome = HoardRootDisposalOutcome.NotAttemptedUnsafe;
             }
         }
+        ReleaseInputsWhenQuiescent();
         return result with { RootDisposal = outcome, Diagnostics = Coordinator.Snapshot.Diagnostics, OmittedCount = Coordinator.Snapshot.OmittedCount };
     }
 }

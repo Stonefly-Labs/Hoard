@@ -22,7 +22,8 @@ dependency management into another full-time job.
 > [!IMPORTANT]
 > **Foundation only.** This repository currently contains product/design documents,
 > development workflows, repository tooling, .NET provider contracts and a tested
-> fixture-only module lifecycle, plus an operator-run Azure identity bootstrap.
+> fixture-only module lifecycle and configuration boundaries,
+> plus an operator-run Azure identity bootstrap.
 > There is no runnable cache, working provider, UI, container, or published package.
 > Everything in the product overview below describes the planned experience.
 
@@ -80,6 +81,9 @@ bash scripts/validate-foundation.sh
 
 # Fixture-only lifecycle, in-process HTTP, package/restart and compatibility proof.
 bash scripts/validate-lifecycle.sh
+
+# Fixture-only configuration, local secrets and original-preserving conversion.
+bash scripts/validate-configuration.sh
 ```
 
 For repository work, use Git, GitHub CLI, Python 3.11+, and a stable .NET 10 SDK
@@ -321,10 +325,133 @@ gates and implementation architecture-review evidence in the
 2026-10-21 (UTC) at `b80c69fc386541be4f56f6ef2edeca40f43a0e1c`.
 The separate `await_merge` stage verified that merge in fetched main and all
 76 completed tasks, then recorded F-02 as complete with its directory, PR and
-merge commit. This completion checkpoint must also merge before another
-specification starts. The next scheduled stage is `specify` for
-[F-03: provider configuration and activation validation](docs/HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-03);
-no F-03 specification or later stage ran in this invocation.
+merge commit. The completion checkpoint merged through
+[PR #7](https://github.com/Stonefly-Labs/Hoard/pull/7), satisfying the next-spec
+gate. The subsequent
+[F-03 specification: provider configuration and activation validation](specs/003-provider-configuration/spec.md)
+defines deterministic source precedence, explicit provider choices, active option
+validation, disabled-module isolation, environment/file secret references, safe
+diagnostics, fixed-state restart and reviewed configuration conversion/recovery.
+It consumes the existing lifecycle composition gate rather than creating another
+activation path. Five prioritized stories, 26 requirements and eight outcomes
+have a [built-in specification-quality checklist](specs/003-provider-configuration/checklists/requirements.md)
+passing 16/16 criteria; the bounded architecture review found no actionable
+findings. These are requirements only: no configuration parser, resolver,
+migration tool, new runtime API, discovery endpoint or UI was implemented.
+Custom reviewer approval and runtime proof remain later gates.
+The subsequent [clarification review](specs/003-provider-configuration/spec.md#clarifications)
+found no critical ambiguities across all ten review categories: zero questions,
+with requirements, acceptance criteria and scope unchanged. The built-in
+checklist remains 16/16, with no newly passing, regressed or unchecked items.
+Exact syntax, option contracts, version mappings and finite budget values remain
+planning decisions under the specified behavior.
+The subsequent [implementation plan](specs/003-provider-configuration/plan.md)
+resolves these choices into strict JSON sources, whole-selection replacement,
+Hosting-owned option contracts, private single-use validation proofs and
+owner-scoped environment/file secrets. Its
+[research](specs/003-provider-configuration/research.md),
+[state/ownership model](specs/003-provider-configuration/data-model.md),
+[contracts](specs/003-provider-configuration/contracts/configuration-format.md)
+and [validation guide](specs/003-provider-configuration/quickstart.md) define
+36 planned proof cases, including original-preserving synthetic conversion,
+bounded pending-work safety and retained binary compatibility.
+The bounded planning architecture review found no confirmed contradictions;
+actual lifecycle integration, diagnostic remapping and platform publication
+remain implementation proof obligations. No runtime API, parser or new check
+command is implemented by planning, and existing specification/checklist bytes
+remain unchanged.
+The subsequent checklist stage generated separate
+[configuration](specs/003-provider-configuration/checklists/configuration.md) and
+[safety](specs/003-provider-configuration/checklists/safety.md)
+requirements-quality checklists with 20 criteria each. These standard-depth
+reviews are for maintainers and provider-contract reviewers before implementation
+authorization. The 40 reviewer-owned criteria cover
+source/option/composition clarity and compatibility, plus secrets, diagnostics,
+bounded ownership, restart and original-preserving conversion. Generation is
+not requirements approval, implementation authorization or runtime evidence.
+At the user's explicit follow-up request, Copilot evaluated all 40 criteria:
+configuration 20/20 and safety 20/20 satisfied, with no unresolved writing gaps
+or decisions needing user attention. Both checklists record the evidence.
+This satisfies the custom requirements-review gate only, not implementation
+authorization or runtime acceptance. The specification, design and built-in
+16/16 checklist remain unchanged. That review did not start task generation
+or implementation.
+The subsequent [implementation task list](specs/003-provider-configuration/tasks.md)
+originally contained 69 unchecked tasks: shared setup/bounded ownership primitives, five
+story phases and cross-cutting acceptance. Source inspection is the first MVP;
+composition, secrets, restart/distribution and synthetic conversion follow with
+paired tests. Every requirement, outcome and planned CFG-01..36 proof case has
+task assignments, including retained binaries, atomic ownership races and
+platform publication/interruption. Independent tests/readers may run in parallel;
+shared evaluator/lifecycle/orchestrator edits are ordered explicitly.
+Specification/design and all checklist bytes remain unchanged. No configuration
+API, parser, resolver, converter or validation command is implemented by task
+generation.
+The subsequent installed read-only analysis found no actionable duplication,
+ambiguity, underspecification, inconsistency, constitution conflict or coverage
+gap. All 26 requirements and eight buildable outcomes have implementation/proof
+tasks; all 69 tasks map to requirements or shared acceptance prerequisites.
+The 36 planned cases retain coverage of all 22 scenarios and 13 edge cases,
+with complete acyclic prerequisites and ordered shared-file edits.
+The report is recorded in [draft PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8)
+and completion evidence in the shared checkpoint. Specification, design, task
+and checklist bytes remain unchanged; no remediation or implementation occurred.
+At that checkpoint, the next separately authorized stage was `implement`, with
+the existing 40/40 custom requirements-review gate satisfied. Analysis is not
+runtime acceptance.
+
+F-03 now implements strict versioned JSON sources, inert option metadata,
+active ordinary checks and local environment/mounted-file secret references.
+`EvaluateConfigurationAsync` delegates selection to F-02 and returns a private
+single-use proof only after every active check succeeds. Configured adapters
+receive fixed owner-only values immediately before service configuration;
+legacy compose cannot bypass an enabled opt-in registration. Disabled modules
+perform no operational checks or secret reads. No ambient process credentials,
+hidden defaults, reload, provider download or fallback are introduced.
+
+Explicit synthetic `fixture-v0` conversion offers secret-free preview, exact
+session approval, full validation and complete fresh-file publication without
+overwriting the original or an existing/racing destination. A pending bounded
+wait is not a rollback guarantee. This is not support for a released old format,
+illustrative product YAML, provider-data migration or universal filesystem
+power-loss recovery.
+
+`bash scripts/validate-configuration.sh` runs the complete fixture acceptance:
+source/option/ownership tests, real packed graphs, unchanged old binaries,
+package-only TestServer restart/custom-distribution journeys and actual child
+interruption at publication boundaries. Partial `--filter`/`--baseline-only`
+modes remain explicitly partial. See the
+[implementation evidence](specs/003-provider-configuration/plan.md#complete-implementation),
+[provider API guide](docs/PROVIDERS.md#f-03-configuration-boundary) and
+[quickstart](specs/003-provider-configuration/quickstart.md).
+Publication is measured on this macOS local volume; Linux and other
+filesystems are not certified by that run. No runnable cache, production
+provider, native-client or conformance claim follows.
+
+The first F-03 convergence assessment reproduced two **HIGH** diagnostic gaps
+despite passing existing acceptance: secret failures lost their known setting
+identity, and option-check failures discarded the declared rule and winning source.
+[Phase 9 / T070–T071](specs/003-provider-configuration/tasks.md#phase-9-convergence)
+records the follow-up without changing the original 69 tasks, specification
+or reviewer-owned checklists. The separately authorized implementation now
+preserves each secret's canonical setting/source through failure, cancellation
+and late faults. Option rejections expose only a validated declared `OptionRule`,
+the effective field's source and host-owned guidance; unsupported active option
+versions identify their own setting/source. No values, locators or provider
+messages are exposed, and F-02 remains the sole activation authority.
+The subsequent fresh convergence assessment found no actionable gaps across
+all 26 requirements, eight outcomes, 22 scenarios, 13 edge cases, 12 grouped
+plan decisions, 71 tasks and eight constitutional principles, including
+T070/T071. No tasks were appended or artifacts/checklists rewritten.
+See the [clean convergence checkpoint](docs/DEVELOPMENT.md#f-03-clean-convergence)
+for evidence and measured scope. The separately authorized
+[finalization acceptance](specs/003-provider-configuration/plan.md#finalization-acceptance-2026-10-21)
+verifies the complete configuration and retained lifecycle/foundation checks,
+unchanged requirements-review gates and implementation architecture-review
+evidence. [PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) is ready for
+maintainer review, targeting `main`. The checkpoint records `await_merge`;
+F-03 remains active and dependent work stays locked until its merge is verified
+and the separate completion checkpoint is published and merged.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

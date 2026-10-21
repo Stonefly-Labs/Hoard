@@ -15,7 +15,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "Hej8GCnNQ8NPPa2z+1womNrYcFfckBzwwSP0BRW9se10cExdWdL+YblZpJdEB/aaRzovF+6bhYSER4lVNq2maw==",
+        "contentHash": "gF/MACbF7r+UzRVDJnkl0lWXE28RfaVl4RjpGiYMxUWHSET+26jrbIGHgXC9k/itYNmzx8pl+S8x3qyi5nLkOQ==",
         "dependencies": {
           "Hoard.Hosting": "[0.1.0]"
         }
@@ -33,7 +33,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "FbO2vsoHIy15d4DbGjFKXEeaef3l22bXBmCZ4aK6ominU2DvSCAEu480bFj3vPgh1iczipcR+ri6roPSPbnioQ==",
+        "contentHash": "mAXN2juCBu8wXJ+3RGXf7bLGSthYju+2s53ESko8eeNjqOH/Z1QI34K+H0qP8iy0dOkD70IsXIyOgU0LJu6kWQ==",
         "dependencies": {
           "Hoard.Hosting": "[0.1.0]"
         }
@@ -42,7 +42,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "eV9GMgJY93vwPPe78bWt+J3q4ApAyFvKL5r1J3KNZk2nr2Bj0LtcHuaXIgg2aTWjbcB4SpQCxSi3583jPCdEOA==",
+        "contentHash": "ozEaPxm20xkgD454K2/8OuVbkz1tTZnDGZYONqhOYba29JwkM14u4tweeNwlHJQf1JwcaooZcSchxOSoSBWESw==",
         "dependencies": {
           "Hoard.Hosting": "[0.1.0]"
         }
@@ -51,7 +51,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "WGlX9sNlNvsWHCwsfI1ZR9A6XLnaU9kytZGArVsbJkNAA9u1PExh54EcCWGWAAsmkWTptmBYDNWmHuNbvXeenA==",
+        "contentHash": "Lke9XVqDqfvHGqa94KXs2VUE2Wgj9On+gqxPx6sOiCXKZhfg30zebSLxPLV6JAY7xPR3NSmKtqiM8abXgB1twg==",
         "dependencies": {
           "Hoard.Abstractions": "0.1.0",
           "Hoard.Core": "0.1.0",

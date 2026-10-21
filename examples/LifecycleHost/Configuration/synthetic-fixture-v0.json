@@ -1,0 +1,34 @@
+{
+  "configurationversion": "fixture-v0",
+  "enabled": [
+    "fixture.legacy-options",
+    "fixture.artifact.one",
+    "fixture.protocol.one"
+  ],
+  "metadata": "fixture.legacy-options",
+  "artifact": "fixture.artifact.one",
+  "identities": [],
+  "capabilities": [],
+  "providers": {
+    "fixture.legacy-options": {
+      "optionsversion": 1,
+      "options": {
+        "label": "configured-old-provider",
+        "credential": {
+          "kind": "env",
+          "target": "INVENTED_CONFIGURATION_SECRET"
+        }
+      }
+    },
+    "fixture.protocol.one": {
+      "optionsversion": 1,
+      "options": {
+        "label": "configured",
+        "credential": {
+          "kind": "env",
+          "target": "INVENTED_CONFIGURATION_SECRET"
+        }
+      }
+    }
+  }
+}

@@ -1,11 +1,13 @@
 using Hoard.Fixtures.Lifecycle.Metadata;
+using Hoard.Hosting.Configuration;
 using Hoard.Hosting.Lifecycle;
 using Hoard.Hosting.Routing;
 
 namespace LifecycleHost.Adapters;
 
-public sealed class MetadataModule : IHoardModule
+public sealed class MetadataModule : IHoardModule, IHoardConfiguredModule
 {
+    public void ConfigureOptions(HoardModuleOptions options) { }
     private MetadataProvider? provider;
     public void ConfigureServices(IServiceCollection services) { }
     public void MapEndpoints(HoardModuleEndpointBuilder endpoints) { }

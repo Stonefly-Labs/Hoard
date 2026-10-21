@@ -7,4 +7,6 @@ public sealed class HoardBuilder
     internal HoardBuilder(IServiceCollection services) => Services = services;
 
     public IServiceCollection Services { get; }
+    internal object ConfigurationGate { get; } = new();
+    internal bool ConfigurationConsumed { get; set; }
 }

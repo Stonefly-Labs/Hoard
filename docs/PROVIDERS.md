@@ -94,7 +94,7 @@ makes the composition unsupported. Never silently disable a module/integration,
 ignore a dependency, fall back, or substitute another provider. Operators must
 explicitly change selection or install a compatible version and revalidate.
 F-01 classifies examples; F-02's explicit validator now enforces these rules.
-F-03 will resolve configuration into that same gate, not duplicate it.
+F-03 resolves configuration into that same gate, without duplicating it.
 
 ## Opt-in lifecycle
 
@@ -236,12 +236,124 @@ Retain a coherent previous host/contract/provider set for rollback; do not
 relabel incompatible binaries as supported. Local compile tests do not authorize
 package publication or replace later behavior/conformance qualification.
 
+## F-03 configuration boundary
+
+`Hoard.Hosting.Configuration` adds an opt-in pre-activation boundary. Existing provider
+interfaces/descriptors, Abstractions/Core/Application and lifecycle signatures
+are unchanged. Metadata/artifact providers keep their Abstractions-only edge;
+the composing host owns the new option descriptions.
+
+`AddModuleConfiguration<TProvider>(HoardModuleConfiguration, HoardOptionValidator?)`
+records an inert association. Fields must bijectively match descriptor keys and
+required/secret flags; duplicate/orphan/colliding associations fail inspection.
+Types are String, Boolean, Integer, Address and Secret, with version 1 metadata.
+Informative defaults/examples are not injected into effective settings; secret
+defaults/examples are forbidden. Registration/inspection invokes no provider,
+adapter or validator. During evaluation, the existing F-02 composition gate
+owns graph/cardinality/version/capability decisions. All active ordinary rules
+and Public callbacks finish before any secret resolution. Secrets callbacks
+receive only their owner's resolved handles. Disabled modules receive neither
+callback nor secret read. Validators return declared field/rule identities,
+not arbitrary messages; exceptions and malformed results become safe failures.
+Composition failures retain a closed CompositionRule, known registered owner,
+effective selection-source provenance and a bounded DependencyPath. Unknown
+IDs/path elements become generated categories, even if their syntax is valid;
+raw versions/capability targets and collaborator messages are never forwarded.
+Active option-rule rejections retain `CheckFailure` plus a separately validated
+`OptionRule` from that owner's declared rule IDs, canonical field and its
+winning source. CorrectiveAction is host-owned text, never a provider message.
+Malformed/undeclared field or rule results become `InvalidCheckResult` without
+reflecting the supplied identity. Unsupported active option versions identify
+`modules:<owner>:optionsversion` and its effective source. Secret resolution,
+timeout, cancellation notification and late faults retain the originating
+registered owner/field/source; locators and secret values remain private.
+Returned reports stay frozen; eventual faults appear only in live Supervision.
+
+`HoardConfigurationInput` takes explicit Defaults, optional file, arguments and
+an environment dictionary/read adapter. Inputs and owner options have redacted
+display and no public value-bearing serialization; explicit secret-handle access
+is not process isolation or guaranteed managed-memory zeroization. The input
+does not capture ambient process credentials. See the
+[development guide](DEVELOPMENT.md#f-03-configuration-implementation) for
+snapshot ceilings, source grammar, finite coordination and pending retention.
+
+`EvaluateConfigurationAsync(input, platformVersions, lifecycleOptions,
+configurationOptions, cancellationToken)` returns a safe report and, only on
+complete success, an unconstructible `HoardValidatedConfiguration`. Consume it
+once with `builder.ComposeHoardModulesAsync(proof, token)`, then use the existing
+build/map/start/stop/lease-disposal sequence. `await using` the evaluation
+disposes an unused proof; after transfer, only the F-02 lease owns the inputs.
+Foreign/stale/disposed/used proofs fail before construction. Do not mutate a DI
+service collection concurrently with composition; trusted host code is not
+sandboxed. Fresh restart uses a fresh builder, evaluation and lifecycle.
+
+A configurable selected adapter implements `IHoardConfiguredModule` in addition
+to `IHoardModule`. `ConfigureOptions(HoardModuleOptions options)` runs immediately
+before ConfigureServices under the same supervised F-02 phase/deadline. It
+stores/maps only its own typed ordinary values and explicitly accessed secret
+handles; it must not connect, start workers, log/serialize credentials or
+retain a host-wide resolver. Use GetString/GetBoolean/GetInteger/GetSecret, with
+`GetSecret(key).Reveal()` only at intentional sensitive-use boundaries.
+Required/secret flags must match the descriptor. Zero-field legacy adapters
+need no new interface. Enabled opt-in registrations reject bare legacy compose
+as ConfigurationRequired; opt-out F-02 source/binaries remain supported.
+
+Environment names use OS lookup semantics with no fallback; omitted supplied
+environment is empty. File targets are absolute, bounded strict UTF-8 without
+BOM/NUL; at most one final LF and preceding CR are removed. Empty/whitespace,
+unavailable or oversized values reject. Deployment symlinks to regular files
+work; zero-length directory/device/pipe inputs fail before reading, and all
+dispatched reads remain bounded. Values are frozen until explicit restart.
+Release clears owned secret references after the last actual supervised user,
+not merely after a timed wait. This is not managed-memory zeroization or a
+malicious-provider/enumerator/clock sandbox.
+
+### Explicit synthetic conversion
+
+Import `Hoard.Hosting.Configuration.Conversion`. Call
+`PreviewConfigurationConversionAsync(sourcePath, destinationPath,
+platformVersions, lifecycleOptions, configurationOptions, readEnvironment,
+readSecretFile, cancellationToken)` on the registered builder. Only the exact
+documented synthetic `fixture-v0` mapping is supported; startup still accepts
+integer version 1 only. Preview reads the explicit document, checks shared
+structure/composition/public semantics and returns safe change categories plus
+a private session, with no secret read or activation proof.
+
+Inspect its report, call `preview.Session.Approve()` deliberately, then
+`builder.ApplyConfigurationConversionAsync(session, token)`. Apply consumes
+approval once, checks unchanged source/builder/destination context, repeats
+full option/secret checks and writes the reference-bearing proposal to a fresh
+file, never the original. An explicit environment reader supplies secret
+lookups only; conversion never applies HOARD_CONFIG, CLI or remembered overlays.
+An apply result is not startup approval: start from a fresh complete evaluation.
+
+Output directories must already be owner-restricted. Same-directory staging is
+exclusively created at mode 0600, written/flushed/closed before no-clobber
+publication. Existing/racing destinations and source aliases are not overwritten.
+Cancelled waits after dispatch can return PublicationPending; inspect the
+separate live Publication.Status and Supervision without rewriting the frozen
+result or assuming rollback. If a process is interrupted, inspect the original,
+any complete final output and only its identified private
+`.hoard-configuration-<id>.tmp` files; remove staging only after actual work ends.
+Do not use broad directory cleanup or recover resolved-secret rollback files.
+
+Actual child-process interruption tests cover the current macOS local volume.
+Linux publication code is present but unmeasured here; network filesystems,
+hostile same-user directory races and power-loss durability are not certified.
+Provider schema/data compatibility, backups, restore and irreversible changes
+remain provider-owned prerequisites. Restoring configuration never reverses
+provider data. No released older version, YAML converter or automatic migration
+is claimed.
+Conversion also rejects explicitly unsupported option versions on disabled
+providers, without invoking their callbacks/readers; ordinary startup retains
+its intentional disabled-version exemption.
+
 ## Later-feature handoffs
 
 | Feature | Reserved work |
 | --- | --- |
 | F-02 | Implemented bounded, fixture-only module composition/lifecycle; no operational provider |
-| F-03 | Configuration precedence and secret references/resolution feeding the existing validator |
+| F-03 | Implemented fixture-backed configuration, owner secrets and synthetic conversion feeding the existing validator |
 | F-04 | Sanitized management capability discovery |
 | F-05 | Metadata operations, concurrency, transactions, schema/recovery |
 | F-06 | Artifact streaming, staging, commit visibility, read/delete guarantees |

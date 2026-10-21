@@ -1,0 +1,19 @@
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars
+*.tfvars.json
+crash.log
+crash.*.log
+.env
+.env.*
+*.pem
+*.key
+*.pfx
+*.p12
+.terraformrc
+terraform.rc
+
+# Provider locks remain part of the module inputs.
+!.terraform.lock.hcl

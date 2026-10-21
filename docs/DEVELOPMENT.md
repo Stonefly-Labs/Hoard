@@ -5,9 +5,11 @@
 The bootstrap established contributor tools and reserved architecture boundaries.
 F-01 adds four .NET library projects, immutable provider declarations, explicit
 registration, and compile/package/boundary acceptance tooling. F-02 adds
-opt-in fixture-tested lifecycle in Hosting. Core and Application remain empty
-boundaries: no caching engine, management endpoints,
-working providers, curated executable, UI, product CI/CD, or deployment exists.
+opt-in fixture-tested lifecycle in Hosting. F-03 adds fixture-backed configuration,
+owner-scoped local secrets and explicit synthetic conversion through that same
+lifecycle. Core and Application remain empty boundaries: no caching engine,
+management endpoints, working providers, curated executable, UI, product CI/CD,
+or deployment exists.
 Azure identity provisioning is a
 separate, explicitly authorized [operator action](../infra/bootstrap/README.md).
 
@@ -870,9 +872,9 @@ with its directory, PR and merge commit.
 The completion checkpoint clears the active feature and schedules `specify`;
 the next dependency-ready entry is
 [F-03: provider configuration and activation validation](HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-03).
-This progress-only PR must merge before a new specification begins from main.
-No new specification or later stage ran, and no implementation, test, lock,
-task or reviewer-owned checklist changed.
+That progress-only PR had to merge before a new specification could begin from
+main. No new specification or later stage ran during that completion invocation,
+and no implementation, test, lock, task or reviewer-owned checklist changed.
 
 README, this guide and the specification's current status reflect completion;
 historical finalization evidence remains unchanged. Provider/example guides,
@@ -883,6 +885,574 @@ runtime/support behavior or operational requirement. No new architecture review,
 .NET acceptance or IaC run is warranted for this progress/docs-only scope.
 The stage performs no merge, publication, deployment, infrastructure action,
 tag, release or permission change.
+
+### F-03 configuration specification
+
+The F-02 completion checkpoint merged through
+[PR #7](https://github.com/Stonefly-Labs/Hoard/pull/7). The subsequent
+specification stage started `feature/003-provider-configuration` from fetched
+`origin/main`, verified the shared checkpoint and ratified constitution, and
+pinned [F-03](../specs/003-provider-configuration/spec.md) to
+`specs/003-provider-configuration` using the exact backlog prompt.
+
+Five prioritized stories, 22 acceptance scenarios, 26 functional requirements
+and eight outcomes cover command line > environment > one file > documented
+defaults, canonical-key conflicts, whole-selection replacement, provider option
+validation and disabled-module isolation. Configuration must consume F-02's
+existing pre-construction composition gate and F-01's compatibility policy,
+including incompatible enabled optional targets. Explicit validated defaults
+are not fallback from an invalid override. Environment/mounted-file secret
+references require no cloud service; safe diagnostics exclude values, locators
+and untrusted error payloads. Configuration work has finite coordination budgets,
+protects pending resources, observes late faults and cannot activate after failure.
+Settings and resolved secrets remain fixed until explicit restart.
+
+Safe configuration evolution requires a supported version, a sanitized preview,
+retained original, explicit approval and a complete validated replacement.
+The private replacement may preserve secret references, but reports never expose
+their locators or resolved credentials. Acceptance must include a representative
+and interrupted conversion; synthetic old versions cannot be advertised as
+released-format support. Configuration rollback never claims to reverse
+provider-owned schema/data changes.
+
+The [built-in requirements checklist](../specs/003-provider-configuration/checklists/requirements.md)
+passes all 16 specification-quality criteria, with no unresolved clarification
+markers. The bounded architecture review found no actionable findings or
+consequential unanswered requirement choices. Exact option-contract ownership/
+compatibility, actual lifecycle integration and pending-work retention, and
+migration interruption/recovery remain later proof obligations. This review
+does not generate or approve custom reviewer-owned checklists.
+
+README and this guide now link the requirements. Provider/example guides,
+F-01/F-02 artifacts/checklists, product intent, baseline architecture/diagrams/
+ADR, governance, master backlog, IaC and release guides are unaffected: this
+stage changes no API, dependency, implemented configuration behavior, provider
+support claim, permission or operational command. The specification creates no
+parser, resolver, converter, executable, management endpoint, UI or new runtime
+API. No extension hooks are configured. The next scheduled stage is `clarify`
+through a separate invocation, not planning or implementation.
+
+### F-03 configuration clarification
+
+The subsequent [clarification review](../specs/003-provider-configuration/spec.md#clarifications)
+found no critical ambiguities across all ten review categories. Zero questions
+were asked or answered; no requirement, acceptance criterion or scope decision
+changed. Source precedence and canonical conflicts, effective versus structural
+validation, explicit selection through F-02's gate, disabled isolation,
+secret ownership/redaction, bounded pending-work safety, fixed-state restart
+and interruption-safe conversion already have observable acceptance obligations.
+
+Exact configuration/reference syntax, canonical names, option-contract ownership
+and representation, supported version mappings, safe report layout and finite
+budgets remain planning decisions under the existing requirements. Management/UI,
+production scale targets, real-provider data recovery and cloud integrations
+remain separately scoped; synthetic conversions cannot imply released-format
+compatibility. No consequential product choice blocks planning.
+
+The built-in requirements checklist was revalidated at 16/16 before and after,
+with no newly passing items, regressions or unchecked items; its bytes are
+unchanged. No custom reviewer-owned approval, implementation or runtime
+acceptance is implied. No extension hooks are configured.
+
+README, this guide and the specification record the result. Provider/example
+guides, F-01/F-02 artifacts/checklists, product intent, baseline architecture/
+diagrams/ADR, governance, master backlog, IaC and release guides are unaffected:
+no requirement, API, dependency, provider support, command, permission or
+operational behavior changed. No plan, tasks, parser, resolver, converter,
+executable, endpoint or UI was created. The next scheduled stage is `plan`
+through a separate invocation.
+
+### F-03 configuration planning
+
+The subsequent installed `speckit-plan` stage pins the same feature directory
+and produces the [implementation plan](../specs/003-provider-configuration/plan.md),
+[research decisions](../specs/003-provider-configuration/research.md),
+[data/ownership model](../specs/003-provider-configuration/data-model.md),
+[operator format](../specs/003-provider-configuration/contracts/configuration-format.md),
+[Hosting API contract](../specs/003-provider-configuration/contracts/hosting-api.md),
+[acceptance matrix](../specs/003-provider-configuration/contracts/acceptance.md)
+and [validation guide](../specs/003-provider-configuration/quickstart.md).
+
+The design uses version 1 JSON defaults/one explicit file, `HOARD_CONFIG` JSON
+environment overrides and `--hoard:<path>=<JSON>` arguments. It preserves
+whole-selection replacement, keyed option merging and structural rejection of
+discarded/disabled malformed inputs. Descriptive option contracts live in
+Hosting, with host-owned metadata/artifact adapters and no required change to
+Abstractions/provider binaries. Configuration delegates composition acceptance
+to F-02 and hands only successful single-use fixed owner inputs to the existing
+supervised lifecycle; it does not create another readiness or shutdown authority.
+
+Environment/file references resolve only after public checks. Default finite
+coordination is 30 seconds outer/five seconds per dispatch, with retained
+in-use inputs, supervised cancellation notification and safe late observations,
+not forced termination. Reports never expose values, targets or raw callback
+errors. Offline preview/apply uses an explicit synthetic `fixture-v0 -> 1`
+mapping, full pre-publication validation, private same-directory staging and a
+fresh no-clobber destination, retaining the original. Local-platform publication
+proof, truthful pending outcomes and separate provider data recovery are
+mandatory; released older-format or universal power-loss support is not implied.
+
+All 26 requirements, eight outcomes, 22 scenarios and 13 edge cases map to
+36 planned proof cases. The bounded custom architecture review found no
+confirmed design contradiction or consequential unresolved question. Its
+material future gaps are explicitly included: unchanged option-bearing legacy
+provider binary, atomic proof-consumption/disposal/input-transfer races,
+safe remapping of even regex-valid unknown lifecycle identities/path elements,
+and publication/cancellation/interruption evidence on each claimed platform.
+The reviewer ran no tests and approved no custom checklist.
+
+README and this guide link the design. Existing specification/built-in checklist,
+F-01/F-02 artifacts and reviewer-owned markers, product/test/tooling/lock files,
+provider/example guides, baseline charter/specification/architecture/diagrams/
+ADR, governance, backlog, IaC and release guidance remain unchanged. They are
+unaffected because planning changes no implemented API, dependency, provider
+support, executable command, listener, permission or operational behavior.
+Provider/example additions and actual command documentation wait for implementation.
+
+No extension hooks are configured. No task list, custom checklist, parser,
+resolver, converter, runtime change, infrastructure plan/apply, publication,
+deployment or merge occurs here. The proposed `validate-configuration.sh`
+does not exist yet and is not claimed as passing. The next scheduled stage
+is `checklist` through a separate invocation; generation is not reviewer approval
+or implementation authorization.
+
+### F-03 configuration requirements-quality checklists
+
+The subsequent installed `speckit-checklist` stage pins the same recorded
+directory and creates separate
+[configuration](../specs/003-provider-configuration/checklists/configuration.md)
+and [safety](../specs/003-provider-configuration/checklists/safety.md)
+requirements-quality checklists, with 20 criteria each. Both are standard-depth
+PR reviews for maintainers and provider-contract reviewers before implementation
+authorization. No clarification question was needed: audience, depth and scope
+were explicit in the stage invocation.
+
+Configuration criteria cover permitted sources and precedence, canonical
+duplicates, whole selections versus keyed options, explicit defaults,
+structural versus effective validation, disabled isolation, existing composition
+ownership, descriptive option associations, compatibility and bounded inputs.
+Safety criteria cover local reference grammar/ownership, safe diagnostic identity
+remapping and output surfaces, finite coordination and retained pending resources,
+atomic ownership handoff, fixed-state restart, bundled/custom recovery,
+versioned preview/approval and original-preserving publication/interruption.
+Every criterion asks about written requirement quality with traceable evidence;
+none is an implementation procedure or a claim that its criterion is satisfied.
+
+All 40 items were generated unchecked and remain reviewer-owned. Generation is
+not evaluation, approval, implementation authorization, exploit review or
+runtime evidence.
+The specification, seven planning artifacts, built-in 16/16 checklist and all
+F-01/F-02 artifacts/approvals remain byte-for-byte unchanged. No extension hooks
+are configured. No task list, parser, resolver, converter, runtime API or
+configuration validation command is created by this stage.
+
+README and this guide link the new review artifacts. Provider/example guides,
+baseline product charter/specification, architecture/diagrams/ADR, constitution,
+backlog, test/tooling/lock files, IaC and release documentation are unaffected:
+no implemented behavior, dependency, support claim, executable command,
+permission or operator procedure changes. Conversion requirements are reviewed
+as writing, not performed. No infrastructure plan/apply, deployment, publication
+or merge occurs.
+
+After generation, the user explicitly asked Copilot to review both checklists
+and flag anything needing attention. The assisted requirements review finds
+configuration 20/20 and safety 20/20 satisfied, with no unresolved writing gap,
+waiver or decision requiring user attention. Both artifacts now record checked
+criteria and grouped written evidence. No specification or design remediation
+was needed. This is separately requested requirements evaluation, not another
+scheduled driver stage, independent human inspection, implementation
+authorization, exploit review or runtime acceptance.
+
+The generation-time checkpoint evidence correctly records 40 initially
+unchecked items; the subsequent assisted review is recorded in the checklists
+and draft PR, without rewriting stage history. The custom requirements-review
+gate is now satisfied. The next separately authorized stage is `tasks`, followed
+by read-only analysis; implementation is not started by this review and still
+requires the remaining scheduled gates and a separate invocation.
+
+### F-03 configuration task generation
+
+The subsequent installed `speckit-tasks` stage pins the recorded feature
+directory and produces the
+[implementation task list](../specs/003-provider-configuration/tasks.md):
+69 unchecked tasks across eight phases. Setup has four tasks, shared bounded
+ownership/metadata primitives have eight, the five story phases have
+8/11/11/7/12 respectively, and cross-cutting acceptance has eight.
+
+The source-resolution MVP inspects safe winners/provenance without construction
+or secret reads; it cannot produce a successful activation proof. Later
+increments add secret-free composition through the actual F-02 gate, local
+owner-scoped secrets, restart/bundled/custom journeys and explicit synthetic
+conversion. All 26 requirements, eight outcomes and 36 planned CFG proof cases
+have implementation/integration and focused evidence assignments, retaining the
+acceptance contract's mappings for all 22 scenarios and 13 edge cases.
+
+Task-level prerequisites order shared parser/evaluator/proof/lifecycle and
+orchestrator edits. Disjoint tests, local env/file readers and conversion
+mapping/publication work have explicit parallel groups; US4/US5 can develop
+after the secure secret increment, with shared runner edits serialized.
+Every task names destinations and required outcomes, including finite budgets
+and size limits, unknown-identity remapping, atomic proof/disposal/input-transfer
+races, retained option-bearing provider/lifecycle binaries, actual package
+graphs and platform-specific no-clobber/interruption proof. Test instructions
+require intended red-before-green evidence and release/observation of held work.
+
+The specification, seven design artifacts and all built-in/custom checklist
+bytes remain unchanged. Task generation neither evaluates those checklists
+again nor supplies runtime acceptance. The existing assisted 40/40
+requirements-quality review remains satisfied. No extension hooks are configured.
+No parser, resolver, converter, runtime API, package/example change, dependency,
+lockfile or `validate-configuration.sh` is created by this stage.
+
+README and this guide link the generated work and next gate. Provider/example
+guides, product charter/specification, baseline architecture/diagrams/ADR,
+constitution, backlog, predecessor artifacts, IaC and release documentation are
+unaffected: no implemented API, graph, support claim, command, listener,
+permission or operational procedure changes. Their actual configuration and
+recovery additions remain implementation tasks. No infrastructure plan/apply,
+deployment, publication or merge occurs.
+
+At the task-generation checkpoint, the next separately authorized stage was
+read-only `analyze`; task generation did not start implementation or authorize
+remediation. Reviewed custom checklists do not bypass the analysis gate.
+
+### F-03 configuration cross-artifact analysis
+
+The subsequent installed `speckit-analyze` stage uses the recorded feature
+directory and reviews the specification, plan, tasks and supporting contracts
+without changing them. It found no actionable duplication, ambiguity,
+underspecification, inconsistency, constitution conflict or coverage gap.
+All 26 functional requirements and eight buildable outcomes have implementation
+and focused proof assignments; all 36 planned CFG cases preserve coverage of
+the 22 scenarios and 13 edge cases. All 69 tasks map to requirements or shared
+acceptance prerequisites, including the shared harness/primitive proofs in
+T001/T012. The complete prerequisite graph is acyclic, the 30 parallel markers
+refer to independent ready groups, and shared-file edits are ordered.
+
+The structured report is recorded in
+[draft PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8), with completion
+evidence in the shared checkpoint. All 12 feature artifacts, the constitution
+and existing 16/16 built-in plus 20/20 and 20/20 custom checklist bytes remain
+unchanged. No remediation or new checklist approval occurred; no extension
+hooks are configured. The existing tooling suite passes all 22 tests.
+
+README and this guide record the analysis and next gate. Provider/example
+guides, predecessor artifacts, product charter/specification, baseline
+architecture/diagrams/ADR, constitution, backlog, IaC and release documentation
+are unaffected: analysis changes no implemented API, graph, support claim,
+command, listener, permission or operational procedure. No parser, resolver,
+converter, runtime/test/tooling/dependency/lock change, infrastructure action,
+deployment, publication or merge occurs.
+
+At the analysis checkpoint, the next separately authorized invocation was
+`implement`, with the existing 40/40 custom requirements-review gate satisfied.
+All 69 implementation tasks were unchecked. Actual safe output, bounded ownership, retained-binary
+compatibility and local-platform publication/interruption still need measured
+implementation evidence and the later required architecture review; this
+analysis supplies none of that runtime acceptance.
+
+### F-03 configuration implementation
+
+The initial T001..T020 source-resolution checkpoint is historical; subsequent
+implementation adds active selection/options, local secrets, configured
+lifecycle handoff, restart/distribution and explicit synthetic conversion.
+The [complete evidence](../specs/003-provider-configuration/plan.md#complete-implementation)
+records actual commands, review disposition and support boundaries. PR #8
+remains draft; convergence/finalization/merge are separate authorizations.
+
+The input explicitly supplies Defaults, optional file, argument enumerable and
+an environment dictionary/read adapter. It does not inspect developer process
+credentials, appsettings, user-secrets or UI state. Snapshotting scans at most
+4,096 arguments and 4,096 environment entries, retaining only reserved Hoard
+arguments and names eligible for the documented environment-reference grammar.
+Defaults/overlay/reserved-argument text is bounded before copying/parsing;
+secret strings are immutable references, resolved only after every active
+public check passes. Hosts must supply finite in-memory inputs; trusted
+enumerators/clock implementations are not a sandbox.
+
+Each explicit document requires version 1; overlays cannot repair document
+versions. Canonical keys are case-insensitive after JSON escape decoding;
+module selection values are not rewritten. Every supplied occurrence is
+structurally checked, including disabled/discarded options. Whole selections
+replace; module option leaves and option versions merge independently; secret
+reference objects replace atomically. Reports retain only safe identities and
+winning source kinds, never values or private origins.
+
+Default coordination is 30 seconds absolute and five seconds per dispatch,
+capped by remaining time. Complete synchronous prefixes, async bodies and
+cancellation notification are tracked; pending tasks retain inputs after
+bounded disposal, with safe eventual diagnostics and frozen results. Expired
+monotonic dispatch caps reject even if timeout notification arrives late.
+Metric listeners run within supervised callback work, not under the state lock.
+
+Use full fixture acceptance and retained compatibility checks:
+
+```bash
+bash scripts/validate-configuration.sh
+bash scripts/validate-lifecycle.sh
+bash scripts/validate-foundation.sh
+python3 -m unittest discover -s tests/tooling -v
+```
+
+The configuration runner prepares real package/graph inputs for its two
+`Prepared_configuration...` proof tests. Ordinary source/primitive/lifecycle
+tests need no such manifest; retained foundation/lifecycle runners exclude
+only those configuration-specific preparation tests, not the ordinary
+regressions. No missing manifest is treated as a passing proof.
+
+Explicit partial modes are:
+
+```bash
+bash scripts/validate-configuration.sh \
+  --filter '(FullyQualifiedName~Configuration|FullyQualifiedName~ConfiguredComposition)&FullyQualifiedName!~Prepared_configuration'
+bash scripts/validate-configuration.sh --baseline-only
+```
+
+An explicit `--baseline-only --update-locks` creates/replays the two new
+standalone Baseline locks. `--baseline-only --retain-baseline /absolute/fresh/private/directory`
+retains the verified old binaries/assets/hashes outside Git without overwriting
+an existing destination. These partial switches alone do not execute configured
+package journeys or establish old-binary compatibility against new configuration.
+`--evidence-directory /absolute/fresh/private/directory` optionally retains
+the partial runner's real TRX and status, including failed red runs. For a full
+run it retains the complete owner-private workspace, actual package/graph/
+binary/platform evidence, results and final status for independent review;
+this can be large. Only fully verified acceptance sets `fullAcceptance: true`.
+An optional full-run `--retained-baseline /absolute/private/baseline-directory`
+reuses the earlier verified binaries without changing/recompiling their bytes.
+The old-provider package is built reproducibly against pre-F-03 Abstractions
+with normalized source paths before any optional retained-byte substitution.
+Both configured hosts restore/build with the same reviewed package locks, then
+receive the verified retained provider DLL in their runtime output. Each journey
+records and rechecks that actual DLL hash before/after execution; original
+retained bytes never determine a different package hash or bypass locked restore.
+Neither option accepts an existing output directory or publishes artifacts.
+Intentional dependency/payload changes use explicit `--update-locks`, reviewed
+lock diffs and a separate default locked replay. Unit tooling tests use
+synthetic inputs; they never recursively run these acceptance suites.
+
+Evaluation succeeds only after the existing F-02 graph gate, enabled-only
+required/type/range/allowed-value/address/version checks, every public callback,
+local env/file resolution and secret-dependent callbacks. Invalid effective
+input never restores a previous value. Proof consumption/disposal uses one
+builder ownership gate and rejects stale/foreign/used/disposed proofs before
+construction. Configured `ConfigureOptions` shares F-02's ComposingServices
+phase, lease, ledger and root; it introduces no second lifecycle authority.
+Inputs survive pending delivery/notification/root work, even after bounded
+disposal. Legacy F-02 callers without opt-in keep their original APIs/behavior.
+
+Conversion lives in `Hoard.Hosting.Configuration.Conversion`: preview pins
+explicit original/proposal/builder/destination context without resolving
+secrets; `Session.Approve()` authorizes one full-validation apply, never
+activation. No environment/CLI overlays apply during conversion; an explicit
+read adapter may supply local secret values during apply. Output preserves
+references, not resolved credentials. Exclusive same-directory private staging,
+flush/close and no-clobber publication preserve the original. Observe
+`Publication.Status` after `PublicationPending`; the returned outcome/report
+remain frozen. Remove only identified staging files after their originating
+process/work is known to have ended. Do not promise rollback from cancellation.
+
+Actual publication/interruption evidence covers the current macOS local
+volume, not Linux, network shares, hostile same-user races or hardware power
+loss. Run the same real child matrix on any newly claimed platform.
+Configuration restoration never reverses provider schema/artifact changes;
+coherent versions, reference targets and provider-owned backups/restore remain
+separate recovery prerequisites.
+
+See the [historical MVP evidence](../specs/003-provider-configuration/plan.md#source-resolution-mvp-implementation)
+for its earlier scoped review and three corrected findings.
+Source/option/diagnostic/ownership types are grouped into cohesive files rather
+than one file per ancillary type; there is no new package, runtime dependency
+or second lifecycle authority. README, provider guide and the active
+plan/quickstart/status banners distinguish fixture support from planned product
+features. F-01/F-02 artifacts and reviewer checklists, product intent,
+baseline diagrams/ADR, constitution, backlog, infrastructure and release guides
+are otherwise unaffected: no real provider, listener, management/API/UI,
+deployment, permission or provider-data operation is introduced.
+
+### F-03 convergence: diagnostic follow-up
+
+The installed `speckit-converge` assessed the present scoped implementation
+against all 26 FRs, eight buildable SCs, 22 story scenarios, 13 edge cases,
+12 grouped plan decisions, 69 original tasks and eight constitutional principles.
+Its outcome is **tasks_appended**, with two HIGH partial diagnostic-fidelity
+findings and no missing, contradicting or unrequested findings:
+
+| Finding | Current evidence | Remaining task |
+| --- | --- | --- |
+| F1: known secret setting lost | A public-API probe supplies a CLI reference for `modules:metadata:options:credential`; missing resolution reports `SecretUnavailable`, owner `metadata`, source `CommandLine`, but setting `unknown-setting` | T070: retain safe setting context through resolution and supervised failures |
+| F2: option rule/source lost | A public validator returns the declared field/rule `label`/`paired` after a CLI override; the report has the canonical field but only `CheckFailure`, source `Defaults`, no `paired` identity and generic correction | T071: retain the validated declared rule and effective source with host-owned action text |
+
+The probes use current compiled Hosting APIs and existing instrumented fixtures
+in a session-private harness, not application changes or personal credentials.
+Both failures return no activation proof. No credential disclosure, activation
+bypass or new lifecycle authority was observed. These are feature diagnostic
+gaps, not a claim that a passing suite proves every requirement.
+
+Fresh exact acceptance commands passed:
+
+| Command | Result |
+| --- | --- |
+| `bash scripts/validate-configuration.sh` | 168 configuration tests, six boundary proofs, nine package-only journeys, five actual Darwin child interruption barriers; CFG-01..36, formatting/analyzers and tooling passed; locks unchanged |
+| `bash scripts/validate-lifecycle.sh` | 336 tests, nine boundary proofs, seven journeys, six independent packages and retained old registration binary passed |
+| `bash scripts/validate-foundation.sh` | 42 unit, 54 architecture and 339 composition tests passed, zero failures/skips; retained package/Core/host/rejection proofs passed |
+| `python3 -m unittest discover -s tests/tooling -v` | All 38 tests passed |
+
+The stage appends only [Phase 9 / T070–T071](../specs/003-provider-configuration/tasks.md#phase-9-convergence).
+All original task bytes/markers, spec, plan, contracts and reviewer checklists
+remain unchanged; the earlier implementation-stage status in the task list
+is historical, not completion of the two new tasks. No extension hooks exist.
+The shared checkpoint returns to `implement / ready`, then requires a fresh
+convergence assessment. PR #8 remains draft; finalization and merge are blocked
+until the gaps are resolved. No feature completion or dependency unlock occurs.
+
+README and this guide update only current foundation/stage status. Provider/
+example/quickstart guidance, baseline product/architecture diagrams/ADR,
+governance/backlog, predecessor artifacts, infrastructure and release guides
+are otherwise unaffected: no API, dependency, grammar, command, runtime behavior,
+platform support, permission or operational procedure changed. Diagnostic
+guidance/evidence changes belong to the implementation follow-up. Existing
+architecture-review evidence remains historical; this append-only task/docs
+checkpoint changes no provider boundary or shared lifecycle invariant.
+
+### F-03 diagnostic implementation follow-up
+
+The separately authorized `speckit-implement` follow-up corrects T070/T071
+without changing the original 69 tasks or reviewer-owned checklist approvals.
+Secret env/file dispatch now captures the known canonical field alongside
+owner/phase/winning source. Failure, timeout, caller cancellation, cancellation
+notification failure and eventual check faults keep that context; pending
+inputs remain retained and returned reports/outcomes stay frozen.
+
+Public and secret-dependent rule rejection retains `CheckFailure` and a
+separate nullable `OptionRule`, validated against the owner's finite declared
+rule metadata. The effective violated field supplies its winning source.
+Malformed/unknown callback results still fail InvalidCheckResult without
+reflecting their identities; correction text is host-owned. Unsupported active
+option versions report their canonical version setting and actual source.
+No values, locators, raw exceptions or new metric dimensions are added.
+F-02 remains the only activation/lifecycle owner; no dependency is added.
+
+Executable red/green evidence and complete acceptance/review disposition are
+recorded in the [follow-up plan evidence](../specs/003-provider-configuration/plan.md#diagnostic-implementation-follow-up).
+The next scheduled stage is fresh `converge`, not finalize. PR #8 remains
+draft; no feature completion, dependency unlock or merge occurs here.
+README, provider/example diagnostic guidance, model/contracts and quickstart
+are updated. Product intent, baseline architecture/diagrams/ADR, governance,
+backlog, predecessor artifacts, IaC and release guides are unaffected because
+no provider support, grammar, listener, API endpoint, dependency direction,
+platform guarantee, deployment, permission or provider-data operation changes.
+The only additive public member is the safe diagnostic `OptionRule`.
+
+### F-03 clean convergence
+
+The subsequent installed `speckit-converge` assesses the present scoped code
+against the spec, plan and every task, not checkbox completion or a branch diff.
+Its outcome is **converged**, with zero missing, partial, contradicting or
+unrequested findings and zero findings at any severity. It checks all 26 FRs,
+eight buildable SCs, 22 story scenarios, 13 edge cases, 12 grouped plan
+decisions, all 71 tasks including T070/T071, and eight constitutional principles.
+No empty convergence phase is appended. All feature artifacts, task bytes,
+built-in/custom checklists and constitution remain byte-for-byte unchanged.
+
+The assessment traces source structure/precedence/bounds, actual F-02 composition
+and disabled isolation, active option contracts/checks, local owner-only secrets,
+finite supervision and retained inputs, single-use proof transfer, configured
+delivery, restart/distribution, synthetic conversion and private publication
+to their implementation and focused proofs. The twelve plan groups cover
+Hosting/dependency compatibility; strict source parsing; merge/fixed provenance;
+the existing composition gate; public option checks; local secret ownership;
+finite supervision; proof/transfer ownership; sole F-02 delivery/lifecycle;
+restart/distribution; synthetic preview/approval; and no-clobber publication.
+Documentation and support claims are checked against the actual APIs, example
+journeys and measured limits, not inferred from a passing test count.
+
+T070's env/file failures now retain the exact known field, owner and source
+through timeout, caller cancellation, notification failure and late faults.
+T071's public/secret-dependent rejection retains only the validated declared
+OptionRule, effective field/source and host-owned action; explicit active
+option-version errors retain their own setting/source. Malformed/unknown
+callback identities remain sanitized InvalidCheckResult failures. No activation
+bypass, new dependency/lifecycle owner or normal-output payload was observed.
+
+| Validation entry point | Fresh result |
+| --- | --- |
+| `bash scripts/validate-configuration.sh` with a fresh private `--evidence-directory` | Passed full locked acceptance: 201 configuration tests, six boundary proofs, nine package-only journeys, five actual Darwin interruption barriers, CFG-01..36, formatting/analyzers and 38 tooling tests; no lock mutation |
+
+The optional evidence-directory flag only retains the complete owner-private
+workspace; it is not a partial selector. Actual TRX records show 201/201 and
+6/6 passed with zero failed, skipped or unexecuted tests. The closed result is
+passed/fullAcceptance; the manifest has all 36 cases, 13 actual graph scans,
+nine exact journeys, six independent packages and both retained pre-F-03
+binaries with verified runtime-provider provenance. Evidence paths are local
+artifacts, not committed binaries or a prerequisite for another checkout:
+the documented default command prepares equivalent fresh proof inputs.
+
+Publication remains measured Darwin on local device `16777232`, not a verified
+filesystem-family, Linux, network-share or power-loss guarantee. The prior
+implementation's lifecycle/foundation runs and architecture review remain
+historical evidence; this convergence does not claim to rerun them or constitute
+an exploit-focused security review. No runtime source, test, dependency or
+operational behavior changes in this stage.
+
+Only README, this guide and the driver checkpoint change. Provider/example/
+quickstart guidance, product charter/specification, baseline architecture/
+diagrams/ADR, backlog/governance, predecessor artifacts, infrastructure and
+release guides are unaffected: their APIs, support boundaries, procedures and
+intent remain accurate. Existing architecture-review evidence is sufficient
+for this documentation/progress-only handoff; finalization retains its own
+acceptance/documentation/review gate.
+
+The checkpoint schedules **`finalize / ready`**. PR #8 remains draft; no further
+implementation pass is needed for the assessed scope. This invocation does not
+finalize, request a merge, complete F-03, unlock dependencies, deploy, apply
+infrastructure or publish packages/releases.
+
+### F-03 finalization
+
+The separately authorized finalization verifies the clean convergence result
+against all 26 requirements, eight outcomes, 22 story scenarios, 13 edge cases,
+36 CFG cases, 12 grouped plan decisions and all 71 completed tasks. The built-in
+16/16 and reviewer-owned configuration/safety 20/20 each remain unchanged.
+Requirements review is not independent implementation or provider certification.
+
+Fresh full locked configuration acceptance passed 201 tests, six boundary
+proofs, nine package-only journeys and five actual Darwin interruption barriers,
+with all 13 graph scans, six independent packages, retained pre-F-03 binaries
+and verified runtime-provider provenance. The optional private evidence-directory
+flag retained the complete workspace and actual 201/201 and 6/6 TRX results,
+not a partial selection. Lifecycle acceptance passed 369 tests, nine boundary
+proofs and seven journeys; foundation passed 42 unit, 54 architecture and
+372 composition tests, zero failed/skipped. Formatting/analyzers and all
+38 tooling tests passed; no lock changed. The dated dependency advisory check
+covered seven solution projects with no known vulnerable entries or errors.
+Commands, acceptance traceability and limitations are recorded in the
+[finalization evidence](../specs/003-provider-configuration/plan.md#finalization-acceptance-2026-10-21).
+
+The implemented graph/ownership corrections and T070/T071 already received
+the required custom architecture reviews. No implementation changed after
+reviewed commit `66fef6b`; this documentation/progress-only finalization does
+not require a new review or claim an independent runtime/exploit audit.
+Publication remains measured Darwin/local-device behavior, not Linux,
+network-filesystem or hardware power-loss certification. Bounded waiting
+cannot terminate trusted code, and configuration rollback cannot reverse
+provider-owned data changes.
+
+README, specification review status, plan evidence, this guide and the provider
+guide's stale future-tense gate description are updated. Provider API/operational
+guidance, examples, quickstart/model/contracts/research, baseline product intent,
+architecture/diagrams/ADR, governance/backlog, predecessor artifacts, IaC and
+release guidance otherwise remain accurate: finalization changes no API,
+dependency, runtime, grammar, support scope, permission or operational procedure.
+Task bodies/markers and reviewer-owned checklist bytes are preserved.
+
+[PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) targets `main` and is ready
+for maintainer review. The shared checkpoint records **`await_merge / ready`**
+with PR 8; F-03 remains active, not completed, and dependent work stays locked.
+After maintainer merge, a separate invocation must verify merge ancestry in
+fetched main and publish its completion checkpoint; that checkpoint must merge
+before starting another specification. No merge, infrastructure plan/apply,
+deployment, package/release publication, tag or permission change occurs here.
 
 ```mermaid
 flowchart TD

@@ -1,11 +1,13 @@
 using Hoard.Fixtures.Lifecycle.Artifact.Two;
+using Hoard.Hosting.Configuration;
 using Hoard.Hosting.Lifecycle;
 using Hoard.Hosting.Routing;
 
 namespace LifecycleHost.Adapters;
 
-public sealed class ArtifactTwoModule : IHoardModule
+public sealed class ArtifactTwoModule : IHoardModule, IHoardConfiguredModule
 {
+    public void ConfigureOptions(HoardModuleOptions options) { }
     private ArtifactTwoProvider? provider;
     public void ConfigureServices(IServiceCollection services) { }
     public void MapEndpoints(HoardModuleEndpointBuilder endpoints) { }

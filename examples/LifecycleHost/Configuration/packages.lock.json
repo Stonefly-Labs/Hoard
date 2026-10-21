@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "dependencies": {
+    "net10.0": {
+      "Hoard.Fixtures.Configuration.LegacyOptions": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "6q39FTLhHiRLR9sdAVerKm/44MEFApEmWE7LsfuD8YiHQmGSS2JwrRhhvjYlK9HJmh2Jnm5f9sMED65QfLuhrQ==",
+        "dependencies": {
+          "Hoard.Abstractions": "[0.1.0]"
+        }
+      },
+      "Hoard.Fixtures.Lifecycle.Artifact.One": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "FAP2egciWyhPlNkEKsOUt4xzwNNh0hNx/ihI8Y10JOgOfpCXaCBJ+hpxbJ3mlbk8YpDYzsGuOB8XckT2GdAF/g==",
+        "dependencies": {
+          "Hoard.Abstractions": "[0.1.0]"
+        }
+      },
+      "Hoard.Fixtures.Lifecycle.Identity": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "gF/MACbF7r+UzRVDJnkl0lWXE28RfaVl4RjpGiYMxUWHSET+26jrbIGHgXC9k/itYNmzx8pl+S8x3qyi5nLkOQ==",
+        "dependencies": {
+          "Hoard.Hosting": "[0.1.0]"
+        }
+      },
+      "Hoard.Fixtures.Lifecycle.Metadata": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "W4VvWYBlo5Kufyk9yZb9tD2mN7K+Sn5my9HVXH4tv2hTImspB28UJKHHxWMYAmlTesjucOXaiAcluYQyv6mZwg==",
+        "dependencies": {
+          "Hoard.Abstractions": "[0.1.0]"
+        }
+      },
+      "Hoard.Fixtures.Lifecycle.Protocol.One": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "mAXN2juCBu8wXJ+3RGXf7bLGSthYju+2s53ESko8eeNjqOH/Z1QI34K+H0qP8iy0dOkD70IsXIyOgU0LJu6kWQ==",
+        "dependencies": {
+          "Hoard.Hosting": "[0.1.0]"
+        }
+      },
+      "Hoard.Fixtures.Lifecycle.Protocol.Two": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "ozEaPxm20xkgD454K2/8OuVbkz1tTZnDGZYONqhOYba29JwkM14u4tweeNwlHJQf1JwcaooZcSchxOSoSBWESw==",
+        "dependencies": {
+          "Hoard.Hosting": "[0.1.0]"
+        }
+      },
+      "Hoard.Hosting": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "Lke9XVqDqfvHGqa94KXs2VUE2Wgj9On+gqxPx6sOiCXKZhfg30zebSLxPLV6JAY7xPR3NSmKtqiM8abXgB1twg==",
+        "dependencies": {
+          "Hoard.Abstractions": "0.1.0",
+          "Hoard.Core": "0.1.0",
+          "NuGet.Versioning": "7.9.0"
+        }
+      },
+      "Microsoft.AspNetCore.TestHost": {
+        "type": "Direct",
+        "requested": "[10.0.13, 10.0.13]",
+        "resolved": "10.0.13",
+        "contentHash": "8xzbDfEOWg5GRp5byA42Axr4TbockbxCvdHTYk27ZIdst79DO0CLBp/Zw5sduK2goRii7of4EeuTjG/yPH4tsg=="
+      },
+      "Hoard.Abstractions": {
+        "type": "Transitive",
+        "resolved": "0.1.0",
+        "contentHash": "e0+Tty4sh7R4l5BMhkSlWfjDZHiHV1C/rZUFF2p3W9OsHvSFenrJDb/w8gU3Qu8lsvuKKQqwRRbl3Ejx8XmrPA=="
+      },
+      "Hoard.Core": {
+        "type": "Transitive",
+        "resolved": "0.1.0",
+        "contentHash": "OBrdz8CbMW7XEtOhtnWLW2hrfaYUWTAS9QBubhdPamPOEpIKoYFjDnm6crOfxU2cgVImJrVrEZBlM5l1KzSpsQ==",
+        "dependencies": {
+          "Hoard.Abstractions": "0.1.0"
+        }
+      },
+      "NuGet.Versioning": {
+        "type": "Transitive",
+        "resolved": "7.9.0",
+        "contentHash": "r4sZuVpVqwSBLe4qYDrnpScqdyctlRXg0HSF5OoCGkeBc8b+o8BBYHuI/u1RoWYX78PbieijU13TBt71/Xf3lw=="
+      }
+    }
+  }
+}

@@ -182,12 +182,12 @@ def host_journeys(root, work, config, update):
     return total, projects
 
 
-def registration_compatibility(root, work, config, update):
-    baseline = work / "baseline"
+def registration_compatibility(root, work, config, update, baseline_directory="baseline"):
+    baseline = work / baseline_directory
     baseline.mkdir()
     commit = "837fdf3edf51c3df34710184d018479683c194c2"
     run("git", "merge-base", "--is-ancestor", commit, "origin/main", cwd=root)
-    archive = work / "baseline.tar"
+    archive = work / f"{baseline_directory}.tar"
     run("git", "archive", "--format=tar", f"--output={archive}", commit,
         "Directory.Build.props", "Directory.Packages.props", "global.json", "src", cwd=root)
     with tarfile.open(archive) as contents:
@@ -305,7 +305,7 @@ def main():
                 run("dotnet", "format", str(project), "--verify-no-changes", "--no-restore", "-v", "quiet")
             architecture = lifecycle_graphs(root, work, proofs, hosts, registration)
             count = focused_tests(root, work,
-                "FullyQualifiedName!~ProviderPackageTests&FullyQualifiedName!~CoreIndependenceTests&FullyQualifiedName!~CustomHostTests")
+                "FullyQualifiedName!~ProviderPackageTests&FullyQualifiedName!~CoreIndependenceTests&FullyQualifiedName!~CustomHostTests&FullyQualifiedName!~Prepared_configuration")
             print(f"Lifecycle acceptance: {count} tests, {architecture} boundary proofs, {journeys} package-only journeys passed; six independent packages and retained old binary verified.")
         if not args.update_locks:
             verify_locks(root, before)
