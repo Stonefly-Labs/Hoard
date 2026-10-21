@@ -1,0 +1,269 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Hoard Module Discovery",
+    "version": "1.0.0",
+    "description": "Proposed F-04 contract, not an implemented service. Both routes require the host management-read policy and verified exposure posture. Network callers must be authenticated and authorized; an explicit direct loopback-only policy may permit local anonymous reads. No credential format or production identity scheme is introduced by this contract."
+  },
+  "x-hoard-required-policy": "Hoard.Management.Read",
+  "x-hoard-exposure-modes": ["local-loopback", "secured-network"],
+  "x-hoard-authentication": "Host-provided policy; absence of a standardized security scheme here is not permission for anonymous network access.",
+  "paths": {
+    "/api/v1/discovery": {
+      "get": {
+        "operationId": "getHoardDiscovery",
+        "description": "A complete coherent authorized observation. No query parameters, provider calls, extra probes, configuration or secret reads. Responses are no-store/private with nosniff. Availability is not execution permission.",
+        "x-hoard-required-policy": "Hoard.Management.Read",
+        "responses": {
+          "200": {
+            "description": "Complete current read of published lifecycle state, at most 4 MiB UTF-8; capture is not a new health assessment.",
+            "headers": {
+              "Cache-Control": {"schema": {"type": "string", "const": "no-store, private"}},
+              "Pragma": {"schema": {"type": "string", "const": "no-cache"}},
+              "X-Content-Type-Options": {"schema": {"type": "string", "const": "nosniff"}}
+            },
+            "content": {"application/json": {"schema": {"$ref": "#/components/schemas/Discovery"}, "examples": {"synthetic": {"$ref": "#/components/examples/SyntheticObservation"}}}}
+          },
+          "400": {"$ref": "#/components/responses/InvalidRequest"},
+          "401": {"$ref": "#/components/responses/Unauthenticated"},
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "503": {"$ref": "#/components/responses/Unavailable"}
+        }
+      }
+    },
+    "/api/v1/discovery/openapi.json": {
+      "get": {
+        "operationId": "getHoardDiscoveryDescription",
+        "description": "Fixed protected OpenAPI document, not a public static file or Swagger UI. Same policy, verified posture, no-store/private and nosniff rules as the observation route. No deployment-specific inventory.",
+        "x-hoard-required-policy": "Hoard.Management.Read",
+        "responses": {
+          "200": {
+            "description": "This deployed contract document, bounded to 4 MiB UTF-8.",
+            "headers": {
+              "Cache-Control": {"schema": {"type": "string", "const": "no-store, private"}},
+              "Pragma": {"schema": {"type": "string", "const": "no-cache"}},
+              "X-Content-Type-Options": {"schema": {"type": "string", "const": "nosniff"}}
+            },
+            "content": {"application/json": {"schema": {"type": "object", "required": ["openapi", "info", "paths"], "additionalProperties": true}}}
+          },
+          "400": {"$ref": "#/components/responses/InvalidRequest"},
+          "401": {"$ref": "#/components/responses/Unauthenticated"},
+          "403": {"$ref": "#/components/responses/Forbidden"},
+          "503": {"$ref": "#/components/responses/Unavailable"}
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Id": {"type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-z0-9]+([.-][a-z0-9]+)*$"},
+      "Version": {"type": "string", "minLength": 5, "maxLength": 128, "description": "Validated three-component SemVer including approved prerelease/build metadata."},
+      "Phase": {"type": "string", "enum": ["registered", "validating", "constructing", "composing-services", "building-host", "composing-routes", "initializing", "assessing-readiness", "running", "stopping", "draining", "cleaning-up", "stopped", "unknown"]},
+      "ReasonCode": {"type": "string", "enum": ["missing-inclusion", "missing-registration", "disabled", "unsupported", "unverified", "dependency-unavailable", "binding-unavailable", "initializing", "not-ready", "stopping", "stopped", "observation-unknown", "metadata-suppressed", "observation-unavailable", "deadline", "response-limit", "invalid-protection", "invalid-request", "unauthenticated", "forbidden", "cancelled"]},
+      "Reason": {
+        "type": "object",
+        "required": ["code", "correctiveAction"],
+        "properties": {
+          "code": {"$ref": "#/components/schemas/ReasonCode"},
+          "correctiveAction": {"type": "string", "maxLength": 256},
+          "moduleId": {"$ref": "#/components/schemas/Id"},
+          "operationId": {"$ref": "#/components/schemas/Id"},
+          "correlationId": {"type": "string", "format": "uuid"}
+        },
+        "additionalProperties": false
+      },
+      "Distribution": {
+        "type": "object",
+        "required": ["id", "version", "inventoryCompleteness"],
+        "properties": {
+          "id": {"$ref": "#/components/schemas/Id"},
+          "version": {"$ref": "#/components/schemas/Version"},
+          "inventoryCompleteness": {"type": "string", "enum": ["complete", "partial"]}
+        },
+        "additionalProperties": false
+      },
+      "Observation": {
+        "type": "object",
+        "required": ["lifecycleId", "revision", "capturedAt", "publishedAt", "readinessAssessedAt"],
+        "properties": {
+          "lifecycleId": {"type": "string", "format": "uuid"},
+          "revision": {"type": "string", "maxLength": 20, "pattern": "^[1-9][0-9]*$", "description": "Positive monotonic integer encoded as decimal text to avoid JavaScript integer precision loss."},
+          "capturedAt": {"type": "string", "format": "date-time"},
+          "publishedAt": {"type": "string", "format": "date-time"},
+          "readinessAssessedAt": {"type": ["string", "null"], "format": "date-time"}
+        },
+        "additionalProperties": false
+      },
+      "Host": {
+        "type": "object",
+        "required": ["phase", "ready", "startupAdmission"],
+        "properties": {
+          "phase": {"$ref": "#/components/schemas/Phase"},
+          "ready": {"type": "boolean"},
+          "startupAdmission": {"type": "boolean"}
+        },
+        "additionalProperties": false
+      },
+      "Compatibility": {
+        "type": "object",
+        "required": ["hostRange", "abstractionsRange", "allowHostPrerelease", "allowAbstractionsPrerelease"],
+        "properties": {
+          "hostRange": {"type": "string", "maxLength": 128},
+          "abstractionsRange": {"type": "string", "maxLength": 128},
+          "allowHostPrerelease": {"type": "boolean"},
+          "allowAbstractionsPrerelease": {"type": "boolean"}
+        },
+        "additionalProperties": false
+      },
+      "Provenance": {
+        "type": "object",
+        "required": ["classification"],
+        "properties": {
+          "classification": {"type": "string", "enum": ["fixture", "community", "maintainer-supported", "unknown"]},
+          "publisher": {"type": "string", "maxLength": 160}
+        },
+        "additionalProperties": false
+      },
+      "Constraints": {
+        "type": "object",
+        "properties": {
+          "minimumLength": {"type": "integer", "minimum": 0, "maximum": 16384},
+          "maximumLength": {"type": "integer", "minimum": 0, "maximum": 16384},
+          "minimum": {"type": "string", "maxLength": 20, "pattern": "^-?(0|[1-9][0-9]*)$"},
+          "maximum": {"type": "string", "maxLength": 20, "pattern": "^-?(0|[1-9][0-9]*)$"}
+        },
+        "additionalProperties": false
+      },
+      "Option": {
+        "type": "object",
+        "required": ["id", "type", "required", "secret"],
+        "properties": {
+          "id": {"$ref": "#/components/schemas/Id"},
+          "type": {"type": "string", "enum": ["string", "boolean", "integer", "address", "secret"]},
+          "required": {"type": "boolean"},
+          "secret": {"type": "boolean"},
+          "description": {"type": "string", "maxLength": 512},
+          "constraints": {"$ref": "#/components/schemas/Constraints"},
+          "publicDefault": {"type": "string", "maxLength": 512, "description": "Approved ordinary display literal, never an effective configured value."},
+          "allowedValues": {"type": "array", "maxItems": 64, "items": {"type": "string", "maxLength": 160}}
+        },
+        "allOf": [
+          {"if": {"properties": {"secret": {"const": true}}, "required": ["secret"]}, "then": {"properties": {"type": {"const": "secret"}}, "not": {"anyOf": [{"required": ["publicDefault"]}, {"required": ["allowedValues"]}]}}},
+          {"if": {"properties": {"type": {"const": "secret"}}, "required": ["type"]}, "then": {"properties": {"secret": {"const": true}}}}
+        ],
+        "additionalProperties": false
+      },
+      "Capability": {
+        "type": "object",
+        "required": ["id", "version", "operationId", "owners", "dependencies", "support", "evidenceScope", "evidenceIds", "availability", "reasons", "omittedReasonCount"],
+        "properties": {
+          "id": {"$ref": "#/components/schemas/Id"},
+          "version": {"$ref": "#/components/schemas/Version"},
+          "operationId": {"$ref": "#/components/schemas/Id"},
+          "owners": {"type": "array", "minItems": 1, "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/components/schemas/Id"}},
+          "dependencies": {"type": "array", "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/components/schemas/Id"}},
+          "support": {"type": "string", "enum": ["supported", "unsupported", "unverified"]},
+          "evidenceScope": {"type": "string", "enum": ["fixture", "production", "unknown"]},
+          "evidenceIds": {"type": "array", "maxItems": 32, "uniqueItems": true, "items": {"$ref": "#/components/schemas/Id"}},
+          "availability": {"type": "string", "enum": ["usable", "unavailable", "unknown"]},
+          "reasons": {"type": "array", "maxItems": 100, "items": {"$ref": "#/components/schemas/Reason"}},
+          "omittedReasonCount": {"type": "integer", "minimum": 0}
+        },
+        "additionalProperties": false
+      },
+      "Module": {
+        "type": "object",
+        "required": ["id", "category", "version", "inclusion", "registered", "enabled", "compatibility", "provenance", "lifecyclePhase", "readiness", "selectedRoles", "options", "capabilities", "reasons", "omittedReasonCount"],
+        "properties": {
+          "id": {"$ref": "#/components/schemas/Id"},
+          "category": {"type": "string", "enum": ["protocol", "metadata", "artifact", "identity"]},
+          "version": {"$ref": "#/components/schemas/Version"},
+          "inclusion": {"type": "string", "enum": ["included", "unknown"]},
+          "registered": {"type": "boolean"},
+          "enabled": {"type": "boolean"},
+          "compatibility": {"$ref": "#/components/schemas/Compatibility"},
+          "provenance": {"$ref": "#/components/schemas/Provenance"},
+          "lifecyclePhase": {"$ref": "#/components/schemas/Phase"},
+          "readiness": {"type": "string", "enum": ["disabled", "enabled", "initializing", "ready", "not-ready", "failed", "stopping", "stopped", "unknown"]},
+          "selectedRoles": {"type": "array", "maxItems": 3, "uniqueItems": true, "items": {"type": "string", "enum": ["metadata-authority", "artifact-authority", "identity-scheme"]}},
+          "options": {"type": "array", "maxItems": 256, "items": {"$ref": "#/components/schemas/Option"}},
+          "capabilities": {"type": "array", "maxItems": 64, "items": {"$ref": "#/components/schemas/Capability"}},
+          "reasons": {"type": "array", "maxItems": 100, "items": {"$ref": "#/components/schemas/Reason"}},
+          "omittedReasonCount": {"type": "integer", "minimum": 0}
+        },
+        "additionalProperties": false
+      },
+      "Discovery": {
+        "type": "object",
+        "required": ["schemaVersion", "distribution", "observation", "host", "modules", "reasons", "omittedReasonCount"],
+        "properties": {
+          "schemaVersion": {"type": "integer", "const": 1},
+          "distribution": {"$ref": "#/components/schemas/Distribution"},
+          "observation": {"$ref": "#/components/schemas/Observation"},
+          "host": {"$ref": "#/components/schemas/Host"},
+          "modules": {"type": "array", "maxItems": 256, "items": {"$ref": "#/components/schemas/Module"}},
+          "reasons": {"type": "array", "maxItems": 100, "items": {"$ref": "#/components/schemas/Reason"}},
+          "omittedReasonCount": {"type": "integer", "minimum": 0}
+        },
+        "additionalProperties": false
+      },
+      "Problem": {
+        "type": "object",
+        "required": ["type", "title", "status", "detail", "code", "phase", "correlationId"],
+        "properties": {
+          "type": {"type": "string", "const": "about:blank"},
+          "title": {"type": "string", "maxLength": 160},
+          "status": {"type": "integer", "enum": [400, 401, 403, 503]},
+          "detail": {"type": "string", "maxLength": 256},
+          "code": {"$ref": "#/components/schemas/ReasonCode"},
+          "phase": {"type": "string", "enum": ["exposure", "authorization", "request", "capture", "projection", "encoding", "description", "unknown"]},
+          "moduleId": {"$ref": "#/components/schemas/Id"},
+          "operationId": {"$ref": "#/components/schemas/Id"},
+          "correlationId": {"type": "string", "format": "uuid"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "responses": {
+      "InvalidRequest": {"description": "Generic unsupported input; no reflected query/path. No-store/private and nosniff apply.", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}}},
+      "Unauthenticated": {"description": "Host authentication challenge, no inventory/configuration. Body may be empty; if emitted, the safe Problem schema applies. No-store/private and nosniff apply.", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}}},
+      "Forbidden": {"description": "No read permission or invalid local/proxy caller, no inventory/configuration. Body may be empty; if emitted, the safe Problem schema applies. No-store/private and nosniff apply.", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}}}},
+      "Unavailable": {"description": "Protection/source unavailable, inconsistency, compute deadline or response bound; no partial/stale successful fallback. No-store/private and nosniff apply.", "content": {"application/problem+json": {"schema": {"$ref": "#/components/schemas/Problem"}, "example": {"type": "about:blank", "title": "Discovery unavailable", "status": 503, "detail": "Inspect the safe host diagnostics and retry an explicit read.", "code": "observation-unavailable", "phase": "capture", "correlationId": "44444444-4444-4444-8444-444444444444"}}}}
+    },
+    "examples": {
+      "SyntheticObservation": {
+        "summary": "Invented fixture-only ready composition; no production provider, credentials, native-client or continuous-health claim. Execution still requires its own permission.",
+        "value": {
+          "schemaVersion": 1,
+          "distribution": {"id": "fixture.discovery", "version": "0.1.0", "inventoryCompleteness": "complete"},
+          "observation": {"lifecycleId": "11111111-1111-4111-8111-111111111111", "revision": "7", "capturedAt": "2026-10-21T15:00:01Z", "publishedAt": "2026-10-21T15:00:00Z", "readinessAssessedAt": "2026-10-21T15:00:00Z"},
+          "host": {"phase": "running", "ready": true, "startupAdmission": true},
+          "modules": [
+            {
+              "id": "fixture.artifact", "category": "artifact", "version": "0.1.0", "inclusion": "included", "registered": true, "enabled": true,
+              "compatibility": {"hostRange": "[0.1.0,0.2.0)", "abstractionsRange": "[0.1.0,0.2.0)", "allowHostPrerelease": false, "allowAbstractionsPrerelease": false},
+              "provenance": {"classification": "fixture", "publisher": "Invented acceptance fixture"},
+              "lifecyclePhase": "assessing-readiness", "readiness": "ready", "selectedRoles": ["artifact-authority"], "options": [], "capabilities": [], "reasons": [], "omittedReasonCount": 0
+            },
+            {
+              "id": "fixture.metadata", "category": "metadata", "version": "0.1.0", "inclusion": "included", "registered": true, "enabled": true,
+              "compatibility": {"hostRange": "[0.1.0,0.2.0)", "abstractionsRange": "[0.1.0,0.2.0)", "allowHostPrerelease": false, "allowAbstractionsPrerelease": false},
+              "provenance": {"classification": "fixture", "publisher": "Invented acceptance fixture"},
+              "lifecyclePhase": "assessing-readiness", "readiness": "ready", "selectedRoles": ["metadata-authority"], "options": [], "capabilities": [], "reasons": [], "omittedReasonCount": 0
+            },
+            {
+              "id": "fixture.protocol", "category": "protocol", "version": "0.1.0", "inclusion": "included", "registered": true, "enabled": true,
+              "compatibility": {"hostRange": "[0.1.0,0.2.0)", "abstractionsRange": "[0.1.0,0.2.0)", "allowHostPrerelease": false, "allowAbstractionsPrerelease": false},
+              "provenance": {"classification": "fixture", "publisher": "Invented acceptance fixture"},
+              "lifecyclePhase": "assessing-readiness", "readiness": "ready", "selectedRoles": [], "options": [],
+              "capabilities": [{"id": "fixture.inspect", "version": "1.0.0", "operationId": "inspect-synthetic", "owners": ["fixture.protocol"], "dependencies": ["fixture.artifact", "fixture.metadata"], "support": "supported", "evidenceScope": "fixture", "evidenceIds": ["fixture-case-d09"], "availability": "usable", "reasons": [], "omittedReasonCount": 0}],
+              "reasons": [], "omittedReasonCount": 0
+            }
+          ],
+          "reasons": [],
+          "omittedReasonCount": 0
+        }
+      }
+    }
+  }
+}

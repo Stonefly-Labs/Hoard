@@ -1572,8 +1572,9 @@ Revalidation of the
 remains **16/16 to 16/16**: zero newly passing items, regressions or unchecked
 items, with every marker and all other checklist bytes unchanged. This is not
 custom reviewer approval or runtime evidence. No extension hooks are configured.
-The next separately authorized stage is `plan`; this invocation creates no
-design artifacts, tasks, custom checklist, endpoint, console or provider.
+At the clarification checkpoint, the next separately authorized stage was
+`plan`; that invocation created no design artifacts, tasks, custom checklist,
+endpoint, console or provider.
 
 README, this guide and the spec's clarification section are updated with the
 checkpoint. Provider/example guides, predecessor artifacts, baseline
@@ -1584,6 +1585,63 @@ operational procedure. The existing specification-stage architecture review
 remains relevant; no new provider contract, composition or shared invariant
 change warrants another architecture review. Product/.NET, frontend and IaC
 acceptance are not rerun for this documentation/checkpoint-only stage.
+
+### F-04 module discovery planning
+
+The separately authorized `plan` stage runs the installed `speckit-plan`
+with `specs/004-module-discovery` explicitly pinned on its recorded branch.
+Its [implementation plan](../specs/004-module-discovery/plan.md),
+[research](../specs/004-module-discovery/research.md),
+[in-process model](../specs/004-module-discovery/data-model.md) and
+[validation quickstart](../specs/004-module-discovery/quickstart.md) are design
+artifacts, not new runtime behavior. The generated contracts define
+[Hosting/Application integration](../specs/004-module-discovery/contracts/hosting-api.md),
+[HTTP behavior](../specs/004-module-discovery/contracts/discovery-api.md),
+[OpenAPI shapes](../specs/004-module-discovery/contracts/openapi.json),
+[consumer presentation](../specs/004-module-discovery/contracts/presentation.md)
+and [40 paired acceptance cases](../specs/004-module-discovery/contracts/acceptance.md).
+All 22 requirements, eight outcomes, 22 scenarios and 13 edge cases are mapped.
+
+The design keeps F-01/F-02/F-03 interfaces and the sole lifecycle authority.
+An immutable host catalog separates known inclusion, tested support and
+sanitized public metadata; actual route/service-owner evidence and a single
+published lifecycle revision determine operation availability without request
+probes, secret reads or construction. Application gains its already approved
+Hosting/ASP.NET Core dependencies only during implementation. Core stays
+provider-free; metadata/artifact packages remain Abstractions-only.
+
+Two literal protected GET routes cover discovery and its fixed OpenAPI
+description; neither bypasses the existing route validator. Explicit local
+loopback/no-proxy and authenticated secured-network/TLS/trusted-proxy modes
+share management-read enforcement. Defaults authorize no exposure until an
+explicit posture/policy is supplied. Bounded private JSON encoding, cooperative
+cancellation, closed safe diagnostics and no-store prevent success-shaped
+fallbacks or accidental disclosure.
+
+The bounded architecture review identified a missing failure-context schema
+field set and an unspecified cross-assembly ownership check. The design now
+requires safe phase/approved affected identities in Problem and a Hosting-owned
+BindHoardDiscovery guard for the exact app/lease/root/source. It also requires
+future private ephemeral loopback Kestrel adapter evidence rather than relying
+solely on TestServer for actual binding/raw-peer capture. No external proxy,
+production certificate/auth, rendered accessibility or runtime approval is
+claimed. All observation/concurrency/package/binary proofs remain future gates.
+
+The JSON-only reference consumer defines textual state distinctions, denied/
+failed/stale handling and non-invocable unsupported/unknown/unavailable actions;
+the rendered static Next.js console remains later work. The proposed
+`bash scripts/validate-discovery.sh` does not exist yet. Existing validation
+commands remain unchanged; planning never reports future cases as passed.
+
+README and this guide are updated; spec requirements and all built-in checklist
+bytes remain unchanged. Provider/example guides, predecessor artifacts, baseline
+charter/product specification/architecture/diagrams/ADR, constitution, backlog,
+IaC and release guidance are unaffected: no current API, package graph, command,
+runtime/support claim or operational procedure changed. Their established
+boundaries already permit this proposed design. No extension hooks, tasks,
+custom checklists, source/project/lock changes, frontend, provider, listener,
+infrastructure action or release are introduced. The next separately authorized
+stage is `checklist`; generation will not approve reviewer-owned criteria.
 
 ```mermaid
 flowchart TD

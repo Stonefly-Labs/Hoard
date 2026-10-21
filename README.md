@@ -479,8 +479,18 @@ The [clarification review](specs/004-module-discovery/spec.md#clarifications)
 found no critical ambiguities across all ten review categories: zero questions
 and no requirement or scope changes. The built-in checklist remains 16/16;
 exact contract shapes, limits and observation mechanics remain planning
-decisions. The next separately authorized stage is `plan`; no planning or
-implementation ran.
+decisions. The subsequent
+[F-04 implementation plan](specs/004-module-discovery/plan.md) proposes an
+explicit public catalog, atomic lifecycle observations, actual route/service
+binding evidence and two protected read-only management routes in Application.
+Its research, model, OpenAPI/library/presentation contracts and
+[validation guide](specs/004-module-discovery/quickstart.md) map all requirements
+and outcomes to 40 future fixture proof cases, including a JSON-only reference
+consumer and bounded loopback exposure-adapter tests. Architecture review led
+to explicit failure context and a Hosting-owned app/lease/source guard.
+These are design obligations, not implemented endpoints or passing runtime
+evidence. The next separately authorized stage is `checklist`; no tasks,
+custom checklist approval or implementation occurred.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
