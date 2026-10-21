@@ -22,7 +22,8 @@ dependency management into another full-time job.
 > [!IMPORTANT]
 > **Foundation only.** This repository currently contains product/design documents,
 > development workflows, repository tooling, .NET provider contracts and a tested
-> fixture-only module lifecycle, plus an operator-run Azure identity bootstrap.
+> fixture-only module lifecycle, an in-progress source-only configuration boundary,
+> plus an operator-run Azure identity bootstrap.
 > There is no runnable cache, working provider, UI, container, or published package.
 > Everything in the product overview below describes the planned experience.
 
@@ -392,8 +393,30 @@ with complete acyclic prerequisites and ordered shared-file edits.
 The report is recorded in [draft PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8)
 and completion evidence in the shared checkpoint. Specification, design, task
 and checklist bytes remain unchanged; no remediation or implementation occurred.
-The next separately authorized stage is `implement`, with the existing 40/40
-custom requirements-review gate satisfied. Analysis is not runtime acceptance.
+At that checkpoint, the next separately authorized stage was `implement`, with
+the existing 40/40 custom requirements-review gate satisfied. Analysis is not
+runtime acceptance.
+
+The current implementation invocation delivers only the task-defined
+**source-resolution MVP**, not the complete F-03 feature. Hosting now has inert
+option metadata, private copied inputs, bounded callback supervision, strict
+versioned JSON parsing and deterministic per-setting provenance. Same-source
+canonical duplicates, unknown names, malformed disabled/discarded input and
+unsafe reference/address representations fail explicitly. Selections replace
+whole lists; unrelated option fields remain. No secret is resolved and no
+provider is constructed.
+
+`EvaluateConfigurationAsync` intentionally returns **Failed /
+IncompleteConfiguration** after valid source resolution, with no successful
+proof. Configured lifecycle integration, active option checks, local secret
+resolution, restart/distribution and conversion remain unfinished. The new
+`validate-configuration.sh` supports explicitly partial `--filter` and
+`--baseline-only` checks; its default full-acceptance mode deliberately fails.
+The [implementation evidence](specs/003-provider-configuration/plan.md#source-resolution-mvp-implementation)
+records the scoped architecture review, corrections and retained checks.
+The checkpoint stays **`implement / running`**, and
+[PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) stays draft. Resume the
+same stage/directory; do not rerun `begin` or advance to convergence.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

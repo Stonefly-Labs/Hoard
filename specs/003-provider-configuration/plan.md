@@ -4,10 +4,12 @@
 
 **Input**: Feature specification from `specs/003-provider-configuration/spec.md`
 
-**Status**: Phase 0/1 design only, generated through the installed
+**Status**: Historical Phase 0/1 design, generated through the installed
 `speckit-plan` skill with the recorded feature directory explicitly pinned.
-All new APIs, paths, grammar and checks below are planned, not implemented.
-No task list, custom checklist approval or runtime acceptance is produced here.
+The design below remains the complete feature target. The appended
+[source-resolution MVP evidence](#source-resolution-mvp-implementation) records
+the current partial implementation; activation, secrets, conversion and full
+F-03 acceptance remain unfinished. Planning itself produced no implementation.
 
 ## Summary
 
@@ -250,3 +252,151 @@ No constitution violations. A strict source parser and opaque configuration
 proof are needed to enforce duplicate/list/secret rules the generic host
 configuration chain does not provide. Keep them local to Hosting rather than
 introducing a generic schema engine, extension loader or new package family.
+
+## Source-resolution MVP implementation
+
+The installed `speckit-implement` stage began on the recorded branch/directory
+after the pushed analysis checkpoint and satisfied 16/16 built-in plus 20/20
+and 20/20 reviewer-owned requirements gates. No extension hooks exist.
+This checkpoint implements only T001..T020, the incremental source-resolution
+MVP explicitly described in the task list. T021..T069 remain unchecked.
+**The stage stays `implement / running`; no `finish` is called.** PR #8 remains
+draft, and no later driver stage, merge or dependency unlock occurs.
+
+### Delivered scope and deviations
+
+- Inert immutable option associations and descriptor-field validation;
+  private defensive input snapshots, safe bounded reports, owner-only typed
+  options/secret handles and an inaccessible, not-yet-usable proof declaration.
+- Strict versioned Defaults/file parsing, optional supplied environment JSON
+  and reserved CLI assignments, per-source canonical duplicate/known-name/type/
+  reference/address checks, keyed option merge and whole-selection replacement.
+  Versions count toward the document assignment limit and are independently
+  validated before precedence. Safe provenance contains no values/origins.
+- Full-callback supervision under a monotonic absolute budget and capped
+  dispatch budgets, non-inline collaborator cancellation, tracked notification,
+  pending-input retention, bounded disposal and safe once-only eventual faults.
+  Metrics use closed labels and execute inside supervised work, never under the
+  state lock. No post-terminal dispatch or successful proof is exposed.
+- Fail-closed evidence scaffolding with explicit partial selectors, actual
+  pinned-baseline compilation and retained binary hashes, private workspace
+  cleanup, local provenance/lock checks and exact case/platform inventory
+  guards. Default full configuration acceptance deliberately fails.
+
+Ancillary model/result/lease types are grouped in cohesive source files rather
+than every proposed filename. Deadline/pending-work state lives within the
+configuration supervisor; it owns no DI root or provider cleanup. Existing
+test internals access is reused. No runtime dependency, Abstractions/Core/
+Application source, old API or lifecycle source changes.
+
+Input snapshotting scans no more than 4,096 argument elements and 4,096
+environment entries before allocation can grow unbounded. Only reserved Hoard
+arguments and reference-eligible environment names are retained; immutable
+secret text references are not resolved/validated here. Defaults/overlay/CLI
+text has a one-MiB hard ceiling, with narrower trusted evaluation limits still
+enforced. Supplying finite in-memory inputs and a cooperative monotonic clock
+remains the trusted host's responsibility, not a malicious-enumerator sandbox.
+
+`EvaluateConfigurationAsync` intentionally returns **Failed /
+IncompleteConfiguration** after valid source resolution, with safe provenance
+and no successful proof. Existing opt-out F-02 composition remains unchanged;
+option metadata is not an enforced configured lifecycle gate yet. Active option
+checks, secret resolution/checks, proof consumption/input transfer, configured
+delivery, restart/distribution, conversion/publication and full new-package/
+old-binary compatibility evidence remain T021..T069.
+
+### Red-before-green and architecture review
+
+Initial tooling tests failed with missing `configuration_evidence`; initial
+contract/coordination and source tests failed with absent API/types before
+implementation. These compile/import failures establish missing interfaces,
+not runtime safety. Current paired executable source/primitive tests prove
+the measured rejection/retention outcomes; they are not complete CFG acceptance.
+
+The required bounded read-only `hoard-architecture-review` reviewed this
+increment, not the unfinished configured lifecycle or conversion. It ran no
+commands/tests and did not independently inspect the private binaries or
+packed graph. It found three MEDIUM defects, each reproduced dynamically
+before correction:
+
+| Finding | Red regression | Correction / current evidence |
+| --- | --- | --- |
+| Elapsed dispatch cap could lose to delayed timer delivery | `Elapsed_dispatch_cap_wins_even_when_timeout_notification_is_delayed` returned Failed/IncompleteConfiguration rather than TimedOut | Recheck monotonic dispatch elapsed time after await before accepting the result; virtual clock advances without delivering timers |
+| Unbounded pre-evaluation input snapshot enumeration | `Input_snapshots_stop_at_hard_bounds_before_exhausting_supplied_collections` missed InputLimit; `Oversized_snapshot_argument_does_not_enumerate_following_inputs` consumed the next argument | Incremental hard count/byte ceilings; private input error becomes an explicit safe evaluation failure before callbacks |
+| Known structural fields lost their safe owner/setting identity | `Known_field_failures_keep_safe_identity_but_unknown_names_are_not_reflected` reported configuration/unknown-setting for known protocol count | Preserve canonical registered context; unknown names remain safe categories without reflection |
+
+All four regressions now pass. Further focused checks cover exact versus
+over document/depth/selection/assignment/field/string/locator limits, UTF-8 byte
+counting, all four sources, independent versions, replaced arrays/atomic
+references, absent versus explicit unavailable sources, malformed disabled/
+discarded values, typed secret-access separation, late faults, pending
+cancellation/resources and cancellation at the completion boundary.
+Held test callbacks/notifications are released and observed. The architecture
+review is not an exploit audit or approval of later unimplemented work.
+
+### Retained baseline and support boundaries
+
+Both standalone fixtures compile against archived merged F-02 revision
+`b80c69fc386541be4f56f6ef2edeca40f43a0e1c`, whose ancestry in fetched main is
+verified. Metadata/provider dependencies remain Abstractions-only. The
+pre-F-03 lifecycle consumer executes successfully against that old baseline.
+New Baseline locks are generated explicitly and replayed locked.
+The current invocation retains the binary/output/assets manifest privately
+outside Git for later handoff; no generated binary or private path is committed.
+
+| Retained fixture | SHA-256 |
+| --- | --- |
+| LegacyOptions | `64f344f212973d9660d81f0073f93c145b887bf7310c505409aadb4017d3677e` |
+| LifecycleConsumer | `0930d7196a2b529421cd307848a9747007c7682eb8d68836c90a674130c5bec2` |
+
+This proves baseline preparation/retention only. It does not yet prove the
+unchanged provider/lifecycle binaries with new configured adapters/runtime;
+T049/T063 retain those obligations. Existing F-01/F-02 acceptance independently
+retains its old registration binary and actual graph scans.
+
+README, development/provider guides, quickstart and model/contract status
+banners describe actual partial support. Existing lifecycle/custom-host
+examples, predecessor artifacts/checklists, product charter/specification,
+baseline architecture/diagrams/ADR, constitution, backlog, IaC and release
+guides are otherwise unaffected: no provider operation, listener, endpoint/UI,
+permission, data/schema migration, deployment or conversion is introduced.
+No full F-03 support, native-client or conformance claim is made.
+Required setup verification adds only an upload `.terraformignore` to the
+existing bootstrap module, excluding transient state/plans/private inputs while
+retaining its provider lock. No infrastructure resource/configuration changes,
+plan or apply accompany that exclusion file.
+
+### Validation checkpoint
+
+| Command | Current result |
+| --- | --- |
+| `bash scripts/validate-configuration.sh --filter 'FullyQualifiedName~Configuration'` | Passed: 66 source/primitive tests; partial proof only |
+| `bash scripts/validate-configuration.sh --baseline-only` | Passed: two pre-F-03 fixture binaries built with isolated locked packages; old lifecycle consumer executed |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed: 32 tooling tests, including malformed inventory/counter rejection and red/green evidence retention |
+| `bash scripts/validate-lifecycle.sh --update-locks` | Passed: 235 tests, nine boundary proofs, seven package-only journeys and retained old registration binary |
+| `bash scripts/validate-foundation.sh --update-locks` | Passed: 42 unit, 49 architecture and 238 composition tests; isolated Core, provider/host package and architecture-pair proofs |
+| `bash scripts/validate-lifecycle.sh` | Passed: independent default locked replay with the same 235 tests/nine boundary proofs/seven package-only journeys |
+| `bash scripts/validate-foundation.sh` | Passed: independent default locked replay with the same 42/49/238 tests and package/architecture proofs |
+| `dotnet format Hoard.slnx --verify-no-changes --no-restore -v quiet` | Passed |
+| `git diff --check` | Passed |
+| `bash scripts/validate-configuration.sh` | Expected nonzero rejection: runtime, package and publication proofs are not implemented; **not full configuration acceptance** |
+
+The focused run was also repeated with an explicit private
+`--evidence-directory`; its actual TRX and manifest record `scope: partial`,
+`status: passed`, and `fullAcceptance: false`. Default full-run rejection was
+observed dynamically, not inferred from the source. The retained baseline
+hashes remain unchanged.
+
+Structural lock review confirms ten existing locks change only 16 local
+Hosting/rebuilt lifecycle-fixture `contentHash` entries: package IDs, versions
+and dependency edges are unchanged. The two new Baseline locks are intentional.
+Default locked replays do not refresh locks. Read-only assertions confirm
+exactly T001..T020 checked, all 49 remaining tasks unchecked, preserved driver
+history, `implement / running`, unchanged reviewer-owned checklists/specification/
+constitution and valid local documentation targets. Post-implementation hooks
+remain absent.
+
+These checks preserve the delivered F-01/F-02 scope and this source-only
+increment on the current macOS host. They do not establish configured lifecycle,
+secret resolution, new-runtime compatibility of the retained F-03 fixtures,
+conversion, publication/interruption, Linux or complete CFG-01..CFG-36 support.

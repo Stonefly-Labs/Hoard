@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "stage": "implement",
-  "status": "ready",
+  "status": "running",
   "branch": "feature/003-provider-configuration",
   "active": {
     "id": "F-03",

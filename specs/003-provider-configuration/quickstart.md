@@ -1,8 +1,9 @@
 # F-03 Validation Quickstart
 
-**Status**: Planned validation/run guide. F-03 has no implemented configuration
-API, command or converter yet. Existing commands below are runnable; the named
-future command and scenarios are implementation acceptance obligations.
+**Status**: In-progress validation guide. F-03 has a source-only metadata/parser/
+supervision MVP, not configured activation, secret resolution or conversion.
+The complete scenarios below remain acceptance obligations; only explicitly
+partial configuration commands currently run.
 No full implementation code, product host, external provider or cloud account
 is required.
 
@@ -33,10 +34,29 @@ These remain F-01/F-02 fixture acceptance, not F-03 evidence before its cases
 exist. They must still pass after implementation. A bare `dotnet test` is not
 a substitute for the scripts' actual package/graph proof inputs.
 
-## Planned Focused Command
+## Focused Command (Partial)
 
-Implementation must introduce and document `bash scripts/validate-configuration.sh`
-before claiming it works. The default mode must use locked restore and run
+`scripts/validate-configuration.sh` currently offers these partial modes:
+
+```bash
+bash scripts/validate-configuration.sh --filter 'FullyQualifiedName~Configuration'
+bash scripts/validate-configuration.sh --baseline-only
+```
+
+The first runs nonempty source/metadata/coordination regressions under a bounded
+runner; the second compiles independent fixture sources against pinned merged
+pre-F-03 packages and verifies their baseline locks/hashes. To explicitly
+generate the new baseline locks, use `--baseline-only --update-locks`, then
+review and replay without that flag. An optional `--retain-baseline` fresh
+private directory retains the actual old binaries/assets outside Git.
+Neither mode runs configured package journeys or proves new binary compatibility.
+An optional `--evidence-directory /absolute/fresh/private/directory` retains
+actual TRX/closed status for either a failing red run or passing green run;
+failures still exit nonzero and do not claim their own intended cause.
+
+Default `bash scripts/validate-configuration.sh` deliberately exits with
+`Incomplete configuration acceptance` until the remaining work exists.
+It must eventually use locked restore and run
 the [CFG-01..36 obligations](contracts/acceptance.md), formatting/analyzers,
 actual independent package consumers, retained binary compatibility,
 TestServer journeys and local-filesystem conversion tests. It must fail for
@@ -45,7 +65,17 @@ missing/empty proof selections, never skip absent manifests.
 Use the existing scripts' explicit `--update-locks` pattern only if adding or
 changing a manifest makes initial lock generation necessary; inspect lock diffs
 and replay the default locked command afterwards. Do not restore/install
-dependencies for this documentation-only planning stage.
+dependencies solely to read the design. Local packed Hosting payload changes
+also require reviewed content-hash lock updates, not dependency/version changes.
+
+`HoardConfigurationInput` receives explicit finite Defaults/arguments/environment
+snapshots and an optional file/read adapter; it does not capture ambient
+developer credentials. Snapshot scan ceilings are 4,096 arguments/environment
+entries, with one-MiB Defaults/overlay/reserved-argument text. The current public
+`EvaluateConfigurationAsync` returns `Failed / IncompleteConfiguration` after
+valid structural resolution; safe provenance is inspectable, but no successful
+proof, active semantics, secret read or configured lifecycle is available.
+See [measured MVP evidence](plan.md#source-resolution-mvp-implementation).
 
 ## 1. Source Resolution Without Construction
 

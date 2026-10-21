@@ -1,7 +1,9 @@
 # F-03 Configuration Model
 
-**Status**: Planned Hosting-local immutable types and ownership, not storage
-entities or implemented APIs. See [format](contracts/configuration-format.md)
+**Status**: Complete design target, not storage entities. Some source/metadata/
+supervision primitives are now implemented in the
+[partial MVP](plan.md#source-resolution-mvp-implementation); configured activation,
+secret resolution and conversion remain planned. See [format](contracts/configuration-format.md)
 and [library contract](contracts/hosting-api.md).
 
 ## Entities and Relationships

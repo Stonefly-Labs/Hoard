@@ -236,6 +236,40 @@ Retain a coherent previous host/contract/provider set for rollback; do not
 relabel incompatible binaries as supported. Local compile tests do not authorize
 package publication or replace later behavior/conformance qualification.
 
+## F-03 in-progress configuration boundary
+
+The source-resolution MVP adds `Hoard.Hosting.Configuration` metadata and input
+types; it does **not** deliver configured activation. Existing provider
+interfaces/descriptors, Abstractions/Core/Application and lifecycle signatures
+are unchanged. Metadata/artifact providers keep their Abstractions-only edge;
+the composing host owns the new option descriptions.
+
+`AddModuleConfiguration<TProvider>(HoardModuleConfiguration, HoardOptionValidator?)`
+records an inert association. Fields must bijectively match descriptor keys and
+required/secret flags; duplicate/orphan/colliding associations fail inspection.
+Types are String, Boolean, Integer, Address and Secret, with version 1 metadata.
+Informative defaults/examples are not injected into effective settings; secret
+defaults/examples are forbidden. Registration/inspection invokes no provider,
+adapter or validator. The future configured adapter/public/secret callbacks
+remain unimplemented.
+
+`HoardConfigurationInput` takes explicit Defaults, optional file, arguments and
+an environment dictionary/read adapter. Inputs and owner options have redacted
+display and no public value-bearing serialization; explicit secret-handle access
+is not process isolation or guaranteed managed-memory zeroization. The input
+does not capture ambient process credentials. See the
+[development guide](DEVELOPMENT.md#f-03-in-progress-source-resolution-mvp) for
+snapshot ceilings, source grammar, finite coordination and pending retention.
+
+`EvaluateConfigurationAsync` currently stops after strict source resolution
+with `Failed / IncompleteConfiguration`, safe provenance and **no proof**.
+Do not use option metadata or successful source parsing as an activation gate:
+legacy F-02 composition still has its original behavior, and its future
+configuration-required bypass protection has not been implemented. No secret
+is resolved, no active option semantics are checked, and no configuration
+converter/restart journey is supported. Full validation intentionally refuses
+acceptance; the existing LifecycleHost remains an F-02 example only.
+
 ## Later-feature handoffs
 
 | Feature | Reserved work |

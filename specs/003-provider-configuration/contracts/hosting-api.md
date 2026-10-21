@@ -1,7 +1,10 @@
 # F-03 Hosting Configuration Library Contract
 
-**Status**: Proposed additive APIs in `Hoard.Hosting.Configuration`.
-Names/signatures below define implementation obligations, not existing APIs.
+**Status**: Complete target for additive APIs in `Hoard.Hosting.Configuration`.
+The [partial source MVP](../plan.md#source-resolution-mvp-implementation) supplies
+metadata/inputs/safe reports and an always-failed evaluator; successful proofs,
+configured compose/adapters, active checks, secret resolution and conversion
+remain implementation obligations, not available behavior.
 Abstractions, Core and Application receive no F-03 dependency or required member.
 
 ## Compatibility and Ownership Boundary
