@@ -341,7 +341,22 @@ with requirements, acceptance criteria and scope unchanged. The built-in
 checklist remains 16/16, with no newly passing, regressed or unchecked items.
 Exact syntax, option contracts, version mappings and finite budget values remain
 planning decisions under the specified behavior.
-The next scheduled stage is `plan`, through a separate invocation.
+The subsequent [implementation plan](specs/003-provider-configuration/plan.md)
+resolves these choices into strict JSON sources, whole-selection replacement,
+Hosting-owned option contracts, private single-use validation proofs and
+owner-scoped environment/file secrets. Its
+[research](specs/003-provider-configuration/research.md),
+[state/ownership model](specs/003-provider-configuration/data-model.md),
+[contracts](specs/003-provider-configuration/contracts/configuration-format.md)
+and [validation guide](specs/003-provider-configuration/quickstart.md) define
+36 planned proof cases, including original-preserving synthetic conversion,
+bounded pending-work safety and retained binary compatibility.
+The bounded planning architecture review found no confirmed contradictions;
+actual lifecycle integration, diagnostic remapping and platform publication
+remain implementation proof obligations. No runtime API, parser or new check
+command is implemented by planning, and existing specification/checklist bytes
+remain unchanged. The next scheduled stage is `checklist`, through a separate
+invocation; custom requirements-quality review remains reviewer-owned.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

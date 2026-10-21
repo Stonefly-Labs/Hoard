@@ -960,6 +960,60 @@ operational behavior changed. No plan, tasks, parser, resolver, converter,
 executable, endpoint or UI was created. The next scheduled stage is `plan`
 through a separate invocation.
 
+### F-03 configuration planning
+
+The subsequent installed `speckit-plan` stage pins the same feature directory
+and produces the [implementation plan](../specs/003-provider-configuration/plan.md),
+[research decisions](../specs/003-provider-configuration/research.md),
+[data/ownership model](../specs/003-provider-configuration/data-model.md),
+[operator format](../specs/003-provider-configuration/contracts/configuration-format.md),
+[Hosting API contract](../specs/003-provider-configuration/contracts/hosting-api.md),
+[acceptance matrix](../specs/003-provider-configuration/contracts/acceptance.md)
+and [validation guide](../specs/003-provider-configuration/quickstart.md).
+
+The design uses version 1 JSON defaults/one explicit file, `HOARD_CONFIG` JSON
+environment overrides and `--hoard:<path>=<JSON>` arguments. It preserves
+whole-selection replacement, keyed option merging and structural rejection of
+discarded/disabled malformed inputs. Descriptive option contracts live in
+Hosting, with host-owned metadata/artifact adapters and no required change to
+Abstractions/provider binaries. Configuration delegates composition acceptance
+to F-02 and hands only successful single-use fixed owner inputs to the existing
+supervised lifecycle; it does not create another readiness or shutdown authority.
+
+Environment/file references resolve only after public checks. Default finite
+coordination is 30 seconds outer/five seconds per dispatch, with retained
+in-use inputs, supervised cancellation notification and safe late observations,
+not forced termination. Reports never expose values, targets or raw callback
+errors. Offline preview/apply uses an explicit synthetic `fixture-v0 -> 1`
+mapping, full pre-publication validation, private same-directory staging and a
+fresh no-clobber destination, retaining the original. Local-platform publication
+proof, truthful pending outcomes and separate provider data recovery are
+mandatory; released older-format or universal power-loss support is not implied.
+
+All 26 requirements, eight outcomes, 22 scenarios and 13 edge cases map to
+36 planned proof cases. The bounded custom architecture review found no
+confirmed design contradiction or consequential unresolved question. Its
+material future gaps are explicitly included: unchanged option-bearing legacy
+provider binary, atomic proof-consumption/disposal/input-transfer races,
+safe remapping of even regex-valid unknown lifecycle identities/path elements,
+and publication/cancellation/interruption evidence on each claimed platform.
+The reviewer ran no tests and approved no custom checklist.
+
+README and this guide link the design. Existing specification/built-in checklist,
+F-01/F-02 artifacts and reviewer-owned markers, product/test/tooling/lock files,
+provider/example guides, baseline charter/specification/architecture/diagrams/
+ADR, governance, backlog, IaC and release guidance remain unchanged. They are
+unaffected because planning changes no implemented API, dependency, provider
+support, executable command, listener, permission or operational behavior.
+Provider/example additions and actual command documentation wait for implementation.
+
+No extension hooks are configured. No task list, custom checklist, parser,
+resolver, converter, runtime change, infrastructure plan/apply, publication,
+deployment or merge occurs here. The proposed `validate-configuration.sh`
+does not exist yet and is not claimed as passing. The next scheduled stage
+is `checklist` through a separate invocation; generation is not reviewer approval
+or implementation authorization.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
