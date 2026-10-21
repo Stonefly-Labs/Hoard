@@ -542,13 +542,23 @@ Application. Registration precedes configuration/composition snapshots;
 `MapHoardDiscovery` precedes module mapping. Explicit verified direct-local or
 authenticated TLS/trusted-proxy posture is mandatory. Metadata is allowlisted;
 reads never resolve secrets, activate providers or refresh readiness.
-The BCL-only reference consumer proves semantic state/action/freshness rules,
-not a delivered console. Usability never grants execution permission.
+The BCL-only reference consumer exercises semantic state/action/freshness rules,
+not a delivered console; the convergence findings below identify remaining gaps.
+Usability never grants execution permission.
 See the [implemented validation guide](specs/004-module-discovery/quickstart.md)
 and [evidence report](specs/004-module-discovery/plan.md#implementation-evidence).
 The implementation checkpoint remains distinct from convergence, finalization,
 merge and release; draft [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10)
 is not ready for merge.
+The resumed convergence review reproduces two consumer gaps:
+[Phase 9 / T079-T080](specs/004-module-discovery/tasks.md#phase-9-convergence).
+Unknown or terminal owner/dependency phases can leave actions enabled when
+other fields still claim readiness/usability; fixture evidence text also
+replaces the distinct supported/unsupported/unverified label. Existing locked
+acceptance passes but does not cover these cases. The checkpoint returns to
+`implement` for focused red/green regressions and corrections, followed by fresh
+convergence. Finalization and merge remain blocked; no runtime fix or checklist
+approval is claimed by this assessment.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

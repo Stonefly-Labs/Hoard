@@ -1867,6 +1867,56 @@ procedures did not change. No infrastructure, release, publication or merge
 ran. Draft [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10) remains draft;
 the next separately authorized stage is `converge`, not merge or a new feature.
 
+### F-04 convergence: reference-consumer follow-up
+
+The installed `speckit-converge` resumes the interrupted `converge / running`
+checkpoint on the recorded branch and explicitly pinned feature directory.
+It preserves the already appended
+[Phase 9 / T079-T080](../specs/004-module-discovery/tasks.md#phase-9-convergence),
+without rerunning `begin`, duplicating tasks or changing any existing task.
+The assessment covers 22 functional requirements, eight buildable outcomes,
+22 story scenarios, 13 edges, all 80 current tasks, ten grouped plan decisions
+and eight constitutional principles. It identifies two **partial** consumer
+gaps; there are no additional missing, contradicting or unrequested findings.
+
+| Task | Severity | Current evidence and required correction |
+| --- | --- | --- |
+| T079 | HIGH | The public JSON reader understands `unknown` and terminal module phases, but action eligibility checks only understood/registered/enabled/ready owners and dependencies. With current host admission, usable capability and independent execution permission retained, all ten tested `unknown`, `stopping`, `draining`, `cleaning-up` and `stopped` owner/dependency cases remain enabled. Future phases correctly reject, and the genuine ready control correctly permits the last-entered `assessing-readiness` phase. Add paired wire regressions and fail closed at the existing interpretation/eligibility boundary. |
+| T080 | MEDIUM | Fixture evidence replaces the support semantic line, giving supported, unsupported and unverified contributions identical support text. Unsupported/unverified actions correctly remain hidden and reasons remain available; preserve the explicit support state and fixture qualification separately, with focused wire/reading-order assertions. |
+
+A private session-only reproduction uses actual authorized endpoint bytes and
+the compiled JSON reader/projector, not Hosting objects as consumer input.
+It confirms both findings without modifying product/test sources or introducing
+a product listener. The existing two consumer classes pass all 19 tests,
+demonstrating the missing regression coverage rather than disproving the gaps.
+Fresh locked discovery acceptance with a private `--evidence-directory` passes
+122 declared/executed tests, D01..D40, nine package journeys, 18 real graph scans,
+12 runtime mutation checks, original-binary and JSON-consumer proof, with no
+lock mutation. The specified 100-read local fixture workload records p95
+0.031 seconds and zero additional provider activity/resource deltas.
+`python3 -m unittest discover -s tests/tooling -v` passes all 61 tests.
+Prior configuration/lifecycle/foundation results remain implementation evidence;
+this assessment does not claim to rerun those suites or qualify production
+providers, identity, proxy isolation, native clients or rendered accessibility.
+
+Only README, this guide, the append-only task additions and the flow checkpoint
+are shared by this stage. The specification, plan, contracts and reviewer-owned
+checklists remain unchanged. Provider/example/quickstart guides retain the same
+intended APIs and operational procedures; their known consumer proof limits are
+recorded here rather than rewriting historical implementation evidence.
+Product charter/specification/architecture/ADR/diagrams, governance/backlog,
+predecessor artifacts, IaC and release guidance are unaffected because no
+requirement, dependency boundary, API, runtime, permission, restart/rollback,
+infrastructure or release behavior changes. No new architecture review is
+required for this assessment-only checkpoint.
+
+The outcome is **`tasks_appended`**, recovered from the interrupted stage:
+78 original tasks remain checked and T079-T080 remain unchecked. The helper
+schedules **`implement / ready`** for a separate invocation, then fresh
+convergence. Draft [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10)
+must remain draft; finalization and merge are blocked by these two gaps.
+No implementation, merge, release, publication or infrastructure operation ran.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
