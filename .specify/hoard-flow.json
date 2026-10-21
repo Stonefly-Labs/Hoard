@@ -1,9 +1,13 @@
 {
   "schema_version": 1,
-  "stage": "specify",
+  "stage": "clarify",
   "status": "ready",
-  "branch": null,
-  "active": null,
+  "branch": "feature/004-module-discovery",
+  "active": {
+    "id": "F-04",
+    "feature_directory": "specs/004-module-discovery",
+    "pr": null
+  },
   "completed": [
     {
       "id": "F-01",
@@ -325,6 +329,13 @@
       "branch": "chore/spec-progress-f-03",
       "at": "2026-10-21T13:41:09.193539+00:00",
       "evidence": "Verified PR #8 MERGED into main on 2026-10-21 UTC at 7fd73267a5154583363c94e9e85b9bac7d4a16b3; fetched origin/main contains the merge and identical finalization checkpoint/ratified constitution. Started chore/spec-progress-f-03 at that merge; all 71 F-03 tasks complete. README, development guide and spec status updated; historical acceptance and reviewer-owned checklists unchanged. python3 -m unittest discover -s tests/tooling -v passed 38 tests; git diff --check passed. Progress/docs only: no new spec, implementation, infrastructure, release or merge; completion checkpoint must merge before F-04 specify."
+    },
+    {
+      "stage": "specify",
+      "spec_id": "F-04",
+      "branch": "feature/004-module-discovery",
+      "at": "2026-10-21T14:02:25.644043+00:00",
+      "evidence": "F-04 specify completed through installed speckit-specify with exact master-backlog prompt and pinned specs/004-module-discovery. Started feature/004-module-discovery from fetched origin/main after verifying merged F-03 completion PR #9, matching shared checkpoint/ratified constitution and no unpushed predecessor work. Resolved active spec template; produced five prioritized stories, 22 acceptance scenarios, 13 edge cases, 22 functional requirements and eight measurable outcomes. Built-in quality checklist passed 16/16 with no unresolved clarification markers; no custom reviewer approval or implementation authorization. Requirements separate known inclusion, registration, enablement, distribution support and observed readiness; operation-scoped capability claims must match actual composed routes/services and published lifecycle observations without extra probes or activation. Explicit management-read access protects API descriptions and safe metadata; local/network policies, redaction, coherent bounded observations and unknown/stale consumer action rules are specified. Reference consumer proof remains F-04, rendered product console later; fixtures cannot imply production/native-client/conformance support. Bounded hoard-architecture-review found no actionable requirements-level findings or unresolved architecture questions; operational evidence remains future work. No extension hooks. README/development guidance synchronized with unaffected-document reasons. python3 -m unittest discover -s tests/tooling -v passed all 38 tests; pinned-context, exact-input, template-order, ID/count/stage-isolation assertions, 164 local file/anchor checks and git diff --check passed. Existing product/test/tooling sources, references/locks, predecessor specs/tasks/checklists, baseline architecture/diagrams/ADR/governance/backlog and IaC/release docs unchanged. No plan/tasks/custom checklist, endpoint, console, provider, publication, deployment, infrastructure action or merge. Next stage clarify via separate invocation; no specification-stage blocker."
     }
   ]
 }

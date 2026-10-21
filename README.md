@@ -453,9 +453,26 @@ evidence. [PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) merged into
 `7fd73267a5154583363c94e9e85b9bac7d4a16b3`. The separate `await_merge` stage
 verified that merge in fetched main and all 71 completed tasks, then recorded
 F-03 as complete with its directory, PR and merge commit. The progress-only
-completion checkpoint must merge before the next specification can start:
-[F-04: module capabilities and management discovery API](docs/HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-04).
-No new specification or implementation ran in this completion stage.
+completion checkpoint merged through
+[PR #9](https://github.com/Stonefly-Labs/Hoard/pull/9), satisfying the next-spec
+merge gate. No new specification or implementation ran in that completion stage.
+
+The subsequent [F-04 specification: module capabilities and management
+discovery](specs/004-module-discovery/spec.md) defines read-only inspection of
+known distribution inventory, registration, enablement, support and observed
+readiness. Five journeys, 22 functional requirements and eight measurable
+outcomes require truthful route/service capability claims, management-read
+protection, secret-free descriptive metadata, coherent bounded observations and
+safe unavailable-state guidance. Its presentation contract distinguishes
+unsupported, disabled, unknown, stale and temporarily not-ready states and
+constrains consumer action eligibility without treating capability availability
+as execution permission. Reference-consumer proof is in scope; rendered product
+screens remain later console work.
+The [built-in quality checklist](specs/004-module-discovery/checklists/requirements.md)
+passes all 16 specification-quality criteria with no unresolved clarification
+markers. This is requirements review only, not custom reviewer approval,
+implementation authorization, a discovery endpoint or a delivered UI.
+The next separately authorized stage is `clarify`; no later stage ran.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

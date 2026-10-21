@@ -1465,7 +1465,9 @@ with its directory, PR and merge commit.
 The completion checkpoint clears the active feature and schedules `specify`;
 the next dependency-ready entry is
 [F-04: module capabilities and management discovery API](HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-04).
-This progress-only PR must merge before a new specification begins from main.
+The progress-only checkpoint subsequently merged through
+[PR #9](https://github.com/Stonefly-Labs/Hoard/pull/9), satisfying the next-spec
+merge gate.
 No new specification or later stage ran during this completion invocation,
 and no implementation, test, lock, task or reviewer-owned checklist changed.
 
@@ -1478,6 +1480,63 @@ package graph, command, runtime/support behavior or operational requirement.
 No new architecture review, .NET acceptance or IaC run is warranted for this
 progress/docs-only scope. The stage performs no merge, publication, deployment,
 infrastructure action, tag, release or permission change.
+
+### F-04 module discovery specification
+
+The separately authorized `specify` stage starts
+`feature/004-module-discovery` from fetched `origin/main` after verifying
+the merged F-03 completion checkpoint, ratified constitution and shared
+predecessor work. The helper pins
+[F-04](HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-04) and
+`specs/004-module-discovery`; the installed `speckit-specify` receives the exact
+backlog prompt with only its command prefix removed.
+
+The [specification](../specs/004-module-discovery/spec.md) contains five
+independently testable journeys, 22 acceptance scenarios, 13 edge cases,
+22 functional requirements and eight measurable outcomes. It separates known
+package inclusion, registration, enablement, distribution support and observed
+readiness. Unknown inclusion or support evidence cannot be promoted into an
+installed/usable production feature. Capability availability is operation- and
+dependency-scoped and must match actual composed fixture routes/services and
+published lifecycle observations, never extra probes or a second activation
+authority. Failed startup does not become a successful diagnostic service.
+
+Management-read access protects inventory, capability/option details and API
+descriptions. Explicit local loopback policy is distinct from secured network
+exposure; reference identities exercise enforcement without implementing
+production login or token issuance. Sanitized descriptive option metadata
+contains no configured values or secret locators. Discovery is read-only and
+does not confer execution permission.
+
+The presentation contract requires distinct loading, empty, denied, failed,
+unknown, stale, disabled, unsupported and temporarily not-ready states, safe
+textual guidance and no unsupported/unavailable action invocation. A reference
+consumer must prove these decisions; the rendered Next.js console remains
+SPEC-11 and later UI work. Versioned, coherent observations identify their
+distribution/lifecycle and freshness; representative local acceptance targets
+95% of 100 reads within two seconds for 100 modules with 10 capabilities each
+and 10 concurrent readers, without provider I/O or resource growth.
+These are future proof obligations, not measurements from specification.
+
+The [built-in quality checklist](../specs/004-module-discovery/checklists/requirements.md)
+passes 16/16 specification-quality criteria with no unresolved clarification
+markers. It is not reviewer-owned custom checklist approval, implementation
+authorization or passing runtime evidence. Exact contracts, public signatures,
+limits, route shapes and observation mechanics remain planning decisions.
+The bounded `hoard-architecture-review` found no actionable requirements-level
+architecture findings or unresolved design questions; route/service truth,
+coherent observations, access/redaction and reference-consumer behavior still
+require future implementation evidence.
+This invocation generates no plan, tasks, custom checklists, endpoint, product
+console, provider, package/dependency change or infrastructure. The next stage
+is `clarify` through a separate invocation.
+
+README and this guide reflect the specification. Provider/example guides,
+predecessor artifacts, baseline charter/product specification/architecture/
+diagrams/ADR, constitution, master backlog, IaC and release guidance are
+unaffected because this stage changes no current API, dependency graph,
+validation command, runtime/support behavior or operational procedure. Their
+planned discovery/static-console boundaries remain in force.
 
 ```mermaid
 flowchart TD
