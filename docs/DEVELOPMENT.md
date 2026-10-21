@@ -1957,6 +1957,60 @@ All 80 tasks are checked, but draft
 remains incomplete. Next is separately invoked fresh **`converge`**. No merge,
 tag, release, package publication, deployment or infrastructure operation ran.
 
+### F-04 clean convergence
+
+The separately invoked installed `speckit-converge` assesses the current scoped
+implementation after T079-T080, not a branch diff or task completion claims.
+It finds **zero actionable findings** across 22 functional requirements, eight
+buildable outcomes, 22 story scenarios, 13 edge cases, all 80 tasks, ten grouped
+plan decisions and eight constitutional principles. Missing, partial,
+contradicting and unrequested counts are all zero; no severity has a finding.
+The specification, plan, tasks, contracts and reviewer-owned checklists remain
+byte-for-byte unchanged. No empty convergence phase or new task is added.
+
+The consumer rejects unknown/future and stopping/draining/cleaning-up/stopped
+owner or dependency phases despite conflicting ready/usable fields, while the
+genuine last-entered `assessing-readiness` control stays eligible subject to
+independent execution permission. Explicit support state precedes separate
+fixture evidence scope and availability, with safe corrective reasons and
+contextual reading order. These close the two prior gaps without weakening
+freshness, admission, support, binding or authorization boundaries.
+
+Fresh `bash scripts/validate-discovery.sh --evidence-directory
+<fresh-private-directory>` passes **137 declared/executed tests**, zero skips,
+D01..D40, ten suites, nine package journeys, seven wire observations, 18 real
+graph scans, 12 private-copy runtime mutations, retained binaries, JSON-only
+consumer and SDK formatting/analyzers. Default locked mode changes no lock.
+The command also passes all 61 tooling tests. Its private evidence run ID is
+`a15d7e55-e599-470a-a26e-ba28dc32da90`; logs, TRX, manifests and payloads stay
+outside Git. On macOS 26.5.0/.NET SDK 10.0.203, all 100 complete authorized
+reads of 100 modules x 10 contributions at concurrency 10 produce
+615,887..615,889-byte bodies, p95 **0.0265445 seconds** and zero constructor,
+probe, secret-read, service-call, connection or active-resource deltas.
+This is local fixture evidence, not a production SLA.
+
+Prior configuration/lifecycle/foundation runs and architecture reviews remain
+the implementation evidence recorded in the
+[plan](../specs/004-module-discovery/plan.md#implementation-evidence); they are
+not new rerun or review claims. This assessment changes no application, test,
+tooling, dependency or lifecycle behavior, so no new architecture review is
+warranted. Production identity, external proxy isolation, framework request-log
+redaction, native protocols/provider conformance and rendered accessibility
+remain unqualified.
+
+README and this guide record the clean result; the draft PR carries the full
+assessment and the shared flow checkpoint records its evidence. Provider and
+example guides, quickstart/contracts/research/model, charter/product
+specification/architecture/ADR/diagrams, governance/backlog, predecessor
+artifacts, IaC and release guidance are unaffected because APIs, support scope,
+dependency boundaries, commands, transport, restart/rollback and operational
+procedures are unchanged.
+
+The checkpoint schedules **`finalize / ready`** for a separate invocation.
+[PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10) remains draft; clean
+convergence does not finalize or complete F-04, request a merge, unlock
+dependencies, publish a source release/package, deploy or apply infrastructure.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

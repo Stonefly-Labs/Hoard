@@ -559,9 +559,17 @@ implementation completes both tasks: owner/dependency phases must be
 `assessing-readiness` or `running` alongside ready state, and support text
 precedes a separate evidence-scope label. Paired wire regressions reproduce
 the original failures and now pass; locked discovery acceptance includes all
-15 added scenarios without lock changes. The checkpoint schedules fresh
-`converge`, not finalization or merge. Specification and reviewer approvals
-are unchanged.
+15 added scenarios without lock changes. That checkpoint scheduled fresh
+`converge`; specification and reviewer approvals remained unchanged.
+The subsequent [clean convergence assessment](docs/DEVELOPMENT.md#f-04-clean-convergence)
+finds no remaining gaps across all 22 requirements, eight outcomes, 22 scenarios,
+13 edge cases and 80 tasks, including both consumer corrections. Fresh locked
+discovery acceptance passes 137 tests, all 40 cases, nine package journeys,
+18 graph scans and 12 runtime mutations, with no skips or lock changes.
+The specification, plan, tasks and reviewer-owned checklists remain unchanged.
+The checkpoint now schedules **`finalize`**, not merge; draft
+[PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10) remains draft and F-04
+is not yet complete.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
