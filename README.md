@@ -496,11 +496,15 @@ evidence. The subsequent requirements-quality checklist stage generates
 provider/composition reviewers and management-API/consumer reviewers before
 implementation authorization. They cover inventory/support truth, coherent
 bounded observations, protected disclosure and safe presentation/action rules.
-All **40 criteria remain unchecked and reviewer-owned**; generation neither
-evaluates requirements nor supplies runtime evidence. The specification,
-planning artifacts and built-in 16/16 checklist are unchanged. The next
-separately authorized stage is `tasks`; no task list, custom checklist approval
-or implementation occurred.
+All **40 criteria were generated unchecked and reviewer-owned**; generation
+neither evaluates requirements nor supplies runtime evidence. At the user's
+explicit follow-up request, the assisted review records **discovery 20/20 and
+management 20/20 satisfied**, with no unresolved finding, waiver or decision
+requiring maintainer attention. Criterion-level evidence is in each checklist.
+The specification, planning artifacts and built-in 16/16 checklist are
+unchanged. This satisfies requirements-quality review only, not runtime
+acceptance or implementation completion. The next separately authorized stage
+remains `tasks`; no task list or implementation is created by this review.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

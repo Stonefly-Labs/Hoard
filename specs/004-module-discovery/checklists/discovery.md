@@ -20,43 +20,70 @@ activation/readiness authority is implied.
 
 ## Inventory Requirement Completeness and Clarity
 
-- [ ] CHK001 Are complete versus partial inventory knowledge, positive inclusion, registration and established absence defined distinctly, including binaries without authoritative inclusion records and included-but-unregistered entries? [Completeness, Spec §FR-001, §User Story 1, §Assumptions; Model §Distribution Catalog and Publication Policy]
-- [ ] CHK002 Are safe module identity, category, version, declared compatibility and provenance requirements explicit, without equating unknown publisher information, packaging or successful startup with official or certified support? [Clarity, Spec §FR-002, §SC-001; Model §Module Entry]
-- [ ] CHK003 Are inclusion, registration, enablement, observed phase/readiness and support separate requirement dimensions, with authoritative metadata/artifact selections and identity schemes identifiable without configured settings? [Clarity, Spec §FR-003, §User Story 1; Model §Module Entry]
-- [ ] CHK004 Is distribution support defined by explicit implemented-and-tested evidence and its fixture/production scope, separately from declaration, compatibility, provenance, health and future conformance qualification? [Clarity, Spec §FR-005, §FR-022, §SC-008; Model §Capability Contribution; Research §R2 - Explicit inclusion and tested support, not automatic certification]
+- [x] CHK001 Are complete versus partial inventory knowledge, positive inclusion, registration and established absence defined distinctly, including binaries without authoritative inclusion records and included-but-unregistered entries? [Completeness, Spec §FR-001, §User Story 1, §Assumptions; Model §Distribution Catalog and Publication Policy]
+- [x] CHK002 Are safe module identity, category, version, declared compatibility and provenance requirements explicit, without equating unknown publisher information, packaging or successful startup with official or certified support? [Clarity, Spec §FR-002, §SC-001; Model §Module Entry]
+- [x] CHK003 Are inclusion, registration, enablement, observed phase/readiness and support separate requirement dimensions, with authoritative metadata/artifact selections and identity schemes identifiable without configured settings? [Clarity, Spec §FR-003, §User Story 1; Model §Module Entry]
+- [x] CHK004 Is distribution support defined by explicit implemented-and-tested evidence and its fixture/production scope, separately from declaration, compatibility, provenance, health and future conformance qualification? [Clarity, Spec §FR-005, §FR-022, §SC-008; Model §Capability Contribution; Research §R2 - Explicit inclusion and tested support, not automatic certification]
 
 ## Capability Requirement Consistency
 
-- [ ] CHK005 Are overlapping capability identities, versions, contributors and operations consistently scoped without implicit union or one owner's readiness satisfying another owner's obligations? [Consistency, Spec §FR-005, §FR-007, §Edge Cases; Model §Capability Contribution]
-- [ ] CHK006 Are the requirements for evidence of actual owned route or service composition clear enough to distinguish absent, mismatched, shadowed or ambiguous bindings from a declaration, without inspection constructing a service? [Completeness, Spec §FR-006, §FR-022; Model §Actual Composition Evidence; Acceptance §Forty Focused Cases, D09-D10]
-- [ ] CHK007 Are required contributors/dependencies and optional integrations defined per operation, preserving unrelated capabilities while retaining inherited rejection of enabled incompatible optional targets? [Consistency, Spec §FR-006, §FR-007, §FR-008; Model §Capability Contribution; Acceptance §Forty Focused Cases, D12-D13]
-- [ ] CHK008 Are discovery's dependencies on the existing registration, configuration and lifecycle authorities explicit, with no second validation, activation, readiness, secret-resolution or silent repair authority? [Consistency, Spec §FR-008; Hosting §Composition and Publication; Plan §Constitution Check]
-- [ ] CHK009 Are disabled-entry inspection requirements complete about absent/invalid operational settings, unavailable secrets and incompatible active-version ranges without weakening existing structural validation or permitting activation side effects? [Coverage, Spec §FR-004, §User Story 1; Model §Module Entry; Acceptance §Forty Focused Cases, D05-D06]
+- [x] CHK005 Are overlapping capability identities, versions, contributors and operations consistently scoped without implicit union or one owner's readiness satisfying another owner's obligations? [Consistency, Spec §FR-005, §FR-007, §Edge Cases; Model §Capability Contribution]
+- [x] CHK006 Are the requirements for evidence of actual owned route or service composition clear enough to distinguish absent, mismatched, shadowed or ambiguous bindings from a declaration, without inspection constructing a service? [Completeness, Spec §FR-006, §FR-022; Model §Actual Composition Evidence; Acceptance §Forty Focused Cases, D09-D10]
+- [x] CHK007 Are required contributors/dependencies and optional integrations defined per operation, preserving unrelated capabilities while retaining inherited rejection of enabled incompatible optional targets? [Consistency, Spec §FR-006, §FR-007, §FR-008; Model §Capability Contribution; Acceptance §Forty Focused Cases, D12-D13]
+- [x] CHK008 Are discovery's dependencies on the existing registration, configuration and lifecycle authorities explicit, with no second validation, activation, readiness, secret-resolution or silent repair authority? [Consistency, Spec §FR-008; Hosting §Composition and Publication; Plan §Constitution Check]
+- [x] CHK009 Are disabled-entry inspection requirements complete about absent/invalid operational settings, unavailable secrets and incompatible active-version ranges without weakening existing structural validation or permitting activation side effects? [Coverage, Spec §FR-004, §User Story 1; Model §Module Entry; Acceptance §Forty Focused Cases, D05-D06]
 
 ## Observation Scenario and Edge Case Coverage
 
-- [ ] CHK010 Are response/distribution/lifecycle identity, observation revision and capture/publication/assessment times defined consistently, with all module, aggregate and derived capability fields belonging to one observation rather than a refresh-time health guarantee? [Clarity, Spec §FR-009, §User Story 5; Model §Published Lifecycle State and Read Envelope; HTTP §Freshness and Consumer Compatibility]
-- [ ] CHK011 Are initialization, readiness loss/recovery, stopping/stopped and late diagnostic observations covered without confusing liveness with readiness, implying automatic route removal/draining or reviving terminal capability availability? [Coverage, Spec §FR-003, §FR-009, §Edge Cases; Hosting §Composition and Publication; Acceptance §Forty Focused Cases, D14-D16]
-- [ ] CHK012 Are failed-start and unreachable-management requirements explicit about the existing safe local diagnostic channel, without repairing failed composition or creating a separate discovery listener? [Exception Coverage, Spec §FR-010, §User Story 2; Acceptance §Forty Focused Cases, D17]
-- [ ] CHK013 Are fixed running selection, explicit restart and new lifecycle identity requirements complete for same-distribution changes and custom-package replacement, including the distinction from live installation or provider-data rollback? [Recovery Coverage, Spec §FR-015, §FR-021, §SC-008; Spec §User Story 5; Quickstart §Validation Journeys]
-- [ ] CHK014 Are unavailable, missing or inconsistent observations specified as explicit safe failure or identified unknown state rather than healthy, partial, cached or empty success? [Edge Case Coverage, Spec §FR-007, §FR-010, §SC-006; HTTP §Failure Responses; Acceptance §Forty Focused Cases, D31-D33]
+- [x] CHK010 Are response/distribution/lifecycle identity, observation revision and capture/publication/assessment times defined consistently, with all module, aggregate and derived capability fields belonging to one observation rather than a refresh-time health guarantee? [Clarity, Spec §FR-009, §User Story 5; Model §Published Lifecycle State and Read Envelope; HTTP §Freshness and Consumer Compatibility]
+- [x] CHK011 Are initialization, readiness loss/recovery, stopping/stopped and late diagnostic observations covered without confusing liveness with readiness, implying automatic route removal/draining or reviving terminal capability availability? [Coverage, Spec §FR-003, §FR-009, §Edge Cases; Hosting §Composition and Publication; Acceptance §Forty Focused Cases, D14-D16]
+- [x] CHK012 Are failed-start and unreachable-management requirements explicit about the existing safe local diagnostic channel, without repairing failed composition or creating a separate discovery listener? [Exception Coverage, Spec §FR-010, §User Story 2; Acceptance §Forty Focused Cases, D17]
+- [x] CHK013 Are fixed running selection, explicit restart and new lifecycle identity requirements complete for same-distribution changes and custom-package replacement, including the distinction from live installation or provider-data rollback? [Recovery Coverage, Spec §FR-015, §FR-021, §SC-008; Spec §User Story 5; Quickstart §Validation Journeys]
+- [x] CHK014 Are unavailable, missing or inconsistent observations specified as explicit safe failure or identified unknown state rather than healthy, partial, cached or empty success? [Edge Case Coverage, Spec §FR-007, §FR-010, §SC-006; HTTP §Failure Responses; Acceptance §Forty Focused Cases, D31-D33]
 
 ## Bounded Work and Acceptance Criteria Quality
 
-- [ ] CHK015 Are finite observation, collection, text, diagnostic and encoded-response limits quantified, including valid host overrides and distinct setup-time versus read-time exhaustion outcomes without success-shaped truncation? [Clarity, Spec §FR-014, §FR-021; Plan §Technical Context; Model §Bounds, Cancellation and Ownership; HTTP §Failure Responses]
-- [ ] CHK016 Are entry/mid-read cancellation, deadline and concurrent-inspection requirements explicit about the success boundary, resource lifetime and zero provider calls/probes/secret reads, without a forced-termination or hard transport-deadline promise? [Coverage, Spec §FR-021, §SC-006; Hosting §Failure, Bounds and Lifetime; Acceptance §Forty Focused Cases, D34-D35]
-- [ ] CHK017 Is the bounded inspection target objectively measurable through the specified module/contribution counts, complete authorized sample count, reader concurrency, latency threshold, environment and zero-resource-growth criteria, rather than a production SLA? [Measurability, Spec §SC-007, §Assumptions; Plan §Technical Context; Acceptance §Forty Focused Cases, D36]
-- [ ] CHK018 Are acceptance obligations traceable to inventory, operation correspondence, dependencies, lifecycle transitions and failure/concurrency scenarios, with paired independent evidence and intended-failure requirements rather than checklist or case counts as proof? [Measurability, Spec §FR-022, §SC-001, §SC-002, §SC-006; Acceptance §Requirement and Outcome Coverage; Acceptance §Story Scenarios and Edge Cases]
+- [x] CHK015 Are finite observation, collection, text, diagnostic and encoded-response limits quantified, including valid host overrides and distinct setup-time versus read-time exhaustion outcomes without success-shaped truncation? [Clarity, Spec §FR-014, §FR-021; Plan §Technical Context; Model §Bounds, Cancellation and Ownership; HTTP §Failure Responses]
+- [x] CHK016 Are entry/mid-read cancellation, deadline and concurrent-inspection requirements explicit about the success boundary, resource lifetime and zero provider calls/probes/secret reads, without a forced-termination or hard transport-deadline promise? [Coverage, Spec §FR-021, §SC-006; Hosting §Failure, Bounds and Lifetime; Acceptance §Forty Focused Cases, D34-D35]
+- [x] CHK017 Is the bounded inspection target objectively measurable through the specified module/contribution counts, complete authorized sample count, reader concurrency, latency threshold, environment and zero-resource-growth criteria, rather than a production SLA? [Measurability, Spec §SC-007, §Assumptions; Plan §Technical Context; Acceptance §Forty Focused Cases, D36]
+- [x] CHK018 Are acceptance obligations traceable to inventory, operation correspondence, dependencies, lifecycle transitions and failure/concurrency scenarios, with paired independent evidence and intended-failure requirements rather than checklist or case counts as proof? [Measurability, Spec §FR-022, §SC-001, §SC-002, §SC-006; Acceptance §Requirement and Outcome Coverage; Acceptance §Story Scenarios and Edge Cases]
 
 ## Dependencies, Compatibility and Assumptions
 
-- [ ] CHK019 Are ownership, public/binary compatibility and permitted dependency requirements documented consistently with the predecessor contracts, including cross-lifecycle association rejection and package/framework propagation without relaxing provider/Core boundaries? [Dependency Consistency, Spec §FR-008, §FR-020, §Assumptions; Hosting §Compatibility Boundary; Hosting §Proposed Opt-in Surface; Acceptance §Evidence and Compatibility Obligations]
-- [ ] CHK020 Are prerequisite delivery, fixture-only support, no provider I/O and deferred product/provider/conformance work explicit assumptions with measurable acceptance limits, rather than unresolved terms that could expand discovery into certification, monitoring or a runnable cache? [Assumption, Spec §FR-022, §SC-008, §Assumptions; Plan §Technical Context; Acceptance §Evidence and Compatibility Obligations]
+- [x] CHK019 Are ownership, public/binary compatibility and permitted dependency requirements documented consistently with the predecessor contracts, including cross-lifecycle association rejection and package/framework propagation without relaxing provider/Core boundaries? [Dependency Consistency, Spec §FR-008, §FR-020, §Assumptions; Hosting §Compatibility Boundary; Hosting §Proposed Opt-in Surface; Acceptance §Evidence and Compatibility Obligations]
+- [x] CHK020 Are prerequisite delivery, fixture-only support, no provider I/O and deferred product/provider/conformance work explicit assumptions with measurable acceptance limits, rather than unresolved terms that could expand discovery into certification, monitoring or a runnable cache? [Assumption, Spec §FR-022, §SC-008, §Assumptions; Plan §Technical Context; Acceptance §Evidence and Compatibility Obligations]
+
+## Assisted Requirements Review: 2026-10-21
+
+After generation, the user explicitly requested: "bro can you run through the
+checklists and highlight anything that needs me attention?" Copilot evaluated
+all 20 criteria against the F-04 specification and nine design artifacts on
+baseline `b5a1880`. This separately requested assisted review is not another
+scheduled driver stage, independent human inspection or implementation evidence.
+
+**Result**: 20/20 criteria satisfied. No unresolved requirements-quality finding,
+waiver or decision requires maintainer attention. Only markers and review
+evidence change here; no requirement or design is remediated.
+
+| Criteria | Written evidence supporting the assessment |
+| --- | --- |
+| CHK001-CHK004 | FR-001..005, Model catalog/module/contribution sections and Research R2 distinguish authoritative complete/partial inclusion, registration, selection, observed readiness, provenance and exact support evidence. Fixture scope and unknowns cannot become production or certified support. |
+| CHK005-CHK009 | FR-004..008, Model contribution identity/binding rules, Hosting composition/publication and D05-D13 specify independent owner/version/operation scope, exact actual binding evidence without service construction, per-operation dependencies, inherited optional-target rejection and disabled isolation without a second gate. |
+| CHK010-CHK014 | FR-009/010/015/021, Model publication, HTTP freshness/failure and D14-D17/D31-D33 define one lifecycle/revision, distinct timestamps, readiness-loss/stop semantics, local failed-start diagnostics, fixed selection until restart and explicit unknown/failure rather than fabricated success. |
+| CHK015-CHK016 | Plan quantified limits, Model ownership, Hosting failure/lifetime and D34-D35 define finite catalog/text/encoded bounds, a two-second default compute deadline, cooperative cancellation before success, private buffer lifetime and zero provider/probe/secret work. Transport/auth cooperation is not preemptive termination. |
+| CHK017-CHK018 | SC-001/002/006/007 and the complete acceptance matrix define 100 modules x 10 contributions, 100 complete authorized reads at concurrency 10, the two-second/p95 target and recorded environment/resources. All 22 FRs, eight SCs, 22 scenarios and 13 edges map to paired independent future proof with intended failures, not case-count acceptance. |
+| CHK019-CHK020 | Hosting compatibility/opt-in sections and D38 require unchanged predecessor public contracts, exact app/lease/root/source ownership, approved Application dependency/framework propagation and retained binaries without relaxing provider/Core edges. Spec assumptions and evidence obligations exclude runtime install, monitoring, production providers, native clients and conformance claims. |
+
+Actual binding/publication races, cancellation/buffer lifetime, package/binary
+compatibility and bounded performance still require implementation evidence.
+Their requirements are explicit; none is an unresolved product decision.
+The scheduled checkpoint stays `tasks / ready`; no stage is begun or finished.
 
 ## Notes
 
-- All 20 items are generated unchecked; no requirements-quality evaluation or
-  implementation approval is recorded by generation.
+- All 20 items were generated unchecked. The explicitly requested assisted
+  review above now records requirements-quality satisfaction, not implementation
+  completion or permission to skip subsequent stage gates.
 - Mark items `[x]` only after review confirms the requirements-quality criterion
   is satisfied; leave unresolved or unevaluated items unchecked.
 - `/speckit-implement` reads checklist checkbox state as a gate and must not

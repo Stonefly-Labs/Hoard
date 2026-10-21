@@ -1690,6 +1690,32 @@ explicit reviewer authorization; the draft feature PR remains incomplete.
 No task list, endpoint, console, provider, project/lock change, listener,
 infrastructure action, tag, release or merge is introduced.
 
+After generation, the user explicitly requested an assisted evaluation of both
+checklists. The review assesses all 40 criteria against the unchanged
+specification and nine design artifacts at `b5a1880`: **discovery 20/20 and
+management 20/20 satisfied**, without unresolved requirements-quality findings,
+waivers or decisions needing maintainer attention. Each checklist records
+grouped criterion-level evidence and the distinction from independent human
+inspection or implementation proof. Only review markers and evidence change;
+no requirement or design is remediated.
+
+This separately requested review is not a scheduled driver stage. The
+checkpoint stays **`tasks / ready`**; the next invocation still performs task
+generation, then separately invoked read-only analysis before implementation.
+The custom requirements-quality gate is now satisfied, but actual composition,
+publication/cancellation races, redaction/access integration, consumer behavior,
+package/binary compatibility and bounded performance remain future proof
+obligations. No runtime acceptance, rendered accessibility, production support
+or permission to skip later stages follows from the checked markers.
+
+README and this guide reflect the review; the specification, nine design
+artifacts, built-in checklist and flow checkpoint are byte-for-byte unchanged.
+Provider/example guides, predecessor artifacts, product/architecture/ADR/
+diagrams, constitution, backlog, IaC and release guidance remain unaffected
+because the assisted review changes no requirements, contract, runtime,
+dependency or operational procedure. No additional architecture review or
+product/.NET/UI/IaC acceptance is warranted for marker/evidence-only changes.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
