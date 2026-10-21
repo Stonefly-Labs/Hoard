@@ -7,9 +7,11 @@
 **Status**: Requirements reviewed; fixture-only implementation and finalization
 acceptance recorded in the
 [plan](plan.md#finalization-acceptance-2026-10-21-utc).
-[PR #6](https://github.com/Stonefly-Labs/Hoard/pull/6) awaits maintainer merge;
-F-02 is not complete and no dependent feature is unlocked. The original
-specification stage delivered requirements only, not runtime implementation.
+[PR #6](https://github.com/Stonefly-Labs/Hoard/pull/6) merged into `main` on
+2026-10-21 (UTC) at `b80c69fc386541be4f56f6ef2edeca40f43a0e1c`.
+The separate completion checkpoint records F-02 as complete; that checkpoint
+must also merge before the next specification begins. The original specification
+stage delivered requirements only, not runtime implementation.
 
 **Input**: User description: "Specify how operators assemble Hoard from installed provider NuGet packages and activate selected modules at startup. Define safe module lifecycle, route registration, dependency resolution, readiness, enabled/disabled behavior, diagnostic errors, restart semantics and default-versus-custom distribution expectations."
 

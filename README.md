@@ -317,11 +317,14 @@ for the assessment.
 Finalization now verifies the bounded acceptance, unchanged reviewer-owned
 gates and implementation architecture-review evidence in the
 [plan](specs/002-module-lifecycle/plan.md#finalization-acceptance-2026-10-21-utc).
-[PR #6](https://github.com/Stonefly-Labs/Hoard/pull/6) is ready for maintainer
-review, not merged. The next stage is `await_merge`; F-02 is not recorded as
-complete and no dependent feature is unlocked. After the feature merges, a
-separate invocation must publish its completion checkpoint from fetched main;
-that checkpoint must also merge before another specification starts.
+[PR #6](https://github.com/Stonefly-Labs/Hoard/pull/6) merged into `main` on
+2026-10-21 (UTC) at `b80c69fc386541be4f56f6ef2edeca40f43a0e1c`.
+The separate `await_merge` stage verified that merge in fetched main and all
+76 completed tasks, then recorded F-02 as complete with its directory, PR and
+merge commit. This completion checkpoint must also merge before another
+specification starts. The next scheduled stage is `specify` for
+[F-03: provider configuration and activation validation](docs/HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-03);
+no F-03 specification or later stage ran in this invocation.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
