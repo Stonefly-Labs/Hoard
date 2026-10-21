@@ -811,10 +811,54 @@ contracts, product intent, diagrams/ADR, governance, backlog, IaC and release
 guidance are unaffected because no API, behavior, dependency, operational step
 or supported capability changes. No extension hooks are registered.
 
-The checkpoint schedules `finalize` for a separate invocation. Keep PR #6
-draft: clean convergence is not finalization, merge readiness, feature
-completion or dependency availability. No infrastructure plan/apply, deployment,
-publication, tag, release or merge occurred.
+At that checkpoint, `finalize` was scheduled for a separate invocation and
+PR #6 remained draft. Clean convergence alone is not finalization, merge
+readiness, feature completion or dependency availability.
+
+### F-02 finalization
+
+The separately authorized finalization verifies all 22 requirements, seven
+outcomes, 20 story scenarios, 12 edge cases and 40 LC cases through the
+[acceptance traceability](../specs/002-module-lifecycle/plan.md#acceptance-traceability)
+and clean convergence assessment. All 76 tasks remain complete; the built-in
+16/16 and reviewer-owned composition/lifecycle 20/20 each remain unchanged.
+No requirement, API, implementation, test, example, lock or checklist approval
+changes in finalization.
+
+Fresh default locked lifecycle acceptance passed 169 tests, nine boundary
+proofs and seven package-only journeys, with six independent fixtures and
+retained-old-binary/new-source/shared-framework compatibility. Foundation
+acceptance passed 263 tests (42 foundation, 49 architecture, 172 composition),
+zero failed/skipped, retaining the original eight scans, ARCH-001..008,
+C-01..23, isolated Core and both compile-only hosts. Both commands verify
+formatting/analyzers and package provenance. Tooling passed 22 tests.
+The dated dependency assessment covered seven source/test projects with no
+known vulnerable direct/transitive entries or assessment errors.
+Exact commands/results and documentation review are in
+[finalization acceptance](../specs/002-module-lifecycle/plan.md#finalization-acceptance-2026-10-21-utc).
+
+The implemented graph and T073..T076 ownership changes already received the
+required custom architecture review. No implementation changed after reviewed
+commit `1760c01`, so documentation-only finalization requires no new review.
+The recorded direct host-notification-task exception-injection limitation
+remains explicit; this handoff does not claim that distinct test or production
+provider, native-client or transport certification.
+
+README, specification review status, plan acceptance and this guide now
+describe the handoff. Provider/example guides, quickstart/contracts/model,
+research, baseline product intent/architecture/diagrams/ADR, governance,
+backlog, IaC and release guidance remain accurate: finalization changes no
+API, dependency, runtime behavior, support scope, permission or operational step.
+No extension hooks are registered.
+
+[PR #6](https://github.com/Stonefly-Labs/Hoard/pull/6) targets `main` and is ready
+for maintainer review. The shared checkpoint records `await_merge / ready`,
+with F-02 still active and no dependent feature unlocked. Do not merge without
+authorization. A subsequent invocation must verify the recorded feature PR
+merged, fetch main and publish the separate completion checkpoint; that
+checkpoint must also merge before a new specification begins. No infrastructure
+plan/apply, deployment, publication, tag, release, permission change or merge
+occurred.
 
 ```mermaid
 flowchart TD

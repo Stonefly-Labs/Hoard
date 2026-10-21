@@ -850,3 +850,68 @@ deployment, publication, tag, release or merge occurred.
 T001..T076 are complete. This finishes only implement; fresh convergence is
 the next separately authorized stage. Keep PR #6 draft, without claiming
 clean convergence, finalization, merge readiness or dependency completion.
+
+### Finalization Acceptance (2026-10-21 UTC)
+
+The separately authorized convergence assessment after T076 found no missing,
+partial, contradictory or unrequested work at any severity. It assessed all
+22 functional requirements, seven buildable outcomes, 20 story scenarios,
+12 edge cases, LC-01..40, 20 buildable plan obligations, all 76 tasks and eight
+constitutional principles within this bounded feature. Its report is retained
+in [PR #6](https://github.com/Stonefly-Labs/Hoard/pull/6) and the
+[shared checkpoint](../../.specify/hoard-flow.json); no task was appended.
+Finalization verifies that acceptance and the handoff, not another implementation
+or convergence stage.
+
+| Finalization gate | Evidence / result |
+| --- | --- |
+| Requirements and acceptance | The [acceptance matrix](contracts/acceptance.md) and [executed traceability](#acceptance-traceability) cover every FR/SC/story; all 76 tasks remain complete, including T073..T076's failing-then-passing regressions. |
+| Composition and isolation | Registry/selection/version/capability/cardinality checks occur before construction; ordinal dependency ordering, fixed selection, disabled route/worker/connection isolation and permitted counterparts pass. |
+| Startup/readiness/routing | Supervised compose/build/map/init, owned-route rejection/permitted cases, startup admission, later health and host-policy preservation pass without another configuration path or provider activation authority. |
+| Bounded resource ownership | Notification, cancellation, eventual-fault and response-completion regressions preserve original deadlines, safe diagnostics, retained owner/prerequisite/root resources, independent safe cleanup and immutable outcomes without retry/deferred disposal. |
+| Independent distribution and compatibility | Six independent fixture packages, nine lifecycle boundary proofs, seven package-only restart/custom/recovery journeys, retained merged-F-01 consumer binary, new-source consumer and shared-framework propagation pass. The new ASP.NET Core prerequisite is documented, not concealed by unchanged registration signatures. |
+| Existing foundation | Original eight graph scans, ARCH-001..008 rejection/permitted pairs, Identity/Hosting versus forbidden Core paths, C-01..23, isolated Core, five original independent providers and both compile-only hosts remain passing. |
+| Reviewer-owned requirements gate | Existing composition 20/20, lifecycle 20/20 and built-in requirements 16/16 remain unchanged. Finalization does not self-approve criteria or treat requirements review as product certification. |
+| Implementation architecture review | Original graph/ownership reviews and their corrections, plus bounded T073..T076 reviews, are recorded above. The latest T076 review found no confirmed actionable violation or unresolved question; its added throwing-completion proof and full acceptance gaps are resolved by measured regressions, not a claimed independent re-review. `git diff --exit-code 1760c01..HEAD -- src tests scripts examples Directory.Build.props Directory.Packages.props Hoard.slnx global.json` passed before finalization: no implementation changed since that reviewed checkpoint. |
+| Support and constitutional limits | All eight principles remain satisfied within fixture-only scope, without an architectural exception or governance change. No real provider/cache, configuration/secrets parser, discovery/management endpoint, curated executable, UI, native-client or transport/conformance certification is delivered. |
+
+The direct host-notification-task exception-injection limitation remains the
+explicit narrow test-scope limitation recorded under T073/T075/T076. Existing
+safe diagnostic, actual framework-stop and held-notification regressions do not
+constitute that distinct injection. No new proof, complete arbitrary-code
+supervision guarantee or forced-termination capability is claimed.
+
+Fresh finalization checks, without lock rewriting:
+
+| Exact command / check | Result |
+| --- | --- |
+| `SPECIFY_FEATURE_DIRECTORY=specs/002-module-lifecycle .specify/scripts/bash/check-prerequisites.sh --json --require-spec --require-tasks --include-tasks` | Passed; pinned recorded directory, required spec/plan/tasks and supporting artifacts resolved. |
+| `bash scripts/validate-lifecycle.sh` | Passed: 169 tests, nine boundary proofs, seven package-only journeys; six independent packages and retained-old-binary/new-source/shared-framework proof, source/standalone formatting and analyzers, local-feed/hash provenance and unchanged locks. |
+| `bash scripts/validate-foundation.sh` | Passed: 263 tests (42 foundation, 49 architecture, 172 composition), zero failed/skipped; original graph/compatibility/declaration/registration/package/host proofs and source/standalone formatting/analyzers. |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed: 22 tests. |
+| `dotnet list Hoard.slnx package --vulnerable --include-transitive --format json` | Seven source/test projects assessed; zero known vulnerable direct/transitive entries and zero assessment errors. This dated advisory result is not a future guarantee; pins/licenses remain as recorded in research. |
+| `git diff --check` | Passed. |
+| Documentation/artifact audit | Local files/anchors and PR-template fidelity verified; 60 tracked project locks, all 76 task bodies/markers, three checklist files, contracts, source, tests and examples remain unchanged from clean convergence. |
+
+Finalization updates README/development stage status, specification review
+status, this acceptance record, the shared checkpoint and PR handoff.
+Provider/example guides, quickstart, model/contracts and research need no edits:
+their current commands, resource ownership, compatibility, support limits and
+recovery instructions remain accurate. F-01 sources/examples, charter/product
+specification, baseline architecture/diagrams, ADR-0001, constitution, backlog,
+reserved UI/provider guides, IaC and release guidance are unaffected because
+this stage changes no API, dependency, runtime behavior, product scope,
+permission, governance or operational action.
+
+PR #6 targets `main` and is ready for maintainer review; the checkpoint records
+`await_merge / ready` with its number. F-02 remains active, not completed, and
+dependent work stays locked. A subsequent invocation must verify the feature
+PR merged before publishing the separate completion checkpoint from fetched
+main; that checkpoint must also merge before a new specification starts.
+No merge, infrastructure plan/apply, deployment, publication, tag, release,
+permissions change or schema/data migration occurred. Rollback remains an
+explicit coherent package/registration/selection revision, matching locks and
+a fresh validated lifecycle, not automatic data rollback. Non-cooperative
+trusted work may require process exit. Acceptance wrappers cleaned their own
+temporary feeds/caches; no generated package, binary, credential or runtime
+artifact is committed. No extension hooks are registered.

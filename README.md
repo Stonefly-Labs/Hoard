@@ -311,9 +311,17 @@ all 22 requirements, seven outcomes, 20 story scenarios, 12 edge cases,
 40 acceptance cases, 20 plan obligations and 76 tasks under the eight
 constitutional principles. No convergence tasks were appended; the spec, plan,
 tasks and reviewer-owned checklists remain unchanged. The next separately
-authorized stage is `finalize`; F-02 remains draft, not finalized or ready to
-merge. See the [convergence checkpoint](docs/DEVELOPMENT.md#f-02-clean-convergence)
-for the assessment and current evidence.
+authorized stage at that checkpoint was `finalize`. See the
+[convergence checkpoint](docs/DEVELOPMENT.md#f-02-clean-convergence)
+for the assessment.
+Finalization now verifies the bounded acceptance, unchanged reviewer-owned
+gates and implementation architecture-review evidence in the
+[plan](specs/002-module-lifecycle/plan.md#finalization-acceptance-2026-10-21-utc).
+[PR #6](https://github.com/Stonefly-Labs/Hoard/pull/6) is ready for maintainer
+review, not merged. The next stage is `await_merge`; F-02 is not recorded as
+complete and no dependent feature is unlocked. After the feature merges, a
+separate invocation must publish its completion checkpoint from fetched main;
+that checkpoint must also merge before another specification starts.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
