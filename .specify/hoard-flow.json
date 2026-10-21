@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "stage": "await_merge",
-  "status": "ready",
-  "branch": "feature/004-module-discovery",
+  "status": "running",
+  "branch": "chore/spec-progress-f-04",
   "active": {
     "id": "F-04",
     "feature_directory": "specs/004-module-discovery",
