@@ -489,8 +489,18 @@ and outcomes to 40 future fixture proof cases, including a JSON-only reference
 consumer and bounded loopback exposure-adapter tests. Architecture review led
 to explicit failure context and a Hosting-owned app/lease/source guard.
 These are design obligations, not implemented endpoints or passing runtime
-evidence. The next separately authorized stage is `checklist`; no tasks,
-custom checklist approval or implementation occurred.
+evidence. The subsequent requirements-quality checklist stage generates
+[discovery](specs/004-module-discovery/checklists/discovery.md) and
+[management](specs/004-module-discovery/checklists/management.md) reviews with
+20 criteria each. These standard-depth reviews are for maintainers,
+provider/composition reviewers and management-API/consumer reviewers before
+implementation authorization. They cover inventory/support truth, coherent
+bounded observations, protected disclosure and safe presentation/action rules.
+All **40 criteria remain unchecked and reviewer-owned**; generation neither
+evaluates requirements nor supplies runtime evidence. The specification,
+planning artifacts and built-in 16/16 checklist are unchanged. The next
+separately authorized stage is `tasks`; no task list, custom checklist approval
+or implementation occurred.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

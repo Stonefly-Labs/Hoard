@@ -1643,6 +1643,53 @@ custom checklists, source/project/lock changes, frontend, provider, listener,
 infrastructure action or release are introduced. The next separately authorized
 stage is `checklist`; generation will not approve reviewer-owned criteria.
 
+### F-04 module discovery requirements-quality checklists
+
+The separately authorized `checklist` stage runs the installed
+`speckit-checklist` with `specs/004-module-discovery` explicitly pinned.
+It creates two new reviewer-owned requirements-quality checklists:
+[discovery](../specs/004-module-discovery/checklists/discovery.md) and
+[management](../specs/004-module-discovery/checklists/management.md), with
+20 criteria each. Both use standard depth for maintainers and PR reviewers
+before implementation authorization; provider/composition reviewers own the
+first domain and management-API/consumer reviewers the second.
+
+Discovery covers explicit inclusion versus registration and selection,
+distribution-qualified operation support, actual composition evidence,
+inherited authorities, disabled isolation, coherent lifecycle observations,
+failure/restart semantics, finite limits and measurable bounded acceptance.
+Management covers equal protection of reads and API descriptions, explicit
+local/network exposure assumptions, read versus execution permission,
+allowlisted metadata, safe bounded diagnostics, versioned contract consistency
+and consumer state/freshness/action rules. Semantic accessibility and fixture
+policy/transport evidence are explicitly distinct from rendered WCAG,
+production identity or external-proxy certification.
+
+All **40 criteria are generated unchecked**. They ask whether written
+requirements are complete, clear, consistent, covered and measurable; they are
+not runtime test procedures or a finding that the requirements are satisfied.
+Every item references the specification and supporting design sections.
+No reviewer evaluation, waiver, remediation or custom checklist approval occurs.
+The built-in 16/16 specification-quality checklist and all specification/design
+bytes remain unchanged. No extension hooks are configured.
+
+README and this guide link the generated reviews and preserve current versus
+planned behavior. Provider/example guides, predecessor artifacts, baseline
+charter/product specification/architecture/diagrams/ADR, constitution, backlog,
+IaC and release guidance are unaffected: checklist generation changes no
+requirement, public API, dependency, current command, runtime/support behavior
+or operational procedure. No additional architecture review is needed for
+this requirements-review-artifact/documentation/checkpoint-only stage.
+Product/.NET, UI and IaC acceptance are not rerun; the proposed discovery
+acceptance command still does not exist and is not reported as passing.
+
+The next separately authorized stage is `tasks`, not implementation.
+Task generation and subsequent read-only analysis do not approve these custom
+checklists. Implementation remains gated on reviewer-owned satisfaction or
+explicit reviewer authorization; the draft feature PR remains incomplete.
+No task list, endpoint, console, provider, project/lock change, listener,
+infrastructure action, tag, release or merge is introduced.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
