@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using Hoard.Hosting.Discovery;
 using Hoard.Hosting.Lifecycle;
 
 namespace Hoard.Hosting.Composition;
@@ -13,6 +14,7 @@ public static class HoardCompositionExtensions
         ArgumentNullException.ThrowIfNull(selection);
         ArgumentNullException.ThrowIfNull(versions);
         ArgumentNullException.ThrowIfNull(options);
+        HoardDiscoveryExtensions.Freeze(builder);
         var correlation = Guid.NewGuid();
         var errors = new List<HoardLifecycleDiagnostic>();
         var count = 0;

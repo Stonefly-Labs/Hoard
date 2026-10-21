@@ -1,0 +1,18 @@
+{
+  "configurationversion": 1,
+  "enabledmodules": ["fixture.legacy-options", "fixture.artifact.two", "fixture.protocol.one"],
+  "metadatamodule": "fixture.legacy-options",
+  "artifactmodule": "fixture.artifact.two",
+  "identitymodules": [],
+  "requiredcapabilities": [],
+  "modules": {
+    "fixture.protocol.one": {"optionsversion": 1, "options": {"label": "configured"}},
+    "fixture.legacy-options": {
+      "optionsversion": 1,
+      "options": {
+        "label": "configured-old-provider",
+        "credential": {"kind": "env", "target": "INVENTED_DISCOVERY_CREDENTIAL"}
+      }
+    }
+  }
+}

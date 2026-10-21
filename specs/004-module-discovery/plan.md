@@ -4,10 +4,10 @@
 
 **Input**: Feature specification from `specs/004-module-discovery/spec.md`
 
-**Status**: Phase 0/1 design only, generated through the installed
-`speckit-plan` skill with explicitly pinned feature context. All new APIs,
-routes, files and acceptance commands below are proposed, not implemented.
-The specification and built-in checklist remain unchanged.
+**Status**: F-04 implementation evidence is recorded below. The original Phase
+0/1 design is retained as the contract/rationale, not a separate authority.
+The specification and reviewer-owned checklists remain unchanged.
+Convergence/finalization, merge and release are not part of this implementation.
 
 ## Summary
 
@@ -268,3 +268,210 @@ No constitutional violation requires an exception. The only new assembly
 edges are the already permitted Application -> Hosting/ASP.NET Core edges.
 Static OpenAPI avoids a new generation dependency; immutable in-process
 publications avoid request-time callbacks, locks and supervision machinery.
+
+## Implementation Evidence
+
+F-04 now supplies the additive Hosting discovery surface and Application's
+two protected management slices. The original design sections above remain
+historical rationale. This evidence supersedes their future-tense status, not
+the specification or normative contracts. No requirement, provider interface,
+existing lifecycle signature, public snapshot constructor, constitution or
+reviewer-owned checklist was changed. Requirements remain 16/16; the assisted
+discovery/management requirements-quality reviews remain 20/20 each.
+
+### Implemented authority, ownership and boundaries
+
+`AddHoardDiscovery` freezes bounded immutable catalog/options/publication records
+before evaluation/validation snapshots. The existing lifecycle coordinator
+publishes one immutable reference with acquire/release semantics. Capture takes
+that reference once, projects inventory and evaluates exact operation scopes
+without its Gate, Snapshot, provider callbacks, configuration/secret access,
+service resolution or a readiness scheduler. Stop/cleanup/late publications
+override earlier readiness without changing inherited resource ownership.
+Declared inclusion, registration, fixed selection, compatibility, public
+provenance, tested support and observed availability remain independent.
+
+Actual sealed owned route/method/responsibility and effective single unkeyed
+owner-added service descriptors establish composition, never declaration alone.
+Removed/keyed/shadowed/wrong-owner descriptors cannot prove support; factories
+are not invoked. Operations evaluate their own owners/dependencies, not
+unrelated aggregate health. Multi-owner contributions emit once. Management-read
+alone is denied by the advertised `/fixture-inspect` operation's separate
+execution policy and leaves its counter zero; explicit execution permission
+permits that exact owned handler and increments its independent counter.
+
+The Hosting-owned `BindHoardDiscovery` guard retains exact app/root/lease/source/
+catalog identity. Application maps both routes before module validation and
+uses separate wire DTOs. Both routes have the same policy/posture protection,
+GET/query/method rules, no-store/private/no-cache/nosniff and closed safe errors.
+Kestrel verification deliberately supports explicit
+`UseUrls(...).PreferHostingUrls(true)`, not unseen `Listen` overrides or unknown
+servers. Local mode requires verified direct loopback/no-proxy deployment;
+network mode requires authenticated permission plus direct HTTPS or explicit
+trusted one-hop TLS termination. Authentication needs usable defaults or
+explicit registered policy schemes. Test-only exposure adapters are internal
+and available only to named fixture/test assemblies.
+
+All catalog/schema/text limits are checked before activation. Capture,
+projection and bounded buffer writes check cancellation/monotonic deadline.
+Encoding uses a capped `IBufferWriter<byte>` and completes before success
+dispatch, including escaped-byte and oversized reservation limits. Request
+cancellation/overflow owns no provider resources. Clock implementations must
+be trusted inert time sources, not provider/I/O hooks.
+
+### Case, requirement, scenario and edge reconciliation
+
+The unchanged [acceptance tables](contracts/acceptance.md#requirement-and-outcome-coverage)
+map every FR-001..FR-022, SC-001..SC-008, 22 story scenarios and 13 ordered edges
+to D01..D40. Each case now maps to actual named methods in `CASE_TESTS`; complete
+freshly listed fully qualified scenarios (including theory arguments) must equal
+the actual passing TRX inventory. Every required suite class and both TLS/local
+and forwarding-registration-order counterparts are mandatory. Missing rows,
+empty/duplicate/stale evidence and skipped results fail, not count as coverage.
+
+| Actual cases | Implementation and independent proof |
+| --- | --- |
+| D01..D04 | Frozen inventory, registered/disabled/included/unregistered, complete/partial absence, approved provenance and all family/authority selections; Inventory/Catalog tests and package wire bodies |
+| D05..D06 | Disabled invalid operational options/secrets/ranges versus enabled gates; exact metadata/text/collection bounds reject before constructor/validator/secret/probe activity |
+| D07..D08 | Exact fixture-only support versus declared/unverified/unsupported, with actual owned binding counterparts; Capability tests |
+| D09..D10 | Route method/owner/responsibility and effective service descriptor proof; RouteBinding/ServiceBinding tests plus independently invoked package handlers/services |
+| D11..D13 | Independent version/owner/operation scopes, multi-owner emission, required/optional dependencies and inherited incompatible-enabled rejection |
+| D14..D17 | Initial registered and subsequent phase/readiness/admission/stop/cleanup/late diagnostic publication; explicit loss/recovery, preserved mapped handler and zero additional read probes |
+| D18..D19 | Same authorization for both routes/trailing slashes; anonymous 401, insufficient 403, permitted 200 and fail-before-start missing policy/auth/default schemes |
+| D20..D21 | Actual ephemeral loopback Kestrel, pinned generated TLS certificate, effective addresses and raw peer before forwarding in both registration orders; invalid topology rejected without public socket |
+| D22..D24 | Approved public literals, omitted secret/value/source metadata, bounded inert text, closed reason/phase/correlation/corrective errors; Disclosure/Catalog/WireContract tests and captured owned telemetry |
+| D25..D26 | Actual wire JSON to semantic inventory/action states; unsupported hidden, unavailable disabled, usable still separately permission-gated |
+| D27..D30 | Loading/refreshing/current/empty/denied/error/stale, denial discard, failure/age expiry, inert labels/order/guidance and malformed/additive/unknown semantics |
+| D31..D32 | Held capture versus explicit reassessment/stop, coherent old/new revisions; seven fresh package lifecycle identities, nine journeys, fixed selection after actual file edit and old/duplicate response rejection |
+| D33..D35 | Missing/wrong-lifecycle publication, pre/mid-projection HTTP cancellation/deadline with live module calls unchanged, actual encoding cancellation/deadline, exact/over 4 MiB and UTF-8 escaping/allocation bounds |
+| D36 | Actual authorized 100 x 10-contribution workload, 100 complete bodies at concurrency 10 and independent before/after activity counters |
+| D37 | Advertised operation's independent authorization/counter, not an unrelated endpoint or inferred permission |
+| D38 | Same-root guard, retained binary/public-source/non-web consumers, exact 18 actual graphs, approved Application/framework path and required provider/cross-slice rejections |
+| D39..D40 | Embedded unchanged normative OpenAPI/actual wire/problem/method/cache protections and bounded closed telemetry/late-state guidance, not a public static copy or raw diagnostic dump |
+
+These close US1-1..4, US2-1..5, US3-1..4, US4-1..5 and US5-1..4 and
+E01..E13 under their existing case mappings. The semantic reference consumer
+reads actual public bytes only, caps 4 MiB/depth 32, compares decimal-text
+revisions without numeric precision loss and recognizes only its exact known
+capability/version/operation/owner tuple. A failed refresh stales retained data;
+401/403 discards it; receipt age over 30 seconds expires actions; old or duplicate
+terminal generations/revisions cannot overwrite current lifecycle state.
+No rendered WCAG/DOM/ARIA/browser acceptance or Next.js application follows.
+
+### Measured gates and local workload
+
+Environment: macOS 26.5.0, stable .NET SDK 10.0.203, Python 3.15.0.
+The retained locked run `discovery-locked-final` recorded **122/122 declared
+and executed tests** (121 composition plus one prepared architecture test),
+zero skips, D01..D40, ten nonempty suites/all required classes, nine package
+journeys, seven matching original wire bodies and 18 real graph scans.
+All 12 private-copy runtime mutations reached their intended failing assertions
+and corresponding genuine green results. Compilation errors cannot substitute
+for red evidence. The private manifest/TRX/log/performance artifacts are
+outside Git; only safe scope, IDs and hashes are documented here.
+
+The required 100-module x 10-contribution, 100-authorized-read workload at
+concurrency 10 produced 100 complete parsed bodies of **615,888..615,889 bytes**.
+Retained-run p95 was **0.0354103 seconds**; the additional exact default command
+recorded **0.066 seconds**. Constructor, readiness-probe, secret-read,
+service-call, connection and active-resource deltas were all zero.
+This is local TestServer fixture performance, not public-network throughput,
+native-client qualification or a production SLA.
+
+| Exact command | Result |
+| --- | --- |
+| `bash scripts/validate-discovery.sh --update-locks` | Passed intentional preparation, format/analyzers, all discovery/package/graph/consumer/mutation gates; original retained binaries additionally supplied privately |
+| `bash scripts/validate-discovery.sh` | Passed independent fresh locked acceptance: 122 tests, 40 cases, nine journeys, 18 graphs, 12 runtime mutations, zero skips and no lock mutation |
+| `bash scripts/validate-configuration.sh` | Passed: 201 tests, six boundary proofs, nine package journeys and five real Darwin interruption barriers; CFG-01..36 preserved |
+| `bash scripts/validate-lifecycle.sh` | Passed: 489 tests, nine boundary proofs, seven package journeys; six independent packages and retained binary proof preserved |
+| `bash scripts/validate-foundation.sh` | Passed: 42 unit, 54 architecture and 492 composition tests, zero skips; unchanged ARCH-001..008, C-01..23 and package/registration/retained proofs |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 61 tests, including 17 fail-closed discovery tooling tests |
+
+Existing runner update modes also passed before fresh default replay. Review
+of all 16 modified existing locks found no removed dependency or changed
+existing type/requested/resolved version; changes are expected local payload
+hashes and approved Application/Hosting/project graph additions. New independent
+fixture/consumer/baseline locks are tracked; default modes cannot create,
+remove or mutate any lock. No third-party runtime package/version was added.
+
+Earlier incomplete runs failed explicitly on standalone build preparation,
+formatting and missing linked test input; none was reported as acceptance.
+Two configuration default attempts returned a closed child-command failure;
+direct fixture replay and a diagnostic full replay passed, followed by a
+successful unmodified documented default replay. No reproducible cause was
+established or speculative production fix made; these earlier failures are
+not counted as successful evidence.
+
+### Original binary provenance and packaging
+
+The immutable merged pre-F-04 revision is
+`7fd73267a5154583363c94e9e85b9bac7d4a16b3`. Three principal binaries were
+captured before platform changes and remained hash-identical through final
+compatibility execution; they were not recompiled against new platform code:
+
+| Principal binary | Original SHA-256 |
+| --- | --- |
+| RetainedLifecycle | `8bbd529178abd6c7c106ca0c4bf8b64d15d987c8a7c915f4657efebbdf772981` |
+| RetainedConfiguration | `5b556883aa8542fbea90ef693b720f0853ff7c668981a00dec9c2ba6966c3ce8` |
+| LegacyOptions | `744043a957806145d8065186eefdfc5af1d8fe2d85df5104b143ef89a60eba66` |
+
+The initial retained manifest omitted dependency/assets digests. Review did
+not silently treat recalculated hashes as frozen provenance: original principal
+hashes and source recipes were checked, every dependency DLL/inventory and
+runtime JSON was independently compared with a fresh build of that exact merged
+baseline, and assets' targets/libraries/dependency groups/frameworks matched.
+A separate verified copy then sealed those digests without changing the
+original binaries or original evidence. Strict import now requires the saved
+complete dependency inventory and assets digest and rejects drift/removal/
+addition/missing digests before copying. New baseline exports include them.
+
+The unchanged option-bearing DLL is actually loaded by package-only hosts.
+New source Application and non-web consumers restore only local packages and
+prove transitive ASP.NET Core shared-framework requirements. Eleven feed
+packages have exact local identities/hashes. Existing F-01 retained registration
+proof remains required. Eighteen declared/resolved/packed/compiled graphs include
+the true Application assembly, permitted wrapper classified as Host, forbidden
+provider and cross-slice cases; no architecture exemption was broadened.
+Metadata/artifact packages remain Abstractions-only and Core provider-free.
+
+### Review corrections and equivalent grouping
+
+The production architecture review identified uncapped intermediate JSON writer
+allocation, missing protections on trailing-slash matches and action recognition
+by operation name alone. Six actual runtime failures in
+`discovery-review/architecture-red.trx` preceded the corrections; the focused
+green suite is `architecture-green.trx`. Authentication-default regression
+`auth-red.trx` additionally failed before the startup validation correction.
+The distinct evidence-boundary review then found missing theory/class closure
+and recalculated retained digests. Six runtime tooling failures in
+`evidence-red.log` preceded strict scenario/import guards; `evidence-green.log`
+and final full acceptance pass. Both reviews were read-only; remediation and
+executed evidence are recorded here, not claimed as reviewer-run tests.
+
+Approved equivalent groupings: normative OpenAPI is linked directly as an
+embedded resource instead of duplicated under `src`; RetainedLifecycle links
+the immutable merged lifecycle Program instead of copying it, with explicit
+baseline blob verification; NonWebConsumer links the public Application source;
+existing fixture controls/adapters and ownership scan helpers are reused.
+No public arbitrary exposure adapter, second container/coordinator, runtime
+assembly scanning, provider loader, scheduler or new product project was added.
+
+### Documentation and handoff boundary
+
+README, development/provider guides, both example guides, this plan and the
+quickstart describe actual opt-in/protection, freshness, limits, permission and
+restart/rollback procedures. Charter/product specification, architecture/ADR/
+product diagrams, constitution, backlog, predecessor artifacts, IaC and release
+guidance are unaffected: scope, dependency invariants, governance, infrastructure
+and release/deployment behavior did not change. Their planned APIs remain
+planned beyond these explicit implemented discovery surfaces.
+
+Rollback removes discovery registration/mapping together and restarts a
+compatible build, never swaps a live provider or reverses provider data.
+Framework request logging, production authentication and external proxy
+isolation still need deployment review; owned sanitized telemetry is not
+framework-wide query redaction. Fixture/native/conformance/accessibility
+qualifications were not expanded. No OpenTofu/apply, cloud resources, package
+publication, tag, release, merge or dependent feature was authorized/executed.
+The draft feature PR remains incomplete until separately invoked convergence
+and finalization; this implementation invocation stops before `converge`.

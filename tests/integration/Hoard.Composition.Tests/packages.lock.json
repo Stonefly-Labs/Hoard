@@ -96,6 +96,14 @@
       "hoard.abstractions": {
         "type": "Project"
       },
+      "hoard.application": {
+        "type": "Project",
+        "dependencies": {
+          "Hoard.Abstractions": "[0.1.0, )",
+          "Hoard.Core": "[0.1.0, )",
+          "Hoard.Hosting": "[0.1.0, )"
+        }
+      },
       "hoard.core": {
         "type": "Project",
         "dependencies": {
@@ -109,6 +117,9 @@
           "Hoard.Core": "[0.1.0, )",
           "NuGet.Versioning": "[7.9.0, )"
         }
+      },
+      "referenceconsumer": {
+        "type": "Project"
       },
       "NuGet.Versioning": {
         "type": "CentralTransitive",

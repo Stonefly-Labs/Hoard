@@ -1,0 +1,13 @@
+{
+  "scope": "Fixture-only semantic text and reading order; no rendered accessibility claim",
+  "readingOrder": ["module identity", "inclusion", "registration", "enablement", "observed readiness", "authority phase", "captured", "published", "assessed", "reasons", "operation support", "operation availability"],
+  "statuses": ["loading", "refreshing", "empty", "denied", "error", "stale", "current"],
+  "guidance": {
+    "bundled": "Edit the bundled selection, validate configuration, and restart. Running selection does not change.",
+    "custom": "Add the provider package and registration, rebuild, redeploy, and restart. No hot installation.",
+    "runtime": "Investigate dependencies and the existing lifecycle report, then explicitly reassess readiness.",
+    "rollback": "Remove discovery opt-in and restart. This does not roll back cached data.",
+    "permission": "Management-read permission does not grant execution permission.",
+    "freshness": "Receipt age over 30 seconds or failed refresh disables retained actions."
+  }
+}

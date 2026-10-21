@@ -1,14 +1,15 @@
 # F-04 Validation Quickstart
 
-**Status**: Planning-only guide. Discovery APIs, package consumers and the
-focused command below do not exist yet. No command is reported as passing
-product acceptance by this document.
+**Status**: Implemented fixture-backed library/API acceptance, not a runnable
+cache, production provider or rendered console. The
+[implementation evidence](plan.md#implementation-evidence) records measured
+results and boundaries; convergence/finalization remain separate stages.
 
 ## Prerequisites and Current Checks
 
 Use the stable .NET 10 SDK selected by `global.json`, Git, Python 3.11+ and
 network access for the repository's pinned NuGet restore. No Node, browser,
-cloud account, external database or public listener is needed. Future D20/D21
+cloud account, external database or public listener is needed. D20/D21
 adapter tests need permission to open private ephemeral loopback-only ports;
 they must close them within finite test budgets.
 From the repository root, these commands already exist:
@@ -21,12 +22,11 @@ bash scripts/validate-configuration.sh
 ```
 
 The first command checks repository tooling. The other commands prove their
-documented foundation/fixture lifecycle/configuration scopes, not F-04.
-Do not rerun product suites merely to validate planning documents. No OpenTofu
+documented foundation/fixture lifecycle/configuration scopes. No OpenTofu
 plan/apply or infrastructure operation is needed.
 
-The normative [OpenAPI document](contracts/openapi.json) is already a planning
-artifact and can be parsed now:
+The normative [OpenAPI document](contracts/openapi.json) is embedded unchanged
+in Application, not copied to a public static directory. Syntax-only inspection:
 
 ```bash
 python3 -m json.tool specs/004-module-discovery/contracts/openapi.json > /dev/null
@@ -34,20 +34,19 @@ python3 -m json.tool specs/004-module-discovery/contracts/openapi.json > /dev/nu
 
 Parsing proves JSON syntax only, not schema conformance or endpoint behavior.
 
-## Proposed Focused Acceptance Command
-
-After implementation has actually introduced it:
+## Focused Acceptance Command
 
 ```bash
 bash scripts/validate-discovery.sh
 ```
 
-The future Bash orchestrator owns prerequisites/private workspace cleanup and
-bounded subprocesses; a standard-library helper validates hashes, exact proof
-inventories and failures, following existing evidence tooling. It must restore
+The Bash entry point checks prerequisites; its standard-library helper owns
+private workspace cleanup and
+bounded subprocesses and validates hashes, exact proof
+inventories and failures, following existing evidence tooling. It restores
 tracked locks, build/format/analyze, pack local libraries/independent fixtures,
 build/run package-only discovery hosts and the JSON-only reference consumer,
-and execute the [40-case matrix](contracts/acceptance.md) plus compatibility/
+and executes the [40-case matrix](contracts/acceptance.md) plus compatibility/
 architecture checks. Only the exposure-adapter tests may start ephemeral
 loopback Kestrel/TLS instances, with in-memory certificates pinned solely by
 their clients and finite teardown. It must not create a public/product listener,
@@ -56,8 +55,99 @@ download runtime providers, publish packages or read real developer secrets.
 Tests consume prepared evidence and never recursively invoke the orchestrator.
 Every required suite/journey/case is nonempty and verified; a missing/empty/
 duplicate/stale input fails instead of being skipped. `--update-locks` is
-proposed only for intentional dependency/consumer changes; after reviewing
+only for intentional dependency/consumer changes; after reviewing
 those locks independently replay the default command.
+
+Use `--evidence-directory /absolute/fresh/private/directory` to retain a run;
+the directory must be fresh, owner-private and outside the repository. Default
+runs remove only their exact owned workspace. `--retained-baseline` reuses
+previously frozen pre-F-04 binaries after source/identity/hash validation.
+Import also requires saved complete dependency and assets digests; legacy
+manifests without them fail, never silently rebaseline against current files.
+`--phase baseline --retain-baseline /absolute/fresh/private/directory` captures
+those binaries against merged `7fd73267a5154583363c94e9e85b9bac7d4a16b3`,
+not current platform sources. Manifests/logs are private temporary evidence,
+never committed response/configuration dumps. Runtime mutation recipes operate
+only on private copies; compilation failure is not accepted as a runtime red.
+
+## Public Integration
+
+Use the same service collection, builder, evaluated composition and supervised
+lease as F-03. Before configuration evaluation/legacy validation, call:
+
+```csharp
+builder.AddHoardDiscovery(
+    new HoardDiscoveryCatalog("my-distribution", "0.1.0", "partial"),
+    new HoardDiscoveryOptions
+    {
+        Exposure = HoardDiscoveryExposure.LocalLoopback,
+        DirectLocalNoProxy = true
+    });
+```
+
+`Hoard.Hosting.Discovery` owns these types and `IHoardDiscoverySource`.
+An empty partial catalog does not infer installed packages or tested support.
+Supply explicit inclusion/publication/contribution records as appropriate.
+Collections and public text are bounded and immutable. Host time providers must
+be trusted inert clocks, not I/O or provider callbacks. Defaults are a monotonic
+two-second cooperative deadline and a 4 MiB encoded-body ceiling; configured
+deadlines must be positive finite. Limits are checked before activation and
+encoding finishes before committing success.
+
+For explicit anonymous direct-local use, configure the named
+`Hoard.Management.Read` policy deliberately (for example,
+`AddAuthorization(options => options.AddPolicy("Hoard.Management.Read",
+policy => policy.RequireAssertion(_ => true)))`) and configure Kestrel through
+`web.WebHost.UseUrls("http://127.0.0.1:5080").PreferHostingUrls(true)`.
+This is a wiring fragment, not a command to start a product listener.
+No proxy/forwarded-header processing or wildcard binding is supported in
+local mode. Never proxy public traffic into this anonymous surface.
+
+For secured-network use select `SecuredNetwork`, require authenticated
+management-read permission and configure usable authentication defaults or
+explicit registered read-policy schemes. Use direct HTTPS, or explicitly opt
+into trusted immediate TLS termination with one forwarded hop, known peers/
+networks and validated forwarded protocol/resulting HTTPS. The production
+adapter requires explicit `UseUrls(...).PreferHostingUrls(true)` so effective
+bindings are not hidden by `Listen` overrides. Unknown servers/topologies fail
+closed; TestServer's internal fixture adapter is not a public extension point.
+Host auth/proxy/request-logging posture still needs deployment review; sanitizing
+discovery-owned diagnostics does not redact framework request query logs.
+
+After successful evaluation/composition, use the public extensions from
+`Hoard.Hosting.Lifecycle` and `Hoard.Application.Discovery`:
+
+```csharp
+var app = await web.BuildHoardApplicationAsync(lease, cancellationToken);
+app.MapHoardDiscovery(lease);
+await app.MapHoardModulesAsync(lease, cancellationToken);
+await app.StartAsync(cancellationToken);
+// Stop through the inherited wrapper, then dispose the external lease.
+await app.StopHoardApplicationAsync(lease, cancellationToken);
+```
+
+`lease.BindHoardDiscovery(app).Capture(cancellationToken)` is the in-process
+read-only equivalent, guarded by exact app/root/source/catalog ownership.
+Both literal GET routes share authorization, exposure verification,
+no-store/private/no-cache/nosniff and bounded errors. Queries return a generic
+400; unsupported methods return 405, with no implicit HEAD, ETag/304, mutation
+or static OpenAPI bypass. Missing protection fails startup or returns closed
+503 while actual protection is unverified. No inventory is returned on denial.
+
+Each body carries lifecycle ID, decimal-text revision, publication/capture and
+actual readiness-assessment times. Reads do not refresh health, activate
+providers, resolve service factories/secrets or change selection. Usability
+requires exact tested scope, actual bindings and current contributors; it is
+not execution permission. Reassess only through the existing lifecycle API.
+
+The JSON-only `ReferenceConsumer` executable reads stdin, not a filename.
+It caps input at 4 MiB/depth 32 and recognizes actions only for its exact
+synthetic capability/version/operation/owner tuple. Unknown semantics cannot
+enable actions. Refresh generations/revisions reject old or duplicate terminal
+responses; denial discards data, failure immediately stales it, and monotonic
+receipt age over 30 seconds expires actions (exactly 30 seconds is current).
+Textual labels and reading order are semantic proof, not DOM/ARIA/browser/WCAG
+acceptance.
 
 ## Validation Journeys
 

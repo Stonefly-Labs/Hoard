@@ -1,6 +1,7 @@
 # Fixture-only lifecycle host
 
-This package-only example validates F-02 lifecycle and opt-in F-03 configuration
+This package-only example validates F-02 lifecycle, opt-in F-03 configuration
+and F-04 discovery
 APIs. It is not a cache, native
 package protocol, database, blob store, identity service or curated distribution.
 It runs bounded in-process TestServer journeys, never a listener. No cloud,
@@ -118,6 +119,49 @@ macOS local volume only; cancellation may report PublicationPending rather than
 rollback. See the [conversion/recovery guide](../../docs/PROVIDERS.md#explicit-synthetic-conversion)
 for safe observation and targeted staging cleanup. No released old format,
 YAML, Linux/filesystem certification or power-loss guarantee is claimed.
+
+## Protected discovery variants
+
+```bash
+bash scripts/validate-discovery.sh
+```
+
+`Discovery/LifecycleHost.Discovery.csproj` and
+`Discovery/Custom/LifecycleHost.Discovery.Custom.csproj` consume only independently
+packed local libraries/providers. They reuse host-owned adapters and the
+hash-identical retained option-bearing metadata DLL. Their narrow internal
+TestServer exposure adapter is fixture-only; no public verifier bypass exists.
+The separate real Kestrel/TLS cases belong to composition tests, not these hosts.
+
+Baseline executes four journeys: initial observation, same-binary bundled
+protocol restart, rejected invalid replacement and explicit recovery. Custom
+executes those four plus its separately packaged Artifact.Two rebuild/restart.
+Seven successful observations have distinct lifecycle IDs; all nine journeys
+are mandatory. Actual route/service calls have independent counters, and reads
+resolve neither service factories nor secrets/probes. Editing the copied active
+JSON file cannot change selection; the example restores it before teardown.
+Unrelated provider source/binary hashes must remain stable.
+
+The approved [baseline](Discovery/baseline.json) and
+[custom](Discovery/custom.json) files use only invented isolated inputs.
+The partial catalog includes an explicitly unregistered module, while disabled
+registered entries remain visible without activation. Support is labelled
+fixture-only. The [presentation examples](Discovery/presentation-examples.json)
+and standalone BCL consumer prove textual labels/order/action/freshness rules,
+not a browser UI or WCAG result.
+
+Registration freezes before evaluation. After supervised build, map both
+protected discovery routes before module mapping and normal start. Production
+hosts must supply the verified local or authenticated network posture described
+in the [quickstart](../../specs/004-module-discovery/quickstart.md); the examples
+are not deployable authentication/proxy configurations. Discovery availability
+does not authorize execution or imply fresh health probing.
+
+Change a bundled choice through explicit validated configuration/restart.
+For an absent package, change reference/registration/adapter/catalog, rebuild,
+redeploy and restart. Remove discovery opt-in and mapping together, then restart
+a compatible host to roll it back. No live install/swap, automatic fallback,
+provider-data rollback, package publication or deployment occurs.
 
 ## Public boundary and ownership
 

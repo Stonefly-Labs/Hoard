@@ -7,8 +7,9 @@ F-01 adds four .NET library projects, immutable provider declarations, explicit
 registration, and compile/package/boundary acceptance tooling. F-02 adds
 opt-in fixture-tested lifecycle in Hosting. F-03 adds fixture-backed configuration,
 owner-scoped local secrets and explicit synthetic conversion through that same
-lifecycle. Core and Application remain empty boundaries: no caching engine,
-management endpoints, working providers, curated executable, UI, product CI/CD,
+lifecycle. F-04 adds opt-in protected discovery slices in Application and safe
+Hosting observations; Core remains empty. No caching engine,
+working providers, curated executable, UI, product CI/CD,
 or deployment exists.
 Azure identity provisioning is a
 separate, explicitly authorized [operator action](../infra/bootstrap/README.md).
@@ -1814,6 +1815,58 @@ Analysis starts no implementation, listener, console, provider, infrastructure
 operation, release or merge, and does not bypass convergence/finalization or
 mark F-04 complete.
 
+### F-04 implemented discovery and acceptance
+
+The implementation invocation delivers Hosting's immutable public catalog,
+safe source and sole-lifecycle publication plus Application's two protected
+GET-only discovery slices. It completes the full task scope, not a single
+phase. The [quickstart](../specs/004-module-discovery/quickstart.md#public-integration)
+documents exact opt-in/mapping order, direct-local/no-proxy versus authenticated
+TLS/trusted-proxy posture and the supported explicit Kestrel URL topology.
+The [provider guide](PROVIDERS.md#safe-discovery-metadata-and-observations)
+explains approved metadata, exact fixture support/actual binding evidence and
+why read permission never authorizes execution.
+
+```bash
+bash scripts/validate-discovery.sh
+```
+
+The default command passed all 122 actual/declared tests, D01..D40, nine
+package journeys, seven distinct wire observations, 18 real graph scans and
+12 private-copy runtime mutations. It verifies all required suite classes and
+fully qualified theory rows, never merely method names/counts. Missing or stale
+proof, nonlocal/hash-drifted packages, skipped rows, retained binary/dependency/
+assets drift and lock mutation fail closed. Default workspace cleanup is
+owner-private and exact; use a fresh absolute `--evidence-directory` outside
+the repository to retain local proof. `--update-locks` is intentional only;
+review resulting locks, then independently replay the default.
+
+Final default configuration, lifecycle and foundation checks also passed,
+preserving all prior scan inventories, architecture/compatibility classifications
+and retained binaries. Tooling passed 61 tests. Local macOS 26.5.0/.NET SDK
+10.0.203 measurement recorded 100 complete reads of 100 x 10 contributions at
+concurrency 10, zero extra provider activity/resources and p95 0.0354103s in the
+retained run (0.066s in the subsequent exact default run).
+The [implementation report](../specs/004-module-discovery/plan.md#implementation-evidence)
+records exact commands/results, original hashes, earlier failed attempts,
+provenance correction, both architecture reviews and red/green evidence.
+
+The BCL-only stdin consumer proves semantic presentation/refresh behavior,
+not a rendered console. Protected reads are snapshots of actual publication/
+assessment times, not health refreshes or permission grants. Production auth,
+external proxy isolation, request-log redaction, native providers/conformance
+and rendered accessibility remain unqualified. Only dedicated adapter tests
+open finite private ephemeral loopback listeners; no product/public service
+or deployment exists.
+
+README/guides/examples and active implementation artifacts are updated.
+Product charter/specification/architecture/ADR/diagrams, constitution/backlog,
+predecessor artifacts, IaC and release documents are unaffected because their
+product scope, approved boundaries, governance and operational release/cloud
+procedures did not change. No infrastructure, release, publication or merge
+ran. Draft [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10) remains draft;
+the next separately authorized stage is `converge`, not merge or a new feature.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
@@ -1956,6 +2009,9 @@ required for simple doc or repository-tool changes.
 ```bash
 python3 -m unittest discover -s tests/tooling -v
 bash scripts/validate-foundation.sh
+bash scripts/validate-lifecycle.sh
+bash scripts/validate-configuration.sh
+bash scripts/validate-discovery.sh
 dotnet restore Hoard.slnx --locked-mode
 dotnet build Hoard.slnx --configuration Release --no-restore
 dotnet format Hoard.slnx --verify-no-changes --no-restore

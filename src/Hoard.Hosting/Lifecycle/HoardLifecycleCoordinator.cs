@@ -58,6 +58,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
     private bool admission;
     private bool ready;
     private bool mapped;
+    private DateTimeOffset? readinessAssessedAt;
     private HoardLifecyclePhase phase = HoardLifecyclePhase.Registered;
     internal Action? VerifyRoutes { get; set; }
     internal LifecycleDeadline? ShutdownDeadline { get; private set; }
@@ -68,7 +69,11 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
         StartupDeadline = new(Composition.Clock, Options.StartupTimeout);
         Entries = Composition.Registrations.Where(r => Composition.EnabledModuleIds.Contains(r.Declaration.Id))
             .ToDictionary(r => r.Declaration.Id, r => new Entry(r), StringComparer.Ordinal);
+        PublishDiscovery();
     }
+
+    private void PublishDiscovery() => Lease.Publication?.Publish(phase, admission, ready, readinessAssessedAt,
+        Entries.Values, diagnostics, omitted);
 
     public HoardLifecycleSnapshot Snapshot
     {
@@ -89,12 +94,13 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
     }
 
     internal HoardLifecycleException Error(string code, string owner, HoardLifecyclePhase at,
-        bool cleanup = false, IEnumerable<string>? path = null)
+        bool cleanup = false, IEnumerable<string>? path = null, bool publish = true)
     {
         lock (Gate)
         {
             var diagnostic = new HoardLifecycleDiagnostic(code, owner, at, correlation, cleanup, path);
             if (diagnostics.Count < 100) { diagnostics.Add(diagnostic); } else { omitted++; }
+            if (publish) { PublishDiscovery(); }
             return new([diagnostic]);
         }
     }
@@ -116,6 +122,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
             phase = at;
             if (Entries.TryGetValue(owner, out var entry)) { entry.Phase = at; }
             Ledger.Enter(owner, at);
+            PublishDiscovery();
             var activity = Activities.Enter(owner, at == HoardLifecyclePhase.BuildingHost ? HoardActivityKind.Build : HoardActivityKind.Phase);
             var token = lifetime.Token;
             work = Task.Run(async () =>
@@ -128,7 +135,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
         try
         {
             await StartupDeadline.WaitAsync(work, cap ?? Options.ActivationCallbackTimeout, lifetime.Token).ConfigureAwait(false);
-            lock (Gate) { CheckCanDispatch(owner, at); }
+            lock (Gate) { CheckCanDispatch(owner, at); PublishDiscovery(); }
         }
         catch (HoardLifecycleException) { throw; }
         catch (Exception error)
@@ -162,7 +169,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
 
     internal void MarkMapped()
     {
-        lock (Gate) { CheckCanDispatch("composition", HoardLifecyclePhase.ComposingRoutes); mapped = true; }
+        lock (Gate) { CheckCanDispatch("composition", HoardLifecyclePhase.ComposingRoutes); mapped = true; PublishDiscovery(); }
     }
 
     public Task<HoardStartResult> StartAsync(CancellationToken cancellationToken = default)
@@ -188,7 +195,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
             { VerifyRoutes!(); return Task.CompletedTask; }).ConfigureAwait(false);
             foreach (var id in Composition.ActivationOrder)
             {
-                lock (Gate) { Entries[id].Status = HoardModuleStatus.Initializing; }
+                lock (Gate) { Entries[id].Status = HoardModuleStatus.Initializing; PublishDiscovery(); }
                 await InvokeStartupAsync(id, HoardLifecyclePhase.Initializing,
                     token => Entries[id].Module!.InitializeAsync(Lease.Application!.Services, token).AsTask()).ConfigureAwait(false);
             }
@@ -199,6 +206,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                 if (!ready) { throw Error("NotReady", "composition", HoardLifecyclePhase.AssessingReadiness); }
                 admission = true;
                 phase = HoardLifecyclePhase.Running;
+                PublishDiscovery();
                 foreach (var id in Composition.ActivationOrder)
                 {
                     if (stopping) { break; }
@@ -247,7 +255,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
         }
         catch (HoardLifecycleException)
         {
-            lock (Gate) { ready = admission = false; }
+            lock (Gate) { ready = admission = false; PublishDiscovery(); }
             await StopAsync().ConfigureAwait(false);
             return new(false, Snapshot.Diagnostics);
         }
@@ -286,6 +294,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                         break;
                     }
                     if (initial) { phase = Entries[id].Phase = HoardLifecyclePhase.AssessingReadiness; Ledger.Enter(id, phase); }
+                    PublishDiscovery();
                     var activity = Activities.Enter(id, HoardActivityKind.Phase);
                     work = Task.Run(async () =>
                     {
@@ -326,8 +335,10 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                 {
                     Entries[id].Status = result.Ready ? HoardModuleStatus.Ready : HoardModuleStatus.NotReady;
                     Entries[id].Health = result.Observations;
-                    if (!result.Ready) { Error("NotReady", id, HoardLifecyclePhase.AssessingReadiness); }
+                    if (!result.Ready) { Error("NotReady", id, HoardLifecyclePhase.AssessingReadiness, publish: false); }
                 }
+                readinessAssessedAt = Composition.Builder.DiscoveryRegistration?.Options.TimeProvider.GetUtcNow();
+                PublishDiscovery();
                 return Snapshot;
             }
         }
@@ -361,6 +372,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
                 stopping = true;
                 admission = ready = false;
                 phase = HoardLifecyclePhase.Stopping;
+                PublishDiscovery();
                 ShutdownDeadline = new(Composition.Clock, Options.ShutdownTimeout);
                 stop = Task.Run(StopCoreAsync);
             }
@@ -372,7 +384,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
     {
         var deadline = ShutdownDeadline!;
         CancelPending(lifetime, null, "composition", HoardLifecyclePhase.Stopping);
-        lock (Gate) { phase = HoardLifecyclePhase.Draining; }
+        lock (Gate) { phase = HoardLifecyclePhase.Draining; PublishDiscovery(); }
         try { await deadline.WaitAsync(Activities.WhenQuiescent, Options.DrainTimeout, CancellationToken.None).ConfigureAwait(false); }
         catch (TimeoutException) { Error("Timeout", "composition", HoardLifecyclePhase.Draining, true); }
         var outcomes = ImmutableArray.CreateBuilder<HoardModuleCleanup>();
@@ -380,7 +392,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
         {
             var entry = Entries[id];
             if (entry.Module is null) { outcomes.Add(new(id, HoardCleanupOutcome.NotEntered)); continue; }
-            lock (Gate) { phase = entry.Phase = HoardLifecyclePhase.CleaningUp; entry.Status = HoardModuleStatus.Stopping; }
+            lock (Gate) { phase = entry.Phase = HoardLifecyclePhase.CleaningUp; entry.Status = HoardModuleStatus.Stopping; PublishDiscovery(); }
             if (HoardCleanupPlanner.Unsafe(id, Activities.Snapshot(), Composition))
             {
                 outcomes.Add(new(id, HoardCleanupOutcome.UnsafePendingCallback));
@@ -408,7 +420,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
             {
                 await deadline.WaitAsync(task, Options.ModuleCleanupTimeout, CancellationToken.None).ConfigureAwait(false);
                 outcomes.Add(new(id, HoardCleanupOutcome.Completed));
-                lock (Gate) { entry.Status = HoardModuleStatus.Stopped; }
+                lock (Gate) { entry.Status = HoardModuleStatus.Stopped; PublishDiscovery(); }
             }
             catch (Exception error)
             {
@@ -430,6 +442,7 @@ internal sealed class HoardLifecycleCoordinator : IHoardLifecycle
         lock (Gate)
         {
             phase = HoardLifecyclePhase.Stopped;
+            PublishDiscovery();
             var result = new HoardStopResult(diagnostics.ToImmutableArray(), outcomes.ToImmutable(), Activities.Snapshot(), root, omitted);
             return result;
         }

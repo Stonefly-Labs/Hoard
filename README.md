@@ -22,7 +22,7 @@ dependency management into another full-time job.
 > [!IMPORTANT]
 > **Foundation only.** This repository currently contains product/design documents,
 > development workflows, repository tooling, .NET provider contracts and a tested
-> fixture-only module lifecycle and configuration boundaries,
+> fixture-only module lifecycle, configuration, and protected discovery boundaries,
 > plus an operator-run Azure identity bootstrap.
 > There is no runnable cache, working provider, UI, container, or published package.
 > Everything in the product overview below describes the planned experience.
@@ -84,6 +84,9 @@ bash scripts/validate-lifecycle.sh
 
 # Fixture-only configuration, local secrets and original-preserving conversion.
 bash scripts/validate-configuration.sh
+
+# Protected discovery, JSON consumer, private loopback adapters and compatibility.
+bash scripts/validate-discovery.sh
 ```
 
 For repository work, use Git, GitHub CLI, Python 3.11+, and a stable .NET 10 SDK
@@ -92,7 +95,9 @@ nuget.org and builds temporary local packages; it requires network access.
 OpenTofu and Azure CLI
 are needed only when working on the [Azure bootstrap](infra/bootstrap/README.md).
 There is no runnable cache or Node project yet. The lifecycle harness uses only
-in-memory TestServer, never a listening product service. Hosting consumers now
+in-memory TestServer, never a listening product service. Dedicated discovery
+adapter tests additionally open and close private ephemeral loopback Kestrel/TLS
+listeners. Hosting and Application consumers now
 require the ASP.NET Core shared framework. See the
 [foundation quickstart](specs/001-provider-contracts/quickstart.md) and
 [provider author guide](docs/PROVIDERS.md) for the exact supported scope.
@@ -526,8 +531,24 @@ dependency graph is acyclic, including ordered shared-file edits, and all
 The report is recorded in draft
 [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10). All 14 feature files,
 including task checkboxes and existing 40/40 custom checklist approvals, remain
-unchanged. The next separately authorized stage is `implement`; analysis
+unchanged. At that checkpoint the next separately authorized stage was `implement`; analysis
 introduces no runtime behavior or passing product evidence.
+
+F-04 now implements opt-in immutable discovery catalogs, the lifecycle owner's
+atomic observations, actual route/service binding evidence and protected
+`GET /api/v1/discovery` and `GET /api/v1/discovery/openapi.json` slices in
+Application. Registration precedes configuration/composition snapshots;
+`BindHoardDiscovery` verifies the exact retained app/root/lease and
+`MapHoardDiscovery` precedes module mapping. Explicit verified direct-local or
+authenticated TLS/trusted-proxy posture is mandatory. Metadata is allowlisted;
+reads never resolve secrets, activate providers or refresh readiness.
+The BCL-only reference consumer proves semantic state/action/freshness rules,
+not a delivered console. Usability never grants execution permission.
+See the [implemented validation guide](specs/004-module-discovery/quickstart.md)
+and [evidence report](specs/004-module-discovery/plan.md#implementation-evidence).
+The implementation checkpoint remains distinct from convergence, finalization,
+merge and release; draft [PR #10](https://github.com/Stonefly-Labs/Hoard/pull/10)
+is not ready for merge.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

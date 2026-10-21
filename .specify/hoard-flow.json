@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "stage": "implement",
-  "status": "ready",
+  "status": "running",
   "branch": "feature/004-module-discovery",
   "active": {
     "id": "F-04",
