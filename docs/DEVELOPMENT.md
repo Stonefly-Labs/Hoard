@@ -698,6 +698,54 @@ guidance are unaffected because no public API, dependency, product capability,
 permission or operational action changes. This finishes only implementation;
 fresh `converge` is next, and PR #6 remains draft.
 
+The subsequent installed convergence assessment checked all 22 functional
+requirements, seven buildable outcomes, 20 story scenarios, 12 edge cases,
+12 grouped plan decisions, all 75 existing tasks and eight constitutional
+principles against current scoped code. T073..T075's notification, cancellation
+and eventual-fault corrections are implemented. One **CRITICAL contradiction**
+remains in request resource retention: the admission endpoint registers its
+lease-release `OnCompleted` callback after upstream host middleware. Reverse
+callback order releases that lease before the earlier middleware's response
+completion work finishes.
+
+An isolated public-API/TestServer probe held such a middleware callback.
+Protocol cleanup ran once, its artifact prerequisite and independent metadata
+cleanup all reported Completed, and UnsafeActivities was empty while response
+completion was still pending. The root was incorrectly eligible for external
+owner disposal (NotAttemptedOwnerPending); the probe did not attempt root
+disposal while holding the callback. A paired callback registered inside the
+handler correctly retained protocol/artifact as UnsafePendingCallback and the
+root as NotAttemptedUnsafe. Both held callbacks were released and observed.
+The probe used a 150 ms real-time drain budget with five-second scheduler
+backstops and no listener; deterministic barrier/virtual-time regressions remain
+implementation work.
+
+[Phase 12 / T076](../specs/002-module-lifecycle/tasks.md#phase-12-convergence)
+appends the completion-boundary correction, pre-/post-admission and handled-error
+regressions, pending owner/prerequisite/root protection, cooperative once-only
+release and no deferred cleanup requirements. Existing task bytes, spec, plan
+and all built-in/custom checklists remain unchanged. The assessment produced
+one contradicts/CRITICAL finding and zero missing, partial or unrequested
+findings; no application code or checklist approval changed.
+
+Fresh `bash scripts/validate-lifecycle.sh` passed 161 source tests, nine boundary
+proofs and seven package-only journeys, including six independent packages and
+retained old-binary/new-source/shared-framework proof. Fresh
+`bash scripts/validate-foundation.sh` passed 255 tests (42 foundation,
+49 architecture, 164 composition), zero failed/skipped, retaining the original
+eight scans. `python3 -m unittest discover -s tests/tooling -v` passed 22 tests.
+Those passing baselines do not exercise the reproduced pre-admission completion
+path and do not resolve F1.
+
+README and this guide record the blocker. Provider/example/quickstart contracts,
+product intent, diagrams/ADR, governance, master backlog, F-01 sources/examples,
+IaC and release guidance are unaffected: convergence changes no API, intended
+behavior, dependency, permission or operational action. Implementation evidence
+remains historical, not acceptance of this uncovered path. Keep PR #6 draft;
+the next separately authorized stage is `implement` for T076, followed by fresh
+convergence. Finalization, merge, feature completion and dependency availability
+remain separate gates.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

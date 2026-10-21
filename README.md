@@ -291,9 +291,19 @@ do not rewrite returned outcomes or retry cleanup. The implementation review
 also identified and corrected omitted worker faults during shutdown and root
 disposal dispatch after budget expiry, with failing-then-passing regressions.
 See the [T075 evidence](specs/002-module-lifecycle/plan.md#t075-implementation-follow-up).
-Spec and reviewer-owned checklists remain unchanged. Fresh `converge` is the
-next separately authorized stage; F-02 remains draft, not finalized or ready
-to merge.
+The subsequent fresh convergence assessment verified T073..T075 but found one
+**CRITICAL** response-completion ownership gap. The admission endpoint releases
+its request lease before an earlier host-middleware `OnCompleted` callback
+finishes: a held callback had no tracked request activity while protocol and
+prerequisite cleanup already reported Completed. The paired callback registered
+inside the handler correctly retained those resources.
+[Phase 12 / T076](specs/002-module-lifecycle/tasks.md#phase-12-convergence)
+records the required completion-boundary correction and deterministic regression
+work; no application code was changed. Fresh locked lifecycle/foundation and
+tooling baselines pass but do not cover this reproduced path. Spec, plan,
+existing tasks and all checklist bytes remain unchanged. The next separately
+authorized stage is `implement` for T076, then fresh convergence; F-02 remains
+draft, not finalized or ready to merge.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
