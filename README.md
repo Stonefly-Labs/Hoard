@@ -448,10 +448,14 @@ for evidence and measured scope. The separately authorized
 [finalization acceptance](specs/003-provider-configuration/plan.md#finalization-acceptance-2026-10-21)
 verifies the complete configuration and retained lifecycle/foundation checks,
 unchanged requirements-review gates and implementation architecture-review
-evidence. [PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) is ready for
-maintainer review, targeting `main`. The checkpoint records `await_merge`;
-F-03 remains active and dependent work stays locked until its merge is verified
-and the separate completion checkpoint is published and merged.
+evidence. [PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) merged into
+`main` on 2026-10-21 (UTC) at
+`7fd73267a5154583363c94e9e85b9bac7d4a16b3`. The separate `await_merge` stage
+verified that merge in fetched main and all 71 completed tasks, then recorded
+F-03 as complete with its directory, PR and merge commit. The progress-only
+completion checkpoint must merge before the next specification can start:
+[F-04: module capabilities and management discovery API](docs/HOARD_SPECKIT_MASTER_BACKLOG.md#foundation-f-04).
+No new specification or implementation ran in this completion stage.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

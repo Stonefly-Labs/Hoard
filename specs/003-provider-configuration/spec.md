@@ -4,8 +4,11 @@
 
 **Created**: 2026-10-20
 
-**Status**: Implemented fixture-backed Hosting library; finalized for maintainer
-review in [PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8), not yet merged.
+**Status**: Implemented fixture-backed Hosting library; merged into `main`
+through [PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) on 2026-10-21
+(UTC) at `7fd73267a5154583363c94e9e85b9bac7d4a16b3`.
+The separate completion checkpoint records F-03 as complete; that progress-only
+PR must merge before another specification begins.
 See [finalization acceptance](plan.md#finalization-acceptance-2026-10-21).
 The requirements below originated in the specification stage; they do not
 claim a runnable cache, production provider or conformance certification.
