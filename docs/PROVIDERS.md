@@ -94,7 +94,7 @@ makes the composition unsupported. Never silently disable a module/integration,
 ignore a dependency, fall back, or substitute another provider. Operators must
 explicitly change selection or install a compatible version and revalidate.
 F-01 classifies examples; F-02's explicit validator now enforces these rules.
-F-03 will resolve configuration into that same gate, not duplicate it.
+F-03 resolves configuration into that same gate, without duplicating it.
 
 ## Opt-in lifecycle
 

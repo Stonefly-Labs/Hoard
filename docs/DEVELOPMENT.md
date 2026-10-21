@@ -5,9 +5,11 @@
 The bootstrap established contributor tools and reserved architecture boundaries.
 F-01 adds four .NET library projects, immutable provider declarations, explicit
 registration, and compile/package/boundary acceptance tooling. F-02 adds
-opt-in fixture-tested lifecycle in Hosting. Core and Application remain empty
-boundaries: no caching engine, management endpoints,
-working providers, curated executable, UI, product CI/CD, or deployment exists.
+opt-in fixture-tested lifecycle in Hosting. F-03 adds fixture-backed configuration,
+owner-scoped local secrets and explicit synthetic conversion through that same
+lifecycle. Core and Application remain empty boundaries: no caching engine,
+management endpoints, working providers, curated executable, UI, product CI/CD,
+or deployment exists.
 Azure identity provisioning is a
 separate, explicitly authorized [operator action](../infra/bootstrap/README.md).
 
@@ -1405,6 +1407,52 @@ The checkpoint schedules **`finalize / ready`**. PR #8 remains draft; no further
 implementation pass is needed for the assessed scope. This invocation does not
 finalize, request a merge, complete F-03, unlock dependencies, deploy, apply
 infrastructure or publish packages/releases.
+
+### F-03 finalization
+
+The separately authorized finalization verifies the clean convergence result
+against all 26 requirements, eight outcomes, 22 story scenarios, 13 edge cases,
+36 CFG cases, 12 grouped plan decisions and all 71 completed tasks. The built-in
+16/16 and reviewer-owned configuration/safety 20/20 each remain unchanged.
+Requirements review is not independent implementation or provider certification.
+
+Fresh full locked configuration acceptance passed 201 tests, six boundary
+proofs, nine package-only journeys and five actual Darwin interruption barriers,
+with all 13 graph scans, six independent packages, retained pre-F-03 binaries
+and verified runtime-provider provenance. The optional private evidence-directory
+flag retained the complete workspace and actual 201/201 and 6/6 TRX results,
+not a partial selection. Lifecycle acceptance passed 369 tests, nine boundary
+proofs and seven journeys; foundation passed 42 unit, 54 architecture and
+372 composition tests, zero failed/skipped. Formatting/analyzers and all
+38 tooling tests passed; no lock changed. The dated dependency advisory check
+covered seven solution projects with no known vulnerable entries or errors.
+Commands, acceptance traceability and limitations are recorded in the
+[finalization evidence](../specs/003-provider-configuration/plan.md#finalization-acceptance-2026-10-21).
+
+The implemented graph/ownership corrections and T070/T071 already received
+the required custom architecture reviews. No implementation changed after
+reviewed commit `66fef6b`; this documentation/progress-only finalization does
+not require a new review or claim an independent runtime/exploit audit.
+Publication remains measured Darwin/local-device behavior, not Linux,
+network-filesystem or hardware power-loss certification. Bounded waiting
+cannot terminate trusted code, and configuration rollback cannot reverse
+provider-owned data changes.
+
+README, specification review status, plan evidence, this guide and the provider
+guide's stale future-tense gate description are updated. Provider API/operational
+guidance, examples, quickstart/model/contracts/research, baseline product intent,
+architecture/diagrams/ADR, governance/backlog, predecessor artifacts, IaC and
+release guidance otherwise remain accurate: finalization changes no API,
+dependency, runtime, grammar, support scope, permission or operational procedure.
+Task bodies/markers and reviewer-owned checklist bytes are preserved.
+
+[PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) targets `main` and is ready
+for maintainer review. The shared checkpoint records **`await_merge / ready`**
+with PR 8; F-03 remains active, not completed, and dependent work stays locked.
+After maintainer merge, a separate invocation must verify merge ancestry in
+fetched main and publish its completion checkpoint; that checkpoint must merge
+before starting another specification. No merge, infrastructure plan/apply,
+deployment, package/release publication, tag or permission change occurs here.
 
 ```mermaid
 flowchart TD

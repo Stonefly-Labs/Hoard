@@ -779,3 +779,74 @@ production provider, native-client or conformance certification is inferred.
 The implementation checkpoint schedules **fresh `converge / ready`** and keeps
 PR #8 draft. It does not execute convergence/finalize, mark the feature complete,
 unlock dependents, merge, deploy, apply infrastructure or publish packages/releases.
+
+## Finalization Acceptance (2026-10-21)
+
+The subsequent installed convergence assessment found zero missing, partial,
+contradicting or unrequested findings at any severity across 26 FRs, eight SCs,
+22 story scenarios, 13 edge cases, 12 grouped plan decisions, all 71 tasks and
+eight constitutional principles. Its report is recorded in the
+[development guide](../../docs/DEVELOPMENT.md#f-03-clean-convergence) and shared
+checkpoint. Finalization verifies that acceptance and the handoff, not another
+implementation, convergence assessment or reviewer-owned checklist approval.
+
+| Finalization gate | Evidence / result |
+| --- | --- |
+| Requirement and outcome coverage | The [acceptance matrix](contracts/acceptance.md) maps every FR/SC, all 22 scenarios and 13 edges to CFG-01..36; the [task traceability](tasks.md#requirement-and-proof-traceability) preserves implementation/proof assignments. All 71 tasks remain complete, including T070/T071's executable failing-then-passing regressions. |
+| Sources and fixed effective state | Four-source precedence/provenance, canonical duplicates, limits, whole-selection replacement, keyed option merging, explicit emptiness, independent versions and discarded/disabled structural rejection pass without construction, secret reads or fallback. |
+| Composition and active options | The actual F-02 validator remains the sole graph/cardinality/compatibility authority. Enabled-only public checks precede all secret work; disabled operational activity stays zero. Declared OptionRule, canonical setting and winning source remain actionable without reflecting unknown callback identities. |
+| Local secrets and safe output | Environment/file success and failure counterparts, fixed owner-only delivery, source/field-preserving diagnostics and captured-output redaction pass. No ambient credential capture, alternate resolver, empty/anonymous substitution or resolved-secret persistence is introduced. |
+| Bounded work and ownership | Absolute/capped deadlines, synchronous prefixes, cancellation notifications, late faults, immutable returned outcomes and atomic proof consumption/disposal/transfer pass. Pending configuration/delivery/root activity retains its inputs; F-02 remains the sole lifecycle and cleanup authority. |
+| Restart and distribution | Nine exact package-only baseline/custom journeys prove same-built bundled switching, explicit custom rebuild/redeploy/restart and invalid-replacement recovery without engine changes or hidden previous-value reuse. |
+| Conversion and publication | Synthetic-only preview/approval/full apply, changed-context rejection, no-clobber/alias/fault/cancellation counterparts and five actual interrupted-child barriers preserve original bytes and absent-or-complete output. PublicationPending remains distinct from rollback. |
+| Package and binary compatibility | Thirteen actual source/project/packed/API/assets/runtimeconfig scans, six independent fixtures, the retained F-01 registration consumer and two fresh pinned pre-F-03 binaries pass. Old binaries are not rebuilt after baseline preparation; configured journeys verify the retained option-bearing provider's actual runtime bytes. |
+| Retained foundation/lifecycle | Original eight scans, ARCH-001..008 rejection/permitted pairs, C-01..23, isolated Core, compile-only custom hosts, lifecycle journeys and framework propagation remain passing. Abstractions/Core/Application and production package dependencies are unchanged. |
+| Reviewer-owned requirements gate | Built-in 16/16, configuration 20/20 and safety 20/20 remain byte-identical; finalization neither self-approves criteria nor treats assisted requirements review as product evidence. |
+| Implementation architecture review | The complete implementation review/corrections and bounded T070/T071 follow-up are recorded above; no actionable finding or unresolved design question remains. `git diff --exit-code 66fef6b HEAD -- src tests scripts examples Directory.Build.props Directory.Packages.props Hoard.slnx global.json` passed before finalization, so no implementation has changed since the reviewed checkpoint. This is review-lineage verification, not a new independent review or exploit audit. |
+| Constitutional/support boundary | All eight principles remain satisfied within the bounded fixture scope, with no exception or governance amendment. No runnable cache, operational provider, curated executable, management endpoint/UI, native-client support, cloud dependency or F-07 conformance claim is delivered. |
+
+Fresh finalization checks used the existing locked runners without lock refresh:
+
+| Entry point / check | Finalization result |
+| --- | --- |
+| `SPECIFY_FEATURE_DIRECTORY=specs/003-provider-configuration bash .specify/scripts/bash/check-prerequisites.sh --json --require-spec --require-tasks --include-tasks` | Passed; resolved the recorded directory and required artifacts independently of branch naming. |
+| `bash scripts/validate-configuration.sh` with `--evidence-directory` pointing to a fresh private session directory | Passed full acceptance: 201 configuration tests, six boundary proofs, nine package journeys, five real Darwin interruption barriers, CFG-01..36, formatting/analyzers and 38 tooling tests. This invocation retained evidence; it is not claimed as a no-argument replay. |
+| `bash scripts/validate-lifecycle.sh` | Passed: 369 tests, nine boundary proofs, seven package-only journeys, six independent packages and retained-old-binary/new-source/framework compatibility. |
+| `bash scripts/validate-foundation.sh` | Passed: 42 unit, 54 architecture and 372 composition tests, zero failed/skipped; original graph/package/Core/host/compatibility/declaration/registration proofs retained. |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed: all 38 tests. |
+| `dotnet list Hoard.slnx package --vulnerable --include-transitive --format json` | Seven solution projects assessed; zero known vulnerable direct/transitive entries or errors at assessment. No production dependency was added; existing license/dependency obligations are unchanged. This is not a future advisory guarantee or an exploit-focused audit. |
+| `git diff --check` and documentation/artifact audit | Passed; local file/anchor targets and PR-template fidelity verified, with no source/test/example/lock/checklist changes. |
+
+The closed private result is `passed / fullAcceptance: true`. Actual TRX
+counters are 201/201 and 6/6 passed, zero failed/skipped/unexecuted. The manifest
+contains exactly 36 cases, 13 graph scans, nine journeys, six packages and
+two pre-F-03 binaries; actual runtime-provider bytes and publication records
+were inspected. The complete owner-private evidence workspace is intentionally
+retained outside Git; default acceptance recreates fresh proof inputs and does
+not depend on that local path. Exact invocation arguments are recorded in PR 8.
+Lifecycle/foundation wrappers cleaned their own temporary inputs.
+
+Publication scope remains Darwin on measured local device `16777232`, not a
+verified filesystem family, Linux, network share, hostile same-user filesystem
+or hardware power-loss guarantee. Bounded waits do not terminate trusted
+collaborators; permanently pending work can require process exit. Configuration
+restoration cannot reverse provider schemas/artifacts or substitute for their
+compatible versions, backup and restore procedures. Synthetic fixture-v0
+conversion does not establish released-format or illustrative YAML support.
+
+README, development guidance, specification review status, this evidence record,
+the provider guide's stale future-tense sentence and the shared checkpoint are
+updated. Provider API/operational guidance, examples, quickstart/model/contracts/
+research, baseline product intent, architecture/diagrams/ADR, constitution,
+backlog, predecessor artifacts, infrastructure and release guides otherwise
+remain accurate: this stage changes no runtime, API, dependency, grammar,
+support guarantee, permission, governance or operational procedure.
+All task bodies/markers, reviewer-owned approvals and locks are preserved.
+
+[PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) targets `main` and is ready
+for maintainer review. The checkpoint records `await_merge / ready` with PR 8;
+F-03 remains active, not completed, and dependent work stays locked. After
+maintainer merge, a separate invocation must verify its merge ancestry in
+fetched main and publish the completion checkpoint. That checkpoint must also
+merge before another specification starts. No merge, infrastructure plan/apply,
+deployment, package/release publication, tag or permission change is performed.

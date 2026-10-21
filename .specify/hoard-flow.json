@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "stage": "finalize",
+  "stage": "await_merge",
   "status": "ready",
   "branch": "feature/003-provider-configuration",
   "active": {
     "id": "F-03",
     "feature_directory": "specs/003-provider-configuration",
-    "pr": null
+    "pr": 8
   },
   "completed": [
     {
@@ -309,6 +309,13 @@
       "branch": "feature/003-provider-configuration",
       "at": "2026-10-21T13:13:21.315542+00:00",
       "evidence": "Installed speckit-converge: converged, zero findings across 26 FRs/8 SCs/22 scenarios/13 edges/12 plan groups/all 71 tasks/8 constitutional principles, including T070/T071. Full locked validate-configuration.sh with private evidence retention passed 201 tests, 6 boundary proofs, 9 package journeys, 5 Darwin interruption barriers, CFG-01..36, 13 graph scans, retained binaries, formatting/analyzers and 38 tooling tests; no lock mutation. Feature artifacts/tasks/checklists/constitution byte-identical; no appended phase or runtime changes. README/DEVELOPMENT record scope and unaffected docs; PR #8 remains draft; finalize is next."
+    },
+    {
+      "stage": "finalize",
+      "spec_id": "F-03",
+      "branch": "feature/003-provider-configuration",
+      "at": "2026-10-21T13:32:21.668419+00:00",
+      "evidence": "F-03 finalization acceptance verified all 26 FRs/8 SCs/22 scenarios/13 edges/36 CFG cases/12 plan groups/71 tasks and unchanged 16/20/20 reviewer gates. Fresh full locked configuration with private evidence retention passed 201 tests/6 boundary proofs/9 package journeys/5 Darwin interruption barriers, 13 graph scans, six packages, retained binaries and verified actual runtime-provider hashes; closed passed/fullAcceptance TRX 201/201 and 6/6. Default lifecycle 369/9/7 and foundation 42/54/372 passed; 38 tooling tests and formatting/analyzers passed, no lock changes. Seven-project dependency advisory assessment found no known vulnerable entries or errors. Required complete and T070/T071 architecture reviews remain valid: implementation unchanged since reviewed 66fef6b. README/development/specification status/plan/provider tense updated; 178 local links, PR-template fidelity, protected-artifact/history invariants and git diff --check passed. PR #8 to main finalized for maintainer review; await_merge next, F-03 remains active and dependencies locked. Scope remains fixture-only and measured Darwin/local-device publication, not Linux/power-loss/provider certification. No merge, infrastructure, deployment, permission or publication actions."
     }
   ]
 }

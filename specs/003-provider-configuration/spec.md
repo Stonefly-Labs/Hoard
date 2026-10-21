@@ -4,8 +4,11 @@
 
 **Created**: 2026-10-20
 
-**Status**: Draft requirements; configuration behavior is not implemented by
-this specification stage.
+**Status**: Implemented fixture-backed Hosting library; finalized for maintainer
+review in [PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8), not yet merged.
+See [finalization acceptance](plan.md#finalization-acceptance-2026-10-21).
+The requirements below originated in the specification stage; they do not
+claim a runnable cache, production provider or conformance certification.
 
 **Input**: User description: "Specify secure, intelligible configuration of installed Hoard modules, including enablement, provider selection, per-provider settings and secret references. Include precedence, invalid configurations, disabled modules, compatibility failures, safe migration, diagnostics and restart behavior."
 

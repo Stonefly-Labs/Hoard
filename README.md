@@ -81,6 +81,9 @@ bash scripts/validate-foundation.sh
 
 # Fixture-only lifecycle, in-process HTTP, package/restart and compatibility proof.
 bash scripts/validate-lifecycle.sh
+
+# Fixture-only configuration, local secrets and original-preserving conversion.
+bash scripts/validate-configuration.sh
 ```
 
 For repository work, use Git, GitHub CLI, Python 3.11+, and a stable .NET 10 SDK
@@ -425,10 +428,9 @@ Publication is measured on this macOS local volume; Linux and other
 filesystems are not certified by that run. No runnable cache, production
 provider, native-client or conformance claim follows.
 
-[PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) stays draft.
-The F-03 convergence assessment reproduced two **HIGH** diagnostic gaps despite
-passing existing acceptance: secret failures lose their known setting identity,
-and option-check failures discard the declared rule and winning source.
+The first F-03 convergence assessment reproduced two **HIGH** diagnostic gaps
+despite passing existing acceptance: secret failures lost their known setting
+identity, and option-check failures discarded the declared rule and winning source.
 [Phase 9 / T070–T071](specs/003-provider-configuration/tasks.md#phase-9-convergence)
 records the follow-up without changing the original 69 tasks, specification
 or reviewer-owned checklists. The separately authorized implementation now
@@ -442,9 +444,14 @@ all 26 requirements, eight outcomes, 22 scenarios, 13 edge cases, 12 grouped
 plan decisions, 71 tasks and eight constitutional principles, including
 T070/T071. No tasks were appended or artifacts/checklists rewritten.
 See the [clean convergence checkpoint](docs/DEVELOPMENT.md#f-03-clean-convergence)
-for evidence and measured scope. The next separately authorized stage is
-`finalize`; PR #8 remains draft, and maintainer-authorized merge remains a
-separate gate.
+for evidence and measured scope. The separately authorized
+[finalization acceptance](specs/003-provider-configuration/plan.md#finalization-acceptance-2026-10-21)
+verifies the complete configuration and retained lifecycle/foundation checks,
+unchanged requirements-review gates and implementation architecture-review
+evidence. [PR #8](https://github.com/Stonefly-Labs/Hoard/pull/8) is ready for
+maintainer review, targeting `main`. The checkpoint records `await_merge`;
+F-03 remains active and dependent work stays locked until its merge is verified
+and the separate completion checkpoint is published and merged.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
