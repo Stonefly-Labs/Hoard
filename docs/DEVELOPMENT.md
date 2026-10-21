@@ -1014,6 +1014,60 @@ does not exist yet and is not claimed as passing. The next scheduled stage
 is `checklist` through a separate invocation; generation is not reviewer approval
 or implementation authorization.
 
+### F-03 configuration requirements-quality checklists
+
+The subsequent installed `speckit-checklist` stage pins the same recorded
+directory and creates separate
+[configuration](../specs/003-provider-configuration/checklists/configuration.md)
+and [safety](../specs/003-provider-configuration/checklists/safety.md)
+requirements-quality checklists, with 20 criteria each. Both are standard-depth
+PR reviews for maintainers and provider-contract reviewers before implementation
+authorization. No clarification question was needed: audience, depth and scope
+were explicit in the stage invocation.
+
+Configuration criteria cover permitted sources and precedence, canonical
+duplicates, whole selections versus keyed options, explicit defaults,
+structural versus effective validation, disabled isolation, existing composition
+ownership, descriptive option associations, compatibility and bounded inputs.
+Safety criteria cover local reference grammar/ownership, safe diagnostic identity
+remapping and output surfaces, finite coordination and retained pending resources,
+atomic ownership handoff, fixed-state restart, bundled/custom recovery,
+versioned preview/approval and original-preserving publication/interruption.
+Every criterion asks about written requirement quality with traceable evidence;
+none is an implementation procedure or a claim that its criterion is satisfied.
+
+All 40 items were generated unchecked and remain reviewer-owned. Generation is
+not evaluation, approval, implementation authorization, exploit review or
+runtime evidence.
+The specification, seven planning artifacts, built-in 16/16 checklist and all
+F-01/F-02 artifacts/approvals remain byte-for-byte unchanged. No extension hooks
+are configured. No task list, parser, resolver, converter, runtime API or
+configuration validation command is created by this stage.
+
+README and this guide link the new review artifacts. Provider/example guides,
+baseline product charter/specification, architecture/diagrams/ADR, constitution,
+backlog, test/tooling/lock files, IaC and release documentation are unaffected:
+no implemented behavior, dependency, support claim, executable command,
+permission or operator procedure changes. Conversion requirements are reviewed
+as writing, not performed. No infrastructure plan/apply, deployment, publication
+or merge occurs.
+
+After generation, the user explicitly asked Copilot to review both checklists
+and flag anything needing attention. The assisted requirements review finds
+configuration 20/20 and safety 20/20 satisfied, with no unresolved writing gap,
+waiver or decision requiring user attention. Both artifacts now record checked
+criteria and grouped written evidence. No specification or design remediation
+was needed. This is separately requested requirements evaluation, not another
+scheduled driver stage, independent human inspection, implementation
+authorization, exploit review or runtime acceptance.
+
+The generation-time checkpoint evidence correctly records 40 initially
+unchecked items; the subsequent assisted review is recorded in the checklists
+and draft PR, without rewriting stage history. The custom requirements-review
+gate is now satisfied. The next separately authorized stage is `tasks`, followed
+by read-only analysis; implementation is not started by this review and still
+requires the remaining scheduled gates and a separate invocation.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

@@ -355,8 +355,23 @@ The bounded planning architecture review found no confirmed contradictions;
 actual lifecycle integration, diagnostic remapping and platform publication
 remain implementation proof obligations. No runtime API, parser or new check
 command is implemented by planning, and existing specification/checklist bytes
-remain unchanged. The next scheduled stage is `checklist`, through a separate
-invocation; custom requirements-quality review remains reviewer-owned.
+remain unchanged.
+The subsequent checklist stage generated separate
+[configuration](specs/003-provider-configuration/checklists/configuration.md) and
+[safety](specs/003-provider-configuration/checklists/safety.md)
+requirements-quality checklists with 20 criteria each. These standard-depth
+reviews are for maintainers and provider-contract reviewers before implementation
+authorization. The 40 reviewer-owned criteria cover
+source/option/composition clarity and compatibility, plus secrets, diagnostics,
+bounded ownership, restart and original-preserving conversion. Generation is
+not requirements approval, implementation authorization or runtime evidence.
+At the user's explicit follow-up request, Copilot evaluated all 40 criteria:
+configuration 20/20 and safety 20/20 satisfied, with no unresolved writing gaps
+or decisions needing user attention. Both checklists record the evidence.
+This satisfies the custom requirements-review gate only, not implementation
+authorization or runtime acceptance. The specification, design and built-in
+16/16 checklist remain unchanged. The next scheduled stage is `tasks` through
+a separate invocation.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
