@@ -52,6 +52,62 @@ public sealed class ArtifactBoundaryTests
     }
 
     [Fact]
+    public void Prepared_artifact_consumer_bodies_are_provider_neutral_and_object_mechanisms_do_not_rename()
+    {
+        var path = Environment.GetEnvironmentVariable("HOARD_ARTIFACT_BOUNDARIES");
+        Assert.False(string.IsNullOrWhiteSpace(path), "Prepare actual artifact package graphs first.");
+        using var document = JsonDocument.Parse(File.ReadAllText(path!));
+        var graphs = document.RootElement.GetProperty("graphs").EnumerateArray()
+            .ToDictionary(graph => graph.GetProperty("scanId").GetString()!);
+        using var consumer = InspectionEvidence.Load(graphs["consumer"]);
+        Assert.Empty(ConsumerCouplings(consumer, "Consumer", "Hoard.Fixtures.Artifacts.Consumer.ArtifactConsumer"));
+        using var negative = InspectionEvidence.Load(graphs["boundary-leak"]);
+        Assert.Contains(ConsumerCouplings(negative, "BoundaryLeak",
+            "Hoard.Fixtures.Artifacts.BoundaryLeak.HiddenProviderConsumer"),
+            type => type.Contains("LocalArtifactStore", StringComparison.Ordinal));
+        DependencyGraphInspector.Read(negative);
+        negative.Nodes["BoundaryLeak"] = negative.Nodes["BoundaryLeak"] with { Boundary = BoundaryOwnership.Core };
+        Assert.Contains(DependencyGraphInspector.Inspect(negative),
+            violation => violation.RuleId == "ARCH-002" && violation.Source == "BoundaryLeak"
+                && violation.Target == "Hoard.Fixtures.Artifacts.Local");
+
+        using var local = InspectionEvidence.Load(graphs["local"]);
+        using var objects = InspectionEvidence.Load(graphs["object"]);
+        Assert.NotEmpty(RenameCalls(local.Assemblies["Local"]));
+        Assert.Empty(RenameCalls(objects.Assemblies["ObjectSemantics"]));
+        Assert.DoesNotContain(objects.Assemblies["ObjectSemantics"].MainModule.AssemblyReferences,
+            reference => reference.Name == "Hoard.Fixtures.Artifacts.Local");
+    }
+
+    private static string[] ConsumerCouplings(InspectionEvidence evidence, string assembly, string root)
+    {
+        var types = PublicSurfaceInspector.Types(evidence.Assemblies[assembly].MainModule)
+            .Where(type => type.FullName == root || type.FullName.StartsWith(root + "/", StringComparison.Ordinal)).ToArray();
+        Assert.NotEmpty(types);
+        return types.SelectMany(type => PublicSurfaceInspector.Expand(type.BaseType)
+            .Concat(type.Interfaces.SelectMany(contract => PublicSurfaceInspector.Expand(contract.InterfaceType)))
+            .Concat(type.Fields.SelectMany(field => PublicSurfaceInspector.Expand(field.FieldType)))
+            .Concat(type.Methods.SelectMany(method => PublicSurfaceInspector.Signature(method)
+                .Concat(method.HasBody
+                    ? method.Body.Variables.SelectMany(variable => PublicSurfaceInspector.Expand(variable.VariableType))
+                        .Concat(method.Body.ExceptionHandlers.SelectMany(handler => PublicSurfaceInspector.Expand(handler.CatchType)))
+                        .Concat(method.Body.Instructions.SelectMany(instruction => PublicSurfaceInspector.Operand(instruction.Operand)))
+                    : []))))
+            .Where(type => evidence.Owner(type) != assembly
+                && evidence.Nodes[evidence.Owner(type)].Boundary is not (BoundaryOwnership.Bcl or BoundaryOwnership.Abstractions))
+            .Select(type => type.FullName).Distinct().ToArray();
+    }
+
+    private static MethodReference[] RenameCalls(AssemblyDefinition assembly)
+        => PublicSurfaceInspector.Types(assembly.MainModule).SelectMany(type => type.Methods)
+            .Where(method => method.HasBody).SelectMany(method => method.Body.Instructions)
+            .Select(instruction => instruction.Operand).OfType<MethodReference>()
+            .Where(method => method.DeclaringType.FullName is "System.IO.File" or "System.IO.Directory"
+                && method.Name is "Move" or "Replace"
+                || method.DeclaringType.FullName is "System.IO.FileInfo" or "System.IO.DirectoryInfo"
+                && method.Name is "MoveTo" or "Replace").ToArray();
+
+    [Fact]
     public void Identical_member_names_do_not_hide_accessibility_or_invocation_breaks()
     {
         using var module = ModuleDefinition.CreateModule("CompatibilityNegative", ModuleKind.Dll);

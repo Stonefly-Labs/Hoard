@@ -21,3 +21,8 @@ public sealed class AllowedArtifactContract
     public Stream? BorrowedStream { get; init; }
     public ArtifactStamp? Stamp { get; init; }
 }
+
+public static class HiddenProviderConsumer
+{
+    public static object Create(string root) => new LocalArtifactStore(root);
+}

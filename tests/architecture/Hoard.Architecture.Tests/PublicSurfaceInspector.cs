@@ -96,6 +96,17 @@ internal static class PublicSurfaceInspector
         Expand(method.ReturnType).Concat(Attributes(method)).Concat(Attributes(method.MethodReturnType))
             .Concat(Constraints(method)).Concat(method.Parameters.SelectMany(p => Expand(p.ParameterType).Concat(Attributes(p))));
 
+    internal static IEnumerable<TypeReference> Operand(object? operand) => operand switch
+    {
+        TypeReference target => Expand(target),
+        MethodReference target => Expand(target.DeclaringType).Concat(Expand(target.ReturnType))
+            .Concat(target.Parameters.SelectMany(p => Expand(p.ParameterType)))
+            .Concat(target is GenericInstanceMethod generic ? generic.GenericArguments.SelectMany(Expand) : []),
+        FieldReference target => Expand(target.DeclaringType).Concat(Expand(target.FieldType)),
+        CallSite target => Expand(target.ReturnType).Concat(target.Parameters.SelectMany(p => Expand(p.ParameterType))),
+        _ => []
+    };
+
     internal static List<ArchitectureViolation> Inspect(InspectionEvidence evidence)
     {
         var result = new List<ArchitectureViolation>();

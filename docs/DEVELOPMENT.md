@@ -3725,6 +3725,21 @@ workspace; none qualifies storage. `--phase packages` now checks actual resolved
 graphs/public signatures, provider/Hosting leak negatives, baseline public member
 accessibility and the unchanged old marker binary with current assemblies, plus
 both consumer selections. Full mode still fails for missing obligations.
+The unchanged consumer now executes 16 store/evidence/maintenance/read/authority
+operations on both choices, rather than only a round trip. It verifies exact
+pending/committed/removed receipts, renewal, abandonment, bounded observation,
+safe stale cleanup/recreation, unsupported ranges, borrowed stream survival and
+independent retained protection. Report validation rejects roundtrip-only or
+incomplete/duplicate/foreign operation inventories. Actual compiled consumer
+bodies are checked separately from the host composition entry point; a hidden
+provider-constructor control rejects. The same resolved negative graph also
+rejects an impermissible Core/provider edge, and compiled object code has no
+rename calls with the Local mechanism as its positive rename control.
+Foundation and lifecycle selectors exclude only artifact graph tests that need
+artifact-specific preparation, as they already do for other feature-owned graph
+tests. Artifact package mode executes those tests with its real graphs; generic
+architecture rejection/permitted and in-memory compatibility checks still run
+in the existing foundation/lifecycle suites.
 In-process metadata fixtures, not fabricated reference counts,
 now test committed orphans, failed publication, live-reference exclusion and
 guard retention through lost metadata acknowledgments on SQLite and memory.

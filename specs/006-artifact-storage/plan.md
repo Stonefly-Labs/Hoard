@@ -655,3 +655,60 @@ are untouched. PR #16 stays draft. README/development/quickstart and task-status
 notes are synchronized; product architecture/diagrams, examples, predecessor
 guides, IaC and release guidance remain unaffected because their API/dependency/
 operational claims do not change.
+
+### Complete Common Consumer and Scoped Graph Checks 2026-10-22
+
+The same compiled consumer now executes all 16 common store/read/evidence/
+maintenance/authority methods for each selected package. It verifies pending
+and exact committed/deletion reconciliation, same-ticket retries, verified
+duplicate reuse, renewal, terminal abandonment, bounded observation, explicit
+unsupported range rejection, deletion/absence/recreation, stale cleanup safety
+and protected full readback. Independently retained protection remains valid
+after the original reference is disposed. Explicit read close reports physical
+release without closing borrowed streams; consumer sources now actually track
+EOF/disposal rather than returning an unconditional `CanRead` value.
+
+The runner rejects old roundtrip-only reports and any incomplete/duplicate/
+foreign operation inventory. The first verifier regression needed both correctly
+identified provider reports: an initial single-provider mock already rejected
+the object mismatch, so that first pass was not red evidence. Corrected paired
+reports reproduced the intended acceptance failure before the report was
+strengthened.
+
+Actual consumer IL, fields, locals and signatures are inspected independently
+of Program's permitted host composition. A compiled constructor hidden behind
+an `object` return type demonstrates concrete-provider rejection. The same
+actual resolved negative graph, assigned the Core policy for that canary,
+rejects its provider dependency; the real platform graph remains permitted.
+Compiled object code has no filesystem rename calls, paired with actual Local
+rename calls. Operand inspection reuses the existing slice inspector's logic;
+the shared helper preserves its original method/IL diagnostics.
+
+Full foundation acceptance initially failed because its selectors ran the new
+artifact-preparation-dependent tests without artifact graphs. Foundation's three
+selectors and the equivalent lifecycle selector now follow their existing
+feature-owned preparation exclusions. Artifact package mode still executes
+both graph-dependent artifact tests with actual prepared inputs; no generic
+architecture, public-member or compatibility test is skipped.
+
+| Exact command / check | Result |
+| --- | --- |
+| `python3 -m unittest discover -s tests/tooling -p test_artifact_evidence.py -k roundtrip_only -v` | Corrected paired-provider red: expected runtime exception was not raised before report validation was strengthened |
+| `bash scripts/validate-foundation.sh --phase architecture` | Intended integration red: 49 passed, the two unprepared artifact graph tests failed |
+| `bash scripts/validate-foundation.sh` | Passed complete default locked acceptance: 13 artifact value/contract, nine metadata, 42 foundation, 58 architecture and 507 composition tests; graph/compatibility/format gates passed |
+| `bash scripts/validate-lifecycle.sh` | Passed default locked acceptance: 504 tests, nine boundary proofs, seven package journeys, six independent fixtures and retained old binary |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase packages --evidence ../hoard-artifact-evidence/resume-sixteen-operation-consumer-20261022` | Passed all three artifact architecture tests, eight scans, frozen marker and both identical 16-operation consumer choices; `qualification: false` |
+| `python3 -m unittest discover -s tests/tooling -q` | All 97 passed |
+| `dotnet format whitespace tests/fixtures/artifacts/Consumer --folder --verify-no-changes -v quiet` | Passed |
+| `dotnet format whitespace tests/architecture/Hoard.Architecture.Tests --folder --verify-no-changes -v quiet` | Passed |
+| `git diff --check` | Passed |
+
+Latest artifact package/consumer capture binds source
+`e8ce094ebc9cf700337415cc6c1bf32bcb50172e5c9a296f5b80c0153c07f86d`.
+Foundation's run predates the final standalone consumer read-close/retention
+extension, which does not change its solution inputs. No lock or product API
+changes occur in this checkpoint. All partial results remain nonqualifying,
+both fixtures remain not-ready, and the full inventory/readiness/final review
+obligations stay open. README/provider/development/quickstart guides distinguish
+that boundary; planned product diagrams, old examples, IaC and release guidance
+are unaffected. No driver/task/checklist completion is inferred.

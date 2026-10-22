@@ -325,6 +325,27 @@ class ArtifactEvidenceTests(unittest.TestCase):
                 artifact.verify_manifest({"qualification": True, "phase": phase},
                                          self.work, "a" * 64)
 
+    def test_roundtrip_only_report_cannot_claim_complete_consumer_operations(self):
+        old = {"qualification": False, "provider": "local", "roundTrip": True}
+        reports = [json.dumps({**old, "provider": provider}) for provider in artifact.PROVIDERS]
+        with patch.object(artifact, "run", side_effect=reports), \
+                self.assertRaisesRegex(RuntimeError, "consumer"):
+            artifact.consumer_journeys(self.work)
+
+    def test_consumer_report_requires_each_operation_once_for_both_choices(self):
+        reports = [{"qualification": False, "provider": provider, "roundTrip": True,
+                    "operations": list(artifact.CONSUMER_OPERATIONS)} for provider in artifact.PROVIDERS]
+        with patch.object(artifact, "run", side_effect=[json.dumps(value) for value in reports]):
+            self.assertEqual(reports, artifact.consumer_journeys(self.work))
+        for operations in ([], list(artifact.CONSUMER_OPERATIONS[:-1]),
+                           [*artifact.CONSUMER_OPERATIONS, artifact.CONSUMER_OPERATIONS[0]],
+                           [*artifact.CONSUMER_OPERATIONS[:-1], "ForeignAsync"]):
+            changed = [{**reports[0], "operations": operations}, reports[1]]
+            with self.subTest(operations=operations), \
+                    patch.object(artifact, "run", side_effect=[json.dumps(value) for value in changed]), \
+                    self.assertRaisesRegex(RuntimeError, "consumer"):
+                artifact.consumer_journeys(self.work)
+
     def test_package_phase_runs_real_compatibility_and_never_qualifies(self):
         destination = self.work / "package-phase"
         destination.mkdir()

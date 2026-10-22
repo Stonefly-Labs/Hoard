@@ -772,6 +772,10 @@ Controlled publication/cleanup barriers now cover admitted equivalent writers,
 conflicting staged lengths, inactivity deadlines and changed recovery pages.
 Package negatives also reject third-party SDK, filesystem-path and service-locator
 leaks; real command-timeout checks preserve unrelated processes.
+The same compiled consumer now executes 16 common store/read/authority operations,
+including exact reconciliation, cleanup, deletion and incarnation-safe recreation.
+Compiled-body checks reject hidden provider coupling and confirm the object
+mechanism does not call filesystem rename APIs.
 Both fixtures still declare missing mandatory guarantees and are not ready.
 The full command fails closed until every required case, capability, composition,
 package and evidence gate is implemented. Focused modes always report

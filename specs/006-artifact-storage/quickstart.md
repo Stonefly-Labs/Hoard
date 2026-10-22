@@ -20,6 +20,12 @@ reject compiled SDK/raw-filesystem/service-locator leaks with allowed BCL
 counterparts. Ordinary command timeout/interrupt cleanup targets only its owned
 session's exact observed PIDs; actual descendant cleanup preserves an unrelated
 child. These checks do not close the full case inventory or readiness gate.
+Both package selections now run the identical compiled consumer through all 16
+store/read/evidence/maintenance/authority operations. Its proof includes exact
+reconciliation, independent guard retention, borrowed streams, stale cleanup
+and incarnation-safe recreation. Actual IL controls reject hidden consumer
+provider coupling and forbidden Core/provider edges and distinguish Local's
+rename mechanism from the object's no-rename implementation.
 See the [approved hash refresh and locked replay](plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 
 Read [API](contracts/artifact-api.md), [model](data-model.md),

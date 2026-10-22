@@ -48,19 +48,7 @@ internal static class SliceUsageInspector
                     }
                     foreach (var instruction in method.Body.Instructions)
                     {
-                        var references = instruction.Operand switch
-                        {
-                            TypeReference target => PublicSurfaceInspector.Expand(target),
-                            MethodReference target => PublicSurfaceInspector.Expand(target.DeclaringType)
-                                .Concat(PublicSurfaceInspector.Expand(target.ReturnType))
-                                .Concat(target.Parameters.SelectMany(p => PublicSurfaceInspector.Expand(p.ParameterType)))
-                                .Concat(target is GenericInstanceMethod generic ? generic.GenericArguments.SelectMany(PublicSurfaceInspector.Expand) : []),
-                            FieldReference target => PublicSurfaceInspector.Expand(target.DeclaringType).Concat(PublicSurfaceInspector.Expand(target.FieldType)),
-                            CallSite target => PublicSurfaceInspector.Expand(target.ReturnType)
-                                .Concat(target.Parameters.SelectMany(p => PublicSurfaceInspector.Expand(p.ParameterType))),
-                            _ => []
-                        };
-                        Check(references, $"{method.FullName} IL_{instruction.Offset:x4}");
+                        Check(PublicSurfaceInspector.Operand(instruction.Operand), $"{method.FullName} IL_{instruction.Offset:x4}");
                     }
                 }
                 void Check(IEnumerable<TypeReference> references, string location)

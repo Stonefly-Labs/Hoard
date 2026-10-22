@@ -28,6 +28,10 @@ CASES = tuple(f"AS-{number:02}" for number in range(1, 49))
 BARRIERS = ("B0", "B1", "B2", "B3", "D0", "D1")
 PHASES = ("logical", "transfers", "recovery", "packages")
 COMMAND_TIMEOUT_SECONDS = 600
+CONSUMER_OPERATIONS = (
+    "ReserveWriteAsync", "StageAsync", "RenewAsync", "CommitAsync", "OpenReadAsync", "ValidateAsync",
+    "ReconcileAsync", "AbandonAsync", "ReserveDeleteAsync", "DeleteAsync", "ObserveAsync", "CleanupAsync",
+    "CopyToAsync", "CloseAsync", "AcquireAsync", "RetainAsync")
 PACKAGES = tuple(f"Hoard.{name}.0.1.0.nupkg" for name in (
     "Abstractions", "Core", "Hosting", "Application",
     "Fixtures.Metadata.Sqlite", "Fixtures.Metadata.Memory", "Fixtures.Metadata.HostAdapters",
@@ -420,7 +424,8 @@ def consumer_journeys(work):
     journeys = []
     for provider in PROVIDERS:
         result = json.loads(run("dotnet", str(binary), provider, str(work / f"consumer-{provider}")))
-        if result != {"qualification": False, "provider": provider, "roundTrip": True}:
+        if result != {"qualification": False, "provider": provider, "roundTrip": True,
+                      "operations": list(CONSUMER_OPERATIONS)}:
             raise RuntimeError("Artifact unchanged-consumer journey did not pass.")
         journeys.append(result)
     (work / "consumer-journeys.json").write_text(json.dumps(journeys, indent=2) + "\n")

@@ -19,7 +19,12 @@ queries under the shared authority. Local crash checks use actual killed
 children and fresh reopen; object semantics remain process-local. The
 packages also have focused resolved-graph/public-member inspection, leak
 negatives and frozen-marker compatibility checks; these do not certify a
-production implementation. Both
+production implementation. The unchanged package-only consumer now exercises
+all 16 store/evidence/maintenance/read/authority operations on each choice,
+including independent guard retention, exact reconciliation, abandonment,
+deletion and safe recreation. Actual compiled-body inspection rejects hidden
+concrete-provider coupling; the independent object mechanism has no filesystem
+rename calls. Both
 fixtures declare missing mandatory guarantees and are not ready; neither is a
 production provider or an independently qualified store. The local-package
 hash blocker is resolved with reviewed hash-only lock updates and separate
