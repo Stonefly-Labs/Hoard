@@ -273,11 +273,18 @@ The 37 changed tracked locks were reviewed. Legacy fixture/example dependency
 identities and versions are unchanged; only their local Hoard package content
 hashes change with the additive Abstractions payload. The new negative fixture
 uses the same selected SQLite graph. Memory references Abstractions only.
-Repository tooling passes 75 tests, including 14 metadata-verifier tests.
+Repository tooling passes 76 tests, including 15 metadata-verifier tests.
 Retained evidence is owner-only before copying, outside Git; memory D entries
 reference applicability/overclaim proof with zero durable execution duration.
 
-Independent default locked replay and final regression results remain required
+An initial independent full locked replay also passed. The explicit fresh
+package selector then exposed an orchestration error: preflight required
+logical/recovery results before the pipeline could build them. It now checks
+fresh baseline/package prerequisites first; each later phase still checks its
+actual completed dependencies. The new regression fails for both recovery and
+packages before the repair and passes afterward. Actual fresh package mode
+passes all 96 entries while correctly reporting `qualification: false`.
+Final full locked/current-runner replay and regression results remain required
 before the running implementation checkpoint can finish. Private destination
 paths below are represented by `$PRIVATE_EVIDENCE`, an existing owner-private
 directory outside the repository; no user path or runtime artifact is committed.
@@ -285,11 +292,12 @@ directory outside the repository; no user path or runtime artifact is committed.
 | Executed command | Result |
 | --- | --- |
 | `bash scripts/validate-metadata.sh --update-locks --evidence "$PRIVATE_EVIDENCE/metadata-qualified-update"` | Passed complete qualification as described above |
+| `bash scripts/validate-metadata.sh --phase packages --evidence "$PRIVATE_EVIDENCE/metadata-qualified-packages-repaired"` | Passed fresh logical/recovery/package proof; explicitly not full qualification |
 | `bash scripts/validate-foundation.sh --update-locks` | Passed 615 .NET tests and all original declaration/registration/package/boundary proofs |
 | `bash scripts/validate-lifecycle.sh --update-locks` | Passed 504 tests, nine boundary proofs and seven package journeys |
 | `bash scripts/validate-configuration.sh --update-locks` | Passed 201 tests, six boundary proofs, nine package journeys and five actual publication-interruption barriers |
 | `bash scripts/validate-discovery.sh --update-locks` | Passed 137 tests, D01..D40, nine package journeys and 18 actual graph scans |
-| `python3 -m unittest discover -s tests/tooling -v` | Passed 75 tests |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
 | `git diff --check` | Passed |
 
 The mandatory implementation architecture review found three confirmed issues,

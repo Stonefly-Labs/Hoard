@@ -195,6 +195,30 @@ class MetadataEvidenceTests(unittest.TestCase):
                 with self.subTest(phase=phase), self.assertRaisesRegex(RuntimeError, "prerequisite"):
                     module.verify_prerequisites(evidence, phase, "a" * 64)
 
+    def test_focused_main_builds_prerequisites_before_demanding_later_phase_proof(self):
+        for phase in ("recovery", "packages"):
+            with self.subTest(phase=phase), tempfile.TemporaryDirectory() as directory:
+                module = self.load()
+                parent = Path(directory)
+                root = parent / "repository"
+                root.mkdir()
+                destination = parent / "evidence"
+                create = module.create_workspace
+                prepared = {"schemaVersion": 1, "sourceSha256": "a" * 64, "packages": True, "baseline": True}
+                result = {"qualification": False, "phase": phase}
+                with patch.object(sys, "argv", ["metadata_evidence.py", str(root), "--phase", phase,
+                                                "--evidence", str(destination)]), \
+                        patch.object(module, "create_workspace", side_effect=lambda: create(parent=parent)), \
+                        patch.object(module, "source_hash", return_value="a" * 64), \
+                        patch.object(module, "prepare_baseline"), \
+                        patch.object(module, "prepare_packages", return_value=prepared), \
+                        patch.object(module, "run"), \
+                        patch.object(module, "qualify", return_value=result) as qualify, \
+                        patch("builtins.print"):
+                    module.main()
+                qualify.assert_called_once()
+                self.assertEqual(result, module.json.loads((destination / "qualification.json").read_text()))
+
     def test_empty_manifest_cannot_qualify(self):
         module = self.load()
         with tempfile.TemporaryDirectory() as directory:

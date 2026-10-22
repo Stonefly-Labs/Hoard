@@ -801,7 +801,7 @@ def main():
         else:
             prepare_baseline(root, work, args.update_locks)
             prerequisites = prepare_packages(root, work, args.update_locks)
-            verify_prerequisites(prerequisites, args.phase or "logical", source_hash(root))
+            verify_prerequisites(prerequisites, "logical", source_hash(root))
             run("dotnet", "restore", str(root / "Hoard.slnx"), "--locked-mode", "-v", "quiet")
             run("dotnet", "build", str(root / "Hoard.slnx"), "-c", "Release", "--no-restore", "-v", "quiet")
             if args.phase is None:
