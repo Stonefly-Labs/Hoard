@@ -784,14 +784,13 @@ The subsequent checklist stage generates standard-depth
 [recovery](specs/006-artifact-storage/checklists/recovery.md) requirements-quality
 checklists for maintainer/provider review, with 20 initially unchecked items each.
 At the maintainer's explicit request, a separate assisted review evaluates every
-item: storage **20/20**, recovery **19/20**. One
+item, initially satisfying storage **20/20**, recovery **19/20**. The
 [high-priority consistency issue](specs/006-artifact-storage/checklists/recovery.md#rq-01-finite-release-versus-non-cooperative-work)
-needs attention: the specification promises finite resource release in all
+identified a conflict: the specification promised finite resource release in all
 failure cases, while the plan permits non-cooperative I/O to retain bounded
-resources and block readiness until actual settlement. The recommendation is
-to make the cooperative-I/O qualification and fail-closed exception explicit;
-no requirement change or waiver is presumed. The unresolved criterion remains
-unchecked and blocks implementation approval, not task generation.
+resources and block readiness until actual settlement. At that checkpoint,
+recovery CHK012 remained unchecked and blocked implementation approval,
+not task generation; no requirement change or waiver was presumed.
 See the [review scope](docs/DEVELOPMENT.md#f-06-artifact-storage-checklists-and-assisted-review).
 The subsequent [implementation task list](specs/006-artifact-storage/tasks.md)
 contains **86 unchecked tasks**: shared setup/contracts, five story phases and
@@ -801,14 +800,25 @@ with explicit prerequisites and file-disjoint parallel opportunities. US1 is
 the verified-publication/read MVP, not complete qualification or a runnable cache.
 Actual four size/provider transfer measurements, six local crash barriers,
 shared reference/deletion authority, independent packages and exact 96-entry
-qualification remain future obligations. Task generation leaves all existing
-requirements, design artifacts and checklist markers unchanged; RQ-01 still
-blocks implementation approval and is not silently resolved by planned tasks.
+qualification remain future obligations. Task generation left all existing
+requirements, design artifacts and checklist markers unchanged; planned tasks
+did not resolve RQ-01 or bypass the requirements-review gate.
 See the [task-stage scope](docs/DEVELOPMENT.md#f-06-artifact-storage-task-generation).
+The subsequent [maintainer-approved RQ-01 clarification](specs/006-artifact-storage/spec.md#approved-follow-up-2026-10-22-rq-01-resource-ownership)
+aligns US2 scenario 3, FR-009 and SC-006 with the existing design: finite caller
+return and cleanup attempts, finite actual resource release for cooperative
+I/O, and bounded retained ownership/incomplete cleanup/blocked admission and
+readiness for non-cooperative work until settlement or owner-controlled process
+termination. No live-resource release, forced borrowed-stream disposal or false
+cleanup/rollback is allowed. The separate recovery CHK012 re-review now satisfies
+**all 40/40 custom criteria without waivers**; AS-39 remains mandatory and all
+86 implementation tasks remain unchecked. See the
+[follow-up evidence](docs/DEVELOPMENT.md#f-06-approved-rq-01-clarification-and-re-review).
 The next separately authorized stage is read-only **`analyze`**;
 [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) remains draft.
-No analysis, remediation, implementation or qualification execution occurs in
-task generation; reviewed criteria establish requirements quality, not delivered behavior.
+No analysis, implementation or qualification execution occurs in this approved
+clarification/re-review; satisfied criteria establish requirements quality,
+not delivered behavior or permission to skip the analysis gate.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

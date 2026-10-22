@@ -46,6 +46,29 @@ rendered UI, distributed coordination or live provider replacement is in scope.
 No consequential product decision blocks planning; this review does not approve
 custom checklists or establish runtime evidence.
 
+### Approved Follow-up 2026-10-22: RQ-01 Resource Ownership
+
+After the assisted review identified
+[RQ-01](checklists/recovery.md#rq-01-finite-release-versus-non-cooperative-work),
+the maintainer approved the recommended clarification: "yeah, let's do what
+you're suggesting".
+
+Finite caller-return and cleanup-attempt budgets are distinct from actual
+resource release. The qualified cooperative I/O profile guarantees finite
+owned-resource release. Non-cooperative stream/native work instead requires
+bounded retained resource counts, fenced late mutation, explicit incomplete
+cleanup and blocked admission/readiness until settlement or owner-controlled
+process termination. Live guards/handles must not be released, borrowed streams
+must not be forcibly disposed, and neither successful cleanup nor rollback may
+be fabricated. Uncertain decisions retain exclusion and reconcile by exact
+ticket; cancellation alone never proves non-commit.
+
+US2 scenario 3, FR-009 and SC-006 now state that distinction explicitly.
+Existing plan/API/recovery mechanisms and required AS-39 remain unchanged.
+The separately recorded requirements re-review closes recovery CHK012 without
+a waiver; this clarification supplies no runtime evidence or authorization
+to skip the remaining analysis and implementation gates.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Publish Only Complete, Verified Artifacts (Priority: P1)
@@ -114,8 +137,13 @@ concurrency limit. Covers FR-007 through FR-009, FR-011 and FR-012.
    reported as success or unbounded staging growth.
 3. **Given** a stalled producer, slow reader or pending store operation,
    **When** cancellation or the declared finite work budget takes effect,
-   **Then** resources are released within the documented bound and the outcome
-   distinguishes definite non-commit from possible completed commit.
+   **Then** a classified outcome returns within the caller budget and cleanup
+   attempts remain within their finite budget; cooperative I/O releases owned
+   resources within the cleanup bound, while non-cooperative work retains only
+   bounded owned resources, fences late mutation and reports incomplete cleanup
+   with admission/readiness blocked until settlement or owner-controlled
+   process termination. The outcome distinguishes definite non-commit from a
+   possible completed commit; live resources are not released to force cleanup.
 4. **Given** exhausted capacity, denied access, unavailable storage or a
    missing committed artifact, **When** the operation completes, **Then**
    these outcomes remain distinguishable and sanitized; an outage is not
@@ -306,9 +334,16 @@ durable or production qualification. Covers FR-022 through FR-025.
   MUST remain subject to the byte limit; excess input MUST fail, not truncate
   successfully. Exhausted limits MUST NOT trigger hidden unbounded retries.
 - **FR-009**: Read ownership and disposal, input-stream ownership and
-  cancellation behavior MUST be explicit. Completion, failure and cancellation
-  MUST release owned transfer resources within documented finite bounds without
-  disposing resources retained by the caller.
+  cancellation behavior MUST be explicit. Caller return and cleanup attempts
+  MUST obey documented finite budgets. Completion, failure and cancellation
+  MUST release owned transfer resources within the cleanup bound for the
+  qualified cooperative I/O profile, without disposing resources retained by
+  the caller. Non-cooperative stream/native work MUST retain only bounded owned
+  resources, fence late mutation and report incomplete cleanup with further
+  admission/readiness blocked until actual settlement or owner-controlled
+  process termination. Live handles, buffers, slots and guards MUST NOT be
+  released or borrowed streams forcibly disposed to claim cleanup; successful
+  cleanup or rollback MUST NOT be reported while the outcome remains uncertain.
 - **FR-010**: Committed reads MUST distinguish absent content from unavailable,
   truncated or detected-corrupt content. Detected corruption MUST invalidate
   healthy/reusable claims and prevent successful completion as verified content.
@@ -426,8 +461,14 @@ durable or production qualification. Covers FR-022 through FR-025.
   rejects unsafe removal or stale mutation, with zero truncated protected reads,
   deletion of newly protected content or removal outside the selected namespace.
 - **SC-006**: All cancellation, limit and storage-failure cases return a
-  classified outcome and release owned resources within their declared finite
-  bounds, with zero silent fallbacks, secret exposures or outages reported as misses.
+  classified outcome within the caller budget, with cleanup attempts within
+  their finite budget. Cooperative I/O releases owned resources within the
+  cleanup bound; non-cooperative cases retain only bounded owned resources,
+  fence late mutation and report incomplete cleanup with admission/readiness
+  blocked until settlement or owner-controlled process termination. There are
+  zero unsafe releases under live work, forced disposals of borrowed streams,
+  false cleanup/rollback claims, silent fallbacks, secret exposures or outages
+  reported as misses.
 - **SC-007**: One unchanged consumer completes 100% of the mandatory logical
   cases against two independent implementations using different publication
   mechanisms; no consumer rewrite or assumption of universal atomic rename is

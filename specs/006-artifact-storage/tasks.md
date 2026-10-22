@@ -6,21 +6,20 @@
 [artifact API](contracts/artifact-api.md), [recovery](contracts/recovery.md),
 [acceptance](contracts/acceptance.md) and [quickstart.md](quickstart.md).
 
-**Status**: Task generation only; all 86 tasks are unchecked. No artifact API,
+**Status**: All 86 implementation tasks remain unchecked. No artifact API,
 fixture, command, runtime result or qualification is delivered here. The
-reviewer-owned [storage](checklists/storage.md) checklist is 20/20 and
-[recovery](checklists/recovery.md) is 19/20. Recovery CHK012 and high-priority
+reviewer-owned [storage](checklists/storage.md) and
+[recovery](checklists/recovery.md) checklists are now 20/20 each.
 [RQ-01](checklists/recovery.md#rq-01-finite-release-versus-non-cooperative-work)
-remain unresolved: FR-009, SC-006 and US2 scenario 3 promise finite actual
-resource release, while the design/AS-39 permit retained ownership for
-non-cooperative work. This list preserves both obligations and flags their
-conflict; it neither chooses a resolution nor weakens the specification.
-Implementation must not begin until the maintainer approves a resolution,
-affected artifacts are aligned and the checklist criterion is re-reviewed
-(or the reviewer explicitly authorizes proceeding). A checklist authorization
-alone cannot silently resolve the contradictory acceptance obligations.
-Any critical/high analysis finding also needs separately authorized remediation
-and fresh analysis. Task generation does not approve checklists or remediation.
+is resolved by the [maintainer-approved clarification](spec.md#approved-follow-up-2026-10-22-rq-01-resource-ownership)
+to US2 scenario 3, FR-009 and SC-006 and the separate recovery CHK012 re-review.
+Finite caller-return/cleanup-attempt budgets, finite cooperative release and
+bounded retained non-cooperative ownership now agree with the existing design
+and required AS-39. The custom requirements-review gate is satisfied without
+waivers; read-only analysis must still pass before implementation. Critical/high
+analysis findings require separately authorized remediation and fresh analysis.
+This approved follow-up runs no driver stage and marks no implementation task
+complete; task generation itself was not checklist approval or remediation.
 
 **Tests**: Explicitly required by the five story tests, FR-014/FR-025,
 SC-001..SC-008 and AS-01..AS-48. Write paired successful and rejection/fault
@@ -164,13 +163,14 @@ paced non-seekable producer/sink at fixed concurrency and buffers; verify exact
 bytes/hash and <=64 MiB incremental peak process RSS. Exercise limits, deadlines,
 failure classification, borrowed resources and non-cooperative work in a
 controlled child. Covers US2.1..5, AS-11..20/39 and the empty-content AS-01.
-RQ-01 must be resolved before interpreting finite release versus retained
-ownership as passing acceptance.
+Apply the approved RQ-01 distinction between finite caller-return/cleanup
+attempts, finite cooperative release and bounded retained non-cooperative
+ownership; retained live resources are not successful cleanup.
 
 ### Tests for User Story 2
 
 - [ ] T031 [P] [US2] Write failing `tests/contracts/Hoard.Artifacts.Tests/ArtifactBudgetTests.cs` for AS-13..17: declared/actual/last-chunk cap crossings, slot/queue/staging/ticket exhaustion, total/inactivity/guard/visibility deadlines, cooperative cancellation before decision and distinct full/access/unavailable failures; check original deadlines include queueing and retries.
-- [ ] T032 [P] [US2] Write failing `tests/contracts/Hoard.Artifacts.Tests/ArtifactOwnershipTests.cs` and `ArtifactNonCooperationTests.cs` for AS-18/39: borrowed stream survival, one-copy/early-close semantics, owned handle/buffer/slot/guard release after real quiescence, explicit `CloseAsync`/`DisposeAsync` incomplete-cleanup reporting and fenced late mutation; preserve RQ-01 as a gate, prove retained bounded ownership/not-ready for non-cooperative source/destination/native work without unsafe disposal, detached tasks or false rollback.
+- [ ] T032 [P] [US2] Write failing `tests/contracts/Hoard.Artifacts.Tests/ArtifactOwnershipTests.cs` and `ArtifactNonCooperationTests.cs` for AS-18/39: borrowed stream survival, one-copy/early-close semantics, owned handle/buffer/slot/guard release after real quiescence, explicit `CloseAsync`/`DisposeAsync` incomplete-cleanup reporting and fenced late mutation; assert finite caller-return/cleanup-attempt budgets and cooperative release under approved FR-009/SC-006, and prove retained bounded ownership/not-ready for non-cooperative source/destination/native work without unsafe disposal, detached tasks or false rollback.
 - [ ] T033 [P] [US2] Write failing `tests/contracts/Hoard.Artifacts.Tests/ArtifactFailureTests.cs` and `ArtifactConfinementTests.cs` for AS-19/20/34: unexpected faults on both sides of decision, malformed/foreign-store/epoch/traversal/symlink attempts and synthetic secrets/private paths/opaque handles/raw exceptions; require sanitized actionable codes and an untouched outside sentinel, never miss/empty success or fallback.
 - [ ] T034 [P] [US2] Add `tests/fixtures/artifacts/TransferRunner/Program.cs`, `GeneratedSource.cs`, `HashingSink.cs` and `tests/contracts/Hoard.Artifacts.Tests/ArtifactTransferProofTests.cs`: bounded warmup/idle handshake, deterministic non-seekable generated content, independently computed expected digest, deliberately paced producer and sink, actual write/read counts 268435456 and 4294967296, fixed one-transfer profile and proof checks that reject smaller/sparse/preloaded payloads (AS-11/12).
 
@@ -181,7 +181,7 @@ ownership as passing acceptance.
 - [ ] T037 [US2] Complete shutdown/close ownership in `tests/fixtures/artifacts/Local/LocalLifetime.cs`, `LocalReadSession.cs`, `ObjectSemantics/ObjectLifetime.cs` and `ObjectReadSession.cs`: cooperative resources settle within cleanup budget, held non-cooperative activity keeps bounded handles/slots/guards, blocks admission/readiness and emits explicit incomplete cleanup; borrowed streams are never forcibly closed and expiry never revokes live read protection. Apply only the maintainer-approved RQ-01 resolution.
 - [ ] T038 [US2] Complete owning-boundary failure mapping and fixed safe events in `tests/fixtures/artifacts/Local/LocalFailures.cs` and `ObjectSemantics/ObjectFailures.cs`, integrating T033 confinement/fault paths; preserve known failure distinctions and after-decision uncertainty, redact public values/proof/diagnostics and never broadly catch into miss/default success.
 - [ ] T039 [US2] Extend `scripts/artifact_evidence.py` and `tests/tooling/test_artifact_evidence.py` with actual macOS/Linux OS peak-RSS capture plus sampled RSS, units, warmed idle baseline, exact child/runtime IDs, actual byte/hash/buffer/slot/pacing proof and 40-minute child deadline; fail absent measurement/space/child or incremental peak above 67108864 bytes, never substitute managed allocations or artificial baseline ballast.
-- [ ] T040 [US2] Execute T031..T033 through `scripts/artifact_evidence.py` against both stores, including an owner-controlled non-cooperative child; retain paired AS-13..20/34/39 results, actual cleanup/ownership observations and exact process exit after the negative, without treating retained ownership as successful release or waiving RQ-01.
+- [ ] T040 [US2] Execute T031..T033 through `scripts/artifact_evidence.py` against both stores, including an owner-controlled non-cooperative child; retain paired AS-13..20/34/39 results, actual cleanup/ownership observations and exact process exit after the negative, applying the approved RQ-01 clarification without treating retained ownership as successful release.
 - [ ] T041 [US2] Execute T034 via `scripts/artifact_evidence.py` in four fresh measured children (each size on each provider); retain AS-11/12 actual write/read counts, independent hash, deliberate backpressure, baseline/OS peak/sampled RSS and full-process <=64 MiB increment in every run; missing space/platform support fails, not skips, and this partial gate never qualifies the feature.
 
 **Checkpoint**: Bounded real transfers and classified ownership/failure cases
@@ -441,7 +441,7 @@ its prerequisites exist. All five stories are mandatory for complete F-06.
 
 Ranges are inclusive. Setup/foundation and final current-source gates support
 all rows but do not replace focused behavioral proof. FR-009/SC-006/AS-39
-remain conditional on resolving RQ-01, not implicitly satisfied by this mapping.
+use the approved RQ-01 ownership distinction; mapping is not runtime evidence.
 
 | Requirement | Implementation tasks | Focused proof tasks / cases |
 | --- | --- | --- |
@@ -453,7 +453,7 @@ remain conditional on resolving RQ-01, not implicitly satisfied by this mapping.
 | FR-006 | T025..T028, T046/T047/T051 | T020/T021/T030/T045/T056/T069/T079; AS-02/07/10/37/42/43 |
 | FR-007 | T023/T024/T027/T028/T034..T037 | T020/T031/T032/T040/T041; AS-03/11/12/15/16 |
 | FR-008 | T011/T023/T024/T035..T037/T048..T050 | T031/T032/T040/T041/T043/T055; AS-11..14/16/17/24/39 |
-| FR-009 | T011/T027/T028/T035..T037/T048..T051 | T031/T032/T040/T041/T043/T055; AS-11/12/14..16/18/27/39; RQ-01 gate |
+| FR-009 | T011/T027/T028/T035..T037/T048..T051 | T031/T032/T040/T041/T043/T055; AS-11/12/14..16/18/27/39; approved RQ-01 profile |
 | FR-010 | T025..T028/T038 | T021/T030; AS-09/10 |
 | FR-011 | T023/T024/T027/T028/T034/T037 | T020/T032/T030/T040/T041; AS-01/03/11/12/18 |
 | FR-012 | T011/T035..T039/T046/T047/T061..T065/T073..T078 | T020..T022/T031..T033/T040/T058/T059/T067/T069/T072/T079; AS-04/08/10/15/17..20/33/34/38/39/48 |
@@ -478,7 +478,7 @@ remain conditional on resolving RQ-01, not implicitly satisfied by this mapping.
 | SC-003 | T020/T021/T030 | One equivalent immutable incarnation; fully verified submissions; conflicting/corrupt reuse rejected without overwrite |
 | SC-004 | T042/T045/T055/T056/T058/T060/T067/T068 | Exact retained outcomes across every local B0..B3/D0..D1 interruption, no duplicate effect or false rollback |
 | SC-005 | T043/T055/T057..T060/T067/T068 | Stale ownership/reference/read/delete/recreate cannot remove protected/new/foreign content or truncate a reader |
-| SC-006 | T031..T033/T040/T043/T055/T059/T067/T069/T072/T079 | Classified bounded failures, no fallback/canary exposure/miss-shaped outage; resource-release meaning requires RQ-01 resolution |
+| SC-006 | T031..T033/T040/T043/T055/T059/T067/T069/T072/T079 | Finite classified caller return/cleanup attempts, finite cooperative release and bounded retained non-cooperative ownership; no unsafe release, false cleanup/rollback, fallback/canary exposure/miss-shaped outage |
 | SC-007 | T029/T030/T041/T055/T067/T069..T071/T076/T079/T082 | Same consumer/common assertions on independent mechanisms with actual configured selection and truthful local-only D attribution |
 | SC-008 | T045/T054/T056/T060/T066/T068/T072/T078..T082/T085/T086 | All applicable attributed cases/subproofs, six reproducible crash barriers, declared configuration/limits/exclusions and honest walkthrough |
 
@@ -498,7 +498,7 @@ remain conditional on resolving RQ-01, not implicitly satisfied by this mapping.
 | AS-31..33 | T058/T067 |
 | AS-34..35 | T013/T022/T033/T040/T059/T067 |
 | AS-36..38 | T069/T076/T079 |
-| AS-39 | T032/T040; RQ-01 gate |
+| AS-39 | T032/T040; approved RQ-01 profile |
 | AS-40 | T069/T075/T079 |
 | AS-41..43 | T045/T052/T054/T056 |
 | AS-44 | T060/T066/T068 |
@@ -544,7 +544,7 @@ These are scheduling examples, not instructions to launch agents.
 
 ### MVP First
 
-After the unresolved requirements/review and analysis gates pass, complete
+After the remaining read-only analysis gate passes, complete
 setup/foundation and US1. Validate its complete verified publication/read
 increment with both fixtures and the same package-only consumer. This is the
 suggested MVP, not a deployment, complete F-06 support or permission to skip
@@ -565,10 +565,13 @@ prerelease remain separate gates.
 
 - Counts: setup 6, foundation 13, US1 11, US2 11, US3 15, US4 12, US5 12,
   cross-cutting 6; total 86, all initially unchecked.
-- No extension hooks are configured. Task generation changes no existing
-  requirement, design, checklist marker, dependency, runtime or qualification.
-- RQ-01 remains high priority and needs explicit maintainer resolution plus
-  re-review; do not manufacture a resolution from a task or passing old suite.
+- No extension hooks are configured. Original task generation changed no
+  existing requirement, design, checklist marker, dependency, runtime or
+  qualification. The separately approved RQ-01 follow-up now aligns the three
+  specification passages and closes recovery CHK012; all 86 task markers and
+  their dependency graph remain unchanged.
+- RQ-01 is resolved without a waiver, not by task generation or a passing old
+  suite. Actual ownership/release proof on both fixtures remains mandatory.
 - Qualification is limited to the actual tested local process-crash
   environment and simulated alternative. Production filesystem SPEC-04,
   remote providers SPEC-27, generalized conformance F-07, HA, native protocol

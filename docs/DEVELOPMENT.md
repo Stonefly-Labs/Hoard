@@ -3249,6 +3249,10 @@ infrastructure plan/apply, settings/permissions change, deployment or merge occu
 
 ### F-06 artifact storage checklists and assisted review
 
+This subsection records the original checklist checkpoint. The
+[approved RQ-01 follow-up](#f-06-approved-rq-01-clarification-and-re-review)
+below records the current 40/40 review status.
+
 The separately invoked `checklist` stage retains the recorded branch and pins
 `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage`. After the driver begins
 `checklist / running`, the installed `speckit-checklist` resolves its template
@@ -3274,10 +3278,11 @@ seven planning artifacts. Per-item evidence records **storage 20/20** and
 review, not self-approval during implementation or an unqualified approval of
 the entire feature.
 
-**Maintainer attention: high-priority
+**Initial finding: high-priority
 [RQ-01](../specs/006-artifact-storage/checklists/recovery.md#rq-01-finite-release-versus-non-cooperative-work).**
-FR-009, SC-006 and US2 scenario 3 require finite owned-resource release without
-an explicit cooperation condition. The API/plan/research and required AS-39
+FR-009, SC-006 and US2 scenario 3 initially required finite owned-resource
+release without an explicit cooperation condition. The API/plan/research and
+required AS-39
 negative instead permit non-cooperative stream/native work to retain ownership,
 stop admission and block readiness until settlement. Bounded retained counts
 are not finite release time. The recommendation is to explicitly distinguish
@@ -3288,11 +3293,14 @@ No disposal under live work, forced closure of borrowed streams or fabricated
 rollback is acceptable. A different safely preemptible execution model would
 require reconsidering the design.
 
-The maintainer has not approved that clarification or a waiver. Requirements,
+At this checklist checkpoint, the maintainer had not approved that clarification
+or a waiver. Requirements,
 plan, research, model, API/recovery/acceptance contracts, quickstart and historical
 built-in 16/16 checklist remain byte-for-byte unchanged. The custom review
-does not silently edit them to satisfy its own criterion. RQ-01 must be resolved
-and CHK012 re-reviewed before implementation approval. Checklist generation is
+did not silently edit them to satisfy its own criterion. RQ-01 needed resolution
+and CHK012 re-review before implementation approval. The subsequent
+[approved follow-up](#f-06-approved-rq-01-clarification-and-re-review)
+records that resolution separately. Checklist generation was
 complete, so the driver may schedule `tasks / ready`; neither task generation
 nor later analysis bypasses this outstanding requirements gate.
 
@@ -3321,6 +3329,9 @@ qualification, convergence, finalization, release, infrastructure plan/apply,
 settings/permissions change, deployment or merge occurs.
 
 ### F-06 artifact storage task generation
+
+This subsection records task generation before the separately approved
+[RQ-01 correction](#f-06-approved-rq-01-clarification-and-re-review).
 
 The separately invoked `tasks` stage retains `feature/006-artifact-storage`
 and explicitly pins `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage`.
@@ -3361,16 +3372,19 @@ zero-reference observation is never deletion permission. No cache engine,
 production provider, endpoint, UI, cloud account, vendor SDK or generalized
 F-07 certification is introduced by task generation.
 
-**RQ-01 remains unresolved and high priority.** The tasks explicitly retain
-the conflict between FR-009/SC-006/US2.3 finite release and design/AS-39 retained
-non-cooperative ownership. They do not choose the recommended clarification,
+**At task generation, RQ-01 remained unresolved and high priority.** The tasks
+explicitly retained the conflict between FR-009/SC-006/US2.3 finite release and
+design/AS-39 retained non-cooperative ownership. They did not choose the recommended clarification,
 amend requirements, mark recovery CHK012 satisfied or grant a waiver.
-Implementation must wait for an approved resolution, aligned artifacts and
+Implementation had to wait for an approved resolution, aligned artifacts and
 re-review (or explicit reviewer authorization), without silently interpreting
 contradictory acceptance as satisfied. Read-only analysis may assess the
 conflict; critical/high findings require separately authorized remediation and
 fresh analysis before progress. Successful task generation itself is not blocked
 by unchecked custom review markers and does not bypass their implementation gate.
+The [later approved follow-up](#f-06-approved-rq-01-clarification-and-re-review)
+updates the current task/review status without changing task markers or the
+scheduled stage.
 
 README and this guide link the task list and distinguish planned proof from
 current behavior. Specification, seven planning artifacts and all three
@@ -3400,6 +3414,70 @@ plan/apply, settings/permissions change, deployment or merge occurs here.
 Existing product/.NET/OpenTofu checks and the still-unimplemented
 `validate-artifacts.sh` are not run for documentation-only task generation;
 artifact-structure/link/integrity checks are not runtime storage evidence.
+
+### F-06 approved RQ-01 clarification and re-review
+
+The maintainer explicitly approves the recommended RQ-01 clarification:
+"yeah, let's do what you're suggesting". This is a separately authorized
+requirements correction and assisted re-review, not another `hoard-speckit`
+invocation or implicit implementation approval.
+
+The [specification follow-up](../specs/006-artifact-storage/spec.md#approved-follow-up-2026-10-22-rq-01-resource-ownership)
+aligns exactly US2 scenario 3, FR-009 and SC-006 with the existing
+[finite-work/ownership design](../specs/006-artifact-storage/contracts/artifact-api.md#finite-work-and-ownership):
+caller return and cleanup attempts obey finite budgets; the qualified
+cooperative I/O profile also guarantees actual owned-resource release within
+the cleanup bound. Non-cooperative stream/native work retains only bounded
+owned resources, fences late mutation, reports incomplete cleanup and blocks
+admission/readiness until settlement or owner-controlled process termination.
+Live handles/buffers/slots/guards cannot be released to fake cleanup, borrowed
+streams cannot be forcibly disposed, and uncertainty cannot become false
+rollback or successful cleanup.
+
+The separate [recovery CHK012 re-review](../specs/006-artifact-storage/checklists/recovery.md#approved-resolution-and-re-review-2026-10-22)
+compares these three updated specification passages with the unchanged API,
+research D6, protected-reader/settlement ownership and required AS-39.
+They now specify the same safe cooperative-release/non-cooperative-retention
+outcomes. CHK012 is satisfied without a waiver: recovery becomes 20/20 and the
+combined custom review **40/40**. All other custom markers and the built-in
+16/16 requirements checklist remain unchanged. Storage's evidence notes
+reference the resolution; none of its markers is re-generated or toggled.
+No further maintainer decision remains from this review; actual release,
+memory, crash and coordination proof are still future implementation obligations.
+
+The [task list](../specs/006-artifact-storage/tasks.md) updates its current
+status, RQ-01 references and focused ownership test instructions to the approved
+requirements. Its 86 task IDs/markers, five-story counts, 36 parallel markers
+and complete dependency graph are unchanged. No generator, `begin` or `finish`
+is rerun. The tracked flow checkpoint stays byte-for-byte unchanged at
+**`analyze / ready`**; read-only analysis must run through its installed skill
+on a separate invocation before implementation.
+
+README, this guide and draft [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16)
+record approval, the resolved finding and current review status while retaining
+the original finding/history. The seven planning artifacts, required AS-39 and
+all 48 acceptance cases remain unchanged because they already describe this
+cooperation distinction. Provider/example/compatibility policy, predecessor
+artifacts, charter/product specification, baseline architecture/ADR/diagrams,
+constitution/backlog, source/tests/tooling, locks, release and IaC guidance are
+unaffected: the correction aligns written promises with existing design, not
+public signatures, dependencies, resource limits, architecture or runtime
+behavior. No architecture-agent review is needed for this requirements/docs-only
+correction; implementation still requires its planned architecture review.
+
+| Exact command / check | Result |
+| --- | --- |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks` | Passed; resolves the recorded feature and unchanged task inventory |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed all 76 tests |
+| Focused clarification/re-review assertions | Passed only US2.3/FR-009/SC-006 plus the approval log changed in the spec, only recovery CHK012 toggled, 40/40 custom criteria satisfied and all 86 unchecked tasks/36 parallel markers/dependencies preserved |
+| Artifact/checkpoint integrity assertions | Passed nine unchanged planning/built-in/checkpoint artifacts, required AS-39 unchanged, no source/test/tooling/lock changes and driver still `analyze / ready` |
+| Local Markdown link/anchor assertions | Passed all 17 added local links/anchors |
+| `git diff --check` | Passed |
+
+No analysis stage, implementation, qualification, convergence/finalization,
+release/tag/package publication, infrastructure plan/apply, settings/permissions
+change, deployment or merge occurs. Product/.NET/OpenTofu acceptance and the
+unimplemented artifact runner are not run for this documentation-only change.
 
 ```mermaid
 flowchart TD

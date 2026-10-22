@@ -85,7 +85,7 @@ No implementation, qualification execution or blanket feature approval is implie
 | CHK004 | Satisfied | FR-010..012, read policy and outcome table distinguish empty, absent, unavailable and corrupt/truncated content; every full copy verifies. |
 | CHK005 | Satisfied | FR-005/006/023 and publication steps require direct visibility before success while separately declaring durability/listing conditions. |
 | CHK006 | Satisfied | Model expectations require real EOF, exact length and incremental cap enforcement; short positive reads are not EOF. |
-| CHK007 | Satisfied | Read policy explicitly borrows caller streams, separates open from verified copy and requires discarding failed partial output. Finite-release consistency is separately unresolved in recovery CHK012. |
+| CHK007 | Satisfied | Read policy explicitly borrows caller streams, separates open from verified copy and requires discarding failed partial output. The initially separate finite-release conflict is now resolved by the approved RQ-01 clarification and recovery CHK012 re-review. |
 | CHK008 | Satisfied | Outcome table defines explicit errors/uncertainty, sanitized fixed diagnostics and no broad failure-to-miss or provider fallback. |
 | CHK009 | Satisfied | Publication rechecks existing bytes; read corruption invalidates subsequent evidence/reuse without automatic overwrite or repair. |
 | CHK010 | Satisfied | Plan structure keeps contracts additive and BCL-only, providers independent, Core empty and metadata integration in the host adapter. |
@@ -95,10 +95,13 @@ No implementation, qualification execution or blanket feature approval is implie
 | CHK014 | Satisfied | Qualification classes require exactly 96 entries, 92 applicable passes and four explicit object durability exclusions; AS-48 rejects invalid evidence. |
 | CHK015 | Satisfied | US1/US2, edge cases and AS-01..10 cover empty/unknown inputs, unsupported checks, duplicate verification, equivalent races and corrupt/conflicting content. |
 | CHK016 | Satisfied | US5, alternative protocol and AS-25/37 independently cover delayed direct visibility/listing and conditional conflicts. |
-| CHK017 | Satisfied | Finite-work table bounds bytes, buffers, slots, waiters, staging, deadlines and record/page size; retries consume the original deadline. This does not resolve indefinite retained ownership in recovery RQ-01. |
+| CHK017 | Satisfied | Finite-work table bounds bytes, buffers, slots, waiters, staging, deadlines and record/page size; retries consume the original deadline. The approved RQ-01 follow-up now makes the specification's cooperative-release/non-cooperative-retention distinction consistent with these limits. |
 | CHK018 | Satisfied | Recovery configuration confines trusted roots, rejects foreign/traversal/link access and preserves outside sentinels; AS-19/34 require safe diagnostics/proof. |
 | CHK019 | Satisfied | FR-025, assumptions and AS-36/45..48 require independent packages/consumer, simulation attribution and no SPEC-04/SPEC-27/F-07 support overclaim. |
 | CHK020 | Satisfied | Host composition uses existing selection/lifecycle/configuration, no disabled I/O, initialization before readiness and restart-only change. |
 
-No storage-domain question needs a maintainer decision. The combined review is
-**not fully satisfied**: see [recovery RQ-01](recovery.md#rq-01-finite-release-versus-non-cooperative-work).
+No storage-domain question needs a maintainer decision. After the
+[approved RQ-01 clarification and recovery re-review](recovery.md#approved-resolution-and-re-review-2026-10-22),
+the combined review is **40/40 satisfied without waivers**. All storage markers
+remain unchanged; only recovery CHK012 changes from unchecked to satisfied.
+This is requirements quality, not implementation or qualification evidence.
