@@ -21,14 +21,12 @@ public sealed partial class LocalArtifactStore(string root, TimeProvider? clock 
             lock (activitySync)
             {
                 return initialized && lifecycleActive == 0 && !stopping
-        && retained.Count == 0 && incompleteReadCloses.IsEmpty && Capabilities.MeetsBaseline;
+        && retained.Count == 0 && incompleteHandoffs.Count == 0 && incompleteReadCloses.IsEmpty && Capabilities.MeetsBaseline;
             }
         }
     }
     public ArtifactCapabilities Capabilities { get; private set; } = new(
-        1, ArtifactDurability.LocalProcessCrash, ArtifactEnumerationConsistency.Snapshot, new ArtifactLimits(),
-        conditionalPublication: false, conditionalDeletion: false, stagingRecovery: false,
-        ownerFencing: false, readerProtection: false, boundedStreaming: false);
+        1, ArtifactDurability.LocalProcessCrash, ArtifactEnumerationConsistency.Snapshot, new ArtifactLimits());
 
     public async ValueTask<ArtifactResult<ArtifactAdmission>> InitializeAsync(
         ArtifactInitialization request, ArtifactMaintenanceOptions options, CancellationToken ct)
@@ -76,6 +74,12 @@ public sealed partial class LocalArtifactStore(string root, TimeProvider? clock 
         ArgumentNullException.ThrowIfNull(options);
         if (initialized) { return Failure(ArtifactFailureCode.Conflict); }
         if (ct.IsCancellationRequested) { return Failure(ArtifactFailureCode.CancelledBeforeCommit); }
+        var capabilities = new ArtifactCapabilities(1, ArtifactDurability.LocalProcessCrash, ArtifactEnumerationConsistency.Snapshot, request.Limits);
+        Capabilities = faults.CapabilitiesForAdmission?.Invoke(capabilities) ?? capabilities;
+        if (!Capabilities.MeetsBaseline || Capabilities.Limits != request.Limits
+            || Capabilities.Durability != capabilities.Durability || Capabilities.Enumeration != capabilities.Enumeration
+            || Capabilities.RangeReads || !Capabilities.Sha512)
+        { return Failure(ArtifactFailureCode.Unsupported); }
         var probe = await request.Authority.AcquireAsync(new(Guid.NewGuid(), ArtifactProtectionOperation.Read,
             request.Store, new Hoard.Abstractions.Metadata.ArtifactDigest(new string('0', 64))), new(), ct);
         if (probe is not ArtifactResult<IArtifactProtectionGuard>.Success accepted) { return Failure(ArtifactFailureCode.Denied); }
@@ -92,9 +96,6 @@ public sealed partial class LocalArtifactStore(string root, TimeProvider? clock 
             shutdown = new();
             stopping = false;
             if (request.Mode == ArtifactInitializationMode.ReopenCompatible) { await RecoverAsync(ct); }
-            Capabilities = new(1, ArtifactDurability.LocalProcessCrash, ArtifactEnumerationConsistency.Snapshot, request.Limits,
-                conditionalPublication: false, conditionalDeletion: false, stagingRecovery: false,
-                ownerFencing: false, readerProtection: false, boundedStreaming: false);
             initialized = true;
             await faults.ObserveAsync("initialize.admitted");
             ct.ThrowIfCancellationRequested();
@@ -151,6 +152,12 @@ public sealed partial class LocalArtifactStore(string root, TimeProvider? clock 
             { return Failed<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, live: true); }
             try { await Task.WhenAll(pending).WaitAsync(remaining, ct); }
             catch (Exception error) when (error is TimeoutException or OperationCanceledException)
+            { return Failed<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, live: true); }
+            remaining = options.Deadline - time.GetElapsedTime(started);
+            if (remaining <= TimeSpan.Zero)
+            { return Failed<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, live: true); }
+            try { await Task.WhenAll(RetryUndeliveredCleanup()).WaitAsync(remaining, ct); }
+            catch (Exception)
             { return Failed<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, live: true); }
             LocalReadSession[] sessions;
             lock (stateSync) { sessions = readers.ToArray(); }

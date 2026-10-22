@@ -31,21 +31,24 @@ class ArtifactEvidenceTests(unittest.TestCase):
 
     def cases(self):
         witness = self.work / "synthetic.trx"
-        witness.write_text(
-            '<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><Results>'
-            '<UnitTestResult testName="synthetic-verifier-only" outcome="Passed" duration="00:00:00.001" />'
-            '</Results></TestRun>')
-        proof = {"proof": "synthetic.trx", "sha256": artifact.sha256(witness)}
         bindings = {key: "a" * 64 for key in artifact.CASE_BINDINGS}
         entries = [
             {"id": f"AS-{number:02}", "provider": provider,
              "class": "L" if number <= 40 else "D" if number <= 44 else "Q",
              "result": "NotApplicable" if provider == "object" and 41 <= number <= 44 else "Passed",
              "reason": "simulation: no durable restart" if provider == "object" and 41 <= number <= 44 else "",
-             "runId": "current", "durationMs": 1, "positive": True, "negative": True,
-             "tests": ["synthetic-verifier-only"], **bindings}
+             "runId": "current", "positive": True, "negative": True,
+             "tests": sorted(artifact.required_runtime_tests(provider, f"AS-{number:02}")), **bindings}
             for provider in ("local", "object") for number in range(1, 49)]
+        from xml.sax.saxutils import quoteattr
+        names = sorted({name for entry in entries for name in entry["tests"]})
+        witness.write_text(
+            '<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><Results>'
+            + "".join(f'<UnitTestResult testName={quoteattr(name)} outcome="Passed" duration="00:00:00.001" />'
+                      for name in names) + '</Results></TestRun>')
+        proof = {"proof": "synthetic.trx", "sha256": artifact.sha256(witness)}
         for entry in entries:
+            entry["durationMs"] = len(entry["tests"])
             entry.update(self.proof(f"synthetic-{entry['provider']}-{entry['id']}.json", {
                 "schemaVersion": 1,
                 **{key: entry[key] for key in ("id", "provider", "class", "result", "runId", *artifact.CASE_BINDINGS)},
@@ -95,6 +98,54 @@ class ArtifactEvidenceTests(unittest.TestCase):
             with self.subTest(payload=payload), self.assertRaises(RuntimeError):
                 artifact.verify_cases(changed, self.work, "current")
 
+    def test_case_cannot_borrow_an_unrelated_passed_runtime_method(self):
+        cases = self.cases()
+        payload = json.loads(artifact.proof_file(self.work, cases[0]["proof"]).read_text())
+        cases[0]["tests"] = cases[1]["tests"]
+        cases[0]["durationMs"] = len(cases[0]["tests"])
+        for subproof in payload["subproofs"]:
+            subproof["tests"] = cases[0]["tests"]
+        cases[0].update(self.proof("borrowed-runtime-case.json", payload))
+        with self.assertRaisesRegex(RuntimeError, "required runtime"):
+            artifact.verify_cases(cases, self.work, "current")
+
+    def test_case_requires_every_parameter_variant_and_its_own_provider(self):
+        for provider, case in (("local", "AS-10"), ("object", "AS-28"), ("local", "AS-39")):
+            cases = self.cases()
+            entry = next(entry for entry in cases if entry["provider"] == provider and entry["id"] == case)
+            payload = json.loads(artifact.proof_file(self.work, entry["proof"]).read_text())
+            entry["tests"] = entry["tests"][1:]
+            for subproof in payload["subproofs"]:
+                subproof["tests"] = entry["tests"]
+            entry.update(self.proof("missing-variant.json", payload))
+            with self.subTest(provider=provider, case=case), self.assertRaisesRegex(RuntimeError, "required runtime"):
+                artifact.verify_cases(cases, self.work, "current")
+        cases = self.cases()
+        payload = json.loads(artifact.proof_file(self.work, cases[0]["proof"]).read_text())
+        cases[0]["tests"] = sorted(artifact.required_runtime_tests("object", "AS-01"))
+        for subproof in payload["subproofs"]:
+            subproof["tests"] = cases[0]["tests"]
+        cases[0].update(self.proof("foreign-provider.json", payload))
+        with self.assertRaisesRegex(RuntimeError, "required runtime"):
+            artifact.verify_cases(cases, self.work, "current")
+
+    def test_required_name_in_inventory_is_not_proof_of_execution(self):
+        cases = self.cases()
+        witness = self.work / "synthetic.trx"
+        from xml.etree import ElementTree
+        document = ElementTree.parse(witness)
+        results = document.getroot().find("{*}Results")
+        for result in list(results):
+            if result.get("testName") in cases[0]["tests"]:
+                results.remove(result)
+        document.write(witness)
+        payload = json.loads(artifact.proof_file(self.work, cases[0]["proof"]).read_text())
+        for subproof in payload["subproofs"]:
+            subproof["sha256"] = artifact.sha256(witness)
+        cases[0].update(self.proof("unexecuted-required-name.json", payload))
+        with self.assertRaisesRegex(RuntimeError, "unexecuted runtime"):
+            artifact.verify_cases(cases, self.work, "current")
+
     def test_case_payload_rejects_altered_binding_and_missing_or_failed_runtime_pairs(self):
         cases = self.cases()
         original = json.loads(artifact.proof_file(self.work, cases[0]["proof"]).read_text())
@@ -125,7 +176,7 @@ class ArtifactEvidenceTests(unittest.TestCase):
         for subproof in payload["subproofs"]:
             subproof["tests"] = cases[0]["tests"]
         cases[0].update(self.proof("invented-test.json", payload))
-        with self.assertRaisesRegex(RuntimeError, "unexecuted"):
+        with self.assertRaisesRegex(RuntimeError, "required runtime"):
             artifact.verify_cases(cases, self.work, "current")
         cases = self.cases()
         cases[0]["durationMs"] = 100
@@ -146,7 +197,9 @@ class ArtifactEvidenceTests(unittest.TestCase):
     def test_runtime_witness_rejects_malformed_duplicate_and_negative_duration_results(self):
         self.cases()
         original = (self.work / "synthetic.trx").read_text()
-        duplicate = '<UnitTestResult testName="synthetic-verifier-only" outcome="Passed" duration="00:00:00.001" />'
+        from xml.sax.saxutils import quoteattr
+        name = sorted(artifact.required_runtime_tests("local", "AS-01"))[0]
+        duplicate = f'<UnitTestResult testName={quoteattr(name)} outcome="Passed" duration="00:00:00.001" />'
         for content in ("not XML", original.replace("</Results>", duplicate + "</Results>"),
                         original.replace('duration="00:00:00.001"', 'duration="00:00:-0.001"')):
             cases = self.cases()
@@ -247,6 +300,64 @@ class ArtifactEvidenceTests(unittest.TestCase):
                 "sourceSha256": "a" * 64, "runId": "current", "cases": self.cases()}):
             with self.subTest(manifest=str(manifest)[:60]), self.assertRaises(RuntimeError):
                 artifact.verify_manifest(manifest, self.work, "a" * 64)
+
+    def complete_manifest(self):
+        packages = [{"id": name, **self.proof(name, {})} for name in artifact.PACKAGES]
+        transfers = [{**self.transfer(), "provider": provider, "size": size, "written": size, "read": size}
+                     for provider in artifact.PROVIDERS for size in (268435456, 4294967296)]
+        manifest = {
+            "schemaVersion": 1, "qualification": True, "production": False, "phase": "full",
+            "sourceSha256": "a" * 64, "runId": "current", "baselineRevision": artifact.BASELINE,
+            "environment": {"os": "test", "runtime": ".NET 10", "filesystem": "test", "flushConfiguration": "test"},
+            "limitations": ["synthetic unit fixture, never runtime qualification"],
+            "cases": self.cases(), "packages": packages, "transfers": transfers,
+            "crashes": [{**self.crash(), "barrier": barrier} for barrier in artifact.BARRIERS],
+            "redGreen": [{"id": "test", "test": "test", "redExit": 1, "redOutcome": "Failed",
+                          "redAssertion": True, "greenOutcome": "Passed",
+                          "mutationSha256": "a" * 64, "baselineSha256": "b" * 64}]}
+        inputs = {"locks": self.proof("locks.json", {"example/packages.lock.json": "a" * 64}),
+                  "environment": self.proof("environment.json", manifest["environment"]), "contexts": []}
+        package_hash = packages[0]["sha256"]
+        for provider in artifact.PROVIDERS:
+            capabilities = {
+                "Version": 1, "Durability": 0 if provider == "local" else 1,
+                "Enumeration": 0 if provider == "local" else 1, "MeetsBaseline": True,
+                "Limits": {"TransferSlots": 4}, "RangeReads": False, "Sha512": True,
+                **{key: True for key in ("ConditionalPublication", "ConditionalDeletion", "StagingRecovery",
+                                        "OwnerFencing", "ReaderProtection", "BoundedStreaming")}}
+            configuration = {"limits": capabilities["Limits"]}
+            context = {"implementationId": f"fixture.artifact.{provider}", "runtime": ".NET 10",
+                       "capabilities": capabilities, "configuration": configuration}
+            reference = {"id": provider, **self.proof(f"context-{provider}.json", context),
+                         "capabilities": self.proof(f"capabilities-{provider}.json", capabilities),
+                         "configuration": self.proof(f"configuration-{provider}.json", configuration)}
+            inputs["contexts"].append(reference)
+            bindings = {
+                "sourceSha256": "a" * 64, "lockSha256": inputs["locks"]["sha256"],
+                "environmentSha256": hashlib.sha256(b"test\n.NET 10\ntest\ntest").hexdigest(),
+                "packageSha256": package_hash,
+                "capabilitiesSha256": reference["capabilities"]["sha256"],
+                "configurationSha256": reference["configuration"]["sha256"]}
+            for entry in manifest["cases"]:
+                if entry["provider"] == provider:
+                    entry.update(bindings)
+                    payload = json.loads(artifact.proof_file(self.work, entry["proof"]).read_text())
+                    payload.update(bindings)
+                    entry.update(self.proof(entry["proof"], payload))
+        manifest["inputs"] = inputs
+        return manifest
+
+    def test_matching_outer_and_inner_bindings_cannot_replace_actual_inputs(self):
+        for field in artifact.CASE_BINDINGS[1:]:
+            manifest = self.complete_manifest()
+            artifact.verify_input_bindings(manifest, self.work, "a" * 64)
+            for entry in manifest["cases"]:
+                entry[field] = "b" * 64
+                payload = json.loads(artifact.proof_file(self.work, entry["proof"]).read_text())
+                payload[field] = "b" * 64
+                entry.update(self.proof(entry["proof"], payload))
+            with self.subTest(field=field), self.assertRaises(RuntimeError):
+                artifact.verify_input_bindings(manifest, self.work, "a" * 64)
 
     def test_proof_rejects_escape_symlink_missing_and_hash_tampering(self):
         artifact.proof_file(self.work, self.proof("valid.json", {})["proof"])

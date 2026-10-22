@@ -9,6 +9,27 @@ public sealed class ArtifactPublicationTests
     [Theory]
     [InlineData("local")]
     [InlineData("object")]
+    public async Task Empty_content_and_true_absence_are_distinct(string provider)
+    {
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
+        var empty = new ArtifactDigest(Convert.ToHexStringLower(SHA256.HashData([])));
+        Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+            await driver.Store.OpenReadAsync(new(empty), new(), default)).Code);
+        using var source = new ShortSource([]);
+        var receipt = await PublishAsync(driver, source, new(1));
+        Assert.Equal(empty, receipt.Stamp.Identity.Digest);
+        Assert.Equal(0, receipt.Stamp.Identity.Length);
+        Assert.True(source.EofObserved);
+        Assert.Empty(await ReadAsync(driver, receipt.Stamp));
+        Assert.IsType<ArtifactResolution.Committed>(Success(
+            await driver.Store.ReconcileAsync(receipt.Ticket, new(), default)));
+        Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+            await driver.Store.OpenReadAsync(new(new ArtifactDigest(new string('a', 64))), new(), default)).Code);
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
     public async Task Empty_unknown_length_and_positive_short_reads_require_real_eof(string provider)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);

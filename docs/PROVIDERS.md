@@ -9,7 +9,7 @@ Hosting; F-04 adds protected metadata/observations, not provider operations. Sta
 [validation quickstart](../specs/001-provider-contracts/quickstart.md).
 For lifecycle use, see the [package-only lifecycle host](../examples/LifecycleHost/README.md).
 
-F-06 currently adds **partial, unqualified** BCL-only operations in
+F-06 adds **fixture-qualified** BCL-only operations in
 `Hoard.Abstractions.Storage`, separate from the unchanged `IArtifactProvider`
 marker and historical `Metadata.ArtifactDigest`. Initialization/coordination
 fixtures now exercise complete-stream verification, protected copies, exact
@@ -24,15 +24,18 @@ all 16 store/evidence/maintenance/read/authority operations on each choice,
 including independent guard retention, exact reconciliation, abandonment,
 deletion and safe recreation. Actual compiled-body inspection rejects hidden
 concrete-provider coupling; the independent object mechanism has no filesystem
-rename calls. Both
-fixtures declare missing mandatory guarantees and are not ready; neither is a
-production provider or an independently qualified store. The local-package
+rename calls. Both fixtures declare the mandatory baseline and become ready
+after successful explicit admission; missing guarantees/version/authority
+reject before root I/O. The final locked run qualifies 92 applicable cases
+with exactly four Object durability exclusions on the recorded macOS/.NET/APFS
+environment. Neither fixture is a production provider or remote service. The local-package
 hash blocker is resolved with reviewed hash-only lock updates and separate
 default locked regressions; versions, dependency graphs and frozen baselines
 are unchanged. Follow the
-[running evidence](../specs/006-artifact-storage/plan.md#implementation-evidence),
-not the future API inventory, for actual availability. Do not author a provider
-or advertise support on the strength of these unfinished mechanisms/contracts.
+[final evidence](../specs/006-artifact-storage/plan.md#final-fixture-qualification-and-handoff-2026-10-22)
+and [API inventory](../specs/006-artifact-storage/contracts/artifact-api.md)
+for actual availability. These fixtures do not grant production or F-07
+certification to another implementation.
 
 Streams are borrowed at their current position: providers never seek, flush or
 dispose them. Destination bytes are invalid unless the full verified copy
@@ -54,8 +57,20 @@ their SHA-256 is derived from the four newline-delimited labels. Aggregate
 hashes and exclusions are derived from the results. The former flat
 case-name/hash constructor deliberately throws rather than implying qualification.
 Report validation checks inner case/context identity and actual passed TRX
-witnesses, not merely the outer file hash. This is not yet complete per-AS
-semantic attribution or qualification of either fixture.
+witnesses, not merely the outer file hash. The exact per-AS catalog requires
+every provider/parameter variant; full acceptance also cross-binds actual
+package, lock, configuration, capability and environment inputs, measured
+transfers, killed-process recovery and materialized public qualification records.
+The former five-argument session factory remains available. Trusted fixture
+composition can explicitly provide `ArtifactFixtureAdmissionProfile` for a
+known-identity Local reopen; there is no automatic root discovery/reset.
+Object replacement uses a fresh root/epoch and cannot reconcile old tickets.
+Successful result handoff and cancellation are serialized. If cancellation
+wins first, the provider retains responsibility for reclaiming unclaimed
+tickets/staging/read sessions. Exact-generation cleanup remains valid after
+ownership expiry without authorizing new work. Failed reclamation blocks
+readiness/admission and retains root ownership; bounded `StopAsync` retries
+only that resource and never starts a duplicate live cleanup attempt.
 Expired ticket history may be retired, but live content identity remains
 independent of its receipt anchor. Retained tombstones and reclaimed-incarnation
 records also consume finite bookkeeping capacity until safe expiry-based
@@ -69,7 +84,7 @@ An admitted reconciliation preserves an already-finalized receipt even if
 another operation subsequently deletes and recreates the digest.
 Logically removed content can still occupy space until exact-incarnation
 reclamation is confirmed. See the [current quickstart](../specs/006-artifact-storage/quickstart.md)
-for available focused commands and the remaining qualification gates.
+for full/focused commands and the precise qualification limits.
 
 ## Public ownership and authoring
 

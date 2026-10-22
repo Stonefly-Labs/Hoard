@@ -24,7 +24,7 @@ dependency management into another full-time job.
 > development workflows, repository tooling, .NET provider contracts and a tested
 > fixture-only module lifecycle, configuration, protected discovery boundaries,
 > opt-in metadata operations with SQLite/memory qualification fixtures,
-> and partial, unqualified artifact-storage fixtures,
+> and fixture-qualified artifact storage with independent local and simulated-object mechanisms,
 > plus an operator-run Azure identity bootstrap.
 > There is no runnable cache, production provider, UI, container, or published package.
 > Everything in the product overview below describes the planned experience.
@@ -752,53 +752,41 @@ runtime binaries or packages are published. See the
 [merge/release evidence](docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release).
 [Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
 merged into `main`, recording F-05 complete with release metadata.
-**F-06 implementation remains running and unqualified.**
-Independent local and simulated object fixtures now exercise verified streaming,
-publication, protected reads, exact-ticket reconciliation and fenced deletion.
-Focused package checks include actual SQLite/memory metadata transactions,
-six parent-killed local recovery barriers, and the same compiled round-trip
-consumer on both providers. Separate earlier runs wrote/read 256 MiB and 4 GiB
-on both with measured OS peak RSS; those measurements are not final-source proof.
-The focused package phase inspects eight actual resolved graphs, rejects
-provider/Hosting leaks and runs the unchanged pre-F06 marker binary against
-current assemblies, including public-member accessibility checks.
-Configured fixture registration is inert before startup and for disabled
-selections; startup rejects the fixtures' still-missing mandatory guarantees.
-Further focused checks cover classified input faults, full transfer queues,
-independent object direct/list visibility, lost deletion acknowledgments with
-actual reclamation progress, and terminal pre-decision cancellation (including
-an already-cancelled caller) without stranding later calls.
-Controlled publication/cleanup barriers now cover admitted equivalent writers,
-conflicting staged lengths, inactivity deadlines and changed recovery pages.
-Package negatives also reject third-party SDK, filesystem-path and service-locator
-leaks; real command-timeout checks preserve unrelated processes.
-The same compiled consumer now executes 16 common store/read/authority operations,
-including exact reconciliation, cleanup, deletion and incarnation-safe recreation.
-Compiled-body checks reject hidden provider coupling and confirm the object
-mechanism does not call filesystem rename APIs.
-Expired ticket history now restores admission without losing live content.
-Retained decisions/tombstones/reclaimed incarnations have finite budgets and
-bounded expiry-based compaction; admitted work retains its history through
-physical settlement. Candidate traversal now advances finite pages rather than
-scanning whole tables or rebuilding all ticket dependencies. A finalized
-reconciliation receipt survives later deletion/recreation rather than becoming
-a false rollback.
-Qualification records require no durable-case exclusions for Local and exactly
-AS-41..44 for the simulation. They now require an explicit bounded environment,
-baseline capabilities and 48 immutable per-case results with proof hashes;
-flat case names and unrelated aggregate hashes cannot qualify. Report checks
-also bind case payloads to their context and paired, actually passed TRX tests,
-including duration. Exact per-AS semantic attribution remains unfinished.
-Owned-child negatives now hold non-cooperative
-source, destination and native work on each fixture through a second parent
-inspection, then terminate only that child. They prove containment, not durable
-recovery or successful resource release.
-Both fixtures still declare missing mandatory guarantees and are not ready.
-The full command fails closed until every required case, capability, composition,
-package and evidence gate is implemented. Focused modes always report
-`qualification: false`. Reviewed local-package hash refreshes preserve versions,
-dependency graphs, external hashes and frozen baseline evidence. See the
-[running evidence](specs/006-artifact-storage/plan.md#implementation-evidence).
+**F-06 implementation now passes full test-fixture qualification.**
+The additive BCL-only storage contracts have independent Local and simulated
+ObjectSemantics fixtures for verified streaming/publication, protected reads,
+exact-ticket reconciliation, bounded recovery and reference-safe deletion.
+The final locked run contains **96 attributed entries: 92 passes and exactly
+four Object AS-41..44 exclusions**, on macOS 26.5 arm64, .NET 10.0.7 and APFS.
+Actual 256 MiB/4 GiB write/read runs on each fixture stayed below 64 MiB
+incremental OS peak RSS; all six local SIGKILL/fresh-process barriers passed.
+The same compiled consumer exercises all 16 common operations on both choices.
+Eight resolved graphs, compiled leak/consumer controls and the original
+pre-F06 marker binary preserve package independence and compatibility.
+
+Both fixtures declare the required baseline and become ready only after
+successful explicit admission. Missing guarantees/version/authority reject
+before root I/O; disabled selections remain inert. Existing F-02/F-03
+composition tests demonstrate startup/stop and explicit restart: Local reopens
+its exact known identity; Object replacement starts a fresh root and epoch.
+Cancellation cannot discard a successfully handed-off ticket/read session.
+Unclaimed results are reclaimed under retained ownership; expired staging is
+matched by exact generation, and failed reclamation blocks admission/readiness
+until an exact bounded shutdown retry succeeds.
+
+The full verifier requires every AS case's exact parameterized runtime witnesses,
+actual context/package/lock hashes, paired passed TRX names and durations,
+four measurements, six crash proofs and materialized public qualification records.
+Executed mutation pairs and 29 altered-full-manifest checks reject false claims.
+All four focused modes remain `qualification: false`; their passes never
+substitute for full acceptance. All five predecessor gates pass separately
+with tracked locks; only 15 local fixture-package hashes in six locks changed
+in the final checkpoint, preserving versions, graphs, external hashes and the
+frozen baseline. See the [final evidence](specs/006-artifact-storage/plan.md#final-fixture-qualification-and-handoff-2026-10-22)
+and [qualification guide](specs/006-artifact-storage/quickstart.md).
+These are test-only fixtures, not a working cache, production provider, remote
+service, power-loss certification or generalized F-07 conformance. Convergence,
+finalization, merge and source release remain separately authorized stages.
 
 The separately invoked **`specify`** stage creates the
 [F-06 artifact blob storage provider contract](specs/006-artifact-storage/spec.md)
@@ -807,10 +795,10 @@ publication, bounded multi-GB streaming, interrupted-work recovery, reader-
 and reference-safe deletion, and provider-neutral qualification without assuming
 atomic rename. Its [built-in quality checklist](specs/006-artifact-storage/checklists/requirements.md)
 passes all 16 criteria across 25 requirements and eight measurable outcomes,
-including a future 4 GiB transfer proof within 64 MiB incremental transfer
-memory. Real filesystem qualification and an independent object-store-semantics
-fixture are later proof obligations, not delivered providers or remote-service
-support. See the [stage scope](docs/DEVELOPMENT.md#f-06-artifact-storage-specification).
+including the required 4 GiB transfer proof within 64 MiB incremental transfer
+memory. At that specification checkpoint the fixtures were later proof
+obligations, not delivered providers or remote-service support. See the
+[stage scope](docs/DEVELOPMENT.md#f-06-artifact-storage-specification).
 The subsequent [clarification review](specs/006-artifact-storage/spec.md#clarifications)
 finds all ten ambiguity categories clear, with zero questions and no requirement
 or scope changes. The built-in quality checklist remains 16/16; exact budgets
@@ -826,8 +814,9 @@ qualification remains distinct from simulated object semantics and power-loss
 or production-provider claims. Architecture review's guard-recognition omission
 is addressed by authority-owned retention without reentering admission.
 See the [planning scope](docs/DEVELOPMENT.md#f-06-artifact-storage-planning)
-and [future validation guide](specs/006-artifact-storage/quickstart.md);
-the new APIs and artifact acceptance command are not implemented yet.
+and [qualification guide](specs/006-artifact-storage/quickstart.md).
+Those were planning-only artifacts; the implementation evidence above records
+the subsequently delivered APIs and acceptance command.
 The subsequent checklist stage generates standard-depth
 [storage](specs/006-artifact-storage/checklists/storage.md) and
 [recovery](specs/006-artifact-storage/checklists/recovery.md) requirements-quality
@@ -842,14 +831,14 @@ recovery CHK012 remained unchecked and blocked implementation approval,
 not task generation; no requirement change or waiver was presumed.
 See the [review scope](docs/DEVELOPMENT.md#f-06-artifact-storage-checklists-and-assisted-review).
 The subsequent [implementation task list](specs/006-artifact-storage/tasks.md)
-contains **86 unchecked tasks**: shared setup/contracts, five story phases and
+initially contained **86 unchecked tasks**: shared setup/contracts, five story phases and
 cross-cutting acceptance. All 25 requirements, eight outcomes, 23 scenarios,
 15 edge cases and 48 acceptance cases have implementation/proof assignments,
 with explicit prerequisites and file-disjoint parallel opportunities. US1 is
 the verified-publication/read MVP, not complete qualification or a runnable cache.
 Actual four size/provider transfer measurements, six local crash barriers,
 shared reference/deletion authority, independent packages and exact 96-entry
-qualification remain future obligations. Task generation left all existing
+qualification were future obligations at task generation. Task generation left all existing
 requirements, design artifacts and checklist markers unchanged; planned tasks
 did not resolve RQ-01 or bypass the requirements-review gate.
 See the [task-stage scope](docs/DEVELOPMENT.md#f-06-artifact-storage-task-generation).
@@ -861,7 +850,7 @@ readiness for non-cooperative work until settlement or owner-controlled process
 termination. No live-resource release, forced borrowed-stream disposal or false
 cleanup/rollback is allowed. The separate recovery CHK012 re-review now satisfies
 **all 40/40 custom criteria without waivers**; AS-39 remains mandatory and all
-86 implementation tasks remain unchecked. See the
+86 implementation tasks remained unchecked at that clarification checkpoint. See the
 [follow-up evidence](docs/DEVELOPMENT.md#f-06-approved-rq-01-clarification-and-re-review).
 At that checkpoint, the next separately authorized stage was read-only **`analyze`**.
 No analysis, implementation or qualification execution occurred in the approved
@@ -874,11 +863,11 @@ implementation/proof tasks; all 86 tasks map to requirements or shared acceptanc
 prerequisites. The complete prerequisite graph is acyclic, shared-runner edits
 are serialized and retained baseline capture precedes public API changes.
 The approved RQ-01 distinction remains consistent with required AS-39.
-All 12 feature artifacts, 86 unchecked tasks and existing checklist markers
-remain unchanged. The full report is recorded in draft
+All 12 feature artifacts, 86 then-unchecked tasks and existing checklist markers
+remained unchanged by analysis. The full report is recorded in draft
 [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16); see the
 [analysis scope](docs/DEVELOPMENT.md#f-06-artifact-storage-read-only-analysis).
-The checkpoint schedules **`implement / ready`** for a separate invocation,
+That checkpoint scheduled **`implement / ready`** for a separate invocation,
 with the existing 40/40 custom-review gate satisfied. Analysis supplies no
 runtime evidence and executes no implementation or qualification.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized

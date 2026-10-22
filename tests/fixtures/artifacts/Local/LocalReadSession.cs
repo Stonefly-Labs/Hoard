@@ -63,6 +63,10 @@ public sealed partial class LocalArtifactStore
                 slot.Dispose();
                 throw;
             }
+        }, undelivered: async session =>
+        {
+            if (await session.CloseAsync(new(), default) is not ArtifactResult<ArtifactShutdown>.Success)
+            { throw new LocalStateException(ArtifactFailureCode.CleanupIncomplete); }
         });
     }
 

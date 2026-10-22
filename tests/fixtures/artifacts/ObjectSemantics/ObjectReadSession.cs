@@ -55,6 +55,10 @@ public sealed partial class ObjectArtifactStore
                 lease.Dispose();
                 throw;
             }
+        }, undelivered: async session =>
+        {
+            if (await session.CloseAsync(new(), default) is not ArtifactResult<ArtifactShutdown>.Success)
+            { throw new ObjectOperationException(ArtifactFailureCode.CleanupIncomplete); }
         });
     }
 

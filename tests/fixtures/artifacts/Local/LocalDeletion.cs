@@ -32,7 +32,7 @@ public sealed partial class LocalArtifactStore
                 if (!operations.TryAdd(operation.Id, operation)) { throw new LocalStateException(ArtifactFailureCode.Conflict); }
                 return Task.FromResult(Ticket(operation));
             }
-        });
+        }, undelivered: DiscardUndeliveredTicketAsync);
     }
 
     public ValueTask<ArtifactResult<ArtifactMutationReceipt>> DeleteAsync(

@@ -37,7 +37,7 @@ public sealed partial class ObjectArtifactStore
                 listingRevision = checked(listingRevision + 1);
                 return Task.FromResult(ticket);
             }
-        });
+        }, undelivered: DiscardUndeliveredUploadAsync);
     }
 
     public ValueTask<ArtifactResult<ArtifactMutationReceipt>> DeleteAsync(

@@ -5,6 +5,13 @@ using Hoard.Fixtures.Artifacts.ObjectSemantics;
 
 namespace Hoard.Fixtures.Artifacts.HostAdapters;
 
+public sealed record ArtifactFixtureAdmissionProfile
+{
+    public ArtifactInitializationMode Mode { get; init; } = ArtifactInitializationMode.CreateEmpty;
+    public ArtifactStoreIdentity? Store { get; init; }
+    public Func<ArtifactCapabilities, ArtifactCapabilities>? CapabilitiesForAdmission { get; init; }
+}
+
 public sealed class ArtifactFixtureSession : IAsyncDisposable
 {
     private readonly IArtifactStoreLifetime lifetime;
@@ -38,16 +45,27 @@ public sealed class ArtifactFixtureSession : IAsyncDisposable
         _ => throw new InvalidOperationException("Unknown artifact fixture.")
     };
 
-    public static async Task<ArtifactFixtureSession> CreateForQualificationAsync(string provider, string root,
+    public static Task<ArtifactFixtureSession> CreateForQualificationAsync(string provider, string root,
         Func<ArtifactStamp, CancellationToken, ValueTask<ArtifactReferenceDecision>>? references = null,
         ArtifactLimits? limits = null, CancellationToken cancellationToken = default)
+        => CreateForQualificationAsync(provider, root, references, limits, cancellationToken, null);
+
+    public static async Task<ArtifactFixtureSession> CreateForQualificationAsync(string provider, string root,
+        Func<ArtifactStamp, CancellationToken, ValueTask<ArtifactReferenceDecision>>? references,
+        ArtifactLimits? limits, CancellationToken cancellationToken, ArtifactFixtureAdmissionProfile? profile)
     {
         if (provider is not ("local" or "object")) { throw new ArgumentException("Unknown artifact fixture selection."); }
-        var identity = new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
+        var identity = profile?.Store ?? new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
+        if (identity.ProviderModuleId != $"fixture.artifact.{provider}"
+            || profile is { Mode: ArtifactInitializationMode.ReopenCompatible, Store: null })
+        { throw new ArgumentException("Artifact fixture reopen requires its exact selected store identity."); }
         var authority = new ArtifactCoordinationAuthority(identity, references: references);
-        IArtifactStoreLifetime lifetime = provider == "local" ? new LocalArtifactStore(root) : new ObjectArtifactStore(root);
+        IArtifactStoreLifetime lifetime = provider == "local"
+            ? new LocalArtifactStore(root, controls: new() { CapabilitiesForAdmission = profile?.CapabilitiesForAdmission })
+            : new ObjectArtifactStore(root, controls: new() { CapabilitiesForAdmission = profile?.CapabilitiesForAdmission });
         var session = new ArtifactFixtureSession(lifetime, identity, authority);
-        var result = await lifetime.InitializeAsync(new(ArtifactInitializationMode.CreateEmpty, identity, authority, limits), new(), cancellationToken);
+        var result = await lifetime.InitializeAsync(new(profile?.Mode ?? ArtifactInitializationMode.CreateEmpty,
+            identity, authority, limits), new(), cancellationToken);
         if (result is ArtifactResult<ArtifactAdmission>.Success) { return session; }
         var stopped = await lifetime.StopAsync(new(), default);
         if (stopped is not ArtifactResult<ArtifactShutdown>.Success)

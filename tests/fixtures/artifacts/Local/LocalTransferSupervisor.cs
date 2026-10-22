@@ -89,6 +89,43 @@ public sealed partial class LocalArtifactStore
     private bool TicketInUse(Guid ticket) { lock (activitySync) { return ticketUses.ContainsValue(ticket); } }
     public Task WhenIdleForQualificationAsync()
     { lock (activitySync) { return Task.WhenAll(activities.Values.ToArray()); } }
+    private readonly Dictionary<Guid, Func<ValueTask>> incompleteHandoffs = [];
+    private readonly Dictionary<Guid, Task> handoffRetries = [];
+
+    private async ValueTask ReclaimUndeliveredAsync<T>(Guid id, T value, Func<T, ValueTask> reclaim)
+    {
+        async ValueTask Cleanup()
+        {
+            await faults.ObserveAsync("operation.reclaim");
+            await reclaim(value);
+        }
+        lock (activitySync) { incompleteHandoffs.Add(id, Cleanup); }
+        try { await Cleanup(); }
+        catch (Exception) { throw new LocalStateException(ArtifactFailureCode.CleanupIncomplete); }
+        lock (activitySync) { incompleteHandoffs.Remove(id); }
+    }
+
+    private Task[] RetryUndeliveredCleanup()
+    {
+        lock (activitySync)
+        {
+            foreach (var (id, cleanup) in incompleteHandoffs)
+            {
+                if (handoffRetries.ContainsKey(id)) { continue; }
+                var retry = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await cleanup();
+                        lock (activitySync) { incompleteHandoffs.Remove(id); }
+                    }
+                    finally { lock (activitySync) { handoffRetries.Remove(id); } }
+                });
+                handoffRetries.Add(id, retry);
+            }
+            return handoffRetries.Values.ToArray();
+        }
+    }
 
     private async Task<Slot> AdmitAsync(CancellationToken ct)
     {
@@ -109,7 +146,7 @@ public sealed partial class LocalArtifactStore
 
     private async ValueTask<ArtifactResult<T>> ExecuteAsync<T>(ArtifactPhase phase, TimeSpan budget,
         CancellationToken ct, Func<CancellationToken, Task<T>> work, ArtifactOperationTicket? ticket = null,
-        Action? settled = null, Action? cancellationSettled = null)
+        Action? settled = null, Action? cancellationSettled = null, Func<T, ValueTask>? undelivered = null)
         where T : notnull
     {
         ArgumentNullException.ThrowIfNull(work);
@@ -118,15 +155,19 @@ public sealed partial class LocalArtifactStore
         var deadline = new CancellationTokenSource(budget, time);
         var cancellation = CancellationTokenSource.CreateLinkedTokenSource(ct, deadline.Token, shutdown.Token);
         var token = cancellation.Token;
+        ArtifactResult<T>? delivered = null;
+        var abandoned = false;
         lock (activitySync)
         {
-            if (!initialized || stopping || Volatile.Read(ref lifecycleActive) != 0 || retained.Count > 0 || !incompleteReadCloses.IsEmpty)
+            if (!initialized || stopping || Volatile.Read(ref lifecycleActive) != 0 || retained.Count > 0
+                || incompleteHandoffs.Count > 0 || !incompleteReadCloses.IsEmpty)
             {
                 cancellation.Dispose();
                 deadline.Dispose();
                 settled?.Invoke();
-                return Failed<T>(retained.Count > 0 || !incompleteReadCloses.IsEmpty ? ArtifactFailureCode.CleanupIncomplete : ArtifactFailureCode.Disposed,
-                    phase, ticket, retained.Count > 0 || !incompleteReadCloses.IsEmpty);
+                return Failed<T>(retained.Count > 0 || incompleteHandoffs.Count > 0 || !incompleteReadCloses.IsEmpty
+                    ? ArtifactFailureCode.CleanupIncomplete : ArtifactFailureCode.Disposed,
+                    phase, ticket, retained.Count > 0 || incompleteHandoffs.Count > 0 || !incompleteReadCloses.IsEmpty);
             }
             if (activities.Count >= Limits.TransferSlots + Limits.WaitingCalls)
             {
@@ -149,7 +190,29 @@ public sealed partial class LocalArtifactStore
                 try
                 {
                     token.ThrowIfCancellationRequested();
-                    return (ArtifactResult<T>)new ArtifactResult<T>.Success(await work(token));
+                    var value = await work(token);
+                    var transferred = false;
+                    try
+                    {
+                        await faults.ObserveAsync("operation.completed");
+                        lock (activitySync)
+                        {
+                            if (!abandoned)
+                            {
+                                transferred = true;
+                                return delivered = new ArtifactResult<T>.Success(value);
+                            }
+                        }
+                        return Failed<T>(ct.IsCancellationRequested ? ArtifactFailureCode.CancelledBeforeCommit : ArtifactFailureCode.DeadlineExceeded,
+                            phase, ticket);
+                    }
+                    finally
+                    {
+                        if (!transferred && undelivered is not null)
+                        {
+                            await ReclaimUndeliveredAsync(id, value, undelivered);
+                        }
+                    }
                 }
                 catch (Exception error)
                 {
@@ -172,6 +235,7 @@ public sealed partial class LocalArtifactStore
                         retained.Remove(id);
                         if (mutation) { busyTickets.Remove(ticket!.Id); }
                     }
+                    await faults.ObserveAsync("operation.released");
                     cancellation.Dispose();
                     deadline.Dispose();
                     settled?.Invoke();
@@ -184,9 +248,12 @@ public sealed partial class LocalArtifactStore
         {
             lock (activitySync)
             {
-                if (!activity.IsCompleted) { retained.Add(id); }
+                if (delivered is not null) { return delivered; }
+                abandoned = true;
+                var live = activities.ContainsKey(id);
+                if (live) { retained.Add(id); }
                 return Failed<T>(ct.IsCancellationRequested ? ArtifactFailureCode.CancelledBeforeCommit : ArtifactFailureCode.DeadlineExceeded,
-                    phase, ticket, !activity.IsCompleted);
+                    phase, ticket, live);
             }
         }
     }

@@ -94,7 +94,7 @@ public sealed class ArtifactAdmissionTests
         Assert.False(Directory.Exists(root.Path));
         var result = await first.InitializeAsync(new(ArtifactInitializationMode.CreateEmpty, store, authority), Options, default);
         var admitted = Assert.IsType<ArtifactResult<ArtifactAdmission>.Success>(result);
-        Assert.False(admitted.Value.Capabilities.MeetsBaseline);
+        Assert.True(admitted.Value.Capabilities.MeetsBaseline);
         Assert.True(Directory.Exists(root.Path));
         Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(await second.InitializeAsync(
             new(ArtifactInitializationMode.CreateEmpty, store, authority), Options, default));

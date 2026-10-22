@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Hoard.Abstractions.Storage;
 
 namespace Hoard.Fixtures.Artifacts.ObjectSemantics;
 
@@ -10,11 +11,13 @@ public sealed class ObjectFaultControls
     {
         "object.initialize", "object.admitted", "multipart.part", "multipart.complete",
         "object.publication-admitted", "pointer.compare", "pointer.selected", "object.direct", "object.list",
-        "object.read", "pointer.tombstone", "object.reclaimed", "multipart.cleanup", "object.commit-progress", "object.transfer-queued"
+        "object.read", "pointer.tombstone", "object.reclaimed", "multipart.cleanup", "object.commit-progress", "object.transfer-queued",
+        "object.operation-released", "object.operation-completed", "object.operation-reclaim"
     };
     public string[] Observed => points.ToArray();
     public Action? BeforeObjectDelete { get; set; }
     public Action<string, string>? BeforeHistoryCandidate { get; set; }
+    public Func<ArtifactCapabilities, ArtifactCapabilities>? CapabilitiesForAdmission { get; set; }
     public void SetObserver(string point, Func<ValueTask> callback)
     {
         if (!Supported.Contains(point) || callbacks.Count >= 16) { throw new ArgumentException("Invalid object fixture boundary."); }

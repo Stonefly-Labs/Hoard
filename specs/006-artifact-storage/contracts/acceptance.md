@@ -1,6 +1,7 @@
 # F-06 Acceptance and Qualification Matrix
 
-**Status**: Normative future proof obligations. No row is an executed result.
+**Status**: Normative proof obligations. No row is an executed result; actual
+qualification is recorded separately in the [final evidence](../plan.md#final-fixture-qualification-and-handoff-2026-10-22).
 All changed behavior needs focused red-before-green evidence; compilation
 failure, generated tasks and an existing passing suite are not substitutes.
 

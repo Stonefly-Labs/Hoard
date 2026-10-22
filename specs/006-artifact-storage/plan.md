@@ -4,11 +4,11 @@
 
 **Input**: Feature specification from `specs/006-artifact-storage/spec.md`
 
-**Status**: Implementation running; the local acceptance-package hash blocker
-is resolved by the approved refresh and separate locked replays below.
-The design below remains the full obligation;
-partial current code/evidence is distinguished in
-[Implementation Evidence](#implementation-evidence). No storage qualification.
+**Status**: Implementation tasks are verified, including full default locked
+test-fixture qualification: 96 entries, 92 passes/four Object AS-41..44 exclusions.
+The [final evidence](#final-fixture-qualification-and-handoff-2026-10-22)
+supersedes earlier partial checkpoints below; those remain chronological history.
+Convergence/finalization/merge are separate stages. No production/F-07 claim.
 
 ## Summary
 
@@ -942,3 +942,143 @@ README/development/provider/test/quickstart guides describe these limited
 changes. Pre-F-06 APIs, existing examples, product diagrams, IaC and release
 behavior are unaffected. All unfinished task/checklist/driver gates remain
 unchanged; implementation continues rather than ending at this checkpoint.
+
+### Final Fixture Qualification and Handoff 2026-10-22
+
+All T001..T086 obligations have been audited against their actual implementation,
+the normative acceptance matrix and the final retained full manifest. The final
+source fingerprint is
+`aa5afb01c594acb418f48db975c408ea3c0350e6ef33cef93ba27fd322739e24`.
+The default locked full run is `f57fd648-f0fe-4eef-b72d-554b4e691a44`,
+at `../hoard-artifact-evidence/final-qualified-handoff-locked-20261022`.
+Its 96 entries are exactly 48 cases per provider: 48 Local passes, 44 Object
+passes and explicit Object AS-41..44 non-applicability. No skips or borrowed
+durability evidence qualify. `manifest.json` and both materialized
+`qualification-record-{local,object}.json` records were verified against actual
+case results/durations, admission contexts, packages, environment, source and
+tracked locks. The final audit reverified the full manifest and current
+source/lock equality after documentation-only edits.
+
+The original pre-F06 baseline remains revision
+`830972f24795ffaaaa18cb35138db7da59022313`, captured at
+`../hoard-artifact-evidence/pre-f06-20261022`. Its original marker binary hash
+is `5b745ae0860722852921cab4e6b210fa20facb59e53aa6f1f8a157060aba939d`;
+it was reused unchanged, never rebuilt against new operations. All artifact
+commands below set
+`HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022`.
+Destinations are fresh owner-private directories outside Git.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-artifacts.sh --evidence /Users/christopherhouse/projects/hoard-artifact-evidence/final-qualified-handoff-locked-20261022` | Passed default locked full qualification: 92 applicable passes/four exclusions; 229 common/crash tests, four measured-proof tests, three architecture tests/eight actual graph scans, both unchanged 16-operation consumer selections and original marker binary |
+| `bash scripts/validate-artifacts.sh --phase logical --evidence ../hoard-artifact-evidence/final-focused-logical-20261022` | Passed 223 tests and both consumers; qualification false |
+| `bash scripts/validate-artifacts.sh --phase transfers --evidence ../hoard-artifact-evidence/final-focused-transfers-20261022` | Passed four fresh actual write/read measurements and four corresponding proof tests; qualification false |
+| `bash scripts/validate-artifacts.sh --phase recovery --evidence ../hoard-artifact-evidence/final-focused-recovery-20261022` | Passed 30 tests and all six Python-owned SIGKILL/fresh-process barriers; qualification false |
+| `bash scripts/validate-artifacts.sh --phase packages --evidence ../hoard-artifact-evidence/final-focused-packages-20261022` | Passed three architecture tests/eight actual graphs, original marker binary and both consumers; qualification false |
+| `bash scripts/validate-foundation.sh` | Passed separate default locked full foundation acceptance, including 507 composition checks |
+| `bash scripts/validate-lifecycle.sh` | Passed separate default locked full acceptance: 504 tests, nine boundary proofs, seven package journeys |
+| `bash scripts/validate-configuration.sh` | Passed separate default locked full acceptance: 201 tests, six boundary proofs, nine journeys, five actual interrupted-publication barriers |
+| `bash scripts/validate-discovery.sh` | Passed separate default locked full acceptance: 137 tests, D01..40, nine journeys, 18 actual graphs; local p95 0.046 s |
+| `bash scripts/validate-metadata.sh` | Passed separate default locked F-05 full 96-case qualification |
+| `python3 -m unittest discover -s tests/tooling -v` | All 105 passed |
+| `git diff --check` | Passed |
+
+Full acceptance runs build analyzers and SDK whitespace checks over its
+participating sources. Separate locked predecessor gates ran sequentially
+without changing fingerprinted inputs; their private logs are retained as
+`f06-{foundation,lifecycle,configuration,discovery,metadata}-final.log`.
+All four focused manifests bind the same final source. Only 15 local `Hoard.*`
+content hashes in six locks changed relative to `908ec27`; the audit verified
+unchanged package sets, dependency graphs/versions, external hashes and frozen
+baseline inputs. Full mode refuses lock-update qualification: intentional hash
+refreshes and separate default locked replays are distinct operations.
+
+The full run records macOS-26.5-arm64-arm-64bit-Mach-O, .NET 10.0.7, APFS and
+`Local payload/decision Flush(true), no directory fsync; object process-local simulation`.
+Every measured child writes and reads the complete generated payload with
+independent hashes, pacing on producer/sink, one slot, 256 KiB copy buffers
+and a 2 MiB provider-buffer ceiling. OS `/usr/bin/time -l` maximum RSS and sampled
+RSS are retained with warmed idle baseline and exact runtime/process IDs.
+
+| Provider / actual write and read bytes | Incremental OS peak RSS |
+| --- | --- |
+| Local / 268435456 | 2,129,920 bytes |
+| Local / 4294967296 | 17,793,024 bytes |
+| Object / 268435456 | 1,916,928 bytes |
+| Object / 4294967296 | 18,595,840 bytes |
+
+All are below 67,108,864 bytes. Expected SHA-256 values are
+`113c39a8d2254b64b3df2bdfeeaeb80c277bf4f68ea42510e7cf97e4b8467fb2`
+and `f3492797d78d20782483a505e9a249466dc027f86615e647f4719cd7e93301b2`,
+respectively. The proof tests consume these actual fresh measurements and
+reject altered counts/hash/pacing/profile/environment/memory witnesses.
+B0/B1/B2/B3/D0/D1 each use the exact observed owned-child handshake and signal
+exit, fresh-process reopen, control/new full readback, exact receipts and
+stale-owner/incarnation controls; logical exceptions never substitute for kills.
+
+**Architecture findings and corrections.** The existing
+`hoard-architecture-review` ran as `f06-final-architecture`
+(`5f9a37b5-ba51-43be-8ba1-86cb8b786489`), then a narrowly scoped corrective review
+ran as `f06-handoff-correction`. These reviews did not execute acceptance tests
+or confer blanket approval. A controlled release-boundary defect first produced
+two actual assertion reds: registry removal before Task completion could leave
+an orphan retained flag. Cancellation now checks actual registered ownership.
+The broad review then found a P1 successful-result handoff race; four actual
+assertion reds reproduced discarded reserved tickets/read sessions on both
+providers. Each independent supervisor now serializes delivered success against
+abandonment and reclaims undelivered tickets/staging/reads before releasing
+ownership. The follow-up found two P2s: expired-stage cleanup requiring fresh
+admission and failed reclamation forgotten after worker exit. Six actual
+assertion reds preceded expiry-independent exact-generation cleanup and bounded
+persistent failed-handoff/retry registries. Pending reclamation blocks readiness/
+admission/root release; stop retries only captured resources under its remaining
+original cleanup budget and never duplicates a live retry. Final logical/full
+proof includes all corrected cases; no unresolved reported finding is deferred.
+
+**Task and requirement audit.** Cohesive implementation groupings intentionally
+replace some proposed filenames; no placeholder files were added to mimic the
+plan. Local decisions/receipts are in `LocalRecords`, `LocalOperations`,
+`LocalReconciliation` and `LocalPublication`; ownership/reclamation/lifetime are
+in `LocalMaintenance`, `LocalHistory`, `LocalStaging`, `LocalDeletion`,
+`LocalTransferSupervisor` and `LocalArtifactStore`. Object responsibilities have
+independent `Object*` equivalents, with supervisor code in `ObjectTransfers`.
+Capabilities/admission live with each store; no algorithm is shared.
+Related contract tests are grouped in `Cases/`, including `ArtifactCrashTests`,
+`ArtifactBudgetTests`, `ArtifactMetadataAuthorityTests` and
+`ArtifactNonCooperativeChildTests`; all required variants are cataloged in
+`artifact_case_catalog.py`. `ArtifactConsumer` is compiled from `Program.cs`;
+`ArtifactCrashScenario` contains the crash data/walkthrough. The additive
+qualification model has its own `ArtifactQualification.cs`.
+
+| Audited tasks | Actual final proof |
+| --- | --- |
+| T001..T019: setup/contracts/admission/authority | Frozen pre-change provenance; existing and additive public-value tests; two independent Abstractions-only packages; opaque recognized guard/metadata authority and root admission negatives |
+| T020..T030: US1 | Exact AS-01..10 runtime variants, fully verified publication/read/evidence and unchanged round-trip consumer on both providers |
+| T031..T041: US2 | AS-11..20/34/39, four real measurements, classified budgets/failures, borrowed ownership and controlled non-cooperative containment; delivered/unclaimed result boundary corrections |
+| T042..T056: US3 | AS-21..27/41..43, exact receipts/expiry/changed pages, both actual metadata packages, B0..B3 kill/reopen/readback |
+| T057..T068: US4 | AS-28..35/44 on both providers/metadata choices, actual reference/read races, stale-incarnation controls, pending versus physical reclamation and D0/D1 |
+| T069..T080: US5 | AS-36..40/45..48, admitted/rejected capability profiles, successful/failed/inert lifecycle and explicit restart, identical 16-operation consumer, eight graphs and original binary, all four fresh focused modes |
+| T081..T086: closure | Updated guides, exact immutable full run and separate predecessor gates, architecture corrections, complete matrix audit and durable implementation handoff |
+
+The normative matrix traces all 25 FRs, eight SCs, 23 story scenarios and
+15 edge cases to AS-01..48. The verifier checks every applicable exact
+provider/parameter/TRX witness, paired subproof and duration, and actual
+package/configuration/capability/lock/environment input bindings. Its three
+executed isolated red/green mutation pairs cover Local/Object mandatory
+admission and actual context binding. It also rejects 29 altered copies of the
+actual full manifest, including rehashed materialized records. A genuine
+Int32/Int64 measured-proof test defect was corrected before final acceptance;
+failed/intermediate captures are never counted as qualification.
+Reviewer-owned checklist markers are unchanged. No extension hooks are configured.
+
+README, development/provider/test guides, quickstart and model/contract status
+headers now distinguish normative design, implemented APIs and actual evidence.
+Existing custom-host examples and product diagrams need no edits because this
+adds optional test-fixture composition, not a product store/cache or host path.
+Compatibility policy, IaC and release guides are unaffected: old APIs remain,
+and there are no settings, infrastructure, deployment or release changes.
+Qualification covers only this recorded Local process-crash environment and
+independent process-local Object simulation. It excludes power-loss/OS/device
+failure, Windows/network filesystems, HA, remote services, production provider
+support and generalized F-07 conformance. All implementation tasks may be
+closed; the separate next stage is `converge`, not merge/release or backlog completion.

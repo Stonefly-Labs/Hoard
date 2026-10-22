@@ -3,10 +3,13 @@
 import argparse
 import base64
 import binascii
+import copy
+import functools
 import hashlib
 import json
 import math
 import os
+import platform
 from pathlib import Path
 import re
 import selectors
@@ -18,6 +21,8 @@ import tarfile
 import time
 import uuid
 from xml.etree import ElementTree
+
+from artifact_case_catalog import required_runtime_tests
 
 import foundation_evidence as foundation
 import lifecycle_evidence as lifecycle
@@ -171,6 +176,8 @@ def verify_cases(entries, work, run_id):
                 or len(set(entry["tests"])) != len(entry["tests"])
                 or any(not is_hash(entry.get(key)) for key in CASE_BINDINGS)):
             raise RuntimeError("Stale, unpaired or incomplete artifact case proof.")
+        if not required_runtime_tests(entry["provider"], entry["id"]).issubset(entry["tests"]):
+            raise RuntimeError("Artifact case is missing its required runtime witnesses.")
         path = proof_file(work, entry.get("proof"))
         if path.stat().st_size > 1048576:
             raise RuntimeError("Artifact case proof exceeds its finite report bound.")
@@ -270,6 +277,168 @@ def source_hash(root):
     return metadata.source_hash(root)
 
 
+def write_proof(work, name, value):
+    path = work / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(value, indent=2) + "\n")
+    return {"proof": name, "sha256": sha256(path)}
+
+
+def read_proof(work, reference, maximum=1048576):
+    if not isinstance(reference, dict):
+        raise RuntimeError("Artifact input attribution is missing.")
+    path = proof_file(work, reference.get("proof"))
+    if path.stat().st_size > maximum or sha256(path) != reference.get("sha256"):
+        raise RuntimeError("Artifact input proof is oversized or hash-altered.")
+    try:
+        return json.loads(path.read_text())
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        raise RuntimeError("Artifact input proof is malformed.") from None
+
+
+def verify_input_bindings(evidence, work, source_digest):
+    inputs = evidence.get("inputs")
+    if not isinstance(inputs, dict):
+        raise RuntimeError("Artifact qualification is missing its actual input bindings.")
+    locks = read_proof(work, inputs.get("locks"))
+    environment = read_proof(work, inputs.get("environment"))
+    if (not isinstance(locks, dict) or not locks or not isinstance(environment, dict)
+            or any(not isinstance(name, str) or not is_hash(digest) for name, digest in locks.items())
+            or environment != evidence.get("environment")
+            or any(not isinstance(environment.get(key), str) or not 0 < len(environment[key]) <= 256
+                   or not environment[key].strip() or any(not 32 <= ord(char) <= 126 for char in environment[key])
+                   for key in ("os", "runtime", "filesystem", "flushConfiguration"))):
+        raise RuntimeError("Artifact lock/environment input is invalid.")
+    contexts = inputs.get("contexts")
+    if (not isinstance(contexts, list) or len(contexts) != 2
+            or any(not isinstance(value, dict) for value in contexts)
+            or {value.get("id") for value in contexts} != set(PROVIDERS)):
+        raise RuntimeError("Artifact qualification requires both actual admission contexts.")
+    environment_hash = hashlib.sha256("\n".join(environment[key] for key in (
+        "os", "runtime", "filesystem", "flushConfiguration")).encode()).hexdigest()
+    bindings = {}
+    for reference in contexts:
+        provider = reference["id"]
+        context = read_proof(work, reference)
+        capabilities = read_proof(work, reference.get("capabilities"))
+        configuration = read_proof(work, reference.get("configuration"))
+        if (not isinstance(context, dict) or not isinstance(capabilities, dict) or not isinstance(configuration, dict)
+                or context.get("capabilities") != capabilities or context.get("configuration") != configuration
+                or context.get("implementationId") != f"fixture.artifact.{provider}"
+                or context.get("runtime") != environment["runtime"]
+                or capabilities.get("Version") != 1 or capabilities.get("MeetsBaseline") is not True
+                or capabilities.get("Durability") != (0 if provider == "local" else 1)
+                or capabilities.get("Enumeration") != (0 if provider == "local" else 1)
+                or capabilities.get("RangeReads") is not False or capabilities.get("Sha512") is not True
+                or any(capabilities.get(key) is not True for key in (
+                    "ConditionalPublication", "ConditionalDeletion", "StagingRecovery", "OwnerFencing",
+                    "ReaderProtection", "BoundedStreaming"))
+                or not isinstance(capabilities.get("Limits"), dict)
+                or configuration.get("limits") != capabilities["Limits"]):
+            raise RuntimeError("Artifact admission/capability inputs are inconsistent or unsupported.")
+        package = f"Hoard.Fixtures.Artifacts.{'Local' if provider == 'local' else 'ObjectSemantics'}.0.1.0.nupkg"
+        matching = [value for value in evidence["packages"] if value["id"] == package]
+        if len(matching) != 1:
+            raise RuntimeError("Artifact selected implementation package is missing.")
+        bindings[provider] = {
+            "sourceSha256": source_digest, "lockSha256": inputs["locks"]["sha256"],
+            "environmentSha256": environment_hash, "packageSha256": matching[0]["sha256"],
+            "configurationSha256": reference["configuration"]["sha256"],
+            "capabilitiesSha256": reference["capabilities"]["sha256"]}
+    for entry in evidence["cases"]:
+        if any(entry.get(key) != digest for key, digest in bindings[entry["provider"]].items()):
+            raise RuntimeError("Artifact case does not bind its actual qualification inputs.")
+    return bindings
+
+
+def verify_execution_proofs(evidence, work):
+    if (evidence.get("lockMode") != "locked" or not isinstance(evidence.get("command"), list)
+            or evidence["command"][:2] != ["bash", "scripts/validate-artifacts.sh"]):
+        raise RuntimeError("Artifact qualification requires its exact locked command.")
+    for proof in evidence["transfers"]:
+        stored = read_proof(work, proof)
+        if stored != {key: value for key, value in proof.items() if key not in ("proof", "sha256", "measurement")}:
+            raise RuntimeError("Artifact transfer is not bound to its actual measured child output.")
+        measurement = proof.get("measurement")
+        if not isinstance(measurement, dict):
+            raise RuntimeError("Artifact transfer has no OS measurement capture.")
+        path = proof_file(work, measurement.get("proof"))
+        if path.stat().st_size > 16384 or sha256(path) != measurement.get("sha256"):
+            raise RuntimeError("Artifact OS measurement capture is missing or altered.")
+        pattern = (r"^\s*(\d+)\s+maximum resident set size\s*$" if proof["osPeakMethod"] == "time-l"
+                   else r"Maximum resident set size \(kbytes\):\s*(\d+)")
+        matched = re.search(pattern, path.read_text(), re.MULTILINE)
+        if (not matched or int(matched[1]) * (1 if proof["osPeakMethod"] == "time-l" else 1024) != proof["osPeakRssBytes"]
+                or proof["expectedSha256"] != expected_transfer_hash(proof["size"])
+                or proof["runtime"] != evidence["environment"]["runtime"]):
+            raise RuntimeError("Artifact transfer peak, digest or runtime disagrees with its actual inputs.")
+    for proof in evidence["crashes"]:
+        stored = read_proof(work, proof)
+        if stored != {key: value for key, value in proof.items() if key not in ("proof", "sha256")}:
+            raise RuntimeError("Artifact crash is not bound to its actual parent observation.")
+        state = read_proof(work, {"proof": f"crash-{proof['barrier']}/state.json", "sha256": proof["stateSha256"]})
+        validate_recovery_readback(proof["observed"], state, proof["barrier"], evidence["runId"], proof["reopenPid"])
+    for pair in evidence["redGreen"]:
+        if pair.get("kind") not in ("runtime", "verifier"):
+            raise RuntimeError("Artifact qualification requires actually executed mutation pairs.")
+        for state, digest in (("baseline", pair["baselineSha256"]), ("mutation", pair["mutationSha256"])):
+            if sha256(proof_file(work, pair.get(state))) != digest:
+                raise RuntimeError("Artifact mutation input is missing or hash-altered.")
+        if pair["kind"] == "runtime":
+            red = proof_file(work, pair.get("redProof"))
+            green = proof_file(work, pair.get("greenProof"))
+            if sha256(red) != pair.get("redProofSha256") or sha256(green) != pair.get("greenProofSha256"):
+                raise RuntimeError("Artifact mutation execution proof was altered.")
+            results = ElementTree.parse(red).findall(".//{*}UnitTestResult")
+            result = next((result for result in results if result.get("testName") == pair["test"]), None)
+            if (result is None or result.get("outcome") != "Failed"
+                    or "Assert." not in result.findtext(".//{*}Message", "")
+                    or pair["test"] not in {result["test"] for result in metadata.trx_results(green)}):
+                raise RuntimeError("Artifact mutation pair lacks its exact failed assertion and green execution.")
+        else:
+            capture = read_proof(work, pair.get("execution"))
+            if (capture.get("redExit") != pair["redExit"] or capture.get("greenExit") != 0
+                    or f"FAIL: {pair['test']}" not in capture.get("redOutput", "")
+                    or "AssertionError" not in capture["redOutput"]):
+                raise RuntimeError("Artifact verifier mutation did not execute its intended assertion.")
+    if {pair["id"] for pair in evidence["redGreen"]} != {
+            "local-capability-admission", "object-capability-admission", "case-context-binding"}:
+        raise RuntimeError("Artifact mutation execution inventory is incomplete.")
+    records = evidence.get("qualificationRecords")
+    if (not isinstance(records, list) or len(records) != 2
+            or {record.get("id") for record in records} != set(PROVIDERS)):
+        raise RuntimeError("Both materialized public qualification records are required.")
+    for reference in records:
+        record = read_proof(work, reference)
+        cases = [case for case in evidence["cases"] if case["provider"] == reference["id"]]
+        context = next(value for value in evidence["inputs"]["contexts"] if value["id"] == reference["id"])
+        environment = {key: evidence["environment"][name] for key, name in (
+            ("OperatingSystem", "os"), ("Runtime", "runtime"), ("FileSystem", "filesystem"),
+            ("FlushConfiguration", "flushConfiguration"))}
+        environment["Sha256"] = cases[0]["environmentSha256"]
+        if (record.get("ImplementationId") != f"fixture.artifact.{reference['id']}"
+                or record.get("PackageVersion") != "0.1.0"
+                or record.get("Capabilities") != read_proof(work, context["capabilities"])
+                or record.get("Environment") != environment
+                or record.get("CaseIds") != [case["id"] for case in cases]
+                or set(record.get("ProofHashes", [])) != {case["sha256"] for case in cases}
+                or any(record.get(field) != cases[0][field[0].lower() + field[1:]]
+                       for field in ("SourceSha256", "LockSha256", "ConfigurationSha256", "PackageSha256", "EnvironmentSha256"))
+                or record.get("Exclusions") != (["AS-41", "AS-42", "AS-43", "AS-44"] if reference["id"] == "object" else [])
+                or not isinstance(record.get("CaseResults"), list) or len(record["CaseResults"]) != 48):
+            raise RuntimeError("Materialized public qualification record is incomplete or foreign.")
+        expected = {case["id"]: case for case in cases}
+        for result in record["CaseResults"]:
+            case = expected.pop(result.get("CaseId"), None)
+            duration = result.get("Duration", "").split(":")
+            milliseconds = ((int(duration[0]) * 3600 + int(duration[1]) * 60 + float(duration[2])) * 1000
+                            if len(duration) == 3 else -1)
+            if (case is None or result.get("Status") != (1 if case["result"] == "NotApplicable" else 0)
+                    or result.get("ProofHashes") != [case["sha256"]]
+                    or not math.isclose(milliseconds, case["durationMs"], rel_tol=1e-9, abs_tol=0.01)):
+                raise RuntimeError("Materialized qualification case is unexecuted or unattributed.")
+
+
 def verify_manifest(evidence, work, source_digest):
     if (not isinstance(evidence, dict) or evidence.get("schemaVersion") != 1
             or evidence.get("sourceSha256") != source_digest
@@ -285,6 +454,7 @@ def verify_manifest(evidence, work, source_digest):
     if any(entry["sourceSha256"] != source_digest for entry in evidence["cases"]):
         raise RuntimeError("Artifact case source attribution is stale.")
     verify_files(evidence.get("packages"), work, PACKAGES)
+    verify_input_bindings(evidence, work, source_digest)
     verify_red_green(evidence.get("redGreen"))
     transfers = evidence.get("transfers")
     expected = {(provider, size) for provider in PROVIDERS for size in (268435456, 4294967296)}
@@ -301,6 +471,7 @@ def verify_manifest(evidence, work, source_digest):
         raise RuntimeError("Incomplete artifact crash inventory.")
     for proof in crashes:
         verify_crash(proof, proof["barrier"], evidence["runId"])
+    verify_execution_proofs(evidence, work)
 
 
 def prepare_baseline(root, work, update):
@@ -455,11 +626,11 @@ def prepare_packages(root, work, update):
     return inputs
 
 
-def focused_tests(work, selection):
+def focused_tests(work, selection, *, name="artifacts", environment=None):
     project = work / "current/tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj"
     results = work / "results"
     arguments = ["dotnet", "test", str(project), "-c", "Release", "--no-build", "--no-restore",
-                 "-p:ArtifactPackageAcceptance=true", "--logger", "trx;LogFileName=artifacts.trx",
+                 "-p:ArtifactPackageAcceptance=true", "--logger", f"trx;LogFileName={name}.trx",
                  "--results-directory", str(results), "-v", "quiet"]
     if selection:
         arguments += ["--filter", selection]
@@ -467,16 +638,18 @@ def focused_tests(work, selection):
         "HOARD_ARTIFACT_TEST_ROOT": str(work / "case-roots"),
         "HOARD_METADATA_WORKSPACE": str(work / "metadata-roots"),
         "HOARD_ARTIFACT_CRASH_PROOFS": str(work / "crashes"),
-        "HOARD_ARTIFACT_CRASH_RUNNER": str(work / "current/tests/fixtures/artifacts/CrashRunner/bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll")})
-    (work / "tests.txt").write_text(output)
-    return lifecycle.test_count(results / "artifacts.trx")
+        "HOARD_ARTIFACT_CRASH_RUNNER": str(work / "current/tests/fixtures/artifacts/CrashRunner/bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll"),
+        **(environment or {})})
+    (work / f"{name}-tests.txt").write_text(output)
+    return lifecycle.test_count(results / f"{name}.trx")
 
 
 def consumer_journeys(work):
     binary = work / "current/tests/fixtures/artifacts/Consumer/bin/Release/net10.0/Hoard.Fixtures.Artifacts.Consumer.dll"
     journeys = []
     for provider in PROVIDERS:
-        result = json.loads(run("dotnet", str(binary), provider, str(work / f"consumer-{provider}")))
+        result = json.loads(run("dotnet", str(binary), provider, str(work / f"consumer-{provider}"),
+                                env={"HOARD_ARTIFACT_CONTEXT_PATH": str(work / f"context-{provider}.json")}))
         if result != {"qualification": False, "provider": provider, "roundTrip": True,
                       "operations": list(CONSUMER_OPERATIONS)}:
             raise RuntimeError("Artifact unchanged-consumer journey did not pass.")
@@ -603,6 +776,7 @@ def read_child_line(child, timeout):
     return json.loads(line)
 
 
+@functools.lru_cache(maxsize=2)
 def expected_transfer_hash(size):
     block = bytes((index * 31 + 7) % 251 for index in range(262144))
     digest = hashlib.sha256()
@@ -770,6 +944,269 @@ def crash_recovery(work, barrier, run_id):
     return proof
 
 
+def mutation_pairs(root, work):
+    pairs = []
+    tests = work / "current/tests/contracts/Hoard.Artifacts.Tests/bin/Release/net10.0"
+    for provider, module in (("local", "Local"), ("object", "ObjectSemantics")):
+        directory = work / f"mutation-{provider}"
+        source = directory / "current"
+        source.mkdir(parents=True)
+        for name in ("Directory.Build.props", "Directory.Packages.props", "global.json"):
+            shutil.copy2(work / "current" / name, source / name)
+        relative = Path(f"tests/fixtures/artifacts/{module}")
+        foundation.copy_source(work / "current" / relative, source / relative)
+        shutil.copy2(work / "current/tests/fixtures/artifacts/Directory.Packages.props", source / relative.parent)
+        implementation = source / relative / f"{module if provider == 'local' else 'Object'}ArtifactStore.cs"
+        original = implementation.read_text()
+        needle = "if (!Capabilities.MeetsBaseline || Capabilities.Limits != request.Limits"
+        if original.count(needle) != 1:
+            raise RuntimeError("Artifact admission mutation target changed.")
+        baseline = directory / "baseline.cs"
+        baseline.write_text(original)
+        implementation.write_text(original.replace(needle, "if (Capabilities.Version < 0 || Capabilities.Limits != request.Limits"))
+        mutation = directory / "mutation.cs"
+        shutil.copy2(implementation, mutation)
+        project = source / relative / f"{module}.csproj"
+        environment = {"NUGET_PACKAGES": str(work / "cache"), "HOARD_ARTIFACT_TEST_ROOT": str(directory / "roots")}
+        run("dotnet", "restore", str(project), "--locked-mode", "--configfile", str(work / "NuGet.Config"),
+            "-v", "quiet", env=environment)
+        run("dotnet", "build", str(project), "-c", "Release", "--no-restore", "-v", "quiet", env=environment)
+        output = directory / "tests"
+        shutil.copytree(tests, output)
+        assembly = f"Hoard.Fixtures.Artifacts.{module}.dll"
+        shutil.copy2(project.parent / "bin/Release/net10.0" / assembly, output)
+        method = "Missing_mandatory_guarantees_versions_or_authority_reject_before_io"
+        command = ["dotnet", "vstest", str(output / "Hoard.Artifacts.Tests.dll"),
+                   f"/TestCaseFilter:FullyQualifiedName~{method}", f"/ResultsDirectory:{directory}"]
+        red = subprocess.run([*command, "/Logger:trx;LogFileName=red.trx"], text=True,
+                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=600,
+                             env={**os.environ, **environment})
+        (directory / "red.txt").write_text(red.stdout)
+        test = next(name for name in required_runtime_tests(provider, "AS-38") if 'gap: "streaming"' in name)
+        document = ElementTree.parse(directory / "red.trx")
+        result = next((result for result in document.findall(".//{*}UnitTestResult")
+                       if result.get("testName") == test), None)
+        if (red.returncode <= 0 or result is None or result.get("outcome") != "Failed"
+                or "Assert.IsType" not in result.findtext(".//{*}Message", "")):
+            raise RuntimeError("Artifact runtime mutation missed its intended assertion.")
+        shutil.copy2(tests / assembly, output)
+        run(*command, "/Logger:trx;LogFileName=green.trx", env=environment)
+        if test not in {result["test"] for result in metadata.trx_results(directory / "green.trx")}:
+            raise RuntimeError("Artifact runtime mutation has no matching green.")
+        pairs.append({
+            "id": f"{provider}-capability-admission", "kind": "runtime", "test": test,
+            "redExit": red.returncode, "redOutcome": "Failed", "redAssertion": True, "greenOutcome": "Passed",
+            "baseline": baseline.relative_to(work).as_posix(), "baselineSha256": sha256(baseline),
+            "mutation": mutation.relative_to(work).as_posix(), "mutationSha256": sha256(mutation),
+            "redProof": (directory / "red.trx").relative_to(work).as_posix(),
+            "redProofSha256": sha256(directory / "red.trx"),
+            "greenProof": (directory / "green.trx").relative_to(work).as_posix(),
+            "greenProofSha256": sha256(directory / "green.trx")})
+    directory = work / "mutation-verifier"
+    (directory / "scripts").mkdir(parents=True)
+    (directory / "tests/tooling").mkdir(parents=True)
+    for path in (root / "scripts").glob("*.py"):
+        shutil.copy2(path, directory / "scripts")
+    shutil.copy2(root / "tests/tooling/test_artifact_evidence.py", directory / "tests/tooling")
+    implementation = directory / "scripts/artifact_evidence.py"
+    original = implementation.read_text()
+    needle = '\n        if any(entry.get(key) != digest for key, digest in bindings[entry["provider"]].items()):\n'
+    if original.count(needle) != 1:
+        raise RuntimeError("Artifact context-binding mutation target changed.")
+    baseline = directory / "baseline.py"
+    baseline.write_text(original)
+    implementation.write_text(original.replace(needle, '\n        if any(False for key, digest in bindings[entry["provider"]].items()):\n'))
+    mutation = directory / "mutation.py"
+    shutil.copy2(implementation, mutation)
+    command = [sys.executable, "-m", "unittest", "discover", "-s", "tests/tooling", "-p", "test_artifact_evidence.py", "-v"]
+    red = subprocess.run(command, cwd=directory, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=600)
+    test = "test_matching_outer_and_inner_bindings_cannot_replace_actual_inputs"
+    if (red.returncode <= 0 or f"FAIL: {test}" not in red.stdout or "AssertionError" not in red.stdout
+            or "ImportError" in red.stdout or "SyntaxError" in red.stdout):
+        raise RuntimeError("Artifact verifier mutation missed its intended assertion.")
+    implementation.write_text(original)
+    green = run(*command, cwd=directory)
+    pairs.append({
+        "id": "case-context-binding", "kind": "verifier", "test": test, "redExit": red.returncode,
+        "redOutcome": "Failed", "redAssertion": True, "greenOutcome": "Passed",
+        "baseline": baseline.relative_to(work).as_posix(), "baselineSha256": sha256(baseline),
+        "mutation": mutation.relative_to(work).as_posix(), "mutationSha256": sha256(mutation),
+        "execution": write_proof(work, "mutation-verifier/execution.json", {
+            "command": command, "redExit": red.returncode, "greenExit": 0, "redOutput": red.stdout, "greenOutput": green})})
+    verify_red_green(pairs)
+    return pairs
+
+
+def qualification_inputs(root, work, packages):
+    contexts = []
+    runtimes = set()
+    for provider in PROVIDERS:
+        path = work / f"context-{provider}.json"
+        context = json.loads(path.read_text())
+        runtimes.add(context["runtime"])
+        contexts.append({
+            "id": provider, "proof": path.name, "sha256": sha256(path),
+            "capabilities": write_proof(work, f"capabilities-{provider}.json", context["capabilities"]),
+            "configuration": write_proof(work, f"configuration-{provider}.json", context["configuration"])})
+    if len(runtimes) != 1:
+        raise RuntimeError("Artifact consumers did not execute the same runtime.")
+    environment = {
+        "os": platform.platform(), "runtime": next(iter(runtimes)), "filesystem": metadata.filesystem_type(work),
+        "flushConfiguration": "Local payload/decision Flush(true), no directory fsync; object process-local simulation"}
+    inputs = {"locks": write_proof(work, "locks.json", lock_hashes(root)), "contexts": contexts,
+              "environment": write_proof(work, "environment.json", environment)}
+    bindings = verify_input_bindings({
+        "inputs": inputs, "environment": environment, "packages": packages, "cases": []}, work, source_hash(root))
+    return inputs, environment, bindings
+
+
+def qualification_cases(work, run_id, bindings):
+    executions = {}
+    for name in ("artifacts", "transfer-proofs", "artifact-boundaries"):
+        reference = f"results/{name}.trx"
+        for result in metadata.trx_results(work / reference):
+            if result["test"] in executions:
+                raise RuntimeError("Artifact qualification has ambiguous duplicate runtime witnesses.")
+            executions[result["test"]] = {**result, "proof": reference}
+    cases = []
+    for provider in PROVIDERS:
+        for case in CASES:
+            number = int(case[3:])
+            excluded = provider == "object" and 41 <= number <= 44
+            names = sorted(required_runtime_tests(provider, case))
+            if not set(names).issubset(executions):
+                raise RuntimeError(f"Artifact {provider}/{case} has an unexecuted required runtime witness.")
+            grouped = {}
+            for name in names:
+                grouped.setdefault(executions[name]["proof"], []).append(name)
+            if len(grouped) > 2:
+                raise RuntimeError("Artifact runtime case exceeds its paired witness inventory.")
+            groups = list(grouped.items())
+            if len(groups) == 1:
+                groups *= 2
+            subproofs = [{"id": role, "result": "Passed", "tests": tests, "proof": path, "sha256": sha256(work / path)}
+                         for role, (path, tests) in zip(("positive", "negative"), groups)]
+            entry = {
+                "id": case, "provider": provider, "class": "L" if number <= 40 else "D" if number <= 44 else "Q",
+                "runId": run_id, "result": "NotApplicable" if excluded else "Passed",
+                "reason": "simulation: no durable restart" if excluded else "",
+                "positive": True, "negative": True, "tests": names,
+                "durationMs": sum(executions[name]["durationMs"] for name in names), **bindings[provider]}
+            entry.update(write_proof(work, f"cases/{provider}-{case}.json", {
+                "schemaVersion": 1, **{key: entry[key] for key in (
+                    "id", "provider", "class", "runId", "result", *CASE_BINDINGS)}, "subproofs": subproofs}))
+            cases.append(entry)
+    verify_cases(cases, work, run_id)
+    return cases
+
+
+def negative_manifests(evidence, work):
+    mutations = []
+    for field, value in (("production", True), ("phase", "logical"), ("lockMode", "update"),
+                         ("sourceSha256", "0" * 64), ("runId", "foreign")):
+        changed = copy.deepcopy(evidence)
+        changed[field] = value
+        mutations.append((field, changed))
+    for name, cases in (("missing-case", evidence["cases"][:-1]),
+                        ("duplicate-case", [*evidence["cases"][:-1], evidence["cases"][0]])):
+        changed = copy.deepcopy(evidence)
+        changed["cases"] = cases
+        mutations.append((name, changed))
+    for field, value in (("provider", "foreign"), ("result", "Failed"), ("result", "Skipped"),
+                         ("durationMs", -1), ("packageSha256", "0" * 64),
+                         ("configurationSha256", "0" * 64), ("capabilitiesSha256", "0" * 64),
+                         ("environmentSha256", "0" * 64), ("lockSha256", "0" * 64)):
+        changed = copy.deepcopy(evidence)
+        changed["cases"][0][field] = value
+        mutations.append((f"case-{field}-{value}", changed))
+    for section, field, value in (
+            ("transfers", "written", 0), ("transfers", "osPeakRssBytes", 2 ** 60),
+            ("transfers", "sha256", "0" * 64), ("crashes", "exitCode", 0),
+            ("crashes", "reopenPid", evidence["crashes"][0]["pid"]),
+            ("crashes", "sha256", "0" * 64), ("packages", "sha256", "0" * 64)):
+        changed = copy.deepcopy(evidence)
+        changed[section][0][field] = value
+        mutations.append((f"{section}-{field}", changed))
+    for index, field, value in (
+            (0, "Capabilities", {}), (0, "Environment", {}), (0, "CaseIds", []),
+            (1, "Exclusions", []), (0, "SourceSha256", "0" * 64)):
+        changed = copy.deepcopy(evidence)
+        reference = changed["qualificationRecords"][index]
+        record = read_proof(work, reference)
+        record[field] = value
+        reference.update(write_proof(work, f"negative-records/{index}-{field}.json", record))
+        mutations.append((f"record-{index}-{field}", changed))
+    changed = copy.deepcopy(evidence)
+    reference = changed["qualificationRecords"][0]
+    record = read_proof(work, reference)
+    record["CaseResults"][0]["Duration"] = "00:00:00"
+    reference.update(write_proof(work, "negative-records/duration.json", record))
+    mutations.append(("record-duration", changed))
+    for name, changed in mutations:
+        try:
+            verify_manifest(changed, work, evidence["sourceSha256"])
+        except RuntimeError:
+            continue
+        raise RuntimeError(f"Artifact verifier accepted the actual {name} mutation.")
+    return write_proof(work, "negative-manifests.json", {
+        "schemaVersion": 1, "sourceSha256": evidence["sourceSha256"], "runId": evidence["runId"],
+        "tests": [{"id": name, "result": "Passed"} for name, _ in mutations]})
+
+
+def qualify(root, work, prerequisites):
+    fingerprint = source_hash(root)
+    locks = lock_hashes(root)
+    if prerequisites["sourceSha256"] != fingerprint:
+        raise RuntimeError("Artifact prepared source fingerprint drifted.")
+    run_id = str(uuid.uuid4())
+    focused_tests(work, "FullyQualifiedName~Artifact&FullyQualifiedName!~ArtifactTransferProofTests")
+    transfers = measured_transfers(work, run_id)
+    focused_tests(work, "FullyQualifiedName~ArtifactTransferProofTests", name="transfer-proofs",
+                  environment={"HOARD_ARTIFACT_TRANSFER_PROOFS": str(work), "HOARD_ARTIFACT_RUN_ID": run_id})
+    crashes = [crash_recovery(work, barrier, run_id) for barrier in BARRIERS]
+    package_checks(root, work)
+    inputs, environment, bindings = qualification_inputs(root, work, prerequisites["packages"])
+    cases = qualification_cases(work, run_id, bindings)
+    pairs = mutation_pairs(root, work)
+    records = []
+    binary = work / "current/tests/fixtures/artifacts/Consumer/bin/Release/net10.0/Hoard.Fixtures.Artifacts.Consumer.dll"
+    for provider in PROVIDERS:
+        request = {
+            "implementationId": f"fixture.artifact.{provider}", **bindings[provider], "environment": environment,
+            "capabilities": json.loads((work / f"capabilities-{provider}.json").read_text()),
+            "cases": [case for case in cases if case["provider"] == provider]}
+        reference = write_proof(work, f"qualification-request-{provider}.json", request)
+        output = run("dotnet", str(binary), "qualification", str(work / reference["proof"]))
+        records.append({"id": provider, **write_proof(work, f"qualification-record-{provider}.json", json.loads(output))})
+    for path in ("src", "tests/contracts/Hoard.Artifacts.Tests", "tests/fixtures/artifacts"):
+        run("dotnet", "format", "whitespace", str(root / path), "--folder", "--verify-no-changes", "--verbosity", "quiet")
+    project = work / "current/tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj"
+    run("dotnet", "build", str(project), "-c", "Release", "--no-restore", "-p:ArtifactPackageAcceptance=true",
+        "-p:RunAnalyzersDuringBuild=true", "-v", "quiet", env={"NUGET_PACKAGES": str(work / "cache")})
+    if fingerprint != source_hash(root) or locks != lock_hashes(root):
+        raise RuntimeError("Artifact qualification inputs changed during execution.")
+    evidence = {
+        "schemaVersion": 1, "qualification": True, "production": False, "phase": "full", "lockMode": "locked",
+        "command": ["bash", "scripts/validate-artifacts.sh", "--evidence", str(work)],
+        "runId": run_id, "sourceSha256": fingerprint, "baselineRevision": BASELINE,
+        "environment": environment, "inputs": inputs, "packages": prerequisites["packages"],
+        "cases": cases, "redGreen": pairs, "qualificationRecords": records,
+        "limitations": ["Test-only independent fixtures, not a production cache/provider or F-07 certification.",
+                        "Only the recorded local process-crash environment; no power-loss/remote-service/HA claim.",
+                        "Object simulation has no durable restart; AS-41..44 are explicitly not applicable.",
+                        "Measured transfers run one at a time with one slot and fixed 256 KiB/2 MiB buffers."],
+        "transfers": [{**proof, "proof": f"transfer-{proof['provider']}-{proof['size']}/proof.json",
+                       "sha256": sha256(work / f"transfer-{proof['provider']}-{proof['size']}/proof.json"),
+                       "measurement": {"proof": f"transfer-{proof['provider']}-{proof['size']}/time.txt",
+                                       "sha256": sha256(work / f"transfer-{proof['provider']}-{proof['size']}/time.txt")}}
+                      for proof in transfers],
+        "crashes": [{**proof, "proof": f"crash-{proof['barrier']}/proof.json",
+                     "sha256": sha256(work / f"crash-{proof['barrier']}/proof.json")} for proof in crashes]}
+    verify_manifest(evidence, work, fingerprint)
+    evidence["negativeValidation"] = negative_manifests(evidence, work)
+    return evidence
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("root", type=Path)
@@ -783,7 +1220,7 @@ def main():
     try:
         before = lock_hashes(root)
         prepare_baseline(root, work, args.update_locks)
-        prepare_packages(root, work, args.update_locks)
+        prerequisites = prepare_packages(root, work, args.update_locks)
         if not args.update_locks:
             verify_locks(root, before)
         if args.filter:
@@ -798,8 +1235,10 @@ def main():
         if args.phase == "transfers":
             run_id = str(uuid.uuid4())
             transfers = measured_transfers(work, run_id)
+            count = focused_tests(work, "FullyQualifiedName~ArtifactTransferProofTests", name="transfer-proofs",
+                                  environment={"HOARD_ARTIFACT_TRANSFER_PROOFS": str(work), "HOARD_ARTIFACT_RUN_ID": run_id})
             evidence = {"schemaVersion": 1, "qualification": False, "phase": args.phase,
-                        "runId": run_id, "sourceSha256": source_hash(root), "transfers": transfers}
+                        "runId": run_id, "sourceSha256": source_hash(root), "transfers": transfers, "testsPassed": count}
             (work / "manifest.json").write_text(json.dumps(evidence, indent=2) + "\n")
             print(json.dumps(evidence))
             return 0
@@ -813,7 +1252,7 @@ def main():
             return 0
         if args.phase in ("logical", "recovery"):
             run_id = str(uuid.uuid4())
-            selection = ("FullyQualifiedName~Artifact&FullyQualifiedName!~ArtifactCrashTests" if args.phase == "logical"
+            selection = ("FullyQualifiedName~Artifact&FullyQualifiedName!~ArtifactCrashTests&FullyQualifiedName!~ArtifactTransferProofTests" if args.phase == "logical"
                          else "FullyQualifiedName~ArtifactRecoveryTests|FullyQualifiedName~ArtifactReconciliationTests")
             count = focused_tests(work, selection)
             journeys = consumer_journeys(work) if args.phase == "logical" else []
@@ -824,8 +1263,15 @@ def main():
             (work / "manifest.json").write_text(json.dumps(evidence, indent=2) + "\n")
             print(json.dumps(evidence))
             return 0
-        # No case is inferred from compilation, an old run or the verifier's own tests.
-        raise RuntimeError("Artifact qualification is incomplete: current provider/case execution is not implemented.")
+        if args.update_locks:
+            raise RuntimeError("Full artifact qualification requires a separate default locked replay.")
+        evidence = qualify(root, work, prerequisites)
+        (work / "manifest.json").write_text(json.dumps(evidence, indent=2) + "\n")
+        print(json.dumps({"schemaVersion": 1, "qualification": True, "phase": "full",
+                          "sourceSha256": evidence["sourceSha256"], "runId": evidence["runId"],
+                          "passed": sum(case["result"] == "Passed" for case in evidence["cases"]),
+                          "notApplicable": sum(case["result"] == "NotApplicable" for case in evidence["cases"])}))
+        return 0
     except Exception as error:
         (work / "failure.json").write_text(json.dumps({
             "schemaVersion": 1, "qualification": False, "phase": args.phase or "full",

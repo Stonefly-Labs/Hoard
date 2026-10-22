@@ -24,7 +24,8 @@ public sealed class ArtifactFixtureModule : IHoardModule, IHoardConfiguredModule
         var configured = options ?? throw new InvalidOperationException("Artifact fixture owner options are required.");
         cancellationToken.ThrowIfCancellationRequested();
         session = await ArtifactFixtureSession.CreateForQualificationAsync(
-            configured.GetString("provider"), configured.GetString("root"), cancellationToken: cancellationToken);
+            configured.GetString("provider"), configured.GetString("root"), null, null, cancellationToken,
+            services.GetService<ArtifactFixtureAdmissionProfile>());
         if (!session.Capabilities.MeetsBaseline)
         { throw new InvalidOperationException("Artifact fixture lacks mandatory guarantees; readiness is denied."); }
         ready = true;

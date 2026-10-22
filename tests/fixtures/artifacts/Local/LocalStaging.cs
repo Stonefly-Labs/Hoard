@@ -45,7 +45,22 @@ public sealed partial class LocalArtifactStore
                 reserved = checked(reserved + operation.Cap);
                 return Task.FromResult(Ticket(operation));
             }
-        });
+        }, undelivered: DiscardUndeliveredTicketAsync);
+    }
+
+    private ValueTask DiscardUndeliveredTicketAsync(ArtifactOperationTicket ticket)
+    {
+        lock (stateSync)
+        {
+            if (!operations.TryGetValue(ticket.Id, out var operation) || Ticket(operation) != ticket
+                || operation.State != "reserved") { throw new LocalStateException(ArtifactFailureCode.Conflict); }
+            ReleaseStaging(operation);
+            File.Delete(ownership!.RecordPath("tickets", operation.Id.ToString("N")));
+            ReleaseHistoryDependency(operation.Id);
+            operations.TryRemove(operation.Id, out _);
+            indexedIncarnations.Remove(operation.Id);
+        }
+        return ValueTask.CompletedTask;
     }
 
     private void RetireExpiredTickets(CancellationToken token)
@@ -60,7 +75,7 @@ public sealed partial class LocalArtifactStore
             {
                 token.ThrowIfCancellationRequested();
                 HistoryCandidate("tickets", id.ToString("N"));
-                var expired = operations[id];
+                if (!operations.TryGetValue(id, out var expired)) { continue; }
                 if (now < expired.Expires || expired.State == "deciding" || TicketInUse(id)) { continue; }
                 if (expired.Content is { } content && decisions.TryGetValue(content.Digest, out var anchored)
                     && anchored.Operation == id && anchored.ReconcileUntil is null)
@@ -229,7 +244,21 @@ public sealed partial class LocalArtifactStore
                 }
                 throw;
             }
-        }, ticket);
+        }, ticket, undelivered: staged =>
+        {
+            lock (stateSync)
+            {
+                if (!operations.TryGetValue(staged.Owner.Ticket.Id, out var operation)
+                    || Ticket(operation) != staged.Owner.Ticket || Owner(operation) != staged.Owner
+                    || operation.Session != ownership!.State.SessionId || Staged(operation) != staged
+                    || operation.State is not ("verified" or "notcommitted"))
+                { throw new LocalStateException(ArtifactFailureCode.Conflict); }
+                operation.State = "notcommitted";
+                Save(operation);
+                ReleaseStaging(operation);
+            }
+            return ValueTask.CompletedTask;
+        });
     }
 
     private void ReleaseStaging(LocalOperation operation)

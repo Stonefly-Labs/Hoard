@@ -113,11 +113,11 @@ public sealed partial class LocalArtifactStore
                 {
                     if (direct.Length != operation.Content!.Length) { throw new LocalStateException(ArtifactFailureCode.CorruptContent); }
                 }
-                await faults.ObserveAsync("publish.receipted");
-                token.ThrowIfCancellationRequested();
-                lock (stateSync) { return Receipt(operation); }
             }
             finally { gate.Release(); }
+            await faults.ObserveAsync("publish.receipted");
+            token.ThrowIfCancellationRequested();
+            lock (stateSync) { return Receipt(operation); }
         }, staged.Owner.Ticket, cancellationSettled: () =>
         {
             lock (stateSync)

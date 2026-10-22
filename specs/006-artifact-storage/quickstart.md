@@ -1,31 +1,21 @@
 # F-06 Artifact Qualification Quickstart
 
-**Status**: Partial implementation; the local-package lock blocker is resolved.
-Independent partial mechanisms now execute streaming/publication, protected
-reads, exact receipts, cleanup/deletion, real metadata integration and local
-parent-kill recovery checks. Full qualification remains incomplete and both
-fixtures remain not-ready. Logical, transfer and recovery modes execute real
-focused proof and always report `qualification: false`; the package phase also
-runs actual graph/public-member and frozen-binary checks. Full mode still
-fails closed rather than inventing missing results.
-Configured selection currently proves inert/disabled behavior and fail-closed
-startup only, not successful readiness. Focused cancellation checks cover both
-an already-cancelled caller and authority-queued expiry, exact terminal
-noncommit, refused retry and a subsequent independent-thread absence read.
-Pending deletion receipts advance to reclaimed only after physical cleanup;
-object direct availability and listing are independently controlled.
-Current focused proof also uses admitted-writer and late-cleanup barriers,
-producer/sink inactivity and invalidated recovery continuations. Package checks
-reject compiled SDK/raw-filesystem/service-locator leaks with allowed BCL
-counterparts. Ordinary command timeout/interrupt cleanup targets only its owned
-session's exact observed PIDs; actual descendant cleanup preserves an unrelated
-child. These checks do not close the full case inventory or readiness gate.
-Both package selections now run the identical compiled consumer through all 16
-store/read/evidence/maintenance/authority operations. Its proof includes exact
-reconciliation, independent guard retention, borrowed streams, stale cleanup
-and incarnation-safe recreation. Actual IL controls reject hidden consumer
-provider coupling and forbidden Core/provider edges and distinguish Local's
-rename mechanism from the object's no-rename implementation.
+**Status**: Full test-fixture qualification passed on the final intended source:
+96 provider/case entries, 92 passes and exactly four Object AS-41..44
+non-applicability results, not skips. The recorded environment is macOS 26.5
+arm64, .NET 10.0.7 and APFS, with Local payload/decision `Flush(true)` but no
+directory fsync; no power-loss or production-provider claim follows.
+Both independent fixtures declare the baseline and become ready only after
+explicit admission. Existing F-02/F-03 composition covers inert/disabled
+selection, rejected missing guarantees and successful startup/stop/restart.
+Local reopens its exact known identity; Object replacement uses a fresh root
+and epoch, never a durable-restart claim.
+The unchanged compiled consumer exercises all 16 common operations on both
+choices. Full acceptance includes 229 logical/crash checks, four actual-transfer
+proof tests, three architecture checks, eight graph scans, the original frozen
+marker binary, six Python-owned kill/reopen barriers and 29 altered-manifest
+rejections. See [exact commands and evidence](plan.md#final-fixture-qualification-and-handoff-2026-10-22).
+Every focused mode remains `qualification: false`, even with passing results.
 Expired ticket retirement now restores finite admission; retained identity and
 reclaimed-incarnation history has separate bounded bookkeeping and compacts
 only after expiry, physical reclamation and dependent-work settlement.
@@ -47,8 +37,14 @@ Qualification values now require an explicit bounded environment and exactly
 48 immutable case results with statuses, durations and proof hashes. The old
 flat case-name/hash constructor rejects such unattached claims. Case-report
 validation reads the hashed payload and verifies its context and paired passed
-TRX witnesses, including executed names and duration. The complete semantic
-case registry and full qualifying execution remain unfinished.
+TRX witnesses, including executed names and duration. The exact semantic catalog
+requires every provider and parameter variant, and full verification binds
+actual lock/package/configuration/capability/environment inputs to all cases.
+Successful result delivery is serialized against cancellation. Unclaimed
+tickets, staging and reads remain provider-owned until exact reclamation;
+expiry does not prevent cleanup of that generation. Failed cleanup blocks
+admission/readiness and root release until a bounded exact `StopAsync` retry
+succeeds. Non-cooperative resources are never declared released.
 See the [approved hash refresh and locked replay](plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 
 Read [API](contracts/artifact-api.md), [model](data-model.md),
@@ -61,15 +57,15 @@ pre-F06 baseline captured before public contract additions:
 
 ```bash
 export HOARD_ARTIFACT_RETAINED_BASELINE="../hoard-artifact-evidence/pre-f06-20261022"
-bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Artifact' \
+bash scripts/validate-artifacts.sh --phase logical \
   --evidence "../hoard-artifact-evidence/fresh-focused-check"
 ```
 
 The retained marker is hash-verified and copied, never rebuilt against new
 contracts. This focused check reports `qualification: false`. Do not manufacture
 a replacement baseline if its original source/binary/dependency hashes are
-missing. The default full command currently exits unsuccessfully because its
-case execution is unfinished; it cannot produce a qualifying manifest.
+missing. Default full mode now executes and verifies the complete inventory;
+it still fails closed for any missing, failed, stale or hash-altered obligation.
 
 Use Git, Bash, Python 3.11+ and the stable .NET 10 SDK selected by `global.json`.
 Existing package versions/locks remain authoritative; no vendor SDK or cloud
@@ -82,7 +78,7 @@ start and signal only owned child processes, and exclusive ownership of each
 scratch root. No server, container, network filesystem or rendered UI is needed.
 Only the actual OS/runtime/filesystem exercised can be reported as qualified.
 
-## Checks Available During Planning
+## Repository Checks
 
 ```bash
 python3 -m unittest discover -s tests/tooling -v
@@ -94,7 +90,7 @@ git diff --check
 These validate repository tooling, pinned paths and patch hygiene, not artifact
 semantics, RSS, crash recovery or reviewer-owned checklist approval.
 
-## Proposed Full Command (Not Yet Implemented)
+## Full Command
 
 ```bash
 bash scripts/validate-artifacts.sh --evidence "$PRIVATE_EVIDENCE/artifacts-full"
@@ -103,8 +99,8 @@ bash scripts/validate-artifacts.sh --evidence "$PRIVATE_EVIDENCE/artifacts-full"
 `PRIVATE_EVIDENCE` denotes an explicitly chosen existing owner-private parent
 outside Git. The runner must reject a preexisting destination and create its
 own child with owner-only access before retaining captures.
-It restores/builds/formats with tracked locks, packs independent fixtures,
-executes the same common cases/consumer twice, measures both payload sizes on
+It restores/builds/formats with tracked locks and build analyzers, packs independent fixtures,
+executes the same parameterized common cases and unchanged consumer, measures both payload sizes on
 both providers, drives real local crash children, verifies retained old
 binaries/graphs and writes an exact attributable manifest.
 
@@ -112,7 +108,14 @@ Full success requires 96 provider/case entries: 92 applicable passes and four
 explicit object durable exclusions, not skips. All subproofs must pass.
 Missing space, RSS measurement, crash evidence, changed lock or failed case
 prevents qualification. No secret/path-bearing diagnostic is copied into the
-public report; raw synthetic private captures stay outside Git.
+public console summary; raw captures, exact commands and detailed proof paths
+stay in the private evidence workspace, never Git.
+Inspect `manifest.json`, `qualification-record-local.json` and
+`qualification-record-object.json`. The full manifest links actual case JSON/
+TRX witnesses, package/context inputs, OS memory captures, crash state/readback
+and executed mutation pairs. The public record type validates each provider's
+48 statuses/durations/hashes and exact durability exclusions; a record alone
+does not replace the full manifest's input/proof verification.
 
 Available focused commands rebuild/verify prerequisites and always report
 `qualification: false`, even if their selection passes:
@@ -124,29 +127,31 @@ bash scripts/validate-artifacts.sh --phase recovery --evidence "$PRIVATE_EVIDENC
 bash scripts/validate-artifacts.sh --phase packages --evidence "$PRIVATE_EVIDENCE/artifacts-packages"
 ```
 
-The logical phase excludes crash children. Recovery checks exact owner/ticket
+The logical phase excludes durable-crash and external-measurement proof tests
+(its non-cooperative containment children still execute). Recovery checks exact owner/ticket
 semantics, then kills each Python-owned B0/B1/B2/B3/D0/D1 child only after its
 matching handshake, confirms SIGKILL exit, and opens the same root in a fresh
 process. Captures bind original state hashes, acknowledged control bytes,
 new-content hashes/lengths, exact receipts and recreated-incarnation fencing.
 The transfer phase uses generated paced non-seekable streams, warmed idle RSS,
-OS peak RSS and actual full byte counts. No phase certifies the other provider's
-durability or substitutes its output for the unfinished 96-case full manifest.
+OS peak RSS and actual full byte counts, then runs four attributed proof tests.
+No phase certifies the other provider's durability or substitutes its output
+for the full 96-case manifest.
 The package phase inspects eight actual resolved package graphs and compiled
 public signatures, rejects provider/Hosting leak controls, compares baseline
 members including accessibility/invocation flags, executes the original marker
 binary with current platform assemblies and runs both unchanged consumer choices.
-These are focused proofs, not complete AS-45/46 or full qualification.
+These are focused proofs; only default full mode qualifies the complete matrix.
 
 Use `--update-locks` only for intentional dependency/project-manifest or local
 package-payload changes; review those tracked locks and then run a separate
 default locked acceptance. The approved F-06 unblock refreshes only local
 `Hoard.*` package hashes, preserving dependency versions/graphs and external
 hashes. Frozen baseline locks and binaries are never refreshed. A focused
-locked replay still reports nonqualification. Do not install/restore
-dependencies merely for planning.
+locked replay still reports nonqualification. Full mode refuses `--update-locks`;
+its qualification requires a separate default locked run.
 
-## Scenarios to Inspect After Implementation
+## Reproducible Runtime Scenarios
 
 1. Pause a non-seekable staged write before EOF and verification; committed
    open must not expose it. Finish valid/empty input and compare exact
@@ -177,7 +182,29 @@ Stop every owned process before removing only its exact resolved scratch paths.
 Retain nonsecret evidence outside Git until review; never recursively delete a
 broad parent, user's data or an unrecognized store.
 
-## Existing Regression Commands at Implementation
+## Configured Restart and Recovery
+
+`ArtifactCompositionTests` demonstrates the existing module lifecycle without
+new product configuration or routes. Registration/composition creates no root;
+initialization is explicit. After clean shutdown, trusted fixture composition
+can register an `ArtifactFixtureAdmissionProfile` with
+`Mode = ReopenCompatible` and the exact previous Local `Store` identity.
+`ArtifactFixtureSession.CreateForQualificationAsync` retains its original
+five-argument signature and adds an explicit six-argument profile overload.
+Missing identity, corrupt/incompatible roots or authority/capability mismatches
+fail; no auto-discovery, reset, provider fallback or hot replacement is performed.
+Object restarts deliberately use a new empty root/epoch and reject old tickets.
+
+For a lost mutation acknowledgment, preserve the original ticket, reconcile
+that exact ticket and compare its receipt/stamp. Never create a replacement
+ticket to infer rollback. Use bounded query-bound recovery pages and exact
+generation/incarnation cleanup targets. Removed receipts may still report
+pending physical reclamation; do not count freed space before actual cleanup.
+The executed crash walkthrough seeds acknowledged control bytes, captures the
+exact B0/B1/B2/B3/D0/D1 handshake, kills only its owned PID and reopens in a
+fresh process to compare control/new bytes, receipts and stale-owner fencing.
+
+## Existing Regression Commands
 
 ```bash
 bash scripts/validate-foundation.sh

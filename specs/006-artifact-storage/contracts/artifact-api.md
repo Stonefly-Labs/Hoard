@@ -1,8 +1,8 @@
 # F-06 Provider-Neutral Artifact API
 
-**Status**: Planned additive signatures and normative semantics.
-Types are defined by the [model](../data-model.md); all implementations and
-commands remain future work.
+**Status**: Additive signature inventory and normative semantics.
+Types are defined by the [model](../data-model.md); implementation/qualification
+scope is recorded in the [final evidence](../plan.md#final-fixture-qualification-and-handoff-2026-10-22).
 
 ## Ownership and Signature Inventory
 
@@ -12,7 +12,7 @@ additionally implements `IArtifactStore`; a selected store without mandatory
 guarantees fails operational admission rather than falling back. Old marker-only
 hosts/providers remain valid for their old declaration-only use.
 
-Proposed namespace: `Hoard.Abstractions.Storage`. All named records are closed,
+Namespace: `Hoard.Abstractions.Storage`. All named records are closed,
 immutable BCL values; no SDK, filesystem path, Hosting type, `DbContext`, raw
 exception, arbitrary predicate or `IServiceProvider` crosses this boundary.
 Declarations below are a signature inventory, not implementation bodies.

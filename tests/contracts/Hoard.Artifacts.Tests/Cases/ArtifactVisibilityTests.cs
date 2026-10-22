@@ -6,6 +6,33 @@ namespace Hoard.Artifacts.Tests;
 public sealed class ArtifactVisibilityTests
 {
     [Fact]
+    public async Task Local_publication_is_directly_visible_before_acknowledgment()
+    {
+        await using var driver = await ArtifactProviderDriver.CreateAsync("local");
+        var bytes = "direct local publication before acknowledgment"u8.ToArray();
+        using var source = new ArtifactPublicationTests.ShortSource(bytes);
+        var ticket = ArtifactPublicationTests.Success(
+            await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
+        var staged = ArtifactPublicationTests.Success(await driver.Store.StageAsync(ticket, source, new(), default));
+        await using var boundary = new ArtifactTestBarrier("local-receipt-before-acknowledgment");
+        driver.LocalControls!.SetObserver("publish.receipted", () => new(boundary.HoldAsync()));
+        var committing = driver.Store.CommitAsync(staged, new(), default).AsTask();
+        await boundary.Entered;
+        try
+        {
+            Assert.False(committing.IsCompleted);
+            await using var read = ArtifactPublicationTests.Success(await driver.Store.OpenReadAsync(
+                new(staged.Identity.Digest), new(), default));
+            using var destination = new MemoryStream();
+            ArtifactPublicationTests.Success(await read.CopyToAsync(destination, new(), default));
+            Assert.Equal(bytes, destination.ToArray());
+        }
+        finally { boundary.Release(); }
+        var receipt = ArtifactPublicationTests.Success(await committing);
+        Assert.Equal(bytes, await ArtifactPublicationTests.ReadAsync(driver, receipt.Stamp));
+    }
+
+    [Fact]
     public async Task Delayed_object_listing_does_not_block_direct_publication_or_establish_absence()
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync("object");

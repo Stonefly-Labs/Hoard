@@ -1,6 +1,8 @@
 # F-06 Artifact Operation Model
 
-**Status**: Planned public values and private state constraints; no code delivered.
+**Status**: Normative public values and private state constraints.
+See the [final implementation evidence](plan.md#final-fixture-qualification-and-handoff-2026-10-22)
+for delivered scope and qualification limits.
 All public records are immutable, validated and BCL-only. Optional values and
 results use closed choices, never success-shaped default/null payloads.
 

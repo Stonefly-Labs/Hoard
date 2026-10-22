@@ -1,6 +1,8 @@
 # F-06 Publication, Recovery and Deletion Protocol
 
-**Status**: Planned qualification mechanisms, not a production recovery tool.
+**Status**: Normative qualification mechanisms, not a production recovery tool.
+See the [final execution evidence](../plan.md#final-fixture-qualification-and-handoff-2026-10-22)
+for exercised environments and limits.
 Read with [API](artifact-api.md) and [model](../data-model.md).
 
 ## Local Qualification Configuration

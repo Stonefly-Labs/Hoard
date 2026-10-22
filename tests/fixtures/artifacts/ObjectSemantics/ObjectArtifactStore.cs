@@ -23,14 +23,12 @@ public sealed partial class ObjectArtifactStore(string root, TimeProvider? clock
             lock (workSync)
             {
                 return initialized && lifetimeBusy == 0 && !stopRequested
-        && lateWork.Count == 0 && unfinishedReadCloses.IsEmpty && Capabilities.MeetsBaseline;
+        && lateWork.Count == 0 && incompleteHandoffs.Count == 0 && unfinishedReadCloses.IsEmpty && Capabilities.MeetsBaseline;
             }
         }
     }
     public ArtifactCapabilities Capabilities { get; private set; } = new(
-        1, ArtifactDurability.SimulationOnly, ArtifactEnumerationConsistency.Incomplete, new ArtifactLimits(),
-        conditionalPublication: false, conditionalDeletion: false, stagingRecovery: false,
-        ownerFencing: false, readerProtection: false, boundedStreaming: false);
+        1, ArtifactDurability.SimulationOnly, ArtifactEnumerationConsistency.Incomplete, new ArtifactLimits());
 
     public async ValueTask<ArtifactResult<ArtifactAdmission>> InitializeAsync(
         ArtifactInitialization request, ArtifactMaintenanceOptions options, CancellationToken ct)
@@ -81,6 +79,12 @@ public sealed partial class ObjectArtifactStore(string root, TimeProvider? clock
         if (request.Mode != ArtifactInitializationMode.CreateEmpty)
         { return Failure(ArtifactFailureCode.IncompatibleStore); }
         if (OperatingSystem.IsWindows()) { return Failure(ArtifactFailureCode.Unsupported); }
+        var capabilities = new ArtifactCapabilities(1, ArtifactDurability.SimulationOnly, ArtifactEnumerationConsistency.Incomplete, request.Limits);
+        Capabilities = faults.CapabilitiesForAdmission?.Invoke(capabilities) ?? capabilities;
+        if (!Capabilities.MeetsBaseline || Capabilities.Limits != request.Limits
+            || Capabilities.Durability != capabilities.Durability || Capabilities.Enumeration != capabilities.Enumeration
+            || Capabilities.RangeReads || !Capabilities.Sha512)
+        { return Failure(ArtifactFailureCode.Unsupported); }
         var probe = await request.Authority.AcquireAsync(new(Guid.NewGuid(), ArtifactProtectionOperation.Read,
             request.Store, new Hoard.Abstractions.Metadata.ArtifactDigest(new string('0', 64))), new(), ct);
         if (probe is not ArtifactResult<IArtifactProtectionGuard>.Success recognized)
@@ -135,9 +139,6 @@ public sealed partial class ObjectArtifactStore(string root, TimeProvider? clock
             stopToken.Dispose();
             stopToken = new();
             stopRequested = false;
-            Capabilities = new(1, ArtifactDurability.SimulationOnly, ArtifactEnumerationConsistency.Incomplete, request.Limits,
-                conditionalPublication: false, conditionalDeletion: false, stagingRecovery: false,
-                ownerFencing: false, readerProtection: false, boundedStreaming: false);
             initialized = true;
             await faults.ObserveAsync("object.admitted");
             ct.ThrowIfCancellationRequested();
@@ -192,6 +193,12 @@ public sealed partial class ObjectArtifactStore(string root, TimeProvider? clock
             { return Rejected<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, retainedOwnership: true); }
             try { await Task.WhenAll(pending).WaitAsync(remaining, ct); }
             catch (Exception error) when (error is OperationCanceledException or TimeoutException)
+            { return Rejected<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, retainedOwnership: true); }
+            remaining = options.Deadline - time.GetElapsedTime(start);
+            if (remaining <= TimeSpan.Zero)
+            { return Rejected<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, retainedOwnership: true); }
+            try { await Task.WhenAll(RetryUndeliveredCleanup()).WaitAsync(remaining, ct); }
+            catch (Exception)
             { return Rejected<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, retainedOwnership: true); }
             ObjectReadSession[] admitted;
             lock (pointerSync) { admitted = sessions.ToArray(); }

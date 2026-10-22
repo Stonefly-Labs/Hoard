@@ -45,19 +45,24 @@ real native package clients. Compile-only fixtures do not satisfy either gate.
 F-06 adds `contracts/Hoard.Artifacts.Tests` to the solution. Its value checks
 run source-level; additional `Cases/` compile only with
 `ArtifactPackageAcceptance=true` against independently prepared packages.
-`scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Artifact'` runs the
+`scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Artifact&FullyQualifiedName!~ArtifactTransferProofTests'` runs the
 current package-only checks with a retained pre-F06 baseline and always reports
 nonqualification. Coverage now includes independent streaming/publication/read/
 deletion mechanisms, real SQLite/memory reference transactions and six actual
 local parent-kill/fresh-reopen barriers. `--phase logical` excludes the crash
-children; `--phase recovery` additionally drives Python-owned crash children
+children and external-measurement proof tests; `--phase recovery` additionally drives Python-owned crash children
 with independent hash/receipt validation. `--phase transfers` executes real
-256 MiB/4 GiB write/read and OS peak-RSS measurements on both providers. All
-remain partial. `--phase packages` runs eight actual graph scans, compiled
+256 MiB/4 GiB write/read and OS peak-RSS measurements on both providers, then
+four runtime tests validate those actual inputs and rejection variants.
+All focused modes remain partial. `--phase packages` runs eight actual graph scans, compiled
 provider/Hosting leak negatives, public-member compatibility including
 accessibility, the frozen old marker binary and both consumer selections.
-Full qualification and final-current-source acceptance
-are unfinished, and neither fixture is ready or certified.
+Default full acceptance passed on the final source: 229 logical/crash checks,
+four actual-transfer proof tests, three architecture checks, both consumers,
+the original retained binary, all six Python-owned crash barriers and exactly
+96 case entries (92 passes/four Object durability exclusions). Both fixtures
+admit complete baseline profiles and support explicit configured ready/start/
+stop/restart controls; they remain test-only, not production/F-07-certified.
 The local-package hash blocker is resolved by reviewed `Hoard.*` hash-only lock
 refreshes and separate default locked regressions. Versions, dependency graphs,
 external hashes and frozen historical baselines remain unchanged. See the
@@ -71,7 +76,12 @@ and simulation exclusion sets, flat unattached hashes and missing per-case
 results or explicit environment. Tooling negatives now recompute proof hashes
 around altered payloads and require paired passed TRX witnesses, exact executed
 test names and matching durations. These are evidence-integrity checks, not a
-replacement for the unfinished per-AS semantic registry and full run.
+replacement for execution. The exact per-AS catalog now requires every relevant
+provider/parameter variant; full mode cross-binds actual context inputs,
+materializes public qualification records and rejects 29 altered full manifests.
+Controlled handoff tests cover delivered versus unclaimed tickets/read sessions,
+expired staged-result cleanup, and failed reclamation blocking readiness/
+admission/stop until an exact bounded retry succeeds.
 Bounded-history checks also distinguish examined candidates from removals:
 seven original runtime reds exercise fully ineligible tables, and paired
 cursor-progress checks preserve a faulted candidate while reaching entries

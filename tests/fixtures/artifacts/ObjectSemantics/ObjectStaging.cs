@@ -45,7 +45,23 @@ public sealed partial class ObjectArtifactStore
                 listingRevision = checked(listingRevision + 1);
                 return Task.FromResult(ticket);
             }
-        });
+        }, undelivered: DiscardUndeliveredUploadAsync);
+    }
+
+    private ValueTask DiscardUndeliveredUploadAsync(ArtifactOperationTicket ticket)
+    {
+        lock (pointerSync)
+        {
+            if (!uploads.TryGetValue(ticket.Id, out var upload) || upload.Ticket != ticket
+                || upload.Owner is not null || upload.Receipt is not null || upload.Deciding)
+            { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
+            RemoveMultipart(upload);
+            ReleasePointerDependency(ticket.Id);
+            uploads.TryRemove(ticket.Id, out _);
+            indexedTargets.Remove(ticket.Id);
+            listingRevision = checked(listingRevision + 1);
+        }
+        return ValueTask.CompletedTask;
     }
 
     private void ExpireHistory(CancellationToken token)
@@ -60,7 +76,7 @@ public sealed partial class ObjectArtifactStore
             {
                 token.ThrowIfCancellationRequested();
                 HistoryCandidate("tickets", id.ToString("N"));
-                var upload = uploads[id];
+                if (!uploads.TryGetValue(id, out var upload)) { continue; }
                 if (now < upload.Ticket.Expires || upload.Deciding && upload.Receipt is null || TicketObserved(id))
                 { continue; }
                 upload.Fenced = true;
@@ -202,7 +218,21 @@ public sealed partial class ObjectArtifactStore
                 lock (pointerSync) { upload.Fenced = true; upload.Writing = false; RemoveMultipart(upload); }
                 throw;
             }
-        }, ticket);
+        }, ticket, undelivered: staged =>
+        {
+            lock (pointerSync)
+            {
+                if (!uploads.TryGetValue(staged.Owner.Ticket.Id, out var upload)
+                    || upload.Ticket != staged.Owner.Ticket || upload.Owner != staged.Owner
+                    || staged.Owner.SessionId != processSession || upload.Verified != staged
+                    || upload.Receipt is not null || upload.Deciding)
+                { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
+                upload.Fenced = true;
+                upload.Writing = false;
+                RemoveMultipart(upload);
+            }
+            return ValueTask.CompletedTask;
+        });
     }
 
     private void RemoveMultipart(ObjectOperation upload)

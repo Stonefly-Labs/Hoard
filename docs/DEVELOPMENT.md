@@ -3682,34 +3682,34 @@ required for simple doc or repository-tool changes.
 
 ## Current checks and future product checks
 
-F-06 implementation is currently running; its local-package lock blocker is
-resolved. Its entry point,
+F-06 implementation passes full **test-fixture** qualification. Its entry point,
 `bash scripts/validate-artifacts.sh --evidence <fresh-private-destination>`,
 requires an existing owner-private parent outside Git. It prepares the retained
-pre-F06 baseline and independent packages with tracked locks, then **fails**
-until complete qualification is implemented. Set
+pre-F06 baseline and independent packages with tracked locks, then executes
+the complete 96-entry matrix (92 passes/four Object durability exclusions). Set
 `HOARD_ARTIFACT_RETAINED_BASELINE` to the original private baseline capture;
-the marker binary is hash-verified and reused without rebuilding. Partial BCL
-contracts and independent storage mechanisms have focused package-only checks;
-use `--filter 'FullyQualifiedName~Artifact'` for those nonqualifying checks,
-including real metadata transactions and local crash children. The fixtures
-truthfully declare their missing mandatory guarantees and are not ready.
+the marker binary is hash-verified and reused without rebuilding. The BCL
+contracts and independent storage mechanisms also have focused package checks;
+use `--phase logical` for nonqualifying common checks,
+including real metadata transactions and non-cooperative containment children.
+Both fixtures declare the baseline and become ready after successful explicit
+admission; missing guarantees/version/authority reject before root I/O.
 Failure captures are retained with
 `qualification: false`; neither compilation nor the verifier's synthetic tests
-qualifies storage. See the [running implementation evidence](../specs/006-artifact-storage/plan.md#implementation-evidence).
+qualifies storage. See the [final implementation evidence](../specs/006-artifact-storage/plan.md#final-fixture-qualification-and-handoff-2026-10-22).
 The initial `NU1403` failure came from rebuilt Abstractions bytes under local
 acceptance version `0.1.0` meeting the old package-content hash. The maintainer
 approved reviewed local-package hash refreshes on 2026-10-22. Only 142
 `Hoard.*` hashes in 38 of 97 tracked lockfiles change; package versions,
 dependency graphs, external-package hashes and frozen baseline locks/binaries
 remain unchanged. All five existing regression commands pass separate default
-locked replays at that checkpoint. Current artifact runs still report
-`qualification: false`. The artifact runner permits that local hash-only
+locked replays at that earlier checkpoint. Focused artifact runs still report
+`qualification: false`; only complete locked full mode qualifies. The artifact runner permits that local hash-only
 metadata lock delta while still rejecting source, dependency/version, external
 hash and malformed-hash changes. This does not disable package integrity checks
 or authorize rewriting published packages. See
 [exact results and audit](../specs/006-artifact-storage/plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
-Provider authoring guidance now identifies the partial contracts. Custom-host
+Provider authoring guidance identifies the additive, fixture-qualified contracts. Custom-host
 examples, architecture diagrams, compatibility policy, IaC and release guides
 are otherwise unaffected: old APIs/markers and production behavior are unchanged,
 and no production storage, deployment or release is delivered.
@@ -3717,14 +3717,16 @@ and no production storage, deployment or release is delivered.
 The resumed mechanisms are recorded in the
 [implementation evidence](../specs/006-artifact-storage/plan.md#resumed-storage-mechanisms-and-recovery-2026-10-22).
 `--phase logical` runs common package checks and the unchanged round-trip
-consumer without crash children. `--phase recovery` runs ticket/owner checks
+consumer without durable-crash or external-measurement proof tests.
+`--phase recovery` runs ticket/owner checks
 and six directly owned SIGKILL/fresh-process reopen journeys. `--phase transfers`
 performs real 256 MiB/4 GiB write/read and OS peak-RSS measurements on both
-fixtures. Each rebuilds/hash-verifies prerequisites in a fresh private
+fixtures and four actual-input runtime proof tests. Each rebuilds/hash-verifies prerequisites in a fresh private
 workspace; none qualifies storage. `--phase packages` now checks actual resolved
 graphs/public signatures, provider/Hosting leak negatives, baseline public member
 accessibility and the unchanged old marker binary with current assemblies, plus
-both consumer selections. Full mode still fails for missing obligations.
+both consumer selections. Full mode requires every obligation, input binding
+and exact per-AS runtime witness; missing evidence still fails closed.
 The unchanged consumer now executes 16 store/evidence/maintenance/read/authority
 operations on both choices, rather than only a round trip. It verifies exact
 pending/committed/removed receipts, renewal, abandonment, bounded observation,
@@ -3745,8 +3747,10 @@ now test committed orphans, failed publication, live-reference exclusion and
 guard retention through lost metadata acknowledgments on SQLite and memory.
 Configured artifact fixture selection now uses the existing F-02/F-03 lifecycle:
 registration/composition and disabled options perform no storage I/O, while
-startup refuses the still-incomplete capabilities. This is not a successful
-ready-store composition proof. Lost deletion acknowledgments retain pending
+startup refuses incomplete capabilities. Successful controls prove exactly one
+selected ready instance, stop and explicit restart: Local reopens its exact
+known identity; Object uses a fresh root/epoch and rejects old tickets.
+Lost deletion acknowledgments retain pending
 physical status until exact-incarnation cleanup actually finishes; reconciliation
 then advances only reclamation status, preserving the logical receipt.
 Pre-decision commit cancellation fences the exact settled owner/generation,
@@ -3770,7 +3774,9 @@ descendant stops while an unrelated child remains alive. Incomplete settlement
 is an explicit failure, not permission to delete the retained evidence.
 Architecture review corrected close admission/release ownership, terminal
 noncommit cleanup, deadline bookkeeping behind blocked state I/O and ticket
-validation/expiry classification; final implementation review is still due.
+validation/expiry classification. Final architecture review additionally found
+successful-result handoff and unclaimed-reclamation defects; exact regression
+reds and the corrections are recorded in the final evidence below.
 Ticket-expiry admission now has separate finite retained-index budgets and
 bounded compaction of expired fully reclaimed history. Physically active or
 unresolved ticket work keeps its dependent records. Paired regressions cover
@@ -3779,7 +3785,7 @@ finalized receipts across delete/recreate; a 105-cycle small-budget Local
 journey reopens successfully after UTC rollback. Separate locked logical,
 all-six-crash-barrier and package replays bind the current correction; see
 [exact evidence and bounded reviews](../specs/006-artifact-storage/plan.md#bounded-ticket-and-reclaimed-history-2026-10-22).
-These checks do not enable capabilities/readiness or complete the running stage.
+Those earlier partial checks did not enable readiness or complete the stage.
 The qualification value record now enforces the exact failure-model exclusions:
 none for Local process-crash durability, exactly AS-41..44 for simulation.
 Owned-child negatives additionally exercise non-cooperative source, destination
@@ -3805,8 +3811,57 @@ and aggregate hashes. The verifier reads each hashed case payload, checks its
 provider/run/source/lock/configuration/capability/environment/package context,
 and resolves both runtime subproofs to actual passed TRX tests and measured
 durations. Case JSON is limited to 1 MiB and each TRX witness to 16 MiB.
-These checks reject foreign, stale, failed or invented witnesses, but do not
-yet provide the exact per-AS semantic registry or complete full qualification.
+The exact per-AS registry now requires all provider/parameter variants, not
+generic passing method names. Full mode binds every case to actual input files,
+materializes both public qualification records, and executes runtime/verifier
+mutations plus altered-full-manifest rejection checks.
+
+### F-06 final fixture qualification and handoff
+
+The final locked full run and all four separate focused modes bind source
+`aa5afb01c594acb418f48db975c408ea3c0350e6ef33cef93ba27fd322739e24`.
+The full run ID is `f57fd648-f0fe-4eef-b72d-554b4e691a44`, retained privately at
+`../hoard-artifact-evidence/final-qualified-handoff-locked-20261022`.
+It contains 92 applicable passes/four explicit Object AS-41..44 exclusions,
+229 logical/crash checks, four actual-transfer proof tests, three architecture
+checks/eight graph scans, both unchanged consumer selections and the original
+marker binary (`5b745ae0860722852921cab4e6b210fa20facb59e53aa6f1f8a157060aba939d`).
+All six Python-owned SIGKILL/fresh-process barriers, three executed mutation
+pairs and 29 altered-full-manifest rejection checks passed.
+
+Qualification is limited to macOS 26.5 arm64, .NET 10.0.7 and APFS. Local uses
+payload/decision `Flush(true)` without directory fsync; Object is process-local
+simulation. Incremental OS peak RSS for Local 256 MiB/4 GiB was
+2,129,920/17,793,024 bytes and Object 1,916,928/18,595,840 bytes, each below
+67,108,864. Transfers run individually with one slot, 256 KiB copy buffers and
+a 2 MiB provider buffer limit. No production cache/provider, remote service,
+power-loss/network-filesystem/HA support or F-07 certification is inferred.
+
+The final `hoard-architecture-review` found a P1 successful-result handoff race.
+Four controlled runtime reds reproduced lost tickets/read sessions. Success
+delivery is now serialized against cancellation; abandoned results stay owned
+until their provider-private reclamation finishes. A bounded follow-up found
+two P2 issues: expired staging reclamation and forgotten cleanup failures.
+Six additional actual assertion reds preceded exact-generation cleanup without
+new-work expiry requirements, retained failed-cleanup bookkeeping, blocked
+admission/readiness/root release and bounded shutdown retries without duplicate
+live cleanup. All corrected logical regressions and the final full run passed.
+
+Exact final commands/results are in the
+[plan evidence table](../specs/006-artifact-storage/plan.md#final-fixture-qualification-and-handoff-2026-10-22).
+All five predecessor scripts passed separate default locked runs; tooling
+passed 105 tests and `git diff --check` passed. The final delta is 15 local
+`Hoard.*` content hashes in six locks only; dependency graphs/versions, external
+hashes and frozen baseline locks/binaries are unchanged.
+Full mode refuses `--update-locks`; refresh intentionally, review the delta,
+then replay locked acceptance separately. The original pre-F06 capture remains
+mandatory. The four focused modes always report `qualification: false`.
+README, provider/test guides and the quickstart describe the delivered fixture
+scope. Existing examples, product diagrams, compatibility/release policy and
+IaC are unaffected: no prior API is removed, no product host/provider is added,
+and no infrastructure, merge or release is performed.
+The implementation checkpoint does not start convergence or finalize the PR;
+the next separately authorized stage is **`converge`**.
 
 ```bash
 python3 -m unittest discover -s tests/tooling -v

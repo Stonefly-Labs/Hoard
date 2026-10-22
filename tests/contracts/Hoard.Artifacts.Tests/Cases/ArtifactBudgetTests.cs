@@ -337,6 +337,234 @@ public sealed class ArtifactBudgetTests
     }
 
     [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Cancellation_after_resource_release_cannot_retain_an_already_settled_operation(string provider)
+    {
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
+        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
+        using var source = new ShortSource("released cancellation bookkeeping"u8.ToArray());
+        var staged = Success(await driver.Store.StageAsync(ticket, source, new(), default));
+        var invalid = new ArtifactStagedWrite(staged.Owner, staged.Identity, Guid.NewGuid(), staged.PrivateHandle);
+        using var cancellation = new CancellationTokenSource();
+        await using var released = new ArtifactTestBarrier("resources-released-task-not-completed");
+        async ValueTask Observe()
+        {
+            cancellation.Cancel();
+            await released.HoldAsync();
+        }
+        SetObserver(driver, "operation.released", "object.operation-released", Observe);
+        try
+        {
+            var attempt = driver.Store.CommitAsync(invalid, new(), cancellation.Token).AsTask();
+            await released.Entered;
+            driver.LocalControls?.RemoveObserver("operation.released");
+            driver.ObjectControls?.RemoveObserver("object.operation-released");
+            var result = Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(await attempt);
+            Assert.Equal(ArtifactCleanupState.Released, result.Cleanup);
+            Assert.IsType<ArtifactResolution.Pending>(Success(await driver.Store.ReconcileAsync(ticket, new(), default)));
+        }
+        finally { released.Release(); }
+    }
+
+    [Theory]
+    [InlineData("local", false)]
+    [InlineData("object", false)]
+    [InlineData("local", true)]
+    [InlineData("object", true)]
+    public async Task Cancellation_at_result_handoff_cannot_discard_a_reserved_ticket_or_live_read(
+        string provider, bool readSession)
+    {
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider,
+            limits: new(artifactBytes: 1024, stagingBytes: 1024, transferSlots: 1, waitingCalls: 0),
+            references: (_, _) => ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
+        using var source = new ShortSource("successful result ownership handoff"u8.ToArray());
+        var published = readSession ? await PublishAsync(driver, source, new(1024)) : null;
+        using var cancellation = new CancellationTokenSource();
+        await using var released = new ArtifactTestBarrier("successful-result-before-task-completion");
+        async ValueTask Observe()
+        {
+            cancellation.Cancel();
+            await released.HoldAsync();
+        }
+        SetObserver(driver, "operation.released", "object.operation-released", Observe);
+        try
+        {
+            if (published is null)
+            {
+                var reserving = driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellation.Token).AsTask();
+                await released.Entered;
+                RemoveObserver();
+                var ticket = Success(await reserving);
+                var staged = Success(await driver.Store.StageAsync(ticket, source, new(), default));
+                Success(await driver.Store.CommitAsync(staged, new(), default));
+                Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
+            }
+            else
+            {
+                var opening = driver.Store.OpenReadAsync(new(published.Stamp.Identity.Digest), new(), cancellation.Token).AsTask();
+                await released.Entered;
+                RemoveObserver();
+                await using var read = Success(await opening);
+                using var destination = new MemoryStream();
+                Success(await read.CopyToAsync(destination, new(), default));
+                Assert.Equal("successful result ownership handoff"u8.ToArray(), destination.ToArray());
+                Assert.Equal(ArtifactCleanupState.Released, Success(await read.CloseAsync(new(), default)).State);
+                var deletion = Success(await driver.Store.ReserveDeleteAsync(new(published.Stamp), new(), default));
+                Success(await driver.Store.DeleteAsync(deletion, new(), default));
+            }
+        }
+        finally { RemoveObserver(); released.Release(); }
+
+        void RemoveObserver()
+        {
+            driver.LocalControls?.RemoveObserver("operation.released");
+            driver.ObjectControls?.RemoveObserver("object.operation-released");
+        }
+    }
+
+    [Theory]
+    [InlineData("local", false)]
+    [InlineData("object", false)]
+    [InlineData("local", true)]
+    [InlineData("object", true)]
+    public async Task Cancellation_before_result_handoff_reclaims_the_unclaimed_ticket_or_read(
+        string provider, bool readSession)
+    {
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider,
+            limits: new(artifactBytes: 1024, stagingBytes: 1024, transferSlots: 1, waitingCalls: 0, liveTickets: 2),
+            references: (_, _) => ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
+        using var source = new ShortSource("unclaimed result cleanup"u8.ToArray());
+        var published = readSession ? await PublishAsync(driver, source, new(1024)) : null;
+        using var cancellation = new CancellationTokenSource();
+        await using var produced = new ArtifactTestBarrier("successful-result-not-yet-handed-off");
+        SetObserver(driver, "operation.completed", "object.operation-completed", () => new(produced.HoldAsync()));
+        try
+        {
+            if (published is null)
+            {
+                var reserving = driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellation.Token).AsTask();
+                await produced.Entered;
+                cancellation.Cancel();
+                Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership,
+                    Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(await reserving).Cleanup);
+            }
+            else
+            {
+                var opening = driver.Store.OpenReadAsync(new(published.Stamp.Identity.Digest), new(), cancellation.Token).AsTask();
+                await produced.Entered;
+                cancellation.Cancel();
+                Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership,
+                    Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(await opening).Cleanup);
+            }
+        }
+        finally
+        {
+            driver.LocalControls?.RemoveObserver("operation.completed");
+            driver.ObjectControls?.RemoveObserver("object.operation-completed");
+            produced.Release();
+        }
+        await driver.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(2));
+        if (published is null)
+        {
+            Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
+        }
+        else
+        {
+            var deletion = Success(await driver.Store.ReserveDeleteAsync(new(published.Stamp), new(), default));
+            Success(await driver.Store.DeleteAsync(deletion, new(), default));
+        }
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Undelivered_verified_staging_is_reclaimed_after_ownership_expiry(string provider)
+    {
+        var clock = new ArtifactTestClock();
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock,
+            new(artifactBytes: 1024, stagingBytes: 1024));
+        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
+        using var source = new ShortSource("expired unclaimed staging"u8.ToArray());
+        using var cancellation = new CancellationTokenSource();
+        await using var produced = new ArtifactTestBarrier("verified-owner-expired-before-delivery");
+        SetObserver(driver, "operation.completed", "object.operation-completed", () => new(produced.HoldAsync()));
+        try
+        {
+            var staging = driver.Store.StageAsync(ticket, source, new(), cancellation.Token).AsTask();
+            await produced.Entered;
+            clock.Advance(TimeSpan.FromSeconds(31));
+            cancellation.Cancel();
+            Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(await staging);
+        }
+        finally
+        {
+            driver.LocalControls?.RemoveObserver("operation.completed");
+            driver.ObjectControls?.RemoveObserver("object.operation-completed");
+            produced.Release();
+        }
+        await driver.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.IsType<ArtifactResolution.NotCommitted>(Success(await driver.Store.ReconcileAsync(ticket, new(), default)));
+        Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
+    }
+
+    [Theory]
+    [InlineData("local", false)]
+    [InlineData("object", false)]
+    [InlineData("local", true)]
+    [InlineData("object", true)]
+    public async Task Failed_unclaimed_result_cleanup_blocks_admission_and_stop_until_exact_retry(
+        string provider, bool readSession)
+    {
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider,
+            limits: new(artifactBytes: 1024, stagingBytes: 1024, transferSlots: 1, waitingCalls: 0));
+        using var source = new ShortSource("failed unclaimed cleanup"u8.ToArray());
+        var published = readSession ? await PublishAsync(driver, source, new(1024)) : null;
+        using var cancellation = new CancellationTokenSource();
+        await using var produced = new ArtifactTestBarrier("unclaimed-cleanup-failure");
+        SetObserver(driver, "operation.completed", "object.operation-completed", () => new(produced.HoldAsync()));
+        SetObserver(driver, "operation.reclaim", "object.operation-reclaim",
+            () => throw new IOException("synthetic unclaimed cleanup failure"));
+        try
+        {
+            try
+            {
+                if (published is null)
+                {
+                    var reserving = driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellation.Token).AsTask();
+                    await produced.Entered;
+                    cancellation.Cancel();
+                    Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(await reserving);
+                }
+                else
+                {
+                    var opening = driver.Store.OpenReadAsync(new(published.Stamp.Identity.Digest), new(), cancellation.Token).AsTask();
+                    await produced.Entered;
+                    cancellation.Cancel();
+                    Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(await opening);
+                }
+            }
+            finally
+            {
+                driver.LocalControls?.RemoveObserver("operation.completed");
+                driver.ObjectControls?.RemoveObserver("object.operation-completed");
+                produced.Release();
+            }
+            await driver.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(2));
+            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
+                await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default)).Code);
+            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, Assert.IsType<ArtifactResult<ArtifactShutdown>.Failure>(
+                await driver.StopAsync(new())).Code);
+        }
+        finally
+        {
+            driver.LocalControls?.RemoveObserver("operation.reclaim");
+            driver.ObjectControls?.RemoveObserver("object.operation-reclaim");
+            Assert.Equal(ArtifactCleanupState.Released, Success(await driver.StopAsync(new())).State);
+        }
+    }
+
+    [Theory]
     [InlineData("local", false)]
     [InlineData("object", false)]
     [InlineData("local", true)]

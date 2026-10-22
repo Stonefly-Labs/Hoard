@@ -12,6 +12,55 @@ public sealed class ArtifactMetadataIntegrationTests
     [InlineData("local", "memory")]
     [InlineData("object", "sqlite")]
     [InlineData("object", "memory")]
+    public async Task New_reference_cannot_cross_an_admitted_zero_reference_deletion(string provider, string metadataProvider)
+    {
+        using var root = PrivateRoot();
+        await using var session = await ArtifactMetadataFixtureSession.CreateForQualificationAsync(provider, metadataProvider, root.Path);
+        var receipt = await PublishAsync(session.Artifacts.Store);
+        var (registry, package) = SeedRecords();
+        await CommitAsync(session.Metadata, new MetadataMutation.PutRegistry(registry, new ExpectedRevision.Absent()),
+            new MetadataMutation.PutPackage(package, new ExpectedRevision.Absent()));
+        var operation = Guid.NewGuid();
+        var request = new ArtifactProtectionRequest(operation, ArtifactProtectionOperation.Deletion,
+            session.Artifacts.Identity, receipt.Stamp.Identity.Digest, new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp));
+        var exclusive = Success(await session.Artifacts.Authority.AcquireAsync(request, new(), default));
+        var entry = Entry(package, receipt.Stamp);
+        var ticket = MetadataSuccess(await session.Metadata.ReserveOperationAsync(new(), default));
+        var publishing = session.Metadata.CommitAsync(new(ticket,
+            [new MetadataMutation.PublishCacheEntry(entry, new ExpectedRevision.Absent(), Evidence(session, receipt))],
+            new MetadataOption<MetadataLeaseGuard>.None()), new(), default).AsTask();
+        try
+        {
+            await WaitForReferenceAdmissionAsync(session.Artifacts.Authority, publishing);
+            Assert.False(publishing.IsCompleted);
+            await using var retained = Success(await session.Artifacts.Authority.RetainAsync(exclusive, request, new(), default));
+            await exclusive.DisposeAsync();
+            Assert.False(publishing.IsCompleted);
+        }
+        finally { await exclusive.DisposeAsync(); }
+        MetadataSuccess(await publishing);
+        var deletion = Success(await session.Artifacts.Store.ReserveDeleteAsync(new(receipt.Stamp), new(), default));
+        Assert.Equal(ArtifactFailureCode.Denied, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+            await session.Artifacts.Store.DeleteAsync(deletion, new(), default)).Code);
+        await AssertContentAsync(session.Artifacts.Store, receipt.Stamp);
+    }
+
+    private static async Task WaitForReferenceAdmissionAsync(ArtifactCoordinationAuthority authority, Task publication)
+    {
+        using var deadline = new CancellationTokenSource(TimeSpan.FromSeconds(2));
+        while (authority.WaitingAdmissions == 0 && !publication.IsCompleted)
+        {
+            deadline.Token.ThrowIfCancellationRequested();
+            await Task.Yield();
+        }
+        Assert.Equal(1, authority.WaitingAdmissions);
+    }
+
+    [Theory]
+    [InlineData("local", "sqlite")]
+    [InlineData("local", "memory")]
+    [InlineData("object", "sqlite")]
+    [InlineData("object", "memory")]
     public async Task Failed_metadata_transaction_leaves_identifiable_committed_bytes_not_a_fabricated_entry(
         string provider, string metadataProvider)
     {

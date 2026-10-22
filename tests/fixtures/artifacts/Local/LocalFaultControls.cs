@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using Hoard.Abstractions.Storage;
 
 namespace Hoard.Fixtures.Artifacts.Local;
 
@@ -11,11 +12,12 @@ public sealed class LocalFaultControls
         "initialize.before-root", "initialize.admitted", "stage.prefix", "stage.verified",
         "publish.admitted", "publish.before-decision", "publish.decided", "publish.receipted", "publish.progress",
         "read.opened", "read.copy", "delete.removed", "delete.reclaimed", "cleanup.candidate", "transfer.queued",
-        "reconcile.before-resolution"
+        "reconcile.before-resolution", "operation.released", "operation.completed", "operation.reclaim"
     };
     public string[] Observed => observed.ToArray();
     public Action? BeforeRecordWrite { get; set; }
     public Action<string, string>? BeforeHistoryCandidate { get; set; }
+    public Func<ArtifactCapabilities, ArtifactCapabilities>? CapabilitiesForAdmission { get; set; }
     public string? InitializationFailure { get; private set; }
     internal void RecordInitializationFailure(Exception error)
         => InitializationFailure = error.GetType().Name + ":" + error.TargetSite?.Name;
