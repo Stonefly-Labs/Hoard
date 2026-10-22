@@ -3247,6 +3247,79 @@ Reviewer approval, tasks/analysis, implementation, qualification, convergence
 and finalization remain outstanding. No source release, package publication,
 infrastructure plan/apply, settings/permissions change, deployment or merge occurs.
 
+### F-06 artifact storage checklists and assisted review
+
+The separately invoked `checklist` stage retains the recorded branch and pins
+`SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage`. After the driver begins
+`checklist / running`, the installed `speckit-checklist` resolves its template
+and produces two new standard-depth requirements-quality checklists for
+maintainer/provider-contract PR review:
+[storage](../specs/006-artifact-storage/checklists/storage.md) and
+[recovery](../specs/006-artifact-storage/checklists/recovery.md), 20 criteria each.
+Generation leaves all 40 markers unchecked; no extension hooks are configured.
+
+Storage covers content identity, complete verification, immutable publication,
+read completion, borrowed streams, finite resource limits, private namespaces,
+safe diagnostics and honest provider-neutral qualification. Recovery covers
+ticket reconciliation, expiry/fencing, bounded maintenance, metadata authority,
+protected readers, deletion/recreation, process-crash evidence and incomplete
+cleanup. Every question evaluates written requirements and carries specification
+traceability; none is an implementation procedure or passing runtime claim.
+
+The maintainer explicitly reiterates: "you review the checklists, then highlight
+what needs my attention". After generation completes, the separately authorized
+assisted review evaluates all 40 items against the existing specification and
+seven planning artifacts. Per-item evidence records **storage 20/20** and
+**recovery 19/20**, with recovery CHK012 left unchecked. This is requirements
+review, not self-approval during implementation or an unqualified approval of
+the entire feature.
+
+**Maintainer attention: high-priority
+[RQ-01](../specs/006-artifact-storage/checklists/recovery.md#rq-01-finite-release-versus-non-cooperative-work).**
+FR-009, SC-006 and US2 scenario 3 require finite owned-resource release without
+an explicit cooperation condition. The API/plan/research and required AS-39
+negative instead permit non-cooperative stream/native work to retain ownership,
+stop admission and block readiness until settlement. Bounded retained counts
+are not finite release time. The recommendation is to explicitly distinguish
+finite caller-return/cleanup-attempt budgets from resource release, guarantee
+finite release for cooperative I/O, and require fenced late work, bounded
+retained ownership and truthful incomplete cleanup/not-ready otherwise.
+No disposal under live work, forced closure of borrowed streams or fabricated
+rollback is acceptable. A different safely preemptible execution model would
+require reconsidering the design.
+
+The maintainer has not approved that clarification or a waiver. Requirements,
+plan, research, model, API/recovery/acceptance contracts, quickstart and historical
+built-in 16/16 checklist remain byte-for-byte unchanged. The custom review
+does not silently edit them to satisfy its own criterion. RQ-01 must be resolved
+and CHK012 re-reviewed before implementation approval. Checklist generation is
+complete, so the driver may schedule `tasks / ready`; neither task generation
+nor later analysis bypasses this outstanding requirements gate.
+
+README and this guide link the generated reviews, counts and exact decision
+needed. Provider/example/compatibility guides, predecessor artifacts, charter/
+product specification, baseline architecture/ADR/diagrams, constitution/backlog,
+source/tests/tooling, locks, release and IaC guidance remain unaffected: the
+change adds reviewer questions/evidence and checkpoint status, not APIs,
+dependency edges, supported capabilities, operational procedures or architecture.
+No additional architecture-agent review is needed for this checklist/docs-only
+change. Product/.NET/OpenTofu checks are not rerun; the proposed artifact command
+remains unimplemented and no storage qualification result is claimed.
+
+| Exact command / check | Result |
+| --- | --- |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/check-prerequisites.sh --json --template checklist-template` | Passed; resolves recorded directory, planning documents and canonical checklist template |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed all 76 tests |
+| Direct generation/review assertions | Passed 40 initially unchecked sequential questions, 100% specification traceability, 40 evidence rows, final 39 satisfied/one unresolved marker, unchanged nine original artifacts and no later-stage scaffolding |
+| Local Markdown link/anchor checks | Passed for both new checklists and added README/development links |
+| `git diff --check` | Passed |
+
+The feature stays draft in [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16).
+Only the checklist stage and the expressly requested assisted review run here;
+no tasks, cross-artifact analysis, requirements remediation, implementation,
+qualification, convergence, finalization, release, infrastructure plan/apply,
+settings/permissions change, deployment or merge occurs.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

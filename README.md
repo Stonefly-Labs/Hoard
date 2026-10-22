@@ -779,10 +779,25 @@ is addressed by authority-owned retention without reentering admission.
 See the [planning scope](docs/DEVELOPMENT.md#f-06-artifact-storage-planning)
 and [future validation guide](specs/006-artifact-storage/quickstart.md);
 the new APIs and artifact acceptance command are not implemented yet.
-The next separately authorized stage is **`checklist`**;
+The subsequent checklist stage generates standard-depth
+[storage](specs/006-artifact-storage/checklists/storage.md) and
+[recovery](specs/006-artifact-storage/checklists/recovery.md) requirements-quality
+checklists for maintainer/provider review, with 20 initially unchecked items each.
+At the maintainer's explicit request, a separate assisted review evaluates every
+item: storage **20/20**, recovery **19/20**. One
+[high-priority consistency issue](specs/006-artifact-storage/checklists/recovery.md#rq-01-finite-release-versus-non-cooperative-work)
+needs attention: the specification promises finite resource release in all
+failure cases, while the plan permits non-cooperative I/O to retain bounded
+resources and block readiness until actual settlement. The recommendation is
+to make the cooperative-I/O qualification and fail-closed exception explicit;
+no requirement change or waiver is presumed. The unresolved criterion remains
+unchecked and blocks implementation approval, not task generation.
+See the [review scope](docs/DEVELOPMENT.md#f-06-artifact-storage-checklists-and-assisted-review).
+The next separately authorized stage is **`tasks`**;
 [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) remains draft.
-No tasks, custom checklist approval, implementation or qualification execution
-occurs in planning.
+No tasks, analysis, implementation or qualification execution occurs in this
+checklist/review invocation. Existing requirements and design artifacts remain
+unchanged; reviewed criteria establish requirements quality, not delivered behavior.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "checklist",
+  "stage": "tasks",
   "status": "ready",
   "branch": "feature/006-artifact-storage",
   "active": {
@@ -562,6 +562,13 @@
       "branch": "feature/006-artifact-storage",
       "at": "2026-10-22T13:20:39.809459+00:00",
       "evidence": "F-06 plan completed through installed speckit-plan with explicitly pinned specs/006-artifact-storage; resolved template initialized once, no hooks. Seven design artifacts define additive BCL-only operations, complete-stream and read-completion verification, finite budgets/ownership, ticket/incarnation recovery, common shared authority and unchanged F-05 publication seam. Real local process-crash fixture and independent no-rename object-semantics fixture remain future qualification; both require actual 256 MiB/4 GiB <=64 MiB incremental peak RSS. Traceability covers all 25 FRs/eight SCs, 23 scenarios/15 edge cases, 48 case IDs; expected 96 entries/92 passes/four explicit object durability exclusions. Required hoard-architecture-review found one P2 missing neutral guard-recognition seam, corrected with authority-owned same-operation RetainAsync and AS-35 foreign/copied/disposed/expired-admission negatives; no second review/runtime approval claimed, no unresolved design blocker. Pre/post constitutional assessments pass without exception. Specification and 16-item built-in checklist byte-identical; no custom approval/tasks/source/lock changes. README/DEVELOPMENT updated with unaffected-document reasons; draft PR #16 retained. python3 -m unittest discover -s tests/tooling -v passed 76 tests; pinned setup/prerequisites, seven-artifact/coverage/six-barrier/31-local-link/stage-isolation assertions, PR template fidelity and git diff --check passed. Next stage checklist; no implementation, qualification execution, merge, publication, infrastructure or deployment."
+    },
+    {
+      "stage": "checklist",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-22T13:28:34.173880+00:00",
+      "evidence": "F-06 checklist stage completed through installed speckit-checklist with pinned specs/006-artifact-storage. Generated storage.md and recovery.md, 20 standard-depth requirements-quality criteria each for maintainer/provider PR review; all 40 initially unchecked, no extension hooks. After generation, explicit maintainer request separately authorized assisted evaluation of every item: storage 20/20, recovery 19/20, 40 per-item evidence rows. Recovery CHK012 remains unchecked: high-priority RQ-01 identifies unconditional finite-resource-release wording in FR-009/SC-006/US2 scenario 3 versus plan/API/required AS-39 retained-ownership behavior for non-cooperative I/O. Recommended explicit cooperative-I/O qualification and fail-closed bounded retention; no requirement change, waiver or full implementation approval presumed. Nine original specification/design/built-in checklist artifacts byte-for-byte unchanged against HEAD and saved hashes; all 25 FRs/eight SCs referenced, 25 local links/anchors and exact PR template structure passed. Python tooling suite passed all 76 tests; git diff --check passed. README/development synchronized with review finding and unaffected-document reasons. No tasks, analysis, remediation, implementation, product qualification, architecture change, release, infrastructure or merge. Next stage tasks; RQ-01 resolution and CHK012 re-review remain required before implementation approval; draft PR #16 retained."
     }
   ]
 }
