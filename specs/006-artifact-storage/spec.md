@@ -13,6 +13,39 @@ provider, qualification result or runnable cache is delivered by this stage.
 
 **Feature Directory**: `specs/006-artifact-storage`
 
+## Clarifications
+
+### Session 2026-10-22
+
+No critical ambiguities detected worth formal clarification. Zero questions
+were asked or answered; no requirements, acceptance criteria or scope decisions
+changed.
+
+All ten review categories are clear for this bounded feature: functional scope
+and behavior, domain and data model, interaction and UX flow, applicable
+non-functional quality attributes, integration and external dependencies,
+edge cases and failure handling, constraints and tradeoffs, terminology and
+consistency, completion signals, and miscellaneous/placeholders.
+
+Complete-stream verification, immutable content identity, direct committed-read
+visibility and explicit uncertain-mutation outcomes define publication safety.
+Shared coordination supplies metadata-publication and reader/reference/deletion
+authority; providers do not independently infer reference safety or cross-store
+rollback. Ownership expiry, later content incarnations and incomplete listings
+have explicit protection requirements. Detected corruption invalidates healthy
+claims without promising continuous detection or automatic repair.
+
+Real local-filesystem durability and bounded multi-GB streaming qualification
+remain required, separately from production SPEC-04 delivery. The independent
+object-store-semantics fixture proves logical portability without atomic rename,
+not remote-service qualification or generic F-07 certification. Exact operation
+signatures, finite operational budgets, reconciliation lifetimes, stored-content
+verification schedules and capability representation remain planning decisions
+under the existing requirements. No latency/throughput service-level promise,
+rendered UI, distributed coordination or live provider replacement is in scope.
+No consequential product decision blocks planning; this review does not approve
+custom checklists or establish runtime evidence.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Publish Only Complete, Verified Artifacts (Priority: P1)

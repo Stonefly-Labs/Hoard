@@ -762,8 +762,14 @@ including a future 4 GiB transfer proof within 64 MiB incremental transfer
 memory. Real filesystem qualification and an independent object-store-semantics
 fixture are later proof obligations, not delivered providers or remote-service
 support. See the [stage scope](docs/DEVELOPMENT.md#f-06-artifact-storage-specification).
-The next separately authorized stage is **`clarify`**; the feature PR remains
-draft. No plan, tasks, custom checklist approval or implementation occurs here.
+The subsequent [clarification review](specs/006-artifact-storage/spec.md#clarifications)
+finds all ten ambiguity categories clear, with zero questions and no requirement
+or scope changes. The built-in quality checklist remains 16/16; exact budgets
+and proof mechanics remain constrained planning decisions. See the
+[review evidence](docs/DEVELOPMENT.md#f-06-artifact-storage-clarification).
+The next separately authorized stage is **`plan`**;
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) remains draft.
+No plan, tasks, custom checklist approval or implementation occurs here.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

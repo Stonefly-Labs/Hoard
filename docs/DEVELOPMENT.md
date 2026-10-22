@@ -3096,6 +3096,64 @@ The checkpoint schedules **`clarify / ready`** for a separate invocation; the
 feature PR remains draft. No plan, tasks, custom review approval, implementation,
 qualification execution, merge, tag/release, infrastructure or deployment occurs.
 
+### F-06 artifact storage clarification
+
+The separately invoked `clarify` stage uses the installed `speckit-clarify`
+with `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage`, retaining the
+recorded feature branch and directory. The preceding specification checkpoint
+is already pushed; [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16)
+remains draft. No pre/post extension hooks are configured.
+
+The [dated clarification review](../specs/006-artifact-storage/spec.md#clarifications)
+finds no critical ambiguities worth formal clarification. Zero questions were
+asked or answered, and no functional requirements, acceptance scenarios,
+outcomes, entities or scope decisions change.
+
+| Ambiguity category | Status |
+| --- | --- |
+| Functional scope and behavior | Clear |
+| Domain and data model | Clear |
+| Interaction and UX flow | Clear |
+| Non-functional quality attributes | Clear |
+| Integration and external dependencies | Clear |
+| Edge cases and failure handling | Clear |
+| Constraints and tradeoffs | Clear |
+| Terminology and consistency | Clear |
+| Completion signals | Clear |
+| Miscellaneous / placeholders | Clear |
+
+Publication verification and direct-read visibility, uncertain acknowledgment
+and recovery, ownership fencing, reader/reference-safe deletion and truthful
+provider capabilities already have observable outcomes. Exact signatures,
+finite budgets, reconciliation lifetimes, stored-content verification schedules,
+capability representation and proof mechanics remain planning decisions, not
+unanswered product questions. The 4 GiB/64 MiB target remains a future
+qualification obligation, not measured evidence or a production default.
+
+The built-in [quality checklist](../specs/006-artifact-storage/checklists/requirements.md)
+is revalidated at **16/16 -> 16/16**, with no newly passing items, regressions
+or unchecked items; the entire checklist remains unchanged. No reviewer-owned
+custom checklist is generated or approved. Only the specification's
+Clarifications section, README, this guide and shared checkpoint change.
+Provider/example guides, predecessor artifacts, charter/product specification,
+architecture/ADR/diagrams, constitution/backlog, compatibility policy and
+release/IaC guidance are unaffected because requirements, public APIs,
+dependency edges, operational procedures and supported capabilities do not
+change. No new architecture review or product/OpenTofu run is warranted for
+this documentation/checkpoint-only stage.
+
+| Exact command / check | Result |
+| --- | --- |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed all 76 tests |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/check-prerequisites.sh --json --paths-only` | Passed; resolves the pinned feature/spec |
+| Direct clarification assertions | Passed dated no-question review, unchanged requirements/checklist, ten clear categories, new local links and absence of hooks/later-stage artifacts |
+| `git diff --check` | Passed |
+
+The checkpoint schedules **`plan / ready`** for a separate invocation, with no
+clarification blocker. Planning, custom checklist review, task generation,
+implementation, qualification execution, merge, publication, infrastructure
+and deployment are not performed by this stage.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
