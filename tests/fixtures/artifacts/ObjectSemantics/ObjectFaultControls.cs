@@ -14,6 +14,7 @@ public sealed class ObjectFaultControls
     };
     public string[] Observed => points.ToArray();
     public Action? BeforeObjectDelete { get; set; }
+    public Action<string, string>? BeforeHistoryCandidate { get; set; }
     public void SetObserver(string point, Func<ValueTask> callback)
     {
         if (!Supported.Contains(point) || callbacks.Count >= 16) { throw new ArgumentException("Invalid object fixture boundary."); }

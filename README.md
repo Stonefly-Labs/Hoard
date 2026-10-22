@@ -779,8 +779,10 @@ mechanism does not call filesystem rename APIs.
 Expired ticket history now restores admission without losing live content.
 Retained decisions/tombstones/reclaimed incarnations have finite budgets and
 bounded expiry-based compaction; admitted work retains its history through
-physical settlement. A finalized reconciliation receipt survives later
-deletion/recreation rather than becoming a false rollback.
+physical settlement. Candidate traversal now advances finite pages rather than
+scanning whole tables or rebuilding all ticket dependencies. A finalized
+reconciliation receipt survives later deletion/recreation rather than becoming
+a false rollback.
 Qualification records require no durable-case exclusions for Local and exactly
 AS-41..44 for the simulation. Owned-child negatives now hold non-cooperative
 source, destination and native work on each fixture through a second parent

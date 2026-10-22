@@ -3790,6 +3790,14 @@ cleanup. Each observation checks retained physical work, borrowed streams,
 exclusive root ownership, applicable read/delete protection and incomplete
 shutdown with blocked admission. These six cases are containment negatives,
 not cooperative release, durable crash recovery or qualification.
+Retained-history admission now bounds candidates examined, not just records
+removed: at most 100 tickets and 100 candidates per retained-history index,
+with at most 100 history retirements per call. Rotating candidate cursors
+resume across calls, including after a candidate fault. Incremental
+exact-incarnation dependency memberships avoid rebuilding a protected-ticket
+set from every ticket; Local rebuilds these indexes from validated bounded
+records on reopen. Unexpired, unresolved and physically active dependencies
+remain protected. The partial gate still does not establish full qualification.
 
 ```bash
 python3 -m unittest discover -s tests/tooling -v

@@ -51,6 +51,11 @@ Expired ticket history may be retired, but live content identity remains
 independent of its receipt anchor. Retained tombstones and reclaimed-incarnation
 records also consume finite bookkeeping capacity until safe expiry-based
 compaction; active or unresolved ticket work prevents premature removal.
+Admission examines at most 100 ticket candidates and 100 candidates per retained
+history index, with at most 100 history retirements. Rotating cursors and
+incremental exact-incarnation dependency indexes preserve progress without
+whole-table dependency scans. Capacity can remain unavailable while these
+bounded pages advance; providers do not hide an unbounded sweep or retry.
 An admitted reconciliation preserves an already-finalized receipt even if
 another operation subsequently deletes and recreates the digest.
 Logically removed content can still occupy space until exact-incarnation

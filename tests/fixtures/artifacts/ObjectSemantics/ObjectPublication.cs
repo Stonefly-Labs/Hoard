@@ -72,9 +72,11 @@ public sealed partial class ObjectArtifactStore
                             upload.Ticket.Id, upload.Ticket.Expires);
                         upload.Deciding = true;
                         upload.Selected = current;
+                        IndexUpload(upload);
                         upload.Outcome = ArtifactMutationOutcome.Published;
                         upload.ReceiptId = Guid.NewGuid();
                         upload.Proof = Guid.NewGuid().ToString("N");
+                        if (observed is null) { pointerCandidates.Enqueue(staged.Identity.Digest.Hex); }
                         pointers[staged.Identity.Digest.Hex] = current;
                         listingRevision = checked(listingRevision + 1);
                         selected = true;
@@ -96,6 +98,7 @@ public sealed partial class ObjectArtifactStore
                     lock (pointerSync)
                     {
                         upload.Selected = current;
+                        IndexUpload(upload);
                         upload.Deciding = true;
                         upload.Outcome = ArtifactMutationOutcome.AlreadyPresentVerified;
                         upload.ReceiptId = Guid.NewGuid();

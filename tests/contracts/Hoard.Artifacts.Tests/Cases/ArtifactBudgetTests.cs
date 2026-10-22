@@ -58,6 +58,82 @@ public sealed class ArtifactBudgetTests
     }
 
     [Theory]
+    [InlineData("local", "tickets")]
+    [InlineData("object", "tickets")]
+    [InlineData("local", "dependencies")]
+    [InlineData("object", "dependencies")]
+    [InlineData("local", "decisions")]
+    [InlineData("object", "decisions")]
+    [InlineData("local", "reclamation")]
+    public async Task History_maintenance_bounds_examined_candidates_even_when_none_can_be_retired(string provider, string kind)
+    {
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider,
+            limits: new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1048576, committedIdentities: 128),
+            references: (_, _) => ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
+        for (var index = 0; index < 105; index++)
+        {
+            if (kind is "tickets" or "dependencies")
+            { Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default)); }
+            else
+            {
+                using var source = new ShortSource(BitConverter.GetBytes(index));
+                var receipt = await PublishAsync(driver, source, new(1024));
+                if (kind == "reclamation")
+                {
+                    var deletion = Success(await driver.Store.ReserveDeleteAsync(new(receipt.Stamp), new(), default));
+                    Success(await driver.Store.DeleteAsync(deletion, new(), default));
+                }
+            }
+        }
+        var examined = 0;
+        void Observe(string observed, string id)
+        {
+            if (observed == kind && Interlocked.Increment(ref examined) > 100)
+            { throw new InvalidOperationException("History maintenance exceeded its candidate page."); }
+        }
+        if (driver.LocalControls is { } local) { local.BeforeHistoryCandidate = Observe; }
+        else { driver.ObjectControls!.BeforeHistoryCandidate = Observe; }
+        Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default));
+        Assert.InRange(examined, 0, 100);
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task History_candidate_pages_resume_past_ineligible_entries_and_preserve_a_faulted_candidate(string provider)
+    {
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
+        var original = new HashSet<string>();
+        for (var index = 0; index < 105; index++)
+        {
+            var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default));
+            original.Add(ticket.Id.ToString("N"));
+        }
+        var visited = new HashSet<string>();
+        var examined = 0;
+        var fail = true;
+        void Observe(string kind, string id)
+        {
+            if (kind != "tickets") { return; }
+            visited.Add(id);
+            examined++;
+            if (fail) { fail = false; throw new InvalidOperationException("Injected candidate failure."); }
+        }
+        if (driver.LocalControls is { } local) { local.BeforeHistoryCandidate = Observe; }
+        else { driver.ObjectControls!.BeforeHistoryCandidate = Observe; }
+        Assert.Equal(ArtifactFailureCode.InternalFailure, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
+            await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default)).Code);
+        visited.Clear();
+        for (var page = 0; page < 2; page++)
+        {
+            examined = 0;
+            Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default));
+            Assert.InRange(examined, 1, 100);
+        }
+        Assert.True(original.IsSubsetOf(visited));
+    }
+
+    [Theory]
     [InlineData("local", false)]
     [InlineData("object", false)]
     [InlineData("local", true)]

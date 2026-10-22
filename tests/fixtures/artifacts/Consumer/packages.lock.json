@@ -12,7 +12,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "pw56vuu09+B/hxrMVCW16g2yeHMr26I3WblFQdtYqYB2H/vdwEU11nd0gO5MdJXsZkhaD+y/2I1iQ0+0UcEnSg==",
+        "contentHash": "Sze1dExPpQDtqT0UWKjmXdqSKfQm0CqIIcyvdPMEXH+VNXQBi0SxcGO07Lv7QHyhiffWCo4tFxV+mbHKXNI7+w==",
         "dependencies": {
           "Hoard.Fixtures.Artifacts.Local": "[0.1.0]",
           "Hoard.Fixtures.Artifacts.ObjectSemantics": "[0.1.0]",
@@ -67,7 +67,7 @@
         "type": "CentralTransitive",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "fclUmDF7eNtaOL3mOS6mUo9cdWq9yLp6eHt4PBhwRWd6A/BkDblNHwc0SI5BVNAVGTALXCfOaBUa/JsMQ3JzRg==",
+        "contentHash": "2qVOlZDwk0xtr1LM//zpzbr0sXFc6IT2bOZ4eatkj7Jx724JmLh1KBtvWYjdWLMO403N8hsX+v8FubWkGR3hIQ==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }
@@ -76,7 +76,7 @@
         "type": "CentralTransitive",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "t7DO0WQjNjQdn/oYaO805JcAi0ZzNZP9WA6dqMoP2w8M8uOllSXsIf5UHB26nqf+Ljodtq+/5UloWiyraP3YzA==",
+        "contentHash": "Gbvr2RePG0pySOOXZYaFczg0lPxe1YiiKsC/0nLozMnevsNa/BEb5C/l0O+36JdcX37EsL+cld+tvS/iTR0s5Q==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }

@@ -831,3 +831,54 @@ development/provider/test guides and quickstart describe that distinction.
 Existing product architecture/diagrams, examples, IaC and release guidance
 remain unaffected: no production provider, dependency-direction, deployment
 or release behavior changes.
+
+### Bounded Candidate Traversal and Incremental Dependencies 2026-10-22
+
+The prior history correction bounded removals but still scanned whole tables
+and rebuilt a protected-ticket set. Seven actual runtime reds now demonstrate
+the distinction with more than 100 entirely ineligible ticket, dependency,
+decision and reclamation candidates. The new independent mechanisms examine
+at most 100 tickets and 100 candidates per retained-history index per call,
+while preserving the shared limit of 100 history retirements.
+
+Rotating candidates resume after skipped entries and faults. Incremental
+exact-incarnation dependency memberships retain every unexpired, unresolved or
+physically active ticket; an expired settled ticket may release its dependency
+without evicting its classification record. Local tracks existing in-memory
+ticket mutation even when persistence fails and rebuilds all indexes from
+validated bounded records during reopen. Exact list-node membership prevents
+stale candidate accumulation when Local removes a linked decision out of order;
+the independent object pointer queue removes only through its own cursor.
+All index sizes remain proportional to their finite ticket/history tables.
+
+Paired progress checks reach beyond the first 100 entries and revisit the
+exact candidate whose injected fault interrupted a page. Existing physical
+ticket-user, finalized-receipt, small-budget history and 105-cycle Local
+reopen/rollback checks remain in the full logical run. Bounded reviewer
+`artifact-candidate-page-review` found no concrete high-confidence issue in
+the new indexes/mutation/recovery paths; it did not run acceptance or obtain
+an independent Git diff, and is not final feature architecture approval.
+
+| Exact command / check | Result |
+| --- | --- |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --update-locks --filter 'FullyQualifiedName~History_maintenance_bounds_examined_candidates' --evidence ../hoard-artifact-evidence/resume-history-candidate-pages-red-20261022` | Seven intended runtime assertion failures against instrumented whole-table selection; no compiler failure |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase logical --update-locks --evidence ../hoard-artifact-evidence/resume-history-cursor-pages-update-20261022` | Passed 176 checks and both identical 16-operation consumers; reviewed local-package hash update |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase logical --evidence ../hoard-artifact-evidence/resume-history-cursor-pages-locked-20261022` | Separate default locked replay passed 176 checks and both consumers; nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase recovery --evidence ../hoard-artifact-evidence/resume-history-cursor-recovery-locked-20261022` | Passed 30 checks and all six actual SIGKILL/fresh-process B0/B1/B2/B3/D0/D1 journeys; nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase packages --evidence ../hoard-artifact-evidence/resume-history-cursor-packages-locked-20261022` | Passed three architecture tests, eight actual graphs, unchanged marker and both consumers; nonqualifying |
+| `dotnet format whitespace tests/fixtures/artifacts/Local --folder --verify-no-changes --verbosity quiet` | Passed |
+| `dotnet format whitespace tests/fixtures/artifacts/ObjectSemantics --folder --verify-no-changes --verbosity quiet` | Passed |
+| `dotnet format whitespace tests/contracts/Hoard.Artifacts.Tests --folder --verify-no-changes --verbosity quiet` | Passed |
+| `python3 -m unittest discover -s tests/tooling -q` | All 97 passed |
+| `git diff --check` | Passed |
+
+All three locked captures bind source
+`f0b15db95186963a2e9b21c7c74a624f18e50b4d7b7b4be4d33489f2a8a74112`.
+Only 15 local `Hoard.*` hashes in six locks change; versions, dependency graphs,
+external hashes and frozen baselines remain unchanged. The immediately prior
+checkpoint's five full locked predecessor gates remain applicable: only
+artifact fixture/runtime-test inputs change here. README/development/provider/
+test/quickstart guides now explain finite candidate pages; old examples,
+product diagrams, IaC and release behavior are unaffected. Capability/readiness,
+full attributable qualification, final-source transfers and remaining task
+obligations stay open; no task/checklist/driver completion is inferred.

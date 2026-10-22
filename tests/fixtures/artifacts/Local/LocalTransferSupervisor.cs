@@ -49,13 +49,16 @@ public sealed partial class LocalArtifactStore
     private void Save(LocalOperation operation)
     {
         inventoryRevision = checked(inventoryRevision + 1);
+        if (indexedIncarnations.ContainsKey(operation.Id)) { IndexTicket(operation); }
         faults.BeforeRecordWrite?.Invoke();
         ownership!.WriteRecord("tickets", operation.Id.ToString("N"), operation);
+        IndexTicket(operation);
     }
     private void Save(LocalDecision decision)
     {
         ownership!.WriteRecord("decisions", decision.Content.Digest, decision);
         decisions[decision.Content.Digest] = decision;
+        IndexDecision(decision);
         inventoryRevision = checked(inventoryRevision + 1);
     }
 

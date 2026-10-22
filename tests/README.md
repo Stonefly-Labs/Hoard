@@ -68,6 +68,11 @@ observations verify retained work/streams/root/guards and incomplete shutdown
 before exact-child termination; these are not durable-crash or cooperative
 resource-release passes. Public qualification-record checks reject mixed durable
 and simulation exclusion sets.
+Bounded-history checks also distinguish examined candidates from removals:
+seven original runtime reds exercise fully ineligible tables, and paired
+cursor-progress checks preserve a faulted candidate while reaching entries
+beyond the first 100. Local reopen and held-ticket regressions cover rebuilt
+dependency indexes without treating a bounded removal count as bounded traversal.
 
 OpenTofu mock-provider tests live beside the bootstrap at
 `infra/bootstrap/tests/` and run with `tofu -chdir=infra/bootstrap test`.

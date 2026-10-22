@@ -15,6 +15,7 @@ public sealed class LocalFaultControls
     };
     public string[] Observed => observed.ToArray();
     public Action? BeforeRecordWrite { get; set; }
+    public Action<string, string>? BeforeHistoryCandidate { get; set; }
     public string? InitializationFailure { get; private set; }
     internal void RecordInitializationFailure(Exception error)
         => InitializationFailure = error.GetType().Name + ":" + error.TargetSite?.Name;

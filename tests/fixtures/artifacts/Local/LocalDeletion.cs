@@ -116,6 +116,7 @@ public sealed partial class LocalArtifactStore
         { throw new LocalStateException(ArtifactFailureCode.Capacity); }
         ownership!.WriteRecord("reclamation", decision.Content.Incarnation.ToString("N"), decision);
         removedContent[decision.Content.Incarnation] = decision;
+        IndexReclamation(decision);
         inventoryRevision = checked(inventoryRevision + 1);
     }
 

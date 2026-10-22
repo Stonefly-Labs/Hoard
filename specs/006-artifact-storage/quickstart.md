@@ -29,6 +29,11 @@ rename mechanism from the object's no-rename implementation.
 Expired ticket retirement now restores finite admission; retained identity and
 reclaimed-incarnation history has separate bounded bookkeeping and compacts
 only after expiry, physical reclamation and dependent-work settlement.
+Candidate traversal now resumes bounded pages of at most 100 tickets and
+100 candidates per retained-history index instead of scanning all records;
+at most 100 histories retire per call. Incremental dependency indexes preserve
+active/unresolved work and rebuild on Local reopen. Capacity may remain
+unavailable while finite pages advance; there is no hidden automatic retry.
 Live content survives ticket retirement. Exact finalized reconciliation
 receipts survive later deletion/recreation, including an already-admitted
 reconciliation that resumes after the original ticket expires.

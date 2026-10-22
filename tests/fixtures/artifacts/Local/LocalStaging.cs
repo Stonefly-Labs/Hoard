@@ -52,62 +52,85 @@ public sealed partial class LocalArtifactStore
     {
         var now = Now();
         var retire = operations.Count >= Limits.LiveTickets;
-        foreach (var expired in operations.Values.Where(value => now >= value.Expires
-            && value.State != "deciding" && !TicketInUse(value.Id)).Take(100).ToArray())
+        var candidates = Math.Min(100, ticketCandidates.Count);
+        for (var index = 0; index < candidates; index++)
         {
-            token.ThrowIfCancellationRequested();
-            if (expired.Content is { } content && decisions.TryGetValue(content.Digest, out var anchored)
-                && anchored.Operation == expired.Id && anchored.ReconcileUntil is null)
-            { continue; }
-            if (expired.State is "reserved" or "staging" or "verified")
+            var id = ticketCandidates.Dequeue();
+            try
             {
-                expired.State = "notcommitted";
-                Save(expired);
+                token.ThrowIfCancellationRequested();
+                HistoryCandidate("tickets", id.ToString("N"));
+                var expired = operations[id];
+                if (now < expired.Expires || expired.State == "deciding" || TicketInUse(id)) { continue; }
+                if (expired.Content is { } content && decisions.TryGetValue(content.Digest, out var anchored)
+                    && anchored.Operation == id && anchored.ReconcileUntil is null)
+                { continue; }
+                if (expired.State is "reserved" or "staging" or "verified")
+                {
+                    expired.State = "notcommitted";
+                    Save(expired);
+                }
+                ReleaseStaging(expired);
+                ReleaseHistoryDependency(id);
+                if (!retire) { continue; }
+                ownership!.PersistTime();
+                File.Delete(ownership.RecordPath("tickets", id.ToString("N")));
+                operations.TryRemove(id, out _);
+                indexedIncarnations.Remove(id);
+                inventoryRevision = checked(inventoryRevision + 1);
             }
-            ReleaseStaging(expired);
-            if (!retire) { continue; }
-            ownership!.PersistTime();
-            File.Delete(ownership.RecordPath("tickets", expired.Id.ToString("N")));
-            operations.TryRemove(expired.Id, out _);
-            inventoryRevision = checked(inventoryRevision + 1);
+            finally { if (operations.ContainsKey(id)) { ticketCandidates.Enqueue(id); } }
         }
         CompactReclaimedHistory(now, token);
     }
 
     private void CompactReclaimedHistory(DateTimeOffset now, CancellationToken token)
     {
-        var protectedIncarnations = operations.Values.Where(operation => operation.Content is not null
-            && (now < operation.Expires || operation.State == "deciding" || TicketInUse(operation.Id)))
-            .Select(operation => operation.Content!.Incarnation).ToHashSet();
         bool Retirable(LocalDecision decision) => decision is { Removed: true, Reclaimed: true, ReconcileUntil: { } expiry }
-            && now >= expiry && !protectedIncarnations.Contains(decision.Content.Incarnation);
+            && now >= expiry && !historyDependents.ContainsKey(decision.Content.Incarnation);
 
         var remaining = 100;
-        foreach (var retired in removedContent.Values.Where(Retirable).Take(remaining).ToArray())
+        var candidates = Math.Min(100, reclamationCandidates.Count);
+        for (var index = 0; index < candidates && remaining > 0; index++)
         {
             token.ThrowIfCancellationRequested();
+            var node = reclamationCandidates.First!;
+            reclamationCandidates.RemoveFirst();
+            reclamationCandidates.AddLast(node);
+            HistoryCandidate("reclamation", node.Value.ToString("N"));
+            var retired = removedContent[node.Value];
+            if (!Retirable(retired)) { continue; }
             ownership!.PersistTime();
             File.Delete(ownership.RecordPath("reclamation", retired.Content.Incarnation.ToString("N")));
-            removedContent.Remove(retired.Content.Incarnation);
+            ForgetReclamation(retired.Content.Incarnation);
             if (decisions.TryGetValue(retired.Content.Digest, out var current)
                 && current.Content == retired.Content && Retirable(current))
             {
                 File.Delete(ownership.RecordPath("decisions", current.Content.Digest));
-                decisions.Remove(current.Content.Digest);
+                ForgetDecision(current.Content.Digest);
             }
             inventoryRevision = checked(inventoryRevision + 1);
             remaining--;
         }
-        foreach (var orphan in decisions.Values.Where(decision => !removedContent.ContainsKey(decision.Content.Incarnation)
-            && Retirable(decision)).Take(remaining).ToArray())
+        candidates = Math.Min(100, decisionCandidates.Count);
+        for (var index = 0; index < candidates && remaining > 0; index++)
         {
             token.ThrowIfCancellationRequested();
+            var node = decisionCandidates.First!;
+            decisionCandidates.RemoveFirst();
+            decisionCandidates.AddLast(node);
+            HistoryCandidate("decisions", node.Value);
+            var orphan = decisions[node.Value];
+            if (removedContent.ContainsKey(orphan.Content.Incarnation) || !Retirable(orphan)) { continue; }
             ownership!.PersistTime();
             File.Delete(ownership.RecordPath("decisions", orphan.Content.Digest));
-            decisions.Remove(orphan.Content.Digest);
+            ForgetDecision(orphan.Content.Digest);
             inventoryRevision = checked(inventoryRevision + 1);
+            remaining--;
         }
     }
+
+    private void HistoryCandidate(string kind, string id) => faults.BeforeHistoryCandidate?.Invoke(kind, id);
 
     public ValueTask<ArtifactResult<ArtifactStagedWrite>> StageAsync(
         ArtifactOperationTicket ticket, Stream source, ArtifactTransferOptions options, CancellationToken ct)

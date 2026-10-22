@@ -38,7 +38,9 @@ public sealed partial class ObjectArtifactStore
                 var now = EffectiveNow();
                 var ticket = new ArtifactOperationTicket(Identity, Guid.NewGuid(), ArtifactOperationKind.Write,
                     now, now.AddHours(24), Convert.ToHexStringLower(SHA256.HashData(encoded)));
-                if (!uploads.TryAdd(ticket.Id, new(ticket, expected))) { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
+                var upload = new ObjectOperation(ticket, expected);
+                if (!uploads.TryAdd(ticket.Id, upload)) { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
+                IndexUpload(upload);
                 reservedBytes = checked(reservedBytes + expected.ByteCap);
                 listingRevision = checked(listingRevision + 1);
                 return Task.FromResult(ticket);
@@ -50,27 +52,48 @@ public sealed partial class ObjectArtifactStore
     {
         var now = EffectiveNow();
         var retire = uploads.Count >= Bounds.LiveTickets;
-        var candidates = uploads.Values.Where(upload => now >= upload.Ticket.Expires
-            && (!upload.Deciding || upload.Receipt is not null) && !TicketObserved(upload.Ticket.Id)).Take(100).ToArray();
-        foreach (var upload in candidates)
+        var count = Math.Min(100, uploadCandidates.Count);
+        for (var index = 0; index < count; index++)
         {
-            token.ThrowIfCancellationRequested();
-            upload.Fenced = true;
-            RemoveMultipart(upload);
-            if (retire) { uploads.TryRemove(upload.Ticket.Id, out _); }
+            var id = uploadCandidates.Dequeue();
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                HistoryCandidate("tickets", id.ToString("N"));
+                var upload = uploads[id];
+                if (now < upload.Ticket.Expires || upload.Deciding && upload.Receipt is null || TicketObserved(id))
+                { continue; }
+                upload.Fenced = true;
+                RemoveMultipart(upload);
+                ReleasePointerDependency(id);
+                if (retire)
+                {
+                    uploads.TryRemove(id, out _);
+                    indexedTargets.Remove(id);
+                }
+            }
+            finally { if (uploads.ContainsKey(id)) { uploadCandidates.Enqueue(id); } }
         }
-        var protectedStamps = uploads.Values.Where(upload => now < upload.Ticket.Expires
-            || upload.Deciding && upload.Receipt is null || TicketObserved(upload.Ticket.Id))
-            .Select(upload => upload.Selected?.Stamp ?? upload.DeleteTarget).ToHashSet();
-        foreach (var pointer in pointers.Values.Where(pointer => pointer.Removed && now >= pointer.HistoryUntil
-            && !retiredObjects.ContainsKey(pointer.Stamp.Incarnation) && !protectedStamps.Contains(pointer.Stamp))
-            .Take(100).ToArray())
+        count = Math.Min(100, pointerCandidates.Count);
+        for (var index = 0; index < count; index++)
         {
-            token.ThrowIfCancellationRequested();
-            pointers.Remove(pointer.Stamp.Identity.Digest.Hex);
-            listingRevision = checked(listingRevision + 1);
+            var digest = pointerCandidates.Dequeue();
+            try
+            {
+                token.ThrowIfCancellationRequested();
+                HistoryCandidate("decisions", digest);
+                var pointer = pointers[digest];
+                if (!pointer.Removed || now < pointer.HistoryUntil
+                    || retiredObjects.ContainsKey(pointer.Stamp.Incarnation) || pointerDependents.ContainsKey(pointer.Stamp.Incarnation))
+                { continue; }
+                pointers.Remove(digest);
+                listingRevision = checked(listingRevision + 1);
+            }
+            finally { if (pointers.ContainsKey(digest)) { pointerCandidates.Enqueue(digest); } }
         }
     }
+
+    private void HistoryCandidate(string kind, string id) => faults.BeforeHistoryCandidate?.Invoke(kind, id);
 
     public ValueTask<ArtifactResult<ArtifactStagedWrite>> StageAsync(
         ArtifactOperationTicket ticket, Stream source, ArtifactTransferOptions options, CancellationToken ct)

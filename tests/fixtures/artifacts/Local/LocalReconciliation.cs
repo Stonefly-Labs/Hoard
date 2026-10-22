@@ -102,6 +102,7 @@ public sealed partial class LocalArtifactStore
         operations.Clear();
         decisions.Clear();
         removedContent.Clear();
+        ClearHistoryIndexes();
         reserved = 0;
         foreach (var operation in ownership!.ReadRecords<LocalOperation>("tickets", Limits.LiveTickets, value => value.Id.ToString("N")))
         {
@@ -115,6 +116,7 @@ public sealed partial class LocalArtifactStore
                     || operation.State is not ("reserved" or "staging" or "verified" or "deciding" or "committed" or "notcommitted" or "removed"))
                 { throw new LocalStateException(ArtifactFailureCode.CorruptState); }
                 if (operation.Content is not null) { _ = operation.Content.Stamp(StoreIdentity); }
+                IndexTicket(operation);
                 if (!operation.ReservationReleased) { reserved = checked(reserved + operation.Cap); }
             }
             catch (Exception error) when (error is ArgumentException or OverflowException)
@@ -137,6 +139,7 @@ public sealed partial class LocalArtifactStore
                     || !decisions.TryAdd(decision.Content.Digest, decision))
                 { throw new LocalStateException(ArtifactFailureCode.CorruptState); }
                 if (decisions.Count > Limits.CommittedIdentities) { throw new LocalStateException(ArtifactFailureCode.Capacity); }
+                IndexDecision(decision);
             }
             catch (ArgumentException) { throw new LocalStateException(ArtifactFailureCode.CorruptState); }
         }
@@ -146,6 +149,7 @@ public sealed partial class LocalArtifactStore
             { throw new LocalStateException(ArtifactFailureCode.CorruptState); }
             if (removedContent.Count > Limits.CommittedIdentities) { throw new LocalStateException(ArtifactFailureCode.Capacity); }
             _ = retired.Content.Stamp(StoreIdentity);
+            IndexReclamation(retired);
         }
         foreach (var operation in operations.Values)
         {

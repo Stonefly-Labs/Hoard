@@ -29,9 +29,11 @@ public sealed partial class ObjectArtifactStore
                 });
                 var ticket = new ArtifactOperationTicket(Identity, Guid.NewGuid(), ArtifactOperationKind.Delete,
                     now, now.AddHours(24), Convert.ToHexStringLower(SHA256.HashData(bytes)));
-                if (!uploads.TryAdd(ticket.Id, new(ticket, new ArtifactExpectations(1))
-                { DeleteTarget = intent.Target, ReservationReleased = true }))
+                var operation = new ObjectOperation(ticket, new ArtifactExpectations(1))
+                { DeleteTarget = intent.Target, ReservationReleased = true };
+                if (!uploads.TryAdd(ticket.Id, operation))
                 { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
+                IndexUpload(operation);
                 listingRevision = checked(listingRevision + 1);
                 return Task.FromResult(ticket);
             }
