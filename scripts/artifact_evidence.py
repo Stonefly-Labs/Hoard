@@ -10,6 +10,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tarfile
 import uuid
 
 import foundation_evidence as foundation
@@ -210,6 +211,39 @@ def verify_manifest(evidence, work, source_digest):
 
 
 def prepare_baseline(root, work, update):
+    retained = os.environ.get("HOARD_ARTIFACT_RETAINED_BASELINE")
+    if retained:
+        original = Path(retained).resolve()
+        no_symlinks(Path(retained).absolute())
+        record = json.loads((original / "retained-binaries.json").read_text())
+        if record.get("baseline") != BASELINE:
+            raise RuntimeError("Foreign artifact retained baseline revision.")
+        for key in ("files", "baselineDependencies"):
+            files = record.get(key)
+            if not isinstance(files, dict) or not files:
+                raise RuntimeError("Missing artifact retained binary/dependency hashes.")
+            for name, digest in files.items():
+                if sha256(proof_file(original, name)) != digest:
+                    raise RuntimeError("Artifact retained binary/dependency hash drift.")
+        if sha256(proof_file(original, "baseline.tar")) != record.get("baselineArchiveSha256"):
+            raise RuntimeError("Artifact retained source archive hash drift.")
+        for name, digest in record.get("baselineSources", {}).items():
+            if sha256(proof_file(original / "baseline", name)) != digest:
+                raise RuntimeError("Artifact retained source hash drift.")
+        if (not record.get("baselineSources")
+                or sha256(original / "retained/bin/Release/net10.0/RetainedMarker.dll") != record.get("binarySha256")
+                or sha256(root / "tests/fixtures/artifacts/RetainedMarker/Program.cs") != record.get("sourceSha256")
+                or sha256(root / "tests/fixtures/artifacts/RetainedMarker/Baseline/packages.lock.json") != record.get("lockSha256")):
+            raise RuntimeError("Artifact retained recipe or binary hash drift.")
+        for name in ("baseline", "baseline-feed"):
+            foundation.copy_source(original / name, work / name)
+        shutil.copytree(original / "retained", work / "retained",
+                        ignore=shutil.ignore_patterns("obj"))
+        shutil.copy2(original / "baseline.tar", work / "baseline.tar")
+        shutil.copy2(original / "retained-binaries.json", work / "retained-binaries.json")
+        return record
+    if (root / "src/Hoard.Abstractions/Storage/IArtifactStore.cs").exists():
+        raise RuntimeError("Use HOARD_ARTIFACT_RETAINED_BASELINE: baseline must be frozen before public contracts.")
     evidence = metadata.prepare_baseline(
         root, work, update, revision=BASELINE,
         recipe=root / "tests/fixtures/artifacts/RetainedMarker",
@@ -227,13 +261,49 @@ def prepare_baseline(root, work, update):
 
 
 def prepare_packages(root, work, update):
-    metadata.prepare_packages(root, work, update)
+    historical = work / "metadata-input"
+    historical.mkdir()
+    archive = work / "metadata-input.tar"
+    run("git", "archive", "--format=tar", f"--output={archive}", BASELINE,
+        "Directory.Build.props", "Directory.Packages.props", "global.json", "Hoard.slnx", "src",
+        "tests/fixtures/metadata", "tests/contracts/Hoard.Metadata.Tests",
+        "specs/004-module-discovery/contracts/openapi.json", cwd=root)
+    with tarfile.open(archive) as entries:
+        entries.extractall(historical, filter="data")
+    for base in ("tests/fixtures/metadata", "tests/contracts/Hoard.Metadata.Tests"):
+        for old in (historical / base).rglob("*"):
+            if old.is_file() and old.suffix in (".cs", ".csproj", ".props", ".sql", ".json"):
+                if sha256(old) != sha256(root / old.relative_to(historical)):
+                    raise RuntimeError("F-06 must consume unchanged existing metadata fixtures and locks.")
+    metadata_work = work / "metadata-packages"
+    metadata_work.mkdir()
+    metadata.prepare_packages(historical, metadata_work, False)
     current = work / "current"
+    current.mkdir()
+    for name in ("Directory.Build.props", "Directory.Packages.props", "global.json"):
+        shutil.copy2(root / name, current / name)
+    foundation.copy_source(root / "src", current / "src")
+    resource = Path("specs/004-module-discovery/contracts/openapi.json")
+    (current / resource.parent).mkdir(parents=True)
+    shutil.copy2(root / resource, current / resource)
     foundation.copy_source(root / "tests/fixtures/artifacts", current / "tests/fixtures/artifacts")
     foundation.copy_source(root / "tests/contracts/Hoard.Artifacts.Tests",
                            current / "tests/contracts/Hoard.Artifacts.Tests")
     environment = {"NUGET_PACKAGES": str(work / "cache")}
     config = work / "NuGet.Config"
+    feed = work / "feed"
+    feed.mkdir()
+    for name in ("Sqlite", "Memory", "HostAdapters"):
+        package = f"Hoard.Fixtures.Metadata.{name}.0.1.0.nupkg"
+        shutil.copy2(metadata_work / "feed" / package, feed / package)
+    from xml.sax.saxutils import escape
+    config.write_text(
+        '<configuration><packageSources><clear/>'
+        f'<add key="local" value="{escape(str(feed))}"/>'
+        '<add key="nuget.org" value="https://api.nuget.org/v3/index.json"/>'
+        '</packageSources><packageSourceMapping><packageSource key="local">'
+        '<package pattern="Hoard.*"/></packageSource><packageSource key="nuget.org">'
+        '<package pattern="*"/></packageSource></packageSourceMapping></configuration>')
 
     def build(relative, pack=False, properties=()):
         project = current / relative
@@ -252,9 +322,11 @@ def prepare_packages(root, work, update):
         if pack:
             run("dotnet", "pack", str(project), "-c", "Release", "--no-build",
                 "--no-restore", "-o", str(work / "feed"), "-v", "quiet", env=environment)
-            foundation.canonicalize_acceptance_archive(
-                work / "feed" / f"Hoard.Fixtures.Artifacts.{project.stem}.0.1.0.nupkg")
+            package_id = project.stem if project.stem.startswith("Hoard.") else f"Hoard.Fixtures.Artifacts.{project.stem}"
+            foundation.canonicalize_acceptance_archive(work / "feed" / f"{package_id}.0.1.0.nupkg")
 
+    for name in ("Abstractions", "Core", "Hosting", "Application"):
+        build(f"src/Hoard.{name}/Hoard.{name}.csproj", pack=True)
     for name in ("Local", "ObjectSemantics", "HostAdapters", "Consumer", "CrashRunner", "TransferRunner"):
         build(f"tests/fixtures/artifacts/{name}/{name}.csproj",
               pack=name in ("Local", "ObjectSemantics", "HostAdapters"))
@@ -270,12 +342,29 @@ def prepare_packages(root, work, update):
     return inputs
 
 
+def focused_tests(work, selection):
+    project = work / "current/tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj"
+    results = work / "results"
+    arguments = ["dotnet", "test", str(project), "-c", "Release", "--no-build", "--no-restore",
+                 "-p:ArtifactPackageAcceptance=true", "--logger", "trx;LogFileName=artifacts.trx",
+                 "--results-directory", str(results), "-v", "quiet"]
+    if selection:
+        arguments += ["--filter", selection]
+    output = run(*arguments, env={
+        "HOARD_ARTIFACT_TEST_ROOT": str(work / "case-roots"),
+        "HOARD_METADATA_WORKSPACE": str(work / "metadata-roots"),
+        "HOARD_ARTIFACT_CRASH_RUNNER": str(work / "current/tests/fixtures/artifacts/CrashRunner/bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll")})
+    (work / "tests.txt").write_text(output)
+    return lifecycle.test_count(results / "artifacts.trx")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("root", type=Path)
     parser.add_argument("--evidence", required=True, type=Path)
     parser.add_argument("--phase", choices=PHASES)
     parser.add_argument("--update-locks", action="store_true")
+    parser.add_argument("--filter", help="Focused runtime checks only; never full qualification.")
     args = parser.parse_args()
     root = args.root.resolve()
     work = create_workspace(args.evidence, root)
@@ -285,6 +374,14 @@ def main():
         prepare_packages(root, work, args.update_locks)
         if not args.update_locks:
             verify_locks(root, before)
+        if args.filter:
+            count = focused_tests(work, args.filter)
+            evidence = {"schemaVersion": 1, "qualification": False, "phase": "focused",
+                        "testsPassed": count, "sourceSha256": source_hash(root),
+                        "baselineRevision": BASELINE}
+            (work / "manifest.json").write_text(json.dumps(evidence, indent=2) + "\n")
+            print(json.dumps(evidence))
+            return 0
         # No case is inferred from compilation, an old run or the verifier's own tests.
         raise RuntimeError("Artifact qualification is incomplete: current provider/case execution is not implemented.")
     except Exception as error:

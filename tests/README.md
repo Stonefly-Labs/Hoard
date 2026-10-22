@@ -42,5 +42,14 @@ shortcuts.
 eventually exercise every advertised implementation; protocol tests must use
 real native package clients. Compile-only fixtures do not satisfy either gate.
 
+F-06 adds `contracts/Hoard.Artifacts.Tests` to the solution. Its value checks
+run source-level; additional `Cases/` compile only with
+`ArtifactPackageAcceptance=true` against independently prepared packages.
+`scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Artifact'` runs the
+current 32-check foundation subset with a retained pre-F06 baseline and always
+reports nonqualification. The fixtures' storage methods remain fail-closed
+placeholders; no AS case, multi-GB transfer, RSS or crash durability is proven.
+See the [evidence and locked-regression blocker](../specs/006-artifact-storage/plan.md#implementation-evidence).
+
 OpenTofu mock-provider tests live beside the bootstrap at
 `infra/bootstrap/tests/` and run with `tofu -chdir=infra/bootstrap test`.

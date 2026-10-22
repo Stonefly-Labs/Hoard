@@ -8,8 +8,12 @@
 
 **Status**: Implementation is running; T001..T006 setup is verified. The
 artifact command currently fails closed after independent package preparation;
-no storage behavior or qualification is claimed. The
-reviewer-owned [storage](checklists/storage.md) and
+no storage behavior or qualification is claimed. Partial T007..T019 code has
+32 focused passing checks, but these tasks remain unchecked. The default locked
+foundation package gate fails `NU1403` on the changed Abstractions content hash;
+the prior-lock preservation constraint must be resolved before a required
+regression can pass. See [blocker/evidence](plan.md#partial-foundation-and-blocking-regression).
+The reviewer-owned [storage](checklists/storage.md) and
 [recovery](checklists/recovery.md) checklists are now 20/20 each.
 [RQ-01](checklists/recovery.md#rq-01-finite-release-versus-non-cooperative-work)
 is resolved by the [maintainer-approved clarification](spec.md#approved-follow-up-2026-10-22-rq-01-resource-ownership)

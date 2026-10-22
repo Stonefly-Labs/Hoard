@@ -1,13 +1,30 @@
 # F-06 Artifact Qualification Quickstart
 
-**Status**: Planning-only guide. `validate-artifacts.sh`, its fixtures and
-artifact APIs do not exist yet; do not run the future commands until separately
-authorized implementation supplies them. No result below claims execution.
+**Status**: Partial implementation, blocked on an existing locked regression.
+The script, additive values/interfaces and minimum fixture initialization exist,
+but storage operations and full qualification do not. The proposed full/focused
+story commands below remain unfulfilled obligations, not passing results.
+See the [current evidence and blocker](plan.md#partial-foundation-and-blocking-regression).
 
 Read [API](contracts/artifact-api.md), [model](data-model.md),
 [recovery](contracts/recovery.md) and [exact case matrix](contracts/acceptance.md).
 
 ## Prerequisites
+
+For the current foundation-only checks, provide the retained owner-private
+pre-F06 baseline captured before public contract additions:
+
+```bash
+export HOARD_ARTIFACT_RETAINED_BASELINE="../hoard-artifact-evidence/pre-f06-20261022"
+bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Artifact' \
+  --evidence "../hoard-artifact-evidence/fresh-foundation-check"
+```
+
+The retained marker is hash-verified and copied, never rebuilt against new
+contracts. This focused check reports `qualification: false`. Do not manufacture
+a replacement baseline if its original source/binary/dependency hashes are
+missing. The default full command currently exits unsuccessfully because its
+case execution is unfinished; it cannot produce a qualifying manifest.
 
 Use Git, Bash, Python 3.11+ and the stable .NET 10 SDK selected by `global.json`.
 Existing package versions/locks remain authoritative; no vendor SDK or cloud

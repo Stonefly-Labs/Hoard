@@ -3682,16 +3682,30 @@ required for simple doc or repository-tool changes.
 
 ## Current checks and future product checks
 
-F-06 implementation is currently running. Its setup entry point,
+F-06 implementation is currently running with a locked-regression blocker. Its entry point,
 `bash scripts/validate-artifacts.sh --evidence <fresh-private-destination>`,
 requires an existing owner-private parent outside Git. It prepares the retained
 pre-F06 baseline and independent packages with tracked locks, then **fails**
-until behavioral execution is implemented. Failure captures are retained with
+until behavioral execution is implemented. Set
+`HOARD_ARTIFACT_RETAINED_BASELINE` to the original private baseline capture;
+the marker binary is hash-verified and reused without rebuilding. Partial BCL
+contracts, shared guard authority, metadata-bridge wiring and minimum root
+initialization have 32 focused package-only checks; use `--filter
+'FullyQualifiedName~Artifact'` only for that nonqualifying subset. The fixtures
+truthfully declare their missing mandatory guarantees and are not ready.
+Failure captures are retained with
 `qualification: false`; neither compilation nor the verifier's synthetic tests
 qualifies storage. See the [running implementation evidence](../specs/006-artifact-storage/plan.md#implementation-evidence).
-No existing provider, custom-host example, architecture diagram, compatibility
-policy, IaC or release guide changes at this setup checkpoint: it adds test
-infrastructure only and does not change production behavior or old APIs.
+The unchanged existing foundation runner, invoked directly with a retained
+private workspace, fails `NU1403` when a pre-existing fixture's locked
+Abstractions content hash meets the newly packed additive assembly at local
+version `0.1.0`. Prior tracked locks remain unchanged. Explicitly resolve their
+preservation versus content-hash refresh/replay requirement; do not mask this
+failure with a fallback, old-platform pass or source-only build.
+Provider authoring guidance now identifies the partial contracts. Custom-host
+examples, architecture diagrams, compatibility policy, IaC and release guides
+are otherwise unaffected: old APIs/markers and production behavior are unchanged,
+and no operational storage, deployment or release is delivered.
 
 ```bash
 python3 -m unittest discover -s tests/tooling -v

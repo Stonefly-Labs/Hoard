@@ -9,6 +9,18 @@ Hosting; F-04 adds protected metadata/observations, not provider operations. Sta
 [validation quickstart](../specs/001-provider-contracts/quickstart.md).
 For lifecycle use, see the [package-only lifecycle host](../examples/LifecycleHost/README.md).
 
+F-06 currently adds **partial, unqualified** BCL-only operations in
+`Hoard.Abstractions.Storage`, separate from the unchanged `IArtifactProvider`
+marker and historical `Metadata.ArtifactDigest`. Initialization/coordination
+fixtures and metadata-bridge wiring checks exist, but publication, protected
+copies, reconciliation and deletion remain fail-closed placeholders. Both
+fixtures declare missing mandatory guarantees and are not ready; neither is a
+production provider or an independently qualified store. The existing locked
+foundation regression currently fails package-content validation. Follow the
+[running evidence and blocker](../specs/006-artifact-storage/plan.md#implementation-evidence),
+not the future API inventory, for actual availability. Do not author a provider
+or advertise support on the strength of these unfinished contracts.
+
 ## Public ownership and authoring
 
 `Hoard.Abstractions` owns immutable sealed module records in

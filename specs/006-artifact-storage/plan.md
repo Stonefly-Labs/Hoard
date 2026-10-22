@@ -4,8 +4,10 @@
 
 **Input**: Feature specification from `specs/006-artifact-storage/spec.md`
 
-**Status**: Planning only. Interfaces, fixtures, commands and results below are
-future implementation obligations, not delivered APIs or qualification.
+**Status**: Implementation running, currently blocked on existing locked
+acceptance package hashes. The design below remains the full obligation;
+partial current code/evidence is distinguished in
+[Implementation Evidence](#implementation-evidence). No storage qualification.
 
 ## Summary
 
@@ -235,3 +237,74 @@ HostAdapters. Executable scaffolds explicitly exit unsuccessfully until their
 behavioral tasks are implemented. Existing metadata fixture sources and locks
 are unchanged. Store behavior, transfers, crashes, consumer compatibility,
 architecture review and full regression gates remain pending.
+
+### Partial foundation and blocking regression
+
+Partial T007..T019 work adds BCL-only values and the exact separate operation,
+lifetime, evidence and maintenance interfaces. Existing public files and Core
+are unchanged. Value validation has retained runtime assertion failures followed
+by 13 passing checks; a missing-type compiler failure is not counted as runtime
+red. The package-only suite now has 32 passing value/contract/admission/authority/
+bridge checks, including an actual child-process ownership rejection and a
+successful fresh-process reopen after release.
+
+The local fixture currently initializes only private checksummed root state;
+the independent object fixture only initializes a process-scoped multipart/
+payload namespace, with no rename or restart claim. **All storage operation
+bodies remain explicit fail-closed placeholders.** Their capability records
+declare the missing mandatory guarantees, `MeetsBaseline`/readiness are false,
+and no operational composition, transfer, crash or deletion result is claimed.
+The metadata adapter's wiring tests use a controlled validator; they are not
+AS-26 integration against working artifact stores or completed metadata entries.
+T007..T019 therefore remain conservatively unchecked, as do all story tasks.
+
+After adding public contracts, the runner copies and hash-verifies the original
+unrebuilt marker and dependencies using `HOARD_ARTIFACT_RETAINED_BASELINE`.
+It reconstructs existing F-05 fixture packages from immutable revision
+`830972f` with their **unchanged** source and locks, then consumes those
+packages with the new platform. It refuses any change to those old inputs.
+Only newly introduced artifact-project locks are intentionally refreshed.
+
+| Exact command / check | Result |
+| --- | --- |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --update-locks --filter 'FullyQualifiedName~Artifact' --evidence ../hoard-artifact-evidence/unchanged-metadata-foundation-20261022` | Passed 32 tests; `qualification: false`; unchanged F-05 source/locks |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --update-locks --filter 'FullyQualifiedName~Artifact' --evidence ../hoard-artifact-evidence/blocked-foundation-update-20261022` | Passed 32 tests; current limited capabilities explicitly not ready; `qualification: false` |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Artifact' --evidence ../hoard-artifact-evidence/blocked-foundation-locked-20261022` | Separate default locked replay passed 32 tests with identical source SHA-256 `91348a433517cfcdd84ce4b64a6b0026641230b425fb38c12aa153d960cb71ad`; `qualification: false` |
+| `python3 -m unittest discover -s tests/tooling -p test_artifact_evidence.py -v` | Current verifier: 12 passed |
+| `TMPDIR="$PWD/../hoard-artifact-evidence/tooling-final-20261022" python3 -m unittest discover -s tests/tooling -v` | All 88 passed; retained owner-private scratch and result capture |
+| `dotnet format Hoard.slnx --verify-no-changes --no-restore --include src/Hoard.Abstractions/Storage tests/contracts/Hoard.Artifacts.Tests -v quiet` | Passed |
+| `dotnet format "../hoard-artifact-evidence/blocked-foundation-locked-20261022/current/tests/fixtures/artifacts/$project/$project.csproj" --verify-no-changes --no-restore -v quiet` for `Local ObjectSemantics HostAdapters CrashRunner` | All four standalone fixture checks passed |
+| `git diff --check` | Passed |
+| Direct existing `foundation_evidence.main()` with repository root and fresh retained `foundation-preliminary-20261022` workspace, default locked mode | **Failed**: `NU1403`, changed `Hoard.Abstractions.0.1.0` content rejected by the pre-existing Protocol fixture lock |
+| `python3 scripts/foundation_evidence.py "$PWD" "$PWD/../hoard-artifact-evidence/foundation-locked-blocker-20261022"` | Reproduced failure, exit 1, `NU1403`; exact output retained in `command.txt` |
+
+The frozen `RetainedMarker.dll` also executes unchanged with the current
+Abstractions/Core/Hosting assemblies copied into a separate execution directory:
+`dotnet ../hoard-artifact-evidence/blocked-foundation-locked-20261022/retained-current/RetainedMarker.dll`
+prints `artifact-marker-compatible`. Original and executed binary SHA-256 is
+`5b745ae0860722852921cab4e6b210fa20facb59e53aa6f1f8a157060aba939d`;
+`retained-current.json` records this **nonqualifying** replay. This one replay
+does not complete T071's remaining consumer/API/graph proof.
+
+The direct invocation retained `foundation-regression.txt` and the complete
+failed workspace; it ran the existing locked foundation implementation, not a
+replacement test or fabricated pass. No old fixture/consumer lock was changed
+to hide the failure. The .NET source restore/build before the package gate
+succeeded.
+
+**Blocker requiring resolution**: the mandatory default locked regression
+restores pre-existing package-only fixtures against the newly packed additive
+Abstractions assembly under the existing local version `0.1.0`. Its bytes
+necessarily differ from the old package, so NuGet correctly rejects the old
+content hash. Completing that gate requires either explicitly approved,
+content-hash-only refresh/replay of the affected pre-existing acceptance locks
+(without changing dependency versions), or an approved regression-tooling
+strategy that tests the current platform while preserving those locks. F-06's
+T083's explicit instruction to preserve prior tracked locks, except reviewed
+new project/lock additions, prevents silently choosing the
+first option. Consuming unchanged F-05 packages solves F-06 preparation but does
+not solve the independent foundation gate.
+
+The checkpoint remains `implement / running`; no driver finish, architecture
+review, convergence, merge or release is attempted. Resolve this gate before
+counting the remaining implementation/qualification work complete.
