@@ -2365,6 +2365,50 @@ planning review is not implementation acceptance. Draft
 No schema operation, product scaffolding, release, package publication, merge,
 infrastructure plan/apply or deployment occurs in task generation.
 
+### F-05 metadata persistence cross-artifact analysis
+
+The separately invoked installed `speckit-analyze` uses explicit
+`SPECIFY_FEATURE_DIRECTORY=specs/005-metadata-persistence` after the driver
+begins `analyze / running`. Its prerequisite check resolves the recorded
+directory, specification, plan, tasks and supporting design documents.
+No before/after analysis extension hooks are configured.
+
+Read-only review of the specification, plan, tasks, logical model and three
+contracts against constitution v1.0.0 finds no actionable duplication,
+ambiguity, underspecification, inconsistency, constitutional conflict or
+coverage gap. All 24 FRs and eight buildable SCs have implementation/focused
+proof tasks (32/32, 100%); all 23 story scenarios, 14 edge cases and 48 MP cases
+retain mappings. Every task has a requirement/story or shared acceptance/
+workflow purpose. The 83-node graph has 107 direct edges, no unknown or missing
+prerequisites and no cycles; retained-binary preparation precedes platform
+changes and shared orchestrator edits remain serialized.
+
+The [structured report](https://github.com/Stonefly-Labs/Hoard/pull/14#issuecomment-6329405510)
+records zero findings and no proposed remediation. All 83 tasks, existing
+design/specification artifacts and checklist bytes remain unchanged. The
+built-in checklist stays 16/16; the two reviewer-owned custom checklists retain
+all 40 unchecked markers. Neither the earlier assisted assessment nor analysis
+supplies formal approval. The checkpoint schedules **`implement / ready`**,
+but that separate invocation still requires reviewer approval or explicit
+reviewer authorization before execution.
+
+All 39 logical cases for both independent fixtures, nine additional SQLite
+durable cases, real crash/upgrade/restore, late-work ownership, unchanged
+consumer/retained-binary and package-boundary proof remain implementation
+obligations. No future metadata command runs or gains a passing claim here.
+README and this guide record the analysis result and remaining gate. Provider/
+example/quickstart guides, baseline charter/product specification/architecture/
+ADR/diagrams, prior features, constitution/backlog, compatibility/release policy,
+runtime/test/tooling sources, dependencies/locks and IaC are unaffected:
+analysis changes no requirement, design, API, package edge, command, operational
+procedure or supported behavior. Historical planning architecture review
+remains historical; implementation requires the fresh review in its tasks.
+Existing repository-tool and artifact-integrity checks apply; .NET product
+acceptance and mock OpenTofu checks are not rerun for status/checkpoint-only
+changes. Draft [PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) stays
+incomplete; no implementation, checklist approval, schema operation,
+qualification, source release, merge, infrastructure or deployment occurs.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
