@@ -4,8 +4,9 @@
 
 **Input**: Feature specification from `specs/005-metadata-persistence/spec.md`
 
-**Status**: Implementation running; additive operation contracts, independent
-fixtures and the qualification orchestrator are implemented. See
+**Status**: Implementation complete, including convergence correction T084;
+additive operation contracts, independent fixtures and the qualification
+orchestrator are implemented. Fresh convergence is the next separate stage. See
 [implementation evidence](#implementation-evidence) for measured checks and
 remaining stage gates. Specification and reviewer-owned checklists are unchanged.
 
@@ -362,6 +363,57 @@ T083 records the durable commit/push/draft-PR/checkpoint handoff. Convergence,
 finalization, feature merge, source prerelease, production/F-07 qualification,
 other engines/filesystems and infrastructure/deployment remain separate gates,
 not completed or authorized by these fixture results.
+
+### T084 malformed-continuation correction
+
+The subsequent convergence appended one partial gap under FR-010/FR-015,
+US1/AC5 and MP-08. Both providers dereferenced a null or omitted decoded
+last-key field before translating invalid input. Implementation now checks
+the required key with a null-safe bounded property pattern before hex decoding,
+preserving all existing query/schema/epoch/size binding and decode limits.
+No broad exception handler, fallback, public signature or provider algorithm
+is added.
+
+The new package-only common theory mutates every decoded field using six
+shapes: null, omitted, wrong-type, empty, odd-length hex and invalid hex.
+Before the provider changes, both null/omitted variants fail with
+`Expected: InvalidInput; Actual: InternalFailure` in each provider; the four
+other variants already pass. After correction all six variants assert
+`InvalidInput/CorrectInput/Page`, successful original-cursor resumption after
+every rejection, exact remaining traversal and unchanged full traversal.
+
+`$PRIVATE_EVIDENCE` represents this invocation's existing owner-private parent
+outside Git. Failed-run TRX files retain the actual assertion-level red proof.
+
+| Executed command | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --phase logical --evidence "$PRIVATE_EVIDENCE/metadata-t084-red"` | Intended red: SQLite null/omitted variants fail; 63 pass, two fail |
+| `HOARD_METADATA_PROVIDER=memory HOARD_METADATA_WORKSPACE="$PRIVATE_EVIDENCE/metadata-t084-red" dotnet vstest "$PRIVATE_EVIDENCE/metadata-t084-red/current/tests/contracts/Hoard.Metadata.Tests/bin/Release/net10.0/Hoard.Metadata.Tests.dll" --TestCaseFilter:FullyQualifiedName~MP08_Malformed --logger:'trx;LogFileName=memory-red.trx' --ResultsDirectory:"$PRIVATE_EVIDENCE/metadata-t084-red/results"` | Intended red against the same packaged assembly: null/omitted fail, four pass |
+| `bash scripts/validate-metadata.sh --phase logical --update-locks --evidence "$PRIVATE_EVIDENCE/metadata-t084-logical"` | Passed 65 common tests per provider and unchanged consumers; explicitly `qualification: false` |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/metadata-t084-qualified"` | Passed full locked qualification and formatting/analyzers: 65 tests per provider, 87 applicable passes and nine memory D exclusions; locks unchanged |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| `git diff --check` | Passed |
+
+The full manifest identifies pre-commit source HEAD
+`ecf9e1f0fb08407d577edccc661cff29ab78b0c0` plus tested working-source/lock
+fingerprint
+`41ef899b40bd4017c3be0973de1bb66e93a81ca7dae3b9ed2cf064f1072b6c1a`.
+Its environment remains macOS 26.5.0/APFS, .NET 10.0.7, driver 10.0.13.0
+and SQLite 3.53.3 with checked WAL/FULL/foreign-keys/busy-timeout-zero.
+All existing crash/restore/native-ownership, seven package graphs, retained
+marker, unchanged consumer/common binary and runtime mutation proofs pass.
+
+Only four downstream metadata fixture locks change, exclusively the local
+SQLite/memory/HostAdapters content hashes; dependency identities, versions,
+Abstractions and third-party hashes are unchanged. Existing platform regression
+results above remain historical: these commands were not repeated for a
+fixture-private validation correction. The complete metadata gate rebuilds the
+platform and repeats its applicable compatibility/boundary proof.
+The prior architecture review remains applicable because no dependency,
+public contract, lifecycle, authority, reference or lease boundary changes.
+The specification, constitution and reviewer-owned checklist bytes are
+unchanged. No implementation extension hooks exist. T084 is complete;
+fresh convergence and finalization remain required, and PR #14 stays draft.
 
 ## Complexity Tracking
 

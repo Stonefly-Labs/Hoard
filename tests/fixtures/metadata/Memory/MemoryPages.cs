@@ -22,7 +22,7 @@ public sealed partial class MemoryMetadataStore
             {
                 var cursor = JsonSerializer.Deserialize<MemoryCursor>(Convert.FromBase64String(supplied.Value.Value));
                 if (cursor is null || cursor.Contract != 1 || cursor.Epoch != captured.Epoch || cursor.Query != binding
-                    || cursor.Size != query.PageSize || cursor.After.Length is < 2 or > 16384)
+                    || cursor.Size != query.PageSize || cursor.After is not { Length: >= 2 and <= 16384 })
                 { throw new ArgumentException("Invalid or foreign memory continuation."); }
                 after = Convert.FromHexString(cursor.After);
             }

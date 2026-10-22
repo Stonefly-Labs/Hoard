@@ -2595,6 +2595,42 @@ unaffected: no API, supported behavior, operational procedure, dependency or
 production capability changed. No merge, tag, release, infrastructure operation
 or deployment ran.
 
+### F-05 T084 implementation correction
+
+The returned implementation stage completes T084 only. SQLite `LastKey` and
+memory `After` now use null-safe bounded checks before hex decoding, preserving
+the existing complete-query/schema/epoch/size binding and finite decode limits.
+Six common theory variants mutate every decoded field (null, omitted,
+wrong-type, empty, odd-length and invalid hex); each rejection must return
+`InvalidInput/CorrectInput/Page`, allow the original cursor to resume, and
+preserve remaining/full dataset traversal.
+
+Both independently packaged providers reproduce the null/omitted
+`InternalFailure` assertion before repair. The corrected focused logical gate
+passes 65 tests per provider. The full independent locked metadata gate passes
+formatting/analyzers, 65 common tests per provider, all 87 applicable entries,
+nine explicit memory D exclusions, and existing crash/restore/native-ownership,
+package/old-binary/unchanged-consumer/runtime-mutation proofs. Repository tooling
+passes 76 tests. Four downstream locks change only local fixture package
+content hashes; no dependency identity/version or platform/third-party hash
+changes, and default replay preserves the reviewed locks.
+
+[Exact commands and attribution](../specs/005-metadata-persistence/plan.md#t084-malformed-continuation-correction)
+include both red runs and the tested working-source fingerprint. README,
+plan/tasks, quickstart and acceptance evidence are updated. Provider/API/model/
+recovery/example guidance and product/architecture diagrams are unaffected:
+they already require malformed-cursor refusal, and no public API, operational
+procedure, dependency or shared boundary changes. The earlier architecture
+review remains applicable; no new substantial provider-boundary change occurs.
+The specification, constitution and reviewer-owned checklists are unchanged;
+no implementation hooks exist.
+
+All 84 tasks are complete. The next separately authorized stage is fresh
+**`converge`**, not finalize or merge; draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete until
+convergence and finalization. No merge, tag, release, package publication,
+infrastructure operation or deployment ran.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

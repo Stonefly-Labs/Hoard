@@ -30,7 +30,7 @@ F-07 certification follows from the fixture results.
 | MP-05 | L | Preserve accepted UTC millisecond/counter/size boundaries; reject fractional precision, overflow and oversized values without truncation |
 | MP-06 | L | Scoped policies/aggregates round-trip; cross-registry policy association and invalid/overlapping-key aggregate input cannot cross scope |
 | MP-07 | L | Traverse datasets of 0, 1, 100 and 205 rows in fixed order exactly once; oversized requests/results fail, not truncate |
-| MP-08 | L | Resume same-query cursor; reject changed filter, registry, auth partition, size, version or epoch; demonstrate documented insert/delete/update semantics without snapshot promises |
+| MP-08 | L | Resume same-query cursor; reject changed filter, registry, auth partition, size, version or epoch and null/omitted/malformed decoded fields as InvalidInput/CorrectInput; preserve valid resumption after rejection and demonstrate documented insert/delete/update semantics without snapshot promises |
 | MP-09 | L | Commit multi-entity group all at once; injected failure after each candidate mutation leaves none visible |
 | MP-10 | L | Barrier-coordinated grouped reads observe all-old or all-new; ordinary independent reads may straddle a commit |
 | MP-11 | L | Competing first creates yield exactly one winner and explicit losers; no duplicate canonical identity |
@@ -134,7 +134,7 @@ non-qualifying; only full mode can report complete qualification.
 | Memory 0.1.0, fixture-memory-v2 | All 39 L cases passed | Nine `NotApplicable: non-durable fixture` entries |
 
 The final current-source locked run verifies all 96 entries, with 87 applicable
-passes and no missing/failed/skipped applicable case. It executes 59 common tests
+passes and no missing/failed/skipped applicable case. The T084 replay executes 65 common tests
 per provider, all eight M/U crashes, additional R0/R1 restore interruptions,
 native-stall ownership, backup/restore, unchanged consumers, frozen marker
 compatibility, seven actual package graphs and both runtime mutation pairs.
@@ -142,3 +142,9 @@ Source/configuration attribution, exact commands/results and resolved review
 findings are in the [plan](../plan.md#implementation-evidence). The measured
 macOS/APFS process-stop scope grants no production, other-engine/filesystem,
 power-loss, multi-node or F-07 claim.
+
+The six additional MP-08 theory variants cover null, omitted, wrong-type, empty,
+odd-length and invalid-hex decoded fields in both independently packaged
+providers, preserving the original cursor and complete dataset after rejection.
+The null/omitted variants have attributable assertion-level red proof before
+the repair; see [T084 evidence](../plan.md#t084-malformed-continuation-correction).

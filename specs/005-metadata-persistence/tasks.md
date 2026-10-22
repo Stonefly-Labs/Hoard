@@ -6,9 +6,10 @@
 [metadata API](contracts/metadata-api.md), [recovery](contracts/recovery.md),
 [acceptance](contracts/acceptance.md) and [quickstart.md](quickstart.md).
 
-**Status**: All 83 implementation tasks are verified and complete, including
+**Status**: All 84 implementation tasks are verified and complete, including
 immutable qualification/regression replay, documentation, requirement audit
-and pushed draft-PR handoff. The driver checkpoint schedules `converge` next;
+and the T084 malformed-continuation correction with paired red/green proof.
+The driver checkpoint schedules a fresh `converge` next;
 convergence/finalization/merge/release are not part of this implementation.
 The built-in requirements checklist remains 16/16. The reviewer-owned
 [metadata](checklists/metadata.md) and [recovery](checklists/recovery.md)
@@ -527,4 +528,19 @@ remain later gates; no dependency/backlog completion follows from task checks.
 
 ## Phase 9: Convergence
 
-- [ ] T084 Validate required decoded continuation fields before dereferencing or decoding them in `tests/fixtures/metadata/Sqlite/SqlitePages.cs` and `tests/fixtures/metadata/Memory/MemoryPages.cs`: a query/epoch-matching cursor with null or omitted `LastKey`/`After` currently returns `InternalFailure/OperatorRecovery` instead of `InvalidInput/CorrectInput`. Add paired null/omitted/malformed-field rejection and valid-resume regressions to `tests/contracts/Hoard.Metadata.Tests/Cases/MetadataPagingTests.cs` for both independently packaged providers; preserve query/scope/epoch binding, finite decode bounds and unchanged store usability, replay the applicable qualification checks, and update affected evidence/documentation per FR-010, FR-015, US1/AC5 and T026/T036 (MP-08) (partial).
+- [X] T084 Validate required decoded continuation fields before dereferencing or decoding them in `tests/fixtures/metadata/Sqlite/SqlitePages.cs` and `tests/fixtures/metadata/Memory/MemoryPages.cs`: a query/epoch-matching cursor with null or omitted `LastKey`/`After` currently returns `InternalFailure/OperatorRecovery` instead of `InvalidInput/CorrectInput`. Add paired null/omitted/malformed-field rejection and valid-resume regressions to `tests/contracts/Hoard.Metadata.Tests/Cases/MetadataPagingTests.cs` for both independently packaged providers; preserve query/scope/epoch binding, finite decode bounds and unchanged store usability, replay the applicable qualification checks, and update affected evidence/documentation per FR-010, FR-015, US1/AC5 and T026/T036 (MP-08) (partial).
+
+T084 evidence: both freshly packaged providers fail the null and omitted
+regressions with `InternalFailure` before the repair. Null-safe bounded key
+patterns now reject those fields before dereference/hex decoding. Six common
+theory cases mutate each decoded field (null, omitted, wrong-type, empty,
+odd-length and invalid hex); each rejection asserts
+`InvalidInput/CorrectInput/Page`, then resumes the original cursor successfully.
+Complete remaining and original traversals prove unchanged store usability.
+Focused logical replay passes; full independent locked qualification passes
+65 common tests per provider, all 87 applicable entries and nine explicit
+memory durability exclusions, including existing scope/epoch binding,
+crash/recovery/package/old-binary proofs and formatting/analyzers. Four fixture
+consumer locks change only local fixture content hashes; default replay
+preserves them. Repository tooling passes 76 tests. See
+[correction evidence](plan.md#t084-malformed-continuation-correction).

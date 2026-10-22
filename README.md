@@ -679,8 +679,14 @@ both fixture providers classify a null decoded continuation key as
 Fresh locked qualification still passes its existing cases; the additional
 probe exposes a missing malformed-cursor regression, not a clean convergence
 result. Product code, specification, plan and existing task completions are
-unchanged. The next stage returns to **`implement`** for T084, followed by fresh
-convergence and finalization; PR #14 remains draft.
+unchanged. That checkpoint returned to **`implement`** for T084.
+The subsequent implementation correction is complete: both fixtures reject
+null/omitted decoded keys safely, and six paired malformed-field regressions
+preserve valid resumption and complete dataset traversal. Full locked
+qualification passes 65 common tests per provider, all 87 applicable entries
+and nine explicit memory durability exclusions. See the
+[correction evidence](specs/005-metadata-persistence/plan.md#t084-malformed-continuation-correction).
+Fresh **`converge`** is next, followed by finalization; PR #14 remains draft.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

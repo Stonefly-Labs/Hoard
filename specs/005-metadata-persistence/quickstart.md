@@ -182,3 +182,27 @@ SQLite 3.53.3. These results qualify only this fixture configuration for the
 documented process-stop fault model. See the [plan](plan.md#implementation-evidence)
 for source attribution, architecture corrections and the complete requirement
 audit; later convergence/finalization/merge/release gates remain separate.
+
+### T084 continuation correction
+
+The convergence-added correction is complete. Both fixture providers now
+classify null/omitted decoded last keys as `InvalidInput/CorrectInput` before
+dereference or hex decoding, without changing cursor binding, limits or valid
+resumption. Six common theory variants corrupt every decoded field and verify
+that rejected cursors leave valid paging and the complete dataset usable.
+Null/omitted variants fail against both pre-repair packages, then pass after
+the correction.
+
+| Executed command | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --phase logical --update-locks --evidence "$PRIVATE_EVIDENCE/metadata-t084-logical"` | Passed 65 tests per provider; explicitly not full qualification |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/metadata-t084-qualified"` | Passed formatting/analyzers and full locked qualification: 65 tests per provider, 87 applicable entries and nine explicit memory D exclusions; no lock mutation |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| `git diff --check` | Passed |
+
+The four refreshed downstream locks change only local fixture content hashes,
+not dependencies or versions. Actual crash/restore, native ownership, package
+graphs, retained marker and unchanged consumers pass again. Exact red commands,
+source/configuration attribution and unaffected regression/review boundaries
+are in the [plan](plan.md#t084-malformed-continuation-correction).
+The next separately authorized stage is fresh convergence; PR #14 remains draft.

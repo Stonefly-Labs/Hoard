@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "implement",
+  "stage": "converge",
   "status": "ready",
   "branch": "feature/005-metadata-persistence",
   "active": {
@@ -477,6 +477,13 @@
       "branch": "feature/005-metadata-persistence",
       "at": "2026-10-22T03:11:51.772176+00:00",
       "evidence": "Convergence tasks_appended: assessed 24 FRs, 8 SCs, 23 scenarios, 14 edge cases, 83 tasks, 8 integration decisions and 8 constitution principles. F1 HIGH partial FR-010/FR-015: unchanged packaged SQLite and memory both return InternalFailure/OperatorRecovery for null cursor LastKey/After; SDK interactive probe reproduced both and valid queries still pass. Appended Phase 9 T084 only; original task bytes and spec/plan hashes verified unchanged. Full locked validate-metadata.sh passed 96 entries (87 applicable, 9 memory D exclusions), all crash/package/red-green proof, source fingerprint 2594b90d9871c0a0555e2e5c590ea77dab461c543dbe50ededa5dda552922f5a; 76 tooling tests passed; locks unchanged. No hooks or product-code changes. README/DEVELOPMENT record the gap; draft PR 14 remains blocked on T084, then fresh convergence/finalize."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T03:25:03.621542+00:00",
+      "evidence": "T084 complete: both packaged fixtures reproduced null/omitted cursor InternalFailure before null-safe bounded validation; six paired malformed-field/valid-resume regressions pass. Full locked metadata qualification and formatting/analyzers pass: 65 common tests/provider, 87 applicable cases, nine explicit memory D exclusions, existing crash/recovery/package/retained-binary proof. Four fixture consumer locks contain only local content-hash updates; default replay unchanged. Tooling 76 tests and diff hygiene pass; all 84 tasks complete; README and affected guides/evidence updated, checklists/spec/constitution unchanged, no hooks. Draft PR #14; next fresh converge only."
     }
   ]
 }

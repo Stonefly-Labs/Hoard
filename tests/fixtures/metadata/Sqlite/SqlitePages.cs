@@ -26,7 +26,7 @@ public sealed partial class SqliteMetadataStore
                 cursor = JsonSerializer.Deserialize<Cursor>(bytes, Json) ?? throw new ArgumentException("Invalid metadata continuation.");
                 if (cursor.ContractVersion != 1 || cursor.Epoch != epoch || cursor.Schema != version
                     || cursor.Query != binding || cursor.PageSize != query.PageSize
-                    || cursor.LastKey.Length is < 2 or > 16384)
+                    || cursor.LastKey is not { Length: >= 2 and <= 16384 })
                 { throw new ArgumentException("Foreign or changed metadata continuation."); }
                 after = Convert.FromHexString(cursor.LastKey);
             }
