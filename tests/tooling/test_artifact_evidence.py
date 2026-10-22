@@ -2,13 +2,14 @@ import base64
 import copy
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 import unittest
 import uuid
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -236,13 +237,87 @@ class ArtifactEvidenceTests(unittest.TestCase):
                 artifact.create_workspace(target, ROOT)
 
     def test_failed_child_and_timeout_fail_without_exposing_output(self):
-        for outcome in (subprocess.CompletedProcess([], 7, "synthetic-private-canary"),
-                        subprocess.TimeoutExpired("child", 600)):
-            with patch.object(artifact.subprocess, "run",
-                              side_effect=outcome if isinstance(outcome, Exception) else None,
-                              return_value=outcome), self.assertRaises(RuntimeError) as caught:
+        for timed_out in (False, True):
+            child = MagicMock(pid=42, returncode=7)
+            child.__enter__.return_value = child
+            child.communicate.side_effect = (
+                [subprocess.TimeoutExpired("child", 600), ("synthetic-private-canary", None)]
+                if timed_out else [("synthetic-private-canary", None)])
+            with self.subTest(timed_out=timed_out), \
+                    patch.object(artifact.subprocess, "Popen", return_value=child) as start, \
+                    patch.object(artifact, "command_processes", create=True,
+                                 side_effect=[{42, 43}, set()]) as processes, \
+                    patch.object(artifact.os, "kill") as kill, \
+                    self.assertRaises(RuntimeError) as caught:
                 artifact.run("fixture")
             self.assertNotIn("synthetic-private-canary", str(caught.exception))
+            self.assertIs(True, start.call_args.kwargs.get("start_new_session"))
+            if timed_out:
+                self.assertEqual({42, 43}, {call.args[0] for call in kill.call_args_list})
+                self.assertTrue(all(call.args[1] == artifact.signal.SIGKILL for call in kill.call_args_list))
+                self.assertLessEqual(child.communicate.call_args.kwargs["timeout"], 10)
+            else:
+                kill.assert_not_called()
+                processes.assert_not_called()
+
+    def test_timeout_with_unsettled_pipe_reports_cleanup_incomplete_not_success(self):
+        child = MagicMock(pid=42, returncode=None)
+        child.__enter__.return_value = child
+        child.communicate.side_effect = subprocess.TimeoutExpired("child", 600)
+        with patch.object(artifact.subprocess, "Popen", return_value=child), \
+                patch.object(artifact, "command_processes", create=True, return_value={42}), \
+                patch.object(artifact.os, "kill") as kill, \
+                self.assertRaisesRegex(RuntimeError, "cleanup incomplete"):
+            artifact.run("fixture")
+        kill.assert_called_once_with(child.pid, artifact.signal.SIGKILL)
+
+    def test_actual_timeout_stops_owned_descendant_and_preserves_unrelated_child(self):
+        marker = self.work / "descendant.json"
+        descendant = (
+            "import json,os,time; from pathlib import Path; "
+            f"Path({str(marker)!r}).write_text(json.dumps([os.getpid(),os.getpgrp()])); "
+            "time.sleep(60)"
+        )
+        command = (
+            "import subprocess,sys,time; "
+            f"subprocess.Popen([sys.executable,'-c',{descendant!r}]); "
+            "time.sleep(60)"
+        )
+        unrelated = subprocess.Popen(
+            [sys.executable, "-c", "import time; time.sleep(60)"], start_new_session=True)
+        try:
+            with patch.object(artifact, "COMMAND_TIMEOUT_SECONDS", 2), \
+                    self.assertRaisesRegex(RuntimeError, "finite deadline"):
+                artifact.run(sys.executable, "-c", command)
+            self.assertTrue(marker.is_file(), "The real descendant must exist before timeout.")
+            descendant_pid, group = json.loads(marker.read_text())
+            self.assertNotEqual(descendant_pid, group)
+            self.assertEqual(set(), artifact.command_processes(group))
+            self.assertIsNone(unrelated.poll())
+        finally:
+            if marker.is_file():
+                _, group = json.loads(marker.read_text())
+                for pid in artifact.command_processes(group):
+                    os.kill(pid, artifact.signal.SIGKILL)
+            if unrelated.poll() is None:
+                unrelated.kill()
+            unrelated.wait(timeout=10)
+
+    def test_interrupted_command_settles_owned_children_before_propagating(self):
+        child = MagicMock(pid=42, returncode=-9)
+        child.communicate.side_effect = [KeyboardInterrupt(), ("private-canary", None)]
+        with patch.object(artifact.subprocess, "Popen", return_value=child), \
+                patch.object(artifact, "command_processes", side_effect=[{42, 43}, set()]), \
+                patch.object(artifact.os, "kill") as kill, \
+                self.assertRaises(KeyboardInterrupt):
+            artifact.run("fixture")
+        self.assertEqual({42, 43}, {call.args[0] for call in kill.call_args_list})
+
+    def test_command_processes_selects_only_live_members_of_its_owned_session(self):
+        output = "42 42 S\n43 42 R\n44 42 Z\n99 99 S\n"
+        with patch.object(artifact.subprocess, "run",
+                          return_value=subprocess.CompletedProcess([], 0, output, "")):
+            self.assertEqual({42, 43}, artifact.command_processes(42))
 
     def test_focused_modes_never_qualify_even_with_complete_inventory(self):
         for phase in ("logical", "transfers", "recovery", "packages"):

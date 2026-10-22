@@ -9,6 +9,42 @@ public sealed class ArtifactBudgetTests
     [Theory]
     [InlineData("local")]
     [InlineData("object")]
+    public async Task Producer_and_consumer_inactivity_deadlines_release_cooperative_work_without_closing_borrowed_streams(
+        string provider)
+    {
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
+        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
+        using var stalled = new PendingSource(cooperative: true);
+        Assert.Equal(ArtifactFailureCode.DeadlineExceeded, Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(
+            await driver.Store.StageAsync(ticket, stalled,
+                new(TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(20)), default)
+                .AsTask().WaitAsync(TimeSpan.FromSeconds(3))).Code);
+        await driver.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.False(stalled.WasDisposed);
+        Assert.IsType<ArtifactResolution.NotCommitted>(Success(await driver.Store.ReconcileAsync(ticket, new(), default)));
+        using var source = new ShortSource("cooperative inactivity recovery"u8.ToArray());
+        var receipt = await PublishAsync(driver, source, new(1024));
+        await using (var read = Success(await driver.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default)))
+        {
+            using var destination = new StalledDestination();
+            Assert.Equal(ArtifactFailureCode.DeadlineExceeded, Assert.IsType<ArtifactResult<ArtifactReadCompletion>.Failure>(
+                await read.CopyToAsync(destination, new(TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(20)), default)
+                    .AsTask().WaitAsync(TimeSpan.FromSeconds(3))).Code);
+            Assert.True(destination.CanWrite);
+            Success(await read.CloseAsync(new(), default));
+        }
+        Assert.Equal("cooperative inactivity recovery"u8.ToArray(), await ReadAsync(driver, receipt.Stamp));
+    }
+
+    private sealed class StalledDestination : MemoryStream
+    {
+        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
+            => new(Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken));
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
     public async Task Cancellation_of_an_admitted_commit_cannot_fence_an_externally_renewed_owner(string provider)
     {
         var clock = new ArtifactTestClock();

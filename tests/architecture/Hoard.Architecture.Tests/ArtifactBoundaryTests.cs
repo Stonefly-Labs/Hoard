@@ -21,6 +21,13 @@ public sealed class ArtifactBoundaryTests
             {
                 Assert.Contains(violations, violation => violation.RuleId == "ARCH-004" && violation.Location.Contains("Provider", StringComparison.Ordinal));
                 Assert.Contains(violations, violation => violation.RuleId == "ARCH-004" && violation.Location.Contains("Hosting", StringComparison.Ordinal));
+                foreach (var member in new[] { "Sdk", "RawPath", "RawFile", "ServiceLocator" })
+                {
+                    Assert.Contains(violations, violation => violation.RuleId == "ARCH-004"
+                        && violation.Location.Contains($"::{member}", StringComparison.Ordinal));
+                }
+                Assert.DoesNotContain(violations, violation =>
+                    violation.Location.Contains("AllowedArtifactContract", StringComparison.Ordinal));
             }
             else { Assert.Empty(violations); }
         }

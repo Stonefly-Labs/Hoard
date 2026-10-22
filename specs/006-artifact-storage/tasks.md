@@ -20,6 +20,10 @@ Further focused checks now cover inert configured lifecycle/disabled selection,
 classified faults/full queues, independent object direct/list visibility,
 pending-to-reclaimed deletion receipts and exact-owner cancellation fencing.
 Successful ready-store composition and complete qualification remain unfinished.
+Additional focused evidence covers controlled admitted-writer/late-cleanup races,
+inactivity and changed recovery pages, real command-descendant timeout cleanup,
+and compiled SDK/raw-filesystem/service-locator boundary negatives. None alone
+closes a complete task obligation or changes the qualification/readiness gate.
 See [resumed implementation](plan.md#resumed-storage-mechanisms-and-recovery-2026-10-22).
 The initial
 `NU1403` blocker is resolved by the maintainer-approved local-package hash

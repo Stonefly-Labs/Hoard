@@ -10,6 +10,72 @@ public sealed class ArtifactRecoveryTests
     [Theory]
     [InlineData("local")]
     [InlineData("object")]
+    public async Task Late_cleanup_rechecks_the_exact_generation_after_replacement(string provider)
+    {
+        var clock = new ArtifactTestClock();
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
+        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
+        using var first = new ShortSource("expired generation"u8.ToArray());
+        var old = Success(await driver.Store.StageAsync(ticket, first, new(), default));
+        clock.Advance(TimeSpan.FromSeconds(30));
+        var request = new ArtifactCleanupRequest(driver.Identity, [new ArtifactCleanupTarget.AbandonedStaging(old.Owner)]);
+        await using var barrier = new ArtifactTestBarrier("late-generation-cleanup");
+        SetObserver(driver, "cleanup.candidate", "multipart.cleanup", () => new(barrier.HoldAsync()));
+        var delayed = driver.Maintenance.CleanupAsync(request, new(), default).AsTask();
+        ArtifactStagedWrite replacement;
+        try
+        {
+            await barrier.Entered;
+            if (driver.LocalControls is { } local) { local.RemoveObserver("cleanup.candidate"); }
+            else { driver.ObjectControls!.RemoveObserver("multipart.cleanup"); }
+            Assert.Equal(1, Success(await driver.Maintenance.CleanupAsync(request, new(), default)).Completed);
+            using var second = new ShortSource("replacement generation"u8.ToArray());
+            replacement = Success(await driver.Store.StageAsync(ticket, second, new(), default));
+            Assert.True(replacement.Owner.Generation > old.Owner.Generation);
+        }
+        finally { barrier.Release(); }
+        var result = Success(await delayed);
+        Assert.Equal(1, result.Conflicted);
+        Assert.Equal(0, result.ReclaimedBytes);
+        var receipt = Success(await driver.Store.CommitAsync(replacement, new(), default));
+        Assert.Equal("replacement generation"u8.ToArray(), await ReadAsync(driver, receipt.Stamp));
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Changed_inventory_rejects_old_continuations_and_fresh_pages_cover_every_current_identity(string provider)
+    {
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
+        for (var index = 0; index < 3; index++)
+        {
+            using var source = new ShortSource([(byte)index]);
+            await PublishAsync(driver, source, new(1024));
+        }
+        var query = new ArtifactRecoveryQuery(driver.Identity, ArtifactRecoveryKind.Committed, 1);
+        var first = Success(await driver.Maintenance.ObserveAsync(query, new(), default));
+        var old = Assert.IsType<ArtifactOption<string>.Some>(first.Continuation);
+        using (var added = new ShortSource([3])) { await PublishAsync(driver, added, new(1024)); }
+        Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Failure>(
+            await driver.Maintenance.ObserveAsync(new(driver.Identity, ArtifactRecoveryKind.Committed, 1, old),
+                new(), default)).Code);
+        var stamps = new HashSet<ArtifactStamp>();
+        ArtifactOption<string> next = new ArtifactOption<string>.None();
+        do
+        {
+            var page = Success(await driver.Maintenance.ObserveAsync(
+                new(driver.Identity, ArtifactRecoveryKind.Committed, 1, next), new(), default));
+            var row = Assert.Single(page.Observations);
+            Assert.True(stamps.Add(Assert.IsType<ArtifactOption<ArtifactStamp>.Some>(row.Stamp).Value));
+            next = page.Continuation;
+        } while (next is ArtifactOption<string>.Some);
+        Assert.Equal(4, stamps.Count);
+        foreach (var stamp in stamps) { Assert.Single(await ReadAsync(driver, stamp)); }
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
     public async Task Progressing_commit_renews_owner_across_the_original_ttl(string provider)
     {
         var clock = new ArtifactTestClock();

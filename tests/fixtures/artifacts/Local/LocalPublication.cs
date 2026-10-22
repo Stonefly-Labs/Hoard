@@ -31,6 +31,7 @@ public sealed partial class LocalArtifactStore
             if (admission is not ArtifactResult<IArtifactProtectionGuard>.Success acquired)
             { throw new LocalStateException(admission is ArtifactResult<IArtifactProtectionGuard>.Failure failure ? failure.Code : ArtifactFailureCode.InternalFailure); }
             await using var protection = acquired.Value;
+            await faults.ObserveAsync("publish.admitted");
             var gate = DigestGate(staged.Identity.Digest.Hex);
             await gate.WaitAsync(token);
             try

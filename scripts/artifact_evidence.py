@@ -27,6 +27,7 @@ PROVIDERS = ("local", "object")
 CASES = tuple(f"AS-{number:02}" for number in range(1, 49))
 BARRIERS = ("B0", "B1", "B2", "B3", "D0", "D1")
 PHASES = ("logical", "transfers", "recovery", "packages")
+COMMAND_TIMEOUT_SECONDS = 600
 PACKAGES = tuple(f"Hoard.{name}.0.1.0.nupkg" for name in (
     "Abstractions", "Core", "Hosting", "Application",
     "Fixtures.Metadata.Sqlite", "Fixtures.Metadata.Memory", "Fixtures.Metadata.HostAdapters",
@@ -45,17 +46,47 @@ def sha256(path):
 
 
 def run(*args, cwd=None, env=None):
+    child = subprocess.Popen(
+        args, cwd=cwd, env={**os.environ, **(env or {})}, text=True,
+        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True)
     try:
-        result = subprocess.run(
-            args, cwd=cwd, env={**os.environ, **(env or {})}, text=True,
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=False, timeout=600)
-    except subprocess.TimeoutExpired:
-        raise RuntimeError("Artifact command exceeded its finite deadline.") from None
-    if result.returncode:
-        codes = sorted(set(re.findall(r"error (?:CS|NU|MSB)\d+|error WHITESPACE", result.stdout)))
+        output, _ = child.communicate(timeout=COMMAND_TIMEOUT_SECONDS)
+    except (subprocess.SubprocessError, OSError, UnicodeError, KeyboardInterrupt) as error:
+        deadline = time.monotonic() + 10
+        try:
+            for pid in sorted(command_processes(child.pid, deadline=deadline), reverse=True):
+                try:
+                    os.kill(pid, signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
+            child.communicate(timeout=max(0.001, deadline - time.monotonic()))
+            while command_processes(child.pid, deadline=deadline):
+                if time.monotonic() >= deadline:
+                    raise subprocess.TimeoutExpired("owned artifact command", 10)
+                time.sleep(0.01)
+        except (OSError, subprocess.SubprocessError):
+            raise RuntimeError("Artifact command cleanup incomplete; private evidence retained.") from None
+        if isinstance(error, KeyboardInterrupt):
+            raise
+        if isinstance(error, subprocess.TimeoutExpired):
+            raise RuntimeError("Artifact command exceeded its finite deadline.") from None
+        raise RuntimeError("Artifact command output capture failed; private evidence retained.") from None
+    if child.returncode:
+        codes = sorted(set(re.findall(r"error (?:CS|NU|MSB)\d+|error WHITESPACE", output)))
         suffix = " [" + ", ".join(codes[:10]) + "]" if codes else ""
         raise RuntimeError(f"Artifact command failed: {Path(args[0]).name}{suffix}.")
-    return result.stdout
+    return output
+
+
+def command_processes(session, deadline=None):
+    timeout = 5 if deadline is None else min(5, deadline - time.monotonic())
+    if timeout <= 0:
+        raise subprocess.TimeoutExpired("owned artifact process observation", 0)
+    result = subprocess.run(["ps", "-axo", "pid=,pgid=,stat="], text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=timeout, check=True)
+    return {int(pid) for line in result.stdout.splitlines()
+            for pid, group, state in [line.split()]
+            if int(group) == session and not state.startswith("Z")}
 
 
 def no_symlinks(path):

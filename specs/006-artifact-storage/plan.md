@@ -604,3 +604,54 @@ passes 138 checks and both consumers in a separate default locked run on source
 `1f3370c7b5414b0a282e688893f3241776902d51a5ccdfab81b67213f289fbc3`.
 Both artifact fixture/test folder whitespace checks and `git diff --check`
 also pass. These remain focused nonqualification evidence, not stage completion.
+
+### Controlled Interleavings and Command Ownership 2026-10-22
+
+Equivalent writers now both reach an actual admitted-publication barrier before
+either decision proceeds. A changed staged length rejects without damaging the
+valid incarnation, followed by a successful valid retry/readback. Cooperative
+source/sink inactivity settles with exact terminal noncommit and borrowed-stream
+survival. Delayed cleanup rechecks an exact old generation after replacement
+staging exists; changed inventory rejects an old continuation, while a fresh
+bounded traversal visits all expected observations.
+
+Ordinary artifact commands now start a distinct owned process session rather
+than relying on immediate-child timeout cleanup. Timeout and interruption signal
+only observed live exact PIDs in that session, wait for root/pipes, and confirm
+settlement under one cleanup deadline. Failed settlement explicitly retains
+failure evidence. An actual root/descendant timeout test confirms both stop
+while a separately owned unrelated child survives. An interrupt regression
+first failed its expected owned-PID assertions, then passed after cleanup was
+wired before propagating the interrupt.
+
+Compiled negative contracts now expose third-party `NuGetVersion`, `FileInfo`,
+`FileStream` and `IServiceProvider` alongside the previous provider/Hosting
+leaks. The existing inspector missed the raw filesystem/service-locator types
+because they are BCL types; the actual package-boundary test failed before the
+new artifact/Abstractions-specific restrictions. Allowed operation interfaces,
+borrowed `Stream` and `ArtifactStamp` counterparts remain accepted. Hosting's
+legitimate service-provider lifecycle surface is not restricted by this rule.
+
+| Exact command / check | Result |
+| --- | --- |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase logical --evidence ../hoard-artifact-evidence/resume-controlled-logical-locked-20261022` | Separate default locked replay passed 146 checks and both consumers, source `f9df022dba41f83c07ed86c38ad3c08998f349a2eb1830df4c0ac6d4208a2013`; predates the subsequent runner/boundary-only changes; nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase packages --evidence ../hoard-artifact-evidence/resume-bcl-artifact-boundary-red-20261022` | Intended compiled runtime boundary assertion failed, not compilation |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase packages --evidence ../hoard-artifact-evidence/resume-bcl-artifact-boundary-green-20261022` | Passed both architecture checks/eight actual scans, frozen marker and both consumers on source `9559be6d1f3d7a935b98d2f5232105037ec4fead8e79cd8032f17ce89f1af566`; nonqualifying |
+| `python3 -m unittest discover -s tests/tooling -p test_artifact_evidence.py -k interrupted -v` | Intended runtime owned-PID assertion failed before correction |
+| `python3 -m unittest discover -s tests/tooling -p test_artifact_evidence.py -v` | All 19 passed, including actual descendant timeout/unrelated-process preservation |
+| `python3 -m unittest discover -s tests/tooling -v` | All 95 passed |
+| `dotnet format whitespace tests/fixtures/artifacts --folder --verify-no-changes -v quiet` | Passed |
+| `dotnet format whitespace tests/contracts/Hoard.Artifacts.Tests --folder --verify-no-changes -v quiet` | Passed |
+| `dotnet format whitespace tests/architecture/Hoard.Architecture.Tests --folder --verify-no-changes -v quiet` | Passed |
+| `git diff --check` | Passed |
+
+The intentional fixture-hook package rebuild was separately replayed with
+default locked inputs. Only local package-content hashes changed; no external
+dependency, version or graph change is introduced. Original baseline/marker
+inputs remain unchanged. Full-source qualification and successful readiness
+remain incomplete; all partial modes retain `qualification: false`, the driver
+remains `implement / running`, and custom checklists/task completion markers
+are untouched. PR #16 stays draft. README/development/quickstart and task-status
+notes are synchronized; product architecture/diagrams, examples, predecessor
+guides, IaC and release guidance remain unaffected because their API/dependency/
+operational claims do not change.

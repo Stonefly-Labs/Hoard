@@ -9,7 +9,7 @@ public sealed class LocalFaultControls
     private static readonly HashSet<string> Points = new(StringComparer.Ordinal)
     {
         "initialize.before-root", "initialize.admitted", "stage.prefix", "stage.verified",
-        "publish.before-decision", "publish.decided", "publish.receipted", "publish.progress",
+        "publish.admitted", "publish.before-decision", "publish.decided", "publish.receipted", "publish.progress",
         "read.opened", "read.copy", "delete.removed", "delete.reclaimed", "cleanup.candidate", "transfer.queued"
     };
     public string[] Observed => observed.ToArray();

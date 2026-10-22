@@ -768,6 +768,10 @@ Further focused checks cover classified input faults, full transfer queues,
 independent object direct/list visibility, lost deletion acknowledgments with
 actual reclamation progress, and terminal pre-decision cancellation (including
 an already-cancelled caller) without stranding later calls.
+Controlled publication/cleanup barriers now cover admitted equivalent writers,
+conflicting staged lengths, inactivity deadlines and changed recovery pages.
+Package negatives also reject third-party SDK, filesystem-path and service-locator
+leaks; real command-timeout checks preserve unrelated processes.
 Both fixtures still declare missing mandatory guarantees and are not ready.
 The full command fails closed until every required case, capability, composition,
 package and evidence gate is implemented. Focused modes always report

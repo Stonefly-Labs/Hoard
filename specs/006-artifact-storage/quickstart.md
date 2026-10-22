@@ -14,6 +14,12 @@ an already-cancelled caller and authority-queued expiry, exact terminal
 noncommit, refused retry and a subsequent independent-thread absence read.
 Pending deletion receipts advance to reclaimed only after physical cleanup;
 object direct availability and listing are independently controlled.
+Current focused proof also uses admitted-writer and late-cleanup barriers,
+producer/sink inactivity and invalidated recovery continuations. Package checks
+reject compiled SDK/raw-filesystem/service-locator leaks with allowed BCL
+counterparts. Ordinary command timeout/interrupt cleanup targets only its owned
+session's exact observed PIDs; actual descendant cleanup preserves an unrelated
+child. These checks do not close the full case inventory or readiness gate.
 See the [approved hash refresh and locked replay](plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 
 Read [API](contracts/artifact-api.md), [model](data-model.md),

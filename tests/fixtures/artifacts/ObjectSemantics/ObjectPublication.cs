@@ -32,6 +32,7 @@ public sealed partial class ObjectArtifactStore
             if (admitted is not ArtifactResult<IArtifactProtectionGuard>.Success accepted)
             { throw new ObjectOperationException(admitted is ArtifactResult<IArtifactProtectionGuard>.Failure failed ? failed.Code : ArtifactFailureCode.InternalFailure); }
             await using var protection = accepted.Value;
+            await faults.ObserveAsync("object.publication-admitted");
             var objectId = Guid.NewGuid();
             var selected = false;
             try

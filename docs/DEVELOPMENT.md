@@ -3742,6 +3742,17 @@ Cancellation settlement recognizes the complete current staged handle, not
 just copied owner IDs; stale/forged handles and a newer external renewal cannot
 destructively fence valid staging. Progress renewal owned by the cancelled
 invocation still receives terminal fencing.
+Equivalent-writer proof now holds both admitted publications before releasing
+the decision; cleanup proof holds an old generation while replacement staging
+is created. Additional checks cover conflicting staged lengths, producer/sink
+inactivity and stale versus fresh recovery-page traversal. Package controls
+compile actual third-party SDK, raw filesystem and service-locator leaks beside
+permitted operation/stream/stamp counterparts.
+Ordinary artifact commands own a fresh process session. Timeout or interruption
+settles only its observed exact PIDs before returning; process observations share
+the original cleanup deadline. A real descendant-timeout test confirms the owned
+descendant stops while an unrelated child remains alive. Incomplete settlement
+is an explicit failure, not permission to delete the retained evidence.
 Architecture review corrected close admission/release ownership, terminal
 noncommit cleanup, deadline bookkeeping behind blocked state I/O and ticket
 validation/expiry classification; final implementation review is still due.
