@@ -2918,6 +2918,64 @@ convergence is not finalization, feature completion or a merge request.
 No merge, tag/release, package publication, infrastructure plan/apply, cloud
 mutation or deployment ran.
 
+### F-05 finalization
+
+The separately invoked finalization stage uses the recorded
+`feature/005-metadata-persistence` branch and explicit
+`SPECIFY_FEATURE_DIRECTORY=specs/005-metadata-persistence`, after the driver
+records `finalize / running`. All 87 implementation tasks are complete, fresh
+convergence is clean, and the built-in 16/16 and reviewer-owned 40/40 checklist
+assessments remain unchanged. All 24 requirements, eight outcomes, 23 story
+scenarios and 14 edge cases retain their implementation/proof mappings.
+
+The [implementation architecture reviews](../specs/005-metadata-persistence/plan.md#implementation-evidence)
+remain applicable. Their restore-installation, lifecycle-stop and original-ticket
+reconciliation findings were corrected and re-reviewed, with runtime proof.
+T084..T087 subsequently change fixture-private validation, not public signatures,
+dependency direction, lifecycle, publication authority or reference/lease
+algorithms. Finalization changes no implementation boundary, so it does not
+require another architecture review.
+
+`$PRIVATE_EVIDENCE` below represents this invocation's existing owner-private
+evidence parent outside Git; raw databases, binaries and synthetic captures are
+not committed.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/f05-finalize-evidence"` | Passed complete locked qualification and formatting/analyzers: 72 common tests per provider, 87 applicable entries and nine explicit memory durability exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| Independent manifest/source/lock verification | Passed every proof/package hash, current source fingerprint, eight confirmed crash exits, seven package graphs and all 88 unchanged locks |
+| `git diff --check` | Passed |
+
+The final manifest attributes source commit
+`9bb288b2234341695599a1c2536d8e88209486de` and fingerprint
+`29971e15fbeebde654bad140c1801f840c50018f4b507deaf50243fd5818cb24`.
+Measured scope remains macOS 26.5.0/APFS, .NET 10.0.7,
+Microsoft.Data.Sqlite assembly 10.0.13.0 and native SQLite 3.53.3, with checked
+WAL/FULL/foreign-keys/busy-timeout-zero settings. Full acceptance repeats M0..M2,
+U0..U4, R0/R1 restore interruptions, native ownership, compatible backup/restore,
+unchanged consumer/common binaries, the frozen marker binary and both runtime
+red/green pairs. Separate foundation/lifecycle/configuration/discovery results
+remain historical; finalization does not claim new executions of those commands.
+
+README, this guide and feature plan/task/quickstart status now record the merge
+handoff. Provider, API/model/recovery/acceptance and CustomHost guidance already
+describe the implemented fixture interfaces, commands, reconciliation, recovery
+and limits; no additional change is needed because finalization changes none of
+those behaviors. Baseline charter/product specification/architecture/ADR diagrams,
+earlier features, governance/backlog, release/cloud/UI/IaC guides and permissions
+are unaffected: no production provider, endpoint, runtime, deployment or new
+operational procedure is delivered. Specification, constitution, checklists,
+product/test/tooling sources and locks remain unchanged.
+
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) is ready for maintainer
+review and merge using the repository template. `finish --pr 14` records
+**`await_merge / ready`**, not feature completion or dependency eligibility.
+After the maintainer merges, a separate invocation must verify that merge and
+publish `v0.0.5-alpha` at its exact merge commit before recording completion.
+No merge, tag/release, package publication, infrastructure plan/apply, cloud
+mutation or deployment runs in finalization.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

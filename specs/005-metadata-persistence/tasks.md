@@ -10,8 +10,10 @@
 immutable qualification/regression replay, documentation, requirement audit
 and the T084 malformed-continuation, T085 stored-page corruption and
 T086/T087 filtered-page/receipt corruption corrections with paired red/green proof.
-The driver checkpoint schedules a fresh `converge` next;
-convergence/finalization/merge/release are not part of this implementation.
+Subsequent convergence is clean and finalization is complete; the driver
+checkpoint schedules `await_merge`. PR #14 is ready for maintainer review and
+merge; feature completion and source release remain separate post-merge gates.
+See [finalization evidence](plan.md#finalization-evidence).
 The built-in requirements checklist remains 16/16. The reviewer-owned
 [metadata](checklists/metadata.md) and [recovery](checklists/recovery.md)
 checklists record the separately requested assisted review, 40/40 satisfied.

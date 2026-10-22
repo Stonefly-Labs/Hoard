@@ -4,6 +4,9 @@
 configured host adapters and qualification command are implemented. Qualification
 is fail-closed and fixture-scoped, never production provider delivery. The
 [plan](plan.md#implementation-evidence) records completed checks and stage gates.
+Clean convergence and [finalization](plan.md#finalization-evidence) are complete;
+PR #14 is ready for maintainer review and merge. The next stage is `await_merge`,
+not another implementation or qualification claim.
 
 ## Prerequisites
 
@@ -260,3 +263,22 @@ identities/versions remain unchanged. See [T086/T087 evidence](plan.md#t086t087-
 for memory controls, source/environment attribution and unchanged architectural
 boundaries. All 87 tasks are complete; fresh convergence is next. PR #14 remains
 draft; qualification does not authorize merge or production recovery tooling.
+
+### Finalization replay
+
+The separate finalization stage reruns
+`bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/f05-finalize-evidence"`
+and `python3 -m unittest discover -s tests/tooling -v`: full locked qualification,
+formatting/analyzers and all 76 tooling tests pass. Independent verification
+confirms 72 common tests per provider, 87 applicable passes, nine explicit memory
+D exclusions, matching proof/package/source hashes and all 88 unchanged locks.
+`git diff --check` passes. The measured configuration and fixture-only recovery
+limits above remain unchanged; earlier separate platform regressions are
+historical, not rerun in finalization.
+
+All 87 tasks, clean convergence, existing architecture reviews and current
+documentation satisfy the feature handoff. PR #14 is ready for maintainer
+review and merge; the checkpoint schedules `await_merge`. Only a separate
+post-merge invocation can publish the authorized `v0.0.5-alpha` source prerelease
+and record completion. No merge, release or operational schema change occurs
+in finalization.

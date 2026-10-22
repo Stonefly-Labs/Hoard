@@ -735,6 +735,15 @@ Tasks, specification, plan, checklists, product/tooling sources and all 88 locks
 remain unchanged. See the [clean convergence evidence](docs/DEVELOPMENT.md#f-05-clean-convergence).
 The next separately invoked stage is **`finalize`**; PR #14 remains draft,
 and no merge is requested.
+Finalization now verifies all 87 completed tasks, clean convergence, unchanged
+requirements/checklist approvals, applicable architecture reviews and current
+documentation. Fresh full locked qualification passes 72 common tests per
+provider, all 87 applicable entries and nine explicit memory durability
+exclusions, with all 88 locks unchanged. See the
+[finalization evidence](docs/DEVELOPMENT.md#f-05-finalization).
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) is ready for maintainer
+review and merge. The checkpoint schedules **`await_merge`**; F-05 is not yet
+recorded complete, and no release or dependent specification starts here.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

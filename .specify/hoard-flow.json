@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "stage": "finalize",
+  "stage": "await_merge",
   "status": "ready",
   "branch": "feature/005-metadata-persistence",
   "active": {
     "id": "F-05",
     "feature_directory": "specs/005-metadata-persistence",
-    "pr": null
+    "pr": 14
   },
   "completed": [
     {
@@ -519,6 +519,13 @@
       "branch": "feature/005-metadata-persistence",
       "at": "2026-10-22T04:26:57.810036+00:00",
       "evidence": "Installed speckit-converge outcome converged: assessed 24 FRs, eight buildable SCs, 23 acceptance scenarios, 14 edges, all 87 existing tasks, 12 grouped plan decisions and eight constitution principles; zero missing/partial/contradicts/unrequested findings. No task append; spec/plan/tasks/constitution/checklists/product/test/tooling sources and all 88 locks unchanged. Fresh complete locked metadata qualification/formatting/analyzers pass 72 common tests per provider, all 87 applicable entries and nine explicit memory D exclusions; all eight M/U process stops, R0/R1 restore interruptions, native ownership, backup/restore, seven package graphs, unchanged/frozen binaries and both runtime mutation pairs pass. Independent manifest/proof/hash verification matches source fingerprint 29971e15fbeebde654bad140c1801f840c50018f4b507deaf50243fd5818cb24. Additional freshly packaged six-shape option-discriminator corruption probe passes all read/page/replay/reconcile classifications, damage preservation, restored receipt and final integrity controls. Tooling 76 and diff hygiene pass. README/DEVELOPMENT record clean convergence and unaffected docs; prior architecture review remains applicable; no hooks. PR 14 remains draft; next finalize only, no merge/release/publication/infrastructure/deployment."
+    },
+    {
+      "stage": "finalize",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T05:39:53.725643+00:00",
+      "evidence": "Finalized F-05: all 87 tasks complete; clean convergence; requirements 16/16 and reviewer-owned metadata/recovery 40/40 unchanged; prior implementation architecture findings corrected/re-reviewed with runtime proof and no subsequent substantial boundary change. Fresh bash scripts/validate-metadata.sh full locked qualification/format passed: 72 tests per provider, 87 applicable passes, nine explicit memory D exclusions, eight crash exits, seven package graphs, immutable 88 locks; independently verified source/proof/package hashes (29971e15fbeebde654bad140c1801f840c50018f4b507deaf50243fd5818cb24). python3 -m unittest discover -s tests/tooling -v passed 76; git diff --check passed. README/affected status guides current; unaffected docs justified in DEVELOPMENT#f-05-finalization. PR 14 targets main for maintainer review; no merge/release/infrastructure/deployment."
     }
   ]
 }

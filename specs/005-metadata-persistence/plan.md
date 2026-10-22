@@ -6,7 +6,8 @@
 
 **Status**: Implementation complete, including convergence corrections T084..T087;
 additive operation contracts, independent fixtures and the qualification
-orchestrator are implemented. Fresh convergence is the next separate stage. See
+orchestrator are implemented. Clean convergence and finalization are complete;
+PR #14 is ready for maintainer review and merge, with `await_merge` next. See
 [implementation evidence](#implementation-evidence) for measured checks and
 remaining stage gates. Specification and reviewer-owned checklists are unchanged.
 
@@ -553,6 +554,43 @@ Specification, constitution and all checklist bytes are unchanged; no pre/post
 implementation hooks exist. All 87 tasks are verified complete. Fresh convergence
 and finalization remain separate stages; PR #14 stays draft, with no merge,
 release, package publication or infrastructure operation.
+
+### Finalization Evidence
+
+Finalization verifies all 87 completed tasks and clean convergence against the
+existing traceability for 24 FRs, eight SCs, 23 scenarios and 14 edge cases.
+Requirements 16/16 and reviewer-owned metadata/recovery 40/40 remain unchanged.
+The implementation architecture reviews and corrected runtime proof above
+remain applicable; later fixture-private validation fixes introduce no new
+substantial public-contract, dependency, lifecycle or shared-authority boundary.
+
+`$PRIVATE_EVIDENCE` denotes this invocation's owner-private evidence parent
+outside Git.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/f05-finalize-evidence"` | Passed full locked qualification and formatting/analyzers: 72 common tests per provider, 87 applicable entries and nine explicit memory D exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| Independent manifest/source/lock verification | Passed proof/package hashes and current fingerprint; all 88 locks unchanged |
+| `git diff --check` | Passed |
+
+Manifest source commit is `9bb288b2234341695599a1c2536d8e88209486de`;
+source/lock fingerprint remains
+`29971e15fbeebde654bad140c1801f840c50018f4b507deaf50243fd5818cb24`.
+The same documented macOS/APFS, .NET 10.0.7, driver 10.0.13.0 and SQLite
+3.53.3 configuration passes all eight M/U process stops, R0/R1 restore
+interruptions, native ownership, compatible recovery, seven package graphs,
+unchanged consumers/common binary, retained marker and both runtime mutation
+pairs. Earlier separate platform regression runs remain historical.
+
+README, DEVELOPMENT and feature status are synchronized; other operational and
+architecture guides need no changes because finalization introduces no behavior,
+API, command, package edge or support claim. See
+[the documentation disposition](../../docs/DEVELOPMENT.md#f-05-finalization).
+PR #14 is ready; the checkpoint records `await_merge`, not completed F-05 or
+released production support. The feature merge and separately invoked authorized
+`v0.0.5-alpha` source prerelease remain future gates. No merge, release,
+infrastructure action or deployment occurs in finalization.
 
 ## Complexity Tracking
 
