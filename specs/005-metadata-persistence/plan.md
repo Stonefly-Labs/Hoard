@@ -289,6 +289,15 @@ before the running implementation checkpoint can finish. Private destination
 paths below are represented by `$PRIVATE_EVIDENCE`, an existing owner-private
 directory outside the repository; no user path or runtime artifact is committed.
 
+A subsequent full repetition exposed a recovery-walkthrough race, not a
+weakened provider outcome: a cancelled restore can return before its owned
+cleanup settles. The walkthrough now holds the post-backup callback, proves
+the target remains absent and readmission is rejected while work is held,
+then releases and explicitly awaits settlement before further administration.
+The isolated rebuilt walkthrough passes MP-36/44/45 with that deterministic
+ownership check; no sleep, automatic admission retry or provider fallback hides
+the failure.
+
 | Executed command | Result |
 | --- | --- |
 | `bash scripts/validate-metadata.sh --update-locks --evidence "$PRIVATE_EVIDENCE/metadata-qualified-update"` | Passed complete qualification as described above |

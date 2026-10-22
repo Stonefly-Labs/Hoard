@@ -24,7 +24,8 @@ The compatible application identities are `fixture-sqlite-app-v1` and
 not released production applications. Private methods
 `CaptureRecoveryPointAsync` and `RestoreToIsolatedTargetAsync` belong to
 `SqliteMetadataStore`, not the provider-neutral public contract. Memory's
-logical upgrade authorization and immutable image are **not** recovery points.
+logical upgrade authorization and immutable image are **not durable recovery
+points**.
 
 ## Qualification Configuration
 
@@ -78,6 +79,12 @@ operation admission. Do not delete/replace a locked file or blindly remove an
 engine lock after a crash. SQLite/OS recovery, not a persistent "owner=true"
 flag, releases ownership on process exit. This is local-file single-node
 protection, not distributed coordination or an advisory-lock guarantee on NFS.
+
+Even a known pre-commit cancellation may return before owned cleanup settles.
+The fixture walkthrough holds the post-backup callback, confirms that no target
+is installed and readmission is rejected, then releases and awaits
+`WhenIdleAsync` before further administration. A bounded caller result is not
+permission to dispose live work or immediately assume readmission.
 
 ## Authorized Upgrade v1 to v2
 

@@ -267,12 +267,28 @@ switch (mode)
                 FileAt("foreign-provider.db"), artifacts, new(), default) is MetadataResult<MetadataSchemaAdmission>.Failure);
             using (var cancellation = new CancellationTokenSource())
             {
-                fixture.Controls.SetObserver("restore.after_native", () => { cancellation.Cancel(); return ValueTask.CompletedTask; });
+                var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+                fixture.Controls.SetObserver("restore.after_native", () =>
+                {
+                    cancellation.Cancel();
+                    return new(release.Task.WaitAsync(TimeSpan.FromSeconds(10)));
+                });
                 var cancelled = FileAt("cancelled.db");
-                Require(await sqlite.RestoreToIsolatedTargetAsync(point, cancelled, artifacts, new(), cancellation.Token)
-                    is MetadataResult<MetadataSchemaAdmission>.Failure { Code: MetadataFailureCode.CancelledBeforeCommit });
-                Require(!File.Exists(cancelled));
-                fixture.Controls.RemoveObserver("restore.after_native");
+                try
+                {
+                    Require(await sqlite.RestoreToIsolatedTargetAsync(point, cancelled, artifacts, new(), cancellation.Token)
+                        is MetadataResult<MetadataSchemaAdmission>.Failure { Code: MetadataFailureCode.CancelledBeforeCommit });
+                    Require(!File.Exists(cancelled));
+                    Require(!fixture.WhenIdleAsync().IsCompleted);
+                    Require(await fixture.Schema.PrepareAsync(new MetadataSchemaRequest.InspectOnly(), new(), default)
+                        is MetadataResult<MetadataSchemaAdmission>.Failure { Code: MetadataFailureCode.Unavailable });
+                }
+                finally
+                {
+                    release.TrySetResult();
+                    await fixture.WhenIdleAsync();
+                    fixture.Controls.RemoveObserver("restore.after_native");
+                }
             }
             Success(await fixture.Schema.PrepareAsync(new MetadataSchemaRequest.InspectOnly(), new(), default));
             await Commit(fixture, new MetadataMutation.PutRegistry(Registry(77), new ExpectedRevision.Absent()));
