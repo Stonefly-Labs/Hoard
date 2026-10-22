@@ -564,3 +564,18 @@ replay pass 66 tests per provider; full qualification retains 87 applicable
 passes and nine memory D exclusions. Four locks change only local SQLite/
 HostAdapters content hashes; default replay preserves them. Tooling passes
 76 tests. See [T085 evidence](plan.md#t085-stored-page-corruption-correction).
+
+## Phase 11: Convergence
+
+- [ ] T086 Prevent corrupt persisted query dimensions from disappearing behind page filters in `tests/fixtures/metadata/Sqlite/SqlitePages.cs`: a stored cache entry with null `Identity.AuthorizationPartition` currently yields a successful empty scoped page although exact/grouped reads report `CorruptState/OperatorRecovery/Read`. Make candidate selection and stored-record validation preserve `CorruptState/OperatorRecovery/Page` without weakening query/auth isolation, bounded work/results or deterministic continuation semantics; audit the aggregate interval/partition and lease-prefix predicates for the same omission. Add focused package-only regressions to `tests/contracts/Hoard.Metadata.Tests/Cases/MetadataFailureTests.cs` proving whole-page failure, unchanged damaged data, sanitized diagnostics and valid-page recovery, paired with legitimate empty foreign-scope pages and existing pagination/input-rejection controls. Record runtime red/green evidence, replay applicable locked qualification and update affected documentation per FR-010, FR-013, FR-015, US1/AC5, SC-007 and T024/T026/T036 (MP-21/22) (partial, HIGH).
+- [ ] T087 Validate bounded persisted operation/receipt data before returning committed replay or reconciliation results in `tests/fixtures/metadata/Sqlite/SqliteOperations.cs`, reusing the existing receipt validation/integrity mechanisms in `SqliteIntegrity.cs` and `MetadataEncoding` where suitable: a committed receipt with null `Revisions[0].Target` currently returns successful `MetadataResolution.Committed`. Check stored bounds, closed state/fingerprint/receipt structure and receipt-to-ledger ticket binding before exposing a receipt; classify corrupt persisted data as sanitized `CorruptState/OperatorRecovery` for the originating operation, not caller-invalid input, success, missing state or definite non-commit. Add focused package-only persisted-receipt regressions in `tests/contracts/Hoard.Metadata.Tests/Cases/MetadataReconciliationTests.cs` or `MetadataFailureTests.cs` for malformed/structurally invalid, oversized and mismatched-ticket receipts, preserving damaged data, original-ticket ownership, committed metadata and nonduplicate aggregate effects; pair with valid original-receipt replay/reconciliation and unchanged memory semantics. Record runtime red/green evidence, replay applicable locked qualification and update affected documentation per FR-008, FR-009, FR-010, FR-013, US2/AC4, SC-003, SC-007 and T032/T036 (MP-14/15/21/22) (partial, HIGH).
+
+Both HIGH partial findings were reproduced against fresh independently packed
+SQLite binaries without application-code changes. The filtered-page probe
+returns zero rows while the same damaged entry fails exact reading; the receipt
+probe returns a committed success with a null target. Restoring the synthetic
+payloads recovers the original page/receipt and passes schema integrity.
+Fresh full locked qualification passes 66 common tests per provider and all
+87 applicable entries, with nine explicit memory D exclusions; those existing
+cases do not cover or waive these paths. T084/T085 and all previous task bytes
+remain unchanged. Implement T086/T087 before fresh convergence/finalization.

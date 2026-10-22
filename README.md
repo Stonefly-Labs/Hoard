@@ -705,6 +705,18 @@ damaged data and exact valid-page recovery. Full locked qualification passes
 memory durability exclusions. See [T085 evidence](specs/005-metadata-persistence/plan.md#t085-stored-page-corruption-correction).
 All 85 tasks are complete; fresh **`converge`** is next, then finalization.
 PR #14 remains draft; no merge is requested.
+The subsequent fresh convergence finds two HIGH partial corruption gaps in
+SQLite: a damaged authorization-partition field is silently omitted from a
+filtered page, and reconciliation returns a successful committed receipt with
+an invalid null target. Both are reproduced against freshly packed binaries;
+restoring the synthetic data recovers valid results and integrity.
+[Phase 11 / T086 and T087](specs/005-metadata-persistence/tasks.md#phase-11-convergence)
+append the correction and regression work without changing application code,
+the specification, plan, previous tasks or checklist markers. Full locked
+qualification passes its existing 66 tests per provider and 87 applicable
+entries, but does not cover or waive these newly demonstrated paths.
+The next stage is **`implement`** for both tasks, followed by fresh convergence;
+PR #14 stays draft, with no merge requested.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

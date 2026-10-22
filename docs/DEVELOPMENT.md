@@ -2746,6 +2746,68 @@ All 85 tasks are complete. The next separately authorized stage is fresh
 convergence and finalization. No merge, tag/release, package publication,
 infrastructure operation or deployment ran.
 
+### F-05 fresh convergence after T085
+
+The installed append-only assessment checks all 24 functional requirements,
+eight buildable outcomes, 23 story scenarios, 14 edge cases, 12 grouped plan
+decisions, all 85 existing tasks and eight constitutional principles against
+current scoped code. T084/T085's malformed-continuation and returned-page record
+decoding corrections are implemented. Two **HIGH partial** gaps remain:
+
+| Finding | Current evidence | Required follow-up |
+| --- | --- | --- |
+| F1: filtered pages hide corrupt query dimensions | `SqlitePages.cs` filters authorization partitions using `json_extract` before decoding candidate records. A stored entry with null `Identity.AuthorizationPartition` produces `CorruptState/OperatorRecovery/Read` on exact read, but a successful empty page for its original partition. | T086: corruption-aware bounded page selection, with regression coverage and an audit of the analogous aggregate/lease predicates; preserve legitimate foreign-scope absence and query isolation. |
+| F2: committed receipt retrieval lacks validation | `SqliteOperations.cs` deserializes stored receipts without the full receipt validation used during schema integrity checks. A persisted receipt with null `Revisions[0].Target` returns successful `MetadataResolution.Committed`. | T087: bounded persisted receipt/state validation and ticket binding before replay/reconciliation, with safe corruption outcomes and focused regressions. |
+
+One bounded diagnostic executes against the fresh package consumer's binaries,
+using only a private synthetic database seeded by the existing crash runner.
+Both findings are runtime observations, not deductions from checked tasks.
+The diagnostic verifies the damaged entry remains unchanged, restores both
+synthetic payloads, recovers the original valid page and commit receipt, and
+passes final schema integrity. No listener or repository application-code
+change is involved. F1's aggregate/lease audit and F2's other malformed/oversized/
+ticket-binding cases are implementation obligations, not additional reproduced
+paths. There are zero missing, contradicts or unrequested findings and no
+requirement waiver.
+
+`$PRIVATE_EVIDENCE` represents the owner-private session evidence parent outside
+Git. The F# diagnostic is retained there, not added to the repository.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/metadata-convergence"` | Passed full locked qualification and formatting/analyzers: 66 common tests per provider, 87 applicable passes and nine explicit memory D exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| `DYLD_LIBRARY_PATH="$PWD/runtimes/osx-arm64/native" dotnet fsi --quiet --exec "$PRIVATE_EVIDENCE/metadata-corruption-probe.fsx"` from the fresh package consumer output | Reproduced F1/F2; valid-page/original-receipt restoration and final integrity controls passed |
+| Artifact/source/lock integrity comparison | Original task prefix, specification, plan and all checklist bytes unchanged; exactly two new unchecked tasks, T086/T087; qualified source fingerprint and all 88 locks unchanged |
+| `git diff --check` | Passed |
+
+The full manifest identifies source commit
+`bbdf328ca14d8971e123c5da704a1b3fd3c90d69` and source/lock fingerprint
+`68215c83a4b41ed5b8f3c10976aa7519e71fc8d82cbd1e657a30cec30e3a513d`.
+Configuration remains macOS 26.5.0/APFS, .NET 10.0.7, driver 10.0.13.0 and
+native SQLite 3.53.3, with checked WAL/FULL/foreign-keys/busy-timeout-zero.
+All existing eight M/U process-stop boundaries, R0/R1 restore interruptions,
+native cleanup ownership, seven package graphs, unchanged consumer/common
+binaries, frozen marker and both assertion-level runtime mutation pairs pass.
+Passing existing cases does not resolve F1/F2. Earlier platform-wide regression
+results remain historical and were not repeated for this append-only assessment.
+
+The outcome is **`tasks_appended`** under
+[Phase 11](../specs/005-metadata-persistence/tasks.md#phase-11-convergence).
+The next separately invoked stage is **`implement`** for both T086 and T087,
+then fresh convergence; keep
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) draft.
+No pre/post convergence hooks exist. Outside the assessment, the driver updates
+only README, this guide and its checkpoint. Provider/API/model/recovery/
+acceptance/quickstart/example guides and product/architecture/ADR diagrams are
+unaffected: no intended API, operational procedure, dependency boundary or
+production capability changes. Their contracts still apply; the new tasks
+record implementation gaps, not weaker guarantees. The existing architecture
+review remains historical and no new substantial boundary change occurs here.
+Governance/backlog, prior features, release/cloud/UI/IaC guidance and permissions
+are unaffected. No implementation, merge, tag/release, package publication,
+infrastructure operation or deployment ran.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

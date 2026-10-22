@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "converge",
+  "stage": "implement",
   "status": "ready",
   "branch": "feature/005-metadata-persistence",
   "active": {
@@ -498,6 +498,13 @@
       "branch": "feature/005-metadata-persistence",
       "at": "2026-10-22T03:48:53.690590+00:00",
       "evidence": "F-05 T085 implementation complete through installed speckit-implement; all 85 tasks verified. SQLite page and exact reads share bounded corruption-aware record/key decoding; stored null label/revision, oversized label, malformed JSON and mismatched identity fail whole reads/pages as CorruptState/OperatorRecovery, preserve damaged payloads and recover exact valid pages. Caller query/cursor and oversized-result InvalidInput/CorrectInput semantics preserved. New packaged regression reproduced expected CorruptState/actual InvalidInput before repair. Focused locked and full locked qualification pass 66 tests/provider, 87 applicable entries and nine explicit memory D exclusions; crash/restore/native ownership, seven graphs, unchanged/frozen binaries and runtime mutation proofs pass; formatting/analyzers and 76 tooling tests pass. Four locks change only local SQLite/HostAdapters hashes; all 88 locks preserved by default replay. Source fingerprint 68215c83a4b41ed5b8f3c10976aa7519e71fc8d82cbd1e657a30cec30e3a513d. README/affected evidence updated; protected spec/constitution/checklists unchanged; no hooks or new substantial architecture boundary change; prior review remains applicable. Draft PR 14 retained; next fresh converge only, no merge/release/infrastructure."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T03:57:30.794323+00:00",
+      "evidence": "Installed speckit-converge assessed 24 FRs, eight SCs, 23 scenarios, 14 edge cases, 12 grouped plan decisions, 85 tasks and eight constitution principles. Two HIGH partial runtime-proven SQLite corruption gaps append Phase 11 T086/T087: filtered page hides corrupt auth field; reconciliation accepts invalid committed receipt. Fresh full locked metadata qualification passed 66 tests/provider, 87 applicable entries plus nine memory D exclusions; tooling 76 passed. Probe restores original page/receipt and final integrity; original task prefix, spec/plan/checklists/source and 88 locks unchanged. README/DEVELOPMENT record findings/evidence. Next implement both tasks; PR 14 remains draft."
     }
   ]
 }
