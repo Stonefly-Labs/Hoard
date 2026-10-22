@@ -1,0 +1,10 @@
+<Project>
+  <Import Project="../../../Directory.Packages.props" />
+  <ItemGroup>
+    <PackageVersion Include="Hoard.Abstractions" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Hosting" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Metadata.Sqlite" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Metadata.Memory" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Metadata.HostAdapters" Version="[0.1.0]" />
+  </ItemGroup>
+</Project>

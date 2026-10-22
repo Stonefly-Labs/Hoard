@@ -305,7 +305,7 @@ def main():
                 run("dotnet", "format", str(project), "--verify-no-changes", "--no-restore", "-v", "quiet")
             architecture = lifecycle_graphs(root, work, proofs, hosts, registration)
             count = focused_tests(root, work,
-                "FullyQualifiedName!~ProviderPackageTests&FullyQualifiedName!~CoreIndependenceTests&FullyQualifiedName!~CustomHostTests&FullyQualifiedName!~Prepared_configuration&FullyQualifiedName!~Prepared_discovery")
+                "FullyQualifiedName!~ProviderPackageTests&FullyQualifiedName!~CoreIndependenceTests&FullyQualifiedName!~CustomHostTests&FullyQualifiedName!~Prepared_configuration&FullyQualifiedName!~Prepared_discovery&FullyQualifiedName!~Prepared_metadata")
             print(f"Lifecycle acceptance: {count} tests, {architecture} boundary proofs, {journeys} package-only journeys passed; six independent packages and retained old binary verified.")
         if not args.update_locks:
             verify_locks(root, before)

@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Metadata.Sqlite</AssemblyName>
+    <PackageId>Hoard.Fixtures.Metadata.Sqlite</PackageId>
+    <Description>Test-only file-backed metadata qualification fixture; not a production provider.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Abstractions" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SchemaV2.sql" LogicalName="Hoard.Fixtures.Metadata.Sqlite.SchemaV2.sql" />
+    <EmbeddedResource Include="SchemaV1.sql" LogicalName="Hoard.Fixtures.Metadata.Sqlite.SchemaV1.sql" />
+  </ItemGroup>
+</Project>

@@ -1,9 +1,13 @@
 {
   "schema_version": 1,
-  "stage": "specify",
+  "stage": "await_merge",
   "status": "ready",
-  "branch": null,
-  "active": null,
+  "branch": "feature/005-metadata-persistence",
+  "active": {
+    "id": "F-05",
+    "feature_directory": "specs/005-metadata-persistence",
+    "pr": 14
+  },
   "completed": [
     {
       "id": "F-01",
@@ -417,6 +421,111 @@
       "branch": "chore/spec-progress-f-04",
       "at": "2026-10-21T21:22:31.434236+00:00",
       "evidence": "Verified PR #10 merged into fetched origin/main at 287c7b65a068b50e672d92f2d535ef79c910ac0b; all 80 tasks complete and existing requirements/discovery/management approvals unchanged (16/16, 20/20, 20/20). Tooling: python3 -m unittest discover -s tests/tooling -v passed 61 tests; release.py v0.0.4-alpha --check-main passed. Annotated remote v0.0.4-alpha peels to that exact merge commit; Source release run https://github.com/Stonefly-Labs/Hoard/actions/runs/39678124349 succeeded. Verified non-draft prerelease https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.4-alpha, generated notes, downloaded ZIP/TAR.GZ inventories and exact source contents (ZIP commit metadata matches merge SHA). Progress PR #12 must merge before another spec. No new product implementation, package publication, infrastructure or deployment."
+    },
+    {
+      "stage": "specify",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-21T21:37:48.338609+00:00",
+      "evidence": "Installed speckit-specify completed F-05 in pinned specs/005-metadata-persistence using exact master prompt and resolved template. Reviewed five journeys, 23 scenarios, 14 edges, 24 requirements, ten entities and eight outcomes; built-in quality checklist 16/16, no unresolved markers. Bounded SQLite qualification distinguished from later production SPEC-03; alternative fixture does not imply durable support. README/development updated; no hooks registered, custom approval, plan or implementation. Tooling unittest suite 61/61 passed; artifact/context/local-link checks and git diff --check passed. Next: clarify in separate invocation."
+    },
+    {
+      "stage": "clarify",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-21T21:51:07.213179+00:00",
+      "evidence": "F-05 clarification via installed speckit-clarify: zero questions; all ten categories clear; no requirement/acceptance/scope changes. Dated Clarifications section added; built-in checklist revalidated 16/16 to 16/16, zero newly passing/regressions/unchecked and bytes unchanged. Explicit pinned prerequisite paths passed; no pre/post hooks configured. README and DEVELOPMENT updated; baseline/provider/example/release/IaC docs unaffected because no API/runtime/operational changes. python3 -m unittest discover -s tests/tooling -v passed 61 tests; git diff --check passed. Draft PR #14 retained; planning only next invocation."
+    },
+    {
+      "stage": "plan",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-21T22:11:30.848018+00:00",
+      "evidence": "F-05 plan completed through installed speckit-plan with explicit specs/005-metadata-persistence pin. Seven Phase 0/1 artifacts define BCL-only opt-in metadata interfaces alongside unchanged markers, common value/budget/page limits, 24-hour persisted tickets and atomic receipts, shared-authority publication guards, reference generations/fenced leases, and private SQLite plus independent immutable-memory qualification. Controlled read-only schema inspection, v1-to-v2 upgrade, process-crash boundaries, exclusive store admission and verified backup/restore preserve existing lifecycle/configuration ownership. All 24 FRs/eight SCs, 23 scenarios and 14 edge cases mapped to 48 planned cases (39 logical, nine durable); no product acceptance claim. Required bounded hoard-architecture-review found no violations or unresolved blocking design questions; binary/ownership/interleaving/recovery/dependency environment proof remains implementation work. README/development synchronized with unaffected-document reasons. python3 -m unittest discover -s tests/tooling -v passed 61 tests; git diff --check passed; seven-artifact, traceability, 228 local file/anchor, pinned-context and exact ten-file stage-isolation checks passed. Existing spec/built-in checklist byte-for-byte unchanged; no hooks, custom approval, tasks, source/dependency changes, .NET/IaC run, schema operation, release or merge. Retain draft PR #14; next stage checklist, separate invocation."
+    },
+    {
+      "stage": "checklist",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-21T22:19:39.443698+00:00",
+      "evidence": "Created metadata.md and recovery.md custom requirements-quality checklists, 20 criteria each, standard depth for maintainer/provider reviewers. User-requested assisted assessment found written coverage for all 40 with no unresolved findings or maintainer decisions: https://github.com/Stonefly-Labs/Hoard/pull/14#issuecomment-6327801159. All generated markers remain unchecked; no formal approval or implementation evidence. Existing spec/design/built-in checklist unchanged. README and DEVELOPMENT updated; 38 local links and checklist structure/traceability checks passed. python3 -m unittest discover -s tests/tooling -v: 61 passed; git diff --check passed. No hooks configured, tasks, product/schema/dependency/IaC or release changes."
+    },
+    {
+      "stage": "tasks",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-21T22:32:35.400734+00:00",
+      "evidence": "Generated 83 unchecked implementation tasks via installed speckit-tasks with pinned F-05 context; US1=11 US2=13 US3=11 US4=15 US5=10, shared=23. Mapped all 24 FRs, eight SCs, 23 scenarios, 14 edge cases and 48 MP cases; validated task syntax/paths/story labels, all 83 explicit prerequisite nodes with no forward edges/cycles, and 224 local file links. Repository tooling passed 61 tests; git diff --check passed. Existing spec, seven design artifacts, constitution and checklist bytes unchanged; all 40 custom markers remain unchecked. README/development updated; no hooks, analysis, implementation or qualification executed. Draft PR #14 retained; next read-only analyze, with reviewer approval/authorization still required before implementation."
+    },
+    {
+      "stage": "analyze",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T00:10:56.954218+00:00",
+      "evidence": "F-05 analyze completed through installed speckit-analyze with explicitly pinned specs/005-metadata-persistence. Read-only spec/plan/tasks/model/contracts review against constitution v1.0.0 found zero actionable duplication, ambiguity, underspecification, inconsistency, coverage or constitutional findings; no remediation. All 24 FRs/eight buildable SCs covered (32/32, 100%); 23 story scenarios, 14 edge cases and all 48 MP cases retain proof mappings (39 L both fixtures, nine D SQLite only). All 83 tasks remain unchecked, 30 parallel-marked; complete 83-node/107-edge acyclic prerequisite graph, no unknown dependencies or semantically unmapped work. All feature artifacts and built-in/custom checklist bytes unchanged: 16/16 built-in, 0/40 reviewer-owned custom; assisted assessment and analysis are not approval. No extension hooks. Structured report: https://github.com/Stonefly-Labs/Hoard/pull/14#issuecomment-6329405510. Python tooling suite passed 61 tests; coverage/dependency/read-only/scope/template checks and git diff --check passed. README/development status updated; baseline product/architecture/diagrams/ADR, providers/examples, prior features, governance/backlog, runtime/tests/tooling, dependencies/locks, IaC/release docs unaffected because no requirement/design/API/behavior/command/package edge changed. No .NET/IaC or future metadata acceptance run warranted for checkpoint/status-only scope. Draft PR #14 retained. Next stage implement via separate invocation, gated on reviewer approval or explicit reviewer authorization; no implementation, self-approval, schema operation, qualification, release, merge, infrastructure or deployment."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T03:00:50.039506+00:00",
+      "evidence": "F-05 implementation complete: 83/83 verified tasks; current-source locked metadata qualification 96 entries (87 applicable passes, 9 explicit memory D exclusions), 59 common tests per provider, M0-M2/U0-U4 and R0/R1 process-stop recovery, native ownership, frozen/unchanged binaries and all seven graphs; foundation/lifecycle/configuration/discovery locked gates plus 76 tooling tests and diff hygiene passed with unchanged locks. Architecture review's three findings corrected and runtime-proven. README/guides/audit updated; commits pushed; draft PR #14 updated. No hooks, convergence, merge, release, package publication or infrastructure action."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T03:11:51.772176+00:00",
+      "evidence": "Convergence tasks_appended: assessed 24 FRs, 8 SCs, 23 scenarios, 14 edge cases, 83 tasks, 8 integration decisions and 8 constitution principles. F1 HIGH partial FR-010/FR-015: unchanged packaged SQLite and memory both return InternalFailure/OperatorRecovery for null cursor LastKey/After; SDK interactive probe reproduced both and valid queries still pass. Appended Phase 9 T084 only; original task bytes and spec/plan hashes verified unchanged. Full locked validate-metadata.sh passed 96 entries (87 applicable, 9 memory D exclusions), all crash/package/red-green proof, source fingerprint 2594b90d9871c0a0555e2e5c590ea77dab461c543dbe50ededa5dda552922f5a; 76 tooling tests passed; locks unchanged. No hooks or product-code changes. README/DEVELOPMENT record the gap; draft PR 14 remains blocked on T084, then fresh convergence/finalize."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T03:25:03.621542+00:00",
+      "evidence": "T084 complete: both packaged fixtures reproduced null/omitted cursor InternalFailure before null-safe bounded validation; six paired malformed-field/valid-resume regressions pass. Full locked metadata qualification and formatting/analyzers pass: 65 common tests/provider, 87 applicable cases, nine explicit memory D exclusions, existing crash/recovery/package/retained-binary proof. Four fixture consumer locks contain only local content-hash updates; default replay unchanged. Tooling 76 tests and diff hygiene pass; all 84 tasks complete; README and affected guides/evidence updated, checklists/spec/constitution unchanged, no hooks. Draft PR #14; next fresh converge only."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T03:33:51.945895+00:00",
+      "evidence": "Installed speckit-converge outcome tasks_appended: checked 24 FRs, 8 SCs, 23 scenarios, 14 edges, 84 existing tasks, 8 plan decisions and 8 constitution principles. One HIGH partial FR-010/FR-013 gap: SQLite stored Label:null yields InvalidInput/CorrectInput/Page instead of CorruptState/OperatorRecovery; fresh packaged runtime probe reproduced it with malformed-JSON, restored valid-read/page and cleanup controls. Appended only Phase 10/T085; original tasks prefix/spec/plan/checklists unchanged. Full locked metadata qualification passed 65 tests per provider, 87 applicable entries and 9 memory D exclusions, crash/restore/native ownership/package/retained binary/mutation proofs; 76 tooling tests and diff check passed; source/lock fingerprint 41ef899b40bd4017c3be0973de1bb66e93a81ca7dae3b9ed2cf064f1072b6c1a unchanged. README/DEVELOPMENT record evidence; PR #14 remains draft; next implement, no implementation/merge/release/infrastructure."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T03:48:53.690590+00:00",
+      "evidence": "F-05 T085 implementation complete through installed speckit-implement; all 85 tasks verified. SQLite page and exact reads share bounded corruption-aware record/key decoding; stored null label/revision, oversized label, malformed JSON and mismatched identity fail whole reads/pages as CorruptState/OperatorRecovery, preserve damaged payloads and recover exact valid pages. Caller query/cursor and oversized-result InvalidInput/CorrectInput semantics preserved. New packaged regression reproduced expected CorruptState/actual InvalidInput before repair. Focused locked and full locked qualification pass 66 tests/provider, 87 applicable entries and nine explicit memory D exclusions; crash/restore/native ownership, seven graphs, unchanged/frozen binaries and runtime mutation proofs pass; formatting/analyzers and 76 tooling tests pass. Four locks change only local SQLite/HostAdapters hashes; all 88 locks preserved by default replay. Source fingerprint 68215c83a4b41ed5b8f3c10976aa7519e71fc8d82cbd1e657a30cec30e3a513d. README/affected evidence updated; protected spec/constitution/checklists unchanged; no hooks or new substantial architecture boundary change; prior review remains applicable. Draft PR 14 retained; next fresh converge only, no merge/release/infrastructure."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T03:57:30.794323+00:00",
+      "evidence": "Installed speckit-converge assessed 24 FRs, eight SCs, 23 scenarios, 14 edge cases, 12 grouped plan decisions, 85 tasks and eight constitution principles. Two HIGH partial runtime-proven SQLite corruption gaps append Phase 11 T086/T087: filtered page hides corrupt auth field; reconciliation accepts invalid committed receipt. Fresh full locked metadata qualification passed 66 tests/provider, 87 applicable entries plus nine memory D exclusions; tooling 76 passed. Probe restores original page/receipt and final integrity; original task prefix, spec/plan/checklists/source and 88 locks unchanged. README/DEVELOPMENT record findings/evidence. Next implement both tasks; PR 14 remains draft."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T04:17:43.885180+00:00",
+      "evidence": "F-05 T086/T087 complete through installed speckit-implement; all 87 tasks verified. Five packaged page-filter regressions and invalid-receipt reconciliation fail at runtime against unchanged SQLite packages; six independent memory controls pass. SQLite now validates ordered page candidates before payload filters with per-candidate deadlines and bounded result/lookahead retention; scope, continuation, input rejection and valid recovery preserved. Shared bounded native-type/ticket/state/fingerprint/receipt decoding protects replay, reconciliation and schema integrity; 14 corrupt forms fail as CorruptState/OperatorRecovery with original ticket/phase, preserve damaged rows and committed metadata, and recover original receipts without duplicate aggregate effects. Full locked qualification/formatting/analyzers passes 72 common tests/provider, 87 applicable cases plus nine memory D exclusions, existing actual crash/restore/native ownership, seven package graphs, unchanged/frozen binaries and runtime mutation proof. Tooling 76 and diff hygiene pass. Four locks change only local SQLite/HostAdapters hashes; all 88 preserved by locked replay. Verified source fingerprint 29971e15fbeebde654bad140c1801f840c50018f4b507deaf50243fd5818cb24. README/affected evidence current; spec/constitution/checklists unchanged; no hooks or substantial new architecture boundary; prior review remains applicable. Draft PR 14 retained; next fresh converge only, no merge/release/publication/infrastructure."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T04:26:57.810036+00:00",
+      "evidence": "Installed speckit-converge outcome converged: assessed 24 FRs, eight buildable SCs, 23 acceptance scenarios, 14 edges, all 87 existing tasks, 12 grouped plan decisions and eight constitution principles; zero missing/partial/contradicts/unrequested findings. No task append; spec/plan/tasks/constitution/checklists/product/test/tooling sources and all 88 locks unchanged. Fresh complete locked metadata qualification/formatting/analyzers pass 72 common tests per provider, all 87 applicable entries and nine explicit memory D exclusions; all eight M/U process stops, R0/R1 restore interruptions, native ownership, backup/restore, seven package graphs, unchanged/frozen binaries and both runtime mutation pairs pass. Independent manifest/proof/hash verification matches source fingerprint 29971e15fbeebde654bad140c1801f840c50018f4b507deaf50243fd5818cb24. Additional freshly packaged six-shape option-discriminator corruption probe passes all read/page/replay/reconcile classifications, damage preservation, restored receipt and final integrity controls. Tooling 76 and diff hygiene pass. README/DEVELOPMENT record clean convergence and unaffected docs; prior architecture review remains applicable; no hooks. PR 14 remains draft; next finalize only, no merge/release/publication/infrastructure/deployment."
+    },
+    {
+      "stage": "finalize",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T05:39:53.725643+00:00",
+      "evidence": "Finalized F-05: all 87 tasks complete; clean convergence; requirements 16/16 and reviewer-owned metadata/recovery 40/40 unchanged; prior implementation architecture findings corrected/re-reviewed with runtime proof and no subsequent substantial boundary change. Fresh bash scripts/validate-metadata.sh full locked qualification/format passed: 72 tests per provider, 87 applicable passes, nine explicit memory D exclusions, eight crash exits, seven package graphs, immutable 88 locks; independently verified source/proof/package hashes (29971e15fbeebde654bad140c1801f840c50018f4b507deaf50243fd5818cb24). python3 -m unittest discover -s tests/tooling -v passed 76; git diff --check passed. README/affected status guides current; unaffected docs justified in DEVELOPMENT#f-05-finalization. PR 14 targets main for maintainer review; no merge/release/infrastructure/deployment."
     }
   ]
 }

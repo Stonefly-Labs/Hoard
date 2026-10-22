@@ -22,9 +22,10 @@ dependency management into another full-time job.
 > [!IMPORTANT]
 > **Foundation only.** This repository currently contains product/design documents,
 > development workflows, repository tooling, .NET provider contracts and a tested
-> fixture-only module lifecycle, configuration, and protected discovery boundaries,
+> fixture-only module lifecycle, configuration, protected discovery boundaries,
+> and opt-in metadata operations with SQLite/memory qualification fixtures,
 > plus an operator-run Azure identity bootstrap.
-> There is no runnable cache, working provider, UI, container, or published package.
+> There is no runnable cache, production provider, UI, container, or published package.
 > Everything in the product overview below describes the planned experience.
 
 [Explore the vision](docs/PRODUCT_VISION.md) ·
@@ -87,6 +88,9 @@ bash scripts/validate-configuration.sh
 
 # Protected discovery, JSON consumer, private loopback adapters and compatibility.
 bash scripts/validate-discovery.sh
+
+# Metadata semantics on independent packages, real SQLite crash/recovery proof.
+bash scripts/validate-metadata.sh
 ```
 
 For repository work, use Git, GitHub CLI, Python 3.11+, and a stable .NET 10 SDK
@@ -583,10 +587,163 @@ at that exact commit, including generated notes and both source archives.
 It records F-04 complete with its feature directory, PR, merge commit and release
 evidence. [PR #12](https://github.com/Stonefly-Labs/Hoard/pull/12) merged the
 running checkpoint before the completion changes were committed. The follow-up
-completion-checkpoint PR must merge before the next separately invoked
-**`specify`** stage.
+completion checkpoint merged through
+[PR #13](https://github.com/Stonefly-Labs/Hoard/pull/13), satisfying the next-spec
+merge gate.
 No new specification, implementation, package publication or deployment ran
 in this completion stage; the prerelease contains source only.
+The subsequent [F-05 specification: metadata persistence provider
+contract](specs/005-metadata-persistence/spec.md) defines isolated durable state,
+atomic related changes, explicit concurrency/retry outcomes, reference and lease
+safety, controlled schema upgrades, backup/recovery and provider-neutral
+qualification. Five journeys, 23 scenarios, 24 requirements and eight measurable
+outcomes pass the 16-item [built-in specification-quality
+checklist](specs/005-metadata-persistence/checklists/requirements.md).
+These are future acceptance obligations: bounded SQLite durability proof and
+an independent alternative fixture do not claim the later production provider,
+generic certification, cross-store transactions or multi-node safety.
+No persistence code, schema or new validation command exists from this stage;
+the subsequent [clarification review](specs/005-metadata-persistence/spec.md#clarifications)
+finds all ten review categories clear, with zero questions and no requirement,
+acceptance or scope changes. The built-in quality checklist remains 16/16 with
+no marker changes; this is not custom reviewer approval or runtime evidence.
+The subsequent [implementation plan](specs/005-metadata-persistence/plan.md),
+[logical model](specs/005-metadata-persistence/data-model.md) and
+[public contract](specs/005-metadata-persistence/contracts/metadata-api.md)
+resolve operation shapes, common limits/budgets, 24-hour operation tickets,
+publication guards, reference generations and fenced leases without changing
+existing provider markers. The [recovery design](specs/005-metadata-persistence/contracts/recovery.md)
+defines controlled schema admission, real process-crash boundaries and verified
+backup restoration; [48 planned proof cases](specs/005-metadata-persistence/contracts/acceptance.md)
+separate SQLite durability from independent memory-fixture semantics.
+The [validation quickstart](specs/005-metadata-persistence/quickstart.md) clearly
+labels new commands as future implementation work. Bounded architecture review
+found no design findings; no API, fixture, schema, qualification or production
+support is delivered by planning. The subsequent checklist stage adds standard-depth
+[metadata contract](specs/005-metadata-persistence/checklists/metadata.md) and
+[recovery](specs/005-metadata-persistence/checklists/recovery.md)
+requirements-quality checklists, with 20 criteria each for maintainer/provider
+reviewers. At the user's request, an assisted assessment finds written coverage
+for all 40 criteria, with no unresolved finding or decision needing maintainer
+attention. Generated markers remain unchecked: the assessment is not formal
+checklist approval or implementation evidence. The subsequent
+[task-generation stage](specs/005-metadata-persistence/tasks.md) defines 83
+unchecked tasks: shared setup/foundation, five story increments and cross-cutting
+acceptance. All 24 requirements, eight outcomes, 23 scenarios, 14 edge cases and
+48 planned proof cases map to implementation and focused checks, with explicit
+prerequisites and independent provider lanes. Existing specification/design and
+checklist bytes remain unchanged; no product implementation or qualification
+occurs. At that checkpoint, read-only `analyze` was the next separate stage.
+The subsequent installed read-only analysis finds no actionable duplication,
+ambiguity, underspecification, inconsistency, coverage gap or constitutional
+conflict. All 24 requirements and eight buildable outcomes have tasks; all 23
+scenarios, 14 edge cases and 48 proof cases retain focused mappings. The
+83-task, 107-edge prerequisite graph is complete and acyclic. The
+[analysis report](https://github.com/Stonefly-Labs/Hoard/pull/14#issuecomment-6329405510)
+records the assessment; feature artifacts and every checklist marker remain
+unchanged. The subsequently requested assisted checklist review evaluates and
+marks **metadata 20/20 and recovery 20/20 satisfied**, with criterion-group
+evidence in each checklist and no unresolved finding or decision needing
+maintainer attention. This satisfies the custom requirements-quality review
+gate; **`implement`** remains next through a separate invocation. The checkpoint,
+all 83 tasks and the specification/design remain unchanged. Requirements review
+and artifact analysis are not persistence, durability or production-support
+evidence.
+The separately authorized implementation delivers the operational contract and
+fixture qualification. Setup
+T001..T006 added the deterministic harness, independently packed fixture
+scaffolds, pinned private SQLite dependency, retained pre-F-05 binary recipe
+and fail-closed [metadata evidence command](scripts/validate-metadata.sh).
+The subsequent implementation adds BCL-only records and separate store/schema/
+publication interfaces without changing the marker. Independently packaged
+SQLite and copy-on-write memory fixtures exercise transactions, receipts,
+references, leases, admission and bounded cleanup. The runner uses one common
+test/consumer binary for both compositions, real parent-terminated SQLite
+children, verified isolated restore, actual package scans and the frozen old
+marker binary. Its complete manifest requires all 39 logical cases for both
+providers and nine SQLite-only durable cases; memory durability is explicitly
+not applicable. Preparation and focused selectors never claim full qualification.
+The [quickstart](specs/005-metadata-persistence/quickstart.md) documents commands,
+retained private evidence, recovery and fixture-only limits. Implementation
+does not deliver a production persistence provider or runnable cache.
+Complete locked qualification passes all 87 applicable provider/case entries;
+the nine memory durability entries are explicitly non-applicable. Existing
+foundation/lifecycle/configuration/discovery acceptance and repository tooling
+also pass with unchanged lock hashes. The feature remains a draft in
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14); separate `converge`
+and `finalize` stages remain before any merge gate.
+The subsequent convergence assessment appends one HIGH-priority correction,
+[Phase 9 / T084](specs/005-metadata-persistence/tasks.md#phase-9-convergence):
+both fixture providers classify a null decoded continuation key as
+`InternalFailure/OperatorRecovery` instead of `InvalidInput/CorrectInput`.
+Fresh locked qualification still passes its existing cases; the additional
+probe exposes a missing malformed-cursor regression, not a clean convergence
+result. Product code, specification, plan and existing task completions are
+unchanged. That checkpoint returned to **`implement`** for T084.
+The subsequent implementation correction is complete: both fixtures reject
+null/omitted decoded keys safely, and six paired malformed-field regressions
+preserve valid resumption and complete dataset traversal. Full locked
+qualification passes 65 common tests per provider, all 87 applicable entries
+and nine explicit memory durability exclusions. See the
+[correction evidence](specs/005-metadata-persistence/plan.md#t084-malformed-continuation-correction).
+Fresh **`converge`** is next, followed by finalization; PR #14 remains draft.
+That fresh assessment finds one HIGH partial gap in SQLite page reads:
+a stored registry with a null label is incorrectly classified as
+`InvalidInput/CorrectInput`, while grouped reads correctly return
+`CorruptState/OperatorRecovery` for the same record.
+[Phase 10 / T085](specs/005-metadata-persistence/tasks.md#phase-10-convergence)
+records the correction and missing regression; no implementation changes occur
+in convergence. Fresh full locked qualification passes its existing cases but
+does not cover or waive this additional runtime-proven gap. The next stage is
+**`implement`** for T085, then fresh convergence; PR #14 stays draft.
+The T085 correction is now complete: SQLite pages reuse the corruption-aware
+stored-record decoder and return `CorruptState/OperatorRecovery` for damaged
+payloads, while bad caller input retains `InvalidInput/CorrectInput`.
+Paired regressions prove complete failure, sanitized diagnostics, unchanged
+damaged data and exact valid-page recovery. Full locked qualification passes
+66 common tests per provider and all 87 applicable entries, with nine explicit
+memory durability exclusions. See [T085 evidence](specs/005-metadata-persistence/plan.md#t085-stored-page-corruption-correction).
+All 85 tasks are complete; fresh **`converge`** is next, then finalization.
+PR #14 remains draft; no merge is requested.
+The subsequent fresh convergence finds two HIGH partial corruption gaps in
+SQLite: a damaged authorization-partition field is silently omitted from a
+filtered page, and reconciliation returns a successful committed receipt with
+an invalid null target. Both are reproduced against freshly packed binaries;
+restoring the synthetic data recovers valid results and integrity.
+[Phase 11 / T086 and T087](specs/005-metadata-persistence/tasks.md#phase-11-convergence)
+append the correction and regression work without changing application code,
+the specification, plan, previous tasks or checklist markers. Full locked
+qualification passes its existing 66 tests per provider and 87 applicable
+entries, but does not cover or waive these newly demonstrated paths.
+The next stage is **`implement`** for both tasks, followed by fresh convergence;
+PR #14 stays draft, with no merge requested.
+Both corrections are now complete. SQLite validates page candidates before
+payload-based filters and uses one bounded ledger/receipt decoder for replay,
+reconciliation and schema integrity. Paired regressions preserve damaged data,
+query isolation, original-ticket recovery and nonduplicate effects. Full locked
+qualification passes 72 common tests per provider and all 87 applicable entries,
+with nine explicit memory durability exclusions. See
+[T086/T087 evidence](specs/005-metadata-persistence/plan.md#t086t087-filtered-page-and-receipt-corruption-corrections).
+All 87 tasks are verified complete; fresh **`converge`** is next, then
+finalization. [PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains
+draft; no merge is requested.
+The subsequent installed convergence assessment finds no actionable gaps across
+all 24 requirements, eight outcomes, 23 scenarios, 14 edge cases and 87 tasks.
+Fresh full locked qualification passes 72 common tests per provider and all
+87 applicable entries, with nine explicit memory durability exclusions.
+Tasks, specification, plan, checklists, product/tooling sources and all 88 locks
+remain unchanged. See the [clean convergence evidence](docs/DEVELOPMENT.md#f-05-clean-convergence).
+The next separately invoked stage is **`finalize`**; PR #14 remains draft,
+and no merge is requested.
+Finalization now verifies all 87 completed tasks, clean convergence, unchanged
+requirements/checklist approvals, applicable architecture reviews and current
+documentation. Fresh full locked qualification passes 72 common tests per
+provider, all 87 applicable entries and nine explicit memory durability
+exclusions, with all 88 locks unchanged. See the
+[finalization evidence](docs/DEVELOPMENT.md#f-05-finalization).
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) is ready for maintainer
+review and merge. The checkpoint schedules **`await_merge`**; F-05 is not yet
+recorded complete, and no release or dependent specification starts here.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

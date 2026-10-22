@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Metadata.CrashRunner</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Abstractions" />
+    <PackageReference Include="Hoard.Fixtures.Metadata.Sqlite" />
+    <PackageReference Include="Hoard.Fixtures.Metadata.HostAdapters" />
+  </ItemGroup>
+</Project>

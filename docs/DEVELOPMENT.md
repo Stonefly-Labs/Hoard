@@ -8,8 +8,9 @@ registration, and compile/package/boundary acceptance tooling. F-02 adds
 opt-in fixture-tested lifecycle in Hosting. F-03 adds fixture-backed configuration,
 owner-scoped local secrets and explicit synthetic conversion through that same
 lifecycle. F-04 adds opt-in protected discovery slices in Application and safe
-Hosting observations; Core remains empty. No caching engine,
-working providers, curated executable, UI, product CI/CD,
+Hosting observations; F-05 adds separate BCL-only metadata operations with
+independent SQLite/memory qualification fixtures. Core remains empty. No caching engine,
+production providers, curated executable, UI, product CI/CD,
 or deployment exists.
 Azure identity provisioning is a
 separate, explicitly authorized [operator action](../infra/bootstrap/README.md).
@@ -2107,6 +2108,873 @@ permission, transport or restart/rollback change occurs. No older completion
 is backfilled with release metadata. This stage starts no new specification,
 implements no feature, merges no PR, publishes no binary/package/image and
 performs no infrastructure, deployment, governance change or OpenTofu plan/apply.
+
+### F-05 metadata persistence specification
+
+The F-04 completion checkpoint merged through
+[PR #13](https://github.com/Stonefly-Labs/Hoard/pull/13). The separately invoked
+`specify` stage fetches `origin/main`, verifies the merged checkpoint and ratified
+constitution, and starts `feature/005-metadata-persistence` from current main.
+The driver pins the exact master F-05 prompt and independent directory
+`specs/005-metadata-persistence`; the installed `speckit-specify` uses that explicit
+directory and the resolved specification template. No extension hook is
+registered, and only one specification is created.
+
+The [specification](../specs/005-metadata-persistence/spec.md) defines five
+independently testable journeys: retained identity-isolated state, atomic and
+concurrent changes, artifact-reference/lease ownership, controlled durable
+upgrades and recovery, and alternative-provider qualification. It includes
+23 acceptance scenarios, 14 edge cases, 24 functional requirements, ten logical
+entity descriptions and eight measurable outcomes. Story independent tests
+cover every requirement. The built-in
+[requirements checklist](../specs/005-metadata-persistence/checklists/requirements.md)
+passes all 16 specification-quality criteria, with no unresolved clarification
+markers. This is generation-time quality review, not the scheduled clarification
+stage or reviewer-owned custom checklist approval.
+
+The specification preserves registry/request/authorization identity partitions,
+all-or-nothing metadata visibility, consistent grouped reads, conditional
+revisions, reconcilable uncertain commits, finite work and safe errors. Artifact
+commit evidence comes from shared publication coordination; metadata cannot
+establish cross-store atomicity or authorize physical deletion by itself.
+Leases reject expired owners without claiming distributed coordination.
+Schema compatibility, controlled upgrades, single-upgrader admission, interrupted
+recovery and verified backup restoration remain explicit proof obligations.
+Provider-private schemas/migrations/frameworks must not leak into consumers.
+
+The master F-05 SQLite acceptance focus is retained as a bounded, real durable
+qualification adapter during later implementation, distinct from production
+SQLite delivery in original SPEC-03. An independent alternative fixture proves
+logical interchangeability, not durable production support for another engine.
+Generic certification remains F-07; production PostgreSQL, arbitrary NoSQL,
+cross-engine transfer, HA, artifact storage and shared cache algorithms are not
+implemented or promised here. Exact signatures, value limits, finite budgets,
+schema paths and proof mechanics remain constrained planning decisions.
+
+Only the specification, built-in quality checklist, README, this guide and
+shared driver checkpoint change; the ignored local feature pointer is restored.
+Provider/example guides, predecessor artifacts, charter/product specification,
+architecture/ADR/diagrams, constitution/backlog, package/version policy, runtime
+and test source, IaC and release procedures are unaffected because this stage
+changes no existing API, dependency, command, operational procedure or supported
+capability. No new architecture review is required for this requirements-only
+change; substantial contract implementation/design still needs the normal gate.
+Existing tooling checks validate the driver; product acceptance and OpenTofu
+checks are not rerun for this documentation/checkpoint-only stage.
+
+The checkpoint schedules **`clarify / ready`** for a separate invocation. The
+feature PR remains draft. No plan, tasks, custom review, implementation,
+qualification, schema upgrade, release, merge, infrastructure or deployment is
+performed by this stage.
+
+### F-05 metadata persistence clarification
+
+The separately invoked `clarify` stage uses the recorded
+`feature/005-metadata-persistence` branch and explicitly pinned
+`specs/005-metadata-persistence`, retaining draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14).
+Fetched main contains no new commits requiring branch reconciliation. The
+installed `speckit-clarify` resolves the existing specification without
+rerunning its generator or creating another feature. No extension hooks are
+configured.
+
+The [dated review](../specs/005-metadata-persistence/spec.md#clarifications)
+finds all ten ambiguity/coverage categories clear: zero questions and no
+requirement, acceptance or scope changes. Identity isolation, atomic groups,
+consistent reads, revision conflicts, reconcilable uncertain commits,
+artifact-evidence authority, reference/lease safety and controlled schema
+recovery remain explicit. SQLite durable qualification and alternative-fixture
+semantics remain distinct from production support and generic certification.
+Exact signatures, value/page limits, timestamp precision, finite budgets,
+reconciliation lifetime, schema paths and proof mechanics are constrained
+planning decisions, not unresolved product decisions.
+
+Built-in specification-quality revalidation remains **16/16 to 16/16**:
+zero newly passing items, regressions or unchecked items. All checklist bytes
+remain unchanged; no reviewer-owned custom approval or runtime evidence is
+claimed. Only the spec's clarification section, README, this guide and shared
+checkpoint change. Provider/example guides, predecessor artifacts, baseline
+charter/product specification/architecture/ADR/diagrams, constitution/backlog,
+compatibility policy and release/IaC guidance are unaffected: no existing API,
+dependency, supported behavior, command or operational procedure changes.
+No new architecture-agent review is required for this documentation-only stage;
+product/.NET and OpenTofu acceptance are not rerun.
+
+The checkpoint schedules **`plan / ready`** through a separate invocation.
+PR #14 remains draft. No design artifacts, tasks, custom review, persistence
+implementation, schema upgrade, qualification, release, merge, infrastructure
+or deployment are produced by this clarification stage.
+
+### F-05 metadata persistence planning
+
+The separately invoked installed `speckit-plan` uses the same recorded branch
+and explicit `SPECIFY_FEATURE_DIRECTORY=specs/005-metadata-persistence`.
+The driver begins `plan / running` before setup. No generator or prior stage
+is repeated, and no extension hooks are configured. Existing specification
+and built-in checklist bytes remain unchanged.
+
+The [plan](../specs/005-metadata-persistence/plan.md),
+[research](../specs/005-metadata-persistence/research.md),
+[logical model](../specs/005-metadata-persistence/data-model.md),
+[API contract](../specs/005-metadata-persistence/contracts/metadata-api.md),
+[recovery contract](../specs/005-metadata-persistence/contracts/recovery.md),
+[acceptance matrix](../specs/005-metadata-persistence/contracts/acceptance.md)
+and [validation quickstart](../specs/005-metadata-persistence/quickstart.md)
+resolve the constrained planning details. BCL-only operational interfaces are
+opt-in additions alongside the unchanged metadata marker, not new members on
+existing providers. Typed atomic groups, snapshot reads, binary canonical keys,
+conditional revisions, 24-hour persisted operation tickets and atomic receipts
+prevent partial state and blind replay after reconciliation expiry.
+
+Artifact publication requires a host-injected shared authority guard retained
+until transaction settlement; metadata neither verifies bytes nor authorizes
+physical deletion. Reference generations and lease tombstones protect stale
+decisions, while the persisted time floor and final guarded decision define
+expiry. Work/result/queue/receipt bounds and finite monotonic deadlines include
+explicit uncertainty and retained ownership for non-preemptible native calls.
+
+The proposed file-backed SQLite qualification adapter uses private
+`Microsoft.Data.Sqlite`, parameterized SQL and checked WAL/FULL/foreign-key
+settings. The private driver version/locks will be selected and assessed during
+implementation; no dependency is added now. A separately implemented immutable
+memory fixture proves only logical semantics. Host-side adapters reuse F-02
+admission/cleanup and F-03 owner options without provider-to-Hosting references,
+new Core behavior or a second lifecycle authority.
+
+The 48 acceptance cases trace all 24 FRs, eight SCs, 23 story scenarios and
+14 edge cases. They cover unchanged package-only consumer/old-marker binaries,
+real child-process termination, one explicit v1-to-v2 upgrade, read-only
+incompatible-schema inspection, single-upgrader/store exclusion and verified
+quiescent backup/restore. The future metadata command is clearly labelled
+unimplemented; SQLite process-crash evidence cannot establish power-loss
+certification, production provider support, another engine, HA or generic F-07
+qualification. Existing validation commands are regression obligations at
+implementation, not product evidence from planning.
+
+The required bounded `hoard-architecture-review` found no confirmed design
+violations or unresolved implementation-blocking questions. It identifies
+future binary, ownership/interleaving, crash/recovery and exact environment/
+dependency evidence gaps; it ran no commands. Constitution checks pass before
+research and after design without exceptions.
+
+README and this guide reflect design status. Provider/example guides, existing
+feature artifacts, baseline charter/product specification/architecture/ADR/
+diagrams, constitution/backlog, compatibility policy, runtime/test/tooling
+source, dependency manifests/locks, IaC and release procedures are unaffected:
+this stage changes no existing API, command, package graph, supported behavior
+or operational procedure. Their implementation updates remain later work.
+Only existing repository-tool checks and design/link/scope checks are relevant
+now; .NET product acceptance and mock OpenTofu checks are not rerun.
+
+The checkpoint schedules **`checklist / ready`**, retaining draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14). No custom checklist
+approval, tasks, implementation, schema operation, qualification, source release,
+merge, infrastructure or deployment occurs in planning.
+
+### F-05 metadata persistence requirements-quality checklists
+
+The separately invoked installed `speckit-checklist` uses the recorded branch
+and explicit `SPECIFY_FEATURE_DIRECTORY=specs/005-metadata-persistence`, after
+the driver begins `checklist / running`. No extension hooks are configured.
+It creates two standard-depth requirements-quality checklists for maintainer
+and provider reviewers before implementation authorization:
+[metadata contract](../specs/005-metadata-persistence/checklists/metadata.md)
+and [recovery](../specs/005-metadata-persistence/checklists/recovery.md),
+20 criteria each. They evaluate the written requirements, not delivered behavior.
+
+Metadata scope covers canonical identity and authorization partitions, common
+values, final-graph relationships, atomic groups/reads, concurrent revisions,
+publication authority, reference generations, leases, pages, secret handling
+and compatibility/qualification boundaries. Recovery scope covers operation
+tickets and uncertain outcomes, finite budgets and retained work ownership,
+schema admission, controlled upgrades, real crash boundaries, coherent backups,
+restoration and attributable durability limits.
+
+The user explicitly requests Copilot's assisted review and identification of
+anything needing maintainer judgment. The assessment compares all 40 criteria
+with the specification and seven design artifacts: each has written coverage,
+with no unresolved requirements-quality finding, waiver or product decision
+needing maintainer attention. Evidence is recorded in draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14). This is not independent
+human inspection, formal checklist approval or passing implementation evidence.
+All generated custom markers remain unchecked as required by the checklist
+stage; the built-in 16/16 checklist and all existing design artifacts are
+unchanged. Later implementation still requires reviewer approval or explicit
+reviewer authorization; tasks and analysis may proceed without that approval.
+
+Late native-call/guard ownership, reference/lease/ticket interleavings,
+unchanged-consumer/old-binary compatibility and real SQLite crash/upgrade/restore
+proof remain explicit implementation obligations, not unresolved design choices
+or current support claims. README and this guide link the new artifacts and
+record the assisted-review result. Provider/example guides, baseline product/
+architecture/ADR/diagrams, constitution/backlog, compatibility/release policy,
+existing feature artifacts, runtime/test/tooling sources, dependencies/locks
+and IaC are unaffected: no API, behavior, package graph, command or operational
+procedure changes. No new architecture review is required for checklist and
+status-documentation additions; the planning review remains historical evidence.
+
+The checkpoint schedules **`tasks / ready`**, retaining draft PR #14.
+No task generation, analysis, implementation, formal custom checklist approval,
+schema operation, qualification, release, merge, infrastructure or deployment
+occurs in this invocation.
+
+### F-05 metadata persistence task generation
+
+The separately invoked installed `speckit-tasks` uses the recorded
+`feature/005-metadata-persistence` branch and explicit
+`SPECIFY_FEATURE_DIRECTORY=specs/005-metadata-persistence`, after the driver
+begins `tasks / running`. Its setup resolves the absolute feature directory
+and canonical task template. No before/after task extension hooks are configured.
+
+The [task list](../specs/005-metadata-persistence/tasks.md) contains 83 unchecked
+tasks: six setup, 11 foundational, 11 US1 retention/isolation, 13 US2 atomicity/
+reconciliation, 11 US3 publication/reference/lease, 15 US4 upgrade/recovery,
+ten US5 independent qualification, and six cross-cutting acceptance tasks.
+All 24 FRs, eight SCs, 23 story scenarios, 14 edge cases and 48 MP cases have
+implementation/focused-proof mappings. Direct prerequisites form an explicit
+acyclic graph, including serialized evidence-helper/shared-file edits and
+pre-change retained-binary provenance. File-disjoint test and independent
+SQLite/memory lanes are identified; story dependencies are not disguised as
+parallel work.
+
+US1 is the suggested bounded record/identity/page MVP, not full qualification
+or a runnable cache. Full F-05 implementation requires every story. Tests must
+record intended red before accepted behavior, then attributable green;
+concurrency and late ownership use controlled barriers, while durable cases
+require actual parent-terminated children, confirmed exit and reopened state.
+All 39 logical cases run against each independent fixture; SQLite additionally
+requires nine durable cases. Memory reports those nine as explicitly
+non-durable NotApplicable, never passing or waiving a logical obligation.
+
+The existing specification, seven planning artifacts and built-in/custom
+checklist bytes are unchanged. All 40 custom review markers remain unchecked;
+the earlier assisted assessment is not formal approval. Task generation does
+not evaluate/approve those checklists, perform cross-artifact analysis or
+execute implementation/qualification. Read-only **`analyze`** is the next
+separately authorized stage; implementation additionally waits for reviewer
+approval or explicit reviewer authorization.
+
+README and this guide link the task artifact and next gate. Provider/example/
+quickstart guides, product/architecture/ADR/diagrams, compatibility/release
+policy, constitution/backlog, prior features, runtime/test/tooling sources,
+dependencies/locks and IaC are unaffected: this stage changes only planned work,
+status documentation and checkpoint, not APIs, package edges, operational
+behavior or supported capabilities. Implementation tasks explicitly update
+their affected surfaces and require a fresh architecture review; the historical
+planning review is not implementation acceptance. Draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete.
+No schema operation, product scaffolding, release, package publication, merge,
+infrastructure plan/apply or deployment occurs in task generation.
+
+### F-05 metadata persistence cross-artifact analysis
+
+The separately invoked installed `speckit-analyze` uses explicit
+`SPECIFY_FEATURE_DIRECTORY=specs/005-metadata-persistence` after the driver
+begins `analyze / running`. Its prerequisite check resolves the recorded
+directory, specification, plan, tasks and supporting design documents.
+No before/after analysis extension hooks are configured.
+
+Read-only review of the specification, plan, tasks, logical model and three
+contracts against constitution v1.0.0 finds no actionable duplication,
+ambiguity, underspecification, inconsistency, constitutional conflict or
+coverage gap. All 24 FRs and eight buildable SCs have implementation/focused
+proof tasks (32/32, 100%); all 23 story scenarios, 14 edge cases and 48 MP cases
+retain mappings. Every task has a requirement/story or shared acceptance/
+workflow purpose. The 83-node graph has 107 direct edges, no unknown or missing
+prerequisites and no cycles; retained-binary preparation precedes platform
+changes and shared orchestrator edits remain serialized.
+
+The [structured report](https://github.com/Stonefly-Labs/Hoard/pull/14#issuecomment-6329405510)
+records zero findings and no proposed remediation. All 83 tasks, existing
+design/specification artifacts and checklist bytes remain unchanged. The
+built-in checklist stays 16/16; the two reviewer-owned custom checklists retain
+all 40 unchecked markers. Neither the earlier assisted assessment nor analysis
+supplies formal approval. The checkpoint schedules **`implement / ready`**,
+but that separate invocation still requires reviewer approval or explicit
+reviewer authorization before execution.
+
+All 39 logical cases for both independent fixtures, nine additional SQLite
+durable cases, real crash/upgrade/restore, late-work ownership, unchanged
+consumer/retained-binary and package-boundary proof remain implementation
+obligations. No future metadata command runs or gains a passing claim here.
+README and this guide record the analysis result and remaining gate. Provider/
+example/quickstart guides, baseline charter/product specification/architecture/
+ADR/diagrams, prior features, constitution/backlog, compatibility/release policy,
+runtime/test/tooling sources, dependencies/locks and IaC are unaffected:
+analysis changes no requirement, design, API, package edge, command, operational
+procedure or supported behavior. Historical planning architecture review
+remains historical; implementation requires the fresh review in its tasks.
+Existing repository-tool and artifact-integrity checks apply; .NET product
+acceptance and mock OpenTofu checks are not rerun for status/checkpoint-only
+changes. Draft [PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) stays
+incomplete; no implementation, checklist approval, schema operation,
+qualification, source release, merge, infrastructure or deployment occurs.
+
+### F-05 assisted checklist review
+
+The user reiterates that Copilot should run the existing checklists and
+highlight only decisions needing maintainer attention. This separately
+requested review follows the earlier features' assisted-review pattern; it
+does not regenerate checklists, self-approve them during implementation or
+advance a scheduled driver stage.
+
+Copilot evaluates all 40 criteria against the specification and seven planning
+artifacts at `72f1078`. The
+[metadata checklist](../specs/005-metadata-persistence/checklists/metadata.md)
+and [recovery checklist](../specs/005-metadata-persistence/checklists/recovery.md)
+now record **20/20 and 20/20 satisfied**, with grouped criterion-level evidence.
+There is no unresolved requirements-quality finding, waiver or decision needing
+maintainer attention. Markers record the requested reviewer assessment, not
+independent human inspection, implementation completion or durability evidence.
+The custom requirements-quality review gate is satisfied.
+
+The checkpoint remains **`implement / ready`**, all 83 tasks remain unchecked
+and the specification, seven planning artifacts and built-in checklist remain
+unchanged. No driver stage is begun or finished. Actual transaction/reference/
+lease interleavings, finite late-work ownership, independent package/old-binary
+compatibility and SQLite crash/upgrade/backup recovery remain mandatory proof
+obligations for the next separately authorized implementation invocation.
+
+README and this guide reflect the review. Provider/example/quickstart guides,
+baseline charter/product specification/architecture/ADR/diagrams, prior features,
+constitution/backlog, compatibility/release policy, runtime/test/tooling sources,
+dependencies/locks and IaC guidance are unaffected: review markers/evidence
+change no requirement, design, API, dependency boundary, command, operation or
+capability. No additional architecture review or product/.NET/IaC acceptance is
+warranted for this documentation-only change. Draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete;
+no implementation, schema operation, qualification, publication, merge,
+infrastructure action or deployment occurs.
+
+### F-05 implementation setup
+
+The separately invoked `speckit-implement` runs on the recorded feature branch
+with `SPECIFY_FEATURE_DIRECTORY=specs/005-metadata-persistence`. The existing
+review gate passes: metadata 20/20, recovery 20/20, built-in requirements 16/16.
+There are no pre/post implementation extension hooks.
+
+T001..T006 establish a deterministic clock/owned barrier harness, twelve
+fail-closed evidence-tool tests, isolated locked build/package preparation and
+the retained marker/registration binary from merged pre-F-05 main
+`10ce78851b97b02bd83a8ef7da7ffdc2381d6519`. Private evidence freezes binary,
+recipe, dependency, lock, source and package hashes before public API changes.
+The SQLite scaffold privately pins Microsoft.Data.Sqlite 10.0.13; exact
+native/transitive packages and license/advisory review are in the
+[research](../specs/005-metadata-persistence/research.md).
+
+The [metadata quickstart](../specs/005-metadata-persistence/quickstart.md)
+documents preparation-only selectors. They explicitly report
+`qualification: false`; default full mode fails while runtime case evidence
+is missing. Initial missing-runner red and a runtime mutation that accepts
+failed cases are both observed; the unmodified verifier passes all twelve
+tooling cases. No operational provider, schema, L/D qualification, cache,
+release or deployment follows from compiling/packing scaffolds.
+
+The driver remains **`implement / running`**. Continue through all remaining
+tasks in this invocation unless genuinely blocked; do not call `finish` or
+start convergence from setup. Requirements/checklist bytes remain unchanged.
+Provider/example guides, architectural/product diagrams, release/IaC guides
+and previous feature artifacts are unaffected by setup because there is no
+new operational API, host behavior or supported capability.
+
+### F-05 operational metadata implementation
+
+The full implementation continues beyond setup through all functional and
+acceptance obligations in the 83-task feature.
+`Hoard.Abstractions.Metadata` now supplies opt-in store/schema/publication
+contracts without changing `IMetadataProvider`. Independently packed SQLite and
+copy-on-write memory fixtures preserve exact caller identities, atomic groups/
+receipts, bounded snapshot reads/keyset pages, references, fenced leases and
+explicit admission. HostAdapters uses existing configured F-02/F-03 composition:
+one selected authority, inert registration, no routes or disabled I/O, failure
+blocks readiness, no fallback or second lifecycle.
+
+```bash
+# Full fixture qualification, immutable locks, retained owner-private evidence.
+bash scripts/validate-metadata.sh
+# Focused proof; rebuild/verify prerequisites, explicitly not full qualification.
+bash scripts/validate-metadata.sh --phase logical
+bash scripts/validate-metadata.sh --phase recovery
+bash scripts/validate-metadata.sh --phase packages
+```
+
+Use `--update-locks` only for intentional source/package/dependency changes, then
+review locks and replay the default command independently. `--evidence` accepts
+a fresh destination outside Git with an existing parent; the runner prints the
+retained location. Proofs and synthetic databases/captures/binaries stay private.
+Each subprocess is bounded to ten minutes, with stricter operation/admin
+budgets. Only the exact owned temporary workspace and known children are cleaned
+up. Never remove a live database/WAL/owner file as recovery.
+
+The full manifest accounts for all 96 provider/case entries: 39 logical cases
+per implementation, nine additional SQLite durable cases and explicit
+`NotApplicable: non-durable fixture` for memory. It records actual local OS/
+runtime/filesystem/driver/native versions, effective WAL/FULL/foreign-key/busy
+settings, proof hashes/durations, all eight real signal-terminated crash
+boundaries, isolated verified-v1 restore, unchanged consumer/common binaries,
+frozen marker binary compatibility and permitted/forbidden actual package scans.
+Runtime mutations must cause the intended assertion failure, not compilation
+failure, before the same repaired test passes.
+
+The [quickstart](../specs/005-metadata-persistence/quickstart.md),
+[provider guide](PROVIDERS.md#opt-in-metadata-operations-and-fixture-qualification)
+and [recovery guide](../specs/005-metadata-persistence/contracts/recovery.md)
+document exact interfaces, ticket reconciliation/expiry, explicit upgrades,
+compatible backup readers, artifact reconciliation and cleanup ownership.
+File permissions and OS ownership apply only to private local fixture data.
+Native timeout cannot preempt I/O: late work retains its connection/lock/guards;
+30-second incomplete cleanup remains explicit and may require process termination.
+No physical-deletion permission or distributed safety follows from metadata.
+
+The product charter/specification, baseline architecture/ADR and product
+diagrams remain unchanged: their production topology and centralized cache
+responsibilities are not delivered by test fixtures. Release/IaC/cloud/UI guides,
+prior feature artifacts and the compile-only host source remain unaffected:
+no deployment, secret permissions, protocol/UI operation, new listener,
+production provider or published package is added.
+
+Complete update-lock and independent default locked qualification pass:
+59 common tests per provider, 87 applicable case passes and nine explicit
+memory durability exclusions. All eight M/U crash boundaries, R0/R1 restore
+installation interruptions, native cleanup ownership, unchanged consumer/common
+binaries, frozen marker compatibility and seven real package graphs pass.
+The final locked foundation/lifecycle/configuration/discovery commands and
+76 repository tooling tests pass; every tracked lock hash is unchanged.
+
+The [plan](../specs/005-metadata-persistence/plan.md#implementation-evidence)
+records exact commands/results, the measured macOS/APFS configuration, all three
+architecture findings and their verified corrections, and the final requirement
+audit. No implementation extension hooks are configured. The durable driver
+handoff schedules the separately invoked `converge` stage. Draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete until
+convergence and finalization; feature merge, source release and dependency
+completion remain later gates. This invocation runs none of them.
+
+### F-05 convergence
+
+The installed convergence stage assessed all 24 functional requirements, eight
+outcomes, 23 story acceptance scenarios, 14 edge cases, 83 existing tasks, eight
+numbered integration decisions and eight constitution principles against the
+current implementation. It found one HIGH partial gap, F1, under FR-010/FR-015
+and T026/T036 (MP-08): a query/epoch-matching continuation with null SQLite
+`LastKey` or memory `After` reaches a null dereference, producing
+`InternalFailure/OperatorRecovery` instead of `InvalidInput/CorrectInput`.
+
+An SDK-interactive probe against the freshly packaged, unchanged providers
+reproduces that outcome in both implementations; an ordinary valid query
+continues to succeed afterward. No application or test source was edited.
+The stage appended only
+[Phase 9 / T084](../specs/005-metadata-persistence/tasks.md#phase-9-convergence),
+requiring bounded decoded-field validation and paired malformed/valid cursor
+regressions. The original task bytes and all 83 completions remain intact;
+specification, plan, constitution and reviewer-owned checklists are unchanged.
+There are no convergence extension hooks.
+
+| Convergence check | Result |
+| --- | --- |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| `bash scripts/validate-metadata.sh` | Passed existing full locked qualification and formatting/analyzers: 59 common tests per provider, 87 applicable entries and nine explicit memory durability exclusions; locks unchanged |
+| `dotnet fsi --quiet --readline-` with the fresh fixture assemblies and query/epoch-matching null-key continuations | Reproduced F1 in both providers; subsequent valid queries passed |
+| SHA-256 append-only artifact checks | Specification/plan unchanged; original tasks byte-identical, exactly one new unchecked T084 |
+
+Fresh qualification retains source commit
+`7dcf5090f426ed8088e1b6ba5ec15d11c6e963d8` and source/lock fingerprint
+`2594b90d9871c0a0555e2e5c590ea77dab461c543dbe50ededa5dda552922f5a`.
+It verifies the existing eight M/U crash boundaries, R0/R1 restore interruptions,
+native cleanup ownership, seven package graphs, unchanged consumers/marker
+binary and both runtime mutation pairs. This passing existing suite does not
+waive F1 or establish clean convergence.
+
+The outcome is `tasks_appended`; the next separately invoked stage is
+**`implement`**, not `finalize`. Draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete until
+T084, fresh convergence and finalization pass. The driver updates only this
+handoff documentation and its checkpoint outside the append-only assessment.
+Provider/example/API/recovery guides and product/architecture diagrams remain
+unaffected: no API, supported behavior, operational procedure, dependency or
+production capability changed. No merge, tag, release, infrastructure operation
+or deployment ran.
+
+### F-05 T084 implementation correction
+
+The returned implementation stage completes T084 only. SQLite `LastKey` and
+memory `After` now use null-safe bounded checks before hex decoding, preserving
+the existing complete-query/schema/epoch/size binding and finite decode limits.
+Six common theory variants mutate every decoded field (null, omitted,
+wrong-type, empty, odd-length and invalid hex); each rejection must return
+`InvalidInput/CorrectInput/Page`, allow the original cursor to resume, and
+preserve remaining/full dataset traversal.
+
+Both independently packaged providers reproduce the null/omitted
+`InternalFailure` assertion before repair. The corrected focused logical gate
+passes 65 tests per provider. The full independent locked metadata gate passes
+formatting/analyzers, 65 common tests per provider, all 87 applicable entries,
+nine explicit memory D exclusions, and existing crash/restore/native-ownership,
+package/old-binary/unchanged-consumer/runtime-mutation proofs. Repository tooling
+passes 76 tests. Four downstream locks change only local fixture package
+content hashes; no dependency identity/version or platform/third-party hash
+changes, and default replay preserves the reviewed locks.
+
+[Exact commands and attribution](../specs/005-metadata-persistence/plan.md#t084-malformed-continuation-correction)
+include both red runs and the tested working-source fingerprint. README,
+plan/tasks, quickstart and acceptance evidence are updated. Provider/API/model/
+recovery/example guidance and product/architecture diagrams are unaffected:
+they already require malformed-cursor refusal, and no public API, operational
+procedure, dependency or shared boundary changes. The earlier architecture
+review remains applicable; no new substantial provider-boundary change occurs.
+The specification, constitution and reviewer-owned checklists are unchanged;
+no implementation hooks exist.
+
+All 84 tasks are complete. The next separately authorized stage is fresh
+**`converge`**, not finalize or merge; draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete until
+convergence and finalization. No merge, tag, release, package publication,
+infrastructure operation or deployment ran.
+
+### F-05 fresh convergence: stored-page corruption classification
+
+The separately invoked installed `speckit-converge` assesses the current
+implementation after T084 against all 24 functional requirements, eight
+outcomes, 23 story acceptance scenarios, 14 edge cases, 84 existing tasks,
+eight numbered integration decisions and eight constitution principles.
+The malformed-continuation correction passes its common regressions in both
+independently packaged providers. One HIGH partial gap remains under
+FR-010/FR-013, SC-007 and T024/T026/T036 (MP-21/22).
+
+SQLite page reads deserialize and validate persisted payloads directly.
+A syntactically valid registry payload with `Label: null` reaches the generic
+caller-input exception mapping and returns `InvalidInput/CorrectInput/Page`.
+The identical stored record in a grouped read correctly returns
+`CorruptState/OperatorRecovery/Read`. Consumers therefore receive incorrect
+caller-correction guidance for damaged stored data. The existing
+corruption-aware decoder is the appropriate shared mechanism; globally
+reclassifying input failures would break valid malformed-query rejection.
+
+An SDK-interactive probe against the freshly packed, unchanged SQLite fixture
+reproduces both results. Malformed JSON is a positive classification control:
+both read paths report `CorruptState/OperatorRecovery`. Restoring the original
+synthetic payload after each probe makes the same valid grouped read and page
+succeed; fixture cleanup also completes. No application or test source is
+edited. Private synthetic data, captured output and binaries stay outside Git.
+
+The assessment appends only
+[Phase 10 / T085](../specs/005-metadata-persistence/tasks.md#phase-10-convergence),
+requiring corruption-aware page decoding and paired structural/value/JSON
+corruption, valid-page and caller-input regressions. A SHA-256 prefix comparison
+confirms every original task byte and all 84 completions are unchanged.
+Specification, plan, constitution and reviewer-owned checklists also remain
+unchanged. No pre/post convergence hooks exist.
+
+`$PRIVATE_EVIDENCE` below represents this invocation's owner-private parent
+outside Git; personal paths and raw evidence are not committed.
+
+| Convergence check | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/metadata-convergence"` | Passed full locked qualification and formatting/analyzers: 65 common tests per provider, 87 applicable entries and nine explicit memory durability exclusions; locks unchanged |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| `DYLD_LIBRARY_PATH="$PWD/runtimes/osx-arm64/native" dotnet fsi --quiet --readline-` from the fresh package consumer output, with the bounded synthetic corruption probe on standard input | Reproduced F1; malformed-JSON classification, restored valid reads/pages and cleanup controls passed |
+| SHA-256 artifact and source/lock comparison | Original tasks prefix, specification, plan and checklists unchanged; exactly one new unchecked T085; tested source/lock fingerprint unchanged |
+| `git diff --check` | Passed |
+
+The full manifest attributes execution to source commit
+`50a16a3f54b7a1a75d82ca8905f36742e27c0165` and source/lock fingerprint
+`41ef899b40bd4017c3be0973de1bb66e93a81ca7dae3b9ed2cf064f1072b6c1a`.
+Its measured configuration remains macOS 26.5.0/APFS, .NET 10.0.7,
+Microsoft.Data.Sqlite assembly 10.0.13.0 and native SQLite 3.53.3, with checked
+WAL/FULL/foreign-key/busy-timeout-zero settings. Existing eight M/U crash
+boundaries, R0/R1 restore interruptions, native cleanup ownership, seven actual
+package graphs, unchanged consumer/common binaries, frozen marker compatibility
+and both runtime mutation pairs pass. Existing-case success does not resolve
+F1 or establish clean convergence. Earlier platform-wide regression results
+remain historical; they are not claimed to have been repeated in this stage.
+
+The outcome is **`tasks_appended`** and the next separately invoked stage is
+**`implement`** for T085, not finalize or merge. Draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete until
+the correction, fresh convergence and finalization pass. The driver updates
+only README, this guide and its checkpoint outside the append-only assessment.
+Provider/API/model/recovery/acceptance/quickstart/example guides and product/
+architecture diagrams are unaffected: convergence changes no intended API,
+operational procedure, dependency or supported production capability. No new
+substantial boundary change requires another architecture review in this stage.
+No merge, tag, release, package publication, infrastructure operation or
+deployment ran.
+
+### F-05 T085 stored-page corruption correction
+
+The returned implementation stage completes T085. SQLite pages now reuse the
+existing bounded corruption-aware record decoder used by exact/grouped reads.
+The decoder checks canonical stored-key equality in both paths. Only persisted
+JSON/record validation becomes `CorruptState/OperatorRecovery`; caller query/
+continuation validation and final result-size failures retain
+`InvalidInput/CorrectInput`. No global exception translation changes.
+
+The new packaged MP-21 regression reproduces the null-label failure before
+repair: expected `CorruptState`, actual `InvalidInput` (65 pass, one fails).
+Five SQLite-specific shapes cover null label/revision, oversized label,
+malformed JSON and mismatched identity after a valid first row. Both page and
+group reads fail completely with safe phase/retry results, preserve the damaged
+payload and recover the exact original encoded page after synthetic restoration.
+Both fixture selections also pass the common page-corruption assertion.
+The existing malformed-cursor theory and tightened oversized-result controls
+preserve caller-correction guidance and valid traversal.
+
+Focused locked replay and full locked qualification pass 66 tests per provider;
+the full run passes formatting/analyzers, 87 applicable entries and nine explicit
+memory D exclusions, actual crash/restore/native ownership, seven package graphs,
+unchanged consumers/common binary, frozen marker and runtime mutation pairs.
+Repository tooling passes 76 tests; `git diff --check` passes. Four downstream
+locks change only local SQLite/HostAdapters content hashes, without identity,
+version, memory/Abstractions or third-party changes. Default replay preserves all
+88 reviewed locks. [Exact commands and attribution](../specs/005-metadata-persistence/plan.md#t085-stored-page-corruption-correction)
+also record the intermediate lock-refresh/test-comparison correction.
+
+README, plan/tasks, quickstart and acceptance evidence are updated. Provider/API/
+model/recovery/example guides and product/architecture/ADR diagrams are
+unaffected: existing corruption requirements, public APIs, operational procedures,
+package boundaries and production support claims are unchanged. Earlier platform
+regression results remain historical, not rerun for this fixture-private change.
+The previous architecture review remains applicable without a new substantial
+boundary change. Constitution, specification and reviewer-owned checklists are
+unchanged; no pre/post implementation hooks exist. Backlog/governance, prior
+features, release/cloud/UI/IaC guidance are unaffected; no new permissions,
+schema-repair procedure or deployment behavior is introduced.
+
+All 85 tasks are complete. The next separately authorized stage is fresh
+**`converge`**, not finalize or merge. Draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete until
+convergence and finalization. No merge, tag/release, package publication,
+infrastructure operation or deployment ran.
+
+### F-05 fresh convergence after T085
+
+The installed append-only assessment checks all 24 functional requirements,
+eight buildable outcomes, 23 story scenarios, 14 edge cases, 12 grouped plan
+decisions, all 85 existing tasks and eight constitutional principles against
+current scoped code. T084/T085's malformed-continuation and returned-page record
+decoding corrections are implemented. Two **HIGH partial** gaps remain:
+
+| Finding | Current evidence | Required follow-up |
+| --- | --- | --- |
+| F1: filtered pages hide corrupt query dimensions | `SqlitePages.cs` filters authorization partitions using `json_extract` before decoding candidate records. A stored entry with null `Identity.AuthorizationPartition` produces `CorruptState/OperatorRecovery/Read` on exact read, but a successful empty page for its original partition. | T086: corruption-aware bounded page selection, with regression coverage and an audit of the analogous aggregate/lease predicates; preserve legitimate foreign-scope absence and query isolation. |
+| F2: committed receipt retrieval lacks validation | `SqliteOperations.cs` deserializes stored receipts without the full receipt validation used during schema integrity checks. A persisted receipt with null `Revisions[0].Target` returns successful `MetadataResolution.Committed`. | T087: bounded persisted receipt/state validation and ticket binding before replay/reconciliation, with safe corruption outcomes and focused regressions. |
+
+One bounded diagnostic executes against the fresh package consumer's binaries,
+using only a private synthetic database seeded by the existing crash runner.
+Both findings are runtime observations, not deductions from checked tasks.
+The diagnostic verifies the damaged entry remains unchanged, restores both
+synthetic payloads, recovers the original valid page and commit receipt, and
+passes final schema integrity. No listener or repository application-code
+change is involved. F1's aggregate/lease audit and F2's other malformed/oversized/
+ticket-binding cases are implementation obligations, not additional reproduced
+paths. There are zero missing, contradicts or unrequested findings and no
+requirement waiver.
+
+`$PRIVATE_EVIDENCE` represents the owner-private session evidence parent outside
+Git. The F# diagnostic is retained there, not added to the repository.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/metadata-convergence"` | Passed full locked qualification and formatting/analyzers: 66 common tests per provider, 87 applicable passes and nine explicit memory D exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| `DYLD_LIBRARY_PATH="$PWD/runtimes/osx-arm64/native" dotnet fsi --quiet --exec "$PRIVATE_EVIDENCE/metadata-corruption-probe.fsx"` from the fresh package consumer output | Reproduced F1/F2; valid-page/original-receipt restoration and final integrity controls passed |
+| Artifact/source/lock integrity comparison | Original task prefix, specification, plan and all checklist bytes unchanged; exactly two new unchecked tasks, T086/T087; qualified source fingerprint and all 88 locks unchanged |
+| `git diff --check` | Passed |
+
+The full manifest identifies source commit
+`bbdf328ca14d8971e123c5da704a1b3fd3c90d69` and source/lock fingerprint
+`68215c83a4b41ed5b8f3c10976aa7519e71fc8d82cbd1e657a30cec30e3a513d`.
+Configuration remains macOS 26.5.0/APFS, .NET 10.0.7, driver 10.0.13.0 and
+native SQLite 3.53.3, with checked WAL/FULL/foreign-keys/busy-timeout-zero.
+All existing eight M/U process-stop boundaries, R0/R1 restore interruptions,
+native cleanup ownership, seven package graphs, unchanged consumer/common
+binaries, frozen marker and both assertion-level runtime mutation pairs pass.
+Passing existing cases does not resolve F1/F2. Earlier platform-wide regression
+results remain historical and were not repeated for this append-only assessment.
+
+The outcome is **`tasks_appended`** under
+[Phase 11](../specs/005-metadata-persistence/tasks.md#phase-11-convergence).
+The next separately invoked stage is **`implement`** for both T086 and T087,
+then fresh convergence; keep
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) draft.
+No pre/post convergence hooks exist. Outside the assessment, the driver updates
+only README, this guide and its checkpoint. Provider/API/model/recovery/
+acceptance/quickstart/example guides and product/architecture/ADR diagrams are
+unaffected: no intended API, operational procedure, dependency boundary or
+production capability changes. Their contracts still apply; the new tasks
+record implementation gaps, not weaker guarantees. The existing architecture
+review remains historical and no new substantial boundary change occurs here.
+Governance/backlog, prior features, release/cloud/UI/IaC guidance and permissions
+are unaffected. No implementation, merge, tag/release, package publication,
+infrastructure operation or deployment ran.
+
+### F-05 T086/T087 filtered-page and receipt corrections
+
+The separately invoked implementation completes both Phase 11 tasks and all
+87 feature tasks. SQLite now decodes bounded ordered candidates before applying
+payload-based authorization/aggregate/lease filters. Every scanned candidate
+consumes the original deadline; only page-sized results and matching lookahead
+are retained. Five package-only theory variants prove complete corruption
+failure, unchanged damaged payloads, exact restored pages and one-row traversal
+that excludes interleaved foreign scopes while preserving healthy empty scopes.
+
+Persisted operation decoding is shared by runtime replay/reconciliation and
+schema integrity: native types, ticket bounds, closed state, fingerprint shape,
+bounded receipt bytes, public receipt validation and ticket equality are checked
+before returning success. Fourteen malformed, oversized, wrong-ticket or
+invalid-state/fingerprint forms return sanitized operator-recovery failures with
+the original ticket and originating phase. Damaged state and committed aggregate
+contributions remain unchanged; synthetic restoration returns the original
+receipt without duplicate effects. The memory implementation is unchanged.
+
+`$PRIVATE_EVIDENCE` represents this invocation's owner-private evidence parent
+outside Git; raw synthetic databases, binaries and canary captures are not tracked.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --phase logical --evidence "$PRIVATE_EVIDENCE/red"` | Intended runtime red: six new SQLite failures and 66 passes against unchanged packages |
+| `bash scripts/validate-metadata.sh --phase logical --update-locks --evidence "$PRIVATE_EVIDENCE/logical"` | Passed 72 tests per provider and unchanged consumers; not full qualification |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/qualified"` | Passed complete locked qualification and formatting/analyzers: 72 tests per provider, 87 applicable entries and nine memory D exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| Source/lock/proof comparison | Current source and retained proof hashes verified; four locks change only local SQLite/HostAdapters hashes; all 88 locks preserved by locked replay |
+| `git diff --check` | Passed |
+
+The [plan](../specs/005-metadata-persistence/plan.md#t086t087-filtered-page-and-receipt-corruption-corrections)
+records exact source/environment attribution, the six passing pre-repair memory
+controls and the unchanged architectural/regression scope. Existing actual
+crash/restore/native ownership, seven package graphs, unchanged consumer/common
+binaries, frozen marker and runtime mutation proof pass again. Earlier separate
+platform regression commands remain historical, not newly claimed execution.
+
+README, tasks, plan, quickstart and acceptance evidence are current.
+Provider/API/model/recovery/example guides and baseline product/architecture/ADR
+diagrams are unaffected because the existing contracts, operations, package
+boundaries and production support scope do not change. The prior architecture
+review remains applicable; no new substantial dependency, lifecycle, authority,
+reference or lease boundary is introduced. Governance/backlog, earlier features,
+release/cloud/UI/IaC guidance and permissions are unaffected. Specification,
+constitution and reviewer-owned checklists remain unchanged; no implementation
+hooks exist. Fresh **`converge`** is the next separate stage, then finalization.
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains draft. No merge,
+tag/release, package publication, infrastructure plan/apply or deployment ran.
+
+### F-05 clean convergence
+
+The subsequent installed `speckit-converge` assessment finds no actionable
+missing, partial, contradictory or unrequested work. It checks all 24 functional
+requirements, eight buildable success criteria, 23 story acceptance scenarios,
+14 edge cases and all 87 existing tasks, including the resulting T084..T087
+behavior. Twelve grouped plan decisions and all eight constitution principles
+are assessed against the current implementation and fresh attributable proof.
+No new task or empty convergence phase is appended; `tasks.md` is byte-for-byte
+unchanged. No implementation, requirement, design or checklist approval changes.
+
+The assessment covers additive BCL-only contracts and canonical encoding;
+independent SQL/native and immutable-root state machines; atomic
+revision/ticket/receipt, snapshot/page, authority/reference/lease behavior;
+bounded admission and late ownership; configured F-02/F-03 adapters; schema,
+crash and backup/restore recovery; package/binary boundaries; and fail-closed
+qualification/documentation. Existing out-of-scope production, F-07,
+multi-node, power/device-loss and other-engine/filesystem claims remain excluded.
+
+`$PRIVATE_EVIDENCE` denotes the existing owner-private evidence parent outside
+Git. The full run independently verifies all 96 provider/case entries:
+87 applicable passes and nine explicit memory durability exclusions, with no
+applicable failure or skip. Source/lock fingerprint
+`29971e15fbeebde654bad140c1801f840c50018f4b507deaf50243fd5818cb24`
+matches the current source; every proof/package hash and all 88 locks are
+independently checked. Measured scope remains macOS 26.5.0/APFS, .NET 10.0.7,
+driver 10.0.13.0 and native SQLite 3.53.3 with checked WAL/FULL/foreign keys/
+busy-timeout-zero.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/metadata-converge"` | Passed complete locked qualification and formatting/analyzers; 72 common tests per provider, all 87 applicable entries and nine memory D exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| Independent manifest/source/lock verification | Passed current fingerprint, all proof/package hashes and unchanged 88-lock inventory |
+| Additional freshly packaged SQLite corruption probe | Six wrong-type/unknown option discriminators correctly return `CorruptState/OperatorRecovery` for grouped reads, pages, replay and reconciliation; damaged rows stay unchanged and restored original records/receipts and final integrity pass |
+| `git diff --check` | Passed |
+
+Full qualification repeats all eight M/U process stops, R0/R1 interrupted
+restore installations, native-stall ownership, backup/compatible restore,
+seven actual package graphs, unchanged consumer/common binaries, frozen
+pre-F-05 marker compatibility and both runtime assertion-failure/green pairs.
+Earlier separate foundation/lifecycle/configuration/discovery commands remain
+historical, not newly claimed executions. The installed stage has no pre/post
+extension hooks.
+
+README and this guide record the clean result and next gate. Spec, plan,
+contracts, tasks, constitution, all checklist bytes, product/test/tooling sources
+and locks remain unchanged. Provider/example/compatibility/recovery guides and
+baseline product/architecture/ADR diagrams are unaffected: this assessment
+changes no API, behavior, dependency, operational procedure or support scope.
+The existing architecture review remains applicable; no new substantial
+boundary change requires another review. Earlier feature artifacts, governance/
+backlog and release/cloud/UI/IaC guidance and permissions are unaffected.
+
+The next separately invoked stage is **`finalize`**.
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) stays draft; clean
+convergence is not finalization, feature completion or a merge request.
+No merge, tag/release, package publication, infrastructure plan/apply, cloud
+mutation or deployment ran.
+
+### F-05 finalization
+
+The separately invoked finalization stage uses the recorded
+`feature/005-metadata-persistence` branch and explicit
+`SPECIFY_FEATURE_DIRECTORY=specs/005-metadata-persistence`, after the driver
+records `finalize / running`. All 87 implementation tasks are complete, fresh
+convergence is clean, and the built-in 16/16 and reviewer-owned 40/40 checklist
+assessments remain unchanged. All 24 requirements, eight outcomes, 23 story
+scenarios and 14 edge cases retain their implementation/proof mappings.
+
+The [implementation architecture reviews](../specs/005-metadata-persistence/plan.md#implementation-evidence)
+remain applicable. Their restore-installation, lifecycle-stop and original-ticket
+reconciliation findings were corrected and re-reviewed, with runtime proof.
+T084..T087 subsequently change fixture-private validation, not public signatures,
+dependency direction, lifecycle, publication authority or reference/lease
+algorithms. Finalization changes no implementation boundary, so it does not
+require another architecture review.
+
+`$PRIVATE_EVIDENCE` below represents this invocation's existing owner-private
+evidence parent outside Git; raw databases, binaries and synthetic captures are
+not committed.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/f05-finalize-evidence"` | Passed complete locked qualification and formatting/analyzers: 72 common tests per provider, 87 applicable entries and nine explicit memory durability exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| Independent manifest/source/lock verification | Passed every proof/package hash, current source fingerprint, eight confirmed crash exits, seven package graphs and all 88 unchanged locks |
+| `git diff --check` | Passed |
+
+The final manifest attributes source commit
+`9bb288b2234341695599a1c2536d8e88209486de` and fingerprint
+`29971e15fbeebde654bad140c1801f840c50018f4b507deaf50243fd5818cb24`.
+Measured scope remains macOS 26.5.0/APFS, .NET 10.0.7,
+Microsoft.Data.Sqlite assembly 10.0.13.0 and native SQLite 3.53.3, with checked
+WAL/FULL/foreign-keys/busy-timeout-zero settings. Full acceptance repeats M0..M2,
+U0..U4, R0/R1 restore interruptions, native ownership, compatible backup/restore,
+unchanged consumer/common binaries, the frozen marker binary and both runtime
+red/green pairs. Separate foundation/lifecycle/configuration/discovery results
+remain historical; finalization does not claim new executions of those commands.
+
+README, this guide and feature plan/task/quickstart status now record the merge
+handoff. Provider, API/model/recovery/acceptance and CustomHost guidance already
+describe the implemented fixture interfaces, commands, reconciliation, recovery
+and limits; no additional change is needed because finalization changes none of
+those behaviors. Baseline charter/product specification/architecture/ADR diagrams,
+earlier features, governance/backlog, release/cloud/UI/IaC guides and permissions
+are unaffected: no production provider, endpoint, runtime, deployment or new
+operational procedure is delivered. Specification, constitution, checklists,
+product/test/tooling sources and locks remain unchanged.
+
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) is ready for maintainer
+review and merge using the repository template. `finish --pr 14` records
+**`await_merge / ready`**, not feature completion or dependency eligibility.
+After the maintainer merges, a separate invocation must verify that merge and
+publish `v0.0.5-alpha` at its exact merge commit before recording completion.
+No merge, tag/release, package publication, infrastructure plan/apply, cloud
+mutation or deployment runs in finalization.
 
 ```mermaid
 flowchart TD

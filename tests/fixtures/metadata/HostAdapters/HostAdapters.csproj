@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Metadata.HostAdapters</AssemblyName>
+    <PackageId>Hoard.Fixtures.Metadata.HostAdapters</PackageId>
+    <Description>Test-only host-side metadata composition and controlled publication authority.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Hosting" />
+    <PackageReference Include="Hoard.Fixtures.Metadata.Sqlite" />
+    <PackageReference Include="Hoard.Fixtures.Metadata.Memory" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+</Project>

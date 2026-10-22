@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Metadata.Memory</AssemblyName>
+    <PackageId>Hoard.Fixtures.Metadata.Memory</PackageId>
+    <Description>Independent non-durable metadata qualification fixture; not a production provider.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Abstractions" />
+  </ItemGroup>
+</Project>
