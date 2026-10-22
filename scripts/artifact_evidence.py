@@ -1,6 +1,8 @@
 """Fail-closed orchestration for test-only F-06 qualification."""
 
 import argparse
+import base64
+import binascii
 import hashlib
 import json
 import math
@@ -260,6 +262,27 @@ def prepare_baseline(root, work, update):
     return evidence
 
 
+def verify_metadata_input(previous, current):
+    if sha256(previous) == sha256(current):
+        return
+    if previous.name == current.name == "packages.lock.json":
+        documents = [json.loads(path.read_text()) for path in (previous, current)]
+        for document in documents:
+            for packages in document["dependencies"].values():
+                for name, dependency in packages.items():
+                    if name.startswith("Hoard.") and "contentHash" in dependency:
+                        try:
+                            digest = base64.b64decode(dependency["contentHash"], validate=True)
+                        except (binascii.Error, ValueError, TypeError):
+                            raise RuntimeError("Invalid local metadata package hash.") from None
+                        if len(digest) != 64:
+                            raise RuntimeError("Invalid local metadata package hash.")
+                        dependency["contentHash"] = None
+        if documents[0] == documents[1]:
+            return
+    raise RuntimeError("F-06 must consume unchanged existing metadata fixture sources and lock graphs.")
+
+
 def prepare_packages(root, work, update):
     historical = work / "metadata-input"
     historical.mkdir()
@@ -273,8 +296,7 @@ def prepare_packages(root, work, update):
     for base in ("tests/fixtures/metadata", "tests/contracts/Hoard.Metadata.Tests"):
         for old in (historical / base).rglob("*"):
             if old.is_file() and old.suffix in (".cs", ".csproj", ".props", ".sql", ".json"):
-                if sha256(old) != sha256(root / old.relative_to(historical)):
-                    raise RuntimeError("F-06 must consume unchanged existing metadata fixtures and locks.")
+                verify_metadata_input(old, root / old.relative_to(historical))
     metadata_work = work / "metadata-packages"
     metadata_work.mkdir()
     metadata.prepare_packages(historical, metadata_work, False)

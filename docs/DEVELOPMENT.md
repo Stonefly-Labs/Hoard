@@ -3682,7 +3682,8 @@ required for simple doc or repository-tool changes.
 
 ## Current checks and future product checks
 
-F-06 implementation is currently running with a locked-regression blocker. Its entry point,
+F-06 implementation is currently running; its local-package lock blocker is
+resolved. Its entry point,
 `bash scripts/validate-artifacts.sh --evidence <fresh-private-destination>`,
 requires an existing owner-private parent outside Git. It prepares the retained
 pre-F06 baseline and independent packages with tracked locks, then **fails**
@@ -3696,12 +3697,18 @@ truthfully declare their missing mandatory guarantees and are not ready.
 Failure captures are retained with
 `qualification: false`; neither compilation nor the verifier's synthetic tests
 qualifies storage. See the [running implementation evidence](../specs/006-artifact-storage/plan.md#implementation-evidence).
-The unchanged existing foundation runner, invoked directly with a retained
-private workspace, fails `NU1403` when a pre-existing fixture's locked
-Abstractions content hash meets the newly packed additive assembly at local
-version `0.1.0`. Prior tracked locks remain unchanged. Explicitly resolve their
-preservation versus content-hash refresh/replay requirement; do not mask this
-failure with a fallback, old-platform pass or source-only build.
+The initial `NU1403` failure came from rebuilt Abstractions bytes under local
+acceptance version `0.1.0` meeting the old package-content hash. The maintainer
+approved reviewed local-package hash refreshes on 2026-10-22. Only 142
+`Hoard.*` hashes in 38 of 97 tracked lockfiles change; package versions,
+dependency graphs, external-package hashes and frozen baseline locks/binaries
+remain unchanged. All five existing regression commands pass separate default
+locked replays; the artifact-focused command still passes 32 checks with
+`qualification: false`. The artifact runner permits that local hash-only
+metadata lock delta while still rejecting source, dependency/version, external
+hash and malformed-hash changes. This does not disable package integrity checks
+or authorize rewriting published packages. See
+[exact results and audit](../specs/006-artifact-storage/plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 Provider authoring guidance now identifies the partial contracts. Custom-host
 examples, architecture diagrams, compatibility policy, IaC and release guides
 are otherwise unaffected: old APIs/markers and production behavior are unchanged,

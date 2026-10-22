@@ -1,3 +1,4 @@
+import base64
 import copy
 import hashlib
 import json
@@ -155,6 +156,46 @@ class ArtifactEvidenceTests(unittest.TestCase):
         locks = artifact.lock_hashes(ROOT)
         with self.assertRaises(RuntimeError):
             artifact.verify_locks(ROOT, {**locks, "foreign/packages.lock.json": "a" * 64})
+
+    def test_metadata_inputs_allow_only_local_package_hash_refresh(self):
+        old = self.work / "baseline/packages.lock.json"
+        new = self.work / "current/packages.lock.json"
+        old.parent.mkdir()
+        new.parent.mkdir()
+        lock = {"version": 1, "dependencies": {"net10.0": {
+            "Hoard.Abstractions": {
+                "type": "Direct", "requested": "[0.1.0, 0.1.0]", "resolved": "0.1.0",
+                "contentHash": base64.b64encode(b"a" * 64).decode()},
+            "External.Package": {
+                "type": "Transitive", "resolved": "1.0.0",
+                "contentHash": base64.b64encode(b"b" * 64).decode()}}}}
+        old.write_text(json.dumps(lock))
+        new.write_text(json.dumps(lock))
+        artifact.verify_metadata_input(old, new)
+        changed = copy.deepcopy(lock)
+        changed["dependencies"]["net10.0"]["Hoard.Abstractions"]["contentHash"] = base64.b64encode(b"c" * 64).decode()
+        new.write_text(json.dumps(changed))
+        artifact.verify_metadata_input(old, new)
+
+        for package, field, value in (
+                ("Hoard.Abstractions", "resolved", "0.1.1"),
+                ("Hoard.Abstractions", "requested", "[0.1.0, 0.2.0]"),
+                ("Hoard.Abstractions", "dependencies", {"New.Dependency": "1.0.0"}),
+                ("Hoard.Abstractions", "contentHash", "invalid"),
+                ("Hoard.Abstractions", "contentHash", base64.b64encode(b"short").decode()),
+                ("External.Package", "contentHash", "c" * 88)):
+            changed = copy.deepcopy(lock)
+            changed["dependencies"]["net10.0"][package][field] = value
+            new.write_text(json.dumps(changed))
+            with self.subTest(package=package, field=field), self.assertRaises(RuntimeError):
+                artifact.verify_metadata_input(old, new)
+        for name in ("Fixture.cs", "Fixture.csproj"):
+            prior = old.with_name(name)
+            current = new.with_name(name)
+            prior.write_text("original")
+            current.write_text("changed")
+            with self.subTest(name=name), self.assertRaises(RuntimeError):
+                artifact.verify_metadata_input(prior, current)
 
     def test_cleanup_requires_owned_exact_root_and_settled_children(self):
         with self.assertRaises(RuntimeError):

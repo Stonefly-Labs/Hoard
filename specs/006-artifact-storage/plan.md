@@ -4,8 +4,9 @@
 
 **Input**: Feature specification from `specs/006-artifact-storage/spec.md`
 
-**Status**: Implementation running, currently blocked on existing locked
-acceptance package hashes. The design below remains the full obligation;
+**Status**: Implementation running; the local acceptance-package hash blocker
+is resolved by the approved refresh and separate locked replays below.
+The design below remains the full obligation;
 partial current code/evidence is distinguished in
 [Implementation Evidence](#implementation-evidence). No storage qualification.
 
@@ -292,7 +293,7 @@ replacement test or fabricated pass. No old fixture/consumer lock was changed
 to hide the failure. The .NET source restore/build before the package gate
 succeeded.
 
-**Blocker requiring resolution**: the mandatory default locked regression
+**Initial blocker (resolved below)**: the mandatory default locked regression
 restores pre-existing package-only fixtures against the newly packed additive
 Abstractions assembly under the existing local version `0.1.0`. Its bytes
 necessarily differ from the old package, so NuGet correctly rejects the old
@@ -305,6 +306,61 @@ new project/lock additions, prevents silently choosing the
 first option. Consuming unchanged F-05 packages solves F-06 preparation but does
 not solve the independent foundation gate.
 
-The checkpoint remains `implement / running`; no driver finish, architecture
-review, convergence, merge or release is attempted. Resolve this gate before
-counting the remaining implementation/qualification work complete.
+That attempt preserved `implement / running` rather than waiving the gate.
+The approved follow-up below resolves the lock blocker, not the remaining
+implementation/qualification obligations.
+
+### Approved Lock Refresh and Locked Replay 2026-10-22
+
+The maintainer authorized resolving the blocker after the content-hash-only
+refresh and separate locked replay were explained. T083 now explicitly permits
+reviewed hash-only changes for rebuilt local `Hoard.*` acceptance packages,
+not dependency/version changes or edits to frozen historical baseline inputs.
+The implementation checkpoint remains `implement / running`: T001..T006 are
+complete and 80 tasks remain unchecked. This follow-up does not execute or
+finish another driver stage, implement storage behavior or waive a gate.
+
+The audit covers all **97 tracked lockfiles** against `4f78ca2`: only **142
+local-package `contentHash` values in 38 lockfiles** differ. Requested/resolved
+versions, dependency edges, external-package hashes and historical baseline
+locks are unchanged. The original pre-F06 source archive, retained marker,
+dependencies and recipe lock still match their frozen hashes; no old binary
+was rebuilt. Audit and command logs are retained under the owner-private
+`../hoard-artifact-evidence/lock-unblock-*` paths outside Git.
+
+The artifact runner still builds F-05 fixtures from immutable baseline source
+and locks. Its current-input comparison now allows only valid local `Hoard.*`
+SHA-512 content-hash refreshes while preserving the lock graph. Changed fixture
+source/project files, dependency/version changes, external hash changes and
+malformed local hashes still reject. The focused regression first reproduced
+the old rejection, then passed with these negative controls.
+
+| Exact command / check | Result |
+| --- | --- |
+| `python3 -m unittest discover -s tests/tooling -p test_artifact_evidence.py -v` | Initial red at approved local hash delta; green 13 passed |
+| `bash scripts/validate-foundation.sh --update-locks` | Passed; intentional local hash regeneration and replay |
+| `bash scripts/validate-lifecycle.sh --update-locks` | Passed |
+| `bash scripts/validate-configuration.sh --update-locks` | Passed |
+| `bash scripts/validate-discovery.sh --update-locks` | Passed |
+| `bash scripts/validate-metadata.sh --update-locks` | Regenerated locks, then failed with generic child-command error; no full pass claimed for this attempt |
+| `bash scripts/validate-foundation.sh` | Separate default locked replay passed 628 tests across five assemblies, zero failures/skips; Core/packages/hosts/architecture/compatibility/format gates passed |
+| `bash scripts/validate-lifecycle.sh` | Separate default locked replay passed 504 tests, nine boundary proofs and seven package journeys |
+| `bash scripts/validate-configuration.sh` | Separate default locked replay passed 201 tests, six boundary proofs, nine journeys and five interrupted-publication barriers |
+| `bash scripts/validate-discovery.sh` | Separate default locked replay passed 137 tests, nine journeys and 18 actual graph scans |
+| `bash scripts/validate-metadata.sh --evidence ../hoard-artifact-evidence/lock-unblock-metadata-locked-20261022` | Complete default locked replay passed: 72 logical tests per provider, four boundary tests, 96-case manifest with 87 passes/nine memory durability exclusions; recovery/retained-binary/negative proof passed |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Artifact' --evidence ../hoard-artifact-evidence/lock-unblock-artifacts-locked-20261022` | Default locked focused replay passed 32 tests; `qualification: false`; original baseline reused unchanged |
+| `python3 -m unittest discover -s tests/tooling -v` | All 89 passed |
+| Full tracked-lock semantic audit and frozen-baseline hash verification | Passed; 38 hash-only lock deltas, no version/graph/external-hash drift; baseline intact |
+| `git diff --check` | Passed |
+
+All default locked replays preserve their lock inputs. No public API,
+dependency declaration, fixture source, example source, custom checklist or
+driver checkpoint changes in this follow-up. README/development/provider/test
+guides and this feature's task/quickstart evidence are synchronized. Architecture
+diagrams, charter/specification/ADR, compatibility policy, example guides, IaC
+and release guides are unaffected because this changes acceptance fingerprints
+and tooling policy, not runtime behavior, dependency boundaries or operations.
+The substantial partial F-06 implementation still needs its own architecture
+review and all remaining behavior/qualification tasks; this unblock is not that
+review or full artifact acceptance. PR #16 stays draft; no merge, tag,
+publication, deployment or infrastructure action is authorized or performed.

@@ -15,9 +15,11 @@ marker and historical `Metadata.ArtifactDigest`. Initialization/coordination
 fixtures and metadata-bridge wiring checks exist, but publication, protected
 copies, reconciliation and deletion remain fail-closed placeholders. Both
 fixtures declare missing mandatory guarantees and are not ready; neither is a
-production provider or an independently qualified store. The existing locked
-foundation regression currently fails package-content validation. Follow the
-[running evidence and blocker](../specs/006-artifact-storage/plan.md#implementation-evidence),
+production provider or an independently qualified store. The local-package
+hash blocker is resolved with reviewed hash-only lock updates and separate
+default locked regressions; versions, dependency graphs and frozen baselines
+are unchanged. Follow the
+[running evidence](../specs/006-artifact-storage/plan.md#implementation-evidence),
 not the future API inventory, for actual availability. Do not author a provider
 or advertise support on the strength of these unfinished contracts.
 

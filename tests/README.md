@@ -49,7 +49,10 @@ run source-level; additional `Cases/` compile only with
 current 32-check foundation subset with a retained pre-F06 baseline and always
 reports nonqualification. The fixtures' storage methods remain fail-closed
 placeholders; no AS case, multi-GB transfer, RSS or crash durability is proven.
-See the [evidence and locked-regression blocker](../specs/006-artifact-storage/plan.md#implementation-evidence).
+The local-package hash blocker is resolved by reviewed `Hoard.*` hash-only lock
+refreshes and separate default locked regressions. Versions, dependency graphs,
+external hashes and frozen historical baselines remain unchanged. See the
+[resolution and evidence](../specs/006-artifact-storage/plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 
 OpenTofu mock-provider tests live beside the bootstrap at
 `infra/bootstrap/tests/` and run with `tofu -chdir=infra/bootstrap test`.

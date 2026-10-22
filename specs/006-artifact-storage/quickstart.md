@@ -1,10 +1,10 @@
 # F-06 Artifact Qualification Quickstart
 
-**Status**: Partial implementation, blocked on an existing locked regression.
+**Status**: Partial implementation; the local-package lock blocker is resolved.
 The script, additive values/interfaces and minimum fixture initialization exist,
 but storage operations and full qualification do not. The proposed full/focused
 story commands below remain unfulfilled obligations, not passing results.
-See the [current evidence and blocker](plan.md#partial-foundation-and-blocking-regression).
+See the [approved hash refresh and locked replay](plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 
 Read [API](contracts/artifact-api.md), [model](data-model.md),
 [recovery](contracts/recovery.md) and [exact case matrix](contracts/acceptance.md).
@@ -79,9 +79,13 @@ bash scripts/validate-artifacts.sh --phase recovery --evidence "$PRIVATE_EVIDENC
 bash scripts/validate-artifacts.sh --phase packages --evidence "$PRIVATE_EVIDENCE/artifacts-packages"
 ```
 
-Only intentional dependency/project-manifest changes may use a future
-`--update-locks`; review those tracked locks and then run a separate default
-locked full acceptance. Do not install/restore dependencies merely for planning.
+Use `--update-locks` only for intentional dependency/project-manifest or local
+package-payload changes; review those tracked locks and then run a separate
+default locked acceptance. The approved F-06 unblock refreshes only local
+`Hoard.*` package hashes, preserving dependency versions/graphs and external
+hashes. Frozen baseline locks and binaries are never refreshed. A focused
+locked replay still reports nonqualification. Do not install/restore
+dependencies merely for planning.
 
 ## Scenarios to Inspect After Implementation
 
@@ -127,6 +131,8 @@ python3 -m unittest discover -s tests/tooling -v
 
 These already exist but do not prove F-06 behavior. Implementation must record
 their exact results, review provider/dependency architecture, update README and
-affected guides/examples, and preserve all prior contracts/locks/approvals.
+affected guides/examples, and preserve prior contracts, reviewer approvals
+and dependency graphs/versions. T083 permits reviewed local-package hash-only
+refreshes followed by separate locked replay, never frozen-baseline changes.
 No infrastructure plan/apply, package publication, release, deployment, production
 recovery operation, cache engine, protocol endpoint or UI is authorized here.

@@ -9,10 +9,11 @@
 **Status**: Implementation is running; T001..T006 setup is verified. The
 artifact command currently fails closed after independent package preparation;
 no storage behavior or qualification is claimed. Partial T007..T019 code has
-32 focused passing checks, but these tasks remain unchecked. The default locked
-foundation package gate fails `NU1403` on the changed Abstractions content hash;
-the prior-lock preservation constraint must be resolved before a required
-regression can pass. See [blocker/evidence](plan.md#partial-foundation-and-blocking-regression).
+32 focused passing checks, but these tasks remain unchecked. The initial
+`NU1403` blocker is resolved by the maintainer-approved local-package hash
+refresh and separate default locked regressions. Dependency graphs/versions,
+external-package hashes and frozen historical baselines remain unchanged.
+See [resolution/evidence](plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 The reviewer-owned [storage](checklists/storage.md) and
 [recovery](checklists/recovery.md) checklists are now 20/20 each.
 [RQ-01](checklists/recovery.md#rq-01-finite-release-versus-non-cooperative-work)
@@ -77,9 +78,12 @@ existing F-02/F-03 integration outside either store package.
 Add `tests/contracts/Hoard.Artifacts.Tests/` to `Hoard.slnx`; fixture projects,
 Consumer, CrashRunner and TransferRunner remain standalone. Use current xUnit,
 architecture inspectors and Python/Bash evidence helpers. Track new/changed
-locks; use lock-update mode only for intentional project/manifest changes,
-then replay default locked acceptance separately. No new vendor/native package
-is planned. Existing metadata fixtures are consumed unchanged from packages.
+locks; use lock-update mode only for intentional project/manifest or local
+package-payload changes, then review the delta and replay default locked
+acceptance separately. The approved unblock permits local `Hoard.*` content-hash
+refreshes only, not dependency changes or rewriting frozen baseline inputs.
+No new vendor/native package is planned. Existing metadata fixtures are
+consumed unchanged from packages.
 
 Private payloads, decisions, synthetic canaries, baseline binaries and proof
 captures belong in a fresh owner-private workspace outside Git. Ordinary
@@ -300,7 +304,7 @@ regressions and architecture review before implementation handoff.
 
 - [ ] T081 Update `README.md`, `docs/DEVELOPMENT.md`, `docs/PROVIDERS.md` and `specs/006-artifact-storage/quickstart.md` for actual APIs/command availability, private roots, borrowed/partial output, limits, RQ-01's approved interpretation, evidence/recovery/reclamation steps and explicit simulation/process-crash/production exclusions; explain unaffected compatibility policy/examples/diagrams/IaC/release guides rather than rewriting planned architecture or claiming a usable cache.
 - [ ] T082 Run default locked full `bash scripts/validate-artifacts.sh --evidence <fresh-private-destination>` from the final intended source: restore/build, SDK format/analyzers, independent packages, same common suite/consumer, actual four size/provider measurements, all six local crash barriers, retained binary and graph/report negatives; require exact 96 entries with 92 passes/four exclusions and unchanged source/locks, fail rather than skip any missing requirement.
-- [ ] T083 Run existing `bash scripts/validate-foundation.sh`, `bash scripts/validate-lifecycle.sh`, `bash scripts/validate-configuration.sh`, `bash scripts/validate-discovery.sh`, `bash scripts/validate-metadata.sh`, `python3 -m unittest discover -s tests/tooling -v` and `git diff --check`; record exact results and preserve every prior contract, example, tracked lock and reviewer-owned approval except deliberately reviewed new project/lock additions.
+- [ ] T083 Run existing `bash scripts/validate-foundation.sh`, `bash scripts/validate-lifecycle.sh`, `bash scripts/validate-configuration.sh`, `bash scripts/validate-discovery.sh`, `bash scripts/validate-metadata.sh`, `python3 -m unittest discover -s tests/tooling -v` and `git diff --check`; record exact results and preserve every prior contract, example and reviewer-owned approval. Preserve tracked lock dependency graphs, versions and external-package hashes; the maintainer-approved 2026-10-22 unblock permits reviewed content-hash-only refreshes for rebuilt local `Hoard.*` acceptance packages, followed by a separate default locked replay. Frozen historical baseline locks/binaries remain immutable; new project/lock additions still require review.
 - [ ] T084 Invoke the existing `.github/agents/hoard-architecture-review.agent.md` reviewer for the substantial F-06 contract/provider/shared-authority implementation before handoff; record findings/references in `specs/006-artifact-storage/plan.md`, correct in-scope defects with focused runtime proof and preserve opt-out compatibility, centralized reference authority and independent mechanism boundaries.
 - [ ] T085 Audit `specs/006-artifact-storage/contracts/acceptance.md` against the retained `scripts/artifact_evidence.py` full manifest and final source/lock fingerprints: all 25 FRs, eight SCs, 23 scenarios, 15 edge cases, 48 cases and every transfer/crash/authority subproof need actual applicable evidence. After T084 fixes, rerun affected checks and the default locked full/regression gates when source/lock drift invalidates their prior proof; never count stale results or mark failed tasks complete.
 - [ ] T086 Record exact implementation commands/results, safe qualification/environment/limitation evidence and architecture reference in `specs/006-artifact-storage/plan.md`, `quickstart.md`, `README.md` and `docs/DEVELOPMENT.md`; update task markers only for verified work, preserve all custom checklist markers and share coherent commits with immediate pushes. Do not begin convergence/finalize, declare backlog completion, merge, tag, publish packages or deploy as part of implementation.

@@ -751,15 +751,16 @@ runtime binaries or packages are published. See the
 [merge/release evidence](docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release).
 [Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
 merged into `main`, recording F-05 complete with release metadata.
-**F-06 implementation remains running and is blocked on locked-regression
-compatibility.** Setup and partial BCL-only artifact values/interfaces,
+**F-06 implementation remains running; its local-package lock blocker is resolved.**
+Setup and partial BCL-only artifact values/interfaces,
 shared authority, metadata bridge and minimum private-root fixtures exist.
 The package-only focused suite passes 32 tests with `qualification: false`;
 publication, transfers, recovery and deletion are **not implemented or qualified**.
-The full artifact command fails closed. The existing locked foundation gate
-rejects the changed local `Hoard.Abstractions.0.1.0` package with `NU1403`;
-pre-existing acceptance locks have deliberately not been refreshed without
-resolving their preservation constraint. See the
+The full artifact command fails closed. The maintainer-approved refresh changes
+only local `Hoard.*` acceptance-package hashes in 38 lockfiles; dependency
+versions/graphs, external-package hashes and frozen baseline evidence are
+unchanged. Separate default locked foundation, lifecycle, configuration,
+discovery and metadata regressions now pass. See the
 [running evidence](specs/006-artifact-storage/plan.md#implementation-evidence).
 
 The separately invoked **`specify`** stage creates the
