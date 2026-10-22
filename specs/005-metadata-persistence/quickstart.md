@@ -1,9 +1,9 @@
 # F-05 Metadata Validation Quickstart
 
-**Status**: Future implementation acceptance guide. The metadata commands,
-projects and adapters below do not exist at planning time. Do not run them or
-report a passing provider from this document alone. Existing repository-tool
-checks remain available today.
+**Status**: Implementation in progress. The preparation/evidence command and
+project scaffolds now exist; operational adapters and full qualification do
+not. Full and focused qualification deliberately fail until their attributable
+runtime prerequisites exist. Do not infer support from packaging scaffolds.
 
 ## Prerequisites
 
@@ -26,6 +26,25 @@ git diff --check
 ```
 
 These validate repository tooling/patch hygiene, not metadata semantics.
+
+Setup-only modes are available for fresh, explicit owner-private destinations:
+
+```bash
+# No metadata qualification: freeze old binaries from immutable pre-F-05 main.
+bash scripts/validate-metadata.sh --prepare-baseline /private/new/baseline
+# No metadata qualification: additionally build/pack isolated fixture scaffolds.
+bash scripts/validate-metadata.sh --prepare-only /private/new/setup
+```
+
+Use `--update-locks` only for intentional manifest/dependency changes. Setup
+pins Microsoft.Data.Sqlite 10.0.13 and its private native graph; the
+[selection review](research.md#implementation-dependency-selection-2026-10-21)
+records versions/licenses/advisory scope. Both modes explicitly report
+`qualification: false`. Default locked replay rejects missing/drifted locks.
+T001..T006 preparation passed, with 12 tooling cases and an intended runtime
+negative for failed-case acceptance. Full mode currently exits 1 with
+`Metadata qualification incomplete`; this is the required fail-closed setup
+result, not a failed or passing metadata implementation.
 
 ## Planned End-to-End Acceptance
 

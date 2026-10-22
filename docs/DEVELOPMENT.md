@@ -2445,6 +2445,37 @@ warranted for this documentation-only change. Draft
 no implementation, schema operation, qualification, publication, merge,
 infrastructure action or deployment occurs.
 
+### F-05 implementation setup
+
+The separately invoked `speckit-implement` runs on the recorded feature branch
+with `SPECIFY_FEATURE_DIRECTORY=specs/005-metadata-persistence`. The existing
+review gate passes: metadata 20/20, recovery 20/20, built-in requirements 16/16.
+There are no pre/post implementation extension hooks.
+
+T001..T006 establish a deterministic clock/owned barrier harness, twelve
+fail-closed evidence-tool tests, isolated locked build/package preparation and
+the retained marker/registration binary from merged pre-F-05 main
+`10ce78851b97b02bd83a8ef7da7ffdc2381d6519`. Private evidence freezes binary,
+recipe, dependency, lock, source and package hashes before public API changes.
+The SQLite scaffold privately pins Microsoft.Data.Sqlite 10.0.13; exact
+native/transitive packages and license/advisory review are in the
+[research](../specs/005-metadata-persistence/research.md).
+
+The [metadata quickstart](../specs/005-metadata-persistence/quickstart.md)
+documents preparation-only selectors. They explicitly report
+`qualification: false`; default full mode fails while runtime case evidence
+is missing. Initial missing-runner red and a runtime mutation that accepts
+failed cases are both observed; the unmodified verifier passes all twelve
+tooling cases. No operational provider, schema, L/D qualification, cache,
+release or deployment follows from compiling/packing scaffolds.
+
+The driver remains **`implement / running`**. Continue through all remaining
+tasks in this invocation unless genuinely blocked; do not call `finish` or
+start convergence from setup. Requirements/checklist bytes remain unchanged.
+Provider/example guides, architectural/product diagrams, release/IaC guides
+and previous feature artifacts are unaffected by setup because there is no
+new operational API, host behavior or supported capability.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

@@ -645,6 +645,15 @@ gate; **`implement`** remains next through a separate invocation. The checkpoint
 all 83 tasks and the specification/design remain unchanged. Requirements review
 and artifact analysis are not persistence, durability or production-support
 evidence.
+The separately authorized implementation stage is now **running**. Setup
+T001..T006 adds the deterministic harness, independently packed fixture
+scaffolds, pinned private SQLite dependency, retained pre-F-05 binary recipe
+and fail-closed [metadata evidence command](scripts/validate-metadata.sh).
+Preparation explicitly reports no qualification; full mode refuses incomplete
+runtime evidence. No operational metadata API, store, schema or conformance
+result is delivered by setup. See the
+[quickstart](specs/005-metadata-persistence/quickstart.md) for bounded preparation
+and the remaining obligations.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

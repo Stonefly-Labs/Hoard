@@ -164,3 +164,34 @@ All exact bounds, operation shapes, schema paths and recovery mechanics are
 resolved in the accompanying contracts. Package selection is a normal pinned
 implementation dependency step, not an unresolved product decision. No external
 documentation query included repository source, connection settings or secrets.
+
+## Implementation Dependency Selection: 2026-10-21
+
+The official NuGet tool reports stable `Microsoft.Data.Sqlite` **10.0.13**
+(published 2026-10-13). The package is pinned in `Directory.Packages.props`
+and referenced only by the standalone SQLite fixture manifest. Platform
+libraries, the memory fixture and the provider-neutral consumer have no driver
+reference. The host adapter/crash runner receive it transitively only because
+they explicitly compose the SQLite fixture.
+
+The resolved graph contains `Microsoft.Data.Sqlite.Core` 10.0.13 and
+`SQLitePCLRaw.bundle_e_sqlite3`, `.core`, `.provider.e_sqlite3` and
+`.lib.e_sqlite3` 2.1.13. Downloaded nuspecs declare MIT for Microsoft's two
+packages and Apache-2.0 for all four SQLitePCLRaw packages; SQLite itself uses
+its public-domain dedication. These licenses permit this MIT repository's
+test-only use; package/native notices must be retained in any later
+redistribution. Nothing is published or copied into tracked runtime binaries.
+
+Locked restores and the SDK's `dotnet list <prepared-Sqlite.csproj> package
+--vulnerable --include-transitive --format json --no-restore --config
+<private-NuGet.Config>` report no known advisory on this resolved graph at
+selection time. This is an advisory snapshot, not a guarantee against unknown
+native defects. Tracked locks retain exact versions and package content hashes.
+Native version/effective configuration and real durability evidence remain
+later implementation obligations.
+
+Pre-change marker/registration proof is compiled from the immutable merged
+baseline `10ce78851b97b02bd83a8ef7da7ffdc2381d6519`, never against F-05 APIs.
+The private evidence freezes recipe, dependency and binary hashes before any
+Abstractions changes. The preparation command explicitly reports
+`qualification: false`; packaging empty fixture scaffolds is not conformance.

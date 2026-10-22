@@ -1,0 +1,103 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "Hoard.Fixtures.Metadata.Memory": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "DP5NrGBS3yKsJNtQpzKhzI1a+OUh/Zui4YlN6BLfCf8WBkYHePx3ImNSpFaDfxd3/beP953N7dndbtuwRQfZLw==",
+        "dependencies": {
+          "Hoard.Abstractions": "[0.1.0]"
+        }
+      },
+      "Hoard.Fixtures.Metadata.Sqlite": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "vsAVX3MjAvidqYAM4qjAoCNMT10APp2ODPPBGVASAY4QpvG/5N6sja8a24t0nJ8a9bA4/fcW6rXLV6UdcW4xsQ==",
+        "dependencies": {
+          "Hoard.Abstractions": "[0.1.0]",
+          "Microsoft.Data.Sqlite": "10.0.13"
+        }
+      },
+      "Hoard.Hosting": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "IMBExcETMBE9Wnwyao+V1xDsmhb5dUS9SgjUNkW+PaEYS3uEubh53A9Hlji356jipLy624uPdlX6bakDo2yRkA==",
+        "dependencies": {
+          "Hoard.Abstractions": "0.1.0",
+          "Hoard.Core": "0.1.0",
+          "NuGet.Versioning": "7.9.0"
+        }
+      },
+      "Hoard.Core": {
+        "type": "Transitive",
+        "resolved": "0.1.0",
+        "contentHash": "OBrdz8CbMW7XEtOhtnWLW2hrfaYUWTAS9QBubhdPamPOEpIKoYFjDnm6crOfxU2cgVImJrVrEZBlM5l1KzSpsQ==",
+        "dependencies": {
+          "Hoard.Abstractions": "0.1.0"
+        }
+      },
+      "Microsoft.Data.Sqlite.Core": {
+        "type": "Transitive",
+        "resolved": "10.0.13",
+        "contentHash": "Gge8XsSCOwcbkbdmt2UDAe6kIv9Q0vA6yb3wsTStjjexaMFLTWfc/1gH4kbhJ+zWiXRTRA4lG2sOQNVfir204w==",
+        "dependencies": {
+          "SQLitePCLRaw.core": "2.1.13"
+        }
+      },
+      "SQLitePCLRaw.bundle_e_sqlite3": {
+        "type": "Transitive",
+        "resolved": "2.1.13",
+        "contentHash": "NlDixlC7uHmo+ojXRgkNvN0tQtVGpLDZ3x2OpgNj+G07VHh5cXSszFDrAiC4BpUiPwkcaeuQkMV9WQ123xVtmQ==",
+        "dependencies": {
+          "SQLitePCLRaw.lib.e_sqlite3": "2.1.13",
+          "SQLitePCLRaw.provider.e_sqlite3": "2.1.13"
+        }
+      },
+      "SQLitePCLRaw.core": {
+        "type": "Transitive",
+        "resolved": "2.1.13",
+        "contentHash": "2joofoinuHBFs0nMX3nKuXgxpXryRkCOdM2Ua6HBqQLLy6IW+5f28ZI+HAvMyF8vG7XfNz/lwfBfE6V4juru8Q=="
+      },
+      "SQLitePCLRaw.lib.e_sqlite3": {
+        "type": "Transitive",
+        "resolved": "2.1.13",
+        "contentHash": "D2UAuiGxFYBqeRXjjjGgvJ5UQifzn6wefmSqeKU7XcNGKLbJRP6X7kcPZ6opOBJGdCIlgbSxTvDpBbLvsN594A=="
+      },
+      "SQLitePCLRaw.provider.e_sqlite3": {
+        "type": "Transitive",
+        "resolved": "2.1.13",
+        "contentHash": "ZU60dSqoSNRe49KcQDUmOVgdRtjITOssVXFtiISs+zJXDI4D2Sndwpn2NOtzDQNPu0ZAvpoLPQ+GLKv6iEZn8Q==",
+        "dependencies": {
+          "SQLitePCLRaw.core": "2.1.13"
+        }
+      },
+      "Hoard.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "e0+Tty4sh7R4l5BMhkSlWfjDZHiHV1C/rZUFF2p3W9OsHvSFenrJDb/w8gU3Qu8lsvuKKQqwRRbl3Ejx8XmrPA=="
+      },
+      "Microsoft.Data.Sqlite": {
+        "type": "CentralTransitive",
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "w37nz3WFmDtRfXxWEwIXX2OgqDRiwhD1JGbFwfpFCF8GkCrV/yO6Y2JF5058J2RGoI2sCcdn02wrk0yEcekWcw==",
+        "dependencies": {
+          "Microsoft.Data.Sqlite.Core": "10.0.13",
+          "SQLitePCLRaw.bundle_e_sqlite3": "2.1.13",
+          "SQLitePCLRaw.core": "2.1.13"
+        }
+      },
+      "NuGet.Versioning": {
+        "type": "CentralTransitive",
+        "requested": "[7.9.0, )",
+        "resolved": "7.9.0",
+        "contentHash": "r4sZuVpVqwSBLe4qYDrnpScqdyctlRXg0HSF5OoCGkeBc8b+o8BBYHuI/u1RoWYX78PbieijU13TBt71/Xf3lw=="
+      }
+    }
+  }
+}

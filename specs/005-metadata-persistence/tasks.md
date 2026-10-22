@@ -6,14 +6,13 @@
 [metadata API](contracts/metadata-api.md), [recovery](contracts/recovery.md),
 [acceptance](contracts/acceptance.md) and [quickstart.md](quickstart.md).
 
-**Status**: Task generation only. All 83 tasks are unchecked; no API, fixture,
-schema, new validation command or qualification result is delivered here.
-The built-in requirements checklist remains 16/16. The reviewer-owned
+**Status**: Implementation running. Setup T001..T006 is complete; the remaining
+77 tasks are unchecked. No operational API, store/schema or qualification
+result is delivered by setup. The built-in requirements checklist remains 16/16. The reviewer-owned
 [metadata](checklists/metadata.md) and [recovery](checklists/recovery.md)
-checklists retain all 40 unchecked markers: the prior assisted assessment
-found written coverage, not formal approval. Read-only analysis is next.
-Implementation additionally requires reviewer approval or explicit reviewer
-authorization; neither task generation nor analysis supplies that approval.
+checklists record the separately requested assisted review, 40/40 satisfied.
+That completed review, not generation or analysis, satisfies the implementation
+gate. Their markers are read-only during implementation.
 
 **Tests**: Explicitly required by FR-023/FR-024, the five independent story
 tests, SC-001..SC-008 and MP-01..MP-48. Write positive and rejection/fault
@@ -80,15 +79,23 @@ filesystems, multi-node coordination or physical blob-deletion permission.
 **Purpose**: Prepare fail-closed evidence and pre-change compatibility proof
 before changing platform dependencies or behavior.
 
-- [ ] T001 [P] Create `tests/contracts/Hoard.Metadata.Tests/Hoard.Metadata.Tests.csproj` and `MetadataTestHarness.cs` with existing xUnit conventions, deterministic clocks, caller/engine/authority barriers, synthetic records and canary capture; add the test project to `Hoard.slnx`, keep new fixture projects standalone, and make every held activity observable with finite teardown.
-- [ ] T002 [P] Write failing `tests/tooling/test_metadata_evidence.py` for missing/duplicate/stale case and package inventories, false memory durability, missing red/green proof, failed/timed-out children, absent barrier/exit/state evidence, unsafe cleanup, lock/hash drift and partial-phase prerequisites; use synthetic evidence inputs, not recursive acceptance execution.
-- [ ] T003 Introduce `scripts/validate-metadata.sh` and `scripts/metadata_evidence.py` using existing evidence helpers: prerequisite checks, private workspace, bounded subprocesses, explicit failures, `--update-locks`, default locked mode and `--phase logical|recovery|packages`; full qualification must fail until every applicable proof exists and focused phases must reject absent/stale prerequisites.
-- [ ] T004 [P] Add `tests/fixtures/metadata/RetainedMarker/RetainedMarker.csproj`, `Program.cs` and `Baseline/packages.lock.json` as recipes for a marker/registration consumer compiled against an immutable merged pre-F-05 revision into the private workspace; freeze source/binary/dependency hashes before new Abstractions code, reuse existing retained-registration evidence where suitable, and never rebuild the retained binary against the new API (MP-47).
-- [ ] T005 Select a stable supported 10.x `Microsoft.Data.Sqlite` version with current advisory, license and native/transitive-dependency review; record nonsecret selection evidence in `specs/005-metadata-persistence/research.md`, pin it in `Directory.Packages.props`, create `tests/fixtures/metadata/Sqlite/Sqlite.csproj`, `Memory/Memory.csproj`, `Consumer/Consumer.csproj`, `CrashRunner/CrashRunner.csproj` and `HostAdapters/HostAdapters.csproj`, and generate/review their `packages.lock.json` files with the driver confined to SQLite.
-- [ ] T006 Extend `scripts/metadata_evidence.py` to build the retained baseline before current code, independently restore/build/pack fixture projects, compile tests against prepared packages and fingerprint source/manifests/locks; run T002 tooling negatives and prove incomplete full mode fails rather than producing a qualification-shaped success.
+- [X] T001 [P] Create `tests/contracts/Hoard.Metadata.Tests/Hoard.Metadata.Tests.csproj` and `MetadataTestHarness.cs` with existing xUnit conventions, deterministic clocks, caller/engine/authority barriers, synthetic records and canary capture; add the test project to `Hoard.slnx`, keep new fixture projects standalone, and make every held activity observable with finite teardown.
+- [X] T002 [P] Write failing `tests/tooling/test_metadata_evidence.py` for missing/duplicate/stale case and package inventories, false memory durability, missing red/green proof, failed/timed-out children, absent barrier/exit/state evidence, unsafe cleanup, lock/hash drift and partial-phase prerequisites; use synthetic evidence inputs, not recursive acceptance execution.
+- [X] T003 Introduce `scripts/validate-metadata.sh` and `scripts/metadata_evidence.py` using existing evidence helpers: prerequisite checks, private workspace, bounded subprocesses, explicit failures, `--update-locks`, default locked mode and `--phase logical|recovery|packages`; full qualification must fail until every applicable proof exists and focused phases must reject absent/stale prerequisites.
+- [X] T004 [P] Add `tests/fixtures/metadata/RetainedMarker/RetainedMarker.csproj`, `Program.cs` and `Baseline/packages.lock.json` as recipes for a marker/registration consumer compiled against an immutable merged pre-F-05 revision into the private workspace; freeze source/binary/dependency hashes before new Abstractions code, reuse existing retained-registration evidence where suitable, and never rebuild the retained binary against the new API (MP-47).
+- [X] T005 Select a stable supported 10.x `Microsoft.Data.Sqlite` version with current advisory, license and native/transitive-dependency review; record nonsecret selection evidence in `specs/005-metadata-persistence/research.md`, pin it in `Directory.Packages.props`, create `tests/fixtures/metadata/Sqlite/Sqlite.csproj`, `Memory/Memory.csproj`, `Consumer/Consumer.csproj`, `CrashRunner/CrashRunner.csproj` and `HostAdapters/HostAdapters.csproj`, and generate/review their `packages.lock.json` files with the driver confined to SQLite.
+- [X] T006 Extend `scripts/metadata_evidence.py` to build the retained baseline before current code, independently restore/build/pack fixture projects, compile tests against prepared packages and fingerprint source/manifests/locks; run T002 tooling negatives and prove incomplete full mode fails rather than producing a qualification-shaped success.
 
 **Checkpoint**: Baseline provenance and a failing incomplete acceptance runner
 exist; no metadata support claim follows from scaffolding or package compilation.
+
+Setup evidence (2026-10-21): initial missing-runner red; 12 tooling cases green;
+removing failed-case rejection produces the intended runtime assertion failure,
+then the unmodified verifier passes. Baseline-only and package-preparation modes
+complete with `qualification: false`; default locked full mode fails explicitly
+because logical/recovery/package runtime evidence does not yet exist. The
+package-only test harness builds against the prepared Abstractions package.
+Private run artifacts retain recipe/binary/source/lock/package hashes.
 
 ## Phase 2: Foundational (Blocking Prerequisites)
 

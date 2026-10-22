@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
+    <PackageReference Include="xunit" PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(MetadataPackageAcceptance)' != 'true'">
+    <ProjectReference Include="../../../src/Hoard.Abstractions/Hoard.Abstractions.csproj" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(MetadataPackageAcceptance)' == 'true'">
+    <NuGetLockFilePath>PackageAcceptance/packages.lock.json</NuGetLockFilePath>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(MetadataPackageAcceptance)' == 'true'">
+    <PackageVersion Include="Hoard.Abstractions" Version="[0.1.0]" />
+    <PackageReference Include="Hoard.Abstractions" />
+  </ItemGroup>
+</Project>
