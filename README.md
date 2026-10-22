@@ -741,9 +741,17 @@ documentation. Fresh full locked qualification passes 72 common tests per
 provider, all 87 applicable entries and nine explicit memory durability
 exclusions, with all 88 locks unchanged. See the
 [finalization evidence](docs/DEVELOPMENT.md#f-05-finalization).
-[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) is ready for maintainer
-review and merge. The checkpoint schedules **`await_merge`**; F-05 is not yet
-recorded complete, and no release or dependent specification starts here.
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) merged into `main` at
+`81e2e8d41e08aafc9e89f388dab78e7509227dd5`. The separate **`await_merge`** stage
+verified that merge and published
+[`v0.0.5-alpha`](https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.5-alpha)
+at that exact commit. Its successful source-release run, generated notes,
+annotated remote tag and both automatic source archives are verified; no
+runtime binaries or packages are published. See the
+[merge/release evidence](docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release).
+[Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
+records F-05 complete with release metadata and must merge before the next
+separately invoked **`specify`** stage. No dependent specification starts here.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

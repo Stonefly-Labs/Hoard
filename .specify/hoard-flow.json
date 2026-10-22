@@ -1,13 +1,9 @@
 {
   "schema_version": 1,
-  "stage": "await_merge",
+  "stage": "specify",
   "status": "ready",
-  "branch": "feature/005-metadata-persistence",
-  "active": {
-    "id": "F-05",
-    "feature_directory": "specs/005-metadata-persistence",
-    "pr": 14
-  },
+  "branch": null,
+  "active": null,
   "completed": [
     {
       "id": "F-01",
@@ -34,6 +30,14 @@
       "merge_commit": "287c7b65a068b50e672d92f2d535ef79c910ac0b",
       "release_tag": "v0.0.4-alpha",
       "release_url": "https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.4-alpha"
+    },
+    {
+      "id": "F-05",
+      "feature_directory": "specs/005-metadata-persistence",
+      "pr": 14,
+      "merge_commit": "81e2e8d41e08aafc9e89f388dab78e7509227dd5",
+      "release_tag": "v0.0.5-alpha",
+      "release_url": "https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.5-alpha"
     }
   ],
   "history": [
@@ -526,6 +530,13 @@
       "branch": "feature/005-metadata-persistence",
       "at": "2026-10-22T05:39:53.725643+00:00",
       "evidence": "Finalized F-05: all 87 tasks complete; clean convergence; requirements 16/16 and reviewer-owned metadata/recovery 40/40 unchanged; prior implementation architecture findings corrected/re-reviewed with runtime proof and no subsequent substantial boundary change. Fresh bash scripts/validate-metadata.sh full locked qualification/format passed: 72 tests per provider, 87 applicable passes, nine explicit memory D exclusions, eight crash exits, seven package graphs, immutable 88 locks; independently verified source/proof/package hashes (29971e15fbeebde654bad140c1801f840c50018f4b507deaf50243fd5818cb24). python3 -m unittest discover -s tests/tooling -v passed 76; git diff --check passed. README/affected status guides current; unaffected docs justified in DEVELOPMENT#f-05-finalization. PR 14 targets main for maintainer review; no merge/release/infrastructure/deployment."
+    },
+    {
+      "stage": "await_merge",
+      "spec_id": "F-05",
+      "branch": "chore/spec-progress-f-05",
+      "at": "2026-10-22T05:49:35.883466+00:00",
+      "evidence": "Verified PR #14 merged at 81e2e8d41e08aafc9e89f388dab78e7509227dd5 in origin/main; all 87 tasks complete and merged finalization/architecture/docs evidence retained. Published annotated v0.0.5-alpha at that exact merge; Source release run 39730092661 succeeded: https://github.com/Stonefly-Labs/Hoard/actions/runs/39730092661 . Verified non-draft prerelease, generated PR-linked notes, remote peeled commit, ZIP commit comment and both automatic archives against four exact-merge files: https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.5-alpha . Release validator and main ancestry check passed; tooling 76/76 passed; product acceptance remains merged historical evidence. Running checkpoint eefbd1d pushed in draft progress PR #15; completion checkpoint must merge before next spec."
     }
   ]
 }

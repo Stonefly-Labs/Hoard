@@ -2976,6 +2976,58 @@ publish `v0.0.5-alpha` at its exact merge commit before recording completion.
 No merge, tag/release, package publication, infrastructure plan/apply, cloud
 mutation or deployment runs in finalization.
 
+### F-05 merge completion and alpha source release
+
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) merged into `main` at
+`81e2e8d41e08aafc9e89f388dab78e7509227dd5`. The separately invoked
+`await_merge` stage verifies that exact commit in fetched `origin/main`, all
+87 completed tasks, and the merged finalization, checklist and architecture
+evidence above. This progress/docs-only stage changes no product code or
+dependency; full metadata and earlier platform acceptance remain historical
+evidence, not new executions.
+
+The stage starts `chore/spec-progress-f-05` from fetched main before `begin`.
+Its running checkpoint is committed/pushed as `eefbd1d` in draft
+[PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15), preserving a clean
+worktree and durable recovery point before tagging. Under the bounded standing
+authorization, the installed `hoard-release` skill publishes
+[`v0.0.5-alpha`](https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.5-alpha)
+at the exact feature merge, not the progress branch tip.
+
+| Exact command / check | Result |
+| --- | --- |
+| `python3 scripts/release.py v0.0.5-alpha` | Passed; valid prerelease |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed all 76 tests |
+| `git merge-base --is-ancestor 81e2e8d41e08aafc9e89f388dab78e7509227dd5 origin/main` | Passed |
+| `python3 scripts/release.py v0.0.5-alpha --check-main` | Passed; exact merge commit |
+| `gh run watch 39730092661 --exit-status --interval 3` | Passed; [Source release run](https://github.com/Stonefly-Labs/Hoard/actions/runs/39730092661) succeeded at the exact merge |
+| Release/tag/archive verification | Passed non-draft prerelease, generated PR-linked notes and changelog, annotated remote tag, ZIP commit comment and four exact-merge file comparisons in each automatic archive |
+| `git diff --check` | Passed |
+
+The annotated tag object is `f890f2d1f6938751a6e6f64b9815235829cd399c`;
+its remote peeled commit is the feature merge above. Both GitHub archive roots
+identify that tag object; the ZIP comment identifies the full merge commit.
+README, checkpoint, task list and public metadata values match the exact
+merge's bytes in both archives. Verification holds downloaded archives only
+in memory; no archives, databases, build outputs or credentials enter Git.
+
+Only after publication verification does `finish` independently verify the
+remote annotated tag and GitHub prerelease and record F-05 complete with its
+`release_tag` and `release_url`. The completion checkpoint and documentation
+are shared through PR #15, which must merge before a later invocation can
+start the next **`specify`** stage. This invocation starts no new specification
+and does not merge that PR.
+
+README and feature plan/task/quickstart status now record the verified handoff.
+Provider/API/model/recovery/acceptance and CustomHost guides, baseline product
+intent/architecture/ADR diagrams, constitution/backlog, predecessor artifacts,
+release/cloud/UI/IaC guidance and permissions are unaffected: no implementation,
+signature, package edge, operational procedure or support scope changes.
+No new architecture review is needed for this progress/docs-only scope.
+Specification and reviewer-owned checklists remain unchanged. This source
+release publishes no runtime binaries, packages or containers and performs no
+deployment, infrastructure plan/apply, cloud mutation or governance change.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

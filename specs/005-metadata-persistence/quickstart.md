@@ -5,8 +5,12 @@ configured host adapters and qualification command are implemented. Qualificatio
 is fail-closed and fixture-scoped, never production provider delivery. The
 [plan](plan.md#implementation-evidence) records completed checks and stage gates.
 Clean convergence and [finalization](plan.md#finalization-evidence) are complete;
-PR #14 is ready for maintainer review and merge. The next stage is `await_merge`,
-not another implementation or qualification claim.
+PR #14 merged and the separate `await_merge` stage verified the
+[`v0.0.5-alpha` source prerelease](https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.5-alpha)
+at its exact merge commit. [Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
+must merge before the next specification. See the
+[merge/release evidence](../../docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release);
+this handoff is not another implementation or qualification claim.
 
 ## Prerequisites
 

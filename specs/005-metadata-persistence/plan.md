@@ -7,7 +7,12 @@
 **Status**: Implementation complete, including convergence corrections T084..T087;
 additive operation contracts, independent fixtures and the qualification
 orchestrator are implemented. Clean convergence and finalization are complete;
-PR #14 is ready for maintainer review and merge, with `await_merge` next. See
+PR #14 merged at `81e2e8d41e08aafc9e89f388dab78e7509227dd5`. The separate
+`await_merge` stage verified and published `v0.0.5-alpha` at that exact merge.
+[Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
+must merge before the next specification. See the
+[merge/release evidence](../../docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release)
+and
 [implementation evidence](#implementation-evidence) for measured checks and
 remaining stage gates. Specification and reviewer-owned checklists are unchanged.
 
