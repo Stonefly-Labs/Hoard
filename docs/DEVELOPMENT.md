@@ -3154,6 +3154,99 @@ clarification blocker. Planning, custom checklist review, task generation,
 implementation, qualification execution, merge, publication, infrastructure
 and deployment are not performed by this stage.
 
+### F-06 artifact storage planning
+
+The separately invoked `plan` stage retains `feature/006-artifact-storage` and
+explicitly pins `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage`.
+The installed `speckit-plan` initializes its resolved template once; no
+pre/post extension hooks are configured. It creates the
+[plan](../specs/006-artifact-storage/plan.md),
+[research decisions](../specs/006-artifact-storage/research.md),
+[operation model](../specs/006-artifact-storage/data-model.md),
+[API contract](../specs/006-artifact-storage/contracts/artifact-api.md),
+[recovery protocol](../specs/006-artifact-storage/contracts/recovery.md),
+[acceptance matrix](../specs/006-artifact-storage/contracts/acceptance.md)
+and [future validation quickstart](../specs/006-artifact-storage/quickstart.md).
+These artifacts are design obligations, not implemented public APIs or
+executed artifact-store acceptance.
+
+The additive BCL contract preserves `IArtifactProvider`, the existing
+`Metadata.ArtifactDigest` and all lifecycle/configuration/metadata APIs.
+Stores expose private verified staging, conditional immutable publication,
+protected full-copy reads, ticket reconciliation and bounded maintenance.
+Full read completion verifies digest/length; an open is not a media scrub,
+and a failed copy cannot authorize reuse of partial destination output.
+Complete verification is mandatory even for newly submitted duplicate content.
+
+One host-injected shared authority coordinates store publication, readers,
+F-05 metadata admission and exclusive deletion. Its metadata bridge validates
+exact current commit evidence and holds protection through actual transaction
+settlement. A zero-reference observation is not deletion permission.
+Store/digest/incarnation and operation receipts fence stale deletion/recreation,
+while late uncertain I/O retains exclusion rather than pretending rollback.
+The guard-recognition API is provider-neutral; no concrete authority or
+provider-private metadata schema leaks into consumers.
+
+All 25 FRs, eight outcomes, 23 scenarios and 15 edge cases are traced to
+48 planned cases: 40 common logical cases, four local durability cases and
+four package/report cases. Full qualification requires exactly 96 provider/case
+entries, 92 applicable passes and four explicit simulated-provider durability
+exclusions. Each implementation must actually write/read 256 MiB and 4 GiB
+with paced non-seekable streams and at most 64 MiB incremental peak process RSS.
+Data generation and OS measurements cannot be replaced by sparse file size,
+managed allocation counts, a smaller payload or a skipped test.
+
+The local qualification adapter owns a private same-filesystem root, immutable
+payloads and checked decision/receipt records. Actual child-process kills at
+B0..B3/D0..D1 prove only the reported process-crash configuration; no portable
+BCL flush is advertised as power-loss or directory durability certification.
+The independently implemented disk-backed object-semantics fixture uses
+multipart/conditional pointers and delayed direct visibility/listing without
+rename; it supplies no durable remote-service claim.
+
+Finite budgets now include transfer/control/cleanup/maintenance deadlines,
+inactivity, byte/buffer/concurrency/staging limits, owner renewal and 24-hour
+receipt retention. Cooperative streams have finite resource-release proof;
+non-cooperative negative cases must retain bounded ownership, report incomplete
+cleanup and block readiness. Closing a borrowed stream or disposing a live guard
+is not an acceptable timeout shortcut.
+
+The required bounded `hoard-architecture-review` identified one P2 omission:
+the store lacked a public way to recognize protection acquired by the metadata
+bridge. The design correction adds authority-owned `RetainAsync`, atomically
+recognizing opaque live identity and pinning the same-operation protection
+without another admission acquisition. AS-35 includes foreign/copied/disposed
+guard negatives and held-after-expiry settlement. The reviewer otherwise found
+no confirmed dependency/API compatibility violation or additional product-policy
+question. The correction is recorded in the plan; no second agent review or
+runtime proof is claimed. Both pre-research and post-design constitutional
+assessments pass without an exception or ADR change.
+
+README and this guide link the new artifacts and accurately schedule
+`checklist / ready`. Existing specification and built-in checklist remain
+byte-for-byte unchanged, with no custom approval or tasks generated. Provider/
+example/compatibility guides, predecessor artifacts, charter/product spec,
+baseline architecture/ADR/diagrams, constitution/backlog, product/tooling source,
+locks, release and IaC guides remain unaffected: this stage adds proposed
+contracts/fixture proof, not existing APIs, dependencies, runnable commands,
+supported capabilities or operational procedures. The planned
+`bash scripts/validate-artifacts.sh` must not be presented as runnable until
+implementation. Existing .NET/OpenTofu acceptance is not rerun for design-only
+changes; the tooling checks below do not establish storage behavior.
+
+| Exact command / check | Result |
+| --- | --- |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed all 76 tests |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/setup-plan.sh --json` | Passed once; copied resolved plan template into the pinned directory |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/check-prerequisites.sh --json --paths-only` | Passed; resolves the pinned feature/spec/plan |
+| Direct planning assertions | Passed seven artifacts, 48 cases/25 FRs/eight SCs, six crash barriers, 31 local links/anchors, unchanged spec/16-item checklist and planning-only scope |
+| `git diff --check` | Passed |
+
+The feature PR remains draft and the next separate invocation runs `checklist`.
+Reviewer approval, tasks/analysis, implementation, qualification, convergence
+and finalization remain outstanding. No source release, package publication,
+infrastructure plan/apply, settings/permissions change, deployment or merge occurs.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

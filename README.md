@@ -767,9 +767,22 @@ finds all ten ambiguity categories clear, with zero questions and no requirement
 or scope changes. The built-in quality checklist remains 16/16; exact budgets
 and proof mechanics remain constrained planning decisions. See the
 [review evidence](docs/DEVELOPMENT.md#f-06-artifact-storage-clarification).
-The next separately authorized stage is **`plan`**;
+The subsequent [implementation plan](specs/006-artifact-storage/plan.md)
+defines additive BCL-only operations, exact finite budgets, protected full-read
+completion, ticket/incarnation recovery and one shared authority for metadata
+publication and safe deletion. Its [acceptance matrix](specs/006-artifact-storage/contracts/acceptance.md)
+traces all 25 requirements/eight outcomes to 48 planned cases, including actual
+256 MiB/4 GiB and peak-RSS proof on both independent fixtures. Local process-crash
+qualification remains distinct from simulated object semantics and power-loss
+or production-provider claims. Architecture review's guard-recognition omission
+is addressed by authority-owned retention without reentering admission.
+See the [planning scope](docs/DEVELOPMENT.md#f-06-artifact-storage-planning)
+and [future validation guide](specs/006-artifact-storage/quickstart.md);
+the new APIs and artifact acceptance command are not implemented yet.
+The next separately authorized stage is **`checklist`**;
 [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) remains draft.
-No plan, tasks, custom checklist approval or implementation occurs here.
+No tasks, custom checklist approval, implementation or qualification execution
+occurs in planning.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

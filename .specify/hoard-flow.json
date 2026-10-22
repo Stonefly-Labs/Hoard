@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "plan",
+  "stage": "checklist",
   "status": "ready",
   "branch": "feature/006-artifact-storage",
   "active": {
@@ -555,6 +555,13 @@
       "branch": "feature/006-artifact-storage",
       "at": "2026-10-22T12:46:43.661252+00:00",
       "evidence": "F-06 clarify completed through installed speckit-clarify with explicitly pinned specs/006-artifact-storage. All ten ambiguity categories Clear; no critical ambiguities, zero questions, no requirement/acceptance/scope changes; dated review added only to Clarifications. Built-in quality checklist revalidated 16/16 to 16/16, byte-for-byte unchanged, zero newly passing/regressions/unchecked; no custom approval. No pre/post hooks. README/DEVELOPMENT synchronized with coverage and unaffected-document reasons; no public API/dependency/runtime change warrants new architecture review. python3 -m unittest discover -s tests/tooling -v passed 76 tests; pinned prerequisites, unchanged-content/stage-isolation/local-link assertions and git diff --check passed. Draft PR #16 retained; next stage plan, no blockers. No later-stage generation, implementation, qualification execution, merge, publication, infrastructure or deployment."
+    },
+    {
+      "stage": "plan",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-22T13:20:39.809459+00:00",
+      "evidence": "F-06 plan completed through installed speckit-plan with explicitly pinned specs/006-artifact-storage; resolved template initialized once, no hooks. Seven design artifacts define additive BCL-only operations, complete-stream and read-completion verification, finite budgets/ownership, ticket/incarnation recovery, common shared authority and unchanged F-05 publication seam. Real local process-crash fixture and independent no-rename object-semantics fixture remain future qualification; both require actual 256 MiB/4 GiB <=64 MiB incremental peak RSS. Traceability covers all 25 FRs/eight SCs, 23 scenarios/15 edge cases, 48 case IDs; expected 96 entries/92 passes/four explicit object durability exclusions. Required hoard-architecture-review found one P2 missing neutral guard-recognition seam, corrected with authority-owned same-operation RetainAsync and AS-35 foreign/copied/disposed/expired-admission negatives; no second review/runtime approval claimed, no unresolved design blocker. Pre/post constitutional assessments pass without exception. Specification and 16-item built-in checklist byte-identical; no custom approval/tasks/source/lock changes. README/DEVELOPMENT updated with unaffected-document reasons; draft PR #16 retained. python3 -m unittest discover -s tests/tooling -v passed 76 tests; pinned setup/prerequisites, seven-artifact/coverage/six-barrier/31-local-link/stage-isolation assertions, PR template fidelity and git diff --check passed. Next stage checklist; no implementation, qualification execution, merge, publication, infrastructure or deployment."
     }
   ]
 }
