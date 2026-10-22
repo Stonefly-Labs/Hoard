@@ -687,6 +687,15 @@ qualification passes 65 common tests per provider, all 87 applicable entries
 and nine explicit memory durability exclusions. See the
 [correction evidence](specs/005-metadata-persistence/plan.md#t084-malformed-continuation-correction).
 Fresh **`converge`** is next, followed by finalization; PR #14 remains draft.
+That fresh assessment finds one HIGH partial gap in SQLite page reads:
+a stored registry with a null label is incorrectly classified as
+`InvalidInput/CorrectInput`, while grouped reads correctly return
+`CorruptState/OperatorRecovery` for the same record.
+[Phase 10 / T085](specs/005-metadata-persistence/tasks.md#phase-10-convergence)
+records the correction and missing regression; no implementation changes occur
+in convergence. Fresh full locked qualification passes its existing cases but
+does not cover or waive this additional runtime-proven gap. The next stage is
+**`implement`** for T085, then fresh convergence; PR #14 stays draft.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

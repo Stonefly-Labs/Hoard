@@ -544,3 +544,7 @@ crash/recovery/package/old-binary proofs and formatting/analyzers. Four fixture
 consumer locks change only local fixture content hashes; default replay
 preserves them. Repository tooling passes 76 tests. See
 [correction evidence](plan.md#t084-malformed-continuation-correction).
+
+## Phase 10: Convergence
+
+- [ ] T085 Classify invalid stored page records as `CorruptState/OperatorRecovery/Page` in `tests/fixtures/metadata/Sqlite/SqlitePages.cs`, reusing the existing corruption-aware record decoding in `SqliteMetadataStore.cs` rather than translating caller validation failures globally: a persisted registry payload with `Label: null` currently returns `InvalidInput/CorrectInput/Page`, while the identical record in a grouped read correctly returns `CorruptState/OperatorRecovery/Read`. Add focused regressions in `tests/contracts/Hoard.Metadata.Tests/Cases/MetadataFailureTests.cs` for syntactically valid but structurally/value-invalid stored records and malformed JSON, requiring whole-page failure without partial rows, sanitized diagnostics and preserved stored data; pair them with valid-page recovery and unchanged `InvalidInput/CorrectInput` results for malformed caller queries/continuations and oversized results. Replay applicable locked qualification and update affected evidence/documentation per FR-010, FR-013, SC-007 and T024/T026/T036 (MP-21/22) (partial, HIGH).

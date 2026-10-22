@@ -2631,6 +2631,75 @@ All 84 tasks are complete. The next separately authorized stage is fresh
 convergence and finalization. No merge, tag, release, package publication,
 infrastructure operation or deployment ran.
 
+### F-05 fresh convergence: stored-page corruption classification
+
+The separately invoked installed `speckit-converge` assesses the current
+implementation after T084 against all 24 functional requirements, eight
+outcomes, 23 story acceptance scenarios, 14 edge cases, 84 existing tasks,
+eight numbered integration decisions and eight constitution principles.
+The malformed-continuation correction passes its common regressions in both
+independently packaged providers. One HIGH partial gap remains under
+FR-010/FR-013, SC-007 and T024/T026/T036 (MP-21/22).
+
+SQLite page reads deserialize and validate persisted payloads directly.
+A syntactically valid registry payload with `Label: null` reaches the generic
+caller-input exception mapping and returns `InvalidInput/CorrectInput/Page`.
+The identical stored record in a grouped read correctly returns
+`CorruptState/OperatorRecovery/Read`. Consumers therefore receive incorrect
+caller-correction guidance for damaged stored data. The existing
+corruption-aware decoder is the appropriate shared mechanism; globally
+reclassifying input failures would break valid malformed-query rejection.
+
+An SDK-interactive probe against the freshly packed, unchanged SQLite fixture
+reproduces both results. Malformed JSON is a positive classification control:
+both read paths report `CorruptState/OperatorRecovery`. Restoring the original
+synthetic payload after each probe makes the same valid grouped read and page
+succeed; fixture cleanup also completes. No application or test source is
+edited. Private synthetic data, captured output and binaries stay outside Git.
+
+The assessment appends only
+[Phase 10 / T085](../specs/005-metadata-persistence/tasks.md#phase-10-convergence),
+requiring corruption-aware page decoding and paired structural/value/JSON
+corruption, valid-page and caller-input regressions. A SHA-256 prefix comparison
+confirms every original task byte and all 84 completions are unchanged.
+Specification, plan, constitution and reviewer-owned checklists also remain
+unchanged. No pre/post convergence hooks exist.
+
+`$PRIVATE_EVIDENCE` below represents this invocation's owner-private parent
+outside Git; personal paths and raw evidence are not committed.
+
+| Convergence check | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/metadata-convergence"` | Passed full locked qualification and formatting/analyzers: 65 common tests per provider, 87 applicable entries and nine explicit memory durability exclusions; locks unchanged |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| `DYLD_LIBRARY_PATH="$PWD/runtimes/osx-arm64/native" dotnet fsi --quiet --readline-` from the fresh package consumer output, with the bounded synthetic corruption probe on standard input | Reproduced F1; malformed-JSON classification, restored valid reads/pages and cleanup controls passed |
+| SHA-256 artifact and source/lock comparison | Original tasks prefix, specification, plan and checklists unchanged; exactly one new unchecked T085; tested source/lock fingerprint unchanged |
+| `git diff --check` | Passed |
+
+The full manifest attributes execution to source commit
+`50a16a3f54b7a1a75d82ca8905f36742e27c0165` and source/lock fingerprint
+`41ef899b40bd4017c3be0973de1bb66e93a81ca7dae3b9ed2cf064f1072b6c1a`.
+Its measured configuration remains macOS 26.5.0/APFS, .NET 10.0.7,
+Microsoft.Data.Sqlite assembly 10.0.13.0 and native SQLite 3.53.3, with checked
+WAL/FULL/foreign-key/busy-timeout-zero settings. Existing eight M/U crash
+boundaries, R0/R1 restore interruptions, native cleanup ownership, seven actual
+package graphs, unchanged consumer/common binaries, frozen marker compatibility
+and both runtime mutation pairs pass. Existing-case success does not resolve
+F1 or establish clean convergence. Earlier platform-wide regression results
+remain historical; they are not claimed to have been repeated in this stage.
+
+The outcome is **`tasks_appended`** and the next separately invoked stage is
+**`implement`** for T085, not finalize or merge. Draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete until
+the correction, fresh convergence and finalization pass. The driver updates
+only README, this guide and its checkpoint outside the append-only assessment.
+Provider/API/model/recovery/acceptance/quickstart/example guides and product/
+architecture diagrams are unaffected: convergence changes no intended API,
+operational procedure, dependency or supported production capability. No new
+substantial boundary change requires another architecture review in this stage.
+No merge, tag, release, package publication, infrastructure operation or
+deployment ran.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

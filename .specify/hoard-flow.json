@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "converge",
+  "stage": "implement",
   "status": "ready",
   "branch": "feature/005-metadata-persistence",
   "active": {
@@ -484,6 +484,13 @@
       "branch": "feature/005-metadata-persistence",
       "at": "2026-10-22T03:25:03.621542+00:00",
       "evidence": "T084 complete: both packaged fixtures reproduced null/omitted cursor InternalFailure before null-safe bounded validation; six paired malformed-field/valid-resume regressions pass. Full locked metadata qualification and formatting/analyzers pass: 65 common tests/provider, 87 applicable cases, nine explicit memory D exclusions, existing crash/recovery/package/retained-binary proof. Four fixture consumer locks contain only local content-hash updates; default replay unchanged. Tooling 76 tests and diff hygiene pass; all 84 tasks complete; README and affected guides/evidence updated, checklists/spec/constitution unchanged, no hooks. Draft PR #14; next fresh converge only."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T03:33:51.945895+00:00",
+      "evidence": "Installed speckit-converge outcome tasks_appended: checked 24 FRs, 8 SCs, 23 scenarios, 14 edges, 84 existing tasks, 8 plan decisions and 8 constitution principles. One HIGH partial FR-010/FR-013 gap: SQLite stored Label:null yields InvalidInput/CorrectInput/Page instead of CorruptState/OperatorRecovery; fresh packaged runtime probe reproduced it with malformed-JSON, restored valid-read/page and cleanup controls. Appended only Phase 10/T085; original tasks prefix/spec/plan/checklists unchanged. Full locked metadata qualification passed 65 tests per provider, 87 applicable entries and 9 memory D exclusions, crash/restore/native ownership/package/retained binary/mutation proofs; 76 tooling tests and diff check passed; source/lock fingerprint 41ef899b40bd4017c3be0973de1bb66e93a81ca7dae3b9ed2cf064f1072b6c1a unchanged. README/DEVELOPMENT record evidence; PR #14 remains draft; next implement, no implementation/merge/release/infrastructure."
     }
   ]
 }
