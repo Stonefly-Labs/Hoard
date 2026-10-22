@@ -2550,6 +2550,51 @@ handoff schedules the separately invoked `converge` stage. Draft
 convergence and finalization; feature merge, source release and dependency
 completion remain later gates. This invocation runs none of them.
 
+### F-05 convergence
+
+The installed convergence stage assessed all 24 functional requirements, eight
+outcomes, 23 story acceptance scenarios, 14 edge cases, 83 existing tasks, eight
+numbered integration decisions and eight constitution principles against the
+current implementation. It found one HIGH partial gap, F1, under FR-010/FR-015
+and T026/T036 (MP-08): a query/epoch-matching continuation with null SQLite
+`LastKey` or memory `After` reaches a null dereference, producing
+`InternalFailure/OperatorRecovery` instead of `InvalidInput/CorrectInput`.
+
+An SDK-interactive probe against the freshly packaged, unchanged providers
+reproduces that outcome in both implementations; an ordinary valid query
+continues to succeed afterward. No application or test source was edited.
+The stage appended only
+[Phase 9 / T084](../specs/005-metadata-persistence/tasks.md#phase-9-convergence),
+requiring bounded decoded-field validation and paired malformed/valid cursor
+regressions. The original task bytes and all 83 completions remain intact;
+specification, plan, constitution and reviewer-owned checklists are unchanged.
+There are no convergence extension hooks.
+
+| Convergence check | Result |
+| --- | --- |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| `bash scripts/validate-metadata.sh` | Passed existing full locked qualification and formatting/analyzers: 59 common tests per provider, 87 applicable entries and nine explicit memory durability exclusions; locks unchanged |
+| `dotnet fsi --quiet --readline-` with the fresh fixture assemblies and query/epoch-matching null-key continuations | Reproduced F1 in both providers; subsequent valid queries passed |
+| SHA-256 append-only artifact checks | Specification/plan unchanged; original tasks byte-identical, exactly one new unchecked T084 |
+
+Fresh qualification retains source commit
+`7dcf5090f426ed8088e1b6ba5ec15d11c6e963d8` and source/lock fingerprint
+`2594b90d9871c0a0555e2e5c590ea77dab461c543dbe50ededa5dda552922f5a`.
+It verifies the existing eight M/U crash boundaries, R0/R1 restore interruptions,
+native cleanup ownership, seven package graphs, unchanged consumers/marker
+binary and both runtime mutation pairs. This passing existing suite does not
+waive F1 or establish clean convergence.
+
+The outcome is `tasks_appended`; the next separately invoked stage is
+**`implement`**, not `finalize`. Draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete until
+T084, fresh convergence and finalization pass. The driver updates only this
+handoff documentation and its checkpoint outside the append-only assessment.
+Provider/example/API/recovery guides and product/architecture diagrams remain
+unaffected: no API, supported behavior, operational procedure, dependency or
+production capability changed. No merge, tag, release, infrastructure operation
+or deployment ran.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

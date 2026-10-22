@@ -524,3 +524,7 @@ remain later gates; no dependency/backlog completion follows from task checks.
   be retained in implementation evidence. Do not tick failed/unverified work.
 - Existing foundation/lifecycle/configuration/discovery acceptance must remain
   unchanged in meaning. Do not loosen scanners or silently omit old proofs.
+
+## Phase 9: Convergence
+
+- [ ] T084 Validate required decoded continuation fields before dereferencing or decoding them in `tests/fixtures/metadata/Sqlite/SqlitePages.cs` and `tests/fixtures/metadata/Memory/MemoryPages.cs`: a query/epoch-matching cursor with null or omitted `LastKey`/`After` currently returns `InternalFailure/OperatorRecovery` instead of `InvalidInput/CorrectInput`. Add paired null/omitted/malformed-field rejection and valid-resume regressions to `tests/contracts/Hoard.Metadata.Tests/Cases/MetadataPagingTests.cs` for both independently packaged providers; preserve query/scope/epoch binding, finite decode bounds and unchanged store usability, replay the applicable qualification checks, and update affected evidence/documentation per FR-010, FR-015, US1/AC5 and T026/T036 (MP-08) (partial).

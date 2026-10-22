@@ -672,6 +672,15 @@ foundation/lifecycle/configuration/discovery acceptance and repository tooling
 also pass with unchanged lock hashes. The feature remains a draft in
 [PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14); separate `converge`
 and `finalize` stages remain before any merge gate.
+The subsequent convergence assessment appends one HIGH-priority correction,
+[Phase 9 / T084](specs/005-metadata-persistence/tasks.md#phase-9-convergence):
+both fixture providers classify a null decoded continuation key as
+`InternalFailure/OperatorRecovery` instead of `InvalidInput/CorrectInput`.
+Fresh locked qualification still passes its existing cases; the additional
+probe exposes a missing malformed-cursor regression, not a clean convergence
+result. Product code, specification, plan and existing task completions are
+unchanged. The next stage returns to **`implement`** for T084, followed by fresh
+convergence and finalization; PR #14 remains draft.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
