@@ -17,6 +17,7 @@ import sys
 import tarfile
 import time
 import uuid
+from xml.etree import ElementTree
 
 import foundation_evidence as foundation
 import lifecycle_evidence as lifecycle
@@ -36,6 +37,8 @@ PACKAGES = tuple(f"Hoard.{name}.0.1.0.nupkg" for name in (
     "Abstractions", "Core", "Hosting", "Application",
     "Fixtures.Metadata.Sqlite", "Fixtures.Metadata.Memory", "Fixtures.Metadata.HostAdapters",
     "Fixtures.Artifacts.Local", "Fixtures.Artifacts.ObjectSemantics", "Fixtures.Artifacts.HostAdapters"))
+CASE_BINDINGS = ("sourceSha256", "lockSha256", "configurationSha256",
+                 "capabilitiesSha256", "environmentSha256", "packageSha256")
 lock_hashes = lifecycle.lock_hashes
 verify_locks = lifecycle.verify_locks
 _workspaces = {}
@@ -149,6 +152,7 @@ def verify_cases(entries, work, run_id):
                    or not isinstance(entry.get("id"), str) for entry in entries)
             or {(entry["provider"], entry["id"]) for entry in entries} != expected):
         raise RuntimeError("Missing, duplicate or foreign artifact case inventory.")
+    runtime_proofs = {}
     for entry in entries:
         number = int(entry["id"][3:])
         category = "L" if number <= 40 else "D" if number <= 44 else "Q"
@@ -163,10 +167,57 @@ def verify_cases(entries, work, run_id):
                 or not math.isfinite(entry["durationMs"]) or entry["durationMs"] < 0
                 or entry.get("positive") is not True or entry.get("negative") is not True
                 or not isinstance(entry.get("tests"), list) or not entry["tests"]
-                or any(not isinstance(test, str) or not test.strip() for test in entry["tests"])):
+                or any(not isinstance(test, str) or not test.strip() for test in entry["tests"])
+                or len(set(entry["tests"])) != len(entry["tests"])
+                or any(not is_hash(entry.get(key)) for key in CASE_BINDINGS)):
             raise RuntimeError("Stale, unpaired or incomplete artifact case proof.")
-        if sha256(proof_file(work, entry.get("proof"))) != entry.get("sha256"):
+        path = proof_file(work, entry.get("proof"))
+        if path.stat().st_size > 1048576:
+            raise RuntimeError("Artifact case proof exceeds its finite report bound.")
+        if sha256(path) != entry.get("sha256"):
             raise RuntimeError("Artifact case proof hash mismatch.")
+        try:
+            payload = json.loads(path.read_text())
+        except (OSError, UnicodeError, json.JSONDecodeError):
+            raise RuntimeError("Malformed artifact case proof.") from None
+        if (not isinstance(payload, dict) or type(payload.get("schemaVersion")) is not int or payload["schemaVersion"] != 1
+                or any(payload.get(key) != entry.get(key) for key in (
+                    "id", "provider", "class", "runId", "result", *CASE_BINDINGS))
+                or not isinstance(payload.get("subproofs"), list) or len(payload["subproofs"]) != 2
+                or any(not isinstance(value, dict) or not isinstance(value.get("id"), str)
+                       for value in payload["subproofs"])
+                or {value["id"] for value in payload["subproofs"]} != {"positive", "negative"}):
+            raise RuntimeError("Foreign, stale or unattributed artifact case proof.")
+        witnessed = {}
+        for subproof in payload["subproofs"]:
+            names = subproof.get("tests")
+            if (subproof.get("result") != "Passed" or not isinstance(names, list) or not names
+                    or any(not isinstance(name, str) for name in names) or len(set(names)) != len(names)
+                    or not set(names).issubset(entry["tests"])):
+                raise RuntimeError("Missing or failed artifact runtime subproof.")
+            witness = proof_file(work, subproof.get("proof"))
+            if witness.stat().st_size > 16777216:
+                raise RuntimeError("Artifact runtime witness exceeds its finite report bound.")
+            digest = sha256(witness)
+            if digest != subproof.get("sha256"):
+                raise RuntimeError("Artifact runtime subproof hash mismatch.")
+            cache_key = (witness, digest)
+            if cache_key not in runtime_proofs:
+                try:
+                    results = metadata.trx_results(witness)
+                except (OSError, UnicodeError, ElementTree.ParseError, ValueError, RuntimeError):
+                    raise RuntimeError("Missing, malformed, failed or skipped artifact runtime witness.") from None
+                if (len({result["test"] for result in results}) != len(results)
+                        or any(not math.isfinite(result["durationMs"]) or result["durationMs"] < 0 for result in results)):
+                    raise RuntimeError("Duplicate or invalid-duration artifact runtime witness.")
+                runtime_proofs[cache_key] = {result["test"]: result["durationMs"] for result in results}
+            for name in names:
+                if name not in runtime_proofs[cache_key]:
+                    raise RuntimeError("Artifact case names an unexecuted runtime witness.")
+                witnessed[(witness, name)] = runtime_proofs[cache_key][name]
+        if ({name for _, name in witnessed} != set(entry["tests"])
+                or not math.isclose(sum(witnessed.values()), entry["durationMs"], rel_tol=1e-9, abs_tol=0.01)):
+            raise RuntimeError("Artifact case runtime inventory or duration is unattributed.")
 
 
 def is_hash(value):
@@ -231,6 +282,8 @@ def verify_manifest(evidence, work, source_digest):
             or not isinstance(evidence.get("limitations"), list) or not evidence["limitations"]):
         raise RuntimeError("Incomplete or overclaimed artifact qualification manifest.")
     verify_cases(evidence.get("cases"), work, evidence["runId"])
+    if any(entry["sourceSha256"] != source_digest for entry in evidence["cases"]):
+        raise RuntimeError("Artifact case source attribution is stale.")
     verify_files(evidence.get("packages"), work, PACKAGES)
     verify_red_green(evidence.get("redGreen"))
     transfers = evidence.get("transfers")

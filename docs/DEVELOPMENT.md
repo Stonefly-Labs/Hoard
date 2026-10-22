@@ -3798,6 +3798,15 @@ exact-incarnation dependency memberships avoid rebuilding a protected-ticket
 set from every ticket; Local rebuilds these indexes from validated bounded
 records on reopen. Unexpired, unresolved and physically active dependencies
 remain protected. The partial gate still does not establish full qualification.
+Public qualification records now require a bounded explicit environment,
+baseline capabilities and all 48 immutable per-case statuses, durations and
+proof hashes. The old flat constructor explicitly rejects unattached case names
+and aggregate hashes. The verifier reads each hashed case payload, checks its
+provider/run/source/lock/configuration/capability/environment/package context,
+and resolves both runtime subproofs to actual passed TRX tests and measured
+durations. Case JSON is limited to 1 MiB and each TRX witness to 16 MiB.
+These checks reject foreign, stale, failed or invented witnesses, but do not
+yet provide the exact per-AS semantic registry or complete full qualification.
 
 ```bash
 python3 -m unittest discover -s tests/tooling -v

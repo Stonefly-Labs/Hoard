@@ -133,10 +133,15 @@ public sealed class ArtifactContractTests
         Assert.False(new ArtifactCapabilities(2, ArtifactDurability.SimulationOnly, ArtifactEnumerationConsistency.Incomplete, new ArtifactLimits()).MeetsBaseline);
         var cases = Enumerable.Range(1, 48).Select(number => $"AS-{number:D2}").ToArray();
         var hash = new string('a', 64);
-        Assert.NotNull(new ArtifactQualificationRecord("fixture.artifact", "0.1.0", hash, hash, hash, hash, hash,
-            capabilities, cases, [hash], ["AS-41", "AS-42", "AS-43", "AS-44"]));
-        Assert.Throws<ArgumentException>(() => new ArtifactQualificationRecord("fixture.artifact", "0.1.0", hash, hash, hash, hash, hash,
-            capabilities, cases.Take(47), [hash], []));
+        var environment = new ArtifactQualificationEnvironment("test OS", "test runtime", "test filesystem", "test flush");
+        var results = cases.Select(id => new ArtifactQualificationCaseResult(id,
+            id is "AS-41" or "AS-42" or "AS-43" or "AS-44"
+                ? ArtifactQualificationCaseStatus.NotApplicable : ArtifactQualificationCaseStatus.Passed,
+            TimeSpan.Zero, [hash])).ToArray();
+        Assert.NotNull(new ArtifactQualificationRecord("fixture.artifact", "0.1.0", hash, hash, hash, hash,
+            environment, capabilities, results));
+        Assert.Throws<ArgumentException>(() => new ArtifactQualificationRecord("fixture.artifact", "0.1.0", hash, hash, hash, hash,
+            environment, capabilities, results.Take(47)));
     }
 
     [Fact]
@@ -149,12 +154,108 @@ public sealed class ArtifactContractTests
         var simulated = new ArtifactCapabilities(1, ArtifactDurability.SimulationOnly,
             ArtifactEnumerationConsistency.Incomplete, new ArtifactLimits());
         var exclusions = new[] { "AS-41", "AS-42", "AS-43", "AS-44" };
+        var environment = new ArtifactQualificationEnvironment("test OS", "test runtime", "test filesystem", "test flush");
         ArtifactQualificationRecord Record(ArtifactCapabilities capabilities, IEnumerable<string> omitted) =>
-            new("fixture.artifact", "0.1.0", hash, hash, hash, hash, hash, capabilities, cases, [hash], omitted);
+            new("fixture.artifact", "0.1.0", hash, hash, hash, hash, environment, capabilities,
+                cases.Select(id => new ArtifactQualificationCaseResult(id, omitted.Contains(id)
+                    ? ArtifactQualificationCaseStatus.NotApplicable : ArtifactQualificationCaseStatus.Passed, TimeSpan.Zero, [hash])));
         Assert.Empty(Record(durable, []).Exclusions);
         Assert.Equal(exclusions, Record(simulated, exclusions).Exclusions);
         Assert.Throws<ArgumentException>(() => Record(durable, exclusions));
         foreach (var partial in new[] { Array.Empty<string>(), new[] { "AS-41" }, exclusions[..3] })
         { Assert.Throws<ArgumentException>(() => Record(simulated, partial)); }
+    }
+
+    [Fact]
+    public void Flat_case_names_and_unattributed_hashes_cannot_claim_qualification()
+    {
+        var hash = new string('a', 64);
+        var cases = Enumerable.Range(1, 48).Select(number => $"AS-{number:D2}");
+        var capabilities = new ArtifactCapabilities(1, ArtifactDurability.SimulationOnly,
+            ArtifactEnumerationConsistency.Incomplete, new ArtifactLimits());
+        Assert.Throws<ArgumentException>(() => new ArtifactQualificationRecord(
+            "fixture.artifact", "0.1.0", hash, hash, hash, hash, hash,
+            capabilities, cases, [hash], ["AS-41", "AS-42", "AS-43", "AS-44"]));
+    }
+
+    [Fact]
+    public void Qualification_case_results_reject_missing_or_unbounded_attribution()
+    {
+        var hash = new string('a', 64);
+        Assert.NotNull(new ArtifactQualificationCaseResult("AS-48", ArtifactQualificationCaseStatus.Passed, TimeSpan.Zero, [hash]));
+        foreach (var id in new[] { "", "AS-00", "AS-49", "AS-1", "as-01", "AS-+1" })
+        {
+            Assert.Throws<ArgumentException>(() => new ArtifactQualificationCaseResult(
+                id, ArtifactQualificationCaseStatus.Passed, TimeSpan.Zero, [hash]));
+        }
+        Assert.Throws<ArgumentException>(() => new ArtifactQualificationCaseResult(
+            "AS-01", (ArtifactQualificationCaseStatus)99, TimeSpan.Zero, [hash]));
+        Assert.Throws<ArgumentException>(() => new ArtifactQualificationCaseResult(
+            "AS-01", ArtifactQualificationCaseStatus.Passed, TimeSpan.FromTicks(-1), [hash]));
+        foreach (var proofs in new[] { Array.Empty<string>(), new[] { hash, hash }, new[] { "foreign" },
+            Enumerable.Range(0, 33).Select(index => index.ToString("x64")).ToArray() })
+        {
+            Assert.Throws<ArgumentException>(() => new ArtifactQualificationCaseResult(
+                "AS-01", ArtifactQualificationCaseStatus.Passed, TimeSpan.Zero, proofs));
+        }
+        Assert.NotNull(new ArtifactQualificationCaseResult("AS-01", ArtifactQualificationCaseStatus.Passed,
+            TimeSpan.Zero, Enumerable.Range(0, 32).Select(index => index.ToString("x64"))));
+        Assert.Throws<ArgumentException>(() => new ArtifactQualificationCaseResult(
+            "AS-01", ArtifactQualificationCaseStatus.Passed, TimeSpan.Zero, default(ImmutableArray<string>)));
+    }
+
+    [Fact]
+    public void Qualification_records_keep_case_proofs_and_environment_attributable_and_immutable()
+    {
+        var hash = new string('a', 64);
+        var other = new string('b', 64);
+        var proofInputs = new List<string> { hash };
+        var first = new ArtifactQualificationCaseResult("AS-01", ArtifactQualificationCaseStatus.Passed,
+            TimeSpan.Zero, proofInputs);
+        var results = Enumerable.Range(2, 47).Select(number => new ArtifactQualificationCaseResult(
+            $"AS-{number:D2}", ArtifactQualificationCaseStatus.Passed, TimeSpan.FromMilliseconds(1), [other]))
+            .Prepend(first).ToList();
+        var environment = new ArtifactQualificationEnvironment("test OS", "test runtime", "test filesystem", "test flush");
+        var capabilities = new ArtifactCapabilities(1, ArtifactDurability.LocalProcessCrash,
+            ArtifactEnumerationConsistency.Snapshot, new ArtifactLimits());
+        ArtifactQualificationRecord Record(IEnumerable<ArtifactQualificationCaseResult> input, ArtifactCapabilities? selected = null)
+            => new("fixture.artifact", "0.1.0", hash, hash, hash, hash, environment, selected ?? capabilities, input);
+        var record = Record(results);
+        proofInputs[0] = other;
+        Assert.Equal(hash, record.CaseResults[0].ProofHashes[0]);
+        Assert.Equal(other, record.CaseResults[1].ProofHashes[0]);
+        Assert.Equal(new[] { hash, other }, record.ProofHashes);
+        Assert.Equal(environment.Sha256, record.EnvironmentSha256);
+        Assert.NotEqual(environment.Sha256,
+            new ArtifactQualificationEnvironment("test OS", "other runtime", "test filesystem", "test flush").Sha256);
+        Assert.Throws<ArgumentException>(() => Record(results.Take(47)));
+        Assert.Throws<ArgumentException>(() => Record(results.Append(first)));
+        Assert.Throws<ArgumentException>(() => Record(results.Take(47).Append(first)));
+        Assert.Throws<ArgumentException>(() => Record(results.Skip(1).Prepend(new(
+            "AS-01", ArtifactQualificationCaseStatus.NotApplicable, TimeSpan.Zero, [hash]))));
+        Assert.Throws<ArgumentException>(() => Record(results.Select((result, index) => new ArtifactQualificationCaseResult(
+            result.CaseId, result.Status, result.Duration, Enumerable.Range(index * 6, 6).Select(value => value.ToString("x64"))))));
+        Assert.Throws<ArgumentException>(() => Record(results, new(2, ArtifactDurability.LocalProcessCrash,
+            ArtifactEnumerationConsistency.Snapshot, new ArtifactLimits())));
+        Assert.Throws<ArgumentException>(() => Record(results, new(1, ArtifactDurability.LocalProcessCrash,
+            ArtifactEnumerationConsistency.Snapshot, new ArtifactLimits(), conditionalPublication: false)));
+        results.Clear();
+        Assert.Equal(48, record.CaseResults.Length);
+    }
+
+    [Fact]
+    public void Qualification_environment_is_bounded_unambiguous_and_redacted()
+    {
+        Assert.NotNull(new ArtifactQualificationEnvironment(new string('x', 256), "runtime", "filesystem", "flush"));
+        foreach (var label in new[] { "", "   ", "line\nbreak", "nul\0", new string('x', 257) })
+        {
+            Assert.Throws<ArgumentException>(() => new ArtifactQualificationEnvironment(label, "runtime", "filesystem", "flush"));
+            Assert.Throws<ArgumentException>(() => new ArtifactQualificationEnvironment("OS", label, "filesystem", "flush"));
+            Assert.Throws<ArgumentException>(() => new ArtifactQualificationEnvironment("OS", "runtime", label, "flush"));
+            Assert.Throws<ArgumentException>(() => new ArtifactQualificationEnvironment("OS", "runtime", "filesystem", label));
+        }
+        Assert.Throws<ArgumentNullException>(() => new ArtifactQualificationEnvironment(null!, "runtime", "filesystem", "flush"));
+        ArtifactTestData.AssertSanitized(new ArtifactQualificationEnvironment(
+            ArtifactTestData.Canary, "runtime", "filesystem", "flush").ToString());
     }
 }

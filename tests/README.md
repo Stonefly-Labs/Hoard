@@ -67,7 +67,11 @@ destination and native-deletion containment checks. Two explicit parent
 observations verify retained work/streams/root/guards and incomplete shutdown
 before exact-child termination; these are not durable-crash or cooperative
 resource-release passes. Public qualification-record checks reject mixed durable
-and simulation exclusion sets.
+and simulation exclusion sets, flat unattached hashes and missing per-case
+results or explicit environment. Tooling negatives now recompute proof hashes
+around altered payloads and require paired passed TRX witnesses, exact executed
+test names and matching durations. These are evidence-integrity checks, not a
+replacement for the unfinished per-AS semantic registry and full run.
 Bounded-history checks also distinguish examined candidates from removals:
 seven original runtime reds exercise fully ineligible tables, and paired
 cursor-progress checks preserve a faulted candidate while reaching entries

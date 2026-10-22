@@ -6,13 +6,13 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "i+GR0TK7xO2y/EnVfEaDzjXTJSDKUesp15Ur2gHSkLhzn142nFNO32X/C2rEWipnMvob+7yecTluSuW94Nx56w=="
+        "contentHash": "pM68l+JrKWnSE8DU+/EoLGaHTMBThwqP+f+h+1F7HPaLCaf8Qq/ZLHB9PfZH2Adtd+3/klNO0zZT1HQeOhYXgg=="
       },
       "Hoard.Fixtures.Metadata.HostAdapters": {
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "Drdc31kzbTjz8zxLS50hBOgbm02L+ib7IPxbRZAgBc2TE3tdkXOjzfDqjOsZFE6OOD+9Ir+CMm6waCJy5aYYTA==",
+        "contentHash": "cRUVy4uaHhT33ato4JodMuRUFzsj6xDPcfL+ffAVBfx/HK87eggVh10nQs+JTaPQ6uY7jMODdeYWHlQEsLRqmw==",
         "dependencies": {
           "Hoard.Fixtures.Metadata.Memory": "[0.1.0]",
           "Hoard.Fixtures.Metadata.Sqlite": "[0.1.0]",
@@ -23,7 +23,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "IfKQAb6rHJRvoWOXEXTRhDREApWqcIxdJ7eZ+xP+kRIPzAeEL3mj8pej0QYmaHHtCOk9PdEf7ihGdX1sMZ9/0Q==",
+        "contentHash": "pH8Qm+nvGWldqNy6YPVVWaaQcQ7tR9oSlG3RnlTAlojnlSJ1KmqAy2oTj+Wneri0tZQtaqWUrygYLavUVI5MGA==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]",
           "Microsoft.Data.Sqlite": "10.0.13"
@@ -32,7 +32,7 @@
       "Hoard.Core": {
         "type": "Transitive",
         "resolved": "0.1.0",
-        "contentHash": "bIgxBkS0XCOohP7H0pIksf13XGDw/xPXFKeJAHABTTvmi7gS9RczdDXCn79vTEcyDnCwJjNZfeXF7ogRsAMYAw==",
+        "contentHash": "IBGGdoSf20gWD3SOYuIlofavmbW5dz9ZMktGN8C0E27/lKO/QKSE+PfgR3vJzhWz0YKmzlewcaOuSRs1Blbskg==",
         "dependencies": {
           "Hoard.Abstractions": "0.1.0"
         }
@@ -76,7 +76,7 @@
         "type": "CentralTransitive",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "ZxYCRzgxxl38yMgM/qBK94UqSYy0mPWaOJZMI4efp51Lvp/NfIz0/sss0skQAfsbvTx+UvveMM1f1URfcN8zFQ==",
+        "contentHash": "jSXcfsJJ3CEjeD+kAjOcF+b9tsp5cdvWei8k+ioplhGrI5wRPCLC4OcjwfC4texPsWYDasgPsnjxyVV8KCHlkw==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }
@@ -85,7 +85,7 @@
         "type": "CentralTransitive",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "lj/BH+w+flBZMbCuWptcbiDsI23MmEpfmNjayQ44hUkiE8kOgOI98dZYb0tt8z1szGMLwFl8q4/PoJ86oBiU5Q==",
+        "contentHash": "uEqdqp+g7lR3mADOZFOLMzM8sY8LVq+8LiVf8jFMXT0HElBX/UG8rSkBLAaAGXfqyngkH0geP3N/GbAbq1HSSQ==",
         "dependencies": {
           "Hoard.Abstractions": "0.1.0",
           "Hoard.Core": "0.1.0",

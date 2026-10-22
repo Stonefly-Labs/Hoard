@@ -47,6 +47,15 @@ before terminating the exact owned child; this is unsupported-worker containment
 not a durable crash or cooperative-release pass.
 Qualification records reject durable-case exclusions for Local and require
 exactly AS-41..44 for the process-local simulation; the classes cannot be exchanged.
+Construct records with `ArtifactQualificationEnvironment` and 48 immutable
+`ArtifactQualificationCaseResult` values, each with a closed status, duration
+and bounded proof hashes. Environment labels are bounded printable ASCII;
+their SHA-256 is derived from the four newline-delimited labels. Aggregate
+hashes and exclusions are derived from the results. The former flat
+case-name/hash constructor deliberately throws rather than implying qualification.
+Report validation checks inner case/context identity and actual passed TRX
+witnesses, not merely the outer file hash. This is not yet complete per-AS
+semantic attribution or qualification of either fixture.
 Expired ticket history may be retired, but live content identity remains
 independent of its receipt anchor. Retained tombstones and reclaimed-incarnation
 records also consume finite bookkeeping capacity until safe expiry-based

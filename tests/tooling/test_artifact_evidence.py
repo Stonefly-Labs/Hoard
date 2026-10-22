@@ -30,15 +30,28 @@ class ArtifactEvidenceTests(unittest.TestCase):
         return {"proof": name, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
     def cases(self):
-        proof = self.proof("synthetic.json", {"synthetic": "verifier-only"})
-        return [
+        witness = self.work / "synthetic.trx"
+        witness.write_text(
+            '<TestRun xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010"><Results>'
+            '<UnitTestResult testName="synthetic-verifier-only" outcome="Passed" duration="00:00:00.001" />'
+            '</Results></TestRun>')
+        proof = {"proof": "synthetic.trx", "sha256": artifact.sha256(witness)}
+        bindings = {key: "a" * 64 for key in artifact.CASE_BINDINGS}
+        entries = [
             {"id": f"AS-{number:02}", "provider": provider,
              "class": "L" if number <= 40 else "D" if number <= 44 else "Q",
              "result": "NotApplicable" if provider == "object" and 41 <= number <= 44 else "Passed",
              "reason": "simulation: no durable restart" if provider == "object" and 41 <= number <= 44 else "",
              "runId": "current", "durationMs": 1, "positive": True, "negative": True,
-             "tests": ["synthetic-verifier-only"], **proof}
+             "tests": ["synthetic-verifier-only"], **bindings}
             for provider in ("local", "object") for number in range(1, 49)]
+        for entry in entries:
+            entry.update(self.proof(f"synthetic-{entry['provider']}-{entry['id']}.json", {
+                "schemaVersion": 1,
+                **{key: entry[key] for key in ("id", "provider", "class", "result", "runId", *artifact.CASE_BINDINGS)},
+                "subproofs": [{"id": role, "result": "Passed", "tests": entry["tests"], **proof}
+                              for role in ("positive", "negative")]}))
+        return entries
 
     def test_exact_inventory_rejects_missing_duplicate_foreign_stale_and_failed(self):
         cases = self.cases()
@@ -51,7 +64,9 @@ class ArtifactEvidenceTests(unittest.TestCase):
                 ("result", "Skipped"), ("result", "Failed"), ("class", "D"),
                 ("positive", False), ("negative", False), ("tests", []),
                 ("durationMs", -1), ("durationMs", True), ("durationMs", float("nan")),
-                ("sha256", "a" * 64)):
+                ("sha256", "a" * 64), ("sourceSha256", "b" * 64), ("lockSha256", "b" * 64),
+                ("configurationSha256", "b" * 64), ("capabilitiesSha256", "b" * 64),
+                ("environmentSha256", "b" * 64), ("packageSha256", "b" * 64)):
             changed = copy.deepcopy(cases)
             changed[0][field] = value
             with self.subTest(field=field, value=value), self.assertRaises(RuntimeError):
@@ -68,6 +83,81 @@ class ArtifactEvidenceTests(unittest.TestCase):
         changed[88]["reason"] = "not tested"
         with self.assertRaises(RuntimeError):
             artifact.verify_cases(changed, self.work, "current")
+
+    def test_case_hash_cannot_substitute_foreign_failed_or_unattributed_proof_contents(self):
+        cases = self.cases()
+        for payload in (
+                {"synthetic": "no case attribution"},
+                {"id": "AS-02", "provider": "object", "runId": "stale", "result": "Failed"},
+                {"id": "AS-01", "provider": "local", "runId": "current", "result": "Passed", "subproofs": []}):
+            changed = copy.deepcopy(cases)
+            changed[0].update(self.proof("unattributed.json", payload))
+            with self.subTest(payload=payload), self.assertRaises(RuntimeError):
+                artifact.verify_cases(changed, self.work, "current")
+
+    def test_case_payload_rejects_altered_binding_and_missing_or_failed_runtime_pairs(self):
+        cases = self.cases()
+        original = json.loads(artifact.proof_file(self.work, cases[0]["proof"]).read_text())
+        mutations = [("schemaVersion", True), ("provider", "object"), ("id", "AS-02"),
+                     ("result", "Failed"), ("class", "D"), ("runId", "stale"),
+                     ("subproofs", []), ("subproofs", original["subproofs"][:1]),
+                     ("subproofs", [original["subproofs"][0]] * 2),
+                     *((key, "b" * 64) for key in artifact.CASE_BINDINGS)]
+        for field, value in mutations:
+            changed = copy.deepcopy(cases)
+            payload = {**original, field: value}
+            changed[0].update(self.proof("mutated-case.json", payload))
+            with self.subTest(field=field), self.assertRaises(RuntimeError):
+                artifact.verify_cases(changed, self.work, "current")
+        for field, value in (("result", "Skipped"), ("tests", []),
+                             ("tests", ["foreign-test"]), ("sha256", "b" * 64)):
+            changed = copy.deepcopy(cases)
+            payload = copy.deepcopy(original)
+            payload["subproofs"][0][field] = value
+            changed[0].update(self.proof("mutated-subproof.json", payload))
+            with self.subTest(field=field), self.assertRaises(RuntimeError):
+                artifact.verify_cases(changed, self.work, "current")
+
+    def test_runtime_witness_cannot_invent_test_execution_or_duration(self):
+        cases = self.cases()
+        payload = json.loads(artifact.proof_file(self.work, cases[0]["proof"]).read_text())
+        cases[0]["tests"] = ["never-executed"]
+        for subproof in payload["subproofs"]:
+            subproof["tests"] = cases[0]["tests"]
+        cases[0].update(self.proof("invented-test.json", payload))
+        with self.assertRaisesRegex(RuntimeError, "unexecuted"):
+            artifact.verify_cases(cases, self.work, "current")
+        cases = self.cases()
+        cases[0]["durationMs"] = 100
+        with self.assertRaisesRegex(RuntimeError, "duration"):
+            artifact.verify_cases(cases, self.work, "current")
+        for outcome in ("Failed", "NotExecuted"):
+            cases = self.cases()
+            witness = self.work / "synthetic.trx"
+            witness.write_text(witness.read_text().replace('outcome="Passed"', f'outcome="{outcome}"'))
+            for entry in cases:
+                payload = json.loads(artifact.proof_file(self.work, entry["proof"]).read_text())
+                for subproof in payload["subproofs"]:
+                    subproof["sha256"] = artifact.sha256(witness)
+                entry.update(self.proof(entry["proof"], payload))
+            with self.subTest(outcome=outcome), self.assertRaisesRegex(RuntimeError, "runtime witness"):
+                artifact.verify_cases(cases, self.work, "current")
+
+    def test_runtime_witness_rejects_malformed_duplicate_and_negative_duration_results(self):
+        self.cases()
+        original = (self.work / "synthetic.trx").read_text()
+        duplicate = '<UnitTestResult testName="synthetic-verifier-only" outcome="Passed" duration="00:00:00.001" />'
+        for content in ("not XML", original.replace("</Results>", duplicate + "</Results>"),
+                        original.replace('duration="00:00:00.001"', 'duration="00:00:-0.001"')):
+            cases = self.cases()
+            witness = self.work / "synthetic.trx"
+            witness.write_text(content)
+            payload = json.loads(artifact.proof_file(self.work, cases[0]["proof"]).read_text())
+            for subproof in payload["subproofs"]:
+                subproof["sha256"] = artifact.sha256(witness)
+            cases[0].update(self.proof("invalid-runtime-witness.json", payload))
+            with self.subTest(content=content), self.assertRaisesRegex(RuntimeError, "runtime witness"):
+                artifact.verify_cases(cases, self.work, "current")
 
     def transfer(self):
         return {
@@ -165,7 +255,7 @@ class ArtifactEvidenceTests(unittest.TestCase):
             with self.subTest(name=name), self.assertRaises(RuntimeError):
                 artifact.proof_file(self.work, name)
         cases = self.cases()
-        (self.work / "synthetic.json").write_text('{"changed":true}')
+        artifact.proof_file(self.work, cases[0]["proof"]).write_text('{"changed":true}')
         with self.assertRaises(RuntimeError):
             artifact.verify_cases(cases, self.work, "current")
 

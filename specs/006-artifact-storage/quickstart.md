@@ -43,6 +43,12 @@ non-cooperative source/destination/native containment checks. Their second
 parent inspection precedes exact-child termination and confirms retained work,
 streams, root ownership, applicable guards and incomplete shutdown. They are
 not durable crash evidence or successful cooperative cleanup.
+Qualification values now require an explicit bounded environment and exactly
+48 immutable case results with statuses, durations and proof hashes. The old
+flat case-name/hash constructor rejects such unattached claims. Case-report
+validation reads the hashed payload and verifies its context and paired passed
+TRX witnesses, including executed names and duration. The complete semantic
+case registry and full qualifying execution remain unfinished.
 See the [approved hash refresh and locked replay](plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 
 Read [API](contracts/artifact-api.md), [model](data-model.md),

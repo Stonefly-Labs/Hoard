@@ -882,3 +882,63 @@ test/quickstart guides now explain finite candidate pages; old examples,
 product diagrams, IaC and release behavior are unaffected. Capability/readiness,
 full attributable qualification, final-source transfers and remaining task
 obligations stay open; no task/checklist/driver completion is inferred.
+
+### Structured Qualification Values and Runtime Witness Attribution 2026-10-22
+
+An actual public-contract red showed that flat case names and an unrelated
+aggregate hash could claim qualification. `ArtifactQualificationRecord` now
+requires an explicit bounded environment, baseline capabilities and exactly
+48 immutable case results with closed statuses, durations and bounded hashes.
+Each case permits 1..32 distinct proof hashes; the aggregate permits at most
+256. Environment fingerprints are derived from four printable ASCII labels,
+each at most 256 characters, separated by forbidden-in-label newlines. The
+old flat constructor deliberately throws. Local still requires 48 passes;
+simulation requires exactly AS-41..44 non-applicability.
+
+A separate tooling red reproduced acceptance of correctly rehashed foreign,
+failed or unattributed JSON. The verifier now reads each case payload, binds
+its identity and six context hashes, resolves paired positive/negative proofs
+to actual passed TRX names and checks attributed duration without double
+counting a shared witness. Missing, skipped, failed, duplicate, malformed,
+unexecuted and invalid-duration witnesses reject. Case JSON is bounded to
+1 MiB and TRX to 16 MiB before hashing/parsing. A separate synthetic boundary
+check accepted both exact limits and rejected one extra byte.
+
+This is not the complete semantic registry: generic passed tests cannot yet
+be treated as proof of a particular AS obligation, and full manifest binding
+to every actual package/configuration/capability/environment input is still
+unfinished. Full mode remains fail-closed and both fixtures remain not-ready.
+The new public types/guards and their checks are not qualification certificates.
+
+The first hash-refresh chain stopped when configuration encountered the
+intentional tooling red. Its retry passed. A discovery attempt then correctly
+rejected concurrent edits to its fingerprinted tooling/script inputs. Inputs
+were frozen for the successful remaining refreshes and all separate default
+locked replays below; failed attempts are not acceptance evidence. Exactly
+177 local `Hoard.*` content hashes change across 46 locks, with no dependency
+graph/version/external-hash changes or frozen baseline mutation.
+
+| Command / check | Result |
+| --- | --- |
+| `python3 -m unittest discover -s tests/tooling -p test_artifact_evidence.py -k test_case_hash_cannot_substitute -v` | Initial red: three intended assertion failures, not import/compilation failures |
+| `dotnet test tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj -c Release --no-restore --logger 'trx;LogFileName=qualification-attribution.trx' --results-directory <private-session>/files/f06-attribution-green --verbosity quiet` | All 18 public value/contract checks passed; red/green TRX retained privately |
+| `bash scripts/validate-foundation.sh` | Separate default locked full acceptance passed, including 18 artifact value/contract checks |
+| `bash scripts/validate-lifecycle.sh` | Separate default locked acceptance passed 504 tests, nine boundary proofs, seven package journeys and retained binary |
+| `bash scripts/validate-configuration.sh` | Separate default locked acceptance passed 201 tests, six boundary proofs, nine journeys and five interrupted-publication barriers |
+| `bash scripts/validate-discovery.sh` | Separate default locked acceptance passed 137 tests, D01..D40, nine journeys and 18 actual graph scans |
+| `bash scripts/validate-metadata.sh --evidence ../hoard-artifact-evidence/resume-attribution-metadata-locked-20261022` | Separate default locked unchanged F-05 full 96-case qualification passed |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase logical --update-locks --evidence ../hoard-artifact-evidence/resume-attribution-logical-update-20261022` | Intentional local-payload hash refresh passed 180 checks and both unchanged consumers; nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase logical --evidence ../hoard-artifact-evidence/resume-attribution-logical-locked-20261022` | Separate default locked replay passed 180 checks and both unchanged consumers; nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase recovery --evidence ../hoard-artifact-evidence/resume-attribution-recovery-locked-20261022` | Passed 30 checks and all six actual SIGKILL/fresh-process B0/B1/B2/B3/D0/D1 barriers; nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase packages --evidence ../hoard-artifact-evidence/resume-attribution-packages-locked-20261022` | Passed three architecture checks, eight actual graphs, original frozen marker and both consumers; nonqualifying |
+| `python3 -m unittest discover -s tests/tooling -v` | All 101 passed |
+| `dotnet format whitespace src/Hoard.Abstractions/Hoard.Abstractions.csproj --no-restore --verify-no-changes --verbosity quiet` | Passed |
+| `dotnet format whitespace tests/contracts/Hoard.Artifacts.Tests --folder --verify-no-changes --verbosity quiet` | Passed |
+| `git diff --check` | Passed |
+
+All three locked artifact captures bind source
+`64a814551e58de5737cbe76e58635d1dfb62a3b9fec4c33e58ce04f1f49a1ba5`.
+README/development/provider/test/quickstart guides describe these limited
+changes. Pre-F-06 APIs, existing examples, product diagrams, IaC and release
+behavior are unaffected. All unfinished task/checklist/driver gates remain
+unchanged; implementation continues rather than ending at this checkpoint.

@@ -107,6 +107,13 @@ internal static class ArtifactValidation
         return result;
     }
 
+    public static string Sha256(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        Require(value.Length == 64 && value.All(character => character is >= '0' and <= '9' or >= 'a' and <= 'f'));
+        return value;
+    }
+
     public static TimeSpan Duration(TimeSpan value, TimeSpan maximum)
     {
         Require(value >= TimeSpan.FromMilliseconds(1) && value <= maximum);

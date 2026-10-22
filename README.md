@@ -784,7 +784,12 @@ scanning whole tables or rebuilding all ticket dependencies. A finalized
 reconciliation receipt survives later deletion/recreation rather than becoming
 a false rollback.
 Qualification records require no durable-case exclusions for Local and exactly
-AS-41..44 for the simulation. Owned-child negatives now hold non-cooperative
+AS-41..44 for the simulation. They now require an explicit bounded environment,
+baseline capabilities and 48 immutable per-case results with proof hashes;
+flat case names and unrelated aggregate hashes cannot qualify. Report checks
+also bind case payloads to their context and paired, actually passed TRX tests,
+including duration. Exact per-AS semantic attribution remains unfinished.
+Owned-child negatives now hold non-cooperative
 source, destination and native work on each fixture through a second parent
 inspection, then terminate only that child. They prove containment, not durable
 recovery or successful resource release.
