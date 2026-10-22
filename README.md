@@ -814,11 +814,24 @@ cleanup/rollback is allowed. The separate recovery CHK012 re-review now satisfie
 **all 40/40 custom criteria without waivers**; AS-39 remains mandatory and all
 86 implementation tasks remain unchecked. See the
 [follow-up evidence](docs/DEVELOPMENT.md#f-06-approved-rq-01-clarification-and-re-review).
-The next separately authorized stage is read-only **`analyze`**;
-[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) remains draft.
-No analysis, implementation or qualification execution occurs in this approved
+At that checkpoint, the next separately authorized stage was read-only **`analyze`**.
+No analysis, implementation or qualification execution occurred in the approved
 clarification/re-review; satisfied criteria establish requirements quality,
 not delivered behavior or permission to skip the analysis gate.
+The subsequent installed read-only analysis finds no actionable duplication,
+ambiguity, underspecification, constitutional conflict, coverage gap or
+inconsistency. All 25 requirements and eight buildable outcomes have
+implementation/proof tasks; all 86 tasks map to requirements or shared acceptance
+prerequisites. The complete prerequisite graph is acyclic, shared-runner edits
+are serialized and retained baseline capture precedes public API changes.
+The approved RQ-01 distinction remains consistent with required AS-39.
+All 12 feature artifacts, 86 unchecked tasks and existing checklist markers
+remain unchanged. The full report is recorded in draft
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16); see the
+[analysis scope](docs/DEVELOPMENT.md#f-06-artifact-storage-read-only-analysis).
+The checkpoint schedules **`implement / ready`** for a separate invocation,
+with the existing 40/40 custom-review gate satisfied. Analysis supplies no
+runtime evidence and executes no implementation or qualification.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

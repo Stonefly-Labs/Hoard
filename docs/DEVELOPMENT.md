@@ -3479,6 +3479,70 @@ release/tag/package publication, infrastructure plan/apply, settings/permissions
 change, deployment or merge occurs. Product/.NET/OpenTofu acceptance and the
 unimplemented artifact runner are not run for this documentation-only change.
 
+### F-06 artifact storage read-only analysis
+
+The separately invoked `analyze` stage retains the recorded
+`feature/006-artifact-storage` branch and explicitly pins
+`SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage`. The driver begins
+`analyze / running` before the installed `speckit-analyze` initializes the
+existing specification, plan and tasks. No generator or earlier stage is
+repeated, and no before/after analysis hooks are configured.
+
+The read-only assessment finds no actionable duplication, ambiguity,
+underspecification, constitutional conflict, coverage gap or inconsistency.
+All **25 functional requirements and eight buildable outcomes** have
+implementation/proof tasks: **100% coverage**, with zero actionable findings
+and no remediation required. All **86 tasks** map to requirements, stories or
+shared acceptance prerequisites; no task is unmapped. The 23 scenarios,
+15 edge cases and all 48 acceptance cases retain focused proof assignments.
+The 86-row prerequisite graph is complete and acyclic. Shared runner edits
+are serialized, provider lanes remain independent and baseline capture
+precedes public contract changes. The 36 parallel markers are scheduling
+metadata, not authorization for agents or a workflow engine.
+
+The approved RQ-01 clarification agrees across US2.3, FR-009, SC-006,
+the API ownership contract, recovery design and T032/T037/T040/AS-39:
+finite caller return and cleanup attempts, finite cooperative resource release,
+bounded retained non-cooperative ownership, fenced late mutation and blocked
+admission/readiness. No live-resource release or fabricated cleanup/rollback
+is permitted. The additive BCL boundary, unchanged marker/digest/metadata APIs,
+one shared authority and exact local-versus-simulated qualification limits
+remain consistent with the constitution. UI, native protocol clients and
+production-provider acceptance remain outside this bounded feature.
+
+All **12 feature artifacts remain byte-for-byte unchanged**, including the
+86 unchecked implementation tasks, built-in 16/16 checklist and existing
+40/40 custom-review markers. Analysis does not re-approve checklists, implement
+contracts, qualify storage or establish runtime proof. Actual four size/provider
+measurements, six process-crash barriers, authority races, independent packages
+and the 96-entry qualification inventory remain future obligations.
+
+The full structured analysis report and per-requirement coverage table are
+recorded in draft [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16).
+Only after the read-only skill completes does the driver finish analysis and
+update README, this guide and the shared checkpoint. Provider/example guides,
+compatibility policy, predecessor artifacts, charter/product specification,
+architecture/ADR/diagrams, constitution/backlog, product/test/tooling sources,
+locks, release and IaC guidance are unaffected: no requirement, public API,
+dependency, support claim, command, permission or operational procedure changes.
+No new architecture review is warranted for this report/docs/checkpoint-only
+stage; the implementation's planned review remains mandatory.
+
+| Exact command / check | Result |
+| --- | --- |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/check-prerequisites.sh --json --require-spec --require-tasks --include-tasks` | Passed once; resolves the recorded feature and all required analysis artifacts |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed all 76 tests |
+| Direct inventory, traceability, prerequisite and integrity assertions | Passed 33 requirement/outcome mappings, 86 unique sequential unchecked tasks, complete acyclic prerequisites, serialized runner edits, pre-API baseline ordering, 48 case IDs, 36 parallel markers and byte-identical feature artifacts |
+| `git diff --check` | Passed |
+
+The checkpoint schedules **`implement / ready`** for a separate invocation,
+with the existing reviewer-owned 40/40 custom gate satisfied and no analysis
+blocker. PR #16 remains draft. Product/.NET/OpenTofu acceptance and the
+unimplemented artifact command are not run for this analysis/docs-only stage.
+No implementation, qualification, convergence/finalization, feature completion,
+merge, release/tag/package publication, infrastructure plan/apply, governance
+change or deployment occurs.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
