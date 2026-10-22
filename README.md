@@ -23,7 +23,8 @@ dependency management into another full-time job.
 > **Foundation only.** This repository currently contains product/design documents,
 > development workflows, repository tooling, .NET provider contracts and a tested
 > fixture-only module lifecycle, configuration, protected discovery boundaries,
-> and opt-in metadata operations with SQLite/memory qualification fixtures,
+> opt-in metadata operations with SQLite/memory qualification fixtures,
+> and partial, unqualified artifact-storage fixtures,
 > plus an operator-run Azure identity bootstrap.
 > There is no runnable cache, production provider, UI, container, or published package.
 > Everything in the product overview below describes the planned experience.
@@ -751,16 +752,21 @@ runtime binaries or packages are published. See the
 [merge/release evidence](docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release).
 [Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
 merged into `main`, recording F-05 complete with release metadata.
-**F-06 implementation remains running; its local-package lock blocker is resolved.**
-Setup and partial BCL-only artifact values/interfaces,
-shared authority, metadata bridge and minimum private-root fixtures exist.
-The package-only focused suite passes 32 tests with `qualification: false`;
-publication, transfers, recovery and deletion are **not implemented or qualified**.
-The full artifact command fails closed. The maintainer-approved refresh changes
-only local `Hoard.*` acceptance-package hashes in 38 lockfiles; dependency
-versions/graphs, external-package hashes and frozen baseline evidence are
-unchanged. Separate default locked foundation, lifecycle, configuration,
-discovery and metadata regressions now pass. See the
+**F-06 implementation remains running and unqualified.**
+Independent local and simulated object fixtures now exercise verified streaming,
+publication, protected reads, exact-ticket reconciliation and fenced deletion.
+Focused package checks include actual SQLite/memory metadata transactions,
+six parent-killed local recovery barriers, and the same compiled round-trip
+consumer on both providers. Separate earlier runs wrote/read 256 MiB and 4 GiB
+on both with measured OS peak RSS; those measurements are not final-source proof.
+The focused package phase inspects eight actual resolved graphs, rejects
+provider/Hosting leaks and runs the unchanged pre-F06 marker binary against
+current assemblies, including public-member accessibility checks.
+Both fixtures still declare missing mandatory guarantees and are not ready.
+The full command fails closed until every required case, capability, composition,
+package and evidence gate is implemented. Focused modes always report
+`qualification: false`. Reviewed local-package hash refreshes preserve versions,
+dependency graphs, external hashes and frozen baseline evidence. See the
 [running evidence](specs/006-artifact-storage/plan.md#implementation-evidence).
 
 The separately invoked **`specify`** stage creates the

@@ -11,6 +11,7 @@ internal sealed class LocalStateException(ArtifactFailureCode code) : Exception
 
 internal sealed class LocalRoot : IDisposable
 {
+    private static readonly object mountEnumeration = new();
     private readonly FileStream ownership;
     public string Path { get; }
     public LocalState State { get; private set; }
@@ -60,7 +61,7 @@ internal sealed class LocalRoot : IDisposable
                 { throw new LocalStateException(ArtifactFailureCode.IncompatibleStore); }
                 state = state with { SessionId = Guid.NewGuid(), TimeFloor = now > state.TimeFloor ? now : state.TimeFloor };
             }
-            foreach (var name in new[] { "staging", "data", "decisions", "tickets" })
+            foreach (var name in new[] { "staging", "data", "decisions", "tickets", "reclamation" })
             {
                 var child = System.IO.Path.Combine(path, name);
                 ValidateAncestors(child);
@@ -90,18 +91,25 @@ internal sealed class LocalRoot : IDisposable
         }
     }
 
-    private static void ValidateFile(string path)
+    internal static void ValidateFile(string path)
     {
         var file = new FileInfo(path);
         if (file.LinkTarget is not null || file.Exists && (file.Attributes & FileAttributes.ReparsePoint) != 0)
         { throw new LocalStateException(ArtifactFailureCode.InvalidInput); }
     }
 
-    private static string Volume(string path) => DriveInfo.GetDrives().Select(drive => drive.Name)
-        .Where(name => path == name.TrimEnd(System.IO.Path.DirectorySeparatorChar)
-            || path.StartsWith(name.EndsWith(System.IO.Path.DirectorySeparatorChar)
-                ? name : name + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal))
-        .OrderByDescending(name => name.Length).First();
+    private static string Volume(string path)
+    {
+        // macOS mount enumeration uses native shared state; never run it concurrently.
+        lock (mountEnumeration)
+        {
+            return DriveInfo.GetDrives().Select(drive => drive.Name)
+                .Where(name => path == name.TrimEnd(System.IO.Path.DirectorySeparatorChar)
+                    || path.StartsWith(name.EndsWith(System.IO.Path.DirectorySeparatorChar)
+                        ? name : name + System.IO.Path.DirectorySeparatorChar, StringComparison.Ordinal))
+                .OrderByDescending(name => name.Length).First();
+        }
+    }
 
     private static LocalState ReadState(string path, int maximum)
     {
@@ -137,4 +145,70 @@ internal sealed class LocalRoot : IDisposable
     }
 
     public void Dispose() => ownership.Dispose();
+
+    public void AdvanceTime(DateTimeOffset now)
+    {
+        if (now <= State.TimeFloor) { return; }
+        State = State with { TimeFloor = now };
+    }
+
+    public void PersistTime() => WriteState(Path, State, State.Limits.DecisionBytes);
+
+    public string RecordPath(string area, string key, string extension = ".json")
+    {
+        var directory = System.IO.Path.Combine(Path, area);
+        ValidateAncestors(directory);
+        var path = System.IO.Path.Combine(directory, key + extension);
+        ValidateFile(path);
+        return path;
+    }
+
+    public void WriteRecord<T>(string area, string key, T value)
+    {
+        WriteState(Path, State, State.Limits.DecisionBytes);
+        var final = RecordPath(area, key);
+        var payload = JsonSerializer.SerializeToUtf8Bytes(value);
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(new LocalEnvelope(
+            Convert.ToBase64String(payload), Convert.ToHexStringLower(SHA256.HashData(payload))));
+        if (bytes.Length > State.Limits.DecisionBytes) { throw new LocalStateException(ArtifactFailureCode.Capacity); }
+        var pending = RecordPath(area, ".pending-" + Guid.NewGuid().ToString("N"));
+        using (var output = new FileStream(pending, FileMode.CreateNew, FileAccess.Write, FileShare.None, 4096, FileOptions.WriteThrough))
+        {
+            output.Write(bytes);
+            output.Flush(flushToDisk: true);
+        }
+        File.Move(pending, final, overwrite: true);
+    }
+
+    public IEnumerable<T> ReadRecords<T>(string area, int maximum, Func<T, string> key)
+    {
+        var directory = System.IO.Path.Combine(Path, area);
+        ValidateAncestors(directory);
+        var count = 0;
+        foreach (var path in Directory.EnumerateFileSystemEntries(directory))
+        {
+            if (++count > checked(maximum * 2 + 100)) { throw new LocalStateException(ArtifactFailureCode.Capacity); }
+            ValidateFile(path);
+            var name = System.IO.Path.GetFileName(path);
+            if (name.StartsWith(".pending-", StringComparison.Ordinal)) { continue; }
+            if (!name.EndsWith(".json", StringComparison.Ordinal) || !File.Exists(path)
+                || new FileInfo(path).Length > State.Limits.DecisionBytes)
+            { throw new LocalStateException(ArtifactFailureCode.CorruptState); }
+            T value;
+            try
+            {
+                var envelope = JsonSerializer.Deserialize<LocalEnvelope>(File.ReadAllBytes(path))
+                    ?? throw new LocalStateException(ArtifactFailureCode.CorruptState);
+                var bytes = Convert.FromBase64String(envelope.Payload);
+                if (Convert.ToHexStringLower(SHA256.HashData(bytes)) != envelope.Sha256)
+                { throw new LocalStateException(ArtifactFailureCode.CorruptState); }
+                value = JsonSerializer.Deserialize<T>(bytes) ?? throw new LocalStateException(ArtifactFailureCode.CorruptState);
+            }
+            catch (Exception error) when (error is JsonException or FormatException or ArgumentException)
+            { throw new LocalStateException(ArtifactFailureCode.CorruptState); }
+            if (!StringComparer.Ordinal.Equals(name, key(value) + ".json"))
+            { throw new LocalStateException(ArtifactFailureCode.CorruptState); }
+            yield return value;
+        }
+    }
 }

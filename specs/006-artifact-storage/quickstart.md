@@ -1,9 +1,13 @@
 # F-06 Artifact Qualification Quickstart
 
 **Status**: Partial implementation; the local-package lock blocker is resolved.
-The script, additive values/interfaces and minimum fixture initialization exist,
-but storage operations and full qualification do not. The proposed full/focused
-story commands below remain unfulfilled obligations, not passing results.
+Independent partial mechanisms now execute streaming/publication, protected
+reads, exact receipts, cleanup/deletion, real metadata integration and local
+parent-kill recovery checks. Full qualification remains incomplete and both
+fixtures remain not-ready. Logical, transfer and recovery modes execute real
+focused proof and always report `qualification: false`; the package phase also
+runs actual graph/public-member and frozen-binary checks. Full mode still
+fails closed rather than inventing missing results.
 See the [approved hash refresh and locked replay](plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 
 Read [API](contracts/artifact-api.md), [model](data-model.md),
@@ -11,13 +15,13 @@ Read [API](contracts/artifact-api.md), [model](data-model.md),
 
 ## Prerequisites
 
-For the current foundation-only checks, provide the retained owner-private
+For the current package-only checks, provide the retained owner-private
 pre-F06 baseline captured before public contract additions:
 
 ```bash
 export HOARD_ARTIFACT_RETAINED_BASELINE="../hoard-artifact-evidence/pre-f06-20261022"
 bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Artifact' \
-  --evidence "../hoard-artifact-evidence/fresh-foundation-check"
+  --evidence "../hoard-artifact-evidence/fresh-focused-check"
 ```
 
 The retained marker is hash-verified and copied, never rebuilt against new
@@ -69,7 +73,7 @@ Missing space, RSS measurement, crash evidence, changed lock or failed case
 prevents qualification. No secret/path-bearing diagnostic is copied into the
 public report; raw synthetic private captures stay outside Git.
 
-Planned focused commands rebuild/verify prerequisites and always report
+Available focused commands rebuild/verify prerequisites and always report
 `qualification: false`, even if their selection passes:
 
 ```bash
@@ -78,6 +82,20 @@ bash scripts/validate-artifacts.sh --phase transfers --evidence "$PRIVATE_EVIDEN
 bash scripts/validate-artifacts.sh --phase recovery --evidence "$PRIVATE_EVIDENCE/artifacts-recovery"
 bash scripts/validate-artifacts.sh --phase packages --evidence "$PRIVATE_EVIDENCE/artifacts-packages"
 ```
+
+The logical phase excludes crash children. Recovery checks exact owner/ticket
+semantics, then kills each Python-owned B0/B1/B2/B3/D0/D1 child only after its
+matching handshake, confirms SIGKILL exit, and opens the same root in a fresh
+process. Captures bind original state hashes, acknowledged control bytes,
+new-content hashes/lengths, exact receipts and recreated-incarnation fencing.
+The transfer phase uses generated paced non-seekable streams, warmed idle RSS,
+OS peak RSS and actual full byte counts. No phase certifies the other provider's
+durability or substitutes its output for the unfinished 96-case full manifest.
+The package phase inspects eight actual resolved package graphs and compiled
+public signatures, rejects provider/Hosting leak controls, compares baseline
+members including accessibility/invocation flags, executes the original marker
+binary with current platform assemblies and runs both unchanged consumer choices.
+These are focused proofs, not complete AS-45/46 or full qualification.
 
 Use `--update-locks` only for intentional dependency/project-manifest or local
 package-payload changes; review those tracked locks and then run a separate

@@ -3687,12 +3687,12 @@ resolved. Its entry point,
 `bash scripts/validate-artifacts.sh --evidence <fresh-private-destination>`,
 requires an existing owner-private parent outside Git. It prepares the retained
 pre-F06 baseline and independent packages with tracked locks, then **fails**
-until behavioral execution is implemented. Set
+until complete qualification is implemented. Set
 `HOARD_ARTIFACT_RETAINED_BASELINE` to the original private baseline capture;
 the marker binary is hash-verified and reused without rebuilding. Partial BCL
-contracts, shared guard authority, metadata-bridge wiring and minimum root
-initialization have 32 focused package-only checks; use `--filter
-'FullyQualifiedName~Artifact'` only for that nonqualifying subset. The fixtures
+contracts and independent storage mechanisms have focused package-only checks;
+use `--filter 'FullyQualifiedName~Artifact'` for those nonqualifying checks,
+including real metadata transactions and local crash children. The fixtures
 truthfully declare their missing mandatory guarantees and are not ready.
 Failure captures are retained with
 `qualification: false`; neither compilation nor the verifier's synthetic tests
@@ -3703,7 +3703,7 @@ approved reviewed local-package hash refreshes on 2026-10-22. Only 142
 `Hoard.*` hashes in 38 of 97 tracked lockfiles change; package versions,
 dependency graphs, external-package hashes and frozen baseline locks/binaries
 remain unchanged. All five existing regression commands pass separate default
-locked replays; the artifact-focused command still passes 32 checks with
+locked replays at that checkpoint. Current artifact runs still report
 `qualification: false`. The artifact runner permits that local hash-only
 metadata lock delta while still rejecting source, dependency/version, external
 hash and malformed-hash changes. This does not disable package integrity checks
@@ -3712,7 +3712,25 @@ or authorize rewriting published packages. See
 Provider authoring guidance now identifies the partial contracts. Custom-host
 examples, architecture diagrams, compatibility policy, IaC and release guides
 are otherwise unaffected: old APIs/markers and production behavior are unchanged,
-and no operational storage, deployment or release is delivered.
+and no production storage, deployment or release is delivered.
+
+The resumed mechanisms are recorded in the
+[implementation evidence](../specs/006-artifact-storage/plan.md#resumed-storage-mechanisms-and-recovery-2026-10-22).
+`--phase logical` runs common package checks and the unchanged round-trip
+consumer without crash children. `--phase recovery` runs ticket/owner checks
+and six directly owned SIGKILL/fresh-process reopen journeys. `--phase transfers`
+performs real 256 MiB/4 GiB write/read and OS peak-RSS measurements on both
+fixtures. Each rebuilds/hash-verifies prerequisites in a fresh private
+workspace; none qualifies storage. `--phase packages` now checks actual resolved
+graphs/public signatures, provider/Hosting leak negatives, baseline public member
+accessibility and the unchanged old marker binary with current assemblies, plus
+both consumer selections. Full mode still fails for missing obligations.
+In-process metadata fixtures, not fabricated reference counts,
+now test committed orphans, failed publication, live-reference exclusion and
+guard retention through lost metadata acknowledgments on SQLite and memory.
+Architecture review corrected close admission/release ownership, terminal
+noncommit cleanup, deadline bookkeeping behind blocked state I/O and ticket
+validation/expiry classification; final implementation review is still due.
 
 ```bash
 python3 -m unittest discover -s tests/tooling -v

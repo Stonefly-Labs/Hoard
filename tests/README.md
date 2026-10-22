@@ -46,9 +46,18 @@ F-06 adds `contracts/Hoard.Artifacts.Tests` to the solution. Its value checks
 run source-level; additional `Cases/` compile only with
 `ArtifactPackageAcceptance=true` against independently prepared packages.
 `scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Artifact'` runs the
-current 32-check foundation subset with a retained pre-F06 baseline and always
-reports nonqualification. The fixtures' storage methods remain fail-closed
-placeholders; no AS case, multi-GB transfer, RSS or crash durability is proven.
+current package-only checks with a retained pre-F06 baseline and always reports
+nonqualification. Coverage now includes independent streaming/publication/read/
+deletion mechanisms, real SQLite/memory reference transactions and six actual
+local parent-kill/fresh-reopen barriers. `--phase logical` excludes the crash
+children; `--phase recovery` additionally drives Python-owned crash children
+with independent hash/receipt validation. `--phase transfers` executes real
+256 MiB/4 GiB write/read and OS peak-RSS measurements on both providers. All
+remain partial. `--phase packages` runs eight actual graph scans, compiled
+provider/Hosting leak negatives, public-member compatibility including
+accessibility, the frozen old marker binary and both consumer selections.
+Full qualification and final-current-source acceptance
+are unfinished, and neither fixture is ready or certified.
 The local-package hash blocker is resolved by reviewed `Hoard.*` hash-only lock
 refreshes and separate default locked regressions. Versions, dependency graphs,
 external hashes and frozen historical baselines remain unchanged. See the

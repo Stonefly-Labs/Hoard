@@ -6,10 +6,18 @@
 [artifact API](contracts/artifact-api.md), [recovery](contracts/recovery.md),
 [acceptance](contracts/acceptance.md) and [quickstart.md](quickstart.md).
 
-**Status**: Implementation is running; T001..T006 setup is verified. The
-artifact command currently fails closed after independent package preparation;
-no storage behavior or qualification is claimed. Partial T007..T019 code has
-32 focused passing checks, but these tasks remain unchecked. The initial
+**Status**: Implementation is running; T001..T006 setup is verified. Partial
+independent storage mechanisms, real metadata composition, measured transfers
+and six actual local crash barriers now have focused evidence, not full
+qualification. Task markers remain conservative: the remaining tasks' complete
+obligations and final-source gates have not all passed. The full artifact
+command still fails closed; both fixtures declare missing guarantees/not-ready.
+Focused package mode now executes actual graph/public-member checks, negative
+provider/Hosting leaks and unchanged old-binary/consumer journeys. Review-driven
+reservation, commit-renewal, idle-read and composed-shutdown fixes have focused
+regressions; none substitutes for unfinished complete task obligations.
+See [resumed implementation](plan.md#resumed-storage-mechanisms-and-recovery-2026-10-22).
+The initial
 `NU1403` blocker is resolved by the maintainer-approved local-package hash
 refresh and separate default locked regressions. Dependency graphs/versions,
 external-package hashes and frozen historical baselines remain unchanged.

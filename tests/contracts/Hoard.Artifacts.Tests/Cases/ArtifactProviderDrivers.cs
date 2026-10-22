@@ -32,10 +32,23 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
     public IArtifactMaintenance Maintenance { get; }
     public LocalFaultControls? LocalControls { get; }
     public ObjectFaultControls? ObjectControls { get; }
+    public ValueTask<ArtifactResult<ArtifactShutdown>> StopAsync(ArtifactCleanupOptions options)
+        => lifetime.StopAsync(options, default);
+
+    public void DamageOnlyPayload(bool truncate)
+    {
+        var directory = System.IO.Path.Combine(root.Path, ProviderId == "local" ? "data" : "objects");
+        var path = Directory.EnumerateFiles(directory).Single();
+        using var file = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        if (truncate) { file.SetLength(file.Length - 1); }
+        else { file.WriteByte(0xff); }
+        file.Flush(flushToDisk: true);
+    }
 
     public static async Task<ArtifactProviderDriver> CreateAsync(string providerId, TimeProvider? clock = null,
         ArtifactLimits? limits = null,
-        Func<ArtifactStamp, CancellationToken, ValueTask<ArtifactReferenceDecision>>? references = null)
+        Func<ArtifactStamp, CancellationToken, ValueTask<ArtifactReferenceDecision>>? references = null,
+        Func<ArtifactCoordinationAuthority, IArtifactCoordinationAuthority>? decorate = null)
     {
         if (providerId is not ("local" or "object")) { throw new ArgumentException("Unknown artifact fixture."); }
         var root = new ArtifactTestRoot();
@@ -48,8 +61,11 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
         var driver = new ArtifactProviderDriver(providerId, root, lifetime, identity, authority, local, objects);
         try
         {
-            Assert.IsType<ArtifactResult<ArtifactAdmission>.Success>(await lifetime.InitializeAsync(
-                new(ArtifactInitializationMode.CreateEmpty, identity, authority, limits), new(), default));
+            var admission = await lifetime.InitializeAsync(
+                new(ArtifactInitializationMode.CreateEmpty, identity, decorate?.Invoke(authority) ?? authority, limits), new(), default);
+            Assert.True(admission is ArtifactResult<ArtifactAdmission>.Success,
+                admission is ArtifactResult<ArtifactAdmission>.Failure failure
+                    ? $"Artifact initialization failed ({failure.Code}, {local?.InitializationFailure})." : "Unexpected artifact admission result.");
             return driver;
         }
         catch

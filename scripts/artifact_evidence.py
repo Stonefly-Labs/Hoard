@@ -9,10 +9,13 @@ import math
 import os
 from pathlib import Path
 import re
+import selectors
 import shutil
+import signal
 import subprocess
 import sys
 import tarfile
+import time
 import uuid
 
 import foundation_evidence as foundation
@@ -238,7 +241,7 @@ def prepare_baseline(root, work, update):
                 or sha256(root / "tests/fixtures/artifacts/RetainedMarker/Baseline/packages.lock.json") != record.get("lockSha256")):
             raise RuntimeError("Artifact retained recipe or binary hash drift.")
         for name in ("baseline", "baseline-feed"):
-            foundation.copy_source(original / name, work / name)
+            shutil.copytree(original / name, work / name)
         shutil.copytree(original / "retained", work / "retained",
                         ignore=shutil.ignore_patterns("obj"))
         shutil.copy2(original / "baseline.tar", work / "baseline.tar")
@@ -349,7 +352,7 @@ def prepare_packages(root, work, update):
 
     for name in ("Abstractions", "Core", "Hosting", "Application"):
         build(f"src/Hoard.{name}/Hoard.{name}.csproj", pack=True)
-    for name in ("Local", "ObjectSemantics", "HostAdapters", "Consumer", "CrashRunner", "TransferRunner"):
+    for name in ("Local", "ObjectSemantics", "HostAdapters", "Consumer", "CrashRunner", "TransferRunner", "BoundaryLeak"):
         build(f"tests/fixtures/artifacts/{name}/{name}.csproj",
               pack=name in ("Local", "ObjectSemantics", "HostAdapters"))
     build("tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj")
@@ -375,9 +378,307 @@ def focused_tests(work, selection):
     output = run(*arguments, env={
         "HOARD_ARTIFACT_TEST_ROOT": str(work / "case-roots"),
         "HOARD_METADATA_WORKSPACE": str(work / "metadata-roots"),
+        "HOARD_ARTIFACT_CRASH_PROOFS": str(work / "crashes"),
         "HOARD_ARTIFACT_CRASH_RUNNER": str(work / "current/tests/fixtures/artifacts/CrashRunner/bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll")})
     (work / "tests.txt").write_text(output)
     return lifecycle.test_count(results / "artifacts.trx")
+
+
+def consumer_journeys(work):
+    binary = work / "current/tests/fixtures/artifacts/Consumer/bin/Release/net10.0/Hoard.Fixtures.Artifacts.Consumer.dll"
+    journeys = []
+    for provider in PROVIDERS:
+        result = json.loads(run("dotnet", str(binary), provider, str(work / f"consumer-{provider}")))
+        if result != {"qualification": False, "provider": provider, "roundTrip": True}:
+            raise RuntimeError("Artifact unchanged-consumer journey did not pass.")
+        journeys.append(result)
+    (work / "consumer-journeys.json").write_text(json.dumps(journeys, indent=2) + "\n")
+    return journeys
+
+
+def package_checks(root, work):
+    retained = json.loads((work / "retained-binaries.json").read_text())
+    runtime = work / "compatible-runtime"
+    shutil.copytree(work / "retained/bin/Release/net10.0", runtime)
+    current = work / "current"
+    for name in ("Abstractions", "Core", "Hosting", "Application"):
+        shutil.copy2(current / f"src/Hoard.{name}/bin/Release/net10.0/Hoard.{name}.dll", runtime)
+    if (sha256(runtime / "RetainedMarker.dll") != retained["binarySha256"]
+            or run("dotnet", str(runtime / "RetainedMarker.dll")).strip() != "artifact-marker-compatible"
+            or any(sha256(proof_file(work, path)) != digest for path, digest in retained["files"].items())):
+        raise RuntimeError("Frozen pre-F-06 artifact binary compatibility failed.")
+    ownership = {
+        **{f"Hoard.{name}": name for name in ("Abstractions", "Core", "Hosting", "Application")},
+        "NuGet.Versioning": "Versioning", "Microsoft.Extensions.DependencyInjection.Abstractions": "Di",
+        **{name: "Artifact" for name in ("Local", "ObjectSemantics", "BoundaryLeak")},
+        **{f"Hoard.Fixtures.Artifacts.{name}": "Artifact" for name in ("Local", "ObjectSemantics")},
+        **{name: "Host" for name in ("HostAdapters", "Consumer", "CrashRunner", "TransferRunner")},
+        "Hoard.Fixtures.Artifacts.HostAdapters": "Host",
+        **{f"Hoard.Fixtures.Metadata.{name}": "Metadata" for name in ("Sqlite", "Memory")},
+        "Hoard.Fixtures.Metadata.HostAdapters": "Host",
+        **{name: "Sdk" for name in ("Microsoft.Data.Sqlite", "Microsoft.Data.Sqlite.Core",
+            "SQLitePCLRaw.bundle_e_sqlite3", "SQLitePCLRaw.core", "SQLitePCLRaw.provider.e_sqlite3",
+            "SQLitePCLRaw.lib.e_sqlite3", "System.Memory")}
+    }
+    projects = [("platform", [current / f"src/Hoard.{name}/Hoard.{name}.csproj"
+                             for name in ("Abstractions", "Core", "Hosting", "Application")])]
+    projects += [(scan, [current / f"tests/fixtures/artifacts/{name}/{name}.csproj"])
+                 for scan, name in (("local", "Local"), ("object", "ObjectSemantics"),
+                                    ("host-adapters", "HostAdapters"), ("consumer", "Consumer"),
+                                    ("crash-runner", "CrashRunner"), ("transfer-runner", "TransferRunner"),
+                                    ("boundary-leak", "BoundaryLeak"))]
+    graphs = []
+    previous = os.environ.get("NUGET_PACKAGES")
+    os.environ["NUGET_PACKAGES"] = str(work / "cache")
+    try:
+        for scan, inputs in projects:
+            graph = foundation.inspection_graph(inputs, ownership)
+            graph["scanId"] = scan
+            for project in graph["projects"]:
+                if project["id"] in ("Local", "ObjectSemantics", "HostAdapters", "Consumer",
+                                     "CrashRunner", "TransferRunner", "BoundaryLeak"):
+                    project["assembly"] = str(Path(project["project"]).parent
+                        / f"bin/Release/net10.0/Hoard.Fixtures.Artifacts.{project['id']}.dll")
+            graphs.append(graph)
+    finally:
+        if previous is None:
+            os.environ.pop("NUGET_PACKAGES", None)
+        else:
+            os.environ["NUGET_PACKAGES"] = previous
+    manifest = work / "artifact-boundaries.json"
+    manifest.write_text(json.dumps({
+        "graphs": graphs,
+        "baselineAbstractions": str(work / "baseline/src/Hoard.Abstractions/bin/Release/net10.0/Hoard.Abstractions.dll"),
+        "currentAbstractions": str(current / "src/Hoard.Abstractions/bin/Release/net10.0/Hoard.Abstractions.dll")
+    }, indent=2) + "\n")
+    project = root / "tests/architecture/Hoard.Architecture.Tests/Hoard.Architecture.Tests.csproj"
+    output = run("dotnet", "test", str(project), "-c", "Release", "--no-restore",
+                 "--filter", "FullyQualifiedName~ArtifactBoundaryTests",
+                 "--logger", "trx;LogFileName=artifact-boundaries.trx",
+                 "--results-directory", str(work / "results"), "-v", "quiet",
+                 env={"HOARD_ARTIFACT_BOUNDARIES": str(manifest)})
+    (work / "boundaries.txt").write_text(output)
+    count = lifecycle.test_count(work / "results/artifact-boundaries.trx")
+    journeys = consumer_journeys(work)
+    proof = {"testsPassed": count, "retainedBinarySha256": retained["binarySha256"],
+             "unchangedRetainedBinaryExecuted": True, "consumerJourneys": len(journeys),
+             "scans": [graph["scanId"] for graph in graphs]}
+    (work / "package-checks.json").write_text(json.dumps(proof, indent=2) + "\n")
+    return proof
+
+
+def process_rss(pid):
+    result = subprocess.run(["ps", "-o", "rss=", "-p", str(pid)], text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5, check=False)
+    if result.returncode or not result.stdout.strip().isdigit():
+        raise RuntimeError("Artifact child OS RSS measurement is unavailable.")
+    return int(result.stdout.strip()) * 1024
+
+
+def child_processes(parent):
+    result = subprocess.run(["ps", "-axo", "pid=,ppid="], text=True,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=5, check=True)
+    pairs = [tuple(map(int, line.split())) for line in result.stdout.splitlines() if len(line.split()) == 2]
+    descendants = {parent}
+    for _ in range(16):
+        found = {pid for pid, ppid in pairs if ppid in descendants}
+        if found.issubset(descendants):
+            break
+        descendants.update(found)
+    return descendants - {parent}
+
+
+def stop_measured_child(child):
+    if child.poll() is not None:
+        return
+    for pid in sorted(child_processes(child.pid), reverse=True):
+        try:
+            os.kill(pid, signal.SIGKILL)
+        except ProcessLookupError:
+            pass
+    try:
+        child.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        child.kill()
+        child.wait(timeout=10)
+
+
+def read_child_line(child, timeout):
+    with selectors.DefaultSelector() as selection:
+        selection.register(child.stdout, selectors.EVENT_READ)
+        if not selection.select(timeout):
+            raise RuntimeError("Artifact measured child missed its bounded handshake.")
+        line = child.stdout.readline(16385)
+    if not line or len(line) > 16384:
+        raise RuntimeError("Artifact measured child emitted no bounded proof.")
+    return json.loads(line)
+
+
+def expected_transfer_hash(size):
+    block = bytes((index * 31 + 7) % 251 for index in range(262144))
+    digest = hashlib.sha256()
+    remaining = size
+    while remaining:
+        count = min(len(block), remaining)
+        digest.update(block[:count])
+        remaining -= count
+    return digest.hexdigest()
+
+
+def measured_transfer(work, provider, size, run_id, expected):
+    if sys.platform not in ("darwin", "linux") or not Path("/usr/bin/time").is_file():
+        raise RuntimeError("Artifact qualification requires supported OS peak-RSS measurement.")
+    if shutil.disk_usage(work).free < 16 * 1024 ** 3:
+        raise RuntimeError("Artifact measured transfer requires at least 16 GiB free scratch space.")
+    capture = work / f"transfer-{provider}-{size}"
+    capture.mkdir(mode=0o700)
+    binary = work / "current/tests/fixtures/artifacts/TransferRunner/bin/Release/net10.0/Hoard.Fixtures.Artifacts.TransferRunner.dll"
+    flag = "-l" if sys.platform == "darwin" else "-v"
+    command = ["/usr/bin/time", flag, "dotnet", str(binary), provider,
+               str(capture / "store"), str(size), expected, run_id]
+    with (capture / "time.txt").open("w") as errors:
+        child = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                 stderr=errors, text=True, bufsize=1, start_new_session=True)
+        _workspaces[work].add(child.pid)
+        actual_pid = None
+        try:
+            idle = read_child_line(child, 120)
+            actual_pid = idle.get("pid")
+            if (idle.get("eventName") != "idle" or type(actual_pid) is not int
+                    or actual_pid not in child_processes(child.pid)):
+                raise RuntimeError("Artifact measured handshake is not from the owned transfer child.")
+            _workspaces[work].add(actual_pid)
+            baseline = process_rss(actual_pid)
+            samples = [baseline]
+            child.stdin.write("transfer\n")
+            child.stdin.flush()
+            deadline = time.monotonic() + 2400
+            with selectors.DefaultSelector() as selection:
+                selection.register(child.stdout, selectors.EVENT_READ)
+                while True:
+                    if time.monotonic() >= deadline:
+                        raise RuntimeError("Artifact transfer child exceeded its 40-minute deadline.")
+                    if selection.select(0.05):
+                        complete = json.loads(child.stdout.readline(16385))
+                        break
+                    samples.append(process_rss(actual_pid))
+            child.wait(timeout=max(0.001, deadline - time.monotonic()))
+            if child.stdout.read(1) or child.returncode != 0:
+                raise RuntimeError("Artifact transfer child failed or emitted unexpected proof.")
+        finally:
+            stop_measured_child(child)
+            child.stdin.close()
+            child.stdout.close()
+            _workspaces[work].discard(child.pid)
+            if actual_pid is not None:
+                _workspaces[work].discard(actual_pid)
+    raw = (capture / "time.txt").read_text()
+    pattern = r"^\s*(\d+)\s+maximum resident set size\s*$" if sys.platform == "darwin" else r"Maximum resident set size \(kbytes\):\s*(\d+)"
+    matched = re.search(pattern, raw, re.MULTILINE)
+    if not matched:
+        raise RuntimeError("Artifact OS peak resident-memory capture is missing.")
+    proof = {**complete, "baselineRssBytes": baseline, "osPeakRssBytes": int(matched[1]) * (1 if sys.platform == "darwin" else 1024),
+             "sampledPeakRssBytes": max(samples), "samples": len(samples), "rssUnits": "bytes",
+             "osPeakMethod": "time-l" if sys.platform == "darwin" else "time-v", "exitCode": child.returncode}
+    (capture / "proof.json").write_text(json.dumps(proof, indent=2) + "\n")
+    verify_transfer(proof, provider, size, run_id)
+    return proof
+
+
+def measured_transfers(work, run_id):
+    hashes = {size: expected_transfer_hash(size) for size in (268435456, 4294967296)}
+    proofs = [measured_transfer(work, provider, size, run_id, hashes[size])
+              for provider in PROVIDERS for size in hashes]
+    (work / "transfers.json").write_text(json.dumps(proofs, indent=2) + "\n")
+    return proofs
+
+
+def validate_recovery_readback(observed, state, barrier, run_id, pid):
+    if not isinstance(state, dict) or not isinstance(state.get("Control"), dict):
+        raise RuntimeError("Artifact original crash state is invalid.")
+    pattern = bytes((index * 17 + 11) % 256 for index in range(256))
+    control = b"acknowledged independent control before crash"
+    if (not isinstance(observed, dict) or observed.get("eventName") != "recovered"
+            or observed.get("provider") != "local" or observed.get("qualification") is not False
+            or observed.get("pid") != pid or observed.get("runId") != run_id or observed.get("barrier") != barrier
+            or any(observed.get(key) is not True for key in (
+                "controlReadback", "controlReceipt", "exactReceipt", "contentReadback", "ownerFenced", "noDuplicateEffect"))
+            or state.get("Run") != run_id or state.get("Barrier") != barrier
+            or observed.get("contentSha256") != state.get("TargetDigest")
+            or observed.get("contentLength") != state.get("TargetLength")
+            or observed.get("controlSha256") != state.get("Control", {}).get("Digest")
+            or observed.get("controlLength") != state.get("Control", {}).get("Length")
+            or not is_hash(observed.get("contentSha256")) or not is_hash(observed.get("controlSha256"))
+            or type(observed.get("contentLength")) is not int or observed["contentLength"] != 1048576
+            or observed["contentSha256"] != hashlib.sha256(pattern * 4096).hexdigest()
+            or type(observed.get("controlLength")) is not int or observed["controlLength"] != len(control)
+            or observed["controlSha256"] != hashlib.sha256(control).hexdigest()
+            or observed.get("outcome") != ("Removed" if barrier.startswith("D") else "Published")
+            or observed.get("reconstructed") is not (barrier in ("B0", "B1"))
+            or observed.get("reclamation") != {"D0": "Pending", "D1": "Reclaimed"}.get(barrier, "NotApplicable")):
+        raise RuntimeError("Artifact fresh-process recovery readback is incomplete or foreign.")
+
+
+def crash_recovery(work, barrier, run_id):
+    capture = work / f"crash-{barrier}"
+    capture.mkdir(mode=0o700)
+    binary = work / "current/tests/fixtures/artifacts/CrashRunner/bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll"
+    state_path = capture / "state.json"
+    arguments = [str(capture / "store"), str(state_path), barrier, run_id]
+    started = time.monotonic()
+    with (capture / "crash-errors.txt").open("w") as errors:
+        child = subprocess.Popen(["dotnet", str(binary), "crash", *arguments],
+                                 stdout=subprocess.PIPE, stderr=errors, text=True, start_new_session=True)
+        _workspaces[work].add(child.pid)
+        try:
+            handshake = read_child_line(child, 120)
+            if (handshake.get("eventName") != "barrier" or handshake.get("pid") != child.pid
+                    or handshake.get("runId") != run_id or handshake.get("barrier") != barrier
+                    or handshake.get("acknowledged") is not (barrier == "B3")
+                    or handshake.get("stateSha256") != sha256(state_path) or child.poll() is not None):
+                raise RuntimeError("Artifact crash child missed its exact owned barrier.")
+            before = sha256(state_path)
+            os.kill(child.pid, signal.SIGKILL)
+            child.wait(timeout=10)
+            if child.returncode != -signal.SIGKILL:
+                raise RuntimeError("Artifact crash child did not exit from its parent's SIGKILL.")
+        finally:
+            if child.poll() is None:
+                child.kill()
+                child.wait(timeout=10)
+            child.stdout.close()
+            _workspaces[work].discard(child.pid)
+    with (capture / "reopen-errors.txt").open("w") as errors:
+        reopened = subprocess.Popen(["dotnet", str(binary), "recover", *arguments],
+                                    stdout=subprocess.PIPE, stderr=errors, text=True, start_new_session=True)
+        _workspaces[work].add(reopened.pid)
+        try:
+            output, _ = reopened.communicate(timeout=120)
+            (capture / "reopen-output.txt").write_text(output)
+            if reopened.returncode or len(output) > 16384 or sha256(state_path) != before:
+                raise RuntimeError("Artifact fresh-process reopen failed or changed its original ticket proof.")
+            observed = json.loads(output)
+            state = json.loads(state_path.read_text())
+            validate_recovery_readback(observed, state, barrier, run_id, reopened.pid)
+        finally:
+            if reopened.poll() is None:
+                reopened.kill()
+                reopened.wait(timeout=10)
+            reopened.stdout.close()
+            _workspaces[work].discard(reopened.pid)
+    proof = {
+        "provider": "local", "barrier": barrier, "runId": run_id, "signal": "SIGKILL",
+        "pid": child.pid, "reopenPid": reopened.pid, "exitCode": child.returncode,
+        "exitConfirmed": True, "handshake": True, "stateCompared": before == sha256(state_path),
+        "receiptCompared": observed["exactReceipt"] and observed["controlReceipt"],
+        "controlReadback": observed["controlReadback"], "newReadback": observed["contentReadback"],
+        "ownerFenced": observed["ownerFenced"], "noDuplicateEffect": observed["noDuplicateEffect"],
+        "stateSha256": before, "durationMs": (time.monotonic() - started) * 1000,
+        "observed": observed, "parentObserved": handshake,
+    }
+    verify_crash(proof, barrier, run_id)
+    (capture / "proof.json").write_text(json.dumps(proof, indent=2) + "\n")
+    return proof
 
 
 def main():
@@ -398,9 +699,39 @@ def main():
             verify_locks(root, before)
         if args.filter:
             count = focused_tests(work, args.filter)
+            journeys = consumer_journeys(work)
             evidence = {"schemaVersion": 1, "qualification": False, "phase": "focused",
                         "testsPassed": count, "sourceSha256": source_hash(root),
-                        "baselineRevision": BASELINE}
+                        "baselineRevision": BASELINE, "consumerJourneys": len(journeys)}
+            (work / "manifest.json").write_text(json.dumps(evidence, indent=2) + "\n")
+            print(json.dumps(evidence))
+            return 0
+        if args.phase == "transfers":
+            run_id = str(uuid.uuid4())
+            transfers = measured_transfers(work, run_id)
+            evidence = {"schemaVersion": 1, "qualification": False, "phase": args.phase,
+                        "runId": run_id, "sourceSha256": source_hash(root), "transfers": transfers}
+            (work / "manifest.json").write_text(json.dumps(evidence, indent=2) + "\n")
+            print(json.dumps(evidence))
+            return 0
+        if args.phase == "packages":
+            checks = package_checks(root, work)
+            evidence = {"schemaVersion": 1, "qualification": False, "phase": args.phase,
+                        "sourceSha256": source_hash(root), "baselineRevision": BASELINE,
+                        "packageChecks": checks}
+            (work / "manifest.json").write_text(json.dumps(evidence, indent=2) + "\n")
+            print(json.dumps(evidence))
+            return 0
+        if args.phase in ("logical", "recovery"):
+            run_id = str(uuid.uuid4())
+            selection = ("FullyQualifiedName~Artifact&FullyQualifiedName!~ArtifactCrashTests" if args.phase == "logical"
+                         else "FullyQualifiedName~ArtifactRecoveryTests|FullyQualifiedName~ArtifactReconciliationTests")
+            count = focused_tests(work, selection)
+            journeys = consumer_journeys(work) if args.phase == "logical" else []
+            crashes = [crash_recovery(work, barrier, run_id) for barrier in BARRIERS] if args.phase == "recovery" else []
+            evidence = {"schemaVersion": 1, "qualification": False, "phase": args.phase, "runId": run_id,
+                        "sourceSha256": source_hash(root), "testsPassed": count,
+                        "consumerJourneys": len(journeys), "crashes": crashes}
             (work / "manifest.json").write_text(json.dumps(evidence, indent=2) + "\n")
             print(json.dumps(evidence))
             return 0

@@ -128,6 +128,28 @@ class ArtifactEvidenceTests(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             artifact.verify_red_green([])
 
+    def test_actual_recovery_readback_requires_exact_run_hashes_outcomes_and_all_observations(self):
+        content = hashlib.sha256(bytes((index * 17 + 11) % 256 for index in range(1048576))).hexdigest()
+        control = b"acknowledged independent control before crash"
+        control_hash = hashlib.sha256(control).hexdigest()
+        state = {"Run": "current", "Barrier": "D1", "TargetDigest": content, "TargetLength": 1048576,
+                 "Control": {"Digest": control_hash, "Length": len(control)}}
+        observed = {"eventName": "recovered", "provider": "local", "qualification": False,
+                    "pid": 43, "runId": "current", "barrier": "D1", "outcome": "Removed",
+                    "reconstructed": False, "reclamation": "Reclaimed",
+                    "contentSha256": content, "contentLength": 1048576,
+                    "controlSha256": control_hash, "controlLength": len(control),
+                    **{key: True for key in ("controlReadback", "controlReceipt", "exactReceipt",
+                                            "contentReadback", "ownerFenced", "noDuplicateEffect")}}
+        artifact.validate_recovery_readback(observed, state, "D1", "current", 43)
+        for field, value in (("runId", "foreign"), ("pid", 42), ("provider", "object"),
+                             ("qualification", True), ("contentSha256", "c" * 64),
+                             ("controlLength", 0), ("outcome", "AlreadyAbsent"),
+                             ("reconstructed", True), ("reclamation", "Pending"),
+                             ("ownerFenced", False), ("exactReceipt", False), ("noDuplicateEffect", False)):
+            with self.subTest(field=field), self.assertRaises(RuntimeError):
+                artifact.validate_recovery_readback({**observed, field: value}, state, "D1", "current", 43)
+
     def test_unfinished_full_manifest_never_qualifies(self):
         for manifest in (None, {}, {"qualification": True}, {
                 "schemaVersion": 1, "qualification": True, "production": False,
@@ -227,3 +249,18 @@ class ArtifactEvidenceTests(unittest.TestCase):
             with self.subTest(phase=phase), self.assertRaises(RuntimeError):
                 artifact.verify_manifest({"qualification": True, "phase": phase},
                                          self.work, "a" * 64)
+
+    def test_package_phase_runs_real_compatibility_and_never_qualifies(self):
+        destination = self.work / "package-phase"
+        destination.mkdir()
+        with patch.object(artifact, "create_workspace", return_value=destination), \
+                patch.object(artifact, "prepare_baseline"), patch.object(artifact, "prepare_packages"), \
+                patch.object(artifact, "package_checks", create=True, return_value={"testsPassed": 1}) as checks, \
+                patch.object(artifact, "source_hash", return_value="a" * 64), \
+                patch.object(sys, "argv", ["artifact_evidence", str(ROOT), "--phase", "packages",
+                                          "--evidence", str(destination)]):
+            self.assertEqual(0, artifact.main())
+        checks.assert_called_once_with(ROOT, destination)
+        manifest = json.loads((destination / "manifest.json").read_text())
+        self.assertIs(False, manifest["qualification"])
+        self.assertEqual("packages", manifest["phase"])

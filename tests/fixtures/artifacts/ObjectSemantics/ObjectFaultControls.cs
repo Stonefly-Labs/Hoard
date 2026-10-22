@@ -10,9 +10,10 @@ public sealed class ObjectFaultControls
     {
         "object.initialize", "object.admitted", "multipart.part", "multipart.complete",
         "pointer.compare", "pointer.selected", "object.direct", "object.list",
-        "object.read", "pointer.tombstone", "object.reclaimed", "multipart.cleanup"
+        "object.read", "pointer.tombstone", "object.reclaimed", "multipart.cleanup", "object.commit-progress"
     };
     public string[] Observed => points.ToArray();
+    public Action? BeforeObjectDelete { get; set; }
     public void SetObserver(string point, Func<ValueTask> callback)
     {
         if (!Supported.Contains(point) || callbacks.Count >= 16) { throw new ArgumentException("Invalid object fixture boundary."); }

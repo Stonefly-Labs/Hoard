@@ -12,8 +12,14 @@ For lifecycle use, see the [package-only lifecycle host](../examples/LifecycleHo
 F-06 currently adds **partial, unqualified** BCL-only operations in
 `Hoard.Abstractions.Storage`, separate from the unchanged `IArtifactProvider`
 marker and historical `Metadata.ArtifactDigest`. Initialization/coordination
-fixtures and metadata-bridge wiring checks exist, but publication, protected
-copies, reconciliation and deletion remain fail-closed placeholders. Both
+fixtures now exercise complete-stream verification, protected copies, exact
+receipts, fenced cleanup and deletion. The host adapter composes unchanged
+SQLite/memory packages with actual evidence validation and current reference
+queries under the shared authority. Local crash checks use actual killed
+children and fresh reopen; object semantics remain process-local. The
+packages also have focused resolved-graph/public-member inspection, leak
+negatives and frozen-marker compatibility checks; these do not certify a
+production implementation. Both
 fixtures declare missing mandatory guarantees and are not ready; neither is a
 production provider or an independently qualified store. The local-package
 hash blocker is resolved with reviewed hash-only lock updates and separate
@@ -21,7 +27,17 @@ default locked regressions; versions, dependency graphs and frozen baselines
 are unchanged. Follow the
 [running evidence](../specs/006-artifact-storage/plan.md#implementation-evidence),
 not the future API inventory, for actual availability. Do not author a provider
-or advertise support on the strength of these unfinished contracts.
+or advertise support on the strength of these unfinished mechanisms/contracts.
+
+Streams are borrowed at their current position: providers never seek, flush or
+dispose them. Destination bytes are invalid unless the full verified copy
+completes. A timeout does not prove physical settlement: non-cooperative I/O
+retains its bounded handles, slots and opaque guards, reports incomplete cleanup
+and blocks admission rather than releasing live protection. Use the exact
+reserved ticket to reconcile uncertainty; never replay it as a new mutation.
+Logically removed content can still occupy space until exact-incarnation
+reclamation is confirmed. See the [current quickstart](../specs/006-artifact-storage/quickstart.md)
+for available focused commands and the remaining qualification gates.
 
 ## Public ownership and authoring
 

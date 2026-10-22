@@ -3,6 +3,10 @@ using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Fixtures.Artifacts.Local;
 
+if (args.Length == 5 && args[0] is "crash" or "recover")
+{
+    return await ArtifactCrashScenario.ExecuteAsync(args);
+}
 if (args.Length == 5 && args[0] == "admission")
 {
     var identity = new ArtifactStoreIdentity(args[2], Guid.Parse(args[3]), Guid.Parse(args[4]));
@@ -18,5 +22,5 @@ if (args.Length == 5 && args[0] == "admission")
     await store.StopAsync(new(), default);
     return 0;
 }
-Console.Error.WriteLine("Artifact crash execution is not implemented.");
+Console.Error.WriteLine("Artifact child requires an explicit admission or crash scenario.");
 return 1;

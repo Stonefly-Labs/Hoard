@@ -1,0 +1,47 @@
+{
+  "version": 2,
+  "dependencies": {
+    "net10.0": {
+      "Hoard.Fixtures.Artifacts.Local": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "LI0+tBhj6lZGmR0zSMLZvxddQmwGAe5BUc6jikeJgU+kPUEJHBMj0Rg9YHBZrObYKvg/o829ID+XvtcnWamaxg==",
+        "dependencies": {
+          "Hoard.Abstractions": "[0.1.0]"
+        }
+      },
+      "Hoard.Hosting": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "lj/BH+w+flBZMbCuWptcbiDsI23MmEpfmNjayQ44hUkiE8kOgOI98dZYb0tt8z1szGMLwFl8q4/PoJ86oBiU5Q==",
+        "dependencies": {
+          "Hoard.Abstractions": "0.1.0",
+          "Hoard.Core": "0.1.0",
+          "NuGet.Versioning": "7.9.0"
+        }
+      },
+      "Hoard.Core": {
+        "type": "Transitive",
+        "resolved": "0.1.0",
+        "contentHash": "bIgxBkS0XCOohP7H0pIksf13XGDw/xPXFKeJAHABTTvmi7gS9RczdDXCn79vTEcyDnCwJjNZfeXF7ogRsAMYAw==",
+        "dependencies": {
+          "Hoard.Abstractions": "0.1.0"
+        }
+      },
+      "Hoard.Abstractions": {
+        "type": "CentralTransitive",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "ttmIZw4Q4XOeOMxJp9vcwOx+aloQWAt2Ly9Cja/A0jdQ/ZFhCYCq/qeEgIYlCrE/MPfipiGxfqrfL+9Xma9zow=="
+      },
+      "NuGet.Versioning": {
+        "type": "CentralTransitive",
+        "requested": "[7.9.0, )",
+        "resolved": "7.9.0",
+        "contentHash": "r4sZuVpVqwSBLe4qYDrnpScqdyctlRXg0HSF5OoCGkeBc8b+o8BBYHuI/u1RoWYX78PbieijU13TBt71/Xf3lw=="
+      }
+    }
+  }
+}

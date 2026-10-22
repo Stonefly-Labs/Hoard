@@ -12,6 +12,57 @@ public sealed class ArtifactAdmissionTests
     private static readonly ArtifactMaintenanceOptions Options = new();
     private static readonly ArtifactCleanupOptions Cleanup = new();
 
+    [Fact]
+    public async Task Concurrent_local_admission_keeps_native_volume_enumeration_safe()
+    {
+        await Task.WhenAll(Enumerable.Range(0, 16).Select(async _ =>
+        {
+            await using var driver = await ArtifactProviderDriver.CreateAsync("local");
+            Assert.NotNull(driver.Identity);
+        }));
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Noncooperative_initialization_returns_with_owned_work_and_stop_does_not_release_it(string provider)
+    {
+        using var root = new ArtifactTestRoot();
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        ValueTask Pause() { entered.TrySetResult(); return new(release.Task); }
+        var local = new LocalFaultControls();
+        var objects = new ObjectFaultControls();
+        local.SetObserver("initialize.before-root", Pause);
+        objects.SetObserver("object.initialize", Pause);
+        var identity = new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
+        IArtifactStoreLifetime store = provider == "local" ? new LocalArtifactStore(root.Path, controls: local)
+            : new ObjectArtifactStore(root.Path, controls: objects);
+        var initialization = store.InitializeAsync(new(ArtifactInitializationMode.CreateEmpty, identity,
+            new ArtifactCoordinationAuthority(identity)), new(TimeSpan.FromMilliseconds(100)), default).AsTask();
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            var failure = Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(
+                await initialization.WaitAsync(TimeSpan.FromSeconds(2)));
+            Assert.Equal(ArtifactFailureCode.DeadlineExceeded, failure.Code);
+            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failure.Cleanup);
+            Assert.False(Directory.Exists(root.Path));
+            var stop = Assert.IsType<ArtifactResult<ArtifactShutdown>.Failure>(
+                await store.StopAsync(new(TimeSpan.FromMilliseconds(20)), default).AsTask().WaitAsync(TimeSpan.FromSeconds(2)));
+            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, stop.Code);
+        }
+        finally
+        {
+            release.TrySetResult();
+            await initialization;
+            var stopped = await store.StopAsync(new(), default);
+            root.AllowCleanup = stopped is ArtifactResult<ArtifactShutdown>.Success;
+            Assert.True(root.AllowCleanup);
+        }
+        Assert.False(Directory.Exists(root.Path));
+    }
+
     [Theory]
     [InlineData("local")]
     [InlineData("object")]

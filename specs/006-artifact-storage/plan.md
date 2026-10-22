@@ -364,3 +364,165 @@ The substantial partial F-06 implementation still needs its own architecture
 review and all remaining behavior/qualification tasks; this unblock is not that
 review or full artifact acceptance. PR #16 stays draft; no merge, tag,
 publication, deployment or infrastructure action is authorized or performed.
+
+### Resumed Storage Mechanisms and Recovery 2026-10-22
+
+The interrupted `implement / running` stage resumes on the recorded feature
+branch without another `begin` or generator. This is **partial implementation
+evidence, not feature qualification or a completed stage**. The 80 remaining
+task markers stay unchecked until their complete obligations are verified;
+reviewer-owned checklist markers, requirements and the driver checkpoint are
+unchanged. No requirement waiver or new maintainer decision is inferred.
+
+The independently packaged fixtures now implement private bounded disk-backed
+staging, full EOF/hash/length verification, conditional immutable publication,
+verified duplicate reuse, protected one-copy reads, exact-ticket receipts,
+generation-fenced cleanup and exact-incarnation deletion/reclamation. Local
+uses checksummed intent/decision/receipt records and same-volume publication;
+ObjectSemantics independently uses multipart assembly/versioned pointers with
+no Local reference, shared mutation algorithm or rename. Object state remains
+process-local. Both still declare missing mandatory guarantees and not-ready;
+this work does not claim completed provider capabilities or F-07 certification.
+
+The same compiled package-only consumer performs a round trip on both choices.
+The host adapter separately composes both stores with **unchanged F-05 SQLite
+and memory packages**: actual failed metadata transactions leave identifiable
+committed orphan bytes, current live references deny deletion, committed
+reference removal permits it, stale evidence cannot recreate an entry, and
+lost metadata acknowledgments retain the actual reference guard until physical
+settlement. No metadata schema, provider source or existing metadata API changes.
+
+Local crash drivers seed acknowledged independent control content, pause at
+actual B0/B1/B2/B3/D0/D1 boundaries, and are killed by their exact owning parent.
+Fresh processes reopen the same roots and verify original tickets, complete
+control/new bytes, identical logical receipts, old-owner fencing and
+delete/recreate/stale-cleanup safety. B0/B1 without decision intent remain
+resumable under a new session/generation; only a recorded authoritative decision
+is settled as committed or definitely not committed. This is the consistent
+reading confirmed by architecture review, not a requirement amendment.
+D1 first failed its intended reclamation assertion; recovery now advances
+physical status from the persisted reclaimed-incarnation record.
+
+Named architecture review `artifact-recovery-review` found no provider/metadata
+dependency-boundary break and four concrete partial-mechanism defects:
+concurrent copy/close admission and premature second-close success; object
+cleanup reopening finalized noncommit; deadline reporting behind state locks
+held during blocked I/O; and expired/altered ticket failures mapped to
+uncertainty. Fixes use atomic per-session copy admission/single physical close,
+terminal cleanup fencing, separate supervisor bookkeeping locks and
+lock-independent exact-ticket failure classification. Focused tests also prove
+bounded non-cooperative initialization/stop and synchronous native-I/O
+retention. A native macOS failure was observed in concurrent
+`DriveInfo.GetDrives`/`GetAllMountPoints`; local mount enumeration is serialized,
+with a 16-root parallel admission regression. This partial review is not final
+architecture approval or completion of T084.
+
+Retained private runs include actual prior-code assertion failures, not just
+compilation errors. `resume-review-ownership-red-20261022` contains five expected
+assertion failures after correcting a test import and disabling parallel native
+mount enumeration for that old-code capture; the earlier native crash/compile
+failures are preserved but not counted as logical red evidence.
+`resume-crash-barriers-proof-red-20261022` has five passes and the exact D1
+reclamation failure. Earlier publication, integrity, deadline and reconciliation
+red/green runs remain under `../hoard-artifact-evidence/resume-*`.
+
+| Exact command / check | Result |
+| --- | --- |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --update-locks --filter 'FullyQualifiedName~Artifact' --evidence ../hoard-artifact-evidence/resume-metadata-settlement-green-20261022` | Passed 109 focused tests and both unchanged-consumer choices; includes six actual C# parent-kill/reopen cases and 12 actual metadata/store composition checks; `qualification: false` |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --update-locks --phase recovery --evidence ../hoard-artifact-evidence/resume-recovery-phase-20261022` | Passed 14 owner/ticket checks plus six Python-owned SIGKILL/fresh-process journeys; independent expected hashes/counts, exact state/receipt/owner/reclamation proof; `qualification: false` |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase logical --evidence ../hoard-artifact-evidence/resume-logical-locked-20261022` | Separate default locked replay passed 103 checks and both unchanged-consumer choices; `qualification: false` |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --update-locks --phase transfers --evidence ../hoard-artifact-evidence/resume-measured-transfers-20261022` | Earlier source actually wrote/read 268435456 and 4294967296 bytes on both providers; exact independent digest/count/pacing and <=64 MiB incremental OS peak RSS passed in all four children; explicitly not final-current-source qualification |
+| `python3 -m unittest discover -s tests/tooling -p test_artifact_evidence.py -v` | Passed all 14, including actual recovery-readback mutation negatives |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed all 90 |
+| `dotnet format whitespace tests/fixtures/artifacts --folder --verify-no-changes -v quiet` and `dotnet format whitespace tests/contracts/Hoard.Artifacts.Tests --folder --verify-no-changes -v quiet` | Both passed |
+| `git diff --check` | Passed |
+
+Recovery/logical evidence at source fingerprint
+`33435a0cb052ab49da3f8283bd41bea5d9ba74c186efa2a8b77c3fca2c6ece4d`
+is attributable to those captures, not later source changes. Recovery run ID
+`ece5f849-e445-478a-93fd-d84a68bc7043` binds all six directly owned signals and
+fresh reopen processes. Original pre-F06 baseline/marker bytes remain reused,
+never rebuilt against new contracts. Only reviewed artifact-local package hashes
+change; dependency versions/graphs and external hashes remain fixed.
+
+At this recovery checkpoint package mode was still unimplemented; the subsequent
+package/review work below supersedes that limitation. Full mode remains
+fail-closed. Outstanding work includes complete active-owner renewal/idle cases, independently controlled direct/list
+visibility and unresolved-guard ownership, complete configured F-02/F-03
+selection/readiness/disabled behavior, actual package/public-API graph negatives
+and old binary inspection, every AS subproof, hardened exact manifest closure,
+final-current-source transfer replay and full locked qualification/regression/
+architecture gates. Existing focused passes do not mark these complete.
+
+README, development/provider/test guides and quickstart now distinguish
+executed partial mechanisms from those obligations. Compatibility policy,
+custom-host example sources/guides, product charter/specification,
+architecture/ADR/diagrams, IaC and release guides remain unaffected: dependency
+directions, old marker/digest/API behavior and planned product boundaries are
+preserved; no production provider, cache engine, endpoint/UI, cloud resource,
+infrastructure plan/apply, deployment, tag/release/package publication or merge
+is introduced. PR #16 remains draft; implementation continues without advancing
+to convergence or finalization.
+
+### Resumed Package and Review Checks 2026-10-22
+
+The package phase now executes eight resolved-asset/nuspec/assembly graph scans
+through the existing architecture inspector, including actual Local and
+ObjectSemantics packages and an intentionally leaking provider/Hosting control.
+It runs the original hash-verified pre-F06 marker executable with current
+platform assemblies and the same compiled round-trip consumer for both stores.
+Baseline copying now preserves archived package and assembly inputs rather than
+dropping them with the source-copy helper's build-output exclusions.
+Public member comparisons additionally check accessibility and invocation flags;
+an in-memory negative pair rejects private/static replacements of a public method.
+This remains focused nonqualification, not complete AS-45/46 evidence.
+
+Architecture reviewer `artifact-review` identified six concrete defects.
+Corrections restore residual committed staging reservations on reopen, settle
+expired ownerless reservations in bounded admission batches, renew commit
+ownership only on verified copy progress, fence/close idle read sessions, and
+refuse composed shutdown while authority-owned reference work remains live.
+The sixth finding prompted the public-member accessibility check above.
+Focused cases cover expiry versus capacity, interrupted persisted reservation
+release, commit progress crossing TTL, idle-copy rejection and composed shutdown.
+The reservation-expiry red run failed both provider runtime assertions before
+the correction; the first reservation-release test needed its fault count
+corrected (three ticket writes, not four). Neither simulated record failure
+nor idle-copy checks are represented as new actual crash/timer qualification.
+
+| Exact command / check | Result |
+| --- | --- |
+| `python3 -m unittest discover -s tests/tooling -p test_artifact_evidence.py -v` | Package-mode runtime red: expected assertion `0 != 1`; green: 15 passed |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase packages --evidence ../hoard-artifact-evidence/resume-packages-locked-20261022` | Passed eight scans, one architecture test, retained binary and both consumers; nonqualifying earlier source |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --update-locks --filter 'FullyQualifiedName~Artifact' --evidence ../hoard-artifact-evidence/resume-reviewed-all-20261022` | Passed 118 artifact checks and both consumer choices; `qualification: false` |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 91 tests |
+| `dotnet format whitespace tests/fixtures/artifacts --folder --verify-no-changes -v quiet` and `dotnet format whitespace tests/contracts/Hoard.Artifacts.Tests --folder --verify-no-changes -v quiet` | Passed |
+| `dotnet format whitespace tests/architecture/Hoard.Architecture.Tests --folder --include ArtifactBoundaryTests.cs --verify-no-changes -v quiet` | Passed; corrected an initial invocation that incorrectly supplied a file as a folder |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase packages --evidence ../hoard-artifact-evidence/resume-reviewed-packages-locked-20261022` | Separate locked replay passed two architecture checks, eight scans, frozen binary and both consumers; `qualification: false` |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Artifact' --evidence ../hoard-artifact-evidence/resume-reviewed-focused-locked-20261022` | Separate locked replay passed all 118 checks, including crash children, plus both consumers; `qualification: false` |
+| `bash scripts/validate-metadata.sh --evidence ../hoard-artifact-evidence/resume-reviewed-metadata-locked-20261022` | Passed complete unchanged F-05 96-case qualification |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/resume-reviewed-full-gate-20261022` | Expected failure after locked prerequisites: complete provider/case execution is not implemented; `qualification: false` |
+
+Those focused locked captures bind source fingerprint
+`a83e9bc1376bd5075be52be37d8f5203293995ce2d5700964cdd5a8abddeabae`.
+The five changed existing lockfiles contain only local `Hoard.*` content-hash
+updates; versions/graphs/external hashes are unchanged. The new negative-control
+lock is tracked separately. No remaining task or full-stage gate is inferred
+from these focused passes.
+
+A subsequent correction makes authority drain and store shutdown share one
+original five-second cleanup budget rather than each receiving five seconds.
+After the resulting local host-adapter hash refresh, both default locked gates
+were repeated on source
+`e1eed660f9c3347d14096db3437a3d4a638936ef9ff0de8f7ba71d9ae2a44163`:
+
+| Exact command | Result |
+| --- | --- |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --update-locks --filter 'FullyQualifiedName~Artifact' --evidence ../hoard-artifact-evidence/resume-budgeted-shutdown-update-20261022` | Passed 118 checks plus both consumers; nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Artifact' --evidence ../hoard-artifact-evidence/resume-budgeted-shutdown-locked-20261022` | Separate default locked replay passed 118 checks plus both consumers; nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase packages --evidence ../hoard-artifact-evidence/resume-budgeted-packages-locked-20261022` | Separate default locked replay passed both architecture checks/eight scans, frozen binary and both consumers; nonqualifying |
+
+Task markers and reviewer-owned checklists remain conservative and unchanged.
+Configured lifecycle selection/readiness, comprehensive graph-negative shapes,
+all acceptance subproofs and exact current-source full qualification remain
+unfinished. No stage completion or final architecture approval is claimed.

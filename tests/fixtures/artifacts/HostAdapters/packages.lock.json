@@ -6,7 +6,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "iBe882n7ZB+uvrtO4WgQGGnTj0T2B/XJ5V5SFsFlAkUBfIJ3DHuLpNpEjBwAgGpH+wHSwvqXt4uQun3S0RFPFg==",
+        "contentHash": "LI0+tBhj6lZGmR0zSMLZvxddQmwGAe5BUc6jikeJgU+kPUEJHBMj0Rg9YHBZrObYKvg/o829ID+XvtcnWamaxg==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }
@@ -15,7 +15,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "FWESPZ/gxSh8n1IPcEbQdEewVEsQ1mnxeLw9JDm+acgqV5UKBnLQY1OKtgqdfV+skbLUFaeQ6KnGLW0ehUt1FA==",
+        "contentHash": "nIuMVxzcY+hW6DyFnEKMUb4TNiKAlzQNPtokbOmKknTQEcWOkrJr7LB0DzIZ+NGZScHETj4NQmtWs69zfomIzg==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }

@@ -9,10 +9,14 @@ public sealed class LocalFaultControls
     private static readonly HashSet<string> Points = new(StringComparer.Ordinal)
     {
         "initialize.before-root", "initialize.admitted", "stage.prefix", "stage.verified",
-        "publish.before-decision", "publish.decided", "publish.receipted",
+        "publish.before-decision", "publish.decided", "publish.receipted", "publish.progress",
         "read.opened", "read.copy", "delete.removed", "delete.reclaimed", "cleanup.candidate"
     };
     public string[] Observed => observed.ToArray();
+    public Action? BeforeRecordWrite { get; set; }
+    public string? InitializationFailure { get; private set; }
+    internal void RecordInitializationFailure(Exception error)
+        => InitializationFailure = error.GetType().Name + ":" + error.TargetSite?.Name;
     public void SetObserver(string point, Func<ValueTask> observer)
     {
         if (!Points.Contains(point) || observers.Count >= 16) { throw new ArgumentException("Invalid local fixture boundary."); }
