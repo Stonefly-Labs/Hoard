@@ -4,7 +4,7 @@
 
 **Input**: Feature specification from `specs/005-metadata-persistence/spec.md`
 
-**Status**: Implementation complete, including convergence corrections T084/T085;
+**Status**: Implementation complete, including convergence corrections T084..T087;
 additive operation contracts, independent fixtures and the qualification
 orchestrator are implemented. Fresh convergence is the next separate stage. See
 [implementation evidence](#implementation-evidence) for measured checks and
@@ -477,6 +477,82 @@ backlog, release/cloud/UI/IaC guidance and earlier feature artifacts are unaffec
 Specification, constitution and reviewer-owned checklists remain unchanged; no
 implementation hooks exist. All 85 tasks are complete. Fresh convergence and
 finalization remain separate gates; PR #14 stays draft, with no merge requested.
+
+### T086/T087 filtered-page and receipt corruption corrections
+
+Both convergence findings are corrected without changing public contracts,
+provider composition or the independent memory implementation.
+
+T086 removes payload-based SQL predicates for cache authorization, aggregate
+authorization/intervals and lease prefixes. The ordered candidate stream first
+uses the existing bounded corruption-aware decoder, then applies those filters.
+Every scanned candidate consumes the original operation deadline; at most the
+requested page and one matching lookahead are retained. Excluded rows cannot
+consume a premature SQL result limit or change the last returned continuation
+key. Invalid stored dimensions now fail the whole page, not disappear as absence.
+
+Five common theory variants reproduce the faulty behavior in all audited
+dimensions. Each SQLite injection preserves the damaged payload, fails both
+page/group reads with the owning phase and sanitized corruption outcome, then
+restores the exact original page. Both fixtures traverse the restored scope
+with page size one, excluding interleaved foreign authorization partitions,
+aggregate intervals and lease prefixes, and retain legitimate empty scopes.
+Existing input/cursor rejection, oversized-result and ordering cases still pass.
+
+T087 centralizes persisted operation decoding for runtime replay/reconciliation
+and schema integrity. It validates native column types, exact ticket structure,
+closed ledger states, 32-byte committed fingerprints, bounded receipt bytes
+before deserialization, complete public receipt validation and receipt-to-ledger
+ticket equality. Reserved/abandoned rows cannot carry a fingerprint or receipt.
+Only invalid stored data becomes `CorruptState/OperatorRecovery`; caller
+validation and original-ticket failure ownership are unchanged.
+
+The new MP-15 regression covers 14 damaged forms: null target/revision, malformed
+JSON, missing/oversized revision collections, oversized raw receipt, mismatched
+ticket, missing receipt, short/missing/text fingerprint, reserved/abandoned
+states with committed data and fractional state. Both originating operations
+fail safely while preserving receipt/fingerprint/state, committed metadata and
+the original ticket. Restoring each synthetic row returns the byte-equivalent
+original receipt and leaves the aggregate contribution at exactly three.
+The same common assembly also proves unchanged memory replay/reconciliation.
+
+`$PRIVATE_EVIDENCE` represents this invocation's owner-private evidence parent
+outside Git. Assertion-level red proof and final manifests remain there.
+
+| Executed command / check | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --phase logical --evidence "$PRIVATE_EVIDENCE/red"` | Intended runtime red: all five page-filter variants and invalid-receipt reconciliation fail against unchanged SQLite packages; 66 pass, six fail |
+| `HOARD_METADATA_PROVIDER=memory HOARD_METADATA_WORKSPACE="$PRIVATE_EVIDENCE/red" dotnet vstest "$PRIVATE_EVIDENCE/red/current/tests/contracts/Hoard.Metadata.Tests/bin/Release/net10.0/Hoard.Metadata.Tests.dll" '--TestCaseFilter:FullyQualifiedName~Corrupt_query_dimensions\|FullyQualifiedName~Corrupt_persisted_receipts' '--logger:trx;LogFileName=memory-controls.trx' --ResultsDirectory:"$PRIVATE_EVIDENCE/red/results"` | Passed all six independent memory controls against the pre-repair common assembly |
+| `bash scripts/validate-metadata.sh --phase logical --update-locks --evidence "$PRIVATE_EVIDENCE/logical"` | Passed 72 tests per provider and unchanged consumers; explicitly not full qualification |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/qualified"` | Passed full locked qualification, formatting/analyzers, 72 tests per provider, 87 applicable entries and nine explicit memory D exclusions; no lock mutation |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| Manifest/proof/source and lock comparison | Independent manifest verification matches current source; only local SQLite/HostAdapters hashes change in four locks, with all 88 locks preserved by default replay |
+| `git diff --check` | Passed |
+
+The full manifest attributes pre-commit HEAD
+`7571a485f529640372bb7eebcf4550f99ef14670` and working-source/lock fingerprint
+`29971e15fbeebde654bad140c1801f840c50018f4b507deaf50243fd5818cb24`.
+Configuration remains macOS 26.5.0/APFS, .NET 10.0.7, driver 10.0.13.0 and
+SQLite 3.53.3 with checked WAL/FULL/foreign-keys/busy-timeout-zero.
+All eight M/U process stops, R0/R1 restore interruptions, native ownership,
+seven package graphs, unchanged consumers/common binary, frozen marker and
+both assertion-level runtime mutation pairs pass. These remain fixture-scoped
+process-stop results, not production, other-engine/filesystem or F-07 support.
+
+Earlier foundation/lifecycle/configuration/discovery results remain historical:
+these fixture-private validation corrections change no platform source, public
+signature, dependency direction, lifecycle, publication authority, reference or
+lease algorithm. Full metadata acceptance rebuilds the platform and repeats its
+applicable boundary/binary proof; the prior architecture review remains
+applicable, without a new substantial architectural boundary change.
+README, DEVELOPMENT, tasks, quickstart and acceptance evidence are updated.
+Provider/API/model/recovery/example guides, baseline product/architecture/ADR
+diagrams, governance/backlog and release/cloud/UI/IaC documentation are unaffected:
+their existing contracts, operational procedures and support limits do not change.
+Specification, constitution and all checklist bytes are unchanged; no pre/post
+implementation hooks exist. All 87 tasks are verified complete. Fresh convergence
+and finalization remain separate stages; PR #14 stays draft, with no merge,
+release, package publication or infrastructure operation.
 
 ## Complexity Tracking
 

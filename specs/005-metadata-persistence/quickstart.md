@@ -230,3 +230,33 @@ no dependency identity/version changes. See [T085 evidence](plan.md#t085-stored-
 for the lock-refresh attempt, exact source/configuration attribution and
 unchanged architecture/regression boundaries. All 85 tasks are complete;
 fresh convergence is next, then finalization. PR #14 remains draft.
+
+### T086/T087 filtered-page and receipt corruption corrections
+
+SQLite now validates ordered candidates before applying payload-based auth,
+aggregate interval and lease-prefix filters. The original deadline bounds every
+scanned row; result/page limits and last-returned-key continuation semantics are
+unchanged. Five new variants prove whole-page corruption failure, preserved
+damaged data, exact restored pages, foreign-scope exclusion and valid one-row
+continuation traversal in both fixtures.
+
+Replay, reconciliation and schema integrity share one bounded persisted ledger
+decoder. Fourteen invalid state/fingerprint/receipt forms, including oversized
+and mismatched-ticket receipts, require sanitized `CorruptState/OperatorRecovery`
+with the original ticket and originating phase. Synthetic restoration recovers
+the original receipt without duplicate aggregate effects; memory semantics
+remain unchanged.
+
+| Executed command / check | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --phase logical --evidence "$PRIVATE_EVIDENCE/red"` | Intended red: all six new SQLite regressions fail against unchanged packages; 66 pass |
+| `bash scripts/validate-metadata.sh --phase logical --update-locks --evidence "$PRIVATE_EVIDENCE/logical"` | Passed 72 common tests per provider and unchanged consumers; not full qualification |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/qualified"` | Passed full locked qualification and formatting/analyzers: 72 tests per provider, 87 applicable entries and nine memory D exclusions; all 88 locks preserved |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| `git diff --check` | Passed |
+
+Only local SQLite/HostAdapters hashes change in four downstream locks; dependency
+identities/versions remain unchanged. See [T086/T087 evidence](plan.md#t086t087-filtered-page-and-receipt-corruption-corrections)
+for memory controls, source/environment attribution and unchanged architectural
+boundaries. All 87 tasks are complete; fresh convergence is next. PR #14 remains
+draft; qualification does not authorize merge or production recovery tooling.

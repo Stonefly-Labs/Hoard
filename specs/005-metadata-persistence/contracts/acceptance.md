@@ -159,3 +159,17 @@ Malformed caller query/cursor and oversized-result controls still require
 `InvalidInput/CorrectInput/Page`. The null-label regression fails before repair.
 Full locked qualification repeats all 96 entries and existing recovery/package
 proof, without lock mutation; see [T085 evidence](../plan.md#t085-stored-page-corruption-correction).
+
+The T086/T087 replay increases the common assembly to 72 passing tests per
+provider. Five MP-21 variants require corruption-aware filtering for cache auth,
+aggregate auth/start/end and lease resource. Valid restored one-row traversal
+must exclude interleaved foreign scopes, while healthy empty scopes remain empty.
+The new MP-15 case exercises 14 invalid persisted ledger/receipt forms, including
+bounded deserialization, ticket binding and native state/fingerprint types.
+Reconciliation and replay must preserve damaged data, original-ticket ownership,
+committed metadata and nonduplicate effects, never return a committed success
+or definite non-commit from corruption. All six new regressions have runtime
+red proof against unchanged SQLite packages; the independent memory controls
+already pass. Full locked qualification retains 87 applicable passes, nine
+explicit memory D exclusions and all existing recovery/package/binary proof;
+see [T086/T087 evidence](../plan.md#t086t087-filtered-page-and-receipt-corruption-corrections).

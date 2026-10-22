@@ -717,6 +717,16 @@ qualification passes its existing 66 tests per provider and 87 applicable
 entries, but does not cover or waive these newly demonstrated paths.
 The next stage is **`implement`** for both tasks, followed by fresh convergence;
 PR #14 stays draft, with no merge requested.
+Both corrections are now complete. SQLite validates page candidates before
+payload-based filters and uses one bounded ledger/receipt decoder for replay,
+reconciliation and schema integrity. Paired regressions preserve damaged data,
+query isolation, original-ticket recovery and nonduplicate effects. Full locked
+qualification passes 72 common tests per provider and all 87 applicable entries,
+with nine explicit memory durability exclusions. See
+[T086/T087 evidence](specs/005-metadata-persistence/plan.md#t086t087-filtered-page-and-receipt-corruption-corrections).
+All 87 tasks are verified complete; fresh **`converge`** is next, then
+finalization. [PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains
+draft; no merge is requested.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

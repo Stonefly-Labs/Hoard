@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using Hoard.Abstractions.Metadata;
 
@@ -56,7 +55,6 @@ public sealed partial class SqliteMetadataStore
             case MetadataPageQuery.Packages packages: Filter("registry", IdBytes(packages.RegistryId)); break;
             case MetadataPageQuery.CacheEntries entries:
                 Filter("registry", IdBytes(entries.RegistryId));
-                Filter("json_extract(payload,'$.Identity.AuthorizationPartition.Value')", entries.AuthorizationPartition.Value);
                 if (entries.Package is MetadataOption<MetadataPackageKey>.Some package)
                 { Filter("package", RecordKey(new MetadataSelector.Package(package.Value))); }
                 break;
@@ -64,32 +62,38 @@ public sealed partial class SqliteMetadataStore
             case MetadataPageQuery.Policies { Scope: MetadataPolicyScope.Registry registry }: Filter("registry", IdBytes(registry.Id)); break;
             case MetadataPageQuery.Aggregates aggregates:
                 Filter("registry", IdBytes(aggregates.RegistryId));
-                Filter("json_extract(payload,'$.Key.AuthorizationPartition.Value')", aggregates.AuthorizationPartition.Value);
-                Filter("json_extract(payload,'$.Key.Start.UnixMilliseconds')", aggregates.Start.UnixMilliseconds);
-                Filter("json_extract(payload,'$.Key.End.UnixMilliseconds')", aggregates.End.UnixMilliseconds);
-                break;
-            case MetadataPageQuery.Leases leases:
-                arguments.Add(Encoding.UTF8.GetBytes(leases.ResourcePrefix.Value));
-                filters.Add("substr(CAST(json_extract(payload,'$.Resource.Value') AS BLOB),1,length(?" + arguments.Count + "))=?" + arguments.Count);
                 break;
         }
-        arguments.Add(query.PageSize + 1);
         SqliteStatement.Execute(Database, "BEGIN");
         try
         {
             using var select = new SqliteStatement(Database,
                 "SELECT key,length(CAST(payload AS BLOB)),payload FROM metadata_records WHERE "
-                + string.Join(" AND ", filters) + " ORDER BY key LIMIT ?" + arguments.Count, arguments.ToArray());
+                + string.Join(" AND ", filters) + " ORDER BY key", arguments.ToArray());
             var records = ImmutableArray.CreateBuilder<MetadataRecord>(query.PageSize);
             byte[]? last = null;
             var more = false;
             while (select.Step())
             {
                 budget.Check();
-                if (records.Count == query.PageSize) { more = true; break; }
                 if (select.Number(1) > MetadataEncoding.MaximumBytes) { throw new SqliteNativeFailure(11); }
-                last = select.Bytes(0);
-                records.Add(DecodeRecord(select.Text(2), last));
+                var key = select.Bytes(0);
+                var record = DecodeRecord(select.Text(2), key);
+                var include = query switch
+                {
+                    MetadataPageQuery.CacheEntries entries => record is MetadataCacheEntry entry
+                        && entry.Identity.AuthorizationPartition == entries.AuthorizationPartition,
+                    MetadataPageQuery.Aggregates aggregates => record is MetadataAccessAggregate aggregate
+                        && aggregate.Key.AuthorizationPartition == aggregates.AuthorizationPartition
+                        && aggregate.Key.Start == aggregates.Start && aggregate.Key.End == aggregates.End,
+                    MetadataPageQuery.Leases leases => record is MetadataWorkLease lease
+                        && lease.Resource.Value.StartsWith(leases.ResourcePrefix.Value, StringComparison.Ordinal),
+                    _ => true
+                };
+                if (!include) { continue; }
+                if (records.Count == query.PageSize) { more = true; break; }
+                last = key;
+                records.Add(record);
             }
             MetadataOption<MetadataContinuation> next = more && last is not null
                 ? new MetadataOption<MetadataContinuation>.Some(new(Convert.ToBase64String(

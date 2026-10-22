@@ -133,6 +133,110 @@ public sealed class MetadataFailureTests
         MetadataTestData.AssertSanitized(corrupted.ToString());
     }
 
+    [Theory]
+    [InlineData("cache-auth")]
+    [InlineData("aggregate-auth")]
+    [InlineData("aggregate-start")]
+    [InlineData("aggregate-end")]
+    [InlineData("lease-resource")]
+    public async Task MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters(string shape)
+    {
+        await using var fixture = await OpenAsync();
+        var (registry, package) = await Seed(fixture);
+        var first = Entry(package, target: "/a");
+        var damaged = Entry(package, target: "/b");
+        var aggregate = Aggregate(registry);
+        await Commit(fixture, Publish(fixture, first), Publish(fixture, damaged),
+            Publish(fixture, Entry(package, partition: "other", target: "/a0")),
+            Publish(fixture, Entry(package, partition: "other", target: "/a1")),
+            Publish(fixture, Entry(package, partition: "other", target: "/a2")),
+            new MetadataMutation.AddAggregateContribution(aggregate, Delta()),
+            new MetadataMutation.AddAggregateContribution(Aggregate(registry, "other"), Delta()),
+            new MetadataMutation.AddAggregateContribution(aggregate with { Start = new(1) }, Delta()),
+            new MetadataMutation.AcquireLease(new("maintenance-a"), Id(3), 300),
+            new MetadataMutation.AcquireLease(new("maintenance-b"), Id(3), 300),
+            new MetadataMutation.AcquireLease(new("other-a"), Id(3), 300));
+        MetadataPageQuery query = shape switch
+        {
+            "cache-auth" => new MetadataPageQuery.CacheEntries(registry.Id, new("anonymous"),
+                new MetadataOption<MetadataPackageKey>.Some(package.Key)) { PageSize = 100, Continuation = None<MetadataContinuation>() },
+            "lease-resource" => new MetadataPageQuery.Leases(new("maintenance-"))
+                { PageSize = 100, Continuation = None<MetadataContinuation>() },
+            _ => new MetadataPageQuery.Aggregates(registry.Id, new("anonymous"), aggregate.Start, aggregate.End)
+                { PageSize = 100, Continuation = None<MetadataContinuation>() }
+        };
+        MetadataSelector selector = shape switch
+        {
+            "cache-auth" => damaged.Selector,
+            "lease-resource" => new MetadataSelector.Lease(new("maintenance-b")),
+            _ => new MetadataSelector.Aggregate(aggregate)
+        };
+        MetadataPageQuery[] emptyQueries = [
+            new MetadataPageQuery.CacheEntries(registry.Id, new("foreign"), None<MetadataPackageKey>())
+                { PageSize = 100, Continuation = None<MetadataContinuation>() },
+            new MetadataPageQuery.Aggregates(registry.Id, new("foreign"), aggregate.Start, aggregate.End)
+                { PageSize = 100, Continuation = None<MetadataContinuation>() },
+            new MetadataPageQuery.Aggregates(registry.Id, new("anonymous"), new(2), aggregate.End)
+                { PageSize = 100, Continuation = None<MetadataContinuation>() },
+            new MetadataPageQuery.Leases(new("foreign-"))
+                { PageSize = 100, Continuation = None<MetadataContinuation>() }];
+        var baseline = Success(await fixture.Store.ReadPageAsync(query, new(), default));
+        Assert.Equal(shape.StartsWith("aggregate-", StringComparison.Ordinal) ? 1 : 2, baseline.Records.Length);
+        foreach (var empty in emptyQueries) { Assert.Empty(await Traverse(fixture, empty)); }
+        if (fixture.DatabasePath is { } path)
+        {
+            await fixture.WhenIdleAsync();
+            using var database = new SqliteConnection(new SqliteConnectionStringBuilder
+            { DataSource = path, Mode = SqliteOpenMode.ReadWrite, Pooling = false, DefaultTimeout = 1 }.ToString());
+            database.Open();
+            using var select = database.CreateCommand();
+            select.CommandText = "SELECT payload FROM metadata_records WHERE key=$key";
+            select.Parameters.AddWithValue("$key", MetadataEncoding.Key(selector).ToArray());
+            var original = Assert.IsType<string>(select.ExecuteScalar());
+            var record = Assert.IsType<JsonObject>(JsonNode.Parse(original));
+            switch (shape)
+            {
+                case "cache-auth": record["Identity"]!["AuthorizationPartition"] = null; break;
+                case "aggregate-auth": record["Key"]!["AuthorizationPartition"] = null; break;
+                case "aggregate-start": record["Key"]!["Start"] = null; break;
+                case "aggregate-end": record["Key"]!["End"] = null; break;
+                case "lease-resource": record["Resource"] = null; break;
+            }
+            var corrupt = record.ToJsonString();
+            using var update = database.CreateCommand();
+            update.CommandText = "UPDATE metadata_records SET payload=$payload WHERE key=$key";
+            update.Parameters.AddWithValue("$key", MetadataEncoding.Key(selector).ToArray());
+            var payload = update.Parameters.AddWithValue("$payload", corrupt);
+            try
+            {
+                Assert.Equal(1, update.ExecuteNonQuery());
+                var failure = Assert.IsType<MetadataResult<MetadataPage>.Failure>(
+                    await fixture.Store.ReadPageAsync(query, new(), default));
+                Assert.Equal(MetadataFailureCode.CorruptState, failure.Code);
+                Assert.Equal(MetadataRetryDisposition.OperatorRecovery, failure.Retry);
+                Assert.Equal(MetadataPhase.Page, failure.Phase);
+                MetadataTestData.AssertSanitized(failure.ToString());
+                var grouped = Assert.IsType<MetadataResult<MetadataReadSnapshot>.Failure>(
+                    await fixture.Store.ReadAsync(new([registry.Selector, selector]), new(), default));
+                Assert.Equal(MetadataFailureCode.CorruptState, grouped.Code);
+                Assert.Equal(MetadataPhase.Read, grouped.Phase);
+                Assert.True(corrupt == Assert.IsType<string>(select.ExecuteScalar()), "Failed reads changed stored data.");
+                foreach (var diagnostic in fixture.Controls.Diagnostics) { MetadataTestData.AssertSanitized(diagnostic); }
+            }
+            finally
+            {
+                payload.Value = original;
+                Assert.Equal(1, update.ExecuteNonQuery());
+            }
+        }
+        var restored = Success(await fixture.Store.ReadPageAsync(query, new(), default));
+        Assert.True(MetadataEncoding.Encode(baseline).AsSpan().SequenceEqual(MetadataEncoding.Encode(restored).AsSpan()),
+            "Restored scoped page differs from the original committed page.");
+        Assert.Equal(baseline.Records.Select(record => record.Selector),
+            (await Traverse(fixture, query with { PageSize = 1 })).Select(record => record.Selector));
+        foreach (var empty in emptyQueries) { Assert.Empty(await Traverse(fixture, empty)); }
+    }
+
     [Fact]
     public async Task MP22_Diagnostics_and_all_failure_shapes_are_sanitized()
     {

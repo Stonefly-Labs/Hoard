@@ -2808,6 +2808,56 @@ Governance/backlog, prior features, release/cloud/UI/IaC guidance and permission
 are unaffected. No implementation, merge, tag/release, package publication,
 infrastructure operation or deployment ran.
 
+### F-05 T086/T087 filtered-page and receipt corrections
+
+The separately invoked implementation completes both Phase 11 tasks and all
+87 feature tasks. SQLite now decodes bounded ordered candidates before applying
+payload-based authorization/aggregate/lease filters. Every scanned candidate
+consumes the original deadline; only page-sized results and matching lookahead
+are retained. Five package-only theory variants prove complete corruption
+failure, unchanged damaged payloads, exact restored pages and one-row traversal
+that excludes interleaved foreign scopes while preserving healthy empty scopes.
+
+Persisted operation decoding is shared by runtime replay/reconciliation and
+schema integrity: native types, ticket bounds, closed state, fingerprint shape,
+bounded receipt bytes, public receipt validation and ticket equality are checked
+before returning success. Fourteen malformed, oversized, wrong-ticket or
+invalid-state/fingerprint forms return sanitized operator-recovery failures with
+the original ticket and originating phase. Damaged state and committed aggregate
+contributions remain unchanged; synthetic restoration returns the original
+receipt without duplicate effects. The memory implementation is unchanged.
+
+`$PRIVATE_EVIDENCE` represents this invocation's owner-private evidence parent
+outside Git; raw synthetic databases, binaries and canary captures are not tracked.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --phase logical --evidence "$PRIVATE_EVIDENCE/red"` | Intended runtime red: six new SQLite failures and 66 passes against unchanged packages |
+| `bash scripts/validate-metadata.sh --phase logical --update-locks --evidence "$PRIVATE_EVIDENCE/logical"` | Passed 72 tests per provider and unchanged consumers; not full qualification |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/qualified"` | Passed complete locked qualification and formatting/analyzers: 72 tests per provider, 87 applicable entries and nine memory D exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| Source/lock/proof comparison | Current source and retained proof hashes verified; four locks change only local SQLite/HostAdapters hashes; all 88 locks preserved by locked replay |
+| `git diff --check` | Passed |
+
+The [plan](../specs/005-metadata-persistence/plan.md#t086t087-filtered-page-and-receipt-corruption-corrections)
+records exact source/environment attribution, the six passing pre-repair memory
+controls and the unchanged architectural/regression scope. Existing actual
+crash/restore/native ownership, seven package graphs, unchanged consumer/common
+binaries, frozen marker and runtime mutation proof pass again. Earlier separate
+platform regression commands remain historical, not newly claimed execution.
+
+README, tasks, plan, quickstart and acceptance evidence are current.
+Provider/API/model/recovery/example guides and baseline product/architecture/ADR
+diagrams are unaffected because the existing contracts, operations, package
+boundaries and production support scope do not change. The prior architecture
+review remains applicable; no new substantial dependency, lifecycle, authority,
+reference or lease boundary is introduced. Governance/backlog, earlier features,
+release/cloud/UI/IaC guidance and permissions are unaffected. Specification,
+constitution and reviewer-owned checklists remain unchanged; no implementation
+hooks exist. Fresh **`converge`** is the next separate stage, then finalization.
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains draft. No merge,
+tag/release, package publication, infrastructure plan/apply or deployment ran.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

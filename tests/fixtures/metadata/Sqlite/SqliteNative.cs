@@ -49,6 +49,9 @@ internal sealed class SqliteStatement : IDisposable
     public string Text(int index) => raw.sqlite3_column_text(statement, index).utf8_to_string();
     public byte[] Bytes(int index) => raw.sqlite3_column_blob(statement, index).ToArray();
     public bool IsNull(int index) => raw.sqlite3_column_type(statement, index) == raw.SQLITE_NULL;
+    public bool IsInteger(int index) => raw.sqlite3_column_type(statement, index) == raw.SQLITE_INTEGER;
+    public bool IsBlob(int index) => raw.sqlite3_column_type(statement, index) == raw.SQLITE_BLOB;
+    public bool IsText(int index) => raw.sqlite3_column_type(statement, index) == raw.SQLITE_TEXT;
     public void Dispose() => statement.Dispose();
 
     public static void Execute(SqliteConnection connection, string sql, params object?[] parameters)

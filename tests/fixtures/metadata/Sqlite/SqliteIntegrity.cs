@@ -100,37 +100,15 @@ public sealed partial class SqliteMetadataStore
             "SELECT 1 FROM metadata_edges e JOIN metadata_records a ON a.key=e.entry JOIN metadata_records b ON b.key=e.digest WHERE a.kind<>4 OR b.kind<>5 LIMIT 1"))
         { if (edges.Step()) { throw new SqliteNativeFailure(11); } }
         using var operations = new SqliteStatement(database,
-            "SELECT id,epoch,issued,expires,state,length(fingerprint),length(CAST(receipt AS BLOB)),receipt FROM metadata_operations ORDER BY id");
+            "SELECT id,epoch,issued,expires,state,length(fingerprint),length(CAST(receipt AS BLOB)),receipt,fingerprint "
+            + "FROM metadata_operations ORDER BY id");
         var countOperations = 0;
         while (operations.Step())
         {
             budget.Check();
-            if (++countOperations > 100000 || operations.Bytes(0).Length != 16 || operations.Bytes(1).Length != 16)
+            if (++countOperations > 100000)
             { throw new SqliteNativeFailure(11); }
-            MetadataOperationTicket ticket;
-            try
-            {
-                ticket = new(new(new Guid(operations.Bytes(1), bigEndian: true)), new(new Guid(operations.Bytes(0), bigEndian: true)),
-                    new(operations.Number(2)), new(operations.Number(3)));
-                MetadataEncoding.ValidateTicket(ticket);
-            }
-            catch (ArgumentException) { throw new SqliteNativeFailure(11); }
-            var state = operations.Number(4);
-            if (state == 1)
-            {
-                if (operations.Number(5) != 32 || operations.IsNull(6) || operations.Number(6) is < 1 or > MetadataEncoding.MaximumBytes)
-                { throw new SqliteNativeFailure(11); }
-                try
-                {
-                    var receipt = JsonSerializer.Deserialize<MetadataCommitReceipt>(operations.Text(7), Json) ?? throw new SqliteNativeFailure(11);
-                    if (receipt.Ticket != ticket) { throw new SqliteNativeFailure(11); }
-                    _ = MetadataEncoding.Encode(receipt);
-                }
-                catch (ArgumentException) { throw new SqliteNativeFailure(11); }
-                catch (JsonException) { throw new SqliteNativeFailure(11); }
-            }
-            else if (state is not 0 and not 2 || !operations.IsNull(5) || !operations.IsNull(6))
-            { throw new SqliteNativeFailure(11); }
+            _ = ReadStoredOperation(operations);
         }
     }
 

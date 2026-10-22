@@ -18,14 +18,40 @@ public sealed partial class SqliteMetadataStore
         MetadataEncoding.ValidateTicket(ticket);
         if (ticket.Epoch != epoch) { return null; }
         using var select = new SqliteStatement(Database,
-            "SELECT epoch,issued,expires,state,fingerprint,receipt FROM metadata_operations WHERE id=?1", IdBytes(ticket.Id));
+            "SELECT id,epoch,issued,expires,state,length(fingerprint),length(CAST(receipt AS BLOB)),receipt,fingerprint "
+            + "FROM metadata_operations WHERE id=?1", IdBytes(ticket.Id));
         if (!select.Step()) { return null; }
-        var stored = new MetadataOperationTicket(new(new Guid(select.Bytes(0), bigEndian: true)), ticket.Id,
-            new(select.Number(1)), new(select.Number(2)));
-        if (stored != ticket) { return null; }
-        return new(stored, checked((int)select.Number(3)), select.IsNull(4) ? null : select.Bytes(4),
-            select.IsNull(5) ? null : JsonSerializer.Deserialize<MetadataCommitReceipt>(select.Text(5), Json)
-                ?? throw new SqliteNativeFailure(11));
+        var operation = ReadStoredOperation(select);
+        return operation.Ticket == ticket ? operation : null;
+    }
+
+    private static Operation ReadStoredOperation(SqliteStatement select)
+    {
+        if (!select.IsBlob(0) || !select.IsBlob(1) || select.Bytes(0).Length != 16 || select.Bytes(1).Length != 16
+            || !select.IsInteger(2) || !select.IsInteger(3) || !select.IsInteger(4))
+        { throw new SqliteNativeFailure(11); }
+        try
+        {
+            var ticket = new MetadataOperationTicket(new(new Guid(select.Bytes(1), bigEndian: true)),
+                new(new Guid(select.Bytes(0), bigEndian: true)), new(select.Number(2)), new(select.Number(3)));
+            MetadataEncoding.ValidateTicket(ticket);
+            var state = select.Number(4);
+            if (state == 1)
+            {
+                if (!select.IsBlob(8) || select.Number(5) != 32 || !select.IsText(7)
+                    || select.Number(6) is < 1 or > MetadataEncoding.MaximumBytes)
+                { throw new SqliteNativeFailure(11); }
+                var receipt = JsonSerializer.Deserialize<MetadataCommitReceipt>(select.Text(7), Json) ?? throw new SqliteNativeFailure(11);
+                if (receipt.Ticket != ticket) { throw new SqliteNativeFailure(11); }
+                _ = MetadataEncoding.Encode(receipt);
+                return new(ticket, 1, select.Bytes(8), receipt);
+            }
+            if (state is not 0 and not 2 || !select.IsNull(8) || !select.IsNull(7))
+            { throw new SqliteNativeFailure(11); }
+            return new(ticket, (int)state, null, null);
+        }
+        catch (ArgumentException) { throw new SqliteNativeFailure(11); }
+        catch (JsonException) { throw new SqliteNativeFailure(11); }
     }
 
     private async ValueTask<MetadataResult<MetadataOperationTicket>> ReserveCoreAsync(SqliteWorkBudget budget)

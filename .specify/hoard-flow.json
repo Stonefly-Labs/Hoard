@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "implement",
+  "stage": "converge",
   "status": "ready",
   "branch": "feature/005-metadata-persistence",
   "active": {
@@ -505,6 +505,13 @@
       "branch": "feature/005-metadata-persistence",
       "at": "2026-10-22T03:57:30.794323+00:00",
       "evidence": "Installed speckit-converge assessed 24 FRs, eight SCs, 23 scenarios, 14 edge cases, 12 grouped plan decisions, 85 tasks and eight constitution principles. Two HIGH partial runtime-proven SQLite corruption gaps append Phase 11 T086/T087: filtered page hides corrupt auth field; reconciliation accepts invalid committed receipt. Fresh full locked metadata qualification passed 66 tests/provider, 87 applicable entries plus nine memory D exclusions; tooling 76 passed. Probe restores original page/receipt and final integrity; original task prefix, spec/plan/checklists/source and 88 locks unchanged. README/DEVELOPMENT record findings/evidence. Next implement both tasks; PR 14 remains draft."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T04:17:43.885180+00:00",
+      "evidence": "F-05 T086/T087 complete through installed speckit-implement; all 87 tasks verified. Five packaged page-filter regressions and invalid-receipt reconciliation fail at runtime against unchanged SQLite packages; six independent memory controls pass. SQLite now validates ordered page candidates before payload filters with per-candidate deadlines and bounded result/lookahead retention; scope, continuation, input rejection and valid recovery preserved. Shared bounded native-type/ticket/state/fingerprint/receipt decoding protects replay, reconciliation and schema integrity; 14 corrupt forms fail as CorruptState/OperatorRecovery with original ticket/phase, preserve damaged rows and committed metadata, and recover original receipts without duplicate aggregate effects. Full locked qualification/formatting/analyzers passes 72 common tests/provider, 87 applicable cases plus nine memory D exclusions, existing actual crash/restore/native ownership, seven package graphs, unchanged/frozen binaries and runtime mutation proof. Tooling 76 and diff hygiene pass. Four locks change only local SQLite/HostAdapters hashes; all 88 preserved by locked replay. Verified source fingerprint 29971e15fbeebde654bad140c1801f840c50018f4b507deaf50243fd5818cb24. README/affected evidence current; spec/constitution/checklists unchanged; no hooks or substantial new architecture boundary; prior review remains applicable. Draft PR 14 retained; next fresh converge only, no merge/release/publication/infrastructure."
     }
   ]
 }
