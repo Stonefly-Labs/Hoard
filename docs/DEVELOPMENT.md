@@ -2700,6 +2700,52 @@ substantial boundary change requires another architecture review in this stage.
 No merge, tag, release, package publication, infrastructure operation or
 deployment ran.
 
+### F-05 T085 stored-page corruption correction
+
+The returned implementation stage completes T085. SQLite pages now reuse the
+existing bounded corruption-aware record decoder used by exact/grouped reads.
+The decoder checks canonical stored-key equality in both paths. Only persisted
+JSON/record validation becomes `CorruptState/OperatorRecovery`; caller query/
+continuation validation and final result-size failures retain
+`InvalidInput/CorrectInput`. No global exception translation changes.
+
+The new packaged MP-21 regression reproduces the null-label failure before
+repair: expected `CorruptState`, actual `InvalidInput` (65 pass, one fails).
+Five SQLite-specific shapes cover null label/revision, oversized label,
+malformed JSON and mismatched identity after a valid first row. Both page and
+group reads fail completely with safe phase/retry results, preserve the damaged
+payload and recover the exact original encoded page after synthetic restoration.
+Both fixture selections also pass the common page-corruption assertion.
+The existing malformed-cursor theory and tightened oversized-result controls
+preserve caller-correction guidance and valid traversal.
+
+Focused locked replay and full locked qualification pass 66 tests per provider;
+the full run passes formatting/analyzers, 87 applicable entries and nine explicit
+memory D exclusions, actual crash/restore/native ownership, seven package graphs,
+unchanged consumers/common binary, frozen marker and runtime mutation pairs.
+Repository tooling passes 76 tests; `git diff --check` passes. Four downstream
+locks change only local SQLite/HostAdapters content hashes, without identity,
+version, memory/Abstractions or third-party changes. Default replay preserves all
+88 reviewed locks. [Exact commands and attribution](../specs/005-metadata-persistence/plan.md#t085-stored-page-corruption-correction)
+also record the intermediate lock-refresh/test-comparison correction.
+
+README, plan/tasks, quickstart and acceptance evidence are updated. Provider/API/
+model/recovery/example guides and product/architecture/ADR diagrams are
+unaffected: existing corruption requirements, public APIs, operational procedures,
+package boundaries and production support claims are unchanged. Earlier platform
+regression results remain historical, not rerun for this fixture-private change.
+The previous architecture review remains applicable without a new substantial
+boundary change. Constitution, specification and reviewer-owned checklists are
+unchanged; no pre/post implementation hooks exist. Backlog/governance, prior
+features, release/cloud/UI/IaC guidance are unaffected; no new permissions,
+schema-repair procedure or deployment behavior is introduced.
+
+All 85 tasks are complete. The next separately authorized stage is fresh
+**`converge`**, not finalize or merge. Draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete until
+convergence and finalization. No merge, tag/release, package publication,
+infrastructure operation or deployment ran.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

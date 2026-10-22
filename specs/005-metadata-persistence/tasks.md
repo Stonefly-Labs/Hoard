@@ -6,9 +6,10 @@
 [metadata API](contracts/metadata-api.md), [recovery](contracts/recovery.md),
 [acceptance](contracts/acceptance.md) and [quickstart.md](quickstart.md).
 
-**Status**: All 84 implementation tasks are verified and complete, including
+**Status**: All 85 implementation tasks are verified and complete, including
 immutable qualification/regression replay, documentation, requirement audit
-and the T084 malformed-continuation correction with paired red/green proof.
+and the T084 malformed-continuation and T085 stored-page corruption
+corrections with paired red/green proof.
 The driver checkpoint schedules a fresh `converge` next;
 convergence/finalization/merge/release are not part of this implementation.
 The built-in requirements checklist remains 16/16. The reviewer-owned
@@ -547,4 +548,19 @@ preserves them. Repository tooling passes 76 tests. See
 
 ## Phase 10: Convergence
 
-- [ ] T085 Classify invalid stored page records as `CorruptState/OperatorRecovery/Page` in `tests/fixtures/metadata/Sqlite/SqlitePages.cs`, reusing the existing corruption-aware record decoding in `SqliteMetadataStore.cs` rather than translating caller validation failures globally: a persisted registry payload with `Label: null` currently returns `InvalidInput/CorrectInput/Page`, while the identical record in a grouped read correctly returns `CorruptState/OperatorRecovery/Read`. Add focused regressions in `tests/contracts/Hoard.Metadata.Tests/Cases/MetadataFailureTests.cs` for syntactically valid but structurally/value-invalid stored records and malformed JSON, requiring whole-page failure without partial rows, sanitized diagnostics and preserved stored data; pair them with valid-page recovery and unchanged `InvalidInput/CorrectInput` results for malformed caller queries/continuations and oversized results. Replay applicable locked qualification and update affected evidence/documentation per FR-010, FR-013, SC-007 and T024/T026/T036 (MP-21/22) (partial, HIGH).
+- [X] T085 Classify invalid stored page records as `CorruptState/OperatorRecovery/Page` in `tests/fixtures/metadata/Sqlite/SqlitePages.cs`, reusing the existing corruption-aware record decoding in `SqliteMetadataStore.cs` rather than translating caller validation failures globally: a persisted registry payload with `Label: null` currently returns `InvalidInput/CorrectInput/Page`, while the identical record in a grouped read correctly returns `CorruptState/OperatorRecovery/Read`. Add focused regressions in `tests/contracts/Hoard.Metadata.Tests/Cases/MetadataFailureTests.cs` for syntactically valid but structurally/value-invalid stored records and malformed JSON, requiring whole-page failure without partial rows, sanitized diagnostics and preserved stored data; pair them with valid-page recovery and unchanged `InvalidInput/CorrectInput` results for malformed caller queries/continuations and oversized results. Replay applicable locked qualification and update affected evidence/documentation per FR-010, FR-013, SC-007 and T024/T026/T036 (MP-21/22) (partial, HIGH).
+
+T085 evidence: the new packaged MP-21 regression first fails with expected
+`CorruptState`, actual `InvalidInput` (65 passing tests, one failure). Page
+and exact reads now share the existing bounded corruption-aware decoder,
+including canonical stored-key comparison. SQLite-specific cases cover null
+label/revision, oversized label, malformed JSON and mismatched identity:
+both read paths fail completely with sanitized operator-recovery results,
+leave the damaged payload unchanged and recover the exact original page
+after synthetic payload restoration. Both fixtures also pass the shared
+page-corruption assertion. Caller query/continuation and oversized-result
+failures retain `InvalidInput/CorrectInput/Page`. Focused and full locked
+replay pass 66 tests per provider; full qualification retains 87 applicable
+passes and nine memory D exclusions. Four locks change only local SQLite/
+HostAdapters content hashes; default replay preserves them. Tooling passes
+76 tests. See [T085 evidence](plan.md#t085-stored-page-corruption-correction).

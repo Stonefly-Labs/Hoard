@@ -122,20 +122,21 @@ public sealed partial class SqliteMetadataStore : IMetadataStore, IMetadataSchem
 
     private MetadataRecord? Get(MetadataSelector selector, SqliteConnection? database = null)
     {
-        using var select = new SqliteStatement(database ?? Database, "SELECT length(CAST(payload AS BLOB)),payload FROM metadata_records WHERE key=?1", RecordKey(selector));
+        var key = RecordKey(selector);
+        using var select = new SqliteStatement(database ?? Database, "SELECT length(CAST(payload AS BLOB)),payload FROM metadata_records WHERE key=?1", key);
         if (!select.Step()) { return null; }
         if (select.Number(0) > MetadataEncoding.MaximumBytes) { throw new SqliteNativeFailure(11); }
-        return DecodeRecord(select.Text(1), selector);
+        return DecodeRecord(select.Text(1), key);
     }
 
-    private static MetadataRecord DecodeRecord(string text, MetadataSelector selector)
+    private static MetadataRecord DecodeRecord(string text, ReadOnlySpan<byte> key)
     {
         if (Encoding.UTF8.GetByteCount(text) > MetadataEncoding.MaximumBytes) { throw new SqliteNativeFailure(11); }
         try
         {
             var record = JsonSerializer.Deserialize<MetadataRecord>(text, Json) ?? throw new SqliteNativeFailure(11);
             MetadataEncoding.Validate(record);
-            if (record.Selector != selector) { throw new SqliteNativeFailure(11); }
+            if (!RecordKey(record.Selector).AsSpan().SequenceEqual(key)) { throw new SqliteNativeFailure(11); }
             return record;
         }
         catch (ArgumentException) { throw new SqliteNativeFailure(11); }

@@ -696,6 +696,15 @@ records the correction and missing regression; no implementation changes occur
 in convergence. Fresh full locked qualification passes its existing cases but
 does not cover or waive this additional runtime-proven gap. The next stage is
 **`implement`** for T085, then fresh convergence; PR #14 stays draft.
+The T085 correction is now complete: SQLite pages reuse the corruption-aware
+stored-record decoder and return `CorruptState/OperatorRecovery` for damaged
+payloads, while bad caller input retains `InvalidInput/CorrectInput`.
+Paired regressions prove complete failure, sanitized diagnostics, unchanged
+damaged data and exact valid-page recovery. Full locked qualification passes
+66 common tests per provider and all 87 applicable entries, with nine explicit
+memory durability exclusions. See [T085 evidence](specs/005-metadata-persistence/plan.md#t085-stored-page-corruption-correction).
+All 85 tasks are complete; fresh **`converge`** is next, then finalization.
+PR #14 remains draft; no merge is requested.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

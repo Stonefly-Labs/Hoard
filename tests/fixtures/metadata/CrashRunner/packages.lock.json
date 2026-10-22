@@ -12,7 +12,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "nAXvujvKjNgCTJ6CS5oUURw335y9duyVA9hCB2jU8eHmTSudmfP/iPhKjFtRfzP9zjb4AMIXN1Y/O7+kHbDxLQ==",
+        "contentHash": "vcLapoDlEf0qHbE+8MaIADm8bXRGpXQ3C9RPr98p1dTZMi4YseIC9v4LLkevppurXnLZqxmrERgQLl3Gy+TmLg==",
         "dependencies": {
           "Hoard.Fixtures.Metadata.Memory": "[0.1.0]",
           "Hoard.Fixtures.Metadata.Sqlite": "[0.1.0]",
@@ -23,7 +23,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "ZRUP9iLRApVld34k1M98/Qiwd5LeLVcxvuVaJX8dEQc7wVIPjaH2cw9W2xPwFgcUBlIjJ+hYzoo46DKDX2zSXA==",
+        "contentHash": "4FvkRj6tdqWPpc0HW1nkAQmrIuoYhH9IYy0hIOyAj8aGiMIQ64eF7TnF/UfyVSK57JQBgqRFcZW4R89FErTAHg==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]",
           "Microsoft.Data.Sqlite": "10.0.13"

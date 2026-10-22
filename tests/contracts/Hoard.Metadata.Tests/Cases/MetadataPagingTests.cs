@@ -48,9 +48,12 @@ public sealed class MetadataPagingTests
         foreach (var entry in entries) { await Commit(fixture, Publish(fixture, entry)); }
         Assert.Equal(MetadataFailureCode.InvalidInput, Failed(await fixture.Store.ReadAsync(new(
             entries.Select(entry => entry.Selector).ToImmutableArray()), new(), default)));
-        Assert.Equal(MetadataFailureCode.InvalidInput, Failed(await fixture.Store.ReadPageAsync(
+        var oversized = Assert.IsType<MetadataResult<MetadataPage>.Failure>(await fixture.Store.ReadPageAsync(
             new MetadataPageQuery.CacheEntries(package.Key.RegistryId, new("anonymous"), None<MetadataPackageKey>())
-            { PageSize = 100, Continuation = None<MetadataContinuation>() }, new(), default)));
+            { PageSize = 100, Continuation = None<MetadataContinuation>() }, new(), default));
+        Assert.Equal(MetadataFailureCode.InvalidInput, oversized.Code);
+        Assert.Equal(MetadataRetryDisposition.CorrectInput, oversized.Retry);
+        Assert.Equal(MetadataPhase.Page, oversized.Phase);
         var small = await Traverse(fixture, new MetadataPageQuery.CacheEntries(package.Key.RegistryId, new("anonymous"), None<MetadataPackageKey>())
         { PageSize = 1, Continuation = None<MetadataContinuation>() });
         Assert.Equal(64, small.Length);

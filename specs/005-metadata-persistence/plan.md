@@ -4,7 +4,7 @@
 
 **Input**: Feature specification from `specs/005-metadata-persistence/spec.md`
 
-**Status**: Implementation complete, including convergence correction T084;
+**Status**: Implementation complete, including convergence corrections T084/T085;
 additive operation contracts, independent fixtures and the qualification
 orchestrator are implemented. Fresh convergence is the next separate stage. See
 [implementation evidence](#implementation-evidence) for measured checks and
@@ -414,6 +414,69 @@ public contract, lifecycle, authority, reference or lease boundary changes.
 The specification, constitution and reviewer-owned checklist bytes are
 unchanged. No implementation extension hooks exist. T084 is complete;
 fresh convergence and finalization remain required, and PR #14 stays draft.
+
+### T085 stored-page corruption correction
+
+The subsequent convergence found that page reads classified structurally invalid
+persisted records as caller-input failures. T085 routes page rows through the
+same bounded `DecodeRecord` used by exact/grouped reads. Its expected identity
+is now the canonical stored key, preserving both read paths' key-match check.
+JSON/record validation failures become `CorruptState/OperatorRecovery` only
+inside this stored-record boundary; query/cursor validation and final result
+encoding retain their existing `InvalidInput/CorrectInput` behavior.
+No public API, global exception mapping or provider-selection behavior changes.
+
+The new MP-21 regression first fails against the unchanged packaged SQLite
+fixture with expected `CorruptState`, actual `InvalidInput`: 65 pass, one fails.
+SQLite-specific assertions inject null label/revision, oversized label, malformed
+JSON and mismatched identity into the second of two stored rows. Each page/group
+fails completely with the correct phase and sanitized operator-recovery result,
+leaves the damaged payload unchanged, and returns the exact original encoded
+page after restoration of the synthetic payload. Both provider selections also
+exercise the common page-corruption rejection. Malformed caller queries/cursors,
+valid resumption and oversized results retain their input-correction semantics.
+Private SQL inspection is confined to the failure test, never consumer logic.
+
+`$PRIVATE_EVIDENCE` represents this invocation's owner-private evidence parent
+outside Git. The intermediate lock-refresh run exposed a test-only comparison
+of immutable-array backing identity; the final regression compares exact encoded
+page contents instead. No provider behavior was changed to satisfy that assertion.
+
+| Executed command | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --phase logical --evidence "$PRIVATE_EVIDENCE/red"` | Intended red: new SQLite MP-21 assertion fails with `InvalidInput`; 65 pass, one fails |
+| `bash scripts/validate-metadata.sh --phase logical --update-locks --evidence "$PRIVATE_EVIDENCE/logical"` | Local package hashes refreshed; initial test-only page-comparison assertion failed, then was corrected as described above |
+| `bash scripts/validate-metadata.sh --phase logical --evidence "$PRIVATE_EVIDENCE/logical-green"` | Passed 66 tests per provider and unchanged consumers; explicitly not full qualification |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/qualified"` | Passed full locked qualification and formatting/analyzers: 66 tests per provider, 87 applicable entries and nine explicit memory D exclusions; locks unchanged |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| `git diff --check` | Passed |
+
+The full manifest attributes pre-commit HEAD
+`795e3bcc08c7d4a7884119653160babff620eed5` and tested working-source/lock fingerprint
+`68215c83a4b41ed5b8f3c10976aa7519e71fc8d82cbd1e657a30cec30e3a513d`.
+Configuration remains macOS 26.5.0/APFS, .NET 10.0.7, driver 10.0.13.0 and
+SQLite 3.53.3, with checked WAL/FULL/foreign-keys/busy-timeout-zero.
+Actual M0/M1/M2, U0..U4, R0/R1 and native-ownership recovery, seven package
+graphs, unchanged consumers/common binary, frozen marker and runtime mutation
+pairs pass again. Process-stop/fixture limits remain unchanged.
+
+Four downstream metadata locks change only local SQLite/HostAdapters content
+hashes; package identities, versions, memory/Abstractions and third-party hashes
+are unchanged. Independent locked replay preserves all 88 reviewed locks.
+Earlier foundation/lifecycle/configuration/discovery runs remain historical;
+this fixture-private correction changes no platform contract or shared runtime.
+Full metadata acceptance rebuilds the platform and repeats applicable boundary
+and binary-compatibility proof. The prior architecture review remains applicable:
+no dependency, lifecycle, publication, lease or shared authority boundary changes.
+
+README, DEVELOPMENT, tasks, quickstart and acceptance evidence are synchronized.
+Provider/API/model/recovery/example guides and baseline product/architecture/ADR
+diagrams are unaffected because the existing corruption contract, operational
+procedure, package graph and production support scope do not change. Governance,
+backlog, release/cloud/UI/IaC guidance and earlier feature artifacts are unaffected.
+Specification, constitution and reviewer-owned checklists remain unchanged; no
+implementation hooks exist. All 85 tasks are complete. Fresh convergence and
+finalization remain separate gates; PR #14 stays draft, with no merge requested.
 
 ## Complexity Tracking
 

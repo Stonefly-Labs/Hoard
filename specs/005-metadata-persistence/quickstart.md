@@ -206,3 +206,27 @@ graphs, retained marker and unchanged consumers pass again. Exact red commands,
 source/configuration attribution and unaffected regression/review boundaries
 are in the [plan](plan.md#t084-malformed-continuation-correction).
 The next separately authorized stage is fresh convergence; PR #14 remains draft.
+
+### T085 stored-page corruption correction
+
+SQLite page and grouped reads now share corruption-aware stored-record decoding.
+Invalid persisted structure/value/JSON or a mismatched stored key returns
+`CorruptState/OperatorRecovery` without partial rows or payload changes.
+Five SQLite-specific corruption/restoration cases prove sanitized failures and
+exact original-page recovery; the common page-corruption assertion runs for
+both fixtures. Malformed caller queries/continuations and oversized results
+still return `InvalidInput/CorrectInput`.
+
+| Executed command | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --phase logical --evidence "$PRIVATE_EVIDENCE/red"` | Intended red: new SQLite assertion reports expected `CorruptState`, actual `InvalidInput` |
+| `bash scripts/validate-metadata.sh --phase logical --evidence "$PRIVATE_EVIDENCE/logical-green"` | Passed 66 tests per provider and unchanged consumers; not full qualification |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/qualified"` | Passed full locked qualification and formatting/analyzers: 66 tests per provider, 87 applicable entries and nine memory D exclusions; all reviewed locks unchanged |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| `git diff --check` | Passed |
+
+Only local SQLite/HostAdapters package hashes change in four downstream locks;
+no dependency identity/version changes. See [T085 evidence](plan.md#t085-stored-page-corruption-correction)
+for the lock-refresh attempt, exact source/configuration attribution and
+unchanged architecture/regression boundaries. All 85 tasks are complete;
+fresh convergence is next, then finalization. PR #14 remains draft.

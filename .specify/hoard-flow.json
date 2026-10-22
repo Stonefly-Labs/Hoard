@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "implement",
+  "stage": "converge",
   "status": "ready",
   "branch": "feature/005-metadata-persistence",
   "active": {
@@ -491,6 +491,13 @@
       "branch": "feature/005-metadata-persistence",
       "at": "2026-10-22T03:33:51.945895+00:00",
       "evidence": "Installed speckit-converge outcome tasks_appended: checked 24 FRs, 8 SCs, 23 scenarios, 14 edges, 84 existing tasks, 8 plan decisions and 8 constitution principles. One HIGH partial FR-010/FR-013 gap: SQLite stored Label:null yields InvalidInput/CorrectInput/Page instead of CorruptState/OperatorRecovery; fresh packaged runtime probe reproduced it with malformed-JSON, restored valid-read/page and cleanup controls. Appended only Phase 10/T085; original tasks prefix/spec/plan/checklists unchanged. Full locked metadata qualification passed 65 tests per provider, 87 applicable entries and 9 memory D exclusions, crash/restore/native ownership/package/retained binary/mutation proofs; 76 tooling tests and diff check passed; source/lock fingerprint 41ef899b40bd4017c3be0973de1bb66e93a81ca7dae3b9ed2cf064f1072b6c1a unchanged. README/DEVELOPMENT record evidence; PR #14 remains draft; next implement, no implementation/merge/release/infrastructure."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-05",
+      "branch": "feature/005-metadata-persistence",
+      "at": "2026-10-22T03:48:53.690590+00:00",
+      "evidence": "F-05 T085 implementation complete through installed speckit-implement; all 85 tasks verified. SQLite page and exact reads share bounded corruption-aware record/key decoding; stored null label/revision, oversized label, malformed JSON and mismatched identity fail whole reads/pages as CorruptState/OperatorRecovery, preserve damaged payloads and recover exact valid pages. Caller query/cursor and oversized-result InvalidInput/CorrectInput semantics preserved. New packaged regression reproduced expected CorruptState/actual InvalidInput before repair. Focused locked and full locked qualification pass 66 tests/provider, 87 applicable entries and nine explicit memory D exclusions; crash/restore/native ownership, seven graphs, unchanged/frozen binaries and runtime mutation proofs pass; formatting/analyzers and 76 tooling tests pass. Four locks change only local SQLite/HostAdapters hashes; all 88 locks preserved by default replay. Source fingerprint 68215c83a4b41ed5b8f3c10976aa7519e71fc8d82cbd1e657a30cec30e3a513d. README/affected evidence updated; protected spec/constitution/checklists unchanged; no hooks or new substantial architecture boundary change; prior review remains applicable. Draft PR 14 retained; next fresh converge only, no merge/release/infrastructure."
     }
   ]
 }

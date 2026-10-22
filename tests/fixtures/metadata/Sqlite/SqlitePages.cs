@@ -88,11 +88,8 @@ public sealed partial class SqliteMetadataStore
                 budget.Check();
                 if (records.Count == query.PageSize) { more = true; break; }
                 if (select.Number(1) > MetadataEncoding.MaximumBytes) { throw new SqliteNativeFailure(11); }
-                var record = JsonSerializer.Deserialize<MetadataRecord>(select.Text(2), Json) ?? throw new SqliteNativeFailure(11);
-                MetadataEncoding.Validate(record);
                 last = select.Bytes(0);
-                if (!RecordKey(record.Selector).AsSpan().SequenceEqual(last)) { throw new SqliteNativeFailure(11); }
-                records.Add(record);
+                records.Add(DecodeRecord(select.Text(2), last));
             }
             MetadataOption<MetadataContinuation> next = more && last is not null
                 ? new MetadataOption<MetadataContinuation>.Some(new(Convert.ToBase64String(

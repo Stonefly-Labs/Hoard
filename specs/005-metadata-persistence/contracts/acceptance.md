@@ -43,7 +43,7 @@ F-07 certification follows from the fixture results.
 | MP-18 | L | Cancel before admission/commit leaves no changes; cancel after unobserved commit attempt reports uncertainty, then reconciles |
 | MP-19 | L | Finite queue/lock/authority budgets succeed below limit and fail at deadline; no hidden commit retry or over-capacity admission |
 | MP-20 | L | Counter, ledger, queue and injected storage capacity limits yield classified failures, preserve prior state and do not evict live receipts |
-| MP-21 | L | Explicit not-found selector succeeds only on absence; unavailable/corrupt state fails the group, never returns empty/miss |
+| MP-21 | L | Explicit not-found selector succeeds only on absence; unavailable/corrupt state fails the whole group/page, never returns partial rows or empty/miss; invalid persisted structure/value/JSON requires CorruptState/OperatorRecovery without changing damaged payloads |
 | MP-22 | L | Safe error codes/corrective templates for every failure class; injected canary secret/connection/path/record content never appears in diagnostics, debugger strings or evidence |
 | MP-23 | L | Authority-accepted publication succeeds; missing, uncommitted, forged or digest/length-mismatched evidence fails without entry/edge |
 | MP-24 | L | Entry+edge replacement/removal atomic; multiple entries share digest without lost/double references under competing changes |
@@ -148,3 +148,14 @@ odd-length and invalid-hex decoded fields in both independently packaged
 providers, preserving the original cursor and complete dataset after rejection.
 The null/omitted variants have attributable assertion-level red proof before
 the repair; see [T084 evidence](../plan.md#t084-malformed-continuation-correction).
+
+The T085 replay increases the common assembly to 66 passing tests per provider.
+Its MP-21 assertion rejects page corruption in both fixtures. SQLite additionally
+tests five persisted payload shapes: null label/revision, oversized label,
+malformed JSON and mismatched identity. Each fails both read paths completely,
+preserves the damaged payload and returns the exact original page after synthetic
+restoration; canary-bearing values never appear in result/diagnostic strings.
+Malformed caller query/cursor and oversized-result controls still require
+`InvalidInput/CorrectInput/Page`. The null-label regression fails before repair.
+Full locked qualification repeats all 96 entries and existing recovery/package
+proof, without lock mutation; see [T085 evidence](../plan.md#t085-stored-page-corruption-correction).

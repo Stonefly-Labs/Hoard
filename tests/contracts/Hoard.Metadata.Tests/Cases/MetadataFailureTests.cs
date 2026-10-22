@@ -1,5 +1,8 @@
 using System.Diagnostics;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using Hoard.Abstractions.Metadata;
+using Microsoft.Data.Sqlite;
 using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
@@ -41,6 +44,93 @@ public sealed class MetadataFailureTests
         Assert.IsType<MetadataReadItem.NotFound>(before.Items[1]);
         Success(await fixture.CorruptRecordForTestAsync(registry.Selector));
         Assert.Equal(MetadataFailureCode.CorruptState, Failed(await fixture.Store.ReadAsync(new([package.Selector, absent, registry.Selector]), new(), default)));
+    }
+
+    [Fact]
+    public async Task MP21_Stored_page_corruption_fails_whole_and_preserves_data()
+    {
+        await using var fixture = await OpenAsync();
+        var damaged = Registry(2) with { Label = new(MetadataTestData.Canary) };
+        await Commit(fixture, new MetadataMutation.PutRegistry(Registry(), new ExpectedRevision.Absent()),
+            new MetadataMutation.PutRegistry(damaged, new ExpectedRevision.Absent()));
+        var query = Registries();
+        var baseline = Success(await fixture.Store.ReadPageAsync(query, new(), default));
+        Assert.Equal(2, baseline.Records.Length);
+        foreach (var invalid in new[] { query with { PageSize = 101 }, query with
+        {
+            Continuation = new MetadataOption<MetadataContinuation>.Some(new(MetadataTestData.Canary))
+        } })
+        {
+            var failure = Assert.IsType<MetadataResult<MetadataPage>.Failure>(
+                await fixture.Store.ReadPageAsync(invalid, new(), default));
+            Assert.Equal(MetadataFailureCode.InvalidInput, failure.Code);
+            Assert.Equal(MetadataRetryDisposition.CorrectInput, failure.Retry);
+            Assert.Equal(MetadataPhase.Page, failure.Phase);
+            MetadataTestData.AssertSanitized(failure.ToString());
+        }
+        if (fixture.DatabasePath is { } path)
+        {
+            await fixture.WhenIdleAsync();
+            using var database = new SqliteConnection(new SqliteConnectionStringBuilder
+            { DataSource = path, Mode = SqliteOpenMode.ReadWrite, Pooling = false, DefaultTimeout = 1 }.ToString());
+            database.Open();
+            using var select = database.CreateCommand();
+            select.CommandText = "SELECT payload FROM metadata_records WHERE key=$key";
+            select.Parameters.AddWithValue("$key", MetadataEncoding.Key(damaged.Selector).ToArray());
+            var original = Assert.IsType<string>(select.ExecuteScalar());
+            using var update = database.CreateCommand();
+            update.CommandText = "UPDATE metadata_records SET payload=$payload WHERE key=$key";
+            update.Parameters.AddWithValue("$key", MetadataEncoding.Key(damaged.Selector).ToArray());
+            var payload = update.Parameters.Add("$payload", SqliteType.Text);
+            foreach (var shape in new[] { "null-label", "oversized-label", "null-revision", "malformed-json", "mismatched-key" })
+            {
+                var record = Assert.IsType<JsonObject>(JsonNode.Parse(original));
+                switch (shape)
+                {
+                    case "null-label": record["Label"] = null; break;
+                    case "oversized-label": record["Label"]!["Value"] = new string('x', 513) + MetadataTestData.Canary; break;
+                    case "null-revision": record["Revision"] = null; break;
+                    case "mismatched-key": record["Id"] = JsonSerializer.SerializeToNode(Id(99)); break;
+                }
+                var corrupt = shape == "malformed-json" ? "{" + MetadataTestData.Canary : record.ToJsonString();
+                try
+                {
+                    payload.Value = corrupt;
+                    Assert.Equal(1, update.ExecuteNonQuery());
+                    var failure = Assert.IsType<MetadataResult<MetadataPage>.Failure>(
+                        await fixture.Store.ReadPageAsync(query, new(), default));
+                    Assert.Equal(MetadataFailureCode.CorruptState, failure.Code);
+                    Assert.Equal(MetadataRetryDisposition.OperatorRecovery, failure.Retry);
+                    Assert.Equal(MetadataPhase.Page, failure.Phase);
+                    MetadataTestData.AssertSanitized(failure.ToString());
+                    var grouped = Assert.IsType<MetadataResult<MetadataReadSnapshot>.Failure>(
+                        await fixture.Store.ReadAsync(new([Registry().Selector, damaged.Selector]), new(), default));
+                    Assert.Equal(MetadataFailureCode.CorruptState, grouped.Code);
+                    Assert.Equal(MetadataRetryDisposition.OperatorRecovery, grouped.Retry);
+                    Assert.Equal(MetadataPhase.Read, grouped.Phase);
+                    MetadataTestData.AssertSanitized(grouped.ToString());
+                    Assert.True(corrupt == Assert.IsType<string>(select.ExecuteScalar()), "Failed reads changed stored data.");
+                    foreach (var diagnostic in fixture.Controls.Diagnostics) { MetadataTestData.AssertSanitized(diagnostic); }
+                }
+                finally
+                {
+                    payload.Value = original;
+                    Assert.Equal(1, update.ExecuteNonQuery());
+                }
+                var restored = Success(await fixture.Store.ReadPageAsync(query, new(), default));
+                Assert.True(MetadataEncoding.Encode(baseline).AsSpan().SequenceEqual(MetadataEncoding.Encode(restored).AsSpan()),
+                    "Restored page differs from the original committed page.");
+                Assert.IsType<MetadataOption<MetadataContinuation>.None>(restored.Continuation);
+                await Read<MetadataRegistry>(fixture, damaged.Selector);
+            }
+        }
+        Success(await fixture.CorruptRecordForTestAsync(damaged.Selector));
+        var corrupted = Assert.IsType<MetadataResult<MetadataPage>.Failure>(
+            await fixture.Store.ReadPageAsync(query, new(), default));
+        Assert.Equal(MetadataFailureCode.CorruptState, corrupted.Code);
+        Assert.Equal(MetadataRetryDisposition.OperatorRecovery, corrupted.Retry);
+        Assert.Equal(MetadataPhase.Page, corrupted.Phase);
+        MetadataTestData.AssertSanitized(corrupted.ToString());
     }
 
     [Fact]
