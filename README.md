@@ -793,11 +793,22 @@ to make the cooperative-I/O qualification and fail-closed exception explicit;
 no requirement change or waiver is presumed. The unresolved criterion remains
 unchecked and blocks implementation approval, not task generation.
 See the [review scope](docs/DEVELOPMENT.md#f-06-artifact-storage-checklists-and-assisted-review).
-The next separately authorized stage is **`tasks`**;
+The subsequent [implementation task list](specs/006-artifact-storage/tasks.md)
+contains **86 unchecked tasks**: shared setup/contracts, five story phases and
+cross-cutting acceptance. All 25 requirements, eight outcomes, 23 scenarios,
+15 edge cases and 48 acceptance cases have implementation/proof assignments,
+with explicit prerequisites and file-disjoint parallel opportunities. US1 is
+the verified-publication/read MVP, not complete qualification or a runnable cache.
+Actual four size/provider transfer measurements, six local crash barriers,
+shared reference/deletion authority, independent packages and exact 96-entry
+qualification remain future obligations. Task generation leaves all existing
+requirements, design artifacts and checklist markers unchanged; RQ-01 still
+blocks implementation approval and is not silently resolved by planned tasks.
+See the [task-stage scope](docs/DEVELOPMENT.md#f-06-artifact-storage-task-generation).
+The next separately authorized stage is read-only **`analyze`**;
 [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) remains draft.
-No tasks, analysis, implementation or qualification execution occurs in this
-checklist/review invocation. Existing requirements and design artifacts remain
-unchanged; reviewed criteria establish requirements quality, not delivered behavior.
+No analysis, remediation, implementation or qualification execution occurs in
+task generation; reviewed criteria establish requirements quality, not delivered behavior.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

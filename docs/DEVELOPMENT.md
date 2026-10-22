@@ -3320,6 +3320,87 @@ no tasks, cross-artifact analysis, requirements remediation, implementation,
 qualification, convergence, finalization, release, infrastructure plan/apply,
 settings/permissions change, deployment or merge occurs.
 
+### F-06 artifact storage task generation
+
+The separately invoked `tasks` stage retains `feature/006-artifact-storage`
+and explicitly pins `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage`.
+After the driver begins `tasks / running`, the installed `speckit-tasks`
+resolves its canonical template and all eight specification/design inputs.
+No pre/post extension hooks are configured. The generated
+[tasks](../specs/006-artifact-storage/tasks.md) contain **86 unchecked tasks**:
+six setup, 13 foundational, 11 US1, 11 US2, 15 US3, 12 US4, 12 US5 and six
+cross-cutting tasks. All task lines have sequential IDs, exact destination
+paths and story labels only in their respective story phases.
+
+The plan's five journeys become independently testable increments in actual
+dependency order: verified publication/read, bounded real large transfers,
+exact receipt/recovery/ownership, shared-authority deletion, then unchanged
+consumer/package/qualification proof. US1 is the smallest useful MVP, not
+complete qualification or a runnable cache. The task prerequisite table is
+complete and acyclic, with separate provider lanes and file-disjoint test work.
+Shared orchestrator edits are serialized, and the old binary is frozen before
+public API changes. Parallel markers describe scheduling opportunities, not
+permission to launch a workflow engine.
+
+Traceability assigns all 25 FRs, eight SCs, 23 story scenarios, 15 edge cases
+and AS-01..48 to implementation and focused proof. Tests require intended
+runtime red-before-green evidence rather than treating a missing type as proof
+of failure safety. Each independent store must actually write/read both 256 MiB
+and 4 GiB through paced non-seekable streams, with <=64 MiB incremental OS
+peak RSS. Local B0..B3/D0..D1 require actual parent-signaled exit, fresh reopen,
+exact receipt and full acknowledged control/new-content readback. Complete
+qualification needs exactly 96 provider/case entries, 92 applicable passes and
+four explicit simulated-provider durability exclusions, including every
+required subproof on the current source/locks. Focused modes cannot qualify.
+
+The tasks preserve the additive BCL-only boundary, historical digest and marker,
+private independent local/object mechanisms, existing lifecycle/configuration
+authority and unchanged metadata fixtures/APIs. One controlled host authority
+coordinates publication, readers, metadata settlement and exclusive deletion;
+zero-reference observation is never deletion permission. No cache engine,
+production provider, endpoint, UI, cloud account, vendor SDK or generalized
+F-07 certification is introduced by task generation.
+
+**RQ-01 remains unresolved and high priority.** The tasks explicitly retain
+the conflict between FR-009/SC-006/US2.3 finite release and design/AS-39 retained
+non-cooperative ownership. They do not choose the recommended clarification,
+amend requirements, mark recovery CHK012 satisfied or grant a waiver.
+Implementation must wait for an approved resolution, aligned artifacts and
+re-review (or explicit reviewer authorization), without silently interpreting
+contradictory acceptance as satisfied. Read-only analysis may assess the
+conflict; critical/high findings require separately authorized remediation and
+fresh analysis before progress. Successful task generation itself is not blocked
+by unchecked custom review markers and does not bypass their implementation gate.
+
+README and this guide link the task list and distinguish planned proof from
+current behavior. Specification, seven planning artifacts and all three
+checklists remain byte-for-byte unchanged, including built-in 16/16, storage
+20/20 and recovery 19/20. Provider/example guides, existing compatibility
+policy, predecessor artifacts, charter/product specification, architecture/ADR/diagrams,
+constitution/backlog, source/tests/tooling, locks, release and IaC guides are
+unaffected: only task/documentation/checkpoint artifacts change, not an API,
+dependency edge, supported capability, architecture or operational procedure.
+No additional architecture-agent review is needed for this task/docs-only
+stage; implementation tasks retain that required pre-handoff review.
+
+| Exact command / check | Result |
+| --- | --- |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/setup-tasks.sh --json` | Passed once; resolved the pinned directory, canonical task template and four available design-document entries |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks` | Passed; resolved the same feature with tasks included |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed all 76 tests |
+| Direct task-structure/traceability/integrity assertions | Passed 86 unchecked sequential tasks, 36 parallel markers, all 86 prerequisite rows acyclic, 25 FR/eight SC/48 case/23 scenario/15 edge mappings, 11 unchanged original artifacts and intact review gate |
+| Local Markdown link/anchor assertions | Passed all 14 links/anchors in the new task list and added README/development text |
+| `git diff --check` | Passed |
+
+The next separately authorized stage is read-only **`analyze`**. The feature
+stays draft in [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16).
+No cross-artifact analysis stage, requirements remediation, implementation,
+qualification, convergence, finalization, source release, infrastructure
+plan/apply, settings/permissions change, deployment or merge occurs here.
+Existing product/.NET/OpenTofu checks and the still-unimplemented
+`validate-artifacts.sh` are not run for documentation-only task generation;
+artifact-structure/link/integrity checks are not runtime storage evidence.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
