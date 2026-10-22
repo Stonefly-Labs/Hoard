@@ -62,6 +62,12 @@ The local-package hash blocker is resolved by reviewed `Hoard.*` hash-only lock
 refreshes and separate default locked regressions. Versions, dependency graphs,
 external hashes and frozen historical baselines remain unchanged. See the
 [resolution and evidence](../specs/006-artifact-storage/plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
+Logical mode additionally runs six owned-child non-cooperative source,
+destination and native-deletion containment checks. Two explicit parent
+observations verify retained work/streams/root/guards and incomplete shutdown
+before exact-child termination; these are not durable-crash or cooperative
+resource-release passes. Public qualification-record checks reject mixed durable
+and simulation exclusion sets.
 
 OpenTofu mock-provider tests live beside the bootstrap at
 `infra/bootstrap/tests/` and run with `tofu -chdir=infra/bootstrap test`.

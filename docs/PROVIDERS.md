@@ -40,6 +40,13 @@ completes. A timeout does not prove physical settlement: non-cooperative I/O
 retains its bounded handles, slots and opaque guards, reports incomplete cleanup
 and blocks admission rather than releasing live protection. Use the exact
 reserved ticket to reconcile uncertainty; never replay it as a new mutation.
+The fixture child runner exercises source, destination and synchronous native
+stalls on each provider. Parent-controlled inspection confirms retained work,
+borrowed streams, root ownership, applicable guards and incomplete shutdown
+before terminating the exact owned child; this is unsupported-worker containment,
+not a durable crash or cooperative-release pass.
+Qualification records reject durable-case exclusions for Local and require
+exactly AS-41..44 for the process-local simulation; the classes cannot be exchanged.
 Expired ticket history may be retired, but live content identity remains
 independent of its receipt anchor. Retained tombstones and reclaimed-incarnation
 records also consume finite bookkeeping capacity until safe expiry-based

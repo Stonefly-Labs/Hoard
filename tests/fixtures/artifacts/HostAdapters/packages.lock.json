@@ -6,7 +6,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "g3HiiPX2BCz/LHw2EnZh4XnDCKxhDcCpTBa0AXIAAW7hV41TrzuTM75oHFUtXywAzNcl0X1FioKkZ3DxBsA0Nw==",
+        "contentHash": "fclUmDF7eNtaOL3mOS6mUo9cdWq9yLp6eHt4PBhwRWd6A/BkDblNHwc0SI5BVNAVGTALXCfOaBUa/JsMQ3JzRg==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }
@@ -15,7 +15,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "4Zfxpck03m3ajVejCsk7dhiknUdilQ7qf5Pn1XhJoIFKQADWlmVkxhIB/4yTAsIu/L74gVcl646+0wWfqv7Rnw==",
+        "contentHash": "t7DO0WQjNjQdn/oYaO805JcAi0ZzNZP9WA6dqMoP2w8M8uOllSXsIf5UHB26nqf+Ljodtq+/5UloWiyraP3YzA==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }
@@ -89,7 +89,7 @@
         "type": "CentralTransitive",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "ttmIZw4Q4XOeOMxJp9vcwOx+aloQWAt2Ly9Cja/A0jdQ/ZFhCYCq/qeEgIYlCrE/MPfipiGxfqrfL+9Xma9zow=="
+        "contentHash": "i+GR0TK7xO2y/EnVfEaDzjXTJSDKUesp15Ur2gHSkLhzn142nFNO32X/C2rEWipnMvob+7yecTluSuW94Nx56w=="
       },
       "Hoard.Fixtures.Metadata.Memory": {
         "type": "CentralTransitive",

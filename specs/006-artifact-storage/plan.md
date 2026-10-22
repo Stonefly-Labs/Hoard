@@ -774,3 +774,60 @@ provider and quickstart guidance describes these partial mechanisms; product
 architecture/diagrams, old examples, IaC and release guidance remain unaffected
 because no existing public API/dependency direction, deployment or release
 behavior changes.
+
+### Qualification Failure Models and Owned Non-Cooperative Children 2026-10-22
+
+A public-record runtime red demonstrated that Local durability could accept
+simulated durable-case exclusions and simulation could omit them. The
+qualification constructor now requires no exclusions for Local and exactly
+AS-41..44 for simulation. All 14 public value/contract checks pass.
+
+Six new package-only tests first failed at their actual missing child
+handshake against the previous runner, then passed with its explicit
+`noncooperative` mode. Each provider is exercised with a never-settling
+borrowed source, borrowed destination and synchronous native deletion boundary.
+The child uses one transfer slot/no waiters and never releases the stalled
+worker. Two explicit parent observations verify bounded caller return,
+retained physical work, intact streams, blocked admission, incomplete shutdown,
+exclusive root ownership and the applicable read/delete guard. Only after the
+second PID/run/provider/scenario-bound inspection does the parent terminate
+that exact process and await exit before allowing root cleanup. These are
+unsupported-worker containment negatives, not cooperative release or durable
+crash recovery.
+
+Private runtime red/green captures are retained under the session's
+`files/f06-qualification-model-{red,green}/` and `files/f06-child-{red,green}/`.
+The child reds are six actual assertion failures, not missing-type/compiler
+errors; the green snapshot compiles with zero warnings/errors. The package-only
+locked logical replay below independently rebuilds these source inputs.
+
+The Abstractions payload correction required intentional hash-only updates
+using each predecessor command's `--update-locks` mode and the artifact logical
+update mode. An audit found exactly 107 local `Hoard.*` content-hash changes
+across 46 lockfiles, with no dependency graph/version or external-hash change.
+Frozen historical inputs remain unchanged.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-foundation.sh` | Separate default locked replay passed 14 artifact, nine metadata, 42 foundation, 58 architecture and 507 composition checks plus package/format/compatibility gates |
+| `bash scripts/validate-lifecycle.sh` | Separate default locked replay passed 504 tests, nine boundary proofs, seven package journeys and retained binary |
+| `bash scripts/validate-configuration.sh` | Separate default locked replay passed 201 tests, six boundary proofs, nine journeys and five actual interrupted-publication barriers |
+| `bash scripts/validate-discovery.sh` | Separate default locked replay passed 137 tests, D01..D40, nine journeys, 18 actual graph scans and retained consumers |
+| `bash scripts/validate-metadata.sh --evidence ../hoard-artifact-evidence/resume-model-metadata-locked-20261022` | Separate default locked replay passed unchanged F-05 full 96-case qualification |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase logical --evidence ../hoard-artifact-evidence/resume-model-child-logical-locked-20261022` | Separate default locked replay passed 167 checks, including all six owned-child cases, and both 16-operation consumers; nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase recovery --evidence ../hoard-artifact-evidence/resume-model-child-recovery-locked-20261022` | Passed 30 recovery/reconciliation checks and six actual SIGKILL/fresh-process reopen journeys B0/B1/B2/B3/D0/D1; nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase packages --evidence ../hoard-artifact-evidence/resume-model-child-packages-locked-20261022` | Passed three architecture tests, eight actual scans, frozen marker and both consumers; nonqualifying |
+| `python3 -m unittest discover -s tests/tooling -q` | All 97 passed |
+| `dotnet format whitespace tests/fixtures/artifacts/CrashRunner --folder --verify-no-changes --verbosity quiet` | Passed |
+| `dotnet format whitespace tests/contracts/Hoard.Artifacts.Tests --folder --verify-no-changes --verbosity quiet` | Passed |
+| `dotnet format whitespace src/Hoard.Abstractions/Hoard.Abstractions.csproj --no-restore --verify-no-changes --verbosity quiet` | Passed |
+| `git diff --check` | Passed |
+
+This is a partial checkpoint, not task/driver completion or feature approval.
+The three artifact captures bind source
+`b90fd134aacb1cc44455194cf6f4de859a7a9e7e4f138fa792b4a6fed262c1e0`.
+Both fixtures remain not-ready and full mode remains fail-closed. README,
+development/provider/test guides and quickstart describe that distinction.
+Existing product architecture/diagrams, examples, IaC and release guidance
+remain unaffected: no production provider, dependency-direction, deployment
+or release behavior changes.

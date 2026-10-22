@@ -6,7 +6,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "oo1l88I+KCEPUSmfwFEDFqEMAGiv4wgz20AnCCqgOs1h1w3DQQ7N3v1zrmqLDJJvT8dTXK9BCa6gtwC8Pvcw4Q==",
+        "contentHash": "ZxYCRzgxxl38yMgM/qBK94UqSYy0mPWaOJZMI4efp51Lvp/NfIz0/sss0skQAfsbvTx+UvveMM1f1URfcN8zFQ==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }
@@ -15,7 +15,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "IzWP2/jjiXMjLtnafNOMqKce/jzfEQD3g5c+FD4FGwi63BvCw1pYPHNb6lTVaA9JELXvo4iiy6J/QXtWHbb/kA==",
+        "contentHash": "IfKQAb6rHJRvoWOXEXTRhDREApWqcIxdJ7eZ+xP+kRIPzAeEL3mj8pej0QYmaHHtCOk9PdEf7ihGdX1sMZ9/0Q==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]",
           "Microsoft.Data.Sqlite": "10.0.13"
@@ -79,7 +79,7 @@
         "type": "CentralTransitive",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "ttmIZw4Q4XOeOMxJp9vcwOx+aloQWAt2Ly9Cja/A0jdQ/ZFhCYCq/qeEgIYlCrE/MPfipiGxfqrfL+9Xma9zow=="
+        "contentHash": "i+GR0TK7xO2y/EnVfEaDzjXTJSDKUesp15Ur2gHSkLhzn142nFNO32X/C2rEWipnMvob+7yecTluSuW94Nx56w=="
       },
       "Microsoft.Data.Sqlite": {
         "type": "CentralTransitive",

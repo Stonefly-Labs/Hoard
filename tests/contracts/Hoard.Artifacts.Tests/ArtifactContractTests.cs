@@ -138,4 +138,23 @@ public sealed class ArtifactContractTests
         Assert.Throws<ArgumentException>(() => new ArtifactQualificationRecord("fixture.artifact", "0.1.0", hash, hash, hash, hash, hash,
             capabilities, cases.Take(47), [hash], []));
     }
+
+    [Fact]
+    public void Qualification_exclusions_cannot_exchange_simulated_and_durable_failure_models()
+    {
+        var hash = new string('a', 64);
+        var cases = Enumerable.Range(1, 48).Select(number => $"AS-{number:D2}").ToArray();
+        var durable = new ArtifactCapabilities(1, ArtifactDurability.LocalProcessCrash,
+            ArtifactEnumerationConsistency.Snapshot, new ArtifactLimits());
+        var simulated = new ArtifactCapabilities(1, ArtifactDurability.SimulationOnly,
+            ArtifactEnumerationConsistency.Incomplete, new ArtifactLimits());
+        var exclusions = new[] { "AS-41", "AS-42", "AS-43", "AS-44" };
+        ArtifactQualificationRecord Record(ArtifactCapabilities capabilities, IEnumerable<string> omitted) =>
+            new("fixture.artifact", "0.1.0", hash, hash, hash, hash, hash, capabilities, cases, [hash], omitted);
+        Assert.Empty(Record(durable, []).Exclusions);
+        Assert.Equal(exclusions, Record(simulated, exclusions).Exclusions);
+        Assert.Throws<ArgumentException>(() => Record(durable, exclusions));
+        foreach (var partial in new[] { Array.Empty<string>(), new[] { "AS-41" }, exclusions[..3] })
+        { Assert.Throws<ArgumentException>(() => Record(simulated, partial)); }
+    }
 }

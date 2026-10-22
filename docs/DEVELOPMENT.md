@@ -3780,6 +3780,16 @@ journey reopens successfully after UTC rollback. Separate locked logical,
 all-six-crash-barrier and package replays bind the current correction; see
 [exact evidence and bounded reviews](../specs/006-artifact-storage/plan.md#bounded-ticket-and-reclaimed-history-2026-10-22).
 These checks do not enable capabilities/readiness or complete the running stage.
+The qualification value record now enforces the exact failure-model exclusions:
+none for Local process-crash durability, exactly AS-41..44 for simulation.
+Owned-child negatives additionally exercise non-cooperative source, destination
+and synchronous native work on both fixtures. The parent validates two
+PID/run/provider/scenario-bound observations around an explicit inspection
+handshake, then terminates only that child and observes its exit before root
+cleanup. Each observation checks retained physical work, borrowed streams,
+exclusive root ownership, applicable read/delete protection and incomplete
+shutdown with blocked admission. These six cases are containment negatives,
+not cooperative release, durable crash recovery or qualification.
 
 ```bash
 python3 -m unittest discover -s tests/tooling -v

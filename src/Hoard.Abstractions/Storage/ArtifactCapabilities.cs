@@ -72,7 +72,8 @@ public sealed record ArtifactQualificationRecord : ArtifactDiagnostic
         foreach (var hash in ProofHashes) { ValidateHash(hash); }
         ArtifactValidation.Require(ProofHashes.Length > 0
             && Exclusions.All(value => value is "AS-41" or "AS-42" or "AS-43" or "AS-44")
-            && Exclusions.Distinct().Count() == Exclusions.Length);
+            && Exclusions.Distinct().Count() == Exclusions.Length
+            && Exclusions.Length == (capabilities.Durability == ArtifactDurability.SimulationOnly ? 4 : 0));
     }
     private static void ValidateHash(string hash)
     {

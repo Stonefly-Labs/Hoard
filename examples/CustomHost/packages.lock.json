@@ -6,7 +6,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "UlchQHUAfoF3YPjquO0B6l2N8KRh4jGpH3WVPmLJF/H3kxYVK9NFDR1lC7EELKOP+Kmeg9WvYZL3TT+EI9Wb9A==",
+        "contentHash": "OW8LQ0JqKEcK3TRp5oui5n8nIoZTKdIsanDeUw31ZRiPbsOJxs52kfBoBpXMdg7TDYa+79/U2EHLT2rEbUt1Sw==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }
@@ -15,7 +15,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "Nbcf1QskqEqomuU1tjtVJGcmNSt/B19jODTve9EKnIq0BNtVBlaMQKjaMpS9725aXdjHSulKCm/CriN6rVuM/w==",
+        "contentHash": "Kn9T+eaZEmTBVl12j3KaLcTDhzpuVcsX4+PS9Cbtm+qWaL5kfnea/8Y4BvUauar2Rr8Pl+cmczuOmyEElkVY3Q==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }
@@ -24,7 +24,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "tXc4Tf09BE7dgirGQd6Y84mVGYwDE4ND+w5TndWFAmtwqHXlht8yEl5JD2fp43qcvfoBxNEuihKDDkZmvN5FyQ==",
+        "contentHash": "1L84yikMIWJH/q6Vs1I12/kuJakLEZft+gJyCMV+9WiYEeIm80kmjlNThNydcpOdp/FS8jxvEtBiCoAqkdkwLg==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }
@@ -33,7 +33,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "fiuxSrJTJ9mJxkUOgZS+YI7DCT/H6S4FXk4VrP20mSVDyjXns0Xa1U6qwRIJM27CQR5B/YjQ+Y6HG6AvWO/XcA==",
+        "contentHash": "XYbz2cTS6U61Yi2jkGTec6xWaqe/YBe0I260UaTTBgjBB3oepnd0ifUFc80QXjPxdb+0wzLxzH+1QKAXj1J8QQ==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }
@@ -52,7 +52,7 @@
       "Hoard.Abstractions": {
         "type": "Transitive",
         "resolved": "0.1.0",
-        "contentHash": "ttmIZw4Q4XOeOMxJp9vcwOx+aloQWAt2Ly9Cja/A0jdQ/ZFhCYCq/qeEgIYlCrE/MPfipiGxfqrfL+9Xma9zow=="
+        "contentHash": "i+GR0TK7xO2y/EnVfEaDzjXTJSDKUesp15Ur2gHSkLhzn142nFNO32X/C2rEWipnMvob+7yecTluSuW94Nx56w=="
       },
       "Hoard.Core": {
         "type": "Transitive",

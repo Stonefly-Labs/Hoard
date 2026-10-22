@@ -32,6 +32,12 @@ only after expiry, physical reclamation and dependent-work settlement.
 Live content survives ticket retirement. Exact finalized reconciliation
 receipts survive later deletion/recreation, including an already-admitted
 reconciliation that resumes after the original ticket expires.
+Qualification records now enforce zero durable exclusions for Local and exactly
+AS-41..44 for the simulation. Logical mode also runs six owned-child
+non-cooperative source/destination/native containment checks. Their second
+parent inspection precedes exact-child termination and confirms retained work,
+streams, root ownership, applicable guards and incomplete shutdown. They are
+not durable crash evidence or successful cooperative cleanup.
 See the [approved hash refresh and locked replay](plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 
 Read [API](contracts/artifact-api.md), [model](data-model.md),

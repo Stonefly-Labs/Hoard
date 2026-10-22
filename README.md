@@ -781,6 +781,11 @@ Retained decisions/tombstones/reclaimed incarnations have finite budgets and
 bounded expiry-based compaction; admitted work retains its history through
 physical settlement. A finalized reconciliation receipt survives later
 deletion/recreation rather than becoming a false rollback.
+Qualification records require no durable-case exclusions for Local and exactly
+AS-41..44 for the simulation. Owned-child negatives now hold non-cooperative
+source, destination and native work on each fixture through a second parent
+inspection, then terminate only that child. They prove containment, not durable
+recovery or successful resource release.
 Both fixtures still declare missing mandatory guarantees and are not ready.
 The full command fails closed until every required case, capability, composition,
 package and evidence gate is implemented. Focused modes always report
