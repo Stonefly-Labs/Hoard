@@ -24,14 +24,7 @@ public sealed partial class ObjectArtifactStore
             {
                 token.ThrowIfCancellationRequested();
                 if (expected.ByteCap > Bounds.ArtifactBytes) { throw new ObjectOperationException(ArtifactFailureCode.LimitExceeded); }
-                var effectiveNow = EffectiveNow();
-                foreach (var expired in uploads.Values.Where(value => value.Ticket.Kind == ArtifactOperationKind.Write
-                    && value.Owner is null && !value.ReservationReleased && effectiveNow >= value.Ticket.Expires).Take(100))
-                {
-                    if (MutationActive(expired.Ticket.Id)) { continue; }
-                    expired.Fenced = true;
-                    RemoveMultipart(expired);
-                }
+                ExpireHistory(token);
                 if (uploads.Count >= Bounds.LiveTickets || expected.ByteCap > Bounds.StagingBytes - reservedBytes)
                 { throw new ObjectOperationException(ArtifactFailureCode.Capacity); }
                 var encoded = JsonSerializer.SerializeToUtf8Bytes(new
@@ -51,6 +44,32 @@ public sealed partial class ObjectArtifactStore
                 return Task.FromResult(ticket);
             }
         });
+    }
+
+    private void ExpireHistory(CancellationToken token)
+    {
+        var now = EffectiveNow();
+        var retire = uploads.Count >= Bounds.LiveTickets;
+        var candidates = uploads.Values.Where(upload => now >= upload.Ticket.Expires
+            && (!upload.Deciding || upload.Receipt is not null) && !TicketObserved(upload.Ticket.Id)).Take(100).ToArray();
+        foreach (var upload in candidates)
+        {
+            token.ThrowIfCancellationRequested();
+            upload.Fenced = true;
+            RemoveMultipart(upload);
+            if (retire) { uploads.TryRemove(upload.Ticket.Id, out _); }
+        }
+        var protectedStamps = uploads.Values.Where(upload => now < upload.Ticket.Expires
+            || upload.Deciding && upload.Receipt is null || TicketObserved(upload.Ticket.Id))
+            .Select(upload => upload.Selected?.Stamp ?? upload.DeleteTarget).ToHashSet();
+        foreach (var pointer in pointers.Values.Where(pointer => pointer.Removed && now >= pointer.HistoryUntil
+            && !retiredObjects.ContainsKey(pointer.Stamp.Incarnation) && !protectedStamps.Contains(pointer.Stamp))
+            .Take(100).ToArray())
+        {
+            token.ThrowIfCancellationRequested();
+            pointers.Remove(pointer.Stamp.Identity.Digest.Hex);
+            listingRevision = checked(listingRevision + 1);
+        }
     }
 
     public ValueTask<ArtifactResult<ArtifactStagedWrite>> StageAsync(

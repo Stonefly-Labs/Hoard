@@ -25,7 +25,7 @@ internal sealed class ObjectOperation(ArtifactOperationTicket ticket, ArtifactEx
     public ArtifactStamp? DeleteTarget { get; set; }
 }
 
-internal sealed record ObjectPointer(ArtifactStamp Stamp, Guid ObjectId, long Version,
+internal sealed record ObjectPointer(ArtifactStamp Stamp, Guid ObjectId, long Version, Guid OperationId, DateTimeOffset HistoryUntil,
     bool Removed = false, bool Corrupt = false);
 internal sealed class ObjectOperationException(ArtifactFailureCode code) : Exception
 {
@@ -42,6 +42,7 @@ public sealed partial class ObjectArtifactStore
     private readonly Dictionary<Guid, Task> ownedWork = [];
     private readonly HashSet<Guid> lateWork = [];
     private readonly HashSet<Guid> activeMutations = [];
+    private readonly Dictionary<Guid, Guid> ticketReaders = [];
     private readonly Dictionary<Guid, ObjectPointer> retiredObjects = [];
     private readonly Dictionary<string, ObjectCursor> listingCursors = new(StringComparer.Ordinal);
     private long listingRevision;
@@ -112,6 +113,7 @@ public sealed partial class ObjectArtifactStore
     }
 
     private bool MutationActive(Guid ticket) { lock (workSync) { return activeMutations.Contains(ticket); } }
+    private bool TicketObserved(Guid ticket) { lock (workSync) { return ticketReaders.ContainsValue(ticket); } }
     public Task WhenIdleForQualificationAsync()
     { lock (workSync) { return Task.WhenAll(ownedWork.Values.ToArray()); } }
 
@@ -143,6 +145,7 @@ public sealed partial class ObjectArtifactStore
                 onSettled?.Invoke();
                 return Rejected<T>(ArtifactFailureCode.Conflict, phase, ticket);
             }
+            if (ticket is not null) { ticketReaders.Add(id, ticket.Id); }
             work = Task.Run(async () =>
             {
                 try
@@ -167,6 +170,7 @@ public sealed partial class ObjectArtifactStore
                     lock (workSync)
                     {
                         ownedWork.Remove(id);
+                        ticketReaders.Remove(id);
                         lateWork.Remove(id);
                         if (mutating) { activeMutations.Remove(ticket!.Id); }
                     }

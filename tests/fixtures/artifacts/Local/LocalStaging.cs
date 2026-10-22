@@ -23,15 +23,7 @@ public sealed partial class LocalArtifactStore
             {
                 token.ThrowIfCancellationRequested();
                 if (expectation.ByteCap > Limits.ArtifactBytes) { throw new LocalStateException(ArtifactFailureCode.LimitExceeded); }
-                var now = Now();
-                foreach (var expired in operations.Values.Where(value => value.Kind == ArtifactOperationKind.Write
-                    && value.Owner == Guid.Empty && !value.ReservationReleased && now >= value.Expires).Take(100))
-                {
-                    if (IsBusy(expired.Id)) { continue; }
-                    expired.State = "notcommitted";
-                    Save(expired);
-                    ReleaseStaging(expired);
-                }
+                RetireExpiredTickets(token);
                 if (operations.Count >= Limits.LiveTickets || expectation.ByteCap > Limits.StagingBytes - reserved)
                 { throw new LocalStateException(ArtifactFailureCode.Capacity); }
                 var issued = Now();
@@ -54,6 +46,67 @@ public sealed partial class LocalArtifactStore
                 return Task.FromResult(Ticket(operation));
             }
         });
+    }
+
+    private void RetireExpiredTickets(CancellationToken token)
+    {
+        var now = Now();
+        var retire = operations.Count >= Limits.LiveTickets;
+        foreach (var expired in operations.Values.Where(value => now >= value.Expires
+            && value.State != "deciding" && !TicketInUse(value.Id)).Take(100).ToArray())
+        {
+            token.ThrowIfCancellationRequested();
+            if (expired.Content is { } content && decisions.TryGetValue(content.Digest, out var anchored)
+                && anchored.Operation == expired.Id && anchored.ReconcileUntil is null)
+            { continue; }
+            if (expired.State is "reserved" or "staging" or "verified")
+            {
+                expired.State = "notcommitted";
+                Save(expired);
+            }
+            ReleaseStaging(expired);
+            if (!retire) { continue; }
+            ownership!.PersistTime();
+            File.Delete(ownership.RecordPath("tickets", expired.Id.ToString("N")));
+            operations.TryRemove(expired.Id, out _);
+            inventoryRevision = checked(inventoryRevision + 1);
+        }
+        CompactReclaimedHistory(now, token);
+    }
+
+    private void CompactReclaimedHistory(DateTimeOffset now, CancellationToken token)
+    {
+        var protectedIncarnations = operations.Values.Where(operation => operation.Content is not null
+            && (now < operation.Expires || operation.State == "deciding" || TicketInUse(operation.Id)))
+            .Select(operation => operation.Content!.Incarnation).ToHashSet();
+        bool Retirable(LocalDecision decision) => decision is { Removed: true, Reclaimed: true, ReconcileUntil: { } expiry }
+            && now >= expiry && !protectedIncarnations.Contains(decision.Content.Incarnation);
+
+        var remaining = 100;
+        foreach (var retired in removedContent.Values.Where(Retirable).Take(remaining).ToArray())
+        {
+            token.ThrowIfCancellationRequested();
+            ownership!.PersistTime();
+            File.Delete(ownership.RecordPath("reclamation", retired.Content.Incarnation.ToString("N")));
+            removedContent.Remove(retired.Content.Incarnation);
+            if (decisions.TryGetValue(retired.Content.Digest, out var current)
+                && current.Content == retired.Content && Retirable(current))
+            {
+                File.Delete(ownership.RecordPath("decisions", current.Content.Digest));
+                decisions.Remove(current.Content.Digest);
+            }
+            inventoryRevision = checked(inventoryRevision + 1);
+            remaining--;
+        }
+        foreach (var orphan in decisions.Values.Where(decision => !removedContent.ContainsKey(decision.Content.Incarnation)
+            && Retirable(decision)).Take(remaining).ToArray())
+        {
+            token.ThrowIfCancellationRequested();
+            ownership!.PersistTime();
+            File.Delete(ownership.RecordPath("decisions", orphan.Content.Digest));
+            decisions.Remove(orphan.Content.Digest);
+            inventoryRevision = checked(inventoryRevision + 1);
+        }
     }
 
     public ValueTask<ArtifactResult<ArtifactStagedWrite>> StageAsync(

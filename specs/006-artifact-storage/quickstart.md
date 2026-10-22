@@ -26,6 +26,12 @@ reconciliation, independent guard retention, borrowed streams, stale cleanup
 and incarnation-safe recreation. Actual IL controls reject hidden consumer
 provider coupling and forbidden Core/provider edges and distinguish Local's
 rename mechanism from the object's no-rename implementation.
+Expired ticket retirement now restores finite admission; retained identity and
+reclaimed-incarnation history has separate bounded bookkeeping and compacts
+only after expiry, physical reclamation and dependent-work settlement.
+Live content survives ticket retirement. Exact finalized reconciliation
+receipts survive later deletion/recreation, including an already-admitted
+reconciliation that resumes after the original ticket expires.
 See the [approved hash refresh and locked replay](plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 
 Read [API](contracts/artifact-api.md), [model](data-model.md),

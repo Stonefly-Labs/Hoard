@@ -3771,6 +3771,15 @@ is an explicit failure, not permission to delete the retained evidence.
 Architecture review corrected close admission/release ownership, terminal
 noncommit cleanup, deadline bookkeeping behind blocked state I/O and ticket
 validation/expiry classification; final implementation review is still due.
+Ticket-expiry admission now has separate finite retained-index budgets and
+bounded compaction of expired fully reclaimed history. Physically active or
+unresolved ticket work keeps its dependent records. Paired regressions cover
+capacity restoration, blocked native/delete/reconciliation ownership and
+finalized receipts across delete/recreate; a 105-cycle small-budget Local
+journey reopens successfully after UTC rollback. Separate locked logical,
+all-six-crash-barrier and package replays bind the current correction; see
+[exact evidence and bounded reviews](../specs/006-artifact-storage/plan.md#bounded-ticket-and-reclaimed-history-2026-10-22).
+These checks do not enable capabilities/readiness or complete the running stage.
 
 ```bash
 python3 -m unittest discover -s tests/tooling -v

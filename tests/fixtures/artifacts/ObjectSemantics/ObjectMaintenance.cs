@@ -90,8 +90,7 @@ public sealed partial class ObjectArtifactStore
         {
             foreach (var pointer in pointers.Values.Where(pointer => !pointer.Removed))
             {
-                var issuedBy = uploads.Values.First(upload => upload.Selected?.Stamp == pointer.Stamp).Ticket.Id;
-                yield return new(ArtifactObservationKind.Committed, issuedBy, new ArtifactOption<ArtifactStamp>.Some(pointer.Stamp));
+                yield return new(ArtifactObservationKind.Committed, pointer.OperationId, new ArtifactOption<ArtifactStamp>.Some(pointer.Stamp));
             }
         }
         if (kind is ArtifactRecoveryKind.All or ArtifactRecoveryKind.Uncertain)
@@ -103,8 +102,7 @@ public sealed partial class ObjectArtifactStore
         {
             foreach (var pointer in retiredObjects.Values)
             {
-                var issuedBy = uploads.Values.First(upload => upload.DeleteTarget == pointer.Stamp && upload.Deciding).Ticket.Id;
-                yield return new(ArtifactObservationKind.PendingReclamation, issuedBy, new ArtifactOption<ArtifactStamp>.Some(pointer.Stamp));
+                yield return new(ArtifactObservationKind.PendingReclamation, pointer.OperationId, new ArtifactOption<ArtifactStamp>.Some(pointer.Stamp));
             }
         }
     }

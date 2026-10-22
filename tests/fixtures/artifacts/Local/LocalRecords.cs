@@ -36,4 +36,4 @@ internal sealed record LocalContent(string Digest, long Length, Guid Incarnation
 }
 
 internal sealed record LocalDecision(LocalContent Content, Guid Operation, bool Removed = false,
-    bool Reclaimed = false, bool Corrupt = false);
+    bool Reclaimed = false, bool Corrupt = false, DateTimeOffset? ReconcileUntil = null);

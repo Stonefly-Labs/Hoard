@@ -19,10 +19,15 @@ public sealed partial class LocalArtifactStore
                 if (operation.State == "notcommitted") { return new ArtifactResolution.NotCommitted(ticket); }
                 if (operation.State != "deciding") { return new ArtifactResolution.Pending(ticket); }
             }
+            await faults.ObserveAsync("reconcile.before-resolution");
             var gate = DigestGate(operation.Content!.Digest);
             await gate.WaitAsync(token);
             try
             {
+                lock (stateSync)
+                {
+                    if (operation.State != "deciding") { return Resolution(operation); }
+                }
                 if (operation.Kind == ArtifactOperationKind.Delete) { ResolveDeletion(operation); }
                 else { await ResolvePublicationAsync(operation, token); }
                 lock (stateSync)
@@ -123,8 +128,15 @@ public sealed partial class LocalArtifactStore
             try
             {
                 _ = decision.Content.Stamp(StoreIdentity);
-                if (!decisions.TryAdd(decision.Content.Digest, decision) || !operations.ContainsKey(decision.Operation))
+                var retained = operations.TryGetValue(decision.Operation, out var ticket);
+                if (decision.Operation == Guid.Empty
+                    || decision.ReconcileUntil is { } until
+                        && (until.Offset != TimeSpan.Zero || until < DateTimeOffset.UnixEpoch.AddHours(24)
+                            || retained && until != ticket!.Expires)
+                    || !retained && (decision.ReconcileUntil is not { } expiry || Now() < expiry)
+                    || !decisions.TryAdd(decision.Content.Digest, decision))
                 { throw new LocalStateException(ArtifactFailureCode.CorruptState); }
+                if (decisions.Count > Limits.CommittedIdentities) { throw new LocalStateException(ArtifactFailureCode.Capacity); }
             }
             catch (ArgumentException) { throw new LocalStateException(ArtifactFailureCode.CorruptState); }
         }
@@ -132,6 +144,7 @@ public sealed partial class LocalArtifactStore
         {
             if (!retired.Removed || !removedContent.TryAdd(retired.Content.Incarnation, retired))
             { throw new LocalStateException(ArtifactFailureCode.CorruptState); }
+            if (removedContent.Count > Limits.CommittedIdentities) { throw new LocalStateException(ArtifactFailureCode.Capacity); }
             _ = retired.Content.Stamp(StoreIdentity);
         }
         foreach (var operation in operations.Values)

@@ -16,6 +16,7 @@ public sealed partial class ObjectArtifactStore
             lock (pointerSync)
             {
                 if (intent.Target.Store != Identity) { throw new ObjectOperationException(ArtifactFailureCode.InvalidInput); }
+                ExpireHistory(token);
                 if (uploads.Count >= Bounds.LiveTickets) { throw new ObjectOperationException(ArtifactFailureCode.Capacity); }
                 token.ThrowIfCancellationRequested();
                 var now = EffectiveNow();
@@ -79,7 +80,13 @@ public sealed partial class ObjectArtifactStore
                 deletion.ReceiptId = Guid.NewGuid();
                 if (current is { Removed: false })
                 {
-                    var tombstone = current with { Removed = true, Version = checked(current.Version + 1) };
+                    var tombstone = current with
+                    {
+                        Removed = true,
+                        Version = checked(current.Version + 1),
+                        OperationId = ticket.Id,
+                        HistoryUntil = ticket.Expires
+                    };
                     pointers[target.Identity.Digest.Hex] = tombstone;
                     retiredObjects[target.Incarnation] = tombstone;
                     deletion.Selected = tombstone;

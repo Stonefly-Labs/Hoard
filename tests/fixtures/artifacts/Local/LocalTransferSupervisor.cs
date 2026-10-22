@@ -16,6 +16,7 @@ public sealed partial class LocalArtifactStore
     private readonly Dictionary<Guid, Task> activities = [];
     private readonly HashSet<Guid> retained = [];
     private readonly HashSet<Guid> busyTickets = [];
+    private readonly Dictionary<Guid, Guid> ticketUses = [];
     private readonly Dictionary<Guid, LocalDecision> removedContent = [];
     private readonly Dictionary<string, LocalContinuation> continuations = new(StringComparer.Ordinal);
     private long inventoryRevision;
@@ -82,6 +83,7 @@ public sealed partial class LocalArtifactStore
         => digestGates[Convert.ToByte(digest[..2], 16) % digestGates.Length];
 
     private bool IsBusy(Guid id) { lock (activitySync) { return busyTickets.Contains(id); } }
+    private bool TicketInUse(Guid ticket) { lock (activitySync) { return ticketUses.ContainsValue(ticket); } }
     public Task WhenIdleForQualificationAsync()
     { lock (activitySync) { return Task.WhenAll(activities.Values.ToArray()); } }
 
@@ -138,6 +140,7 @@ public sealed partial class LocalArtifactStore
                 settled?.Invoke();
                 return Failed<T>(ArtifactFailureCode.Conflict, phase, ticket);
             }
+            if (ticket is not null) { ticketUses.Add(id, ticket.Id); }
             activity = Task.Run(async () =>
             {
                 try
@@ -162,6 +165,7 @@ public sealed partial class LocalArtifactStore
                     lock (activitySync)
                     {
                         activities.Remove(id);
+                        ticketUses.Remove(id);
                         retained.Remove(id);
                         if (mutation) { busyTickets.Remove(ticket!.Id); }
                     }

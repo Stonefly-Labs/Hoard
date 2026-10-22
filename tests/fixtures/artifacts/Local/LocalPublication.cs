@@ -92,7 +92,8 @@ public sealed partial class LocalArtifactStore
                 {
                     token.ThrowIfCancellationRequested();
                     CheckOwner(operation, staged.Owner, requireVerified: true);
-                    if (decisions.Values.Count(value => !value.Removed) + removedContent.Values.Count(value => !value.Reclaimed) >= Limits.CommittedIdentities)
+                    if (!decisions.ContainsKey(staged.Identity.Digest.Hex) && decisions.Count >= Limits.CommittedIdentities
+                        || decisions.Values.Count(value => !value.Removed) + removedContent.Values.Count(value => !value.Reclaimed) >= Limits.CommittedIdentities)
                     { throw new LocalStateException(ArtifactFailureCode.Capacity); }
                     operation.Receipt = Guid.NewGuid();
                     operation.Proof = Guid.NewGuid().ToString("N");
@@ -100,7 +101,7 @@ public sealed partial class LocalArtifactStore
                     operation.State = "deciding";
                     Save(operation);
                     File.Move(StagePath(operation), PayloadPath(operation.Content!), overwrite: false);
-                    Save(new LocalDecision(operation.Content!, operation.Id));
+                    Save(new LocalDecision(operation.Content!, operation.Id, ReconcileUntil: operation.Expires));
                 }
                 await faults.ObserveAsync("publish.decided");
                 lock (stateSync)

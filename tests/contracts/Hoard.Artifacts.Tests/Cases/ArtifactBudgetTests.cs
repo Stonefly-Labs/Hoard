@@ -6,6 +6,114 @@ namespace Hoard.Artifacts.Tests;
 
 public sealed class ArtifactBudgetTests
 {
+    [Fact]
+    public async Task Local_reclaimed_incarnations_remain_budgeted_until_expiry_without_removing_the_recreated_blob()
+    {
+        var clock = new ArtifactTestClock();
+        await using var driver = await ArtifactProviderDriver.CreateAsync("local", clock,
+            new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, committedIdentities: 1),
+            references: (_, _) => ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
+        using var source = new ShortSource("reclaimed incarnation budget"u8.ToArray());
+        var old = await PublishAsync(driver, source, new(1024));
+        var deletion = Success(await driver.Store.ReserveDeleteAsync(new(old.Stamp), new(), default));
+        Success(await driver.Store.DeleteAsync(deletion, new(), default));
+        using var replacement = new ShortSource("reclaimed incarnation budget"u8.ToArray());
+        var current = await PublishAsync(driver, replacement, new(1024));
+        Assert.NotEqual(old.Stamp, current.Stamp);
+        var blocked = Success(await driver.Store.ReserveDeleteAsync(new(current.Stamp), new(), default));
+        Assert.Equal(ArtifactFailureCode.Capacity, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+            await driver.Store.DeleteAsync(blocked, new(), default)).Code);
+        Assert.Equal("reclaimed incarnation budget"u8.ToArray(), await ReadAsync(driver, current.Stamp));
+        clock.SetUtc(blocked.Expires.ToUnixTimeMilliseconds());
+        var fresh = Success(await driver.Store.ReserveDeleteAsync(new(current.Stamp), new(), default));
+        Assert.Equal(ArtifactMutationOutcome.Removed, Success(await driver.Store.DeleteAsync(fresh, new(), default)).Outcome);
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Reclaimed_identity_history_has_a_finite_budget_and_expiry_restores_new_digest_admission(string provider)
+    {
+        var clock = new ArtifactTestClock();
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock,
+            new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, committedIdentities: 1),
+            references: (_, _) => ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
+        using var source = new ShortSource("bounded retained identity history"u8.ToArray());
+        var original = await PublishAsync(driver, source, new(1024));
+        var deletion = Success(await driver.Store.ReserveDeleteAsync(new(original.Stamp), new(), default));
+        var removed = Success(await driver.Store.DeleteAsync(deletion, new(), default));
+        using var next = new ShortSource("new digest after retained history"u8.ToArray());
+        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
+        var staged = Success(await driver.Store.StageAsync(ticket, next, new(), default));
+        Assert.Equal(ArtifactFailureCode.Capacity, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+            await driver.Store.CommitAsync(staged, new(), default)).Code);
+        Assert.Equal(removed, Success(await driver.Store.DeleteAsync(deletion, new(), default)));
+        clock.SetUtc(ticket.Expires.ToUnixTimeMilliseconds());
+        using var replacement = new ShortSource("new digest after retained history"u8.ToArray());
+        var current = await PublishAsync(driver, replacement, new(1024));
+        Assert.Equal("new digest after retained history"u8.ToArray(), await ReadAsync(driver, current.Stamp));
+        Success(await driver.Maintenance.CleanupAsync(new(driver.Identity,
+            [new ArtifactCleanupTarget.RemovedIncarnation(original.Stamp)]), new(), default));
+        Assert.Equal("new digest after retained history"u8.ToArray(), await ReadAsync(driver, current.Stamp));
+    }
+
+    [Theory]
+    [InlineData("local", false)]
+    [InlineData("object", false)]
+    [InlineData("local", true)]
+    [InlineData("object", true)]
+    public async Task Expired_ticket_history_restores_write_and_delete_capacity_without_losing_committed_or_removed_identity(
+        string provider, bool reserveDelete)
+    {
+        var clock = new ArtifactTestClock();
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock,
+            new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, liveTickets: 4),
+            references: (_, _) => ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
+        using var source = new ShortSource("survives ticket retirement"u8.ToArray());
+        var control = await PublishAsync(driver, source, new(1024));
+        using var removedSource = new ShortSource("removed before ticket retirement"u8.ToArray());
+        var old = await PublishAsync(driver, removedSource, new(1024));
+        var deletion = Success(await driver.Store.ReserveDeleteAsync(new(old.Stamp), new(), default));
+        Success(await driver.Store.DeleteAsync(deletion, new(), default));
+        var reserved = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
+        clock.Advance(TimeSpan.FromHours(24) - TimeSpan.FromMilliseconds(1));
+        Assert.Equal(ArtifactFailureCode.Capacity, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
+            await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default)).Code);
+        Assert.Equal(ArtifactFailureCode.Capacity, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
+            await driver.Store.ReserveDeleteAsync(new(control.Stamp), new(), default)).Code);
+        clock.Advance(TimeSpan.FromMilliseconds(1));
+        var replacement = Success(reserveDelete
+            ? await driver.Store.ReserveDeleteAsync(new(control.Stamp), new(), default)
+            : await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
+        Assert.Equal("survives ticket retirement"u8.ToArray(), await ReadAsync(driver, control.Stamp));
+        var page = Success(await driver.Maintenance.ObserveAsync(
+            new(driver.Identity, ArtifactRecoveryKind.Committed), new(), default));
+        Assert.Equal(control.Stamp, Assert.IsType<ArtifactOption<ArtifactStamp>.Some>(Assert.Single(page.Observations).Stamp).Value);
+        Success(await driver.Maintenance.CleanupAsync(new(driver.Identity,
+            [new ArtifactCleanupTarget.RemovedIncarnation(old.Stamp)]), new(), default));
+        foreach (var ticket in new[] { control.Ticket, old.Ticket, deletion, reserved })
+        {
+            Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(
+                await driver.Store.ReconcileAsync(ticket, new(), default));
+        }
+        clock.SetUtc(control.Ticket.Issued.ToUnixTimeMilliseconds());
+        using var replay = new ShortSource([1]);
+        Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(
+            await driver.Store.StageAsync(reserved, replay, new(), default));
+        Assert.Equal(0, replay.BytesRead);
+        if (reserveDelete)
+        {
+            Assert.Equal(ArtifactMutationOutcome.Removed,
+                Success(await driver.Store.DeleteAsync(replacement, new(), default)).Outcome);
+        }
+        else
+        {
+            using var duplicate = new ShortSource("survives ticket retirement"u8.ToArray());
+            var staged = Success(await driver.Store.StageAsync(replacement, duplicate, new(), default));
+            Assert.Equal(control.Stamp, Success(await driver.Store.CommitAsync(staged, new(), default)).Stamp);
+        }
+    }
+
     [Theory]
     [InlineData("local")]
     [InlineData("object")]

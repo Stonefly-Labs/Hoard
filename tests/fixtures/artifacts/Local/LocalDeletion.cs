@@ -14,6 +14,7 @@ public sealed partial class LocalArtifactStore
             lock (stateSync)
             {
                 if (intent.Target.Store != StoreIdentity) { throw new LocalStateException(ArtifactFailureCode.InvalidInput); }
+                RetireExpiredTickets(token);
                 if (operations.Count >= Limits.LiveTickets) { throw new LocalStateException(ArtifactFailureCode.Capacity); }
                 token.ThrowIfCancellationRequested();
                 var now = Now();
@@ -70,6 +71,9 @@ public sealed partial class LocalArtifactStore
                 lock (stateSync)
                 {
                     token.ThrowIfCancellationRequested();
+                    if (current is { Removed: false } && !removedContent.ContainsKey(stamp.Incarnation)
+                        && removedContent.Count >= Limits.CommittedIdentities)
+                    { throw new LocalStateException(ArtifactFailureCode.Capacity); }
                     operation.Receipt = Guid.NewGuid();
                     operation.Outcome = current is { Removed: false } ? ArtifactMutationOutcome.Removed : ArtifactMutationOutcome.AlreadyAbsent;
                     operation.Reclamation = operation.Outcome == ArtifactMutationOutcome.Removed
@@ -79,7 +83,8 @@ public sealed partial class LocalArtifactStore
                     Save(operation);
                     if (operation.Outcome == ArtifactMutationOutcome.Removed)
                     {
-                        var tombstone = new LocalDecision(operation.Content!, operation.Id, Removed: true);
+                        var tombstone = new LocalDecision(operation.Content!, operation.Id, Removed: true,
+                            ReconcileUntil: operation.Expires);
                         Save(tombstone);
                         SaveRemoved(tombstone);
                     }
@@ -107,6 +112,8 @@ public sealed partial class LocalArtifactStore
 
     private void SaveRemoved(LocalDecision decision)
     {
+        if (!removedContent.ContainsKey(decision.Content.Incarnation) && removedContent.Count >= Limits.CommittedIdentities)
+        { throw new LocalStateException(ArtifactFailureCode.Capacity); }
         ownership!.WriteRecord("reclamation", decision.Content.Incarnation.ToString("N"), decision);
         removedContent[decision.Content.Incarnation] = decision;
         inventoryRevision = checked(inventoryRevision + 1);

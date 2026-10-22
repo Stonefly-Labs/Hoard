@@ -712,3 +712,65 @@ both fixtures remain not-ready, and the full inventory/readiness/final review
 obligations stay open. README/provider/development/quickstart guides distinguish
 that boundary; planned product diagrams, old examples, IaC and release guidance
 are unaffected. No driver/task/checklist completion is inferred.
+
+### Bounded Ticket and Reclaimed History 2026-10-22
+
+Expired tickets previously exhausted admission permanently. Actual red captures
+cover both stores' write/delete reservations and Local reopen/UTC rollback.
+Reservations now release expired staging independently of ticket eviction,
+retire at most 100 eligible history records per batch when ticket capacity is
+full, and preserve unresolved decisions and every physically active
+ticket-bearing invocation, including reconciliation. Local decisions carry
+expiry provenance so live committed identity survives removal of its old
+ticket anchor; legacy missing provenance remains conservative.
+
+Bounded reviewer `artifact-ticket-retirement-review` identified P1: retirement
+removed the incidental lifetime bound on reclaimed-incarnation records and
+removed-digest decisions/pointers. The fix independently limits each retained
+index, rejects new-index growth before logical mutation, and compacts at most
+100 exact expired fully reclaimed histories per reservation. Live/unresolved/
+physically active dependencies block compaction. Local persists its
+nondecreasing time floor before unlinking, never removes a newer incarnation,
+and handles orphan reclaimed tombstones after an interrupted two-record removal.
+Object retains its own operation/expiry provenance without a Local journal or
+restart claim. An initial three-case runtime red reproduced new-digest budget
+bypass on both stores and Local reopen failure after 105 delete/recreate cycles
+at bookkeeping budget one. Those cases now pass.
+
+Follow-up reviewer `artifact-history-bound-review` confirmed the P1 mechanism
+addressed and found P2: a reconciliation admitted before another reconciliation
+finalized the ticket could later overwrite that finalized commit after
+delete/recreate. A paired actual runtime red reproduced Local's false
+`NotCommitted` result and Object's old-payload failure. Local now rechecks
+final state after taking its digest gate. Object rechecks finalized receipts
+around asynchronous read-protection admission and verifies unresolved bytes
+under a genuine shared guard. Reviewer `artifact-settled-reconciliation-review`
+found no high-confidence defect in that narrow correction. These are scoped
+source reviews, not independently rerun evidence or final feature approval.
+
+| Exact command / check | Result |
+| --- | --- |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Reclaimed_identity_history_has_a_finite_budget|FullyQualifiedName~Local_reopen_preserves_committed_decisions' --evidence ../hoard-artifact-evidence/resume-retained-history-budget-red-20261022` | Intended runtime red: both new-digest budget assertions and Local reopen failed |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Admitted_reconciliation_preserves_the_settled_receipt' --evidence ../hoard-artifact-evidence/resume-settled-reconciliation-red-20261022` | Intended runtime red on both providers, not compilation failures |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase logical --update-locks --evidence ../hoard-artifact-evidence/resume-settled-reconciliation-logical-update-20261022` | Passed 160 checks and both 16-operation consumers; intentional fixture hash refresh |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase logical --evidence ../hoard-artifact-evidence/resume-history-final-logical-locked-20261022` | Separate default locked replay passed 160 checks and both consumers; nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase recovery --evidence ../hoard-artifact-evidence/resume-history-final-recovery-locked-20261022` | Passed 30 recovery/reconciliation checks and all six actual SIGKILL/fresh-process barriers B0/B1/B2/B3/D0/D1; nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase packages --evidence ../hoard-artifact-evidence/resume-history-final-packages-locked-20261022` | Passed three architecture tests, eight scans, unchanged frozen marker and both consumers; nonqualifying |
+| `dotnet format whitespace tests/fixtures/artifacts/Local/Local.csproj --no-restore --verify-no-changes --verbosity quiet` | Passed |
+| `dotnet format whitespace tests/fixtures/artifacts/ObjectSemantics/ObjectSemantics.csproj --no-restore --verify-no-changes --verbosity quiet` | Passed |
+| `dotnet format whitespace tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj --no-restore --verify-no-changes --verbosity quiet` | Passed |
+| `python3 -m unittest discover -s tests/tooling -q` | All 97 passed |
+| `git diff --check` | Passed |
+
+The three locked artifact captures bind source
+`ee3d0bbfd1c31c0aa676e280a8e20f842a7478295bdbf5cd4f5ef2b512c2d33c`.
+Frozen marker SHA-256 remains
+`5b745ae0860722852921cab4e6b210fa20facb59e53aa6f1f8a157060aba939d`.
+Lock changes are reviewed local-package content hashes only; dependency
+versions/graphs and external hashes remain unchanged. No task/checklist/driver
+completion or capability/readiness is inferred. Final-source transfer/full
+qualification and remaining task obligations stay open. README, development,
+provider and quickstart guidance describes these partial mechanisms; product
+architecture/diagrams, old examples, IaC and release guidance remain unaffected
+because no existing public API/dependency direction, deployment or release
+behavior changes.

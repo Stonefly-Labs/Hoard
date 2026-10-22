@@ -776,6 +776,11 @@ The same compiled consumer now executes 16 common store/read/authority operation
 including exact reconciliation, cleanup, deletion and incarnation-safe recreation.
 Compiled-body checks reject hidden provider coupling and confirm the object
 mechanism does not call filesystem rename APIs.
+Expired ticket history now restores admission without losing live content.
+Retained decisions/tombstones/reclaimed incarnations have finite budgets and
+bounded expiry-based compaction; admitted work retains its history through
+physical settlement. A finalized reconciliation receipt survives later
+deletion/recreation rather than becoming a false rollback.
 Both fixtures still declare missing mandatory guarantees and are not ready.
 The full command fails closed until every required case, capability, composition,
 package and evidence gate is implemented. Focused modes always report

@@ -64,10 +64,12 @@ public sealed partial class ObjectArtifactStore
                     if (current is null || current.Removed)
                     {
                         if (current?.Version != observed?.Version) { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
-                        if (pointers.Values.Count(pointer => !pointer.Removed) + retiredObjects.Count >= Bounds.CommittedIdentities)
+                        if (current is null && pointers.Count >= Bounds.CommittedIdentities
+                            || pointers.Values.Count(pointer => !pointer.Removed) + retiredObjects.Count >= Bounds.CommittedIdentities)
                         { throw new ObjectOperationException(ArtifactFailureCode.Capacity); }
                         var version = checked((current?.Version ?? 0) + 1);
-                        current = new(new ArtifactStamp(Identity, staged.Identity, Guid.NewGuid()), objectId, version);
+                        current = new(new ArtifactStamp(Identity, staged.Identity, Guid.NewGuid()), objectId, version,
+                            upload.Ticket.Id, upload.Ticket.Expires);
                         upload.Deciding = true;
                         upload.Selected = current;
                         upload.Outcome = ArtifactMutationOutcome.Published;

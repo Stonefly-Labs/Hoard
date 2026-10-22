@@ -40,6 +40,12 @@ completes. A timeout does not prove physical settlement: non-cooperative I/O
 retains its bounded handles, slots and opaque guards, reports incomplete cleanup
 and blocks admission rather than releasing live protection. Use the exact
 reserved ticket to reconcile uncertainty; never replay it as a new mutation.
+Expired ticket history may be retired, but live content identity remains
+independent of its receipt anchor. Retained tombstones and reclaimed-incarnation
+records also consume finite bookkeeping capacity until safe expiry-based
+compaction; active or unresolved ticket work prevents premature removal.
+An admitted reconciliation preserves an already-finalized receipt even if
+another operation subsequently deletes and recreates the digest.
 Logically removed content can still occupy space until exact-incarnation
 reclamation is confirmed. See the [current quickstart](../specs/006-artifact-storage/quickstart.md)
 for available focused commands and the remaining qualification gates.
