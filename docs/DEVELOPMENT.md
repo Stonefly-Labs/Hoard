@@ -2858,6 +2858,66 @@ hooks exist. Fresh **`converge`** is the next separate stage, then finalization.
 [PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains draft. No merge,
 tag/release, package publication, infrastructure plan/apply or deployment ran.
 
+### F-05 clean convergence
+
+The subsequent installed `speckit-converge` assessment finds no actionable
+missing, partial, contradictory or unrequested work. It checks all 24 functional
+requirements, eight buildable success criteria, 23 story acceptance scenarios,
+14 edge cases and all 87 existing tasks, including the resulting T084..T087
+behavior. Twelve grouped plan decisions and all eight constitution principles
+are assessed against the current implementation and fresh attributable proof.
+No new task or empty convergence phase is appended; `tasks.md` is byte-for-byte
+unchanged. No implementation, requirement, design or checklist approval changes.
+
+The assessment covers additive BCL-only contracts and canonical encoding;
+independent SQL/native and immutable-root state machines; atomic
+revision/ticket/receipt, snapshot/page, authority/reference/lease behavior;
+bounded admission and late ownership; configured F-02/F-03 adapters; schema,
+crash and backup/restore recovery; package/binary boundaries; and fail-closed
+qualification/documentation. Existing out-of-scope production, F-07,
+multi-node, power/device-loss and other-engine/filesystem claims remain excluded.
+
+`$PRIVATE_EVIDENCE` denotes the existing owner-private evidence parent outside
+Git. The full run independently verifies all 96 provider/case entries:
+87 applicable passes and nine explicit memory durability exclusions, with no
+applicable failure or skip. Source/lock fingerprint
+`29971e15fbeebde654bad140c1801f840c50018f4b507deaf50243fd5818cb24`
+matches the current source; every proof/package hash and all 88 locks are
+independently checked. Measured scope remains macOS 26.5.0/APFS, .NET 10.0.7,
+driver 10.0.13.0 and native SQLite 3.53.3 with checked WAL/FULL/foreign keys/
+busy-timeout-zero.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/metadata-converge"` | Passed complete locked qualification and formatting/analyzers; 72 common tests per provider, all 87 applicable entries and nine memory D exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| Independent manifest/source/lock verification | Passed current fingerprint, all proof/package hashes and unchanged 88-lock inventory |
+| Additional freshly packaged SQLite corruption probe | Six wrong-type/unknown option discriminators correctly return `CorruptState/OperatorRecovery` for grouped reads, pages, replay and reconciliation; damaged rows stay unchanged and restored original records/receipts and final integrity pass |
+| `git diff --check` | Passed |
+
+Full qualification repeats all eight M/U process stops, R0/R1 interrupted
+restore installations, native-stall ownership, backup/compatible restore,
+seven actual package graphs, unchanged consumer/common binaries, frozen
+pre-F-05 marker compatibility and both runtime assertion-failure/green pairs.
+Earlier separate foundation/lifecycle/configuration/discovery commands remain
+historical, not newly claimed executions. The installed stage has no pre/post
+extension hooks.
+
+README and this guide record the clean result and next gate. Spec, plan,
+contracts, tasks, constitution, all checklist bytes, product/test/tooling sources
+and locks remain unchanged. Provider/example/compatibility/recovery guides and
+baseline product/architecture/ADR diagrams are unaffected: this assessment
+changes no API, behavior, dependency, operational procedure or support scope.
+The existing architecture review remains applicable; no new substantial
+boundary change requires another review. Earlier feature artifacts, governance/
+backlog and release/cloud/UI/IaC guidance and permissions are unaffected.
+
+The next separately invoked stage is **`finalize`**.
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) stays draft; clean
+convergence is not finalization, feature completion or a merge request.
+No merge, tag/release, package publication, infrastructure plan/apply, cloud
+mutation or deployment ran.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
