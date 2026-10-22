@@ -1,9 +1,13 @@
 {
   "schema_version": 1,
-  "stage": "specify",
+  "stage": "clarify",
   "status": "ready",
-  "branch": null,
-  "active": null,
+  "branch": "feature/006-artifact-storage",
+  "active": {
+    "id": "F-06",
+    "feature_directory": "specs/006-artifact-storage",
+    "pr": null
+  },
   "completed": [
     {
       "id": "F-01",
@@ -537,6 +541,13 @@
       "branch": "chore/spec-progress-f-05",
       "at": "2026-10-22T05:49:35.883466+00:00",
       "evidence": "Verified PR #14 merged at 81e2e8d41e08aafc9e89f388dab78e7509227dd5 in origin/main; all 87 tasks complete and merged finalization/architecture/docs evidence retained. Published annotated v0.0.5-alpha at that exact merge; Source release run 39730092661 succeeded: https://github.com/Stonefly-Labs/Hoard/actions/runs/39730092661 . Verified non-draft prerelease, generated PR-linked notes, remote peeled commit, ZIP commit comment and both automatic archives against four exact-merge files: https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.5-alpha . Release validator and main ancestry check passed; tooling 76/76 passed; product acceptance remains merged historical evidence. Running checkpoint eefbd1d pushed in draft progress PR #15; completion checkpoint must merge before next spec."
+    },
+    {
+      "stage": "specify",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-22T12:41:27.342019+00:00",
+      "evidence": "F-06 exact master prompt specified in specs/006-artifact-storage/spec.md using installed speckit-specify and resolved core template; 5 stories, 23 acceptance scenarios, 15 edge cases, 25 requirements, 9 entities, 8 outcomes; built-in quality checklist 16/16 with no clarification markers; no pre/post hooks configured. README and DEVELOPMENT updated; requirements-only scope preserves provider/shared-coordination boundaries and requires no new architecture review. python3 -m unittest discover -s tests/tooling -v passed 76 tests; pinned prerequisites and direct artifact assertions passed; git diff --check passed. No planning, custom approval, implementation, release or deployment."
     }
   ]
 }

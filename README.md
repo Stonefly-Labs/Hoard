@@ -750,8 +750,20 @@ annotated remote tag and both automatic source archives are verified; no
 runtime binaries or packages are published. See the
 [merge/release evidence](docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release).
 [Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
-records F-05 complete with release metadata and must merge before the next
-separately invoked **`specify`** stage. No dependent specification starts here.
+merged into `main`, recording F-05 complete with release metadata.
+The separately invoked **`specify`** stage now creates the
+[F-06 artifact blob storage provider contract](specs/006-artifact-storage/spec.md)
+on `feature/006-artifact-storage`. Five journeys cover complete verified
+publication, bounded multi-GB streaming, interrupted-work recovery, reader-
+and reference-safe deletion, and provider-neutral qualification without assuming
+atomic rename. Its [built-in quality checklist](specs/006-artifact-storage/checklists/requirements.md)
+passes all 16 criteria across 25 requirements and eight measurable outcomes,
+including a future 4 GiB transfer proof within 64 MiB incremental transfer
+memory. Real filesystem qualification and an independent object-store-semantics
+fixture are later proof obligations, not delivered providers or remote-service
+support. See the [stage scope](docs/DEVELOPMENT.md#f-06-artifact-storage-specification).
+The next separately authorized stage is **`clarify`**; the feature PR remains
+draft. No plan, tasks, custom checklist approval or implementation occurs here.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

@@ -3028,6 +3028,74 @@ Specification and reviewer-owned checklists remain unchanged. This source
 release publishes no runtime binaries, packages or containers and performs no
 deployment, infrastructure plan/apply, cloud mutation or governance change.
 
+### F-06 artifact storage specification
+
+The F-05 completion checkpoint merged through
+[PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15). The separately invoked
+`specify` stage fetches `origin/main`, verifies the shared checkpoint and ratified
+constitution already merged, and starts `feature/006-artifact-storage` from that
+main. The driver pins the exact master F-06 prompt and independent directory
+`specs/006-artifact-storage`. The installed `speckit-specify` uses the explicitly
+pinned directory and core specification template resolved through the preset
+stack. No pre/post extension hooks are configured; only one spec is created.
+
+The [specification](../specs/006-artifact-storage/spec.md) defines five
+independently testable journeys: verified publication, bounded large transfers,
+interrupted-work recovery, safe deletion, and alternative-store qualification.
+It includes 23 acceptance scenarios, 15 edge cases, 25 functional requirements,
+nine logical entities and eight measurable outcomes. Story independent tests
+map all requirements to observable proof obligations. Its built-in
+[requirements checklist](../specs/006-artifact-storage/checklists/requirements.md)
+passes all 16 quality criteria with no unresolved clarification markers. This
+generation-time review is not the scheduled clarification stage, custom
+reviewer-owned checklist approval or product acceptance.
+
+The agreement requires private staging, complete-content verification,
+immutable digest identity, conditional publication, reconcilable uncertain
+mutations and direct committed-read visibility. Bounded non-seekable streaming,
+explicit resource ownership and classified safe failures remain mandatory.
+The future qualification must write and read 256 MiB and 4 GiB artifacts within
+64 MiB incremental transfer memory per single-transfer run; this is not a
+production size default or total host memory ceiling.
+
+Shared coordination owns integrity/publication policy, metadata sequencing
+and reader/reference/deletion authority; no provider establishes cross-store
+atomicity or independently treats an unreferenced observation as deletion
+permission. Recovery must fence expired owners, preserve acknowledged content
+and distinguish incomplete staging from committed-but-unreferenced artifacts.
+Filesystem and object-store capabilities must preserve the same safety
+outcomes without requiring atomic rename or trusting incomplete listings.
+
+The master F-06 filesystem focus remains real durable qualification during
+later implementation, distinct from production filesystem delivery in original
+SPEC-04. An independent no-rename object-store-semantics fixture proves logical
+portability, not qualification of a real remote service or delivery of SPEC-27.
+Generic certification remains F-07. Exact signatures, finite operational
+budgets, reconciliation lifetimes and stored-content verification schedules
+remain planning decisions under these requirements.
+
+Only the spec, built-in checklist, README, this guide and shared flow checkpoint
+change; the ignored local feature pointer is restored. Existing provider/example
+guides, predecessor artifacts, product charter/specification, architecture/ADR
+and diagrams, constitution/backlog, compatibility policy, product/tooling source,
+IaC and release guidance are unaffected: this stage changes no existing API,
+package edge, operational procedure or supported capability. No new architecture
+review is required for this requirements-only change; substantial later contract
+design/implementation retains its normal review gate. Repository tooling checks
+cover the checkpoint, not artifact-store behavior; product and OpenTofu checks
+are not rerun for this documentation/checkpoint-only stage.
+
+| Exact command / check | Result |
+| --- | --- |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed all 76 tests |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/check-prerequisites.sh --json --paths-only` | Passed; resolves the pinned feature/spec |
+| Direct artifact assertions | Passed exact master prompt, feature pointers, completed template and counts above; no pre/post hooks configured |
+| `git diff --check` | Passed |
+
+The checkpoint schedules **`clarify / ready`** for a separate invocation; the
+feature PR remains draft. No plan, tasks, custom review approval, implementation,
+qualification execution, merge, tag/release, infrastructure or deployment occurs.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]
