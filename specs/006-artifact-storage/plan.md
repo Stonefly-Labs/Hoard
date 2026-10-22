@@ -203,3 +203,35 @@ authority dependency or existing API change is needed.
 Implementation evidence, reviewer-owned custom checklist approval, tasks,
 read-only analysis and runtime acceptance remain outstanding. No extension
 hooks are configured. The next scheduled stage is `checklist`, not implementation.
+
+## Implementation Evidence
+
+Implementation is running on the pinned feature branch. Reviewer-owned gates
+are 20/20 each, the built-in gate is 16/16 and the prior read-only analysis is
+clear. No checkpoint finish, convergence or qualification is recorded here.
+
+T001..T006 setup freezes the immutable merged pre-F06 revision
+`830972f24795ffaaaa18cb35138db7da59022313` **before any new public contract**.
+The retained marker/registration consumer also checks the historical digest.
+The private `pre-f06-20261022/retained-binaries.json` capture records 136
+source hashes, nine binary/dependency hashes and the baseline archive/lock hash.
+Retained binary SHA-256:
+`5b745ae0860722852921cab4e6b210fa20facb59e53aa6f1f8a157060aba939d`.
+Raw evidence is in the owner-private sibling evidence workspace, outside Git.
+
+| Exact command | Result |
+| --- | --- |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/check-prerequisites.sh --json --require-tasks --include-tasks` | Passed; pinned directory and all required artifacts |
+| `python3 -m unittest discover -s tests/tooling -p test_artifact_evidence.py -v` | Red: assertion failures retained; green: 12 passed |
+| `dotnet restore tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj --force-evaluate -v quiet` | Passed; new lock generated intentionally |
+| `dotnet build tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj -c Release --no-restore -v quiet` | Passed; zero warnings/errors |
+| `bash scripts/validate-artifacts.sh --update-locks --evidence ../hoard-artifact-evidence/setup-update-20261022` | Expected failure after independent package build; no case execution implemented, `qualification: false` |
+| `bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/setup-locked-20261022` | Separate default locked replay built successfully, then expected incomplete-qualification failure; no fabricated cases |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 88 tests |
+
+Only the artifact contract-test project joins the solution. Each store recipe
+depends only on Abstractions; framework/Hosting/metadata dependencies remain in
+HostAdapters. Executable scaffolds explicitly exit unsuccessfully until their
+behavioral tasks are implemented. Existing metadata fixture sources and locks
+are unchanged. Store behavior, transfers, crashes, consumer compatibility,
+architecture review and full regression gates remain pending.

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Artifacts.ObjectSemantics</AssemblyName>
+    <PackageId>Hoard.Fixtures.Artifacts.ObjectSemantics</PackageId>
+    <Description>Test-only no-rename object-semantics simulation; not a remote service or durable provider.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Abstractions" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Artifacts.Local</AssemblyName>
+    <PackageId>Hoard.Fixtures.Artifacts.Local</PackageId>
+    <Description>Test-only local artifact qualification fixture; not a production provider.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Abstractions" />
+  </ItemGroup>
+</Project>

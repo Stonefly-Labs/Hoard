@@ -203,12 +203,13 @@ def source_hash(root):
     return hashlib.sha256(json.dumps(inputs, separators=(",", ":")).encode()).hexdigest()
 
 
-def prepare_baseline(root, work, update):
-    run("git", "merge-base", "--is-ancestor", BASELINE, "origin/main", cwd=root)
+def prepare_baseline(root, work, update, *, revision=BASELINE, recipe=None,
+                     expected_output="metadata-marker-compatible"):
+    run("git", "merge-base", "--is-ancestor", revision, "origin/main", cwd=root)
     baseline = work / "baseline"
     baseline.mkdir()
     archive = work / "baseline.tar"
-    run("git", "archive", "--format=tar", f"--output={archive}", BASELINE,
+    run("git", "archive", "--format=tar", f"--output={archive}", revision,
         "Directory.Build.props", "Directory.Packages.props", "global.json", "src", cwd=root)
     with tarfile.open(archive) as contents:
         contents.extractall(baseline, filter="data")
@@ -229,7 +230,7 @@ def prepare_baseline(root, work, update):
             "--packages", str(cache), "-v", "quiet")
         run("dotnet", "pack", str(project), "-c", "Release", "--no-restore", "-o", str(feed), "-v", "quiet")
         foundation.canonicalize_acceptance_archive(feed / f"Hoard.{name}.0.1.0.nupkg")
-    source = root / "tests/fixtures/metadata/RetainedMarker"
+    source = recipe or root / "tests/fixtures/metadata/RetainedMarker"
     target = work / "retained"
     foundation.copy_source(source, target)
     lock = source / "Baseline/packages.lock.json"
@@ -247,12 +248,12 @@ def prepare_baseline(root, work, update):
             "--packages", str(work / "baseline-replay-cache"), "-v", "quiet")
     run("dotnet", "build", str(project), "-c", "Release", "--no-restore", "-v", "quiet")
     binary = target / "bin/Release/net10.0/RetainedMarker.dll"
-    if run("dotnet", str(binary)).strip() != "metadata-marker-compatible":
+    if run("dotnet", str(binary)).strip() != expected_output:
         raise RuntimeError("Retained metadata marker baseline did not execute.")
     frozen = {path.relative_to(work).as_posix(): sha256(path)
               for base in (target, feed) for path in sorted(base.rglob("*"))
               if path.is_file() and not {"obj", "Baseline"}.intersection(path.relative_to(base).parts)}
-    evidence = {"baseline": BASELINE, "binarySha256": sha256(binary),
+    evidence = {"baseline": revision, "binarySha256": sha256(binary),
                 "sourceSha256": sha256(source / "Program.cs"),
                 "lockSha256": sha256(lock), "files": frozen}
     (work / "retained-binaries.json").write_text(json.dumps(evidence, indent=2) + "\n")

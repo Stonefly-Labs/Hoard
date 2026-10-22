@@ -6,8 +6,9 @@
 [artifact API](contracts/artifact-api.md), [recovery](contracts/recovery.md),
 [acceptance](contracts/acceptance.md) and [quickstart.md](quickstart.md).
 
-**Status**: All 86 implementation tasks remain unchecked. No artifact API,
-fixture, command, runtime result or qualification is delivered here. The
+**Status**: Implementation is running; T001..T006 setup is verified. The
+artifact command currently fails closed after independent package preparation;
+no storage behavior or qualification is claimed. The
 reviewer-owned [storage](checklists/storage.md) and
 [recovery](checklists/recovery.md) checklists are now 20/20 each.
 [RQ-01](checklists/recovery.md#rq-01-finite-release-versus-non-cooperative-work)
@@ -89,12 +90,12 @@ No recursive child acceptance or cleanup of an unrecognized root is permitted.
 **Purpose**: Prepare fail-closed evidence and retained compatibility proof before
 changing public contracts or behavior.
 
-- [ ] T001 [P] Create `tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj` and `ArtifactTestHarness.cs` with existing xUnit/package-consumer conventions, deterministic clocks, named barriers, bounded teardown and synthetic canaries; add only the contract test project to `Hoard.slnx` and prepare provider-neutral test drivers.
-- [ ] T002 [P] Write failing `tests/tooling/test_artifact_evidence.py` for missing/duplicate/foreign/stale cases, wrong durability exclusions, tampered source/lock/package/proof hashes, missing runtime red/green pairs, false byte/RSS/crash proof, failed children, unsafe destinations/cleanup and partial-mode overclaims; use synthetic evidence, never recursive acceptance.
-- [ ] T003 Introduce `scripts/validate-artifacts.sh` and `scripts/artifact_evidence.py` using existing foundation/lifecycle evidence helpers: prerequisites, fresh owner-private destination, bounded subprocess ownership, explicit failure retention, default locked mode, intentional `--update-locks` and `--phase logical|transfers|recovery|packages`; incomplete full inventory must fail, and every focused mode must report `qualification: false`.
-- [ ] T004 [P] Add `tests/fixtures/artifacts/RetainedMarker/RetainedMarker.csproj`, `Program.cs` and `Baseline/packages.lock.json` as recipes for a marker/registration consumer compiled against a recorded immutable merged pre-F-06 revision; freeze baseline source, binary and dependency hashes in the private workspace before new Abstractions code, reuse existing retained-binary tooling and never rebuild that binary against the new API (AS-46).
-- [ ] T005 Create standalone `tests/fixtures/artifacts/Local/Local.csproj`, `ObjectSemantics/ObjectSemantics.csproj`, `HostAdapters/HostAdapters.csproj`, `Consumer/Consumer.csproj`, `CrashRunner/CrashRunner.csproj` and `TransferRunner/TransferRunner.csproj`; keep provider references Abstractions-only, host/framework/metadata dependencies outside them, and generate/review each new `packages.lock.json` using current versions without a new vendor SDK.
-- [ ] T006 Extend `scripts/artifact_evidence.py` to build/freeze the retained baseline first, prepare independent current platform/fixture packages and unchanged existing metadata packages, compile package-only tests/tools and fingerprint actual sources/manifests/locks; run T002 negatives and prove unfinished full mode fails without manufacturing case results.
+- [x] T001 [P] Create `tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj` and `ArtifactTestHarness.cs` with existing xUnit/package-consumer conventions, deterministic clocks, named barriers, bounded teardown and synthetic canaries; add only the contract test project to `Hoard.slnx` and prepare provider-neutral test drivers.
+- [x] T002 [P] Write failing `tests/tooling/test_artifact_evidence.py` for missing/duplicate/foreign/stale cases, wrong durability exclusions, tampered source/lock/package/proof hashes, missing runtime red/green pairs, false byte/RSS/crash proof, failed children, unsafe destinations/cleanup and partial-mode overclaims; use synthetic evidence, never recursive acceptance.
+- [x] T003 Introduce `scripts/validate-artifacts.sh` and `scripts/artifact_evidence.py` using existing foundation/lifecycle evidence helpers: prerequisites, fresh owner-private destination, bounded subprocess ownership, explicit failure retention, default locked mode, intentional `--update-locks` and `--phase logical|transfers|recovery|packages`; incomplete full inventory must fail, and every focused mode must report `qualification: false`.
+- [x] T004 [P] Add `tests/fixtures/artifacts/RetainedMarker/RetainedMarker.csproj`, `Program.cs` and `Baseline/packages.lock.json` as recipes for a marker/registration consumer compiled against a recorded immutable merged pre-F-06 revision; freeze baseline source, binary and dependency hashes in the private workspace before new Abstractions code, reuse existing retained-binary tooling and never rebuild that binary against the new API (AS-46).
+- [x] T005 Create standalone `tests/fixtures/artifacts/Local/Local.csproj`, `ObjectSemantics/ObjectSemantics.csproj`, `HostAdapters/HostAdapters.csproj`, `Consumer/Consumer.csproj`, `CrashRunner/CrashRunner.csproj` and `TransferRunner/TransferRunner.csproj`; keep provider references Abstractions-only, host/framework/metadata dependencies outside them, and generate/review each new `packages.lock.json` using current versions without a new vendor SDK.
+- [x] T006 Extend `scripts/artifact_evidence.py` to build/freeze the retained baseline first, prepare independent current platform/fixture packages and unchanged existing metadata packages, compile package-only tests/tools and fingerprint actual sources/manifests/locks; run T002 negatives and prove unfinished full mode fails without manufacturing case results.
 
 **Checkpoint**: Baseline provenance and incomplete, fail-closed acceptance
 exist. Project creation or compilation is not storage qualification.

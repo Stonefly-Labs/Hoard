@@ -3682,6 +3682,17 @@ required for simple doc or repository-tool changes.
 
 ## Current checks and future product checks
 
+F-06 implementation is currently running. Its setup entry point,
+`bash scripts/validate-artifacts.sh --evidence <fresh-private-destination>`,
+requires an existing owner-private parent outside Git. It prepares the retained
+pre-F06 baseline and independent packages with tracked locks, then **fails**
+until behavioral execution is implemented. Failure captures are retained with
+`qualification: false`; neither compilation nor the verifier's synthetic tests
+qualifies storage. See the [running implementation evidence](../specs/006-artifact-storage/plan.md#implementation-evidence).
+No existing provider, custom-host example, architecture diagram, compatibility
+policy, IaC or release guide changes at this setup checkpoint: it adds test
+infrastructure only and does not change production behavior or old APIs.
+
 ```bash
 python3 -m unittest discover -s tests/tooling -v
 bash scripts/validate-foundation.sh

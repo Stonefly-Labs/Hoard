@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Artifacts.CrashRunner</AssemblyName>
+    <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Abstractions" />
+    <PackageReference Include="Hoard.Fixtures.Artifacts.HostAdapters" />
+  </ItemGroup>
+</Project>
