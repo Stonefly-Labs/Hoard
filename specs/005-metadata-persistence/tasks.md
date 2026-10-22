@@ -6,9 +6,10 @@
 [metadata API](contracts/metadata-api.md), [recovery](contracts/recovery.md),
 [acceptance](contracts/acceptance.md) and [quickstart.md](quickstart.md).
 
-**Status**: Implementation running. T001..T082 are verified and complete,
-including final immutable qualification/regression replay, documentation and
-requirement audit. Only T083's durable PR/checkpoint handoff remains unchecked.
+**Status**: All 83 implementation tasks are verified and complete, including
+immutable qualification/regression replay, documentation, requirement audit
+and pushed draft-PR handoff. The driver checkpoint schedules `converge` next;
+convergence/finalization/merge/release are not part of this implementation.
 The built-in requirements checklist remains 16/16. The reviewer-owned
 [metadata](checklists/metadata.md) and [recovery](checklists/recovery.md)
 checklists record the separately requested assisted review, 40/40 satisfied.
@@ -291,7 +292,7 @@ and hand off honest documentation and reviewed boundaries.
 - [X] T080 [P] Update `README.md` and `docs/DEVELOPMENT.md` for the implemented metadata contract/fixtures and actual validation commands, linking acceptance/recovery and distinguishing qualification from production cache/providers; review affected provider/example/compatibility guides and diagrams, explicitly justify unchanged surfaces and document operational permissions/manual recovery/rollback limits.
 - [X] T081 Perform the required bounded `hoard-architecture-review` of public additions, package graphs, provider independence, host admission/late ownership and shared authority/reference/lease boundaries; record findings and resolved evidence in `specs/005-metadata-persistence/plan.md`, fix in-scope blockers and rerun affected proof rather than treating the historical planning review as implementation approval.
 - [X] T082 Audit `specs/005-metadata-persistence/tasks.md`, `plan.md`, `quickstart.md` and `contracts/acceptance.md` against all 24 FRs, eight SCs, 23 story scenarios, 14 edge cases and 48 MP cases; require runtime red-to-green/attribution, no unchecked or unverified earlier implementation task, no leaked secret/private artifact and no overstated production/durability support. Preserve reviewer-owned checklist markers; unresolved evidence blocks completion.
-- [ ] T083 Commit coherent verified artifacts and checkpoint through the separately authorized implementation stage, push immediately after each commit and update draft PR #14 using `.github/pull_request_template.md`; record remaining gates in `docs/DEVELOPMENT.md`. All implementation tasks must pass before the driver finishes implementation; do not run convergence/finalization, merge, tag, publish packages or apply infrastructure in that invocation.
+- [X] T083 Commit coherent verified artifacts and checkpoint through the separately authorized implementation stage, push immediately after each commit and update draft PR #14 using `.github/pull_request_template.md`; record remaining gates in `docs/DEVELOPMENT.md`. All implementation tasks must pass before the driver finishes implementation; do not run convergence/finalization, merge, tag, publish packages or apply infrastructure in that invocation.
 
 ## Dependencies and Execution Order
 
