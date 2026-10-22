@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "stage": "await_merge",
-  "status": "ready",
-  "branch": "feature/005-metadata-persistence",
+  "status": "running",
+  "branch": "chore/spec-progress-f-05",
   "active": {
     "id": "F-05",
     "feature_directory": "specs/005-metadata-persistence",
