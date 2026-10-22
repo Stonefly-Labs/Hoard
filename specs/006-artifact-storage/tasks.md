@@ -16,6 +16,10 @@ Focused package mode now executes actual graph/public-member checks, negative
 provider/Hosting leaks and unchanged old-binary/consumer journeys. Review-driven
 reservation, commit-renewal, idle-read and composed-shutdown fixes have focused
 regressions; none substitutes for unfinished complete task obligations.
+Further focused checks now cover inert configured lifecycle/disabled selection,
+classified faults/full queues, independent object direct/list visibility,
+pending-to-reclaimed deletion receipts and exact-owner cancellation fencing.
+Successful ready-store composition and complete qualification remain unfinished.
 See [resumed implementation](plan.md#resumed-storage-mechanisms-and-recovery-2026-10-22).
 The initial
 `NU1403` blocker is resolved by the maintainer-approved local-package hash

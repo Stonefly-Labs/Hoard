@@ -12,13 +12,19 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "CNOGQ/yY8zp0cM2Ek+xJPOrILedG9/HAAASsgQpuSSyjJ4KQh0W1fO92Bx44AFA3c/fGuvLL3Us8JVLXaZZ7Ng==",
+        "contentHash": "zA8G7xFPHPcFT4m4pM8bdZcp+9r7Lz+EBLu+2InhIcabI7NJDzoAxm/EN/Dy4mFkEx9ZqWxi1/NHD8XahAVvyg==",
         "dependencies": {
           "Hoard.Fixtures.Artifacts.Local": "[0.1.0]",
           "Hoard.Fixtures.Artifacts.ObjectSemantics": "[0.1.0]",
           "Hoard.Fixtures.Metadata.HostAdapters": "[0.1.0]",
           "Hoard.Hosting": "[0.1.0]"
         }
+      },
+      "Microsoft.AspNetCore.TestHost": {
+        "type": "Direct",
+        "requested": "[10.0.13, )",
+        "resolved": "10.0.13",
+        "contentHash": "8xzbDfEOWg5GRp5byA42Axr4TbockbxCvdHTYk27ZIdst79DO0CLBp/Zw5sduK2goRii7of4EeuTjG/yPH4tsg=="
       },
       "Microsoft.NET.Test.Sdk": {
         "type": "Direct",
@@ -58,7 +64,7 @@
       "Hoard.Fixtures.Artifacts.Local": {
         "type": "Transitive",
         "resolved": "0.1.0",
-        "contentHash": "LI0+tBhj6lZGmR0zSMLZvxddQmwGAe5BUc6jikeJgU+kPUEJHBMj0Rg9YHBZrObYKvg/o829ID+XvtcnWamaxg==",
+        "contentHash": "RT8+xsAGcNC/7PqV1G6/5xmmLou4FnBQGkLE7Ra+bETMOB0i7186Hts4Trb/dpWlIuY6POBan/jsX3WChXxOAA==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }
@@ -66,7 +72,7 @@
       "Hoard.Fixtures.Artifacts.ObjectSemantics": {
         "type": "Transitive",
         "resolved": "0.1.0",
-        "contentHash": "nIuMVxzcY+hW6DyFnEKMUb4TNiKAlzQNPtokbOmKknTQEcWOkrJr7LB0DzIZ+NGZScHETj4NQmtWs69zfomIzg==",
+        "contentHash": "6+NgGQtB/4EwuvO9Diqv04gAiwq8uLZw5tviaSSR5KDNzk2fuIqeW7r06QgYw6Tc4VWEr4ofbCA2ThQc3OiWgQ==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }

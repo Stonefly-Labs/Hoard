@@ -49,7 +49,7 @@ public sealed partial class ObjectArtifactStore
             lock (pointerSync)
             {
                 deletion = Operation(ticket);
-                if (deletion.Receipt is { } receipt) { return receipt; }
+                if (deletion.Receipt is not null) { return RefreshDeletionReceipt(deletion); }
                 if (ticket.Kind != ArtifactOperationKind.Delete || deletion.DeleteTarget is not { } stamp)
                 { throw new ObjectOperationException(ArtifactFailureCode.InvalidInput); }
                 target = stamp;
@@ -104,6 +104,19 @@ public sealed partial class ObjectArtifactStore
             token.ThrowIfCancellationRequested();
             return deletion.Receipt;
         }, ticket);
+    }
+
+    private ArtifactMutationReceipt RefreshDeletionReceipt(ObjectOperation operation)
+    {
+        var receipt = operation.Receipt!;
+        if (receipt.Reclamation == ArtifactReclamation.Pending
+            && !retiredObjects.ContainsKey(receipt.Stamp.Incarnation))
+        {
+            receipt = new(receipt.Ticket, receipt.ReceiptId, receipt.Outcome, receipt.Stamp,
+                receipt.Visibility, ArtifactReclamation.Reclaimed);
+            operation.Receipt = receipt;
+        }
+        return receipt;
     }
 
     private long ReclaimObject(ArtifactStamp stamp)

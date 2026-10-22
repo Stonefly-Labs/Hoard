@@ -9,6 +9,39 @@ public sealed class ArtifactDeletionTests
     [Theory]
     [InlineData("local")]
     [InlineData("object")]
+    public async Task Lost_delete_acknowledgment_preserves_pending_reclamation_until_actual_cleanup(string provider)
+    {
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider, references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
+        using var source = new ShortSource("pending physical reclamation"u8.ToArray());
+        var committed = await PublishAsync(driver, source, new(1024));
+        var ticket = Success(await driver.Store.ReserveDeleteAsync(new(committed.Stamp), new(), default));
+        ValueTask LostAck() => ValueTask.FromException(new IOException(ArtifactTestData.Canary));
+        if (driver.LocalControls is { } local) { local.SetObserver("delete.removed", LostAck); }
+        else { driver.ObjectControls!.SetObserver("pointer.tombstone", LostAck); }
+        Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+            await driver.Store.DeleteAsync(ticket, new(), default)).Code);
+        var pending = Assert.IsType<ArtifactResolution.Removed>(
+            Success(await driver.Store.ReconcileAsync(ticket, new(), default))).Receipt;
+        Assert.Equal(ArtifactReclamation.Pending, pending.Reclamation);
+        Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+            await driver.Store.OpenReadAsync(new(committed.Stamp.Identity.Digest), new(), default)).Code);
+        var cleaned = Success(await driver.Maintenance.CleanupAsync(new(driver.Identity,
+            [new ArtifactCleanupTarget.RemovedIncarnation(committed.Stamp)]), new(), default));
+        Assert.Equal(1, cleaned.Completed);
+        Assert.Equal(committed.Stamp.Identity.Length, cleaned.ReclaimedBytes);
+        var settled = Assert.IsType<ArtifactResolution.Removed>(
+            Success(await driver.Store.ReconcileAsync(ticket, new(), default))).Receipt;
+        Assert.Equal(pending.ReceiptId, settled.ReceiptId);
+        Assert.Equal(pending.Stamp, settled.Stamp);
+        Assert.Equal(pending.Outcome, settled.Outcome);
+        Assert.Equal(ArtifactReclamation.Reclaimed, settled.Reclamation);
+        Assert.Equal(settled, Success(await driver.Store.DeleteAsync(ticket, new(), default)));
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
     public async Task Exact_delete_receipts_and_recreation_never_remove_the_new_incarnation(string provider)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, references: (_, _) =>

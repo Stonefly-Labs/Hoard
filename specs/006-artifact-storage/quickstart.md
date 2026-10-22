@@ -8,6 +8,12 @@ fixtures remain not-ready. Logical, transfer and recovery modes execute real
 focused proof and always report `qualification: false`; the package phase also
 runs actual graph/public-member and frozen-binary checks. Full mode still
 fails closed rather than inventing missing results.
+Configured selection currently proves inert/disabled behavior and fail-closed
+startup only, not successful readiness. Focused cancellation checks cover both
+an already-cancelled caller and authority-queued expiry, exact terminal
+noncommit, refused retry and a subsequent independent-thread absence read.
+Pending deletion receipts advance to reclaimed only after physical cleanup;
+object direct availability and listing are independently controlled.
 See the [approved hash refresh and locked replay](plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 
 Read [API](contracts/artifact-api.md), [model](data-model.md),

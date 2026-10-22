@@ -18,6 +18,7 @@ public sealed partial class ObjectArtifactStore
                 upload = Operation(ticket);
                 if (upload.Receipt is { } receipt)
                 {
+                    if (ticket.Kind == ArtifactOperationKind.Delete) { receipt = RefreshDeletionReceipt(upload); }
                     return receipt.Outcome switch
                     {
                         ArtifactMutationOutcome.Removed => new ArtifactResolution.Removed(receipt),

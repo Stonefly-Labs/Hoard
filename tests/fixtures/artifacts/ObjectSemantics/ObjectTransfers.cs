@@ -102,7 +102,12 @@ public sealed partial class ObjectArtifactStore
             if (queued >= Bounds.WaitingCalls) { throw new ObjectOperationException(ArtifactFailureCode.Capacity); }
             queued++;
         }
-        try { await transferSlots.WaitAsync(token); return new(transferSlots); }
+        try
+        {
+            await faults.ObserveAsync("object.transfer-queued");
+            await transferSlots.WaitAsync(token);
+            return new(transferSlots);
+        }
         finally { lock (pointerSync) { queued--; } }
     }
 
@@ -112,7 +117,7 @@ public sealed partial class ObjectArtifactStore
 
     private async ValueTask<ArtifactResult<T>> OwnedAsync<T>(ArtifactPhase phase, TimeSpan timeout,
         CancellationToken caller, Func<CancellationToken, Task<T>> operation, ArtifactOperationTicket? ticket = null,
-        Action? onSettled = null) where T : notnull
+        Action? onSettled = null, Action? cancellationSettled = null) where T : notnull
     {
         var id = Guid.NewGuid();
         var deadline = new CancellationTokenSource(timeout, time);
@@ -148,6 +153,11 @@ public sealed partial class ObjectArtifactStore
                 catch (Exception error)
                 {
                     var code = MapError(error, caller);
+                    if (code is ArtifactFailureCode.CancelledBeforeCommit or ArtifactFailureCode.DeadlineExceeded)
+                    {
+                        try { cancellationSettled?.Invoke(); }
+                        catch (Exception settlementError) { return Rejected<T>(MapError(settlementError, caller), phase, ticket); }
+                    }
                     if (code == ArtifactFailureCode.CancelledBeforeCommit && !caller.IsCancellationRequested && token.IsCancellationRequested)
                     { code = ArtifactFailureCode.DeadlineExceeded; }
                     return Rejected<T>(code, phase, ticket);

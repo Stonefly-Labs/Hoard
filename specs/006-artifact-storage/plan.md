@@ -526,3 +526,81 @@ Task markers and reviewer-owned checklists remain conservative and unchanged.
 Configured lifecycle selection/readiness, comprehensive graph-negative shapes,
 all acceptance subproofs and exact current-source full qualification remain
 unfinished. No stage completion or final architecture approval is claimed.
+
+### Continued Composition and Settlement Checks 2026-10-22
+
+Configured artifact registration/module composition now uses F-02/F-03's
+existing APIs. Both selections are inert until initialization, disabled invalid
+options touch no root, and missing baseline guarantees block startup/readiness.
+This proves fail-closed admission only; successful ready-store composition is
+still outstanding. Focused input-fault controls distinguish access, capacity,
+unavailability and unexpected internal failures without exposing exceptions.
+An observed full transfer queue rejects before reading input and restores
+capacity after actual release. Object listing and direct availability have
+independent barriers, not a shared visibility shortcut.
+
+A new lost-deletion-acknowledgment test first failed for both providers:
+reconciliation still reported `Pending` after physical reclamation completed.
+Receipts now refresh that physical status from the exact retired incarnation
+while preserving the receipt ID, stamp and logical outcome.
+
+Pre-decision cancellation tests first failed, and an intermediate cancellation
+wrapper stranded provider state after a rejected retry. Teardown's retained-work
+error masked the original subsequent-read timeout. Isolated managed-stack and
+ownership observations identified the blocked state-monitor admission; those
+temporary diagnostics were removed. Terminal fencing now runs in the owning
+supervisor only after the worker unwinds, with exact ticket/session/owner/
+generation and pre-decision checks. This also covers an already-cancelled
+caller whose worker body never begins. Four focused cases prove terminal
+noncommit, refused retry and a subsequent read initiated on a distinct thread.
+No guard, buffer, slot or staging is released underneath live I/O.
+
+| Exact command | Result |
+| --- | --- |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --update-locks --filter 'FullyQualifiedName~Cancelled_commit_before_decision' --evidence ../hoard-artifact-evidence/resume-cancellation-settlement-20261022` | Passed four cancellation cases and both unchanged consumer choices; nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase logical --evidence ../hoard-artifact-evidence/resume-settlement-logical-locked-20261022` | Separate default locked replay passed 128 checks and both consumers; `qualification: false` |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase packages --evidence ../hoard-artifact-evidence/resume-settlement-packages-20261022` | Separate default locked replay passed two architecture checks/eight actual graphs, unchanged frozen binary and both consumers; `qualification: false` |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 91 tests |
+
+These captures bind source
+`e69798badba77fceeb72a52f16e36323c0f96429c0428aacad5a1059d3512bff`.
+The intentional test manifest adds the already centrally pinned TestHost
+dependency only in artifact package-acceptance mode; its new lock entry is
+reviewed separately from local package content hashes. Other existing lock
+changes contain only rebuilt local artifact fixture hashes; existing package
+versions, dependency graphs, external hashes and frozen inputs are unchanged.
+Earlier four actual large-transfer runs in
+`resume-current-transfers-20261022` predate cancellation changes and are not
+final-source proof. The failed/hung intermediate directory named
+`resume-cancelled-publication-green-20261022` is failure evidence, not a green
+claim. Full qualification remains fail-closed; the implementation stage and
+unfinished task markers are not advanced by these focused checks.
+
+The bounded follow-up reviewer `artifact-composition-review` found a further
+destructive cancellation edge: an already-cancelled stale-after-renewal or
+forged completion/private handle could bypass full worker validation and fence
+valid current staging. Six paired-provider runtime assertions reproduced the
+incorrect `NotCommitted` result before correction. Settlement now requires the
+complete current owner, including expiry, and either prior full recognition
+by this invocation or a currently valid, exact staged handle. The invocation
+tracks its own progress renewals separately from external renewals. Two
+additional tests cancel after progress renewal and preserve already-committed
+content while fencing only the cancelled duplicate.
+
+`HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --update-locks --filter 'FullyQualifiedName~ArtifactBudgetTests|FullyQualifiedName~Progressing_commit_renews_owner' --evidence ../hoard-artifact-evidence/resume-invalid-cancelled-handle-green-20261022`
+passes 22 checks and both unchanged consumers on source
+`066d2dcf6e5d398c2d7646c1ad8137facd08f8594cd5356820d74d4b27437193`,
+still nonqualifying. The preceding 128-check locked logical capture is
+historical rather than proof of this later source.
+
+The reviewer closed that finding by source inspection. Its remaining
+external-renewal evidence gap is now covered by a deterministic pre-decision
+barrier: renewal changes the owner expiry after full recognition, cancellation
+settles without fencing that newer owner, and its exact renewed handle still
+publishes/readbacks successfully on both stores.
+
+`HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --phase logical --evidence ../hoard-artifact-evidence/resume-external-renewal-logical-locked-20261022`
+passes 138 checks and both consumers in a separate default locked run on source
+`1f3370c7b5414b0a282e688893f3241776902d51a5ccdfab81b67213f289fbc3`.
+Both artifact fixture/test folder whitespace checks and `git diff --check`
+also pass. These remain focused nonqualification evidence, not stage completion.

@@ -10,11 +10,12 @@ public sealed partial class LocalArtifactStore
     {
         ArgumentNullException.ThrowIfNull(staged);
         ArgumentNullException.ThrowIfNull(options);
+        var owner = staged.Owner;
+        var recognized = false;
         return ExecuteAsync(ArtifactPhase.Publication, options.Deadline, ct, async token =>
         {
             using var slot = await AdmitAsync(token);
             LocalOperation operation;
-            var owner = staged.Owner;
             var renewal = time.GetTimestamp();
             lock (stateSync)
             {
@@ -22,6 +23,7 @@ public sealed partial class LocalArtifactStore
                 if (operation.State == "committed") { return Receipt(operation); }
                 CheckOwner(operation, staged.Owner, requireVerified: true);
                 if (Staged(operation) != staged) { throw new LocalStateException(ArtifactFailureCode.InvalidInput); }
+                recognized = true;
             }
             var request = new ArtifactProtectionRequest(operation.Id, ArtifactProtectionOperation.Publication,
                 StoreIdentity, staged.Identity.Digest);
@@ -114,7 +116,23 @@ public sealed partial class LocalArtifactStore
                 lock (stateSync) { return Receipt(operation); }
             }
             finally { gate.Release(); }
-        }, staged.Owner.Ticket);
+        }, staged.Owner.Ticket, cancellationSettled: () =>
+        {
+            lock (stateSync)
+            {
+                if (operations.TryGetValue(staged.Owner.Ticket.Id, out var cancelled)
+                    && Ticket(cancelled) == staged.Owner.Ticket
+                    && Owner(cancelled) == owner && cancelled.State == "verified"
+                    && (recognized || Staged(cancelled) == staged
+                        && cancelled.Session == ownership!.State.SessionId
+                        && Now() < cancelled.OwnerExpires && Now() < cancelled.Expires))
+                {
+                    cancelled.State = "notcommitted";
+                    Save(cancelled);
+                    ReleaseStaging(cancelled);
+                }
+            }
+        });
     }
 
     private void FinalizePublication(LocalOperation operation)
@@ -130,6 +148,13 @@ public sealed partial class LocalArtifactStore
         var stamp = operation.Content!.Stamp(StoreIdentity);
         if (operation.Kind == ArtifactOperationKind.Delete)
         {
+            if (operation.Reclamation == ArtifactReclamation.Pending
+                && removedContent.TryGetValue(stamp.Incarnation, out var retired)
+                && retired.Content == operation.Content && retired.Reclaimed)
+            {
+                operation.Reclamation = ArtifactReclamation.Reclaimed;
+                Save(operation);
+            }
             return new(Ticket(operation), operation.Receipt, operation.Outcome, stamp,
                 ArtifactVisibility.Removed, operation.Reclamation);
         }

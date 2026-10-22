@@ -10,7 +10,7 @@ public sealed class ObjectFaultControls
     {
         "object.initialize", "object.admitted", "multipart.part", "multipart.complete",
         "pointer.compare", "pointer.selected", "object.direct", "object.list",
-        "object.read", "pointer.tombstone", "object.reclaimed", "multipart.cleanup", "object.commit-progress"
+        "object.read", "pointer.tombstone", "object.reclaimed", "multipart.cleanup", "object.commit-progress", "object.transfer-queued"
     };
     public string[] Observed => points.ToArray();
     public Action? BeforeObjectDelete { get; set; }

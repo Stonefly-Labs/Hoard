@@ -34,6 +34,12 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
     public ObjectFaultControls? ObjectControls { get; }
     public ValueTask<ArtifactResult<ArtifactShutdown>> StopAsync(ArtifactCleanupOptions options)
         => lifetime.StopAsync(options, default);
+    public Task WhenIdleAsync() => lifetime switch
+    {
+        LocalArtifactStore local => local.WhenIdleForQualificationAsync(),
+        ObjectArtifactStore objects => objects.WhenIdleForQualificationAsync(),
+        _ => throw new InvalidOperationException("Unknown artifact fixture.")
+    };
 
     public void DamageOnlyPayload(bool truncate)
     {

@@ -762,6 +762,12 @@ on both with measured OS peak RSS; those measurements are not final-source proof
 The focused package phase inspects eight actual resolved graphs, rejects
 provider/Hosting leaks and runs the unchanged pre-F06 marker binary against
 current assemblies, including public-member accessibility checks.
+Configured fixture registration is inert before startup and for disabled
+selections; startup rejects the fixtures' still-missing mandatory guarantees.
+Further focused checks cover classified input faults, full transfer queues,
+independent object direct/list visibility, lost deletion acknowledgments with
+actual reclamation progress, and terminal pre-decision cancellation (including
+an already-cancelled caller) without stranding later calls.
 Both fixtures still declare missing mandatory guarantees and are not ready.
 The full command fails closed until every required case, capability, composition,
 package and evidence gate is implemented. Focused modes always report

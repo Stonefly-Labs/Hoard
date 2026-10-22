@@ -93,13 +93,18 @@ public sealed partial class LocalArtifactStore
             if (waiters >= Limits.WaitingCalls) { throw new LocalStateException(ArtifactFailureCode.Capacity); }
             waiters++;
         }
-        try { await slots.WaitAsync(ct); return new Slot(slots); }
+        try
+        {
+            await faults.ObserveAsync("transfer.queued");
+            await slots.WaitAsync(ct);
+            return new Slot(slots);
+        }
         finally { lock (stateSync) { waiters--; } }
     }
 
     private async ValueTask<ArtifactResult<T>> ExecuteAsync<T>(ArtifactPhase phase, TimeSpan budget,
         CancellationToken ct, Func<CancellationToken, Task<T>> work, ArtifactOperationTicket? ticket = null,
-        Action? settled = null)
+        Action? settled = null, Action? cancellationSettled = null)
         where T : notnull
     {
         ArgumentNullException.ThrowIfNull(work);
@@ -143,6 +148,11 @@ public sealed partial class LocalArtifactStore
                 catch (Exception error)
                 {
                     var code = FailureCode(error, ct);
+                    if (code is ArtifactFailureCode.CancelledBeforeCommit or ArtifactFailureCode.DeadlineExceeded)
+                    {
+                        try { cancellationSettled?.Invoke(); }
+                        catch (Exception settlementError) { return Failed<T>(FailureCode(settlementError, ct), phase, ticket); }
+                    }
                     if (code == ArtifactFailureCode.CancelledBeforeCommit && !ct.IsCancellationRequested && token.IsCancellationRequested)
                     { code = ArtifactFailureCode.DeadlineExceeded; }
                     return Failed<T>(code, phase, ticket);

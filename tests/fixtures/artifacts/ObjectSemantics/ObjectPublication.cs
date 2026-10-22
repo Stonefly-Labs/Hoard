@@ -10,11 +10,12 @@ public sealed partial class ObjectArtifactStore
     {
         ArgumentNullException.ThrowIfNull(staged);
         ArgumentNullException.ThrowIfNull(options);
+        var owner = staged.Owner;
+        var recognized = false;
         return OwnedAsync(ArtifactPhase.Publication, options.Deadline, ct, async token =>
         {
             using var lease = await EnterTransferAsync(token);
             ObjectOperation upload;
-            var owner = staged.Owner;
             var renewedAt = time.GetTimestamp();
             ObjectPointer? observed;
             lock (pointerSync)
@@ -23,6 +24,7 @@ public sealed partial class ObjectArtifactStore
                 if (upload.Receipt is { } receipt) { return receipt; }
                 CurrentOwner(upload, staged.Owner);
                 if (upload.Verified != staged) { throw new ObjectOperationException(ArtifactFailureCode.InvalidInput); }
+                recognized = true;
                 pointers.TryGetValue(staged.Identity.Digest.Hex, out observed);
             }
             var admitted = await initializedWith!.Authority.AcquireAsync(new(upload.Ticket.Id,
@@ -112,7 +114,21 @@ public sealed partial class ObjectArtifactStore
 
             }
             finally { if (!selected) { File.Delete(ObjectPath(objectId)); } }
-        }, staged.Owner.Ticket);
+        }, staged.Owner.Ticket, cancellationSettled: () =>
+        {
+            lock (pointerSync)
+            {
+                if (uploads.TryGetValue(staged.Owner.Ticket.Id, out var cancelled)
+                    && cancelled.Ticket == staged.Owner.Ticket && !cancelled.Deciding && cancelled.Receipt is null
+                    && !cancelled.Fenced && cancelled.Owner == owner
+                    && (recognized || cancelled.Verified == staged && owner.SessionId == processSession
+                        && EffectiveNow() < owner.Expires && EffectiveNow() < owner.Ticket.Expires))
+                {
+                    cancelled.Fenced = true;
+                    RemoveMultipart(cancelled);
+                }
+            }
+        });
     }
 
     private ArtifactMutationReceipt RecordObjectReceipt(ObjectOperation upload)

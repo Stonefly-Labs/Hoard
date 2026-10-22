@@ -10,7 +10,7 @@ public sealed class LocalFaultControls
     {
         "initialize.before-root", "initialize.admitted", "stage.prefix", "stage.verified",
         "publish.before-decision", "publish.decided", "publish.receipted", "publish.progress",
-        "read.opened", "read.copy", "delete.removed", "delete.reclaimed", "cleanup.candidate"
+        "read.opened", "read.copy", "delete.removed", "delete.reclaimed", "cleanup.candidate", "transfer.queued"
     };
     public string[] Observed => observed.ToArray();
     public Action? BeforeRecordWrite { get; set; }

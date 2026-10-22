@@ -3728,6 +3728,20 @@ both consumer selections. Full mode still fails for missing obligations.
 In-process metadata fixtures, not fabricated reference counts,
 now test committed orphans, failed publication, live-reference exclusion and
 guard retention through lost metadata acknowledgments on SQLite and memory.
+Configured artifact fixture selection now uses the existing F-02/F-03 lifecycle:
+registration/composition and disabled options perform no storage I/O, while
+startup refuses the still-incomplete capabilities. This is not a successful
+ready-store composition proof. Lost deletion acknowledgments retain pending
+physical status until exact-incarnation cleanup actually finishes; reconciliation
+then advances only reclamation status, preserving the logical receipt.
+Pre-decision commit cancellation fences the exact settled owner/generation,
+including cancellation before the worker starts. Fencing happens after worker
+unwind; live I/O is never cleaned underneath it. Independent-thread follow-up
+reads guard against rejection paths stranding a provider state lock.
+Cancellation settlement recognizes the complete current staged handle, not
+just copied owner IDs; stale/forged handles and a newer external renewal cannot
+destructively fence valid staging. Progress renewal owned by the cancelled
+invocation still receives terminal fencing.
 Architecture review corrected close admission/release ownership, terminal
 noncommit cleanup, deadline bookkeeping behind blocked state I/O and ticket
 validation/expiry classification; final implementation review is still due.

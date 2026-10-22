@@ -24,6 +24,13 @@ public sealed class ArtifactFixtureSession : IAsyncDisposable
     public IArtifactStore Store { get; }
     public IArtifactEvidenceValidator Validator { get; }
     public IArtifactMaintenance Maintenance { get; }
+    public ArtifactCapabilities Capabilities => Store.Capabilities;
+    public bool Ready => !Authority.HasRetainedWork && lifetime switch
+    {
+        LocalArtifactStore local => local.Ready,
+        ObjectArtifactStore objects => objects.Ready,
+        _ => throw new InvalidOperationException("Unknown artifact fixture.")
+    };
     public Task WhenIdleForQualificationAsync() => lifetime switch
     {
         LocalArtifactStore local => local.WhenIdleForQualificationAsync(),
@@ -33,14 +40,14 @@ public sealed class ArtifactFixtureSession : IAsyncDisposable
 
     public static async Task<ArtifactFixtureSession> CreateForQualificationAsync(string provider, string root,
         Func<ArtifactStamp, CancellationToken, ValueTask<ArtifactReferenceDecision>>? references = null,
-        ArtifactLimits? limits = null)
+        ArtifactLimits? limits = null, CancellationToken cancellationToken = default)
     {
         if (provider is not ("local" or "object")) { throw new ArgumentException("Unknown artifact fixture selection."); }
         var identity = new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
         var authority = new ArtifactCoordinationAuthority(identity, references: references);
         IArtifactStoreLifetime lifetime = provider == "local" ? new LocalArtifactStore(root) : new ObjectArtifactStore(root);
         var session = new ArtifactFixtureSession(lifetime, identity, authority);
-        var result = await lifetime.InitializeAsync(new(ArtifactInitializationMode.CreateEmpty, identity, authority, limits), new(), default);
+        var result = await lifetime.InitializeAsync(new(ArtifactInitializationMode.CreateEmpty, identity, authority, limits), new(), cancellationToken);
         if (result is ArtifactResult<ArtifactAdmission>.Success) { return session; }
         var stopped = await lifetime.StopAsync(new(), default);
         if (stopped is not ArtifactResult<ArtifactShutdown>.Success)
