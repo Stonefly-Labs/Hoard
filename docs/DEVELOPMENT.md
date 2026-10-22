@@ -2409,6 +2409,42 @@ changes. Draft [PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) stays
 incomplete; no implementation, checklist approval, schema operation,
 qualification, source release, merge, infrastructure or deployment occurs.
 
+### F-05 assisted checklist review
+
+The user reiterates that Copilot should run the existing checklists and
+highlight only decisions needing maintainer attention. This separately
+requested review follows the earlier features' assisted-review pattern; it
+does not regenerate checklists, self-approve them during implementation or
+advance a scheduled driver stage.
+
+Copilot evaluates all 40 criteria against the specification and seven planning
+artifacts at `72f1078`. The
+[metadata checklist](../specs/005-metadata-persistence/checklists/metadata.md)
+and [recovery checklist](../specs/005-metadata-persistence/checklists/recovery.md)
+now record **20/20 and 20/20 satisfied**, with grouped criterion-level evidence.
+There is no unresolved requirements-quality finding, waiver or decision needing
+maintainer attention. Markers record the requested reviewer assessment, not
+independent human inspection, implementation completion or durability evidence.
+The custom requirements-quality review gate is satisfied.
+
+The checkpoint remains **`implement / ready`**, all 83 tasks remain unchecked
+and the specification, seven planning artifacts and built-in checklist remain
+unchanged. No driver stage is begun or finished. Actual transaction/reference/
+lease interleavings, finite late-work ownership, independent package/old-binary
+compatibility and SQLite crash/upgrade/backup recovery remain mandatory proof
+obligations for the next separately authorized implementation invocation.
+
+README and this guide reflect the review. Provider/example/quickstart guides,
+baseline charter/product specification/architecture/ADR/diagrams, prior features,
+constitution/backlog, compatibility/release policy, runtime/test/tooling sources,
+dependencies/locks and IaC guidance are unaffected: review markers/evidence
+change no requirement, design, API, dependency boundary, command, operation or
+capability. No additional architecture review or product/.NET/IaC acceptance is
+warranted for this documentation-only change. Draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete;
+no implementation, schema operation, qualification, publication, merge,
+infrastructure action or deployment occurs.
+
 ```mermaid
 flowchart TD
     Constitution["Constitution · once"] --> ConstitutionPR["Constitution PR merged"]

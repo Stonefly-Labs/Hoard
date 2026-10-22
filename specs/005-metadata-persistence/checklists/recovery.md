@@ -12,56 +12,83 @@
 
 ## Requirement Completeness
 
-- [ ] CHK001 Are operation reservation, commit, repeated content, reconciliation, abandonment and expiry outcomes specified as a complete lifecycle that prevents duplicate effects? [Completeness, Spec §FR-008, Model §Operation State Transitions]
-- [ ] CHK002 Are definite non-commit, acknowledged commit and uncertain acknowledgment distinguished for cancellation, failure and lost responses, with safe caller actions for each? [Completeness, Spec §FR-008/FR-010, API §Finite Budgets and Cancellation/Failure Classification]
-- [ ] CHK003 Are empty, compatible, upgrade-required, incompatible and corrupt schema states defined, including the normal-use/readiness gate and explicit creation/upgrade authority? [Completeness, Spec §FR-017/FR-018, API §Schema and Host Wiring, Recovery §Schema Inventory and Admission]
+- [x] CHK001 Are operation reservation, commit, repeated content, reconciliation, abandonment and expiry outcomes specified as a complete lifecycle that prevents duplicate effects? [Completeness, Spec §FR-008, Model §Operation State Transitions]
+- [x] CHK002 Are definite non-commit, acknowledged commit and uncertain acknowledgment distinguished for cancellation, failure and lost responses, with safe caller actions for each? [Completeness, Spec §FR-008/FR-010, API §Finite Budgets and Cancellation/Failure Classification]
+- [x] CHK003 Are empty, compatible, upgrade-required, incompatible and corrupt schema states defined, including the normal-use/readiness gate and explicit creation/upgrade authority? [Completeness, Spec §FR-017/FR-018, API §Schema and Host Wiring, Recovery §Schema Inventory and Admission]
 
 ## Requirement Clarity
 
-- [ ] CHK004 Are ticket lifetime, capacity, bounded pruning, payload matching and expired/unknown/foreign-ticket refusal quantified without implying that a new ticket makes an unresolved action safe to replay? [Clarity, Spec §FR-008/FR-009, Model §Operation State Transitions, API §Failure Classification]
-- [ ] CHK005 Are the operation and administration budgets explicit about queueing, authority acquisition, contention, native work and caller waiting, without promising hard preemption of stuck I/O? [Clarity, Spec §FR-009/SC-007, API §Finite Budgets and Cancellation/Schema and Host Wiring]
-- [ ] CHK006 Are supported schema paths, compatible application versions, verified recovery-point freshness and ticket/cursor invalidation defined before upgrade or restore admission? [Clarity, Spec §FR-018/FR-021, Recovery §Authorized Upgrade v1 to v2/Backup and Restore Walkthrough]
+- [x] CHK004 Are ticket lifetime, capacity, bounded pruning, payload matching and expired/unknown/foreign-ticket refusal quantified without implying that a new ticket makes an unresolved action safe to replay? [Clarity, Spec §FR-008/FR-009, Model §Operation State Transitions, API §Failure Classification]
+- [x] CHK005 Are the operation and administration budgets explicit about queueing, authority acquisition, contention, native work and caller waiting, without promising hard preemption of stuck I/O? [Clarity, Spec §FR-009/SC-007, API §Finite Budgets and Cancellation/Schema and Host Wiring]
+- [x] CHK006 Are supported schema paths, compatible application versions, verified recovery-point freshness and ticket/cursor invalidation defined before upgrade or restore admission? [Clarity, Spec §FR-018/FR-021, Recovery §Authorized Upgrade v1 to v2/Backup and Restore Walkthrough]
 
 ## Requirement Consistency
 
-- [ ] CHK007 Are late-work ownership, publication-guard retention, closed admission and incomplete shutdown outcomes consistent with the prohibition on disposing resources under live work? [Consistency, Spec §FR-009/FR-011, API §Publication Authority Boundary/Finite Budgets and Cancellation, Acceptance MP-27/MP-37]
-- [ ] CHK008 Are schema admission, single-upgrader exclusion and process-lifetime store ownership consistent with existing host lifecycle ownership and local-only qualification? [Consistency, Spec §FR-017/FR-018/Assumptions, API §Schema and Host Wiring, Recovery §Schema Inventory and Admission]
-- [ ] CHK009 Do recovery requirements consistently preserve committed state and evidence rather than authorize silent reset, fallback, downgrade, guessed repair or blind engine-lock deletion? [Consistency, Spec §FR-010/FR-018/FR-021, Recovery §Interrupted Upgrade Matrix/Backup and Restore Walkthrough]
+- [x] CHK007 Are late-work ownership, publication-guard retention, closed admission and incomplete shutdown outcomes consistent with the prohibition on disposing resources under live work? [Consistency, Spec §FR-009/FR-011, API §Publication Authority Boundary/Finite Budgets and Cancellation, Acceptance MP-27/MP-37]
+- [x] CHK008 Are schema admission, single-upgrader exclusion and process-lifetime store ownership consistent with existing host lifecycle ownership and local-only qualification? [Consistency, Spec §FR-017/FR-018/Assumptions, API §Schema and Host Wiring, Recovery §Schema Inventory and Admission]
+- [x] CHK009 Do recovery requirements consistently preserve committed state and evidence rather than authorize silent reset, fallback, downgrade, guessed repair or blind engine-lock deletion? [Consistency, Spec §FR-010/FR-018/FR-021, Recovery §Interrupted Upgrade Matrix/Backup and Restore Walkthrough]
 
 ## Acceptance Criteria Quality
 
-- [ ] CHK010 Are mutation crash boundaries defined on both sides of durable commit and acknowledgment, with complete logical-state/receipt outcomes rather than process-exit-only success? [Measurability, Spec §FR-020/SC-003, Recovery §Mutation Crash Boundaries, Acceptance MP-38..40]
-- [ ] CHK011 Does every documented upgrade interruption boundary have an explicit schema/epoch outcome and an attributable retry-or-restore obligation? [Measurability, Spec §FR-018/FR-020/SC-005, Recovery §Interrupted Upgrade Matrix, Acceptance MP-41/MP-42]
-- [ ] CHK012 Are backup/restore success criteria based on a verified captured logical state, compatibility and artifact reconciliation, with explicit loss of post-capture changes? [Measurability, Spec §FR-021/SC-005/SC-008, Recovery §Backup and Restore Walkthrough, Acceptance MP-44/MP-45]
+- [x] CHK010 Are mutation crash boundaries defined on both sides of durable commit and acknowledgment, with complete logical-state/receipt outcomes rather than process-exit-only success? [Measurability, Spec §FR-020/SC-003, Recovery §Mutation Crash Boundaries, Acceptance MP-38..40]
+- [x] CHK011 Does every documented upgrade interruption boundary have an explicit schema/epoch outcome and an attributable retry-or-restore obligation? [Measurability, Spec §FR-018/FR-020/SC-005, Recovery §Interrupted Upgrade Matrix, Acceptance MP-41/MP-42]
+- [x] CHK012 Are backup/restore success criteria based on a verified captured logical state, compatibility and artifact reconciliation, with explicit loss of post-capture changes? [Measurability, Spec §FR-021/SC-005/SC-008, Recovery §Backup and Restore Walkthrough, Acceptance MP-44/MP-45]
 
 ## Scenario Coverage
 
-- [ ] CHK013 Are lost commit acknowledgment, delayed queued commits, reconciliation exclusion and repeated aggregate contributions covered as distinct recovery scenarios? [Coverage, Spec §US2.3..5/FR-008/FR-016, Model §Operation State Transitions, Acceptance MP-14..18/MP-39]
-- [ ] CHK014 Are missing/stale backups, unresolved reservations, simultaneous open/upgrade attempts, interrupted schema changes and failed required initialization addressed before normal use is allowed? [Coverage, Spec §US4.1..5, Recovery §Schema Inventory and Admission/Authorized Upgrade v1 to v2, Acceptance MP-32..36/41..43]
+- [x] CHK013 Are lost commit acknowledgment, delayed queued commits, reconciliation exclusion and repeated aggregate contributions covered as distinct recovery scenarios? [Coverage, Spec §US2.3..5/FR-008/FR-016, Model §Operation State Transitions, Acceptance MP-14..18/MP-39]
+- [x] CHK014 Are missing/stale backups, unresolved reservations, simultaneous open/upgrade attempts, interrupted schema changes and failed required initialization addressed before normal use is allowed? [Coverage, Spec §US4.1..5, Recovery §Schema Inventory and Admission/Authorized Upgrade v1 to v2, Acceptance MP-32..36/41..43]
 
 ## Edge Case Coverage
 
-- [ ] CHK015 Are exact ticket expiry, retained or pruned receipts, restored-away epochs and restored cursors addressed without assuming permanent receipt availability or blind automated replay? [Edge Cases, Spec §FR-008/FR-015/FR-021, Model §Operation State Transitions/Pages and Continuations, Acceptance MP-17/MP-42/MP-45]
-- [ ] CHK016 Are empty-store detection, unrelated layouts, newer unsupported schemas, corrupt records and committed WAL contents distinguished so inspection or backup cannot silently reinterpret or discard data? [Edge Cases, Spec §FR-013/FR-017/FR-021, Recovery §Schema Inventory and Admission/Backup and Restore Walkthrough, Acceptance MP-21/MP-33/MP-43/MP-44]
+- [x] CHK015 Are exact ticket expiry, retained or pruned receipts, restored-away epochs and restored cursors addressed without assuming permanent receipt availability or blind automated replay? [Edge Cases, Spec §FR-008/FR-015/FR-021, Model §Operation State Transitions/Pages and Continuations, Acceptance MP-17/MP-42/MP-45]
+- [x] CHK016 Are empty-store detection, unrelated layouts, newer unsupported schemas, corrupt records and committed WAL contents distinguished so inspection or backup cannot silently reinterpret or discard data? [Edge Cases, Spec §FR-013/FR-017/FR-021, Recovery §Schema Inventory and Admission/Backup and Restore Walkthrough, Acceptance MP-21/MP-33/MP-43/MP-44]
 
 ## Non-Functional Requirements
 
-- [ ] CHK017 Are finite failure outcomes and sanitized corrective guidance specified for contention, capacity, unavailable/corrupt state and unexpected provider errors, without exposing paths, secrets or record contents? [Reliability/Security, Spec §FR-009/FR-010/FR-019, API §Failure Classification, Acceptance MP-19..22]
-- [ ] CHK018 Are the durable fault model, required configuration/environment attribution and limits of process-termination evidence explicit, without claiming power-loss, device-loss or untested-filesystem certification? [Durability, Spec §FR-020/FR-024/Assumptions, Recovery §Qualification Configuration, Acceptance §Evidence and Regression Gates]
+- [x] CHK017 Are finite failure outcomes and sanitized corrective guidance specified for contention, capacity, unavailable/corrupt state and unexpected provider errors, without exposing paths, secrets or record contents? [Reliability/Security, Spec §FR-009/FR-010/FR-019, API §Failure Classification, Acceptance MP-19..22]
+- [x] CHK018 Are the durable fault model, required configuration/environment attribution and limits of process-termination evidence explicit, without claiming power-loss, device-loss or untested-filesystem certification? [Durability, Spec §FR-020/FR-024/Assumptions, Recovery §Qualification Configuration, Acceptance §Evidence and Regression Gates]
 
 ## Dependencies & Assumptions
 
-- [ ] CHK019 Are durable SQLite obligations separated from memory-only logical schema simulation, synthetic artifact authority and later production/general certification, with no applicable logical case silently waived? [Dependencies, Spec §FR-023/FR-024/Assumptions, Plan §Technical Context, Acceptance §Qualification Classes, MP-34..36/MP-48]
+- [x] CHK019 Are durable SQLite obligations separated from memory-only logical schema simulation, synthetic artifact authority and later production/general certification, with no applicable logical case silently waived? [Dependencies, Spec §FR-023/FR-024/Assumptions, Plan §Technical Context, Acceptance §Qualification Classes, MP-34..36/MP-48]
 
 ## Ambiguities & Conflicts
 
-- [ ] CHK020 Do the written evidence, future-command and regression requirements distinguish a planned recovery procedure, a measured qualification result and implementation authorization without conflicting capability claims? [Consistency, Spec §SC-008/Assumptions, Acceptance §Determinism and Failure Evidence/Evidence and Regression Gates, Quickstart §Checks Available Today/Planned End-to-End Acceptance]
+- [x] CHK020 Do the written evidence, future-command and regression requirements distinguish a planned recovery procedure, a measured qualification result and implementation authorization without conflicting capability claims? [Consistency, Spec §SC-008/Assumptions, Acceptance §Determinism and Failure Evidence/Evidence and Regression Gates, Quickstart §Checks Available Today/Planned End-to-End Acceptance]
+
+## Assisted Requirements Review: 2026-10-21
+
+The user explicitly requested Copilot to run the checklists and highlight only
+decisions needing maintainer attention. Copilot reviewed all 20 criteria against
+the specification and seven planning artifacts at baseline `72f1078`, following
+the separately requested assisted-review pattern used for earlier features.
+This is reviewer assessment, not checklist generation, a scheduled driver
+stage, independent human inspection or implementation evidence.
+
+**Result**: 20/20 criteria satisfied; no unresolved finding, waiver or decision
+requires maintainer attention. Checked markers record requirements-quality
+satisfaction and satisfy this checklist's pre-implementation review gate.
+No requirement or design changes are needed.
+
+| Criteria | Written evidence supporting satisfaction |
+| --- | --- |
+| CHK001-CHK004 | FR-008..010/017/018, Model operation transitions and API failure/schema sections distinguish reserved, committed and abandoned tickets; atomic receipts and fingerprints prevent duplicate effects. The 24-hour lifetime, 100,000-row capacity, 100-row expired-only pruning and explicit foreign/expired refusal prohibit blind replay. Schema inspection/admission distinguishes empty, compatible, old, incompatible and corrupt state. |
+| CHK005-CHK009 | API budgets/publication/host wiring and Recovery admission/upgrade/restore define inclusive queue/authority/native-work budgets, bounded caller waiting without hard preemption, retained guards/connections under late work, closed admission, process-lifetime exclusive ownership and existing F-02 cleanup. Only explicit supported v1-to-v2 upgrade with a fresh verified compatible capture may proceed; restore/upgrade rotates epochs. No reset, fallback, downgrade or guessed lock removal is authorized. |
+| CHK010-CHK012 | Recovery M0/M1/M2 and U0..U4 matrices with MP-38..45 require actual parent-terminated children, confirmed exit, complete contents/receipt/schema/epoch comparison and explicit retry/admit/restore actions. Backup verification compares the captured logical state with compatible application versions; rollback loses post-capture writes and requires artifact reconciliation. |
+| CHK013-CHK016 | Model ticket/page transitions, Recovery schema inventory/upgrade/backup and MP-14..18/21/32..36/39/41..45 cover delayed commits fenced by reconciliation, uncertain aggregate replay, missing/stale recovery points, unresolved reservations, simultaneous owners, exact expiry and old-epoch rejection. Empty detection examines actual contents; read-only incompatible inspection preserves bytes, corrupt state is not absence and driver backup includes committed WAL. |
+| CHK017-CHK018 | API fixed failures and MP-19..22 require classified finite outcomes and safe operator guidance without raw exceptions, paths, secrets or record content. Recovery configuration and acceptance manifest require exact driver/native/runtime/OS/configuration attribution, WAL/FULL/foreign keys and explicit process-failure-only scope, not device/power-loss or untested-filesystem certification. |
+| CHK019-CHK020 | FR-023/024, Plan technical context, Acceptance qualification/evidence sections and Quickstart separate both fixtures' mandatory logical cases from SQLite-only durable proof, synthetic artifact authority and later production/F-07 support. New metadata commands remain planned; paired red/green, actual crash/recovery and existing regression gates remain mandatory before qualification claims. |
+
+Actual crash recovery, schema exclusion, verified backup restoration and bounded
+native-work ownership remain implementation proof obligations, not unresolved
+product decisions. The checkpoint remains `implement / ready`; this review
+does not begin or finish a driver stage.
 
 ## Notes
 
-- Newly generated markers remain unchecked; generation is not review approval.
-- The user requested an assisted requirements review and identification of any decisions needing maintainer judgment; report that assessment separately from checkbox approval.
-- Mark items `[x]` only after reviewer approval confirms the requirements-quality criterion is satisfied. Leave unresolved criteria unchecked with an attributable finding.
+- All 20 items were generated unchecked. The explicitly requested review above now records requirements-quality satisfaction, not implementation completion.
+- Mark items `[x]` only after review confirms the requirements-quality criterion is satisfied. Leave unresolved or unevaluated criteria unchecked with an attributable finding.
 - `/speckit-implement` reads checklist checkbox state as a gate and must not modify markers.
 - `checklists/requirements.md` has a separate built-in lifecycle maintained by `/speckit-specify` and `/speckit-clarify`.
 - Source labels refer to [specification](../spec.md), [model](../data-model.md), [API](../contracts/metadata-api.md), [plan](../plan.md), [recovery](../contracts/recovery.md), [acceptance](../contracts/acceptance.md) and [quickstart](../quickstart.md).
