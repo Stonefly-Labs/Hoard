@@ -155,3 +155,30 @@ README/example guides must distinguish operation-contract qualification from
 production SQLite delivery, with safe failure/upgrade/rollback instructions.
 No OpenTofu apply, infrastructure mutation, package publication, release,
 production database repair or rendered UI is part of this guide.
+
+## Measured Implementation Results
+
+`$PRIVATE_EVIDENCE` below represents the existing owner-private evidence parent
+outside Git; personal directory paths are deliberately not published.
+
+| Executed command | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --update-locks --evidence "$PRIVATE_EVIDENCE/metadata-qualified-update"` | Passed complete fixture qualification; resulting locks reviewed |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/metadata-qualified-settled"` | Passed independent current-source locked qualification and formatting/analyzers; all locks unchanged |
+| `bash scripts/validate-metadata.sh --phase packages --evidence "$PRIVATE_EVIDENCE/metadata-qualified-packages-repaired"` | Passed fresh prerequisite/package proof; correctly reports `qualification: false` |
+| `bash scripts/validate-foundation.sh` | Passed 615 .NET tests and original package/compatibility/boundary proofs |
+| `bash scripts/validate-lifecycle.sh` | Passed 504 tests, nine boundary proofs and seven package journeys |
+| `bash scripts/validate-configuration.sh` | Passed 201 tests, six boundary proofs, nine package journeys and five real interruption barriers |
+| `bash scripts/validate-discovery.sh` | Passed 137 tests, D01..D40, nine package journeys and 18 actual graph scans |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
+| `git diff --check` | Passed |
+
+The complete run executes 59 common tests per provider with zero failures or
+skips and verifies 96 exact entries: 87 applicable passes and nine memory D
+exclusions. Actual M0/M1/M2, U0..U4, R0/R1 and native-stall ownership/recovery
+proof, unchanged binaries and all seven package graphs pass. The measured
+environment is macOS 26.5.0/APFS, .NET 10.0.7, driver assembly 10.0.13.0 and
+SQLite 3.53.3. These results qualify only this fixture configuration for the
+documented process-stop fault model. See the [plan](plan.md#implementation-evidence)
+for source attribution, architecture corrections and the complete requirement
+audit; later convergence/finalization/merge/release gates remain separate.

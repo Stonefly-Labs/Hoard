@@ -2479,7 +2479,8 @@ new operational API, host behavior or supported capability.
 
 ### F-05 operational metadata implementation
 
-The same running implementation continues beyond setup through all 83 tasks.
+The full implementation continues beyond setup through all functional and
+acceptance obligations in the 83-task feature.
 `Hoard.Abstractions.Metadata` now supplies opt-in store/schema/publication
 contracts without changing `IMetadataProvider`. Independently packed SQLite and
 copy-on-write memory fixtures preserve exact caller identities, atomic groups/
@@ -2532,10 +2533,22 @@ prior feature artifacts and the compile-only host source remain unaffected:
 no deployment, secret permissions, protocol/UI operation, new listener,
 production provider or published package is added.
 
-Measured full/regression results and the required implementation architecture
-review are recorded in the [plan](../specs/005-metadata-persistence/plan.md#implementation-evidence).
-The driver remains `implement / running` until every task and gate passes;
-then the next separately invoked stage is `converge`, not merge/release.
+Complete update-lock and independent default locked qualification pass:
+59 common tests per provider, 87 applicable case passes and nine explicit
+memory durability exclusions. All eight M/U crash boundaries, R0/R1 restore
+installation interruptions, native cleanup ownership, unchanged consumer/common
+binaries, frozen marker compatibility and seven real package graphs pass.
+The final locked foundation/lifecycle/configuration/discovery commands and
+76 repository tooling tests pass; every tracked lock hash is unchanged.
+
+The [plan](../specs/005-metadata-persistence/plan.md#implementation-evidence)
+records exact commands/results, the measured macOS/APFS configuration, all three
+architecture findings and their verified corrections, and the final requirement
+audit. No implementation extension hooks are configured. The durable driver
+handoff schedules the separately invoked `converge` stage. Draft
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14) remains incomplete until
+convergence and finalization; feature merge, source release and dependency
+completion remain later gates. This invocation runs none of them.
 
 ```mermaid
 flowchart TD

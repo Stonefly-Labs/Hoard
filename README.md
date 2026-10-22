@@ -649,7 +649,8 @@ gate; **`implement`** remains next through a separate invocation. The checkpoint
 all 83 tasks and the specification/design remain unchanged. Requirements review
 and artifact analysis are not persistence, durability or production-support
 evidence.
-The separately authorized implementation stage is now **running**. Setup
+The separately authorized implementation delivers the operational contract and
+fixture qualification. Setup
 T001..T006 added the deterministic harness, independently packed fixture
 scaffolds, pinned private SQLite dependency, retained pre-F-05 binary recipe
 and fail-closed [metadata evidence command](scripts/validate-metadata.sh).
@@ -665,6 +666,12 @@ not applicable. Preparation and focused selectors never claim full qualification
 The [quickstart](specs/005-metadata-persistence/quickstart.md) documents commands,
 retained private evidence, recovery and fixture-only limits. Implementation
 does not deliver a production persistence provider or runnable cache.
+Complete locked qualification passes all 87 applicable provider/case entries;
+the nine memory durability entries are explicitly non-applicable. Existing
+foundation/lifecycle/configuration/discovery acceptance and repository tooling
+also pass with unchanged lock hashes. The feature remains a draft in
+[PR #14](https://github.com/Stonefly-Labs/Hoard/pull/14); separate `converge`
+and `finalize` stages remain before any merge gate.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

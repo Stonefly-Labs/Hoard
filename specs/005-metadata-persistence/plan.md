@@ -284,8 +284,8 @@ fresh baseline/package prerequisites first; each later phase still checks its
 actual completed dependencies. The new regression fails for both recovery and
 packages before the repair and passes afterward. Actual fresh package mode
 passes all 96 entries while correctly reporting `qualification: false`.
-Final full locked/current-runner replay and regression results remain required
-before the running implementation checkpoint can finish. Private destination
+Final full locked/current-runner replay and all existing-behavior regression
+gates now pass. Private destination
 paths below are represented by `$PRIVATE_EVIDENCE`, an existing owner-private
 directory outside the repository; no user path or runtime artifact is committed.
 
@@ -301,13 +301,25 @@ the failure.
 | Executed command | Result |
 | --- | --- |
 | `bash scripts/validate-metadata.sh --update-locks --evidence "$PRIVATE_EVIDENCE/metadata-qualified-update"` | Passed complete qualification as described above |
+| `bash scripts/validate-metadata.sh --evidence "$PRIVATE_EVIDENCE/metadata-qualified-settled"` | Passed complete current-source locked qualification, formatting/analyzers, 59 tests per provider and all 96 entries; no lock mutation |
 | `bash scripts/validate-metadata.sh --phase packages --evidence "$PRIVATE_EVIDENCE/metadata-qualified-packages-repaired"` | Passed fresh logical/recovery/package proof; explicitly not full qualification |
 | `bash scripts/validate-foundation.sh --update-locks` | Passed 615 .NET tests and all original declaration/registration/package/boundary proofs |
 | `bash scripts/validate-lifecycle.sh --update-locks` | Passed 504 tests, nine boundary proofs and seven package journeys |
 | `bash scripts/validate-configuration.sh --update-locks` | Passed 201 tests, six boundary proofs, nine package journeys and five actual publication-interruption barriers |
 | `bash scripts/validate-discovery.sh --update-locks` | Passed 137 tests, D01..D40, nine package journeys and 18 actual graph scans |
+| `bash scripts/validate-foundation.sh` | Passed 615 .NET tests and every original declaration/registration/package/boundary proof |
+| `bash scripts/validate-lifecycle.sh` | Passed 504 tests, nine boundary proofs and seven package journeys |
+| `bash scripts/validate-configuration.sh` | Passed 201 tests, six boundary proofs, nine package journeys and five actual publication-interruption barriers |
+| `bash scripts/validate-discovery.sh` | Passed 137 tests, D01..D40, nine package journeys and 18 actual graph scans; fixture p95 0.036 s |
 | `python3 -m unittest discover -s tests/tooling -v` | Passed 76 tests |
 | `git diff --check` | Passed |
+
+The final full manifest identifies source commit
+`62fdda0b0c533ff8a6a1326731bfbc7f29f7ad03` and source/lock fingerprint
+`2594b90d9871c0a0555e2e5c590ea77dab461c543dbe50ededa5dda552922f5a`.
+Subsequent changes are documentation/task/checkpoint handoff only. A separate
+whole-repository lock-inventory comparison confirms every default acceptance
+command preserved the reviewed hashes.
 
 The mandatory implementation architecture review found three confirmed issues,
 all corrected before handoff:
@@ -323,6 +335,33 @@ level, subject to complete runtime proof. The complete qualification above now
 supplies that proof, including configured stop, original-ticket reconciliation
 and both interrupted restore installations. The reviewer ran no commands; its
 static assessment does not substitute for MP-47 or runtime evidence.
+
+### Final requirement audit
+
+All 24 FRs, eight SCs, 23 story scenarios, 14 edge cases and 48 MP cases retain
+the [task traceability](tasks.md#requirement-and-acceptance-traceability) and
+[scenario/edge mapping](contracts/acceptance.md#story-and-edge-case-coverage).
+Every applicable MP entry was individually verified against its current proof,
+provider/module/schema/configuration and hash attribution: 39 L cases per
+provider plus nine SQLite D cases, with no missing/failed/skipped L obligation.
+The public API, boundary, native ownership, recovery and red/green evidence
+above satisfy their corresponding tasks; no requirement or acceptance waiver
+was introduced.
+
+The specification, constitution and reviewer-owned checklist bytes remain
+unchanged: requirements 16/16, metadata 20/20 and recovery 20/20. Historical
+generation/setup status paragraphs describe those earlier stages, not current
+implementation support. No pre/post implementation extension hooks exist.
+README and affected provider/example/development/model/API/acceptance/recovery
+guides are current; baseline product/architecture/ADR diagrams, release/cloud/
+UI/IaC guides and compile-only example source are unaffected for the reasons
+recorded in DEVELOPMENT. No private runtime evidence, database, binary or
+canary capture is tracked.
+
+T083 records the durable commit/push/draft-PR/checkpoint handoff. Convergence,
+finalization, feature merge, source prerelease, production/F-07 qualification,
+other engines/filesystems and infrastructure/deployment remain separate gates,
+not completed or authorized by these fixture results.
 
 ## Complexity Tracking
 

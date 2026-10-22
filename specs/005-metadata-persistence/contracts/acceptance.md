@@ -125,3 +125,20 @@ behavior. No source packages are published and no release tag or product CI
 is introduced by this feature. Full commands appear in the
 [quickstart](../quickstart.md). Focused/preparation selectors explicitly remain
 non-qualifying; only full mode can report complete qualification.
+
+## Measured Fixture Scope
+
+| Provider | Logical result | Durable result |
+| --- | --- | --- |
+| SQLite 0.1.0, fixture-sqlite-v2 | All 39 L cases passed | All nine D cases passed |
+| Memory 0.1.0, fixture-memory-v2 | All 39 L cases passed | Nine `NotApplicable: non-durable fixture` entries |
+
+The final current-source locked run verifies all 96 entries, with 87 applicable
+passes and no missing/failed/skipped applicable case. It executes 59 common tests
+per provider, all eight M/U crashes, additional R0/R1 restore interruptions,
+native-stall ownership, backup/restore, unchanged consumers, frozen marker
+compatibility, seven actual package graphs and both runtime mutation pairs.
+Source/configuration attribution, exact commands/results and resolved review
+findings are in the [plan](../plan.md#implementation-evidence). The measured
+macOS/APFS process-stop scope grants no production, other-engine/filesystem,
+power-loss, multi-node or F-07 claim.
