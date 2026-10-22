@@ -10,9 +10,12 @@
 immutable qualification/regression replay, documentation, requirement audit
 and the T084 malformed-continuation, T085 stored-page corruption and
 T086/T087 filtered-page/receipt corruption corrections with paired red/green proof.
-Subsequent convergence is clean and finalization is complete; the driver
-checkpoint schedules `await_merge`. PR #14 is ready for maintainer review and
-merge; feature completion and source release remain separate post-merge gates.
+Subsequent convergence is clean and finalization is complete. PR #14 merged at
+`81e2e8d41e08aafc9e89f388dab78e7509227dd5`; the separate `await_merge` stage
+verified and published `v0.0.5-alpha` at that exact merge and recorded F-05
+complete. [Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
+must merge before the next specification. See
+[merge/release evidence](../../docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release).
 See [finalization evidence](plan.md#finalization-evidence).
 The built-in requirements checklist remains 16/16. The reviewer-owned
 [metadata](checklists/metadata.md) and [recovery](checklists/recovery.md)
