@@ -22,9 +22,10 @@ dependency management into another full-time job.
 > [!IMPORTANT]
 > **Foundation only.** This repository currently contains product/design documents,
 > development workflows, repository tooling, .NET provider contracts and a tested
-> fixture-only module lifecycle, configuration, and protected discovery boundaries,
+> fixture-only module lifecycle, configuration, protected discovery boundaries,
+> and opt-in metadata operations with SQLite/memory qualification fixtures,
 > plus an operator-run Azure identity bootstrap.
-> There is no runnable cache, working provider, UI, container, or published package.
+> There is no runnable cache, production provider, UI, container, or published package.
 > Everything in the product overview below describes the planned experience.
 
 [Explore the vision](docs/PRODUCT_VISION.md) ·
@@ -87,6 +88,9 @@ bash scripts/validate-configuration.sh
 
 # Protected discovery, JSON consumer, private loopback adapters and compatibility.
 bash scripts/validate-discovery.sh
+
+# Metadata semantics on independent packages, real SQLite crash/recovery proof.
+bash scripts/validate-metadata.sh
 ```
 
 For repository work, use Git, GitHub CLI, Python 3.11+, and a stable .NET 10 SDK
@@ -646,14 +650,21 @@ all 83 tasks and the specification/design remain unchanged. Requirements review
 and artifact analysis are not persistence, durability or production-support
 evidence.
 The separately authorized implementation stage is now **running**. Setup
-T001..T006 adds the deterministic harness, independently packed fixture
+T001..T006 added the deterministic harness, independently packed fixture
 scaffolds, pinned private SQLite dependency, retained pre-F-05 binary recipe
 and fail-closed [metadata evidence command](scripts/validate-metadata.sh).
-Preparation explicitly reports no qualification; full mode refuses incomplete
-runtime evidence. No operational metadata API, store, schema or conformance
-result is delivered by setup. See the
-[quickstart](specs/005-metadata-persistence/quickstart.md) for bounded preparation
-and the remaining obligations.
+The subsequent implementation adds BCL-only records and separate store/schema/
+publication interfaces without changing the marker. Independently packaged
+SQLite and copy-on-write memory fixtures exercise transactions, receipts,
+references, leases, admission and bounded cleanup. The runner uses one common
+test/consumer binary for both compositions, real parent-terminated SQLite
+children, verified isolated restore, actual package scans and the frozen old
+marker binary. Its complete manifest requires all 39 logical cases for both
+providers and nine SQLite-only durable cases; memory durability is explicitly
+not applicable. Preparation and focused selectors never claim full qualification.
+The [quickstart](specs/005-metadata-persistence/quickstart.md) documents commands,
+retained private evidence, recovery and fixture-only limits. Implementation
+does not deliver a production persistence provider or runnable cache.
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

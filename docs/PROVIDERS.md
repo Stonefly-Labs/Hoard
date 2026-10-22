@@ -2,7 +2,7 @@
 
 F-01 supplies source-level .NET 10 declarations and registration-only composition
 at local acceptance package version `0.1.0`. Nothing is published to nuget.org.
-There is no working cache, protocol, persistence, byte store, authentication,
+There is no working cache, production persistence provider, protocol, byte store, authentication,
 or certification. F-02 adds opt-in fixture-tested module lifecycle in
 Hosting; F-04 adds protected metadata/observations, not provider operations. Start with the
 [compile-only host](../examples/CustomHost/README.md) and
@@ -116,6 +116,62 @@ wiring, bounds, refresh rules and fixture-only acceptance. A usable operation
 still needs its own execution policy; management-read grants none. Reference
 consumer decisions do not certify production protocols/providers, F-07
 conformance, external proxies, authentication or rendered accessibility.
+
+## Opt-in metadata operations and fixture qualification
+
+F-05 adds `Hoard.Abstractions.Metadata`, not members on `IMetadataProvider`.
+`IMetadataStore`, `IMetadataSchemaAdministration` and
+`IMetadataPublicationAuthority` are separate BCL-only contracts. Existing
+marker-only registrations still compile and their frozen pre-F-05 binary
+executes unchanged against the new platform. Core remains provider-free.
+
+The independently packed [SQLite](../tests/fixtures/metadata/Sqlite/) and
+[memory](../tests/fixtures/metadata/Memory/) implementations are **test fixtures**,
+not production providers. They share public validation, synthetic inputs and
+assertions, never transaction, reference, lease or recovery algorithms. SQLite
+privately owns its SQL, native driver, file lock, worker, WAL schema and backup;
+memory owns immutable committed roots and non-durable logical images.
+
+Use the compiled [fixture host adapter](../tests/fixtures/metadata/HostAdapters/MetadataFixtureModule.cs)
+and [configured integration test](../tests/contracts/Hoard.Metadata.Tests/Cases/MetadataHostIntegrationTests.cs)
+as the executable composition example. Existing F-02/F-03 selects one metadata
+authority. Module registration/construction opens nothing; initialization explicitly
+inspects/creates/adopts the configured store, fails readiness on error and maps
+no routes. Disabled modules create no file or worker. Secrets, admission policy
+and publication authority are host-owned, not caller-substituted or re-resolved
+by persistence. The fixture introduces no discovery support claim.
+
+Reserve an operation ticket before mutation. Retry identical content with that
+same ticket only while valid; reconcile uncertain acknowledgment rather than
+inventing a new ticket. Reconciliation either returns the original receipt or
+abandons/fences the reservation. Expired/foreign/pruned tickets cannot execute.
+Atomic batches use revision conditions and final graph validation; read groups
+have one committed snapshot, while keyset pages are not historical snapshots.
+Keep caller canonicalization/auth partitions exact; providers do not normalize
+identities or make authorization decisions.
+
+Publication guards come from the one injected shared authority, are acquired
+outside writer exclusion and remain owned through actual settlement. Artifact
+length/reference changes commit with the entry and receipt. Zero-reference
+confirmation is metadata evidence only: byte verification, active readers,
+cross-store sequencing, orphan handling and physical deletion remain shared
+cache/storage responsibilities. Leases use owner/generation/expiry fencing and
+a monotonic effective time floor, not a distributed lock.
+
+Operations have one overall budget (default five seconds, 1 ms..30 seconds);
+administration defaults to 30 seconds with a two-minute maximum. A caller
+deadline does not preempt native I/O. Late work blocks admission and retains
+connection/lock/guards; cleanup exceeding 30 seconds reports explicit incomplete
+ownership, never successful disposal. Trusted stuck native code may require
+operator-controlled process termination.
+
+Run `bash scripts/validate-metadata.sh`; see the
+[quickstart](../specs/005-metadata-persistence/quickstart.md) and
+[recovery procedure](../specs/005-metadata-persistence/contracts/recovery.md).
+All 39 L cases apply independently to both packages. SQLite additionally has
+nine D cases; memory reports `NotApplicable: non-durable fixture`. These results
+do not qualify PostgreSQL/NoSQL, other filesystems, multi-node operation,
+power/device-loss protection, F-07 certification or production cache support.
 
 ## Compatibility and release obligations
 
@@ -402,7 +458,7 @@ its intentional disabled-version exemption.
 | F-02 | Implemented bounded, fixture-only module composition/lifecycle; no operational provider |
 | F-03 | Implemented fixture-backed configuration, owner secrets and synthetic conversion feeding the existing validator |
 | F-04 | Sanitized management capability discovery |
-| F-05 | Metadata operations, concurrency, transactions, schema/recovery |
+| F-05 | Implemented additive metadata operations and independent fixture qualification; production persistence remains separate |
 | F-06 | Artifact streaming, staging, commit visibility, read/delete guarantees |
 | F-07 | Reusable operational provider conformance and support qualification |
 | F-08 | Identity normalization, scheme composition, central permission mapping |

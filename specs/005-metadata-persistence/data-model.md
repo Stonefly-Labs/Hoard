@@ -1,7 +1,8 @@
 # F-05 Logical Metadata Model
 
-**Status**: Proposed public values and observable semantics, not implemented
-types or a portable physical schema. See [API](contracts/metadata-api.md).
+**Status**: Implemented public values and fixture-tested observable semantics,
+not a portable physical schema. See [API](contracts/metadata-api.md) and
+[implementation evidence](plan.md#implementation-evidence).
 
 ## Common Values and Validation
 

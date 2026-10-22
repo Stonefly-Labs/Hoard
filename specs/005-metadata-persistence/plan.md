@@ -4,9 +4,10 @@
 
 **Input**: Feature specification from `specs/005-metadata-persistence/spec.md`
 
-**Status**: Phase 0/1 design only. No metadata API, database, migration,
-qualification adapter or acceptance command below has been implemented by this
-stage. Existing specification and checklist markers are unchanged.
+**Status**: Implementation running; additive operation contracts, independent
+fixtures and the qualification orchestrator are implemented. See
+[implementation evidence](#implementation-evidence) for measured checks and
+remaining stage gates. Specification and reviewer-owned checklists are unchanged.
 
 ## Summary
 
@@ -31,7 +32,7 @@ Python standard-library acceptance orchestration and Bash entry point.
 **Primary Dependencies**: Abstractions stays BCL-only. SQLite qualification
 uses private `Microsoft.Data.Sqlite` from the stable .NET 10 servicing line,
 selected with an advisory/license check and pinned centrally with tracked
-locks during implementation. No SQLite/EF package currently exists in
+locks during implementation. Microsoft.Data.Sqlite 10.0.13 is now pinned in
 `Directory.Packages.props`. Direct parameterized SQL is sufficient; EF Core is
 not mandatory and no EF migrations/tool dependency is introduced.
 
@@ -182,7 +183,7 @@ No unresolved planning clarification remains.
 ## Acceptance Traceability
 
 Case IDs below refer to the normative [acceptance matrix](contracts/acceptance.md).
-All are planned obligations; no case has passed in this planning stage.
+These were planning obligations; measured implementation evidence follows below.
 
 | Requirements | Proof cases | Outcomes |
 | --- | --- | --- |
@@ -211,9 +212,100 @@ and late-work ownership, ticket/reference/lease interleavings, real SQLite
 crash/schema/backup recovery, and exact dependency/environment qualification.
 The agent ran no commands and made no implementation/qualification claim.
 
-Implementation evidence, custom requirements-quality review, tasks, analysis,
-production qualification and schema operations remain outstanding. No extension
-hooks are configured. The next separately authorized stage is `checklist`.
+That historical planning review is not implementation approval. Custom
+requirements review, task generation and read-only analysis subsequently passed.
+Production qualification remains out of scope. Implementation-stage review and
+checks are recorded below; no extension hooks are configured.
+
+## Implementation Evidence
+
+Implementation is fixture-scoped: public BCL-only values/records/operations,
+separate store/schema/publication interfaces and exact canonical encoding;
+SQLite's private parameterized native statements, bounded owned worker and
+durable ledger; independently implemented immutable memory roots; existing
+F-02/F-03 configured host integration with no routes or fallback.
+
+Equivalent cohesive file grouping preserves the task semantics: values include
+continuations; record/read logic lives in each store/state plus mutation/page
+partials; operation/worker partials own publication, lease, failures and
+settlement. HostAdapters owns session/composition/module helpers. CrashRunner's
+`Program.cs` and `CrashData.cs` contain all fixed mutation/upgrade/recovery
+scenarios. `Cases/` contains package-only common tests; actual durable proof and
+qualification-verifier tests live in the Python runner/tooling suite, not dummy
+xUnit durability passes. The real negative SDK/query/transaction fixture is
+`BoundaryLeak/`, equivalent to the planned `Forbidden/` grouping.
+
+Focused runs establish complete old/new graph visibility (including independent
+SQLite engine reads), actual writer contention, atomic receipts, exact expiry
+and rollback time floors, lease generation overflow, reference ABA, late
+publication guards, configured failure/disabled paths and owned incomplete
+cleanup. Actual children were signal-terminated at M0/M1/M2 and U0..U4, then
+reopened and compared. Driver backup includes committed WAL data; isolated
+compatible-v1 restore compares the full logical digest and requires the
+synthetic artifact set. Stuck `sqlite3_step` callback work remains process/file/
+guard-owned after caller timeout and explicit incomplete cleanup.
+
+Runtime red assertions exposed and repaired ticket revival after clock
+rollback, lease expiry omitted at the final decision, and typed exceptions
+after commit incorrectly classified as definite invalid input/capacity.
+The reproducible full runner additionally mutates post-commit uncertainty and
+failed-case evidence refusal in isolated copies and requires their intended
+assertion failure followed by the same passing test. It rejects incomplete,
+failed, skipped, stale, foreign, duplicate and hash-mismatched applicable proof.
+
+Actual package scanning now recognizes explicitly classified native-only SDK
+packages, selects nuspec dependency groups using resolved asset frameworks and
+permits package pruning only with matching SDK pruning/version evidence and
+an actual BCL reference. Existing rules/negative inventories are retained.
+The frozen pre-F-05 marker/registration executable is not rebuilt or overwritten.
+
+The complete `--update-locks` qualification passed with 59 common tests per
+provider, all 96 provider/case entries (87 applicable passes and nine explicit
+memory D exclusions), all eight M/U process-stop boundaries and both R0/R1
+restore-installation interruptions. Both runtime mutation pairs produced their
+intended assertion failure and then passed. All seven actual package graphs,
+the negative SDK/query/transaction fixture and frozen marker binary passed.
+The measured configuration is macOS 26.5.0/APFS, .NET 10.0.7,
+Microsoft.Data.Sqlite assembly 10.0.13.0 and native SQLite 3.53.3; effective
+WAL/FULL/foreign-keys/busy-timeout-zero settings were read from the engine.
+
+The 37 changed tracked locks were reviewed. Legacy fixture/example dependency
+identities and versions are unchanged; only their local Hoard package content
+hashes change with the additive Abstractions payload. The new negative fixture
+uses the same selected SQLite graph. Memory references Abstractions only.
+Repository tooling passes 75 tests, including 14 metadata-verifier tests.
+Retained evidence is owner-only before copying, outside Git; memory D entries
+reference applicability/overclaim proof with zero durable execution duration.
+
+Independent default locked replay and final regression results remain required
+before the running implementation checkpoint can finish. Private destination
+paths below are represented by `$PRIVATE_EVIDENCE`, an existing owner-private
+directory outside the repository; no user path or runtime artifact is committed.
+
+| Executed command | Result |
+| --- | --- |
+| `bash scripts/validate-metadata.sh --update-locks --evidence "$PRIVATE_EVIDENCE/metadata-qualified-update"` | Passed complete qualification as described above |
+| `bash scripts/validate-foundation.sh --update-locks` | Passed 615 .NET tests and all original declaration/registration/package/boundary proofs |
+| `bash scripts/validate-lifecycle.sh --update-locks` | Passed 504 tests, nine boundary proofs and seven package journeys |
+| `bash scripts/validate-configuration.sh --update-locks` | Passed 201 tests, six boundary proofs, nine package journeys and five actual publication-interruption barriers |
+| `bash scripts/validate-discovery.sh --update-locks` | Passed 137 tests, D01..D40, nine package journeys and 18 actual graph scans |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed 75 tests |
+| `git diff --check` | Passed |
+
+The mandatory implementation architecture review found three confirmed issues,
+all corrected before handoff:
+
+| Finding | Correction and regression proof |
+| --- | --- |
+| High: restored file could be admitted before verification/epoch rotation | Restore verifies and rotates a private sibling staging database, closes it, then installs without overwrite under target ownership. Cancellation after backup leaves no target; parent kills at R0 after backup and R1 before installation require an absent target, successful verified retry and old-ticket rejection. |
+| High: module stop only cleared readiness | Stop and disposal share one owned shutdown task, close store admission and await settlement. The configured lifecycle test holds a real read, observes rejected calls/not-ready state and pending host stop, then releases it to complete cleanup. |
+| Medium: unresolved reconciliation returned a definite-looking deadline/failure without its ticket | Both providers retain original tickets and return Uncertain/Reconcile for exclusion/deadline/cancellation/known unavailability. Focused tests hold writer exclusion around an already committed ticket and inject pre-decision I/O failure on a reservation, then verify original receipt or same-ticket execution. All SQLite typed exception mappings retain the ticket. |
+
+The bounded follow-up review found all three findings resolved at code-review
+level, subject to complete runtime proof. The complete qualification above now
+supplies that proof, including configured stop, original-ticket reconciliation
+and both interrupted restore installations. The reviewer ran no commands; its
+static assessment does not substitute for MP-47 or runtime evidence.
 
 ## Complexity Tracking
 

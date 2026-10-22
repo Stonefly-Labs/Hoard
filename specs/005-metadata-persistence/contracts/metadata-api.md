@@ -1,6 +1,6 @@
 # F-05 Provider-Neutral Metadata API
 
-**Status**: Proposed contract for later implementation, not current APIs.
+**Status**: Implemented opt-in contracts; fixtures are not production providers.
 Normative values are in the [model](../data-model.md); proofs are in
 [acceptance](acceptance.md). Namespace: `Hoard.Abstractions.Metadata`.
 

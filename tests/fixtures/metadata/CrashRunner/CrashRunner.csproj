@@ -2,6 +2,7 @@
   <PropertyGroup>
     <AssemblyName>Hoard.Fixtures.Metadata.CrashRunner</AssemblyName>
     <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Hoard.Abstractions" />

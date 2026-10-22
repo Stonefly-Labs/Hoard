@@ -1,6 +1,8 @@
 # F-05 Resolved Research
 
-**Date**: 2026-10-21. Design decisions, not implementation results.
+**Date**: 2026-10-21. Initial design decisions, followed by the implementation
+dependency selection below. Measured results belong to the
+[implementation evidence](plan.md#implementation-evidence).
 
 ## 1. Add operations without changing existing markers
 
@@ -187,11 +189,19 @@ Locked restores and the SDK's `dotnet list <prepared-Sqlite.csproj> package
 <private-NuGet.Config>` report no known advisory on this resolved graph at
 selection time. This is an advisory snapshot, not a guarantee against unknown
 native defects. Tracked locks retain exact versions and package content hashes.
-Native version/effective configuration and real durability evidence remain
-later implementation obligations.
+Native version/effective configuration and actual process-stop evidence are
+recorded by the qualification manifest, not inferred from package selection.
 
 Pre-change marker/registration proof is compiled from the immutable merged
 baseline `10ce78851b97b02bd83a8ef7da7ffdc2381d6519`, never against F-05 APIs.
 The private evidence freezes recipe, dependency and binary hashes before any
 Abstractions changes. The preparation command explicitly reports
 `qualification: false`; packaging empty fixture scaffolds is not conformance.
+
+The implemented SQLite fixture keeps the driver's connection/backup API but
+uses private SQLitePCLRaw prepared statements for immediate busy detection.
+Managed command retry behavior cannot enforce the specified subsecond overall
+lock budget; native busy timeout is zero and only lock acquisition retries
+within that original budget. This is private fixture logic, not a public SDK
+dependency or a new production provider. The independent memory fixture uses
+its own immutable-root algorithms and has no SQLite reference.

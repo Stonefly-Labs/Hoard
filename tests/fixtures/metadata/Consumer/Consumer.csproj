@@ -2,8 +2,10 @@
   <PropertyGroup>
     <AssemblyName>Hoard.Fixtures.Metadata.Consumer</AssemblyName>
     <IsPackable>false</IsPackable>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Hoard.Abstractions" />
+    <PackageReference Include="Hoard.Fixtures.Metadata.HostAdapters" />
   </ItemGroup>
 </Project>

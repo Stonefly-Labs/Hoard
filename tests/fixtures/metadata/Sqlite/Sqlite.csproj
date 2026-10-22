@@ -9,4 +9,8 @@
     <PackageReference Include="Hoard.Abstractions" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="SchemaV2.sql" LogicalName="Hoard.Fixtures.Metadata.Sqlite.SchemaV2.sql" />
+    <EmbeddedResource Include="SchemaV1.sql" LogicalName="Hoard.Fixtures.Metadata.Sqlite.SchemaV1.sql" />
+  </ItemGroup>
 </Project>

@@ -8,8 +8,9 @@ registration, and compile/package/boundary acceptance tooling. F-02 adds
 opt-in fixture-tested lifecycle in Hosting. F-03 adds fixture-backed configuration,
 owner-scoped local secrets and explicit synthetic conversion through that same
 lifecycle. F-04 adds opt-in protected discovery slices in Application and safe
-Hosting observations; Core remains empty. No caching engine,
-working providers, curated executable, UI, product CI/CD,
+Hosting observations; F-05 adds separate BCL-only metadata operations with
+independent SQLite/memory qualification fixtures. Core remains empty. No caching engine,
+production providers, curated executable, UI, product CI/CD,
 or deployment exists.
 Azure identity provisioning is a
 separate, explicitly authorized [operator action](../infra/bootstrap/README.md).
@@ -2475,6 +2476,66 @@ start convergence from setup. Requirements/checklist bytes remain unchanged.
 Provider/example guides, architectural/product diagrams, release/IaC guides
 and previous feature artifacts are unaffected by setup because there is no
 new operational API, host behavior or supported capability.
+
+### F-05 operational metadata implementation
+
+The same running implementation continues beyond setup through all 83 tasks.
+`Hoard.Abstractions.Metadata` now supplies opt-in store/schema/publication
+contracts without changing `IMetadataProvider`. Independently packed SQLite and
+copy-on-write memory fixtures preserve exact caller identities, atomic groups/
+receipts, bounded snapshot reads/keyset pages, references, fenced leases and
+explicit admission. HostAdapters uses existing configured F-02/F-03 composition:
+one selected authority, inert registration, no routes or disabled I/O, failure
+blocks readiness, no fallback or second lifecycle.
+
+```bash
+# Full fixture qualification, immutable locks, retained owner-private evidence.
+bash scripts/validate-metadata.sh
+# Focused proof; rebuild/verify prerequisites, explicitly not full qualification.
+bash scripts/validate-metadata.sh --phase logical
+bash scripts/validate-metadata.sh --phase recovery
+bash scripts/validate-metadata.sh --phase packages
+```
+
+Use `--update-locks` only for intentional source/package/dependency changes, then
+review locks and replay the default command independently. `--evidence` accepts
+a fresh destination outside Git with an existing parent; the runner prints the
+retained location. Proofs and synthetic databases/captures/binaries stay private.
+Each subprocess is bounded to ten minutes, with stricter operation/admin
+budgets. Only the exact owned temporary workspace and known children are cleaned
+up. Never remove a live database/WAL/owner file as recovery.
+
+The full manifest accounts for all 96 provider/case entries: 39 logical cases
+per implementation, nine additional SQLite durable cases and explicit
+`NotApplicable: non-durable fixture` for memory. It records actual local OS/
+runtime/filesystem/driver/native versions, effective WAL/FULL/foreign-key/busy
+settings, proof hashes/durations, all eight real signal-terminated crash
+boundaries, isolated verified-v1 restore, unchanged consumer/common binaries,
+frozen marker binary compatibility and permitted/forbidden actual package scans.
+Runtime mutations must cause the intended assertion failure, not compilation
+failure, before the same repaired test passes.
+
+The [quickstart](../specs/005-metadata-persistence/quickstart.md),
+[provider guide](PROVIDERS.md#opt-in-metadata-operations-and-fixture-qualification)
+and [recovery guide](../specs/005-metadata-persistence/contracts/recovery.md)
+document exact interfaces, ticket reconciliation/expiry, explicit upgrades,
+compatible backup readers, artifact reconciliation and cleanup ownership.
+File permissions and OS ownership apply only to private local fixture data.
+Native timeout cannot preempt I/O: late work retains its connection/lock/guards;
+30-second incomplete cleanup remains explicit and may require process termination.
+No physical-deletion permission or distributed safety follows from metadata.
+
+The product charter/specification, baseline architecture/ADR and product
+diagrams remain unchanged: their production topology and centralized cache
+responsibilities are not delivered by test fixtures. Release/IaC/cloud/UI guides,
+prior feature artifacts and the compile-only host source remain unaffected:
+no deployment, secret permissions, protocol/UI operation, new listener,
+production provider or published package is added.
+
+Measured full/regression results and the required implementation architecture
+review are recorded in the [plan](../specs/005-metadata-persistence/plan.md#implementation-evidence).
+The driver remains `implement / running` until every task and gate passes;
+then the next separately invoked stage is `converge`, not merge/release.
 
 ```mermaid
 flowchart TD

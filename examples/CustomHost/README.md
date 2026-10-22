@@ -122,6 +122,17 @@ ASP.NET Core shared framework; non-web package propagation is tested separately.
 Adding a package or marker here supplies no tested support, readiness or
 execution permission and does not turn this host into a runnable product.
 
+F-05 leaves this marker-only example unchanged. Its new operational interfaces
+are opt-in, not additional marker members. The separately compiled
+[metadata fixture consumer](../../tests/fixtures/metadata/Consumer/MetadataConsumer.cs)
+uses only `IMetadataStore`/schema/publication contracts for its journey, with
+[host adapters](../../tests/fixtures/metadata/HostAdapters/) selecting SQLite or
+memory and using the existing lifecycle/configuration gate. Run
+`bash scripts/validate-metadata.sh` for same-binary composition, old marker-binary
+compatibility and separately attributed L/D proof. Registration here neither
+opens metadata nor grants publication, recovery or deletion permission. No
+production SQLite/PostgreSQL composition API is supplied by these fixtures.
+
 There are no migrations, runtime state, infrastructure changes, permissions,
 release tags, or deployments here. Roll back source and matching locks together
 through a reviewed change; the script's feeds, caches, binaries, and manifests

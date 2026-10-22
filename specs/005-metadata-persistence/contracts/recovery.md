@@ -1,7 +1,30 @@
 # F-05 Durable Admission and Recovery
 
-**Status**: Planned qualification procedures; no command/schema is delivered
-by this design stage. Public outcomes: [metadata API](metadata-api.md).
+**Status**: Implemented test-fixture procedures, not product backup tooling.
+Public outcomes: [metadata API](metadata-api.md). Run from the repository root:
+
+```bash
+# Fresh logical/package prerequisites, then all durable scenarios.
+bash scripts/validate-metadata.sh --phase recovery
+# Complete qualification also includes formatting, package boundaries and red/green.
+bash scripts/validate-metadata.sh
+```
+
+The owner-private retained evidence contains `proofs/crash-M0.json` through
+`crash-U4.json`, `recovery-walkthrough.json`, `ownership.json` and
+`native-ownership.json`. The parent-controlled
+[runner](../../../tests/fixtures/metadata/CrashRunner/Program.cs) seeds fixed
+synthetic data, blocks at each named boundary, confirms signal exit and compares
+reopened contents/receipts/baseline. No child exception substitutes for a crash.
+Full results and actual version/filesystem attribution are recorded in the
+[implementation evidence](../plan.md#implementation-evidence).
+
+The compatible application identities are `fixture-sqlite-app-v1` and
+`fixture-sqlite-app-v2`; they are reader modes in the same test-fixture binary,
+not released production applications. Private methods
+`CaptureRecoveryPointAsync` and `RestoreToIsolatedTargetAsync` belong to
+`SqliteMetadataStore`, not the provider-neutral public contract. Memory's
+logical upgrade authorization and immutable image are **not** recovery points.
 
 ## Qualification Configuration
 
@@ -118,8 +141,12 @@ drop rows, reset to empty or fall back to memory/another provider.
    Compute a stable logical digest in key order; record capture/provider/schema/
    application versions, backup digest and PRAGMAs, not private paths/secrets.
 4. To restore, stop the current owner, retain the failed/current data separately,
-   restore into a fresh target and verify again before explicit selection.
-   Rotate epoch before admitting restored normal use; old tickets/cursors must
+   restore into private sibling staging and verify again before installation at
+   a fresh target. Rotate epoch and close the complete staging database before
+   its no-overwrite installation under target ownership. A cancellation or
+   parent kill after native backup (R0) or before installation (R1) must leave
+   the selected target absent, never admissible with the historical epoch.
+   Old tickets/cursors must
    not execute against a historical ledger. Do not overwrite a live database
    or delete its WAL/SHM files by hand.
 5. For rollback after an unsafe-to-reverse upgrade, select the compatible v1

@@ -1,6 +1,7 @@
 # F-05 Metadata Acceptance and Qualification
 
-**Status**: Planned proof obligations, no measured results.
+**Status**: Implemented fixture proof obligations; measured command results
+and review corrections are recorded in the [plan](../plan.md#implementation-evidence).
 Each row requires a positive control and the stated rejection/fault assertion.
 All assertions use public outcomes and committed contents unless specifically
 testing provider-private recovery/configuration.
@@ -108,9 +109,9 @@ MP-35/41..43; MP-44; MP-22/47.
 
 ## Evidence and Regression Gates
 
-Future `validate-metadata.sh` must restore/build with tracked locks, verify
-SDK formatting/analyzers, package the fixtures independently, run common and
-durable tests, compile/run both consumer selections and retain the old binary.
+`validate-metadata.sh` restores/builds with tracked locks, verifies
+SDK formatting/analyzers, packages the fixtures independently, runs common and
+durable tests, executes both consumer selections and retains the old binary.
 Manifest fields: schema version, exact provider/module/package/native versions,
 source commit, OS/runtime, effective configuration (safe allowlist), case ID/
 class/expected applicability/result, durations, crash barrier/exit confirmation,
@@ -122,4 +123,5 @@ existing scanner. Run existing foundation/lifecycle/configuration/discovery
 acceptance to preserve old registration/configuration/readiness/discovery
 behavior. No source packages are published and no release tag or product CI
 is introduced by this feature. Full commands appear in the
-[quickstart](../quickstart.md); none of the new commands exists yet.
+[quickstart](../quickstart.md). Focused/preparation selectors explicitly remain
+non-qualifying; only full mode can report complete qualification.

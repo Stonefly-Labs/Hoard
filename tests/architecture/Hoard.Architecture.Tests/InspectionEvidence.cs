@@ -44,6 +44,19 @@ internal sealed class InspectionEvidence : IDisposable
         var ownership = input.GetProperty("ownership").Deserialize<Dictionary<string, string>>()!;
         foreach (var project in Projects.EnumerateArray())
         {
+            using var assets = JsonDocument.Parse(File.ReadAllText(project.GetProperty("assets").GetString()!));
+            foreach (var library in assets.RootElement.GetProperty("targets").GetProperty("net10.0").EnumerateObject())
+            {
+                var id = library.Name.Split('/')[0];
+                if (Nodes.ContainsKey(id) || !ownership.TryGetValue(id, out var owner)) { continue; }
+                var description = assets.RootElement.GetProperty("libraries").GetProperty(library.Name);
+                if (description.GetProperty("type").GetString() == "package" && owner == "Sdk"
+                    && HasNoManagedAssets(library.Value))
+                { Nodes.Add(id, new(id, BoundaryOwnership.Sdk, "", "")); }
+            }
+        }
+        foreach (var project in Projects.EnumerateArray())
+        {
             var id = project.GetProperty("id").GetString()!;
             Add(id, Enum.Parse<BoundaryOwnership>(ownership[id]), project.GetProperty("assembly").GetString()!);
         }
@@ -122,6 +135,23 @@ internal sealed class InspectionEvidence : IDisposable
             }
             SliceRoots.Add(id, roots);
         }
+    }
+
+    internal static bool HasNoManagedAssets(JsonElement target)
+    {
+        foreach (var group in new[] { "compile", "runtime", "runtimeTargets" })
+        {
+            if (!target.TryGetProperty(group, out var assets)) { continue; }
+            foreach (var asset in assets.EnumerateObject())
+            {
+                if ((asset.Name.EndsWith(".dll", StringComparison.OrdinalIgnoreCase)
+                    || asset.Name.EndsWith(".exe", StringComparison.OrdinalIgnoreCase)
+                    || asset.Name.EndsWith(".winmd", StringComparison.OrdinalIgnoreCase))
+                    && !(group == "runtimeTargets" && asset.Value.TryGetProperty("assetType", out var type)
+                        && type.GetString() == "native")) { return false; }
+            }
+        }
+        return true;
     }
 
     private void Add(string id, BoundaryOwnership boundary, string path, bool isFramework = false)

@@ -77,15 +77,18 @@ internal static class DependencyGraphInspector
                     {
                         throw new InspectionException($"Packed/resolved identity mismatch: {source}.");
                     }
-                    var groups = metadata.Descendants().Where(e => e.Name.LocalName == "group").ToArray();
-                    var group = groups.FirstOrDefault(g => g.Attribute("targetFramework")?.Value == "net10.0")
-                        ?? groups.FirstOrDefault(g => g.Attribute("targetFramework")?.Value == "net8.0")
-                        ?? groups.SingleOrDefault();
-                    var packed = (group ?? metadata).Descendants().Where(e => e.Name.LocalName == "dependency")
-                        .Select(e => e.Attribute("id")!.Value).Distinct().Order().ToArray();
+                    var groups = metadata.Elements().Where(e => e.Name.LocalName == "dependencies")
+                        .Elements().Where(e => e.Name.LocalName == "group").ToArray();
+                    var group = SelectedGroup(groups, library.Value);
+                    var packedDeclarations = (group ?? metadata).Descendants().Where(e => e.Name.LocalName == "dependency").ToArray();
+                    var packed = packedDeclarations.Select(e => e.Attribute("id")!.Value).Distinct().Order().ToArray();
                     var resolved = library.Value.TryGetProperty("dependencies", out var deps)
                         ? deps.EnumerateObject().Select(d => d.Name).Order().ToArray() : [];
-                    if (!packed.SequenceEqual(resolved))
+                    var pruned = packedDeclarations.Where(dependency => !resolved.Contains(dependency.Attribute("id")!.Value)
+                        && ProvenFrameworkPruning(dependency, framework,
+                            evidence.Nodes.GetValueOrDefault(dependency.Attribute("id")!.Value)))
+                        .Select(dependency => dependency.Attribute("id")!.Value).ToHashSet();
+                    if (!packed.Where(dependency => !pruned.Contains(dependency)).SequenceEqual(resolved))
                     {
                         throw new InspectionException($"Packed/resolved dependency disagreement: {source}.");
                     }
@@ -115,6 +118,39 @@ internal static class DependencyGraphInspector
                 Edge(evidence, pair.Key, owner, "compiled reference", evidence.Nodes[pair.Key].Assembly);
             }
         }
+    }
+
+    internal static bool ProvenFrameworkPruning(XElement dependency, JsonElement framework, InspectionNode? node)
+    {
+        var id = dependency.Attribute("id")?.Value;
+        if (id is null || node is null || node.Id != id || !node.IsFramework || node.Boundary != BoundaryOwnership.Bcl
+            || !framework.TryGetProperty("packagesToPrune", out var packages) || !packages.TryGetProperty(id, out var configured))
+        { return false; }
+        var range = configured.GetString();
+        return range is not null && range.StartsWith("(,", StringComparison.Ordinal) && range.EndsWith(']')
+            && Version.TryParse(range[2..^1], out var maximum)
+            && Version.TryParse(dependency.Attribute("version")?.Value, out var minimum) && minimum <= maximum;
+    }
+
+    internal static XElement? SelectedGroup(XElement[] groups, JsonElement assets)
+    {
+        var frameworks = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var name in new[] { "compile", "runtime" })
+        {
+            if (!assets.TryGetProperty(name, out var files)) { continue; }
+            foreach (var file in files.EnumerateObject())
+            {
+                var parts = file.Name.Split('/');
+                if (parts.Length >= 3 && parts[0] is "lib" or "ref") { frameworks.Add(parts[1]); }
+            }
+        }
+        static string Normalize(string value) => value.Replace(".NETStandard", "netstandard", StringComparison.OrdinalIgnoreCase)
+            .Replace(".NETCoreApp", "netcoreapp", StringComparison.OrdinalIgnoreCase);
+        if (groups.Length == 0) { return null; }
+        var selected = groups.Where(group => frameworks.Contains(Normalize(group.Attribute("targetFramework")?.Value ?? ""))).ToArray();
+        if (selected.Length == 1) { return selected[0]; }
+        if (frameworks.Count == 0 && groups.Length == 1) { return groups[0]; }
+        throw new InspectionException("Missing or ambiguous packed group for the actual resolved asset framework.");
     }
 
     internal static bool FrameworkCompatible(InspectionNode node, Mono.Cecil.AssemblyNameReference requested,

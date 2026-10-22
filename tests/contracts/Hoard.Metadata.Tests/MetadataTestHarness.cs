@@ -16,7 +16,7 @@ internal sealed class MetadataTestClock : TimeProvider
     public void Advance(TimeSpan value) => Interlocked.Add(ref milliseconds, checked((long)value.TotalMilliseconds));
 }
 
-internal sealed class MetadataTestBarrier : IAsyncDisposable
+internal sealed class MetadataTestBarrier(TimeSpan? holdTimeout = null) : IAsyncDisposable
 {
     private readonly TaskCompletionSource entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private readonly TaskCompletionSource released = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -30,7 +30,7 @@ internal sealed class MetadataTestBarrier : IAsyncDisposable
     {
         if (Interlocked.Exchange(ref active, 1) != 0) { throw new InvalidOperationException("Barrier already active."); }
         entered.TrySetResult();
-        try { await released.Task.WaitAsync(TimeSpan.FromSeconds(20)); }
+        try { await released.Task.WaitAsync(holdTimeout ?? TimeSpan.FromSeconds(20)); }
         finally
         {
             Volatile.Write(ref active, 0);

@@ -1,15 +1,15 @@
 # F-05 Metadata Validation Quickstart
 
-**Status**: Implementation in progress. The preparation/evidence command and
-project scaffolds now exist; operational adapters and full qualification do
-not. Full and focused qualification deliberately fail until their attributable
-runtime prerequisites exist. Do not infer support from packaging scaffolds.
+**Status**: The additive operation contracts, independent test-only providers,
+configured host adapters and qualification command are implemented. Qualification
+is fail-closed and fixture-scoped, never production provider delivery. The
+[plan](plan.md#implementation-evidence) records completed checks and stage gates.
 
 ## Prerequisites
 
 Use Git, Python 3.11+, Bash and the stable .NET 10 SDK selected by `global.json`.
-Restore pinned packages from nuget.org; implementation must choose/check/pin
-the new private SQLite dependency and track all changed/new lockfiles. Use a
+Restore pinned packages from nuget.org; Microsoft.Data.Sqlite 10.0.13 and all
+transitive/native dependencies have tracked locks. Use a
 private temporary directory on a local filesystem with enough room for database,
 WAL and verified backup copies. No external database/cloud/container/listener
 or native package-manager upstream is required.
@@ -18,7 +18,7 @@ Read the [API](contracts/metadata-api.md), [model](data-model.md),
 [recovery procedure](contracts/recovery.md) and
 [acceptance matrix](contracts/acceptance.md) first.
 
-## Checks Available Today
+## Repository Tooling Checks
 
 ```bash
 python3 -m unittest discover -s tests/tooling -v
@@ -32,7 +32,7 @@ Setup-only modes are available for fresh, explicit owner-private destinations:
 ```bash
 # No metadata qualification: freeze old binaries from immutable pre-F-05 main.
 bash scripts/validate-metadata.sh --prepare-baseline /private/new/baseline
-# No metadata qualification: additionally build/pack isolated fixture scaffolds.
+# No metadata qualification: additionally build/pack isolated fixture packages.
 bash scripts/validate-metadata.sh --prepare-only /private/new/setup
 ```
 
@@ -41,18 +41,16 @@ pins Microsoft.Data.Sqlite 10.0.13 and its private native graph; the
 [selection review](research.md#implementation-dependency-selection-2026-10-21)
 records versions/licenses/advisory scope. Both modes explicitly report
 `qualification: false`. Default locked replay rejects missing/drifted locks.
-T001..T006 preparation passed, with 12 tooling cases and an intended runtime
-negative for failed-case acceptance. Full mode currently exits 1 with
-`Metadata qualification incomplete`; this is the required fail-closed setup
-result, not a failed or passing metadata implementation.
+The historical T001..T006 checkpoint deliberately refused full qualification
+until runtime proof existed. The completed runner now executes that proof;
+preparation remains explicitly non-qualifying.
 
-## Planned End-to-End Acceptance
-
-After implementation introduces/documents the entry point:
+## End-to-End Fixture Acceptance
 
 ```bash
-# Future initial dependency/lock generation, then independent locked replay.
+# Only after intentional manifest/source package changes; review resulting locks.
 bash scripts/validate-metadata.sh --update-locks
+# Independent immutable locked replay.
 bash scripts/validate-metadata.sh
 ```
 
@@ -60,29 +58,61 @@ The first command intentionally updates only declared implementation dependency
 locks; the default replay must fail on missing/drifted locks. The orchestrator
 owns private temporary directories and bounded subprocesses (ten-minute maximum
 per child, with stricter per-operation budgets), always reports errors, and
-cleans up only its known paths/processes after confirming work stopped.
+cleans up only its known paths/processes after confirming work stopped. It
+retains an owner-private evidence directory outside Git before cleanup, printing
+its location. `--evidence /private/new/proof` selects a fresh destination; the
+parent must already exist and the destination must be outside the repository.
+The destination is created owner-only before any proof is copied; preparation
+and failed-run retention enforce the same boundary.
+Retained fixture databases, captures, raw synthetic test inputs and binaries
+are private diagnostics, not portable production backups. Remove only that
+specific evidence directory after review, never a broad parent/workspace.
 
-Expected phases: build/format; independent fixture packing; shared logical
+Executed phases: build/format; independent fixture packing; shared logical
 suite against SQLite and memory; SQLite-only durability/upgrade/backup suite;
 unchanged consumer execution for both composition choices; retained-binary/
 architecture proof; complete attributable result manifest. Per-case results
 must follow [qualification classes](contracts/acceptance.md#qualification-classes).
 No test recursively invokes the orchestrator.
 
-For a focused rerun after prepared evidence exists, the implementation should
-expose these bounded selectors:
+Focused selectors rebuild and verify fresh prerequisites in the same owned
+workspace; they never trust a stale prior manifest:
 
 ```bash
-# Future focused selectors; neither alone establishes complete qualification.
+# Each reports qualification: false, even when its selected proof passes.
 bash scripts/validate-metadata.sh --phase logical
 bash scripts/validate-metadata.sh --phase recovery
 bash scripts/validate-metadata.sh --phase packages
 ```
 
-`logical` runs the same cases against both independent implementations;
-`recovery` runs real file-backed SQLite child-stop and operator recovery cases;
-`packages` runs unchanged-consumer, boundary and old-binary proof.
-Any selector must fail explicitly if prerequisite evidence is absent/stale.
+`logical` freezes the old binary, prepares packages and runs the same common
+assembly/consumer for both compositions. `recovery` additionally runs actual
+SQLite child-stop/backup/restore/ownership proof. `packages` additionally runs
+boundary, retained-binary and runtime red/green proof. Prerequisite source,
+lock/package hashes and exact inventories are checked before each dependent
+phase. Only unfiltered full mode includes the complete formatting gate and
+reports full qualification.
+
+Inspect `qualification.json`: 96 exact provider/case entries, including 39 L
+cases for each provider, nine SQLite D passes and nine explicit memory D
+non-applicability entries. Proof references/hashes, test durations, all eight
+confirmed signal exits, actual environment and effective PRAGMAs are retained.
+Each provider records the configured `fixture.metadata` module at version
+`0.1.0` with configuration/options version 1; the configured-host scenario checks
+the actual registration. Memory D exclusions reference the overclaim-refusal
+proof with zero execution duration, never SQLite's durable results.
+The runner reproduces assertion-level red/green pairs by disabling failed-case
+refusal and post-commit exception uncertainty in isolated copies, then runs the
+same tests against the repaired implementation. Compilation/import failure is
+not accepted as that runtime evidence.
+
+The providers use `MetadataResult<T>` failures with fixed codes, phase, retry
+disposition and correlation. Before a commit attempt, cancellation/deadline
+fences later execution. After an unobserved attempt, retain the ticket and
+reconcile; do not automate a new-ticket replay. Expiry/epoch refusal requires
+explicit application/operator recovery. Native work outliving its caller
+retains authority guards and process/file ownership, including after explicit
+incomplete cleanup.
 
 ## Scenarios to Inspect
 

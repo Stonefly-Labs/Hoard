@@ -75,6 +75,31 @@ class MetadataEvidenceTests(unittest.TestCase):
                 with self.subTest(path=path), self.assertRaisesRegex(RuntimeError, "proof"):
                     module.proof_file(work, path)
 
+    def test_retained_evidence_is_private_before_copy_and_refuses_unsafe_destinations(self):
+        module = self.load()
+        with tempfile.TemporaryDirectory() as directory:
+            parent = Path(directory)
+            root = parent / "repository"
+            root.mkdir()
+            work = parent / "work"
+            work.mkdir(mode=0o700)
+            (work / "proof.json").write_text('{"private":"synthetic"}')
+            destination = parent / "retained"
+            copytree = module.shutil.copytree
+
+            def copy_private(source, target, **kwargs):
+                self.assertEqual(0o700, target.stat().st_mode & 0o777)
+                return copytree(source, target, **kwargs)
+
+            with patch.object(module.shutil, "copytree", side_effect=copy_private):
+                module.retain_private_evidence(work, destination, root)
+            self.assertEqual((work / "proof.json").read_bytes(), (destination / "proof.json").read_bytes())
+            link = parent / "link"
+            link.symlink_to(root / "absent")
+            for target in (root / "inside", destination, parent / "missing/child", link):
+                with self.subTest(target=target.name), self.assertRaisesRegex(RuntimeError, "destination"):
+                    module.retain_private_evidence(work, target, root)
+
     def test_crash_proof_requires_named_barrier_confirmed_signal_exit_and_state(self):
         module = self.load()
         proof = {"barrier": "M0", "pid": 321, "exitCode": -9, "exitConfirmed": True,
@@ -176,3 +201,39 @@ class MetadataEvidenceTests(unittest.TestCase):
             for value in (None, {}, {"production": True}, {"durable": True, "provider": "memory"}):
                 with self.assertRaisesRegex(RuntimeError, "qualification"):
                     module.verify_manifest(value, Path(directory), "a" * 64)
+
+    def test_complete_manifest_passes_but_provider_schema_configuration_and_proof_drift_do_not(self):
+        module = self.load()
+        with tempfile.TemporaryDirectory() as directory:
+            work = Path(directory)
+            cases = self.cases(module, work)
+            digest = cases[0]["sha256"]
+            evidence = {
+                "schemaVersion": 1, "sourceSha256": "a" * 64, "runId": "current", "production": False,
+                "environment": dict.fromkeys(("os", "runtime", "driver", "nativeSqlite", "filesystem"), "recorded"),
+                "configuration": {"journalMode": "wal", "synchronous": 2, "foreignKeys": 1, "busyTimeout": 0},
+                "providers": module.provider_inventory(), "cases": cases, "limitations": ["fixture only"],
+                "crashes": [{"barrier": barrier, "pid": 321, "exitCode": -9, "exitConfirmed": True,
+                            "stateCompared": True, "receiptCompared": True, "baselineCompared": True}
+                           for barrier in module.BARRIERS],
+                "packages": [{"id": name, "proof": "proof.json", "sha256": digest} for name in module.PACKAGES],
+                "redGreen": [{"id": "refusal", "test": "runtime-test", "redExit": 1, "redOutcome": "Failed",
+                              "redAssertion": True, "greenOutcome": "Passed",
+                              "mutationSha256": "a" * 64, "baselineSha256": "b" * 64}]}
+            module.verify_manifest(evidence, work, "a" * 64)
+            for field, value in (("providers", []), ("providers", [{"id": "postgres"}]),
+                                 ("configuration", {**evidence["configuration"], "synchronous": 1}),
+                                 ("sourceSha256", "stale"), ("production", True)):
+                with self.subTest(field=field), self.assertRaisesRegex(RuntimeError, "qualification"):
+                    module.verify_manifest({**evidence, field: value}, work, "a" * 64)
+            changed = copy.deepcopy(evidence)
+            changed["providers"][0]["schema"] = "unqualified"
+            with self.assertRaisesRegex(RuntimeError, "qualification"):
+                module.verify_manifest(changed, work, "a" * 64)
+            changed = copy.deepcopy(evidence)
+            changed["providers"][0]["moduleVersion"] = "unqualified"
+            with self.assertRaisesRegex(RuntimeError, "qualification"):
+                module.verify_manifest(changed, work, "a" * 64)
+            (work / "proof.json").write_text("changed")
+            with self.assertRaisesRegex(RuntimeError, "hash"):
+                module.verify_manifest(evidence, work, "a" * 64)
