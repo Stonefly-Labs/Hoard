@@ -5,6 +5,12 @@
 non-applicability results, not skips. The recorded environment is macOS 26.5
 arm64, .NET 10.0.7 and APFS, with Local payload/decision `Flush(true)` but no
 directory fsync; no power-loss or production-provider claim follows.
+PR #16 is merged and
+[`v0.0.6-alpha`](https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.6-alpha)
+publishes source only at its exact merge commit. The completion checkpoint in
+[PR #17](https://github.com/Stonefly-Labs/Hoard/pull/17) must merge before F-07
+`specify`; no new product qualification is claimed by that handoff.
+See the [merge/release evidence](plan.md#merge-completion-and-alpha-source-release).
 Both independent fixtures declare the baseline and become ready only after
 explicit admission. Existing F-02/F-03 composition covers inert/disabled
 selection, rejected missing guarantees and successful startup/stop/restart.

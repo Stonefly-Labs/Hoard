@@ -4349,6 +4349,62 @@ maintainer merges, a separate invocation must verify the merge and publish
 tag/release, package publication, infrastructure plan/apply, repository-setting
 change, cloud mutation or deployment runs in finalization.
 
+### F-06 merge completion and alpha source release
+
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) merged into `main` at
+`9389016c0285c79f6f515f59805a5a41c69b0767`. The separately invoked
+`await_merge` stage verifies that exact commit in fetched `origin/main`, all
+90 completed tasks, unchanged 16/16 built-in and 40/40 reviewer-owned checklist
+approvals, and the finalization/convergence/architecture evidence above.
+The retained full manifest independently revalidates against unchanged source
+`27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4`,
+run `49189bab-9010-4ec6-a825-2b4d2f2de31b`, with all 96 attributed entries.
+This is verification of retained acceptance, not a new full product execution
+or architecture review; the qualification limits above still apply.
+
+The stage starts `chore/spec-progress-f-06` from fetched main before `begin`.
+Its running checkpoint is committed/pushed as `f46b561` in draft
+[PR #17](https://github.com/Stonefly-Labs/Hoard/pull/17), preserving a clean
+worktree and durable recovery point before tagging. Under the bounded standing
+authorization, the installed `hoard-release` skill publishes
+[`v0.0.6-alpha`](https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.6-alpha)
+at the exact feature merge, not the progress branch tip.
+
+| Exact command / check | Result |
+| --- | --- |
+| `python3 scripts/release.py v0.0.6-alpha` | Passed; valid prerelease |
+| `python3 -m unittest discover -s tests/tooling -v` | Passed all 105 tests |
+| `git merge-base --is-ancestor 9389016c0285c79f6f515f59805a5a41c69b0767 origin/main` | Passed |
+| `artifact_evidence.verify_manifest(manifest, work, artifact_evidence.source_hash(root))` | Passed independent retained full-manifest revalidation against unchanged source |
+| `python3 scripts/release.py v0.0.6-alpha --check-main` | Passed; exact merge commit |
+| `gh run watch 39887599522 --exit-status --interval 3` | Passed; [Source release run](https://github.com/Stonefly-Labs/Hoard/actions/runs/39887599522) succeeded at the exact merge |
+| Release/tag/archive verification | Passed non-draft prerelease, generated PR-linked notes/changelog, annotated remote tag, ZIP full-commit comment and four exact-merge file comparisons in each automatic archive |
+| `git diff --check` | Passed |
+
+The annotated tag object is `a2b7124ab826c04b43f3dcfc809e1d891f2271bd`;
+its remote peeled commit is the feature merge above. README, checkpoint, task
+list and `src/Hoard.Abstractions/Storage/IArtifactStore.cs` match the exact
+merge's bytes in both source archives. Verification holds downloaded archives
+only in memory; no archives, raw qualification evidence, runtime data, build
+output or credentials enter Git.
+
+Only after publication verification does `finish` independently verify the
+annotated remote tag and published GitHub prerelease and record F-06 complete
+with `release_tag` and `release_url`. PR #17 shares the completion checkpoint
+and documentation and must merge before a later invocation starts F-07
+**`specify`**. This invocation starts no new specification and merges no PR.
+
+README and feature plan/task/quickstart status now record the verified handoff.
+Provider/API/model/recovery/acceptance and CustomHost guides, examples, baseline
+product intent/architecture/ADR diagrams, constitution/backlog, predecessor
+artifacts, release/cloud/UI/IaC guidance and permissions are unaffected: no
+implementation, signature, package edge, operational procedure or support scope
+changes. No new architecture review is needed for this progress/docs-only scope.
+The normative specification and reviewer-owned checklists remain unchanged.
+The source release publishes no runtime binaries, packages or containers and
+performs no deployment, infrastructure plan/apply, cloud mutation or governance
+change.
+
 ## Releases and deployment
 
 [Version tags publish GitHub source releases](RELEASING.md). They do not run

@@ -9,9 +9,11 @@ T087/T088/T089/T090, are verified with fresh default locked
 test-fixture qualification: 96 entries, 92 passes/four Object AS-41..44 exclusions.
 The [latest follow-up evidence](#corruption-quarantine-implementation-2026-10-22)
 supersedes earlier partial checkpoints below; those remain chronological history.
-Clean convergence and finalization are complete; PR #16 is ready for maintainer
-review and merge. Next separately invoked stage: `await_merge`, not feature
-completion or dependency eligibility. See the [finalization evidence](#finalization-evidence).
+Clean convergence and finalization are complete; PR #16 merged and
+`v0.0.6-alpha` is published at its exact merge commit. F-06 completion is recorded
+in [PR #17](https://github.com/Stonefly-Labs/Hoard/pull/17), which must merge
+before a later invocation starts F-07 `specify`.
+See the [merge/release evidence](#merge-completion-and-alpha-source-release).
 No production/F-07 claim.
 
 ## Summary
@@ -1390,3 +1392,27 @@ is ready for maintainer review and merge. `finish --pr 16` records
 A later invocation must verify merge and publish `v0.0.6-alpha` at the exact
 feature merge commit before recording completion. No merge, tag/release,
 package publication, infrastructure action or deployment runs here.
+
+## Merge completion and alpha source release
+
+The separate `await_merge` invocation verifies merged
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) at
+`9389016c0285c79f6f515f59805a5a41c69b0767` in fetched main, all 90 completed tasks,
+unchanged reviewer approvals and the retained finalization manifest against the
+same source hash. No product qualification or architecture review is newly run.
+The installed `hoard-release` publishes
+[`v0.0.6-alpha`](https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.6-alpha)
+at that exact merge under the bounded standing authorization.
+
+[Source release run 39887599522](https://github.com/Stonefly-Labs/Hoard/actions/runs/39887599522)
+succeeds; the annotated remote tag, published non-draft prerelease, generated
+notes/changelog and both automatic archives are verified. Fresh release version/
+ancestry checks and all 105 tooling tests pass. Exact commands, archive checks
+and unaffected-document reasons are in the
+[development evidence](../../docs/DEVELOPMENT.md#f-06-merge-completion-and-alpha-source-release).
+Only then does the helper record completion and release metadata in
+[PR #17](https://github.com/Stonefly-Labs/Hoard/pull/17).
+That checkpoint PR must merge before F-07 `specify`; this invocation starts no
+new spec or PR merge. No implementation, contract, dependency or support scope
+changes, runtime/package/container publication, infrastructure action, cloud
+mutation or deployment.
