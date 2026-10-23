@@ -191,7 +191,14 @@ class ConformanceExecutionTests(unittest.TestCase):
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(result.events[0]["value"], 3)
         with self.assertRaisesRegex(ConformanceError, "UnknownDiagnostic"):
-            run.command([sys.executable, "-c", 'print("synthetic-secret-canary/private/path")'])
+            run.command([sys.executable, "-c",
+                         'print(\'{"event":"control","code":"None","value":4}\'); '
+                         'print("synthetic-secret-canary/private/path")'])
+        self.assertEqual([json.loads(line) for line in
+                          (run.root / "diagnostics/command-0002.jsonl").read_bytes().splitlines()], [
+                              {"event": "control", "code": "None", "value": 4},
+                              {"event": "control", "code": "UnknownDiagnostic", "value": 0},
+                          ])
         for path in (run.root / "diagnostics").rglob("*"):
             if path.is_file():
                 self.assertNotIn(b"synthetic-secret-canary", path.read_bytes())
@@ -199,6 +206,13 @@ class ConformanceExecutionTests(unittest.TestCase):
         self.assertFalse(any(path.suffix in (".trx", ".log") for path in run.root.rglob("*")))
         run.transition("Settling")
         run.release()
+
+    def test_safe_event_size_is_bounded_before_json_expansion_without_truncation(self):
+        event = b'{"event":"control","code":"None","value":1}'
+        self.assertEqual(execution.project_event(event.ljust(1024))["value"], 1)
+        for value in (event.ljust(1025), b'{"extra":[' + b"0," * 32768 + b"0]}"):
+            with self.subTest(size=len(value)), self.assertRaisesRegex(ConformanceError, "OutputLimitExceeded"):
+                execution.project_event(value)
 
     def test_test_projection_accepts_only_finite_vstest_scaffolding_and_closed_events(self):
         for line in (b"", b"Starting test execution, please wait...",
@@ -245,17 +259,24 @@ print('{"event":"control","code":"None","value":1}')
         with self.assertRaisesRegex(ConformanceError, "OutputLimitExceeded"):
             run.command([sys.executable, "-c", 'import os; os.write(1,b"x"*131072)'], timeout=5)
         self.assertFalse(run.live_children())
+        self.assertEqual(json.loads((run.root / "diagnostics/command-0001.jsonl").read_bytes())["code"],
+                         "OutputLimitExceeded")
         run.transition("Settling")
         run.release()
 
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_watchdog_terminates_only_owned_process_tree_and_confirms_exit(self):
         run = self.workspace()
-        code = ('import subprocess,sys,time; '
-                'subprocess.Popen([sys.executable,"-c","import time; time.sleep(60)"]); time.sleep(60)')
-        with self.assertRaisesRegex(ConformanceError, "DeadlineExceeded"):
-            run.command([sys.executable, "-c", code], timeout=0.2)
+        for code in (
+                'import subprocess,sys,time; '
+                'subprocess.Popen([sys.executable,"-c","import time; time.sleep(60)"]); time.sleep(60)',
+                "import os,time; os.close(1); os.close(2); time.sleep(60)"):
+            with self.subTest(code=code), self.assertRaisesRegex(ConformanceError, "DeadlineExceeded"):
+                run.command([sys.executable, "-c", code], timeout=0.2)
         self.assertFalse(run.live_children())
+        for name in ("command-0001.jsonl", "command-0002.jsonl"):
+            self.assertEqual(json.loads((run.root / "diagnostics" / name).read_bytes())["code"],
+                             "DeadlineExceeded")
         run.transition("Settling")
         run.release()
 

@@ -198,17 +198,38 @@ Only actual exit and completed synthetic deletion admit release; explicit
 The controller can project immutable path-free `ResourceOwnership` records,
 including actual still-live PID/start identities. No-live-child projection uses
 PID zero and an all-zero digest, not an invented execution identity. Portable
-focused checks pass 70 tests with ten Linux-native skips; native verification
-of this increment is pending. Existing SDK diagnostics intentionally retain
+focused checks passed 70 tests with ten Linux-native skips; native foundation
+job `120293251935` in run `39917215214` at `bc27614` then passed all 70 with zero
+failures/errors/skips, measuring 92,111,507,456 free scratch bytes. Its SDK/logger
+job also passed. T010 is complete. Existing SDK diagnostics intentionally retain
 baseline/input bytes and remain `Settling`; they do not claim full-run cleanup
 or promote the new projection into qualification. Callers must retain required
 input/proof bytes outside synthetic deletion directories before full cleanup.
-T010 and the downstream profile/controller gates remain unchecked pending their
+The downstream profile/controller gates remain unchecked pending their
 complete verification. An actual atomic-rename failure additionally exposed a
 stale staged ledger blocking retained-state publication. Failed publication now
 removes only its own identity-checked temporary marker; a pre-existing foreign
 marker is never removed or overwritten. All 175 tooling tests pass with ten
 native skips on macOS.
+
+### Bounded diagnostic and catalog admission increment
+
+An intended catalog regression demonstrated mutable witness declarations;
+the Python expectation model now copies both collections and enforces the same
+ASCII/name/duplicate/count/exclusion bounds as the SDK. The embedded catalog
+bytes remain unchanged. T008's remaining control mappings are not inferred.
+
+Two intended diagnostic reds demonstrated a valid oversized event being
+accepted and a large JSON array being expanded before rejection. Event bytes
+now reject above 1 KiB before parsing, preserving `OutputLimitExceeded` through
+the test-output adapter. Raw capture uses at most 64 KiB/read and a two-read
+line window; safe retention reserves space for a closed failure record within
+the existing 8 MiB/child and 64 MiB/profile limits. Unknown output, floods,
+watchdog expiry and containment failure preserve already admitted safe
+observations and explicit failure codes, never raw messages or shortened
+passing evidence. Watchdog coverage includes a child that closes both output
+streams but remains live. Native proof of this increment is pending; T011
+remains unchecked. All 177 tooling tests pass with ten native skips on macOS.
 
 ## Partial implementation checkpoint
 

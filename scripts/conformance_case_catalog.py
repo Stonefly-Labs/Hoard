@@ -4,7 +4,10 @@ from dataclasses import dataclass
 import json
 from pathlib import Path
 
-from conformance_evidence import CATALOG_REVISION, ConformanceError, MAX_RESULTS, PROFILES, canonical_bytes, stable_id
+from conformance_evidence import (
+    CATALOG_REVISION, ConformanceError, MAX_RESULTS, MAX_WITNESSES, PROFILES,
+    canonical_bytes, load_json, stable_id,
+)
 
 
 INVENTORY = Path(__file__).resolve().parents[1] / "tests/fixtures/conformance/baselines/inventory.json"
@@ -19,6 +22,25 @@ class ExpectedCase:
     witnesses: tuple[str, ...]
     controls: tuple[str, ...] = ()
     exclusion: str | None = None
+
+    def __post_init__(self):
+        if self.profile_id not in PROFILES or self.exclusion not in (
+                None, "non-durable fixture", "simulation: no durable restart"):
+            raise ConformanceError()
+        for dimension in self.key:
+            stable_id(dimension)
+        for field in ("witnesses", "controls"):
+            names = getattr(self, field)
+            if (not isinstance(names, (list, tuple)) or len(names) > MAX_WITNESSES
+                    or any(not isinstance(name, str) or not 0 < len(name) <= 1024
+                           or any(character < " " or character > "~" for character in name) for name in names)
+                    or len(set(names)) != len(names)):
+                raise ConformanceError()
+            object.__setattr__(self, field, tuple(names))
+        if not self.witnesses and not self.controls and self.exclusion is None:
+            raise ConformanceError("WitnessMissing")
+        if len(self.witnesses) + len(self.controls) > MAX_WITNESSES:
+            raise ConformanceError("EvidenceIncomplete")
 
     @property
     def key(self):
@@ -216,7 +238,7 @@ def classification_witnesses(case_id):
 
 
 def category_cases():
-    inventory = json.loads(INVENTORY.read_bytes())
+    inventory = load_json(INVENTORY.read_bytes())
     if inventory.get("catalogRevision") != CATALOG_REVISION:
         raise ConformanceError()
     cases = tuple(
@@ -285,13 +307,6 @@ def expected_cases(profile):
                                   (f"obligation:QC-{number:02}",)))
     if len(cases) > MAX_RESULTS or len({case.key for case in cases}) != len(cases):
         raise ConformanceError("EvidenceIncomplete")
-    for case in cases:
-        for dimension in case.key:
-            stable_id(dimension)
-        if not case.witnesses and not case.controls and case.exclusion is None:
-            raise ConformanceError("WitnessMissing")
-        if len(case.witnesses) + len(case.controls) > 128:
-            raise ConformanceError("EvidenceIncomplete")
     return tuple(cases)
 
 

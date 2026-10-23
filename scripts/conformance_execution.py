@@ -21,6 +21,7 @@ from conformance_evidence import ConformanceError, DIAGNOSTIC_CODES, admit_entit
 
 
 READ_BYTES = 64 * 1024
+SAFE_EVENT_BYTES = 1024
 TRANSIENT_BYTES = 1024 * 1024
 CHILD_DIAGNOSTIC_BYTES = 8 * 1024 * 1024
 PROFILE_DIAGNOSTIC_BYTES = 64 * 1024 * 1024
@@ -182,6 +183,8 @@ def process_group(group, *, deadline=None):
 
 
 def project_event(line):
+    if len(line) > SAFE_EVENT_BYTES:
+        raise ConformanceError("OutputLimitExceeded")
     value = load_json(line)
     if (not isinstance(value, dict) or set(value) != {"event", "code", "value"}
             or value["event"] not in ("control", "build", "test", "barrier", "cleanup")
@@ -198,10 +201,10 @@ def project_build_line(line):
         raise ConformanceError("UnknownDiagnostic") from None
     if not text:
         return None
-    codes = re.findall(r"\b(?:error|warning) ((?:CS|NU|MSB|NETSDK)\d{4,5})\b", text)
-    if codes:
+    code = re.search(r"\b(?:error|warning) ((?:CS|NU|MSB|NETSDK)\d{4,5})\b", text)
+    if code:
         return MappingProxyType({"event": "build", "code": "CommandFailed",
-                                 "value": int(re.search(r"\d+", codes[0])[0])})
+                                 "value": int(re.search(r"\d+", code[1])[0])})
     if text == "Build FAILED.":
         return MappingProxyType({"event": "build", "code": "CommandFailed", "value": 0})
     if (text in ("Build succeeded.", "Pack succeeded.", "Determining projects to restore...",
@@ -226,7 +229,9 @@ def project_test_line(line):
         return None
     try:
         return project_event(line)
-    except ConformanceError:
+    except ConformanceError as error:
+        if str(error) == "OutputLimitExceeded":
+            raise
         raise ConformanceError("UnknownDiagnostic") from None
 
 
@@ -478,6 +483,8 @@ class OwnedRun:
                 or type(timeout) not in (int, float) or not 0 < timeout <= ceilings[scope]
                 or kind not in ("events", "build", "tests")):
             raise ConformanceError("OwnershipInvalid")
+        if self.retained_bytes + SAFE_EVENT_BYTES > PROFILE_DIAGNOSTIC_BYTES:
+            raise ConformanceError("OutputLimitExceeded")
         if self.state == "Allocated":
             self.transition("Active")
         started = time.monotonic()
@@ -507,6 +514,25 @@ class OwnedRun:
         buffer = bytearray()
         retained = 0
         raw_total = 0
+        failure = None
+
+        def observe(line):
+            nonlocal retained
+            try:
+                event = {"build": project_build_line, "tests": project_test_line,
+                         "events": project_event}[kind](line)
+            except ConformanceError as error:
+                if str(error) == "OutputLimitExceeded":
+                    raise
+                raise ConformanceError("UnknownDiagnostic") from None
+            if event is not None:
+                size = len(canonical_bytes(event)) + 1
+                if (retained + size + SAFE_EVENT_BYTES > CHILD_DIAGNOSTIC_BYTES
+                        or self.retained_bytes + retained + size + SAFE_EVENT_BYTES > PROFILE_DIAGNOSTIC_BYTES):
+                    raise ConformanceError("OutputLimitExceeded")
+                events.append(event)
+                retained += size
+
         try:
             self.groups.add(child.pid)
             if scope != "cleanup":
@@ -534,9 +560,9 @@ class OwnedRun:
                             selector.unregister(key.fileobj)
                             continue
                         raw_total += len(block)
-                        buffer.extend(block)
-                        if len(buffer) > TRANSIENT_BYTES or raw_total > CHILD_DIAGNOSTIC_BYTES:
+                        if len(buffer) + len(block) > 2 * READ_BYTES or raw_total > CHILD_DIAGNOSTIC_BYTES:
                             raise ConformanceError("OutputLimitExceeded")
+                        buffer.extend(block)
                         while b"\n" in buffer:
                             line, _, tail = buffer.partition(b"\n")
                             buffer = bytearray(tail)
@@ -544,31 +570,20 @@ class OwnedRun:
                                 raise ConformanceError("OutputLimitExceeded")
                             if not line.strip():
                                 continue
-                            try:
-                                event = {"build": project_build_line, "tests": project_test_line,
-                                         "events": project_event}[kind](bytes(line))
-                            except ConformanceError:
-                                raise ConformanceError("UnknownDiagnostic") from None
-                            if event is not None:
-                                safe = canonical_bytes(event) + b"\n"
-                                retained += len(safe)
-                                if retained > CHILD_DIAGNOSTIC_BYTES or self.retained_bytes + retained > PROFILE_DIAGNOSTIC_BYTES:
-                                    raise ConformanceError("OutputLimitExceeded")
-                                events.append(event)
+                            observe(bytes(line))
+                        if len(buffer) > READ_BYTES:
+                            raise ConformanceError("OutputLimitExceeded")
                 if buffer.strip():
                     if len(buffer) > READ_BYTES:
                         raise ConformanceError("OutputLimitExceeded")
-                    try:
-                        event = {"build": project_build_line, "tests": project_test_line,
-                                 "events": project_event}[kind](bytes(buffer))
-                    except ConformanceError:
-                        raise ConformanceError("UnknownDiagnostic") from None
-                    if event is not None:
-                        events.append(event)
+                    observe(bytes(buffer))
             code = child.wait(timeout=max(0.001, deadline - time.monotonic()))
             if self._group_members(child.pid, deadline=deadline):
                 raise ConformanceError("CleanupIncomplete")
         except (ConformanceError, OSError, subprocess.SubprocessError, KeyboardInterrupt) as error:
+            observed = (error if isinstance(error, (ConformanceError, KeyboardInterrupt)) else
+                        ConformanceError("DeadlineExceeded" if isinstance(error, subprocess.TimeoutExpired)
+                                         else "CommandFailed"))
             try:
                 self._contain(child)
             except (ConformanceError, OSError, subprocess.SubprocessError):
@@ -576,12 +591,13 @@ class OwnedRun:
                     self.transition("Settling")
                 if self.state == "Settling":
                     self.transition("Retained")
-                raise ConformanceError("CleanupIncomplete") from None
-            if isinstance(error, ConformanceError):
-                raise
-            if isinstance(error, KeyboardInterrupt):
-                raise
-            raise ConformanceError("CommandFailed") from None
+                events.append(MappingProxyType({
+                    "event": "control", "code": str(observed) if isinstance(observed, ConformanceError)
+                    else "EvidenceIncomplete", "value": 0,
+                }))
+                failure = ConformanceError("CleanupIncomplete")
+            else:
+                failure = observed
         finally:
             acknowledgement.close()
             child.stdout.close()
@@ -592,13 +608,24 @@ class OwnedRun:
                 if handle is not None:
                     os.close(handle)
                 self._persist()
+        if failure is not None:
+            events.append(MappingProxyType({
+                "event": "control", "code": str(failure) if isinstance(failure, ConformanceError)
+                else "EvidenceIncomplete", "value": 0,
+            }))
+        self._retain_diagnostics(destination.name, events)
+        if failure is not None:
+            raise failure
+        return CommandResult(code, tuple(events), (time.monotonic() - started) * 1000)
+
+    def _retain_diagnostics(self, name, events):
         data = b"".join(canonical_bytes(event) + b"\n" for event in events)
         if len(data) > CHILD_DIAGNOSTIC_BYTES or self.retained_bytes + len(data) > PROFILE_DIAGNOSTIC_BYTES:
             raise ConformanceError("OutputLimitExceeded")
         try:
             directory = self._directory_descriptor("diagnostics")
             try:
-                with os.fdopen(os.open(destination.name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                with os.fdopen(os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
                                        0o600, dir_fd=directory), "wb") as output:
                     output.write(data)
             finally:
@@ -606,10 +633,10 @@ class OwnedRun:
         except (ConformanceError, OSError):
             if self.state in ("Allocated", "Active"):
                 self.transition("Settling")
-            self.transition("Retained")
+            if self.state == "Settling":
+                self.transition("Retained")
             raise ConformanceError("OwnershipInvalid") from None
         self.retained_bytes += len(data)
-        return CommandResult(code, tuple(events), (time.monotonic() - started) * 1000)
 
     def release(self):
         self._check_ledger()

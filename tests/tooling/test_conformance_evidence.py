@@ -18,6 +18,21 @@ import conformance_evidence as evidence
 
 
 class ConformanceAdmissionTests(unittest.TestCase):
+    def test_catalog_copies_witnesses_and_rejects_nonmatching_sdk_bounds(self):
+        import conformance_case_catalog as catalog
+        names = ["Tests.Check"]
+        case = catalog.ExpectedCase("harness", "none", "none", "QC-01", names)
+        names.append("changed")
+        self.assertEqual(case.witnesses, ("Tests.Check",))
+        for witnesses, controls, exclusion in (
+                (["Tests.Check"] * 2, (), None), (["x" * 1025], (), None),
+                (["control\ncanary"], (), None), (["caf\u00e9"], (), None),
+                ([f"Tests.Check{number}" for number in range(129)], (), None),
+                ((), ("control", "control"), None), ((), (), None),
+                ((), (), "provider-selected"), ("Tests.Check", (), None)):
+            with self.subTest(witnesses=witnesses, controls=controls), self.assertRaises(evidence.ConformanceError):
+                catalog.ExpectedCase("harness", "none", "none", "QC-01", witnesses, controls, exclusion)
+
     def test_classification_catalog_preserves_every_source_parameter_and_policy_case(self):
         import conformance_case_catalog as catalog
         source = (ROOT / "tests/integration/Hoard.Composition.Tests/ConformanceVersionTests.cs").read_text()

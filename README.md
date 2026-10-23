@@ -1077,8 +1077,11 @@ concurrent private caches and containment that leaves the other run alive.
 Cleanup now removes only settled synthetic stores, feeds and caches, retaining
 proofs, safe diagnostics and the ownership ledger. Live work and failed ledger
 publication remain `Retained`; explicit retries preserve earlier cleanup failures.
-The new controller projection and private ledger revision are under native
-verification, not completed-profile evidence.
+T010's controller helper/private ledger passed all 70 native foundation checks;
+end-to-end profile integration remains unfinished. Diagnostic capture now also
+checks the 1 KiB event limit before JSON expansion, bounds raw line buffering,
+and preserves safe prefixes plus closed failure codes. That diagnostic increment
+is pending native verification and is not completed-profile evidence.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
