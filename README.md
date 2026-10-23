@@ -1148,9 +1148,13 @@ actual enum theory rows. Run
 [39933805476](https://github.com/Stonefly-Labs/Hoard/actions/runs/39933805476)
 at `a1fe180` verified 103 native checks without skips and ten scenarios/
 29 observations. Actual-instance assembly capture and strict runtime/package
-correspondence now pass locally; their eleventh native scenario remains
-unverified. Loaded session/invocation integration and complete T014 remain
-unfinished.
+correspondence also passed run
+[39934964377](https://github.com/Stonefly-Labs/Hoard/actions/runs/39934964377)
+at `0a0b1d1`: 105 native checks without skips, eleven scenarios/31 observations
+and all six baselines. The next local increment separates exact discovery from
+execution and binds completion to the captured record bytes; actual portable
+VSTest discovery passed, while its twelve-scenario Linux replay is pending.
+Loaded session/invocation integration and complete T014 remain unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

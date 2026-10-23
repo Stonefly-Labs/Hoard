@@ -10,6 +10,60 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class RuntimeLoggerTests
 {
+    [Fact]
+    public void Discovery_preserves_exact_selected_parameters_without_fabricating_execution_witnesses()
+    {
+        using var owned = new OwnedInput(2, purpose: "discovery");
+        using (var recorder = owned.Open())
+        {
+            var unrelated = owned.Result(0).TestCase;
+            unrelated.FullyQualifiedName = "Hoard.Unselected.Check";
+            unrelated.DisplayName = "private-canary";
+            recorder.ObserveDiscovery(unrelated);
+            recorder.ObserveDiscovery(owned.Result(0).TestCase);
+            recorder.ObserveDiscovery(owned.Result(1).TestCase);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+            Assert.Equal(2, recorder.ObservedCount);
+        }
+        var lines = File.ReadAllLines(Path.Combine(owned.Output, "discovered.jsonl"));
+        Assert.Equal(2, lines.Length);
+        for (var index = 0; index < lines.Length; index++)
+        {
+            using var document = JsonDocument.Parse(lines[index]);
+            Assert.Equal(owned.Input.Expected[index].TestIdentity, document.RootElement.GetProperty("testIdentity").GetString());
+            Assert.False(document.RootElement.TryGetProperty("executionId", out _));
+        }
+        Assert.False(File.Exists(Path.Combine(owned.Output, "witnesses.jsonl")));
+        Assert.Empty(Directory.GetFiles(owned.Output, "proof-*.json"));
+        using var completion = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(owned.Output, "completion.json")));
+        Assert.Equal("discovery", completion.RootElement.GetProperty("purpose").GetString());
+        Assert.Equal(Hash(File.ReadAllBytes(Path.Combine(owned.Output, "discovered.jsonl"))),
+            completion.RootElement.GetProperty("recordsSha256").GetString());
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
+    [InlineData("parameter", ConformanceDiagnosticCode.WitnessMissing)]
+    [InlineData("source", ConformanceDiagnosticCode.ProofMismatch)]
+    [InlineData("duplicate", ConformanceDiagnosticCode.EvidenceIncomplete)]
+    public void Discovery_rejects_selected_parameter_source_or_duplicate_changes_without_erasing_prior_records(
+        string mutation, ConformanceDiagnosticCode code)
+    {
+        using var owned = new OwnedInput(2, purpose: "discovery");
+        using var recorder = owned.Open();
+        recorder.ObserveDiscovery(owned.Result(0).TestCase);
+        var before = File.ReadAllBytes(Path.Combine(owned.Output, "discovered.jsonl"));
+        var test = owned.Result(mutation == "duplicate" ? 0 : 1).TestCase;
+        if (mutation == "parameter") { test.DisplayName = "Hoard.Frozen.Check(value: 99)"; }
+        if (mutation == "source") { test.Source = Path.Combine(owned.Root, "foreign.dll"); }
+        recorder.ObserveDiscovery(test);
+        recorder.Complete();
+        Assert.Equal(code, recorder.Diagnostic);
+        Assert.Equal(before, File.ReadAllBytes(Path.Combine(owned.Output, "discovered.jsonl")));
+        AssertSafe(owned.Output);
+    }
+
     [Theory]
     [InlineData(ConformanceCategory.Metadata)]
     [InlineData(ConformanceCategory.Artifacts)]
@@ -145,6 +199,8 @@ public sealed class RuntimeLoggerTests
     [InlineData("manifest")]
     [InlineData("duplicate-key")]
     [InlineData("unknown-field")]
+    [InlineData("purpose-omitted")]
+    [InlineData("purpose-unknown")]
     [InlineData("input-hash")]
     [InlineData("symlink")]
     [InlineData("parameter-omitted")]
@@ -167,6 +223,11 @@ public sealed class RuntimeLoggerTests
             case "unknown-field":
                 owned.RewriteManifest(File.ReadAllText(owned.ManifestPath).Replace("\"schemaVersion\":1",
                     "\"schemaVersion\":1,\"unknown\":true", StringComparison.Ordinal)); break;
+            case "purpose-omitted":
+                owned.RewriteManifest(File.ReadAllText(owned.ManifestPath).Replace(
+                    ",\"purpose\":\"execution\"", "", StringComparison.Ordinal)); break;
+            case "purpose-unknown":
+                owned.RewriteManifest(JsonSerializer.Serialize(owned.Input with { Purpose = "unknown" }, Json)); break;
             case "symlink":
                 File.Move(owned.AssemblyPath, owned.AssemblyPath + ".target");
                 File.CreateSymbolicLink(owned.AssemblyPath, owned.AssemblyPath + ".target"); break;
@@ -274,11 +335,12 @@ public sealed class RuntimeLoggerTests
         internal string AssemblyPath => Path.Combine(Root, "tests.dll");
         internal string OwnerPath => Path.Combine(Root, "runtime-owner.json");
         internal string ManifestPath => Path.Combine(Root, $"runtime-input-{Input.AttemptId:D}.json");
-        internal string Output => Path.Combine(Root, $"runtime-{Input.AttemptId:D}");
+        internal string Output => Path.Combine(Root,
+            $"{(Input.Purpose == "discovery" ? "discovery" : "runtime")}-{Input.AttemptId:D}");
         private string ownerHash;
         private string manifestHash;
 
-        internal OwnedInput(int count = 1)
+        internal OwnedInput(int count = 1, string purpose = "execution")
         {
             Directory.CreateDirectory(Root);
             if (!OperatingSystem.IsWindows())
@@ -301,7 +363,7 @@ public sealed class RuntimeLoggerTests
                 [new("fixture", "fixture.nupkg", Hash(File.ReadAllBytes(Path.Combine(Root, "fixture.nupkg"))))],
                 Enumerable.Range(0, count).Select(index => new RuntimeExpectedTest(
                     $"Hoard.Frozen.Check(value: {index})", "Hoard.Frozen.Check", "tests", "fixture", "memory", "matrix",
-                    "Hoard.Testing.Conformance.FrozenAssertion.Check")).ToArray());
+                    "Hoard.Testing.Conformance.FrozenAssertion.Check")).ToArray(), purpose);
             var manifest = JsonSerializer.SerializeToUtf8Bytes(Input, Json);
             File.WriteAllBytes(ManifestPath, manifest);
             manifestHash = Hash(manifest);

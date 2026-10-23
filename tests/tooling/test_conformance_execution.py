@@ -234,6 +234,17 @@ class ConformanceExecutionTests(unittest.TestCase):
             with self.subTest(line=line), self.assertRaisesRegex(ConformanceError, "UnknownDiagnostic"):
                 execution.project_test_line(line)
 
+    def test_discovery_projection_requires_exact_frozen_names_and_never_accepts_substrings(self):
+        names = frozenset({"Hoard.Tests.Check(value: 1)", "Hoard.Tests.Check(value: 2)"})
+        for line in (b"The following Tests are available:", b"    Hoard.Tests.Check(value: 1)"):
+            self.assertIsNone(execution.project_discovery_line(line, names))
+        for line in (b"Hoard.Tests.Check(value: 3)", b"Hoard.Tests", b"/private/canary",
+                     b"    Hoard.Tests.Check(value: 1) private-canary", b"\xff"):
+            with self.subTest(line=line), self.assertRaisesRegex(ConformanceError, "UnknownDiagnostic"):
+                execution.project_discovery_line(line, names)
+        with self.assertRaises(ConformanceError):
+            execution.project_discovery_line(b"Hoard.Tests", "Hoard.Tests.Check")
+
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_diagnostic_parent_swap_cannot_redirect_a_safe_write_outside_its_owned_directory(self):
         run = self.workspace()

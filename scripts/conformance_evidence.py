@@ -1075,16 +1075,10 @@ def ingest_loaded_assembly(inputs, data, *, runtime_path, package_id):
     return observed
 
 
-def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, proofs,
-                           completion_data, expected_tests, manifest_sha256, owner_sha256,
-                           started_ms, ended_ms):
-    """Validate actual safe-logger records; a valid failed attempt remains failed."""
+def _runtime_manifest(inputs, manifest_data, owner_data, expected_tests,
+                      manifest_sha256, owner_sha256, purpose):
     inputs = admit_entity("RunInputs", inputs)
     input_sha = digest(inputs)
-    _number(started_ms)
-    _number(ended_ms)
-    if ended_ms < started_ms:
-        _invalid()
     sha256(manifest_sha256)
     sha256(owner_sha256)
     file_fields = {"id": stable_id, "path": relative_path, "sha256": sha256}
@@ -1100,6 +1094,7 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
     manifest = _runtime_json(manifest_data, {
         "schemaVersion": _constant(1), "runId": _uuid, "invocationGroupId": _uuid,
         "attemptId": _uuid, "attemptSequence": _integer, "inputSha256": sha256,
+        "purpose": _constant(purpose),
         "runInputsPath": relative_path,
         "assemblies": _list(_record(file_fields), 128),
         "packages": _list(_record(file_fields), 128),
@@ -1146,6 +1141,88 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
                     suffix, re.ASCII) is None)
                 or entry["assemblyId"] not in assemblies or entry["packageId"] not in packages):
             raise ConformanceError("WitnessMissing")
+    return inputs, manifest, expected, assemblies, packages, expected_tests
+
+
+def _runtime_completion(data, purpose, records_data):
+    completion = _runtime_json(data, {
+        "schemaVersion": _constant(1), "runId": _uuid, "invocationGroupId": _uuid,
+        "attemptId": _uuid, "attemptSequence": _integer, "manifestSha256": sha256,
+        "inputSha256": sha256, "purpose": _constant(purpose), "recordsSha256": sha256,
+        "diagnosticCode": _one_of(*DIAGNOSTIC_CODES),
+        "observedCount": _integer, "expectedCount": _integer, "complete": _boolean,
+    }, limit=64 * 1024)
+    if completion["recordsSha256"] != hashlib.sha256(records_data).hexdigest():
+        raise ConformanceError("ProofMismatch")
+    return completion
+
+
+def ingest_runtime_discovery(*, inputs, manifest_data, owner_data, discoveries_data,
+                             completion_data, expected_tests, manifest_sha256, owner_sha256,
+                             started_ms, ended_ms):
+    """Admit exact selected discovery records, never execution witnesses."""
+    inputs, manifest, expected, assemblies, _, _ = _runtime_manifest(
+        inputs, manifest_data, owner_data, expected_tests, manifest_sha256, owner_sha256, "discovery")
+    _number(started_ms)
+    _number(ended_ms)
+    if ended_ms < started_ms:
+        _invalid()
+    if (not isinstance(discoveries_data, bytes) or not isinstance(completion_data, bytes)
+            or len(discoveries_data) + len(completion_data) > 8 * 1024 * 1024):
+        raise ConformanceError("OutputLimitExceeded")
+    if discoveries_data and not discoveries_data.endswith(b"\n"):
+        raise ConformanceError("EvidenceIncomplete")
+    lines = discoveries_data.splitlines()
+    if len(lines) > MAX_RESULTS or any(not line or len(line) > 64 * 1024 for line in lines):
+        raise ConformanceError("EvidenceIncomplete")
+    fields = {
+        "schemaVersion": _constant(1), "runId": _uuid, "invocationGroupId": _uuid,
+        "attemptId": _uuid, "attemptSequence": _integer, "inputSha256": sha256,
+        "manifestSha256": sha256, "ownerSha256": sha256,
+        "testIdentity": _runtime_identity, "fullyQualifiedName": _runtime_identity,
+        "assemblySha256": sha256, "discoveredMs": _number,
+    }
+    records = tuple(_runtime_json(line, fields, limit=64 * 1024) for line in lines)
+    if len({record["testIdentity"] for record in records}) != len(records):
+        raise ConformanceError("EvidenceIncomplete")
+    for record in records:
+        entry = expected.get(record["testIdentity"])
+        if (entry is None or record["fullyQualifiedName"] != entry["fullyQualifiedName"]
+                or record["assemblySha256"] != assemblies[entry["assemblyId"]]["sha256"]
+                or any(record[key] != manifest[key] for key in (
+                    "runId", "invocationGroupId", "attemptId", "attemptSequence", "inputSha256"))
+                or record["manifestSha256"] != manifest_sha256 or record["ownerSha256"] != owner_sha256
+                or not started_ms - 0.001 <= record["discoveredMs"] <= ended_ms + 0.001):
+            raise ConformanceError("ProofMismatch")
+    completion = _runtime_completion(completion_data, "discovery", discoveries_data)
+    code = completion["diagnosticCode"]
+    inventory_complete = {record["testIdentity"] for record in records} == set(expected)
+    if (any(completion[key] != manifest[key] for key in (
+            "runId", "invocationGroupId", "attemptId", "attemptSequence", "inputSha256"))
+            or completion["manifestSha256"] != manifest_sha256
+            or completion["expectedCount"] != len(expected)
+            or not len(records) <= completion["observedCount"] <= MAX_RESULTS + 1
+            or completion["complete"] != (inventory_complete and code == "None")
+            or code == "AssertionFailed"
+            or (code == "None" and (not inventory_complete or completion["observedCount"] != len(records)))):
+        raise ConformanceError("EvidenceIncomplete")
+    return MappingProxyType({
+        "discoveries": records, "completion": completion,
+        "attemptId": manifest["attemptId"], "diagnosticCode": code,
+    })
+
+
+def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, proofs,
+                           completion_data, expected_tests, manifest_sha256, owner_sha256,
+                           started_ms, ended_ms):
+    """Validate actual safe-logger records; a valid failed attempt remains failed."""
+    inputs, manifest, expected, assemblies, packages, expected_tests = _runtime_manifest(
+        inputs, manifest_data, owner_data, expected_tests, manifest_sha256, owner_sha256, "execution")
+    input_sha = digest(inputs)
+    _number(started_ms)
+    _number(ended_ms)
+    if ended_ms < started_ms:
+        _invalid()
     if (not isinstance(witnesses_data, bytes) or not isinstance(completion_data, bytes)
             or len(witnesses_data) > 8 * 1024 * 1024
             or not isinstance(proofs, Mapping) or len(proofs) > MAX_RESULTS
@@ -1209,12 +1286,7 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
                     or (proof["failureKind"] == "Unknown" and proof["assertionSymbol"] is not None)))):
             raise ConformanceError("ProofMismatch")
         unknown_failure |= proof["failureKind"] == "Unknown"
-    completion = _runtime_json(completion_data, {
-        "schemaVersion": _constant(1), "runId": _uuid, "invocationGroupId": _uuid,
-        "attemptId": _uuid, "attemptSequence": _integer, "manifestSha256": sha256,
-        "inputSha256": sha256, "diagnosticCode": _one_of(*DIAGNOSTIC_CODES),
-        "observedCount": _integer, "expectedCount": _integer, "complete": _boolean,
-    }, limit=64 * 1024)
+    completion = _runtime_completion(completion_data, "execution", witnesses_data)
     code = completion["diagnosticCode"]
     inventory_complete = {item["testIdentity"] for item in witnesses} == set(expected)
     failed = any(item["status"] == "Failed" for item in witnesses)

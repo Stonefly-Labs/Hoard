@@ -23,13 +23,34 @@ public sealed class SafeRuntimeLogger : ITestLoggerWithParameters
                 && parameters.GetValueOrDefault("OwnerSha256") is not null, "OwnershipInvalid");
             recorder = new RuntimeResultRecorder(root, Guid.ParseExact(parameters["AttemptId"]!, "D"),
                 parameters["ManifestSha256"]!, parameters["OwnerSha256"]!);
-            events.TestResult += (_, args) => recorder.Observe(args.Result);
-            events.TestRunMessage += (_, args) => recorder.ObserveMessage(args.Message);
-            events.TestRunComplete += (_, args) =>
+            if (recorder.IsDiscovery)
             {
-                recorder.Complete(args.IsAborted || args.IsCanceled || args.Error is not null);
-                Emit(recorder.Diagnostic, recorder.ObservedCount);
-            };
+                events.DiscoveryMessage += (_, args) => recorder.ObserveMessage(args.Message);
+                events.DiscoveredTests += (_, args) =>
+                {
+                    if (args.DiscoveredTestCases is null) { recorder.Fail(ConformanceDiagnosticCode.EvidenceIncomplete); return; }
+                    foreach (var test in args.DiscoveredTestCases)
+                    {
+                        recorder.ObserveDiscovery(test);
+                        if (recorder.Diagnostic != ConformanceDiagnosticCode.None) { break; }
+                    }
+                };
+                events.DiscoveryComplete += (_, args) =>
+                {
+                    recorder.Complete(args.IsAborted);
+                    Emit(recorder.Diagnostic, recorder.ObservedCount);
+                };
+            }
+            else
+            {
+                events.TestResult += (_, args) => recorder.Observe(args.Result);
+                events.TestRunMessage += (_, args) => recorder.ObserveMessage(args.Message);
+                events.TestRunComplete += (_, args) =>
+                {
+                    recorder.Complete(args.IsAborted || args.IsCanceled || args.Error is not null);
+                    Emit(recorder.Diagnostic, recorder.ObservedCount);
+                };
+            }
         }
         catch (Exception error) { Emit(RuntimeResultRecorder.SafeCode(error), 0); }
     }

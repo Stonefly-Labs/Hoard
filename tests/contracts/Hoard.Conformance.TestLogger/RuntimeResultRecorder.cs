@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Hoard.Testing.Conformance.Catalog;
@@ -26,14 +27,17 @@ public sealed class RuntimeResultRecorder : IDisposable
     private readonly Dictionary<string, RuntimeExpectedTest> expected;
     private readonly Dictionary<string, RuntimeFile> assemblies;
     private readonly Dictionary<string, RuntimeFile> packages;
+    private readonly HashSet<string> selectedMethods;
     private readonly HashSet<string> seen = new(StringComparer.Ordinal);
     private readonly HashSet<string> unmatchedMessages = new(StringComparer.Ordinal);
     private readonly HashSet<string> failureLines = new(StringComparer.Ordinal);
     private readonly FileStream witnesses;
+    private readonly IncrementalHash recordsHash;
     private readonly string output;
     private readonly object gate = new();
     private long bytesWritten;
     private int observed;
+    private int discovered;
     private bool completed;
     private ConformanceDiagnosticCode diagnostic;
 
@@ -50,26 +54,30 @@ public sealed class RuntimeResultRecorder : IDisposable
         input = RuntimeSafety.Read<RuntimeInput>(ManifestPath, manifestDigest);
         Validate(owner);
         expected = input.Expected.ToDictionary(entry => entry.TestIdentity, StringComparer.Ordinal);
+        selectedMethods = input.Expected.Select(entry => entry.FullyQualifiedName).ToHashSet(StringComparer.Ordinal);
         assemblies = input.Assemblies.ToDictionary(entry => entry.Id, StringComparer.Ordinal);
         packages = input.Packages.ToDictionary(entry => entry.Id, StringComparer.Ordinal);
         VerifyInputs();
-        output = RuntimeSafety.OwnedPath(this.root, $"runtime-{attemptId:D}");
+        output = RuntimeSafety.OwnedPath(this.root, $"{(IsDiscovery ? "discovery" : "runtime")}-{attemptId:D}");
         RuntimeSafety.Require(!Directory.Exists(output) && !File.Exists(output), "OwnershipInvalid");
         // The CreateNew claim is retained, including after failure; an attempt can never be replayed.
         using (new FileStream(RuntimeSafety.OwnedPath(this.root, $"runtime-{attemptId:D}.claim"),
             FileMode.CreateNew, FileAccess.Write, FileShare.None)) { }
         Directory.CreateDirectory(output);
-        witnesses = new FileStream(RuntimeSafety.OwnedPath(output, "witnesses.jsonl"),
+        witnesses = new FileStream(RuntimeSafety.OwnedPath(output, IsDiscovery ? "discovered.jsonl" : "witnesses.jsonl"),
             FileMode.CreateNew, FileAccess.Write, FileShare.Read);
+        recordsHash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
     }
 
     private string ManifestPath => RuntimeSafety.OwnedPath(root, $"runtime-input-{attemptId:D}.json");
     public ConformanceDiagnosticCode Diagnostic => diagnostic;
     public int ObservedCount => observed;
+    public bool IsDiscovery => input.Purpose == "discovery";
 
     private void Validate(RuntimeOwner owner)
     {
         RuntimeSafety.Require(owner.SchemaVersion == 1 && input.SchemaVersion == 1
+            && input.Purpose is "execution" or "discovery"
             && owner.RunId != Guid.Empty && owner.InvocationGroupId != Guid.Empty
             && owner.RunId == input.RunId && owner.InvocationGroupId == input.InvocationGroupId
             && input.AttemptId == attemptId && input.AttemptSequence is >= 1 and <= 3, "OwnershipInvalid");
@@ -134,6 +142,58 @@ public sealed class RuntimeResultRecorder : IDisposable
         }
     }
 
+    private (RuntimeExpectedTest Entry, RuntimeFile Assembly) AdmitTestCase(TestCase test, string identity)
+    {
+        RuntimeSafety.Require(++observed <= RuntimeSafety.MaxTests, "OutputLimitExceeded");
+        VerifyProvenance();
+        RuntimeSafety.Require(identity is { Length: > 0 and <= 1024 }
+            && expected.ContainsKey(identity), "WitnessMissing");
+        var entry = expected[identity];
+        RuntimeSafety.Require(seen.Add(identity), "EvidenceIncomplete");
+        RuntimeSafety.Require(test.FullyQualifiedName == entry.FullyQualifiedName, "WitnessMissing");
+        var assembly = assemblies[entry.AssemblyId];
+        var path = RuntimeSafety.OwnedPath(root, assembly.Path);
+        RuntimeSafety.Require(test.Source is { Length: > 0 and <= 4096 }
+            && Path.GetFullPath(test.Source) == path, "ProofMismatch");
+        RuntimeSafety.Require(RuntimeSafety.FileHash(path) == assembly.Sha256, "InputChanged");
+        return (entry, assembly);
+    }
+
+    public void ObserveDiscovery(TestCase test)
+    {
+        lock (gate)
+        {
+            if (completed || diagnostic != ConformanceDiagnosticCode.None) { return; }
+            try
+            {
+                RuntimeSafety.Require(IsDiscovery && test is not null, "ProofMismatch");
+                RuntimeSafety.Require(++discovered <= RuntimeSafety.MaxTests, "OutputLimitExceeded");
+                // Discovery can enumerate other methods in the same assembly; select exact methods,
+                // then require every parameter identity of those methods to match independently.
+                if (!selectedMethods.Contains(test.FullyQualifiedName)) { return; }
+                var (entry, assembly) = AdmitTestCase(test, test.DisplayName);
+                var bytes = JsonSerializer.SerializeToUtf8Bytes(new
+                {
+                    schemaVersion = 1,
+                    runId = input.RunId,
+                    invocationGroupId = input.InvocationGroupId,
+                    attemptId,
+                    attemptSequence = input.AttemptSequence,
+                    inputSha256 = input.InputSha256,
+                    manifestSha256 = manifestDigest,
+                    ownerSha256 = ownerDigest,
+                    testIdentity = entry.TestIdentity,
+                    fullyQualifiedName = entry.FullyQualifiedName,
+                    assemblySha256 = assembly.Sha256,
+                    discoveredMs = Stopwatch.GetTimestamp() * 1000.0 / Stopwatch.Frequency
+                }, RuntimeSafety.Json);
+                Reserve(bytes.Length + 1);
+                WriteRecord(bytes);
+            }
+            catch (Exception error) { Fail(SafeCode(error)); }
+        }
+    }
+
     public void Observe(TestResult result)
     {
         lock (gate)
@@ -141,22 +201,9 @@ public sealed class RuntimeResultRecorder : IDisposable
             if (completed || diagnostic != ConformanceDiagnosticCode.None) { return; }
             try
             {
-                RuntimeSafety.Require(++observed <= RuntimeSafety.MaxTests, "OutputLimitExceeded");
-                VerifyProvenance();
-                // Never interpolate or serialize an unrecognized runtime name, even privately.
-                RuntimeSafety.Require(result is not null
-                    && (result.DisplayName ?? result.TestCase.DisplayName) is { Length: > 0 and <= 1024 }
-                    && expected.TryGetValue(result.DisplayName ?? result.TestCase.DisplayName, out _),
-                    "WitnessMissing");
+                RuntimeSafety.Require(!IsDiscovery && result is not null, "ProofMismatch");
                 var identity = result.DisplayName ?? result.TestCase.DisplayName;
-                var entry = expected[identity];
-                RuntimeSafety.Require(seen.Add(identity), "EvidenceIncomplete");
-                RuntimeSafety.Require(result.TestCase.FullyQualifiedName == entry.FullyQualifiedName, "WitnessMissing");
-                var assembly = assemblies[entry.AssemblyId];
-                var assemblyPath = RuntimeSafety.OwnedPath(root, assembly.Path);
-                RuntimeSafety.Require(result.TestCase.Source is { Length: > 0 and <= 4096 }
-                    && Path.GetFullPath(result.TestCase.Source) == assemblyPath, "ProofMismatch");
-                RuntimeSafety.Require(RuntimeSafety.FileHash(assemblyPath) == assembly.Sha256, "InputChanged");
+                var (entry, assembly) = AdmitTestCase(result.TestCase, identity);
                 var executionId = Guid.NewGuid();
                 var ended = TimeSpan.FromMilliseconds(Stopwatch.GetTimestamp() * 1000.0 / Stopwatch.Frequency);
                 RuntimeSafety.Require(result.Duration >= TimeSpan.Zero
@@ -204,9 +251,7 @@ public sealed class RuntimeResultRecorder : IDisposable
                 var line = JsonSerializer.SerializeToUtf8Bytes(witness, RuntimeSafety.Json);
                 Reserve(proof.Length + line.Length + 1);
                 WriteNew($"proof-{executionId:D}.json", proof);
-                witnesses.Write(line);
-                witnesses.WriteByte((byte)'\n');
-                witnesses.Flush();
+                WriteRecord(line);
                 if (status == ConformanceWitnessStatus.Incomplete) { incomplete = true; }
                 else if (status == ConformanceWitnessStatus.Failed)
                 {
@@ -347,8 +392,10 @@ public sealed class RuntimeResultRecorder : IDisposable
                     invocationGroupId = input.InvocationGroupId,
                     attemptId,
                     attemptSequence = input.AttemptSequence,
+                    purpose = input.Purpose,
                     manifestSha256 = manifestDigest,
                     inputSha256 = input.InputSha256,
+                    recordsSha256 = Convert.ToHexStringLower(recordsHash.GetCurrentHash()),
                     diagnosticCode = diagnostic.ToString(),
                     observedCount = observed,
                     expectedCount = expected.Count,
@@ -359,7 +406,7 @@ public sealed class RuntimeResultRecorder : IDisposable
                 WriteNew("completion.json", bytes);
             }
             catch (Exception error) { Fail(SafeCode(error)); }
-            finally { completed = true; witnesses.Dispose(); }
+            finally { completed = true; witnesses.Dispose(); recordsHash.Dispose(); }
         }
     }
 
@@ -367,6 +414,15 @@ public sealed class RuntimeResultRecorder : IDisposable
     {
         RuntimeSafety.Require(bytesWritten + count <= RuntimeSafety.MaxOutputBytes, "OutputLimitExceeded");
         bytesWritten += count;
+    }
+
+    private void WriteRecord(byte[] bytes)
+    {
+        witnesses.Write(bytes);
+        witnesses.WriteByte((byte)'\n');
+        recordsHash.AppendData(bytes);
+        recordsHash.AppendData("\n"u8);
+        witnesses.Flush();
     }
 
     private void WriteNew(string name, byte[] bytes)

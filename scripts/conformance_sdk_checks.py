@@ -67,6 +67,14 @@ SCENARIOS = (
         "Loaded_component_capture_observes_instance_bytes_and_type_not_interface_or_declaration_labels",
         "Loaded_component_projection_is_closed_and_never_renders_provider_objects_or_private_paths")),
      "None", "Passed", 0, "None"),
+    ("discovery", (
+        "Hoard.Conformance.Tests.RuntimeLoggerTests."
+        "Discovery_preserves_exact_selected_parameters_without_fabricating_execution_witnesses",
+        *(("Hoard.Conformance.Tests.RuntimeLoggerTests."
+           "Discovery_rejects_selected_parameter_source_or_duplicate_changes_without_erasing_prior_records"
+           + f'(mutation: "{mutation}", code: {code})') for mutation, code in (
+               ("parameter", "WitnessMissing"), ("source", "ProofMismatch"), ("duplicate", "EvidenceIncomplete")))),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {
@@ -204,7 +212,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
 
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
-    source_tests = name in ("owned", "ranges", "catalog", "declarations", "enums", "loaded")
+    source_tests = name in ("owned", "ranges", "catalog", "declarations", "enums", "loaded", "discovery")
     assembly = candidate / (TESTS if source_tests else LOGGER + "/Smoke") / "bin/Release/net10.0" / (
         "Hoard.Conformance.Tests.dll" if source_tests else "Smoke.dll")
     assembly_path = assembly.relative_to(run.root).as_posix()
@@ -214,7 +222,8 @@ def test_attempt(run, inputs, candidate, scenario):
     expected = {identity: ("none", "none") for identity in identities}
     manifest = {
         "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
-        "attemptId": attempt_id, "attemptSequence": 1, "inputSha256": evidence.digest(inputs),
+        "attemptId": attempt_id, "attemptSequence": 1, "purpose": "execution",
+        "inputSha256": evidence.digest(inputs),
         "runInputsPath": "proofs/run-inputs.json",
         "assemblies": [{"id": "test-assembly", "path": assembly_path,
                         "sha256": inputs["runtimeAssemblies"][assembly_path]}],
@@ -227,6 +236,54 @@ def test_attempt(run, inputs, candidate, scenario):
             "assertionSymbol": ASSERTION if name == "assertion" else None,
         } for identity, (binding, matrix) in expected.items()],
     }
+    discovery_manifest = {**manifest, "purpose": "discovery", "attemptId": str(uuid.uuid4())}
+    discovery_result, discovery_output, discovery_transport = runtime_command(run, assembly, discovery_manifest)
+    files = set()
+    for path in discovery_output.iterdir():
+        files.add(path.name)
+        if len(files) > 2:
+            raise evidence.ConformanceError("EvidenceIncomplete")
+    if files != {"completion.json", "discovered.jsonl"}:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    discovery = evidence.ingest_runtime_discovery(
+        inputs=inputs, expected_tests=expected,
+        discoveries_data=read_bounded(discovery_output / "discovered.jsonl", 1024 * 1024),
+        completion_data=read_bounded(discovery_output / "completion.json", 64 * 1024),
+        **discovery_transport)
+    if (discovery_result.exit_code or discovery["diagnosticCode"] != "None"
+            or tuple(dict(event) for event in discovery_result.events) != (
+                {"event": "control", "code": "None", "value": len(identities)},)
+            or {record["testIdentity"] for record in discovery["discoveries"]} != set(identities)):
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    result, output, transport = runtime_command(run, assembly, manifest)
+    files = set()
+    for path in output.iterdir():
+        files.add(path.name)
+        if len(files) > len(identities) + 2:
+            raise evidence.ConformanceError("OutputLimitExceeded")
+    if not {"completion.json", "witnesses.jsonl"} <= files or len(files) > len(identities) + 2:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    proof_data = {filename: read_bounded(output / filename, 64 * 1024)
+                  for filename in files if filename.startswith("proof-") and filename.endswith(".json")}
+    if files != {"completion.json", "witnesses.jsonl", *proof_data}:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    ingested = evidence.ingest_runtime_attempt(
+        inputs=inputs, expected_tests=expected,
+        witnesses_data=read_bounded(output / "witnesses.jsonl", 1024 * 1024), proofs=proof_data,
+        completion_data=read_bounded(output / "completion.json", 64 * 1024), **transport)
+    validate_observation(ingested, result, identities, expected_code, expected_status, expected_exit,
+                         proof_data, failure_kind)
+    return {"code": expected_code, "tests": len(identities),
+            "discoverySha256": evidence.file_sha256(discovery_output / "completion.json"),
+            "completionSha256": evidence.file_sha256(output / "completion.json")}
+
+
+def runtime_command(run, assembly, manifest):
+    attempt_id = manifest["attemptId"]
+    identities = tuple(entry["testIdentity"] for entry in manifest["expected"])
+    if manifest["purpose"] not in ("discovery", "execution"):
+        raise evidence.ConformanceError()
+    discovery = manifest["purpose"] == "discovery"
     manifest_data = evidence.canonical_bytes(manifest)
     owner_data = read_bounded(run.root / "runtime-owner.json", 64 * 1024)
     manifest_sha = hashlib.sha256(manifest_data).hexdigest()
@@ -247,32 +304,18 @@ def test_attempt(run, inputs, candidate, scenario):
                            for name in dict.fromkeys(identity.split("(")[0] for identity in identities))
     started = time.monotonic() * 1000
     result = run.command(
-        ["dotnet", "vstest", str(assembly), f"--Settings:{settings}",
-         f"--TestCaseFilter:{filter_text}"],
-        cwd=assembly.parent, timeout=180, kind="tests", cache_id="runtime")
+        ["dotnet", "vstest", str(assembly), *(["--ListTests"] if discovery else []),
+         f"--Settings:{settings}", f"--TestCaseFilter:{filter_text}"],
+        cwd=assembly.parent, timeout=180, kind="discovery" if discovery else "tests", cache_id="runtime",
+        **({"discovery_tests": frozenset(identities)} if discovery else {}))
     ended = time.monotonic() * 1000
-    output = run.root / f"runtime-{attempt_id}"
+    output = run.root / f'{"discovery" if discovery else "runtime"}-{attempt_id}'
     no_symlinks(output)
-    files = set()
-    for path in output.iterdir():
-        files.add(path.name)
-        if len(files) > len(identities) + 2:
-            raise evidence.ConformanceError("OutputLimitExceeded")
-    if not {"completion.json", "witnesses.jsonl"} <= files or len(files) > len(identities) + 2:
-        raise evidence.ConformanceError("EvidenceIncomplete")
-    proof_data = {filename: read_bounded(output / filename, 64 * 1024)
-                  for filename in files if filename.startswith("proof-") and filename.endswith(".json")}
-    if files != {"completion.json", "witnesses.jsonl", *proof_data}:
-        raise evidence.ConformanceError("EvidenceIncomplete")
-    ingested = evidence.ingest_runtime_attempt(
-        inputs=inputs, manifest_data=manifest_data, owner_data=owner_data,
-        witnesses_data=read_bounded(output / "witnesses.jsonl", 1024 * 1024), proofs=proof_data,
-        completion_data=read_bounded(output / "completion.json", 64 * 1024), expected_tests=expected,
-        manifest_sha256=manifest_sha, owner_sha256=owner_sha, started_ms=started, ended_ms=ended)
-    validate_observation(ingested, result, identities, expected_code, expected_status, expected_exit,
-                         proof_data, failure_kind)
-    return {"code": expected_code, "tests": len(identities),
-            "completionSha256": evidence.file_sha256(output / "completion.json")}
+    return result, output, {
+        "manifest_data": manifest_data, "owner_data": owner_data,
+        "manifest_sha256": manifest_sha, "owner_sha256": owner_sha,
+        "started_ms": started, "ended_ms": ended,
+    }
 
 
 def validate_observation(ingested, result, identities, code, status, exit_code, proofs, failure_kind):

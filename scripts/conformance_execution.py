@@ -20,7 +20,10 @@ import time
 from types import MappingProxyType
 import uuid
 
-from conformance_evidence import ConformanceError, DIAGNOSTIC_CODES, admit_entity, canonical_bytes, load_json
+from conformance_evidence import (
+    ConformanceError, DIAGNOSTIC_CODES, MAX_RESULTS, _runtime_identity,
+    admit_entity, canonical_bytes, load_json,
+)
 
 
 READ_BYTES = 64 * 1024
@@ -262,6 +265,20 @@ def project_test_line(line):
         if str(error) == "OutputLimitExceeded":
             raise
         raise ConformanceError("UnknownDiagnostic") from None
+
+
+def project_discovery_line(line, expected_tests):
+    if not isinstance(expected_tests, frozenset) or not 0 < len(expected_tests) <= MAX_RESULTS:
+        raise ConformanceError("OwnershipInvalid")
+    if len(line) > 2048:
+        raise ConformanceError("OutputLimitExceeded")
+    try:
+        text = line.decode("utf-8", errors="strict").strip()
+    except UnicodeError:
+        raise ConformanceError("UnknownDiagnostic") from None
+    if text == "The following Tests are available:" or text in expected_tests:
+        return None
+    return project_test_line(line)
 
 
 @dataclass(frozen=True)
@@ -526,8 +543,15 @@ class OwnedRun:
 
     @single_writer
     def command(self, args, *, cwd=None, timeout=None, kind="events", env=None,
-                scope="ordinary", cache_id="default", deadline=None):
+                scope="ordinary", cache_id="default", deadline=None, discovery_tests=frozenset()):
         started = time.monotonic()
+        if kind == "discovery":
+            if not isinstance(discovery_tests, frozenset) or not 0 < len(discovery_tests) <= MAX_RESULTS:
+                raise ConformanceError("OwnershipInvalid")
+            for identity in discovery_tests:
+                _runtime_identity(identity)
+        elif discovery_tests:
+            raise ConformanceError("OwnershipInvalid")
         ceilings = {"control": 5, "barrier": 15, "ordinary": 600,
                     "transfer": 2400, "recovery": 300, "cleanup": 20}
         if scope not in ceilings:
@@ -562,7 +586,7 @@ class OwnedRun:
                 or self.live_children(deadline=deadline)
                 or not isinstance(args, (list, tuple)) or not args
                 or any(not isinstance(arg, str) or "\x00" in arg for arg in args)
-                or kind not in ("events", "build", "tests")):
+                or kind not in ("events", "build", "tests", "discovery")):
             raise ConformanceError("OwnershipInvalid")
         if self.retained_bytes + SAFE_EVENT_BYTES > PROFILE_DIAGNOSTIC_BYTES:
             raise ConformanceError("OutputLimitExceeded")
@@ -598,8 +622,9 @@ class OwnedRun:
         def observe(line):
             nonlocal retained
             try:
-                event = {"build": project_build_line, "tests": project_test_line,
-                         "events": project_event}[kind](line)
+                event = (project_discovery_line(line, discovery_tests) if kind == "discovery"
+                         else {"build": project_build_line, "tests": project_test_line,
+                               "events": project_event}[kind](line))
             except ConformanceError as error:
                 if str(error) == "OutputLimitExceeded":
                     raise

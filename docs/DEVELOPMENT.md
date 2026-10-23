@@ -5112,9 +5112,37 @@ an unpackaged test artifact cannot borrow a provider package label. An explicit
 The two source facts first failed to compile without the capture API; two Python
 regressions also failed before ingestion existed. All 64 source SDK tests and
 105 conformance tooling checks now pass (ten native skips locally); the new
-eleventh native scenario/31 total observations is not yet verified. These are
+eleventh native scenario/31 total observations passed run
+[39934964377](https://github.com/Stonefly-Labs/Hoard/actions/runs/39934964377)
+at `0a0b1d1`: 105 native foundation checks without failures/errors/skips,
+92,111,003,648 free scratch bytes, eleven scenarios/31 observations and all six
+baselines. Input digest
+`6d21a3127a27650ac8c73e37eb6aaa0552d4c55496581a73cb2d0f600229866b`. These are
 component-capture APIs, not session/factory invocation linkage, an actual .NET/
 SQLite environment producer, or completed T014/provider qualification.
+
+The next T014 increment adds actual VSTest discovery-event capture, separate
+from execution witnesses. Each private attempt manifest/completion has required
+`purpose` (`discovery`/`execution`); a discovery UUID cannot be reused as an
+execution attempt. Discovery selects exact requested fully qualified methods,
+then requires every parameterized identity, actual source assembly and input/
+owner/attempt link. Other methods in the same assembly are outside that filter;
+an extra parameter row of a selected method fails. Duplicate/foreign results,
+unknown messages and incomplete inventory retain only their safe prefix.
+Discovery never emits execution UUIDs, witness statuses or assertion passes.
+Completion now binds the complete JSONL bytes with an incremental SHA-256;
+an intended in-bounds timestamp mutation exposed the missing correspondence
+before repair. The executor admits only exact frozen discovery display names
+and finite scaffolding, never substring matches or raw diagnostic persistence.
+All 213 tooling checks (including 108 conformance checks; ten native skips)
+and 70 source SDK tests pass locally. A portable
+actual VSTest probe discovered both exact enum rows with no unknown diagnostics;
+its temporary private fixtures were removed and it makes no native/qualification
+claim. Linux diagnostics now discover each selected scope before executing it,
+including four discovery transport regressions: twelve scenarios, 35 selected
+discovery records and 35 execution observations. Native verification is pending.
+T014 remains unchecked for its remaining execution-state and loaded-session/
+factory/invocation integration.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

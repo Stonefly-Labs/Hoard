@@ -73,9 +73,12 @@ The next T014 increment repairs bounded enum parameters in the safe transports.
 Its ten-scenario/29-observation native selection passed in run `39933805476`
 at `a1fe180`, alongside 103 native checks without skips. Actual-instance
 assembly capture and exact selected runtime/package correspondence now pass
-locally; the eleventh native scenario/31-observation selection is pending.
-These APIs do not yet link loaded session/factory instances to their invocation.
-T014 remains unchecked.
+locally and in run `39934964377` at `0a0b1d1` (105 native checks, eleven scenarios/
+31 observations). The next increment performs exact safe discovery before each
+diagnostic execution; its portable VSTest probe passes, while native verification
+of twelve scenarios/35 discovery records/35 execution observations is pending.
+Discovery is not execution proof. These APIs do not yet link loaded session/
+factory instances to their invocation. T014 remains unchecked.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

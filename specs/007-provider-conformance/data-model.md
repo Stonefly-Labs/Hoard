@@ -58,6 +58,20 @@ safe observations survive interrupted/skipped/unknown executions; they remain
 incomplete. Only an actual frozen assertion symbol can classify an assertion
 negative. Test-source hashes do not substitute for loaded-provider evidence.
 
+Private attempt manifests and completion records require `purpose` equal to
+`discovery` or `execution`; completion also hashes the exact complete JSONL
+bytes as `recordsSha256`. A retained exclusive attempt claim prevents replay
+across both purposes. Discovery JSONL records bind schema/run/group/attempt/
+sequence/input/manifest/owner, exact selected test identity and fully qualified
+method, actual assembly SHA-256 and monotonic `discoveredMs`. Exact method
+selection can exclude unrelated methods in the same assembly, never additional
+parameter rows of a selected method. Duplicate rows, missing required rows,
+foreign source/provenance, changed record bytes or unknown diagnostics block
+passing discovery. Partial safe records survive but remain incomplete.
+Discovery records have no execution ID, result status or execution-witness
+claim and cannot enter execution ingestion. Parent invocation intervals and
+input/package inventories are independently checked for both transports.
+
 Parameterized transport identities preserve exact parent-expected display
 names. Values may be bounded quoted ASCII/version-range tokens, finite decimal
 tokens or bare ASCII identifiers of at most 128 characters (including enum,

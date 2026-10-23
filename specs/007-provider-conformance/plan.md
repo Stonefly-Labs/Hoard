@@ -459,6 +459,26 @@ APIs do not yet prove actual session/factory/invocation linkage, complete
 discovery, append-only execution state or actual provider/runtime environment.
 T014 remains unchecked.
 
+Run [39934964377](https://github.com/Stonefly-Labs/Hoard/actions/runs/39934964377)
+at `0a0b1d1` subsequently verified the component capture: 105 native checks,
+zero failures/errors/skips, 92,111,003,648 free scratch bytes, eleven scenarios/
+31 observations and all six historical baselines. Input digest
+`6d21a3127a27650ac8c73e37eb6aaa0552d4c55496581a73cb2d0f600229866b`.
+
+The next local increment separates actual VSTest discovery from execution:
+required purpose-bound manifests/completions, exact selected methods and all
+their parameter rows, actual source bytes, safe append-only discovery records
+and independent Python provenance/interval admission. A discovery record cannot
+become an execution witness. Incremental completion hashing additionally binds
+the entire record stream; an intended in-bounds timestamp mutation failed
+before that repair. A portable real VSTest enum-discovery probe passed with
+no unknown diagnostics and removed its temporary private fixtures. All 108
+conformance tooling checks pass (ten native skips locally). Linux diagnostics
+now discover each selected scope before execution and add four discovery
+transport regressions: twelve scenarios/35 discovery records/35 execution
+observations, native verification pending. Complete append-only execution state
+and loaded-session/factory/invocation integration remain unfinished T014 work.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

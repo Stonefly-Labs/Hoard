@@ -963,7 +963,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.manifest = {
             "schemaVersion": 1, "runId": self.inputs["runId"],
             "invocationGroupId": self.inputs["invocationGroupId"],
-            "attemptId": self.attempt, "attemptSequence": 1,
+            "attemptId": self.attempt, "attemptSequence": 1, "purpose": "execution",
             "inputSha256": evidence.digest(self.inputs), "runInputsPath": "run-inputs.json",
             "assemblies": [{"id": "tests", "path": "consumer/Hoard.Tests.dll", "sha256": "e" * 64}],
             "packages": [{"id": "Hoard.Fixture", "path": "feed/Hoard.Fixture.nupkg", "sha256": "b" * 64}],
@@ -995,7 +995,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.completion = {
             "schemaVersion": 1, "runId": self.inputs["runId"],
             "invocationGroupId": self.inputs["invocationGroupId"], "attemptId": self.attempt,
-            "attemptSequence": 1, "manifestSha256": evidence.digest(self.manifest),
+            "attemptSequence": 1, "purpose": "execution", "manifestSha256": evidence.digest(self.manifest),
             "inputSha256": evidence.digest(self.inputs), "diagnosticCode": "None",
             "observedCount": 1, "expectedCount": 1, "complete": True,
         }
@@ -1006,7 +1006,9 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             "owner_data": evidence.canonical_bytes(self.owner),
             "witnesses_data": evidence.canonical_bytes(self.witness) + b"\n",
             "proofs": {f"proof-{self.execution}.json": evidence.canonical_bytes(self.proof)},
-            "completion_data": evidence.canonical_bytes(self.completion),
+            "completion_data": evidence.canonical_bytes({
+                **self.completion, "recordsSha256": hashlib.sha256(
+                    evidence.canonical_bytes(self.witness) + b"\n").hexdigest()}),
             "expected_tests": {self.identity: ("sqlite", "none")},
             "manifest_sha256": evidence.digest(self.manifest), "owner_sha256": evidence.digest(self.owner),
             "started_ms": 9, "ended_ms": 12,
@@ -1023,6 +1025,56 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             admitted["completion"]["complete"] = False
         with self.assertRaises(TypeError):
             admitted["proofs"]["invented"] = "a" * 64
+
+    def discovery(self, **overrides):
+        self.manifest["purpose"] = "discovery"
+        self.completion.update(purpose="discovery", manifestSha256=evidence.digest(self.manifest))
+        record = {
+            "schemaVersion": 1, "runId": self.inputs["runId"],
+            "invocationGroupId": self.inputs["invocationGroupId"],
+            "attemptId": self.attempt, "attemptSequence": 1, "inputSha256": evidence.digest(self.inputs),
+            "manifestSha256": evidence.digest(self.manifest), "ownerSha256": evidence.digest(self.owner),
+            "testIdentity": self.identity, "fullyQualifiedName": self.manifest["expected"][0]["fullyQualifiedName"],
+            "assemblySha256": "e" * 64, "discoveredMs": 10,
+        }
+        options = {
+            "inputs": self.inputs, "manifest_data": evidence.canonical_bytes(self.manifest),
+            "owner_data": evidence.canonical_bytes(self.owner),
+            "discoveries_data": evidence.canonical_bytes(record) + b"\n",
+            "completion_data": evidence.canonical_bytes({
+                **self.completion, "recordsSha256": hashlib.sha256(
+                    evidence.canonical_bytes(record) + b"\n").hexdigest()}),
+            "expected_tests": {self.identity: ("sqlite", "none")},
+            "manifest_sha256": evidence.digest(self.manifest), "owner_sha256": evidence.digest(self.owner),
+            "started_ms": 9, "ended_ms": 12,
+        }
+        options.update(overrides)
+        return evidence.ingest_runtime_discovery(**options)
+
+    def test_actual_discovery_is_exact_immutable_and_not_an_execution_witness(self):
+        captured = self.discovery()
+        self.assertEqual(captured["discoveries"][0]["testIdentity"], self.identity)
+        self.assertNotIn("witnesses", captured)
+        self.assertNotIn("executionId", captured["discoveries"][0])
+        with self.assertRaises(TypeError):
+            captured["discoveries"][0]["testIdentity"] = "changed"
+        with self.assertRaises(evidence.ConformanceError):
+            self.ingest()
+
+    def test_discovery_cannot_borrow_totals_parameter_source_or_other_invocation_provenance(self):
+        captured = self.discovery()
+        record = dict(captured["discoveries"][0])
+        for key, value in (("testIdentity", self.identity.replace("1)", "2)")),
+                           ("fullyQualifiedName", "Foreign.Check"), ("assemblySha256", "1" * 64),
+                           ("attemptId", str(uuid.uuid4())), ("inputSha256", "1" * 64),
+                           ("ownerSha256", "1" * 64), ("manifestSha256", "1" * 64),
+                           ("discoveredMs", 11), ("discoveredMs", 13),
+                           ("executionId", str(uuid.uuid4()))):
+            with self.subTest(field=key), self.assertRaises(evidence.ConformanceError):
+                self.discovery(discoveries_data=evidence.canonical_bytes({**record, key: value}) + b"\n")
+        for records in (b"", evidence.canonical_bytes(record) + b"\n" + evidence.canonical_bytes(record) + b"\n"):
+            with self.subTest(records=len(records)), self.assertRaises(evidence.ConformanceError):
+                self.discovery(discoveries_data=records)
 
     def test_loaded_assembly_requires_exact_admitted_runtime_and_selected_package_bytes(self):
         self.inputs["runtimeAssemblies"]["provider/Hoard.Fixture.dll"] = "d" * 64
@@ -1146,7 +1198,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         result = self.ingest()
         self.assertEqual(result["diagnosticCode"], "WitnessMissing")
         self.completion.update(diagnosticCode="EvidenceIncomplete", complete=False, observedCount=0)
-        result = self.ingest(witnesses_data=b"", proofs={})
+        result = self.ingest(witnesses_data=b"", proofs={}, completion_data=evidence.canonical_bytes({
+            **self.completion, "recordsSha256": hashlib.sha256(b"").hexdigest()}))
         self.assertEqual(result["witnesses"], ())
         self.assertEqual(result["diagnosticCode"], "EvidenceIncomplete")
 
@@ -1154,7 +1207,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         for dimension, value in (
                 ("assemblies", [{"id": "tests", "path": "foreign.dll", "sha256": "e" * 64}]),
                 ("packages", [{"id": "Hoard.Foreign", "path": "feed/foreign.nupkg", "sha256": "b" * 64}]),
-                ("expected", []), ("unknown", True)):
+                ("expected", []), ("purpose", "unknown"), ("purpose", None), ("unknown", True)):
             manifest = {**self.manifest, dimension: value}
             with self.subTest(field=dimension), self.assertRaises(evidence.ConformanceError):
                 self.ingest(manifest_data=evidence.canonical_bytes(manifest),

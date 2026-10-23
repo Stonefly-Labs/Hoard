@@ -228,9 +228,9 @@ class SdkDiagnosticTests(unittest.TestCase):
         result = SimpleNamespace(exit_code=0, events=(
             {"event": "control", "code": "None", "value": 2},))
         received = {}
+        discoveries = {}
 
         def command(args, **kwargs):
-            self.assertEqual(kwargs["kind"], "tests")
             self.assertLessEqual(kwargs["timeout"], 600)
             self.assertEqual(args[-1], "--TestCaseFilter:FullyQualifiedName=" +
                              checks.SMOKE + "Parameter")
@@ -240,12 +240,21 @@ class SdkDiagnosticTests(unittest.TestCase):
             self.assertEqual([(item.attrib["friendlyName"], item.attrib["enabled"]) for item in loggers],
                              [("console", "False"), ("HoardSafe", "True")])
             attempt_id = settings.findtext(".//AttemptId")
-            output = self.directory / ("runtime-" + attempt_id)
+            manifest = json.loads((self.directory / f"runtime-input-{attempt_id}.json").read_bytes())
+            discovery = manifest["purpose"] == "discovery"
+            self.assertEqual(kwargs["kind"], "discovery" if discovery else "tests")
+            self.assertEqual("--ListTests" in args, discovery)
+            if discovery:
+                self.assertEqual(kwargs["discovery_tests"], frozenset(identities))
+            output = self.directory / (("discovery-" if discovery else "runtime-") + attempt_id)
             output.mkdir()
             (output / "completion.json").write_bytes(b"{}")
-            (output / "witnesses.jsonl").write_bytes(b"actual-lines\n")
-            for number in range(2):
-                (output / f"proof-{number}.json").write_bytes(b'{"failureKind":"None"}')
+            if discovery:
+                (output / "discovered.jsonl").write_bytes(b"actual-discovery\n")
+            else:
+                (output / "witnesses.jsonl").write_bytes(b"actual-lines\n")
+                for number in range(2):
+                    (output / f"proof-{number}.json").write_bytes(b'{"failureKind":"None"}')
             return result
 
         def ingest(**kwargs):
@@ -253,8 +262,14 @@ class SdkDiagnosticTests(unittest.TestCase):
             return {"diagnosticCode": "None", "witnesses": tuple(
                 {"testIdentity": identity, "status": "Passed"} for identity in identities)}
 
+        def discover(**kwargs):
+            discoveries.update(kwargs)
+            return {"diagnosticCode": "None", "discoveries": tuple(
+                {"testIdentity": identity} for identity in identities)}
+
         run = SimpleNamespace(root=self.directory, command=command)
-        with patch.object(checks.evidence, "ingest_runtime_attempt", side_effect=ingest):
+        with patch.object(checks.evidence, "ingest_runtime_attempt", side_effect=ingest), \
+                patch.object(checks.evidence, "ingest_runtime_discovery", side_effect=discover):
             observation = checks.test_attempt(run, inputs, candidate, scenario)
         self.assertEqual(observation["tests"], 2)
         self.assertEqual(received["expected_tests"],
@@ -265,6 +280,18 @@ class SdkDiagnosticTests(unittest.TestCase):
         manifest = json.loads(received["manifest_data"])
         self.assertEqual(manifest["packages"][0]["id"], "Hoard.Conformance.TestLogger")
         self.assertEqual(manifest["assemblies"][0]["path"], assembly_path)
+        self.assertEqual(manifest["purpose"], "execution")
+        discovery_manifest = json.loads(discoveries["manifest_data"])
+        self.assertEqual(discovery_manifest["purpose"], "discovery")
+        self.assertNotEqual(discovery_manifest["attemptId"], manifest["attemptId"])
+        self.assertEqual(discoveries["discoveries_data"], b"actual-discovery\n")
+        self.assertLessEqual(discoveries["ended_ms"], received["started_ms"])
+        with patch.object(checks.evidence, "ingest_runtime_attempt") as execution, \
+                patch.object(checks.evidence, "ingest_runtime_discovery", return_value={
+                    "diagnosticCode": "None", "discoveries": [{"testIdentity": identities[0]}]}):
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "EvidenceIncomplete"):
+                checks.test_attempt(run, inputs, candidate, scenario)
+            execution.assert_not_called()
 
     def test_environment_forwards_only_allowlisted_actual_runner_image(self):
         (self.directory / "proofs").mkdir()

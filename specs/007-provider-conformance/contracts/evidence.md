@@ -47,6 +47,14 @@ expected invocation/assembly and test discovery inventory. A TRX total or
 copied case name/flag is not enough. Missing mandatory tests cannot become a
 smaller expected inventory.
 
+The implemented private transport distinguishes `purpose: discovery` from
+`purpose: execution` and hashes each complete JSONL stream in its completion
+record. Discovery observes exact selected methods and every expected parameter
+row from VSTest discovery events, with actual source assembly and immutable
+owner/input/attempt provenance. It emits no execution UUID/status and cannot be
+ingested as a runtime witness. This diagnostic transport does not by itself
+implement the complete profile/evaluator or loaded-session attribution below.
+
 Attempts are append-only. Any genuine contract failure in the run blocks
 qualification even if a retry passes. Deliberate red/green experiments are
 separate expected-negative child executions: the parent passes only if it

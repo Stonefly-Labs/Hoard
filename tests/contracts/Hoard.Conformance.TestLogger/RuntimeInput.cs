@@ -16,7 +16,7 @@ public sealed record RuntimeExpectedTest(string TestIdentity, string FullyQualif
 
 public sealed record RuntimeInput(int SchemaVersion, Guid RunId, Guid InvocationGroupId, Guid AttemptId,
     int AttemptSequence, string InputSha256, string RunInputsPath, RuntimeFile[] Assemblies, RuntimeFile[] Packages,
-    RuntimeExpectedTest[] Expected);
+    RuntimeExpectedTest[] Expected, string Purpose);
 
 internal static partial class RuntimeSafety
 {
