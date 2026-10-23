@@ -4405,6 +4405,50 @@ The source release publishes no runtime binaries, packages or containers and
 performs no deployment, infrastructure plan/apply, cloud mutation or governance
 change.
 
+### F-07 provider conformance specification
+
+The F-06 completion checkpoint merged through
+[PR #17](https://github.com/Stonefly-Labs/Hoard/pull/17) at
+`e75415fee07a5003c4cb40d869826c19fe0a2f36`. The next invocation fetched
+`origin/main`, verified the merged checkpoint and ratified constitution,
+and began F-07 on `feature/007-provider-conformance` from that main commit.
+The driver pinned the exact dependency-ready master prompt and
+`specs/007-provider-conformance` before invoking installed `speckit-specify`.
+The resolved core specification template was used; no extension hooks exist.
+
+The [specification](../specs/007-provider-conformance/spec.md) defines five
+prioritized journeys, 23 acceptance scenarios, 14 edge cases, 24 functional
+requirements and eight measurable outcomes. Scope includes shared category
+checks, startup/readiness/disabled-module failures, declared and actual
+source/binary compatibility, forbidden/permitted dependency proof, contributor
+templates, bounded isolated resources, and attributable fail-closed local/CI
+reporting. The [built-in checklist](../specs/007-provider-conformance/checklists/requirements.md)
+satisfies 16/16 specification-quality criteria, not custom reviewer approval.
+
+The future baseline must exercise both independent F-05 metadata options and
+both independent F-06 artifact options with unchanged common assertions and
+consumers. Required logical guarantees cannot become optional exclusions.
+Actual local database/filesystem crash evidence, process-local simulations
+and future remote-service qualification remain distinct. Marker-only protocol
+and identity checks cannot certify operational behavior; F-08 retains identity
+contracts, production providers retain their backlog scopes, and native-client
+acceptance remains SPEC-09. Existing contracts and finite retained-ownership
+semantics are not redefined. CI checks are a future bounded F-07 deliverable,
+not a workflow added or executed by specification generation.
+
+Only README, this guide, the checkpoint and the new specification/checklist
+change. Provider/API/compatibility/recovery and example guides, existing feature
+artifacts, product charter/specification, architecture/ADR/diagrams, governance/
+backlog, release/cloud/UI/IaC guidance and runtime/test/tooling sources are
+unaffected: this stage changes no API, dependency edge, executable behavior,
+support status or operational procedure. No new architecture review or product
+acceptance execution is warranted for this requirements-only change.
+
+The next stage is **`clarify`** in a separate invocation. The feature remains
+incomplete and its PR remains draft; no implementation, qualification,
+production support, merge, release, package publication, infrastructure action
+or deployment is claimed.
+
 ## Releases and deployment
 
 [Version tags publish GitHub source releases](RELEASING.md). They do not run

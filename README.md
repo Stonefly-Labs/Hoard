@@ -881,7 +881,8 @@ at that exact commit. Its successful source-release run, annotated remote tag,
 generated notes and both automatic source archives are verified. The helper
 records F-06 complete with release metadata in
 [completion-checkpoint PR #17](https://github.com/Stonefly-Labs/Hoard/pull/17).
-That PR must merge before a later invocation starts F-07 **`specify`**.
+That completion checkpoint subsequently merged through PR #17, enabling the
+separately invoked F-07 specification stage below.
 See the [merge/release evidence](docs/DEVELOPMENT.md#f-06-merge-completion-and-alpha-source-release).
 No runtime binaries, packages, containers, infrastructure action or deployment
 are included; no new spec or PR merge runs in this invocation.
@@ -968,6 +969,20 @@ remained unchanged by analysis. The full report is recorded in draft
 That checkpoint scheduled **`implement / ready`** for a separate invocation,
 with the existing 40/40 custom-review gate satisfied. Analysis supplies no
 runtime evidence and executes no implementation or qualification.
+
+The separately invoked **F-07 `specify`** stage creates the
+[provider conformance, compatibility and composition specification](specs/007-provider-conformance/spec.md).
+Five journeys define reusable category checks, safe host compositions, version
+and consumer compatibility, contributor templates, and attributable local/CI
+reports. Its [built-in quality checklist](specs/007-provider-conformance/checklists/requirements.md)
+passes 16/16 criteria across 24 requirements and eight measurable outcomes.
+The planned baseline uses the existing independent metadata/artifact fixtures,
+keeping logical, durable-local and simulated qualification distinct. It does
+not deliver a harness, CI workflow, production provider or certification result;
+operational protocol/identity and native-client checks remain separately scoped.
+See the [stage scope](docs/DEVELOPMENT.md#f-07-provider-conformance-specification).
+The next separately authorized stage is **`clarify`**.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

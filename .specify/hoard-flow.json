@@ -1,9 +1,13 @@
 {
   "schema_version": 1,
-  "stage": "specify",
+  "stage": "clarify",
   "status": "ready",
-  "branch": null,
-  "active": null,
+  "branch": "feature/007-provider-conformance",
+  "active": {
+    "id": "F-07",
+    "feature_directory": "specs/007-provider-conformance",
+    "pr": null
+  },
   "completed": [
     {
       "id": "F-01",
@@ -657,6 +661,13 @@
       "branch": "chore/spec-progress-f-06",
       "at": "2026-10-23T02:05:51.725814+00:00",
       "evidence": "F-06 await_merge verified PR #16 merged at 9389016c0285c79f6f515f59805a5a41c69b0767 reachable from fetched origin/main; all 90 tasks and existing 16/16 built-in plus 40/40 reviewer-owned checklist approvals remain complete and unchanged. Retained full acceptance run 49189bab-9010-4ec6-a825-2b4d2f2de31b independently revalidated against unchanged source 27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4 (96 entries); prior qualification and architecture reviews remain historical, not newly executed. Running progress checkpoint f46b561 committed/pushed in draft PR #17 before tagging. Installed hoard-release under standing authorization published v0.0.6-alpha at exact feature merge; annotated remote tag a2b7124ab826c04b43f3dcfc809e1d891f2271bd peels to that commit. Source release run 39887599522 succeeded; non-draft prerelease, generated PR-linked notes/changelog, ZIP full-commit comment and four exact-merge file comparisons in both automatic source archives verified. python3 scripts/release.py v0.0.6-alpha and --check-main passed; python3 -m unittest discover -s tests/tooling -v passed all 105 tests. No product/dependency/runtime support change, package publication, infrastructure plan/apply, cloud mutation, governance change or deployment. Completion PR #17 must merge before another invocation begins specify; no new spec or PR merge performed."
+    },
+    {
+      "stage": "specify",
+      "spec_id": "F-07",
+      "branch": "feature/007-provider-conformance",
+      "at": "2026-10-23T02:13:12.350457+00:00",
+      "evidence": "F-07 specify completed through installed speckit-specify using the exact master-backlog prompt and pinned specs/007-provider-conformance, from fetched main after verifying merged F-06 completion PR #17, shared checkpoint and ratified constitution. Core template resolved; five stories, 23 scenarios, 14 edge cases, 24 FRs and eight measurable SCs; built-in quality checklist passed 16/16, no unresolved clarification markers. Shared category cases, safe composition/lifecycle, optional-target policy, version/source/retained-binary/architecture proof, contributor onboarding and complete input-bound local/CI reporting specified. Existing two independent metadata and two artifact fixtures are future baseline obligations; logical, actual durable-local and simulated/service scopes remain distinct; no operational protocol/identity or native-client certification invented. README/development updated with unaffected-document reasons. python3 -m unittest discover -s tests/tooling -v passed all 105 tests; structural/context/stage-isolation assertions, 317 local links/anchors and git diff --check passed. No extension hooks, custom reviewer approval, later-stage artifacts, product implementation, CI workflow, qualification execution, infrastructure action, release or merge. Next stage clarify via separate invocation; no blocker."
     }
   ]
 }
