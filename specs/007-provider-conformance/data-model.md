@@ -48,6 +48,16 @@ Catalog exclusions carry no attempts or fabricated runtime proofs. An
 interrupted attempt may have no runtime observations and carries a closed
 failure code; runtime skips are `Incomplete`, never exclusion witnesses.
 
+The safe VSTest attempt transport additionally binds a private owner manifest
+and an immutable per-attempt manifest to actual run inputs, admitted assembly
+paths/hashes and package identities. Each JSONL witness references one exact
+proof file with matching execution/attempt/parameter/dimension/input/assembly/
+package fields and monotonic duration. The completion record is independently
+checked against those observations, not trusted as a passing boolean. Partial
+safe observations survive interrupted/skipped/unknown executions; they remain
+incomplete. Only an actual frozen assertion symbol can classify an assertion
+negative. Test-source hashes do not substitute for loaded-provider evidence.
+
 ## Validation and Bounds
 
 - Stable IDs: ASCII `[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}`. Digests:

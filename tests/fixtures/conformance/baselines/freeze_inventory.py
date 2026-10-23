@@ -116,6 +116,7 @@ def freeze():
         "schemaVersion": 1, "catalogRevision": "f07-v1", "baselineRevision": REVISION,
         "qualification": False, "identityOrigin": "baseline-source-not-observed-runtime",
         "historicalBaselines": {
+            "lifecycle": "837fdf3edf51c3df34710184d018479683c194c2",
             "configuration": "b80c69fc386541be4f56f6ef2edeca40f43a0e1c",
             "discovery": "7fd73267a5154583363c94e9e85b9bac7d4a16b3",
             "metadata": "10ce78851b97b02bd83a8ef7da7ffdc2381d6519",

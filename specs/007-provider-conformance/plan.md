@@ -120,6 +120,29 @@ Public product behavior is unchanged; no route-declaration redesign was added.
 Reviewer-owned CHK014 text/markers remain untouched and are not self-approved.
 Complete profile evidence remains required before task completion.
 
+### Runtime ingestion and native SDK diagnostic increment
+
+T001/T006 are complete: the frozen pre-extraction inventory includes all six
+historical revisions, and strict model tests exercise required fields and
+unknown extensions across every data-model entity as well as bounds, immutable
+expectations, status/schema and relationship mutations. No runtime pass is
+imported from that inventory.
+
+`ingest_runtime_attempt` now validates actual safe-logger JSONL, proof and
+completion bytes against immutable run inputs, trusted manifest/owner hashes,
+independent expected identities/dimensions and parent monotonic intervals.
+Assertion, unknown, skipped and interrupted outcomes remain distinct; completion
+counts/flags cannot replace missing observations. Actual loaded-provider proof
+and complete profile orchestration remain outstanding.
+
+Proof traversal rejects symlinked roots/ancestors and special files, is anchored
+to directory descriptors, and enforces finite file/byte/depth/time bounds.
+A native SDK diagnostic workflow now prepares/seals/verifies all six baselines
+before compiling candidates, explicitly labels isolated local-archive lock
+preparation, independently replays locks and exercises fixed SDK/logger cases.
+Its result is pending real Linux execution; unit mocks or portable passes do
+not establish that evidence. All diagnostics remain `qualification: false`.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

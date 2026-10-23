@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 import uuid
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -44,6 +45,53 @@ class ConformanceAdmissionTests(unittest.TestCase):
             del changed[key]
             with self.subTest(missing=key), self.assertRaises(evidence.ConformanceError):
                 evidence.admit_entity("ContractCase", changed)
+
+    def test_each_evidence_entity_requires_all_fields_and_rejects_extensions(self):
+        inputs = self.inputs()
+        package = inputs["packages"][0]
+        key = {"profileId": "metadata", "bindingId": "sqlite", "matrixId": "none", "caseId": "MP-01"}
+        fixtures = {
+            "ContractCase": self.case(),
+            "QualificationProfile": {
+                "profileId": "metadata", "revision": "f07-v1", "caseExpansion": [key],
+                "bindingIds": ["sqlite"], "matrixIds": ["none"],
+                "budgets": inputs["budgets"], "prerequisites": ["native"],
+            },
+            "ExpectedKey": key, "PackageIdentity": package, "ProviderBinding": inputs["bindings"][0],
+            "MatrixEntry": {
+                "matrixId": "baseline", "packageIds": ["Hoard.Fixture"], "hostVersion": "0.1.0",
+                "abstractionsVersion": "0.1.0", "enabledIds": ["metadata", "artifacts"],
+                "expectedRule": "None", "expectedReadiness": True, "expectedOwnership": "Released",
+            },
+            "CompatibilityBaseline": {
+                "revision": "a" * 40, "sourceSha256": "b" * 64, "lockSha256": "c" * 64,
+                "recipeSha256": "d" * 64, "binarySha256": "e" * 64,
+                "dependencySha256": {"consumer.dll": "f" * 64}, "apiScope": "metadata",
+            },
+            "Budgets": inputs["budgets"], "Environment": inputs["environment"], "RunInputs": inputs,
+            "ResourceOwnership": {
+                "runId": inputs["runId"], "rootId": "root", "childPid": 0,
+                "childStartSha256": "a" * 64, "state": "Allocated", "cleanupDurationMs": 0,
+                "diagnosticCode": "None",
+            },
+            "Attempt": self.result()["attempts"][0], "CaseResult": self.result(),
+            "RuntimeWitness": self.report()["witnesses"][0], "QualificationReport": self.report(),
+            "SupportStatement": {
+                "reportSha256": "a" * 64, "profiles": ["metadata"], "bindingIds": ["sqlite"],
+                "versions": ["0.1.0"], "environmentSha256": ["b" * 64], "exclusions": [],
+                "unsupportedScope": ["production"],
+            },
+        }
+        for kind, fixture in fixtures.items():
+            with self.subTest(kind=kind, control=True):
+                evidence.admit_entity(kind, fixture)
+            for field in fixture:
+                incomplete = copy.deepcopy(fixture)
+                del incomplete[field]
+                with self.subTest(kind=kind, missing=field), self.assertRaises(evidence.ConformanceError):
+                    evidence.admit_entity(kind, incomplete)
+            with self.subTest(kind=kind, unknown=True), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity(kind, {**fixture, "unrecognized": "canary"})
 
     def test_unknown_fields_categories_revisions_and_unbounded_ids_reject(self):
         for key, value in (
@@ -302,6 +350,7 @@ class ConformanceAdmissionTests(unittest.TestCase):
             evidence.admit_entity("Unknown", {})
 
     def test_frozen_inventory_has_all_unique_keys_and_exact_durable_exclusions(self):
+        import conformance_baselines as baselines
         inventory = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
         entries = inventory["entries"]
         keys = {(x["profileId"], x["bindingId"], x["matrixId"], x["caseId"]) for x in entries}
@@ -317,6 +366,8 @@ class ConformanceAdmissionTests(unittest.TestCase):
         self.assertEqual(sum(x["exclusion"] is not None for x in entries), 13)
         self.assertFalse(inventory["qualification"])
         self.assertEqual(inventory["baselineRevision"], "9389016c0285c79f6f515f59805a5a41c69b0767")
+        self.assertEqual(set(inventory["historicalBaselines"].values()),
+                         {revision for _, revision, _, _ in baselines.BASELINES})
 
 
 class ConformanceInputTests(unittest.TestCase):
@@ -329,6 +380,35 @@ class ConformanceInputTests(unittest.TestCase):
         subprocess.run(["git", "init", "--quiet", str(self.repo)], check=True)
         (self.repo / "src").mkdir()
         (self.repo / "src/check.cs").write_text("immutable source")
+
+    def test_proof_roots_and_ancestors_cannot_borrow_a_symlinked_tree(self):
+        actual = self.parent / "actual-proofs"
+        actual.mkdir()
+        (actual / "proof.json").write_text("{}")
+        link = self.parent / "linked-proofs"
+        link.symlink_to(actual, target_is_directory=True)
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.proof_manifest(link)
+        (actual / "nested").mkdir()
+        (actual / "nested/proof.json").write_text("{}")
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.proof_manifest(link / "nested")
+        self.assertEqual((actual / "proof.json").read_text(), "{}")
+        self.assertEqual(set(evidence.proof_manifest(actual)), {"proof.json", "nested/proof.json"})
+
+    def test_proof_walk_rejects_overflow_and_special_files_without_opening_them(self):
+        actual = self.parent / "proofs"
+        actual.mkdir()
+        (actual / "first.json").write_text("{}")
+        (actual / "second.json").write_text("{}")
+        with mock.patch.object(evidence, "MAX_PROOF_FILES", 1), self.assertRaises(evidence.ConformanceError):
+            evidence.proof_manifest(actual)
+        with mock.patch.object(evidence, "MAX_PROOF_BYTES", 3), self.assertRaises(evidence.ConformanceError):
+            evidence.proof_manifest(actual)
+        self.assertEqual(len(evidence.proof_manifest(actual)), 2)
+        os.mkfifo(actual / "blocked-reader")
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.proof_manifest(actual)
 
     def test_snapshot_binds_actual_source_bytes_and_rejects_changed_and_extra_inputs(self):
         from conformance_execution import OwnedRun
@@ -379,6 +459,159 @@ class ConformanceInputTests(unittest.TestCase):
         for changed in ([], [witness, witness]):
             with self.assertRaises(evidence.ConformanceError):
                 ingest(changed)
+
+
+class ConformanceRuntimeIngestionTests(unittest.TestCase):
+    def setUp(self):
+        self.inputs = ConformanceAdmissionTests().inputs()
+        self.attempt = str(uuid.uuid4())
+        self.execution = str(uuid.uuid4())
+        self.identity = "Hoard.Testing.Conformance.Runtime.Check(value: 1)"
+        self.owner = {
+            "schemaVersion": 1, "runId": self.inputs["runId"],
+            "invocationGroupId": self.inputs["invocationGroupId"],
+            "rootId": "synthetic-owned-root", "rootPathSha256": "f" * 64,
+        }
+        self.manifest = {
+            "schemaVersion": 1, "runId": self.inputs["runId"],
+            "invocationGroupId": self.inputs["invocationGroupId"],
+            "attemptId": self.attempt, "attemptSequence": 1,
+            "inputSha256": evidence.digest(self.inputs), "runInputsPath": "run-inputs.json",
+            "assemblies": [{"id": "tests", "path": "consumer/Hoard.Tests.dll", "sha256": "e" * 64}],
+            "packages": [{"id": "Hoard.Fixture", "path": "feed/Hoard.Fixture.nupkg", "sha256": "b" * 64}],
+            "expected": [{
+                "testIdentity": self.identity, "fullyQualifiedName": "Hoard.Testing.Conformance.Runtime.Check",
+                "assemblyId": "tests", "packageId": "Hoard.Fixture",
+                "bindingId": "sqlite", "matrixId": "none",
+                "assertionSymbol": "Hoard.Testing.Conformance.Runtime.Check",
+            }],
+        }
+        self.proof = {
+            "schemaVersion": 1, "executionId": self.execution,
+            "runId": self.inputs["runId"], "invocationGroupId": self.inputs["invocationGroupId"],
+            "attemptId": self.attempt, "attemptSequence": 1, "testIdentity": self.identity,
+            "bindingId": "sqlite", "matrixId": "none", "inputSha256": evidence.digest(self.inputs),
+            "manifestSha256": evidence.digest(self.manifest), "ownerSha256": evidence.digest(self.owner),
+            "assemblySha256": "e" * 64, "packageSha256": "b" * 64,
+            "clock": "system-monotonic-ms", "durationMs": 1, "failureKind": "None",
+            "assertionSymbol": None, "status": "Passed",
+        }
+        self.witness = {
+            "executionId": self.execution, "runId": self.inputs["runId"],
+            "invocationGroupId": self.inputs["invocationGroupId"], "testIdentity": self.identity,
+            "bindingId": "sqlite", "matrixId": "none", "packageSha256": "b" * 64,
+            "assemblySha256": "e" * 64, "inputSha256": evidence.digest(self.inputs),
+            "startedMs": 10, "endedMs": 11, "status": "Passed",
+            "proofSha256": evidence.digest(self.proof),
+        }
+        self.completion = {
+            "schemaVersion": 1, "runId": self.inputs["runId"],
+            "invocationGroupId": self.inputs["invocationGroupId"], "attemptId": self.attempt,
+            "attemptSequence": 1, "manifestSha256": evidence.digest(self.manifest),
+            "inputSha256": evidence.digest(self.inputs), "diagnosticCode": "None",
+            "observedCount": 1, "expectedCount": 1, "complete": True,
+        }
+
+    def ingest(self, **overrides):
+        options = {
+            "inputs": self.inputs, "manifest_data": evidence.canonical_bytes(self.manifest),
+            "owner_data": evidence.canonical_bytes(self.owner),
+            "witnesses_data": evidence.canonical_bytes(self.witness) + b"\n",
+            "proofs": {f"proof-{self.execution}.json": evidence.canonical_bytes(self.proof)},
+            "completion_data": evidence.canonical_bytes(self.completion),
+            "expected_tests": {self.identity: ("sqlite", "none")},
+            "manifest_sha256": evidence.digest(self.manifest), "owner_sha256": evidence.digest(self.owner),
+            "started_ms": 9, "ended_ms": 12,
+        }
+        options.update(overrides)
+        return evidence.ingest_runtime_attempt(**options)
+
+    def test_safe_logger_records_require_exact_manifest_proof_and_completion_links(self):
+        admitted = self.ingest()
+        self.assertEqual(admitted["attemptId"], self.attempt)
+        self.assertEqual(admitted["witnesses"][0]["executionId"], self.execution)
+        self.assertEqual(admitted["diagnosticCode"], "None")
+        with self.assertRaises(TypeError):
+            admitted["completion"]["complete"] = False
+        with self.assertRaises(TypeError):
+            admitted["proofs"]["invented"] = "a" * 64
+
+    def test_rehashed_proof_cannot_borrow_another_attempt_dimension_or_input(self):
+        for key, value in (
+                ("attemptId", str(uuid.uuid4())), ("attemptSequence", 2),
+                ("bindingId", "memory"), ("matrixId", "foreign"),
+                ("inputSha256", "1" * 64), ("assemblySha256", "2" * 64),
+                ("packageSha256", "3" * 64), ("manifestSha256", "4" * 64),
+                ("ownerSha256", "5" * 64), ("clock", "wall-clock"),
+                ("durationMs", 2), ("failureKind", "Assertion"), ("unknown", "canary")):
+            proof = {**self.proof, key: value}
+            witness = {**self.witness, "proofSha256": evidence.digest(proof)}
+            with self.subTest(field=key), self.assertRaises(evidence.ConformanceError):
+                self.ingest(proofs={f"proof-{self.execution}.json": evidence.canonical_bytes(proof)},
+                            witnesses_data=evidence.canonical_bytes(witness) + b"\n")
+
+    def test_count_or_complete_flag_cannot_replace_a_missing_or_skipped_result(self):
+        for changed in (b"", evidence.canonical_bytes(self.witness) + b"\n" * 2,
+                        evidence.canonical_bytes(self.witness) + b"\n" + evidence.canonical_bytes(self.witness) + b"\n"):
+            with self.subTest(size=len(changed)), self.assertRaises(evidence.ConformanceError):
+                self.ingest(witnesses_data=changed)
+        self.proof.update(status="Incomplete", failureKind="SkippedOrUnknown")
+        self.witness.update(status="Incomplete", proofSha256=evidence.digest(self.proof))
+        with self.assertRaises(evidence.ConformanceError):
+            self.ingest()
+        self.completion.update(diagnosticCode="EvidenceIncomplete", complete=False)
+        self.assertEqual(self.ingest()["diagnosticCode"], "EvidenceIncomplete")
+
+    def test_real_assertion_failure_is_retained_without_turning_into_a_passing_attempt(self):
+        self.proof.update(status="Failed", failureKind="Assertion",
+                          assertionSymbol="Hoard.Testing.Conformance.Runtime.Check")
+        self.witness.update(status="Failed", proofSha256=evidence.digest(self.proof))
+        with self.assertRaises(evidence.ConformanceError):
+            self.ingest()
+        self.completion["diagnosticCode"] = "AssertionFailed"
+        result = self.ingest()
+        self.assertEqual(result["diagnosticCode"], "AssertionFailed")
+        self.assertEqual(result["witnesses"][0]["status"], "Failed")
+        self.proof.update(failureKind="Unknown", assertionSymbol=None)
+        self.witness["proofSha256"] = evidence.digest(self.proof)
+        with self.assertRaises(evidence.ConformanceError):
+            self.ingest()
+        self.completion.update(diagnosticCode="UnknownDiagnostic", complete=False)
+        self.assertEqual(self.ingest()["diagnosticCode"], "UnknownDiagnostic")
+
+    def test_unknown_or_missing_results_retain_only_safe_attributed_prefix(self):
+        self.completion.update(diagnosticCode="WitnessMissing", complete=False, observedCount=2)
+        result = self.ingest()
+        self.assertEqual(result["diagnosticCode"], "WitnessMissing")
+        self.completion.update(diagnosticCode="EvidenceIncomplete", complete=False, observedCount=0)
+        result = self.ingest(witnesses_data=b"", proofs={})
+        self.assertEqual(result["witnesses"], ())
+        self.assertEqual(result["diagnosticCode"], "EvidenceIncomplete")
+
+    def test_manifest_is_independent_of_runtime_and_bound_to_admitted_artifact_bytes(self):
+        for dimension, value in (
+                ("assemblies", [{"id": "tests", "path": "foreign.dll", "sha256": "e" * 64}]),
+                ("packages", [{"id": "Hoard.Foreign", "path": "feed/foreign.nupkg", "sha256": "b" * 64}]),
+                ("expected", []), ("unknown", True)):
+            manifest = {**self.manifest, dimension: value}
+            with self.subTest(field=dimension), self.assertRaises(evidence.ConformanceError):
+                self.ingest(manifest_data=evidence.canonical_bytes(manifest),
+                            manifest_sha256=evidence.digest(manifest))
+        with self.assertRaises(evidence.ConformanceError):
+            self.ingest(manifest_sha256="0" * 64)
+        with self.assertRaises(evidence.ConformanceError):
+            self.ingest(expected_tests={self.identity: ("memory", "none")})
+        with self.assertRaises(evidence.ConformanceError):
+            self.ingest(ended_ms=10)
+
+    def test_proof_inventory_and_diagnostic_output_are_bounded_and_no_raw_fields_are_accepted(self):
+        proofs = {f"proof-{self.execution}.json": evidence.canonical_bytes(self.proof), "raw.trx": b"canary"}
+        with self.assertRaises(evidence.ConformanceError):
+            self.ingest(proofs=proofs)
+        with self.assertRaises(evidence.ConformanceError):
+            self.ingest(witnesses_data=b"x" * (8 * 1024 * 1024 + 1))
+        with self.assertRaises(evidence.ConformanceError):
+            self.ingest(completion_data=b'{"schemaVersion":1,"schemaVersion":1}')
 
 
 class ConformanceBaselineTests(unittest.TestCase):

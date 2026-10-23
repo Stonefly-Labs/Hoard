@@ -8,7 +8,9 @@ import os
 from pathlib import Path
 from pathlib import PurePosixPath
 import re
+import stat
 import subprocess
+import time
 from types import MappingProxyType
 import uuid
 
@@ -531,18 +533,73 @@ def verify_snapshot(snapshot, manifest):
 
 
 def proof_manifest(directory):
-    directory = Path(directory).resolve()
+    from conformance_execution import no_symlinks
+    directory = Path(directory).absolute()
     files = {}
     total = 0
-    for candidate in sorted(directory.rglob("*")):
-        if candidate.is_symlink():
+    entries_seen = 0
+    deadline = time.monotonic() + 5
+
+    def visit(descriptor, prefix="", depth=0):
+        nonlocal total, entries_seen
+        if depth > 32 or time.monotonic() >= deadline:
             raise ConformanceError("ProofMismatch")
-        if candidate.is_file():
-            total += candidate.stat().st_size
-            if len(files) >= MAX_PROOF_FILES or total > MAX_PROOF_BYTES:
+        with os.scandir(descriptor) as entries:
+            for entry in entries:
+                entries_seen += 1
+                if entries_seen > MAX_PROOF_FILES * 2 or time.monotonic() >= deadline:
+                    raise ConformanceError("ProofMismatch")
+                relative = relative_path(prefix + entry.name)
+                before = os.stat(entry.name, dir_fd=descriptor, follow_symlinks=False)
+                if stat.S_ISDIR(before.st_mode):
+                    child = os.open(entry.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptor)
+                    try:
+                        opened = os.fstat(child)
+                        if (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino):
+                            raise ConformanceError("ProofMismatch")
+                        visit(child, relative + "/", depth + 1)
+                    finally:
+                        os.close(child)
+                elif stat.S_ISREG(before.st_mode):
+                    if len(files) >= MAX_PROOF_FILES or total + before.st_size > MAX_PROOF_BYTES:
+                        raise ConformanceError("ProofMismatch")
+                    child = os.open(entry.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=descriptor)
+                    with os.fdopen(child, "rb") as source:
+                        opened = os.fstat(source.fileno())
+                        if (not stat.S_ISREG(opened.st_mode)
+                                or (opened.st_dev, opened.st_ino) != (before.st_dev, before.st_ino)):
+                            raise ConformanceError("ProofMismatch")
+                        hashed = hashlib.sha256()
+                        observed = 0
+                        while block := source.read(64 * 1024):
+                            observed += len(block)
+                            if total + observed > MAX_PROOF_BYTES or time.monotonic() >= deadline:
+                                raise ConformanceError("ProofMismatch")
+                            hashed.update(block)
+                        if observed != before.st_size:
+                            raise ConformanceError("ProofMismatch")
+                        files[relative] = hashed.hexdigest()
+                        total += observed
+                else:
+                    raise ConformanceError("ProofMismatch")
+                after = os.stat(entry.name, dir_fd=descriptor, follow_symlinks=False)
+                if ((after.st_dev, after.st_ino, after.st_mode, after.st_size, after.st_mtime_ns)
+                        != (before.st_dev, before.st_ino, before.st_mode, before.st_size, before.st_mtime_ns)):
+                    raise ConformanceError("ProofMismatch")
+    try:
+        no_symlinks(directory)
+        root = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        try:
+            original = os.fstat(root)
+            visit(root)
+            no_symlinks(directory)
+            final = directory.stat()
+            if (final.st_dev, final.st_ino) != (original.st_dev, original.st_ino):
                 raise ConformanceError("ProofMismatch")
-            relative = relative_path(candidate.relative_to(directory).as_posix())
-            files[relative] = file_sha256(candidate)
+        finally:
+            os.close(root)
+    except (OSError, ConformanceError):
+        raise ConformanceError("ProofMismatch") from None
     if not files:
         raise ConformanceError("ProofMismatch")
     return MappingProxyType(files)
@@ -576,3 +633,185 @@ def ingest_witnesses(data, *, run_id, invocation_group_id, input_sha256,
         if (witness["bindingId"], witness["matrixId"]) != expected_tests[witness["testIdentity"]]:
             raise ConformanceError("ProofMismatch")
     return witnesses
+
+
+def _runtime_identity(value):
+    if (not isinstance(value, str) or not 0 < len(value) <= 1024
+            or re.fullmatch(r'[a-zA-Z0-9_.():, "+-]+', value, re.ASCII) is None):
+        _invalid()
+    return value
+
+
+def _assertion_symbol(value):
+    if value is None:
+        return None
+    if (not isinstance(value, str) or len(value) > 256
+            or re.fullmatch(r"Hoard\.Testing\.Conformance\.[a-zA-Z0-9_.]+", value, re.ASCII) is None):
+        _invalid()
+    return value
+
+
+def _runtime_json(data, fields, *, limit=2 * 1024 * 1024):
+    if not isinstance(data, bytes) or not 0 < len(data) <= limit:
+        raise ConformanceError("OutputLimitExceeded")
+    return _record(fields)(load_json(data))
+
+
+def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, proofs,
+                           completion_data, expected_tests, manifest_sha256, owner_sha256,
+                           started_ms, ended_ms):
+    """Validate actual safe-logger records; a valid failed attempt remains failed."""
+    inputs = admit_entity("RunInputs", inputs)
+    input_sha = digest(inputs)
+    _number(started_ms)
+    _number(ended_ms)
+    if ended_ms < started_ms:
+        _invalid()
+    sha256(manifest_sha256)
+    sha256(owner_sha256)
+    file_fields = {"id": stable_id, "path": relative_path, "sha256": sha256}
+    expected_fields = {
+        "testIdentity": _runtime_identity, "fullyQualifiedName": _runtime_identity,
+        "assemblyId": stable_id, "packageId": stable_id, "bindingId": stable_id,
+        "matrixId": stable_id, "assertionSymbol": _assertion_symbol,
+    }
+    owner = _runtime_json(owner_data, {
+        "schemaVersion": _constant(1), "runId": _uuid, "invocationGroupId": _uuid,
+        "rootId": stable_id, "rootPathSha256": sha256,
+    })
+    manifest = _runtime_json(manifest_data, {
+        "schemaVersion": _constant(1), "runId": _uuid, "invocationGroupId": _uuid,
+        "attemptId": _uuid, "attemptSequence": _integer, "inputSha256": sha256,
+        "runInputsPath": relative_path,
+        "assemblies": _list(_record(file_fields), 128),
+        "packages": _list(_record(file_fields), 128),
+        "expected": _list(_record(expected_fields), MAX_RESULTS),
+    })
+    if (hashlib.sha256(manifest_data).hexdigest() != manifest_sha256
+            or hashlib.sha256(owner_data).hexdigest() != owner_sha256
+            or owner["runId"] != inputs["runId"] or manifest["runId"] != inputs["runId"]
+            or owner["invocationGroupId"] != inputs["invocationGroupId"]
+            or manifest["invocationGroupId"] != inputs["invocationGroupId"]
+            or manifest["inputSha256"] != input_sha
+            or not 1 <= manifest["attemptSequence"] <= 3):
+        raise ConformanceError("InputChanged")
+    if (not isinstance(expected_tests, Mapping) or not 0 < len(expected_tests) <= MAX_RESULTS
+            or any(not isinstance(dimensions, tuple) or len(dimensions) != 2
+                   for dimensions in expected_tests.values())):
+        raise ConformanceError("EvidenceIncomplete")
+    expected_tests = {_runtime_identity(identity): tuple(stable_id(part) for part in dimensions)
+                      for identity, dimensions in expected_tests.items()}
+    expected = {entry["testIdentity"]: entry for entry in manifest["expected"]}
+    files = (*manifest["assemblies"], *manifest["packages"])
+    if (len({item["id"] for item in files}) != len(files)
+            or len({item["path"] for item in files} | {manifest["runInputsPath"]}) != len(files) + 1
+            or len(expected) != len(manifest["expected"])
+            or {identity: (item["bindingId"], item["matrixId"]) for identity, item in expected.items()}
+            != expected_tests):
+        raise ConformanceError("ProofMismatch")
+    assemblies = {item["id"]: item for item in manifest["assemblies"]}
+    packages = {item["id"]: item for item in manifest["packages"]}
+    admitted_packages = {(item["packageId"], item["sha256"]) for item in inputs["packages"]}
+    if (any(inputs["runtimeAssemblies"].get(item["path"]) != item["sha256"]
+            for item in assemblies.values())
+            or any((item["id"], item["sha256"]) not in admitted_packages
+                   for item in packages.values())):
+        raise ConformanceError("ProofMismatch")
+    for entry in expected.values():
+        name = entry["fullyQualifiedName"]
+        suffix = entry["testIdentity"][len(name):]
+        parameter = r'(?:\"[a-zA-Z0-9._:+-]{0,128}\"|[-+]?[0-9]+(?:\.[0-9]+)?|True|False|null)'
+        if (re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_.+]*", name, re.ASCII) is None
+                or not entry["testIdentity"].startswith(name)
+                or (suffix and re.fullmatch(
+                    rf"\([a-zA-Z_][a-zA-Z0-9_]*: {parameter}(?:, [a-zA-Z_][a-zA-Z0-9_]*: {parameter})*\)",
+                    suffix, re.ASCII) is None)
+                or entry["assemblyId"] not in assemblies or entry["packageId"] not in packages):
+            raise ConformanceError("WitnessMissing")
+    if (not isinstance(witnesses_data, bytes) or not isinstance(completion_data, bytes)
+            or len(witnesses_data) > 8 * 1024 * 1024
+            or not isinstance(proofs, Mapping) or len(proofs) > MAX_RESULTS
+            or any(not isinstance(data, bytes) for data in proofs.values())
+            or sum(map(len, proofs.values())) + len(witnesses_data) + len(completion_data) > 8 * 1024 * 1024):
+        raise ConformanceError("OutputLimitExceeded")
+    if witnesses_data and not witnesses_data.endswith(b"\n"):
+        raise ConformanceError("EvidenceIncomplete")
+    lines = witnesses_data.splitlines()
+    if len(lines) > MAX_RESULTS or any(not line or len(line) > 64 * 1024 for line in lines):
+        raise ConformanceError("EvidenceIncomplete")
+    witnesses = tuple(admit_entity("RuntimeWitness", load_json(line)) for line in lines)
+    if (len({item["executionId"] for item in witnesses}) != len(witnesses)
+            or len({item["testIdentity"] for item in witnesses}) != len(witnesses)
+            or set(proofs) != {f'proof-{item["executionId"]}.json' for item in witnesses}):
+        raise ConformanceError("ProofMismatch")
+    proof_fields = {
+        "schemaVersion": _constant(1), "executionId": _uuid, "runId": _uuid,
+        "invocationGroupId": _uuid, "attemptId": _uuid, "attemptSequence": _integer,
+        "testIdentity": _runtime_identity, "bindingId": stable_id, "matrixId": stable_id,
+        "inputSha256": sha256, "manifestSha256": sha256, "ownerSha256": sha256,
+        "assemblySha256": sha256, "packageSha256": sha256,
+        "clock": _constant("system-monotonic-ms"), "durationMs": _number,
+        "failureKind": _one_of("None", "Assertion", "Unknown", "SkippedOrUnknown"),
+        "assertionSymbol": _assertion_symbol, "status": _executed_state,
+    }
+    proof_hashes = {}
+    unknown_failure = False
+    for witness in witnesses:
+        entry = expected.get(witness["testIdentity"])
+        if entry is None:
+            raise ConformanceError("WitnessMissing")
+        path = f'proof-{witness["executionId"]}.json'
+        proof_data = proofs[path]
+        proof = _runtime_json(proof_data, proof_fields, limit=64 * 1024)
+        proof_hashes[path] = hashlib.sha256(proof_data).hexdigest()
+        if (proof_hashes[path] != witness["proofSha256"]
+                or any(proof[key] != witness[key] for key in (
+                    "executionId", "runId", "invocationGroupId", "testIdentity", "bindingId", "matrixId",
+                    "inputSha256", "assemblySha256", "packageSha256", "status"))
+                or proof["runId"] != inputs["runId"]
+                or proof["invocationGroupId"] != inputs["invocationGroupId"]
+                or proof["inputSha256"] != input_sha or proof["manifestSha256"] != manifest_sha256
+                or proof["ownerSha256"] != owner_sha256
+                or proof["attemptId"] != manifest["attemptId"]
+                or proof["attemptSequence"] != manifest["attemptSequence"]
+                or (witness["bindingId"], witness["matrixId"]) != expected_tests[witness["testIdentity"]]
+                or witness["packageSha256"] != packages[entry["packageId"]]["sha256"]
+                or witness["assemblySha256"] != assemblies[entry["assemblyId"]]["sha256"]
+                or witness["startedMs"] < started_ms - 0.001 or witness["endedMs"] > ended_ms + 0.001
+                or proof["durationMs"] > 8 * 60 * 60 * 1000
+                or abs(proof["durationMs"] - (witness["endedMs"] - witness["startedMs"])) > 0.001):
+            raise ConformanceError("ProofMismatch")
+        if ((witness["status"] == "Passed" and (proof["failureKind"] != "None" or proof["assertionSymbol"] is not None))
+                or (witness["status"] == "Incomplete"
+                    and (proof["failureKind"] != "SkippedOrUnknown" or proof["assertionSymbol"] is not None))
+                or (witness["status"] == "Failed" and (
+                    proof["failureKind"] not in ("Assertion", "Unknown")
+                    or (proof["failureKind"] == "Assertion" and (
+                        entry["assertionSymbol"] is None or proof["assertionSymbol"] != entry["assertionSymbol"]))
+                    or (proof["failureKind"] == "Unknown" and proof["assertionSymbol"] is not None)))):
+            raise ConformanceError("ProofMismatch")
+        unknown_failure |= proof["failureKind"] == "Unknown"
+    completion = _runtime_json(completion_data, {
+        "schemaVersion": _constant(1), "runId": _uuid, "invocationGroupId": _uuid,
+        "attemptId": _uuid, "attemptSequence": _integer, "manifestSha256": sha256,
+        "inputSha256": sha256, "diagnosticCode": _one_of(*DIAGNOSTIC_CODES),
+        "observedCount": _integer, "expectedCount": _integer, "complete": _boolean,
+    }, limit=64 * 1024)
+    code = completion["diagnosticCode"]
+    inventory_complete = {item["testIdentity"] for item in witnesses} == set(expected)
+    failed = any(item["status"] == "Failed" for item in witnesses)
+    if (any(completion[key] != manifest[key] for key in (
+            "runId", "invocationGroupId", "attemptId", "attemptSequence", "inputSha256"))
+            or completion["manifestSha256"] != manifest_sha256
+            or completion["expectedCount"] != len(expected)
+            or not len(witnesses) <= completion["observedCount"] <= MAX_RESULTS + 1
+            or completion["complete"] != (inventory_complete and code in ("None", "AssertionFailed"))
+            or (completion["complete"] and completion["observedCount"] != len(witnesses))
+            or (code == "None" and (not inventory_complete or any(item["status"] != "Passed" for item in witnesses)))
+            or (code == "AssertionFailed" and (not inventory_complete or not failed or unknown_failure
+                or any(item["status"] == "Incomplete" for item in witnesses)))):
+        raise ConformanceError("EvidenceIncomplete")
+    return MappingProxyType({
+        "witnesses": witnesses, "proofs": MappingProxyType(proof_hashes), "completion": completion,
+        "attemptId": manifest["attemptId"], "diagnosticCode": code,
+    })

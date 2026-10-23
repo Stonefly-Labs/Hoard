@@ -1046,6 +1046,14 @@ initialization, readiness or admission. No product route-contract redesign or
 duplicate-ID substitute is used. See the
 [implementation checkpoint](specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
 
+Setup tasks T001..T006 are now complete, including all six historical revision
+pins and strict required-field/extension checks for every evidence entity.
+Actual safe-logger records can now be ingested with exact manifest/proof/
+completion relationships; proof walking rejects symlinked roots and bounded
+overflow. A separate diagnostic Linux SDK/logger job seals historical baselines
+before candidate compilation; its native result is pending. None of this
+completes the remaining foundations or grants provider qualification.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
