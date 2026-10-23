@@ -59,18 +59,7 @@ class ConformanceAdmissionTests(unittest.TestCase):
                 evidence.admit_entity("ContractCase", changed)
 
     def test_result_requires_exact_dimensions_status_attempts_and_provenance(self):
-        result = {
-            "runId": "95b3bbc8-f009-4692-bca2-c2253fa2d967",
-            "profileId": "metadata", "bindingId": "sqlite", "matrixId": "none",
-            "caseId": "MP-01", "status": "Passed", "applicable": True,
-            "exclusionRule": "none",
-            "attempts": [{
-                "sequence": 1, "startedMs": 0, "endedMs": 1, "status": "Passed",
-                "witnessIds": ["metadata.roundtrip"], "proofSha256": ["a" * 64],
-                "diagnosticCode": "None",
-            }],
-            "proofSha256": ["a" * 64],
-        }
+        result = self.result()
         admitted = evidence.admit_entity("CaseResult", result)
         self.assertEqual(admitted["matrixId"], "none")
         for key, value in (
@@ -89,6 +78,220 @@ class ConformanceAdmissionTests(unittest.TestCase):
             changed["attempts"][0][key] = value
             with self.subTest(attempt=key), self.assertRaises(evidence.ConformanceError):
                 evidence.admit_entity("CaseResult", changed)
+
+    def result(self):
+        return {
+            "runId": "95b3bbc8-f009-4692-bca2-c2253fa2d967",
+            "profileId": "metadata", "bindingId": "sqlite", "matrixId": "none",
+            "caseId": "MP-01", "status": "Passed", "applicable": True,
+            "exclusionRule": "none",
+            "attempts": [{
+                "sequence": 1, "startedMs": 0, "endedMs": 1, "status": "Passed",
+                "witnessIds": ["25fffb6f-61c1-42b9-9c70-a0c2571cd212"], "proofSha256": ["a" * 64],
+                "diagnosticCode": "None",
+            }],
+            "proofSha256": ["a" * 64],
+        }
+
+    def inputs(self):
+        source = {"src/check.cs": "a" * 64}
+        environment = {
+            "os": "linux", "osVersion": "test", "architecture": "x86_64",
+            "sdk": "10.0.203", "runtime": "10.0.7", "nativeSqlite": "none",
+            "filesystem": "ext4", "runnerImage": "none", "freeBytes": 0,
+            "pragmas": {"journalMode": "none", "synchronous": 0, "foreignKeys": 0, "busyTimeout": 0},
+        }
+        package = {
+            "packageId": "Hoard.Fixture", "version": "0.1.0", "sha256": "b" * 64,
+            "nugetSha512": "c" * 128, "sourceMapping": "local",
+            "runtimeAssemblies": {"lib/net10.0/Hoard.Fixture.dll": "d" * 64},
+        }
+        return {
+            "schemaVersion": 1, "runId": self.result()["runId"],
+            "invocationGroupId": "95cc783d-a60b-4378-822e-8dcb854fa3fc",
+            "profileId": "metadata", "mode": "diagnostic",
+            "catalogRevision": "f07-v1", "catalogSha256": "a" * 64, "sdkSha256": "b" * 64,
+            "sourceRevision": "c" * 40, "sourceState": "dirty-local",
+            "sourceManifest": source, "sourceManifestSha256": evidence.digest(source),
+            "packages": [package], "locks": {"packages.lock.json": "d" * 64},
+            "bindings": [{
+                "bindingId": "sqlite", "package": copy.deepcopy(package), "category": "metadata",
+                "descriptorSha256": "a" * 64, "capabilitySha256": "b" * 64,
+                "adapterId": "sqlite.adapter",
+            }],
+            "baselines": [], "runtimeAssemblies": {"consumer/Hoard.Tests.dll": "e" * 64},
+            "configurationSha256": "e" * 64, "capabilitySha256": "f" * 64,
+            "environment": environment, "environmentSha256": evidence.digest(environment),
+            "budgets": {
+                "operationSeconds": 5, "barrierSeconds": 15, "childSeconds": 600,
+                "transferSeconds": 2400, "recoverySeconds": 300, "terminationSeconds": 10,
+                "cleanupSeconds": 30, "profileSeconds": 5400, "baselineSeconds": 28800,
+                "maxChildren": 4, "maxTransferChildren": 1,
+            },
+            "invocation": ["profile", "metadata"],
+        }
+
+    def report(self):
+        inputs = self.inputs()
+        result = self.result()
+        witness = {
+            "executionId": result["attempts"][0]["witnessIds"][0],
+            "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+            "testIdentity": "Tests.Roundtrip", "bindingId": "sqlite", "matrixId": "none",
+            "packageSha256": "b" * 64, "assemblySha256": "e" * 64,
+            "inputSha256": evidence.digest(inputs), "startedMs": 0, "endedMs": 1,
+            "status": "Passed", "proofSha256": "a" * 64,
+        }
+        return {
+            "schemaVersion": 1, "catalogRevision": "f07-v1", "inputs": inputs,
+            "postInputSha256": evidence.digest(inputs), "results": [result], "witnesses": [witness],
+            "resources": [], "proofs": {"runtime/proof.json": "a" * 64},
+            "state": "Complete", "qualification": False, "scope": ["common-logical"],
+        }
+
+    def test_exclusions_and_interruption_do_not_invent_runtime_executions(self):
+        excluded = self.result()
+        excluded.update(bindingId="memory", caseId="MP-36", status="NotApplicable",
+                        applicable=False, exclusionRule="non-durable-fixture", attempts=[], proofSha256=[])
+        evidence.admit_entity("CaseResult", excluded)
+        for key, value in (("attempts", self.result()["attempts"]), ("proofSha256", ["a" * 64])):
+            malformed = copy.deepcopy(excluded)
+            malformed[key] = value
+            with self.subTest(key=key), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("CaseResult", malformed)
+        interrupted = self.result()
+        interrupted.update(status="Incomplete", proofSha256=[])
+        interrupted["attempts"][0].update(status="Incomplete", witnessIds=[], proofSha256=[],
+                                         diagnosticCode="DeadlineExceeded")
+        evidence.admit_entity("CaseResult", interrupted)
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.admit_entity("Attempt", {
+                **self.result()["attempts"][0], "status": "NotApplicable",
+            })
+
+    def test_input_hashes_bind_distinct_baselines_packages_bindings_and_runtime_assets(self):
+        inputs = self.inputs()
+        admitted = evidence.admit_entity("RunInputs", inputs)
+        self.assertEqual(evidence.admit_entity("RunInputs", admitted), admitted)
+        mutations = (
+            ("sourceManifestSha256", "1" * 64), ("environmentSha256", "2" * 64),
+            ("packages", inputs["packages"] * 2), ("bindings", inputs["bindings"] * 2),
+        )
+        for key, value in mutations:
+            malformed = copy.deepcopy(inputs)
+            malformed[key] = value
+            with self.subTest(key=key), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("RunInputs", malformed)
+        for dimension in ("packages", "bindings"):
+            malformed = copy.deepcopy(inputs)
+            if dimension == "packages":
+                malformed["packages"][0]["sha256"] = "3" * 64
+            else:
+                malformed["bindings"][0]["package"]["sha256"] = "3" * 64
+            with self.subTest(dimension=dimension), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("RunInputs", malformed)
+        inputs["runtimeAssemblies"]["consumer/Hoard.Tests.dll"] = "4" * 64
+        self.assertEqual(admitted["runtimeAssemblies"]["consumer/Hoard.Tests.dll"], "e" * 64)
+
+    def test_profile_cannot_duplicate_or_change_its_frozen_dimensions(self):
+        profile = {
+            "profileId": "metadata", "revision": "f07-v1",
+            "caseExpansion": [{"profileId": "metadata", "bindingId": "sqlite",
+                               "matrixId": "none", "caseId": "MP-01"}],
+            "bindingIds": ["sqlite"], "matrixIds": ["none"],
+            "budgets": self.inputs()["budgets"], "prerequisites": ["owned-native-execution"],
+        }
+        evidence.admit_entity("QualificationProfile", profile)
+        for key, value in (
+                ("caseExpansion", profile["caseExpansion"] * 2),
+                ("bindingIds", ["memory"]), ("matrixIds", ["invented"])):
+            malformed = copy.deepcopy(profile)
+            malformed[key] = value
+            with self.subTest(field=key), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("QualificationProfile", malformed)
+        profile["caseExpansion"][0]["profileId"] = "harness"
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.admit_entity("QualificationProfile", profile)
+
+    def test_report_rejects_cross_run_proof_borrowing_missing_and_duplicate_executions(self):
+        report = self.report()
+        evidence.admit_entity("QualificationReport", report)
+        for field, value in (
+                ("runId", str(uuid.uuid4())), ("invocationGroupId", str(uuid.uuid4())),
+                ("inputSha256", "1" * 64), ("packageSha256", "2" * 64),
+                ("assemblySha256", "3" * 64), ("proofSha256", "4" * 64)):
+            malformed = copy.deepcopy(report)
+            malformed["witnesses"][0][field] = value
+            with self.subTest(field=field), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("QualificationReport", malformed)
+        for field in ("results", "witnesses"):
+            malformed = copy.deepcopy(report)
+            malformed[field] *= 2
+            with self.subTest(duplicate=field), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("QualificationReport", malformed)
+        malformed = copy.deepcopy(report)
+        malformed["results"][0]["attempts"][0]["witnessIds"] = [str(uuid.uuid4())]
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.admit_entity("QualificationReport", malformed)
+        malformed = copy.deepcopy(report)
+        malformed["qualification"] = True
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.admit_entity("QualificationReport", malformed)
+
+    def test_retry_keeps_the_failed_execution_and_all_its_proofs(self):
+        report = self.report()
+        result = report["results"][0]
+        first = result["attempts"][0]
+        first.update(status="Failed", diagnosticCode="AssertionFailed")
+        report["witnesses"][0]["status"] = "Failed"
+        retry_id = str(uuid.uuid4())
+        result["attempts"].append({
+            "sequence": 2, "startedMs": 2, "endedMs": 3, "status": "Passed",
+            "witnessIds": [retry_id], "proofSha256": ["f" * 64], "diagnosticCode": "None",
+        })
+        result["proofSha256"].append("f" * 64)
+        report["witnesses"].append({
+            **report["witnesses"][0], "executionId": retry_id, "startedMs": 2, "endedMs": 3,
+            "status": "Passed", "proofSha256": "f" * 64,
+        })
+        report["proofs"]["runtime/retry.json"] = "f" * 64
+        evidence.admit_entity("QualificationReport", report)
+        result["attempts"] = result["attempts"][1:]
+        result["attempts"][0]["sequence"] = 1
+        result["proofSha256"] = ["f" * 64]
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.admit_entity("QualificationReport", report)
+
+    def test_an_attempt_cannot_borrow_other_dimensions_or_outside_execution_times(self):
+        for dimension, value in (("bindingId", "memory"), ("matrixId", "other")):
+            report = self.report()
+            report["results"][0][dimension] = value
+            with self.subTest(dimension=dimension), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("QualificationReport", report)
+        for started, ended in ((0, 2), (2, 3)):
+            report = self.report()
+            report["witnesses"][0].update(startedMs=started, endedMs=ended)
+            with self.subTest(interval=(started, ended)), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("QualificationReport", report)
+        result = self.result()
+        result["attempts"][0]["endedMs"] = 3
+        result["attempts"].append({**result["attempts"][0], "sequence": 2, "startedMs": 2})
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.admit_entity("CaseResult", result)
+
+    def test_nil_execution_and_oversized_monotonic_values_fail_with_closed_codes(self):
+        for field, value in (
+                ("sequence", True), ("startedMs", 10**400), ("endedMs", 10**400),
+                ("witnessIds", ["metadata.roundtrip"])):
+            attempt = self.result()["attempts"][0]
+            attempt[field] = value
+            with self.subTest(field=field), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("Attempt", attempt)
+        witness = self.report()["witnesses"][0]
+        for field in ("executionId", "runId", "invocationGroupId"):
+            malformed = {**witness, field: str(uuid.UUID(int=0))}
+            with self.subTest(field=field), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("RuntimeWitness", malformed)
 
     def test_unknown_entity_and_oversized_json_fail_without_echoing_input(self):
         for data in (b" " * (16 * 1024 * 1024 + 1), b"\xff", b'{"canary":'):

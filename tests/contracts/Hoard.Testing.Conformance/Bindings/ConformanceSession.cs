@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using Hoard.Abstractions.Metadata;
 using Hoard.Abstractions.Storage;
+using Hoard.Testing.Conformance.Diagnostics;
 
 namespace Hoard.Testing.Conformance.Bindings;
 
@@ -8,24 +9,38 @@ public enum ConformanceOwnershipState { Allocated, Active, Settling, Released, R
 
 public sealed class ConformanceCleanupObservation
 {
-    public ConformanceCleanupObservation(ConformanceOwnershipState state, IEnumerable<string> resourceIds)
+    public ConformanceCleanupObservation(ConformanceOwnershipState state, IEnumerable<string> resourceIds,
+        ConformanceDiagnosticCode reason = ConformanceDiagnosticCode.None)
     {
-        if (!Enum.IsDefined(state)) { throw new ArgumentException("OwnershipInvalid"); }
+        if (!Enum.IsDefined(state) || !Enum.IsDefined(reason)) { throw new ArgumentException("OwnershipInvalid"); }
         ArgumentNullException.ThrowIfNull(resourceIds);
         State = state;
         ResourceIds = resourceIds.Take(1025).Select(ConformanceBindingDeclaration.Id).ToImmutableArray();
         if (ResourceIds.Length > 1024 || ResourceIds.Distinct(StringComparer.Ordinal).Count() != ResourceIds.Length
-            || (state == ConformanceOwnershipState.Retained && ResourceIds.IsEmpty))
+            || (state == ConformanceOwnershipState.Retained
+                && (ResourceIds.IsEmpty || reason == ConformanceDiagnosticCode.None))
+            || (state == ConformanceOwnershipState.Released
+                && (!ResourceIds.IsEmpty || reason != ConformanceDiagnosticCode.None)))
         { throw new ArgumentException("OwnershipInvalid"); }
+        Reason = reason;
     }
 
     public ConformanceOwnershipState State { get; }
     public ImmutableArray<string> ResourceIds { get; }
+    public ConformanceDiagnosticCode Reason { get; }
 }
 
 public sealed record ConformanceFaultObservation(
     ConformanceFault Fault, string BoundaryId, long ObservationCount,
-    ConformanceOwnershipState Ownership);
+    ConformanceOwnershipState Ownership)
+{
+    public ConformanceFault Fault { get; } = Enum.IsDefined(Fault) ? Fault : throw new ArgumentException("BindingInvalid");
+    public string BoundaryId { get; } = ConformanceBindingDeclaration.Id(BoundaryId);
+    public long ObservationCount { get; } = ObservationCount >= 0
+        ? ObservationCount : throw new ArgumentException("BindingInvalid");
+    public ConformanceOwnershipState Ownership { get; } = Enum.IsDefined(Ownership)
+        ? Ownership : throw new ArgumentException("OwnershipInvalid");
+}
 
 public interface IConformanceFaultDriver
 {

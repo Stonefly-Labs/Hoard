@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPackable>true</IsPackable>
+    <Description>Test-only bounded VSTest runtime witness projection. Not a qualification evaluator or product dependency.</Description>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Smoke/**/*.cs" />
+    <PackageReference Include="Microsoft.TestPlatform.ObjectModel" />
+    <ProjectReference Include="../Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj" />
+  </ItemGroup>
+</Project>

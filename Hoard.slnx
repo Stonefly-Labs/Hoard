@@ -12,6 +12,7 @@
   <Folder Name="/tests/contracts/">
     <Project Path="tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj" />
     <Project Path="tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj" />
+    <Project Path="tests/contracts/Hoard.Conformance.TestLogger/Hoard.Conformance.TestLogger.csproj" />
     <Project Path="tests/contracts/Hoard.Metadata.Tests/Hoard.Metadata.Tests.csproj" />
     <Project Path="tests/contracts/Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj" />
   </Folder>

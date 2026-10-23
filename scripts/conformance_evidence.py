@@ -57,6 +57,8 @@ def _unicode(value, depth=0):
         value.encode("utf-8", errors="strict")
     elif isinstance(value, dict):
         for key, child in value.items():
+            if not isinstance(key, str):
+                _invalid()
             _unicode(key, depth + 1)
             _unicode(child, depth + 1)
     elif isinstance(value, list):
@@ -74,7 +76,7 @@ def load_json(data):
                             parse_constant=lambda _: _invalid())
         _unicode(result)
         return result
-    except (UnicodeError, json.JSONDecodeError, RecursionError):
+    except (UnicodeError, ValueError, RecursionError):
         raise ConformanceError() from None
 
 
@@ -130,7 +132,8 @@ def _uuid(value):
     if not isinstance(value, str):
         _invalid()
     try:
-        if str(uuid.UUID(value)) != value:
+        parsed = uuid.UUID(value)
+        if parsed.int == 0 or str(parsed) != value:
             _invalid()
     except ValueError:
         raise ConformanceError() from None
@@ -138,7 +141,7 @@ def _uuid(value):
 
 
 def _number(value):
-    if type(value) not in (int, float) or not math.isfinite(value) or value < 0:
+    if type(value) not in (int, float) or not 0 <= value <= 2**63 - 1 or not math.isfinite(value):
         _invalid()
     return value
 
@@ -183,14 +186,14 @@ def _list(validate, limit, *, minimum=1, unique=False):
 
 
 def _hash_map(value):
-    if not isinstance(value, dict) or not value or len(value) > MAX_PROOF_FILES:
+    if not isinstance(value, (dict, MappingProxyType)) or not value or len(value) > MAX_PROOF_FILES:
         _invalid()
     return MappingProxyType({relative_path(key): sha256(child) for key, child in value.items()})
 
 
 def _record(fields):
     def validate(value):
-        if not isinstance(value, dict) or set(value) != set(fields):
+        if not isinstance(value, (dict, MappingProxyType)) or set(value) != set(fields):
             _invalid()
         return MappingProxyType({key: validator(value[key]) for key, validator in fields.items()})
     return validate
@@ -202,8 +205,11 @@ def _entity(kind):
 
 _ids = _list(stable_id, MAX_WITNESSES, unique=True)
 _hashes = _list(sha256, MAX_WITNESSES, unique=True)
+_optional_hashes = _list(sha256, MAX_WITNESSES, minimum=0, unique=True)
+_executions = _list(_uuid, MAX_WITNESSES, minimum=0, unique=True)
 _category = _one_of("metadata", "artifacts", "declaration-lifecycle", "harness", "compatibility")
 _state = _one_of(*STATUSES)
+_executed_state = _one_of("Passed", "Failed", "Incomplete")
 _schemas = {
     "ContractCase": {
         "caseId": stable_id, "contractRevision": _constant(CATALOG_REVISION),
@@ -229,7 +235,8 @@ _schemas = {
         "runtimeAssemblies": _hash_map,
     },
     "ProviderBinding": {
-        "bindingId": stable_id, "package": _entity("PackageIdentity"), "category": _category,
+        "bindingId": stable_id, "package": _entity("PackageIdentity"),
+        "category": _one_of("metadata", "artifacts"),
         "descriptorSha256": sha256, "capabilitySha256": sha256, "adapterId": stable_id,
     },
     "MatrixEntry": {
@@ -265,6 +272,9 @@ _schemas = {
         "sourceManifest": _hash_map, "sourceManifestSha256": sha256,
         "packages": _list(_entity("PackageIdentity"), 1024),
         "locks": _hash_map, "configurationSha256": sha256, "capabilitySha256": sha256,
+        "bindings": _list(_entity("ProviderBinding"), 128, minimum=0),
+        "baselines": _list(_entity("CompatibilityBaseline"), 6, minimum=0),
+        "runtimeAssemblies": _hash_map,
         "environment": _entity("Environment"), "environmentSha256": sha256,
         "budgets": _entity("Budgets"), "invocation": _ids,
     },
@@ -275,15 +285,16 @@ _schemas = {
         "cleanupDurationMs": _number, "diagnosticCode": _one_of(*DIAGNOSTIC_CODES),
     },
     "Attempt": {
-        "sequence": _integer, "startedMs": _number, "endedMs": _number, "status": _state,
-        "witnessIds": _ids, "proofSha256": _hashes, "diagnosticCode": _one_of(*DIAGNOSTIC_CODES),
+        "sequence": _integer, "startedMs": _number, "endedMs": _number, "status": _executed_state,
+        "witnessIds": _executions, "proofSha256": _optional_hashes,
+        "diagnosticCode": _one_of(*DIAGNOSTIC_CODES),
     },
     "CaseResult": {
         "runId": _uuid, "profileId": _one_of(*PROFILES), "bindingId": stable_id,
         "matrixId": stable_id, "caseId": stable_id, "status": _state,
         "applicable": _boolean,
         "exclusionRule": _one_of("none", "non-durable-fixture", "simulation-no-durable-restart"),
-        "attempts": _list(_entity("Attempt"), 3), "proofSha256": _hashes,
+        "attempts": _list(_entity("Attempt"), 3, minimum=0), "proofSha256": _optional_hashes,
     },
     "RuntimeWitness": {
         "executionId": _uuid, "runId": _uuid, "invocationGroupId": _uuid,
@@ -291,13 +302,13 @@ _schemas = {
         and all(32 <= ord(c) <= 126 for c in x) else _invalid(),
         "bindingId": stable_id, "matrixId": stable_id, "packageSha256": sha256,
         "assemblySha256": sha256, "inputSha256": sha256,
-        "startedMs": _number, "endedMs": _number, "status": _state, "proofSha256": sha256,
+        "startedMs": _number, "endedMs": _number, "status": _executed_state, "proofSha256": sha256,
     },
     "QualificationReport": {
         "schemaVersion": _constant(1), "catalogRevision": _constant(CATALOG_REVISION),
         "inputs": _entity("RunInputs"), "postInputSha256": sha256,
         "results": _list(_entity("CaseResult"), MAX_RESULTS),
-        "witnesses": _list(_entity("RuntimeWitness"), MAX_RESULTS * MAX_WITNESSES),
+        "witnesses": _list(_entity("RuntimeWitness"), MAX_RESULTS * MAX_WITNESSES, minimum=0),
         "resources": _list(_entity("ResourceOwnership"), 1024, minimum=0),
         "proofs": _hash_map,
         "state": _one_of("Created", "Admitted", "Running", "Evaluating", "Complete", "Failed", "Incomplete"),
@@ -313,22 +324,34 @@ _schemas = {
 
 
 def admit_entity(kind, value):
-    if kind not in _schemas:
+    if not isinstance(kind, str) or kind not in _schemas:
         _invalid()
     result = _record(_schemas[kind])(value)
     if kind in ("Attempt", "RuntimeWitness"):
         if result["endedMs"] < result["startedMs"]:
             _invalid()
-    if kind == "Attempt" and not 1 <= result["sequence"] <= 3:
-        _invalid()
+    if kind == "Attempt":
+        if (not 1 <= result["sequence"] <= 3
+                or (result["status"] == "Passed"
+                    and (not result["witnessIds"] or not result["proofSha256"]
+                         or result["diagnosticCode"] != "None"))
+                or (result["status"] != "Passed" and result["diagnosticCode"] == "None")):
+            _invalid()
     if kind == "CaseResult":
         if tuple(attempt["sequence"] for attempt in result["attempts"]) != tuple(range(1, len(result["attempts"]) + 1)):
             _invalid()
-        if result["status"] != result["attempts"][-1]["status"]:
+        if any(earlier["endedMs"] > later["startedMs"]
+               for earlier, later in zip(result["attempts"], result["attempts"][1:])):
+            _invalid()
+        if result["applicable"] and (not result["attempts"] or result["status"] != result["attempts"][-1]["status"]):
             _invalid()
         if result["applicable"] != (result["exclusionRule"] == "none"):
             _invalid()
         if (result["status"] == "NotApplicable") == result["applicable"]:
+            _invalid()
+        if not result["applicable"] and (result["attempts"] or result["proofSha256"]):
+            _invalid()
+        if set(result["proofSha256"]) != {proof for attempt in result["attempts"] for proof in attempt["proofSha256"]}:
             _invalid()
     if kind == "Budgets":
         ceilings = {
@@ -339,7 +362,91 @@ def admit_entity(kind, value):
         }
         if any(not 0 < result[key] <= limit for key, limit in ceilings.items()):
             _invalid()
+    if kind == "QualificationProfile":
+        keys = result["caseExpansion"]
+        if (len({tuple(key.values()) for key in keys}) != len(keys)
+                or any(key["profileId"] != result["profileId"] for key in keys)
+                or {key["bindingId"] for key in keys} != set(result["bindingIds"])
+                or {key["matrixId"] for key in keys} != set(result["matrixIds"])):
+            _invalid()
+    if kind == "RunInputs":
+        _validate_input_links(result)
+    if kind == "QualificationReport":
+        _validate_report_links(result)
     return result
+
+
+def _package_key(package):
+    return package["sourceMapping"], package["packageId"].casefold(), package["version"].casefold()
+
+
+def _validate_input_links(inputs):
+    packages = {_package_key(package): package for package in inputs["packages"]}
+    bindings = {binding["bindingId"]: binding for binding in inputs["bindings"]}
+    baselines = {(baseline["revision"], baseline["apiScope"]) for baseline in inputs["baselines"]}
+    if (inputs["sourceManifestSha256"] != digest(inputs["sourceManifest"])
+            or inputs["environmentSha256"] != digest(inputs["environment"])
+            or len(packages) != len(inputs["packages"])
+            or len(bindings) != len(inputs["bindings"])
+            or len(baselines) != len(inputs["baselines"])
+            or any(packages.get(_package_key(binding["package"])) != binding["package"]
+                   for binding in bindings.values())):
+        _invalid()
+    ceiling = {"metadata": 5400, "artifacts": 10800, "composition": 3600,
+               "compatibility": 3600, "harness": 3600}[inputs["profileId"]]
+    if inputs["budgets"]["profileSeconds"] > ceiling:
+        _invalid()
+
+
+def _validate_report_links(report):
+    inputs = report["inputs"]
+    input_sha = digest(inputs)
+    executions = {witness["executionId"]: witness for witness in report["witnesses"]}
+    packages = {package["sha256"] for package in inputs["packages"]}
+    bindings = {binding["bindingId"]: binding for binding in inputs["bindings"]}
+    assemblies = set(inputs["runtimeAssemblies"].values())
+    assemblies.update(assembly for package in inputs["packages"] for assembly in package["runtimeAssemblies"].values())
+    proofs = set(report["proofs"].values())
+    result_keys = {(result["profileId"], result["bindingId"], result["matrixId"], result["caseId"])
+                   for result in report["results"]}
+    if len(result_keys) != len(report["results"]) or len(executions) != len(report["witnesses"]):
+        _invalid()
+    for witness in executions.values():
+        binding = bindings.get(witness["bindingId"])
+        if (witness["runId"] != inputs["runId"]
+                or witness["invocationGroupId"] != inputs["invocationGroupId"]
+                or witness["inputSha256"] != input_sha
+                or witness["packageSha256"] not in packages
+                or witness["assemblySha256"] not in assemblies
+                or witness["proofSha256"] not in proofs
+                or (witness["bindingId"] != "none"
+                    and (binding is None or binding["package"]["sha256"] != witness["packageSha256"]))):
+            _invalid()
+    referenced = set()
+    for result in report["results"]:
+        if (result["runId"] != inputs["runId"] or result["profileId"] != inputs["profileId"]
+                or not set(result["proofSha256"]).issubset(proofs)):
+            _invalid()
+        for attempt in result["attempts"]:
+            for execution_id in attempt["witnessIds"]:
+                witness = executions.get(execution_id)
+                if (witness is None or witness["proofSha256"] not in attempt["proofSha256"]
+                        or witness["bindingId"] != result["bindingId"] or witness["matrixId"] != result["matrixId"]
+                        or witness["startedMs"] < attempt["startedMs"] or witness["endedMs"] > attempt["endedMs"]
+                        or (attempt["status"] == "Passed" and witness["status"] != "Passed")):
+                    _invalid()
+                referenced.add(execution_id)
+    if referenced != set(executions) or any(resource["runId"] != inputs["runId"] for resource in report["resources"]):
+        _invalid()
+    if report["qualification"] and (
+            inputs["mode"] != "qualification" or report["state"] != "Complete"
+            or report["postInputSha256"] != input_sha
+            or any(result["status"] not in ("Passed", "NotApplicable") for result in report["results"])
+            or any(attempt["status"] != "Passed" for result in report["results"] for attempt in result["attempts"])
+            or any(resource["state"] != "Released" for resource in report["resources"])):
+        _invalid()
+    if len(canonical_bytes(report)) > MAX_REPORT_BYTES:
+        _invalid()
 
 
 def file_sha256(path):

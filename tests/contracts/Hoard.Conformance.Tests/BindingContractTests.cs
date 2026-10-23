@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Catalog;
 using Hoard.Testing.Conformance.Diagnostics;
+using Hoard.Testing.Conformance.Evidence;
 
 namespace Hoard.Conformance.Tests;
 
@@ -63,11 +64,41 @@ public sealed class BindingContractTests
     public void Released_observations_cannot_stand_in_for_retained_ownership()
     {
         var resources = new List<string> { "owned-resource" };
-        var retained = new ConformanceCleanupObservation(ConformanceOwnershipState.Retained, resources);
+        var retained = new ConformanceCleanupObservation(ConformanceOwnershipState.Retained, resources,
+            ConformanceDiagnosticCode.CleanupIncomplete);
         resources.Clear();
         Assert.Equal<string>(["owned-resource"], retained.ResourceIds);
         Assert.Throws<ArgumentException>(() => new ConformanceCleanupObservation(ConformanceOwnershipState.Retained, []));
         Assert.Throws<ArgumentException>(() => new ConformanceCleanupObservation(ConformanceOwnershipState.Retained, ["same", "same"]));
+        Assert.Throws<ArgumentException>(() => new ConformanceCleanupObservation(ConformanceOwnershipState.Retained, ["owned"]));
+        Assert.Throws<ArgumentException>(() => new ConformanceCleanupObservation(ConformanceOwnershipState.Released, ["owned"]));
+        Assert.Throws<ArgumentException>(() => new ConformanceCleanupObservation(ConformanceOwnershipState.Released, [],
+            ConformanceDiagnosticCode.CleanupIncomplete));
+        Assert.Equal(ConformanceDiagnosticCode.CleanupIncomplete, retained.Reason);
+    }
+
+    [Fact]
+    public void Fault_observations_reject_private_paths_invalid_counts_and_unknown_states()
+    {
+        Assert.Throws<ArgumentException>(() => new ConformanceFaultObservation(
+            ConformanceFault.Capacity, "/private/synthetic-canary", 0, ConformanceOwnershipState.Active));
+        Assert.Throws<ArgumentException>(() => new ConformanceFaultObservation(
+            (ConformanceFault)int.MaxValue, "capacity", 0, ConformanceOwnershipState.Active));
+        Assert.Throws<ArgumentException>(() => new ConformanceFaultObservation(
+            ConformanceFault.Capacity, "capacity", -1, ConformanceOwnershipState.Active));
+        Assert.Throws<ArgumentException>(() => new ConformanceFaultObservation(
+            ConformanceFault.Capacity, "capacity", 0, (ConformanceOwnershipState)int.MaxValue));
+    }
+
+    [Fact]
+    public void Catalog_exclusion_cannot_be_fabricated_as_a_runtime_execution()
+    {
+        var expected = ConformanceCatalog.Expand("metadata").First(entry => !entry.Witnesses.IsEmpty);
+        Assert.Throws<ArgumentException>(() => new ConformanceRuntimeWitness(
+            Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), expected, expected.Witnesses[0],
+            new string('a', 64), new string('b', 64), new string('c', 64),
+            TimeSpan.Zero, TimeSpan.FromSeconds(1), ConformanceWitnessStatus.NotApplicable,
+            new string('d', 64)));
     }
 
     [Fact]

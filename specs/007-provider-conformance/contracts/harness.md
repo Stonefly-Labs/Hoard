@@ -22,7 +22,7 @@ dependency of any platform/provider package.
 | `IArtifactConformanceSession` | Existing store, validator, maintenance/lifetime and same coordination authority; typed fault driver; reopen/settlement observation | No private payload paths in common checks; common code owns expected bytes/digest/reference state |
 | `IConformanceFaultDriver` | Catalogued fault capability IDs; arm/release named barriers; inject one named fault; observe typed boundary/state evidence | Setup/observations only; never `RunCase`, `Assert`, expected-outcome override or pass boolean |
 | `ConformanceRunContext` | Run/case identity, controlled clock, finite budgets, owned-resource allocator, safe evidence sink | Harness-owned synthetic resources and input snapshot; no arbitrary output/path callbacks |
-| `ConformanceCleanupObservation` | Released/retained state, exact opaque owned resource IDs, safe reason | Common evaluator checks actual settlement; dispose alone is not proof |
+| `ConformanceCleanupObservation` | Released/retained state, exact opaque still-owned resource IDs, closed safe reason | Released has no remaining IDs/reason; retained requires IDs and a failure reason; dispose alone is not proof |
 
 Exact C# member types follow these shapes during implementation without
 weakening the listed invariants. Use cancellation-aware `ValueTask`/`Task`,

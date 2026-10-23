@@ -1035,11 +1035,14 @@ implemented; full acceptance and final architecture review remain outstanding.
 Native execution admission now requires both inherited Linux confinement and
 kernel PID-handle group signalling, verified before the target is released;
 unsupported hosts fail admission rather than claiming unsafe settlement.
-The foundation workflow subsequently passed 26 native checks without skips.
-A new diagnostic-directory replacement challenge then exposed an ownership gap.
-The correction anchors ledger, diagnostic and cleanup operations to verified
-directory identities; its native replay is pending. None of these focused
-results is full qualification. See the
+The corrected directory-ownership implementation passed 28 native checks without
+skips. The SDK now also has owned-resource allocation and a bounded VSTest logger;
+composition/version fixtures exercise existing Hosting APIs. These remain
+non-qualifying foundations, not shared provider suites or a completed CLI.
+Implementation is paused on a real contract conflict: CP-11/FR-007 require
+route-conflict rejection before construction, but existing Hosting learns actual
+routes only after construction. Neither changing public contracts nor weakening
+that requirement has been approved. See the
 [implementation checkpoint](specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized

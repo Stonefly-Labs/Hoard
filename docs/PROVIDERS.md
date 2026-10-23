@@ -15,7 +15,13 @@ foundations only: common assertions, independent adapters and the contributor
 workflow are not delivered. Memory now exposes targeted test-only record and
 receipt controls, with bounded private encoding and real corruption validation;
 its independent copy-on-write mechanism and public operation contracts remain.
-Initial executor/witness repairs are undergoing native Linux validation.
+The corrected executor passed 28 focused native Linux checks without skips.
+The SDK also has an identity-pinned allocator and bounded runtime logger;
+Linux allocator execution, actual loaded-provider attribution and complete
+controller ingestion remain unproven. Focused composition/version fixtures
+do not establish category or host-profile qualification. CP-11's preconstruction
+route-rejection requirement conflicts with the existing mapping lifecycle and
+awaits a maintainer decision; responsibility IDs are not route declarations.
 Do not use the new executor as acceptance-ready tooling. See the
 [implementation checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
 

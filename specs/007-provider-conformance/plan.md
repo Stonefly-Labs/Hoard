@@ -4,9 +4,9 @@
 
 **Input**: Feature specification from `specs/007-provider-conformance/spec.md`
 
-**Status**: Implementation continues autonomously after the maintainer directed
-resolution of implementation questions. No completed harness, shared
-assertion extraction, workflow, custom checklist approval or qualification
+**Status**: The authorized implementation remains `implement / running`, with
+the unresolved CP-11 contract conflict recorded below. No completed harness, shared
+assertion extraction, five-profile workflow, custom checklist approval or qualification
 result is delivered. Public product contracts and required outcomes remain
 unchanged; necessary fixture-private controls are extended as recorded below.
 
@@ -67,13 +67,55 @@ failed exactly the diagnostic-parent directory replacement case. Its correction
 anchors ledger/diagnostic/cleanup operations to verified directory descriptors
 and records original child-directory device/inode identities. Same-name directory
 replacement is rejected before child launch; cleanup depth and entries are
-bounded. Native replay of this correction is pending. Earlier retained private
+bounded. The correction passed 28 native checks without skips in
+[39908082714](https://github.com/Stonefly-Labs/Hoard/actions/runs/39908082714).
+Earlier retained private
 ledgers lack these directory identities and are not admitted for ordinary
 resume/cleanup under the new format.
 The unchanged inherited metadata suite also passed 72 tests against candidate
 Memory bytes; this is a focused regression, not category qualification.
 Subsequent repairs remain subject to full challenge coverage and final
 architecture review before qualification.
+
+### Current SDK/evidence checkpoint and unresolved requirement
+
+The test-only SDK now includes a native identity-pinned resource allocator,
+validated cleanup/fault observations and a real bounded VSTest logger with
+private input/owner manifests and hashed runtime proofs. SDK settlement never
+deletes resources or reports authoritative `Released`. Complete controller
+ingestion and actual loaded-provider proofs are not yet implemented.
+Strict model admission binds input/package/binding/baseline/runtime inventories,
+actual execution UUIDs, append-only attempts, exact dimensions and monotonic
+attempt/witness intervals. Finite VSTest scaffolding is projected without raw
+console/TRX persistence. Composition and version fixtures use existing Hosting
+validation; they are focused foundations, not complete profile coverage.
+
+Observed checks: 141 portable tooling tests discovered (132 passed, nine native
+skips on macOS); 39 source SDK tests passed; 41 tests passed against freshly
+packed SDK/logger packages after independent fresh-cache locked replay.
+Package-only logger smoke locks also replayed and built. The focused new
+composition/version suites passed 142 tests. A broad direct integration run
+passed 646 and failed five preparation-dependent evidence checks: required
+foundation/configuration/discovery inputs were absent. No complete predecessor
+acceptance is claimed. Formatting/catalog checks passed. A bounded SDK/logger
+architecture review reported no confirmed architectural violations, with Linux
+allocator execution and loaded-provider proof integration still unproven;
+it is not final T081 review.
+
+**Blocker requiring a maintainer decision:** CP-11 and FR-007 require actual
+route conflicts to reject before provider construction, while the existing
+Hosting contract learns routes only through constructed modules' `MapEndpoints`.
+The actual `AmbiguousRoute` check therefore runs at route composition, before
+publication/readiness. Owner-scoped endpoint responsibility IDs do not encode
+routes; malformed/duplicate-ID tests are not CP-11 proof and are labelled
+`endpoint-declaration` instead. Preconstructing modules just to inspect their
+routes would itself violate the requested boundary.
+
+The maintainer was unavailable to decide between preserving APIs and clarifying
+the route-conflict boundary (recommended), or authorizing a product route
+declaration redesign. Requirements and public product contracts remain unchanged;
+no weaker substitute, fabricated preconstruction proof or CP-11 completion is
+claimed. The stage remains running, task/checklist markers unchanged.
 
 ## Partial implementation checkpoint
 
@@ -90,9 +132,9 @@ contracts, an independently expanded catalog, strict Python evidence entities,
 source snapshots, initial witness admission, owned execution and historical
 baseline preparation. The solution registers SDK unit tests normally and
 excludes package-only fixture projects from default builds. Production
-reference edges and provider implementations are unchanged. Common consumers,
-adapters, the conformance CLI/evaluator/reports, compatibility/composition
-execution, contributor example and five-profile CI are not delivered.
+reference edges and production provider contracts are unchanged. Common consumers,
+adapters, the conformance CLI/evaluator/reports, complete compatibility/composition
+profiles, contributor example and five-profile CI are not delivered.
 
 Historical preparation completed locally before candidate package builds:
 the sealed proof SHA-256 was

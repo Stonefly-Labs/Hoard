@@ -8,6 +8,8 @@
     <PackageVersion Include="Hoard.Fixtures.Metadata.Memory" Version="[0.1.0]" />
     <PackageVersion Include="Hoard.Fixtures.Artifacts.Local" Version="[0.1.0]" />
     <PackageVersion Include="Hoard.Fixtures.Artifacts.ObjectSemantics" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Metadata.HostAdapters" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Artifacts.HostAdapters" Version="[0.1.0]" />
     <PackageVersion Include="Hoard.Fixtures.Conformance.Bindings.Sqlite" Version="[0.1.0]" />
     <PackageVersion Include="Hoard.Fixtures.Conformance.Bindings.Memory" Version="[0.1.0]" />
     <PackageVersion Include="Hoard.Fixtures.Conformance.Bindings.Local" Version="[0.1.0]" />

@@ -8,10 +8,29 @@
     <PackageReference Include="xunit" PrivateAssets="all" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.TestHost" PrivateAssets="all" />
+    <Compile Include="../../FoundationEvidence.cs" Link="FoundationEvidence.cs" />
+    <Compile Include="../../fixtures/conformance/Host/CompositionFixtures.cs" Link="Conformance/CompositionFixtures.cs" />
+    <Compile Include="../../fixtures/conformance/Host/VersionFixtures.cs" Link="Conformance/VersionFixtures.cs" />
+    <Compile Include="../../unit/Hoard.Foundation.Tests/ContractChangeExamples.cs" Link="Conformance/ContractChangeExamples.cs" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ConformancePackageAcceptance)' != 'true'">
     <ProjectReference Include="../../../src/Hoard.Hosting/Hoard.Hosting.csproj" />
     <ProjectReference Include="../../../src/Hoard.Application/Hoard.Application.csproj" />
     <ProjectReference Include="../../fixtures/discovery/ReferenceConsumer/ReferenceConsumer.csproj" />
-    <Compile Include="../../FoundationEvidence.cs" Link="FoundationEvidence.cs" />
-    <Using Include="Xunit" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
+    <DefineConstants>$(DefineConstants);CONFORMANCE_PROVIDER_PACKAGES</DefineConstants>
+    <NuGetLockFilePath>$(BaseIntermediateOutputPath)ConformancePackageAcceptance/packages.lock.json</NuGetLockFilePath>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
+    <Compile Remove="*.cs" />
+    <Compile Include="ConformanceMatrixTests.cs;ConformanceVersionTests.cs;LifecycleFixtures.cs;LifecycleTestHarness.cs;LifecycleTestTimeProvider.cs" />
+    <PackageVersion Include="Hoard.Hosting" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Metadata.HostAdapters" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Artifacts.HostAdapters" Version="[0.1.0]" />
+    <PackageReference Include="Hoard.Hosting" />
+    <PackageReference Include="Hoard.Fixtures.Metadata.HostAdapters" />
+    <PackageReference Include="Hoard.Fixtures.Artifacts.HostAdapters" />
   </ItemGroup>
 </Project>

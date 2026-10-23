@@ -13,9 +13,9 @@ immutable after admission; absent required values fail validation.
 | ProviderBinding | stable binding ID, provider package/version/hash, category, descriptor/capability hash, factory/fault adapter identity | No display-name identity; one implementation per binding; no self-reported pass |
 | MatrixEntry | ID, selected module/package identities, platform versions, enabled set, expected rule/readiness/ownership outcome | Exact finite composition; success declaration cannot imply behavior qualification |
 | CompatibilityBaseline | immutable revision, source/lock/recipe hashes, retained binary/dependency hashes, API scope | Prepared before candidate; retained consumer cannot be rebuilt/substituted during execution |
-| RunInputs | run UUID, profile, source manifest, inventory/SDK hashes, packages/locks, safe config/capabilities, environment, budgets, exact safe invocation | Canonical digest recomputed at admission and completion; mutable source/input mismatch blocks qualification |
+| RunInputs | run/group UUIDs, profile, source manifest, inventory/SDK hashes, packages/locks, typed binding and sealed historical baseline inventories, runtime assembly hashes, safe config/capabilities, environment, budgets, exact safe invocation | Canonical digest recomputed at admission and completion; mutable source/input mismatch blocks qualification |
 | ResourceOwnership | run ID, opaque root ID, child PID/start identity, state, bounded cleanup observations | Private ledger resolves actual paths; public projection never contains paths or user data |
-| Attempt | sequence, start/end monotonic durations, observed status, witness/proof references, safe diagnostic code | Append-only; failed attempt cannot disappear after retry |
+| Attempt | sequence, start/end monotonic durations, observed status, actual execution UUID/proof references, safe diagnostic code | Append-only; failed attempt cannot disappear after retry |
 | CaseResult | run/profile/binding/matrix/case key, final status, attempts, applicable/exclusion rule, proof hashes | Exactly one final per expected key; all required subproofs present and attributable |
 | QualificationReport | schema/catalog revision, RunInputs, exact results, resource settlement, derived qualification and scope limits | Independently recomputed, never trusted from a boolean field |
 | SupportStatement | report digest, tested profiles/options/versions/environment, exclusions and unsupported scope | Human-readable projection of verified report, not endorsement or production support |
@@ -25,6 +25,28 @@ binding/matrix dimensions use the explicit catalog value `none`, not omitted
 or inferred values. Attempts are children of one result, not extra final
 entries. A single runtime test can witness several cases only through explicit
 catalog mappings, never matching a display-name substring.
+
+`RunInputs.bindings`, `baselines` and `runtimeAssemblies` bind actual admitted
+declarations, retained compatibility artifacts and compiled test artifacts
+before execution. Binding packages must match the package inventory exactly;
+source/environment digests must match their canonical admitted contents.
+Historical binaries remain separate from candidate package identities even
+when package versions coincide. Diagnostic work may have no historical
+baselines; qualification still requires its independently selected baseline
+and scope obligations.
+
+`Attempt.witnessIds` reference actual `RuntimeWitness.executionId` UUIDs,
+not test display names, totals or catalog labels. Exact parameterized
+`testIdentity` values remain independently catalog-matched. Referenced runtime
+observations must match run/group/input/package/assembly/proof provenance;
+each attempt's observations must match its result's binding/matrix dimensions
+and fit wholly inside its monotonic interval; retries cannot overlap.
+duplicate executions and final keys, dangling references and orphan
+observations reject. Case proof references retain the union of all attempts,
+including an earlier failed attempt followed by a passing diagnostic retry.
+Catalog exclusions carry no attempts or fabricated runtime proofs. An
+interrupted attempt may have no runtime observations and carries a closed
+failure code; runtime skips are `Incomplete`, never exclusion witnesses.
 
 ## Validation and Bounds
 

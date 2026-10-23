@@ -216,6 +216,20 @@ def project_build_line(line):
     raise ConformanceError("UnknownDiagnostic")
 
 
+def project_test_line(line):
+    try:
+        text = line.decode("utf-8", errors="strict").strip()
+    except UnicodeError:
+        raise ConformanceError("UnknownDiagnostic") from None
+    if (not text or text == "Starting test execution, please wait..."
+            or re.fullmatch(r"VSTest version [0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4} \((?:x64|x86|arm64)\)", text)):
+        return None
+    try:
+        return project_event(line)
+    except ConformanceError:
+        raise ConformanceError("UnknownDiagnostic") from None
+
+
 @dataclass(frozen=True)
 class CommandResult:
     exit_code: int
@@ -438,7 +452,7 @@ class OwnedRun:
                 or not isinstance(args, (list, tuple)) or not args
                 or any(not isinstance(arg, str) or "\x00" in arg for arg in args)
                 or type(timeout) not in (int, float) or not 0 < timeout <= ceilings[scope]
-                or kind not in ("events", "build")):
+                or kind not in ("events", "build", "tests")):
             raise ConformanceError("OwnershipInvalid")
         if self.state == "Allocated":
             self.transition("Active")
@@ -507,7 +521,8 @@ class OwnedRun:
                             if not line.strip():
                                 continue
                             try:
-                                event = project_build_line(bytes(line)) if kind == "build" else project_event(bytes(line))
+                                event = {"build": project_build_line, "tests": project_test_line,
+                                         "events": project_event}[kind](bytes(line))
                             except ConformanceError:
                                 raise ConformanceError("UnknownDiagnostic") from None
                             if event is not None:
@@ -520,7 +535,8 @@ class OwnedRun:
                     if len(buffer) > READ_BYTES:
                         raise ConformanceError("OutputLimitExceeded")
                     try:
-                        event = project_build_line(bytes(buffer)) if kind == "build" else project_event(bytes(buffer))
+                        event = {"build": project_build_line, "tests": project_test_line,
+                                 "events": project_event}[kind](bytes(buffer))
                     except ConformanceError:
                         raise ConformanceError("UnknownDiagnostic") from None
                     if event is not None:

@@ -9,6 +9,7 @@
     <Using Include="Xunit" />
   </ItemGroup>
   <ItemGroup Condition="'$(ConformancePackageAcceptance)' != 'true'">
+    <ProjectReference Include="../Hoard.Conformance.TestLogger/Hoard.Conformance.TestLogger.csproj" />
     <ProjectReference Include="../Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj" />
     <Compile Remove="MemoryMechanismTests.cs" />
   </ItemGroup>
@@ -18,7 +19,9 @@
   <ItemGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
     <PackageVersion Include="Hoard.Testing.Conformance" Version="[0.1.0]" />
     <PackageVersion Include="Hoard.Fixtures.Metadata.Memory" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Conformance.TestLogger" Version="[0.1.0]" />
     <PackageReference Include="Hoard.Testing.Conformance" />
     <PackageReference Include="Hoard.Fixtures.Metadata.Memory" />
+    <PackageReference Include="Hoard.Conformance.TestLogger" />
   </ItemGroup>
 </Project>

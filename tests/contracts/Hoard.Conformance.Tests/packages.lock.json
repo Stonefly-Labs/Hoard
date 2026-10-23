@@ -79,6 +79,13 @@
       "hoard.abstractions": {
         "type": "Project"
       },
+      "hoard.conformance.testlogger": {
+        "type": "Project",
+        "dependencies": {
+          "Hoard.Testing.Conformance": "[0.1.0, )",
+          "Microsoft.TestPlatform.ObjectModel": "[18.11.0, )"
+        }
+      },
       "hoard.testing.conformance": {
         "type": "Project",
         "dependencies": {

@@ -3,8 +3,11 @@
 **Status**: Future acceptance guide with partial implementation foundations.
 The SDK, focused tests and fixture project manifests now exist, but the
 `validate-conformance.sh` commands below, shared suites, adapters, contributor
-journey and CI qualification do not. The new execution/ingestion foundations
-have unresolved review findings and are not acceptance-ready. See the
+journey and CI qualification do not. The allocator, runtime logger and focused
+composition/version fixtures are also non-qualifying foundations; complete
+ingestion and Linux allocator evidence remain outstanding. Implementation is
+paused on the CP-11/FR-007 route-validation boundary conflict, not renewed
+generic authorization. The tooling is not acceptance-ready. See the
 [implementation checkpoint](plan.md#partial-implementation-checkpoint).
 Existing predecessor commands are available.
 

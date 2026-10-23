@@ -14,7 +14,8 @@ public sealed partial class ConformanceRuntimeWitness
         ArgumentNullException.ThrowIfNull(expected);
         if (executionId == Guid.Empty || runId == Guid.Empty || invocationGroupId == Guid.Empty
             || !expected.Witnesses.Contains(testIdentity, StringComparer.Ordinal)
-            || started < TimeSpan.Zero || ended < started || !Enum.IsDefined(status))
+            || started < TimeSpan.Zero || ended < started || !Enum.IsDefined(status)
+            || status == ConformanceWitnessStatus.NotApplicable)
         { throw new ArgumentException("EvidenceSchemaInvalid"); }
         ExecutionId = executionId;
         RunId = runId;

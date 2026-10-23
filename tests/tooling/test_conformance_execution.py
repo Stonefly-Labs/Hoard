@@ -72,6 +72,18 @@ class ConformanceExecutionTests(unittest.TestCase):
         run.transition("Settling")
         run.release()
 
+    def test_test_projection_accepts_only_finite_vstest_scaffolding_and_closed_events(self):
+        for line in (b"", b"Starting test execution, please wait...",
+                     b"VSTest version 18.3.0 (arm64)", b"VSTest version 18.3.0 (x64)"):
+            self.assertIsNone(execution.project_test_line(line))
+        self.assertEqual(execution.project_test_line(
+            b'{"event":"control","code":"None","value":3}')["value"], 3)
+        for line in (b"Starting test execution, please wait... /private/canary",
+                     b"VSTest version private-canary (x64)", b"Test run for /private/canary.dll",
+                     b"Passed!  - Failed: 0, Passed: 100", b"\xff"):
+            with self.subTest(line=line), self.assertRaisesRegex(ConformanceError, "UnknownDiagnostic"):
+                execution.project_test_line(line)
+
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_diagnostic_parent_swap_cannot_redirect_a_safe_write_outside_its_owned_directory(self):
         run = self.workspace()

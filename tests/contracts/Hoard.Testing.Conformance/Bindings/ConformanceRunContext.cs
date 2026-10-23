@@ -43,8 +43,15 @@ public sealed class ConformanceOwnedDirectory
 public interface IConformanceResourceAllocator
 {
     ValueTask<ConformanceOwnedDirectory> AllocateDirectoryAsync(CancellationToken cancellationToken);
+    /// <summary>Begins deferred settlement; this alone is never evidence that owned work ended.</summary>
     ValueTask<ConformanceCleanupObservation> ReleaseAsync(
         ConformanceOwnedDirectory resource, CancellationToken cancellationToken);
+    /// <summary>
+    /// Observes the genuine store/lifetime settlement task without cancelling its work.
+    /// Successful observation still defers physical cleanup and Released to the owning controller.
+    /// </summary>
+    ValueTask<ConformanceCleanupObservation> ReleaseAsync(
+        ConformanceOwnedDirectory resource, Task actualSettlement, CancellationToken cancellationToken);
 }
 
 public interface IConformanceEvidenceSink

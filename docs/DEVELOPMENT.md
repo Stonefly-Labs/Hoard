@@ -4721,13 +4721,52 @@ then failed only the diagnostic-parent directory replacement check. The
 correction uses original directory device/inode identities and descriptor-relative
 ledger writes, diagnostic retention and cleanup; a same-name replacement cannot
 recreate ownership. Cleanup traversal also has finite depth/entry bounds.
-The correction's native replay remains pending. Its private ledger format now
+The correction passed 28 native checks without skips in
+[39908082714](https://github.com/Stonefly-Labs/Hoard/actions/runs/39908082714).
+Its private ledger format now
 requires directory identities: do not resume earlier retained roots as though
 they carried the new ownership proof.
 Separately, all 72 unchanged inherited metadata tests passed against
 candidate Memory packages without skips. Neither focused result is complete
 F-07 acceptance. Full challenge coverage remains required before acceptance.
 This is not the final architecture review or T081 completion.
+
+The next foundation checkpoint adds a real bounded VSTest logger, private
+input/owner manifests, safe per-execution proofs and completion records, and
+an SDK resource allocator with native directory identity pins. Settlement
+timeouts/faults retain ownership; the SDK never deletes stores or reports
+`Released` in-process. Actual controller cleanup remains authoritative.
+The executor now accepts only finite VSTest scaffolding plus closed safe events,
+not console summaries or arbitrary test output. Python evidence admission binds
+packages, bindings, baselines, runtime assets, execution UUIDs, every retry's
+proofs, dimensions and monotonic attempt intervals. The logger is not yet wired
+to complete controller ingestion or actual loaded-provider proofs.
+
+Portable tooling discovered 141 tests: 132 passed and nine Linux-native checks
+were skipped on macOS. The current SDK source tests passed 39 cases; independently
+prepared/fresh-cache locked current SDK/logger packages passed 41 cases.
+Package-only smoke locks were independently replayed and the project built.
+The focused composition/version suite passed 142 cases. A broad direct
+composition invocation passed 646 cases and failed five preparation-dependent
+checks because foundation/configuration/discovery evidence was not supplied;
+this is not a full predecessor acceptance result.
+A bounded SDK/logger architecture review found no confirmed architectural
+violations, but identified Linux allocator execution and loaded-provider proof
+integration as material gaps. This is not final T081 review.
+
+**Unresolved implementation blocker:** `contracts/matrix.md` CP-11 and FR-007
+require route conflicts to fail before provider construction. Existing Hosting
+receives real routes from constructed modules' `MapEndpoints` callbacks and
+rejects ambiguity before route publication/readiness, not before construction.
+Responsibility IDs are owner-scoped identifiers, not route templates; malformed
+or duplicate IDs cannot honestly stand in for CP-11. Those declaration tests
+are therefore labelled `endpoint-declaration`, not CP-11.
+The requested maintainer decision was unavailable. The recommended resolution
+is to preserve public APIs and clarify the route-conflict boundary while retaining
+preconstruction validation for declaration errors. Alternatively, retaining
+preconstruction route rejection requires an explicitly authorized product
+contract redesign. Neither change has been made. Resume the same running stage
+after resolving that decision; do not mark this blocker or the feature complete.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
