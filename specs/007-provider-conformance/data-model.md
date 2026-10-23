@@ -58,6 +58,12 @@ safe observations survive interrupted/skipped/unknown executions; they remain
 incomplete. Only an actual frozen assertion symbol can classify an assertion
 negative. Test-source hashes do not substitute for loaded-provider evidence.
 
+Parameterized transport identities preserve exact parent-expected display
+names. Values may be bounded quoted ASCII/version-range tokens, finite decimal
+tokens or bare ASCII identifiers of at most 128 characters (including enum,
+boolean and null display tokens). This grammar does not select expectations or
+authorize arbitrary text, paths, missing parameters or normalization.
+
 ## Validation and Bounds
 
 ### Binding input snapshot

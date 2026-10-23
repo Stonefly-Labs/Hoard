@@ -69,6 +69,10 @@ foundation checks without skips and nine SDK scenarios/27 observations.
 T013's shared capture foundation is complete; T014 and full profile execution
 remain unfinished.
 
+The next T014 increment repairs bounded enum parameters in the safe transports.
+Its ten-scenario/29-observation native selection is not yet verified; local
+source SDK and ingestion regressions pass. T014 remains unchecked.
+
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be
 sanitized; raw child text is transient bounded input, never a saved log/TRX.

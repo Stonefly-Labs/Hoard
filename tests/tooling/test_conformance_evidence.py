@@ -1040,6 +1040,27 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     with self.assertRaises(evidence.ConformanceError):
                         self.ingest()
 
+    def test_enum_parameters_are_bounded_identifiers_and_still_require_exact_parent_expectations(self):
+        for parameter in ("Metadata", "Artifacts", "A" * 128, "A" * 129,
+                          "Metadata Artifacts", "../Metadata", "Metadata-Artifact"):
+            self.setUp()
+            self.identity = f"Hoard.Testing.Conformance.Runtime.Check(category: {parameter})"
+            self.manifest["expected"][0]["testIdentity"] = self.identity
+            self.witness["testIdentity"] = self.proof["testIdentity"] = self.identity
+            self.completion["manifestSha256"] = self.proof["manifestSha256"] = evidence.digest(self.manifest)
+            self.witness["proofSha256"] = evidence.digest(self.proof)
+            with self.subTest(parameter=parameter):
+                if parameter in ("Metadata", "Artifacts", "A" * 128):
+                    self.assertEqual(self.ingest()["witnesses"][0]["testIdentity"], self.identity)
+                    unexpected = self.identity.replace(parameter, "Unselected")
+                    self.witness["testIdentity"] = self.proof["testIdentity"] = unexpected
+                    self.witness["proofSha256"] = evidence.digest(self.proof)
+                    with self.assertRaises(evidence.ConformanceError):
+                        self.ingest()
+                else:
+                    with self.assertRaises(evidence.ConformanceError):
+                        self.ingest()
+
     def test_rehashed_proof_cannot_borrow_another_attempt_dimension_or_input(self):
         for key, value in (
                 ("attemptId", str(uuid.uuid4())), ("attemptSequence", 2),

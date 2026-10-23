@@ -1141,6 +1141,12 @@ skips, nine SDK scenarios/27 observations and all six historical baselines.
 T013's input-capture foundation is complete; implementation continues with T014,
 not qualification or merge readiness.
 
+T014's first repair admits bounded enum parameter tokens in both runtime
+transports while retaining exact independently expected identities. Local
+regressions pass, and a tenth native diagnostic scenario now selects the two
+actual enum theory rows; native verification of this increment is pending.
+Loaded-provider attribution and complete T014 remain unfinished.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

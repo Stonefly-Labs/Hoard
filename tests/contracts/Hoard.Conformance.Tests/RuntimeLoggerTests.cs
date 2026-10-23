@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Hoard.Conformance.TestLogger;
+using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Diagnostics;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 
@@ -9,6 +10,25 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class RuntimeLoggerTests
 {
+    [Theory]
+    [InlineData(ConformanceCategory.Metadata)]
+    [InlineData(ConformanceCategory.Artifacts)]
+    public void Finite_enum_parameters_preserve_exact_parent_expected_identity(ConformanceCategory category)
+    {
+        using var owned = new OwnedInput();
+        var identity = $"Hoard.Frozen.Check(category: {category})";
+        owned.Input.Expected[0] = owned.Input.Expected[0] with { TestIdentity = identity };
+        owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(owned.Result(0));
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var witness = JsonDocument.Parse(File.ReadAllText(Path.Combine(owned.Output, "witnesses.jsonl")));
+        Assert.Equal(identity, witness.RootElement.GetProperty("testIdentity").GetString());
+    }
+
     [Theory]
     [InlineData("[1.2.0,2.0.0)")]
     [InlineData("(2.0.0,1.0.0]")]
@@ -129,6 +149,9 @@ public sealed class RuntimeLoggerTests
     [InlineData("symlink")]
     [InlineData("parameter-omitted")]
     [InlineData("private-identity")]
+    [InlineData("enum-overflow")]
+    [InlineData("enum-text")]
+    [InlineData("enum-path")]
     [InlineData("moved-root")]
     public void Foreign_or_malformed_inputs_are_rejected_before_output_creation(string mutation)
     {
@@ -152,6 +175,14 @@ public sealed class RuntimeLoggerTests
                 owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json)); break;
             case "private-identity":
                 owned.Input.Expected[0] = owned.Input.Expected[0] with { TestIdentity = "Hoard.Frozen.Check(value: \"/private/canary\")" };
+                owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json)); break;
+            case "enum-overflow":
+            case "enum-text":
+            case "enum-path":
+                var parameter = mutation == "enum-overflow" ? new string('A', 129)
+                    : mutation == "enum-text" ? "Metadata Artifacts" : "../Metadata";
+                owned.Input.Expected[0] = owned.Input.Expected[0] with
+                { TestIdentity = $"Hoard.Frozen.Check(category: {parameter})" };
                 owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json)); break;
             case "moved-root":
                 var owner = JsonSerializer.Deserialize<RuntimeOwner>(File.ReadAllBytes(owned.OwnerPath), Json)!;

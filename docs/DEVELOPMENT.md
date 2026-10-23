@@ -5084,6 +5084,17 @@ T013 is complete as a shared foundation API; actual loaded-provider/session/
 runtime provenance remains T014 work. These 27 observations do not constitute
 a full 57-test source SDK or package-only run.
 
+T014's enum-parameter regression first failed in both the C# logger and Python
+ingestion. Both now accept bounded bare ASCII identifiers (including existing
+boolean/null tokens), without accepting spaces, paths, overlong tokens or an
+unselected runtime identity. The three token alternatives have distinct initial
+characters; boolean/null alternatives are not duplicated inside the identifier
+alternative. All 62 source SDK tests and 103 conformance tooling checks pass
+(ten native skips locally). Native diagnostics now select ten scenarios/
+29 observations, including both actual enum theory rows; verification of this
+increment is pending. This repair does not complete loaded-provider provenance
+or T014.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full
