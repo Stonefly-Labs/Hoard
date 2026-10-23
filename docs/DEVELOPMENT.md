@@ -5070,6 +5070,11 @@ pass. Native confirmation of this new shared capture/ninth declaration scenario
 is pending. Loaded-provider attribution continues to belong to T014; no
 qualification or new CLI is claimed. Production reference edges and architecture
 diagrams are unaffected by this test-only input capture.
+An additional intended regression changed generated `runtimeconfig.json` while
+the DLL stayed unchanged; the old inventory missed it. The SDK now inventories
+dependency/runtime configuration files alongside assemblies, so these mutations
+also reject. Their file hashes are runtime-artifact identity, not configuration
+policy values or proof of which runtime loaded.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

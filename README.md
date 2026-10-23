@@ -1132,6 +1132,9 @@ capture of actual source, packages, locks, declarations, runtime files,
 synthetic source policy and verified historical baselines. It passes 207 local
 tooling checks (ten native skips) and 57 source SDK tests; its native execution
 is pending. Actual loaded-provider attribution remains T014 work.
+An additional mutation challenge exposed unbound generated runtime configuration.
+SDK capture now includes dependency/runtime configuration files alongside DLLs;
+changing them after admission also rejects.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

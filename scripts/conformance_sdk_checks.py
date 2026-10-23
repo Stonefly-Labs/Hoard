@@ -175,7 +175,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     locks = [f"{prefix}/{name}" for name in inventory if name.endswith("packages.lock.json")]
     runtime_folders = {f"{TESTS}/bin/Release/net10.0", f"{LOGGER}/Smoke/bin/Release/net10.0"}
     runtime = [f"{prefix}/{name}" for name in inventory
-               if name.endswith(".dll") and Path(name).parent.as_posix() in runtime_folders]
+               if name.endswith((".dll", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))
+               and Path(name).parent.as_posix() in runtime_folders]
     if not runtime or not locks:
         raise evidence.ConformanceError("EvidenceIncomplete")
     inputs = evidence.capture_profile_inputs(

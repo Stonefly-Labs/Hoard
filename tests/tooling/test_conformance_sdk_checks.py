@@ -183,6 +183,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         runtime = candidate / checks.TESTS / "bin/Release/net10.0"
         runtime.mkdir(parents=True)
         (runtime / "Tests.dll").write_bytes(b"runtime")
+        (runtime / "Tests.runtimeconfig.json").write_bytes(b'{"runtimeOptions":{}}')
         sources = checks.evidence.source_manifest(repository)
         environment = {
             "os": "linux", "osVersion": "test", "architecture": "x86_64",
@@ -196,13 +197,18 @@ class SdkDiagnosticTests(unittest.TestCase):
                                       environment, identity, None, group_id=group_id)
         before = capture()
         self.assertNotIn(str(self.directory).encode(), checks.evidence.canonical_bytes(before))
-        for path in (runtime / "Added.dll", candidate / "added.packages.lock.json"):
+        for path in (runtime / "Added.dll", runtime / "Tests.runtimeconfig.json",
+                     candidate / "added.packages.lock.json"):
             with self.subTest(path=path.name):
+                original = path.read_bytes() if path.exists() else None
                 path.write_bytes(b"added after admission")
                 with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
                     checks.evidence.verify_input_recomputation(
                         before, capture(before["invocationGroupId"]))
-                path.unlink()
+                if original is None:
+                    path.unlink()
+                else:
+                    path.write_bytes(original)
         config.write_text(config.read_text().replace("Hoard.*", "*"))
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
             capture(before["invocationGroupId"])

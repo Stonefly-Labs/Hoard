@@ -62,6 +62,8 @@ diagnostic pre/post input recomputation. Run `39929542533` at `44881ff` verified
 API and immutable typed binding-declaration producer now pass focused local
 checks; their native execution is pending. They do not prove which provider/
 runtime executed or provide a working qualification CLI.
+SDK runtime input hashes also include generated dependency/runtime configuration,
+not just DLLs; post-admission changes reject even when assembly bytes stay fixed.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

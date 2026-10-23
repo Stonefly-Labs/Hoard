@@ -412,6 +412,13 @@ pass. The two new declaration facts form a ninth native diagnostic scenario
 until that shared-path verification completes. Profile execution/evaluation,
 actual loaded providers and SQLite environment production remain later tasks.
 
+A further mutation regression changed generated `runtimeconfig.json` without
+touching a DLL and observed missing input rejection. SDK runtime inventory now
+also binds `.deps.json`, `.runtimeconfig.json` and `.runtimeconfig.dev.json`
+bytes. These compiled runtime artifacts remain separate from the shared
+synthetic configuration-policy digest. This does not replace T014 loaded-runtime
+proof. The existing focused SDK mutation test now covers that repaired boundary.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

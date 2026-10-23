@@ -78,6 +78,9 @@ session provenance belongs to runtime ingestion, not this snapshot.
 actual files and observed producers. Completion recaptures those same roles;
 only measured free-space variation is excluded from immutable machine identity,
 retaining the admission measurement rather than fabricating equal free bytes.
+`runtimeAssemblies` also inventories selected generated dependency/runtime
+configuration files as runtime artifacts. They cannot stand in for an assembly
+execution witness; loaded-origin checks must identify the actual assembly.
 
 ### Shared bounds
 
