@@ -92,6 +92,10 @@ def check_capacity(profile, *, free_bytes):
         raise ConformanceError("InsufficientCapacity")
 
 
+def native_execution_supported():
+    return sys.platform == "linux" and os.uname().machine in ("x86_64", "aarch64")
+
+
 def command_environment(root, cache, supplied):
     if supplied is not None and (not isinstance(supplied, dict) or len(supplied) > 128):
         raise ConformanceError("OwnershipInvalid")
@@ -396,7 +400,7 @@ class OwnedRun:
         deadline = min(started + timeout, self.deadline)
         if deadline <= started:
             raise ConformanceError("DeadlineExceeded")
-        if scope != "cleanup" and (sys.platform != "linux" or os.uname().machine not in ("x86_64", "aarch64")):
+        if scope != "cleanup" and not native_execution_supported():
             raise ConformanceError("PrerequisiteMissing")
         environment = command_environment(self.root, cache, env)
         acknowledgement, writer = socket.socketpair()

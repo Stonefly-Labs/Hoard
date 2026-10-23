@@ -144,7 +144,7 @@ class ConformanceExecutionTests(unittest.TestCase):
 
     def test_unsupported_containment_fails_before_starting_a_provider(self):
         run = self.workspace()
-        with mock.patch.object(execution.sys, "platform", "unsupported"):
+        with mock.patch.object(execution, "native_execution_supported", return_value=False):
             with self.assertRaisesRegex(ConformanceError, "PrerequisiteMissing"):
                 run.command([sys.executable, "-c", "raise AssertionError('must not execute')"])
         self.assertFalse(run.live_children())
