@@ -4538,6 +4538,49 @@ future contributor guide is specified, not presented as an existing example.
 No merge, release/tag, publishing, infrastructure plan/apply, repository-setting
 change, cloud action or deployment is authorized or performed.
 
+### F-07 provider conformance checklists and assisted assessment
+
+The installed `speckit-checklist` used pinned `specs/007-provider-conformance`
+after `begin` recorded `checklist / running`. No before/after extension hooks
+are configured. Standard-depth scope is requirements quality for maintainers
+and provider-contract/evidence reviewers at draft PR review, before
+implementation authorization. The two new reviewer-owned files are
+[conformance](../specs/007-provider-conformance/checklists/conformance.md) and
+[evidence](../specs/007-provider-conformance/checklists/evidence.md), with
+20 criteria each. Every criterion cites written requirements; the checklists
+assess completeness, clarity, consistency, measurable acceptance, scenarios,
+edge cases, bounds, dependencies and scope, not delivered runtime behavior.
+
+At the maintainer's request, an assisted assessment maps all 40 criteria to
+written evidence and finds no unresolved requirements-quality blocker or
+product decision needing maintainer resolution. All 40 markers remain
+unchecked: generation and advisory assessment do not constitute reviewer
+approval or authorization to implement. The built-in 16/16 checklist, spec,
+plan, contracts and other design artifacts remain unchanged.
+
+The important implementation risks are already explicit requirements:
+preserve all 192 inherited category entries and parameterized subproofs during
+extraction; freeze old binaries before candidate execution; perform actual
+256 MiB/4 GiB and SQLite/Local crash proofs; measure at least 24 GiB private
+scratch and sufficient runner capacity without reducing mandatory coverage;
+sanitize private diagnostics before persistence as well as public output, and
+bound transient capture without raw spooling or truncation into a pass.
+Finite observation still preserves live ownership until actual settlement.
+These require future evidence, not new product decisions at this checkpoint.
+
+Next is separately invoked **`tasks`**. Task generation and later read-only
+analysis do not require custom approval, but implementation remains gated on
+reviewer approval or explicit reviewer authorization. Draft PR #18 stays draft.
+No task list, implementation, workflow, runtime qualification, merge, release,
+publishing, infrastructure plan/apply or deployment is performed here.
+
+README and this guide link the new artifacts and distinguish assessment from
+approval. Provider/API/compatibility/recovery and example guides, predecessor
+artifacts, charter/product specification, architecture/ADR/diagrams,
+constitution/backlog and release/cloud/UI/IaC guides are unaffected: this stage
+changes no contract, product dependency, supported behavior or operational
+procedure. No architecture change requires a new architecture-agent review.
+
 ## Releases and deployment
 
 [Version tags publish GitHub source releases](RELEASING.md). They do not run

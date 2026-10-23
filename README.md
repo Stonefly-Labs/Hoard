@@ -996,7 +996,19 @@ witness attribution. Real durable-local, simulated and unqualified service
 scopes remain separate. These are design artifacts, not implemented commands,
 CI, approved custom checklists or certification results. See the
 [planning scope](docs/DEVELOPMENT.md#f-07-provider-conformance-planning).
-The next separately authorized stage is **`checklist`**.
+The subsequent checklist stage creates standard-depth
+[conformance](specs/007-provider-conformance/checklists/conformance.md) and
+[evidence](specs/007-provider-conformance/checklists/evidence.md)
+requirements-quality checklists, 20 criteria each, for maintainer review before
+implementation. The requested assisted assessment finds written support for all
+40 criteria and no unresolved requirements blocker or product decision.
+All 40 reviewer-owned markers remain unchecked; assessment is not approval.
+Preserving inherited assertion coverage, actual large-transfer/recovery proof,
+CI scratch capacity and sanitation before diagnostic persistence remain
+implementation obligations. See the
+[assessment scope](docs/DEVELOPMENT.md#f-07-provider-conformance-checklists-and-assisted-assessment).
+The next separately authorized stage is **`tasks`**; implementation still
+requires reviewer approval or explicit authorization.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
