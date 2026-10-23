@@ -1080,8 +1080,17 @@ publication remain `Retained`; explicit retries preserve earlier cleanup failure
 T010's controller helper/private ledger passed all 70 native foundation checks;
 end-to-end profile integration remains unfinished. Diagnostic capture now also
 checks the 1 KiB event limit before JSON expansion, bounds raw line buffering,
-and preserves safe prefixes plus closed failure codes. That diagnostic increment
-is pending native verification and is not completed-profile evidence.
+and preserves safe prefixes plus closed failure codes. T011 passed all 72 native
+foundation checks in run `39918257385`; its SDK/logger diagnostic also passed.
+This is not completed-profile evidence.
+
+The next supervisor increment counts admission work in command deadlines,
+reserves termination/cleanup time, and bounds control/barrier scopes. Native
+artifact/baseline allocation now checks both actual capacity and a finite local
+filesystem allowlist before creating a workspace; path-free preflight facts are
+retained separately from synthetic stores. These changes pass 184 tooling checks
+with ten native skips on macOS; their native confirmation and complete T012
+integration remain pending.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

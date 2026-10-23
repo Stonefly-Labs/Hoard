@@ -192,8 +192,8 @@ def environment(run):
 def probe(path):
     if not native_execution_supported():
         raise evidence.ConformanceError("PrerequisiteMissing")
-    code, sdk = capture_control(["dotnet", "--version"], limit=1024, timeout=10)
-    code2, runtimes = capture_control(["dotnet", "--list-runtimes"], limit=16384, timeout=10)
+    code, sdk = capture_control(["dotnet", "--version"], limit=1024, timeout=5)
+    code2, runtimes = capture_control(["dotnet", "--list-runtimes"], limit=16384, timeout=5)
     code3, filesystem = capture_control(
         ["stat", "-f", "--format=%T", str(path.parent)], limit=1024, timeout=5)
     sdk = sdk.decode("ascii").strip()

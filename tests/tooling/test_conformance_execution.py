@@ -48,6 +48,12 @@ class ConformanceExecutionTests(unittest.TestCase):
         self.assertEqual(stat.S_IMODE(run.root.stat().st_mode), 0o700)
         self.assertEqual({path.name for path in run.root.iterdir()},
                          {"ownership.json", "stores", "feed", "cache", "diagnostics", "proofs"})
+        preflight = json.loads((run.root / "proofs/preflight.json").read_bytes())
+        self.assertFalse(preflight["qualification"])
+        self.assertGreaterEqual(preflight["freeBytes"], 24 * 1024**3)
+        self.assertGreaterEqual(preflight["durationMs"], 0)
+        if NATIVE_CONTAINMENT:
+            self.assertNotEqual(preflight["filesystem"], "unobserved")
         with self.assertRaises(ConformanceError):
             execution.OwnedRun.allocate(run.root, ROOT)
         with self.assertRaises(ConformanceError):
@@ -475,6 +481,105 @@ else:
         self.assertEqual(execution.profile_budget("metadata"), 90 * 60)
         self.assertEqual(execution.profile_budget("artifacts"), 180 * 60)
         self.assertEqual(execution.profile_budget("baseline"), 480 * 60)
+
+    def test_profile_reserves_termination_and_cleanup_before_admitting_another_child(self):
+        run = self.workspace()
+        run.deadline = time.monotonic() + 30
+        original = execution.subprocess.Popen
+        def launch(args, *values, **kwargs):
+            if args[0] == "ps":
+                return original(args, *values, **kwargs)
+            raise AssertionError("Child admitted without settlement budget")
+        with mock.patch.object(execution, "native_execution_supported", return_value=True), \
+                mock.patch.object(execution.subprocess, "Popen", side_effect=launch):
+            with self.assertRaisesRegex(ConformanceError, "DeadlineExceeded"):
+                run.command([sys.executable, "-c", "pass"], timeout=1)
+        run.transition("Settling")
+        run.release()
+
+    def test_child_deadline_includes_admission_work_instead_of_restarting_after_it(self):
+        run = self.workspace()
+        now = [time.monotonic()]
+        def delayed_admission(**kwargs):
+            now[0] += 2
+        with mock.patch.object(execution.time, "monotonic", side_effect=lambda: now[0]), \
+                mock.patch.object(run, "_check_ledger", side_effect=delayed_admission), \
+                mock.patch.object(execution, "native_execution_supported", return_value=True), \
+                mock.patch.object(execution.subprocess, "Popen",
+                                  side_effect=AssertionError("Child admitted after its deadline")):
+            with self.assertRaisesRegex(ConformanceError, "DeadlineExceeded"):
+                run.command([sys.executable, "-c", "pass"], timeout=1)
+        run.transition("Settling")
+        run.release()
+
+    def test_remote_or_unknown_artifact_scratch_rejects_before_workspace_creation(self):
+        for filesystem in (b"nfs\n", b"cifs\n", b"unknown\n"):
+            with self.subTest(filesystem=filesystem), \
+                    mock.patch.object(execution, "native_execution_supported", return_value=True), \
+                    mock.patch.object(execution, "capture_control", return_value=(0, filesystem)), \
+                    self.assertRaisesRegex(ConformanceError, "PrerequisiteMissing"):
+                execution.OwnedRun.allocate(self.parent / "rejected", ROOT, profile="artifacts")
+            self.assertFalse((self.parent / "rejected").exists())
+
+    def test_state_publication_does_not_restart_expired_admission_controls(self):
+        run = self.workspace()
+        started = time.monotonic()
+        now = [started]
+        def inspect(*, deadline=None):
+            now[0] += 5 if deadline is None else min(0.1, max(0, deadline - now[0]))
+            if deadline is not None and now[0] >= deadline:
+                raise ConformanceError("DeadlineExceeded")
+        with mock.patch.object(execution.time, "monotonic", side_effect=lambda: now[0]), \
+                mock.patch.object(run, "_check_ledger", side_effect=inspect), \
+                mock.patch.object(execution, "native_execution_supported", return_value=True), \
+                mock.patch.object(execution.subprocess, "Popen",
+                                  side_effect=AssertionError("Expired admission spawned a child")):
+            with self.assertRaisesRegex(ConformanceError, "DeadlineExceeded"):
+                run.command([sys.executable, "-c", "pass"], scope="control", timeout=0.3)
+        self.assertLessEqual(now[0] - started, 0.301)
+        run.transition("Settling")
+        run.release()
+
+    def test_expired_cleanup_records_retention_without_deleting_synthetic_resources(self):
+        run = self.workspace()
+        sentinel = run.root / "stores" / "still-owned"
+        sentinel.write_bytes(b"preserve")
+        run.transition("Settling")
+        original_deadline = run.deadline
+        run.deadline = time.monotonic() - 1
+        with self.assertRaisesRegex(ConformanceError, "CleanupIncomplete"):
+            run.release()
+        self.assertEqual(run.state, "Retained")
+        self.assertEqual(run.cleanup_attempts[-1]["diagnosticCode"], "CleanupIncomplete")
+        self.assertEqual(sentinel.read_bytes(), b"preserve")
+        run.deadline = original_deadline
+        run.transition("Settling")
+        run.release()
+
+    def test_local_scratch_observation_is_bounded_and_rejects_failed_or_malformed_controls(self):
+        with mock.patch.object(execution, "native_execution_supported", return_value=True):
+            with mock.patch.object(execution, "capture_control", return_value=(0, b"ext2/ext3\n")) as capture:
+                self.assertEqual(execution.scratch_filesystem(self.parent, "artifacts"), "ext2-ext3")
+                self.assertEqual(capture.call_args.kwargs, {"limit": 1024, "timeout": 5})
+            for response in ((1, b"ext2/ext3\n"), (0, b"ext2/ext3\nnfs\n"), (0, b"\xff\n")):
+                with self.subTest(response=response), \
+                        mock.patch.object(execution, "capture_control", return_value=response), \
+                        self.assertRaisesRegex(ConformanceError, "PrerequisiteMissing"):
+                    execution.scratch_filesystem(self.parent, "artifacts")
+
+    def test_control_barrier_and_caller_limits_cannot_expand_or_bypass_command_budgets(self):
+        run = self.workspace()
+        for scope, timeout in (("control", 6), ("barrier", 16), ("ordinary", 601),
+                               ("transfer", 2401), ("recovery", 301)):
+            with self.subTest(scope=scope), self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                run.command([sys.executable, "-c", "pass"], scope=scope, timeout=timeout)
+        for deadline in (True, float("nan"), float("inf")):
+            with self.subTest(deadline=deadline), self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                run.command([sys.executable, "-c", "pass"], deadline=deadline)
+        with self.assertRaisesRegex(ConformanceError, "DeadlineExceeded"):
+            run.command([sys.executable, "-c", "pass"], deadline=time.monotonic() - 1)
+        run.transition("Settling")
+        run.release()
 
 
 if __name__ == "__main__":

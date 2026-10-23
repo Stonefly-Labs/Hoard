@@ -228,8 +228,34 @@ the existing 8 MiB/child and 64 MiB/profile limits. Unknown output, floods,
 watchdog expiry and containment failure preserve already admitted safe
 observations and explicit failure codes, never raw messages or shortened
 passing evidence. Watchdog coverage includes a child that closes both output
-streams but remains live. Native proof of this increment is pending; T011
-remains unchecked. All 177 tooling tests pass with ten native skips on macOS.
+streams but remains live. All 177 tooling tests pass with ten native skips on
+macOS. Native foundation job `120296941427` in run `39918257385` at `ac9be42`
+then passed all 72 checks with zero failures/errors/skips, observing
+92,111,450,112 free scratch bytes; the SDK/logger diagnostic also passed.
+T011 is complete. These diagnostics do not qualify a provider/profile.
+
+### Supervisor deadline and local-scratch increment
+
+Intended regressions exposed missing cleanup reserve, restarted admission
+deadlines, and renewed state-publication controls taking 10.2 seconds against a
+0.3-second command allowance. Effective absolute deadlines now include admission
+and state publication, never widen a stricter caller/scope/profile limit, and
+reserve 40 seconds for termination/cleanup before ordinary command admission.
+Control/barrier scopes are five/15 seconds; SDK host probes also use five-second
+controls. Cleanup reserves its containment allowance within the outer limit.
+Commands currently execute serially, below the four-child/one-transfer maxima.
+
+Another regression reproduced a root being created before a remote filesystem
+was rejected. Native artifact/baseline admission now checks actual >=24 GiB
+capacity and a conservative local-filesystem allowlist before root creation.
+Path-free `proofs/preflight.json` retains the observed capacity, filesystem and
+monotonic duration, explicitly non-qualifying. Allocation/preflight time counts
+against the profile budget. macOS ownership fixtures remain portable but leave
+filesystem identity unobserved; provider execution still rejects.
+An expired cleanup records retained ownership without deleting resources; an
+explicit retry preserves that failure history.
+All 184 tooling checks pass with ten native skips. New native verification and
+complete T012 integration are pending; T012 remains unchecked.
 
 ## Partial implementation checkpoint
 
