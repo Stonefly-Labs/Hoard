@@ -160,10 +160,14 @@ locks use recorded local-archive derivations, never graph resolution or writebac
 The command rejects concurrent repository input changes and foreign output paths.
 Native run `39947737831` at `585970d` verified both fresh build graphs with identical
 bytes for all 18 packages/13 locks; generated source locks are reviewed/tracked.
-All other CLI modes
-listed below remain planned until T017; preparation is always non-qualifying.
+Partial T017 now admits the selectors/modes below, freezes independent exact
+catalog keys and rejects invalid/ambiguous options or unsafe destinations before
+allocation. Only preparation executes. Other admitted modes explicitly return
+`Incomplete`/`EvidenceIncomplete`, exit `2`; runtime runners and independent
+verification/aggregation remain unimplemented, and T017 stays open.
+Preparation is always non-qualifying.
 
-`bash scripts/validate-conformance.sh` will expose:
+`bash scripts/validate-conformance.sh` recognizes:
 
 - `--profile baseline|metadata|artifacts|composition|compatibility|harness`
   (default `baseline`), `--evidence <fresh-private-path>` (required).

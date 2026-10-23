@@ -2,6 +2,8 @@
 
 from collections.abc import Mapping
 from contextlib import contextmanager
+from dataclasses import dataclass
+import argparse
 import hashlib
 import io
 import json
@@ -55,6 +57,135 @@ def failure_status(code):
         "DeadlineExceeded", "OutputLimitExceeded", "UnknownDiagnostic", "CleanupIncomplete",
         "OwnershipInvalid", "CommandFailed",
     ) else "Failed"
+
+
+@dataclass(frozen=True)
+class ConformanceInvocation:
+    action: str
+    repository: Path
+    mode: str
+    profiles: tuple[str, ...] = ()
+    case_keys: tuple[tuple[str, str, str, str], ...] = ()
+    evidence: Path | None = None
+    binding_project: Path | None = None
+    input_path: Path | None = None
+
+
+class _Arguments(argparse.ArgumentParser):
+    def error(self, message):
+        raise ConformanceError()
+
+
+def invocation_parser():
+    parser = _Arguments(
+        description="Conformance admission; only lock preparation currently executes. "
+                    "Profile runners and independent verify/aggregate remain incomplete.",
+        add_help=False, allow_abbrev=False)
+    parser.add_argument("--profile", metavar="PROFILE",
+                        help="baseline (default), metadata, artifacts, composition, compatibility, harness")
+    parser.add_argument("--evidence", type=Path, metavar="FRESH_PRIVATE_PATH")
+    parser.add_argument("--binding-project", type=Path, metavar="PROJECT")
+    parser.add_argument("--filter", metavar="EXACT_CATALOG_CASE_ID")
+    parser.add_argument("--update-locks", action="store_true", help="non-qualifying preparation")
+    parser.add_argument("--verify", type=Path, metavar="PUBLIC_REPORT")
+    parser.add_argument("--aggregate", type=Path, metavar="REPORT_DIRECTORY")
+    parser.add_argument("--help", action="store_true")
+    return parser
+
+
+def _invocation_path(path):
+    from conformance_execution import no_symlinks
+    path = path.absolute()
+    if ".." in path.parts:
+        raise ConformanceError("OwnershipInvalid")
+    no_symlinks(path)
+    return path
+
+
+def admit_invocation(repository, arguments):
+    from conformance_case_catalog import expected_cases
+    if (not isinstance(arguments, (list, tuple)) or len(arguments) > 32
+            or any(not isinstance(value, str) or len(value) > 8192 for value in arguments)):
+        raise ConformanceError()
+    seen = set()
+    for argument in arguments:
+        option = argument.partition("=")[0]
+        if argument.startswith("--"):
+            if option in seen:
+                raise ConformanceError()
+            seen.add(option)
+    options = invocation_parser().parse_args(arguments)
+    repository = Path(repository).resolve()
+    if options.help:
+        if len(arguments) != 1:
+            raise ConformanceError()
+        return ConformanceInvocation("help", repository, "diagnostic")
+    offline = options.verify is not None or options.aggregate is not None
+    if sum((options.verify is not None, options.aggregate is not None, options.update_locks)) > 1:
+        raise ConformanceError()
+    if offline:
+        if any(value is not None for value in (
+                options.profile, options.evidence, options.binding_project, options.filter)):
+            raise ConformanceError()
+        action = "verify" if options.verify is not None else "aggregate"
+        path = _invocation_path(options.verify if action == "verify" else options.aggregate)
+        if action == "verify":
+            info = path.stat()
+            if not stat.S_ISREG(info.st_mode) or not 0 < info.st_size <= MAX_REPORT_BYTES:
+                raise ConformanceError()
+        elif not path.is_dir():
+            raise ConformanceError("PrerequisiteMissing")
+        return ConformanceInvocation(action, repository, "diagnostic", input_path=path)
+    profile = options.profile if options.profile is not None else "baseline"
+    if profile not in ("baseline", *PROFILES):
+        raise ConformanceError("UnsupportedProfile")
+    if options.update_locks and any(value is not None for value in (
+            options.profile, options.binding_project, options.filter)):
+        raise ConformanceError()
+    if options.evidence is None:
+        raise ConformanceError()
+    destination = _invocation_path(options.evidence)
+    if (destination.exists() or not destination.parent.is_dir()
+            or destination.is_relative_to(repository)):
+        raise ConformanceError("OwnershipInvalid")
+    info = destination.parent.stat()
+    if info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) & 0o077:
+        raise ConformanceError("OwnershipInvalid")
+    if options.update_locks:
+        return ConformanceInvocation("preparation", repository, "preparation", evidence=destination)
+    project = None
+    if options.binding_project is not None:
+        if profile not in ("metadata", "artifacts"):
+            raise ConformanceError()
+        project = _invocation_path(options.binding_project)
+        if project.suffix != ".csproj" or not project.is_file():
+            raise ConformanceError("BindingInvalid")
+    profiles = PROFILES if profile == "baseline" else (profile,)
+    cases = tuple(case for selected in profiles for case in expected_cases(selected))
+    mode = "qualification"
+    if options.filter is not None:
+        case_id = stable_id(options.filter)
+        cases = tuple(case for case in cases if case.case_id == case_id)
+        if not cases:
+            raise ConformanceError("WitnessMissing")
+        profiles = tuple(selected for selected in profiles
+                         if any(case.profile_id == selected for case in cases))
+        mode = "diagnostic"
+    return ConformanceInvocation("run", repository, mode, profiles,
+                                 tuple(case.key for case in cases), destination, project)
+
+
+def dispatch_invocation(invocation):
+    if invocation.action == "help":
+        invocation_parser().print_help()
+        return 0
+    if invocation.action == "preparation":
+        from conformance_prepare import execute
+        return execute(invocation.repository, invocation.evidence)
+    # Story tasks install runtime runners and the independent evaluator, not admission.
+    if invocation.action in ("run", "verify", "aggregate"):
+        raise ConformanceError("EvidenceIncomplete")
+    raise ConformanceError()
 
 
 def _invalid():

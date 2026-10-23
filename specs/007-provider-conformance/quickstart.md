@@ -1,9 +1,10 @@
 # F-07 Validation Quickstart
 
 **Status**: Future acceptance guide with partial implementation foundations.
-The SDK, focused tests and fixture project manifests now exist, but the
-`validate-conformance.sh` commands below, shared suites, adapters, contributor
-journey and CI qualification do not. The allocator, runtime logger and focused
+The SDK, focused tests, fixture project manifests, preparation command and
+CLI admission now exist; complete profile execution,
+shared suites, adapters, contributor journey and CI qualification do not.
+The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/
 classification identities match package-mode discovery; this is not behavior
@@ -113,6 +114,14 @@ sequences across independent fresh builds. Seven new locks and three existing
 local-archive hash updates are reviewed/tracked, with no graph or third-party
 identity changes. T016 is complete as non-qualifying preparation. Default profiles
 and verify/aggregate CLI behavior below remain planned, not functional commands.
+
+Partial T017 admission now recognizes the exact documented options and freezes
+catalog-owned selection; unsupported profiles, shortened/unknown case IDs, mixed
+modes and unsafe destinations reject without execution or private argument output.
+Use `bash scripts/validate-conformance.sh --help` for current status. Preparation
+executes; all admitted runtime/verify/aggregate requests still explicitly return
+`Incomplete`/`EvidenceIncomplete`, exit `2`, without creating evidence. This is
+not an independent verifier or a working qualification profile. T017 remains open.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

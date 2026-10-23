@@ -1194,6 +1194,14 @@ contract (`CS1566`); a red snapshot regression confirmed the omission. That exac
 compiled resource is now included in source fingerprints/snapshots; the repaired
 native replay passed.
 
+The next partial T017 increment admits exact profile/catalog selectors, mutually
+exclusive preparation/verification/aggregation requests, explicit category project
+paths and fresh private evidence destinations. `--help` describes the current
+boundary. Only preparation executes; admitted runtime/verify/aggregate requests
+currently return sanitized `Incomplete`/`EvidenceIncomplete`, exit `2`, without
+creating an evidence root. They do not fall back to a different profile or qualify
+from an optimistic report. T017 remains open until dispatch is delivered.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
