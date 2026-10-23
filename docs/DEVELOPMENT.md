@@ -5040,9 +5040,21 @@ Independent restore/build receives the explicit alternate
 Immutable source copies are retained input material, not sanitized diagnostic
 uploads. A focused actual-checkout probe copied and verified all 703 scoped
 files with read-only modes and settled its synthetic resources in 395 ms;
-this is diagnostic evidence only. All 196 tooling checks pass with ten native
-skips. Native confirmation of this increment and complete T013
-package/configuration/capability/environment sealing remain pending.
+this is diagnostic evidence only. Native run
+[39927534630](https://github.com/Stonefly-Labs/Hoard/actions/runs/39927534630)
+at `4e17986` then passed all 91 foundation checks without skips and eight SDK
+scenarios/25 observations, preserving all six verified historical baselines.
+
+The following input-sealing increment reads package metadata, SHA-256/SHA-512 and
+runtime assembly bytes from one bounded archive capture, not separate path
+reads. It checks the actual generated source mapping before admitting its
+path-free synthetic policy. Bounded lock/runtime inventories and the complete
+SDK diagnostic input manifest are recomputed after execution, including fresh
+safe environment observations. Free-space variation does not masquerade as
+mutable machine identity: the input manifest retains its admission measurement.
+The new increment's native execution and complete T013 per-profile capability/
+declaration integration remain pending. Actual loaded-provider attribution
+continues to belong to T014; no qualification or new CLI is claimed.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

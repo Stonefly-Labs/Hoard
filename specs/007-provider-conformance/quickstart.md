@@ -53,8 +53,12 @@ workflows and build/ignore settings. Sources are copied read-only through pinned
 descriptors; aliases, changed ancestors and unlisted special files reject.
 Local diagnostics label dirty inputs explicitly; CI requires clean Git state
 and the exact workflow checkout SHA. SDK smoke preparation uses an alternate
-lock rather than modifying a frozen source lock. Native confirmation of this
-new shared snapshot path and complete T013 input sealing remain pending.
+lock rather than modifying a frozen source lock. Native run `39927534630` at
+`4e17986` verified this path with 91 foundation checks without skips and eight
+SDK scenarios/25 observations. The next increment adds coherent archive/runtime
+package hashes, actual synthetic source-mapping verification and complete SDK
+diagnostic pre/post input recomputation. Its native execution and complete
+per-profile capability/loaded-runtime integration remain pending.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

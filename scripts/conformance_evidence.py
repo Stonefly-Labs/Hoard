@@ -3,6 +3,7 @@
 from collections.abc import Mapping
 from contextlib import contextmanager
 import hashlib
+import io
 import json
 import math
 import os
@@ -14,6 +15,10 @@ import subprocess
 import time
 from types import MappingProxyType
 import uuid
+import xml.etree.ElementTree as ET
+from xml.sax.saxutils import escape
+import zipfile
+import zlib
 
 
 MAX_REPORT_BYTES = 16 * 1024 * 1024
@@ -21,6 +26,8 @@ MAX_RESULTS = 10_000
 MAX_WITNESSES = 128
 MAX_PROOF_FILES = 50_000
 MAX_PROOF_BYTES = 256 * 1024 * 1024
+MAX_PACKAGE_BYTES = 64 * 1024 * 1024
+MAX_PACKAGE_EXPANDED_BYTES = 128 * 1024 * 1024
 CATALOG_REVISION = "f07-v1"
 PROFILES = ("metadata", "artifacts", "composition", "compatibility", "harness")
 STATUSES = ("Passed", "Failed", "NotApplicable", "Incomplete")
@@ -554,6 +561,64 @@ def _source_file(root, relative, *, remaining, deadline, target=None):
         return hashed.hexdigest(), observed
 
 
+def input_manifest(root, paths):
+    deadline = time.monotonic() + 5
+    if isinstance(paths, (list, tuple)) and len(paths) > MAX_PROOF_FILES:
+        raise ConformanceError("OutputLimitExceeded")
+    paths = _list(relative_path, MAX_PROOF_FILES, unique=True)(paths)
+    total = 0
+    result = {}
+    with _input_root(root) as (_, descriptor):
+        for relative in sorted(paths):
+            hashed, size = _source_file(descriptor, relative, remaining=MAX_PROOF_BYTES - total,
+                                         deadline=deadline)
+            result[relative] = hashed
+            total += size
+    if time.monotonic() >= deadline:
+        raise ConformanceError("DeadlineExceeded")
+    return MappingProxyType(result)
+
+
+def synthetic_nuget_configuration(feed):
+    local = escape(str(feed), {'"': "&quot;"})
+    return (
+        '<configuration><packageSources><clear/>'
+        f'<add key="local" value="{local}"/>'
+        '<add key="nuget.org" value="https://api.nuget.org/v3/index.json"/>'
+        '</packageSources><packageSourceMapping><packageSource key="local">'
+        '<package pattern="Hoard.*"/></packageSource><packageSource key="nuget.org">'
+        '<package pattern="*"/></packageSource></packageSourceMapping></configuration>'
+    ).encode("utf-8")
+
+
+def verify_synthetic_source_mapping(root, configuration, feed):
+    configuration, feed = relative_path(configuration), relative_path(feed)
+    captured = io.BytesIO()
+    with _input_root(root) as (root, descriptor):
+        with _input_root(root / feed):
+            _source_file(descriptor, configuration, remaining=64 * 1024,
+                         deadline=time.monotonic() + 5, target=captured)
+            if captured.getvalue() != synthetic_nuget_configuration(root / feed):
+                raise ConformanceError("InputChanged")
+    return MappingProxyType({
+        "packageSources": MappingProxyType({
+            "local": "isolated-current-archives", "nuget.org": "https://api.nuget.org/v3/index.json"}),
+        "packageSourceMapping": MappingProxyType({"local": ("Hoard.*",), "nuget.org": ("*",)}),
+    })
+
+
+def verify_input_recomputation(before, after):
+    before, after = admit_entity("RunInputs", before), admit_entity("RunInputs", after)
+    environment = dict(after["environment"])
+    # Free space is an admission measurement, not an immutable machine identity.
+    environment["freeBytes"] = before["environment"]["freeBytes"]
+    compared = dict(after)
+    compared.update(environment=environment, environmentSha256=digest(environment))
+    if digest(before) != digest(compared):
+        raise ConformanceError("InputChanged")
+    return digest(before)
+
+
 def _git_control(root, arguments, deadline):
     from conformance_execution import capture_control
     remaining = deadline - time.monotonic()
@@ -566,6 +631,90 @@ def _git_control(root, arguments, deadline):
     if code:
         raise ConformanceError("InputChanged")
     return output
+
+
+def package_identity(feed, package_id, version):
+    package_id, version = stable_id(package_id), stable_id(version)
+    filename = relative_path(f"{package_id}.{version}.nupkg")
+    deadline = time.monotonic() + 5
+    captured = io.BytesIO()
+    with _input_root(feed) as (_, descriptor):
+        sha256, _ = _source_file(descriptor, filename, remaining=MAX_PACKAGE_BYTES,
+                                 deadline=deadline, target=captured)
+    raw = captured.getvalue()
+    # Bound central-directory materialization before ZipFile allocates entries.
+    end = raw.rfind(b"PK\x05\x06", max(0, len(raw) - 65557))
+    if (end < 0 or end + 22 > len(raw)
+            or end + 22 + int.from_bytes(raw[end + 20:end + 22], "little") != len(raw)):
+        raise ConformanceError("InputChanged")
+    if (int.from_bytes(raw[end + 10:end + 12], "little") > 1024
+            or int.from_bytes(raw[end + 12:end + 16], "little") > 1024 * 1024):
+        raise ConformanceError("OutputLimitExceeded")
+    try:
+        with zipfile.ZipFile(io.BytesIO(raw)) as archive:
+            entries = archive.infolist()
+            if len(entries) > 1024 or sum(item.file_size for item in entries) > MAX_PACKAGE_EXPANDED_BYTES:
+                raise ConformanceError("OutputLimitExceeded")
+            names = set()
+            for item in entries:
+                name = relative_path(item.filename[:-1] if item.is_dir() else item.filename)
+                kind = stat.S_IFMT(item.external_attr >> 16)
+                if (name in names or item.flag_bits & 1
+                        or kind not in (0, stat.S_IFREG, stat.S_IFDIR)
+                        or (kind == stat.S_IFDIR and not item.is_dir())
+                        or (kind == stat.S_IFREG and item.is_dir())
+                        or item.compress_type not in (zipfile.ZIP_STORED, zipfile.ZIP_DEFLATED)):
+                    raise ConformanceError("InputChanged")
+                names.add(name)
+            manifests = [item for item in entries if item.filename.lower().endswith(".nuspec")]
+            if (len(manifests) != 1 or manifests[0].filename.lower() != f"{package_id}.nuspec".lower()
+                    or manifests[0].file_size > 64 * 1024):
+                raise ConformanceError("InputChanged")
+            document = archive.read(manifests[0]).decode("utf-8-sig", errors="strict")
+            if "<!DOCTYPE" in document.upper() or "<!ENTITY" in document.upper():
+                raise ConformanceError("InputChanged")
+            root = ET.fromstring(document)
+            if sum(1 for _ in root.iter()) > 1024 or root.tag.rsplit("}", 1)[-1] != "package":
+                raise ConformanceError("InputChanged")
+            metadata = [node for node in root if node.tag.rsplit("}", 1)[-1] == "metadata"]
+            if len(metadata) != 1:
+                raise ConformanceError("InputChanged")
+            for field, expected in (("id", package_id), ("version", version)):
+                values = [node.text for node in metadata[0] if node.tag.rsplit("}", 1)[-1] == field]
+                if len(values) != 1 or values[0] is None or values[0].casefold() != expected.casefold():
+                    raise ConformanceError("InputChanged")
+            assemblies = {}
+            for item in entries:
+                if time.monotonic() >= deadline:
+                    raise ConformanceError("DeadlineExceeded")
+                if (item.is_dir() or not item.filename.startswith(("lib/", "runtimes/"))
+                        or not item.filename.endswith((".dll", ".so", ".dylib"))):
+                    continue
+                hashed = hashlib.sha256()
+                observed = 0
+                with archive.open(item) as source:
+                    while block := source.read(64 * 1024):
+                        observed += len(block)
+                        if observed > item.file_size or observed > MAX_PACKAGE_EXPANDED_BYTES:
+                            raise ConformanceError("OutputLimitExceeded")
+                        if time.monotonic() >= deadline:
+                            raise ConformanceError("DeadlineExceeded")
+                        hashed.update(block)
+                if observed != item.file_size:
+                    raise ConformanceError("InputChanged")
+                assemblies[item.filename] = hashed.hexdigest()
+    except (zipfile.BadZipFile, ET.ParseError, UnicodeError, EOFError, RuntimeError, zlib.error):
+        raise ConformanceError("InputChanged") from None
+    if not assemblies:
+        raise ConformanceError("EvidenceIncomplete")
+    admitted = admit_entity("PackageIdentity", {
+        "packageId": package_id, "version": version, "sha256": sha256,
+        "nugetSha512": hashlib.sha512(raw).hexdigest(),
+        "sourceMapping": "local", "runtimeAssemblies": assemblies,
+    })
+    if time.monotonic() >= deadline:
+        raise ConformanceError("DeadlineExceeded")
+    return admitted
 
 
 def source_manifest(root):

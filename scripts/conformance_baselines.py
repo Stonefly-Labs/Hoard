@@ -16,10 +16,9 @@ import stat
 import sys
 import tarfile
 import zipfile
-from xml.sax.saxutils import escape
 
 from foundation_evidence import canonicalize_acceptance_archive
-from conformance_evidence import MAX_REPORT_BYTES, ConformanceError, canonical_bytes, digest, file_sha256, load_json, relative_path, sha256
+from conformance_evidence import MAX_REPORT_BYTES, ConformanceError, canonical_bytes, digest, file_sha256, load_json, relative_path, sha256, synthetic_nuget_configuration
 from conformance_execution import OwnedRun, capture_control, no_symlinks
 from conformance_lock_preparation import prepare_project_lock, read_lock, verify_project_lock
 
@@ -112,13 +111,7 @@ def _config(run, name):
     feed = run.root / "feed" / name
     feed.mkdir(mode=0o700)
     config = run.root / "stores" / f"{name}.NuGet.Config"
-    config.write_text(
-        '<configuration><packageSources><clear/>'
-        f'<add key="local" value="{escape(str(feed))}"/>'
-        '<add key="nuget.org" value="https://api.nuget.org/v3/index.json"/>'
-        '</packageSources><packageSourceMapping><packageSource key="local">'
-        '<package pattern="Hoard.*"/></packageSource><packageSource key="nuget.org">'
-        '<package pattern="*"/></packageSource></packageSourceMapping></configuration>')
+    config.write_bytes(synthetic_nuget_configuration(feed))
     return config, feed
 
 

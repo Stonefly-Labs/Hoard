@@ -12,6 +12,7 @@ import unittest
 from unittest.mock import patch
 import uuid
 import xml.etree.ElementTree as ET
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -156,6 +157,45 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertIn("--locked-mode", received[0])
         self.assertIn("--no-restore", received[1])
 
+    def test_capture_recomputes_added_runtime_and_locks_and_rejects_remapped_sources(self):
+        (self.directory / "stores").mkdir()
+        (self.directory / "feed").mkdir()
+        run = SimpleNamespace(root=self.directory, run_id=str(uuid.uuid4()), _check_ledger=lambda: None)
+        config, feed = checks.baselines._config(run, "candidate")
+        with zipfile.ZipFile(feed / "Hoard.Fixture.0.1.0.nupkg", "w") as archive:
+            archive.writestr("Hoard.Fixture.nuspec",
+                            "<package><metadata><id>Hoard.Fixture</id><version>0.1.0</version></metadata></package>")
+            archive.writestr("lib/net10.0/Hoard.Fixture.dll", b"fixture")
+        packages = [checks.evidence.package_identity(feed, "Hoard.Fixture", "0.1.0")]
+        candidate = self.directory / "snapshot"
+        runtime = candidate / checks.TESTS / "bin/Release/net10.0"
+        runtime.mkdir(parents=True)
+        (runtime / "Tests.dll").write_bytes(b"runtime")
+        (candidate / "packages.lock.json").write_bytes(b"lock")
+        sources = {f"{checks.SDK}/Catalog/catalog.json": "a" * 64}
+        environment = {
+            "os": "linux", "osVersion": "test", "architecture": "x86_64",
+            "sdk": "10.0.203", "runtime": "10.0.7", "nativeSqlite": "not-used",
+            "filesystem": "ext4", "runnerImage": "none", "freeBytes": 100,
+            "pragmas": {"journalMode": "none", "synchronous": 0, "foreignKeys": 0, "busyTimeout": 0},
+        }
+        identity = {"sourceRevision": "a" * 40, "sourceState": "dirty-local"}
+        def capture(group_id=None):
+            return checks.make_inputs(run, candidate, sources, packages, {"entries": []},
+                                      environment, identity, group_id=group_id)
+        before = capture()
+        self.assertNotIn(str(self.directory).encode(), checks.evidence.canonical_bytes(before))
+        for path in (runtime / "Added.dll", candidate / "added.packages.lock.json"):
+            with self.subTest(path=path.name):
+                path.write_bytes(b"added after admission")
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                    checks.evidence.verify_input_recomputation(
+                        before, capture(before["invocationGroupId"]))
+                path.unlink()
+        config.write_text(config.read_text().replace("Hoard.*", "*"))
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+            capture(before["invocationGroupId"])
+
     def test_attempt_uses_exact_identities_disabled_console_and_ingestion(self):
         (self.directory / "proofs").mkdir()
         (self.directory / "stores").mkdir()
@@ -215,7 +255,7 @@ class SdkDiagnosticTests(unittest.TestCase):
 
         def command(args, **kwargs):
             observed.append(kwargs)
-            (self.directory / "proofs/environment.json").write_text("{}")
+            Path(args[-1]).write_text("{}")
             return SimpleNamespace(exit_code=0, events=())
 
         run = SimpleNamespace(root=self.directory, command=command)
@@ -231,6 +271,22 @@ class SdkDiagnosticTests(unittest.TestCase):
                 self.assertEqual(observed[-1]["env"], {"HOARD_RUNNER_IMAGE": expected})
                 self.assertEqual(observed[-1]["kind"], "build")
                 self.assertLessEqual(observed[-1]["timeout"], 30)
+
+    def test_admission_and_completion_capture_distinct_environment_observations(self):
+        (self.directory / "proofs").mkdir()
+        observed = []
+        def command(args, **kwargs):
+            with Path(args[-1]).open("xb") as target:
+                target.write(b"{}")
+            observed.append((Path(args[-1]).name, kwargs["cache_id"]))
+            return SimpleNamespace(exit_code=0, events=())
+        run = SimpleNamespace(root=self.directory, command=command)
+        checks.environment(run)
+        checks.environment(run, phase="completion")
+        self.assertEqual(observed, [
+            ("environment-admission.json", "environment-admission"),
+            ("environment-completion.json", "environment-completion"),
+        ])
 
     def test_probe_observes_filesystem_and_explicit_runner_metadata(self):
         output = self.directory / "environment.json"

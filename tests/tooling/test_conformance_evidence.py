@@ -11,6 +11,8 @@ import tempfile
 import unittest
 from unittest import mock
 import uuid
+import xml.etree.ElementTree as ET
+import zipfile
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
@@ -518,6 +520,120 @@ class ConformanceInputTests(unittest.TestCase):
         subprocess.run(["git", "init", "--quiet", str(self.repo)], check=True)
         (self.repo / "src").mkdir()
         (self.repo / "src/check.cs").write_text("immutable source")
+
+    def package(self, *, package_id="Hoard.Fixture", version="0.1.0", assembly=b"assembly", extra=()):
+        feed = self.parent / "feed"
+        feed.mkdir(mode=0o700, exist_ok=True)
+        path = feed / "Hoard.Fixture.0.1.0.nupkg"
+        with zipfile.ZipFile(path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+            archive.writestr("Hoard.Fixture.nuspec",
+                            f"<package><metadata><id>{package_id}</id><version>{version}</version></metadata></package>")
+            if assembly is not None:
+                archive.writestr("lib/net10.0/Hoard.Fixture.dll", assembly)
+            for name, data in extra:
+                archive.writestr(name, data)
+        return path
+
+    def test_package_identity_binds_actual_metadata_archive_and_runtime_bytes(self):
+        path = self.package()
+        raw = path.read_bytes()
+        admitted = evidence.package_identity(path.parent, "Hoard.Fixture", "0.1.0")
+        self.assertEqual(admitted["sha256"], hashlib.sha256(raw).hexdigest())
+        self.assertEqual(admitted["nugetSha512"], hashlib.sha512(raw).hexdigest())
+        self.assertEqual(dict(admitted["runtimeAssemblies"]),
+                         {"lib/net10.0/Hoard.Fixture.dll": hashlib.sha256(b"assembly").hexdigest()})
+        with self.assertRaises(TypeError):
+            admitted["version"] = "0.2.0"
+        for mutation in ({"package_id": "Hoard.Other"}, {"version": "0.2.0"}, {"assembly": None}):
+            with self.subTest(mutation=mutation):
+                self.package(**mutation)
+                with self.assertRaises(evidence.ConformanceError):
+                    evidence.package_identity(path.parent, "Hoard.Fixture", "0.1.0")
+
+    def test_package_archive_and_runtime_hashes_cannot_describe_different_reads(self):
+        path = self.package()
+        original = path.read_bytes()
+        self.package(assembly=b"replacement")
+        replacement = path.read_bytes()
+        path.write_bytes(original)
+        constructor = zipfile.ZipFile
+        changed = []
+        def replaced_after_read(source, *args, **kwargs):
+            path.write_bytes(replacement)
+            changed.append(True)
+            return constructor(source, *args, **kwargs)
+        with mock.patch.object(zipfile, "ZipFile", side_effect=replaced_after_read):
+            identity = evidence.package_identity(path.parent, "Hoard.Fixture", "0.1.0")
+        self.assertEqual(changed, [True])
+        self.assertEqual(identity["sha256"], hashlib.sha256(original).hexdigest())
+        self.assertEqual(identity["runtimeAssemblies"]["lib/net10.0/Hoard.Fixture.dll"],
+                         hashlib.sha256(b"assembly").hexdigest())
+        self.assertNotEqual(evidence.package_identity(path.parent, "Hoard.Fixture", "0.1.0"), identity)
+
+    def test_package_inventory_rejects_escaping_members_and_bounded_expansion(self):
+        path = self.package(extra=(("../outside.dll", b"not a runtime input"),))
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.package_identity(path.parent, "Hoard.Fixture", "0.1.0")
+        self.package()
+        with mock.patch.object(evidence, "MAX_PACKAGE_BYTES", 1), \
+                self.assertRaisesRegex(evidence.ConformanceError, "OutputLimitExceeded"):
+            evidence.package_identity(path.parent, "Hoard.Fixture", "0.1.0")
+        with mock.patch.object(evidence, "MAX_PACKAGE_EXPANDED_BYTES", 1), \
+                self.assertRaisesRegex(evidence.ConformanceError, "OutputLimitExceeded"):
+            evidence.package_identity(path.parent, "Hoard.Fixture", "0.1.0")
+
+    def test_selected_inputs_are_pinned_bounded_and_recomputed_from_bytes(self):
+        selected = ["src/check.cs"]
+        before = evidence.input_manifest(self.repo, selected)
+        self.assertEqual(dict(before), {"src/check.cs": hashlib.sha256(b"immutable source").hexdigest()})
+        (self.repo / "src/check.cs").write_text("changed")
+        self.assertNotEqual(evidence.input_manifest(self.repo, selected), before)
+        with mock.patch.object(evidence, "MAX_PROOF_BYTES", 1), \
+                self.assertRaisesRegex(evidence.ConformanceError, "OutputLimitExceeded"):
+            evidence.input_manifest(self.repo, selected)
+        (self.repo / "src/check.cs").unlink()
+        (self.repo / "src/check.cs").symlink_to(self.package())
+        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            evidence.input_manifest(self.repo, selected)
+
+    def test_recomputation_compares_all_input_roles_but_not_live_free_space(self):
+        before = ConformanceAdmissionTests().inputs()
+        after = copy.deepcopy(before)
+        after["environment"]["freeBytes"] += 1
+        after["environmentSha256"] = evidence.digest(after["environment"])
+        self.assertEqual(evidence.verify_input_recomputation(before, after), evidence.digest(before))
+        mutations = [
+            lambda value: value.update(configurationSha256="1" * 64),
+            lambda value: value.update(capabilitySha256="1" * 64),
+            lambda value: value.update(sdkSha256="1" * 64),
+            lambda value: value.update(catalogSha256="1" * 64),
+            lambda value: value["locks"].update({"packages.lock.json": "1" * 64}),
+            lambda value: value["runtimeAssemblies"].update({"consumer/Hoard.Tests.dll": "1" * 64}),
+            lambda value: value["bindings"][0].update(descriptorSha256="1" * 64),
+            lambda value: value["bindings"][0].update(capabilitySha256="1" * 64),
+            lambda value: value["environment"].update(runtime="10.0.8"),
+            lambda value: value.update(sourceState="clean-local"),
+        ]
+        for index, mutate in enumerate(mutations):
+            changed = copy.deepcopy(after)
+            mutate(changed)
+            changed["environmentSha256"] = evidence.digest(changed["environment"])
+            with self.subTest(role=index), self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                evidence.verify_input_recomputation(before, changed)
+
+    def test_source_mapping_is_verified_without_serializing_private_paths(self):
+        self.package()
+        feed = self.parent / 'feed&"synthetic'
+        (self.parent / "feed").rename(feed)
+        config = self.parent / "NuGet.Config"
+        config.write_bytes(evidence.synthetic_nuget_configuration(feed))
+        actual = ET.fromstring(config.read_bytes()).find("./packageSources/add")
+        self.assertEqual(actual.attrib["value"], str(feed))
+        policy = evidence.verify_synthetic_source_mapping(self.parent, "NuGet.Config", feed.name)
+        self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(policy))
+        config.write_text(config.read_text().replace("Hoard.*", "*"))
+        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            evidence.verify_synthetic_source_mapping(self.parent, "NuGet.Config", feed.name)
 
     def test_source_admission_rejects_symlinked_roots_and_changed_ancestors(self):
         self.assertEqual(set(evidence.source_manifest(self.repo)), {"src/check.cs"})

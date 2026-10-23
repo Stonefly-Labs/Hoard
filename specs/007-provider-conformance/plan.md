@@ -339,9 +339,39 @@ All 196 tooling checks pass with ten native skips; the conformance subset has
 91 cases. A focused actual-checkout probe copied and exactly verified 703
 read-only scoped files in 395 ms, labelled actual dirty-local inputs and
 settled its synthetic resources without provider execution. This is not
-qualification. Native execution of the changed SDK snapshot/alternate-lock
-path is pending. T013 remains unchecked until complete package, lock,
-configuration, capability, runtime and environment capture/sealing pass.
+qualification. Native run
+[39927534630](https://github.com/Stonefly-Labs/Hoard/actions/runs/39927534630)
+at `4e17986` then passed 91 foundation checks with zero failures/errors/skips
+and 92,111,253,504 free scratch bytes. SDK job `120327506542` passed eight
+scenarios/25 observations through the new read-only snapshot/alternate-lock
+path. It independently reverified all six baselines with the unchanged seal
+`41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`
+and bound input digest
+`9bfeaac44eab42b175d40bbbd76945f53b1640207befde112bf8af485d75ad7c`.
+
+The next increment binds local package ID/version to actual embedded nuspec
+metadata, archive SHA-256/SHA-512 and runtime hashes from one captured byte
+sequence. It rejects escaping/duplicate/special/encrypted members and bounded
+archive/expansion overflow. Bounds are 64 MiB/archive, 128 MiB expanded,
+1,024 members and a 1 MiB central directory, with finite five-second capture
+and 64 KiB assembly reads. Selected-file hashing also uses pinned descriptors.
+Actual generated NuGet configuration must match the shared synthetic source
+mapping before its path-free policy is hashed; arbitrary configuration and
+environment dumps are not accepted as configuration inputs.
+
+SDK diagnostic completion recaptures bounded lock/runtime file inventories,
+packages, source identity/manifests, verified baselines, synthetic configuration,
+and fresh environment observations. Added locks/runtime assemblies also change
+the input digest. Every role is compared; only live free-space variation is
+excluded from immutable identity, preserving its original admission measurement.
+Admission/completion probes retain separate safe observations and independent
+caches. These changes do not establish actual loaded-provider provenance.
+T013 remains unchecked until complete per-profile capability/declaration
+capture and integration pass; the newest increment still needs native execution.
+All 204 tooling checks pass with ten native skips on macOS; the conformance
+subset contains 99 cases. Catalog generation, frozen baseline inventory and
+whitespace checks also pass. No C# or production boundary changed in this
+increment; the earlier 55-test source SDK result is not a fresh native result.
 
 ## Partial implementation checkpoint
 

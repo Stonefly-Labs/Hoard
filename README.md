@@ -1117,9 +1117,15 @@ Aliased/replaced roots, changed ancestors and unlisted special files reject
 without redirecting writes. Real Git identity distinguishes dirty local bytes
 from a clean CI checkout pinned to the exact workflow SHA, without ambient Git
 overrides. SDK smoke preparation now uses a separate alternate lock; frozen
-source locks are never rewritten. All 196 tooling checks pass with ten native
-skips. Native verification and T013's complete package/configuration/capability/
-environment sealing remain outstanding.
+source locks are never rewritten. Run
+[39927534630](https://github.com/Stonefly-Labs/Hoard/actions/runs/39927534630)
+at `4e17986` verified this path: 91 native foundation checks without skips,
+eight SDK scenarios/25 observations, and all six historical baselines.
+The following input-sealing increment captures package metadata/archive/runtime
+hashes from one bounded byte sequence, verifies actual synthetic source mapping,
+and recomputes complete SDK diagnostic inputs after execution. Free space remains
+an admission measurement, not a supposedly immutable value. Provider capability/
+loaded-runtime integration and complete T013 acceptance remain outstanding.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
