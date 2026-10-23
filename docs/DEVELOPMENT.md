@@ -4625,6 +4625,47 @@ No product project, harness, workflow, listener, qualification, package
 publication, release, infrastructure operation or merge occurs in this stage.
 Draft [PR #18](https://github.com/Stonefly-Labs/Hoard/pull/18) remains incomplete.
 
+### F-07 provider conformance analysis
+
+The installed `speckit-analyze` runs read-only with explicitly pinned
+`SPECIFY_FEATURE_DIRECTORY=specs/007-provider-conformance`, after the driver
+records `analyze / running`. Its prerequisite check resolves the recorded
+directory and complete design/task inventory; no extension hooks are configured.
+
+The review finds no actionable duplication, ambiguity, underspecification,
+inconsistency, coverage gap or constitutional conflict across the specification,
+plan, tasks and supporting contracts/model. All 24 functional requirements and
+eight buildable outcomes have implementation and focused proof assignments:
+32/32 covered, with zero unmapped tasks. Supporting mappings retain QC-01..48,
+23 acceptance scenarios, 14 edge cases, all 192 inherited category entries and
+every finite composition/version/architecture subvariant. This is an assessment
+of planned coverage, not proof that any runtime obligation has passed.
+
+All 86 tasks remain unchecked, with 18 marked parallel opportunities and story
+counts 20/11/12/6/13. All 86 exact prerequisite rows are complete, execution-ordered
+and acyclic; every task reaches T086 closure. Shared-file edits are serialized.
+Old baselines are sealed before candidate builds. Immutable-input acceptance,
+real transfer/recovery proof, sanitation before private diagnostic persistence,
+bounded live ownership and actual five-profile CI remain future obligations.
+Insufficient runner capacity or missing evidence remains a blocker.
+
+All 13 feature artifacts, including task bodies and built-in/custom checklist
+markers, remain byte-for-byte unchanged. The structured analysis report is
+published in draft [PR #18](https://github.com/Stonefly-Labs/Hoard/pull/18).
+No remediation is needed. The next separately authorized stage is **`implement`**,
+but execution remains blocked on reviewer approval or explicit reviewer
+authorization for all 40 unchecked custom checklist items. Existing advisory
+assessment is not approval, and this analysis does not change that gate.
+
+README and this guide record the analysis and next gate. Provider/compatibility,
+custom-host and other example guides, predecessor artifacts, charter/product
+specification, baseline architecture/ADR/diagrams, constitution/backlog and
+IaC/release/UI guidance are unaffected: analysis changes no requirement, design,
+API, dependency graph, runtime/support claim or operational procedure.
+No product, .NET/native-client or IaC acceptance is implied by this documentation
+checkpoint; no implementation, workflow, qualification, release/tag, publishing,
+infrastructure operation, repository-setting change, deployment or merge occurs.
+
 ## Releases and deployment
 
 [Version tags publish GitHub source releases](RELEASING.md). They do not run

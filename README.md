@@ -1014,9 +1014,14 @@ to implementation and focused proof, preserving all inherited cases and
 subvariants. Explicit prerequisites serialize shared tooling edits and seal
 old binaries before candidate builds. The MVP is complete category-scoped US1,
 not full five-profile qualification. No implementation or qualification ran.
-The next separately authorized stage is **`analyze`**; implementation still
-requires reviewer approval or explicit authorization for the 40 unchecked
-custom checklist items.
+The subsequent read-only analysis finds no actionable cross-artifact or
+constitutional findings. All 24 requirements and eight outcomes have
+implementation and focused proof tasks; all 86 tasks have complete acyclic
+prerequisites. Feature artifacts and checklist markers remain unchanged.
+The next separately authorized stage is **`implement`**, but execution remains
+gated on reviewer approval or explicit authorization for the 40 unchecked
+custom checklist items. Analysis supplies no runtime qualification. See the
+[analysis scope](docs/DEVELOPMENT.md#f-07-provider-conformance-analysis).
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
