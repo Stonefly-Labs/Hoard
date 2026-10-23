@@ -13,6 +13,42 @@ workflow, production provider or certification result is delivered by this stage
 
 **Feature Directory**: `specs/007-provider-conformance`
 
+## Clarifications
+
+### Session 2026-10-22
+
+No critical ambiguities detected worth formal clarification. Zero questions
+were asked or answered; no requirements, acceptance criteria or scope decisions
+changed.
+
+All ten review categories are clear for this bounded feature: functional scope
+and behavior, domain and data model, interaction and UX flow, applicable
+non-functional quality attributes, integration and external dependencies,
+edge cases and failure handling, constraints and tradeoffs, terminology and
+consistency, completion signals, and miscellaneous/placeholders.
+
+The versioned common inventory, unchanged assertions and explicit applicability
+rules distinguish mandatory logical guarantees from optional environmental
+evidence. Both independent metadata and both artifact implementations are required
+baseline options; actual durable-local proof, process-local simulation and
+future service qualification remain separate. Declaration/lifecycle results
+cannot certify undeveloped protocol or identity operations, native clients,
+production support or multi-node safety.
+
+Composition and compatibility checks preserve existing contracts, including
+disabled optional targets, initialization before readiness, retained-old-binary
+consumption and permitted dependency counterparts. Finite observation budgets
+do not imply settlement or release of non-cooperative work. Run isolation,
+bounded retained ownership, safe diagnostics and exact input attribution are
+explicit; incomplete, altered or retried-away failures cannot qualify a run.
+
+Exact test interfaces, report formats, finite budget values, CI job structure
+and the enumerated bounded composition/version matrix remain planning decisions
+under FR-006, FR-011, FR-014 and FR-016 through FR-021. No service-level latency
+or throughput promise, rendered UI or new activation mechanism is required.
+No consequential product decision blocks planning. This review does not
+approve custom checklists, execute qualification or establish runtime evidence.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Qualify Providers Against One Shared Agreement (Priority: P1)

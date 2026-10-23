@@ -4444,10 +4444,44 @@ unaffected: this stage changes no API, dependency edge, executable behavior,
 support status or operational procedure. No new architecture review or product
 acceptance execution is warranted for this requirements-only change.
 
-The next stage is **`clarify`** in a separate invocation. The feature remains
+That specification checkpoint scheduled **`clarify`** in a separate invocation. The feature remains
 incomplete and its PR remains draft; no implementation, qualification,
 production support, merge, release, package publication, infrastructure action
 or deployment is claimed.
+
+### F-07 provider conformance clarification
+
+The installed `speckit-clarify` reviewed the pinned
+[specification](../specs/007-provider-conformance/spec.md#clarifications) against
+all ten ambiguity categories and the constitution. No critical ambiguity
+required a question: zero asked or answered, with no requirement, acceptance
+criterion or scope change. Functional scope, domain/data, interaction flow,
+applicable quality attributes, integrations, failure handling, constraints,
+terminology, completion signals and placeholders are clear for this feature.
+
+Mandatory logical checks, actual durable-local evidence, simulated behavior and
+future service qualification remain distinct. Composition, disabled optional
+targets, retained binary consumers and permitted dependency counterparts retain
+their existing policies. Observation deadlines do not authorize unsafe resource
+release; reports must preserve input attribution and reject incomplete evidence.
+Exact interfaces, report formats, finite budgets, job structure and the bounded
+composition/version matrix remain constrained planning decisions, not unresolved
+product choices.
+
+The built-in specification checklist was revalidated unchanged at **16/16 ->
+16/16**, with no newly passing items, regressions or unchecked items. No custom
+reviewer checklist is approved. No extension hooks are configured; no plan,
+tasks, implementation, CI workflow or qualification run is produced here.
+The next stage is **`plan / ready`** through a separate invocation; draft
+[PR #18](https://github.com/Stonefly-Labs/Hoard/pull/18) remains incomplete.
+
+Only the clarification record, README, this guide and shared checkpoint change.
+Provider/API/compatibility/recovery and example guides, predecessor artifacts,
+product charter/specification, architecture/ADR/diagrams, governance/backlog,
+release/cloud/UI/IaC guidance and runtime/test/tooling sources are unaffected:
+no requirement, API, dependency edge, executable behavior, support scope or
+operational procedure changes. No architecture-agent review, product acceptance,
+infrastructure action, publication or merge is warranted or performed.
 
 ## Releases and deployment
 
