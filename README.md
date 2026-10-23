@@ -1007,8 +1007,16 @@ Preserving inherited assertion coverage, actual large-transfer/recovery proof,
 CI scratch capacity and sanitation before diagnostic persistence remain
 implementation obligations. See the
 [assessment scope](docs/DEVELOPMENT.md#f-07-provider-conformance-checklists-and-assisted-assessment).
-The next separately authorized stage is **`tasks`**; implementation still
-requires reviewer approval or explicit authorization.
+The subsequent [task list](specs/007-provider-conformance/tasks.md) defines 86
+unchecked tasks across setup, shared foundations, five story increments and
+final acceptance. It maps all 24 requirements, eight outcomes and QC-01..48
+to implementation and focused proof, preserving all inherited cases and
+subvariants. Explicit prerequisites serialize shared tooling edits and seal
+old binaries before candidate builds. The MVP is complete category-scoped US1,
+not full five-profile qualification. No implementation or qualification ran.
+The next separately authorized stage is **`analyze`**; implementation still
+requires reviewer approval or explicit authorization for the 40 unchecked
+custom checklist items.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

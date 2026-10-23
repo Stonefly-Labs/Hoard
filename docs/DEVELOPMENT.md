@@ -4581,6 +4581,50 @@ constitution/backlog and release/cloud/UI/IaC guides are unaffected: this stage
 changes no contract, product dependency, supported behavior or operational
 procedure. No architecture change requires a new architecture-agent review.
 
+### F-07 provider conformance task generation
+
+The installed `speckit-tasks` uses the pinned
+`SPECIFY_FEATURE_DIRECTORY=specs/007-provider-conformance` and canonical task
+template to generate [86 unchecked tasks](../specs/007-provider-conformance/tasks.md).
+Setup has six tasks and shared foundations twelve; the five story phases contain
+20, 11, 12, six and 13 tasks, followed by six cross-cutting completion tasks.
+There are 18 explicitly marked different-file parallel opportunities, subject
+to the exact prerequisite graph and immutable-input acceptance isolation.
+
+Every functional requirement, all eight outcomes and QC-01..48 have focused
+implementation/proof assignments. The task list preserves all 192 inherited
+category entries, every CP/version/architecture subvariant, real durable-local
+recovery and actual 256 MiB/4 GiB/RSS proof. It requires safe owned execution,
+sanitation before private/public diagnostic persistence, sealed old binaries
+before candidate builds, a package-only contributor red/green journey and
+all five actual CI profiles. Insufficient runner capacity, incomplete ownership
+or missing CI evidence blocks acceptance; no reduced-coverage fallback is allowed.
+
+US1 is the suggested MVP: unchanged common category consumers on all four
+independent implementations, exact applicability and deliberate faulty-adapter
+proof. It is category-scoped evidence, not complete F-07 qualification.
+Each later story has its own independent diagnosis criteria; cross-story
+prerequisites honestly identify shared packaged consumer, host and evaluator
+integration. Shared-file edits are explicitly serialized and acceptance cannot
+overlap edits to fingerprinted inputs.
+
+Existing specification, plan, research, model, contracts, quickstart and all
+checklists remain unchanged. All 40 reviewer-owned custom markers remain
+unchecked; advisory assessment and task generation do not approve them.
+No extension hooks are configured. Next is separately invoked read-only
+**`analyze`**; implementation still requires reviewer approval or explicit
+authorization and cannot bypass analysis.
+
+README and this guide link the tasks and record the next gate. Provider,
+compatibility, custom-host and other example guides, predecessor artifacts,
+charter/product specification/architecture/ADR/diagrams, constitution/backlog,
+IaC/release/UI guidance are unaffected: task generation changes no requirement,
+design, implemented API, package graph, runtime/support claim or operational
+procedure. The task list assigns their actual implementation-time updates.
+No product project, harness, workflow, listener, qualification, package
+publication, release, infrastructure operation or merge occurs in this stage.
+Draft [PR #18](https://github.com/Stonefly-Labs/Hoard/pull/18) remains incomplete.
+
 ## Releases and deployment
 
 [Version tags publish GitHub source releases](RELEASING.md). They do not run
