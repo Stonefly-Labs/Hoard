@@ -4787,9 +4787,10 @@ It seals/verifies all six historical baselines before candidate compilation,
 then exercises the SDK allocator and safe logger with fixed source-owned test
 identities. Runtime command inputs containing private paths stay in synthetic
 stores, not diagnostic/proof directories. Current local archive hashes may be
-prepared only in the isolated smoke lock with an explicit preparation record;
+prepared in the isolated smoke lock with an explicit preparation record;
 fresh locked replay preserves its dependency graph and leaves tracked locks
-unchanged. Native CI execution is pending. Actual loaded-provider evidence,
+unchanged. Historical platform-built archives now have the separate explicit
+preparation described below. Native SDK execution is incomplete. Actual loaded-provider evidence,
 all category assertions, full profile evaluation and final review remain required.
 
 The first combined Linux attempt correctly rejected mocked fixture progress
@@ -4821,6 +4822,21 @@ T007 is complete after typed corruption requests were shown to accept missing
 subjects/unknown enum values, then repaired at admission. The full source SDK
 now passes 42 tests. These contracts and strict evidence entities are not the
 remaining category adapters, runtime-provider attribution or final evaluator.
+
+Historical cross-platform preparation is now explicit:
+`conformance_baselines.py --prepare-local-archives` creates alternate private
+locks, without editing pinned source locks or changing package versions,
+dependencies or third-party hashes. The SDK diagnostic opts into this
+non-qualifying preparation before candidate compilation. A fresh locked restore
+consumes each alternate lock. The private preparation seal uses schema `2`
+for this mode; existing strict schema-`1` seals still verify unchanged. Public
+F-07 evidence remains schema `1` / catalog `f07-v1`.
+
+Each alternate lock has a recipe-owned record linking its original lock,
+prepared bytes, actual local archives and graph-preserving derivation. Seal
+verification recomputes that derivation and rejects detached/rehashed graph
+changes, absent archives or a downgrade to the old preparation format. Native
+confirmation of this increment is pending; it is not provider qualification.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

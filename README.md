@@ -1059,6 +1059,9 @@ snapshots; observations are setup evidence, never provider-selected pass results
 T007's typed contracts and strict entities are complete; category adapters,
 runtime attribution, independent evaluation and the remaining foundations are
 not.
+Cross-platform historical archive preparation is explicit and non-qualifying:
+alternate locks preserve the original dependency graph/source locks and bind
+the platform-built bytes before any candidate compilation.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

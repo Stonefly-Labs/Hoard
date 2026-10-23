@@ -7,7 +7,6 @@ independent fresh cache then replays that unchanged graph in locked mode.
 """
 
 import argparse
-import base64
 import hashlib
 import json
 import os
@@ -23,6 +22,7 @@ from xml.sax.saxutils import escape
 import conformance_baselines as baselines
 import conformance_evidence as evidence
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
+from conformance_lock_preparation import rebind_local_archives
 from foundation_evidence import canonicalize_acceptance_archive
 
 
@@ -62,6 +62,7 @@ CONFIGURATION_POLICY = {
     "packageSourceMapping": {"local": ["Hoard.*"], "nuget.org": ["*"]},
     "restore": "locked-replay-after-isolated-local-hash-preparation",
     "buildRuntimeRollForward": "Disable",
+    "historicalArchivePreparation": "explicit-alternate-locks-with-unchanged-source-and-graph",
     "consoleLogger": False, "runtimeLogger": "HoardSafe",
     "testSelection": [{"identities": list(item[1]), "diagnosticCode": item[2],
                        "status": item[3], "exitCode": item[4], "failureKind": item[5]}
@@ -136,32 +137,11 @@ def build(run, project, config, cache_id, *, feed=None):
 
 def replay_lock(path, feed):
     """Rebind only local archive hashes; preserve the checked-in dependency graph."""
-    document = evidence.load_json(read_bounded(path, 2 * 1024 * 1024))
-    if (not isinstance(document, dict) or document.get("version") != 2
-            or not isinstance(document.get("dependencies"), dict) or not document["dependencies"]):
+    prepared, packages, _ = rebind_local_archives(read_bounded(path, 2 * 1024 * 1024), feed)
+    if set(packages) != {f"{name}.0.1.0.nupkg" for name in
+                         ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger")}:
         raise evidence.ConformanceError("InputChanged")
-    changed = 0
-    for dependencies in document["dependencies"].values():
-        if not isinstance(dependencies, dict):
-            raise evidence.ConformanceError("InputChanged")
-        for package_id, dependency in dependencies.items():
-            if not isinstance(dependency, dict):
-                raise evidence.ConformanceError("InputChanged")
-            if not package_id.startswith("Hoard.") or "contentHash" not in dependency:
-                continue
-            version = dependency.get("resolved")
-            if version != "0.1.0":
-                raise evidence.ConformanceError("InputChanged")
-            package = feed / f"{package_id}.{version}.nupkg"
-            no_symlinks(package)
-            if not package.is_file():
-                raise evidence.ConformanceError("PrerequisiteMissing")
-            dependency["contentHash"] = base64.b64encode(
-                hashlib.sha512(read_bounded(package, 64 * 1024 * 1024)).digest()).decode("ascii")
-            changed += 1
-    if changed != 3:
-        raise evidence.ConformanceError("InputChanged")
-    path.write_bytes(evidence.canonical_bytes(document) + b"\n")
+    path.write_bytes(prepared)
 
 
 def package_inputs(feed):
@@ -198,7 +178,7 @@ def environment(run):
              and re.fullmatch(r"[0-9]{8}\.[0-9]+\.[0-9]+", image_version) else "none")
     result = run.command(
         [sys.executable, str(Path(__file__).resolve()), "--probe", str(path)],
-        cwd=run.root, kind="build", timeout=30, cache_id="environment",
+        cwd=Path(__file__).resolve().parents[1], kind="build", timeout=30, cache_id="environment",
         env={"HOARD_RUNNER_IMAGE": image})
     if result.exit_code or result.events:
         raise evidence.ConformanceError("PrerequisiteMissing")
@@ -361,7 +341,7 @@ def execute(repository, destination):
         (home / ".local").mkdir(mode=0o700)
         (home / ".local/share").mkdir(mode=0o700)
         print(json.dumps({"qualification": False, "phase": "baseline-preparation"}), flush=True)
-        seal = baselines.prepare(repository, run)
+        seal = baselines.prepare(repository, run, prepare_local_archives=True)
         seal_sha = evidence.file_sha256(seal)
         prepared = baselines.verify_prepared_baselines(run.root, seal_sha)
         candidate, sources = snapshot(repository, run)

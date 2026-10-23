@@ -143,6 +143,17 @@ preparation, independently replays locks and exercises fixed SDK/logger cases.
 Its result is pending real Linux execution; unit mocks or portable passes do
 not establish that evidence. All diagnostics remain `qualification: false`.
 
+Linux historical locked restoration subsequently exposed different compiled
+archive bytes from the macOS-prepared pins. A build-runtime pin did not change
+those fingerprints. Explicit historical preparation now creates alternate
+private locks, preserving every original source lock, dependency/version and
+third-party hash. Private seal schema `2` records the recipe/actual archive
+derivation; strict old schema-`1` seals remain supported unchanged. Public
+evidence schema/catalog versions do not change. Independent verification
+recomputes each derivation rather than accepting rehashed graph changes.
+This is preparation before candidate compilation, not baseline substitution
+during execution; native acceptance remains pending.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

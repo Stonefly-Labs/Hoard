@@ -615,6 +615,84 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
 
 class ConformanceBaselineTests(unittest.TestCase):
+    def test_explicit_local_archive_preparation_preserves_source_and_graph_then_verifies_actual_bytes(self):
+        import conformance_lock_preparation as preparation
+        source = self.root / "stores/registration"
+        project = source / "retained/Consumer.csproj"
+        lock = project.parent / "packages.lock.json"
+        original = {"version": 1, "dependencies": {"net10.0": {
+            "Hoard.Example": {"type": "Direct", "resolved": "0.1.0", "contentHash": "original",
+                             "dependencies": {"External.Dependency": "1.0.0"}},
+            "External.Dependency": {"type": "Transitive", "resolved": "1.0.0", "contentHash": "external"},
+        }}}
+        lock.write_bytes(evidence.canonical_bytes(original))
+        before = lock.read_bytes()
+        feed = self.root / "feed/registration"
+        prepared, record = preparation.prepare_project_lock(project, source, feed, "registration")
+        self.assertEqual(lock.read_bytes(), before)
+        changed = json.loads(prepared.read_bytes())
+        self.assertNotEqual(changed["dependencies"]["net10.0"]["Hoard.Example"]["contentHash"], "original")
+        changed["dependencies"]["net10.0"]["Hoard.Example"]["contentHash"] = "original"
+        self.assertEqual(changed, original)
+        self.assertFalse(record["qualification"])
+        preparation.verify_project_lock(record, source, feed)
+        prepared.chmod(0o600)
+        changed["dependencies"]["net10.0"]["External.Dependency"]["resolved"] = "2.0.0"
+        prepared.write_bytes(evidence.canonical_bytes(changed) + b"\n")
+        record["preparedSha256"] = evidence.file_sha256(prepared)
+        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            preparation.verify_project_lock(record, source, feed)
+
+    def test_archive_preparation_never_resolves_missing_local_or_rebinds_external_packages(self):
+        import conformance_lock_preparation as preparation
+        source = self.root / "stores/registration"
+        project = source / "retained/Consumer.csproj"
+        lock = project.parent / "packages.lock.json"
+        external = {"version": 2, "dependencies": {"net10.0": {
+            "External.Dependency": {"resolved": "1.0.0", "contentHash": "untouched"}}}}
+        lock.write_bytes(evidence.canonical_bytes(external))
+        self.assertEqual(preparation.prepare_project_lock(
+            project, source, self.root / "feed/registration", "registration"), (None, None))
+        external["dependencies"]["net10.0"]["Hoard.Missing"] = {
+            "resolved": "0.1.0", "contentHash": "missing"}
+        lock.write_bytes(evidence.canonical_bytes(external))
+        with self.assertRaisesRegex(evidence.ConformanceError, "PrerequisiteMissing"):
+            preparation.prepare_project_lock(project, source, self.root / "feed/registration", "registration")
+        self.assertEqual(json.loads(lock.read_bytes()), external)
+
+    def test_sealed_alternate_locks_are_recipe_owned_and_cannot_be_downgraded_or_detached(self):
+        import conformance_lock_preparation as preparation
+        source = self.root / "stores/registration"
+        project = source / "retained/Consumer.csproj"
+        lock = project.parent / "packages.lock.json"
+        lock.write_bytes(evidence.canonical_bytes({"version": 1, "dependencies": {"net10.0": {
+            "Hoard.Example": {"resolved": "0.1.0", "contentHash": "original"}}}}))
+        prepared, record = preparation.prepare_project_lock(
+            project, source, self.root / "feed/registration", "registration")
+        record_path = project.parent / "F07LockPreparation/0000.json"
+        record_path.parent.mkdir()
+        record_path.write_bytes(evidence.canonical_bytes(record))
+        entry = self.manifest["entries"][0]
+        entry["recipes"] = self.baselines._hash_tree(project.parent, exclude_outputs=True)
+        entry["recipeSha256"] = evidence.digest(entry["recipes"])
+        entry["locks"][record["preparedLock"]] = evidence.file_sha256(prepared)
+        entry["lockSha256"] = evidence.digest(entry["locks"])
+        self.manifest["schemaVersion"] = 2
+
+        def verify():
+            self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+            return self.baselines.verify_prepared_baselines(self.root, evidence.file_sha256(self.seal))
+
+        self.assertEqual(len(verify()["entries"]), 6)
+        self.manifest["schemaVersion"] = 1
+        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            verify()
+        self.manifest["schemaVersion"] = 2
+        del entry["locks"][record["preparedLock"]]
+        entry["lockSha256"] = evidence.digest(entry["locks"])
+        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            verify()
+
     def test_build_runtime_pin_overrides_ambient_roll_forward_only_for_owned_build_command(self):
         run = mock.Mock(command_sequence=1)
         run.command.return_value = mock.Mock(exit_code=0, events=())

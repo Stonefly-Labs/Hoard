@@ -41,7 +41,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                               live_children=lambda: False)
         run.transition = lambda state: setattr(run, "state", state)
 
-        def prepare(*args):
+        def prepare(*args, **kwargs):
+            self.assertEqual(kwargs, {"prepare_local_archives": True})
             self.assertTrue((run.root / "cache/.local/share").is_dir())
             self.assertEqual((run.root / "cache/.local").stat().st_mode & 0o777, 0o700)
             calls.append("prepare")

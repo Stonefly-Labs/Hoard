@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import stat
 import sys
@@ -20,6 +21,7 @@ from xml.sax.saxutils import escape
 from foundation_evidence import canonicalize_acceptance_archive
 from conformance_evidence import MAX_REPORT_BYTES, ConformanceError, canonical_bytes, digest, file_sha256, load_json, relative_path, sha256
 from conformance_execution import OwnedRun, capture_control, no_symlinks
+from conformance_lock_preparation import prepare_project_lock, read_lock, verify_project_lock
 
 
 BASELINE = "9389016c0285c79f6f515f59805a5a41c69b0767"
@@ -120,22 +122,28 @@ def _config(run, name):
     return config, feed
 
 
-def _build(run, project, config, name, *, pack=False, feed=None):
+def _build(run, project, config, name, *, pack=False, feed=None, source_root=None, preparations=None):
+    lock_args = []
+    if preparations is not None:
+        alternate, record = prepare_project_lock(project, source_root, run.root / "feed" / name, name)
+        if alternate is not None:
+            preparations.append(record)
+            lock_args = [f"-p:NuGetLockFilePath={alternate}"]
     _command(run, ["dotnet", "restore", str(project), "--locked-mode",
                    "--configfile", str(config), "-p:UseSharedCompilation=false", "-nodeReuse:false",
-                   "-v", "quiet"], cwd=project.parent, cache_id=name)
+                   "-v", "quiet", *lock_args], cwd=project.parent, cache_id=name)
     _command(run, ["dotnet", "build", str(project), "-c", "Release",
                    "--no-restore", "-p:UseSharedCompilation=false", "-nodeReuse:false",
-                   "-v", "quiet"], cwd=project.parent, cache_id=name)
+                   "-v", "quiet", *lock_args], cwd=project.parent, cache_id=name)
     if pack:
         _command(run, ["dotnet", "pack", str(project), "-c", "Release", "--no-build",
                        "--no-restore", "-p:UseSharedCompilation=false", "-nodeReuse:false",
-                       "-o", str(feed), "-v", "quiet"], cwd=project.parent, cache_id=name)
+                       "-o", str(feed), "-v", "quiet", *lock_args], cwd=project.parent, cache_id=name)
         for package in feed.glob("*.nupkg"):
             canonicalize_acceptance_archive(package)
 
 
-def prepare(repository, run):
+def prepare(repository, run, *, prepare_local_archives=False):
     frozen = export_revision(repository, run, BASELINE, "f06")
     specs = (*BASELINES, ("f06", BASELINE, None, None))
     entries = []
@@ -143,18 +151,24 @@ def prepare(repository, run):
         source = frozen if name == "f06" else export_revision(repository, run, revision, name)
         source_hashes = _hash_tree(source, exclude_outputs=True)
         config, feed = _config(run, name)
+        preparations = [] if prepare_local_archives else None
+
+        def build(project, configuration, cache_id, *, pack=False, feed=None):
+            _build(run, project, configuration, cache_id, pack=pack, feed=feed,
+                   source_root=source, preparations=preparations)
+
         for package in ("Abstractions", "Core", "Hosting", "Application"):
             project = source / f"src/Hoard.{package}/Hoard.{package}.csproj"
             if project.is_file():
-                _build(run, project, config, name, pack=True, feed=feed)
+                build(project, config, name, pack=True, feed=feed)
         if name == "f06":
             metadata_projects = (
                 "metadata/Sqlite/Sqlite.csproj", "metadata/Memory/Memory.csproj",
                 "metadata/HostAdapters/HostAdapters.csproj",
             )
             for relative in metadata_projects:
-                _build(run, source / "tests/fixtures" / relative, config, name, pack=True, feed=feed)
-            _build(run, source / "tests/fixtures/metadata/Consumer/Consumer.csproj", config, name)
+                build(source / "tests/fixtures" / relative, config, name, pack=True, feed=feed)
+            build(source / "tests/fixtures/metadata/Consumer/Consumer.csproj", config, name)
             # F-06's artifact recipe deliberately consumes pre-F-06 metadata
             # binaries, not same-version recompilations against new abstractions.
             artifact_config, artifact_feed = _config(run, "f06-artifacts")
@@ -169,10 +183,9 @@ def prepare(repository, run):
                 "artifacts/HostAdapters/HostAdapters.csproj",
             )
             for relative in artifact_projects:
-                _build(run, source / "tests/fixtures" / relative, artifact_config, "f06-artifacts",
-                       pack=True, feed=artifact_feed)
-            _build(run, source / "tests/fixtures/artifacts/Consumer/Consumer.csproj",
-                   artifact_config, "f06-artifacts")
+                build(source / "tests/fixtures" / relative, artifact_config, "f06-artifacts",
+                      pack=True, feed=artifact_feed)
+            build(source / "tests/fixtures/artifacts/Consumer/Consumer.csproj", artifact_config, "f06-artifacts")
             recipes = {relative: file_sha256(source / "tests/fixtures" / relative)
                        for relative in (*metadata_projects, *artifact_projects, "metadata/Consumer/Consumer.csproj",
                                         "artifacts/Consumer/Consumer.csproj")}
@@ -180,7 +193,7 @@ def prepare(repository, run):
             if name == "artifact-marker":
                 for relative in ("metadata/Sqlite/Sqlite.csproj", "metadata/Memory/Memory.csproj",
                                  "metadata/HostAdapters/HostAdapters.csproj"):
-                    _build(run, source / "tests/fixtures" / relative, config, name, pack=True, feed=feed)
+                    build(source / "tests/fixtures" / relative, config, name, pack=True, feed=feed)
             target = source / "retained"
             shutil.copytree(frozen / recipe, target, ignore=shutil.ignore_patterns("bin", "obj"))
             baseline_lock = target / "Baseline/packages.lock.json"
@@ -191,7 +204,15 @@ def prepare(repository, run):
                 '<Project><PropertyGroup><ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>'
                 '</PropertyGroup></Project>')
             recipes = _hash_tree(target, exclude_outputs=True)
-            _build(run, target / project_file, config, name)
+            build(target / project_file, config, name)
+        recipe_root = source / ("tests/fixtures" if name == "f06" else "retained")
+        for sequence, record in enumerate(preparations or ()):
+            record_path = recipe_root / "F07LockPreparation" / f"{sequence:04}.json"
+            record_path.parent.mkdir(exist_ok=True, mode=0o700)
+            with record_path.open("xb") as output:
+                output.write(canonical_bytes(record) + b"\n")
+            record_path.chmod(0o400)
+            recipes[record_path.relative_to(recipe_root).as_posix()] = file_sha256(record_path)
         binaries = {
             path.relative_to(source).as_posix(): file_sha256(path)
             for path in sorted(source.rglob("*")) if path.is_file()
@@ -203,6 +224,7 @@ def prepare(repository, run):
         if any(file_sha256(source / path) != expected for path, expected in source_hashes.items()):
             raise ConformanceError("InputChanged")
         locks = {path: value for path, value in source_hashes.items() if path.endswith("packages.lock.json")}
+        locks.update({record["preparedLock"]: record["preparedSha256"] for record in preparations or ()})
         package_hashes = {
             path.name: {"sha256": file_sha256(path), "sha512": hashlib.sha512(path.read_bytes()).hexdigest()}
             for path in sorted(feed.glob("*.nupkg"))
@@ -218,7 +240,7 @@ def prepare(repository, run):
             "sources": source_hashes, "recipeSha256": digest(recipes), "recipes": recipes,
             "lockSha256": digest(locks), "locks": locks, "binaries": binaries, "packages": package_hashes,
         })
-    evidence = {"schemaVersion": 1, "qualification": False, "mode": "preparation",
+    evidence = {"schemaVersion": 2 if prepare_local_archives else 1, "qualification": False, "mode": "preparation",
                 "baselineRevision": BASELINE, "entries": entries}
     sealed = run.root / "proofs" / "baselines.json"
     with sealed.open("xb") as destination:
@@ -240,7 +262,7 @@ def verify_prepared_baselines(root, expected_sha256):
     evidence = load_json(seal.read_bytes())
     if (not isinstance(evidence, dict) or set(evidence) !=
             {"schemaVersion", "qualification", "mode", "baselineRevision", "entries"}
-            or type(evidence["schemaVersion"]) is not int or evidence["schemaVersion"] != 1
+            or type(evidence["schemaVersion"]) is not int or evidence["schemaVersion"] not in (1, 2)
             or evidence["qualification"] is not False or evidence["mode"] != "preparation"
             or evidence["baselineRevision"] != BASELINE or not isinstance(evidence["entries"], list)):
         raise ConformanceError("EvidenceIncomplete")
@@ -267,14 +289,38 @@ def verify_prepared_baselines(root, expected_sha256):
         for field, hash_field in (("sources", "sourceSha256"), ("recipes", "recipeSha256"), ("locks", "lockSha256")):
             if digest(entry[field]) != sha256(entry[hash_field]):
                 raise ConformanceError("InputChanged")
-        if entry["locks"] != {path: value for path, value in entry["sources"].items() if path.endswith("packages.lock.json")}:
-            raise ConformanceError("InputChanged")
         expected_sources = dict(entry["sources"])
         if entry["id"] != "f06":
             expected_sources.update({"retained/" + path: value for path, value in entry["recipes"].items()})
+        elif evidence["schemaVersion"] == 2:
+            for path, value in entry["recipes"].items():
+                relative = "tests/fixtures/" + path
+                if relative in expected_sources and expected_sources[relative] != value:
+                    raise ConformanceError("InputChanged")
+                expected_sources[relative] = value
+        expected_locks = {path: value for path, value in entry["sources"].items()
+                          if path.endswith("packages.lock.json")}
+        recipe_root = source / ("tests/fixtures" if entry["id"] == "f06" else "retained")
+        for path in entry["recipes"]:
+            if not path.startswith("F07LockPreparation/"):
+                continue
+            if evidence["schemaVersion"] != 2 or not re.fullmatch(r"F07LockPreparation/[0-9]{4}\.json", path):
+                raise ConformanceError("InputChanged")
+            record = load_json(read_lock(recipe_root / relative_path(path)))
+            if (not isinstance(record, dict) or not isinstance(record.get("feedId"), str) or record["feedId"] not in
+                    ({entry["id"], "f06-artifacts"} if entry["id"] == "f06" else {entry["id"]})):
+                raise ConformanceError("InputChanged")
+            verify_project_lock(record, source, root / "feed" / record["feedId"])
+            if (record["project"] not in expected_sources
+                    or expected_sources.get(record["originalLock"]) != record["originalSha256"]
+                    or record["preparedLock"] in expected_locks):
+                raise ConformanceError("InputChanged")
+            expected_locks[record["preparedLock"]] = record["preparedSha256"]
+        if entry["locks"] != expected_locks:
+            raise ConformanceError("InputChanged")
         if _hash_tree(source, exclude_outputs=True) != expected_sources:
             raise ConformanceError("InputChanged")
-        for field in ("sources", "recipes", "binaries"):
+        for field in ("sources", "recipes", "locks", "binaries"):
             base = source if field != "recipes" else source / ("tests/fixtures" if entry["id"] == "f06" else "retained")
             for relative, expected in entry[field].items():
                 path = base / relative_path(relative)
@@ -317,16 +363,19 @@ def main():
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--evidence", type=Path, required=True)
     parser.add_argument("--verify-sha256")
+    parser.add_argument("--prepare-local-archives", action="store_true")
     options = parser.parse_args()
     run = None
     try:
         if options.verify_sha256 is not None:
+            if options.prepare_local_archives:
+                raise ConformanceError("PrerequisiteMissing")
             verified = verify_prepared_baselines(options.evidence, options.verify_sha256)
             print(json.dumps({"mode": "verification", "qualification": False,
                               "baselines": len(verified["entries"]), "proofSha256": options.verify_sha256}))
             return 0
         run = OwnedRun.allocate(options.evidence, options.root, profile="baseline")
-        sealed = prepare(options.root.resolve(), run)
+        sealed = prepare(options.root.resolve(), run, prepare_local_archives=options.prepare_local_archives)
         print(json.dumps({"mode": "preparation", "qualification": False,
                           "proofSha256": file_sha256(sealed)}))
         run.transition("Settling")
