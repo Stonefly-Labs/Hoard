@@ -1,3 +1,4 @@
+import errno
 import json
 import os
 from pathlib import Path
@@ -209,6 +210,40 @@ else:
             with self.assertRaisesRegex(ConformanceError, "CommandFailed"):
                 run.command([sys.executable, "-c", "import time; time.sleep(60)"])
         self.assertTrue(failed)
+        self.assertFalse(run.live_children())
+        run.transition("Settling")
+        run.release()
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_unavailable_process_handle_prevents_target_execution(self):
+        run = self.workspace()
+        marker = run.root / "stores" / "target-started"
+        program = (
+            "from pathlib import Path; Path('target-started').write_text('unsafe'); "
+            "print('{\"event\":\"control\",\"code\":\"None\",\"value\":1}')"
+        )
+        with mock.patch.object(execution.os, "pidfd_open",
+                               side_effect=OSError(errno.EMFILE, "synthetic"), create=True):
+            with self.assertRaisesRegex(ConformanceError, "PrerequisiteMissing"):
+                run.command([sys.executable, "-c", program], cwd=marker.parent)
+        self.assertFalse(marker.exists())
+        self.assertFalse(run.live_children())
+        run.transition("Settling")
+        run.release()
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_unavailable_kernel_group_signalling_prevents_target_execution(self):
+        run = self.workspace()
+        marker = run.root / "stores" / "target-started"
+        program = (
+            "from pathlib import Path; Path('target-started').write_text('unsafe'); "
+            "print('{\"event\":\"control\",\"code\":\"None\",\"value\":1}')"
+        )
+        with mock.patch.object(execution.signal, "pidfd_send_signal",
+                               side_effect=OSError(errno.EINVAL, "synthetic"), create=True):
+            with self.assertRaisesRegex(ConformanceError, "PrerequisiteMissing"):
+                run.command([sys.executable, "-c", program], cwd=marker.parent)
+        self.assertFalse(marker.exists())
         self.assertFalse(run.live_children())
         run.transition("Settling")
         run.release()
