@@ -88,6 +88,18 @@ retaining the admission measurement rather than fabricating equal free bytes.
 configuration files as runtime artifacts. They cannot stand in for an assembly
 execution witness; loaded-origin checks must identify the actual assembly.
 
+`ConformanceLoadedAssembly.Capture` observes an actual typed instance, reads
+at most 64 MiB from its loaded assembly's symlink-checked path, and uses that one
+captured byte sequence for SHA-256 and PE metadata. Assembly name/version and
+MVID must match the loaded module; the actual type name is hashed, never rendered
+from the provider object. The closed projection is `assemblyName`,
+`assemblyVersion`, `moduleVersionId`, `assemblySha256` and `typeSha256`.
+`ingest_loaded_assembly` validates it against an independently selected admitted
+runtime artifact and optional selected package's embedded runtime inventory.
+Explicitly unpackaged test artifacts make no package-origin claim. Component
+correspondence alone is not session/factory/invocation attribution or hostile
+provider attestation; those execution links remain required.
+
 ### Shared bounds
 
 - Stable IDs: ASCII `[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}`. Digests:

@@ -436,6 +436,29 @@ actual loaded-factory/session/runtime provenance; later profile tasks retain
 their real SQLite/environment producer and full orchestration obligations.
 No category or five-profile qualification follows from these diagnostic runs.
 
+### Partial T014: enum transport and actual-instance component capture
+
+Enum identities first failed focused C#/Python regressions, then passed with
+bounded bare identifier tokens and unchanged exact parent matching. Run
+[39933805476](https://github.com/Stonefly-Labs/Hoard/actions/runs/39933805476)
+at `a1fe180` passed 103 native foundation checks with zero failures/errors/skips,
+92,111,106,048 free scratch bytes, ten scenarios/29 observations and all six
+historical baselines. Input digest
+`8b291f375d50901e255a9d95dbb44e37ed117ab520c04c19e208ebc270388992`.
+
+The next local increment adds actual typed-instance assembly capture: bounded
+coherent bytes, loaded module/PE MVID and name/version checks, and actual type
+hashes without provider rendering, path projection, directory discovery or
+assembly loading. Independent Python ingestion requires the selected runtime
+artifact and any selected package's actual embedded assembly bytes, not a
+copied package label. Two missing C# capture facts and two missing Python
+ingestion cases preceded implementation. All 64 source SDK tests and 105
+conformance tooling checks pass (ten native skips locally); native verification
+of the eleventh scenario/31-observation selection is pending. These component
+APIs do not yet prove actual session/factory/invocation linkage, complete
+discovery, append-only execution state or actual provider/runtime environment.
+T014 remains unchecked.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

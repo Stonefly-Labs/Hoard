@@ -63,6 +63,10 @@ SCENARIOS = (
         "Hoard.Conformance.Tests.RuntimeLoggerTests.Finite_enum_parameters_preserve_exact_parent_expected_identity"
         + f"(category: {category})" for category in ("Metadata", "Artifacts")),
      "None", "Passed", 0, "None"),
+    ("loaded", tuple("Hoard.Conformance.Tests.BindingContractTests." + method for method in (
+        "Loaded_component_capture_observes_instance_bytes_and_type_not_interface_or_declaration_labels",
+        "Loaded_component_projection_is_closed_and_never_renders_provider_objects_or_private_paths")),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {
@@ -200,7 +204,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
 
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
-    source_tests = name in ("owned", "ranges", "catalog", "declarations", "enums")
+    source_tests = name in ("owned", "ranges", "catalog", "declarations", "enums", "loaded")
     assembly = candidate / (TESTS if source_tests else LOGGER + "/Smoke") / "bin/Release/net10.0" / (
         "Hoard.Conformance.Tests.dll" if source_tests else "Smoke.dll")
     assembly_path = assembly.relative_to(run.root).as_posix()

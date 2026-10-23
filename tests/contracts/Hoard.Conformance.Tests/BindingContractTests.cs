@@ -1,4 +1,6 @@
 using System.Collections.Immutable;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using Hoard.Abstractions.Metadata;
 using Hoard.Testing.Conformance.Bindings;
@@ -10,6 +12,43 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class BindingContractTests
 {
+    [Fact]
+    public void Loaded_component_capture_observes_instance_bytes_and_type_not_interface_or_declaration_labels()
+    {
+        IConformanceBinding first = new ObservedBinding();
+        IConformanceBinding second = new OtherObservedBinding();
+        var observed = ConformanceLoadedAssembly.Capture(first);
+        var other = ConformanceLoadedAssembly.Capture(second);
+        var assembly = typeof(ObservedBinding).Assembly;
+        Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(assembly.Location))),
+            observed.AssemblySha256);
+        Assert.Equal(assembly.ManifestModule.ModuleVersionId, observed.ModuleVersionId);
+        Assert.Equal(assembly.GetName().Name, observed.AssemblyName);
+        Assert.Equal(assembly.GetName().Version!.ToString(), observed.AssemblyVersion);
+        Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(typeof(ObservedBinding).FullName!))),
+            observed.TypeSha256);
+        Assert.Equal(observed.AssemblySha256, other.AssemblySha256);
+        Assert.NotEqual(observed.TypeSha256, other.TypeSha256);
+        Assert.NotEqual(first.Declaration.PackageSha256, observed.AssemblySha256);
+        Assert.NotEqual(typeof(IConformanceBinding).Assembly.ManifestModule.ModuleVersionId, observed.ModuleVersionId);
+    }
+
+    [Fact]
+    public void Loaded_component_projection_is_closed_and_never_renders_provider_objects_or_private_paths()
+    {
+        IConformanceBinding binding = new ObservedBinding();
+        var observed = ConformanceLoadedAssembly.Capture(binding);
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(observed,
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        using var document = JsonDocument.Parse(bytes);
+        Assert.Equal<string>(["assemblyName", "assemblyVersion", "moduleVersionId", "assemblySha256", "typeSha256"],
+            document.RootElement.EnumerateObject().Select(property => property.Name));
+        var text = Encoding.UTF8.GetString(bytes);
+        Assert.DoesNotContain("private-canary", text, StringComparison.Ordinal);
+        Assert.DoesNotContain(typeof(ObservedBinding).Assembly.Location, text, StringComparison.Ordinal);
+        Assert.DoesNotContain(typeof(ObservedBinding).FullName!, text, StringComparison.Ordinal);
+    }
+
     [Fact]
     public void Binding_snapshots_capture_closed_actual_declarations_without_outcome_labels()
     {
@@ -226,4 +265,13 @@ public sealed class BindingContractTests
     private static ConformanceBindingDeclaration Declare(
         ConformanceCategory category, IEnumerable<ConformanceFault> faults) =>
         new("binding", category, "Hoard.Fixture", "0.1.0", new string('a', 64), ["common-logical"], faults);
+
+    private class ObservedBinding : IConformanceBinding
+    {
+        public ConformanceBindingDeclaration Declaration => Declare(ConformanceCategory.Metadata,
+            ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Metadata));
+        public override string ToString() => throw new InvalidOperationException("private-canary");
+    }
+
+    private sealed class OtherObservedBinding : ObservedBinding;
 }

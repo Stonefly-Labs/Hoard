@@ -5092,8 +5092,29 @@ characters; boolean/null alternatives are not duplicated inside the identifier
 alternative. All 62 source SDK tests and 103 conformance tooling checks pass
 (ten native skips locally). Native diagnostics now select ten scenarios/
 29 observations, including both actual enum theory rows; verification of this
-increment is pending. This repair does not complete loaded-provider provenance
-or T014.
+increment passed in run
+[39933805476](https://github.com/Stonefly-Labs/Hoard/actions/runs/39933805476)
+at `a1fe180`: 103 native checks without failures/errors/skips, 92,111,106,048
+free scratch bytes, ten scenarios/29 observations and all six baselines.
+Input digest `8b291f375d50901e255a9d95dbb44e37ed117ab520c04c19e208ebc270388992`.
+This repair does not complete loaded-provider provenance or T014.
+
+`ConformanceLoadedAssembly.Capture` now inspects an actual typed instance,
+never its rendering or declared package label. Within a five-second scope it
+captures at most 64 MiB in reads of at most 64 KiB, hashes those bytes, and checks
+their PE assembly name/version and MVID against the loaded module. Its closed
+projection contains only name/version, MVID, assembly hash and hashed actual
+type name, not paths or object values. No directory discovery or assembly
+loading is performed. Python `ingest_loaded_assembly` checks the independently
+selected runtime artifact and, when selected, actual embedded package bytes;
+an unpackaged test artifact cannot borrow a provider package label. An explicit
+`package_id=None` makes only an unpackaged runtime correspondence claim.
+The two source facts first failed to compile without the capture API; two Python
+regressions also failed before ingestion existed. All 64 source SDK tests and
+105 conformance tooling checks now pass (ten native skips locally); the new
+eleventh native scenario/31 total observations is not yet verified. These are
+component-capture APIs, not session/factory invocation linkage, an actual .NET/
+SQLite environment producer, or completed T014/provider qualification.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

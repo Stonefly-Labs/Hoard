@@ -1024,6 +1024,43 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             admitted["proofs"]["invented"] = "a" * 64
 
+    def test_loaded_assembly_requires_exact_admitted_runtime_and_selected_package_bytes(self):
+        self.inputs["runtimeAssemblies"]["provider/Hoard.Fixture.dll"] = "d" * 64
+        observed = {
+            "assemblyName": "Hoard.Fixture", "assemblyVersion": "0.1.0.0",
+            "moduleVersionId": str(uuid.uuid4()), "assemblySha256": "d" * 64,
+            "typeSha256": "f" * 64,
+        }
+        captured = evidence.ingest_loaded_assembly(
+            self.inputs, evidence.canonical_bytes(observed),
+            runtime_path="provider/Hoard.Fixture.dll", package_id="Hoard.Fixture")
+        self.assertEqual(captured["assemblySha256"], "d" * 64)
+        with self.assertRaises(TypeError):
+            captured["assemblySha256"] = "e" * 64
+        for key, value in (("assemblySha256", "e" * 64), ("moduleVersionId", str(uuid.UUID(int=0))),
+                           ("assemblyVersion", "0.1.0"), ("assemblyVersion", "0.1.0.65536"),
+                           ("assemblyName", "/private/canary"), ("path", "/private/canary")):
+            with self.subTest(field=key), self.assertRaises(evidence.ConformanceError):
+                evidence.ingest_loaded_assembly(
+                    self.inputs, evidence.canonical_bytes({**observed, key: value}),
+                    runtime_path="provider/Hoard.Fixture.dll", package_id="Hoard.Fixture")
+
+    def test_loaded_assembly_cannot_borrow_a_package_label_for_an_unpacked_runtime_artifact(self):
+        observed = {
+            "assemblyName": "Hoard.Tests", "assemblyVersion": "0.1.0.0",
+            "moduleVersionId": str(uuid.uuid4()), "assemblySha256": "e" * 64,
+            "typeSha256": "f" * 64,
+        }
+        data = evidence.canonical_bytes(observed)
+        self.assertEqual(evidence.ingest_loaded_assembly(
+            self.inputs, data, runtime_path="consumer/Hoard.Tests.dll",
+            package_id=None)["assemblySha256"], "e" * 64)
+        for package_id, runtime_path in (
+                ("Hoard.Fixture", "consumer/Hoard.Tests.dll"), ("Hoard.Missing", "consumer/Hoard.Tests.dll"),
+                (None, "consumer/Missing.dll"), (None, "../Hoard.Tests.dll")):
+            with self.subTest(package=package_id, path=runtime_path), self.assertRaises(evidence.ConformanceError):
+                evidence.ingest_loaded_assembly(self.inputs, data, runtime_path=runtime_path, package_id=package_id)
+
     def test_finite_version_ranges_preserve_identity_without_allowing_paths_or_free_text(self):
         for value in ("[1.2.0,2.0.0)", "(2.0.0,1.0.0]", "[1.2.3]",
                       "/private/canary", "private canary", "canary\n", 'canary"'):

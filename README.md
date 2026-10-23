@@ -1144,8 +1144,13 @@ not qualification or merge readiness.
 T014's first repair admits bounded enum parameter tokens in both runtime
 transports while retaining exact independently expected identities. Local
 regressions pass, and a tenth native diagnostic scenario now selects the two
-actual enum theory rows; native verification of this increment is pending.
-Loaded-provider attribution and complete T014 remain unfinished.
+actual enum theory rows. Run
+[39933805476](https://github.com/Stonefly-Labs/Hoard/actions/runs/39933805476)
+at `a1fe180` verified 103 native checks without skips and ten scenarios/
+29 observations. Actual-instance assembly capture and strict runtime/package
+correspondence now pass locally; their eleventh native scenario remains
+unverified. Loaded session/invocation integration and complete T014 remain
+unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

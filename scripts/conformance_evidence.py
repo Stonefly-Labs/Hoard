@@ -1052,6 +1052,29 @@ def _runtime_json(data, fields, *, limit=2 * 1024 * 1024):
     return _record(fields)(load_json(data))
 
 
+def ingest_loaded_assembly(inputs, data, *, runtime_path, package_id):
+    """Check a trusted actual-instance producer against independently selected input bytes."""
+    inputs = admit_entity("RunInputs", inputs)
+    runtime_path = relative_path(runtime_path)
+    observed = _runtime_json(data, {
+        "assemblyName": stable_id, "assemblyVersion": stable_id, "moduleVersionId": _uuid,
+        "assemblySha256": sha256, "typeSha256": sha256,
+    }, limit=64 * 1024)
+    parts = observed["assemblyVersion"].split(".")
+    if (len(parts) != 4
+            or any(not part.isascii() or not part.isdecimal()
+                   or str(int(part)) != part or int(part) > 65535 for part in parts)):
+        raise ConformanceError()
+    if inputs["runtimeAssemblies"].get(runtime_path) != observed["assemblySha256"]:
+        raise ConformanceError("InputChanged")
+    if package_id is not None:
+        stable_id(package_id)
+        package = next((item for item in inputs["packages"] if item["packageId"] == package_id), None)
+        if package is None or observed["assemblySha256"] not in package["runtimeAssemblies"].values():
+            raise ConformanceError("ProofMismatch")
+    return observed
+
+
 def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, proofs,
                            completion_data, expected_tests, manifest_sha256, owner_sha256,
                            started_ms, ended_ms):

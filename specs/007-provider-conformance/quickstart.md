@@ -70,8 +70,12 @@ T013's shared capture foundation is complete; T014 and full profile execution
 remain unfinished.
 
 The next T014 increment repairs bounded enum parameters in the safe transports.
-Its ten-scenario/29-observation native selection is not yet verified; local
-source SDK and ingestion regressions pass. T014 remains unchecked.
+Its ten-scenario/29-observation native selection passed in run `39933805476`
+at `a1fe180`, alongside 103 native checks without skips. Actual-instance
+assembly capture and exact selected runtime/package correspondence now pass
+locally; the eleventh native scenario/31-observation selection is pending.
+These APIs do not yet link loaded session/factory instances to their invocation.
+T014 remains unchecked.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be
