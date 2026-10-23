@@ -1,4 +1,6 @@
+import contextlib
 import hashlib
+import io
 import json
 from pathlib import Path
 import shutil
@@ -53,7 +55,8 @@ class SdkDiagnosticTests(unittest.TestCase):
             calls.append("snapshot")
             raise checks.evidence.ConformanceError("InputChanged")
 
-        with patch.object(checks, "native_execution_supported", return_value=True), \
+        with contextlib.redirect_stdout(io.StringIO()) as output, \
+                patch.object(checks, "native_execution_supported", return_value=True), \
                 patch.object(checks.OwnedRun, "allocate", return_value=run), \
                 patch.object(checks.baselines, "prepare", side_effect=prepare), \
                 patch.object(checks.baselines, "verify_prepared_baselines", side_effect=verify), \
@@ -64,6 +67,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(calls, ["prepare", "verify", "snapshot"])
         build.assert_not_called()
         self.assertEqual(run.state, "Settling")
+        self.assertEqual(json.loads(output.getvalue()),
+                         {"qualification": False, "phase": "baseline-preparation"})
 
     def test_invalid_baseline_seal_never_snapshots_or_compiles_candidate(self):
         seal = self.directory / "baselines.json"
@@ -71,7 +76,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         run = SimpleNamespace(root=self.directory, deadline=float("inf"), state="Active",
                               live_children=lambda: True)
         run.transition = lambda state: setattr(run, "state", state)
-        with patch.object(checks, "native_execution_supported", return_value=True), \
+        with contextlib.redirect_stdout(io.StringIO()) as output, \
+                patch.object(checks, "native_execution_supported", return_value=True), \
                 patch.object(checks.OwnedRun, "allocate", return_value=run), \
                 patch.object(checks.baselines, "prepare", return_value=seal), \
                 patch.object(checks.baselines, "verify_prepared_baselines",
@@ -83,6 +89,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         build.assert_not_called()
         self.assertEqual(run.state, "Retained")
         self.assertTrue(seal.exists())
+        self.assertEqual(json.loads(output.getvalue()),
+                         {"qualification": False, "phase": "baseline-preparation"})
 
     def test_snapshot_preserves_solution_ancestry_but_rejects_symlinks(self):
         repository = self.directory / "repository"
