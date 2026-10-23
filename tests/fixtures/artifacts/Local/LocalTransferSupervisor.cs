@@ -11,6 +11,7 @@ public sealed partial class LocalArtifactStore
     private readonly object activitySync = new();
     private readonly ConcurrentDictionary<Guid, LocalOperation> operations = [];
     private readonly ConcurrentDictionary<Guid, byte> incompleteReadCloses = [];
+    private readonly ConcurrentDictionary<Guid, byte> pendingStagingCleanup = [];
     private readonly Dictionary<string, LocalDecision> decisions = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim[] digestGates = Enumerable.Range(0, 64).Select(_ => new SemaphoreSlim(1, 1)).ToArray();
     private readonly Dictionary<Guid, Task> activities = [];
@@ -160,12 +161,13 @@ public sealed partial class LocalArtifactStore
         lock (activitySync)
         {
             if (!initialized || stopping || Volatile.Read(ref lifecycleActive) != 0 || retained.Count > 0
-                || incompleteHandoffs.Count > 0 || !incompleteReadCloses.IsEmpty)
+                || incompleteHandoffs.Count > 0 || !incompleteReadCloses.IsEmpty
+                || !pendingStagingCleanup.IsEmpty && phase is not (ArtifactPhase.Maintenance or ArtifactPhase.Reconcile))
             {
                 cancellation.Dispose();
                 deadline.Dispose();
                 settled?.Invoke();
-                return Failed<T>(retained.Count > 0 || incompleteHandoffs.Count > 0 || !incompleteReadCloses.IsEmpty
+                return Failed<T>(retained.Count > 0 || incompleteHandoffs.Count > 0 || !incompleteReadCloses.IsEmpty || !pendingStagingCleanup.IsEmpty
                     ? ArtifactFailureCode.CleanupIncomplete : ArtifactFailureCode.Disposed,
                     phase, ticket, retained.Count > 0 || incompleteHandoffs.Count > 0 || !incompleteReadCloses.IsEmpty);
             }
@@ -268,7 +270,8 @@ public sealed partial class LocalArtifactStore
         return new ArtifactResult<T>.Failure(code, phase,
             code == ArtifactFailureCode.Uncertain ? ArtifactAction.ReconcileExactTicket : ArtifactAction.Reobserve,
             Guid.NewGuid(), ticket is null ? null : new ArtifactOption<ArtifactOperationTicket>.Some(ticket),
-            live || code == ArtifactFailureCode.CleanupIncomplete ? ArtifactCleanupState.RetainedLiveOwnership : ArtifactCleanupState.Released);
+            live || code == ArtifactFailureCode.CleanupIncomplete || !pendingStagingCleanup.IsEmpty
+                ? ArtifactCleanupState.RetainedLiveOwnership : ArtifactCleanupState.Released);
     }
 
     private static ArtifactFailureCode FailureCode(Exception error, CancellationToken caller) => error switch

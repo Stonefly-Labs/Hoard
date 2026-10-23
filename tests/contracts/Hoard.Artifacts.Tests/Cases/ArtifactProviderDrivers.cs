@@ -32,6 +32,13 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
     public IArtifactMaintenance Maintenance { get; }
     public LocalFaultControls? LocalControls { get; }
     public ObjectFaultControls? ObjectControls { get; }
+    public string StagingDirectory => System.IO.Path.Combine(root.Path, ProviderId == "local" ? "staging" : "multipart");
+    public bool Ready => lifetime switch
+    {
+        LocalArtifactStore local => local.Ready,
+        ObjectArtifactStore objects => objects.Ready,
+        _ => throw new InvalidOperationException("Unknown artifact fixture.")
+    };
     public ValueTask<ArtifactResult<ArtifactShutdown>> StopAsync(ArtifactCleanupOptions options)
         => lifetime.StopAsync(options, default);
     public Task WhenIdleAsync() => lifetime switch

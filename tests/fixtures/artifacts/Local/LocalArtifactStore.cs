@@ -21,7 +21,8 @@ public sealed partial class LocalArtifactStore(string root, TimeProvider? clock 
             lock (activitySync)
             {
                 return initialized && lifecycleActive == 0 && !stopping
-        && retained.Count == 0 && incompleteHandoffs.Count == 0 && incompleteReadCloses.IsEmpty && Capabilities.MeetsBaseline;
+        && retained.Count == 0 && incompleteHandoffs.Count == 0 && incompleteReadCloses.IsEmpty
+        && pendingStagingCleanup.IsEmpty && Capabilities.MeetsBaseline;
             }
         }
     }
@@ -157,6 +158,12 @@ public sealed partial class LocalArtifactStore(string root, TimeProvider? clock 
             if (remaining <= TimeSpan.Zero)
             { return Failed<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, live: true); }
             try { await Task.WhenAll(RetryUndeliveredCleanup()).WaitAsync(remaining, ct); }
+            catch (Exception)
+            { return Failed<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, live: true); }
+            remaining = options.Deadline - time.GetElapsedTime(started);
+            if (remaining <= TimeSpan.Zero)
+            { return Failed<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, live: true); }
+            try { await RetryStagingCleanupAsync().WaitAsync(remaining, ct); }
             catch (Exception)
             { return Failed<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, live: true); }
             LocalReadSession[] sessions;

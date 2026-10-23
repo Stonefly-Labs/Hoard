@@ -57,7 +57,7 @@ four runtime tests validate those actual inputs and rejection variants.
 All focused modes remain partial. `--phase packages` runs eight actual graph scans, compiled
 provider/Hosting leak negatives, public-member compatibility including
 accessibility, the frozen old marker binary and both consumer selections.
-Default full acceptance passed on the final source: 229 logical/crash checks,
+Default full acceptance passed on the follow-up source: 237 logical/crash checks,
 four actual-transfer proof tests, three architecture checks, both consumers,
 the original retained binary, all six Python-owned crash barriers and exactly
 96 case entries (92 passes/four Object durability exclusions). Both fixtures
@@ -87,6 +87,14 @@ seven original runtime reds exercise fully ineligible tables, and paired
 cursor-progress checks preserve a faulted candidate while reaching entries
 beyond the first 100. Local reopen and held-ticket regressions cover rebuilt
 dependency indexes without treating a bounded removal count as bounded traversal.
+Follow-up regressions deny actual staging-directory unlink after a real prefix,
+repeat failed cleanup/stop, restore access and verify exact bounded reclamation,
+capacity/readiness restoration, borrowed-stream survival and Local reopen.
+Separate post-commit permission failures preserve exact settled reconciliation
+and committed bytes while maintenance reclaims only residual staging. Paging
+regressions run 32 independent single-row scans through 35 identities, rejecting
+consumed/query-mismatched/expired handles and proving terminal quota release.
+Their exact runtime names are required by the AS-17/21/24/27/40 catalog.
 
 OpenTofu mock-provider tests live beside the bootstrap at
 `infra/bootstrap/tests/` and run with `tofu -chdir=infra/bootstrap test`.

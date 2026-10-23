@@ -11,10 +11,10 @@ selection, rejected missing guarantees and successful startup/stop/restart.
 Local reopens its exact known identity; Object replacement uses a fresh root
 and epoch, never a durable-restart claim.
 The unchanged compiled consumer exercises all 16 common operations on both
-choices. Full acceptance includes 229 logical/crash checks, four actual-transfer
+choices. Current full acceptance includes 237 logical/crash checks, four actual-transfer
 proof tests, three architecture checks, eight graph scans, the original frozen
 marker binary, six Python-owned kill/reopen barriers and 29 altered-manifest
-rejections. See [exact commands and evidence](plan.md#final-fixture-qualification-and-handoff-2026-10-22).
+rejections. See [exact commands and evidence](plan.md#convergence-follow-up-implementation-2026-10-22).
 Every focused mode remains `qualification: false`, even with passing results.
 Expired ticket retirement now restores finite admission; retained identity and
 reclaimed-incarnation history has separate bounded bookkeeping and compacts
@@ -45,6 +45,17 @@ tickets, staging and reads remain provider-owned until exact reclamation;
 expiry does not prevent cleanup of that generation. Failed cleanup blocks
 admission/readiness and root release until a bounded exact `StopAsync` retry
 succeeds. Non-cooperative resources are never declared released.
+Failed staging prefixes also retain ownership when unlink fails. Observe the
+exact abandoned generation and retry bounded maintenance after restoring access,
+or retry stop; neither path waits for ticket expiry or reopens a finalized
+noncommit. Settled commit receipts remain reconcilable while exact residual
+staging is pending; maintenance preserves committed content and receipt identity.
+Readiness/new admission remain blocked until actual reclamation settles.
+Recovery continuations are single-use and bound to store/query/page size/revision/
+expiry. Each successful page replaces its consumed handle and terminal pages
+release their slot, allowing 32 independent scans to progress beyond 32 pages.
+The [follow-up evidence](plan.md#convergence-follow-up-implementation-2026-10-22)
+supersedes earlier source qualification; fresh convergence is still required.
 See the [approved hash refresh and locked replay](plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 
 Read [API](contracts/artifact-api.md), [model](data-model.md),

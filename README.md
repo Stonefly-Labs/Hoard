@@ -752,11 +752,11 @@ runtime binaries or packages are published. See the
 [merge/release evidence](docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release).
 [Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
 merged into `main`, recording F-05 complete with release metadata.
-**F-06's existing qualification passes, but convergence found two HIGH gaps.**
+**F-06's two convergence corrections are implemented; fresh convergence is next.**
 The additive BCL-only storage contracts have independent Local and simulated
 ObjectSemantics fixtures for verified streaming/publication, protected reads,
 exact-ticket reconciliation, bounded recovery and reference-safe deletion.
-The final locked run contains **96 attributed entries: 92 passes and exactly
+The current locked run contains **96 attributed entries: 92 passes and exactly
 four Object AS-41..44 exclusions**, on macOS 26.5 arm64, .NET 10.0.7 and APFS.
 Actual 256 MiB/4 GiB write/read runs on each fixture stayed below 64 MiB
 incremental OS peak RSS; all six local SIGKILL/fresh-process barriers passed.
@@ -782,7 +782,7 @@ All four focused modes remain `qualification: false`; their passes never
 substitute for full acceptance. All five predecessor gates pass separately
 with tracked locks; only 15 local fixture-package hashes in six locks changed
 in the final checkpoint, preserving versions, graphs, external hashes and the
-frozen baseline. See the [final evidence](specs/006-artifact-storage/plan.md#final-fixture-qualification-and-handoff-2026-10-22)
+frozen baseline. See the [follow-up evidence](specs/006-artifact-storage/plan.md#convergence-follow-up-implementation-2026-10-22)
 and [qualification guide](specs/006-artifact-storage/quickstart.md).
 These are test-only fixtures, not a working cache, production provider, remote
 service, power-loss certification or generalized F-07 conformance.
@@ -790,12 +790,20 @@ service, power-loss certification or generalized F-07 conformance.
 The subsequent convergence assessment reproduced two **HIGH partial gaps** on
 both fixtures despite a fresh passing full locked run.
 [Phase 9 / T087-T088](specs/006-artifact-storage/tasks.md#phase-9-convergence)
-records the remaining work: failed staging reclamation reports release/readiness
+recorded the remaining work: failed staging reclamation reported release/readiness
 but strands bytes and reserved capacity even after access returns; sequential
-recovery paging exhausts the 32 retained cursor slots before finishing a stable
-35-row inventory. The original 86 tasks, spec, plan and reviewer-owned checklists
-are unchanged. See the [convergence evidence](docs/DEVELOPMENT.md#f-06-convergence-findings).
-The next stage is **`implement`** for both corrections, then fresh convergence;
+recovery paging exhausted the 32 retained cursor slots before finishing a stable
+35-row inventory. The follow-up implementation completes both tasks on both
+fixtures: failed prefixes retain exact cleanup ownership, block readiness/new
+admission and support bounded maintenance or shutdown retry without reopening
+finalized tickets. Settled commit receipts remain reconcilable while residual
+staging is reclaimed, with committed bytes untouched. Consumed recovery cursors
+are retired; 32 independent scans each traverse all 35 rows and free their
+terminal handles. Fresh locked qualification passes 237 logical/crash tests,
+all transfer/crash/package proofs and the exact 92-pass/four-exclusion matrix.
+All 88 tasks are checked; reviewer-owned checklists remain unchanged.
+See the [follow-up checkpoint](docs/DEVELOPMENT.md#f-06-convergence-follow-up-implementation).
+The next stage is fresh **`converge`**;
 [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) remains draft.
 No clean-convergence, finalization, merge or release is claimed.
 

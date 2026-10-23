@@ -23,7 +23,8 @@ public sealed partial class ObjectArtifactStore(string root, TimeProvider? clock
             lock (workSync)
             {
                 return initialized && lifetimeBusy == 0 && !stopRequested
-        && lateWork.Count == 0 && incompleteHandoffs.Count == 0 && unfinishedReadCloses.IsEmpty && Capabilities.MeetsBaseline;
+        && lateWork.Count == 0 && incompleteHandoffs.Count == 0 && unfinishedReadCloses.IsEmpty
+        && failedMultipartCleanup.IsEmpty && Capabilities.MeetsBaseline;
             }
         }
     }
@@ -198,6 +199,12 @@ public sealed partial class ObjectArtifactStore(string root, TimeProvider? clock
             if (remaining <= TimeSpan.Zero)
             { return Rejected<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, retainedOwnership: true); }
             try { await Task.WhenAll(RetryUndeliveredCleanup()).WaitAsync(remaining, ct); }
+            catch (Exception)
+            { return Rejected<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, retainedOwnership: true); }
+            remaining = options.Deadline - time.GetElapsedTime(start);
+            if (remaining <= TimeSpan.Zero)
+            { return Rejected<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, retainedOwnership: true); }
+            try { await RetryMultipartCleanupAsync().WaitAsync(remaining, ct); }
             catch (Exception)
             { return Rejected<ArtifactShutdown>(ArtifactFailureCode.CleanupIncomplete, ArtifactPhase.Cleanup, retainedOwnership: true); }
             ObjectReadSession[] admitted;

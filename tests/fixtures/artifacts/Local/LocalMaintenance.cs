@@ -24,6 +24,7 @@ public sealed partial class LocalArtifactStore
                 var path = StagePath(operation);
                 var bytes = File.Exists(path) ? new FileInfo(path).Length : 0;
                 operation.State = "notcommitted";
+                pendingStagingCleanup.TryAdd(operation.Id, 0);
                 Save(operation);
                 ReleaseStaging(operation);
                 return Task.FromResult(new ArtifactCleanupReport(1, 0, 0, bytes));
@@ -52,18 +53,6 @@ public sealed partial class LocalArtifactStore
                 }
                 var rows = Inventory(query.Kind, now).OrderBy(row => row.OperationId).Skip(offset).Take(query.PageSize + 1).ToArray();
                 token.ThrowIfCancellationRequested();
-                ArtifactOption<string> continuation = new ArtifactOption<string>.None();
-                if (rows.Length > query.PageSize)
-                {
-                    foreach (var expired in continuations.Where(pair => now >= pair.Value.Expires).Select(pair => pair.Key).ToArray())
-                    { continuations.Remove(expired); }
-                    if (continuations.Count >= 32) { throw new LocalStateException(ArtifactFailureCode.Capacity); }
-                    var key = Guid.NewGuid().ToString("N");
-                    continuations.Add(key, new(ownership!.State.SessionId, query.Kind, query.PageSize, inventoryRevision,
-                        checked(offset + query.PageSize), now.AddSeconds(30)));
-                    continuation = new ArtifactOption<string>.Some(key);
-                }
-                var page = new ArtifactRecoveryPage(rows.Take(query.PageSize), ArtifactEnumerationConsistency.Snapshot, continuation);
                 var encoded = JsonSerializer.SerializeToUtf8Bytes(rows.Select(row => new
                 {
                     row.Kind,
@@ -72,6 +61,20 @@ public sealed partial class LocalArtifactStore
                     Owner = row.Owner is ArtifactOption<ArtifactStagingOwner>.Some owner ? owner.Value : null
                 }));
                 if (encoded.Length > Limits.PageBytes) { throw new LocalStateException(ArtifactFailureCode.Capacity); }
+                ArtifactOption<string> continuation = new ArtifactOption<string>.None();
+                if (rows.Length > query.PageSize)
+                {
+                    foreach (var expired in continuations.Where(pair => now >= pair.Value.Expires).Select(pair => pair.Key).ToArray())
+                    { continuations.Remove(expired); }
+                    if (continuations.Count >= 32 && query.Continuation is not ArtifactOption<string>.Some)
+                    { throw new LocalStateException(ArtifactFailureCode.Capacity); }
+                    var key = Guid.NewGuid().ToString("N");
+                    continuations.Add(key, new(ownership!.State.SessionId, query.Kind, query.PageSize, inventoryRevision,
+                        checked(offset + query.PageSize), now.AddSeconds(30)));
+                    continuation = new ArtifactOption<string>.Some(key);
+                }
+                var page = new ArtifactRecoveryPage(rows.Take(query.PageSize), ArtifactEnumerationConsistency.Snapshot, continuation);
+                if (query.Continuation is ArtifactOption<string>.Some consumed) { continuations.Remove(consumed.Value); }
                 return Task.FromResult(page);
             }
         });
@@ -82,9 +85,10 @@ public sealed partial class LocalArtifactStore
         if (kind is ArtifactRecoveryKind.All or ArtifactRecoveryKind.Staging)
         {
             foreach (var operation in operations.Values.Where(value => value.Owner != Guid.Empty && !value.ReservationReleased
-                && value.State is "reserved" or "staging" or "verified" or "notcommitted"))
+                && value.State is "reserved" or "staging" or "verified" or "notcommitted" or "committed"))
             {
-                var abandoned = operation.Session != ownership!.State.SessionId || now >= operation.OwnerExpires;
+                var abandoned = operation.State is "notcommitted" or "committed"
+                    || operation.Session != ownership!.State.SessionId || now >= operation.OwnerExpires;
                 yield return new(abandoned ? ArtifactObservationKind.AbandonedStaging : ArtifactObservationKind.ActiveStaging,
                     operation.Id, owner: new ArtifactOption<ArtifactStagingOwner>.Some(Owner(operation)));
             }
@@ -127,15 +131,20 @@ public sealed partial class LocalArtifactStore
                     {
                         if (!operations.TryGetValue(staging.Owner.Ticket.Id, out var operation)
                             || operation.Owner == Guid.Empty || Owner(operation) != staging.Owner
-                            || IsBusy(operation.Id) || operation.State is not ("reserved" or "staging" or "verified")
-                            || operation.Session == ownership!.State.SessionId && Now() < operation.OwnerExpires)
+                            || operation.ReservationReleased || IsBusy(operation.Id)
+                            || operation.State is not ("reserved" or "staging" or "verified" or "notcommitted" or "committed")
+                            || operation.State is not ("notcommitted" or "committed")
+                                && operation.Session == ownership!.State.SessionId && Now() < operation.OwnerExpires)
                         { conflicted++; continue; }
                         var path = StagePath(operation);
                         bytes = checked(bytes + (File.Exists(path) ? new FileInfo(path).Length : 0));
                         ReleaseStaging(operation);
-                        operation.State = "reserved";
-                        operation.Verified = Guid.Empty;
-                        operation.Content = null;
+                        if (operation.State is not ("notcommitted" or "committed"))
+                        {
+                            operation.State = "reserved";
+                            operation.Verified = Guid.Empty;
+                            operation.Content = null;
+                        }
                         Save(operation);
                         completed++;
                     }

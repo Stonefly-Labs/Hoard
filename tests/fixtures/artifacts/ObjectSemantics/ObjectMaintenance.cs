@@ -21,7 +21,7 @@ public sealed partial class ObjectArtifactStore
                 CurrentOwner(upload, owner);
                 if (MutationActive(owner.Ticket.Id)) { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
                 token.ThrowIfCancellationRequested();
-                var bytes = upload.Parts.Sum(part => new FileInfo(PartPath(part)).Length);
+                var bytes = MultipartBytes(upload);
                 upload.Fenced = true;
                 RemoveMultipart(upload);
                 return Task.FromResult(new ArtifactCleanupReport(1, 0, 0, bytes));
@@ -52,17 +52,6 @@ public sealed partial class ObjectArtifactStore
                 }
                 var rows = ObjectObservations(query.Kind, now).OrderBy(row => row.OperationId)
                     .Skip(offset).Take(query.PageSize + 1).ToArray();
-                ArtifactOption<string> next = new ArtifactOption<string>.None();
-                if (rows.Length > query.PageSize)
-                {
-                    foreach (var old in listingCursors.Where(pair => now >= pair.Value.Until).Select(pair => pair.Key).ToArray())
-                    { listingCursors.Remove(old); }
-                    if (listingCursors.Count >= 32) { throw new ObjectOperationException(ArtifactFailureCode.Capacity); }
-                    var handle = Guid.NewGuid().ToString("N");
-                    listingCursors.Add(handle, new(query.Kind, query.PageSize, listingRevision,
-                        checked(offset + query.PageSize), now.AddSeconds(30)));
-                    next = new ArtifactOption<string>.Some(handle);
-                }
                 var encoded = JsonSerializer.SerializeToUtf8Bytes(rows.Select(row => new
                 {
                     row.Kind,
@@ -71,6 +60,19 @@ public sealed partial class ObjectArtifactStore
                     Owner = row.Owner is ArtifactOption<ArtifactStagingOwner>.Some owner ? owner.Value : null
                 }));
                 if (encoded.Length > Bounds.PageBytes) { throw new ObjectOperationException(ArtifactFailureCode.Capacity); }
+                ArtifactOption<string> next = new ArtifactOption<string>.None();
+                if (rows.Length > query.PageSize)
+                {
+                    foreach (var old in listingCursors.Where(pair => now >= pair.Value.Until).Select(pair => pair.Key).ToArray())
+                    { listingCursors.Remove(old); }
+                    if (listingCursors.Count >= 32 && query.Continuation is not ArtifactOption<string>.Some)
+                    { throw new ObjectOperationException(ArtifactFailureCode.Capacity); }
+                    var handle = Guid.NewGuid().ToString("N");
+                    listingCursors.Add(handle, new(query.Kind, query.PageSize, listingRevision,
+                        checked(offset + query.PageSize), now.AddSeconds(30)));
+                    next = new ArtifactOption<string>.Some(handle);
+                }
+                if (query.Continuation is ArtifactOption<string>.Some consumed) { listingCursors.Remove(consumed.Value); }
                 return new ArtifactRecoveryPage(rows.Take(query.PageSize), ArtifactEnumerationConsistency.Incomplete, next);
             }
         });
@@ -80,10 +82,12 @@ public sealed partial class ObjectArtifactStore
     {
         if (kind is ArtifactRecoveryKind.All or ArtifactRecoveryKind.Staging)
         {
-            foreach (var upload in uploads.Values.Where(upload => upload.Owner is not null && !upload.ReservationReleased && upload.Receipt is null))
+            foreach (var upload in uploads.Values.Where(upload => upload.Owner is not null && !upload.ReservationReleased))
             {
-                yield return new(now >= upload.Owner!.Expires ? ArtifactObservationKind.AbandonedStaging : ArtifactObservationKind.ActiveStaging,
-                    upload.Ticket.Id, owner: new ArtifactOption<ArtifactStagingOwner>.Some(upload.Owner));
+                var owner = upload.Owner!;
+                yield return new(upload.Fenced || upload.Receipt is not null || now >= owner.Expires
+                    ? ArtifactObservationKind.AbandonedStaging : ArtifactObservationKind.ActiveStaging,
+                    upload.Ticket.Id, owner: new ArtifactOption<ArtifactStagingOwner>.Some(owner));
             }
         }
         if (kind is ArtifactRecoveryKind.All or ArtifactRecoveryKind.Committed)
@@ -127,14 +131,12 @@ public sealed partial class ObjectArtifactStore
                     if (target is ArtifactCleanupTarget.AbandonedStaging abandoned)
                     {
                         if (!uploads.TryGetValue(abandoned.Owner.Ticket.Id, out var upload) || upload.Owner != abandoned.Owner
-                            || upload.Receipt is not null || upload.Deciding || upload.Fenced || MutationActive(upload.Ticket.Id)
-                            || EffectiveNow() < abandoned.Owner.Expires)
+                            || upload.ReservationReleased || upload.Deciding && upload.Receipt is null || upload.Writing
+                            || MutationActive(upload.Ticket.Id) || !upload.Fenced && upload.Receipt is null && EffectiveNow() < abandoned.Owner.Expires)
                         { conflicted++; continue; }
-                        bytes = checked(bytes + upload.Parts.Sum(part => new FileInfo(PartPath(part)).Length));
+                        bytes = checked(bytes + MultipartBytes(upload));
                         RemoveMultipart(upload);
-                        upload.Owner = null;
-                        upload.Verified = null;
-                        upload.Fenced = false;
+                        if (!upload.Fenced && upload.Receipt is null) { upload.Owner = null; upload.Verified = null; }
                         completed++;
                     }
                     else if (target is ArtifactCleanupTarget.RemovedIncarnation removed)
@@ -149,4 +151,10 @@ public sealed partial class ObjectArtifactStore
             return new ArtifactCleanupReport(completed, conflicted, 0, bytes);
         });
     }
+
+    private long MultipartBytes(ObjectOperation upload) => upload.Parts.Sum(part =>
+    {
+        var path = PartPath(part);
+        return File.Exists(path) ? new FileInfo(path).Length : 0;
+    });
 }

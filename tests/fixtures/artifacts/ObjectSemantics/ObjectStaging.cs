@@ -237,13 +237,35 @@ public sealed partial class ObjectArtifactStore
 
     private void RemoveMultipart(ObjectOperation upload)
     {
-        foreach (var piece in upload.Parts) { File.Delete(PartPath(piece)); }
-        upload.Parts.Clear();
-        listingRevision = checked(listingRevision + 1);
-        if (!upload.ReservationReleased)
+        try
         {
-            reservedBytes = checked(reservedBytes - upload.Expectations.ByteCap);
-            upload.ReservationReleased = true;
+            foreach (var piece in upload.Parts) { File.Delete(PartPath(piece)); }
+            upload.Parts.Clear();
+            listingRevision = checked(listingRevision + 1);
+            if (!upload.ReservationReleased)
+            {
+                reservedBytes = checked(reservedBytes - upload.Expectations.ByteCap);
+                upload.ReservationReleased = true;
+            }
+            failedMultipartCleanup.TryRemove(upload.Ticket.Id, out _);
+        }
+        catch { failedMultipartCleanup.TryAdd(upload.Ticket.Id, 0); throw; }
+    }
+
+    private Task? multipartCleanupRetry;
+    private Task RetryMultipartCleanupAsync()
+    {
+        lock (workSync)
+        {
+            if (multipartCleanupRetry is { IsCompleted: false }) { return multipartCleanupRetry; }
+            return multipartCleanupRetry = Task.Run(() =>
+            {
+                lock (pointerSync)
+                {
+                    foreach (var id in failedMultipartCleanup.Keys.Take(100)) { RemoveMultipart(uploads[id]); }
+                    if (!failedMultipartCleanup.IsEmpty) { throw new ObjectOperationException(ArtifactFailureCode.CleanupIncomplete); }
+                }
+            });
         }
     }
 

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "implement",
+  "stage": "converge",
   "status": "ready",
   "branch": "feature/006-artifact-storage",
   "active": {
@@ -597,6 +597,13 @@
       "branch": "feature/006-artifact-storage",
       "at": "2026-10-23T00:33:05.874685+00:00",
       "evidence": "F-06 converge executed through installed speckit-converge in pinned specs/006-artifact-storage. Outcome tasks_appended: two HIGH partial findings, no other types/severities. Assessed 25 FRs, eight buildable SCs, 23 story scenarios, 15 edge cases, eight Phase 1 plan decisions/technical constraints, all 86 original tasks and eight constitutional principles. F1/T087: both stores return AccessDenied/Released and ready=true when staged-prefix reclamation fails; after access restoration/owner expiry, abandoned-stage cleanup conflicts, one file/reservation persists and fresh reservation returns Capacity. F2/T088: both stable 35-identity inventories stop at 32 single-row pages with Capacity because consumed cursors remain allocated. Owner-private probes executed against fresh qualified assemblies without provider edits reproduced all four failures. Appended only Phase 9/T087-T088; every prior task byte, spec, plan, other feature artifacts and checklist markers preserved. Fresh default locked full artifact qualification run d74a80fa-1aa2-42a8-8217-2cf9370c661e passes existing 92 applicable cases/four Object durability exclusions, actual transfers/crashes/package/architecture/evidence checks; these omit the uncovered paths and do not close findings. Full manifest reverified against unchanged source aa5afb01c594acb418f48db975c408ea3c0350e6ef33cef93ba27fd322739e24. Python tooling 105 passed; append-only/task/checklist/source integrity, 287 README/development local links/new anchors, PR template fidelity and git diff --check passed. No source/test/tooling/lock edits or hooks. README/development record findings and unaffected-guide reasons; draft PR #16 stays draft. Next stage implement both tasks, then fresh convergence; finalization blocked. No self-approval, feature completion/dependency unlock, merge, release, package publication, infrastructure or deployment."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-23T00:56:32.268307+00:00",
+      "evidence": "F-06 follow-up implement completed through installed speckit-implement in pinned specs/006-artifact-storage; T087/T088 checked, all 88 tasks complete. Independent failed-staging registries retain exact generation/reservations and truthful cleanup, fence readiness/new admission, allow bounded maintenance and nonduplicating shutdown retries, preserve finalized noncommit and Local reopen safety. Consumed recovery cursors retire on success/terminal pages; 32 independent scans each traverse 35 identities under bounded quota with binding/expiry/revision/listing protection. Six genuine initial runtime reds plus two architecture-correction reds retained privately. Required hoard-architecture-review f06-recovery-followup-review found one MEDIUM receipt-reconciliation regression; corrected with exact settled reconciliation and residual-staging-only maintenance, preserving committed bytes/receipts. Fresh default locked full run a3c382f7-31a8-45a8-bda1-3037d44f9119 qualifies source 42cb2a4eaa77daf772b4197c1b6b189155516a9029aa08f00fdecfa995f1a90c: 237 common/crash tests, four actual-transfer proof tests, three architecture checks/eight graphs, six SIGKILL/reopen barriers, both unchanged consumers/frozen marker, exact 92 applicable passes/four Object exclusions, three mutation pairs and 29 manifest negatives. Logical update passed 231 tests; tooling 105 passed; format/analyzers, current-source manifest revalidation, unchanged task-body/checklist integrity, docs links and git diff check passed. Exactly 15 local Hoard.* content hashes in six locks change; graphs/versions/external hashes/frozen baseline unchanged. README/affected guides/quickstart/recovery contract/plan synchronized with unaffected-document reasons; no hooks. Exact commands/private paths and review limits in plan follow-up section. Draft PR #16 remains draft; next separate stage converge, no clean-convergence/finalization/feature completion/release/infrastructure claim."
     }
   ]
 }

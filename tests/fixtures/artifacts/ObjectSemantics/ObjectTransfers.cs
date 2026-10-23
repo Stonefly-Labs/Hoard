@@ -38,6 +38,7 @@ public sealed partial class ObjectArtifactStore
     private readonly object workSync = new();
     private readonly ConcurrentDictionary<Guid, ObjectOperation> uploads = [];
     private readonly ConcurrentDictionary<Guid, byte> unfinishedReadCloses = [];
+    private readonly ConcurrentDictionary<Guid, byte> failedMultipartCleanup = [];
     private readonly Dictionary<string, ObjectPointer> pointers = new(StringComparer.Ordinal);
     private readonly Dictionary<Guid, Task> ownedWork = [];
     private readonly HashSet<Guid> lateWork = [];
@@ -168,12 +169,15 @@ public sealed partial class ObjectArtifactStore
         lock (workSync)
         {
             if (!initialized || stopRequested || Volatile.Read(ref lifetimeBusy) != 0 || lateWork.Count != 0
-                || incompleteHandoffs.Count > 0 || !unfinishedReadCloses.IsEmpty || ownedWork.Count >= Bounds.TransferSlots + Bounds.WaitingCalls)
+                || incompleteHandoffs.Count > 0 || !unfinishedReadCloses.IsEmpty
+                || !failedMultipartCleanup.IsEmpty && phase is not (ArtifactPhase.Maintenance or ArtifactPhase.Reconcile)
+                || ownedWork.Count >= Bounds.TransferSlots + Bounds.WaitingCalls)
             {
                 cancellation.Dispose();
                 deadline.Dispose();
                 onSettled?.Invoke();
-                return Rejected<T>(lateWork.Count > 0 || incompleteHandoffs.Count > 0 || !unfinishedReadCloses.IsEmpty ? ArtifactFailureCode.CleanupIncomplete
+                return Rejected<T>(lateWork.Count > 0 || incompleteHandoffs.Count > 0 || !unfinishedReadCloses.IsEmpty || !failedMultipartCleanup.IsEmpty
+                    ? ArtifactFailureCode.CleanupIncomplete
                     : initialized && !stopRequested ? ArtifactFailureCode.Capacity : ArtifactFailureCode.Disposed, phase, ticket);
             }
             var mutating = ticket is not null && phase is ArtifactPhase.Stage or ArtifactPhase.Publication or ArtifactPhase.Delete;
@@ -268,7 +272,7 @@ public sealed partial class ObjectArtifactStore
         return new ArtifactResult<T>.Failure(code, phase,
             code == ArtifactFailureCode.Uncertain ? ArtifactAction.ReconcileExactTicket : ArtifactAction.Reobserve,
             Guid.NewGuid(), ticket is null ? null : new ArtifactOption<ArtifactOperationTicket>.Some(ticket),
-            retainedOwnership || code == ArtifactFailureCode.CleanupIncomplete
+            retainedOwnership || code == ArtifactFailureCode.CleanupIncomplete || !failedMultipartCleanup.IsEmpty
                 ? ArtifactCleanupState.RetainedLiveOwnership : ArtifactCleanupState.Released);
     }
 

@@ -112,6 +112,21 @@ work, unknown state and committed unreferenced content are not reclaimed as
 abandoned staging. Committed observations can be passed to shared reconciliation,
 but cannot manufacture cache entries or authorize eviction.
 
+Failed staging reclamation retains its exact generation and byte reservation,
+reports retained cleanup and blocks readiness/new admission until actual
+settlement. The bounded maintenance path may retry fenced/finalized noncommit
+staging without waiting for ticket expiry; it never reopens that ticket.
+It may also remove only residual staging from an already committed operation:
+its settled receipt remains reconcilable, and committed payload/receipt state
+is preserved. Stop retries owned staging cleanup within its remaining budget
+without starting another live retry or releasing root ownership prematurely.
+
+Continuation handles are single-use after successful page construction, including
+terminal-page retirement. Each successor replaces its consumed predecessor;
+the 32-handle quota limits independent scans, not the number of pages a scan can
+traverse. Invalid query/store/page-size/revision/expiry values still reject, and
+an incomplete listing remains an observation rather than deletion authority.
+
 ## Deletion and Physical Reclamation
 
 1. Reserve a ticket for the exact observed stamp.

@@ -102,6 +102,8 @@ public sealed partial class LocalArtifactStore
         operations.Clear();
         decisions.Clear();
         removedContent.Clear();
+        pendingStagingCleanup.Clear();
+        continuations.Clear();
         ClearHistoryIndexes();
         reserved = 0;
         foreach (var operation in ownership!.ReadRecords<LocalOperation>("tickets", Limits.LiveTickets, value => value.Id.ToString("N")))
@@ -163,6 +165,10 @@ public sealed partial class LocalArtifactStore
             {
                 operation.State = "reserved";
                 Save(operation);
+            }
+            else if (operation.State == "notcommitted")
+            {
+                ReleaseStaging(operation);
             }
             else if (operation.State == "committed")
             {

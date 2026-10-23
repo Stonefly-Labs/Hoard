@@ -10,6 +10,62 @@ public sealed class ArtifactRecoveryTests
     [Theory]
     [InlineData("local")]
     [InlineData("object")]
+    public async Task Sequential_recovery_retires_consumed_cursors_without_starving_independent_scans(string provider)
+    {
+        var clock = new ArtifactTestClock();
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
+        for (var number = 0; number < 35; number++)
+        {
+            using var source = new ShortSource([(byte)number]);
+            await PublishAsync(driver, source, new(1024));
+        }
+        var query = new ArtifactRecoveryQuery(driver.Identity, ArtifactRecoveryKind.Committed, 1);
+        var pages = new ArtifactRecoveryPage[32];
+        var seen = Enumerable.Range(0, 32).Select(_ => new HashSet<Guid>()).ToArray();
+        for (var scan = 0; scan < pages.Length; scan++)
+        {
+            pages[scan] = Success(await driver.Maintenance.ObserveAsync(query, new(), default));
+            Assert.True(seen[scan].Add(Assert.Single(pages[scan].Observations).OperationId));
+        }
+        Assert.Equal(ArtifactFailureCode.Capacity, Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Failure>(
+            await driver.Maintenance.ObserveAsync(query, new(), default)).Code);
+        var old = Assert.IsType<ArtifactOption<string>.Some>(pages[0].Continuation);
+        Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Failure>(
+            await driver.Maintenance.ObserveAsync(new(driver.Identity, ArtifactRecoveryKind.All, 1, old), new(), default)).Code);
+        Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Failure>(
+            await driver.Maintenance.ObserveAsync(new(driver.Identity, ArtifactRecoveryKind.Committed, 2, old), new(), default)).Code);
+        for (var row = 1; row < 35; row++)
+        {
+            for (var scan = 0; scan < pages.Length; scan++)
+            {
+                pages[scan] = Success(await driver.Maintenance.ObserveAsync(
+                    new(driver.Identity, ArtifactRecoveryKind.Committed, 1, pages[scan].Continuation), new(), default));
+                Assert.True(seen[scan].Add(Assert.Single(pages[scan].Observations).OperationId));
+                Assert.Equal(provider == "local" ? ArtifactEnumerationConsistency.Snapshot : ArtifactEnumerationConsistency.Incomplete,
+                    pages[scan].Consistency);
+            }
+            if (row == 1)
+            {
+                Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Failure>(
+                    await driver.Maintenance.ObserveAsync(new(driver.Identity, ArtifactRecoveryKind.Committed, 1, old), new(), default)).Code);
+            }
+        }
+        for (var scan = 0; scan < pages.Length; scan++)
+        {
+            Assert.Equal(35, seen[scan].Count);
+            Assert.IsType<ArtifactOption<string>.None>(pages[scan].Continuation);
+            pages[scan] = Success(await driver.Maintenance.ObserveAsync(query, new(), default));
+        }
+        clock.Advance(TimeSpan.FromSeconds(30));
+        Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Failure>(
+            await driver.Maintenance.ObserveAsync(new(driver.Identity, ArtifactRecoveryKind.Committed, 1,
+                pages[0].Continuation), new(), default)).Code);
+        Success(await driver.Maintenance.ObserveAsync(query, new(), default));
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
     public async Task Admitted_reconciliation_preserves_the_settled_receipt_after_delete_and_recreate(string provider)
     {
         var clock = new ArtifactTestClock();

@@ -239,6 +239,7 @@ public sealed partial class LocalArtifactStore
                 lock (stateSync)
                 {
                     operation.State = "notcommitted";
+                    pendingStagingCleanup.TryAdd(operation.Id, 0);
                     Save(operation);
                     ReleaseStaging(operation);
                 }
@@ -254,6 +255,7 @@ public sealed partial class LocalArtifactStore
                     || operation.State is not ("verified" or "notcommitted"))
                 { throw new LocalStateException(ArtifactFailureCode.Conflict); }
                 operation.State = "notcommitted";
+                pendingStagingCleanup.TryAdd(operation.Id, 0);
                 Save(operation);
                 ReleaseStaging(operation);
             }
@@ -263,12 +265,40 @@ public sealed partial class LocalArtifactStore
 
     private void ReleaseStaging(LocalOperation operation)
     {
-        if (operation.Owner != Guid.Empty) { File.Delete(StagePath(operation)); }
-        if (!operation.ReservationReleased)
+        try
         {
-            reserved = checked(reserved - operation.Cap);
-            operation.ReservationReleased = true;
-            Save(operation);
+            if (operation.Owner != Guid.Empty) { File.Delete(StagePath(operation)); }
+            if (!operation.ReservationReleased)
+            {
+                operation.ReservationReleased = true;
+                try { Save(operation); }
+                catch { operation.ReservationReleased = false; throw; }
+                reserved = checked(reserved - operation.Cap);
+            }
+            pendingStagingCleanup.TryRemove(operation.Id, out _);
+        }
+        catch { pendingStagingCleanup.TryAdd(operation.Id, 0); throw; }
+    }
+
+    private Task? stagingCleanupRetry;
+    private Task RetryStagingCleanupAsync()
+    {
+        lock (activitySync)
+        {
+            if (stagingCleanupRetry is { IsCompleted: false }) { return stagingCleanupRetry; }
+            return stagingCleanupRetry = Task.Run(() =>
+            {
+                lock (stateSync)
+                {
+                    foreach (var id in pendingStagingCleanup.Keys.Take(100))
+                    {
+                        var operation = operations[id];
+                        Save(operation);
+                        ReleaseStaging(operation);
+                    }
+                    if (!pendingStagingCleanup.IsEmpty) { throw new LocalStateException(ArtifactFailureCode.CleanupIncomplete); }
+                }
+            });
         }
     }
 

@@ -69,8 +69,18 @@ Successful result handoff and cancellation are serialized. If cancellation
 wins first, the provider retains responsibility for reclaiming unclaimed
 tickets/staging/read sessions. Exact-generation cleanup remains valid after
 ownership expiry without authorizing new work. Failed reclamation blocks
-readiness/admission and retains root ownership; bounded `StopAsync` retries
+readiness/new admission and retains root ownership; bounded `StopAsync` retries
 only that resource and never starts a duplicate live cleanup attempt.
+Failed prefix reclamation is observable and retryable by its exact staging
+generation, including finalized noncommits, without waiting for ticket expiry.
+Maintenance does not reopen finalized tickets or reclaim committed bytes.
+Settled commit receipts remain reconcilable while residual staging is pending;
+exact cleanup preserves those receipts and restores capacity/readiness.
+Recovery continuations are single-use: a successful page replaces its consumed
+handle, and a terminal page releases it. Up to 32 independent scans can progress
+beyond 32 pages without artificial expiry waits; query/page-size/store/revision/
+expiry checks and explicit listing consistency still apply. See the
+[follow-up evidence](../specs/006-artifact-storage/plan.md#convergence-follow-up-implementation-2026-10-22).
 Expired ticket history may be retired, but live content identity remains
 independent of its receipt anchor. Retained tombstones and reclaimed-incarnation
 records also consume finite bookkeeping capacity until safe expiry-based

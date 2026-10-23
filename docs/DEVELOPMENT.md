@@ -3923,6 +3923,59 @@ The driver schedules **`implement / ready`**, followed by fresh convergence.
 completion, dependency unlock, finalization, merge, tag, publication, infrastructure
 action or deployment occurred.
 
+### F-06 convergence follow-up implementation
+
+The separately invoked installed `speckit-implement` completes both
+[Phase 9 tasks](../specs/006-artifact-storage/tasks.md#phase-9-convergence).
+All 88 tasks are checked; existing reviewer-owned checklist markers are
+unchanged. This invocation does not run convergence or finalization.
+
+Failed prefix reclamation now retains exact staging ownership/reservations,
+reports retained cleanup and blocks readiness/new admission. Bounded maintenance
+can retry after access returns without ticket expiry or reopening a finalized
+noncommit. Repeated shutdown failure keeps root ownership; one owned retry task
+prevents duplicate live cleanup, and Local stop/reopen restores safe capacity.
+Borrowed streams remain intact. Stale owners cannot reclaim new staging.
+
+Recovery continuation successors retire their consumed handles; terminal pages
+release them. All 32 independent single-row scans traverse 35 stable identities,
+then free quota for another set of scans. Query/page-size/store/revision/expiry,
+explicit consistency and no-deletion-authority protections remain intact.
+
+Required architecture review `f06-recovery-followup-review` found one MEDIUM
+introduced receipt-recovery issue. Two additional runtime reds preceded its
+correction: exact settled receipts remain reconcilable during pending staging
+cleanup, and bounded maintenance reclaims only residual staging without touching
+committed bytes or reopening tickets. The reviewer ran no tests or post-fix
+re-review; paired regressions/full acceptance provide correction evidence.
+
+Six original and two review-correction runtime reds are retained privately.
+Fresh source
+`42cb2a4eaa77daf772b4197c1b6b189155516a9029aa08f00fdecfa995f1a90c`
+qualifies in locked full run `a3c382f7-31a8-45a8-bda1-3037d44f9119`.
+It passes 237 common/crash tests, four actual-transfer proof tests, three
+architecture checks/eight graphs, six actual SIGKILL/fresh-reopen journeys,
+the original frozen binary and both unchanged consumers. The 96-entry matrix
+contains 92 passes/four Object durability exclusions; three mutation pairs and
+29 altered manifests pass their rejection controls. Exact commands, red paths,
+environment/limits and review details are in the
+[follow-up evidence](../specs/006-artifact-storage/plan.md#convergence-follow-up-implementation-2026-10-22).
+The logical update run passed 231 tests; its qualification remains false.
+`python3 -m unittest discover -s tests/tooling -v` passed all 105 tests.
+Build analyzers/format verification, hash-only lock audit and
+`git diff --check` passed. Only 15 local package hashes in six locks change;
+graphs/versions, external hashes and historical baselines remain unchanged.
+
+README, provider/test guides, quickstart and recovery contract are updated.
+Other contracts/model/research, examples, baseline product/architecture/diagrams/
+ADR/governance/backlog, compatibility, IaC and release guides are unaffected:
+no API, dependency boundary, production support, configuration or deployment/
+release behavior changes. Predecessor full checks remain historical, not freshly
+rerun; the complete affected artifact gate and tooling suite run here.
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) stays draft. Next:
+**`converge / ready`**, separately invoked; no clean-convergence, merge,
+feature completion, release, infrastructure or dependency-unlock claim.
+
 ```bash
 python3 -m unittest discover -s tests/tooling -v
 bash scripts/validate-foundation.sh

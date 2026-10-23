@@ -4,9 +4,10 @@
 
 **Input**: Feature specification from `specs/006-artifact-storage/spec.md`
 
-**Status**: Implementation tasks are verified, including full default locked
+**Status**: All 88 implementation tasks, including convergence follow-ups
+T087/T088, are verified with fresh default locked
 test-fixture qualification: 96 entries, 92 passes/four Object AS-41..44 exclusions.
-The [final evidence](#final-fixture-qualification-and-handoff-2026-10-22)
+The [follow-up evidence](#convergence-follow-up-implementation-2026-10-22)
 supersedes earlier partial checkpoints below; those remain chronological history.
 Convergence/finalization/merge are separate stages. No production/F-07 claim.
 
@@ -1082,3 +1083,98 @@ independent process-local Object simulation. It excludes power-loss/OS/device
 failure, Windows/network filesystems, HA, remote services, production provider
 support and generalized F-07 conformance. All implementation tasks may be
 closed; the separate next stage is `converge`, not merge/release or backlog completion.
+
+### Convergence Follow-up Implementation 2026-10-22
+
+The separately invoked installed `speckit-implement` completes T087 and T088
+in the pinned feature directory. All 88 tasks are checked. This is implementation,
+not a fresh convergence assessment or feature finalization.
+
+**T087: exact failed-staging ownership.** Both independent fixtures retain
+failed staging cleanup and its reservation, return retained cleanup, and fence
+readiness/new admissions. Bounded maintenance can observe/retry the exact
+fenced generation immediately, including finalized noncommit state, without
+waiting for ticket expiry or admitting new bytes on that ticket. A stale target
+cannot remove a later ticket/generation. Cleanup reports actual bytes, preserves
+borrowed streams and restores readiness/capacity only after real settlement.
+Object retries tolerate pieces already removed by an earlier partial attempt.
+Local reservation accounting changes only after its release record persists.
+
+Shutdown retries bounded owned staging cleanup, retaining the root on repeated
+failure or caller timeout. One stored retry task prevents duplicate live retry
+workers. Local reopen also reclaims finalized noncommit staging before admission;
+clean stop/reopen preserves its definite outcome and restores reservation
+capacity. No public API, provider selection or historical evidence is changed.
+
+**T088: consumed continuation lifecycle.** A successfully constructed bounded
+page retires its consumed handle; a successor replaces it and terminal pages
+free the slot. The 32-handle quota now bounds independent scans, not total pages.
+Both fixtures traverse all 35 stable identities for each of 32 independent
+single-row scans without expiry waits, then admit another 32 scans. Consumed,
+wrong-query, wrong-page-size and expired handles reject. Existing changed-
+inventory, store binding, listing consistency and no-deletion-authority checks
+remain green. Page-size serialization is checked before allocating a successor.
+
+**Architecture review and correction.** Required bounded reviewer
+`f06-recovery-followup-review` identified one MEDIUM introduced issue: using
+the new fence for post-commit staging failures also blocked exact receipt
+reconciliation, while maintenance omitted committed residual staging.
+Two additional actual permission-denial runtime reds reproduced it. Reconciliation
+now remains available despite pending staging cleanup (other retained-live-work
+fences stay intact); exact maintenance observes/reclaims only residual staging,
+preserving the committed payload, finalized receipt and retry identity.
+The review ran no tests and was not repeated after correction. Its sole finding
+is addressed by the paired regression and fresh full qualification, not asserted
+blanket reviewer approval.
+
+**Runtime red/green evidence.** Six intended runtime assertion failures before
+the fixes cover prefix reclamation, repeated stop and cursor progression on
+both fixtures; retained snapshot:
+`../hoard-artifact-evidence/f06-followup-runtime-red-20261022`.
+The explicit six-red TRX is retained in the private session's
+`files/f06-followup-red/regressions-red.trx`. The receipt-fence correction adds
+two intended runtime reds at
+`../hoard-artifact-evidence/f06-followup-receipt-runtime-red-20261022/results/artifacts.trx`.
+Earlier failed preparation attempts (platform analyzer, syntax and nullable
+errors) are not counted as runtime proof. Intermediate test-observer cleanup
+was corrected before the final green.
+
+All artifact commands below use the original
+`HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022`.
+No baseline binary/source/lock is rebuilt or refreshed.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-artifacts.sh --phase logical --update-locks --evidence ../hoard-artifact-evidence/f06-followup-reviewed-logical-update-20261022` | Passed 231 tests, including all eight new runtime variants, and both unchanged 16-operation consumers; intentional local fixture-payload hash refresh, qualification false |
+| `bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/f06-followup-full-locked-20261022` | Separate default locked full qualification passed: 237 common/crash tests, four actual-transfer proof tests, three architecture checks/eight real graphs, six Python-owned SIGKILL/reopen barriers, both unchanged consumers and original frozen marker; exact 96-entry matrix, 92 applicable passes/four Object AS-41..44 exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | All 105 passed |
+| `dotnet format whitespace tests/fixtures/artifacts/Local --folder --verbosity quiet` | Applied formatting; full acceptance's independent verify-no-changes passed |
+| `dotnet format whitespace tests/fixtures/artifacts/ObjectSemantics --folder --verbosity quiet` | Applied formatting; full acceptance's independent verify-no-changes passed |
+| `dotnet format whitespace tests/contracts/Hoard.Artifacts.Tests --folder --verbosity quiet` | Applied formatting; full acceptance's independent verify-no-changes passed |
+| Hash-only lock audit against `7088871` | Exactly 15 local `Hoard.*` content hashes in six locks; package sets, versions/graphs, external hashes and frozen historical inputs unchanged |
+| `git diff --check` | Passed |
+
+The final source fingerprint is
+`42cb2a4eaa77daf772b4197c1b6b189155516a9029aa08f00fdecfa995f1a90c`;
+full run `a3c382f7-31a8-45a8-bda1-3037d44f9119` at the locked destination above.
+The full verifier now requires the new exact runtime witnesses for
+AS-17/21/24/27/40, materializes both public qualification records, executes its
+three mutation red/green pairs and rejects all 29 altered full manifests.
+All four actual 256 MiB/4 GiB write/read measurements pass the 64 MiB incremental
+OS peak-RSS ceiling. Environment remains macOS 26.5 arm64, .NET 10.0.7, APFS,
+Local payload/decision `Flush(true)` without directory fsync; object storage
+is process-local simulation, not durable restart. Earlier qualification remains
+historical, superseded for this source.
+
+README, development/provider/test guides, quickstart and recovery contract
+document the corrections. Other contracts/model/research, examples, product
+charter/spec/architecture/diagrams/ADR, compatibility policy, IaC and release
+guides are unaffected: no public signature, dependency boundary, production
+provider, configuration, supported environment, infrastructure or release
+behavior changes. The five predecessor full locked gates recorded above are
+historical and were not rerun for fixture/catalog-only changes; this invocation
+runs the affected complete artifact qualification and tooling regressions.
+Reviewer-owned checklist bytes and previous task bodies remain unchanged;
+there are no pre/post implementation hooks. No production/F-07/HA/power-loss
+claim, merge, publication, infrastructure action or dependency unlock follows.
+Draft PR #16 remains draft. Next stage: separately invoked fresh `converge`.
