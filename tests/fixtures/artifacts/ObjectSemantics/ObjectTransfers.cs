@@ -23,6 +23,8 @@ internal sealed class ObjectOperation(ArtifactOperationTicket ticket, ArtifactEx
     public Guid ReceiptId { get; set; }
     public string Proof { get; set; } = "";
     public ArtifactStamp? DeleteTarget { get; set; }
+    public Guid? Assembly { get; set; }
+    public long AssemblyBytes { get; set; }
 }
 
 internal sealed record ObjectPointer(ArtifactStamp Stamp, Guid ObjectId, long Version, Guid OperationId, DateTimeOffset HistoryUntil,
@@ -39,6 +41,7 @@ public sealed partial class ObjectArtifactStore
     private readonly ConcurrentDictionary<Guid, ObjectOperation> uploads = [];
     private readonly ConcurrentDictionary<Guid, byte> unfinishedReadCloses = [];
     private readonly ConcurrentDictionary<Guid, byte> failedMultipartCleanup = [];
+    private readonly ConcurrentDictionary<Guid, byte> failedAssemblyCleanup = [];
     private readonly Dictionary<string, ObjectPointer> pointers = new(StringComparer.Ordinal);
     private readonly Dictionary<Guid, Task> ownedWork = [];
     private readonly HashSet<Guid> lateWork = [];
@@ -57,6 +60,8 @@ public sealed partial class ObjectArtifactStore
     private CancellationTokenSource stopToken = new();
     private int queued;
     private long reservedBytes;
+    private long assemblyBytes;
+    private int assemblyCount;
     private volatile bool stopRequested;
     private string? bucketPath;
 
@@ -170,13 +175,15 @@ public sealed partial class ObjectArtifactStore
         {
             if (!initialized || stopRequested || Volatile.Read(ref lifetimeBusy) != 0 || lateWork.Count != 0
                 || incompleteHandoffs.Count > 0 || !unfinishedReadCloses.IsEmpty
-                || !failedMultipartCleanup.IsEmpty && phase is not (ArtifactPhase.Maintenance or ArtifactPhase.Reconcile)
+                || (!failedMultipartCleanup.IsEmpty || !failedAssemblyCleanup.IsEmpty)
+                    && phase is not (ArtifactPhase.Maintenance or ArtifactPhase.Reconcile)
                 || ownedWork.Count >= Bounds.TransferSlots + Bounds.WaitingCalls)
             {
                 cancellation.Dispose();
                 deadline.Dispose();
                 onSettled?.Invoke();
-                return Rejected<T>(lateWork.Count > 0 || incompleteHandoffs.Count > 0 || !unfinishedReadCloses.IsEmpty || !failedMultipartCleanup.IsEmpty
+                return Rejected<T>(lateWork.Count > 0 || incompleteHandoffs.Count > 0 || !unfinishedReadCloses.IsEmpty
+                    || !failedMultipartCleanup.IsEmpty || !failedAssemblyCleanup.IsEmpty
                     ? ArtifactFailureCode.CleanupIncomplete
                     : initialized && !stopRequested ? ArtifactFailureCode.Capacity : ArtifactFailureCode.Disposed, phase, ticket);
             }
@@ -272,7 +279,7 @@ public sealed partial class ObjectArtifactStore
         return new ArtifactResult<T>.Failure(code, phase,
             code == ArtifactFailureCode.Uncertain ? ArtifactAction.ReconcileExactTicket : ArtifactAction.Reobserve,
             Guid.NewGuid(), ticket is null ? null : new ArtifactOption<ArtifactOperationTicket>.Some(ticket),
-            retainedOwnership || code == ArtifactFailureCode.CleanupIncomplete || !failedMultipartCleanup.IsEmpty
+            retainedOwnership || code == ArtifactFailureCode.CleanupIncomplete || !failedMultipartCleanup.IsEmpty || !failedAssemblyCleanup.IsEmpty
                 ? ArtifactCleanupState.RetainedLiveOwnership : ArtifactCleanupState.Released);
     }
 

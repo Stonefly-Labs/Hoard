@@ -166,6 +166,20 @@ visibility before budget expiry; timeout after a conditional pointer decision
 is uncertain and reconcilable, never a miss. Conditional version comparison
 rejects stale publication/deletion even when enumeration is delayed.
 Multipart cleanup fences expired owners and cannot remove finalized/new objects.
+Every assembly is registered to its exact upload before file creation. Reserve
+its verified maximum length in a separate scratch pool bounded by the staging
+byte limit and transfer-slot count; multipart reservations remain held too.
+The two private pools therefore consume at most twice the staging byte limit,
+excluding independently bounded selected/retired content. Conditional selection
+atomically transfers the exact assembly out of scratch accounting. An unselected
+partial/complete assembly remains owned until actual removal, including after
+reuse, cancellation or an unexpected fault. Failed unlink retains its original
+staging generation/reservation, fences readiness/new admission and prevents
+retry-driven object growth. Exact abandoned-staging maintenance reclaims the
+assembly and multipart pieces together, reporting actual bytes rather than the
+reserved maximum. It preserves settled reuse receipts and the existing selected
+object. Stop shares the bounded nonduplicating owned-cleanup retry and cannot
+report release while this scratch is pending.
 The same consumer/cases exercise delayed listing, conditional races, active
 readers, corruption and pending reclamation. Durable restart cases explicitly
 do not apply; no remote vendor or account is qualified.

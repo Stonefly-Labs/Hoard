@@ -815,9 +815,19 @@ retry while reporting released cleanup and readiness. Abandonment releases its
 reservation and shutdown reports release without reclaiming those objects.
 The writable-directory control leaves no residual payloads. A fresh full locked
 run passes the existing matrix, but does not cover or waive this new failure
-path. The next stage is **`implement`** for T089, then fresh convergence.
+path. That assessment scheduled **`implement`** for T089, then fresh convergence.
 See the [assessment and reproduction](docs/DEVELOPMENT.md#f-06-fresh-convergence-unpublished-object-cleanup).
-The original 88 tasks stay checked; T089 is unchecked and PR #16 stays draft.
+The subsequent implementation completes T089: unselected assemblies are owned
+before creation, count/byte bounded and retained on failed unlink. Incomplete
+cleanup blocks readiness and retries until exact maintenance or shutdown
+reclaims the payload; selected objects and settled reuse receipts survive.
+Fresh locked full qualification passes 243 logical/crash checks and the exact
+92-pass/four-exclusion matrix, including partial/complete assembly failures,
+cancellation, repeated denial and restored capacity.
+All 89 tasks are checked. See the
+[implementation evidence](specs/006-artifact-storage/plan.md#unpublished-object-cleanup-implementation-2026-10-22).
+The next stage is fresh **`converge`**; PR #16 stays draft, with no finalization,
+feature completion or release claim.
 
 The separately invoked **`specify`** stage creates the
 [F-06 artifact blob storage provider contract](specs/006-artifact-storage/spec.md)

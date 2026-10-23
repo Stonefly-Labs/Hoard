@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "implement",
+  "stage": "converge",
   "status": "ready",
   "branch": "feature/006-artifact-storage",
   "active": {
@@ -611,6 +611,13 @@
       "branch": "feature/006-artifact-storage",
       "at": "2026-10-23T01:03:49.292668+00:00",
       "evidence": "F-06 fresh converge through installed speckit-converge in pinned specs/006-artifact-storage: tasks_appended, one HIGH partial F1; assessed 25 FRs, eight SCs, 23 scenarios, 15 edge cases, eight grouped plan decisions, all 88 existing tasks and eight constitutional principles. T087/T088 remain covered. Current-assembly isolated paired probe proves ObjectPublication unselected assembly unlink failure is untracked: three same-ticket 1 KiB retries return AccessDenied/Released and ready=true while leaking 1/2/3 payloads; abandon releases reservation, Observe(All) is empty, new full-cap reservation and Released stop succeed with all payloads remaining. Writable control has zero residuals. Appended only Phase 10/T089 for exact bounded scratch ownership/capacity, fenced admission/readiness and safe recovery/shutdown with focused red/green/current locked qualification; no implementation or spec/plan/checklist edits. Fresh full locked artifact gate at ../hoard-artifact-evidence/converge-followup-20261023 passes existing 237 common/crash tests, four transfer proof tests, package/architecture/compatibility/consumer checks, four actual measurements and six SIGKILL/reopen journeys; exact 96 entries, 92 passes/four exclusions, run faea99c3-fc0b-44bb-a402-24e223a0158f, unchanged source 42cb2a4eaa77daf772b4197c1b6b189155516a9029aa08f00fdecfa995f1a90c. Existing qualification does not cover or waive F1. Python tooling 105 passed; independent manifest, append-only/spec/plan/checklist and docs-link integrity and git diff --check passed. README/development synchronized with unaffected-guide reasons; no hooks. Draft PR #16 retained; next implement T089, then fresh convergence; finalization blocked. No merge/publication/infrastructure/dependency unlock."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-23T01:18:40.627006+00:00",
+      "evidence": "F-06 follow-up implement through installed speckit-implement completes T089, all 89 tasks checked. Object assemblies now have exact pre-I/O upload ownership and bounded verified-length/count accounting; conditional selection transfers ownership, failed unlink retains scratch/reservations, fences readiness/admission/retries, and supports exact bounded maintenance/stop without touching selected/newer payloads. Settled equivalent-reuse receipts remain reconcilable. Five genuine initial runtime reds, then seven focused passes and both consumers with reviewed local hash refresh; new reuse witness closes required architecture review f06-t089-architecture evidence gap (no confirmed violations). Separate default locked full t089-full-locked-20261023 run a5c38d76-6d43-4cc9-94a6-0ec01f220cfb qualifies source b4a89fcc5fdf5334a4ab03c493ba62704580643ca486e970ced3e65f9d1da1db: 243 common/crash tests, four transfer proofs, three architecture tests/eight graphs, four actual size/provider measurements, six owned SIGKILL/reopen barriers, original marker and both unchanged consumers; exact 96 entries, 92 passes/four Object exclusions, three mutation pairs and 29 manifest negatives. Tooling 105 passed; current-source/lock full manifest independently reverified. Nine local Hoard.* content hashes in five locks only; graphs/versions/external hashes/frozen baseline unchanged. README/affected guides/quickstart/recovery/plan/tasks synchronized; original task bodies/spec/API/model/research/checklists unchanged; doc links and git diff check passed; no hooks. Prior predecessor gates historical, not rerun for fixture/catalog-only change. Draft PR #16 remains draft; next separate converge, no finalization/feature completion/merge/release/infrastructure/dependency unlock."
     }
   ]
 }

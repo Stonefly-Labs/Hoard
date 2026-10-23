@@ -152,9 +152,14 @@ public sealed partial class ObjectArtifactStore
         });
     }
 
-    private long MultipartBytes(ObjectOperation upload) => upload.Parts.Sum(part =>
+    private long MultipartBytes(ObjectOperation upload)
     {
-        var path = PartPath(part);
-        return File.Exists(path) ? new FileInfo(path).Length : 0;
-    });
+        var multipart = upload.Parts.Sum(part =>
+        {
+            var path = PartPath(part);
+            return File.Exists(path) ? new FileInfo(path).Length : 0;
+        });
+        var assembly = upload.Assembly is { } id ? ObjectPath(id) : null;
+        return checked(multipart + (assembly is not null && File.Exists(assembly) ? new FileInfo(assembly).Length : 0));
+    }
 }

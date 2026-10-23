@@ -4,10 +4,10 @@
 
 **Input**: Feature specification from `specs/006-artifact-storage/spec.md`
 
-**Status**: All 88 implementation tasks, including convergence follow-ups
-T087/T088, are verified with fresh default locked
+**Status**: All 89 implementation tasks, including convergence follow-ups
+T087/T088/T089, are verified with fresh default locked
 test-fixture qualification: 96 entries, 92 passes/four Object AS-41..44 exclusions.
-The [follow-up evidence](#convergence-follow-up-implementation-2026-10-22)
+The [latest follow-up evidence](#unpublished-object-cleanup-implementation-2026-10-22)
 supersedes earlier partial checkpoints below; those remain chronological history.
 Convergence/finalization/merge are separate stages. No production/F-07 claim.
 
@@ -1178,3 +1178,92 @@ Reviewer-owned checklist bytes and previous task bodies remain unchanged;
 there are no pre/post implementation hooks. No production/F-07/HA/power-loss
 claim, merge, publication, infrastructure action or dependency unlock follows.
 Draft PR #16 remains draft. Next stage: separately invoked fresh `converge`.
+
+### Unpublished Object Cleanup Implementation 2026-10-22
+
+The separately invoked installed `speckit-implement` completes T089 in pinned
+`specs/006-artifact-storage`; all 89 tasks are checked. It does not perform the
+next convergence assessment or finalize the feature.
+
+**Exact ownership and accounting.** Object publication registers its unique
+assembly on the owning upload before any fallible file creation. At most the
+configured transfer-slot count of assemblies reserve their verified lengths,
+with their total at most the staging byte limit. This is a separate bounded
+pool alongside existing multipart reservations: total private multipart/assembly
+payloads are at most twice the staging byte limit, excluding selected/retired
+content. Partial objects keep their maximum reservation until physical removal.
+Selecting the exact completed object transfers it atomically out of scratch
+accounting; equivalent reuse never transfers ownership of the existing object.
+No public limit/API or provider dependency changes.
+
+Failed unlink retains the exact assembly and multipart reservation, fences
+predecision mutation and blocks readiness/ordinary admission. Same-ticket
+retries cannot allocate another payload. Maintenance observes the exact
+abandoned staging generation, retries only its registered unselected assembly/
+multipart pieces and reports actual reclaimed bytes. Restored access permits
+immediate bounded settlement without waiting for ticket expiry. Stale cleanup
+cannot delete selected or newly published content. Bounded shutdown merges
+failed assembly/multipart targets into its existing nonduplicating retry,
+retaining root ownership on failure/timeout. Settled equivalent-reuse receipts
+remain reconcilable while redundant assembly removal is pending. Borrowed
+sources are never disposed.
+
+**Runtime proof and review.** Before the fix, five actual runtime assertions
+failed: partial/complete assembly unlink denial with/without cancellation, and
+false released shutdown. Snapshot:
+`../hoard-artifact-evidence/t089-runtime-red-20261023`; explicit TRX:
+`$SESSION_FILES/t089-runtime-red/t089-runtime-red.trx`. The earlier preparation
+failure (xUnit2031/CA1416) and zero-match diagnostic run are not runtime proof.
+The corrected focused package run passes seven tests, including the existing
+committed-residual-staging pair. Required bounded architecture reviewer
+`f06-t089-architecture` found no confirmed actionable violations and identified
+a missing direct reuse-plus-assembly-unlink witness. A sixth regression now
+exercises that gap in the final full run: exact settled reuse receipt,
+continued reconciliation, retained scratch, selected-content preservation,
+actual cleanup and restored capacity. The review executed no commands/tests,
+was not repeated after that test-only addition and is not blanket approval.
+
+All artifact commands below set the original
+`HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022`.
+`SESSION_FILES` denotes the current private session `files/` directory. Runtime
+captures and scratch roots remain outside Git; the frozen marker/baseline
+sources, binaries and locks are unchanged.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Unselected_object_cleanup\|FullyQualifiedName~Stop_retains_unselected_object' --evidence ../hoard-artifact-evidence/t089-runtime-red-20261023` | Intended runtime red; prepared packages compile, five actual assertions fail before ownership correction |
+| `HOARD_ARTIFACT_TEST_ROOT=../hoard-artifact-evidence/t089-runtime-red-20261023/case-roots dotnet test ../hoard-artifact-evidence/t089-runtime-red-20261023/current/tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj -c Release --no-build --no-restore -p:ArtifactPackageAcceptance=true --filter 'FullyQualifiedName~Unselected_object_cleanup\|FullyQualifiedName~Stop_retains_unselected_object' --logger 'trx;LogFileName=t089-runtime-red.trx' --results-directory "$SESSION_FILES/t089-runtime-red" --verbosity normal` | Explicit retained TRX: five failed runtime assertions, no build errors or skips |
+| `bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Unselected_object_cleanup\|FullyQualifiedName~Stop_retains_unselected_object\|FullyQualifiedName~Committed_receipts_remain_reconcilable' --update-locks --evidence ../hoard-artifact-evidence/t089-focused-green-update-20261023` | Seven checks and both unchanged 16-operation consumers pass; intentional local-payload hash refresh, qualification false |
+| `bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/t089-full-locked-20261023` | Separate default locked full qualification passes: 243 common/crash tests, four actual-transfer proof tests, three architecture checks/eight graphs, six owned SIGKILL/reopen barriers, original marker and both unchanged consumers; exact 96 entries, 92 passes/four Object AS-41..44 exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | All 105 passed after final runtime catalog additions |
+| `artifact_evidence.verify_manifest(manifest, work, artifact_evidence.source_hash(root))` | Independent full-manifest revalidation passes against final current source and tracked locks |
+| Lock audit against `5134e09` | Nine local `Hoard.*` content hashes in five locks; package sets, dependency graphs/versions and external hashes unchanged; no frozen baseline changes |
+| `git diff --check` | Passed |
+
+Full run `a5c38d76-6d43-4cc9-94a6-0ec01f220cfb` binds source
+`b4a89fcc5fdf5334a4ab03c493ba62704580643ca486e970ced3e65f9d1da1db`.
+The exact semantic catalog requires all six new runtime variants for Object
+AS-15/17/21/27/40. Materialized public records, three executed mutation pairs
+and 29 altered-manifest rejection controls pass. Full acceptance independently
+verifies whitespace/build analyzers and zero failures/skips in all test groups.
+All four actual 256 MiB/4 GiB write/read runs pass the 64 MiB incremental OS
+peak-RSS bound: Local 2,195,456/17,891,328 bytes, Object
+2,031,616/18,726,912 bytes. B0/B1/B2/B3/D0/D1 use actual owned-child SIGKILL,
+fresh-process reopen and exact receipt/full-byte readback.
+
+README, development/provider/test guides, quickstart and recovery contract
+record actual mechanisms and evidence. Spec, API/model/research, original task
+bodies, reviewer-owned checklists, examples, charter/product architecture/
+diagrams/ADR, compatibility policy, IaC and release guides are unaffected:
+public contracts, dependency boundaries, supported environments and operational
+commands do not change. No predecessor source/package changed; prior five
+predecessor full gates remain historical, not freshly rerun. This invocation
+runs complete affected artifact qualification and tooling regressions.
+No pre/post implementation hooks are configured.
+
+Qualification remains test-only Local process-crash proof on macOS 26.5 arm64,
+.NET 10.0.7/APFS with `Flush(true)` and no directory fsync, plus process-local
+Object simulation. No production/F-07, remote-service, Windows/network
+filesystem, HA, power-loss/OS/device-failure, merge, publication, infrastructure,
+deployment or dependency-unlock claim follows. PR #16 stays draft. Next:
+separately invoked fresh `converge`.

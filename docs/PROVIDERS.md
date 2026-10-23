@@ -81,6 +81,19 @@ handle, and a terminal page releases it. Up to 32 independent scans can progress
 beyond 32 pages without artificial expiry waits; query/page-size/store/revision/
 expiry checks and explicit listing consistency still apply. See the
 [follow-up evidence](../specs/006-artifact-storage/plan.md#convergence-follow-up-implementation-2026-10-22).
+The Object fixture also registers each unselected assembly before file creation.
+Its scratch pool reserves the verified length, at most the configured staging
+byte limit and transfer-slot count, independently of multipart reservations.
+Thus multipart plus assembly scratch is bounded by twice the staging byte limit;
+selected/retired content is accounted separately. Failed unlink retains the
+exact assembly and original multipart reservation, blocks readiness/admission
+and prevents commit retries from allocating more payloads. Exact staging
+maintenance or bounded shutdown retries reclaim only that unselected object.
+Partial assemblies count their reserved maximum until actual removal; cleanup
+reports actual reclaimed bytes. Conditional selection transfers the object out
+of scratch ownership atomically. Equivalent reuse retains its original selected
+content and settled receipt even when the redundant assembly cannot be removed.
+See the [T089 evidence](../specs/006-artifact-storage/plan.md#unpublished-object-cleanup-implementation-2026-10-22).
 Expired ticket history may be retired, but live content identity remains
 independent of its receipt anchor. Retained tombstones and reclaimed-incarnation
 records also consume finite bookkeeping capacity until safe expiry-based

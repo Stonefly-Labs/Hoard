@@ -57,7 +57,7 @@ four runtime tests validate those actual inputs and rejection variants.
 All focused modes remain partial. `--phase packages` runs eight actual graph scans, compiled
 provider/Hosting leak negatives, public-member compatibility including
 accessibility, the frozen old marker binary and both consumer selections.
-Default full acceptance passed on the follow-up source: 237 logical/crash checks,
+Default full acceptance passed on the T089 follow-up source: 243 logical/crash checks,
 four actual-transfer proof tests, three architecture checks, both consumers,
 the original retained binary, all six Python-owned crash barriers and exactly
 96 case entries (92 passes/four Object durability exclusions). Both fixtures
@@ -95,6 +95,14 @@ and committed bytes while maintenance reclaims only residual staging. Paging
 regressions run 32 independent single-row scans through 35 identities, rejecting
 consumed/query-mismatched/expired handles and proving terminal quota release.
 Their exact runtime names are required by the AS-17/21/24/27/40 catalog.
+T089 adds four object-only partial/complete assembly-unlink failures, with and
+without cancellation, plus finite shutdown and settled equivalent-reuse cases.
+They verify exact observation/cleanup, retry/admission/readiness fences,
+actual reclaimed bytes and restored capacity without deleting selected/current/
+newer payloads or closing borrowed streams. Five intended runtime reds preceded
+the ownership fix; the full verifier requires these exact additional witnesses
+for Object AS-15/17/21/27/40. See the
+[T089 evidence](../specs/006-artifact-storage/plan.md#unpublished-object-cleanup-implementation-2026-10-22).
 
 OpenTofu mock-provider tests live beside the bootstrap at
 `infra/bootstrap/tests/` and run with `tofu -chdir=infra/bootstrap test`.

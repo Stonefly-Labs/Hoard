@@ -15,7 +15,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "EbSy8IWlHtZvmKSv41YW4tIsk18ALTsF8ZHWeBD3bILoyssWx+SDuBfMvknBd8hBPOxvwFyX3jJ2Yjrh9dSuWw==",
+        "contentHash": "qQRZjwrZPHBGEQSy53alqKimvUh+hlHBwkZK37ysE4QM6PiKVfFjFMT87FzOucxZVqrYUtYtW+Ngr7FMksZBAw==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }

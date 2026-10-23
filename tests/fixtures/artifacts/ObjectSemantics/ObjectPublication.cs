@@ -37,6 +37,18 @@ public sealed partial class ObjectArtifactStore
             var selected = false;
             try
             {
+                lock (pointerSync)
+                {
+                    token.ThrowIfCancellationRequested();
+                    CurrentOwner(upload, owner);
+                    if (upload.Assembly is not null || assemblyCount >= Bounds.TransferSlots
+                        || staged.Identity.Length > Bounds.StagingBytes - assemblyBytes)
+                    { throw new ObjectOperationException(ArtifactFailureCode.Capacity); }
+                    upload.Assembly = objectId;
+                    upload.AssemblyBytes = staged.Identity.Length;
+                    assemblyBytes = checked(assemblyBytes + upload.AssemblyBytes);
+                    assemblyCount++;
+                }
                 async ValueTask Progress()
                 {
                     await faults.ObserveAsync("object.commit-progress");
@@ -80,6 +92,7 @@ public sealed partial class ObjectArtifactStore
                         pointers[staged.Identity.Digest.Hex] = current;
                         listingRevision = checked(listingRevision + 1);
                         selected = true;
+                        ReleaseAssembly(upload);
                     }
                 }
                 if (!selected)
@@ -119,7 +132,16 @@ public sealed partial class ObjectArtifactStore
                 }
 
             }
-            finally { if (!selected) { File.Delete(ObjectPath(objectId)); } }
+            finally
+            {
+                if (!selected)
+                {
+                    lock (pointerSync)
+                    {
+                        if (upload.Assembly == objectId) { RemoveAssembly(upload); }
+                    }
+                }
+            }
         }, staged.Owner.Ticket, cancellationSettled: () =>
         {
             lock (pointerSync)
@@ -135,6 +157,32 @@ public sealed partial class ObjectArtifactStore
                 }
             }
         });
+    }
+
+    private void ReleaseAssembly(ObjectOperation upload)
+    {
+        assemblyBytes = checked(assemblyBytes - upload.AssemblyBytes);
+        assemblyCount--;
+        upload.Assembly = null;
+        upload.AssemblyBytes = 0;
+        failedAssemblyCleanup.TryRemove(upload.Ticket.Id, out _);
+    }
+
+    private void RemoveAssembly(ObjectOperation upload)
+    {
+        if (upload.Assembly is not { } objectId) { return; }
+        try
+        {
+            File.Delete(ObjectPath(objectId));
+            ReleaseAssembly(upload);
+        }
+        catch
+        {
+            failedAssemblyCleanup.TryAdd(upload.Ticket.Id, 0);
+            if (!upload.Deciding && upload.Receipt is null) { upload.Fenced = true; }
+            listingRevision = checked(listingRevision + 1);
+            throw;
+        }
     }
 
     private ArtifactMutationReceipt RecordObjectReceipt(ObjectOperation upload)

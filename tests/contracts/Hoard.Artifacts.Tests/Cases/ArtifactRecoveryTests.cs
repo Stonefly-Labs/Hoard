@@ -7,6 +7,48 @@ namespace Hoard.Artifacts.Tests;
 
 public sealed class ArtifactRecoveryTests
 {
+    [Fact]
+    public async Task Stop_retains_unselected_object_ownership_and_retries_only_its_private_payload()
+    {
+        await using var driver = await ArtifactProviderDriver.CreateAsync("object",
+            limits: new(artifactBytes: 1024, stagingBytes: 1024));
+        using var control = new ShortSource("selected control through stop"u8.ToArray());
+        await PublishAsync(driver, control, new(1024));
+        var objects = Path.Combine(Path.GetDirectoryName(driver.StagingDirectory)!, "objects");
+        var selected = Assert.Single(Directory.GetFiles(objects));
+        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
+        using var source = new ShortSource("unselected assembly through stop"u8.ToArray());
+        var staged = Success(await driver.Store.StageAsync(ticket, source, new(), default));
+        driver.ObjectControls!.SetObserver("pointer.compare", () =>
+        {
+            if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix object proof required."); }
+            File.SetUnixFileMode(objects, UnixFileMode.UserRead | UnixFileMode.UserExecute);
+            return ValueTask.FromException(new IOException(ArtifactTestData.Canary));
+        });
+        try
+        {
+            Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(await driver.Store.CommitAsync(staged, new(), default));
+            for (var attempt = 0; attempt < 2; attempt++)
+            {
+                var stopped = Assert.IsType<ArtifactResult<ArtifactShutdown>.Failure>(
+                    await driver.StopAsync(new(TimeSpan.FromSeconds(1))));
+                Assert.Equal(ArtifactFailureCode.CleanupIncomplete, stopped.Code);
+                Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, stopped.Cleanup);
+                Assert.Equal(2, Directory.GetFiles(objects).Length);
+                Assert.False(source.WasDisposed);
+            }
+        }
+        finally
+        {
+            if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix object proof required."); }
+            File.SetUnixFileMode(objects, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+            driver.ObjectControls.RemoveObserver("pointer.compare");
+        }
+        Assert.Equal(ArtifactCleanupState.Released, Success(await driver.StopAsync(new())).State);
+        Assert.Equal(selected, Assert.Single(Directory.GetFiles(objects)));
+        Assert.Empty(Directory.GetFiles(driver.StagingDirectory));
+    }
+
     [Theory]
     [InlineData("local")]
     [InlineData("object")]

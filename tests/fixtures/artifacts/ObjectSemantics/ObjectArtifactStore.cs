@@ -24,7 +24,7 @@ public sealed partial class ObjectArtifactStore(string root, TimeProvider? clock
             {
                 return initialized && lifetimeBusy == 0 && !stopRequested
         && lateWork.Count == 0 && incompleteHandoffs.Count == 0 && unfinishedReadCloses.IsEmpty
-        && failedMultipartCleanup.IsEmpty && Capabilities.MeetsBaseline;
+        && failedMultipartCleanup.IsEmpty && failedAssemblyCleanup.IsEmpty && Capabilities.MeetsBaseline;
             }
         }
     }

@@ -4041,6 +4041,62 @@ Finalization is blocked; no merge, feature completion, dependency unlock,
 release, package publication, infrastructure action or deployment is authorized
 or performed.
 
+### F-06 unpublished-object cleanup implementation
+
+The separately invoked installed `speckit-implement` completes T089 and all
+89 tasks. Before any fallible file creation, ObjectSemantics registers each
+assembly to its exact upload and reserves its verified length. Its independent
+scratch pool is bounded by the staging byte limit and transfer slots, alongside
+the existing multipart reservation; the two private pools total at most twice
+the staging byte limit, excluding selected/retired content. Selection atomically
+transfers the exact object out of scratch accounting. No rename or shared
+Local algorithm, public API, dependency or capability change is introduced.
+
+Failed unlink retains partial/complete assemblies and original reservations,
+blocks readiness/new admission and prevents commit retries from allocating
+more payloads. Exact abandoned-generation maintenance reclaims only that
+operation's unselected assembly and multipart pieces, reports actual bytes and
+restores capacity only after settlement. Bounded nonduplicating shutdown retry
+retains ownership on repeated failure. Selected/current/new content and exact
+settled reuse receipts survive cleanup; borrowed sources stay open.
+
+Five actual runtime reds precede the fix. Required bounded architecture review
+`f06-t089-architecture` finds no confirmed defect, but identifies a missing
+direct equivalent-reuse/unselected-unlink witness. The sixth regression closes
+that evidence gap in the final full run; the reviewer ran no commands/tests.
+See the [exact commands, audit and limits](../specs/006-artifact-storage/plan.md#unpublished-object-cleanup-implementation-2026-10-22).
+
+| Exact command / check | Result |
+| --- | --- |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Unselected_object_cleanup\|FullyQualifiedName~Stop_retains_unselected_object\|FullyQualifiedName~Committed_receipts_remain_reconcilable' --update-locks --evidence ../hoard-artifact-evidence/t089-focused-green-update-20261023` | Seven checks and both unchanged consumers passed; intentional local-payload hash refresh, nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/t089-full-locked-20261023` | Separate default locked full qualification passed: 243 common/crash tests, four actual-transfer proof tests, three architecture checks/eight graphs, both unchanged consumers/original marker and six SIGKILL/reopen barriers; 96 entries, 92 passes/four Object durability exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | All 105 passed |
+| `artifact_evidence.verify_manifest(manifest, work, artifact_evidence.source_hash(root))` | Independent final-source/lock manifest revalidation passed |
+| Hash-only lock audit against `5134e09` | Nine local package content hashes in five locks; dependency graphs/versions, external hashes and frozen baseline unchanged |
+| `git diff --check` | Passed |
+
+Full run `a5c38d76-6d43-4cc9-94a6-0ec01f220cfb` binds source
+`b4a89fcc5fdf5334a4ab03c493ba62704580643ca486e970ced3e65f9d1da1db`.
+The exact catalog requires the new Object AS-15/17/21/27/40 witnesses. Actual
+256 MiB/4 GiB write/read measurements meet the 64 MiB incremental RSS limit;
+materialized qualification records, three mutation pairs and all 29 altered
+manifest controls pass. Full acceptance includes whitespace/build analyzers.
+No simulation or stale capture is substituted for durable proof.
+
+README, provider/test guides, quickstart, recovery contract, plan and task status
+are synchronized. Spec/API/model/research, existing examples, baseline charter/
+product architecture/diagrams/ADR/governance/backlog, compatibility, IaC and
+release guides are unaffected: no public signature, dependency boundary,
+supported environment or operational command changes. Original task bodies
+and reviewer-owned checklist markers stay unchanged. No extension hooks exist.
+The five predecessor full gates remain historical; fixture/catalog-only changes
+receive complete affected artifact qualification and tooling regressions.
+
+The checkpoint schedules **`converge / ready`** for a separate invocation.
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) remains draft.
+No clean-convergence, finalization, feature completion, dependency unlock,
+merge, release, package publication, infrastructure action or deployment.
+
 ```bash
 python3 -m unittest discover -s tests/tooling -v
 bash scripts/validate-foundation.sh

@@ -116,6 +116,17 @@ def required_runtime_tests(provider, case):
         tests.add(runtime_test("ArtifactBudgetTests.Undelivered_verified_staging_is_reclaimed_after_ownership_expiry", provider))
     if case == "AS-19":
         tests.add(runtime_test("ArtifactValueTests.Public_diagnostic_formatting_is_redacted_and_contract_members_are_get_only"))
+    if provider == "object" and case in ("AS-15", "AS-17", "AS-27"):
+        tests.update(runtime_test(
+            "ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed",
+            boundary=boundary, cancel=cancel)
+            for boundary in ("object.commit-progress", "pointer.compare") for cancel in (False, True))
+    if provider == "object" and case == "AS-40":
+        tests.add(runtime_test(
+            "ArtifactRecoveryTests.Stop_retains_unselected_object_ownership_and_retries_only_its_private_payload"))
+    if provider == "object" and case == "AS-21":
+        tests.add(runtime_test(
+            "ArtifactFailureTests.Reused_object_receipt_survives_failed_unselected_assembly_cleanup"))
     if case == "AS-25" and provider == "object":
         tests.add(runtime_test("ArtifactVisibilityTests.Delayed_object_listing_does_not_block_direct_publication_or_establish_absence"))
     if case in ("AS-26", "AS-28", "AS-30"):

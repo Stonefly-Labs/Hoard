@@ -239,6 +239,7 @@ public sealed partial class ObjectArtifactStore
     {
         try
         {
+            RemoveAssembly(upload);
             foreach (var piece in upload.Parts) { File.Delete(PartPath(piece)); }
             upload.Parts.Clear();
             listingRevision = checked(listingRevision + 1);
@@ -262,8 +263,10 @@ public sealed partial class ObjectArtifactStore
             {
                 lock (pointerSync)
                 {
-                    foreach (var id in failedMultipartCleanup.Keys.Take(100)) { RemoveMultipart(uploads[id]); }
-                    if (!failedMultipartCleanup.IsEmpty) { throw new ObjectOperationException(ArtifactFailureCode.CleanupIncomplete); }
+                    foreach (var id in failedMultipartCleanup.Keys.Concat(failedAssemblyCleanup.Keys).Distinct().Take(100))
+                    { RemoveMultipart(uploads[id]); }
+                    if (!failedMultipartCleanup.IsEmpty || !failedAssemblyCleanup.IsEmpty)
+                    { throw new ObjectOperationException(ArtifactFailureCode.CleanupIncomplete); }
                 }
             });
         }
