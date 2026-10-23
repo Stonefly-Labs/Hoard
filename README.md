@@ -1177,6 +1177,15 @@ at `0687888` verified all 116 native checks without skips, fifteen scopes/
 their foundation scope. Lock preparation, actual SQLite environment production
 and full controller/profile integration remain unfinished.
 
+The T016 preparation entry point now exists as
+`bash scripts/validate-conformance.sh --update-locks --evidence <fresh-private-path>`.
+It is explicitly non-qualifying: it seals six historical baselines first, builds
+the current package graph, and requires a second fresh source/cache/feed locked
+replay before publishing only the reviewable conformance locks. Native verification
+and the remaining tracked locks are pending; default profile/verify/aggregate CLI
+behavior is not implemented yet. The dedicated CI preparation job retains source
+locks only, not raw test output or synthetic store data.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

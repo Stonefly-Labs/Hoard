@@ -54,3 +54,39 @@ jobs:
           mkdir -m 700 "$private_parent"
           python3 scripts/conformance_sdk_checks.py \
             --root "$GITHUB_WORKSPACE" --evidence "$private_parent/run"
+
+  lock-preparation:
+    name: Non-qualifying lock preparation and fresh build replay
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install the global.json compatible .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.203
+          global-json-file: global.json
+      - name: Prepare reviewable locks only after independent locked replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          private_parent="$(dirname "$GITHUB_WORKSPACE")/lock-preparation-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -m 700 "$private_parent"
+          bash scripts/validate-conformance.sh \
+            --update-locks --evidence "$private_parent/run"
+      - name: Retain only reviewable source locks
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: conformance-prepared-locks
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            tests/contracts/Hoard.Testing.Conformance/packages.lock.json
+            tests/contracts/Hoard.Conformance.TestLogger/**/packages.lock.json
+            tests/contracts/Hoard.Conformance.Tests/**/packages.lock.json
+            tests/fixtures/conformance/**/packages.lock.json
+            tests/integration/Hoard.Composition.Tests/PackageAcceptance/packages.lock.json

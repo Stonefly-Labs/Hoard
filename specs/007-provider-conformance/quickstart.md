@@ -97,6 +97,20 @@ factory output probe is diagnostic, not provider qualification. The full control
 and SQLite environment producer remain unfinished. T014/T015 are complete within
 generic runtime evidence and six-baseline preparation; T016 lock preparation is next.
 
+T016's preparation-only entry point is now available on the supported native
+Linux environment:
+
+```sh
+bash scripts/validate-conformance.sh --update-locks --evidence <fresh-private-path>
+```
+
+This intentionally resolves only the thirteen selected conformance locks after
+sealing six historical baselines. It publishes them only after a second fresh
+source/feed/cache locked replay reproduces all lock/package bytes. No predecessor
+lock is overwritten and no diagnostic/provider qualification is implied.
+Native verification/review of the generated locks is pending. Default profiles
+and verify/aggregate CLI behavior below remain planned, not functional commands.
+
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be
 sanitized; raw child text is transient bounded input, never a saved log/TRX.

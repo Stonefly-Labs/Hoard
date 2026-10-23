@@ -570,6 +570,25 @@ substitution/derivation regressions pass; no old SDK release or copied runtime p
 is invented. T015 is complete. T016 and later controller/category/SQLite/evaluator
 tasks remain open; these observations remain non-qualifying diagnostics.
 
+### Partial T016: explicit lock preparation
+
+`scripts/validate-conformance.sh --update-locks --evidence <fresh-private-path>`
+now drives non-qualifying six-baseline-first preparation. Ten existing
+prerequisite projects preserve their historical lock graphs using recorded
+local-archive-only derivations; thirteen explicit new/variant conformance locks
+are prepared. A second owned source/feed/cache must locked-build the same graph
+and reproduce every package/lock byte before publication. No predecessor lock is
+copied back; repository source changes and foreign paths block publication.
+Three intended missing-API regressions precede implementation; a fourth focused
+publication case also passes. All 225 local
+tooling checks pass (ten native skips). A local Linux Docker experiment rejected
+native prerequisites before preparing anything (120 checks/26 prerequisite
+errors); the stopped container was removed without relaxing containment or
+filesystem admission. A dedicated non-qualifying Ubuntu CI job now performs the
+native experiment and uploads only source locks for review. Actual replay and
+tracked lock generation/review remain pending; T016 stays unchecked and T017
+default profile/verify/aggregate behavior remains unimplemented.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

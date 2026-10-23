@@ -441,6 +441,61 @@ class SdkDiagnosticTests(unittest.TestCase):
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "OwnershipInvalid"):
             checks.read_bounded(linked, 100)
 
+    def test_lock_entry_rejects_unknown_arguments_without_echoing_private_input(self):
+        import conformance_prepare as preparation
+        output = io.StringIO()
+        with contextlib.redirect_stdout(output), patch.object(preparation.OwnedRun, "allocate") as allocate:
+            code = preparation.main(["--private-canary-value"])
+        self.assertEqual(code, 2)
+        self.assertEqual(json.loads(output.getvalue()), {
+            "mode": "preparation", "qualification": False, "status": "Incomplete",
+            "code": "EvidenceSchemaInvalid",
+        })
+        allocate.assert_not_called()
+
+    def test_failed_locked_restore_never_switches_to_dependency_resolution_or_build(self):
+        import conformance_prepare as preparation
+        project = preparation.Project("tests/fixtures/conformance/Consumer/Consumer.csproj")
+        calls = []
+        def fail(run, args, **kwargs):
+            calls.append(args)
+            raise checks.evidence.ConformanceError("CommandFailed")
+        with patch.object(preparation.baselines, "_command", side_effect=fail):
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "CommandFailed"):
+                preparation.build_project(
+                    object(), self.directory, project, self.directory / "NuGet.Config",
+                    self.directory / "feed", update=False)
+        self.assertEqual(len(calls), 1)
+        self.assertIn("--locked-mode", calls[0])
+        self.assertNotIn("--force-evaluate", calls[0])
+
+    def test_lock_publication_rejects_concurrent_source_changes_and_foreign_paths(self):
+        import conformance_prepare as preparation
+        target = preparation.TARGETS[0].lock_path
+        prepared = {project.lock_path: b'{"version":2,"dependencies":{}}' for project in preparation.TARGETS}
+        for locks, current, code in ((prepared, {"changed.cs": "a" * 64}, "InputChanged"),
+                                    ({**prepared, "outside/packages.lock.json": b"{}"}, {}, "EvidenceIncomplete")):
+            with self.subTest(locks=locks), patch.object(preparation.evidence, "source_manifest", return_value=current):
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, code):
+                    preparation.publish_locks(self.directory, {}, locks)
+                self.assertFalse((self.directory / target).exists())
+
+    def test_lock_publication_changes_only_the_explicit_reviewable_inventory(self):
+        import conformance_prepare as preparation
+        locks = {project.lock_path: b'{"version":2,"dependencies":{"net10.0":{}}}' for project in preparation.TARGETS}
+        for relative in locks:
+            (self.directory / relative).parent.mkdir(parents=True, exist_ok=True)
+        existing = self.directory / preparation.TARGETS[0].lock_path
+        existing.write_bytes(b"original lock")
+        foreign = self.directory / "predecessor.lock"
+        foreign.write_bytes(b"untouched")
+        sources = {existing.relative_to(self.directory).as_posix(): checks.evidence.file_sha256(existing)}
+        with patch.object(preparation.evidence, "source_manifest", return_value=sources):
+            preparation.publish_locks(self.directory, sources, locks)
+        self.assertEqual({path: (self.directory / path).read_bytes() for path in locks}, locks)
+        self.assertEqual(foreign.read_bytes(), b"untouched")
+        self.assertFalse(tuple(self.directory.rglob(".conformance-lock-*.tmp")))
+
 
 if __name__ == "__main__":
     unittest.main()

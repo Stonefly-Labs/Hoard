@@ -5248,6 +5248,37 @@ SDK release was invented. The next foundation task is the explicit lock-preparat
 entry point and all new project locks (T016). Concrete SQLite observations,
 shared category assertions/adapters and full CLI/evaluator work remain later tasks.
 
+T016 now introduces the explicit non-qualifying preparation command:
+
+```sh
+bash scripts/validate-conformance.sh --update-locks --evidence <fresh-private-path>
+```
+
+It requires the existing supported Linux ownership/containment/filesystem and
+24 GiB scratch preflight. Six historical baselines seal/verify before current
+packages build. Existing predecessor locks are never published or graph-resolved;
+bounded, recorded local-archive derivations preserve their versions, graph and
+third-party hashes. The thirteen explicitly selected conformance locks may be
+resolved during preparation only. A second owned run gets a fresh source snapshot,
+feed and cache, with no first-run bin/obj or package-cache reuse, and must build
+the unchanged locks using `--locked-mode` without resolution fallback. Package
+bytes and lock bytes must match. Only then may the command publish the selected
+locks, after rechecking the original repository inputs. Source races/foreign paths
+reject instead of overwriting unrelated work. This is build/preparation evidence,
+not passing tests or provider qualification; complete profile CLI remains T017.
+
+Three missing-API regressions preceded this increment; a fourth focused case
+checks successful publication without unrelated changes. All 225 local tooling checks
+pass (ten native skips), including invalid-argument sanitation, no force-resolution
+fallback after a locked failure, concurrent-source/foreign-path rejection and
+publication preserving unrelated bytes. A local pinned SDK Docker experiment
+failed the existing native preflight checks (120 tests, 26 prerequisite errors);
+no locks published and no checks were weakened. That task-owned container exited
+and was removed. Supported Ubuntu CI now performs the actual preparation/fresh
+replay and retains only reviewable source lockfiles via a pinned artifact action;
+native verification and lock review are pending. No raw diagnostics/store data is
+uploaded, and this preparation job is not a mandatory qualifying F-07 profile.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

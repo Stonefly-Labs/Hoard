@@ -149,7 +149,17 @@ Record separate failed and corrected runs with their different package hashes.
 Neither the expected negative run nor a subsequent retry can be passed off as
 the original successful qualification.
 
-## Planned CLI
+## Preparation Entry Point and Planned CLI
+
+The preparation-only entry point is implemented:
+`bash scripts/validate-conformance.sh --update-locks --evidence <fresh-private-path>`.
+It seals six historical baselines before current builds and requires a second
+fresh source/feed/cache locked replay with identical package/lock bytes before
+publishing only the explicit conformance lock inventory. Existing prerequisite
+locks use recorded local-archive derivations, never graph resolution or writeback.
+The command rejects concurrent repository input changes and foreign output paths.
+Native verification/generated-lock review remains pending. All other CLI modes
+listed below remain planned until T017; preparation is always non-qualifying.
 
 `bash scripts/validate-conformance.sh` will expose:
 
