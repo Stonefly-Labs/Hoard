@@ -4,6 +4,7 @@ import os
 from pathlib import Path
 import shutil
 import stat
+import subprocess
 import sys
 import tempfile
 import time
@@ -54,7 +55,91 @@ class ConformanceExecutionTests(unittest.TestCase):
         run.transition("Active")
         run.transition("Settling")
         run.release()
-        self.assertFalse(run.root.exists())
+        self.assertEqual(json.loads((run.root / "ownership.json").read_bytes())["state"], "Released")
+        self.assertFalse(any((run.root / name).exists() for name in ("stores", "feed", "cache")))
+
+    def test_release_preserves_evidence_and_persists_authoritative_resource_projection(self):
+        run = self.workspace()
+        proof = run.root / "proofs" / "result.json"
+        diagnostic = run.root / "diagnostics" / "prior.jsonl"
+        proof.write_bytes(b'{"caseId":"MP-01"}')
+        diagnostic.write_bytes(b'{"event":"control","code":"None","value":1}\n')
+        (run.root / "stores" / "synthetic.db").write_bytes(b"synthetic-test-data")
+        run.transition("Settling")
+        run.release()
+        self.assertEqual(proof.read_bytes(), b'{"caseId":"MP-01"}')
+        self.assertEqual(diagnostic.read_bytes(), b'{"event":"control","code":"None","value":1}\n')
+        ledger = json.loads((run.root / "ownership.json").read_bytes())
+        self.assertEqual(ledger["state"], "Released")
+        self.assertEqual(ledger["cleanupAttempts"][0]["diagnosticCode"], "None")
+        projection, = run.resource_projection()
+        self.assertEqual(projection["state"], "Released")
+        self.assertEqual(projection["childPid"], 0)
+        self.assertEqual(projection["childStartSha256"], "0" * 64)
+        self.assertGreaterEqual(projection["cleanupDurationMs"], 0)
+        self.assertEqual(projection["diagnosticCode"], "None")
+        with self.assertRaises(TypeError):
+            projection["state"] = "Retained"
+        with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+            run.command([sys.executable, "-c", "raise AssertionError('must not execute')"])
+
+    def test_live_work_is_retained_then_retry_records_exit_without_erasing_the_failure(self):
+        run = self.workspace()
+        child = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(30)"])
+        try:
+            run.children[child.pid] = execution.process_identity(child.pid)
+            run.transition("Settling")
+            with self.assertRaisesRegex(ConformanceError, "CleanupIncomplete"):
+                run.release()
+            self.assertEqual(run.state, "Retained")
+            projection, = run.resource_projection()
+            self.assertEqual(projection["childPid"], child.pid)
+            self.assertEqual(projection["childStartSha256"], run.children[child.pid])
+            self.assertEqual(projection["diagnosticCode"], "CleanupIncomplete")
+            self.assertTrue((run.root / "stores").is_dir())
+        finally:
+            child.kill()
+            child.wait(timeout=5)
+        run.transition("Settling")
+        run.release()
+        ledger = json.loads((run.root / "ownership.json").read_bytes())
+        self.assertEqual([attempt["diagnosticCode"] for attempt in ledger["cleanupAttempts"]],
+                         ["CleanupIncomplete", "None"])
+        self.assertEqual(ledger["state"], "Released")
+
+    def test_failed_release_publication_cannot_claim_release_and_retry_keeps_evidence(self):
+        run = self.workspace()
+        proof = run.root / "proofs" / "result.json"
+        proof.write_bytes(b'{"caseId":"MP-01"}')
+        run.transition("Settling")
+        original = execution.os.rename
+        def failing_publication(*args, **kwargs):
+            if json.loads((run.root / "ownership.next").read_bytes())["state"] == "Released":
+                raise OSError("synthetic ledger failure")
+            return original(*args, **kwargs)
+        with mock.patch.object(execution.os, "rename", side_effect=failing_publication):
+            with self.assertRaisesRegex(ConformanceError, "CleanupIncomplete"):
+                run.release()
+        self.assertEqual(run.state, "Retained")
+        self.assertEqual(json.loads((run.root / "ownership.json").read_bytes())["state"], "Retained")
+        self.assertEqual(proof.read_bytes(), b'{"caseId":"MP-01"}')
+        run.transition("Settling")
+        run.release()
+        self.assertEqual([attempt["diagnosticCode"] for attempt in run.cleanup_attempts],
+                         ["CleanupIncomplete", "None"])
+        self.assertEqual(run.resource_projection()[0]["state"], "Released")
+
+    def test_foreign_staging_marker_is_not_overwritten_or_removed_on_publication_failure(self):
+        run = self.workspace()
+        marker = run.root / "ownership.next"
+        marker.write_bytes(b"foreign-staging-sentinel")
+        with self.assertRaises(OSError):
+            run.transition("Active")
+        self.assertEqual(marker.read_bytes(), b"foreign-staging-sentinel")
+        self.assertEqual(run.state, "Allocated")
+        marker.unlink()
+        run.transition("Settling")
+        run.release()
 
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_concurrent_runs_isolate_cache_inputs_and_containment_does_not_end_the_other_child(self):
@@ -95,7 +180,8 @@ class ConformanceExecutionTests(unittest.TestCase):
         for run in (first, second):
             run.transition("Settling")
             run.release()
-            self.assertFalse(run.root.exists())
+            self.assertFalse(any((run.root / name).exists() for name in ("stores", "feed", "cache")))
+            self.assertEqual(run.state, "Released")
 
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_bounded_safe_events_are_retained_without_raw_canary(self):
@@ -184,6 +270,7 @@ print('{"event":"control","code":"None","value":1}')
             run.release()
         self.assertTrue(run.root.is_dir())
         del run.children[os.getpid()]
+        run.transition("Settling")
         run.release()
 
     def test_linux_identity_distinguishes_kernel_start_ticks_and_ignores_process_names(self):
@@ -310,12 +397,12 @@ else:
         run = self.workspace()
         original = run._persist
         failed = False
-        def failing_persist(*, create=False):
+        def failing_persist(**kwargs):
             nonlocal failed
             if run.groups and not failed:
                 failed = True
                 raise OSError("synthetic ledger failure")
-            return original(create=create)
+            return original(**kwargs)
         with mock.patch.object(run, "_persist", side_effect=failing_persist):
             with self.assertRaisesRegex(ConformanceError, "CommandFailed"):
                 run.command([sys.executable, "-c", "import time; time.sleep(60)"])

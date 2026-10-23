@@ -175,10 +175,40 @@ quoted version parameters. Three intended logger failures and three Python
 admission failures demonstrated the previous grammar limitation. Both admission
 layers now preserve those bounded ASCII characters without allowing paths,
 embedded quotes, whitespace or control characters inside parameter strings.
-Source SDK tests pass 45 checks; the current Linux diagnostic adds the three
-range-parameter cases, whose native result is not yet claimed. Embedded SDK
+Source SDK tests pass 45 checks; Linux diagnostic run `39916071298` at `4678eb8`
+passed all seven scenarios/15 observations, including the three actual
+range-parameter cases. It reproduced the same six-baseline seal and bound input
+digest `a807dba086c63476d9b440a0621f0cf7cded31b194a0dae1b7312a8422127a10`.
+This does not infer all 45 SDK tests ran natively. Embedded SDK
 catalog generation matches the independent expansion. Remaining control mappings,
 loaded-provider attribution and complete profile evaluation keep T008 unchecked.
+
+### Evidence-preserving cleanup increment
+
+An intended failure reproduced deletion of retained proof/diagnostic bytes by
+cleanup. Another reproduced a live child remaining merely `Settling` instead
+of recording retained ownership. Cleanup now deletes only the three
+identity-checked synthetic directories (`stores`, `feed`, `cache`), never the
+evidence root, proofs, safe diagnostics or runtime records. A private schema-`2`
+ownership ledger atomically publishes state and bounded append-only cleanup
+observations. Publication failure cannot make in-memory ownership `Released`.
+Only actual exit and completed synthetic deletion admit release; explicit
+`Retained -> Settling` retry preserves prior failure observations.
+
+The controller can project immutable path-free `ResourceOwnership` records,
+including actual still-live PID/start identities. No-live-child projection uses
+PID zero and an all-zero digest, not an invented execution identity. Portable
+focused checks pass 70 tests with ten Linux-native skips; native verification
+of this increment is pending. Existing SDK diagnostics intentionally retain
+baseline/input bytes and remain `Settling`; they do not claim full-run cleanup
+or promote the new projection into qualification. Callers must retain required
+input/proof bytes outside synthetic deletion directories before full cleanup.
+T010 and the downstream profile/controller gates remain unchecked pending their
+complete verification. An actual atomic-rename failure additionally exposed a
+stale staged ledger blocking retained-state publication. Failed publication now
+removes only its own identity-checked temporary marker; a pre-existing foreign
+marker is never removed or overwritten. All 175 tooling tests pass with ten
+native skips on macOS.
 
 ## Partial implementation checkpoint
 

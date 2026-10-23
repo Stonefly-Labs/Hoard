@@ -17,7 +17,7 @@ import time
 from types import MappingProxyType
 import uuid
 
-from conformance_evidence import ConformanceError, DIAGNOSTIC_CODES, canonical_bytes, load_json
+from conformance_evidence import ConformanceError, DIAGNOSTIC_CODES, admit_entity, canonical_bytes, load_json
 
 
 READ_BYTES = 64 * 1024
@@ -275,14 +275,16 @@ class OwnedRun:
         self.directory_identities = {}
         self.retained_bytes = 0
         self.command_sequence = 0
+        self.cleanup_attempts = []
         self.started = time.monotonic()
         self.deadline = self.started + profile_budget("baseline")
 
     def _ledger(self):
-        return {"schemaVersion": 1, "runId": self.run_id, "rootId": self.root_id,
+        return {"schemaVersion": 2, "runId": self.run_id, "rootId": self.root_id,
                 "ownerPid": self.owner_pid, "ownerStartSha256": self.owner_start,
                 "state": self.state, "groups": sorted(self.groups),
                 "directories": self.directory_identities,
+                "cleanupAttempts": self.cleanup_attempts,
                 "children": {str(pid): identity for pid, identity in self.children.items()}}
 
     def _root_descriptor(self):
@@ -317,21 +319,44 @@ class OwnedRun:
         finally:
             os.close(root)
 
-    def _persist(self, *, create=False):
-        data = canonical_bytes(self._ledger())
+    def _persist(self, *, create=False, state=None, cleanup_attempt=None):
+        ledger = self._ledger()
+        if state is not None:
+            ledger["state"] = state
+        if cleanup_attempt is not None:
+            ledger["cleanupAttempts"] = [*self.cleanup_attempts, cleanup_attempt]
+        data = canonical_bytes(ledger)
         if not create:
             self._check_ledger()
         directory = self._root_descriptor()
+        partial = None
         try:
             name = "ownership.json" if create else "ownership.next"
             with os.fdopen(os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
                                    0o600, dir_fd=directory), "wb") as output:
+                info = os.fstat(output.fileno())
+                partial = (info.st_dev, info.st_ino)
                 output.write(data)
             if not create:
                 os.rename("ownership.next", "ownership.json", src_dir_fd=directory, dst_dir_fd=directory)
+        except OSError:
+            if not create and partial is not None:
+                try:
+                    info = os.stat(name, dir_fd=directory, follow_symlinks=False)
+                except FileNotFoundError:
+                    pass
+                else:
+                    if not stat.S_ISREG(info.st_mode) or (info.st_dev, info.st_ino) != partial:
+                        raise ConformanceError("OwnershipInvalid") from None
+                    os.unlink(name, dir_fd=directory)
+            raise
         finally:
             os.close(directory)
         self._persisted = data
+        if state is not None:
+            self.state = state
+        if cleanup_attempt is not None:
+            self.cleanup_attempts.append(cleanup_attempt)
 
     def _check_ledger(self, *, deadline=None):
         directory = self._root_descriptor()
@@ -357,8 +382,7 @@ class OwnedRun:
         if state not in allowed.get(self.state, ()):
             raise ConformanceError("OwnershipInvalid")
         self._check_ledger()
-        self.state = state
-        self._persist()
+        self._persist(state=state)
 
     def live_children(self):
         self._check_ledger()
@@ -548,8 +572,10 @@ class OwnedRun:
             try:
                 self._contain(child)
             except (ConformanceError, OSError, subprocess.SubprocessError):
-                self.transition("Settling")
-                self.transition("Retained")
+                if self.state in ("Allocated", "Active"):
+                    self.transition("Settling")
+                if self.state == "Settling":
+                    self.transition("Retained")
                 raise ConformanceError("CleanupIncomplete") from None
             if isinstance(error, ConformanceError):
                 raise
@@ -587,39 +613,60 @@ class OwnedRun:
 
     def release(self):
         self._check_ledger()
-        if self.state != "Settling" or self.live_children():
+        if self.state != "Settling":
             raise ConformanceError("CleanupIncomplete")
+        if len(self.cleanup_attempts) >= 128:
+            self._persist(state="Retained")
+            raise ConformanceError("OutputLimitExceeded")
+        started = time.monotonic() * 1000
         deadline = min(time.monotonic() + 30, self.deadline)
         try:
+            if self.live_children():
+                raise ConformanceError("CleanupIncomplete")
+            self.children.clear()
+            self.groups.clear()
+            for handle in self._group_handles.values():
+                os.close(handle)
+            self._group_handles.clear()
+            self._persist()
             result = self.command(
                 [sys.executable, "-I", "-S", str(Path(__file__).with_name("conformance_cleanup.py")),
                  str(self.root), str(self.root_identity[0]), str(self.root_identity[1]),
                  self.root_id, str(self.owner_pid), self.owner_start],
                 scope="cleanup", timeout=min(20, control_timeout(deadline) + 15))
-            if result.exit_code or any(event["code"] != "None" for event in result.events):
+            if (result.exit_code or len(result.events) != 1
+                    or dict(result.events[0]) != {"event": "cleanup", "code": "None", "value": 0}):
                 code = next((event["code"] for event in result.events if event["code"] != "None"), "CleanupIncomplete")
                 raise ConformanceError(code)
             self._check_ledger(deadline=deadline)
-            control_timeout(deadline)
-            directory = self._directory_descriptor("diagnostics")
-            try:
-                with os.scandir(directory) as entries:
-                    for entry in entries:
-                        control_timeout(deadline)
-                        os.unlink(entry.name, dir_fd=directory)
-            finally:
-                os.close(directory)
-            root = self._root_descriptor()
-            try:
-                self._check_ledger(deadline=deadline)
-                os.rmdir("diagnostics", dir_fd=root)
-                os.unlink("ownership.json", dir_fd=root)
-            finally:
-                os.close(root)
-            self.root.rmdir()
-            self.state = "Released"
-        except (ConformanceError, OSError):
-            self.state = "Retained"
-            if (self.root / "ownership.json").is_file():
-                self._persist()
+            if self.live_children() or any(os.path.lexists(self.root / name) for name in ("stores", "feed", "cache")):
+                raise ConformanceError("CleanupIncomplete")
+            self._persist(state="Released", cleanup_attempt={
+                "sequence": len(self.cleanup_attempts) + 1, "startedMs": started,
+                "endedMs": time.monotonic() * 1000, "diagnosticCode": "None",
+            })
+        except (ConformanceError, OSError) as error:
+            self._persist(state="Retained", cleanup_attempt={
+                "sequence": len(self.cleanup_attempts) + 1, "startedMs": started,
+                "endedMs": time.monotonic() * 1000,
+                "diagnosticCode": str(error) if isinstance(error, ConformanceError) else "CleanupIncomplete",
+            })
+            if not isinstance(error, ConformanceError):
+                raise ConformanceError("CleanupIncomplete") from None
             raise
+
+    def resource_projection(self):
+        self._check_ledger()
+        live = self.live_children()
+        if self.state == "Released" and (
+                live or any(os.path.lexists(self.root / name) for name in ("stores", "feed", "cache"))):
+            raise ConformanceError("OwnershipInvalid")
+        for name in ("diagnostics", "proofs"):
+            os.close(self._directory_descriptor(name))
+        duration = sum(attempt["endedMs"] - attempt["startedMs"] for attempt in self.cleanup_attempts)
+        code = self.cleanup_attempts[-1]["diagnosticCode"] if self.cleanup_attempts else "None"
+        return tuple(admit_entity("ResourceOwnership", {
+            "runId": self.run_id, "rootId": self.root_id, "childPid": pid,
+            "childStartSha256": process_identity(pid) if pid else "0" * 64,
+            "state": self.state, "cleanupDurationMs": duration, "diagnosticCode": code,
+        }) for pid in sorted(live) or [0])

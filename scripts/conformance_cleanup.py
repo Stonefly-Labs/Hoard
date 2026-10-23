@@ -21,15 +21,15 @@ def unique_fields(pairs):
     return result
 
 
-def clean(directory, deadline, *, root=False, depth=0, count=None):
+def clean(directory, deadline, *, depth=0, count=None):
     if depth > 32:
         raise CleanupFailure("CleanupIncomplete")
     count = [0] if count is None else count
     with os.scandir(directory) as entries:
-        clean_entries(entries, directory, deadline, root, depth, count)
+        clean_entries(entries, directory, deadline, depth, count)
 
 
-def clean_entries(entries, directory, deadline, root, depth, count):
+def clean_entries(entries, directory, deadline, depth, count):
     for entry in entries:
         if time.monotonic() >= deadline:
             raise CleanupFailure("DeadlineExceeded")
@@ -37,8 +37,6 @@ def clean_entries(entries, directory, deadline, root, depth, count):
         if count[0] > 1_000_000:
             raise CleanupFailure("CleanupIncomplete")
         name = entry.name
-        if root and name == "ownership.json":
-            continue
         info = os.stat(name, dir_fd=directory, follow_symlinks=False)
         if stat.S_ISLNK(info.st_mode):
             raise CleanupFailure("OwnershipInvalid")
@@ -48,8 +46,7 @@ def clean_entries(entries, directory, deadline, root, depth, count):
                 clean(nested, deadline, depth=depth + 1, count=count)
             finally:
                 os.close(nested)
-            if not (root and name == "diagnostics"):
-                os.rmdir(name, dir_fd=directory)
+            os.rmdir(name, dir_fd=directory)
         else:
             os.unlink(name, dir_fd=directory)
 
@@ -75,11 +72,13 @@ def main():
             owner = json.loads(encoded, object_pairs_hook=unique_fields)
             if (not isinstance(owner, dict) or set(owner) !=
                     {"schemaVersion", "runId", "rootId", "ownerPid", "ownerStartSha256",
-                     "state", "children", "groups", "directories"}
-                    or type(owner["schemaVersion"]) is not int or owner["schemaVersion"] != 1
+                     "state", "children", "groups", "directories", "cleanupAttempts"}
+                    or type(owner["schemaVersion"]) is not int or owner["schemaVersion"] != 2
                     or owner["rootId"] != sys.argv[4] or owner["ownerPid"] != int(sys.argv[5])
                     or owner["ownerPid"] != os.getppid() or owner["ownerStartSha256"] != sys.argv[6]
                     or owner["state"] != "Settling"):
+                raise CleanupFailure("OwnershipInvalid")
+            if not isinstance(owner["cleanupAttempts"], list) or len(owner["cleanupAttempts"]) > 128:
                 raise CleanupFailure("OwnershipInvalid")
             identities = owner["directories"]
             if (not isinstance(identities, dict) or set(identities) !=
@@ -92,13 +91,27 @@ def main():
                 try:
                     child = os.stat(name, dir_fd=directory, follow_symlinks=False)
                 except FileNotFoundError:
-                    if name == "diagnostics":
+                    if name in ("diagnostics", "proofs"):
                         raise CleanupFailure("OwnershipInvalid") from None
                     continue
                 if (not stat.S_ISDIR(child.st_mode) or (child.st_dev, child.st_ino) != tuple(identity)
                         or child.st_uid != os.getuid() or stat.S_IMODE(child.st_mode) & 0o077):
                     raise CleanupFailure("OwnershipInvalid")
-            clean(directory, time.monotonic() + 19, root=True)
+            deadline = time.monotonic() + 19
+            count = [0]
+            for name in ("stores", "feed", "cache"):
+                try:
+                    nested = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=directory)
+                except FileNotFoundError:
+                    continue
+                try:
+                    info = os.fstat(nested)
+                    if (info.st_dev, info.st_ino) != tuple(identities[name]):
+                        raise CleanupFailure("OwnershipInvalid")
+                    clean(nested, deadline, count=count)
+                finally:
+                    os.close(nested)
+                os.rmdir(name, dir_fd=directory)
         finally:
             os.close(directory)
     except CleanupFailure as error:

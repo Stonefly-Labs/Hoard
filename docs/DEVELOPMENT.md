@@ -4877,8 +4877,12 @@ identified the missing finite version-range punctuation. Both layers now preserv
 bounded bracket/parenthesis/comma parameters and continue rejecting paths,
 free text, embedded quotes and control characters. All 45 current source SDK
 tests pass; earlier package-acceptance results remain historical. The Linux
-diagnostic now selects these three exact range cases as an additional scenario;
-its current native result is pending. T008 remains incomplete until the remaining
+diagnostic now selects these three exact range cases as an additional scenario.
+Run [39916071298](https://github.com/Stonefly-Labs/Hoard/actions/runs/39916071298)
+at `4678eb8` passed all seven scenarios/15 observations, including those three
+range cases; it reproduced the six-baseline seal above and input digest
+`a807dba086c63476d9b440a0621f0cf7cded31b194a0dae1b7312a8422127a10`.
+This does not imply all 45 source tests ran natively. T008 remains incomplete until the remaining
 control mappings are wired; actual loaded-provider attribution and complete
 profile evaluation are also unfinished.
 
@@ -4892,6 +4896,29 @@ passed again and independently reproduced the same six-baseline seal
 `41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`.
 It measured 92,111,634,432 free scratch bytes. These observations do not complete
 the remaining foundation tasks or qualify a profile.
+
+Cleanup now preserves the evidence root, `proofs`, safe `diagnostics`, runtime
+records and ownership ledger; only settled `stores`, `feed` and `cache` are
+removed. Retained input archives/binaries needed for verification must therefore
+be stored outside those synthetic directories before full cleanup. The current
+SDK diagnostic still deliberately retains its baseline/input bytes and remains
+`Settling`, not authoritatively `Released`.
+
+The private ownership ledger is now schema `2`, separate from public schema `1`
+and baseline seal schema `2`. Old ownership ledgers are not silently adopted.
+It retains up to 128 explicit cleanup observations, rejects overflow rather
+than truncating history, and publishes state only after atomic ledger
+replacement. Live children or failed cleanup/publication remain retained.
+Explicit retry after observed exit preserves the previous failure and safe
+evidence. Immutable path-free resource projections include actual live PID/start
+identities; PID zero/all-zero digest explicitly mean no live child. A preserved
+evidence directory is not an active synthetic store. Four focused regressions
+cover evidence preservation, live-work retry and failed release publication;
+portable conformance checks pass 70 tests with ten native skips. A reproduced
+atomic-rename failure also required removing only the writer's identity-checked
+partial marker; pre-existing foreign markers remain untouched. All 175 tooling
+tests pass with ten native skips. Native proof
+of this new cleanup increment is pending; T010 is not yet marked complete.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

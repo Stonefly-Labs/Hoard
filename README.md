@@ -1074,6 +1074,11 @@ version-range parameter punctuation while still rejecting paths and free text;
 45 current source SDK checks pass, not a current package-acceptance result.
 T009's owned-execution regression inventory also passes on Linux, including
 concurrent private caches and containment that leaves the other run alive.
+Cleanup now removes only settled synthetic stores, feeds and caches, retaining
+proofs, safe diagnostics and the ownership ledger. Live work and failed ledger
+publication remain `Retained`; explicit retries preserve earlier cleanup failures.
+The new controller projection and private ledger revision are under native
+verification, not completed-profile evidence.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
