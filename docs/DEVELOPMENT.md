@@ -3863,6 +3863,66 @@ and no infrastructure, merge or release is performed.
 The implementation checkpoint does not start convergence or finalize the PR;
 the next separately authorized stage is **`converge`**.
 
+### F-06 convergence findings
+
+The separately invoked installed `speckit-converge` assessed the current
+implementation in pinned `specs/006-artifact-storage`: 25 FRs, eight buildable
+SCs, 23 story scenarios, 15 edge cases, eight Phase 1 design decisions with
+their technical constraints, all 86 original tasks and eight constitutional
+principles. The 48-case matrix, actual provider/authority paths, compiled
+consumer, transfer/crash children and evidence verifier support the assessment;
+checked task markers and a passing suite are not proof of uncovered behavior.
+
+**Outcome: `tasks_appended`.** Two HIGH partial gaps remain; zero missing,
+contradictory or unrequested findings and zero other severity findings.
+The installed skill appended only
+[Phase 9 / T087-T088](../specs/006-artifact-storage/tasks.md#phase-9-convergence).
+Every preceding byte of tasks.md is preserved. Specification, plan, all other
+feature artifacts and every built-in/custom checklist marker are unchanged.
+No application, test, tooling or lockfile was modified. No extension hooks exist.
+
+| Finding | Source | Current-code evidence and reproduced result |
+| --- | --- | --- |
+| F1 / T087: failed staging cleanup ownership | FR-009/012/015, US2/AC3-4, US3/AC4, SC-006; T032/037/043/048/049 | Local's staging failure path marks `notcommitted` before unlink; Object fences the upload before removing multipart files. If unlink fails, each supervisor returns `AccessDenied` with cleanup `Released` and readiness true. Restore access and expire ownership: observation exposes one abandoned stage, but cleanup returns zero completed/one conflict because it rejects Local `notcommitted` or Object `Fenced` state. One payload and its reservation remain; a new full-cap reservation returns `Capacity`. |
+| F2 / T088: recovery cursor exhaustion | FR-015, US3/AC4, SC-008; bounded resumable recovery and T043/048/049/055 | Both maintenance implementations retain each consumed continuation and allocate another, with a 32-handle quota. A stable 35-identity inventory, page size one and one sequential caller returns only 32 observations before `Capacity`, without inventory mutation or concurrent scans. |
+
+F1 requires bounded retained/retryable exact-generation reclamation and truthful
+cleanup/readiness until settlement, including repeated failure, safe stop/local
+reopen and capacity restoration. F2 requires a bounded cursor lifecycle that
+permits complete sequential scans beyond 32 pages while retaining expiry,
+query/store binding, changed-inventory rejection and listing-safety semantics.
+Neither correction is implemented in this convergence stage.
+
+Fresh evidence uses the same source fingerprint
+`aa5afb01c594acb418f48db975c408ea3c0350e6ef33cef93ba27fd322739e24`.
+Run `d74a80fa-1aa2-42a8-8217-2cf9370c661e` is retained privately at
+`../hoard-artifact-evidence/converge-f06-locked-20261022`.
+It passes the existing full 96-entry inventory: 92 applicable passes/four Object
+durability exclusions, all four actual transfers, six actual crash barriers,
+package/architecture/compatibility and fail-closed evidence checks. These
+existing cases omit the two newly reproduced paths; their passing status does
+not close T087/T088 or establish clean convergence.
+
+| Command / check | Result |
+| --- | --- |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --evidence /Users/christopherhouse/projects/hoard-artifact-evidence/converge-f06-locked-20261022` | Passed existing locked full qualification, 92 passes/four exclusions; not a clean-convergence result |
+| Owner-private .NET probe referencing this fresh run's compiled Abstractions/Local/Object/HostAdapters assemblies, not rewritten provider code | Reproduced both findings on both providers: stable paging 32/35 then `Capacity`; restored staging access still yields 0 completed/1 conflict, 1 residual file, `Released`, ready true and blocked reservation |
+| `python3 -m unittest discover -s tests/tooling -v` | All 105 passed |
+| Append-only, feature/checklist integrity, current-source manifest verification, README/development link and `git diff --check` checks | Passed |
+
+The probes and detailed raw proof remain outside Git. README and this guide
+now distinguish existing passing qualification from known convergence gaps.
+Provider/test guides, examples, quickstart, contracts/model/research, compatibility
+policy, charter/product spec, architecture/ADR/diagrams, governance/backlog,
+IaC and release guides are unaffected: this stage changes no API, mechanism,
+dependency, command, operational configuration or supported environment; the
+normative requirements already require both corrections. Those documents may
+need implementation evidence updates when the fixes actually exist.
+The driver schedules **`implement / ready`**, followed by fresh convergence.
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) remains draft. No feature
+completion, dependency unlock, finalization, merge, tag, publication, infrastructure
+action or deployment occurred.
+
 ```bash
 python3 -m unittest discover -s tests/tooling -v
 bash scripts/validate-foundation.sh
