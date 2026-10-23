@@ -1185,6 +1185,10 @@ replay before publishing only the reviewable conformance locks. Native verificat
 and the remaining tracked locks are pending; default profile/verify/aggregate CLI
 behavior is not implemented yet. The dedicated CI preparation job retains source
 locks only, not raw test output or synthetic store data.
+The initial native preparation failed safely on a missing embedded F-04 OpenAPI
+contract (`CS1566`); a red snapshot regression confirmed the omission. That exact
+compiled resource is now included in source fingerprints/snapshots; repaired
+native replay remains pending.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

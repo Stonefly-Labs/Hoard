@@ -589,6 +589,14 @@ native experiment and uploads only source locks for review. Actual replay and
 tracked lock generation/review remain pending; T016 stays unchecked and T017
 default profile/verify/aggregate behavior remains unimplemented.
 
+The first supported preparation run `39946559245` at `082d064` passed
+120 native foundation checks with zero failures/errors/skips and repeated all
+fifteen SDK scopes/46 observations and six baselines. Preparation then failed
+safely at command 124 (`CS1566`) because the source inventory omitted Application's
+embedded F-04 OpenAPI contract. A focused intended snapshot failure preceded
+adding that exact compiled resource to immutable source capture. No locks were
+published and no assertions/old artifacts changed; repaired native replay is pending.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

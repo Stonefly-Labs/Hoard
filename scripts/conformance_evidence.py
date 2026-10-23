@@ -835,7 +835,8 @@ def source_manifest(root):
             ["ls-files", "-z", "--cached", "--others", "--exclude-standard", "--",
              "src", "tests", "scripts", "examples", ".github/workflows", "global.json", "Hoard.slnx",
              "Directory.Build.props", "Directory.Build.targets", "Directory.Packages.props",
-             "NuGet.Config", "nuget.config", ".editorconfig", ".gitignore", ".gitattributes"], deadline,
+             "NuGet.Config", "nuget.config", ".editorconfig", ".gitignore", ".gitattributes",
+             "specs/004-module-discovery/contracts/openapi.json"], deadline,
         )
         try:
             paths = sorted(set(output.decode("utf-8", errors="strict").rstrip("\0").split("\0")))

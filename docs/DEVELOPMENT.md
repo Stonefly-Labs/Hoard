@@ -5279,6 +5279,19 @@ replay and retains only reviewable source lockfiles via a pinned artifact action
 native verification and lock review are pending. No raw diagnostics/store data is
 uploaded, and this preparation job is not a mandatory qualifying F-07 profile.
 
+Initial preparation run
+[39946559245](https://github.com/Stonefly-Labs/Hoard/actions/runs/39946559245)
+at `082d064` passed all 120 native foundation checks without failures/errors/skips
+and repeated the fifteen-scope/46-observation SDK diagnostics with all six
+baselines. The new preparation job safely failed at command 124 with compiler
+`CS1566`: Application's embedded
+`specs/004-module-discovery/contracts/openapi.json` was outside the source snapshot
+inventory. A focused snapshot regression reproduced the omission before repair.
+That exact compiled resource now participates in source fingerprinting/copying;
+unrelated specification prose does not. No predecessor artifacts or assertions
+were changed, no locks published on the failed path, and repaired native
+preparation remains pending.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full
