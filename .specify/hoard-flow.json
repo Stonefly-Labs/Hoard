@@ -1,9 +1,13 @@
 {
   "schema_version": 1,
-  "stage": "specify",
+  "stage": "await_merge",
   "status": "ready",
-  "branch": null,
-  "active": null,
+  "branch": "feature/006-artifact-storage",
+  "active": {
+    "id": "F-06",
+    "feature_directory": "specs/006-artifact-storage",
+    "pr": 16
+  },
   "completed": [
     {
       "id": "F-01",
@@ -537,6 +541,111 @@
       "branch": "chore/spec-progress-f-05",
       "at": "2026-10-22T05:49:35.883466+00:00",
       "evidence": "Verified PR #14 merged at 81e2e8d41e08aafc9e89f388dab78e7509227dd5 in origin/main; all 87 tasks complete and merged finalization/architecture/docs evidence retained. Published annotated v0.0.5-alpha at that exact merge; Source release run 39730092661 succeeded: https://github.com/Stonefly-Labs/Hoard/actions/runs/39730092661 . Verified non-draft prerelease, generated PR-linked notes, remote peeled commit, ZIP commit comment and both automatic archives against four exact-merge files: https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.5-alpha . Release validator and main ancestry check passed; tooling 76/76 passed; product acceptance remains merged historical evidence. Running checkpoint eefbd1d pushed in draft progress PR #15; completion checkpoint must merge before next spec."
+    },
+    {
+      "stage": "specify",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-22T12:41:27.342019+00:00",
+      "evidence": "F-06 exact master prompt specified in specs/006-artifact-storage/spec.md using installed speckit-specify and resolved core template; 5 stories, 23 acceptance scenarios, 15 edge cases, 25 requirements, 9 entities, 8 outcomes; built-in quality checklist 16/16 with no clarification markers; no pre/post hooks configured. README and DEVELOPMENT updated; requirements-only scope preserves provider/shared-coordination boundaries and requires no new architecture review. python3 -m unittest discover -s tests/tooling -v passed 76 tests; pinned prerequisites and direct artifact assertions passed; git diff --check passed. No planning, custom approval, implementation, release or deployment."
+    },
+    {
+      "stage": "clarify",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-22T12:46:43.661252+00:00",
+      "evidence": "F-06 clarify completed through installed speckit-clarify with explicitly pinned specs/006-artifact-storage. All ten ambiguity categories Clear; no critical ambiguities, zero questions, no requirement/acceptance/scope changes; dated review added only to Clarifications. Built-in quality checklist revalidated 16/16 to 16/16, byte-for-byte unchanged, zero newly passing/regressions/unchecked; no custom approval. No pre/post hooks. README/DEVELOPMENT synchronized with coverage and unaffected-document reasons; no public API/dependency/runtime change warrants new architecture review. python3 -m unittest discover -s tests/tooling -v passed 76 tests; pinned prerequisites, unchanged-content/stage-isolation/local-link assertions and git diff --check passed. Draft PR #16 retained; next stage plan, no blockers. No later-stage generation, implementation, qualification execution, merge, publication, infrastructure or deployment."
+    },
+    {
+      "stage": "plan",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-22T13:20:39.809459+00:00",
+      "evidence": "F-06 plan completed through installed speckit-plan with explicitly pinned specs/006-artifact-storage; resolved template initialized once, no hooks. Seven design artifacts define additive BCL-only operations, complete-stream and read-completion verification, finite budgets/ownership, ticket/incarnation recovery, common shared authority and unchanged F-05 publication seam. Real local process-crash fixture and independent no-rename object-semantics fixture remain future qualification; both require actual 256 MiB/4 GiB <=64 MiB incremental peak RSS. Traceability covers all 25 FRs/eight SCs, 23 scenarios/15 edge cases, 48 case IDs; expected 96 entries/92 passes/four explicit object durability exclusions. Required hoard-architecture-review found one P2 missing neutral guard-recognition seam, corrected with authority-owned same-operation RetainAsync and AS-35 foreign/copied/disposed/expired-admission negatives; no second review/runtime approval claimed, no unresolved design blocker. Pre/post constitutional assessments pass without exception. Specification and 16-item built-in checklist byte-identical; no custom approval/tasks/source/lock changes. README/DEVELOPMENT updated with unaffected-document reasons; draft PR #16 retained. python3 -m unittest discover -s tests/tooling -v passed 76 tests; pinned setup/prerequisites, seven-artifact/coverage/six-barrier/31-local-link/stage-isolation assertions, PR template fidelity and git diff --check passed. Next stage checklist; no implementation, qualification execution, merge, publication, infrastructure or deployment."
+    },
+    {
+      "stage": "checklist",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-22T13:28:34.173880+00:00",
+      "evidence": "F-06 checklist stage completed through installed speckit-checklist with pinned specs/006-artifact-storage. Generated storage.md and recovery.md, 20 standard-depth requirements-quality criteria each for maintainer/provider PR review; all 40 initially unchecked, no extension hooks. After generation, explicit maintainer request separately authorized assisted evaluation of every item: storage 20/20, recovery 19/20, 40 per-item evidence rows. Recovery CHK012 remains unchecked: high-priority RQ-01 identifies unconditional finite-resource-release wording in FR-009/SC-006/US2 scenario 3 versus plan/API/required AS-39 retained-ownership behavior for non-cooperative I/O. Recommended explicit cooperative-I/O qualification and fail-closed bounded retention; no requirement change, waiver or full implementation approval presumed. Nine original specification/design/built-in checklist artifacts byte-for-byte unchanged against HEAD and saved hashes; all 25 FRs/eight SCs referenced, 25 local links/anchors and exact PR template structure passed. Python tooling suite passed all 76 tests; git diff --check passed. README/development synchronized with review finding and unaffected-document reasons. No tasks, analysis, remediation, implementation, product qualification, architecture change, release, infrastructure or merge. Next stage tasks; RQ-01 resolution and CHK012 re-review remain required before implementation approval; draft PR #16 retained."
+    },
+    {
+      "stage": "tasks",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-22T13:42:53.418849+00:00",
+      "evidence": "Generated specs/006-artifact-storage/tasks.md with 86 unchecked tasks (US1/US2/US3/US4/US5: 11/11/15/12/12; 25 shared), 36 parallel markers and complete acyclic prerequisites. Mapped 25 FRs/eight SCs/23 scenarios/15 edges/48 cases; all 11 prior feature artifacts and checklist markers unchanged. RQ-01/CHK012 remains unresolved and blocks implementation approval; no remediation or analysis stage ran. Pinned setup/prerequisite resolution, 76 tooling tests, task/traceability/integrity assertions, 14 local links and git diff --check passed. README/development updated; draft PR #16 retained."
+    },
+    {
+      "stage": "analyze",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-22T14:00:24.056405+00:00",
+      "evidence": "Installed read-only speckit-analyze passes F-06 with zero actionable findings: all 25 FRs/eight buildable SCs covered, all 86 tasks mapped, 23 scenarios/15 edge cases/48 cases traced; complete 86-row acyclic prerequisites, serialized runner edits and pre-API baseline capture. Approved RQ-01 consistent with mandatory AS-39. All 12 feature artifacts byte-identical, 86 tasks unchecked, built-in 16/16 and reviewer-owned 40/40 unchanged; no hooks/remediation/runtime qualification. Prerequisites, direct inventory/coverage/DAG/integrity/link assertions, all 76 tooling tests and git diff --check pass. Full report: https://github.com/Stonefly-Labs/Hoard/pull/16#issuecomment-6342629286. README/development updated; other guides/contracts/diagrams unaffected because no API/dependency/operation changes. Keep PR 16 draft; implement only on next invocation."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-22T23:48:51.599042+00:00",
+      "evidence": "F-06 implement completed: T001..T086 verified. Final source aa5afb01c594acb418f48db975c408ea3c0350e6ef33cef93ba27fd322739e24; locked full run f57fd648-f0fe-4eef-b72d-554b4e691a44 passed 92 applicable cases/four Object AS-41..44 exclusions, 229 common/crash tests, four measured-proof tests, three architecture checks/eight graphs, six SIGKILL barriers, both 16-operation consumers, original frozen marker, three executed mutation pairs and 29 manifest negatives. All four fresh focused modes passed nonqualifying; all five predecessor gates passed separately locked; tooling 105 passed; format and diff checks passed. Architecture reviews f06-final-architecture/f06-handoff-correction findings corrected with genuine runtime reds and final greens. Exact commands, matrix/task audit, documentation and environment limitations: specs/006-artifact-storage/plan.md final qualification section. Reviewer checklists unchanged; no hooks. Implementation committed/pushed bf41077; draft PR #16 remains unfinalized. Test-only Local process-crash/APFS and Object simulation, no production/F-07/release claim. Next separate stage converge."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-23T00:33:05.874685+00:00",
+      "evidence": "F-06 converge executed through installed speckit-converge in pinned specs/006-artifact-storage. Outcome tasks_appended: two HIGH partial findings, no other types/severities. Assessed 25 FRs, eight buildable SCs, 23 story scenarios, 15 edge cases, eight Phase 1 plan decisions/technical constraints, all 86 original tasks and eight constitutional principles. F1/T087: both stores return AccessDenied/Released and ready=true when staged-prefix reclamation fails; after access restoration/owner expiry, abandoned-stage cleanup conflicts, one file/reservation persists and fresh reservation returns Capacity. F2/T088: both stable 35-identity inventories stop at 32 single-row pages with Capacity because consumed cursors remain allocated. Owner-private probes executed against fresh qualified assemblies without provider edits reproduced all four failures. Appended only Phase 9/T087-T088; every prior task byte, spec, plan, other feature artifacts and checklist markers preserved. Fresh default locked full artifact qualification run d74a80fa-1aa2-42a8-8217-2cf9370c661e passes existing 92 applicable cases/four Object durability exclusions, actual transfers/crashes/package/architecture/evidence checks; these omit the uncovered paths and do not close findings. Full manifest reverified against unchanged source aa5afb01c594acb418f48db975c408ea3c0350e6ef33cef93ba27fd322739e24. Python tooling 105 passed; append-only/task/checklist/source integrity, 287 README/development local links/new anchors, PR template fidelity and git diff --check passed. No source/test/tooling/lock edits or hooks. README/development record findings and unaffected-guide reasons; draft PR #16 stays draft. Next stage implement both tasks, then fresh convergence; finalization blocked. No self-approval, feature completion/dependency unlock, merge, release, package publication, infrastructure or deployment."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-23T00:56:32.268307+00:00",
+      "evidence": "F-06 follow-up implement completed through installed speckit-implement in pinned specs/006-artifact-storage; T087/T088 checked, all 88 tasks complete. Independent failed-staging registries retain exact generation/reservations and truthful cleanup, fence readiness/new admission, allow bounded maintenance and nonduplicating shutdown retries, preserve finalized noncommit and Local reopen safety. Consumed recovery cursors retire on success/terminal pages; 32 independent scans each traverse 35 identities under bounded quota with binding/expiry/revision/listing protection. Six genuine initial runtime reds plus two architecture-correction reds retained privately. Required hoard-architecture-review f06-recovery-followup-review found one MEDIUM receipt-reconciliation regression; corrected with exact settled reconciliation and residual-staging-only maintenance, preserving committed bytes/receipts. Fresh default locked full run a3c382f7-31a8-45a8-bda1-3037d44f9119 qualifies source 42cb2a4eaa77daf772b4197c1b6b189155516a9029aa08f00fdecfa995f1a90c: 237 common/crash tests, four actual-transfer proof tests, three architecture checks/eight graphs, six SIGKILL/reopen barriers, both unchanged consumers/frozen marker, exact 92 applicable passes/four Object exclusions, three mutation pairs and 29 manifest negatives. Logical update passed 231 tests; tooling 105 passed; format/analyzers, current-source manifest revalidation, unchanged task-body/checklist integrity, docs links and git diff check passed. Exactly 15 local Hoard.* content hashes in six locks change; graphs/versions/external hashes/frozen baseline unchanged. README/affected guides/quickstart/recovery contract/plan synchronized with unaffected-document reasons; no hooks. Exact commands/private paths and review limits in plan follow-up section. Draft PR #16 remains draft; next separate stage converge, no clean-convergence/finalization/feature completion/release/infrastructure claim."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-23T01:03:49.292668+00:00",
+      "evidence": "F-06 fresh converge through installed speckit-converge in pinned specs/006-artifact-storage: tasks_appended, one HIGH partial F1; assessed 25 FRs, eight SCs, 23 scenarios, 15 edge cases, eight grouped plan decisions, all 88 existing tasks and eight constitutional principles. T087/T088 remain covered. Current-assembly isolated paired probe proves ObjectPublication unselected assembly unlink failure is untracked: three same-ticket 1 KiB retries return AccessDenied/Released and ready=true while leaking 1/2/3 payloads; abandon releases reservation, Observe(All) is empty, new full-cap reservation and Released stop succeed with all payloads remaining. Writable control has zero residuals. Appended only Phase 10/T089 for exact bounded scratch ownership/capacity, fenced admission/readiness and safe recovery/shutdown with focused red/green/current locked qualification; no implementation or spec/plan/checklist edits. Fresh full locked artifact gate at ../hoard-artifact-evidence/converge-followup-20261023 passes existing 237 common/crash tests, four transfer proof tests, package/architecture/compatibility/consumer checks, four actual measurements and six SIGKILL/reopen journeys; exact 96 entries, 92 passes/four exclusions, run faea99c3-fc0b-44bb-a402-24e223a0158f, unchanged source 42cb2a4eaa77daf772b4197c1b6b189155516a9029aa08f00fdecfa995f1a90c. Existing qualification does not cover or waive F1. Python tooling 105 passed; independent manifest, append-only/spec/plan/checklist and docs-link integrity and git diff --check passed. README/development synchronized with unaffected-guide reasons; no hooks. Draft PR #16 retained; next implement T089, then fresh convergence; finalization blocked. No merge/publication/infrastructure/dependency unlock."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-23T01:18:40.627006+00:00",
+      "evidence": "F-06 follow-up implement through installed speckit-implement completes T089, all 89 tasks checked. Object assemblies now have exact pre-I/O upload ownership and bounded verified-length/count accounting; conditional selection transfers ownership, failed unlink retains scratch/reservations, fences readiness/admission/retries, and supports exact bounded maintenance/stop without touching selected/newer payloads. Settled equivalent-reuse receipts remain reconcilable. Five genuine initial runtime reds, then seven focused passes and both consumers with reviewed local hash refresh; new reuse witness closes required architecture review f06-t089-architecture evidence gap (no confirmed violations). Separate default locked full t089-full-locked-20261023 run a5c38d76-6d43-4cc9-94a6-0ec01f220cfb qualifies source b4a89fcc5fdf5334a4ab03c493ba62704580643ca486e970ced3e65f9d1da1db: 243 common/crash tests, four transfer proofs, three architecture tests/eight graphs, four actual size/provider measurements, six owned SIGKILL/reopen barriers, original marker and both unchanged consumers; exact 96 entries, 92 passes/four Object exclusions, three mutation pairs and 29 manifest negatives. Tooling 105 passed; current-source/lock full manifest independently reverified. Nine local Hoard.* content hashes in five locks only; graphs/versions/external hashes/frozen baseline unchanged. README/affected guides/quickstart/recovery/plan/tasks synchronized; original task bodies/spec/API/model/research/checklists unchanged; doc links and git diff check passed; no hooks. Prior predecessor gates historical, not rerun for fixture/catalog-only change. Draft PR #16 remains draft; next separate converge, no finalization/feature completion/merge/release/infrastructure/dependency unlock."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-23T01:25:48.843672+00:00",
+      "evidence": "Installed speckit-converge assessed 25 FRs/eight SCs/23 scenarios/15 edge cases/eight grouped plan decisions/all 89 existing tasks/eight constitutional principles. Outcome tasks_appended: one HIGH partial F1, validation-first corruption is not quarantined on either fixture. Actual current-assembly public-contract probe: initial validation Success, truncated validation CorruptContent, subsequent open Success, externally restored-byte validation Success and duplicate AlreadyPresentVerified. Appended only Phase 11/T090 for exact-incarnation quarantine across detection paths, paired regressions and Local reopen; all original task bytes/spec/plan/checklists/source/tests/tooling/locks unchanged. Fresh default locked validate-artifacts.sh in converge-f06-20261023-2021 passed 243 common/crash tests, four actual-transfer proof tests, three architecture checks/eight graphs, both consumers/original binary, four real 256MiB/4GiB transfers, six owned SIGKILL/reopen barriers and 96 entries (92 passes/four explicit Object exclusions). Run d43680be-3121-4fbe-a18c-6cea1c01f081, source b4a89fcc5fdf5334a4ab03c493ba62704580643ca486e970ced3e65f9d1da1db; independent manifest revalidation passed. Existing matrix omits F1 and does not waive it. Python tooling passed 105 tests; append-only/scope/new-link checks and git diff --check passed. README/development synchronized; affected-behavior guides/baseline docs unaffected because this stage changes no API/runtime/dependency/operational command. No extension hooks or self-approval. Draft PR #16 retained; next implement T090, finalization blocked; no merge/release/infrastructure/deployment."
+    },
+    {
+      "stage": "implement",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-23T01:46:49.878206+00:00",
+      "evidence": "F-06 T090 completed through installed speckit-implement in pinned specs/006-artifact-storage; all 90 tasks checked. Independent synchronized exact-incarnation quarantine now covers validation-first truncation/missing payload, open, reuse, full-copy, publication and unresolved reconciliation; restored bytes cannot revive evidence/read/reuse. Local quarantine persists across compatible reopen; Object process-only. Access/outage remain distinct; authorized delete/recreate and finalized historical receipts preserved. Fourteen genuine runtime reds precede corrections. Required f06-t090-architecture found two P2 issues, reproduced then fixed: final Local reconciliation revalidation; failed quarantine persistence retains bounded in-memory fence/pending ownership, readiness/admission block and root until nonduplicating bounded stop persistence succeeds. Final focused 32 checks/both consumers passed. Separate default locked t090-full-locked-20261023 run 555737ba-995c-4501-b205-b2352da0da9a qualifies source 27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4: 261 common/crash tests, four measured-transfer proof tests, three architecture checks/eight graphs, four actual 256MiB/4GiB transfers below 64MiB RSS, six owned SIGKILL/reopen barriers, original marker/both consumers, exact 96 entries/92 passes/four Object exclusions; three mutation pairs/29 manifest negatives. Tooling 105 passed; formatting/analyzers and independent current-source/lock manifest verification passed. Only 15 local Hoard.* hashes in six locks, graphs/versions/external/frozen inputs unchanged. README/affected guides/quickstart/recovery/plan/task status synchronized; original task bodies/spec/API/model/research/reviewer checklists unchanged; 359 documentation links/task integrity/git diff check passed; no hooks. Predecessor full gates historical, no predecessor changes. PR #16 remains draft; next separate converge; no finalization/feature completion/merge/release/infrastructure/dependency unlock."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-23T01:54:48.615555+00:00",
+      "evidence": "F-06 converge executed through installed speckit-converge with pinned specs/006-artifact-storage. Outcome converged: zero missing/partial/contradicts/unrequested findings at every severity across 25 FRs, eight buildable SCs, 23 acceptance scenarios, 15 edge cases, eight Phase 1 plan decisions, all 90 existing tasks and eight constitutional principles. Verified resulting T087..T090 behavior, including bounded failed-prefix/unselected-object cleanup, consumed cursor retirement, exact-incarnation quarantine and retained Local quarantine persistence. No new task/phase; all feature artifacts, reviewer-owned checklists, product/test/tooling sources and locks unchanged. Fresh HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/converge-t090-20261022 passed full default locked qualification: run 83c78659-2dc0-4564-93da-f74bdd2fc263, source 27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4, exact 96 entries/92 passes/four Object AS-41..44 exclusions; 261 logical/crash checks, four measured-transfer proof tests, three architecture checks/eight actual graphs, original marker and both unchanged 16-operation consumers, four actual 256MiB/4GiB measurements below 64MiB incremental OS peak RSS, six SIGKILL/fresh-process barriers, three executed mutation pairs/29 altered-manifest negatives, formatting/analyzers. Independent final-source full-manifest revalidation passed; python3 -m unittest discover -s tests/tooling -v passed 105 tests; artifact/template/local-document-target integrity and git diff --check passed. README/development synchronized; other guides/examples/design/architecture/governance/IaC/release documents unaffected because requirements, API, mechanisms, graph, commands, support and recovery behavior unchanged. No hooks or implementation; predecessor gates historical. Draft PR #16 retained; next stage finalize separately, not feature completion, merge, dependency unlock or release."
+    },
+    {
+      "stage": "finalize",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-23T02:01:05.124105+00:00",
+      "evidence": "F-06 finalization: all 90 tasks complete; clean convergence; unchanged 16/16 built-in and 40/40 reviewer-owned approvals; existing architecture findings have runtime red/green corrections. Fresh full locked run 49189bab-9010-4ec6-a825-2b4d2f2de31b binds source 27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4: 261 logical/crash checks, four transfer-proof tests, three architecture tests/eight graphs, both consumers/original marker, four real transfers, six owned SIGKILL/reopens, 92 passes/four explicit Object exclusions, three mutation pairs and 29 altered-manifest negatives. All 105 tooling tests, independent manifest/source revalidation, 340 local documentation links/anchors, PR-template structure and git diff --check pass. README/development/plan/tasks/quickstart updated; normative contracts, checklists, sources and locks unchanged. PR 16 targets main; no merge, release, production/F-07 claim or infrastructure action."
     }
   ]
 }

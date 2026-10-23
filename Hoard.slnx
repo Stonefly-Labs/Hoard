@@ -10,6 +10,7 @@
     <Project Path="tests/architecture/Hoard.Architecture.Tests/Hoard.Architecture.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/contracts/">
+    <Project Path="tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj" />
     <Project Path="tests/contracts/Hoard.Metadata.Tests/Hoard.Metadata.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/integration/">

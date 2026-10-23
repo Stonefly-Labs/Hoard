@@ -10,6 +10,13 @@ internal static class PublicSurfaceInspector
         "System.Data.IDbConnection", "System.Data.IDbTransaction",
         "System.Data.Common.DbConnection", "System.Data.Common.DbTransaction"
     ];
+    private static readonly HashSet<string> ProhibitedArtifactTypes =
+    [
+        "System.IServiceProvider",
+        "System.IO.FileSystemInfo", "System.IO.FileInfo", "System.IO.DirectoryInfo",
+        "System.IO.FileStream", "System.IO.FileSystemWatcher", "System.IO.DriveInfo",
+        "Microsoft.Win32.SafeHandles.SafeFileHandle"
+    ];
 
     private static bool Visible(TypeDefinition type) =>
         type.DeclaringType is null ? type.IsPublic
@@ -89,6 +96,17 @@ internal static class PublicSurfaceInspector
         Expand(method.ReturnType).Concat(Attributes(method)).Concat(Attributes(method.MethodReturnType))
             .Concat(Constraints(method)).Concat(method.Parameters.SelectMany(p => Expand(p.ParameterType).Concat(Attributes(p))));
 
+    internal static IEnumerable<TypeReference> Operand(object? operand) => operand switch
+    {
+        TypeReference target => Expand(target),
+        MethodReference target => Expand(target.DeclaringType).Concat(Expand(target.ReturnType))
+            .Concat(target.Parameters.SelectMany(p => Expand(p.ParameterType)))
+            .Concat(target is GenericInstanceMethod generic ? generic.GenericArguments.SelectMany(Expand) : []),
+        FieldReference target => Expand(target.DeclaringType).Concat(Expand(target.FieldType)),
+        CallSite target => Expand(target.ReturnType).Concat(target.Parameters.SelectMany(p => Expand(p.ParameterType))),
+        _ => []
+    };
+
     internal static List<ArchitectureViolation> Inspect(InspectionEvidence evidence)
     {
         var result = new List<ArchitectureViolation>();
@@ -125,7 +143,10 @@ internal static class PublicSurfaceInspector
                 {
                     var owner = evidence.Owner(type);
                     var target = evidence.Nodes[owner];
-                    var prohibited = target.Boundary == BoundaryOwnership.Bcl && ProhibitedContractTypes.Contains(type.FullName);
+                    var prohibited = target.Boundary == BoundaryOwnership.Bcl
+                        && (ProhibitedContractTypes.Contains(type.FullName)
+                            || node.Boundary is BoundaryOwnership.Abstractions or BoundaryOwnership.Artifact
+                            && ProhibitedArtifactTypes.Contains(type.FullName));
                     var allowed = !prohibited && (target.Boundary == BoundaryOwnership.Bcl || owner == node.Id
                         || (node.Boundary != BoundaryOwnership.Abstractions && target.Boundary == BoundaryOwnership.Abstractions)
                         || (node.Boundary is BoundaryOwnership.Hosting or BoundaryOwnership.Application or BoundaryOwnership.Protocol

@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Artifacts.HostAdapters</AssemblyName>
+    <PackageId>Hoard.Fixtures.Artifacts.HostAdapters</PackageId>
+    <Description>Test-only host composition, shared artifact authority and metadata bridge.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Hosting" />
+    <PackageReference Include="Hoard.Fixtures.Artifacts.Local" />
+    <PackageReference Include="Hoard.Fixtures.Artifacts.ObjectSemantics" />
+    <PackageReference Include="Hoard.Fixtures.Metadata.HostAdapters" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+</Project>

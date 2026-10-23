@@ -42,5 +42,77 @@ shortcuts.
 eventually exercise every advertised implementation; protocol tests must use
 real native package clients. Compile-only fixtures do not satisfy either gate.
 
+F-06 adds `contracts/Hoard.Artifacts.Tests` to the solution. Its value checks
+run source-level; additional `Cases/` compile only with
+`ArtifactPackageAcceptance=true` against independently prepared packages.
+`scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Artifact&FullyQualifiedName!~ArtifactTransferProofTests'` runs the
+current package-only checks with a retained pre-F06 baseline and always reports
+nonqualification. Coverage now includes independent streaming/publication/read/
+deletion mechanisms, real SQLite/memory reference transactions and six actual
+local parent-kill/fresh-reopen barriers. `--phase logical` excludes the crash
+children and external-measurement proof tests; `--phase recovery` additionally drives Python-owned crash children
+with independent hash/receipt validation. `--phase transfers` executes real
+256 MiB/4 GiB write/read and OS peak-RSS measurements on both providers, then
+four runtime tests validate those actual inputs and rejection variants.
+All focused modes remain partial. `--phase packages` runs eight actual graph scans, compiled
+provider/Hosting leak negatives, public-member compatibility including
+accessibility, the frozen old marker binary and both consumer selections.
+Default full acceptance passed on the T090 follow-up source: 261 logical/crash checks,
+four actual-transfer proof tests, three architecture checks, both consumers,
+the original retained binary, all six Python-owned crash barriers and exactly
+96 case entries (92 passes/four Object durability exclusions). Both fixtures
+admit complete baseline profiles and support explicit configured ready/start/
+stop/restart controls; they remain test-only, not production/F-07-certified.
+The local-package hash blocker is resolved by reviewed `Hoard.*` hash-only lock
+refreshes and separate default locked regressions. Versions, dependency graphs,
+external hashes and frozen historical baselines remain unchanged. See the
+[resolution and evidence](../specs/006-artifact-storage/plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
+Logical mode additionally runs six owned-child non-cooperative source,
+destination and native-deletion containment checks. Two explicit parent
+observations verify retained work/streams/root/guards and incomplete shutdown
+before exact-child termination; these are not durable-crash or cooperative
+resource-release passes. Public qualification-record checks reject mixed durable
+and simulation exclusion sets, flat unattached hashes and missing per-case
+results or explicit environment. Tooling negatives now recompute proof hashes
+around altered payloads and require paired passed TRX witnesses, exact executed
+test names and matching durations. These are evidence-integrity checks, not a
+replacement for execution. The exact per-AS catalog now requires every relevant
+provider/parameter variant; full mode cross-binds actual context inputs,
+materializes public qualification records and rejects 29 altered full manifests.
+Controlled handoff tests cover delivered versus unclaimed tickets/read sessions,
+expired staged-result cleanup, and failed reclamation blocking readiness/
+admission/stop until an exact bounded retry succeeds.
+Bounded-history checks also distinguish examined candidates from removals:
+seven original runtime reds exercise fully ineligible tables, and paired
+cursor-progress checks preserve a faulted candidate while reaching entries
+beyond the first 100. Local reopen and held-ticket regressions cover rebuilt
+dependency indexes without treating a bounded removal count as bounded traversal.
+Follow-up regressions deny actual staging-directory unlink after a real prefix,
+repeat failed cleanup/stop, restore access and verify exact bounded reclamation,
+capacity/readiness restoration, borrowed-stream survival and Local reopen.
+Separate post-commit permission failures preserve exact settled reconciliation
+and committed bytes while maintenance reclaims only residual staging. Paging
+regressions run 32 independent single-row scans through 35 identities, rejecting
+consumed/query-mismatched/expired handles and proving terminal quota release.
+Their exact runtime names are required by the AS-17/21/24/27/40 catalog.
+T089 adds four object-only partial/complete assembly-unlink failures, with and
+without cancellation, plus finite shutdown and settled equivalent-reuse cases.
+They verify exact observation/cleanup, retry/admission/readiness fences,
+actual reclaimed bytes and restored capacity without deleting selected/current/
+newer payloads or closing borrowed streams. Five intended runtime reds preceded
+the ownership fix; the full verifier requires these exact additional witnesses
+for Object AS-15/17/21/27/40. See the
+[T089 evidence](../specs/006-artifact-storage/plan.md#unpublished-object-cleanup-implementation-2026-10-22).
+T090 adds paired validation-first truncation/missing-payload, restored-byte
+rejection, delayed-open and direct-publication/reconciliation witnesses, while
+strengthening existing full-copy/reuse tests with restoration and Local reopen.
+Permission/unavailable-directory controls preserve healthy content. Two actual
+review-correction reds cover Local overlapping read/reconciliation settlement
+and failed quarantine-record persistence; bounded stop retry persists the fence
+before root release. Authorized deletion/recreation preserves the new incarnation
+and exact historical receipts. These exact runtime witnesses are required by
+AS-09/10/17/21/31/40 as applicable; see the
+[T090 evidence](../specs/006-artifact-storage/plan.md#corruption-quarantine-implementation-2026-10-22).
+
 OpenTofu mock-provider tests live beside the bootstrap at
 `infra/bootstrap/tests/` and run with `tofu -chdir=infra/bootstrap test`.

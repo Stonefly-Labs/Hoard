@@ -9,6 +9,119 @@ Hosting; F-04 adds protected metadata/observations, not provider operations. Sta
 [validation quickstart](../specs/001-provider-contracts/quickstart.md).
 For lifecycle use, see the [package-only lifecycle host](../examples/LifecycleHost/README.md).
 
+F-06 adds **fixture-qualified** BCL-only operations in
+`Hoard.Abstractions.Storage`, separate from the unchanged `IArtifactProvider`
+marker and historical `Metadata.ArtifactDigest`. Initialization/coordination
+fixtures now exercise complete-stream verification, protected copies, exact
+receipts, fenced cleanup and deletion. The host adapter composes unchanged
+SQLite/memory packages with actual evidence validation and current reference
+queries under the shared authority. Local crash checks use actual killed
+children and fresh reopen; object semantics remain process-local. The
+packages also have focused resolved-graph/public-member inspection, leak
+negatives and frozen-marker compatibility checks; these do not certify a
+production implementation. The unchanged package-only consumer now exercises
+all 16 store/evidence/maintenance/read/authority operations on each choice,
+including independent guard retention, exact reconciliation, abandonment,
+deletion and safe recreation. Actual compiled-body inspection rejects hidden
+concrete-provider coupling; the independent object mechanism has no filesystem
+rename calls. Both fixtures declare the mandatory baseline and become ready
+after successful explicit admission; missing guarantees/version/authority
+reject before root I/O. The final locked run qualifies 92 applicable cases
+with exactly four Object durability exclusions on the recorded macOS/.NET/APFS
+environment. Neither fixture is a production provider or remote service. The local-package
+hash blocker is resolved with reviewed hash-only lock updates and separate
+default locked regressions; versions, dependency graphs and frozen baselines
+are unchanged. Follow the
+[final evidence](../specs/006-artifact-storage/plan.md#final-fixture-qualification-and-handoff-2026-10-22)
+and [API inventory](../specs/006-artifact-storage/contracts/artifact-api.md)
+for actual availability. These fixtures do not grant production or F-07
+certification to another implementation.
+
+Streams are borrowed at their current position: providers never seek, flush or
+dispose them. Destination bytes are invalid unless the full verified copy
+completes. A timeout does not prove physical settlement: non-cooperative I/O
+retains its bounded handles, slots and opaque guards, reports incomplete cleanup
+and blocks admission rather than releasing live protection. Use the exact
+reserved ticket to reconcile uncertainty; never replay it as a new mutation.
+The fixture child runner exercises source, destination and synchronous native
+stalls on each provider. Parent-controlled inspection confirms retained work,
+borrowed streams, root ownership, applicable guards and incomplete shutdown
+before terminating the exact owned child; this is unsupported-worker containment,
+not a durable crash or cooperative-release pass.
+Qualification records reject durable-case exclusions for Local and require
+exactly AS-41..44 for the process-local simulation; the classes cannot be exchanged.
+Construct records with `ArtifactQualificationEnvironment` and 48 immutable
+`ArtifactQualificationCaseResult` values, each with a closed status, duration
+and bounded proof hashes. Environment labels are bounded printable ASCII;
+their SHA-256 is derived from the four newline-delimited labels. Aggregate
+hashes and exclusions are derived from the results. The former flat
+case-name/hash constructor deliberately throws rather than implying qualification.
+Report validation checks inner case/context identity and actual passed TRX
+witnesses, not merely the outer file hash. The exact per-AS catalog requires
+every provider/parameter variant; full acceptance also cross-binds actual
+package, lock, configuration, capability and environment inputs, measured
+transfers, killed-process recovery and materialized public qualification records.
+The former five-argument session factory remains available. Trusted fixture
+composition can explicitly provide `ArtifactFixtureAdmissionProfile` for a
+known-identity Local reopen; there is no automatic root discovery/reset.
+Object replacement uses a fresh root/epoch and cannot reconcile old tickets.
+Successful result handoff and cancellation are serialized. If cancellation
+wins first, the provider retains responsibility for reclaiming unclaimed
+tickets/staging/read sessions. Exact-generation cleanup remains valid after
+ownership expiry without authorizing new work. Failed reclamation blocks
+readiness/new admission and retains root ownership; bounded `StopAsync` retries
+only that resource and never starts a duplicate live cleanup attempt.
+Failed prefix reclamation is observable and retryable by its exact staging
+generation, including finalized noncommits, without waiting for ticket expiry.
+Maintenance does not reopen finalized tickets or reclaim committed bytes.
+Settled commit receipts remain reconcilable while residual staging is pending;
+exact cleanup preserves those receipts and restores capacity/readiness.
+Recovery continuations are single-use: a successful page replaces its consumed
+handle, and a terminal page releases it. Up to 32 independent scans can progress
+beyond 32 pages without artificial expiry waits; query/page-size/store/revision/
+expiry checks and explicit listing consistency still apply. See the
+[follow-up evidence](../specs/006-artifact-storage/plan.md#convergence-follow-up-implementation-2026-10-22).
+The Object fixture also registers each unselected assembly before file creation.
+Its scratch pool reserves the verified length, at most the configured staging
+byte limit and transfer-slot count, independently of multipart reservations.
+Thus multipart plus assembly scratch is bounded by twice the staging byte limit;
+selected/retired content is accounted separately. Failed unlink retains the
+exact assembly and original multipart reservation, blocks readiness/admission
+and prevents commit retries from allocating more payloads. Exact staging
+maintenance or bounded shutdown retries reclaim only that unselected object.
+Partial assemblies count their reserved maximum until actual removal; cleanup
+reports actual reclaimed bytes. Conditional selection transfers the object out
+of scratch ownership atomically. Equivalent reuse retains its original selected
+content and settled receipt even when the redundant assembly cannot be removed.
+See the [T089 evidence](../specs/006-artifact-storage/plan.md#unpublished-object-cleanup-implementation-2026-10-22).
+Every committed-content corruption detection quarantines the exact current
+incarnation, including missing payloads, validation-first truncation, duplicate
+verification, full-copy completion and unresolved-publication reconciliation.
+Restoring bytes externally cannot revive opens, evidence validation or reuse;
+explicit authorized deletion/recreation produces a different incarnation.
+Local persists quarantine across compatible reopen; Object retains it only
+within its declared process lifetime. Permission failures and unavailable
+directories remain distinct failures, not corruption. Quarantine persistence
+failure retains the Local in-memory fence, blocks readiness/new admission and
+keeps root ownership. Restore access and retry bounded `StopAsync` until the
+pending record is durable before reopening; failed stop is not resource release.
+Finalized receipts remain historical decisions, not current health certificates.
+See the [T090 evidence](../specs/006-artifact-storage/plan.md#corruption-quarantine-implementation-2026-10-22).
+Expired ticket history may be retired, but live content identity remains
+independent of its receipt anchor. Retained tombstones and reclaimed-incarnation
+records also consume finite bookkeeping capacity until safe expiry-based
+compaction; active or unresolved ticket work prevents premature removal.
+Admission examines at most 100 ticket candidates and 100 candidates per retained
+history index, with at most 100 history retirements. Rotating cursors and
+incremental exact-incarnation dependency indexes preserve progress without
+whole-table dependency scans. Capacity can remain unavailable while these
+bounded pages advance; providers do not hide an unbounded sweep or retry.
+An admitted reconciliation preserves an already-finalized receipt even if
+another operation subsequently deletes and recreates the digest.
+Logically removed content can still occupy space until exact-incarnation
+reclamation is confirmed. See the [current quickstart](../specs/006-artifact-storage/quickstart.md)
+for full/focused commands and the precise qualification limits.
+
 ## Public ownership and authoring
 
 `Hoard.Abstractions` owns immutable sealed module records in
