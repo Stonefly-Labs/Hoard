@@ -115,13 +115,15 @@ local-archive hash updates are reviewed/tracked, with no graph or third-party
 identity changes. T016 is complete as non-qualifying preparation. Default profiles
 and verify/aggregate CLI behavior below remain planned, not functional commands.
 
-Partial T017 admission now recognizes the exact documented options and freezes
+T017 foundation admission now recognizes the exact documented options and freezes
 catalog-owned selection; unsupported profiles, shortened/unknown case IDs, mixed
 modes and unsafe destinations reject without execution or private argument output.
 Use `bash scripts/validate-conformance.sh --help` for current status. Preparation
 executes; all admitted runtime/verify/aggregate requests still explicitly return
 `Incomplete`/`EvidenceIncomplete`, exit `2`, without creating evidence. This is
-not an independent verifier or a working qualification profile. T017 remains open.
+not an independent verifier or a working qualification profile. Native run
+`39949986671` verified real preparation through this entry point. T017/T018
+complete the foundation gate, not the later runtime/evaluator implementations.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

@@ -634,6 +634,43 @@ native skips on macOS; catalog/frozen inventory, shell syntax and whitespace
 checks pass. No C# or package graph changed in this increment. Native validation
 of the new shell-to-preparation route remains pending.
 
+### T017/T018 foundation closure
+
+Run [39949986671](https://github.com/Stonefly-Labs/Hoard/actions/runs/39949986671)
+at `83ddd428dbf0070b23c45f8d4fbf9843255bd087` passed all three native jobs:
+125 foundation checks without failures/errors/skips, fifteen SDK scopes/
+46 discoveries/46 executions/all six historical baselines, and real preparation
+through the new shell/CLI dispatch. Both independent source/cache/feed builds
+reproduced all 18 package and 13 lock byte sequences.
+Free scratch: 92,110,598,144 bytes; SDK input digest
+`e6eb8293e95bd22208dba1df7bc71d1c9cf97f3d002c467ba62bd8d3ded39369`;
+preparation proof
+`f58635d15061fa1eb4377e4187a26fe35d96809e970eca20e6f3a325c3bee666`.
+An additional local contributor-project selection/private-parent regression brings
+the portable total to 231, with ten native skips. No harness implementation changed
+after the native run; its test count does not include that additional regression.
+
+**Dependency boundary clarified:** T017 implements exact immutable admission,
+real preparation dispatch and explicit fail-closed routing for unavailable
+backends, not the profile/evaluation behavior explicitly assigned to
+T035/T046/T057/T064/T071..T074. Requiring those later backends at this gate would
+create a dependency cycle through T018. No scope/outcome is removed: their tasks
+stay unchecked and their CLI requests still return `EvidenceIncomplete` rather
+than a fake passing run or schema-only verification. T017's foundation is complete.
+
+T018 reran the complete portable tooling suite, including the specified evidence
+and execution files, alongside
+`DOTNET_CLI_USE_MSBUILD_SERVER=0 MSBUILDDISABLENODEREUSE=1 dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --no-restore --filter FullyQualifiedName~BindingContractTests -p:UseSharedCompilation=false -nodeReuse:false --verbosity quiet`
+(19 passed, no skips). Missing mandatory hooks and durable-backup support produce
+the intended `BindingInvalid`; repaired declarations admit. Caller mutation does
+not change copied capabilities/faults or catalog expectations. Missing actual
+session hooks reject despite optimistic declarations; retained cleanup observations
+cannot become `Released`. Native execution regressions also prove retained live
+work, failed cleanup publication and failure-preserving retry. Their earlier
+intended admission/ownership/input/origin reds and passing repairs are recorded
+above, not newly invented failures. T018's foundational gate is complete.
+This is not real-provider category, contributor, profile or full evaluator proof.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

@@ -77,6 +77,22 @@ class ConformanceCliTests(unittest.TestCase):
             with self.assertRaisesRegex(evidence.ConformanceError, "EvidenceIncomplete"):
                 evidence.dispatch_invocation(invocation)
 
+    def test_explicit_category_project_cannot_change_the_selected_common_agreement(self):
+        project = ROOT / "tests/fixtures/conformance/Contributor/Contributor.csproj"
+        invocation = evidence.admit_invocation(ROOT, [
+            "--profile", "metadata", "--binding-project", str(project),
+            "--filter", "MP-01", "--evidence", str(self.destination)])
+        self.assertEqual(invocation.binding_project, project)
+        self.assertEqual(invocation.case_keys, tuple(case.key for case in expected_cases("metadata")
+                                                    if case.case_id == "MP-01"))
+        self.parent.chmod(0o755)
+        try:
+            with self.assertRaisesRegex(evidence.ConformanceError, "OwnershipInvalid"):
+                evidence.admit_invocation(ROOT, ["--evidence", str(self.destination)])
+        finally:
+            self.parent.chmod(0o700)
+        self.assertFalse(self.destination.exists())
+
     def test_cli_rejects_private_unknown_input_without_persistence_or_false_success(self):
         import conformance_cli
         for arguments, code in (

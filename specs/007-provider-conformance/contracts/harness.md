@@ -160,11 +160,13 @@ locks use recorded local-archive derivations, never graph resolution or writebac
 The command rejects concurrent repository input changes and foreign output paths.
 Native run `39947737831` at `585970d` verified both fresh build graphs with identical
 bytes for all 18 packages/13 locks; generated source locks are reviewed/tracked.
-Partial T017 now admits the selectors/modes below, freezes independent exact
+T017's foundation now admits the selectors/modes below, freezes independent exact
 catalog keys and rejects invalid/ambiguous options or unsafe destinations before
 allocation. Only preparation executes. Other admitted modes explicitly return
 `Incomplete`/`EvidenceIncomplete`, exit `2`; runtime runners and independent
-verification/aggregation remain unimplemented, and T017 stays open.
+verification/aggregation remain unimplemented. Native run `39949986671` verifies
+the real preparation route. T017 completes admission/failure routing, not the
+backends explicitly scheduled in T035/T046/T057/T064/T071..T074.
 Preparation is always non-qualifying.
 
 `bash scripts/validate-conformance.sh` recognizes:
