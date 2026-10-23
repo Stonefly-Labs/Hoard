@@ -4122,6 +4122,68 @@ never full acceptance. Later features
 must introduce and document focused backend/UI format/type/unit checks,
 architecture tests, provider contract suites, and real-client protocol tests.
 
+### F-06 fresh convergence: corruption quarantine
+
+The installed `speckit-converge` assessed the present scoped implementation
+against 25 functional requirements, eight buildable success criteria, 23 story
+acceptance scenarios, 15 edge cases, eight grouped plan decisions, all 89
+existing tasks and eight constitutional principles. T087/T088/T089's resulting
+cleanup/cursor behavior is present, but the outcome is **`tasks_appended`**:
+one HIGH partial finding, no missing/contradicting/unrequested findings.
+
+| ID | Source | Current evidence | Remaining work |
+| --- | --- | --- | --- |
+| F1 | FR-005/010/012, US1/AC5, SC-001/003; T021/T022/T025..T028 | `LocalEvidence.cs:35..36` and `ObjectReadSession.cs:213..215` detect a direct-length mismatch but never mark the selected incarnation corrupt | Quarantine each exact detected-corrupt incarnation across validation/open/publication/reconciliation detection paths, with paired regressions and Local reopen proof |
+
+A private console probe references the actual independently prepared current
+assemblies and calls only public artifact/authority contracts. For **each**
+provider, an intact published receipt first validates successfully; truncating
+its payload makes `ValidateAsync` return `CorruptContent`. Without performing a
+full copy (whose existing path does record corruption), `OpenReadAsync` still
+returns a successful session. Externally restoring the original bytes then
+makes that same evidence validate and a new duplicate commit return
+`AlreadyPresentVerified`. No explicit recovery or new incarnation intervenes.
+The normative verification policy requires detected corruption to mark that
+incarnation unusable; external byte restoration is not authorized automatic
+repair. This is missing quarantine, not a demand for continuous media scrubbing.
+
+The skill appends only [Phase 11 / T090](../specs/006-artifact-storage/tasks.md#phase-11-convergence).
+All previous task bytes/checkboxes, spec, plan and reviewer-owned checklists
+remain unchanged. Application/test/tooling sources and lockfiles are untouched;
+the probe and raw qualification captures remain outside Git. No pre/post
+convergence hooks are configured. No implementation or checklist self-approval
+occurs in this stage.
+
+| Exact command / check | Result |
+| --- | --- |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/check-prerequisites.sh --json --require-spec --require-tasks --include-tasks` | Passed; exact pinned directory and required artifacts |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/converge-f06-20261023-2021` | Fresh default locked qualification passed: 243 common/crash tests, four actual-transfer proof tests, three architecture checks/eight graphs, original binary and both unchanged consumers; exact 96 entries, 92 passes/four Object AS-41..44 exclusions |
+| `dotnet run --project "$SESSION_FILES/corruption-probe/Probe.csproj" -c Release -v quiet` | Reproduced F1 on both providers: initial `Success`, truncation `CorruptContent`, subsequent open `Success`, restored-byte validation `Success`, duplicate reuse `Success (AlreadyPresentVerified)` |
+| `python3 -m unittest discover -s tests/tooling -q` | All 105 passed |
+| `artifact_evidence.verify_manifest(manifest, work, artifact_evidence.source_hash(root))` | Independent fresh current-source/lock manifest revalidation passed |
+
+`SESSION_FILES` denotes this invocation's private session `files/` directory.
+Fresh full run `d43680be-3121-4fbe-a18c-6cea1c01f081` binds source
+`b4a89fcc5fdf5334a4ab03c493ba62704580643ca486e970ced3e65f9d1da1db`.
+Existing full qualification includes all four real 256 MiB/4 GiB write/read
+measurements and six owned SIGKILL/fresh-reopen barriers, with zero failed or
+skipped tests. It omits the demonstrated validation-first quarantine sequence
+and therefore cannot establish clean convergence. The five predecessor gates
+remain historical, not freshly rerun for this append-only assessment.
+
+The driver records this result separately from the skill's append-only write.
+README and this guide describe the blocker; provider/test guides, quickstart,
+recovery/API/model/research, examples, baseline charter/product architecture/
+diagrams/ADR/governance/backlog, compatibility policy, IaC and release guides
+are unaffected because no API, intended behavior, dependency, runtime mechanism,
+supported environment or operational command is changed. The original evidence
+and task-status passages remain chronological implementation history.
+
+Next stage: **`implement`** T090, then separately invoked fresh convergence.
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) stays draft.
+Finalization, feature completion and dependency unlock remain blocked; no
+merge, tag, release, package publication, infrastructure action or deployment.
+
 ## Releases and deployment
 
 [Version tags publish GitHub source releases](RELEASING.md). They do not run

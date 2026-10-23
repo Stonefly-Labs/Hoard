@@ -752,7 +752,7 @@ runtime binaries or packages are published. See the
 [merge/release evidence](docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release).
 [Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
 merged into `main`, recording F-05 complete with release metadata.
-**F-06 fresh convergence found one remaining HIGH cleanup gap; implementation is next.**
+**F-06 fresh convergence found one remaining HIGH corruption-quarantine gap; implementation is next.**
 The additive BCL-only storage contracts have independent Local and simulated
 ObjectSemantics fixtures for verified streaming/publication, protected reads,
 exact-ticket reconciliation, bounded recovery and reference-safe deletion.
@@ -828,6 +828,19 @@ All 89 tasks are checked. See the
 [implementation evidence](specs/006-artifact-storage/plan.md#unpublished-object-cleanup-implementation-2026-10-22).
 The next stage is fresh **`converge`**; PR #16 stays draft, with no finalization,
 feature completion or release claim.
+
+The latest convergence verifies T089's cleanup correction but finds that both
+evidence validators fail to quarantine a detected-truncated incarnation.
+After validation returns `CorruptContent`, opens still succeed; externally
+restoring the bytes lets the same evidence validate and duplicate publication
+return `AlreadyPresentVerified`, without explicit recovery.
+[Phase 11 / T090](specs/006-artifact-storage/tasks.md#phase-11-convergence)
+records the HIGH partial correction and paired regression work. A fresh full
+locked run still passes its existing 92-pass/four-exclusion matrix; it does not
+cover or waive this validation-first corruption path. All 89 prior tasks remain
+checked; T090 is unchecked. The next stage is **`implement`**, then fresh
+convergence; PR #16 stays draft. See the
+[assessment and reproduction](docs/DEVELOPMENT.md#f-06-fresh-convergence-corruption-quarantine).
 
 The separately invoked **`specify`** stage creates the
 [F-06 artifact blob storage provider contract](specs/006-artifact-storage/spec.md)
