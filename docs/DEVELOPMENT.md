@@ -4798,6 +4798,14 @@ as repository-relative ownership. Fixture-local capture and an absolute sibling
 path repair those integration issues; neither diagnostic nor ownership
 admission is weakened.
 
+The source SDK now has a concrete `ConformanceEvidenceBuffer`: it retains at
+most 10,000 typed fault observations in order, copies immutable snapshots, and
+rejects cancellation/overflow without discarding prior evidence. All 41 source
+SDK tests pass locally. Native SDK execution is still incomplete: historical
+locked restoration reported compiler/NuGet code 1403 before any candidate
+compilation. The locks remain unchanged; bounded archive/assembly fingerprints
+are being used to diagnose the platform difference.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

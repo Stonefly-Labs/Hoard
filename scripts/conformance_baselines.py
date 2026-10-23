@@ -14,6 +14,7 @@ import shutil
 import stat
 import sys
 import tarfile
+import zipfile
 from xml.sax.saxutils import escape
 
 from foundation_evidence import canonicalize_acceptance_archive
@@ -40,8 +41,35 @@ def _command(run, args, *, cwd, cache_id):
     observed = run.command(args, cwd=cwd, kind="build", cache_id=cache_id)
     if observed.exit_code or any(event["code"] != "None" for event in observed.events):
         codes = sorted({event["value"] for event in observed.events if event["code"] == "CommandFailed"})
-        print(json.dumps({"code": "CommandFailed", "compilerCodes": codes}), file=sys.stderr)
+        diagnostic = {"code": "CommandFailed", "compilerCodes": codes,
+                      "commandSequence": run.command_sequence}
+        if cache_id in {name for name, _, _, _ in BASELINES} | {"f06", "f06-artifacts"}:
+            diagnostic["baselineId"] = cache_id
+            if 1403 in codes:
+                diagnostic["localArchives"] = local_archive_diagnostics(run.root / "feed" / cache_id)
+        print(json.dumps(diagnostic), file=sys.stderr)
         raise ConformanceError("CommandFailed")
+
+
+def local_archive_diagnostics(feed):
+    result = {}
+    for name in ("Hoard.Abstractions", "Hoard.Core", "Hoard.Hosting", "Hoard.Application"):
+        path = feed / f"{name}.0.1.0.nupkg"
+        no_symlinks(path)
+        if not path.exists():
+            continue
+        if not path.is_file() or path.stat().st_size > 64 * 1024 * 1024:
+            raise ConformanceError("OutputLimitExceeded")
+        try:
+            with zipfile.ZipFile(path) as archive:
+                entry = archive.getinfo(f"lib/net10.0/{name}.dll")
+                if entry.file_size > 16 * 1024 * 1024:
+                    raise ConformanceError("OutputLimitExceeded")
+                result[name] = {"archiveSha256": file_sha256(path),
+                                "assemblySha256": hashlib.sha256(archive.read(entry)).hexdigest()}
+        except (zipfile.BadZipFile, KeyError):
+            raise ConformanceError("InputChanged") from None
+    return result
 
 
 def export_revision(repository, run, revision, name):

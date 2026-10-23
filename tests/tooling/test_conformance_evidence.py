@@ -615,6 +615,26 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
 
 class ConformanceBaselineTests(unittest.TestCase):
+    def test_local_archive_diagnostics_project_only_fixed_identities_and_actual_hashes(self):
+        import zipfile
+        with tempfile.TemporaryDirectory() as directory:
+            feed = Path(directory).resolve()
+            package = feed / "Hoard.Abstractions.0.1.0.nupkg"
+            with zipfile.ZipFile(package, "w") as archive:
+                archive.writestr("lib/net10.0/Hoard.Abstractions.dll", b"actual assembly")
+                archive.writestr("private-synthetic-canary.txt", b"unprojected contents")
+            projected = self.baselines.local_archive_diagnostics(feed)
+            self.assertEqual(projected, {"Hoard.Abstractions": {
+                "archiveSha256": evidence.file_sha256(package),
+                "assemblySha256": hashlib.sha256(b"actual assembly").hexdigest()}})
+            package.write_bytes(b"broken archive")
+            with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                self.baselines.local_archive_diagnostics(feed)
+            package.unlink()
+            package.symlink_to(self.seal)
+            with self.assertRaisesRegex(evidence.ConformanceError, "OwnershipInvalid"):
+                self.baselines.local_archive_diagnostics(feed)
+
     def setUp(self):
         import conformance_baselines as baselines
         self.baselines = baselines

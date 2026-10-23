@@ -91,6 +91,43 @@ public sealed class BindingContractTests
     }
 
     [Fact]
+    public async Task Evidence_buffer_preserves_observation_order_without_mutable_snapshots()
+    {
+        var buffer = new ConformanceEvidenceBuffer();
+        var first = new ConformanceFaultObservation(
+            ConformanceFault.Capacity, "capacity", 1, ConformanceOwnershipState.Active);
+        await buffer.ObserveAsync(first, default);
+        var snapshot = buffer.Snapshot();
+        var second = new ConformanceFaultObservation(
+            ConformanceFault.CleanupFailure, "cleanup", 2, ConformanceOwnershipState.Retained);
+        await buffer.ObserveAsync(second, default);
+        Assert.Equal<ConformanceFaultObservation>([first], snapshot);
+        Assert.Equal<ConformanceFaultObservation>([first, second], buffer.Snapshot());
+    }
+
+    [Fact]
+    public async Task Evidence_buffer_rejects_cancellation_and_overflow_without_losing_prior_observations()
+    {
+        var buffer = new ConformanceEvidenceBuffer();
+        var observation = new ConformanceFaultObservation(
+            ConformanceFault.Capacity, "capacity", 1, ConformanceOwnershipState.Active);
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(async () =>
+            await buffer.ObserveAsync(observation, cancelled.Token));
+        Assert.Empty(buffer.Snapshot());
+        for (var number = 0; number < 10_000; number++)
+        {
+            await buffer.ObserveAsync(observation, default);
+        }
+        var failure = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
+            await buffer.ObserveAsync(observation, default));
+        Assert.Equal("OutputLimitExceeded", failure.Message);
+        Assert.Equal(10_000, buffer.Snapshot().Length);
+        Assert.All(buffer.Snapshot(), observed => Assert.Equal(observation, observed));
+    }
+
+    [Fact]
     public void Catalog_exclusion_cannot_be_fabricated_as_a_runtime_execution()
     {
         var expected = ConformanceCatalog.Expand("metadata").First(entry => !entry.Witnesses.IsEmpty);

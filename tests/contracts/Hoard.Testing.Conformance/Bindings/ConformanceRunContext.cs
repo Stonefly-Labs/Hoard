@@ -1,3 +1,5 @@
+using System.Collections.Immutable;
+
 namespace Hoard.Testing.Conformance.Bindings;
 
 public sealed class ConformanceRunContext
@@ -57,4 +59,30 @@ public interface IConformanceResourceAllocator
 public interface IConformanceEvidenceSink
 {
     ValueTask ObserveAsync(ConformanceFaultObservation observation, CancellationToken cancellationToken);
+}
+
+public sealed class ConformanceEvidenceBuffer : IConformanceEvidenceSink
+{
+    private readonly object gate = new();
+    private readonly List<ConformanceFaultObservation> observations = [];
+
+    public ValueTask ObserveAsync(ConformanceFaultObservation observation, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(observation);
+        lock (gate)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (observations.Count >= 10_000) { throw new InvalidOperationException("OutputLimitExceeded"); }
+            observations.Add(observation);
+        }
+        return ValueTask.CompletedTask;
+    }
+
+    public ImmutableArray<ConformanceFaultObservation> Snapshot()
+    {
+        lock (gate)
+        {
+            return observations.ToImmutableArray();
+        }
+    }
 }

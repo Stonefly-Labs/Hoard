@@ -1054,6 +1054,9 @@ overflow. A separate diagnostic Linux SDK/logger job seals historical baselines
 before candidate compilation; its native result is pending. None of this
 completes the remaining foundations or grants provider qualification.
 
+The SDK also supplies a bounded safe fault-observation buffer with immutable
+snapshots; observations are setup evidence, never provider-selected pass results.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
