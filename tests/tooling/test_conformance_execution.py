@@ -105,6 +105,19 @@ class ConformanceExecutionTests(unittest.TestCase):
         del run.children[os.getpid()]
         run.release()
 
+    def test_linux_identity_distinguishes_kernel_start_ticks_and_ignores_process_names(self):
+        def image(name, ticks):
+            fields = [b"S", b"1", b"7", b"7"] + [b"0"] * 15 + [str(ticks).encode("ascii")]
+            return b"42 (" + name + b") " + b" ".join(fields)
+        original = execution.linux_process_identity(42, image(b"test) internal name", 100))
+        renamed = execution.linux_process_identity(42, image(b"changed", 100))
+        reused = execution.linux_process_identity(42, image(b"test) internal name", 101))
+        self.assertEqual(original, renamed)
+        self.assertNotEqual(original, reused)
+        for malformed in (b"42 (bad) S", b"43 (different) S", b"x" * 4097):
+            with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                execution.linux_process_identity(42, malformed)
+
     def test_ledger_tampering_and_symlink_swap_prevent_cleanup(self):
         run = self.workspace()
         run.transition("Active")

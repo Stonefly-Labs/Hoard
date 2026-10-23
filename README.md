@@ -1032,8 +1032,11 @@ autonomously. The Memory fixture now has bounded, targeted corruption controls
 and real stored-payload/receipt validation without a dependency on the SDK.
 Witness binding/matrix admission and initial ownership/cleanup fixes are
 implemented; full acceptance and final architecture review remain outstanding.
-New native child execution requires Linux kernel confinement; macOS fails
-prerequisite admission rather than claiming unsafe settlement. See the
+Native execution admission now requires both inherited Linux confinement and
+kernel PID-handle group signalling, verified before the target is released;
+unsupported hosts fail admission rather than claiming unsafe settlement.
+The foundation workflow has observed a 23-test, zero-skip Linux pass and then
+two intended handle-admission failures; neither is full qualification. See the
 [implementation checkpoint](specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized

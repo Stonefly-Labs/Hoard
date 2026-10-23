@@ -4700,11 +4700,22 @@ The same early review found incomplete descendant containment, an unprotected
 post-spawn registration window, cleanup/termination budget and state-ordering
 defects, and missing binding/matrix checks during witness ingestion. Initial
 repairs and targeted regressions are implemented. Native child execution now
-requires inherited Linux kernel process-group confinement; macOS returns
+requires inherited Linux kernel process-group confinement and stable
+PID-handle group signalling (probed Linux 6.9+ support). A two-way startup
+handshake prevents target execution before handle, identity and ledger admission.
+Group signals use the kernel handle; Linux process fingerprints use actual
+kernel start ticks, not second-resolution `ps` dates. Unsupported hosts return
 `PrerequisiteMissing` rather than claiming safe generic containment. The Ubuntu
 foundation workflow runs sanitized native regressions without skips and does
 not claim qualification. Local skipped native checks are incomplete evidence.
-Full challenge coverage and native results remain required before acceptance.
+Run [39901637391](https://github.com/Stonefly-Labs/Hoard/actions/runs/39901637391)
+passed 23 tests without skips and measured 92,112,142,336 free scratch bytes.
+Run [39904414231](https://github.com/Stonefly-Labs/Hoard/actions/runs/39904414231)
+then observed exactly two intended failures for missing process/group handles;
+the repaired handshake and stable-handle implementation require a fresh native
+replay. Separately, all 72 unchanged inherited metadata tests passed against
+candidate Memory packages without skips. Neither focused result is complete
+F-07 acceptance. Full challenge coverage remains required before acceptance.
 This is not the final architecture review or T081 completion.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)

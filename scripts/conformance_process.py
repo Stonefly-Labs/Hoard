@@ -4,6 +4,7 @@ import ctypes
 import errno
 import os
 import platform
+import socket
 import sys
 
 
@@ -57,15 +58,15 @@ def install_group_guard():
 def main():
     if len(sys.argv) < 3:
         return 2
-    acknowledgement = int(sys.argv[1])
     try:
-        install_group_guard()
+        with socket.socket(fileno=int(sys.argv[1])) as acknowledgement:
+            install_group_guard()
+            acknowledgement.sendall(b"1")
+            if acknowledgement.recv(1) != b"1":
+                return 2
     except OSError:
-        os.write(acknowledgement, b"0")
-        os.close(acknowledgement)
+        os.write(1, b'{"event":"control","code":"PrerequisiteMissing","value":0}\n')
         return 2
-    os.write(acknowledgement, b"1")
-    os.close(acknowledgement)
     try:
         os.execvpe(sys.argv[2], sys.argv[2:], os.environ)
     except OSError:

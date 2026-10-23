@@ -38,7 +38,13 @@ environment, propagate termination control deadlines and perform synthetic
 cleanup in an identity-checked, bounded helper before marking release.
 Linux x64/arm64 child bootstraps install inherited kernel filters that prevent
 session/group and namespace escapes before executing a test program.
-The controller requires a private startup acknowledgement. Native regressions
+The controller requires a two-way startup handshake: the target remains blocked
+until identity/ledger registration and kernel PID-handle group signalling
+admission succeed. Group termination uses the stable kernel handle, not a
+numeric PID that could be reused. Linux identity also records kernel start ticks
+rather than second-resolution `ps` start times. The group-handle prerequisite
+requires Linux 6.9 or later support and is probed, not inferred from a version
+label. Native regressions
 must run without skips on Linux; macOS cannot provide the required generic
 containment and therefore returns `PrerequisiteMissing`, not a qualified result
 or case exclusion. Existing predecessor tooling is unaffected by this admission
@@ -46,8 +52,17 @@ restriction. A least-privilege Ubuntu foundation workflow runs sanitized
 non-qualifying regressions; it is not the planned five-profile baseline.
 
 The historical checkpoint and unresolved review inventory below explain the
-earlier pause. Subsequent repairs are still subject to full challenge coverage,
-native CI results and final architecture review before qualification.
+earlier pause. Native foundation run
+[39901637391](https://github.com/Stonefly-Labs/Hoard/actions/runs/39901637391)
+passed 23 checks without skips and measured 92,112,142,336 free scratch bytes.
+Subsequent run
+[39904414231](https://github.com/Stonefly-Labs/Hoard/actions/runs/39904414231)
+observed exactly the two intended missing-handle admission failures before
+the handshake/handle correction. A new native replay must confirm the repair.
+The unchanged inherited metadata suite also passed 72 tests against candidate
+Memory bytes; this is a focused regression, not category qualification.
+Subsequent repairs remain subject to full challenge coverage and final
+architecture review before qualification.
 
 ## Partial implementation checkpoint
 

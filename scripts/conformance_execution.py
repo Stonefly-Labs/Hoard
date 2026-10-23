@@ -9,6 +9,7 @@ import re
 import selectors
 import shutil
 import signal
+import socket
 import stat
 import subprocess
 import sys
@@ -24,6 +25,7 @@ TRANSIENT_BYTES = 1024 * 1024
 CHILD_DIAGNOSTIC_BYTES = 8 * 1024 * 1024
 PROFILE_DIAGNOSTIC_BYTES = 64 * 1024 * 1024
 MAX_PROCESSES = 256
+PIDFD_SIGNAL_PROCESS_GROUP = 4
 
 
 def control_timeout(deadline):
@@ -115,6 +117,17 @@ def command_environment(root, cache, supplied):
 def process_identity(pid, *, deadline=None):
     if type(pid) is not int or pid <= 0:
         raise ConformanceError("OwnershipInvalid")
+    if sys.platform == "linux":
+        control_timeout(deadline)
+        try:
+            descriptor = os.open(f"/proc/{pid}/stat", os.O_RDONLY | os.O_NOFOLLOW)
+        except FileNotFoundError:
+            return None
+        with os.fdopen(descriptor, "rb") as source:
+            if os.fstat(source.fileno()).st_uid != os.getuid():
+                raise ConformanceError("OwnershipInvalid")
+            encoded = source.read(4097)
+        return linux_process_identity(pid, encoded)
     code, output = capture_control(
         ["ps", "-p", str(pid), "-o", "pid=,uid=,pgid=,lstart=,stat="],
         limit=4096, timeout=control_timeout(deadline))
@@ -128,6 +141,20 @@ def process_identity(pid, *, deadline=None):
     if fields[-1].startswith("Z"):
         return None
     return hashlib.sha256(" ".join(fields[:-1]).encode("ascii")).hexdigest()
+
+
+def linux_process_identity(pid, encoded):
+    prefix, separator, remainder = encoded.rpartition(b") ")
+    fields = remainder.split()
+    if (len(encoded) > 4096 or not separator or not prefix.startswith(str(pid).encode("ascii") + b" (")
+            or len(fields) < 20 or fields[0] not in (b"R", b"S", b"D", b"Z", b"T", b"t", b"X", b"x", b"K", b"W", b"P", b"I")
+            or any(not fields[index].isdigit() for index in (1, 2, 3, 19))):
+        raise ConformanceError("OwnershipInvalid")
+    if fields[0] in (b"Z", b"X", b"x"):
+        return None
+    identity = b":".join((str(pid).encode("ascii"), str(os.getuid()).encode("ascii"),
+                          fields[2], fields[3], fields[19]))
+    return hashlib.sha256(identity).hexdigest()
 
 
 def process_group(group, *, deadline=None):
@@ -224,6 +251,7 @@ class OwnedRun:
         self.state = "Allocated"
         self.children = {}
         self.groups = set()
+        self._group_handles = {}
         self.retained_bytes = 0
         self.command_sequence = 0
         self.started = time.monotonic()
@@ -280,8 +308,30 @@ class OwnedRun:
                     raise ConformanceError("OwnershipInvalid")
                 live.add(pid)
         for group in self.groups:
-            live.update(process_group(group))
+            live.update(self._group_members(group))
         return frozenset(live)
+
+    def _admit_group_handle(self, group):
+        try:
+            handle = os.pidfd_open(group, 0)
+        except (AttributeError, OSError):
+            raise ConformanceError("PrerequisiteMissing") from None
+        try:
+            signal.pidfd_send_signal(handle, 0, None, PIDFD_SIGNAL_PROCESS_GROUP)
+        except (AttributeError, OSError):
+            os.close(handle)
+            raise ConformanceError("PrerequisiteMissing") from None
+        self._group_handles[group] = handle
+
+    def _group_members(self, group, *, deadline=None):
+        if group in self._group_handles:
+            try:
+                signal.pidfd_send_signal(self._group_handles[group], 0, None, PIDFD_SIGNAL_PROCESS_GROUP)
+            except ProcessLookupError:
+                return ()
+            except OSError:
+                raise ConformanceError("OwnershipInvalid") from None
+        return process_group(group, deadline=deadline)
 
     def terminate(self, pid, *, deadline=None):
         deadline = min(deadline or time.monotonic() + 10, time.monotonic() + 10)
@@ -290,33 +340,30 @@ class OwnedRun:
             raise ConformanceError("OwnershipInvalid")
         self._terminate_group(pid, deadline)
 
-    def _terminate_group(self, group, deadline, *, exclude=None):
-        identities = {child: process_identity(child, deadline=deadline)
-                      for child in process_group(group, deadline=deadline) if child != exclude}
-        for child in sorted(identities, reverse=True):
-            identity = identities[child]
-            if identity is not None:
-                if process_identity(child, deadline=deadline) != identity:
-                    raise ConformanceError("OwnershipInvalid")
-                try:
-                    os.kill(child, signal.SIGKILL)
-                except ProcessLookupError:
-                    if process_identity(child, deadline=deadline) is not None:
-                        raise ConformanceError("CleanupIncomplete") from None
-        while process_group(group, deadline=deadline):
+    def _terminate_group(self, group, deadline):
+        if group not in self._group_handles:
+            raise ConformanceError("OwnershipInvalid")
+        try:
+            signal.pidfd_send_signal(self._group_handles[group], signal.SIGKILL, None, PIDFD_SIGNAL_PROCESS_GROUP)
+        except ProcessLookupError:
+            return
+        except OSError:
+            raise ConformanceError("CleanupIncomplete") from None
+        while self._group_members(group, deadline=deadline):
             time.sleep(0.01)
 
     def _contain(self, child):
         deadline = time.monotonic() + 10
-        if child.poll() is None:
+        if child.pid in self._group_handles:
+            self._terminate_group(child.pid, deadline)
+        elif child.poll() is None:
             child.kill()
-        self._terminate_group(child.pid, deadline, exclude=child.pid)
         try:
             child.wait(timeout=max(0.001, deadline - time.monotonic()))
         except subprocess.TimeoutExpired:
             raise ConformanceError("CleanupIncomplete") from None
-        while process_group(child.pid, deadline=deadline):
-            time.sleep(0.01)
+        if self._group_members(child.pid, deadline=deadline):
+            raise ConformanceError("CleanupIncomplete")
 
     def command(self, args, *, cwd=None, timeout=None, kind="events", env=None, scope="ordinary", cache_id="default"):
         self._check_ledger()
@@ -352,19 +399,20 @@ class OwnedRun:
         if scope != "cleanup" and (sys.platform != "linux" or os.uname().machine not in ("x86_64", "aarch64")):
             raise ConformanceError("PrerequisiteMissing")
         environment = command_environment(self.root, cache, env)
-        acknowledgement, writer = os.pipe()
+        acknowledgement, writer = socket.socketpair()
         launch = (list(args) if scope == "cleanup" else
-                  [sys.executable, "-I", "-S", str(Path(__file__).with_name("conformance_process.py")), str(writer), *args])
+                  [sys.executable, "-I", "-S", str(Path(__file__).with_name("conformance_process.py")),
+                   str(writer.fileno()), *args])
         try:
             child = subprocess.Popen(
                 launch, cwd=cwd, env=environment,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True,
-                pass_fds=(() if scope == "cleanup" else (writer,)))
+                pass_fds=(() if scope == "cleanup" else (writer.fileno(),)))
         except OSError:
-            os.close(acknowledgement)
+            acknowledgement.close()
             raise ConformanceError("CommandFailed") from None
         finally:
-            os.close(writer)
+            writer.close()
         self.command_sequence += 1
         destination = self.root / "diagnostics" / f"command-{self.command_sequence:04}.jsonl"
         events = []
@@ -373,6 +421,8 @@ class OwnedRun:
         raw_total = 0
         try:
             self.groups.add(child.pid)
+            if scope != "cleanup":
+                self._admit_group_handle(child.pid)
             self._persist()
             identity = process_identity(child.pid, deadline=deadline)
             if identity is not None:
@@ -381,8 +431,9 @@ class OwnedRun:
             if scope != "cleanup":
                 with selectors.DefaultSelector() as startup:
                     startup.register(acknowledgement, selectors.EVENT_READ)
-                    if not startup.select(control_timeout(deadline)) or os.read(acknowledgement, 2) != b"1":
+                    if not startup.select(control_timeout(deadline)) or acknowledgement.recv(2) != b"1":
                         raise ConformanceError("PrerequisiteMissing")
+                acknowledgement.sendall(b"1")
             with selectors.DefaultSelector() as selector:
                 selector.register(child.stdout, selectors.EVENT_READ)
                 while selector.get_map():
@@ -425,7 +476,7 @@ class OwnedRun:
                     if event is not None:
                         events.append(event)
             code = child.wait(timeout=max(0.001, deadline - time.monotonic()))
-            if process_group(child.pid, deadline=deadline):
+            if self._group_members(child.pid, deadline=deadline):
                 raise ConformanceError("CleanupIncomplete")
         except (ConformanceError, OSError, subprocess.SubprocessError, KeyboardInterrupt) as error:
             try:
@@ -440,11 +491,14 @@ class OwnedRun:
                 raise
             raise ConformanceError("CommandFailed") from None
         finally:
-            os.close(acknowledgement)
+            acknowledgement.close()
             child.stdout.close()
-            if child.poll() is not None and not process_group(child.pid):
+            if child.poll() is not None and not self._group_members(child.pid):
                 self.children.pop(child.pid, None)
                 self.groups.discard(child.pid)
+                handle = self._group_handles.pop(child.pid, None)
+                if handle is not None:
+                    os.close(handle)
                 self._persist()
         data = b"".join(canonical_bytes(event) + b"\n" for event in events)
         if len(data) > CHILD_DIAGNOSTIC_BYTES or self.retained_bytes + len(data) > PROFILE_DIAGNOSTIC_BYTES:
