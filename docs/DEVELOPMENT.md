@@ -5185,15 +5185,48 @@ provider package label. Three C# missing-API regressions and two Python missing-
 regressions preceded the implementation. All 73 source SDK checks and 218 tooling
 checks pass locally (ten native tooling skips); focused format checks pass.
 The bounded architecture review found no actionable ownership/dependency defects.
-Native session diagnostics are pending; the selection now has thirteen scopes/
-38 discoveries/38 executions. These leaf observations are not yet linked to exact
+Native run
+[39940194762](https://github.com/Stonefly-Labs/Hoard/actions/runs/39940194762)
+at `457c4e5` verified 114 checks without failures/errors/skips,
+92,110,696,448 free scratch bytes, thirteen scopes/38 discoveries/38 executions
+and all six baselines. Input digest
+`8ffbb9fc9ca1d634e0030b796ae3454f20577185226bb643f370983787781782`.
+At that checkpoint these leaf observations were not yet linked to exact
 platform execution/attempt/group/input evidence. SQLite/PRAGMA production and full
 controller/evaluator integration remain unfinished, and T014 stays unchecked.
 An added source-routing regression caught the session diagnostic mistakenly
 selecting the smoke assembly. The explicit source scope list is repaired; all
 thirteen scenario launches now have focused assembly/package checks before
 discovery, and all sixteen SDK orchestration unit tests pass. Native observation
-must still establish actual execution.
+in run `39940194762` established execution. Its predecessor run `39939945388`
+had passed 113 native checks and twelve diagnostic scopes before the source-routing
+error safely failed the thirteenth scope with `Incomplete`/`EvidenceIncomplete`.
+
+The current origin channel emits only hashes, canonical UUIDs and closed runtime/
+case data through bounded `ITestOutputHelper` packets. It does not export provider
+names, paths or tokens. Actual VSTest results carry the packets; the safe logger
+requires exact run/case and admitted assembly correspondence, complete packet
+inventory/digest and nonreplayed sessions before embedding origins in that result's
+execution/attempt/group/input/owner-bound proof. Proofs remain bounded to 64 KiB.
+Parent ingestion independently selects role/runtime/package assignments, checks
+actual initial declaration/runtime/architecture and reopen lineage, and requires
+an attributable origin for a passing provider-bound qualification witness.
+This requirement does not invent origins for failed/skipped observations.
+Case history freezes role assignments, retains immutable admitted origins and
+rejects origin replay under fresh attempt/execution IDs.
+
+The bounded architecture review found an instance-coherence map resetting per
+origin. Intended rehashed regressions reproduced contradictory component identities
+across origins, separate results and fresh attempts; shared instance-identity maps
+now reject all three without deleting prior observations. Packet/missing/digest/
+foreign-case/replay/raw-field regressions also preceded repairs. The native selection
+now includes a real package-mode output probe over an explicitly synthetic metadata
+factory, not a provider qualification, plus its source-owned negative controls:
+fifteen scopes/46 expected discovery and execution observations. That full channel
+is native-pending. Local tooling passes 221 checks (ten native skips); the complete
+80-test source SDK suite and focused formatting verification pass. No CLI/full profiles
+or SQLite producer are claimed, and T014 remains unchecked pending its remaining
+foundation verification.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

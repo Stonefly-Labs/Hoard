@@ -131,7 +131,24 @@ Capture shares a five-second/256 MiB component-byte scope, 64 MiB per assembly.
 selected runtime/package assignments, immutable declaration/environment and
 expected parent identity; inconsistent records for one instance ID reject.
 This observation is not an execution witness, pass result or qualification.
-Exact platform execution/attempt/group/input linkage remains required.
+Exact platform execution/attempt/group/input linkage is required for result admission.
+
+The implemented private wire channel uses a hash-only projection inside
+`sessionOrigins` on the actual VSTest execution proof. Component records contain
+only `instanceId`, `assemblySha256`, `moduleVersionId` and `typeSha256`; names,
+paths and tokens are never wire data. Complete bounded packets carry the session
+UUID, sequential index/count and SHA-256; exact run/case and actual source-result
+context bind the projection to its owner/input/group/attempt/execution envelope.
+Manifest expectations now require an independent `caseId`. Parent admission checks
+the selected declaration, runtime/architecture and role-specific runtime/package
+assignments, including explicitly unpackaged test roles. Passing provider-bound
+qualification witnesses require attributable origins; failed/skipped observations
+do not invent them. Reopen parents and factory identities must match previously
+observed lineage. Instance identity maps span origins/results within an attempt
+and all attempts of a case, rejecting changed module/type/assembly for one UUID.
+Case history retains immutable origins and rejects session replay even when the
+attempt and execution UUIDs are fresh. These checks remain foundation APIs, not
+complete profile evaluation or hostile-provider attestation.
 
 ### Shared bounds
 

@@ -50,8 +50,19 @@ Reopen creates an observed wrapper around the actual reopened session with paren
 lineage; cleanup/disposal delegate to that real session and confer no release
 claim. Component reads share five seconds/256 MiB (64 MiB per assembly). Factory,
 getter and provider work still require finite owning-controller scopes; these
-wrappers are not a non-cooperation containment mechanism. The leaf origin and
-independent role-byte admission are not yet wired to complete execution evidence.
+wrappers are not a non-cooperation containment mechanism.
+
+`ConformanceSessionOriginOutput.Write` sends a hash-only origin projection through
+the actual xUnit output helper. The safe VSTest logger reassembles bounded packets
+only from the corresponding actual result, requires exact manifest run/case and
+admitted assembly hashes, and embeds the closed origin in that execution's proof.
+Parent admission independently checks role/runtime/package assignments, initial
+declaration, environment and reopen lineage. Session replay and contradictory
+instance identities across origins, results and case attempts reject; failed/
+skipped observations do not fabricate missing origins. Passing provider-bound
+qualification witnesses require attributable origins. The synthetic package-mode
+transport probe is diagnostic, not provider qualification. Its native execution
+is pending, and complete CLI/profile/evaluator integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
 

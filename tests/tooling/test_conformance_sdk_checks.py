@@ -35,7 +35,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             folder = checks.TESTS if source else checks.LOGGER + "/Smoke"
             assembly = candidate / folder / "bin/Release/net10.0" / (
                 "Hoard.Conformance.Tests.dll" if source else "Smoke.dll")
-            package = "Hoard.Testing.Conformance" if source else "Hoard.Conformance.TestLogger"
+            package = "Hoard.Testing.Conformance" if source or name == "origin-output" else "Hoard.Conformance.TestLogger"
             inputs = {
                 "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
                 "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},

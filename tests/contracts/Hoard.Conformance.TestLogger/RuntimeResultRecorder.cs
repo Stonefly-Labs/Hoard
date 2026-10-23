@@ -29,6 +29,8 @@ public sealed class RuntimeResultRecorder : IDisposable
     private readonly Dictionary<string, RuntimeFile> packages;
     private readonly HashSet<string> selectedMethods;
     private readonly HashSet<string> seen = new(StringComparer.Ordinal);
+    private readonly HashSet<Guid> seenSessions = [];
+    private readonly Dictionary<Guid, RuntimeOriginOutput.ComponentIdentity> seenInstances = [];
     private readonly HashSet<string> unmatchedMessages = new(StringComparer.Ordinal);
     private readonly HashSet<string> failureLines = new(StringComparer.Ordinal);
     private readonly FileStream witnesses;
@@ -107,6 +109,7 @@ public sealed class RuntimeResultRecorder : IDisposable
             RuntimeSafety.IdentityPair(entry.TestIdentity, entry.FullyQualifiedName);
             RuntimeSafety.Id(entry.BindingId);
             RuntimeSafety.Id(entry.MatrixId);
+            RuntimeSafety.Id(entry.CaseId);
             RuntimeSafety.Require(identities.Add(entry.TestIdentity)
                 && input.Assemblies.Any(file => file.Id == entry.AssemblyId)
                 && input.Packages.Any(file => file.Id == entry.PackageId));
@@ -212,7 +215,9 @@ public sealed class RuntimeResultRecorder : IDisposable
                 var kind = FailureKind(result, entry);
                 if (result.Outcome == TestOutcome.Failed) { CorrelateFailureMessages(result); }
                 RuntimeSafety.Require(diagnostic == ConformanceDiagnosticCode.None, diagnostic.ToString());
-                if (result.Messages.Count > 0 || (result.Outcome == TestOutcome.Passed
+                var (sessionOrigins, unknownOutput, instances) =
+                    RuntimeOriginOutput.Read(result, input, entry, seenSessions, seenInstances);
+                if (unknownOutput || (result.Outcome == TestOutcome.Passed
                     && (!string.IsNullOrEmpty(result.ErrorMessage) || !string.IsNullOrEmpty(result.ErrorStackTrace))))
                 { unknownDiagnostic = true; }
                 var status = result.Outcome switch
@@ -232,6 +237,7 @@ public sealed class RuntimeResultRecorder : IDisposable
                     testIdentity = entry.TestIdentity,
                     bindingId = entry.BindingId,
                     matrixId = entry.MatrixId,
+                    caseId = entry.CaseId,
                     inputSha256 = input.InputSha256,
                     manifestSha256 = manifestDigest,
                     ownerSha256 = ownerDigest,
@@ -241,8 +247,10 @@ public sealed class RuntimeResultRecorder : IDisposable
                     durationMs = result.Duration.TotalMilliseconds,
                     failureKind = kind,
                     assertionSymbol = kind == "Assertion" ? entry.AssertionSymbol : null,
-                    status = status.ToString()
+                    status = status.ToString(),
+                    sessionOrigins
                 }, RuntimeSafety.Json);
+                RuntimeSafety.Require(proof.Length <= 64 * 1024, "OutputLimitExceeded");
                 var expectedCase = new ConformanceExpectedCase("harness", entry.BindingId, entry.MatrixId,
                     "runtime", ImmutableArray.Create(entry.TestIdentity), [], null);
                 var witness = new ConformanceRuntimeWitness(executionId, input.RunId, input.InvocationGroupId,
@@ -252,6 +260,9 @@ public sealed class RuntimeResultRecorder : IDisposable
                 Reserve(proof.Length + line.Length + 1);
                 WriteNew($"proof-{executionId:D}.json", proof);
                 WriteRecord(line);
+                foreach (var origin in sessionOrigins)
+                { seenSessions.Add(origin.GetProperty("sessionId").GetGuid()); }
+                foreach (var (id, componentIdentity) in instances) { seenInstances.TryAdd(id, componentIdentity); }
                 if (status == ConformanceWitnessStatus.Incomplete) { incomplete = true; }
                 else if (status == ConformanceWitnessStatus.Failed)
                 {

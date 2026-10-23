@@ -513,14 +513,42 @@ need not pretend to belong to one package. Three C# missing-API regressions and 
 Python missing-API regressions preceded implementation. Local source SDK tests
 pass (73), tooling passes (218, ten native skips), and focused formatting passes.
 The bounded architecture review found no actionable ownership/dependency defect.
-The thirteen-scope/38-observation native selection is pending. These leaf APIs
-still need exact execution/attempt/group/input linkage, actual SQLite/PRAGMA
+Run `39940194762` at `457c4e5` verified 114 native checks without
+failures/errors/skips, 92,110,696,448 free scratch bytes, thirteen scopes/
+38 observations and all six baselines. Input digest
+`8ffbb9fc9ca1d634e0030b796ae3454f20577185226bb643f370983787781782`.
+At that checkpoint these leaf APIs still needed exact execution/attempt/group/input linkage, actual SQLite/PRAGMA
 production and full controller/evaluator integration; T014 remains unchecked.
 An additional intended controller regression exposed the new session scope
 selecting the smoke assembly instead of the source SDK test assembly. Explicit
 source routing is repaired; all thirteen scopes now have a checked launch against
 their actual admitted assembly/package before discovery, and all sixteen SDK
-orchestration unit checks pass. This does not replace pending native observation.
+orchestration unit checks pass. Run `39940194762` verifies the repaired routing;
+it does not verify the subsequent origin channel described below.
+
+The next increment implements the exact result-origin channel. The SDK emits
+hash-only, canonical UUID/runtime/case packets, each below 1 KiB; the actual VSTest
+result supplies their execution context. The safe logger validates the closed
+packet/schema inventory and exact run/case/admitted assemblies, then binds origins
+inside its immutable execution/attempt/group/input/owner proof (64 KiB maximum).
+Parent admission independently selects every component's runtime/package bytes,
+checks descriptor/runtime/architecture and reopen lineage, and requires origins
+for passing provider-bound qualification witnesses. Failure/skip observations do
+not fabricate origin data. Case history retains immutable origins and frozen role
+assignments, rejecting session replay under fresh attempt/execution UUIDs.
+
+The focused architecture review exposed instance-coherence maps resetting per
+origin; intended rehashed C#/Python regressions reproduced conflicting identities
+across origins, separate results and retries. Shared maps now reject those mutations
+without replacing prior evidence. The fifteen-scope/46-observation native selection
+adds a real package-mode channel probe using an explicitly synthetic metadata
+factory and independently planned declaration, plus six logger mutation rows.
+This diagnostic setup is not observed provider behavior or qualification; its
+actual factory/session capture must match the planned input, and all probe roles
+remain explicitly unpackaged test artifacts. Local tooling passes 221 checks
+(ten native skips), source SDK tests pass, and native channel verification is
+pending. T014 remains unchecked; concrete adapters, actual SQLite environment
+production and complete CLI/profile/evaluator behavior are not implemented claims.
 
 ## Partial implementation checkpoint
 

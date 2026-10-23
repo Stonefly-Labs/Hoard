@@ -952,6 +952,7 @@ class ConformanceInputTests(unittest.TestCase):
 class ConformanceRuntimeIngestionTests(unittest.TestCase):
     def setUp(self):
         self.inputs = ConformanceAdmissionTests().inputs()
+        self.inputs["mode"] = "diagnostic"
         self.attempt = str(uuid.uuid4())
         self.execution = str(uuid.uuid4())
         self.identity = "Hoard.Testing.Conformance.Runtime.Check(value: 1)"
@@ -972,6 +973,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 "assemblyId": "tests", "packageId": "Hoard.Fixture",
                 "bindingId": "sqlite", "matrixId": "none",
                 "assertionSymbol": "Hoard.Testing.Conformance.Runtime.Check",
+                "caseId": "runtime",
             }],
         }
         self.proof = {
@@ -983,6 +985,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             "assemblySha256": "e" * 64, "packageSha256": "b" * 64,
             "clock": "system-monotonic-ms", "durationMs": 1, "failureKind": "None",
             "assertionSymbol": None, "status": "Passed",
+            "caseId": "runtime", "sessionOrigins": [],
         }
         self.witness = {
             "executionId": self.execution, "runId": self.inputs["runId"],
@@ -1019,7 +1022,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
     def ingest(self, **overrides):
         return evidence.ingest_runtime_attempt(**self.transport(**overrides))
 
-    def history(self, *, max_attempts=1):
+    def history(self, *, max_attempts=1, origin_inputs=None):
         import conformance_case_catalog as catalog
         case = next(case for case in catalog.expected_cases("composition") if case.case_id == "CP-01")
         self.inputs.update(profileId="composition", invocation=["profile", "composition"])
@@ -1027,16 +1030,17 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.identity = case.witnesses[0]
         entry = self.manifest["expected"][0]
         entry.update(testIdentity=self.identity, fullyQualifiedName=self.identity.split("(")[0],
-                     bindingId=case.binding_id, matrixId=case.matrix_id)
+                     bindingId=case.binding_id, matrixId=case.matrix_id, caseId=case.case_id)
         self.manifest["inputSha256"] = evidence.digest(self.inputs)
         self.proof.update(testIdentity=self.identity, bindingId=case.binding_id, matrixId=case.matrix_id,
-                          inputSha256=evidence.digest(self.inputs), manifestSha256=evidence.digest(self.manifest))
+                          inputSha256=evidence.digest(self.inputs), manifestSha256=evidence.digest(self.manifest),
+                          caseId=case.case_id)
         self.witness.update(testIdentity=self.identity, bindingId=case.binding_id, matrixId=case.matrix_id,
                             inputSha256=evidence.digest(self.inputs), proofSha256=evidence.digest(self.proof))
         self.completion.update(inputSha256=evidence.digest(self.inputs), manifestSha256=evidence.digest(self.manifest))
         return evidence.RuntimeCaseHistory(self.inputs, binding_id=case.binding_id,
                                            matrix_id=case.matrix_id, case_id=case.case_id,
-                                           max_attempts=max_attempts)
+                                           max_attempts=max_attempts, origin_inputs=origin_inputs)
 
     def finish_history(self, history):
         options = self.transport()
@@ -1107,6 +1111,48 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.assertEqual(result["attempts"][0]["diagnosticCode"], "ProofMismatch")
         with self.assertRaises(evidence.ConformanceError):
             history.begin(str(uuid.uuid4()))
+
+    def test_case_execution_cannot_replay_a_session_origin_under_a_fresh_attempt_and_execution(self):
+        origin, assignments = self.runtime_origin("CP-01")
+        self.proof["sessionOrigins"] = [origin]
+        history = self.history(max_attempts=3, origin_inputs={"sqlite": assignments})
+        assignments["store"] = ("missing.dll", None)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin(self.attempt)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            self.finish_history(history)
+        first_execution = self.execution
+        self.attempt, self.execution = str(uuid.uuid4()), str(uuid.uuid4())
+        self.manifest.update(attemptId=self.attempt, attemptSequence=2)
+        self.proof.update(attemptId=self.attempt, attemptSequence=2, executionId=self.execution,
+                          manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(executionId=self.execution, startedMs=21, endedMs=22,
+                            proofSha256=evidence.digest(self.proof))
+        self.completion.update(attemptId=self.attempt, attemptSequence=2, manifestSha256=evidence.digest(self.manifest))
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.020):
+            history.begin(self.attempt)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.023), \
+                self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+            self.finish_history(history)
+        self.assertEqual(history.state, "Failed")
+        self.assertEqual(set(history.session_origins), {first_execution})
+        self.assertEqual(history.session_origins[first_execution][0]["sessionId"], origin["sessionId"])
+        self.assertEqual(history.result()["attempts"][1]["witnessIds"], ())
+        self.attempt, self.execution = str(uuid.uuid4()), str(uuid.uuid4())
+        self.manifest.update(attemptId=self.attempt, attemptSequence=3)
+        self.proof["sessionOrigins"][0]["sessionId"] = str(uuid.uuid4())
+        self.proof["sessionOrigins"][0]["components"]["store"]["typeSha256"] = "0" * 64
+        self.proof.update(attemptId=self.attempt, attemptSequence=3, executionId=self.execution,
+                          manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(executionId=self.execution, startedMs=31, endedMs=32,
+                            proofSha256=evidence.digest(self.proof))
+        self.completion.update(attemptId=self.attempt, attemptSequence=3, manifestSha256=evidence.digest(self.manifest))
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.030):
+            history.begin(self.attempt)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.033), \
+                self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+            self.finish_history(history)
+        self.assertEqual(history.result()["attempts"][2]["witnessIds"], ())
 
     def test_case_execution_interruption_and_catalog_exclusion_never_invent_runtime_proofs(self):
         history = self.history()
@@ -1251,6 +1297,69 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         options = dict(binding_id="sqlite", case_id="MT-01", component_inputs=assignments, parent_session_id=None)
         options.update(overrides)
         return evidence.ingest_session_origin(self.inputs, evidence.canonical_bytes(origin), **options)
+
+    def runtime_origin(self, case_id):
+        origin, assignments = self.session_origin()
+        origin["caseId"] = case_id
+        origin["components"] = {role: {
+            "instanceId": component["instanceId"], "assemblySha256": component["assembly"]["assemblySha256"],
+            "moduleVersionId": component["assembly"]["moduleVersionId"], "typeSha256": component["assembly"]["typeSha256"],
+        } for role, component in origin["components"].items()}
+        return origin, assignments
+
+    def test_runtime_origin_proof_requires_independent_role_assignments_and_exact_execution_case(self):
+        self.inputs["mode"] = "qualification"
+        origin, assignments = self.runtime_origin("runtime")
+        self.proof.update(sessionOrigins=[origin], inputSha256=evidence.digest(self.inputs))
+        self.manifest["inputSha256"] = self.completion["inputSha256"] = evidence.digest(self.inputs)
+        self.proof["manifestSha256"] = self.completion["manifestSha256"] = evidence.digest(self.manifest)
+        self.witness.update(inputSha256=evidence.digest(self.inputs), proofSha256=evidence.digest(self.proof))
+        with self.assertRaisesRegex(evidence.ConformanceError, "EvidenceIncomplete"):
+            self.ingest()
+        admitted = self.ingest(origin_inputs={"sqlite": assignments})
+        self.assertEqual(admitted["sessionOrigins"][self.execution][0]["sessionId"], origin["sessionId"])
+        def admit_changed(proof):
+            data = evidence.canonical_bytes(proof)
+            witness = {**self.witness, "proofSha256": hashlib.sha256(data).hexdigest()}
+            lines = evidence.canonical_bytes(witness) + b"\n"
+            return self.ingest(origin_inputs={"sqlite": assignments},
+                               proofs={f"proof-{self.execution}.json": data}, witnesses_data=lines,
+                               completion_data=evidence.canonical_bytes({
+                                   **self.completion, "recordsSha256": hashlib.sha256(lines).hexdigest()}))
+        lineage = json.loads(evidence.canonical_bytes(self.proof))
+        reopened = json.loads(evidence.canonical_bytes(origin))
+        reopened.update(sessionId=str(uuid.uuid4()), parentSessionId=origin["sessionId"], factoryOperation="reopen")
+        lineage["sessionOrigins"].append(reopened)
+        self.assertEqual(len(admit_changed(lineage)["sessionOrigins"][self.execution]), 2)
+        for mutation in ("case", "runtime", "type", "descriptor", "missing", "replay", "absent",
+                         "parent", "factory", "instance"):
+            changed = json.loads(evidence.canonical_bytes(self.proof))
+            captured = changed["sessionOrigins"][0]
+            if mutation == "case":
+                captured["caseId"] = "foreign"
+            elif mutation == "runtime":
+                captured["runtimeVersion"] = "10.0.8"
+            elif mutation == "type":
+                captured["components"]["factory"]["instanceId"] = captured["components"]["store"]["instanceId"]
+            elif mutation == "descriptor":
+                captured["descriptorSha256"] = "b" * 64
+            elif mutation == "missing":
+                del captured["components"]["store"]
+            elif mutation == "absent":
+                changed["sessionOrigins"] = []
+            elif mutation in ("parent", "factory", "instance"):
+                child = json.loads(evidence.canonical_bytes(reopened))
+                if mutation == "parent":
+                    child["parentSessionId"] = str(uuid.uuid4())
+                elif mutation == "factory":
+                    child["components"]["factory"]["instanceId"] = str(uuid.uuid4())
+                else:
+                    child["components"]["store"]["typeSha256"] = "0" * 64
+                changed["sessionOrigins"].append(child)
+            else:
+                changed["sessionOrigins"].append(captured)
+            with self.subTest(mutation=mutation), self.assertRaises(evidence.ConformanceError):
+                admit_changed(changed)
 
     def test_session_origin_matches_independent_role_bytes_environment_and_reopen_lineage(self):
         origin, assignments = self.session_origin()

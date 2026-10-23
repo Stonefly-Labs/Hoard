@@ -4,12 +4,90 @@ using System.Text.Json;
 using Hoard.Conformance.TestLogger;
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Diagnostics;
+using Hoard.Testing.Conformance.Evidence;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel;
 
 namespace Hoard.Conformance.Tests;
 
 public sealed class RuntimeLoggerTests
 {
+    [Fact]
+    public async Task Origin_output_is_bound_to_the_actual_result_proof_without_private_component_labels()
+    {
+        using var owned = new OwnedInput();
+        var origin = await BindingContractTests.CaptureMetadataOriginAsync(owned.Input.RunId, "runtime");
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory,
+            string.Join('\n', ConformanceSessionOriginOutput.Render(origin))));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        var captured = Assert.Single(proof.RootElement.GetProperty("sessionOrigins").EnumerateArray());
+        Assert.Equal(origin.SessionId, captured.GetProperty("sessionId").GetGuid());
+        Assert.Equal(owned.Input.Expected[0].CaseId, captured.GetProperty("caseId").GetString());
+        Assert.All(captured.GetProperty("components").EnumerateObject(), component =>
+            Assert.False(component.Value.TryGetProperty("assemblyName", out _)));
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
+    [InlineData("missing", ConformanceDiagnosticCode.EvidenceIncomplete)]
+    [InlineData("digest", ConformanceDiagnosticCode.ProofMismatch)]
+    [InlineData("case", ConformanceDiagnosticCode.ProofMismatch)]
+    [InlineData("replay", ConformanceDiagnosticCode.EvidenceIncomplete)]
+    [InlineData("raw", ConformanceDiagnosticCode.ProofMismatch)]
+    [InlineData("instance", ConformanceDiagnosticCode.ProofMismatch)]
+    public async Task Invalid_origin_output_retains_prior_execution_without_accepting_replay_or_foreign_case(
+        string mutation, ConformanceDiagnosticCode code)
+    {
+        using var owned = new OwnedInput(2);
+        var first = await BindingContractTests.CaptureMetadataOriginAsync(owned.Input.RunId, "runtime");
+        var firstResult = owned.Result(0);
+        firstResult.Messages.Add(new(TestResultMessage.StandardOutCategory,
+            string.Join('\n', ConformanceSessionOriginOutput.Render(first))));
+        using var recorder = owned.Open();
+        recorder.Observe(firstResult);
+        var before = File.ReadAllBytes(Path.Combine(owned.Output, "witnesses.jsonl"));
+        var other = mutation == "replay" ? first
+            : await BindingContractTests.CaptureMetadataOriginAsync(owned.Input.RunId, mutation == "case" ? "foreign" : "runtime");
+        var packets = ConformanceSessionOriginOutput.Render(other).ToArray();
+        if (mutation == "missing") { packets = packets[..^1]; }
+        if (mutation == "digest")
+        {
+            var fields = packets[0].Split(':');
+            fields[4] = new string('0', 64);
+            packets[0] = string.Join(':', fields);
+        }
+        if (mutation is "raw" or "instance")
+        {
+            var body = System.Text.Json.Nodes.JsonNode.Parse(Convert.FromBase64String(
+                string.Concat(packets.Select(packet => packet.Split(':')[5]))))!;
+            if (mutation == "raw") { body["privatePath"] = "/private/canary"; }
+            else
+            {
+                body["components"]!["store"]!["instanceId"] = first.Components["store"].InstanceId.ToString("D");
+                body["components"]!["store"]!["typeSha256"] = new string('0', 64);
+            }
+            var bytes = JsonSerializer.SerializeToUtf8Bytes(body);
+            var encoded = Convert.ToBase64String(bytes);
+            var count = (encoded.Length + 511) / 512;
+            packets = Enumerable.Range(0, count).Select(index =>
+                $"{ConformanceSessionOriginOutput.Prefix}:{other.SessionId:D}:{index}:{count}:{Hash(bytes)}:"
+                + encoded.Substring(index * 512, Math.Min(512, encoded.Length - index * 512))).ToArray();
+        }
+        var result = owned.Result(1);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, string.Join('\n', packets)));
+        recorder.Observe(result);
+        recorder.Complete();
+        Assert.Equal(code, recorder.Diagnostic);
+        Assert.Equal(before, File.ReadAllBytes(Path.Combine(owned.Output, "witnesses.jsonl")));
+        AssertSafe(owned.Output);
+    }
+
     [Fact]
     public void Discovery_preserves_exact_selected_parameters_without_fabricating_execution_witnesses()
     {
@@ -363,7 +441,7 @@ public sealed class RuntimeLoggerTests
                 [new("fixture", "fixture.nupkg", Hash(File.ReadAllBytes(Path.Combine(Root, "fixture.nupkg"))))],
                 Enumerable.Range(0, count).Select(index => new RuntimeExpectedTest(
                     $"Hoard.Frozen.Check(value: {index})", "Hoard.Frozen.Check", "tests", "fixture", "memory", "matrix",
-                    "Hoard.Testing.Conformance.FrozenAssertion.Check")).ToArray(), purpose);
+                    "Hoard.Testing.Conformance.FrozenAssertion.Check", "runtime")).ToArray(), purpose);
             var manifest = JsonSerializer.SerializeToUtf8Bytes(Input, Json);
             File.WriteAllBytes(ManifestPath, manifest);
             manifestHash = Hash(manifest);

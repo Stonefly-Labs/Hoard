@@ -12,7 +12,7 @@ public sealed record RuntimeOwner(int SchemaVersion, Guid RunId, Guid Invocation
 public sealed record RuntimeFile(string Id, string Path, string Sha256);
 
 public sealed record RuntimeExpectedTest(string TestIdentity, string FullyQualifiedName, string AssemblyId,
-    string PackageId, string BindingId, string MatrixId, string? AssertionSymbol);
+    string PackageId, string BindingId, string MatrixId, string? AssertionSymbol, string CaseId);
 
 public sealed record RuntimeInput(int SchemaVersion, Guid RunId, Guid InvocationGroupId, Guid AttemptId,
     int AttemptSequence, string InputSha256, string RunInputsPath, RuntimeFile[] Assemblies, RuntimeFile[] Packages,

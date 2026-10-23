@@ -82,6 +82,13 @@ public sealed class BindingContractTests
         Assert.DoesNotContain(typeof(MetadataProbe).FullName!, projection, StringComparison.Ordinal);
         Assert.DoesNotContain(typeof(MetadataProbe).Assembly.Location, projection, StringComparison.Ordinal);
         Assert.DoesNotContain("private-canary", projection, StringComparison.Ordinal);
+        var packets = ConformanceSessionOriginOutput.Render(origin);
+        Assert.NotEmpty(packets);
+        Assert.All(packets, packet =>
+        {
+            Assert.InRange(packet.Length, 1, 1024);
+            Assert.DoesNotContain(typeof(MetadataProbe).FullName!, packet, StringComparison.Ordinal);
+        });
         await using var reopened = await observed.ReopenAsync(default);
         var reopenedOrigin = Assert.IsType<ConformanceObservedMetadataSession>(reopened).CaptureOrigin();
         Assert.Equal(origin.SessionId, reopenedOrigin.ParentSessionId);
@@ -379,6 +386,17 @@ public sealed class BindingContractTests
     private sealed class OtherObservedBinding : ObservedBinding;
 
     private static string Hash(ReadOnlySpan<byte> bytes) => Convert.ToHexStringLower(SHA256.HashData(bytes));
+
+    internal static async ValueTask<ConformanceSessionOrigin> CaptureMetadataOriginAsync(
+        Guid runId, string caseId, ConformanceBindingDeclaration? declaration = null)
+    {
+        var binding = new MetadataProbeBinding();
+        if (declaration is not null) { binding.Declaration = declaration; }
+        var context = new ConformanceRunContext(runId, caseId, TimeProvider.System,
+            new UnusedResources(), new ConformanceEvidenceBuffer());
+        await using var observed = await ConformanceObservedMetadataSession.OpenAsync(binding, context, default);
+        return observed.CaptureOrigin();
+    }
 
     private sealed class MetadataProbeBinding : IMetadataConformanceBinding
     {

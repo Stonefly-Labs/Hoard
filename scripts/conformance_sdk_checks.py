@@ -80,6 +80,17 @@ SCENARIOS = (
         "Observed_metadata_origin_rejects_changed_declarations_and_missing_actual_fault_hooks",
         "Observed_artifact_sessions_pin_all_actual_roles_and_preserve_cleanup_ownership_on_capture_failure")),
      "None", "Passed", 0, "None"),
+    ("origin-output", (SMOKE + "OriginOutput",), "None", "Passed", 0, "None"),
+    ("origin-ingestion", (
+        "Hoard.Conformance.Tests.RuntimeLoggerTests."
+        "Origin_output_is_bound_to_the_actual_result_proof_without_private_component_labels",
+        *(("Hoard.Conformance.Tests.RuntimeLoggerTests."
+           "Invalid_origin_output_retains_prior_execution_without_accepting_replay_or_foreign_case"
+           + f'(mutation: "{mutation}", code: {code})') for mutation, code in (
+               ("missing", "EvidenceIncomplete"), ("digest", "ProofMismatch"),
+               ("case", "ProofMismatch"), ("replay", "EvidenceIncomplete"),
+               ("raw", "ProofMismatch"), ("instance", "ProofMismatch")))),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {
@@ -189,7 +200,7 @@ def probe(path):
 
 
 def make_inputs(run, repository, candidate, sources, observed_environment, identity, seal_sha,
-                *, group_id=None, ci_revision=None):
+                *, group_id=None, ci_revision=None, binding_sources=()):
     run._check_ledger()
     inventory = evidence.proof_manifest(candidate)
     prefix = candidate.relative_to(run.root).as_posix()
@@ -206,7 +217,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
         package_versions=[{"packageId": name, "version": "0.1.0"} for name in
                           ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger")],
         feed="feed/candidate", configuration="stores/candidate.NuGet.Config",
-        lock_paths=locks, runtime_paths=runtime, binding_sources=[],
+        lock_paths=locks, runtime_paths=runtime, binding_sources=list(binding_sources),
         observed_environment=observed_environment, budgets=BUDGETS, invocation=["sdk-logger-diagnostic"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
@@ -217,14 +228,15 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
 
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
-    source_tests = name in ("owned", "ranges", "catalog", "declarations", "enums", "loaded", "discovery", "sessions")
+    source_tests = name in (
+        "owned", "ranges", "catalog", "declarations", "enums", "loaded", "discovery", "sessions", "origin-ingestion")
     assembly = candidate / (TESTS if source_tests else LOGGER + "/Smoke") / "bin/Release/net10.0" / (
         "Hoard.Conformance.Tests.dll" if source_tests else "Smoke.dll")
     assembly_path = assembly.relative_to(run.root).as_posix()
-    package_id = "Hoard.Testing.Conformance" if source_tests else "Hoard.Conformance.TestLogger"
+    package_id = "Hoard.Testing.Conformance" if source_tests or name == "origin-output" else "Hoard.Conformance.TestLogger"
     package = next(package for package in inputs["packages"] if package["packageId"] == package_id)
     attempt_id = str(uuid.uuid4())
-    expected = {identity: ("none", "none") for identity in identities}
+    expected = {identity: ("origin-probe" if name == "origin-output" else "none", "none") for identity in identities}
     manifest = {
         "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
         "attemptId": attempt_id, "attemptSequence": 1, "purpose": "execution",
@@ -239,6 +251,7 @@ def test_attempt(run, inputs, candidate, scenario):
             "assemblyId": "test-assembly", "packageId": package_id,
             "bindingId": binding, "matrixId": matrix,
             "assertionSymbol": ASSERTION if name == "assertion" else None,
+            "caseId": "runtime",
         } for identity, (binding, matrix) in expected.items()],
     }
     discovery_manifest = {**manifest, "purpose": "discovery", "attemptId": str(uuid.uuid4())}
@@ -272,12 +285,21 @@ def test_attempt(run, inputs, candidate, scenario):
                   for filename in files if filename.startswith("proof-") and filename.endswith(".json")}
     if files != {"completion.json", "witnesses.jsonl", *proof_data}:
         raise evidence.ConformanceError("EvidenceIncomplete")
+    origin_inputs = None
+    if name == "origin-output":
+        origin_inputs = {"origin-probe": {role: (assembly_path, None) for role in (
+            "factory", "session", "store", "schema", "authority", "faults")}}
     ingested = evidence.ingest_runtime_attempt(
         inputs=inputs, expected_tests=expected,
         witnesses_data=read_bounded(output / "witnesses.jsonl", 1024 * 1024), proofs=proof_data,
-        completion_data=read_bounded(output / "completion.json", 64 * 1024), **transport)
+        completion_data=read_bounded(output / "completion.json", 64 * 1024),
+        **({"origin_inputs": origin_inputs} if origin_inputs is not None else {}), **transport)
     validate_observation(ingested, result, identities, expected_code, expected_status, expected_exit,
                          proof_data, failure_kind)
+    if name == "origin-output" and (
+            len(ingested["sessionOrigins"]) != 1
+            or any(len(origins) != 1 for origins in ingested["sessionOrigins"].values())):
+        raise evidence.ConformanceError("WitnessMissing")
     return {"code": expected_code, "tests": len(identities),
             "discoverySha256": evidence.file_sha256(discovery_output / "completion.json"),
             "completionSha256": evidence.file_sha256(output / "completion.json")}
@@ -289,6 +311,16 @@ def runtime_command(run, assembly, manifest):
     if manifest["purpose"] not in ("discovery", "execution"):
         raise evidence.ConformanceError()
     discovery = manifest["purpose"] == "discovery"
+    origin_environment = ""
+    if any(entry["fullyQualifiedName"] == SMOKE + "OriginOutput" for entry in manifest["expected"]):
+        package = next((item for item in manifest["packages"] if item["id"] == "Hoard.Testing.Conformance"), None)
+        if package is None:
+            raise evidence.ConformanceError("PrerequisiteMissing")
+        origin_environment = (
+            "<EnvironmentVariables>"
+            f'<HOARD_ORIGIN_RUN_ID>{escape(manifest["runId"])}</HOARD_ORIGIN_RUN_ID>'
+            f'<HOARD_ORIGIN_PACKAGE_SHA256>{escape(package["sha256"])}</HOARD_ORIGIN_PACKAGE_SHA256>'
+            "</EnvironmentVariables>")
     manifest_data = evidence.canonical_bytes(manifest)
     owner_data = read_bounded(run.root / "runtime-owner.json", 64 * 1024)
     manifest_sha = hashlib.sha256(manifest_data).hexdigest()
@@ -299,6 +331,7 @@ def runtime_command(run, assembly, manifest):
         '<RunSettings><RunConfiguration>'
         f'<TestAdaptersPaths>{escape(str(assembly.parent))}</TestAdaptersPaths>'
         '<MaxCpuCount>1</MaxCpuCount><TestSessionTimeout>120000</TestSessionTimeout>'
+        + origin_environment +
         '</RunConfiguration><LoggerRunSettings><Loggers>'
         '<Logger friendlyName="console" enabled="False"/>'
         '<Logger friendlyName="HoardSafe" enabled="True"><Configuration>'
@@ -381,8 +414,18 @@ def execute(repository, destination):
         build(run, smoke_project, config, "smoke-locked-replay", lock=alternate)
         if evidence.source_identity(repository, ci_revision=ci_revision) != identity:
             raise evidence.ConformanceError("InputChanged")
+        # This is an independently planned diagnostic declaration, not observed provider behavior.
+        declaration = {
+            "schemaVersion": 1, "bindingId": "origin-probe", "category": "metadata",
+            "packageId": "Hoard.Testing.Conformance", "packageVersion": "0.1.0",
+            "packageSha256": evidence.package_identity(feed, "Hoard.Testing.Conformance", "0.1.0")["sha256"],
+            "capabilities": ["common-logical"], "faults": sorted(evidence._BINDING_REQUIRED_FAULTS["metadata"]),
+        }
+        write_new(run.root / "stores/origin-probe.json",
+                  json.dumps(declaration, separators=(",", ":"), ensure_ascii=True).encode("ascii"))
+        binding_sources = [{"path": "stores/origin-probe.json", "adapterId": "sdk-origin-probe"}]
         inputs = make_inputs(run, repository, candidate, sources, environment(run), identity, seal_sha,
-                             ci_revision=ci_revision)
+                             ci_revision=ci_revision, binding_sources=binding_sources)
         for name in sources:
             (candidate / name).chmod(0o400)
         for name in inputs["runtimeAssemblies"]:
@@ -409,7 +452,7 @@ def execute(repository, destination):
             verify_project_lock(lock_record, candidate, feed)
         post_inputs = make_inputs(
             run, repository, candidate, post_sources, post_environment, post_identity, seal_sha,
-            group_id=inputs["invocationGroupId"], ci_revision=ci_revision)
+            group_id=inputs["invocationGroupId"], ci_revision=ci_revision, binding_sources=binding_sources)
         evidence.verify_input_recomputation(inputs, post_inputs)
         summary = {"qualification": False, "code": "None", "baselines": 6,
                    "baselineSha256": seal_sha, "inputsSha256": evidence.digest(inputs),

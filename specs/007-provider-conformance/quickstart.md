@@ -83,12 +83,17 @@ proofs across retries and passed run `39938028171` at `a9039fa` (111 native
 checks without skips, twelve scopes/35 observations and all six baselines).
 The current increment adds typed observed metadata/artifact sessions with actual
 factory invocation, pinned consumer/component references, reopen lineage and
-independent role/runtime/package correspondence. Local checks pass; native
-verification of thirteen scopes/38 observations is pending. Use `await using`
+independent role/runtime/package correspondence. Run `39940194762` at `457c4e5`
+verified 114 native checks without skips, thirteen scopes/38 observations and all
+six baselines. Use `await using`
 on the returned session before calling `CaptureOrigin`, so capture/getter failure
-cannot lose session cleanup ownership. These leaf observations do not yet link
-to exact execution/attempt/group/input evidence or implement the full controller
-or SQLite environment producer. T014 remains unchecked.
+cannot lose session cleanup ownership. The current channel sends bounded hash-only
+origin packets through actual VSTest results and their exact case/execution/
+attempt/group/input/owner proofs; independent parent role assignment and cross-
+origin/result/attempt identity checks prevent evidence substitution/replay.
+The fifteen-scope/46-observation native channel selection is pending. Its synthetic
+factory output probe is diagnostic, not provider qualification. The full controller
+and SQLite environment producer remain unfinished, and T014 remains unchecked.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

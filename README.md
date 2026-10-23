@@ -1163,10 +1163,16 @@ at `a9039fa`: 111 native checks without skips and the same twelve diagnostic
 scopes/35 observations. The next increment adds typed observed metadata/artifact
 sessions: actual factory invocation, cached consumer/component references,
 reopen lineage, actual .NET runtime/architecture and independently checked
-role-specific assembly/package correspondence. Its local regressions pass;
-native verification is pending. Execution/attempt linkage, actual SQLite
-environment production, full controller integration and complete T014 remain
-unfinished.
+role-specific assembly/package correspondence. Run
+[39940194762](https://github.com/Stonefly-Labs/Hoard/actions/runs/39940194762)
+at `457c4e5` verified 114 native checks without skips, thirteen scopes/
+38 observations and all six baselines after repairing a diagnostic source-routing
+failure. The current increment carries bounded hash-only session observations
+through actual VSTest result proofs, binding them to exact case/execution/
+attempt/group/input/owner provenance and independent role assignments. Local
+regressions pass; native verification of fifteen scopes/46 observations is pending.
+Actual SQLite environment production, full controller/profile integration and
+complete T014 remain unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

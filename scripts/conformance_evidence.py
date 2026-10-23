@@ -1056,23 +1056,31 @@ _LOADED_ASSEMBLY_FIELDS = {
     "assemblyName": stable_id, "assemblyVersion": stable_id, "moduleVersionId": _uuid,
     "assemblySha256": sha256, "typeSha256": sha256,
 }
+_SESSION_ROLES = {
+    "metadata": ("factory", "session", "store", "schema", "authority", "faults"),
+    "artifacts": ("factory", "session", "store", "validator", "maintenance", "lifetime", "authority", "faults"),
+}
 
 
 def _loaded_assembly_correspondence(inputs, observed, runtime_path, package_id):
-    runtime_path = relative_path(runtime_path)
     parts = observed["assemblyVersion"].split(".")
     if (len(parts) != 4
             or any(not part.isascii() or not part.isdecimal()
                    or str(int(part)) != part or int(part) > 65535 for part in parts)):
         raise ConformanceError()
-    if inputs["runtimeAssemblies"].get(runtime_path) != observed["assemblySha256"]:
+    _runtime_bytes_correspondence(inputs, observed["assemblySha256"], runtime_path, package_id)
+    return observed
+
+
+def _runtime_bytes_correspondence(inputs, assembly_sha256, runtime_path, package_id):
+    runtime_path = relative_path(runtime_path)
+    if inputs["runtimeAssemblies"].get(runtime_path) != assembly_sha256:
         raise ConformanceError("InputChanged")
     if package_id is not None:
         stable_id(package_id)
         package = next((item for item in inputs["packages"] if item["packageId"] == package_id), None)
-        if package is None or observed["assemblySha256"] not in package["runtimeAssemblies"].values():
+        if package is None or assembly_sha256 not in package["runtimeAssemblies"].values():
             raise ConformanceError("ProofMismatch")
-    return observed
 
 
 def ingest_loaded_assembly(inputs, data, *, runtime_path, package_id):
@@ -1091,9 +1099,7 @@ def ingest_session_origin(inputs, data, *, binding_id, case_id, component_inputs
     binding = next((item for item in inputs["bindings"] if item["bindingId"] == binding_id), None)
     if binding is None or binding["category"] not in ("metadata", "artifacts"):
         raise ConformanceError("BindingInvalid")
-    roles = (("factory", "session", "store", "schema", "authority", "faults")
-             if binding["category"] == "metadata" else
-             ("factory", "session", "store", "validator", "maintenance", "lifetime", "authority", "faults"))
+    roles = _SESSION_ROLES[binding["category"]]
     if (not isinstance(component_inputs, Mapping) or set(component_inputs) != set(roles)
             or any(not isinstance(value, tuple) or len(value) != 2 for value in component_inputs.values())):
         raise ConformanceError("EvidenceIncomplete")
@@ -1124,6 +1130,60 @@ def ingest_session_origin(inputs, data, *, binding_id, case_id, component_inputs
     return observed
 
 
+def _observe_component_instance(instances, captured):
+    identity = tuple(captured[key] for key in ("assemblySha256", "moduleVersionId", "typeSha256"))
+    if instances.setdefault(captured["instanceId"], identity) != identity:
+        raise ConformanceError("ProofMismatch")
+
+
+def _ingest_runtime_origins(inputs, origins, *, origin_inputs, case_id, prior_sessions, prior_instances):
+    observed = []
+    component = _record({
+        "instanceId": _uuid, "assemblySha256": sha256, "moduleVersionId": _uuid, "typeSha256": sha256,
+    })
+    for raw in origins:
+        if not isinstance(raw, Mapping):
+            raise ConformanceError()
+        descriptor = sha256(raw.get("descriptorSha256"))
+        bindings = [item for item in inputs["bindings"] if item["descriptorSha256"] == descriptor]
+        if len(bindings) != 1 or bindings[0]["category"] not in _SESSION_ROLES:
+            raise ConformanceError("BindingInvalid")
+        binding = bindings[0]
+        roles = _SESSION_ROLES[binding["category"]]
+        if not isinstance(origin_inputs, Mapping):
+            raise ConformanceError("EvidenceIncomplete")
+        assignments = origin_inputs.get(binding["bindingId"])
+        if (not isinstance(assignments, Mapping) or set(assignments) != set(roles)
+                or any(not isinstance(value, tuple) or len(value) != 2 for value in assignments.values())):
+            raise ConformanceError("EvidenceIncomplete")
+        origin = _record({
+            "schemaVersion": _constant(1), "runId": _uuid, "caseId": stable_id, "sessionId": _uuid,
+            "parentSessionId": lambda value: None if value is None else _uuid(value),
+            "factoryOperation": _one_of("create", "reopen"), "descriptorSha256": sha256,
+            "runtimeVersion": stable_id, "processArchitecture": _one_of("x64", "arm64"),
+            "components": _record({role: component for role in roles}),
+        })(raw)
+        architecture = {"x64": ("x86_64", "x64"), "arm64": ("aarch64", "arm64")}
+        parent_id = origin["parentSessionId"]
+        if (origin["runId"] != inputs["runId"] or origin["caseId"] != case_id
+                or origin["runtimeVersion"] != inputs["environment"]["runtime"]
+                or inputs["environment"]["architecture"] not in architecture[origin["processArchitecture"]]
+                or origin["factoryOperation"] != ("create" if parent_id is None else "reopen")
+                or origin["sessionId"] in prior_sessions or origin["sessionId"] == parent_id):
+            raise ConformanceError("ProofMismatch")
+        if parent_id is not None:
+            parent = prior_sessions.get(parent_id)
+            if (parent is None or parent["descriptorSha256"] != descriptor or parent["caseId"] != case_id
+                    or parent["components"]["factory"] != origin["components"]["factory"]):
+                raise ConformanceError("ProofMismatch")
+        for role, captured in origin["components"].items():
+            _runtime_bytes_correspondence(inputs, captured["assemblySha256"], *assignments[role])
+            _observe_component_instance(prior_instances, captured)
+        prior_sessions[origin["sessionId"]] = origin
+        observed.append(origin)
+    return tuple(observed)
+
+
 def _runtime_manifest(inputs, manifest_data, owner_data, expected_tests,
                       manifest_sha256, owner_sha256, purpose):
     inputs = admit_entity("RunInputs", inputs)
@@ -1135,6 +1195,7 @@ def _runtime_manifest(inputs, manifest_data, owner_data, expected_tests,
         "testIdentity": _runtime_identity, "fullyQualifiedName": _runtime_identity,
         "assemblyId": stable_id, "packageId": stable_id, "bindingId": stable_id,
         "matrixId": stable_id, "assertionSymbol": _assertion_symbol,
+        "caseId": stable_id,
     }
     owner = _runtime_json(owner_data, {
         "schemaVersion": _constant(1), "runId": _uuid, "invocationGroupId": _uuid,
@@ -1263,7 +1324,7 @@ def ingest_runtime_discovery(*, inputs, manifest_data, owner_data, discoveries_d
 
 def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, proofs,
                            completion_data, expected_tests, manifest_sha256, owner_sha256,
-                           started_ms, ended_ms):
+                           started_ms, ended_ms, origin_inputs=None):
     """Validate actual safe-logger records; a valid failed attempt remains failed."""
     inputs, manifest, expected, assemblies, packages, expected_tests = _runtime_manifest(
         inputs, manifest_data, owner_data, expected_tests, manifest_sha256, owner_sha256, "execution")
@@ -1297,8 +1358,12 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
         "clock": _constant("system-monotonic-ms"), "durationMs": _number,
         "failureKind": _one_of("None", "Assertion", "Unknown", "SkippedOrUnknown"),
         "assertionSymbol": _assertion_symbol, "status": _executed_state,
+        "caseId": stable_id, "sessionOrigins": _list(lambda value: value, 128, minimum=0),
     }
     proof_hashes = {}
+    session_origins = {}
+    prior_sessions = {}
+    prior_instances = {}
     unknown_failure = False
     for witness in witnesses:
         entry = expected.get(witness["testIdentity"])
@@ -1318,6 +1383,7 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
                 or proof["ownerSha256"] != owner_sha256
                 or proof["attemptId"] != manifest["attemptId"]
                 or proof["attemptSequence"] != manifest["attemptSequence"]
+                or proof["caseId"] != entry["caseId"]
                 or (witness["bindingId"], witness["matrixId"]) != expected_tests[witness["testIdentity"]]
                 or witness["packageSha256"] != packages[entry["packageId"]]["sha256"]
                 or witness["assemblySha256"] != assemblies[entry["assemblyId"]]["sha256"]
@@ -1325,6 +1391,16 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
                 or proof["durationMs"] > 8 * 60 * 60 * 1000
                 or abs(proof["durationMs"] - (witness["endedMs"] - witness["startedMs"])) > 0.001):
             raise ConformanceError("ProofMismatch")
+        origins = _ingest_runtime_origins(
+            inputs, proof["sessionOrigins"], origin_inputs=origin_inputs,
+            case_id=entry["caseId"], prior_sessions=prior_sessions, prior_instances=prior_instances)
+        selected_binding = next((binding for binding in inputs["bindings"]
+                                 if binding["bindingId"] == witness["bindingId"]), None)
+        if (inputs["mode"] == "qualification" and witness["status"] == "Passed" and selected_binding is not None
+                and selected_binding["category"] in _SESSION_ROLES
+                and not any(origin["descriptorSha256"] == selected_binding["descriptorSha256"] for origin in origins)):
+            raise ConformanceError("WitnessMissing")
+        session_origins[witness["executionId"]] = origins
         if ((witness["status"] == "Passed" and (proof["failureKind"] != "None" or proof["assertionSymbol"] is not None))
                 or (witness["status"] == "Incomplete"
                     and (proof["failureKind"] != "SkippedOrUnknown" or proof["assertionSymbol"] is not None))
@@ -1353,15 +1429,41 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
     return MappingProxyType({
         "witnesses": witnesses, "proofs": MappingProxyType(proof_hashes), "completion": completion,
         "attemptId": manifest["attemptId"], "diagnosticCode": code,
+        "sessionOrigins": MappingProxyType(session_origins),
+        "caseIds": tuple(sorted({entry["caseId"] for entry in expected.values()})),
     })
 
 
 class RuntimeCaseHistory:
     """Append-only runtime-bearing case state selected from the independent catalog."""
 
-    def __init__(self, inputs, *, binding_id, matrix_id, case_id, max_attempts=1):
+    def __init__(self, inputs, *, binding_id, matrix_id, case_id, max_attempts=1, origin_inputs=None):
         from conformance_case_catalog import expected_cases
         self._inputs = admit_entity("RunInputs", inputs)
+        self._session_origins = MappingProxyType({})
+        self._used_sessions = frozenset()
+        self._instances = {}
+        self._origin_inputs = None
+        if origin_inputs is not None:
+            if not isinstance(origin_inputs, Mapping) or len(origin_inputs) > 128:
+                raise ConformanceError("EvidenceIncomplete")
+            frozen = {}
+            for origin_binding, assignments in origin_inputs.items():
+                stable_id(origin_binding)
+                if not isinstance(assignments, Mapping) or len(assignments) > 8:
+                    raise ConformanceError("EvidenceIncomplete")
+                captured = {}
+                for role, assignment in assignments.items():
+                    stable_id(role)
+                    if not isinstance(assignment, tuple) or len(assignment) != 2:
+                        raise ConformanceError("EvidenceIncomplete")
+                    path, package = assignment
+                    relative_path(path)
+                    if package is not None:
+                        stable_id(package)
+                    captured[role] = assignment
+                frozen[origin_binding] = MappingProxyType(captured)
+            self._origin_inputs = MappingProxyType(frozen)
         key = (self._inputs["profileId"], stable_id(binding_id), stable_id(matrix_id), stable_id(case_id))
         matches = tuple(case for case in expected_cases(key[0]) if case.key == key)
         if len(matches) != 1:
@@ -1393,6 +1495,10 @@ class RuntimeCaseHistory:
     @property
     def proofs(self):
         return self._proofs
+
+    @property
+    def session_origins(self):
+        return self._session_origins
 
     def begin(self, attempt_id):
         attempt_id = _uuid(attempt_id)
@@ -1450,15 +1556,28 @@ class RuntimeCaseHistory:
                 manifest_sha256=manifest_sha256, owner_sha256=owner_sha256,
                 expected_tests={identity: (self._case.binding_id, self._case.matrix_id)
                                 for identity in self._case.witnesses},
-                started_ms=self._active[1], ended_ms=ended)
+                started_ms=self._active[1], ended_ms=ended, origin_inputs=self._origin_inputs)
             if (observed["attemptId"] != self._active[0]
                     or observed["completion"]["attemptSequence"] != len(self._attempts) + 1
+                    or observed["caseIds"] != (self._case.case_id,)
                     or any(witness["executionId"] in self._used_executions for witness in observed["witnesses"])):
                 raise ConformanceError("ProofMismatch")
+            sessions = frozenset(origin["sessionId"] for origins in observed["sessionOrigins"].values()
+                                 for origin in origins)
+            if sessions & self._used_sessions:
+                raise ConformanceError("ProofMismatch")
+            instances = dict(self._instances)
+            for origins in observed["sessionOrigins"].values():
+                for origin in origins:
+                    for captured in origin["components"].values():
+                        _observe_component_instance(instances, captured)
             code = observed["diagnosticCode"]
             if code == "None" and self._case.controls:
                 code = "EvidenceIncomplete"
             self._append(code, ended, observed["witnesses"], observed["proofs"])
+            self._session_origins = MappingProxyType({**self._session_origins, **observed["sessionOrigins"]})
+            self._used_sessions = self._used_sessions | sessions
+            self._instances = instances
         except ConformanceError as error:
             if self._active is not None:
                 self._append(str(error), ended)

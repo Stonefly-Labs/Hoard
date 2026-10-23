@@ -64,8 +64,20 @@ checks the initial declaration and expected parent, and rejects missing,
 extra or inconsistent instance records. Factory and provider roles may belong
 to different packages. Origins contain no pass status or private tokens/paths.
 The caller must own session disposal before capture, and origin observation
-cannot imply resource release. Exact execution/attempt/group/input linkage,
-native SQLite/PRAGMA production and full evaluator integration are still required.
+cannot imply resource release.
+
+The current result channel carries a hash-only origin projection through bounded
+SDK output packets into the actual VSTest result's immutable proof. It contains no
+assembly names, private paths or tokens. Required manifest `caseId`, canonical UUIDs,
+complete packet indices/count/digest and admitted assembly bytes are checked before
+persistence. The execution proof binds those origins to exact test identity,
+execution/attempt/group/input/owner provenance. Parent admission independently
+checks the planned role/runtime/package assignments, declaration/environment and
+reopen lineage. One instance UUID cannot change assembly/module/type across origins,
+results or case attempts; fresh execution/attempt IDs cannot launder session replay.
+Passing provider-bound qualification witnesses require attributable origins, while
+failed/skipped observations do not fabricate them. The full native channel remains
+pending; SQLite/PRAGMA production and complete profile evaluation are later work.
 
 Attempts are append-only. Any genuine contract failure in the run blocks
 qualification even if a retry passes. Deliberate red/green experiments are
