@@ -1174,21 +1174,25 @@ regressions pass. Run
 [39943968117](https://github.com/Stonefly-Labs/Hoard/actions/runs/39943968117)
 at `0687888` verified all 116 native checks without skips, fifteen scopes/
 46 discoveries/46 executions and all six baselines. T014/T015 are complete within
-their foundation scope. Lock preparation, actual SQLite environment production
+their foundation scope. Actual SQLite environment production
 and full controller/profile integration remain unfinished.
 
 The T016 preparation entry point now exists as
 `bash scripts/validate-conformance.sh --update-locks --evidence <fresh-private-path>`.
 It is explicitly non-qualifying: it seals six historical baselines first, builds
 the current package graph, and requires a second fresh source/cache/feed locked
-replay before publishing only the reviewable conformance locks. Native verification
-and the remaining tracked locks are pending; default profile/verify/aggregate CLI
+replay before publishing only the reviewable conformance locks. Native run
+[39947737831](https://github.com/Stonefly-Labs/Hoard/actions/runs/39947737831)
+at `585970d` verified identical bytes for all 18 packages and 13 locks across both
+fresh builds. The reviewed inventory adds seven locks and updates only local-archive
+hashes in three existing F-07 variants; all dependency graphs and 20 third-party
+identities are unchanged. T016 is complete; default profile/verify/aggregate CLI
 behavior is not implemented yet. The dedicated CI preparation job retains source
 locks only, not raw test output or synthetic store data.
 The initial native preparation failed safely on a missing embedded F-04 OpenAPI
 contract (`CS1566`); a red snapshot regression confirmed the omission. That exact
-compiled resource is now included in source fingerprints/snapshots; repaired
-native replay remains pending.
+compiled resource is now included in source fingerprints/snapshots; the repaired
+native replay passed.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

@@ -108,7 +108,10 @@ This intentionally resolves only the thirteen selected conformance locks after
 sealing six historical baselines. It publishes them only after a second fresh
 source/feed/cache locked replay reproduces all lock/package bytes. No predecessor
 lock is overwritten and no diagnostic/provider qualification is implied.
-Native verification/review of the generated locks is pending. Default profiles
+Native run `39947737831` at `585970d` reproduced all 18 package and 13 lock byte
+sequences across independent fresh builds. Seven new locks and three existing
+local-archive hash updates are reviewed/tracked, with no graph or third-party
+identity changes. T016 is complete as non-qualifying preparation. Default profiles
 and verify/aggregate CLI behavior below remain planned, not functional commands.
 
 Do not point qualification at a user/production database, existing artifact
