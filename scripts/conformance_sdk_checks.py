@@ -91,6 +91,36 @@ SCENARIOS = (
                ("case", "ProofMismatch"), ("replay", "EvidenceIncomplete"),
                ("raw", "ProofMismatch"), ("instance", "ProofMismatch")))),
      "None", "Passed", 0, "None"),
+    ("metadata-parity", (
+        *(f'Hoard.Conformance.Tests.MetadataBindingTests.'
+          f'Extraction_must_preserve_all_frozen_cases_parameters_controls_and_exclusions(binding: "{binding}")'
+          for binding in ("sqlite", "memory")),
+        *(f'Hoard.Conformance.Tests.MetadataBindingTests.Each_provider_requires_every_exact_corruption_parameter'
+          f'(binding: "{binding}", mutation: "{mutation}", expected: {code})'
+          for binding in ("sqlite", "memory")
+          for mutation, code in (("complete", "None"), ("missing", "EvidenceIncomplete"), ("changed", "WitnessMissing"))),
+        *(f'Hoard.Conformance.Tests.MetadataBindingTests.'
+          f'Provider_cannot_replace_owned_expectations_with_a_shortened_passing_manifest(binding: "{binding}")'
+          for binding in ("sqlite", "memory")),
+        *(f'Hoard.Conformance.Tests.MetadataBindingTests.'
+          f'Missing_logical_hook_rejects_instead_of_reducing_the_selected_agreement(binding: "{binding}")'
+          for binding in ("sqlite", "memory")),
+    ), "None", "Passed", 0, "None"),
+    ("artifact-parity", (
+        *(f'Hoard.Conformance.Tests.ArtifactBindingTests.'
+          f'Extraction_must_preserve_all_frozen_streaming_authority_and_recovery_obligations(binding: "{binding}")'
+          for binding in ("local", "object")),
+        *(f'Hoard.Conformance.Tests.ArtifactBindingTests.'
+          f'Both_streaming_handoff_rows_are_required_and_cannot_borrow_the_other_provider'
+          f'(binding: "{binding}", mutation: "{mutation}", expected: {code})'
+          for binding in ("local", "object")
+          for mutation, code in (("complete", "None"), ("missing", "EvidenceIncomplete"), ("foreign", "WitnessMissing"))),
+        *(f'Hoard.Conformance.Tests.ArtifactBindingTests.'
+          f'Missing_authority_or_streaming_fault_hooks_cannot_reduce_the_agreement(binding: "{binding}")'
+          for binding in ("local", "object")),
+        "Hoard.Conformance.Tests.ArtifactBindingTests."
+        "Simulation_cannot_take_local_restart_witnesses_or_remove_its_frozen_exclusions",
+    ), "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {
@@ -228,8 +258,10 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
 
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
-    source_tests = name in (
-        "owned", "ranges", "catalog", "declarations", "enums", "loaded", "discovery", "sessions", "origin-ingestion")
+    source_tests = all(identity.startswith("Hoard.Conformance.Tests.") for identity in identities)
+    smoke_tests = all(identity.startswith(SMOKE) for identity in identities)
+    if source_tests == smoke_tests:
+        raise evidence.ConformanceError("WitnessMissing")
     assembly = candidate / (TESTS if source_tests else LOGGER + "/Smoke") / "bin/Release/net10.0" / (
         "Hoard.Conformance.Tests.dll" if source_tests else "Smoke.dll")
     assembly_path = assembly.relative_to(run.root).as_posix()

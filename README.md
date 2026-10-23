@@ -1206,6 +1206,13 @@ verified the real CLI-to-preparation route and both fresh locked-build graphs.
 T017/T018 complete the foundation gate only; profile implementations and the
 independent evaluator remain mandatory later tasks, not delivered behavior.
 
+Initial T019/T020 guards now compare the compiled SDK catalog against the frozen
+192-entry inventory, including every parameter/control and the 13 exclusions.
+Safe discovery challenges reject missing/altered metadata rows, foreign artifact
+provider rows and shortened owned manifests. These are pre-extraction regression
+guards, not execution of shared assertions against the four adapters; T019/T020
+remain open for their complete extraction tests.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

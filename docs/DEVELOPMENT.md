@@ -5357,6 +5357,29 @@ cleanup history; earlier intended missing-handle, parent-replacement, immutable
 input and result-origin red/green repairs remain recorded in the plan.
 T018 is complete; story work follows, with all backend/qualification tasks open.
 
+The first T019/T020 tests embed the source-owned frozen inventory into the test
+assembly and compare the complete compiled SDK category maps against it. Every
+case, parameterized witness, independent control and exclusion must match; this
+preserves all inherited convergence obligations without treating their labels as
+observed provider behavior. New metadata discovery controls exercise complete,
+missing and changed corruption parameters for both bindings; altered owned
+manifests reject with `InputChanged`. Artifact controls require both handoff
+parameters and reject a row borrowed from the other provider. Missing logical,
+streaming or authority hooks reject without reducing the agreement, and object
+simulation retains its frozen restart exclusions.
+
+All 103 source SDK tests pass without skips, including these 23 new guards;
+focused formatting passes. The new native diagnostic selection contains seventeen
+scopes/69 expected observations, pending actual execution. An intended routing
+regression exposed two new scopes going to the smoke assembly and unknown/mixed
+names falling through. The controller now admits only homogeneous SDK-test or
+smoke namespaces and rejects unknown/mixed/empty selections before launch. It no
+longer needs a second hand-maintained list of scenario names to choose the
+assembly. All 232 tooling checks pass (ten native skips). This is partial test
+preparation: actual compiled common-consumer parity, four adapters, unchanged
+behavioral assertions and real-provider category proof remain unbuilt;
+T019/T020 stay unchecked.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

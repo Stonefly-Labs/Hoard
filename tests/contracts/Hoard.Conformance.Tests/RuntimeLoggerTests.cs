@@ -403,10 +403,10 @@ public sealed class RuntimeLoggerTests
         }
     }
 
-    private static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    internal static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     private static string Hash(byte[] bytes) => Convert.ToHexStringLower(SHA256.HashData(bytes));
 
-    private sealed class OwnedInput : IDisposable
+    internal sealed class OwnedInput : IDisposable
     {
         internal string Root { get; } = Path.GetFullPath(Path.Combine(".runtime-logger-tests", Guid.NewGuid().ToString("D")));
         internal RuntimeInput Input { get; }

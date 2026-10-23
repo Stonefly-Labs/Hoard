@@ -59,6 +59,15 @@ class SdkDiagnosticTests(unittest.TestCase):
         allocate.assert_not_called()
         prepare.assert_not_called()
 
+    def test_unknown_mixed_or_empty_diagnostic_names_never_fall_back_to_an_assembly(self):
+        for identities in ((), ("Foreign.Provider.Check",),
+                           (checks.SCENARIOS[0][1][0], checks.SMOKE + "Assertion")):
+            scenario = ("unrecognized", identities, "None", "Passed", 0, "None")
+            with self.subTest(identities=identities), patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, self.directory, scenario)
+                launch.assert_not_called()
+
     def test_preparation_and_seal_verification_precede_candidate_snapshot(self):
         calls = []
         seal = self.directory / "baselines.json"
@@ -132,11 +141,16 @@ class SdkDiagnosticTests(unittest.TestCase):
             contract = "specs/004-module-discovery/contracts/openapi.json"
             (repository / contract).parent.mkdir(parents=True)
             (repository / contract).write_text('{"openapi":"3.1.0"}')
+            inventory = "tests/fixtures/conformance/baselines/inventory.json"
+            (repository / inventory).parent.mkdir(parents=True)
+            (repository / inventory).write_text('{"entries":[]}')
             run = checks.OwnedRun.allocate(parent / "run", repository, profile="harness")
             candidate, sources = checks.snapshot(repository, run)
             self.assertEqual((candidate / "Hoard.slnx").read_bytes(), (repository / "Hoard.slnx").read_bytes())
             self.assertIn(contract, sources)
             self.assertEqual((candidate / contract).read_bytes(), (repository / contract).read_bytes())
+            self.assertEqual(sources[inventory], hashlib.sha256((repository / inventory).read_bytes()).hexdigest())
+            self.assertEqual((candidate / inventory).read_bytes(), (repository / inventory).read_bytes())
             self.assertEqual(sources["src/file.cs"], hashlib.sha256(b"source").hexdigest())
             self.assertEqual((candidate / "src/file.cs").stat().st_mode & 0o222, 0)
             run.transition("Settling")

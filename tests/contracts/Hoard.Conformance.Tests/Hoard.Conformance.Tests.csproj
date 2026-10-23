@@ -7,6 +7,8 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
     <Using Include="Xunit" />
+    <EmbeddedResource Include="../../fixtures/conformance/baselines/inventory.json"
+                      LogicalName="Hoard.Conformance.FrozenInventory" />
   </ItemGroup>
   <ItemGroup Condition="'$(ConformancePackageAcceptance)' != 'true'">
     <ProjectReference Include="../Hoard.Conformance.TestLogger/Hoard.Conformance.TestLogger.csproj" />

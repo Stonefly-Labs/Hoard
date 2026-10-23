@@ -671,6 +671,41 @@ intended admission/ownership/input/origin reds and passing repairs are recorded
 above, not newly invented failures. T018's foundational gate is complete.
 This is not real-provider category, contributor, profile or full evaluator proof.
 
+### Partial T019/T020: pre-extraction inventory and discovery guards
+
+The test assembly now embeds the independent frozen inventory. Its category
+guards compare every compiled SDK case, parameter, control and exclusion against
+that source baseline, not a provider-selected subset. Metadata has complete/
+missing/changed parameter controls for both bindings and rejects shortened
+post-selection manifests with `InputChanged`. Artifact handoff controls reject
+missing rows and the other provider's exact row; simulation keeps its frozen
+restart exclusions instead of inheriting Local proof. Every required metadata/
+artifact hook is challenged without reducing the expected map.
+
+These 23 new C# cases pass alongside the existing tests (103 total, no skips);
+focused SDK formatting passes. The tests reuse the existing owned logger fixture,
+and the new inventory resource is test-only. No SDK/provider/package-reference
+graph or public product operation changes. A first assertion incorrectly compared
+the count of offered discovery records to retained valid rows; it was corrected
+to check the actual JSONL prefix, not a logger behavior change.
+
+Two new native diagnostic scopes select the 12 metadata and 11 artifact guards
+with exact test identities; the total is seventeen scopes/69 observations.
+Their new routing regression first failed four ways: the two scopes selected
+the smoke assembly, and unknown/mixed namespaces had no safe rejection. Explicit
+homogeneous SDK-test/smoke namespace admission fixes the routing without
+service/unknown fallback or another scenario-name allowlist. All 232 portable
+tooling checks pass (ten native skips); catalog/frozen inventory/whitespace checks
+pass. Actual native execution remains pending.
+
+T019/T020 remain unchecked: these inventory/transport guards cannot establish that
+actual common consumers were extracted, execute unchanged for all four adapters
+or reject behavioral provider mutations. Completing those tests remains next;
+no category/story qualification is claimed. README/development guidance reflects
+this boundary; provider/contributor examples, product architecture/ADR/diagrams,
+governance, predecessor, infrastructure, release and UI guides are unaffected by
+test-only guard additions with no new working product/qualification command.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;
