@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -17,6 +18,22 @@ import conformance_evidence as evidence
 
 
 class ConformanceAdmissionTests(unittest.TestCase):
+    def test_version_catalog_names_real_methods_axes_and_each_source_owned_row(self):
+        import conformance_case_catalog as catalog
+        fixture = (ROOT / "tests/fixtures/conformance/Host/VersionFixtures.cs").read_text()
+        rows = re.findall(r'new\("([^"]+)",', fixture.split("public static Row Repair")[0])
+        self.assertEqual(set(catalog.VERSION_RUNTIME_ROWS), {row[0] for row in catalog.VERSION_ROWS})
+        self.assertEqual(set(catalog.VERSION_RUNTIME_ROWS.values()), set(rows))
+        source = (ROOT / "tests/integration/Hoard.Composition.Tests/ConformanceVersionTests.cs").read_text()
+        methods = set(re.findall(r"public void (\w+)\(", source))
+        witnesses = [name for case in catalog.expected_cases("compatibility")
+                     if case.case_id in ("VERSION", "VERSION-INDEPENDENT") for name in case.witnesses]
+        for name in witnesses:
+            self.assertIn(name.split("(")[0].rsplit(".", 1)[1], methods)
+            if ".Runtime_matrix(" in name:
+                self.assertRegex(name, r'axis: "(?:host|abstractions|required|optional)", row: "[a-z0-9-]+"')
+                self.assertIn(name.split('row: "')[1].rstrip('")'), rows)
+
     def case(self):
         return {
             "caseId": "MP-01", "contractRevision": "f07-v1", "category": "metadata",

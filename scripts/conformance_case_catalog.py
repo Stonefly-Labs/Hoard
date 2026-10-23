@@ -73,6 +73,35 @@ VERSION_ROWS = (
     ("malformed", "[0.1.0,0.2.0)", "malformed-canary", False, False),
 )
 
+VERSION_RUNTIME_ROWS = {
+    "inclusive-lower": "inclusive-lower", "exclusive-upper": "exclusive-upper",
+    "exclusive-lower": "exclusive-lower", "inclusive-upper": "inclusive-upper",
+    "build": "exact-build", "prerelease-off": "rc-blocked", "prerelease-on": "rc-enabled",
+    "below-stable": "below-stable-lower", "prerelease-range-off": "range-not-opt-in",
+    "prerelease-range-on": "rc-range-enabled", "upper-prerelease-off": "upper-rc-blocked",
+    "upper-prerelease-on": "upper-rc-enabled", "case": "case-precedence",
+    "empty": "empty", "floating": "floating", "unbounded": "unbounded", "reversed": "reversed",
+    "empty-open": "empty-open", "unnormalized": "short-range",
+    "four-part": "four-part-candidate", "malformed": "unsafe-candidate",
+}
+
+
+def independent_version_witnesses(name):
+    prefix = "Hoard.Composition.Tests.ConformanceVersionTests."
+    flags = prefix + "Platform_prerelease_flags_are_independent"
+    inherited = prefix + "Inherited_platform_flags_do_not_derive_from_module_version"
+    optional = prefix + "Incompatible_optional_target_is_unavailable_not_an_active_edge_or_capability"
+    return {
+        "host-only-flag": (f"{flags}(host: True, abstractions: False)",
+                           f'{inherited}(id: "C-11", host: True, abstractions: False)'),
+        "abstractions-only-flag": (f"{flags}(host: False, abstractions: True)",),
+        "module-no-platform-flag": (
+            f"{flags}(host: False, abstractions: False)", f"{flags}(host: True, abstractions: True)",
+            f'{inherited}(id: "C-18", host: False, abstractions: False)'),
+        "optional-absent": (f'{optional}(selection: "absent")',),
+        "optional-disabled": (f'{optional}(selection: "registered-disabled")',),
+    }[name]
+
 
 def category_cases():
     inventory = json.loads(INVENTORY.read_bytes())
@@ -107,14 +136,16 @@ def expected_cases(profile):
                         f'Hoard.Composition.Tests.ConformanceCompositionTests.Matrix(caseId: "{case_id}", variant: "{variant}", mode: "{mode}")',)))
     elif profile == "compatibility":
         for axis in ("host", "abstractions", "dependency-required", "dependency-optional"):
+            runtime_axis = {"host": "host", "abstractions": "abstractions",
+                            "dependency-required": "required", "dependency-optional": "optional"}[axis]
             for name, _, _, _, _ in VERSION_ROWS:
                 matrix = f"{axis}.{name}"
                 cases.append(ExpectedCase(profile, "none", matrix, "VERSION", (
-                    f'Hoard.Composition.Tests.ConformanceVersionTests.Matrix(axis: "{axis}", row: "{name}")',)))
+                    f'Hoard.Composition.Tests.ConformanceVersionTests.Runtime_matrix(axis: "{runtime_axis}", row: "{VERSION_RUNTIME_ROWS[name]}")',)))
         for name in ("host-only-flag", "abstractions-only-flag", "module-no-platform-flag",
                      "optional-absent", "optional-disabled"):
-            cases.append(ExpectedCase(profile, "none", name, "VERSION-INDEPENDENT", (
-                f'Hoard.Composition.Tests.ConformanceVersionTests.IndependentFlags(row: "{name}")',)))
+            cases.append(ExpectedCase(profile, "none", name, "VERSION-INDEPENDENT",
+                                      independent_version_witnesses(name)))
         for number in range(1, 24):
             cases.append(ExpectedCase(profile, "none", "none", f"C-{number:02}", (),
                                       (f"classification:C-{number:02}",)))

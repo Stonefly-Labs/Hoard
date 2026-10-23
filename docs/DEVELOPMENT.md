@@ -4790,7 +4790,7 @@ stores, not diagnostic/proof directories. Current local archive hashes may be
 prepared in the isolated smoke lock with an explicit preparation record;
 fresh locked replay preserves its dependency graph and leaves tracked locks
 unchanged. Historical platform-built archives now have the separate explicit
-preparation described below. Native SDK execution is incomplete. Actual loaded-provider evidence,
+preparation described below. Native SDK diagnostics now pass, not qualification. Actual loaded-provider evidence,
 all category assertions, full profile evaluation and final review remain required.
 
 The first combined Linux attempt correctly rejected mocked fixture progress
@@ -4801,7 +4801,7 @@ admission is weakened.
 
 The source SDK now has a concrete `ConformanceEvidenceBuffer`: it retains at
 most 10,000 typed fault observations in order, copies immutable snapshots, and
-rejects cancellation/overflow without discarding prior evidence. All 41 source
+rejects cancellation/overflow without discarding prior evidence. All 42 source
 SDK tests pass locally. Native SDK execution is still incomplete: historical
 locked restoration reported compiler/NuGet code 1403 before any candidate
 compilation. The locks remain unchanged; bounded archive/assembly fingerprints
@@ -4837,6 +4837,28 @@ prepared bytes, actual local archives and graph-preserving derivation. Seal
 verification recomputes that derivation and rejects detached/rehashed graph
 changes, absent archives or a downgrade to the old preparation format. Native
 confirmation of this increment is pending; it is not provider qualification.
+
+Native confirmation is now available at
+[run 39913608773](https://github.com/Stonefly-Labs/Hoard/actions/runs/39913608773),
+head checkpoint `53c3857`: all six baselines were prepared/sealed before
+candidate compilation and reverified after all SDK/logger cases. The baseline
+seal is `41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`;
+admitted input digest is
+`a982fc72e53d6a62df4aba671761cf4d2b061ccc9d1f65da60f1a5d6711e750d`.
+Six allocator facts and the two parameter cases passed; actual assertion,
+unknown exception/output, skip and passing-with-stdout cases retained their
+expected distinct safe outcomes. The separate Python job passed all 61 checks
+with zero failures/errors/skips and 92,111,626,240 free scratch bytes.
+Neither the current workflow head nor all 42 source SDK tests are inferred
+to have run from this older native checkpoint. Full provider/profile
+qualification, actual loaded-provider proof and final resource projection remain
+unfinished.
+
+The version catalog now maps to the actual `Runtime_matrix` method, exact
+source-owned row aliases, required/optional axes and all independent flag cases.
+Actual bounded `dotnet ... --list-tests` discovery matched all 92 expected
+identities with none missing. This is discovery evidence, not behavior passes;
+T008 remains incomplete until the composition and remaining mappings are wired.
 
 A new native concurrency regression holds two independently owned runs at
 explicit file barriers, writes the same cache key with distinct values, lets

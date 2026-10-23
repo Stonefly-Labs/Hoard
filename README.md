@@ -1051,7 +1051,9 @@ pins and strict required-field/extension checks for every evidence entity.
 Actual safe-logger records can now be ingested with exact manifest/proof/
 completion relationships; proof walking rejects symlinked roots and bounded
 overflow. A separate diagnostic Linux SDK/logger job seals historical baselines
-before candidate compilation; its native result is pending. None of this
+before candidate compilation. Its [Linux run](https://github.com/Stonefly-Labs/Hoard/actions/runs/39913608773)
+passed all six allocator facts and five logger smoke scenarios, including the
+required negative/incomplete classifications. None of this
 completes the remaining foundations or grants provider qualification.
 
 The SDK also supplies a bounded safe fault-observation buffer with immutable
@@ -1062,6 +1064,8 @@ not.
 Cross-platform historical archive preparation is explicit and non-qualifying:
 alternate locks preserve the original dependency graph/source locks and bind
 the platform-built bytes before any candidate compilation.
+All 92 version-catalog runtime identities now match actual discovery; unresolved
+composition mappings and full runtime/profile evaluation keep T008 incomplete.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

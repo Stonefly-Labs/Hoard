@@ -152,7 +152,18 @@ derivation; strict old schema-`1` seals remain supported unchanged. Public
 evidence schema/catalog versions do not change. Independent verification
 recomputes each derivation rather than accepting rehashed graph changes.
 This is preparation before candidate compilation, not baseline substitution
-during execution; native acceptance remains pending.
+during execution. Native diagnostic run `39913608773` at `53c3857` passed:
+six baselines were sealed before candidate compilation, all six allocator facts
+and five logger smoke scenarios produced the expected observations, and inputs/
+baselines reverified afterwards. Its independent Python job passed 61 checks
+without failures/errors/skips. Baseline seal:
+`41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`.
+No provider/profile qualification is inferred.
+
+The version catalog's 92 runtime identities now match actual bounded discovery,
+including source-owned row aliases, real required/optional axes and the
+independent flag cases. Planned/nonexistent composition wrapper mappings remain
+outstanding, so T008 is not marked complete.
 
 ## Partial implementation checkpoint
 
