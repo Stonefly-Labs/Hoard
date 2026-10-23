@@ -18,6 +18,42 @@ import conformance_evidence as evidence
 
 
 class ConformanceAdmissionTests(unittest.TestCase):
+    def test_classification_catalog_preserves_every_source_parameter_and_policy_case(self):
+        import conformance_case_catalog as catalog
+        source = (ROOT / "tests/integration/Hoard.Composition.Tests/ConformanceVersionTests.cs").read_text()
+        section = source.split("public static IEnumerable<object[]> Classifications()")[1].split("[Theory]")[0]
+        rows = tuple(tuple(json.loads("[" + row + "]"))
+                     for row in re.findall(r"yield return \[(.+)\];", section))
+        self.assertEqual(catalog.CLASSIFICATION_RUNTIME_ROWS, rows)
+        methods = set(re.findall(r"public void (\w+)\(", source))
+        cases = [case for case in catalog.expected_cases("compatibility") if case.case_id.startswith("C-")]
+        self.assertEqual({case.case_id for case in cases}, {f"C-{number:02}" for number in range(1, 24)})
+        for case in cases:
+            self.assertTrue(case.witnesses)
+            for name in case.witnesses:
+                self.assertIn(name.split("(")[0].rsplit(".", 1)[1], methods)
+                if ".Inherited_runtime_classification(" not in name:
+                    parameters = name.split("(", 1)[1].removesuffix(")")
+                    values = re.sub(r"\w+: ", "", parameters).replace("True", "true").replace("False", "false")
+                    self.assertIn("[InlineData(" + values + ")]", source)
+        self.assertEqual(len(catalog.classification_witnesses("C-14")), 2)
+        with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+            catalog.classification_witnesses("C-99")
+
+    def test_composition_catalog_maps_only_real_methods_and_declared_rejection_parameters(self):
+        import conformance_case_catalog as catalog
+        source = (ROOT / "tests/integration/Hoard.Composition.Tests/ConformanceMatrixTests.cs").read_text()
+        methods = set(re.findall(r"public async Task (\w+)\(", source))
+        declarations = set(re.findall(r'yield return \["([^"]+)", "([^"]+)", "([^"]+)"\]', source))
+        for case in catalog.expected_cases("composition"):
+            for name in case.witnesses:
+                self.assertIn(name.split("(")[0].rsplit(".", 1)[1], methods)
+                if ".Declaration_rejection_and_single_input_repair(" in name:
+                    values = tuple(re.findall(r': "([^"]+)"', name))
+                    self.assertIn(values, declarations)
+        with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+            catalog.composition_witnesses("CP-99", "missing")
+
     def test_version_catalog_names_real_methods_axes_and_each_source_owned_row(self):
         import conformance_case_catalog as catalog
         fixture = (ROOT / "tests/fixtures/conformance/Host/VersionFixtures.cs").read_text()
@@ -552,6 +588,22 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             admitted["completion"]["complete"] = False
         with self.assertRaises(TypeError):
             admitted["proofs"]["invented"] = "a" * 64
+
+    def test_finite_version_ranges_preserve_identity_without_allowing_paths_or_free_text(self):
+        for value in ("[1.2.0,2.0.0)", "(2.0.0,1.0.0]", "[1.2.3]",
+                      "/private/canary", "private canary", "canary\n", 'canary"'):
+            self.setUp()
+            self.identity = "Hoard.Testing.Conformance.Runtime.Check(range: " + json.dumps(value) + ")"
+            self.manifest["expected"][0]["testIdentity"] = self.identity
+            self.witness["testIdentity"] = self.proof["testIdentity"] = self.identity
+            self.completion["manifestSha256"] = self.proof["manifestSha256"] = evidence.digest(self.manifest)
+            self.witness["proofSha256"] = evidence.digest(self.proof)
+            with self.subTest(value=value):
+                if value.startswith(("[", "(")):
+                    self.assertEqual(self.ingest()["witnesses"][0]["testIdentity"], self.identity)
+                else:
+                    with self.assertRaises(evidence.ConformanceError):
+                        self.ingest()
 
     def test_rehashed_proof_cannot_borrow_another_attempt_dimension_or_input(self):
         for key, value in (

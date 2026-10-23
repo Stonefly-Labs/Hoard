@@ -4,8 +4,11 @@
 The SDK, focused tests and fixture project manifests now exist, but the
 `validate-conformance.sh` commands below, shared suites, adapters, contributor
 journey and CI qualification do not. The allocator, runtime logger and focused
-composition/version fixtures are also non-qualifying foundations; complete
-ingestion and Linux allocator evidence remain outstanding. Implementation is
+composition/version fixtures are also non-qualifying foundations. Native allocator
+and logger diagnostics have passed, and all 144 expected composition/version/
+classification identities match package-mode discovery; this is not behavior
+qualification. Loaded-provider attribution, final resource projection and complete
+profiles remain outstanding. Implementation is
 continuing with the existing route-mapping boundary explicitly distinguished
 from preconstruction declaration validation. The tooling is not acceptance-ready. See the
 [implementation checkpoint](plan.md#partial-implementation-checkpoint).

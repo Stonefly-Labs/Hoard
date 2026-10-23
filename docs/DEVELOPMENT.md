@@ -4854,11 +4854,33 @@ to have run from this older native checkpoint. Full provider/profile
 qualification, actual loaded-provider proof and final resource projection remain
 unfinished.
 
-The version catalog now maps to the actual `Runtime_matrix` method, exact
-source-owned row aliases, required/optional axes and all independent flag cases.
-Actual bounded `dotnet ... --list-tests` discovery matched all 92 expected
-identities with none missing. This is discovery evidence, not behavior passes;
-T008 remains incomplete until the composition and remaining mappings are wired.
+The catalog now maps composition, version and inherited classification rows to
+actual methods and exact parameters. Default composition discovery omits seven
+mandatory package-only cases; they are not exclusions. The conditional project
+now has its own tracked `PackageAcceptance/packages.lock.json`. Deliberate
+preparation used the already sealed F-06 artifact feed, followed by a second
+empty-cache locked restore and package-mode Release build. No predecessor lock
+was changed. Actual bounded discovery matched all 144 distinct expected runtime
+identities, including those seven cases, with none missing:
+
+```bash
+dotnet test tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj \
+  -p:ConformancePackageAcceptance=true -c Release --no-build --no-restore \
+  --list-tests --verbosity quiet
+python3 scripts/conformance_case_catalog.py --check-sdk
+```
+
+Both commands passed. Discovery is not execution/qualification, and one physical
+test appearing in multiple matrix dimensions cannot supply borrowed witnesses.
+Three intended source logger failures and three Python admission failures
+identified the missing finite version-range punctuation. Both layers now preserve
+bounded bracket/parenthesis/comma parameters and continue rejecting paths,
+free text, embedded quotes and control characters. All 45 current source SDK
+tests pass; earlier package-acceptance results remain historical. The Linux
+diagnostic now selects these three exact range cases as an additional scenario;
+its current native result is pending. T008 remains incomplete until the remaining
+control mappings are wired; actual loaded-provider attribution and complete
+profile evaluation are also unfinished.
 
 A new native concurrency regression holds two independently owned runs at
 explicit file barriers, writes the same cache key with distinct values, lets

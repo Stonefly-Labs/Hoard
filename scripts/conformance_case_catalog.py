@@ -103,6 +103,118 @@ def independent_version_witnesses(name):
     }[name]
 
 
+def composition_witnesses(case_id, variant):
+    prefix = "Hoard.Composition.Tests.ConformanceMatrixTests."
+    declarations = {
+        ("CP-04", "duplicate"): ("duplicate", "DuplicateModule"),
+        ("CP-05", "unknown"): ("unknown", "UnknownSelection"),
+        ("CP-06", "missing-required"): ("missing-required", "MissingDependency"),
+        ("CP-07", "cycle-forward"): ("cycle-forward", "DependencyCycle"),
+        ("CP-07", "cycle-reversed"): ("cycle-reordered", "DependencyCycle"),
+        ("CP-08", "missing-capability"): ("missing-capability", "UnsupportedCapability"),
+        ("CP-09", "metadata-zero"): ("metadata-zero", "InvalidCardinality"),
+        ("CP-09", "metadata-two"): ("metadata-two", "InvalidCardinality"),
+        ("CP-10", "artifacts-zero"): ("artifact-zero", "InvalidCardinality"),
+        ("CP-10", "artifacts-two"): ("artifact-two", "InvalidCardinality"),
+        ("CP-13", "optional-compatible"): ("optional-incompatible", "UnsupportedDependency"),
+        ("CP-13", "optional-incompatible"): ("optional-incompatible", "UnsupportedDependency"),
+    }
+    key = case_id, variant
+    if key in declarations:
+        row, rule = declarations[key]
+        return (prefix + "Declaration_rejection_and_single_input_repair"
+                + f'(id: "{case_id}", variant: "{row}", rule: "{rule}")',)
+    facts = {
+        ("CP-03", "multiple"): "CP03_explicit_multiple_protocols_and_identity_schemes_start_and_stop",
+        ("CP-11", "route-conflict"): "CP11_actual_route_ambiguity_rejects_before_publication_and_repair_starts",
+        ("CP-16", "late-initialization"): "CP16_noncooperative_initializer_returns_finitely_but_retains_owner_until_real_settlement",
+        ("CP-18", "recovery-failed"): "CP18_real_local_recovery_rejects_corrupt_manifest_without_fallback_and_exact_repair_recovers",
+        ("CP-20", "settled-restart"): "CP20_active_selection_is_immutable_and_only_fresh_settled_restart_changes_owner",
+        ("CP-20", "active-config"): "CP20_active_configuration_is_fixed_until_a_fresh_explicit_restart",
+    }
+    if key in facts:
+        return (prefix + facts[key],)
+    methods = {
+        ("CP-01", "baseline"): (
+            'Packaged_baseline_and_replacement_use_the_identical_consumer(id: "CP-01", metadata: "sqlite", '
+            'artifact: "local", metadataAssembly: "Hoard.Fixtures.Metadata.Sqlite", artifactAssembly: "Hoard.Fixtures.Artifacts.Local")',),
+        ("CP-02", "replacement"): (
+            'Packaged_baseline_and_replacement_use_the_identical_consumer(id: "CP-02", metadata: "memory", '
+            'artifact: "object", metadataAssembly: "Hoard.Fixtures.Metadata.Memory", artifactAssembly: "Hoard.Fixtures.Artifacts.ObjectSemantics")',),
+        ("CP-12", "optional-absent"): (
+            'CP12_disabled_effects_and_unavailable_optional_integration(target: "absent")',),
+        ("CP-12", "optional-disabled"): (
+            'CP12_disabled_effects_and_unavailable_optional_integration(target: "registered-disabled")',),
+        ("CP-14", "initializer-failed"): (
+            'Required_initialization_failure_has_no_readiness_or_fallback_and_cleans_owner(id: "CP-14", phase: "initialize")',
+            'CP14_schema_admission_denies_empty_store_without_explicit_create_and_repair_succeeds(provider: "sqlite")',
+            'CP14_schema_admission_denies_empty_store_without_explicit_create_and_repair_succeeds(provider: "memory")'),
+        ("CP-15", "cancel-initialization"): (
+            'CP15_cancelled_caller_does_not_admit_or_release_pending_shared_work(phase: "initialize")',),
+        ("CP-15", "cancel-readiness"): (
+            'CP15_cancelled_caller_does_not_admit_or_release_pending_shared_work(phase: "readiness")',),
+        ("CP-17", "stop-fault"): (
+            'CP17_shutdown_fault_or_retention_never_claims_complete_cleanup(variant: "fault")',),
+        ("CP-17", "late-stop"): (
+            'CP17_shutdown_fault_or_retention_never_claims_complete_cleanup(variant: "noncooperative")',),
+        ("CP-19", "authority-mismatch"): (
+            'CP19_actual_store_admission_rejects_before_io_and_paired_repair_admits(variant: "authority-identity")',),
+        ("CP-19", "missing-guarantee"): (
+            'CP19_actual_store_admission_rejects_before_io_and_paired_repair_admits(variant: "mandatory-guarantee")',),
+    }
+    if key not in methods:
+        raise ConformanceError("WitnessMissing")
+    return tuple(prefix + method for method in methods[key])
+
+
+CLASSIFICATION_RUNTIME_ROWS = (
+    ("C-01", "host", "[1.2.0,2.0.0)", "1.4.0", False, "enabled", True),
+    ("C-02", "host", "[1.2.0,2.0.0)", "2.0.0", False, "enabled", False),
+    ("C-03", "host", "", "1.0.0", False, "enabled", False),
+    ("C-04", "host", "[0.1.0,0.2.0)", "0.2.0", False, "enabled", False),
+    ("C-07", "host", "[1.0.0,2.0.0)", "1.5.0-rc.1", False, "enabled", False),
+    ("C-08", "host", "[1.0.0,2.0.0)", "1.5.0-rc.1", True, "enabled", True),
+    ("C-09", "host", "[1.5.0,2.0.0)", "1.5.0-rc.1", True, "enabled", False),
+    ("C-10", "host", "[1.5.0-rc.1,1.5.0]", "1.5.0-rc.2", False, "enabled", False),
+    ("C-12", "host", "[1.2.3]", "1.2.3+build.7", False, "enabled", True),
+    ("C-13", "host", "(2.0.0,1.0.0]", "1.5.0", False, "enabled", False),
+    ("C-14", "required", "[1.0.0,2.0.0)", "1.5.0", False, "absent", False),
+    ("C-14-outside", "required", "[1.0.0,2.0.0)", "2.0.0", False, "enabled", False),
+    ("C-15", "optional", "[1.0.0,2.0.0)", "1.5.0", False, "absent", True),
+    ("C-19", "optional", "[1.0.0,2.0.0)", "1.5.0", False, "enabled", True),
+    ("C-20", "optional", "[1.0.0,2.0.0)", "2.0.0", False, "enabled", False),
+    ("C-21", "optional", "[1.0.0,2.0.0)", "1.5.0-rc.1", False, "enabled", False),
+    ("C-22", "optional", "[1.0.0,2.0.0)", "1.5.0-rc.1", True, "enabled", True),
+    ("C-23", "optional", "[1.0.0,2.0.0)", "2.0.0", False, "registered-disabled", True),
+)
+
+
+def classification_witnesses(case_id):
+    prefix = "Hoard.Composition.Tests.ConformanceVersionTests."
+    names = []
+    for row in CLASSIFICATION_RUNTIME_ROWS:
+        if row[0] != case_id and not (case_id == "C-14" and row[0] == "C-14-outside"):
+            continue
+        arguments = ", ".join(
+            f"{key}: {str(value) if isinstance(value, bool) else json.dumps(value)}"
+            for key, value in zip(("id", "axis", "range", "candidate", "prerelease", "selection", "accepted"),
+                                  row, strict=True))
+        names.append(prefix + f"Inherited_runtime_classification({arguments})")
+    if names:
+        return tuple(names)
+    if case_id in ("C-11", "C-18"):
+        host = case_id == "C-11"
+        return (prefix + "Inherited_platform_flags_do_not_derive_from_module_version"
+                + f'(id: "{case_id}", host: {host}, abstractions: False)',)
+    policies = {"C-05": ("stable-major", "2.0.0"), "C-06": ("pre-1.0-minor", "0.2.0"),
+                "C-16": ("stable-major", "2.0.0"), "C-17": ("stable-major", "2.0.0")}
+    if case_id not in policies:
+        raise ConformanceError("WitnessMissing")
+    transition, version = policies[case_id]
+    return (prefix + "Inherited_release_classifier_is_policy_not_runtime_evidence"
+            + f'(id: "{case_id}", transition: "{transition}", repairedVersion: "{version}")',)
+
+
 def category_cases():
     inventory = json.loads(INVENTORY.read_bytes())
     if inventory.get("catalogRevision") != CATALOG_REVISION:
@@ -132,8 +244,8 @@ def expected_cases(profile):
                     case_id == "CP-13" and variant == "optional-incompatible") else ("observe",)
                 for mode in modes:
                     matrix = f"{variant}.{mode}"
-                    cases.append(ExpectedCase(profile, "none", matrix, case_id, (
-                        f'Hoard.Composition.Tests.ConformanceCompositionTests.Matrix(caseId: "{case_id}", variant: "{variant}", mode: "{mode}")',)))
+                    cases.append(ExpectedCase(profile, "none", matrix, case_id,
+                                              composition_witnesses(case_id, variant)))
     elif profile == "compatibility":
         for axis in ("host", "abstractions", "dependency-required", "dependency-optional"):
             runtime_axis = {"host": "host", "abstractions": "abstractions",
@@ -147,8 +259,9 @@ def expected_cases(profile):
             cases.append(ExpectedCase(profile, "none", name, "VERSION-INDEPENDENT",
                                       independent_version_witnesses(name)))
         for number in range(1, 24):
-            cases.append(ExpectedCase(profile, "none", "none", f"C-{number:02}", (),
-                                      (f"classification:C-{number:02}",)))
+            case_id = f"C-{number:02}"
+            cases.append(ExpectedCase(profile, "none", "none", case_id, classification_witnesses(case_id),
+                                      (f"classification:{case_id}",)))
         for number in range(1, 9):
             for mode in ("reject", "permit"):
                 matrix = f"ARCH-{number:03}.{mode}"

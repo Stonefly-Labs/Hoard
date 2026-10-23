@@ -21,7 +21,7 @@
   </ItemGroup>
   <PropertyGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
     <DefineConstants>$(DefineConstants);CONFORMANCE_PROVIDER_PACKAGES</DefineConstants>
-    <NuGetLockFilePath>$(BaseIntermediateOutputPath)ConformancePackageAcceptance/packages.lock.json</NuGetLockFilePath>
+    <NuGetLockFilePath>PackageAcceptance/packages.lock.json</NuGetLockFilePath>
   </PropertyGroup>
   <ItemGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
     <Compile Remove="*.cs" />

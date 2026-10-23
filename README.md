@@ -1064,8 +1064,14 @@ not.
 Cross-platform historical archive preparation is explicit and non-qualifying:
 alternate locks preserve the original dependency graph/source locks and bind
 the platform-built bytes before any candidate compilation.
-All 92 version-catalog runtime identities now match actual discovery; unresolved
-composition mappings and full runtime/profile evaluation keep T008 incomplete.
+All 144 distinct composition/version/classification runtime identities now match
+actual package-mode discovery. A separate tracked composition package lock was
+prepared against the sealed historical feed and replayed in an independent fresh
+cache without changing predecessor locks. This verifies discovery, not behavior
+or loaded-provider attribution; remaining control mappings and full runtime/profile
+evaluation keep T008 incomplete. The logger and Python ingestion preserve finite
+version-range parameter punctuation while still rejecting paths and free text;
+45 current source SDK checks pass, not a current package-acceptance result.
 T009's owned-execution regression inventory also passes on Linux, including
 concurrent private caches and containment that leaves the other run alive.
 

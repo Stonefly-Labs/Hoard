@@ -9,6 +9,26 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class RuntimeLoggerTests
 {
+    [Theory]
+    [InlineData("[1.2.0,2.0.0)")]
+    [InlineData("(2.0.0,1.0.0]")]
+    [InlineData("[1.2.3]")]
+    public void Finite_version_ranges_preserve_exact_parameter_identity(string range)
+    {
+        using var owned = new OwnedInput();
+        var identity = $"Hoard.Frozen.Check(range: \"{range}\")";
+        owned.Input.Expected[0] = owned.Input.Expected[0] with { TestIdentity = identity };
+        owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(owned.Result(0));
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var witness = JsonDocument.Parse(File.ReadAllText(Path.Combine(owned.Output, "witnesses.jsonl")));
+        Assert.Equal(identity, witness.RootElement.GetProperty("testIdentity").GetString());
+    }
+
     [Fact]
     public void Actual_results_preserve_each_parameter_identity_and_append_only_attempts()
     {

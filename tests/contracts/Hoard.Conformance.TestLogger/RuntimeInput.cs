@@ -125,7 +125,7 @@ internal static partial class RuntimeSafety
     internal static void Id(string? value) => Require(value is not null && IdPattern().IsMatch(value));
     internal static void Digest(string? value) => Require(value is not null && HashPattern().IsMatch(value));
     internal static void Identity(string? value) => Require(value is { Length: > 0 and <= 1024 }
-        && value.All(c => char.IsAsciiLetterOrDigit(c) || "_.():, \"-+".Contains(c)));
+        && value.All(c => char.IsAsciiLetterOrDigit(c) || "_.():, []\"-+".Contains(c)));
     internal static void IdentityPair(string identity, string fullyQualifiedName)
     {
         Identity(identity);
@@ -152,7 +152,7 @@ internal static partial class RuntimeSafety
     private static partial Regex HashPattern();
     [GeneratedRegex(@"\A[a-zA-Z_][a-zA-Z0-9_.+]*\z", RegexOptions.CultureInvariant)]
     private static partial Regex SymbolPattern();
-    [GeneratedRegex("\\A\\([a-zA-Z_][a-zA-Z0-9_]*: (?:\"[a-zA-Z0-9._:+-]{0,128}\"|[-+]?[0-9]+(?:\\.[0-9]+)?|True|False|null)(?:, [a-zA-Z_][a-zA-Z0-9_]*: (?:\"[a-zA-Z0-9._:+-]{0,128}\"|[-+]?[0-9]+(?:\\.[0-9]+)?|True|False|null))*\\)\\z", RegexOptions.CultureInvariant)]
+    [GeneratedRegex("\\A\\([a-zA-Z_][a-zA-Z0-9_]*: (?:\"[a-zA-Z0-9._:+,()\\[\\]-]{0,128}\"|[-+]?[0-9]+(?:\\.[0-9]+)?|True|False|null)(?:, [a-zA-Z_][a-zA-Z0-9_]*: (?:\"[a-zA-Z0-9._:+,()\\[\\]-]{0,128}\"|[-+]?[0-9]+(?:\\.[0-9]+)?|True|False|null))*\\)\\z", RegexOptions.CultureInvariant)]
     private static partial Regex ParameterPattern();
     [GeneratedRegex(@"\AxUnit\.net VSTest Adapter v[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}(?:\+[a-zA-Z0-9.-]{1,64})? \([a-zA-Z0-9 .+-]{1,128}\)\z", RegexOptions.CultureInvariant)]
     private static partial Regex AdapterBannerPattern();

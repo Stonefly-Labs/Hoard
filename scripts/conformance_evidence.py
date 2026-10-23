@@ -637,7 +637,7 @@ def ingest_witnesses(data, *, run_id, invocation_group_id, input_sha256,
 
 def _runtime_identity(value):
     if (not isinstance(value, str) or not 0 < len(value) <= 1024
-            or re.fullmatch(r'[a-zA-Z0-9_.():, "+-]+', value, re.ASCII) is None):
+            or re.fullmatch(r'[a-zA-Z0-9_.():, "\[\]+-]+', value, re.ASCII) is None):
         _invalid()
     return value
 
@@ -720,7 +720,7 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
     for entry in expected.values():
         name = entry["fullyQualifiedName"]
         suffix = entry["testIdentity"][len(name):]
-        parameter = r'(?:\"[a-zA-Z0-9._:+-]{0,128}\"|[-+]?[0-9]+(?:\.[0-9]+)?|True|False|null)'
+        parameter = r'(?:\"[a-zA-Z0-9._:+,()\[\]-]{0,128}\"|[-+]?[0-9]+(?:\.[0-9]+)?|True|False|null)'
         if (re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_.+]*", name, re.ASCII) is None
                 or not entry["testIdentity"].startswith(name)
                 or (suffix and re.fullmatch(

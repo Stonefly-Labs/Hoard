@@ -160,10 +160,25 @@ without failures/errors/skips. Baseline seal:
 `41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`.
 No provider/profile qualification is inferred.
 
-The version catalog's 92 runtime identities now match actual bounded discovery,
-including source-owned row aliases, real required/optional axes and the
-independent flag cases. Planned/nonexistent composition wrapper mappings remain
-outstanding, so T008 is not marked complete.
+The catalog's 144 distinct composition/version/classification runtime identities
+now match actual bounded package-mode discovery, including all seven mandatory
+package-only composition identities. Canonical matrix keys remain unchanged;
+separate reject/repair dimensions still require separately attributed executions,
+not borrowed witnesses. A tracked conditional composition lock was deliberately
+prepared against the already sealed F-06 feed and successfully restored in a
+second empty cache before building/discovering the consumer. No predecessor lock
+changed, and no behavior pass or current candidate-provider qualification is
+inferred from discovery.
+
+The inherited classification rows require brackets, parentheses and commas in
+quoted version parameters. Three intended logger failures and three Python
+admission failures demonstrated the previous grammar limitation. Both admission
+layers now preserve those bounded ASCII characters without allowing paths,
+embedded quotes, whitespace or control characters inside parameter strings.
+Source SDK tests pass 45 checks; the current Linux diagnostic adds the three
+range-parameter cases, whose native result is not yet claimed. Embedded SDK
+catalog generation matches the independent expansion. Remaining control mappings,
+loaded-provider attribution and complete profile evaluation keep T008 unchecked.
 
 ## Partial implementation checkpoint
 

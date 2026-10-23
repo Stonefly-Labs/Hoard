@@ -49,6 +49,10 @@ SCENARIOS = (
     ("unknown", (SMOKE + "Unknown",), "UnknownDiagnostic", "Failed", 1, "Unknown"),
     ("skipped", (SMOKE + "Skipped",), "EvidenceIncomplete", "Incomplete", 0, "SkippedOrUnknown"),
     ("stdout", (SMOKE + "PassingOutput",), "UnknownDiagnostic", "Passed", 0, "None"),
+    ("ranges", tuple(
+        "Hoard.Conformance.Tests.RuntimeLoggerTests.Finite_version_ranges_preserve_exact_parameter_identity"
+        + f'(range: "{value}")' for value in ("[1.2.0,2.0.0)", "(2.0.0,1.0.0]", "[1.2.3]")),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {
@@ -247,11 +251,11 @@ def make_inputs(run, candidate, sources, packages, prepared, observed_environmen
 
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
-    owned = name == "owned"
-    assembly = candidate / (TESTS if owned else LOGGER + "/Smoke") / "bin/Release/net10.0" / (
-        "Hoard.Conformance.Tests.dll" if owned else "Smoke.dll")
+    source_tests = name in ("owned", "ranges")
+    assembly = candidate / (TESTS if source_tests else LOGGER + "/Smoke") / "bin/Release/net10.0" / (
+        "Hoard.Conformance.Tests.dll" if source_tests else "Smoke.dll")
     assembly_path = assembly.relative_to(run.root).as_posix()
-    package_id = "Hoard.Testing.Conformance" if owned else "Hoard.Conformance.TestLogger"
+    package_id = "Hoard.Testing.Conformance" if source_tests else "Hoard.Conformance.TestLogger"
     package = next(package for package in inputs["packages"] if package["packageId"] == package_id)
     attempt_id = str(uuid.uuid4())
     expected = {identity: ("none", "none") for identity in identities}
