@@ -73,6 +73,33 @@ class ConformanceExecutionTests(unittest.TestCase):
         run.release()
 
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_diagnostic_parent_swap_cannot_redirect_a_safe_write_outside_its_owned_directory(self):
+        run = self.workspace()
+        outside = self.parent / "outside-diagnostics"
+        outside.mkdir()
+        (outside / "sentinel").write_text("untouched")
+        program = """
+from pathlib import Path
+import sys
+root, outside = map(Path, sys.argv[1:])
+(root / "diagnostics").rename(root / "stores" / "original-diagnostics")
+(root / "diagnostics").symlink_to(outside, target_is_directory=True)
+print('{"event":"control","code":"None","value":1}')
+"""
+        try:
+            with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                run.command([sys.executable, "-c", program, str(run.root), str(outside)])
+            self.assertEqual({entry.name for entry in outside.iterdir()}, {"sentinel"})
+            self.assertEqual((outside / "sentinel").read_text(), "untouched")
+            self.assertFalse(run.live_children())
+        finally:
+            if (run.root / "diagnostics").is_symlink():
+                (run.root / "diagnostics").unlink()
+                (run.root / "stores" / "original-diagnostics").rename(run.root / "diagnostics")
+        run.transition("Settling")
+        run.release()
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_output_flood_is_failure_not_truncated_success_and_child_exits(self):
         run = self.workspace()
         with self.assertRaisesRegex(ConformanceError, "OutputLimitExceeded"):
