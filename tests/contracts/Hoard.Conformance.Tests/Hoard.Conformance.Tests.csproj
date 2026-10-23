@@ -4,9 +4,21 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
     <Using Include="Xunit" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ConformancePackageAcceptance)' != 'true'">
+    <ProjectReference Include="../Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj" />
+    <Compile Remove="MemoryMechanismTests.cs" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
+    <NuGetLockFilePath>PackageAcceptance/packages.lock.json</NuGetLockFilePath>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
+    <PackageVersion Include="Hoard.Testing.Conformance" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Metadata.Memory" Version="[0.1.0]" />
+    <PackageReference Include="Hoard.Testing.Conformance" />
+    <PackageReference Include="Hoard.Fixtures.Metadata.Memory" />
   </ItemGroup>
 </Project>

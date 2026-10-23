@@ -1027,10 +1027,13 @@ Implementation subsequently began with explicit maintainer authorization;
 the reviewer-owned checklist markers remain unchanged. Partial test SDK,
 catalog, baseline-preparation and evidence/execution foundations are checked in,
 but no common-suite extraction or five-profile qualification is delivered.
-Implementation is paused on the Memory fixture's missing targeted fault seam
-versus the unchanged-provider constraint. An early architecture review also
-identified unresolved ownership, cleanup-budget and witness-attribution defects;
-the new execution tools are not acceptance-ready. See the
+Implementation continues under the maintainer's direction to resolve issues
+autonomously. The Memory fixture now has bounded, targeted corruption controls
+and real stored-payload/receipt validation without a dependency on the SDK.
+Witness binding/matrix admission and initial ownership/cleanup fixes are
+implemented; full acceptance and final architecture review remain outstanding.
+New native child execution requires Linux kernel confinement; macOS fails
+prerequisite admission rather than claiming unsafe settlement. See the
 [implementation checkpoint](specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized

@@ -53,6 +53,8 @@ public interface IMetadataConformanceAuthority : IMetadataPublicationAuthority
 
 public interface IMetadataConformanceFaultDriver : IConformanceFaultDriver
 {
+    ValueTask<IMetadataCorruptionScope> CorruptAsync(
+        MetadataCorruptionRequest request, CancellationToken cancellationToken);
     ValueTask<MetadataResult<MetadataReadSnapshot>> ObserveIndependentSnapshotAsync(
         MetadataReadGroup request, CancellationToken cancellationToken);
     ValueTask<IAsyncDisposable> HoldWriterAsync(CancellationToken cancellationToken);
@@ -64,6 +66,42 @@ public interface IMetadataConformanceFaultDriver : IConformanceFaultDriver
     ValueTask<MetadataResult<MetadataId>> CreateUnrecognizedLayoutAsync(bool partial, CancellationToken cancellationToken);
     ValueTask<MetadataRecoveryPoint> AuthorizeUpgradeAsync(CancellationToken cancellationToken);
     ValueTask AwaitSettlementAsync(CancellationToken cancellationToken);
+}
+
+public enum MetadataRecordCorruption
+{
+    NullLabel, OversizedLabel, NullRevision, MalformedEncoding, MismatchedKey,
+    CacheAuthorization, AggregateAuthorization, AggregateStart, AggregateEnd, LeaseResource
+}
+
+public enum MetadataOperationCorruption
+{
+    NullTarget, NullRevision, MalformedEncoding, MissingRevisions, OversizedRevisions,
+    OversizedEncoding, MismatchedTicket, MissingReceipt, ShortFingerprint,
+    MissingFingerprint, InvalidFingerprintEncoding, ReservedReceipt, AbandonedReceipt,
+    InvalidState
+}
+
+public abstract record MetadataCorruptionRequest
+{
+    private MetadataCorruptionRequest() { }
+    public sealed record Record(
+        MetadataSelector Selector, MetadataRecordCorruption Corruption) : MetadataCorruptionRequest;
+    public sealed record Operation(
+        MetadataOperationTicket Ticket, MetadataOperationCorruption Corruption,
+        MetadataOperationTicket ForeignTicket) : MetadataCorruptionRequest;
+}
+
+public interface IMetadataCorruptionScope : IAsyncDisposable
+{
+    ConformanceStateFingerprint Original { get; }
+    ValueTask<ConformanceStateFingerprint> ObserveAsync(CancellationToken cancellationToken);
+}
+
+public sealed record ConformanceStateFingerprint
+{
+    public ConformanceStateFingerprint(string sha256) => Sha256 = ConformanceBindingDeclaration.Hash(sha256);
+    public string Sha256 { get; }
 }
 
 public interface IArtifactConformanceSession : IAsyncDisposable

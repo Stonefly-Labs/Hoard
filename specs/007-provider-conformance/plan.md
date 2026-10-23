@@ -4,18 +4,59 @@
 
 **Input**: Feature specification from `specs/007-provider-conformance/spec.md`
 
-**Status**: Implementation started with explicit maintainer authorization and
-is paused at a partial foundational checkpoint. No completed harness, shared
+**Status**: Implementation continues autonomously after the maintainer directed
+resolution of implementation questions. No completed harness, shared
 assertion extraction, workflow, custom checklist approval or qualification
-result is delivered. Existing product contracts, provider implementations and
-the specification remain unchanged.
+result is delivered. Public product contracts and required outcomes remain
+unchanged; necessary fixture-private controls are extended as recorded below.
+
+## Foundation continuation
+
+The maintainer's subsequent instruction to make decisions and keep implementing
+resolves the earlier pause. Necessary fixture-private controls are being
+implemented rather than weakening assertions. Memory now stores bounded private
+record/receipt encodings within its independent immutable copy-on-write state,
+validates corruption through real public read/reconcile/replay paths, and
+exposes bounded targeted capture/replacement controls. No SDK dependency,
+private state type, SQLite delegation, public operation signature change or
+provider-returned pass flag was introduced. The package-only tests exercised
+five record shapes and fourteen receipt/ledger shapes, original-ticket
+classification, unchanged damaged state, independent effects and restoration.
+Nine SDK/package checks passed after a separate fresh-cache locked restore.
+T003's fixture-private seam wording is updated to reflect this necessary
+implementation decision; mandatory outcomes and reviewer-owned markers remain.
+
+Witness ingestion now requires expected binding/matrix dimensions. Two
+dimension-only mutations were observed failing before the fix and pass after
+rejection was added. Baseline verification recomputes all six sealed source,
+recipe, lock, binary and package inventories/hashes before reuse, including the
+distinct F-06 artifact feed. The original private preparation seal verified
+unchanged; it remains non-qualifying.
+
+Initial executor corrections guard post-spawn registration, constrain inherited
+environment, propagate termination control deadlines and perform synthetic
+cleanup in an identity-checked, bounded helper before marking release.
+Linux x64/arm64 child bootstraps install inherited kernel filters that prevent
+session/group and namespace escapes before executing a test program.
+The controller requires a private startup acknowledgement. Native regressions
+must run without skips on Linux; macOS cannot provide the required generic
+containment and therefore returns `PrerequisiteMissing`, not a qualified result
+or case exclusion. Existing predecessor tooling is unaffected by this admission
+restriction. A least-privilege Ubuntu foundation workflow runs sanitized
+non-qualifying regressions; it is not the planned five-profile baseline.
+
+The historical checkpoint and unresolved review inventory below explain the
+earlier pause. Subsequent repairs are still subject to full challenge coverage,
+native CI results and final architecture review before qualification.
 
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
-task markers also remain unchecked: scaffolding and focused successes do not
-establish complete task acceptance. No `finish` or convergence ran.
+tasks originally started unchecked; T002..T005 manifest/solution setup is now
+verified complete. Remaining markers await their full acceptance obligations:
+scaffolding and focused successes do not establish complete task acceptance.
+No `finish` or convergence ran.
 
 Delivered foundations comprise the source-derived frozen inventory/generator,
 SDK and fixture manifests, typed binding/session/resource/diagnostic/witness
@@ -48,7 +89,7 @@ foundation findings. This does not satisfy the final T081 review gate.
 | Medium | `scripts/conformance_evidence.py` witness admission | Compare expected binding and matrix dimensions, not only names/input/package/assembly hashes. Add dimension-only mutation cases. |
 | Medium | SDK metadata fault interfaces | Express typed targeted record/receipt faults, scoped restoration and opaque before/after fingerprints while keeping assertions in common consumers and private storage access in adapters. |
 
-**Decision blocking extraction:** T003 requires unchanged provider
+**Historical decision at the earlier checkpoint:** T003 required unchanged provider
 implementations, but Memory exposes neither targeted receipt mutation nor
 opaque observations of its private `MemoryState`/operation ledger.
 `MemoryFaultControls.CorruptRecordForTestAsync` sets global `Schema = 4`; it

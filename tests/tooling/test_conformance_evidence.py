@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -161,10 +162,11 @@ class ConformanceInputTests(unittest.TestCase):
             return evidence.ingest_witnesses(
                 json.dumps(value).encode(), run_id=run_id, invocation_group_id=group_id,
                 input_sha256="c" * 64, package_sha256="a" * 64, assembly_sha256="b" * 64,
-                expected_tests={witness["testIdentity"]})
+                expected_tests={witness["testIdentity"]: ("sqlite", "none")})
         self.assertEqual(len(ingest([witness])), 1)
         for key, value in (
                 ("executionId", "label"), ("runId", str(uuid.uuid4())),
+                ("bindingId", "memory"), ("matrixId", "different-row"),
                 ("testIdentity", 'Tests.Behavior(provider: "sqlite", shape: "omitted")'),
                 ("packageSha256", "e" * 64), ("assemblySha256", "e" * 64),
                 ("inputSha256", "e" * 64), ("status", "Incomplete")):
@@ -174,6 +176,84 @@ class ConformanceInputTests(unittest.TestCase):
         for changed in ([], [witness, witness]):
             with self.assertRaises(evidence.ConformanceError):
                 ingest(changed)
+
+
+class ConformanceBaselineTests(unittest.TestCase):
+    def setUp(self):
+        import conformance_baselines as baselines
+        self.baselines = baselines
+        self.root = Path(tempfile.mkdtemp(prefix="hoard-sealed-baseline-test-")).resolve()
+        self.root.chmod(0o700)
+        self.addCleanup(shutil.rmtree, self.root)
+        entries = []
+        for name, revision, _, _ in (*baselines.BASELINES, ("f06", baselines.BASELINE, None, None)):
+            source = self.root / "stores" / name
+            source.mkdir(parents=True)
+            (source / "source.cs").write_text("frozen source")
+            (source / "packages.lock.json").write_text("{}")
+            recipe = source / ("tests/fixtures" if name == "f06" else "retained") / "Consumer.csproj"
+            if name == "f06":
+                recipe.parent.mkdir(parents=True)
+                recipe.write_text("<Project />")
+            sources = baselines._hash_tree(source, exclude_outputs=True)
+            if name != "f06":
+                recipe.parent.mkdir(parents=True)
+                recipe.write_text("<Project />")
+            recipes = {"Consumer.csproj": evidence.file_sha256(recipe)}
+            binary = recipe.parent / "bin/Release/Consumer.dll"
+            binary.parent.mkdir(parents=True)
+            binary.write_bytes(b"immutable compiled consumer")
+            package = self.root / "feed" / name / "Hoard.Example.0.1.0.nupkg"
+            package.parent.mkdir(parents=True)
+            package.write_bytes(b"immutable package bytes")
+            locks = {path: value for path, value in sources.items() if path.endswith("packages.lock.json")}
+            entries.append({
+                "id": name, "revision": revision, "sources": sources, "sourceSha256": evidence.digest(sources),
+                "recipes": recipes, "recipeSha256": evidence.digest(recipes),
+                "locks": locks, "lockSha256": evidence.digest(locks),
+                "binaries": {binary.relative_to(source).as_posix(): evidence.file_sha256(binary)},
+                "packages": {package.name: {"sha256": evidence.file_sha256(package),
+                            "sha512": hashlib.sha512(package.read_bytes()).hexdigest()}},
+            })
+        self.manifest = {"schemaVersion": 1, "qualification": False, "mode": "preparation",
+                         "baselineRevision": baselines.BASELINE, "entries": entries}
+        self.seal = self.root / "proofs/baselines.json"
+        self.seal.parent.mkdir()
+        self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+        self.expected_sha256 = evidence.file_sha256(self.seal)
+
+    def test_sealed_sources_binaries_locks_recipes_and_packages_cannot_be_substituted(self):
+        self.assertEqual(len(self.baselines.verify_prepared_baselines(self.root, self.expected_sha256)["entries"]), 6)
+        paths = [
+            self.root / "stores/registration/source.cs",
+            self.root / "stores/registration/packages.lock.json",
+            self.root / "stores/registration/retained/Consumer.csproj",
+            self.root / "stores/registration/retained/bin/Release/Consumer.dll",
+            self.root / "feed/registration/Hoard.Example.0.1.0.nupkg",
+        ]
+        for path in paths:
+            original = path.read_bytes()
+            path.write_bytes(b"same version but substituted bytes")
+            with self.subTest(kind=path.suffix), self.assertRaises(evidence.ConformanceError):
+                self.baselines.verify_prepared_baselines(self.root, self.expected_sha256)
+            path.write_bytes(original)
+        extra = self.root / "feed/registration/Hoard.Foreign.0.1.0.nupkg"
+        extra.write_bytes(b"unsealed package")
+        with self.assertRaises(evidence.ConformanceError):
+            self.baselines.verify_prepared_baselines(self.root, self.expected_sha256)
+        extra.unlink()
+        self.baselines.verify_prepared_baselines(self.root, self.expected_sha256)
+
+    def test_rehashed_labels_cannot_invent_a_historical_revision_or_qualification(self):
+        self.manifest["entries"][0]["revision"] = "0" * 40
+        self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+        with self.assertRaises(evidence.ConformanceError):
+            self.baselines.verify_prepared_baselines(self.root, evidence.file_sha256(self.seal))
+        self.manifest["entries"][0]["revision"] = self.baselines.BASELINES[0][1]
+        self.manifest["qualification"] = True
+        self.seal.write_bytes(evidence.canonical_bytes(self.manifest))
+        with self.assertRaises(evidence.ConformanceError):
+            self.baselines.verify_prepared_baselines(self.root, evidence.file_sha256(self.seal))
 
 
 if __name__ == "__main__":

@@ -72,7 +72,7 @@ public sealed partial class MemoryMetadataStore
             await EnterWriterAsync(activity);
             try
             {
-                Volatile.Write(ref state, state with { Schema = 4 });
+                Volatile.Write(ref state, state with { Records = state.Records.WithPayload(selector, "{") });
                 return Success(state.Epoch);
             }
             finally { writer.Release(); }

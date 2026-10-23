@@ -6,11 +6,13 @@ import stat
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 import conformance_execution as execution
 from conformance_evidence import ConformanceError
+NATIVE_CONTAINMENT = sys.platform == "linux" and os.uname().machine in ("x86_64", "aarch64")
 
 
 class ConformanceExecutionTests(unittest.TestCase):
@@ -52,6 +54,7 @@ class ConformanceExecutionTests(unittest.TestCase):
         run.release()
         self.assertFalse(run.root.exists())
 
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_bounded_safe_events_are_retained_without_raw_canary(self):
         run = self.workspace()
         result = run.command([sys.executable, "-c",
@@ -68,6 +71,7 @@ class ConformanceExecutionTests(unittest.TestCase):
         run.transition("Settling")
         run.release()
 
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_output_flood_is_failure_not_truncated_success_and_child_exits(self):
         run = self.workspace()
         with self.assertRaisesRegex(ConformanceError, "OutputLimitExceeded"):
@@ -76,6 +80,7 @@ class ConformanceExecutionTests(unittest.TestCase):
         run.transition("Settling")
         run.release()
 
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_watchdog_terminates_only_owned_process_tree_and_confirms_exit(self):
         run = self.workspace()
         code = ('import subprocess,sys,time; '
@@ -119,6 +124,93 @@ class ConformanceExecutionTests(unittest.TestCase):
             run.release()
         self.assertEqual((outside / "sentinel").read_text(), "untouched")
         (run.root / "stores/link").unlink()
+        self.assertEqual(run.state, "Retained")
+        run.transition("Settling")
+        run.release()
+
+    def test_unsupported_containment_fails_before_starting_a_provider(self):
+        run = self.workspace()
+        with mock.patch.object(execution.sys, "platform", "unsupported"):
+            with self.assertRaisesRegex(ConformanceError, "PrerequisiteMissing"):
+                run.command([sys.executable, "-c", "raise AssertionError('must not execute')"])
+        self.assertFalse(run.live_children())
+        run.transition("Settling")
+        run.release()
+
+    def test_child_environment_is_explicit_and_cannot_inject_a_native_loader(self):
+        run = self.workspace()
+        with mock.patch.dict(os.environ, {"UNRELATED_SECRET": "synthetic-canary", "LD_PRELOAD": "/private/canary"}):
+            environment = execution.command_environment(run.root, run.root / "cache", {"HOARD_TEST": "synthetic"})
+        self.assertNotIn("UNRELATED_SECRET", environment)
+        self.assertNotIn("LD_PRELOAD", environment)
+        self.assertEqual(environment["HOARD_TEST"], "synthetic")
+        for supplied in ({"LD_PRELOAD": "/private/canary"}, {"HOARD_TEST": "x\x00"}, {"HOARD_TEST": "x" * 16385}):
+            with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                execution.command_environment(run.root, run.root / "cache", supplied)
+        run.transition("Settling")
+        run.release()
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_descendants_cannot_detach_into_an_unobserved_session_or_group(self):
+        run = self.workspace()
+        program = """
+import subprocess, sys
+try:
+    child = subprocess.Popen([sys.executable, "-c", "pass"], start_new_session=True)
+except PermissionError:
+    print('{"event":"control","code":"None","value":1}')
+else:
+    child.wait()
+    print('{"event":"control","code":"None","value":0}')
+subprocess.run([sys.executable, "-c", '''
+import os
+try:
+    os.setpgid(0, 0)
+except PermissionError:
+    print('{"event":"control","code":"None","value":1}')
+else:
+    print('{"event":"control","code":"None","value":0}')
+'''], check=True)
+"""
+        result = run.command([sys.executable, "-c", program])
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual([event["value"] for event in result.events], [1, 1])
+        self.assertFalse(run.live_children())
+        run.transition("Settling")
+        run.release()
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_identity_failure_after_spawn_contains_the_provisional_child(self):
+        run = self.workspace()
+        original = execution.process_identity
+        def failing_identity(pid, **kwargs):
+            if pid != os.getpid():
+                raise ConformanceError("OwnershipInvalid")
+            return original(pid, **kwargs)
+        with mock.patch.object(execution, "process_identity", side_effect=failing_identity):
+            with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                run.command([sys.executable, "-c", "import time; time.sleep(60)"])
+        self.assertFalse(run.live_children())
+        run.transition("Settling")
+        run.release()
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_ledger_failure_after_spawn_contains_the_provisional_child(self):
+        run = self.workspace()
+        original = run._persist
+        failed = False
+        def failing_persist(*, create=False):
+            nonlocal failed
+            if run.groups and not failed:
+                failed = True
+                raise OSError("synthetic ledger failure")
+            return original(create=create)
+        with mock.patch.object(run, "_persist", side_effect=failing_persist):
+            with self.assertRaisesRegex(ConformanceError, "CommandFailed"):
+                run.command([sys.executable, "-c", "import time; time.sleep(60)"])
+        self.assertTrue(failed)
+        self.assertFalse(run.live_children())
+        run.transition("Settling")
         run.release()
 
     def test_insufficient_artifact_capacity_and_invalid_budgets_fail_explicitly(self):

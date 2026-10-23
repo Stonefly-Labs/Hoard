@@ -1,5 +1,6 @@
 """Strict test-only F-07 evidence admission; no production certification."""
 
+from collections.abc import Mapping
 import hashlib
 import json
 import math
@@ -442,6 +443,16 @@ def proof_manifest(directory):
 
 def ingest_witnesses(data, *, run_id, invocation_group_id, input_sha256,
                      package_sha256, assembly_sha256, expected_tests):
+    if (not isinstance(expected_tests, Mapping) or not expected_tests
+            or len(expected_tests) > MAX_RESULTS * MAX_WITNESSES):
+        raise ConformanceError("EvidenceIncomplete")
+    expected_tests = dict(expected_tests)
+    for identity, dimensions in expected_tests.items():
+        if (not isinstance(identity, str) or not identity or len(identity) > 2048
+                or not isinstance(dimensions, tuple) or len(dimensions) != 2):
+            raise ConformanceError("EvidenceIncomplete")
+        for dimension in dimensions:
+            stable_id(dimension)
     value = load_json(data)
     if not isinstance(value, list) or len(value) > MAX_RESULTS * MAX_WITNESSES:
         raise ConformanceError("EvidenceIncomplete")
@@ -454,5 +465,7 @@ def ingest_witnesses(data, *, run_id, invocation_group_id, input_sha256,
         if (witness["runId"] != run_id or witness["invocationGroupId"] != invocation_group_id
                 or witness["inputSha256"] != input_sha256 or witness["packageSha256"] != package_sha256
                 or witness["assemblySha256"] != assembly_sha256 or witness["status"] != "Passed"):
+            raise ConformanceError("ProofMismatch")
+        if (witness["bindingId"], witness["matrixId"]) != expected_tests[witness["testIdentity"]]:
             raise ConformanceError("ProofMismatch")
     return witnesses

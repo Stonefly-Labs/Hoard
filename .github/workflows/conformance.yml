@@ -1,0 +1,32 @@
+name: Conformance foundations
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: conformance-foundations-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  foundations:
+    name: Native ownership and evidence regressions
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Run non-qualifying foundational regressions
+        run: python3 scripts/conformance_unit_checks.py
+      - name: Verify source-owned catalogs
+        run: |
+          python3 tests/fixtures/conformance/baselines/freeze_inventory.py --check
+          python3 scripts/conformance_case_catalog.py --check-sdk

@@ -24,8 +24,7 @@ public sealed partial class ConformanceBindingDeclaration
         Category = category;
         PackageId = Id(packageId);
         PackageVersion = Id(packageVersion);
-        if (!DigestPattern().IsMatch(packageSha256)) { throw new ArgumentException("BindingInvalid"); }
-        PackageSha256 = packageSha256;
+        PackageSha256 = Hash(packageSha256);
         ArgumentNullException.ThrowIfNull(capabilities);
         ArgumentNullException.ThrowIfNull(faults);
         Capabilities = capabilities.Take(129).Select(Id).ToImmutableArray();
@@ -48,6 +47,12 @@ public sealed partial class ConformanceBindingDeclaration
     public static string Id(string value)
     {
         if (value is null || !IdPattern().IsMatch(value)) { throw new ArgumentException("BindingInvalid"); }
+        return value;
+    }
+
+    public static string Hash(string value)
+    {
+        if (value is null || !DigestPattern().IsMatch(value)) { throw new ArgumentException("BindingInvalid"); }
         return value;
     }
 

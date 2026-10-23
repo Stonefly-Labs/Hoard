@@ -82,6 +82,17 @@ public sealed class BindingContractTests
             System.Text.Encoding.UTF8.GetString(output.ToArray()));
     }
 
+    [Fact]
+    public void Corruption_observations_cannot_export_private_values_as_fingerprints()
+    {
+        foreach (var input in new[] { "/private/synthetic-canary", new string('A', 64), new string('a', 65), "" })
+        {
+            var failure = Assert.Throws<ArgumentException>(() => new ConformanceStateFingerprint(input));
+            Assert.Equal("BindingInvalid", failure.Message);
+        }
+        Assert.Equal(new ConformanceStateFingerprint(new string('a', 64)), new ConformanceStateFingerprint(new string('a', 64)));
+    }
+
     private static ConformanceBindingDeclaration Declare(
         ConformanceCategory category, IEnumerable<ConformanceFault> faults) =>
         new("binding", category, "Hoard.Fixture", "0.1.0", new string('a', 64), ["common-logical"], faults);

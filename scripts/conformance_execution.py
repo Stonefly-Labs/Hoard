@@ -11,6 +11,7 @@ import shutil
 import signal
 import stat
 import subprocess
+import sys
 import time
 from types import MappingProxyType
 import uuid
@@ -25,18 +26,26 @@ PROFILE_DIAGNOSTIC_BYTES = 64 * 1024 * 1024
 MAX_PROCESSES = 256
 
 
+def control_timeout(deadline):
+    remaining = 5 if deadline is None else min(5, deadline - time.monotonic())
+    if remaining <= 0:
+        raise ConformanceError("CleanupIncomplete")
+    return remaining
+
+
 def capture_control(args, *, limit=TRANSIENT_BYTES, timeout=5, cwd=None):
     """Bounded transient data from fixed host tools; never diagnostic storage."""
     child = subprocess.Popen(args, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     output = bytearray()
     deadline = time.monotonic() + timeout
+    work_deadline = deadline - min(1, timeout / 5)
     try:
         with selectors.DefaultSelector() as selector:
             selector.register(child.stdout, selectors.EVENT_READ)
             while selector.get_map():
-                if time.monotonic() >= deadline:
+                if time.monotonic() >= work_deadline:
                     raise ConformanceError("DeadlineExceeded")
-                for key, _ in selector.select(min(0.1, max(0.001, deadline - time.monotonic()))):
+                for key, _ in selector.select(min(0.1, max(0.001, work_deadline - time.monotonic()))):
                     block = os.read(key.fileobj.fileno(), min(READ_BYTES, limit + 1))
                     if not block:
                         selector.unregister(key.fileobj)
@@ -44,13 +53,16 @@ def capture_control(args, *, limit=TRANSIENT_BYTES, timeout=5, cwd=None):
                         output.extend(block)
                         if len(output) > limit:
                             raise ConformanceError("OutputLimitExceeded")
-        code = child.wait(timeout=max(0.001, deadline - time.monotonic()))
+        try:
+            code = child.wait(timeout=max(0.001, work_deadline - time.monotonic()))
+        except subprocess.TimeoutExpired:
+            raise ConformanceError("DeadlineExceeded") from None
         return code, bytes(output)
     finally:
         if child.poll() is None:
             child.kill()
             try:
-                child.wait(timeout=10)
+                child.wait(timeout=max(0.001, deadline - time.monotonic()))
             except subprocess.TimeoutExpired:
                 raise ConformanceError("CleanupIncomplete") from None
         child.stdout.close()
@@ -78,12 +90,34 @@ def check_capacity(profile, *, free_bytes):
         raise ConformanceError("InsufficientCapacity")
 
 
-def process_identity(pid):
+def command_environment(root, cache, supplied):
+    if supplied is not None and (not isinstance(supplied, dict) or len(supplied) > 128):
+        raise ConformanceError("OwnershipInvalid")
+    environment = {key: os.environ[key] for key in
+                   ("PATH", "LANG", "LC_ALL", "DOTNET_ROOT", "DOTNET_ROOT_X64", "DOTNET_ROOT_ARM64")
+                   if key in os.environ}
+    for key, value in (supplied or {}).items():
+        if (not isinstance(key, str) or not key.startswith(("HOARD_", "DOTNET_", "ASPNETCORE_", "COMPlus_"))
+                or re.fullmatch(r"[a-zA-Z_][a-zA-Z0-9_]{0,127}", key) is None
+                or not isinstance(value, str) or "\x00" in value or len(value.encode("utf-8")) > 16384):
+            raise ConformanceError("OwnershipInvalid")
+        environment[key] = value
+    if sum(len(key.encode("utf-8")) + len(value.encode("utf-8")) for key, value in environment.items()) > READ_BYTES:
+        raise ConformanceError("OwnershipInvalid")
+    environment.update({
+        "NUGET_PACKAGES": str(cache), "HOME": str(root / "cache"), "DOTNET_CLI_HOME": str(cache),
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1", "DOTNET_NOLOGO": "1",
+        "DOTNET_CLI_USE_MSBUILD_SERVER": "0", "MSBUILDDISABLENODEREUSE": "1",
+    })
+    return environment
+
+
+def process_identity(pid, *, deadline=None):
     if type(pid) is not int or pid <= 0:
         raise ConformanceError("OwnershipInvalid")
     code, output = capture_control(
         ["ps", "-p", str(pid), "-o", "pid=,uid=,pgid=,lstart=,stat="],
-        limit=4096)
+        limit=4096, timeout=control_timeout(deadline))
     if code == 1 and not output.strip():
         return None
     if code:
@@ -96,8 +130,9 @@ def process_identity(pid):
     return hashlib.sha256(" ".join(fields[:-1]).encode("ascii")).hexdigest()
 
 
-def process_group(group):
-    code, output = capture_control(["ps", "-axo", "pid=,pgid=,uid=,stat="])
+def process_group(group, *, deadline=None):
+    code, output = capture_control(["ps", "-axo", "pid=,pgid=,uid=,stat="],
+                                   timeout=control_timeout(deadline))
     if code:
         raise ConformanceError("OwnershipInvalid")
     owned = []
@@ -197,7 +232,8 @@ class OwnedRun:
     def _ledger(self):
         return {"schemaVersion": 1, "runId": self.run_id, "rootId": self.root_id,
                 "ownerPid": self.owner_pid, "ownerStartSha256": self.owner_start,
-                "state": self.state, "children": {str(pid): identity for pid, identity in self.children.items()}}
+                "state": self.state, "groups": sorted(self.groups),
+                "children": {str(pid): identity for pid, identity in self.children.items()}}
 
     def _persist(self, *, create=False):
         data = canonical_bytes(self._ledger())
@@ -214,7 +250,7 @@ class OwnedRun:
             temporary.replace(path)
         self._persisted = data
 
-    def _check_ledger(self):
+    def _check_ledger(self, *, deadline=None):
         no_symlinks(self.root)
         info = self.root.stat()
         path = self.root / "ownership.json"
@@ -222,7 +258,7 @@ class OwnedRun:
                 or stat.S_IMODE(info.st_mode) & 0o077 or path.is_symlink()
                 or not path.is_file() or path.stat().st_size > TRANSIENT_BYTES
                 or path.read_bytes() != self._persisted
-                or self.owner_pid != os.getpid() or process_identity(self.owner_pid) != self.owner_start):
+                or self.owner_pid != os.getpid() or process_identity(self.owner_pid, deadline=deadline) != self.owner_start):
             raise ConformanceError("OwnershipInvalid")
 
     def transition(self, state):
@@ -248,62 +284,60 @@ class OwnedRun:
         return frozenset(live)
 
     def terminate(self, pid, *, deadline=None):
-        self._check_ledger()
-        if pid not in self.children or process_identity(pid) != self.children[pid]:
-            raise ConformanceError("OwnershipInvalid")
         deadline = min(deadline or time.monotonic() + 10, time.monotonic() + 10)
-        identities = {child: process_identity(child) for child in process_group(pid)}
+        self._check_ledger(deadline=deadline)
+        if pid not in self.children or process_identity(pid, deadline=deadline) != self.children[pid]:
+            raise ConformanceError("OwnershipInvalid")
+        self._terminate_group(pid, deadline)
+
+    def _terminate_group(self, group, deadline, *, exclude=None):
+        identities = {child: process_identity(child, deadline=deadline)
+                      for child in process_group(group, deadline=deadline) if child != exclude}
         for child in sorted(identities, reverse=True):
             identity = identities[child]
             if identity is not None:
-                if process_identity(child) != identity:
+                if process_identity(child, deadline=deadline) != identity:
                     raise ConformanceError("OwnershipInvalid")
                 try:
                     os.kill(child, signal.SIGKILL)
                 except ProcessLookupError:
-                    if process_identity(child) is not None:
+                    if process_identity(child, deadline=deadline) is not None:
                         raise ConformanceError("CleanupIncomplete") from None
-        while process_group(pid):
-            if time.monotonic() >= deadline:
-                raise ConformanceError("CleanupIncomplete")
+        while process_group(group, deadline=deadline):
             time.sleep(0.01)
 
     def _contain(self, child):
         deadline = time.monotonic() + 10
-        if child.poll() is None and process_identity(child.pid) is not None:
-            self.terminate(child.pid, deadline=deadline)
-        else:
-            identities = {pid: process_identity(pid) for pid in process_group(child.pid)}
-            for pid, identity in identities.items():
-                if identity is not None:
-                    if process_identity(pid) != identity:
-                        raise ConformanceError("OwnershipInvalid")
-                    try:
-                        os.kill(pid, signal.SIGKILL)
-                    except ProcessLookupError:
-                        if process_identity(pid) is not None:
-                            raise ConformanceError("CleanupIncomplete") from None
+        if child.poll() is None:
+            child.kill()
+        self._terminate_group(child.pid, deadline, exclude=child.pid)
         try:
             child.wait(timeout=max(0.001, deadline - time.monotonic()))
         except subprocess.TimeoutExpired:
             raise ConformanceError("CleanupIncomplete") from None
-        while process_group(child.pid):
-            if time.monotonic() >= deadline:
-                raise ConformanceError("CleanupIncomplete")
+        while process_group(child.pid, deadline=deadline):
             time.sleep(0.01)
 
     def command(self, args, *, cwd=None, timeout=None, kind="events", env=None, scope="ordinary", cache_id="default"):
         self._check_ledger()
-        ceilings = {"ordinary": 600, "transfer": 2400, "recovery": 300}
+        ceilings = {"ordinary": 600, "transfer": 2400, "recovery": 300, "cleanup": 20}
         if scope not in ceilings:
+            raise ConformanceError("OwnershipInvalid")
+        if scope == "cleanup" and (not isinstance(args, (list, tuple)) or list(args) != [
+                sys.executable, "-I", "-S", str(Path(__file__).with_name("conformance_cleanup.py")),
+                str(self.root), str(self.root_identity[0]), str(self.root_identity[1]),
+                self.root_id, str(self.owner_pid), self.owner_start]
+                or env is not None or cwd is not None):
             raise ConformanceError("OwnershipInvalid")
         if not isinstance(cache_id, str) or re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}", cache_id) is None:
             raise ConformanceError("OwnershipInvalid")
         cache = self.root / "cache" / cache_id
         no_symlinks(cache)
-        cache.mkdir(exist_ok=True, mode=0o700)
+        if scope != "cleanup":
+            cache.mkdir(exist_ok=True, mode=0o700)
         timeout = ceilings[scope] if timeout is None else timeout
-        if (self.state not in ("Allocated", "Active") or self.live_children()
+        if (self.state not in ("Allocated", "Active") and not (scope == "cleanup" and self.state == "Settling")
+                or self.live_children()
                 or not isinstance(args, (list, tuple)) or not args
                 or any(not isinstance(arg, str) or "\x00" in arg for arg in args)
                 or type(timeout) not in (int, float) or not 0 < timeout <= ceilings[scope]
@@ -315,16 +349,22 @@ class OwnedRun:
         deadline = min(started + timeout, self.deadline)
         if deadline <= started:
             raise ConformanceError("DeadlineExceeded")
-        child = subprocess.Popen(
-            args, cwd=cwd, env={**os.environ, **(env or {}), "NUGET_PACKAGES": str(cache),
-                               "DOTNET_CLI_TELEMETRY_OPTOUT": "1", "DOTNET_NOLOGO": "1",
-                               "DOTNET_CLI_USE_MSBUILD_SERVER": "0", "MSBUILDDISABLENODEREUSE": "1"},
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True)
-        self.groups.add(child.pid)
-        identity = process_identity(child.pid)
-        if identity is not None:
-            self.children[child.pid] = identity
-        self._persist()
+        if scope != "cleanup" and (sys.platform != "linux" or os.uname().machine not in ("x86_64", "aarch64")):
+            raise ConformanceError("PrerequisiteMissing")
+        environment = command_environment(self.root, cache, env)
+        acknowledgement, writer = os.pipe()
+        launch = (list(args) if scope == "cleanup" else
+                  [sys.executable, "-I", "-S", str(Path(__file__).with_name("conformance_process.py")), str(writer), *args])
+        try:
+            child = subprocess.Popen(
+                launch, cwd=cwd, env=environment,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True,
+                pass_fds=(() if scope == "cleanup" else (writer,)))
+        except OSError:
+            os.close(acknowledgement)
+            raise ConformanceError("CommandFailed") from None
+        finally:
+            os.close(writer)
         self.command_sequence += 1
         destination = self.root / "diagnostics" / f"command-{self.command_sequence:04}.jsonl"
         events = []
@@ -332,6 +372,17 @@ class OwnedRun:
         retained = 0
         raw_total = 0
         try:
+            self.groups.add(child.pid)
+            self._persist()
+            identity = process_identity(child.pid, deadline=deadline)
+            if identity is not None:
+                self.children[child.pid] = identity
+            self._persist()
+            if scope != "cleanup":
+                with selectors.DefaultSelector() as startup:
+                    startup.register(acknowledgement, selectors.EVENT_READ)
+                    if not startup.select(control_timeout(deadline)) or os.read(acknowledgement, 2) != b"1":
+                        raise ConformanceError("PrerequisiteMissing")
             with selectors.DefaultSelector() as selector:
                 selector.register(child.stdout, selectors.EVENT_READ)
                 while selector.get_map():
@@ -374,7 +425,7 @@ class OwnedRun:
                     if event is not None:
                         events.append(event)
             code = child.wait(timeout=max(0.001, deadline - time.monotonic()))
-            if process_group(child.pid):
+            if process_group(child.pid, deadline=deadline):
                 raise ConformanceError("CleanupIncomplete")
         except (ConformanceError, OSError, subprocess.SubprocessError, KeyboardInterrupt) as error:
             try:
@@ -389,6 +440,7 @@ class OwnedRun:
                 raise
             raise ConformanceError("CommandFailed") from None
         finally:
+            os.close(acknowledgement)
             child.stdout.close()
             if child.poll() is not None and not process_group(child.pid):
                 self.children.pop(child.pid, None)
@@ -406,10 +458,26 @@ class OwnedRun:
         self._check_ledger()
         if self.state != "Settling" or self.live_children():
             raise ConformanceError("CleanupIncomplete")
-        for directory, directories, files in os.walk(self.root, followlinks=False):
-            for name in (*directories, *files):
-                if (Path(directory) / name).is_symlink():
-                    raise ConformanceError("OwnershipInvalid")
-        self.state = "Released"
-        self._persist()
-        shutil.rmtree(self.root)
+        deadline = min(time.monotonic() + 30, self.deadline)
+        try:
+            result = self.command(
+                [sys.executable, "-I", "-S", str(Path(__file__).with_name("conformance_cleanup.py")),
+                 str(self.root), str(self.root_identity[0]), str(self.root_identity[1]),
+                 self.root_id, str(self.owner_pid), self.owner_start],
+                scope="cleanup", timeout=min(20, control_timeout(deadline) + 15))
+            if result.exit_code or any(event["code"] != "None" for event in result.events):
+                code = next((event["code"] for event in result.events if event["code"] != "None"), "CleanupIncomplete")
+                raise ConformanceError(code)
+            self._check_ledger(deadline=deadline)
+            control_timeout(deadline)
+            for path in (self.root / "diagnostics").iterdir():
+                path.unlink()
+            (self.root / "diagnostics").rmdir()
+            (self.root / "ownership.json").unlink()
+            self.root.rmdir()
+            self.state = "Released"
+        except (ConformanceError, OSError):
+            self.state = "Retained"
+            if (self.root / "ownership.json").is_file():
+                self._persist()
+            raise

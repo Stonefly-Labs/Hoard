@@ -10,12 +10,19 @@ Existing predecessor commands are available.
 
 ## Prerequisites and Safe Workspace
 
-Use a clean checkout on local macOS/Linux, the SDK in `global.json`, Python 3,
+Use a clean checkout, the SDK in `global.json`, Python 3,
 Bash and Git. Initial dependency restore needs access to configured NuGet
 sources, but no cloud account, service, container or credential. Use a fresh
 owner-private parent outside Git and synthetic data only. Artifact qualification
 requires at least 24 GiB free local scratch; 4 GiB tests are real transfers.
 The actual environment, disk/RSS measurement and limitations appear in reports.
+
+The new native supervisor currently requires Linux x64/arm64 with inherited
+kernel process-group confinement. Unsupported hosts, including macOS, fail
+prerequisite admission before a provider starts. Portable SDK/schema checks can
+run on macOS, but skipped native regressions are incomplete evidence, never
+qualification. The Ubuntu foundation workflow runs those regressions without
+skips and is explicitly non-qualifying until the complete profiles exist.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

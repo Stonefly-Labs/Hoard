@@ -11,17 +11,17 @@ public sealed class MemoryFixtureImage
 }
 
 internal sealed record MemoryOperation(
-    MetadataOperationTicket Ticket, int State, string? Fingerprint, MetadataCommitReceipt? Receipt);
+    MetadataOperationTicket Ticket, double State, string? Fingerprint, string? Receipt);
 
 internal sealed record MemoryState(
     int Schema, MetadataId Epoch, long TimeFloor, long Changes,
-    ImmutableDictionary<MetadataSelector, MetadataRecord> Records,
+    MemoryStoredRecords Records,
     ImmutableDictionary<MetadataRequestIdentity, ArtifactDigest> Edges,
     ImmutableDictionary<MetadataSelector, ImmutableHashSet<MetadataSelector>> Dependents,
     ImmutableDictionary<MetadataId, MemoryOperation> Operations)
 {
     public static MemoryState Empty(int schema) => new(schema, new(Guid.NewGuid()), 0, 0,
-        ImmutableDictionary<MetadataSelector, MetadataRecord>.Empty,
+        MemoryStoredRecords.Empty,
         ImmutableDictionary<MetadataRequestIdentity, ArtifactDigest>.Empty,
         ImmutableDictionary<MetadataSelector, ImmutableHashSet<MetadataSelector>>.Empty,
         ImmutableDictionary<MetadataId, MemoryOperation>.Empty);

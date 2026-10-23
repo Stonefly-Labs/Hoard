@@ -8,15 +8,17 @@ the resulting sealed bytes.
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
+import stat
 import sys
 import tarfile
 from xml.sax.saxutils import escape
 
 from foundation_evidence import canonicalize_acceptance_archive
-from conformance_evidence import ConformanceError, canonical_bytes, digest, file_sha256
-from conformance_execution import OwnedRun, capture_control
+from conformance_evidence import MAX_REPORT_BYTES, ConformanceError, canonical_bytes, digest, file_sha256, load_json, relative_path, sha256
+from conformance_execution import OwnedRun, capture_control, no_symlinks
 
 
 BASELINE = "9389016c0285c79f6f515f59805a5a41c69b0767"
@@ -196,14 +198,105 @@ def prepare(repository, run):
     return sealed
 
 
+def verify_prepared_baselines(root, expected_sha256):
+    root = Path(root).absolute()
+    no_symlinks(root)
+    if (not root.is_dir() or root.stat().st_uid != os.getuid()
+            or stat.S_IMODE(root.stat().st_mode) & 0o077):
+        raise ConformanceError("OwnershipInvalid")
+    seal = root / "proofs/baselines.json"
+    no_symlinks(seal)
+    if not seal.is_file() or seal.stat().st_size > MAX_REPORT_BYTES or file_sha256(seal) != sha256(expected_sha256):
+        raise ConformanceError("InputChanged")
+    evidence = load_json(seal.read_bytes())
+    if (not isinstance(evidence, dict) or set(evidence) !=
+            {"schemaVersion", "qualification", "mode", "baselineRevision", "entries"}
+            or type(evidence["schemaVersion"]) is not int or evidence["schemaVersion"] != 1
+            or evidence["qualification"] is not False or evidence["mode"] != "preparation"
+            or evidence["baselineRevision"] != BASELINE or not isinstance(evidence["entries"], list)):
+        raise ConformanceError("EvidenceIncomplete")
+    revisions = {name: revision for name, revision, _, _ in (*BASELINES, ("f06", BASELINE, None, None))}
+    if (len(evidence["entries"]) != len(revisions)
+            or any(not isinstance(entry, dict) or not isinstance(entry.get("id"), str) for entry in evidence["entries"])
+            or {entry.get("id") for entry in evidence["entries"] if isinstance(entry, dict)} != set(revisions)):
+        raise ConformanceError("EvidenceIncomplete")
+    fields = {"id", "revision", "sourceSha256", "sources", "recipeSha256", "recipes",
+              "lockSha256", "locks", "binaries", "packages"}
+    for entry in evidence["entries"]:
+        if not isinstance(entry, dict) or set(entry) != fields or entry["revision"] != revisions[entry["id"]]:
+            raise ConformanceError("EvidenceIncomplete")
+        source = root / "stores" / entry["id"]
+        no_symlinks(source)
+        count = 0
+        for path in source.rglob("*"):
+            count += 1
+            if count > 50_000 or path.is_symlink():
+                raise ConformanceError("InputChanged")
+        for field in ("sources", "recipes", "locks", "binaries", "packages"):
+            if not isinstance(entry[field], dict) or not entry[field] or len(entry[field]) > 50_000:
+                raise ConformanceError("EvidenceIncomplete")
+        for field, hash_field in (("sources", "sourceSha256"), ("recipes", "recipeSha256"), ("locks", "lockSha256")):
+            if digest(entry[field]) != sha256(entry[hash_field]):
+                raise ConformanceError("InputChanged")
+        if entry["locks"] != {path: value for path, value in entry["sources"].items() if path.endswith("packages.lock.json")}:
+            raise ConformanceError("InputChanged")
+        expected_sources = dict(entry["sources"])
+        if entry["id"] != "f06":
+            expected_sources.update({"retained/" + path: value for path, value in entry["recipes"].items()})
+        if _hash_tree(source, exclude_outputs=True) != expected_sources:
+            raise ConformanceError("InputChanged")
+        for field in ("sources", "recipes", "binaries"):
+            base = source if field != "recipes" else source / ("tests/fixtures" if entry["id"] == "f06" else "retained")
+            for relative, expected in entry[field].items():
+                path = base / relative_path(relative)
+                no_symlinks(path)
+                if not path.is_file() or file_sha256(path) != sha256(expected):
+                    raise ConformanceError("InputChanged")
+        actual_binaries = {
+            path.relative_to(source).as_posix(): file_sha256(path)
+            for path in source.rglob("*") if path.is_file()
+            and "bin" in path.relative_to(source).parts
+            and path.suffix in (".dll", ".json", ".so", ".dylib")
+        }
+        if actual_binaries != entry["binaries"]:
+            raise ConformanceError("InputChanged")
+        feeds = {entry["id"]: set()}
+        for relative, expected in entry["packages"].items():
+            relative_path(relative)
+            artifact = relative.startswith("artifacts/")
+            filename = relative.removeprefix("artifacts/") if artifact else relative
+            if "/" in filename or not filename.endswith(".nupkg") or artifact and entry["id"] != "f06":
+                raise ConformanceError("EvidenceIncomplete")
+            feed = "f06-artifacts" if artifact else entry["id"]
+            feeds.setdefault(feed, set()).add(filename)
+            package = root / "feed" / feed / filename
+            no_symlinks(package)
+            if (not isinstance(expected, dict) or set(expected) != {"sha256", "sha512"}
+                    or not package.is_file() or file_sha256(package) != sha256(expected["sha256"])
+                    or hashlib.sha512(package.read_bytes()).hexdigest() != expected["sha512"]):
+                raise ConformanceError("InputChanged")
+        for feed, expected in feeds.items():
+            if {path.name for path in (root / "feed" / feed).glob("*.nupkg")} != expected:
+                raise ConformanceError("InputChanged")
+    if file_sha256(seal) != expected_sha256:
+        raise ConformanceError("InputChanged")
+    return evidence
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--evidence", type=Path, required=True)
+    parser.add_argument("--verify-sha256")
     options = parser.parse_args()
     run = None
     try:
-        run = OwnedRun.allocate(options.evidence, options.root, profile="harness")
+        if options.verify_sha256 is not None:
+            verified = verify_prepared_baselines(options.evidence, options.verify_sha256)
+            print(json.dumps({"mode": "verification", "qualification": False,
+                              "baselines": len(verified["entries"]), "proofSha256": options.verify_sha256}))
+            return 0
+        run = OwnedRun.allocate(options.evidence, options.root, profile="baseline")
         sealed = prepare(options.root.resolve(), run)
         print(json.dumps({"mode": "preparation", "qualification": False,
                           "proofSha256": file_sha256(sealed)}))

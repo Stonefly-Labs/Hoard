@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json;
 using Hoard.Abstractions.Metadata;
 
 namespace Hoard.Fixtures.Metadata.Memory;
@@ -15,8 +16,41 @@ public sealed partial class MemoryMetadataStore
     private static MemoryOperation? Operation(MemoryState root, MetadataOperationTicket ticket, long now)
     {
         MetadataEncoding.ValidateTicket(ticket);
-        return ticket.Epoch == root.Epoch && now < ticket.Expires.UnixMilliseconds
-            && root.Operations.TryGetValue(ticket.Id, out var operation) && operation.Ticket == ticket ? operation : null;
+        if (ticket.Epoch != root.Epoch || now >= ticket.Expires.UnixMilliseconds
+            || !root.Operations.TryGetValue(ticket.Id, out var operation) || operation.Ticket != ticket)
+        { return null; }
+        ValidateOperation(operation);
+        return operation;
+    }
+
+    private static void ValidateOperation(MemoryOperation operation)
+    {
+        if (operation.State is not (0 or 1 or 2)
+            || (operation.State != 1 && (operation.Fingerprint is not null || operation.Receipt is not null)))
+        { throw new MemoryContractFailure(MetadataFailureCode.CorruptState); }
+        if (operation.State == 1)
+        {
+            if (operation.Fingerprint is not { Length: 64 } fingerprint
+                || fingerprint.Any(character => character is not (>= '0' and <= '9' or >= 'a' and <= 'f'))
+                || Receipt(operation).Ticket != operation.Ticket)
+            { throw new MemoryContractFailure(MetadataFailureCode.CorruptState); }
+        }
+    }
+
+    private static MetadataCommitReceipt Receipt(MemoryOperation operation)
+    {
+        try
+        {
+            if (operation.Receipt is not { } payload || payload.Length > MetadataEncoding.MaximumBytes)
+            { throw new MemoryContractFailure(MetadataFailureCode.CorruptState); }
+            var receipt = JsonSerializer.Deserialize<MetadataCommitReceipt>(payload, MemoryStoredRecords.Json)
+                ?? throw new MemoryContractFailure(MetadataFailureCode.CorruptState);
+            _ = MetadataEncoding.Encode(receipt);
+            return receipt;
+        }
+        catch (JsonException) { throw new MemoryContractFailure(MetadataFailureCode.CorruptState); }
+        catch (ArgumentException) { throw new MemoryContractFailure(MetadataFailureCode.CorruptState); }
+        catch (OverflowException) { throw new MemoryContractFailure(MetadataFailureCode.CorruptState); }
     }
 
     private async ValueTask<MetadataResult<MetadataOperationTicket>> ReserveCoreAsync(MemoryActivity activity)
@@ -65,7 +99,7 @@ public sealed partial class MemoryMetadataStore
             var operation = Operation(current, ticket, now);
             if (operation is null) { throw new MemoryContractFailure(MetadataFailureCode.ReconciliationExpired); }
             if (operation.State == 1)
-            { return Success<MetadataResolution>(new MetadataResolution.Committed(operation.Receipt ?? throw new MemoryContractFailure(MetadataFailureCode.CorruptState))); }
+            { return Success<MetadataResolution>(new MetadataResolution.Committed(Receipt(operation))); }
             var next = current with { Operations = current.Operations.SetItem(ticket.Id, operation with { State = 2 }) };
             await observe("reconcile.before_decision");
             activity.CommitDecision();
@@ -90,7 +124,7 @@ public sealed partial class MemoryMetadataStore
             if (reserved.State == 1)
             {
                 return reserved.Fingerprint == fingerprint
-                    ? Success(reserved.Receipt ?? throw new MemoryContractFailure(MetadataFailureCode.CorruptState))
+                    ? Success(Receipt(reserved))
                     : Failure<MetadataCommitReceipt>(MetadataFailureCode.Conflict, MetadataPhase.Commit);
             }
             if (reserved.State != 0) { throw new MemoryContractFailure(MetadataFailureCode.Conflict); }
@@ -132,7 +166,7 @@ public sealed partial class MemoryMetadataStore
                 if (operation.State != 0)
                 {
                     return operation.State == 1 && operation.Fingerprint == fingerprint
-                        ? Success(operation.Receipt ?? throw new MemoryContractFailure(MetadataFailureCode.CorruptState))
+                        ? Success(Receipt(operation))
                         : Failure<MetadataCommitReceipt>(MetadataFailureCode.Conflict, MetadataPhase.Commit);
                 }
                 var candidate = previous with { TimeFloor = now };
@@ -191,7 +225,12 @@ public sealed partial class MemoryMetadataStore
                 {
                     TimeFloor = now,
                     Changes = checked(previous.Changes + 1),
-                    Operations = candidate.Operations.SetItem(request.Ticket.Id, operation with { State = 1, Fingerprint = fingerprint, Receipt = receipt })
+                    Operations = candidate.Operations.SetItem(request.Ticket.Id, operation with
+                    {
+                        State = 1,
+                        Fingerprint = fingerprint,
+                        Receipt = JsonSerializer.Serialize(receipt, MemoryStoredRecords.Json)
+                    })
                 };
                 activity.CommitDecision();
                 Volatile.Write(ref state, committed);

@@ -12,9 +12,11 @@ For lifecycle use, see the [package-only lifecycle host](../examples/LifecycleHo
 F-07 shared conformance is partially implemented, not available as provider
 certification. Its test SDK contracts/catalog and package manifests are
 foundations only: common assertions, independent adapters and the contributor
-workflow are not delivered. Implementation is paused on a missing Memory
-fixture fault seam and unresolved early-review findings. Do not use the new
-executor as acceptance-ready tooling. See the
+workflow are not delivered. Memory now exposes targeted test-only record and
+receipt controls, with bounded private encoding and real corruption validation;
+its independent copy-on-write mechanism and public operation contracts remain.
+Initial executor/witness repairs are undergoing native Linux validation.
+Do not use the new executor as acceptance-ready tooling. See the
 [implementation checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
 
 F-06 adds **fixture-qualified** BCL-only operations in
