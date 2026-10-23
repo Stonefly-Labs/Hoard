@@ -1018,10 +1018,20 @@ The subsequent read-only analysis finds no actionable cross-artifact or
 constitutional findings. All 24 requirements and eight outcomes have
 implementation and focused proof tasks; all 86 tasks have complete acyclic
 prerequisites. Feature artifacts and checklist markers remain unchanged.
-The next separately authorized stage is **`implement`**, but execution remains
-gated on reviewer approval or explicit authorization for the 40 unchecked
-custom checklist items. Analysis supplies no runtime qualification. See the
+At that analysis checkpoint, **`implement`** required reviewer approval or
+explicit authorization for the 40 unchecked custom checklist items.
+Analysis supplies no runtime qualification. See the
 [analysis scope](docs/DEVELOPMENT.md#f-07-provider-conformance-analysis).
+
+Implementation subsequently began with explicit maintainer authorization;
+the reviewer-owned checklist markers remain unchanged. Partial test SDK,
+catalog, baseline-preparation and evidence/execution foundations are checked in,
+but no common-suite extraction or five-profile qualification is delivered.
+Implementation is paused on the Memory fixture's missing targeted fault seam
+versus the unchanged-provider constraint. An early architecture review also
+identified unresolved ownership, cleanup-budget and witness-attribution defects;
+the new execution tools are not acceptance-ready. See the
+[implementation checkpoint](specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

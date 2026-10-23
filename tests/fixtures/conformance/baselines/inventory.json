@@ -1,0 +1,2638 @@
+{
+  "schemaVersion": 1,
+  "catalogRevision": "f07-v1",
+  "baselineRevision": "9389016c0285c79f6f515f59805a5a41c69b0767",
+  "qualification": false,
+  "identityOrigin": "baseline-source-not-observed-runtime",
+  "historicalBaselines": {
+    "configuration": "b80c69fc386541be4f56f6ef2edeca40f43a0e1c",
+    "discovery": "7fd73267a5154583363c94e9e85b9bac7d4a16b3",
+    "metadata": "10ce78851b97b02bd83a8ef7da7ffdc2381d6519",
+    "artifacts": "830972f24795ffaaaa18cb35138db7da59022313"
+  },
+  "sourceFiles": {
+    "scripts/artifact_case_catalog.py": "2e83f6673d3bea0a8a93fc6906ee3f143e196b16242fb7fe479c8c6b2f981060",
+    "scripts/artifact_evidence.py": "9d296f85b60714ff9063cda897eca5b87c898e1d59efa05c8cd599a647975531",
+    "scripts/configuration_evidence.py": "09d4c4e6982a4b880286bfacb120c8ae0a282795aa92a5398c3a2365feea2bb2",
+    "scripts/discovery_evidence.py": "ca36fc4672f1c656bcce467b5d3fa4dccb6c7af70db699b9ca946449e0f9d7a5",
+    "scripts/foundation_evidence.py": "e7d09749f1857ca73a7b8236cb110cbf0a5f11043f03a300d36141aad5a1a9af",
+    "scripts/lifecycle_evidence.py": "df5244781e28061c17af15bd2b1f250db016ca53107120cce1933d2a34165b5e",
+    "scripts/metadata_evidence.py": "57a820fa866858b3789b2c98c63b87c138b284c5821e21bbb3e5c2e4cee6047a",
+    "scripts/release.py": "bd72bf9e4f20b7978f8ff051182e357861bba4d509898f95b72706e2ef41d73d",
+    "scripts/speckit_flow.py": "58cf440f255cdc99cb5a7b1dcbd342a8fda248ea57d1f007336c4760b4a260e9",
+    "scripts/validate-artifacts.sh": "7e25f83d56d50787cb8ca21dbc7b932246af87989432c1600d87a0c951b1cfca",
+    "scripts/validate-configuration.sh": "c8821397528920b5034af84f09916d58561160ab358cc442dc96a261dba44129",
+    "scripts/validate-discovery.sh": "ddd90adcbf03f61c172233c457052bb923610853449729fb6692539971791a30",
+    "scripts/validate-foundation.sh": "c4b14d96db4dc13583024251c185ea63e45a720359d63f2afcf45db9ed5e6e39",
+    "scripts/validate-lifecycle.sh": "7767c9564cdab9d5325cd82e7fadd465895fbeec9c11740cfe7af01f1d697818",
+    "scripts/validate-metadata.sh": "e428087051a7e12a63370f30b36cbbc8757c69012661b1eaf7aa8038a0c45742",
+    "tests/contracts/Hoard.Artifacts.Tests/ArtifactContractTests.cs": "c0f79609187e636e0a3fb428bd7c90f63835496720244d940c01daf2b4cf7ab0",
+    "tests/contracts/Hoard.Artifacts.Tests/ArtifactTestHarness.cs": "0f31f955739eec4453694abcec255f45d7ddb830be8ed15cd06952ac8dc47cf9",
+    "tests/contracts/Hoard.Artifacts.Tests/ArtifactValueTests.cs": "257edb15e339f9d3751cb68d24c2e01349a982509f8f8dab8bd3eae88f16ec9e",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactAdmissionTests.cs": "56898da6b321e124a02fa549cce9536668c80d8e4aec8680642253e65ea3320a",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactAuthorityTests.cs": "8873d57a7b516890a70c72f09ca0f373f63d98aa119e36e4b6fb5f517cdfd8db",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactBudgetTests.cs": "8b41c81ec988454fe3610c3ae9c1990e0366a744cb0606366b0ba3e4e9759b47",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactCapabilityTests.cs": "f383019bc06d372c2b2ea7e710341bf3fb1d3d8b5ac1852fa6ed48ffe3398ab7",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactCompositionTests.cs": "879877e4d88f3b885c65bd8c1f753def946d7dc91facfa14bb9f71eb834b1bd3",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactCrashTests.cs": "d5cac6e33aad95ceb9e760b39c822890252ca86d6c296748d532cfe6c8d14825",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactDeletionTests.cs": "2328e71fd648e5a4ddda5865887fa2646999edee5e82ec652c05de71d27a7f4f",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactEvidenceTests.cs": "a39fb1eb228bf750bc6111f91fd8b9660ba4414f818b394890141fd02bf7f8d4",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactFailureTests.cs": "c33a7c7198f772b8ea7650880fd75345276f96502b6f1665b8ade0484d0b3d1f",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactMetadataAuthorityTests.cs": "01062e70e63f2e169b183e8d89180e2b76d22518e85107f2e4c7a03e0e62effd",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactMetadataIntegrationTests.cs": "4a5b80298fc5e5316a40657b95f5f4ec2c19a5ff74816f5b5597e8546133c973",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactNonCooperationTests.cs": "87820940cd1f889ba293f67dff2f550b41af03046a8121e11da4fb657770f6b2",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactNonCooperativeChildTests.cs": "bb4436619a885f5244eb64334ae6a1c7b9cd16f2a3f4241f358d4cc42447e1b9",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactProviderDrivers.cs": "9441e81f17d18ae96850af1ca2ab20502591620f8f713545046502c066da2330",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactPublicationRaceTests.cs": "46f78d5cf321ae70571e644b257ab8ed0cb64dc3c5ebb6bb948ee24a26983e6e",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactPublicationTests.cs": "76c5eb3334852f95e915a53e6d7b16156728d0cd0b4d1fb1c08261899a60c1d2",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactReadVerificationTests.cs": "eae84c2ee455be4ef858167c924b3948ccd78c7fcdbd56e6b5a7d88f6d6e6e1f",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactReconciliationTests.cs": "cb1c210144bcd13677bcbe76c79e23b795313dd1804091db54b367020909022f",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactRecoveryTests.cs": "3e8398bd545ed5ca3b67695d586871093a6a278d18195fb15b974427313b2b90",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactTransferProofTests.cs": "297f0a334b507888f06192028a282d0eca7e4cf12232c822259dbbe0525e1831",
+    "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactVisibilityTests.cs": "e4b875a3c022e3a4de8fb4fe7d715de21b498ca7ebcf8e1696a118f6685c809e",
+    "tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj": "eff4b058f66c2744b9a031703a33ab47e2b2be135ee85fea61fc0106fd105b19",
+    "tests/contracts/Hoard.Artifacts.Tests/PackageAcceptance/packages.lock.json": "675d2099471dc890af3c0b11d2f0697b4e549e9e320235f9ecb329f8355e44e5",
+    "tests/contracts/Hoard.Artifacts.Tests/packages.lock.json": "fb3416a9c0a3fbd5652f6a83f6a3284213fe9774354a13a17681090da6d1ca04",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataAdmissionTests.cs": "fa1ea79d59c08f60ebf243ba083854d4f758740276644564e3d2c7ab2f0a6412",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataAtomicityTests.cs": "25731795fb3eb5bf920a9275e77bffc271e86a1fb74ee59cd5c4c10a486ad0cb",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataCases.cs": "5ef143a39e82e74df5b86594a930b64e6bb2c227b447c22aa9975844c74e9b7a",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataDeadlineTests.cs": "67bb2989facbf27be163e28a389ea5cde95d5ba8a1e6e58672c1a9d4be842f5e",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataFailureTests.cs": "69a95bf8a4501ea85fe2874bffaf5366368815158c851fca979a4b76c61656a0",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataHostIntegrationTests.cs": "f3752c9281e92784acb514ee09aee3c8a20fe4b45245e06768ca8aa4d2b5c775",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataIdentityTests.cs": "711cd74779624cf159a9989685945198c14991726ab85b6275ee122efcea05ca",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataLeaseTests.cs": "cacc59eda8cca66645c058fa454ac4e6caa8b189baeef9e76a5ef264209c2c51",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataPagingTests.cs": "4a5265010b803e611d097fe92e612d013f238e0ac7970763ac77c060ae4626f4",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataPublicationTests.cs": "8f3dfbe8629f595d4f94d4fec3301e4b8c8cb0ce4fbc45e019956dd9e4ee9075",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataReconciliationTests.cs": "f7d91663da5f4f77ffbf0bb9251f64d76c9908f5e4259444d85786cd086159fc",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataRelationshipTests.cs": "1bc677546d23c9dfca3d3446ca470c4d3e254d6db0ea6363c4884521ba88a2bb",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataRoundTripTests.cs": "bf14004d3b9f7be9074b3f88584d57b0a70ec9ce81516a0b4612b66afaef8235",
+    "tests/contracts/Hoard.Metadata.Tests/Cases/MetadataSchemaTests.cs": "190d0c4a9964b421f4464c7c967289ecb9dd865975651dd82a70d9a630b2aa9e",
+    "tests/contracts/Hoard.Metadata.Tests/Hoard.Metadata.Tests.csproj": "a7daeb17637f4b464a41f262277d4582de951c86bc0f7ddd9f88dfba67b147ad",
+    "tests/contracts/Hoard.Metadata.Tests/MetadataContractTests.cs": "9a0864298749202f5dce2ee56220317cd1d431dbaab8a5164aab2ecceb5e45bf",
+    "tests/contracts/Hoard.Metadata.Tests/MetadataEncodingTests.cs": "9d10441c26d93c5594f5fda717f0c4c53f34824298f20e76669033482df06fb8",
+    "tests/contracts/Hoard.Metadata.Tests/MetadataTestHarness.cs": "15152974aff6259808993d4843260710d85a0e8c142ad44395686fbbd8add91b",
+    "tests/contracts/Hoard.Metadata.Tests/MetadataValueTests.cs": "caf40c5c02e524c663b51bfcab9c8526801d9099e1bfb5403d21508c86067445",
+    "tests/contracts/Hoard.Metadata.Tests/PackageAcceptance/packages.lock.json": "c969609f9751a5b97209c0bbc243a18020aca731643524347eb5f1cd543ebe4c",
+    "tests/contracts/Hoard.Metadata.Tests/packages.lock.json": "fb3416a9c0a3fbd5652f6a83f6a3284213fe9774354a13a17681090da6d1ca04"
+  },
+  "metadataBoundarySourceSha256": "55772b9f1c32a8e215031efa5d7b99c1fb1a8bb1ec22022f8c552eef406265e6",
+  "entries": [
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-01",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataRoundTripTests.MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-02",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataIdentityTests.MP02_Registry_identity_is_exact_and_isolated"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-03",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataIdentityTests.MP03_Anonymous_and_authenticated_request_partitions_remain_separate"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-04",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataIdentityTests.MP04_Canonical_text_is_not_normalized_and_forbidden_credentials_are_rejected"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-05",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataRoundTripTests.MP05_Exact_bounds_and_overflow_reject_the_entire_candidate"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-06",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataRoundTripTests.MP06_Scopes_and_intervals_cannot_cross_registry_boundaries"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-07",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP07_All_seven_query_kinds_keep_scope_and_tuple_order",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP07_Bounded_datasets_traverse_once_without_truncation",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP07_Oversized_requests_and_results_fail_whole_instead_of_truncating"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-08",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Continuation_is_bound_to_scope_size_and_epoch_and_is_not_a_snapshot",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: \"empty\")",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: \"invalid-hex\")",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: \"null\")",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: \"odd-hex\")",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: \"omitted\")",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: \"wrong-type\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-09",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataAtomicityTests.MP09_Each_faulted_candidate_is_invisible_and_success_is_complete",
+        "Hoard.Metadata.Tests.MetadataAtomicityTests.MP09_Independent_engine_reads_cannot_see_an_uncommitted_candidate"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-10",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataAtomicityTests.MP10_Grouped_reads_keep_one_root_while_independent_reads_can_straddle"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-11",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataAtomicityTests.MP11_Competing_creates_have_one_winner"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-12",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataAtomicityTests.MP12_Revision_races_and_delete_recreate_are_fenced"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-13",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataRelationshipTests.MP13_Explicit_final_graph_deletion_and_disabled_retention_are_atomic"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-14",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP14_Replay_returns_original_receipt_and_changed_payload_conflicts"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-15",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP15_Corrupt_persisted_receipts_fail_reconciliation_and_replay_without_duplicate_effects",
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP15_Lost_acknowledgment_reconciles_and_abandonment_fences_execution",
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP15_Reconciliation_io_failure_preserves_the_unresolved_original_ticket",
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP15_Reconciliation_without_exclusion_is_uncertain_not_a_noncommit_result"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-16",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP16_Distinct_contributions_sum_and_uncertain_retries_do_not_duplicate"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-17",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP17_Exact_ticket_expiry_and_clock_rollback_cannot_revive_a_ticket"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-18",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataDeadlineTests.MP18_Cancellation_before_decision_is_definite_and_after_attempt_is_uncertain",
+        "Hoard.Metadata.Tests.MetadataDeadlineTests.MP18_Known_exception_types_after_commit_attempt_are_still_uncertain"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-19",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataAdmissionTests.MP19_Invalid_budgets_and_closed_instances_do_not_dispatch_work",
+        "Hoard.Metadata.Tests.MetadataDeadlineTests.MP19_Actual_writer_contention_consumes_the_original_budget_without_committing",
+        "Hoard.Metadata.Tests.MetadataDeadlineTests.MP19_Queue_capacity_and_held_work_deadlines_have_finite_owned_results"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-20",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP20_Injected_storage_capacity_rolls_back_and_allows_same_ticket_retry",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP20_Live_ledger_capacity_is_classified_without_evicting_a_receipt"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-21",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Absence_succeeds_but_corruption_fails_the_complete_group",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters(shape: \"aggregate-auth\")",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters(shape: \"aggregate-end\")",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters(shape: \"aggregate-start\")",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters(shape: \"cache-auth\")",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters(shape: \"lease-resource\")",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Stored_page_corruption_fails_whole_and_preserves_data"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-22",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP22_Diagnostics_and_all_failure_shapes_are_sanitized"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-23",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPublicationTests.MP23_Publication_requires_committed_matching_authority_evidence"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-24",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPublicationTests.MP24_Entry_edges_replace_remove_and_compete_without_double_counts"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-25",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPublicationTests.MP25_Zero_reference_confirmation_is_invalidated_even_by_ABA"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-26",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPublicationTests.MP26_Blob_commit_then_metadata_failure_is_an_orphan_not_a_blob_rollback"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-27",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPublicationTests.MP27_Protection_survives_caller_timeout_through_owned_settlement"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-28",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataLeaseTests.MP28_Generation_overflow_rejects_the_whole_group_and_preserves_tombstone",
+        "Hoard.Metadata.Tests.MetadataLeaseTests.MP28_Lease_owners_generations_and_revisions_are_fenced"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-29",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataLeaseTests.MP29_Expiry_is_rechecked_at_the_final_decision_for_renew_release_and_guards"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-30",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataLeaseTests.MP30_Clock_rollback_does_not_undo_expiry_and_new_generation_is_retained"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-31",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPublicationTests.MP31_Invalid_telemetry_rolls_back_its_declared_entry_and_reference_group"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-32",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataAdmissionTests.MP32_Ordinary_use_requires_explicit_schema_admission",
+        "Hoard.Metadata.Tests.MetadataSchemaTests.MP32_Old_schema_requires_explicit_authorized_upgrade_and_preserves_records"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-33",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataSchemaTests.MP33_Future_schema_and_recognized_corruption_are_never_created_over",
+        "Hoard.Metadata.Tests.MetadataSchemaTests.MP33_Unrelated_and_partial_layouts_are_not_empty_or_permission_to_create"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-34",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataSchemaTests.MP34_Unsupported_and_foreign_upgrade_authorizations_leave_old_state_unchanged"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-35",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataSchemaTests.MP35_Upgrade_exclusion_prevents_partial_admission_and_has_one_winner"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-36",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": null,
+      "runtimeTests": [],
+      "orchestratorControls": [
+        "parent-kill:R0",
+        "parent-kill:R1",
+        "verified-recovery-walkthrough"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-37",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataDeadlineTests.MP37_Disposal_owns_active_work_and_does_not_release_it_early",
+        "Hoard.Metadata.Tests.MetadataDeadlineTests.MP37_Incomplete_cleanup_reports_failure_and_keeps_activity_owned"
+      ],
+      "orchestratorControls": [
+        "sqlite3-step-stall-and-incomplete-cleanup"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-38",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": null,
+      "runtimeTests": [],
+      "orchestratorControls": [
+        "parent-kill:M0"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-39",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": null,
+      "runtimeTests": [],
+      "orchestratorControls": [
+        "parent-kill:M1"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-40",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": null,
+      "runtimeTests": [],
+      "orchestratorControls": [
+        "parent-kill:M2"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-41",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": null,
+      "runtimeTests": [],
+      "orchestratorControls": [
+        "parent-kill:U0",
+        "parent-kill:U1",
+        "parent-kill:U2"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-42",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": null,
+      "runtimeTests": [],
+      "orchestratorControls": [
+        "parent-kill:U3",
+        "parent-kill:U4"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-43",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataSchemaTests.MP33_Future_schema_and_recognized_corruption_are_never_created_over",
+        "Hoard.Metadata.Tests.MetadataSchemaTests.MP33_Unrelated_and_partial_layouts_are_not_empty_or_permission_to_create"
+      ],
+      "orchestratorControls": [
+        "second-process-owner-and-crash-released-lock"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-44",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": null,
+      "runtimeTests": [],
+      "orchestratorControls": [
+        "parent-kill:R0",
+        "parent-kill:R1",
+        "verified-recovery-walkthrough"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-45",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": null,
+      "runtimeTests": [],
+      "orchestratorControls": [
+        "parent-kill:R0",
+        "parent-kill:R1",
+        "verified-recovery-walkthrough"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-46",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataHostIntegrationTests.MP46_Configured_selection_uses_existing_lifecycle_and_has_no_routes_or_fallback"
+      ],
+      "orchestratorControls": [
+        "unchanged-package-consumer"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-47",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Architecture.Tests.MetadataBoundaryTests.Native_only_packages_cannot_hide_managed_assets",
+        "Hoard.Architecture.Tests.MetadataBoundaryTests.Package_groups_follow_actual_resolved_assets_not_a_guessed_framework",
+        "Hoard.Architecture.Tests.MetadataBoundaryTests.Prepared_metadata_packages_and_negative_contracts_preserve_boundaries_and_binary_surface",
+        "Hoard.Architecture.Tests.MetadataBoundaryTests.Pruned_dependency_needs_sdk_evidence_a_compatible_version_and_an_actual_framework_reference"
+      ],
+      "orchestratorControls": [
+        "frozen-pre-F05-binary"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "sqlite",
+      "matrixId": "none",
+      "caseId": "MP-48",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [],
+      "orchestratorControls": [
+        "MetadataEvidenceTests:positive-complete-and-negative-inventories",
+        "test_stale_failed_unpaired_foreign_and_false_memory_durability_reject"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-01",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataRoundTripTests.MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-02",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataIdentityTests.MP02_Registry_identity_is_exact_and_isolated"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-03",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataIdentityTests.MP03_Anonymous_and_authenticated_request_partitions_remain_separate"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-04",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataIdentityTests.MP04_Canonical_text_is_not_normalized_and_forbidden_credentials_are_rejected"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-05",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataRoundTripTests.MP05_Exact_bounds_and_overflow_reject_the_entire_candidate"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-06",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataRoundTripTests.MP06_Scopes_and_intervals_cannot_cross_registry_boundaries"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-07",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP07_All_seven_query_kinds_keep_scope_and_tuple_order",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP07_Bounded_datasets_traverse_once_without_truncation",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP07_Oversized_requests_and_results_fail_whole_instead_of_truncating"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-08",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Continuation_is_bound_to_scope_size_and_epoch_and_is_not_a_snapshot",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: \"empty\")",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: \"invalid-hex\")",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: \"null\")",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: \"odd-hex\")",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: \"omitted\")",
+        "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: \"wrong-type\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-09",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataAtomicityTests.MP09_Each_faulted_candidate_is_invisible_and_success_is_complete",
+        "Hoard.Metadata.Tests.MetadataAtomicityTests.MP09_Independent_engine_reads_cannot_see_an_uncommitted_candidate"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-10",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataAtomicityTests.MP10_Grouped_reads_keep_one_root_while_independent_reads_can_straddle"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-11",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataAtomicityTests.MP11_Competing_creates_have_one_winner"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-12",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataAtomicityTests.MP12_Revision_races_and_delete_recreate_are_fenced"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-13",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataRelationshipTests.MP13_Explicit_final_graph_deletion_and_disabled_retention_are_atomic"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-14",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP14_Replay_returns_original_receipt_and_changed_payload_conflicts"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-15",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP15_Corrupt_persisted_receipts_fail_reconciliation_and_replay_without_duplicate_effects",
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP15_Lost_acknowledgment_reconciles_and_abandonment_fences_execution",
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP15_Reconciliation_io_failure_preserves_the_unresolved_original_ticket",
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP15_Reconciliation_without_exclusion_is_uncertain_not_a_noncommit_result"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-16",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP16_Distinct_contributions_sum_and_uncertain_retries_do_not_duplicate"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-17",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataReconciliationTests.MP17_Exact_ticket_expiry_and_clock_rollback_cannot_revive_a_ticket"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-18",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataDeadlineTests.MP18_Cancellation_before_decision_is_definite_and_after_attempt_is_uncertain",
+        "Hoard.Metadata.Tests.MetadataDeadlineTests.MP18_Known_exception_types_after_commit_attempt_are_still_uncertain"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-19",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataAdmissionTests.MP19_Invalid_budgets_and_closed_instances_do_not_dispatch_work",
+        "Hoard.Metadata.Tests.MetadataDeadlineTests.MP19_Actual_writer_contention_consumes_the_original_budget_without_committing",
+        "Hoard.Metadata.Tests.MetadataDeadlineTests.MP19_Queue_capacity_and_held_work_deadlines_have_finite_owned_results"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-20",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP20_Injected_storage_capacity_rolls_back_and_allows_same_ticket_retry",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP20_Live_ledger_capacity_is_classified_without_evicting_a_receipt"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-21",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Absence_succeeds_but_corruption_fails_the_complete_group",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters(shape: \"aggregate-auth\")",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters(shape: \"aggregate-end\")",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters(shape: \"aggregate-start\")",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters(shape: \"cache-auth\")",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters(shape: \"lease-resource\")",
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Stored_page_corruption_fails_whole_and_preserves_data"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-22",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataFailureTests.MP22_Diagnostics_and_all_failure_shapes_are_sanitized"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-23",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPublicationTests.MP23_Publication_requires_committed_matching_authority_evidence"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-24",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPublicationTests.MP24_Entry_edges_replace_remove_and_compete_without_double_counts"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-25",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPublicationTests.MP25_Zero_reference_confirmation_is_invalidated_even_by_ABA"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-26",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPublicationTests.MP26_Blob_commit_then_metadata_failure_is_an_orphan_not_a_blob_rollback"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-27",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPublicationTests.MP27_Protection_survives_caller_timeout_through_owned_settlement"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-28",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataLeaseTests.MP28_Generation_overflow_rejects_the_whole_group_and_preserves_tombstone",
+        "Hoard.Metadata.Tests.MetadataLeaseTests.MP28_Lease_owners_generations_and_revisions_are_fenced"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-29",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataLeaseTests.MP29_Expiry_is_rechecked_at_the_final_decision_for_renew_release_and_guards"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-30",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataLeaseTests.MP30_Clock_rollback_does_not_undo_expiry_and_new_generation_is_retained"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-31",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataPublicationTests.MP31_Invalid_telemetry_rolls_back_its_declared_entry_and_reference_group"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-32",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataAdmissionTests.MP32_Ordinary_use_requires_explicit_schema_admission",
+        "Hoard.Metadata.Tests.MetadataSchemaTests.MP32_Old_schema_requires_explicit_authorized_upgrade_and_preserves_records"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-33",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataSchemaTests.MP33_Future_schema_and_recognized_corruption_are_never_created_over",
+        "Hoard.Metadata.Tests.MetadataSchemaTests.MP33_Unrelated_and_partial_layouts_are_not_empty_or_permission_to_create"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-34",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataSchemaTests.MP34_Unsupported_and_foreign_upgrade_authorizations_leave_old_state_unchanged"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-35",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataSchemaTests.MP35_Upgrade_exclusion_prevents_partial_admission_and_has_one_winner"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-36",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": "non-durable fixture",
+      "runtimeTests": [],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-37",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataDeadlineTests.MP37_Disposal_owns_active_work_and_does_not_release_it_early",
+        "Hoard.Metadata.Tests.MetadataDeadlineTests.MP37_Incomplete_cleanup_reports_failure_and_keeps_activity_owned"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-38",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": "non-durable fixture",
+      "runtimeTests": [],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-39",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": "non-durable fixture",
+      "runtimeTests": [],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-40",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": "non-durable fixture",
+      "runtimeTests": [],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-41",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": "non-durable fixture",
+      "runtimeTests": [],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-42",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": "non-durable fixture",
+      "runtimeTests": [],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-43",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": "non-durable fixture",
+      "runtimeTests": [],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-44",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": "non-durable fixture",
+      "runtimeTests": [],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-45",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": "non-durable fixture",
+      "runtimeTests": [],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-46",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Metadata.Tests.MetadataHostIntegrationTests.MP46_Configured_selection_uses_existing_lifecycle_and_has_no_routes_or_fallback"
+      ],
+      "orchestratorControls": [
+        "unchanged-package-consumer"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-47",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Architecture.Tests.MetadataBoundaryTests.Native_only_packages_cannot_hide_managed_assets",
+        "Hoard.Architecture.Tests.MetadataBoundaryTests.Package_groups_follow_actual_resolved_assets_not_a_guessed_framework",
+        "Hoard.Architecture.Tests.MetadataBoundaryTests.Prepared_metadata_packages_and_negative_contracts_preserve_boundaries_and_binary_surface",
+        "Hoard.Architecture.Tests.MetadataBoundaryTests.Pruned_dependency_needs_sdk_evidence_a_compatible_version_and_an_actual_framework_reference"
+      ],
+      "orchestratorControls": [
+        "frozen-pre-F05-binary"
+      ]
+    },
+    {
+      "profileId": "metadata",
+      "bindingId": "memory",
+      "matrixId": "none",
+      "caseId": "MP-48",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [],
+      "orchestratorControls": [
+        "MetadataEvidenceTests:positive-complete-and-negative-inventories",
+        "test_stale_failed_unpaired_foreign_and_false_memory_durability_reject"
+      ]
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-01",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Empty_content_and_true_absence_are_distinct(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-02",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Staging_is_private_until_complete_verified_commit(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-03",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Empty_unknown_length_and_positive_short_reads_require_real_eof(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-04",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Every_expectation_is_checked_and_declared_length_does_not_replace_eof(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-05",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Unsupported_checksum_and_range_reject_before_storage_or_stream_io(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-06",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Submitted_duplicates_are_fully_verified_and_keep_one_immutable_incarnation(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-07",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationRaceTests.Equivalent_concurrent_writers_keep_one_stamp_and_distinct_receipts(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-08",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationRaceTests.Conflicting_staged_length_cannot_replace_valid_content_or_its_stamp(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-09",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration(provider: \"local\", missing: False)",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration(provider: \"local\", missing: True)",
+        "Hoard.Artifacts.Tests.ArtifactPublicationRaceTests.Corrupt_existing_bytes_are_not_overwritten_or_reused(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-10",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Local_failed_quarantine_persistence_retains_ownership_until_stop_retry_and_reopen",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration(provider: \"local\", missing: False)",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration(provider: \"local\", missing: True)",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Storage_failures_remain_distinct_and_sanitized_and_do_not_publish_partial_content(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Admitted_open_rechecks_quarantine_before_delivering_a_session(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence(provider: \"local\", truncate: False)",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence(provider: \"local\", truncate: True)",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Every_committed_detection_path_quarantines_restored_bytes(provider: \"local\", detection: \"open\")",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Every_committed_detection_path_quarantines_restored_bytes(provider: \"local\", detection: \"publication\")",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Every_committed_detection_path_quarantines_restored_bytes(provider: \"local\", detection: \"reconciliation\")",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Local_reconciliation_cannot_finalize_after_overlapping_read_quarantines_the_incarnation"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-11",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactTransferProofTests.Measured_transfer_binds_actual_bytes_pacing_hashes_and_os_peak(provider: \"local\", size: 268435456)"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-12",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactTransferProofTests.Measured_transfer_binds_actual_bytes_pacing_hashes_and_os_peak(provider: \"local\", size: 4294967296)"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-13",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cap_crossing_rejects_excess_before_append_and_capacity_recovers(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Every_expectation_is_checked_and_declared_length_does_not_replace_eof(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactValueTests.Expectations_and_checksums_copy_input_and_reject_each_bound"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-14",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Expired_ticket_history_restores_write_and_delete_capacity_without_losing_committed_or_removed_identity(provider: \"local\", reserveDelete: False)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Expired_ticket_history_restores_write_and_delete_capacity_without_losing_committed_or_removed_identity(provider: \"local\", reserveDelete: True)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Full_transfer_queue_rejects_without_input_io_and_capacity_returns_after_release(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Reclaimed_identity_history_has_a_finite_budget_and_expiry_restores_new_digest_admission(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-15",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_after_resource_release_cannot_retain_an_already_settled_operation(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_at_result_handoff_cannot_discard_a_reserved_ticket_or_live_read(provider: \"local\", readSession: False)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_at_result_handoff_cannot_discard_a_reserved_ticket_or_live_read(provider: \"local\", readSession: True)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_before_result_handoff_reclaims_the_unclaimed_ticket_or_read(provider: \"local\", readSession: False)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_before_result_handoff_reclaims_the_unclaimed_ticket_or_read(provider: \"local\", readSession: True)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancelled_commit_before_decision_fences_the_ticket_and_cannot_publish_on_retry(provider: \"local\", alreadyCancelled: False)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancelled_commit_before_decision_fences_the_ticket_and_cannot_publish_on_retry(provider: \"local\", alreadyCancelled: True)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cooperative_cancellation_stops_input_without_disposing_borrowed_stream(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Failed_unclaimed_result_cleanup_blocks_admission_and_stop_until_exact_retry(provider: \"local\", readSession: False)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Failed_unclaimed_result_cleanup_blocks_admission_and_stop_until_exact_retry(provider: \"local\", readSession: True)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Undelivered_verified_staging_is_reclaimed_after_ownership_expiry(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-16",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Producer_and_consumer_inactivity_deadlines_release_cooperative_work_without_closing_borrowed_streams(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Total_deadline_includes_shared_authority_contention_before_publication(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-17",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Local_failed_quarantine_persistence_retains_ownership_until_stop_retry_and_reopen",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_access_failure_does_not_quarantine_intact_content(provider: \"local\", unavailable: False)",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_access_failure_does_not_quarantine_intact_content(provider: \"local\", unavailable: True)",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Failed_prefix_reclamation_retains_ownership_until_exact_bounded_cleanup(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Storage_failures_remain_distinct_and_sanitized_and_do_not_publish_partial_content(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-18",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactNonCooperationTests.Concurrent_close_waits_for_the_same_physical_guard_release_and_fences_new_copy(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperationTests.Idle_read_expiry_fences_copy_without_touching_the_destination(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Destination_failure_and_second_copy_never_return_verified_completion_or_dispose_borrowed_streams(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-19",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Storage_failures_remain_distinct_and_sanitized_and_do_not_publish_partial_content(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactValueTests.Public_diagnostic_formatting_is_redacted_and_contract_members_are_get_only"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-20",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Storage_failures_remain_distinct_and_sanitized_and_do_not_publish_partial_content(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unexpected_fault_after_visibility_requires_exact_ticket_reconciliation(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-21",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Committed_receipts_remain_reconcilable_while_exact_residual_staging_is_reclaimed(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Local_reconciliation_cannot_finalize_after_overlapping_read_quarantines_the_incarnation",
+        "Hoard.Artifacts.Tests.ArtifactReconciliationTests.Acknowledged_commit_reconciles_and_retries_one_identical_receipt_without_new_source(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactReconciliationTests.Lost_acknowledgment_never_becomes_rollback_or_another_publication(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-22",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactReconciliationTests.Expired_history_cannot_be_revived_by_clock_rollback_or_foreign_epoch(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactReconciliationTests.Finalized_mutation_retries_preserve_expiry_and_foreign_ticket_failures(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-23",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_of_an_admitted_commit_cannot_fence_an_externally_renewed_owner(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Expiry_cleanup_and_restage_fence_the_old_generation(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Progressing_commit_renews_owner_across_the_original_ttl(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-24",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.History_candidate_pages_resume_past_ineligible_entries_and_preserve_a_faulted_candidate(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Changed_inventory_rejects_old_continuations_and_fresh_pages_cover_every_current_identity(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Recovery_pages_are_bounded_query_bound_and_not_deletion_authority(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Sequential_recovery_retires_consumed_cursors_without_starving_independent_scans(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-25",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Recovery_pages_are_bounded_query_bound_and_not_deletion_authority(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-26",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.Failed_metadata_transaction_leaves_identifiable_committed_bytes_not_a_fabricated_entry(provider: \"local\", metadataProvider: \"memory\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.Failed_metadata_transaction_leaves_identifiable_committed_bytes_not_a_fabricated_entry(provider: \"local\", metadataProvider: \"sqlite\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-27",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Failed_prefix_reclamation_retains_ownership_until_exact_bounded_cleanup(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperationTests.Deadline_and_stop_return_while_a_native_io_boundary_holds_provider_state(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Expired_reclaimed_history_remains_owned_until_the_admitted_delete_physically_settles(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Late_cleanup_rechecks_the_exact_generation_after_replacement(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-28",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests.Live_reference_or_unavailable_reference_authority_denies_removal(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.Actual_metadata_references_deny_removal_until_the_reference_transaction_commits(provider: \"local\", metadataProvider: \"memory\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.Actual_metadata_references_deny_removal_until_the_reference_transaction_commits(provider: \"local\", metadataProvider: \"sqlite\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-29",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests.A_held_reader_finishes_before_exclusive_deletion_and_later_opens_cannot_enter(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-30",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.Lost_metadata_acknowledgment_keeps_real_reference_protection_until_physical_settlement(provider: \"local\", metadataProvider: \"memory\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.Lost_metadata_acknowledgment_keeps_real_reference_protection_until_physical_settlement(provider: \"local\", metadataProvider: \"sqlite\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.New_reference_cannot_cross_an_admitted_zero_reference_deletion(provider: \"local\", metadataProvider: \"memory\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.New_reference_cannot_cross_an_admitted_zero_reference_deletion(provider: \"local\", metadataProvider: \"sqlite\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-31",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests.Exact_delete_receipts_and_recreation_never_remove_the_new_incarnation(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration(provider: \"local\", missing: False)",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration(provider: \"local\", missing: True)"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-32",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests.Exact_delete_receipts_and_recreation_never_remove_the_new_incarnation(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-33",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests.Lost_delete_acknowledgment_preserves_pending_reclamation_until_actual_cleanup(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-34",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactAdmissionTests.Before_admission_and_with_mismatched_authority_no_source_or_directory_is_touched(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactAdmissionTests.Symlinked_root_or_ancestor_is_rejected_without_touching_outside_sentinel(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Only_exact_current_receipts_with_opaque_same_operation_protection_validate(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-35",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactAuthorityTests.Copied_foreign_changed_scope_and_disposed_handles_never_authorize_retention",
+        "Hoard.Artifacts.Tests.ArtifactAuthorityTests.Held_same_operation_can_settle_after_expiry_without_reentrant_admission",
+        "Hoard.Artifacts.Tests.ArtifactAuthorityTests.Queued_exclusive_admission_closes_new_shared_admission_and_retention_never_reenters",
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests.Live_reference_or_unavailable_reference_authority_denies_removal(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Only_exact_current_receipts_with_opaque_same_operation_protection_validate(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataAuthorityTests.Mismatched_authority_composition_cannot_substitute_field_equivalent_protection"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-36",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactCompositionTests.Configured_singleton_selection_recovers_and_restarts_explicitly(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-37",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactVisibilityTests.Local_publication_is_directly_visible_before_acknowledgment"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-38",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"local\", gap: \"authority\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"local\", gap: \"deletion\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"local\", gap: \"fencing\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"local\", gap: \"publication\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"local\", gap: \"readers\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"local\", gap: \"recovery\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"local\", gap: \"streaming\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"local\", gap: \"version\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-39",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactNonCooperationTests.Deadline_and_stop_return_while_a_native_io_boundary_holds_provider_state(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperationTests.Noncooperative_destination_cannot_release_live_read_protection_via_close_or_dispose(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperationTests.Noncooperative_source_retains_bounded_ownership_and_blocks_admission_until_real_settlement(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperativeChildTests.Owned_child_retains_noncooperative_work_until_parent_termination(provider: \"local\", scenario: \"destination\")",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperativeChildTests.Owned_child_retains_noncooperative_work_until_parent_termination(provider: \"local\", scenario: \"native\")",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperativeChildTests.Owned_child_retains_noncooperative_work_until_parent_termination(provider: \"local\", scenario: \"source\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-40",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactCompositionTests.Configured_selection_is_inert_until_start_and_missing_guarantees_block_readiness(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactCompositionTests.Configured_singleton_selection_recovers_and_restarts_explicitly(provider: \"local\")",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Local_failed_quarantine_persistence_retains_ownership_until_stop_retry_and_reopen",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Stop_retains_failed_prefix_ownership_until_reclamation_can_settle(provider: \"local\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-41",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactCrashTests.Real_parent_kill_and_fresh_process_reopen_preserve_exact_receipts_and_control_bytes(barrier: \"B0\")",
+        "Hoard.Artifacts.Tests.ArtifactCrashTests.Real_parent_kill_and_fresh_process_reopen_preserve_exact_receipts_and_control_bytes(barrier: \"B1\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-42",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactCrashTests.Real_parent_kill_and_fresh_process_reopen_preserve_exact_receipts_and_control_bytes(barrier: \"B2\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-43",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactCrashTests.Real_parent_kill_and_fresh_process_reopen_preserve_exact_receipts_and_control_bytes(barrier: \"B3\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-44",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactCrashTests.Real_parent_kill_and_fresh_process_reopen_preserve_exact_receipts_and_control_bytes(barrier: \"D0\")",
+        "Hoard.Artifacts.Tests.ArtifactCrashTests.Real_parent_kill_and_fresh_process_reopen_preserve_exact_receipts_and_control_bytes(barrier: \"D1\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-45",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Architecture.Tests.ArtifactBoundaryTests.Prepared_artifact_consumer_bodies_are_provider_neutral_and_object_mechanisms_do_not_rename",
+        "Hoard.Architecture.Tests.ArtifactBoundaryTests.Prepared_artifact_packages_preserve_independence_and_existing_public_members"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-46",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Architecture.Tests.ArtifactBoundaryTests.Prepared_artifact_packages_preserve_independence_and_existing_public_members",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Marker_and_historical_digest_remain_separate_from_operational_contracts"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-47",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Flat_case_names_and_unattributed_hashes_cannot_claim_qualification",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_case_results_reject_missing_or_unbounded_attribution",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_environment_is_bounded_unambiguous_and_redacted",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_exclusions_cannot_exchange_simulated_and_durable_failure_models",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_records_keep_case_proofs_and_environment_attributable_and_immutable"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "local",
+      "matrixId": "none",
+      "caseId": "AS-48",
+      "claimClass": "common-logical",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Flat_case_names_and_unattributed_hashes_cannot_claim_qualification",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_case_results_reject_missing_or_unbounded_attribution",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_environment_is_bounded_unambiguous_and_redacted",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_exclusions_cannot_exchange_simulated_and_durable_failure_models",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_records_keep_case_proofs_and_environment_attributable_and_immutable"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-01",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Empty_content_and_true_absence_are_distinct(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-02",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Staging_is_private_until_complete_verified_commit(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-03",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Empty_unknown_length_and_positive_short_reads_require_real_eof(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-04",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Every_expectation_is_checked_and_declared_length_does_not_replace_eof(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-05",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Unsupported_checksum_and_range_reject_before_storage_or_stream_io(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-06",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Submitted_duplicates_are_fully_verified_and_keep_one_immutable_incarnation(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-07",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationRaceTests.Equivalent_concurrent_writers_keep_one_stamp_and_distinct_receipts(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-08",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactPublicationRaceTests.Conflicting_staged_length_cannot_replace_valid_content_or_its_stamp(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-09",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration(provider: \"object\", missing: False)",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration(provider: \"object\", missing: True)",
+        "Hoard.Artifacts.Tests.ArtifactPublicationRaceTests.Corrupt_existing_bytes_are_not_overwritten_or_reused(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-10",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration(provider: \"object\", missing: False)",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration(provider: \"object\", missing: True)",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Storage_failures_remain_distinct_and_sanitized_and_do_not_publish_partial_content(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Admitted_open_rechecks_quarantine_before_delivering_a_session(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence(provider: \"object\", truncate: False)",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence(provider: \"object\", truncate: True)",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Every_committed_detection_path_quarantines_restored_bytes(provider: \"object\", detection: \"open\")",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Every_committed_detection_path_quarantines_restored_bytes(provider: \"object\", detection: \"publication\")",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Every_committed_detection_path_quarantines_restored_bytes(provider: \"object\", detection: \"reconciliation\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-11",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactTransferProofTests.Measured_transfer_binds_actual_bytes_pacing_hashes_and_os_peak(provider: \"object\", size: 268435456)"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-12",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactTransferProofTests.Measured_transfer_binds_actual_bytes_pacing_hashes_and_os_peak(provider: \"object\", size: 4294967296)"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-13",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cap_crossing_rejects_excess_before_append_and_capacity_recovers(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactPublicationTests.Every_expectation_is_checked_and_declared_length_does_not_replace_eof(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactValueTests.Expectations_and_checksums_copy_input_and_reject_each_bound"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-14",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Expired_ticket_history_restores_write_and_delete_capacity_without_losing_committed_or_removed_identity(provider: \"object\", reserveDelete: False)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Expired_ticket_history_restores_write_and_delete_capacity_without_losing_committed_or_removed_identity(provider: \"object\", reserveDelete: True)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Full_transfer_queue_rejects_without_input_io_and_capacity_returns_after_release(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Reclaimed_identity_history_has_a_finite_budget_and_expiry_restores_new_digest_admission(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-15",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_after_resource_release_cannot_retain_an_already_settled_operation(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_at_result_handoff_cannot_discard_a_reserved_ticket_or_live_read(provider: \"object\", readSession: False)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_at_result_handoff_cannot_discard_a_reserved_ticket_or_live_read(provider: \"object\", readSession: True)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_before_result_handoff_reclaims_the_unclaimed_ticket_or_read(provider: \"object\", readSession: False)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_before_result_handoff_reclaims_the_unclaimed_ticket_or_read(provider: \"object\", readSession: True)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancelled_commit_before_decision_fences_the_ticket_and_cannot_publish_on_retry(provider: \"object\", alreadyCancelled: False)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancelled_commit_before_decision_fences_the_ticket_and_cannot_publish_on_retry(provider: \"object\", alreadyCancelled: True)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cooperative_cancellation_stops_input_without_disposing_borrowed_stream(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Failed_unclaimed_result_cleanup_blocks_admission_and_stop_until_exact_retry(provider: \"object\", readSession: False)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Failed_unclaimed_result_cleanup_blocks_admission_and_stop_until_exact_retry(provider: \"object\", readSession: True)",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Undelivered_verified_staging_is_reclaimed_after_ownership_expiry(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed(boundary: \"object.commit-progress\", cancel: False)",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed(boundary: \"object.commit-progress\", cancel: True)",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed(boundary: \"pointer.compare\", cancel: False)",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed(boundary: \"pointer.compare\", cancel: True)"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-16",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Producer_and_consumer_inactivity_deadlines_release_cooperative_work_without_closing_borrowed_streams(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Total_deadline_includes_shared_authority_contention_before_publication(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-17",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_access_failure_does_not_quarantine_intact_content(provider: \"object\", unavailable: False)",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_access_failure_does_not_quarantine_intact_content(provider: \"object\", unavailable: True)",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Failed_prefix_reclamation_retains_ownership_until_exact_bounded_cleanup(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Storage_failures_remain_distinct_and_sanitized_and_do_not_publish_partial_content(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed(boundary: \"object.commit-progress\", cancel: False)",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed(boundary: \"object.commit-progress\", cancel: True)",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed(boundary: \"pointer.compare\", cancel: False)",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed(boundary: \"pointer.compare\", cancel: True)"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-18",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactNonCooperationTests.Concurrent_close_waits_for_the_same_physical_guard_release_and_fences_new_copy(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperationTests.Idle_read_expiry_fences_copy_without_touching_the_destination(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Destination_failure_and_second_copy_never_return_verified_completion_or_dispose_borrowed_streams(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-19",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Storage_failures_remain_distinct_and_sanitized_and_do_not_publish_partial_content(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactValueTests.Public_diagnostic_formatting_is_redacted_and_contract_members_are_get_only"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-20",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Storage_failures_remain_distinct_and_sanitized_and_do_not_publish_partial_content(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unexpected_fault_after_visibility_requires_exact_ticket_reconciliation(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-21",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Committed_receipts_remain_reconcilable_while_exact_residual_staging_is_reclaimed(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Reused_object_receipt_survives_failed_unselected_assembly_cleanup",
+        "Hoard.Artifacts.Tests.ArtifactReconciliationTests.Acknowledged_commit_reconciles_and_retries_one_identical_receipt_without_new_source(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactReconciliationTests.Lost_acknowledgment_never_becomes_rollback_or_another_publication(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-22",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactReconciliationTests.Expired_history_cannot_be_revived_by_clock_rollback_or_foreign_epoch(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactReconciliationTests.Finalized_mutation_retries_preserve_expiry_and_foreign_ticket_failures(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-23",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_of_an_admitted_commit_cannot_fence_an_externally_renewed_owner(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Expiry_cleanup_and_restage_fence_the_old_generation(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Progressing_commit_renews_owner_across_the_original_ttl(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-24",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.History_candidate_pages_resume_past_ineligible_entries_and_preserve_a_faulted_candidate(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Changed_inventory_rejects_old_continuations_and_fresh_pages_cover_every_current_identity(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Recovery_pages_are_bounded_query_bound_and_not_deletion_authority(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Sequential_recovery_retires_consumed_cursors_without_starving_independent_scans(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-25",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Recovery_pages_are_bounded_query_bound_and_not_deletion_authority(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactVisibilityTests.Delayed_object_listing_does_not_block_direct_publication_or_establish_absence"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-26",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.Failed_metadata_transaction_leaves_identifiable_committed_bytes_not_a_fabricated_entry(provider: \"object\", metadataProvider: \"memory\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.Failed_metadata_transaction_leaves_identifiable_committed_bytes_not_a_fabricated_entry(provider: \"object\", metadataProvider: \"sqlite\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-27",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Failed_prefix_reclamation_retains_ownership_until_exact_bounded_cleanup(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed(boundary: \"object.commit-progress\", cancel: False)",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed(boundary: \"object.commit-progress\", cancel: True)",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed(boundary: \"pointer.compare\", cancel: False)",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed(boundary: \"pointer.compare\", cancel: True)",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperationTests.Deadline_and_stop_return_while_a_native_io_boundary_holds_provider_state(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Expired_reclaimed_history_remains_owned_until_the_admitted_delete_physically_settles(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Late_cleanup_rechecks_the_exact_generation_after_replacement(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-28",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests.Live_reference_or_unavailable_reference_authority_denies_removal(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.Actual_metadata_references_deny_removal_until_the_reference_transaction_commits(provider: \"object\", metadataProvider: \"memory\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.Actual_metadata_references_deny_removal_until_the_reference_transaction_commits(provider: \"object\", metadataProvider: \"sqlite\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-29",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests.A_held_reader_finishes_before_exclusive_deletion_and_later_opens_cannot_enter(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-30",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.Lost_metadata_acknowledgment_keeps_real_reference_protection_until_physical_settlement(provider: \"object\", metadataProvider: \"memory\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.Lost_metadata_acknowledgment_keeps_real_reference_protection_until_physical_settlement(provider: \"object\", metadataProvider: \"sqlite\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.New_reference_cannot_cross_an_admitted_zero_reference_deletion(provider: \"object\", metadataProvider: \"memory\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.New_reference_cannot_cross_an_admitted_zero_reference_deletion(provider: \"object\", metadataProvider: \"sqlite\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-31",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests.Exact_delete_receipts_and_recreation_never_remove_the_new_incarnation(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration(provider: \"object\", missing: False)",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration(provider: \"object\", missing: True)"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-32",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests.Exact_delete_receipts_and_recreation_never_remove_the_new_incarnation(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-33",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests.Lost_delete_acknowledgment_preserves_pending_reclamation_until_actual_cleanup(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-34",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactAdmissionTests.Before_admission_and_with_mismatched_authority_no_source_or_directory_is_touched(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactAdmissionTests.Symlinked_root_or_ancestor_is_rejected_without_touching_outside_sentinel(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Only_exact_current_receipts_with_opaque_same_operation_protection_validate(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-35",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactAuthorityTests.Copied_foreign_changed_scope_and_disposed_handles_never_authorize_retention",
+        "Hoard.Artifacts.Tests.ArtifactAuthorityTests.Held_same_operation_can_settle_after_expiry_without_reentrant_admission",
+        "Hoard.Artifacts.Tests.ArtifactAuthorityTests.Queued_exclusive_admission_closes_new_shared_admission_and_retention_never_reenters",
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests.Live_reference_or_unavailable_reference_authority_denies_removal(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactEvidenceTests.Only_exact_current_receipts_with_opaque_same_operation_protection_validate(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactMetadataAuthorityTests.Mismatched_authority_composition_cannot_substitute_field_equivalent_protection"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-36",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactCompositionTests.Configured_singleton_selection_recovers_and_restarts_explicitly(provider: \"object\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-37",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactVisibilityTests.Delayed_object_listing_does_not_block_direct_publication_or_establish_absence",
+        "Hoard.Artifacts.Tests.ArtifactVisibilityTests.Object_commit_waits_for_direct_availability_while_listing_is_independently_observable"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-38",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"object\", gap: \"authority\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"object\", gap: \"deletion\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"object\", gap: \"fencing\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"object\", gap: \"publication\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"object\", gap: \"readers\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"object\", gap: \"recovery\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"object\", gap: \"streaming\")",
+        "Hoard.Artifacts.Tests.ArtifactCapabilityTests.Missing_mandatory_guarantees_versions_or_authority_reject_before_io(provider: \"object\", gap: \"version\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-39",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactNonCooperationTests.Deadline_and_stop_return_while_a_native_io_boundary_holds_provider_state(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperationTests.Noncooperative_destination_cannot_release_live_read_protection_via_close_or_dispose(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperationTests.Noncooperative_source_retains_bounded_ownership_and_blocks_admission_until_real_settlement(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperativeChildTests.Owned_child_retains_noncooperative_work_until_parent_termination(provider: \"object\", scenario: \"destination\")",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperativeChildTests.Owned_child_retains_noncooperative_work_until_parent_termination(provider: \"object\", scenario: \"native\")",
+        "Hoard.Artifacts.Tests.ArtifactNonCooperativeChildTests.Owned_child_retains_noncooperative_work_until_parent_termination(provider: \"object\", scenario: \"source\")"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-40",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactCompositionTests.Configured_selection_is_inert_until_start_and_missing_guarantees_block_readiness(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactCompositionTests.Configured_singleton_selection_recovers_and_restarts_explicitly(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactFailureTests.Stop_retains_failed_prefix_ownership_until_reclamation_can_settle(provider: \"object\")",
+        "Hoard.Artifacts.Tests.ArtifactRecoveryTests.Stop_retains_unselected_object_ownership_and_retries_only_its_private_payload"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-41",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": "simulation: no durable restart",
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_exclusions_cannot_exchange_simulated_and_durable_failure_models"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-42",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": "simulation: no durable restart",
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_exclusions_cannot_exchange_simulated_and_durable_failure_models"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-43",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": "simulation: no durable restart",
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_exclusions_cannot_exchange_simulated_and_durable_failure_models"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-44",
+      "claimClass": "durable-local-process-crash",
+      "exclusion": "simulation: no durable restart",
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_exclusions_cannot_exchange_simulated_and_durable_failure_models"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-45",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Architecture.Tests.ArtifactBoundaryTests.Prepared_artifact_consumer_bodies_are_provider_neutral_and_object_mechanisms_do_not_rename",
+        "Hoard.Architecture.Tests.ArtifactBoundaryTests.Prepared_artifact_packages_preserve_independence_and_existing_public_members"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-46",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Architecture.Tests.ArtifactBoundaryTests.Prepared_artifact_packages_preserve_independence_and_existing_public_members",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Marker_and_historical_digest_remain_separate_from_operational_contracts"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-47",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Flat_case_names_and_unattributed_hashes_cannot_claim_qualification",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_case_results_reject_missing_or_unbounded_attribution",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_environment_is_bounded_unambiguous_and_redacted",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_exclusions_cannot_exchange_simulated_and_durable_failure_models",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_records_keep_case_proofs_and_environment_attributable_and_immutable"
+      ],
+      "orchestratorControls": []
+    },
+    {
+      "profileId": "artifacts",
+      "bindingId": "object",
+      "matrixId": "none",
+      "caseId": "AS-48",
+      "claimClass": "object-simulation",
+      "exclusion": null,
+      "runtimeTests": [
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Flat_case_names_and_unattributed_hashes_cannot_claim_qualification",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_case_results_reject_missing_or_unbounded_attribution",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_environment_is_bounded_unambiguous_and_redacted",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_exclusions_cannot_exchange_simulated_and_durable_failure_models",
+        "Hoard.Artifacts.Tests.ArtifactContractTests.Qualification_records_keep_case_proofs_and_environment_attributable_and_immutable"
+      ],
+      "orchestratorControls": []
+    }
+  ]
+}

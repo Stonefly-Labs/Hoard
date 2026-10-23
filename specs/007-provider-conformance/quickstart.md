@@ -1,8 +1,12 @@
 # F-07 Validation Quickstart
 
-**Status**: Future implementation validation guide. The new commands/projects
-below do not exist yet; do not run them as current capability or infer a passing
-result from this document. Existing predecessor commands are available.
+**Status**: Future acceptance guide with partial implementation foundations.
+The SDK, focused tests and fixture project manifests now exist, but the
+`validate-conformance.sh` commands below, shared suites, adapters, contributor
+journey and CI qualification do not. The new execution/ingestion foundations
+have unresolved review findings and are not acceptance-ready. See the
+[implementation checkpoint](plan.md#partial-implementation-checkpoint).
+Existing predecessor commands are available.
 
 ## Prerequisites and Safe Workspace
 

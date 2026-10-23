@@ -4,9 +4,76 @@
 
 **Input**: Feature specification from `specs/007-provider-conformance/spec.md`
 
-**Status**: Phase 0 research and Phase 1 design only. No harness, package,
-workflow, task list, custom checklist approval or qualification result is
-delivered. Existing product contracts and the specification remain unchanged.
+**Status**: Implementation started with explicit maintainer authorization and
+is paused at a partial foundational checkpoint. No completed harness, shared
+assertion extraction, workflow, custom checklist approval or qualification
+result is delivered. Existing product contracts, provider implementations and
+the specification remain unchanged.
+
+## Partial implementation checkpoint
+
+The driver remains **`implement / running`**. Authorization to start was explicit;
+the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
+task markers also remain unchecked: scaffolding and focused successes do not
+establish complete task acceptance. No `finish` or convergence ran.
+
+Delivered foundations comprise the source-derived frozen inventory/generator,
+SDK and fixture manifests, typed binding/session/resource/diagnostic/witness
+contracts, an independently expanded catalog, strict Python evidence entities,
+source snapshots, initial witness admission, owned execution and historical
+baseline preparation. The solution registers SDK unit tests normally and
+excludes package-only fixture projects from default builds. Production
+reference edges and provider implementations are unchanged. Common consumers,
+adapters, the conformance CLI/evaluator/reports, compatibility/composition
+execution, contributor example and five-profile CI are not delivered.
+
+Historical preparation completed locally before candidate package builds:
+the sealed proof SHA-256 was
+`a725a20dcbb635944f64fed007205d06de532ca7f2b4f87c104ac4434ffa8215`.
+This is **preparation, `qualification: false`**, not imported passing evidence.
+The private seal and retained source/binary/feed/cache resources are outside Git.
+The F-06 artifact recipe intentionally retains pre-F-06 metadata packages in
+its own feed/cache, separate from F-06 metadata acceptance. Baseline integrity
+and safe reuse must be verified before candidate execution; do not rebuild or
+substitute retained binaries.
+
+An early, bounded `hoard-architecture-review` identified these unresolved
+foundation findings. This does not satisfy the final T081 review gate.
+
+| Severity | Surface | Required correction |
+| --- | --- | --- |
+| High | `scripts/conformance_execution.py` descendant tracking | Account for children leaving the original session/group; retain ownership when actual settlement cannot be established. Add a detached-descendant regression. |
+| High | Executor post-`Popen` registration | Guard identity/ledger registration immediately after spawn and contain or retain the child on registration failure. Add injected-failure regressions. |
+| Medium | Executor termination/release | Propagate finite deadlines through control calls and destructive cleanup; never persist `Released` before successful deletion or equate timeout with settlement. |
+| Medium | `scripts/conformance_evidence.py` witness admission | Compare expected binding and matrix dimensions, not only names/input/package/assembly hashes. Add dimension-only mutation cases. |
+| Medium | SDK metadata fault interfaces | Express typed targeted record/receipt faults, scoped restoration and opaque before/after fingerprints while keeping assertions in common consumers and private storage access in adapters. |
+
+**Decision blocking extraction:** T003 requires unchanged provider
+implementations, but Memory exposes neither targeted receipt mutation nor
+opaque observations of its private `MemoryState`/operation ledger.
+`MemoryFaultControls.CorruptRecordForTestAsync` sets global `Schema = 4`; it
+cannot preserve the existing receipt-corruption assertions that independently
+read unchanged aggregates and corroborate unchanged damaged ledger fields.
+A binding alone cannot add those controls without private access or fabricated
+behavior. The recommended resolution is authorization for a narrowly scoped
+test-only seam inside the Memory fixture assembly, with no SDK dependency or
+private types exposed. The maintainer was unavailable to answer that request,
+so no provider edits, applicability waivers or assertion reductions were made.
+
+Focused checks observed before this checkpoint: all 121 Python tooling tests
+and six SDK binding tests passed; frozen inventory/catalog comparisons and
+SDK/test formatting checks passed. These do **not** cover the review findings
+or establish complete model/execution/evidence correctness. Full predecessor
+acceptance, independent locked package replay, actual large transfers/recovery,
+clean contributor execution and local/CI conformance qualification remain
+unrun. Resume with the scope decision, repair the foundation findings and
+complete all remaining tasks before finishing this stage.
+
+README, development/provider guidance and this quickstart reflect the partial
+state. Custom-host examples, product charter/specification, architecture/ADR/
+diagrams, predecessor artifacts, governance, release/IaC/UI guidance remain
+unchanged because no supported product API, provider implementation,
+production graph or operational procedure changed.
 
 ## Summary
 

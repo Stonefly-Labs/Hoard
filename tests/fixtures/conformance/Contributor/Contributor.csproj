@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Conformance.Contributor</AssemblyName>
+    <PackageId>Hoard.Fixtures.Conformance.Contributor</PackageId>
+    <Description>Test-only forwarding adapter example, not an independent provider.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Testing.Conformance" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Memory" />
+  </ItemGroup>
+</Project>

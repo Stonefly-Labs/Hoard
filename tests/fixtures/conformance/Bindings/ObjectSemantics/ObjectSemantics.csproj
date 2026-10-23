@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Conformance.Bindings.ObjectSemantics</AssemblyName>
+    <PackageId>Hoard.Fixtures.Conformance.Bindings.ObjectSemantics</PackageId>
+    <Description>Test-only adapter for the independent object-semantics simulation.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Testing.Conformance" />
+    <PackageReference Include="Hoard.Fixtures.Artifacts.ObjectSemantics" />
+  </ItemGroup>
+</Project>

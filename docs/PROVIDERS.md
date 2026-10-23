@@ -9,6 +9,14 @@ Hosting; F-04 adds protected metadata/observations, not provider operations. Sta
 [validation quickstart](../specs/001-provider-contracts/quickstart.md).
 For lifecycle use, see the [package-only lifecycle host](../examples/LifecycleHost/README.md).
 
+F-07 shared conformance is partially implemented, not available as provider
+certification. Its test SDK contracts/catalog and package manifests are
+foundations only: common assertions, independent adapters and the contributor
+workflow are not delivered. Implementation is paused on a missing Memory
+fixture fault seam and unresolved early-review findings. Do not use the new
+executor as acceptance-ready tooling. See the
+[implementation checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
+
 F-06 adds **fixture-qualified** BCL-only operations in
 `Hoard.Abstractions.Storage`, separate from the unchanged `IArtifactProvider`
 marker and historical `Metadata.ArtifactDigest`. Initialization/coordination

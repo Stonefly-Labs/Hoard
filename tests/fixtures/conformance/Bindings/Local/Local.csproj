@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Conformance.Bindings.Local</AssemblyName>
+    <PackageId>Hoard.Fixtures.Conformance.Bindings.Local</PackageId>
+    <Description>Test-only adapter for the independent local artifact fixture.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Testing.Conformance" />
+    <PackageReference Include="Hoard.Fixtures.Artifacts.Local" />
+  </ItemGroup>
+</Project>

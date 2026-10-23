@@ -4666,6 +4666,47 @@ No product, .NET/native-client or IaC acceptance is implied by this documentatio
 checkpoint; no implementation, workflow, qualification, release/tag, publishing,
 infrastructure operation, repository-setting change, deployment or merge occurs.
 
+### F-07 partial implementation checkpoint
+
+Explicit maintainer authorization cleared the implementation entry gate without
+self-approving the 40 reviewer-owned checklist markers. The driver remains
+`implement / running`; do not rerun `begin`, call `finish`, start convergence,
+or treat the partial SDK/catalog/manifests as qualification.
+
+The checked-in foundations include strict evidence admission, a frozen
+source-level inventory, typed SDK seams, focused unit tests and historical
+baseline preparation. Source-derived test identities are not observed runtime
+witnesses. A local historical preparation completed before candidate package
+builds, but its retained outputs are private, non-qualifying and not committed.
+Baseline reuse/integrity validation and fresh locked replay remain unfinished.
+
+The bounded `hoard-architecture-review` of these foundations identified a real
+scope decision: Memory's current public controls cannot inject and observe
+targeted record/receipt corruption while preserving unrelated state. T003
+requires unchanged providers; T021/T023 require unchanged shared assertions and
+all mandatory logical controls. A separate binding cannot bridge that gap
+without prohibited private access or simulated outcomes. The recommended
+resolution is explicit authorization for a narrow test-only seam inside the
+Memory fixture assembly, keeping private types private and production projects
+independent of the SDK. The authorization request could not be answered; no
+provider changes or requirement relaxations were made.
+
+The same early review found incomplete descendant containment, an unprotected
+post-spawn registration window, cleanup/termination budget and state-ordering
+defects, and missing binding/matrix checks during witness ingestion. These must
+be repaired and challenged before using the new executor or ingestion boundary
+for acceptance. Existing focused tests do not establish those guarantees.
+This is not the final architecture review or T081 completion.
+
+The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
+records the delivered scope, review findings and remaining evidence. All task
+markers remain unchecked pending complete task verification. No F-07 CLI,
+common consumer suites, contributor journey, CI baseline or certification is
+available. Existing predecessor acceptance scripts remain the documented
+entry points; full predecessor regressions were not rerun for this partial
+checkpoint. No production API, provider behavior, cloud resource, release,
+deployment, merge, or repository setting changed.
+
 ## Releases and deployment
 
 [Version tags publish GitHub source releases](RELEASING.md). They do not run

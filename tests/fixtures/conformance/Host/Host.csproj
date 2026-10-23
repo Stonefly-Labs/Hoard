@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Conformance.Host</AssemblyName>
+    <PackageId>Hoard.Fixtures.Conformance.Host</PackageId>
+    <Description>Test-only explicit in-process conformance composition, not a product executable.</Description>
+    <IsPackable>true</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Hoard.Hosting" />
+    <PackageReference Include="Hoard.Testing.Conformance" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Sqlite" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Memory" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Local" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.ObjectSemantics" />
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" PrivateAssets="all" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+</Project>
