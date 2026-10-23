@@ -516,6 +516,11 @@ The bounded architecture review found no actionable ownership/dependency defect.
 The thirteen-scope/38-observation native selection is pending. These leaf APIs
 still need exact execution/attempt/group/input linkage, actual SQLite/PRAGMA
 production and full controller/evaluator integration; T014 remains unchecked.
+An additional intended controller regression exposed the new session scope
+selecting the smoke assembly instead of the source SDK test assembly. Explicit
+source routing is repaired; all thirteen scopes now have a checked launch against
+their actual admitted assembly/package before discovery, and all sixteen SDK
+orchestration unit checks pass. This does not replace pending native observation.
 
 ## Partial implementation checkpoint
 

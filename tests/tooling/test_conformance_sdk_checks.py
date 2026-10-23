@@ -27,6 +27,29 @@ class SdkDiagnosticTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.directory)
 
+    def test_each_diagnostic_discovers_its_actual_selected_assembly_before_execution(self):
+        candidate = self.directory / "candidate"
+        for scenario in checks.SCENARIOS:
+            name, identities = scenario[:2]
+            source = not all(identity.startswith(checks.SMOKE) for identity in identities)
+            folder = checks.TESTS if source else checks.LOGGER + "/Smoke"
+            assembly = candidate / folder / "bin/Release/net10.0" / (
+                "Hoard.Conformance.Tests.dll" if source else "Smoke.dll")
+            package = "Hoard.Testing.Conformance" if source else "Hoard.Conformance.TestLogger"
+            inputs = {
+                "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+                "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+                "packages": [{"packageId": package, "sha256": "b" * 64}],
+            }
+            with self.subTest(scenario=name), patch.object(
+                    checks, "runtime_command", side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+                launch.assert_called_once()
+                self.assertEqual(launch.call_args.args[1], assembly)
+                self.assertEqual(launch.call_args.args[2]["purpose"], "discovery")
+                self.assertEqual(launch.call_args.args[2]["packages"][0]["id"], package)
+
     def test_unsupported_platform_never_allocates_or_prepares(self):
         with patch.object(checks, "native_execution_supported", return_value=False), \
                 patch.object(checks.OwnedRun, "allocate") as allocate, \

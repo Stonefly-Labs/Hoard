@@ -5189,6 +5189,11 @@ Native session diagnostics are pending; the selection now has thirteen scopes/
 38 discoveries/38 executions. These leaf observations are not yet linked to exact
 platform execution/attempt/group/input evidence. SQLite/PRAGMA production and full
 controller/evaluator integration remain unfinished, and T014 stays unchecked.
+An added source-routing regression caught the session diagnostic mistakenly
+selecting the smoke assembly. The explicit source scope list is repaired; all
+thirteen scenario launches now have focused assembly/package checks before
+discovery, and all sixteen SDK orchestration unit tests pass. Native observation
+must still establish actual execution.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
