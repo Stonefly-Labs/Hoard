@@ -3976,6 +3976,71 @@ rerun; the complete affected artifact gate and tooling suite run here.
 **`converge / ready`**, separately invoked; no clean-convergence, merge,
 feature completion, release, infrastructure or dependency-unlock claim.
 
+### F-06 fresh convergence: unpublished object cleanup
+
+The separately invoked installed `speckit-converge` assesses present scoped
+code against all 25 FRs, eight buildable SCs, 23 story acceptance scenarios,
+15 edge cases, eight grouped Phase 1 plan decisions, all 88 existing tasks and
+eight constitutional principles. T087's failed-staging ownership/receipt
+correction and T088's consumed-continuation lifecycle remain covered.
+Outcome: **`tasks_appended`**, one **HIGH partial** finding; zero missing,
+contradicting or unrequested findings. No critical, medium or low finding.
+
+| ID | Source | Current evidence | Required correction |
+| --- | --- | --- | --- |
+| F1 | FR-008/009/012/015, US2.2..4, SC-006; bounded private payload/recovery plan; T024/T032/T036/T037/T049/T050/T065 | `ObjectPublication.cs` creates a new assembled object per commit attempt, but failed deletion in its unselected-object `finally` has no retained cleanup index. Three 1 KiB retries leave three untracked payloads while returning `AccessDenied`, cleanup `Released` and readiness true. Abandonment frees the multipart reservation; recovery lists nothing and stop reports release with all three payloads remaining. | Track exact unpublished assembly ownership/capacity before fallible work, fence admission/readiness/retries on incomplete cleanup and provide finite repeatable recovery/shutdown without deleting selected or newer objects. |
+
+The isolated package-only probe uses unchanged assemblies from the fresh
+qualification workspace. It injects an actual exception at `pointer.compare`
+after assembly and removes write permission from the owned `objects` directory.
+Access is restored after each attempt. The otherwise identical writable
+control leaves zero objects across all three retries; the failure variant
+retains 1,024, 2,048 and 3,072 bytes. After `AbandonAsync`, both variants report
+zero `ObserveAsync(All)` rows and admit another full-cap reservation; only the
+failure variant still has payloads after successful `StopAsync`. No root or
+artifact implementation is edited by the probe, and no external store is used.
+
+The append-only stage adds just
+[Phase 10 / T089](../specs/006-artifact-storage/tasks.md#phase-10-convergence).
+All previous task text/markers, spec, plan, contracts and reviewer-owned
+checklists remain unchanged. The existing task-status header is historical
+implementation evidence, not a claim that newly appended T089 is complete.
+Implementation must retain focused runtime red/green proof, cover partial and
+complete assembly/cancellation/unlink retry/selected-object protection, wire
+required runtime witnesses and rerun affected default locked acceptance.
+Convergence does not implement the correction.
+
+| Exact command / check | Result |
+| --- | --- |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/converge-followup-20261023` | Passed existing full locked qualification: 237 common/crash tests, four measured-transfer proof tests, package/architecture/retained-binary/consumer checks, four actual 256 MiB/4 GiB measurements and six actual SIGKILL/reopen barriers; 96 entries, 92 passes/four explicit Object durability exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | All 105 passed |
+| `dotnet run --project "$SESSION_FILES/convergence-probe/Probe.csproj" -c Release` | Reproduced F1 using current package assemblies: writable control zero residuals; denied-unlink variant three residual 1 KiB objects, false released cleanup/readiness and successful released shutdown; diagnostic probe, not a passing regression or qualification |
+| `artifact_evidence.verify_manifest(manifest, work, artifact_evidence.source_hash(root))` | Passed independent retained full-manifest revalidation against unchanged current source |
+
+`SESSION_FILES` denotes this invocation's private session `files/` directory;
+the probe source, exact command output and owned roots are outside Git.
+Retained `convergence-probe/result.log` SHA-256:
+`99f3aec66a8691d239d8d6ab915e9ff2900c724ba2497eecccb6ba7b86b49ab3`.
+Fresh full run `faea99c3-fc0b-44bb-a402-24e223a0158f` binds source
+`42cb2a4eaa77daf772b4197c1b6b189155516a9029aa08f00fdecfa995f1a90c`.
+These passing existing checks do not cover or waive F1 and do not establish
+clean convergence. Full acceptance independently verifies formatting/analyzers.
+No dependencies, lockfiles, application/test/tooling sources, historical
+baseline inputs or capability claims change.
+
+README and this workflow guide record the current gap and next stage.
+Provider/test guides, quickstart, existing examples, product charter/spec/
+architecture/diagrams/ADR, governance/backlog, compatibility, IaC and release
+guides are unaffected: no API, runtime mechanism, intended contract, supported
+environment or operational command is changed by this append-only assessment;
+implementation must update affected evidence when T089 is actually fixed.
+There are no pre/post convergence hooks. The driver schedules
+**`implement / ready`** for T089, followed by a separate fresh convergence.
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) remains draft.
+Finalization is blocked; no merge, feature completion, dependency unlock,
+release, package publication, infrastructure action or deployment is authorized
+or performed.
+
 ```bash
 python3 -m unittest discover -s tests/tooling -v
 bash scripts/validate-foundation.sh

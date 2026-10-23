@@ -752,7 +752,7 @@ runtime binaries or packages are published. See the
 [merge/release evidence](docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release).
 [Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
 merged into `main`, recording F-05 complete with release metadata.
-**F-06's two convergence corrections are implemented; fresh convergence is next.**
+**F-06 fresh convergence found one remaining HIGH cleanup gap; implementation is next.**
 The additive BCL-only storage contracts have independent Local and simulated
 ObjectSemantics fixtures for verified streaming/publication, protected reads,
 exact-ticket reconciliation, bounded recovery and reference-safe deletion.
@@ -803,9 +803,21 @@ terminal handles. Fresh locked qualification passes 237 logical/crash tests,
 all transfer/crash/package proofs and the exact 92-pass/four-exclusion matrix.
 All 88 tasks are checked; reviewer-owned checklists remain unchanged.
 See the [follow-up checkpoint](docs/DEVELOPMENT.md#f-06-convergence-follow-up-implementation).
-The next stage is fresh **`converge`**;
+That implementation checkpoint scheduled fresh **`converge`**;
 [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) remains draft.
 No clean-convergence, finalization, merge or release is claimed.
+
+Fresh convergence verifies those two corrections but reproduces a separate
+ObjectSemantics unpublished-assembly leak:
+[Phase 10 / T089](specs/006-artifact-storage/tasks.md#phase-10-convergence).
+Failed unlink after assembly leaves another untracked payload on each commit
+retry while reporting released cleanup and readiness. Abandonment releases its
+reservation and shutdown reports release without reclaiming those objects.
+The writable-directory control leaves no residual payloads. A fresh full locked
+run passes the existing matrix, but does not cover or waive this new failure
+path. The next stage is **`implement`** for T089, then fresh convergence.
+See the [assessment and reproduction](docs/DEVELOPMENT.md#f-06-fresh-convergence-unpublished-object-cleanup).
+The original 88 tasks stay checked; T089 is unchecked and PR #16 stays draft.
 
 The separately invoked **`specify`** stage creates the
 [F-06 artifact blob storage provider contract](specs/006-artifact-storage/spec.md)

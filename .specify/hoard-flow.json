@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "converge",
+  "stage": "implement",
   "status": "ready",
   "branch": "feature/006-artifact-storage",
   "active": {
@@ -604,6 +604,13 @@
       "branch": "feature/006-artifact-storage",
       "at": "2026-10-23T00:56:32.268307+00:00",
       "evidence": "F-06 follow-up implement completed through installed speckit-implement in pinned specs/006-artifact-storage; T087/T088 checked, all 88 tasks complete. Independent failed-staging registries retain exact generation/reservations and truthful cleanup, fence readiness/new admission, allow bounded maintenance and nonduplicating shutdown retries, preserve finalized noncommit and Local reopen safety. Consumed recovery cursors retire on success/terminal pages; 32 independent scans each traverse 35 identities under bounded quota with binding/expiry/revision/listing protection. Six genuine initial runtime reds plus two architecture-correction reds retained privately. Required hoard-architecture-review f06-recovery-followup-review found one MEDIUM receipt-reconciliation regression; corrected with exact settled reconciliation and residual-staging-only maintenance, preserving committed bytes/receipts. Fresh default locked full run a3c382f7-31a8-45a8-bda1-3037d44f9119 qualifies source 42cb2a4eaa77daf772b4197c1b6b189155516a9029aa08f00fdecfa995f1a90c: 237 common/crash tests, four actual-transfer proof tests, three architecture checks/eight graphs, six SIGKILL/reopen barriers, both unchanged consumers/frozen marker, exact 92 applicable passes/four Object exclusions, three mutation pairs and 29 manifest negatives. Logical update passed 231 tests; tooling 105 passed; format/analyzers, current-source manifest revalidation, unchanged task-body/checklist integrity, docs links and git diff check passed. Exactly 15 local Hoard.* content hashes in six locks change; graphs/versions/external hashes/frozen baseline unchanged. README/affected guides/quickstart/recovery contract/plan synchronized with unaffected-document reasons; no hooks. Exact commands/private paths and review limits in plan follow-up section. Draft PR #16 remains draft; next separate stage converge, no clean-convergence/finalization/feature completion/release/infrastructure claim."
+    },
+    {
+      "stage": "converge",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-23T01:03:49.292668+00:00",
+      "evidence": "F-06 fresh converge through installed speckit-converge in pinned specs/006-artifact-storage: tasks_appended, one HIGH partial F1; assessed 25 FRs, eight SCs, 23 scenarios, 15 edge cases, eight grouped plan decisions, all 88 existing tasks and eight constitutional principles. T087/T088 remain covered. Current-assembly isolated paired probe proves ObjectPublication unselected assembly unlink failure is untracked: three same-ticket 1 KiB retries return AccessDenied/Released and ready=true while leaking 1/2/3 payloads; abandon releases reservation, Observe(All) is empty, new full-cap reservation and Released stop succeed with all payloads remaining. Writable control has zero residuals. Appended only Phase 10/T089 for exact bounded scratch ownership/capacity, fenced admission/readiness and safe recovery/shutdown with focused red/green/current locked qualification; no implementation or spec/plan/checklist edits. Fresh full locked artifact gate at ../hoard-artifact-evidence/converge-followup-20261023 passes existing 237 common/crash tests, four transfer proof tests, package/architecture/compatibility/consumer checks, four actual measurements and six SIGKILL/reopen journeys; exact 96 entries, 92 passes/four exclusions, run faea99c3-fc0b-44bb-a402-24e223a0158f, unchanged source 42cb2a4eaa77daf772b4197c1b6b189155516a9029aa08f00fdecfa995f1a90c. Existing qualification does not cover or waive F1. Python tooling 105 passed; independent manifest, append-only/spec/plan/checklist and docs-link integrity and git diff --check passed. README/development synchronized with unaffected-guide reasons; no hooks. Draft PR #16 retained; next implement T089, then fresh convergence; finalization blocked. No merge/publication/infrastructure/dependency unlock."
     }
   ]
 }
