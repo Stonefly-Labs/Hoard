@@ -4483,6 +4483,61 @@ no requirement, API, dependency edge, executable behavior, support scope or
 operational procedure changes. No architecture-agent review, product acceptance,
 infrastructure action, publication or merge is warranted or performed.
 
+### F-07 provider conformance planning
+
+The installed `speckit-plan` used pinned `specs/007-provider-conformance` and
+generated the [plan](../specs/007-provider-conformance/plan.md),
+[research](../specs/007-provider-conformance/research.md),
+[data model](../specs/007-provider-conformance/data-model.md),
+[validation quickstart](../specs/007-provider-conformance/quickstart.md) and
+four contracts: [shared harness](../specs/007-provider-conformance/contracts/harness.md),
+[evidence/CI](../specs/007-provider-conformance/contracts/evidence.md),
+[finite matrix](../specs/007-provider-conformance/contracts/matrix.md) and
+[acceptance](../specs/007-provider-conformance/contracts/acceptance.md).
+No extension hooks are configured.
+
+The design extracts common assertions into a separately packable test-only
+SDK, with explicit provider-specific setup/fault bindings outside it. The SDK
+does not reference concrete providers or enter production package graphs.
+Existing independent mechanisms and platform contracts remain unchanged.
+Both metadata and both artifact bindings retain their 192 inherited case
+entries (179 applicable passes/13 exclusions required in a successful future
+run), including actual SQLite/Local process-crash and 4 GiB/RSS obligations.
+The plan adds 20 composition rows with explicit subvariants, existing policy
+plus three-axis version boundary expansion, unchanged-source/retained-binary
+consumption, isolated architecture negatives and permitted counterparts,
+contributor good/faulty examples and 48 F-07 acceptance obligations.
+
+Five mandatory local/CI profiles share one frozen inventory/evaluator.
+Every case is bound to actual parameterized runtime witnesses and exact source,
+locks, package bytes, configuration, capabilities and environment. Missing,
+stale, duplicate, altered, skipped-mandatory, interrupted or retried-away
+failures cannot qualify. Finite watchdogs preserve live ownership rather than
+claiming settlement. All retained diagnostics, including private evidence,
+are sanitized before persistence; raw output is transient and byte-bounded,
+never spooled as logs/TRX. Synthetic stores are separate owned resources, not
+report artifacts.
+The workflow is planned only, with read-only permissions, no credentials,
+verified action SHA pins and explicit runner-capacity admission at implementation.
+
+All 24 FRs, eight SCs, 23 scenarios and 14 edge cases have design/proof mappings.
+Constitution gates pass before and after design without exceptions. The bounded
+architecture review identified retained-diagnostics sanitation and output-capture
+bounds that are now corrected in the contracts and QC-34/QC-48 proof obligations.
+Planned commands remain clearly marked unavailable. No product code,
+new package manifest, workflow, custom checklist, tasks or runtime qualification
+is created by this stage. Next is separately invoked **`checklist`**; custom
+requirements reviews remain reviewer-owned and draft PR #18 remains incomplete.
+
+README and this guide are updated. Provider/API/compatibility/recovery and
+example guides, predecessor artifacts, baseline charter/product specification,
+architecture/ADR/diagrams, constitution/backlog and release/cloud/UI/IaC guides
+are unaffected: planning changes no implemented contract, dependency edge,
+activation behavior, supported provider or operational procedure. The new
+future contributor guide is specified, not presented as an existing example.
+No merge, release/tag, publishing, infrastructure plan/apply, repository-setting
+change, cloud action or deployment is authorized or performed.
+
 ## Releases and deployment
 
 [Version tags publish GitHub source releases](RELEASING.md). They do not run

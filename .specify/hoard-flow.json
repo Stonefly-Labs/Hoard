@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "stage": "plan",
+  "stage": "checklist",
   "status": "ready",
   "branch": "feature/007-provider-conformance",
   "active": {
@@ -675,6 +675,13 @@
       "branch": "feature/007-provider-conformance",
       "at": "2026-10-23T02:15:29.619787+00:00",
       "evidence": "F-07 clarify completed through installed speckit-clarify with pinned specs/007-provider-conformance. Structured review of all ten ambiguity categories against constitution v1.0.0 found no critical ambiguities, zero questions and no requirement, acceptance or scope changes. Dated clarification record preserves mandatory logical versus real durable-local/simulated/service claims, existing composition/optional-target/source-retained-binary/dependency policy, finite observation versus retained ownership and fail-closed input-bound evidence. Exact interfaces, report formats, finite budgets, CI structure and bounded composition/version matrix remain constrained planning decisions. Built-in checklist revalidated byte-for-byte unchanged at 16/16 to 16/16, no newly passing items, regressions or unchecked items; no custom reviewer approval. No pre/post extension hooks. README/development synchronized with unaffected-document reasons; no later-stage artifacts or implementation. python3 -m unittest discover -s tests/tooling -v passed all 105 tests; clarification-only, unchanged-checklist, pinned-context and stage-isolation assertions, three added local links/anchors and git diff --check passed. Draft PR #18 retained; next stage plan via separate invocation. No qualification execution, CI workflow, product/provider/API change, infrastructure action, publication or merge."
+    },
+    {
+      "stage": "plan",
+      "spec_id": "F-07",
+      "branch": "feature/007-provider-conformance",
+      "at": "2026-10-23T02:42:11.773068+00:00",
+      "evidence": "F-07 plan completed through installed speckit-plan with pinned specs/007-provider-conformance. Eight design artifacts define test-only shared SDK/bindings, immutable input-bound runtime witnesses, strict evidence schema/evaluator, finite ownership/output budgets, five local/CI profiles, 20 composition rows and explicit version/architecture/source/retained-binary expansions. Preserved 192 inherited category entries (179 applicable/13 exclusions), all prior guarantees and independent mechanisms; 48 QC obligations trace all 24 FRs/eight SCs/23 scenarios/14 edges. Custom architecture review identified retained-diagnostics sanitation and missing output byte bounds; corrected private/public sanitation-before-persistence, no raw spooling, finite incremental capture/overflow failure, QC-34/QC-48; direct contract checks confirm corrections. Constitution pre/post design gates pass without exceptions. Python tooling passed 105 tests; 23 feature local links/anchors, sequential 48 QC/20 CP rows, FR/SC mappings, unchanged specification/checklist and 11-file stage-isolation assertions passed. No extension hooks. README/development updated with unaffected-document reasons; no tasks/custom approval/product code/workflow/qualification/publication/infrastructure or merge. Draft PR #18 retained; next stage checklist."
     }
   ]
 }

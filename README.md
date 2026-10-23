@@ -987,7 +987,16 @@ and no requirement or scope changes. The built-in checklist remains 16/16;
 custom reviewer approval and qualification evidence are not implied.
 Exact interfaces, report formats, budgets and the bounded matrix remain
 planning decisions. See the [review scope](docs/DEVELOPMENT.md#f-07-provider-conformance-clarification).
-The next separately authorized stage is **`plan`**.
+The subsequent [implementation plan](specs/007-provider-conformance/plan.md)
+defines a test-only shared SDK, explicit provider bindings, five local/CI
+profiles, a finite composition/version matrix and fail-closed evidence.
+It retains all 192 inherited metadata/artifact entries and adds 48 focused
+proof obligations, including contributor red/green examples and exact runtime
+witness attribution. Real durable-local, simulated and unqualified service
+scopes remain separate. These are design artifacts, not implemented commands,
+CI, approved custom checklists or certification results. See the
+[planning scope](docs/DEVELOPMENT.md#f-07-provider-conformance-planning).
+The next separately authorized stage is **`checklist`**.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

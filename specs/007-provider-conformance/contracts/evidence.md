@@ -1,0 +1,158 @@
+# F-07 Evidence, Aggregation and CI Contract
+
+**Status**: Planned schema/evaluator/workflow contract, not an emitted report.
+See [model](../data-model.md), [matrix](matrix.md) and [harness](harness.md).
+
+## Input Manifest
+
+Schema `1` requires `runId`, `invocationGroupId`, `profileId`, `mode`,
+`catalogRevision`, `catalogSha256`, `sdkSha256`, `sourceRevision`,
+`sourceManifestSha256`, package identities/content hashes, lock hashes,
+configuration/capability hashes, environment manifest/hash, finite budgets and
+exact sanitized invocation. Source manifest lists sorted relative paths and
+byte hashes for all scoped sources, scripts, tests, workflow, build/package
+settings, locks and catalogs. Ignored build/runtime files cannot enter the
+source fingerprint. Dirty local tracked input bytes are included and explicitly
+labelled; a clean CI source revision is required.
+
+At admission and after execution, independently recompute these inputs.
+Capabilities cannot change after selecting applicability. Package attribution
+includes package ID/version, nupkg SHA-256, NuGet content hash, source mapping,
+and actual resolved/runtime loaded assemblies. Equal version labels with
+different bytes are different tested inputs. No arbitrary commit label, empty
+hash map or hash of a filename counts as source/content proof.
+
+Profile reports in one baseline share source/catalog/configuration-policy
+inputs and invocation group, not necessarily package or environment hashes:
+different providers and CI runners have different exact bytes/environments.
+Each profile's manifest must match its predeclared input assignments. The
+aggregate records all environments and claims no untested cross-product.
+
+## Observed Results
+
+Each expected key has exactly one final outcome:
+
+| Outcome | Meaning | Qualification effect |
+| --- | --- | --- |
+| `Passed` | All named expected observations/subproofs completed | Eligible only with valid attributable evidence |
+| `Failed` | Contract assertion or evidence rule violated | Blocks entire requested scope |
+| `NotApplicable` | Frozen catalog authorizes named exclusion | Allowed only for that case/binding/class; confers no excluded claim |
+| `Incomplete` | Unobserved, interrupted, infrastructure failure, unknown settlement | Blocks entire requested scope |
+
+No `Skipped`, `Unknown` or success default is accepted. Every runtime witness
+contains the exact fully qualified case/parameter identity, execution ID,
+provider binding/package, start/end monotonic duration, result and immutable
+proof digest. The evaluator checks required witness sets, individual outcomes,
+expected invocation/assembly and test discovery inventory. A TRX total or
+copied case name/flag is not enough. Missing mandatory tests cannot become a
+smaller expected inventory.
+
+Attempts are append-only. Any genuine contract failure in the run blocks
+qualification even if a retry passes. Deliberate red/green experiments are
+separate expected-negative child executions: the parent passes only if it
+observes the intended named assertion failure and the corrected counterpart
+passes the same assertion. Build, setup, timeout or infrastructure failure is
+not a valid red result.
+
+Lower-level evidence is reusable only when its exact cases, observed runtime
+witnesses, proofs and source/lock/package/config/capability/environment inputs
+match this admitted run. Parent imports must validate those child manifests,
+not merely a lower-level exit code or previously trusted `qualified` boolean.
+Do not copy old runtime passes into a new UUID. Historical compatibility
+baseline artifacts are a different explicit entity, not current-run evidence.
+
+## Deterministic Evaluation
+
+1. Validate bounded strict schema, duplicate keys and all digests/proof paths.
+   Reject unknown field/status/schema versions, malformed Unicode or non-finite
+   durations. Treat import exceptions as safe classified failures, not success.
+2. Expand the catalog independently from outcomes. Check exact expected key
+   equality (including binding/matrix dimensions), uniqueness and witness sets.
+3. Re-evaluate applicability from immutable capabilities/profile/environment;
+   reject mandatory exclusions, changed declarations and unauthorized claims.
+4. Verify every required proof byte hash and its runtime/input relationship.
+   Artifact filenames, count, case labels and hash correspondence alone do not
+   establish a witness's origin or satisfy missing assertions.
+5. Validate red/green pairs, compatibility baseline identities, crash barrier/
+   exit/readback evidence and measured-transfer proof through existing checks.
+6. Check attempt history, input stability, profile completion and actual resource
+   settlement. Any failure, missing proof or retained ownership blocks passing.
+7. Recompute aggregate status and human-readable support statement. Reject an
+   optimistic or altered cached summary rather than trusting it.
+
+Report/proof hashes provide correspondence and change detection, not signatures
+or hostile-provider attestation. The trust boundary remains reviewed test code
+and trusted in-process provider code; this is not security certification.
+
+## Diagnostics and Public Projection
+
+Allow only stable catalog/provider IDs, package/version identities, numeric
+measurements, verified hashes, closed failure codes and harness-owned corrective
+templates. Do not interpolate provider exception messages, connection settings,
+paths, environment values, payloads, SQL or opaque authority tokens. Derive
+public output from typed safe observations, not raw log replacement.
+
+Sanitation is required before any diagnostic persistence, including private
+retained logs/test results, not just uploads. Capture raw child text only in
+the bounded transient buffers declared by the harness; never spool raw
+stdout/stderr/TRX or provider exceptions. A safe logger/event projection keeps
+exact runtime identities/results without raw failure messages. Legacy evidence
+adapters must enforce this before reuse. Unknown diagnostic text maps to a safe
+classified failure, not retained raw output or silently discarded success.
+
+Synthetic stores needed to exercise faults are test resources, not diagnostic
+evidence. Keep them separate from retained diagnostic/proof directories;
+unsettled ownership may require preserving a private store, but it cannot be
+included in evidence or treated as sanitized output. If any projection fails
+validation, emit a fixed safe failure code and withhold it, never retain/upload
+the raw source as fallback. Canary challenges inspect every retained diagnostic
+file and public output, including JUnit/Markdown, filenames and CI summaries.
+
+## CI Profiles and Aggregate Check
+
+Planned workflow `.github/workflows/conformance.yml`:
+
+| Job/profile | Mandatory execution | Result artifact |
+| --- | --- | --- |
+| `metadata` | Both bindings, full MP inventory, durable SQLite and package proofs | Safe profile JSON, per-case JUnit, summary, safe proof manifest |
+| `artifacts` | Both bindings, full AS inventory, real transfers/local crash proof, four metadata/storage integrations | Same, no bodies/databases/raw TRX |
+| `composition` | CP-01..20 and inherited lifecycle/configuration/discovery regression witnesses | Same |
+| `compatibility` | Version matrix, unchanged-source/retained-binary, architecture pairs and foundation gates | Same |
+| `harness` | QC harness/evidence mutations, contributor package-only path, tooling regression suite | Same |
+| `qualification` | Strict aggregate of all five admitted profile reports | Recomputed finite support matrix and failing/passing check |
+
+All jobs run on the same checked-out workflow source SHA and catalog, using
+isolated snapshots/caches. PR merge-ref SHA versus head SHA must be explicit;
+never mix their artifacts. CI obtains source history needed for the immutable
+baselines. Pack local Hoard packages from those exact snapshots with tracked
+locks/source mapping; do not retrieve a published package of the same name.
+No dependency/tool installation step is presented as runtime qualification.
+
+Matrix `fail-fast: false`, no `continue-on-error`, finite job/upload timeouts,
+`contents: read`, verified full upstream action SHA pins, no cloud permissions,
+secrets, publishing or `pull_request_target`. Do not add branch-protection rules.
+Use the existing SDK pin and Python 3; no new application/package manager.
+Conformance does not alter the separate source-release workflow.
+
+Run public projection/upload on failure with `if: always()` when possible.
+The aggregate also runs with `always()` and inspects all required job outcomes;
+non-success job or missing/invalid profile blocks qualification even if an
+upload step succeeds. Artifact download/upload failure, cancellation or runner
+loss cannot synthesize passed results. Seven-day retention, unique invocation/
+profile artifact identities and exact file allowlists; no all-workspace glob.
+The local baseline uses the same catalog/evaluator, not a CI-specific expectation.
+
+Platform and artifact jobs may execute concurrently in separate snapshots;
+large transfers stay serial within each artifact profile. Local baseline is
+sequential by default to avoid shared input mutation/resource contention.
+Preflight free space and actual runner image are reported; inadequate capacity
+is an infrastructure blocker, never a skipped mandatory durability/4 GiB case.
+
+## Scope Labels
+
+Reports distinguish `declaration-lifecycle`, `common-logical`,
+`durable-local-process-crash`, `object-simulation` and `unqualified-service`.
+There is no initial service profile. A contributor's forwarding adapter does
+not count as a third independent implementation. No operational protocol/
+identity, native-client, production-provider, Windows, network-filesystem,
+power-loss or multi-node qualification follows from these reports.
