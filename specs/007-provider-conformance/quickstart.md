@@ -43,8 +43,10 @@ without creating a workspace or reducing transfer sizes. Evidence violations
 remain `Failed`/exit `1`; neither outcome qualifies a scope.
 Capacity/filesystem probes and workspace creation are anchored to pinned parent
 and root descriptors. Parent substitution or lexical traversal rejects without
-redirecting writes to a different root. The latest allocation/catalog increment
-still awaits native diagnostic confirmation.
+redirecting writes to a different root. The latest allocation/catalog increment passed 85 native foundation checks
+without skips and eight SDK diagnostic scenarios/25 observations in run
+`39924374116` at `79663dd`. This completes T008/T012's foundation scope, not
+full SDK/package/profile acceptance.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

@@ -1104,8 +1104,12 @@ following a swapped ancestor after preflight. Capacity/filesystem probes and
 workspace creation now use pinned directory descriptors; parent substitution
 or traversal rejects without writing to the outside sentinel.
 The current changes pass 190 tooling checks with ten native skips on macOS.
-Native confirmation of the catalog and allocation repair remains pending;
-T008/T012 and complete profile integration are not yet complete.
+Run [39924374116](https://github.com/Stonefly-Labs/Hoard/actions/runs/39924374116)
+at `79663dd` then passed all 85 native foundation checks without skips and eight
+SDK diagnostic scenarios/25 observations, including the ten catalog cases.
+T008/T012 are complete within their catalog/supervisor foundation scope.
+Immutable complete input snapshots, loaded-provider attribution and profile
+integration remain unfinished; no qualification is claimed.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

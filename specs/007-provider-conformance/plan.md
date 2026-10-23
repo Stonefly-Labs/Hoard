@@ -300,8 +300,19 @@ and synthetic child directories. Parent replacement and lexical traversal
 reject; a second challenge swaps the parent immediately after root creation
 and preserves the pre-existing outside root unchanged. No outside files or
 directories are created, overwritten or removed. All 190 portable tooling
-checks pass with ten native skips. New native confirmation is pending;
-T008/T012 remain unchecked, and full profile orchestration remains separate.
+checks pass with ten native skips. Native run
+[39924374116](https://github.com/Stonefly-Labs/Hoard/actions/runs/39924374116)
+at `79663dd` then passed all 85 foundation checks with zero
+failures/errors/skips and 92,111,257,600 free scratch bytes. Its SDK/logger job
+passed eight scenarios/25 observations, including all ten catalog admission
+cases, and independently reverified all six baselines with seal
+`41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`.
+Input digest:
+`5d7fb9b9ed2288da5c10c4773da834140172c323822ba31b79e13c6b71c803ff`.
+T008/T012 are complete within their independently expanded catalog and bounded
+supervisor scope. This is not full 55-test native SDK/package coverage, executed
+QC control coverage or completed profile orchestration. T013/T014 and later
+tasks retain those input/provenance/integration obligations.
 
 ## Partial implementation checkpoint
 

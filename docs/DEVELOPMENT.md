@@ -5001,8 +5001,19 @@ workspace and its synthetic child directories; no resolved replacement path
 can redefine ownership. Lexical traversal and substitution during preflight or
 immediately after root creation reject, preserving the outside directory and
 pre-existing outside root unchanged. All 190 tooling checks pass with ten native
-skips. Native confirmation of this allocation/catalog increment is pending;
-T008/T012 remain unchecked, and complete profile orchestration is unfinished.
+skips. Native foundation job `120317044366` in
+[run 39924374116](https://github.com/Stonefly-Labs/Hoard/actions/runs/39924374116)
+at `79663dd` passed all 85 checks with zero failures/errors/skips and
+92,111,257,600 free scratch bytes. Its SDK/logger job `120317044724` passed
+eight scenarios/25 observations, including all ten catalog cases, and
+independently reverified all six baselines with the unchanged native seal.
+Input digest:
+`5d7fb9b9ed2288da5c10c4773da834140172c323822ba31b79e13c6b71c803ff`.
+T008/T012 are complete within their catalog/supervisor foundation scope.
+This does not imply all 55 source SDK tests ran natively or that the named QC
+controls executed. Complete immutable input snapshots, actual loaded-provider
+attribution and full profile orchestration remain separate T013/T014 and later
+obligations.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
