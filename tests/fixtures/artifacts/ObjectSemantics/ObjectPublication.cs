@@ -101,15 +101,14 @@ public sealed partial class ObjectArtifactStore
                     if (current.Stamp.Identity != staged.Identity) { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
                     if (!await VerifyObjectAsync(current, options, token, Progress))
                     {
-                        lock (pointerSync)
-                        {
-                            if (pointers[staged.Identity.Digest.Hex] == current)
-                            { pointers[staged.Identity.Digest.Hex] = current with { Corrupt = true }; }
-                        }
-                        throw new ObjectOperationException(ArtifactFailureCode.CorruptContent);
+                        throw Quarantine(current);
                     }
                     lock (pointerSync)
                     {
+                        var latest = pointers[staged.Identity.Digest.Hex];
+                        if (latest.Stamp != current.Stamp || latest.ObjectId != current.ObjectId || latest.Removed)
+                        { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
+                        if (latest.Corrupt) { throw new ObjectOperationException(ArtifactFailureCode.CorruptContent); }
                         upload.Selected = current;
                         IndexUpload(upload);
                         upload.Deciding = true;
@@ -121,13 +120,16 @@ public sealed partial class ObjectArtifactStore
                 else { await faults.ObserveAsync("pointer.selected"); }
                 await faults.ObserveAsync("object.direct");
                 token.ThrowIfCancellationRequested();
-                await using (var direct = new FileStream(ObjectPath(current.ObjectId), FileMode.Open, FileAccess.Read, FileShare.Read))
+                await using (var direct = OpenCommittedObject(current))
                 {
-                    if (direct.Length != current.Stamp.Identity.Length) { throw new ObjectOperationException(ArtifactFailureCode.CorruptContent); }
+                    if (direct.Length != current.Stamp.Identity.Length) { throw Quarantine(current); }
                 }
                 lock (pointerSync)
                 {
-                    if (pointers[staged.Identity.Digest.Hex] != current) { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
+                    var latest = pointers[staged.Identity.Digest.Hex];
+                    if (latest.Stamp != current.Stamp || latest.ObjectId != current.ObjectId || latest.Removed)
+                    { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
+                    if (latest.Corrupt) { throw new ObjectOperationException(ArtifactFailureCode.CorruptContent); }
                     return RecordObjectReceipt(upload);
                 }
 
@@ -230,10 +232,7 @@ public sealed partial class ObjectArtifactStore
     private async Task<bool> VerifyObjectAsync(ObjectPointer pointer, ArtifactTransferOptions options, CancellationToken token,
         Func<ValueTask>? progress = null)
     {
-        var path = ObjectPath(pointer.ObjectId);
-        if (!File.Exists(path)) { return false; }
-        await using var file = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
-            1, FileOptions.Asynchronous | FileOptions.SequentialScan);
+        await using var file = OpenCommittedObject(pointer, FileOptions.Asynchronous | FileOptions.SequentialScan);
         using var digest = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         var buffer = new byte[Bounds.CopyBufferBytes];
         long length = 0;

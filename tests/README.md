@@ -57,7 +57,7 @@ four runtime tests validate those actual inputs and rejection variants.
 All focused modes remain partial. `--phase packages` runs eight actual graph scans, compiled
 provider/Hosting leak negatives, public-member compatibility including
 accessibility, the frozen old marker binary and both consumer selections.
-Default full acceptance passed on the T089 follow-up source: 243 logical/crash checks,
+Default full acceptance passed on the T090 follow-up source: 261 logical/crash checks,
 four actual-transfer proof tests, three architecture checks, both consumers,
 the original retained binary, all six Python-owned crash barriers and exactly
 96 case entries (92 passes/four Object durability exclusions). Both fixtures
@@ -103,6 +103,16 @@ newer payloads or closing borrowed streams. Five intended runtime reds preceded
 the ownership fix; the full verifier requires these exact additional witnesses
 for Object AS-15/17/21/27/40. See the
 [T089 evidence](../specs/006-artifact-storage/plan.md#unpublished-object-cleanup-implementation-2026-10-22).
+T090 adds paired validation-first truncation/missing-payload, restored-byte
+rejection, delayed-open and direct-publication/reconciliation witnesses, while
+strengthening existing full-copy/reuse tests with restoration and Local reopen.
+Permission/unavailable-directory controls preserve healthy content. Two actual
+review-correction reds cover Local overlapping read/reconciliation settlement
+and failed quarantine-record persistence; bounded stop retry persists the fence
+before root release. Authorized deletion/recreation preserves the new incarnation
+and exact historical receipts. These exact runtime witnesses are required by
+AS-09/10/17/21/31/40 as applicable; see the
+[T090 evidence](../specs/006-artifact-storage/plan.md#corruption-quarantine-implementation-2026-10-22).
 
 OpenTofu mock-provider tests live beside the bootstrap at
 `infra/bootstrap/tests/` and run with `tofu -chdir=infra/bootstrap test`.

@@ -280,23 +280,31 @@ public sealed partial class LocalArtifactStore
         catch { pendingStagingCleanup.TryAdd(operation.Id, 0); throw; }
     }
 
-    private Task? stagingCleanupRetry;
-    private Task RetryStagingCleanupAsync()
+    private Task? pendingRecoveryRetry;
+    private Task RetryPendingRecoveryAsync()
     {
         lock (activitySync)
         {
-            if (stagingCleanupRetry is { IsCompleted: false }) { return stagingCleanupRetry; }
-            return stagingCleanupRetry = Task.Run(() =>
+            if (pendingRecoveryRetry is { IsCompleted: false }) { return pendingRecoveryRetry; }
+            return pendingRecoveryRetry = Task.Run(() =>
             {
                 lock (stateSync)
                 {
+                    foreach (var (digest, quarantine) in pendingQuarantine.Take(100))
+                    {
+                        if (!decisions.TryGetValue(digest, out var current) || current != quarantine)
+                        { throw new LocalStateException(ArtifactFailureCode.CorruptState); }
+                        Save(quarantine);
+                        pendingQuarantine.TryRemove(digest, out _);
+                    }
                     foreach (var id in pendingStagingCleanup.Keys.Take(100))
                     {
                         var operation = operations[id];
                         Save(operation);
                         ReleaseStaging(operation);
                     }
-                    if (!pendingStagingCleanup.IsEmpty) { throw new LocalStateException(ArtifactFailureCode.CleanupIncomplete); }
+                    if (!pendingStagingCleanup.IsEmpty || !pendingQuarantine.IsEmpty)
+                    { throw new LocalStateException(ArtifactFailureCode.CleanupIncomplete); }
                 }
             });
         }

@@ -73,13 +73,16 @@ public sealed partial class LocalArtifactStore
                         }
                     }))
                     {
-                        lock (stateSync) { Save(current with { Corrupt = true }); }
-                        throw new LocalStateException(ArtifactFailureCode.CorruptContent);
+                        throw Quarantine(current.Content);
                     }
                     lock (stateSync)
                     {
                         token.ThrowIfCancellationRequested();
                         CheckOwner(operation, owner, requireVerified: true);
+                        if (!decisions.TryGetValue(current.Content.Digest, out var latest)
+                            || latest.Removed || latest.Content != current.Content)
+                        { throw new LocalStateException(ArtifactFailureCode.Conflict); }
+                        if (latest.Corrupt) { throw new LocalStateException(ArtifactFailureCode.CorruptContent); }
                         operation.Content = current.Content;
                         operation.Outcome = ArtifactMutationOutcome.AlreadyPresentVerified;
                         FinalizePublication(operation);
@@ -109,9 +112,9 @@ public sealed partial class LocalArtifactStore
                     FinalizePublication(operation);
                     ReleaseStaging(operation);
                 }
-                await using (var direct = new FileStream(PayloadPath(operation.Content!), FileMode.Open, FileAccess.Read, FileShare.Read))
+                await using (var direct = OpenCommittedPayload(operation.Content!))
                 {
-                    if (direct.Length != operation.Content!.Length) { throw new LocalStateException(ArtifactFailureCode.CorruptContent); }
+                    if (direct.Length != operation.Content!.Length) { throw Quarantine(operation.Content); }
                 }
             }
             finally { gate.Release(); }
@@ -168,10 +171,7 @@ public sealed partial class LocalArtifactStore
     private async Task<bool> VerifyPayloadAsync(LocalContent content, ArtifactTransferOptions options, CancellationToken ct,
         Func<ValueTask>? progress = null)
     {
-        var path = PayloadPath(content);
-        if (!File.Exists(path)) { return false; }
-        await using var input = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read,
-            1, FileOptions.Asynchronous | FileOptions.SequentialScan);
+        await using var input = OpenCommittedPayload(content, FileOptions.Asynchronous | FileOptions.SequentialScan);
         using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
         var buffer = new byte[Limits.CopyBufferBytes];
         long length = 0;

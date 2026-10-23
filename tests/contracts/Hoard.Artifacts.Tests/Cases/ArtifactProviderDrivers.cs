@@ -32,6 +32,7 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
     public IArtifactMaintenance Maintenance { get; }
     public LocalFaultControls? LocalControls { get; }
     public ObjectFaultControls? ObjectControls { get; }
+    public string PayloadDirectory => System.IO.Path.Combine(root.Path, ProviderId == "local" ? "data" : "objects");
     public string StagingDirectory => System.IO.Path.Combine(root.Path, ProviderId == "local" ? "staging" : "multipart");
     public bool Ready => lifetime switch
     {
@@ -50,8 +51,7 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
 
     public void DamageOnlyPayload(bool truncate)
     {
-        var directory = System.IO.Path.Combine(root.Path, ProviderId == "local" ? "data" : "objects");
-        var path = Directory.EnumerateFiles(directory).Single();
+        var path = Directory.EnumerateFiles(PayloadDirectory).Single();
         using var file = new FileStream(path, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
         if (truncate) { file.SetLength(file.Length - 1); }
         else { file.WriteByte(0xff); }

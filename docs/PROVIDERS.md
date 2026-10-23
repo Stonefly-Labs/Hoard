@@ -94,6 +94,19 @@ reports actual reclaimed bytes. Conditional selection transfers the object out
 of scratch ownership atomically. Equivalent reuse retains its original selected
 content and settled receipt even when the redundant assembly cannot be removed.
 See the [T089 evidence](../specs/006-artifact-storage/plan.md#unpublished-object-cleanup-implementation-2026-10-22).
+Every committed-content corruption detection quarantines the exact current
+incarnation, including missing payloads, validation-first truncation, duplicate
+verification, full-copy completion and unresolved-publication reconciliation.
+Restoring bytes externally cannot revive opens, evidence validation or reuse;
+explicit authorized deletion/recreation produces a different incarnation.
+Local persists quarantine across compatible reopen; Object retains it only
+within its declared process lifetime. Permission failures and unavailable
+directories remain distinct failures, not corruption. Quarantine persistence
+failure retains the Local in-memory fence, blocks readiness/new admission and
+keeps root ownership. Restore access and retry bounded `StopAsync` until the
+pending record is durable before reopening; failed stop is not resource release.
+Finalized receipts remain historical decisions, not current health certificates.
+See the [T090 evidence](../specs/006-artifact-storage/plan.md#corruption-quarantine-implementation-2026-10-22).
 Expired ticket history may be retired, but live content identity remains
 independent of its receipt anchor. Retained tombstones and reclaimed-incarnation
 records also consume finite bookkeeping capacity until safe expiry-based

@@ -62,6 +62,25 @@ replace an unresolved decision until its receipt is durable, preserving
 reconciliation after later delete/recreate. Retain receipts for 24 hours;
 after expiry refuse replay even if the digest happens to exist again.
 
+Every detected committed-content corruption fences its exact current incarnation,
+not merely the detecting read or operation. External restoration cannot clear
+that fence. Local records quarantine in its decision and preserves it across
+compatible reopen; Object retains its independent pointer flag for the process
+lifetime. Revalidation under provider synchronization prevents stale detection
+from modifying removed/recreated content. Direct missing payloads are corruption;
+permission failures and unavailable directories remain distinct storage failures.
+An unresolved publication rechecks current quarantine after payload verification
+before finalizing. Already finalized receipts remain immutable historical
+decisions, not evidence of present health.
+
+If Local quarantine persistence fails, its bounded exact-decision pending index
+and in-memory fence remain, blocking readiness/new admission and root release.
+Restore access and retry `StopAsync`: one owned recovery task persists at most
+100 pending decisions per call before reclaiming residual staging. Repeated
+failure/timeout retains ownership; another retry cannot duplicate live work.
+Only successful persistence permits root release and compatible reopen. This
+is not automatic repair or permission to overwrite corrupt bytes.
+
 An acknowledged artifact survives qualified abrupt process termination. Flush
 calls do not prove directory/power-loss/device durability; the exact OS,
 filesystem, runtime, flush configuration and crash model accompany every result.

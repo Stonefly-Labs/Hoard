@@ -4184,6 +4184,61 @@ Next stage: **`implement`** T090, then separately invoked fresh convergence.
 Finalization, feature completion and dependency unlock remain blocked; no
 merge, tag, release, package publication, infrastructure action or deployment.
 
+### F-06 corruption quarantine implementation
+
+The separately invoked installed `speckit-implement` completes T090; all 90
+tasks are checked and reviewer-owned checklist bytes remain unchanged.
+Each independent provider quarantines the exact committed incarnation whenever
+validation, open, reuse, full-copy, publication or unresolved reconciliation
+detects corruption. External byte restoration does not revive evidence/opens/
+reuse. Local quarantine survives compatible reopen; Object retention remains
+process-local. Permission and unavailable-directory failures stay distinct.
+Finalized receipts remain historical decisions; authorized delete/recreate
+produces a new incarnation without poisoning it.
+
+Delayed opens recheck quarantine before handing off a session. Required review
+`f06-t090-architecture` found two P2 defects, both reproduced and corrected:
+Local unresolved reconciliation now rechecks quarantine after verification,
+and failed quarantine persistence retains its in-memory fence, not-ready/
+admission block and root ownership. Restore access and retry bounded `StopAsync`
+until pending quarantine is durable; failure/timeout never reports root release.
+One owned recovery task retries at most 100 pending decisions per call.
+
+| Exact command / check | Result |
+| --- | --- |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --update-locks --filter 'FullyQualifiedName~ArtifactEvidenceTests\|FullyQualifiedName~ArtifactReadVerificationTests\|FullyQualifiedName~ArtifactPublicationRaceTests' --evidence ../hoard-artifact-evidence/t090-final-update-20261023` | All 32 focused checks and both consumers passed; final-source local hash refresh, nonqualifying |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/t090-full-locked-20261023` | Separate default locked full qualification passed: 261 common/crash tests, four actual-transfer proof tests, three architecture checks/eight graphs, both unchanged consumers/original marker, four actual size/provider measurements and six owned SIGKILL/reopen barriers; exact 96 entries, 92 passes/four Object durability exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | All 105 passed |
+| `artifact_evidence.verify_manifest(manifest, work, artifact_evidence.source_hash(root))` | Independent final-source/lock full-manifest revalidation passed |
+| Hash-only lock audit against `73a1fc4` | Only 15 local package hashes in six locks; versions/graphs, external hashes and frozen historical inputs unchanged |
+| Task/checklist integrity, local documentation links and `git diff --check` | Passed |
+
+Run `555737ba-995c-4501-b205-b2352da0da9a` binds source
+`27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4`.
+Fourteen intended runtime reds precede their corresponding corrections, with
+intact/access/outage/full-copy controls retained. Exact commands, reviewer
+findings/corrections, bounded recovery and environment limits are in the
+[T090 evidence](../specs/006-artifact-storage/plan.md#corruption-quarantine-implementation-2026-10-22).
+The full verifier requires new per-AS witnesses and passes its three executed
+mutation pairs/29 altered-manifest controls, formatting and build analyzers.
+Actual generated 256 MiB/4 GiB write/read transfers on each fixture meet the
+64 MiB incremental OS peak-RSS ceiling; no stale or simulated durability proof
+is substituted.
+
+README, provider/test guides, quickstart, recovery contract, plan and task status
+are synchronized. Spec/API/model/research, examples, charter/product architecture/
+diagrams/ADR/governance/backlog, compatibility, IaC and release guides are
+unaffected because no public signature, dependency boundary, supported environment
+or operational command changes. No hooks exist. Predecessor full gates remain
+historical, not rerun for fixture/catalog-only changes. Qualification remains
+test-only macOS/.NET/APFS Local process-crash evidence plus process-local Object
+simulation, not production/F-07 or power-loss/remote-service/HA certification.
+
+The driver schedules separately invoked **`converge / ready`**.
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) remains draft.
+No clean-convergence, finalization, feature completion, merge, release, package
+publication, infrastructure action, deployment or dependency unlock is claimed.
+
 ## Releases and deployment
 
 [Version tags publish GitHub source releases](RELEASING.md). They do not run

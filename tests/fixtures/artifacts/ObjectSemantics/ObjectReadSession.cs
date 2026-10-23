@@ -37,12 +37,17 @@ public sealed partial class ObjectArtifactStore
                     { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
                 }
                 await faults.ObserveAsync("object.direct");
-                if (!File.Exists(ObjectPath(pointer.ObjectId))) { throw new ObjectOperationException(ArtifactFailureCode.CorruptContent); }
-                stream = new FileStream(ObjectPath(pointer.ObjectId), FileMode.Open, FileAccess.Read,
-                    FileShare.Read, 1, FileOptions.Asynchronous | FileOptions.SequentialScan);
+                stream = OpenCommittedObject(pointer, FileOptions.Asynchronous | FileOptions.SequentialScan);
                 token.ThrowIfCancellationRequested();
                 var session = new ObjectReadSession(this, pointer, stream, guard, lease);
-                lock (pointerSync) { sessions.Add(session); }
+                lock (pointerSync)
+                {
+                    if (!pointers.TryGetValue(request.Digest.Hex, out var current)
+                        || current.Removed || current.Stamp != pointer.Stamp || current.ObjectId != pointer.ObjectId)
+                    { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
+                    if (current.Corrupt) { throw new ObjectOperationException(ArtifactFailureCode.CorruptContent); }
+                    sessions.Add(session);
+                }
                 session.StartIdleExpiry();
                 guard = null;
                 stream = null;
@@ -132,12 +137,7 @@ public sealed partial class ObjectArtifactStore
 
         private ArtifactReadCompletion RejectCorruption()
         {
-            lock (owner.pointerSync)
-            {
-                if (owner.pointers.TryGetValue(Stamp.Identity.Digest.Hex, out var current) && current.Stamp == Stamp)
-                { owner.pointers[Stamp.Identity.Digest.Hex] = current with { Corrupt = true }; }
-            }
-            throw new ObjectOperationException(ArtifactFailureCode.CorruptContent);
+            throw owner.Quarantine(pointer);
         }
 
         public async ValueTask<ArtifactResult<ArtifactShutdown>> CloseAsync(ArtifactCleanupOptions options, CancellationToken ct)
@@ -211,10 +211,38 @@ public sealed partial class ObjectArtifactStore
                 if (pointer.Corrupt) { throw new ObjectOperationException(ArtifactFailureCode.CorruptContent); }
             }
             await faults.ObserveAsync("object.direct");
-            using var direct = new FileStream(ObjectPath(pointer.ObjectId), FileMode.Open, FileAccess.Read, FileShare.Read);
-            if (direct.Length != evidence.Stamp.Identity.Length) { throw new ObjectOperationException(ArtifactFailureCode.CorruptContent); }
+            using var direct = OpenCommittedObject(pointer);
+            if (direct.Length != evidence.Stamp.Identity.Length) { throw Quarantine(pointer); }
             token.ThrowIfCancellationRequested();
-            return evidence.Stamp;
+            lock (pointerSync)
+            {
+                if (!pointers.TryGetValue(scope.Digest.Hex, out var current)
+                    || current.Removed || current.Stamp != pointer.Stamp || current.ObjectId != pointer.ObjectId)
+                { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
+                if (current.Corrupt) { throw new ObjectOperationException(ArtifactFailureCode.CorruptContent); }
+                return evidence.Stamp;
+            }
         });
+    }
+
+    private ObjectOperationException Quarantine(ObjectPointer pointer)
+    {
+        lock (pointerSync)
+        {
+            if (pointers.TryGetValue(pointer.Stamp.Identity.Digest.Hex, out var current)
+                && !current.Removed && !current.Corrupt
+                && current.Stamp == pointer.Stamp && current.ObjectId == pointer.ObjectId)
+            {
+                pointers[pointer.Stamp.Identity.Digest.Hex] = current with { Corrupt = true };
+                listingRevision = checked(listingRevision + 1);
+            }
+        }
+        return new(ArtifactFailureCode.CorruptContent);
+    }
+
+    private FileStream OpenCommittedObject(ObjectPointer pointer, FileOptions options = FileOptions.None)
+    {
+        try { return new(ObjectPath(pointer.ObjectId), FileMode.Open, FileAccess.Read, FileShare.Read, 1, options); }
+        catch (FileNotFoundException) { throw Quarantine(pointer); }
     }
 }

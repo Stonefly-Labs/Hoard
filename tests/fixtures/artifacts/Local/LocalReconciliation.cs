@@ -76,9 +76,14 @@ public sealed partial class LocalArtifactStore
             && current.Content == operation.Content)
         {
             if (current.Corrupt || !await VerifyPayloadAsync(current.Content, new(), token))
-            { throw new LocalStateException(ArtifactFailureCode.CorruptContent); }
+            { throw Quarantine(current.Content); }
+            await faults.ObserveAsync("reconcile.verified");
             lock (stateSync)
             {
+                if (!decisions.TryGetValue(current.Content.Digest, out var latest)
+                    || latest.Removed || latest.Content != current.Content || latest.Operation != operation.Id)
+                { throw new LocalStateException(ArtifactFailureCode.Conflict); }
+                if (latest.Corrupt) { throw new LocalStateException(ArtifactFailureCode.CorruptContent); }
                 FinalizePublication(operation);
                 ReleaseStaging(operation);
             }
@@ -103,6 +108,7 @@ public sealed partial class LocalArtifactStore
         decisions.Clear();
         removedContent.Clear();
         pendingStagingCleanup.Clear();
+        pendingQuarantine.Clear();
         continuations.Clear();
         ClearHistoryIndexes();
         reserved = 0;

@@ -41,16 +41,20 @@ public sealed partial class LocalArtifactStore
                             && expected.Value != decision.Content.Stamp(StoreIdentity))
                         { throw new LocalStateException(ArtifactFailureCode.Conflict); }
                     }
-                    if (!File.Exists(PayloadPath(decision.Content)))
-                    { throw new LocalStateException(ArtifactFailureCode.CorruptContent); }
-                    input = new FileStream(PayloadPath(decision.Content), FileMode.Open, FileAccess.Read,
-                        FileShare.Read, 1, FileOptions.Asynchronous | FileOptions.SequentialScan);
+                    input = OpenCommittedPayload(decision.Content, FileOptions.Asynchronous | FileOptions.SequentialScan);
                 }
                 finally { gate.Release(); }
                 await faults.ObserveAsync("read.opened");
                 token.ThrowIfCancellationRequested();
                 var session = new LocalReadSession(this, decision.Content.Stamp(StoreIdentity), input, protection, slot);
-                lock (stateSync) { readers.Add(session); }
+                lock (stateSync)
+                {
+                    if (!decisions.TryGetValue(request.Digest.Hex, out var current)
+                        || current.Removed || current.Content != decision.Content)
+                    { throw new LocalStateException(ArtifactFailureCode.Conflict); }
+                    if (current.Corrupt) { throw new LocalStateException(ArtifactFailureCode.CorruptContent); }
+                    readers.Add(session);
+                }
                 session.StartIdleExpiry();
                 input = null;
                 protection = null;
@@ -144,13 +148,7 @@ public sealed partial class LocalArtifactStore
 
         private ArtifactReadCompletion Corrupt()
         {
-            lock (store.stateSync)
-            {
-                if (store.decisions.TryGetValue(Stamp.Identity.Digest.Hex, out var decision)
-                    && decision.Content.Incarnation == Stamp.Incarnation)
-                { store.Save(decision with { Corrupt = true }); }
-            }
-            throw new LocalStateException(ArtifactFailureCode.CorruptContent);
+            throw store.Quarantine(new(Stamp.Identity.Digest.Hex, Stamp.Identity.Length, Stamp.Incarnation));
         }
 
         public async ValueTask<ArtifactResult<ArtifactShutdown>> CloseAsync(ArtifactCleanupOptions options, CancellationToken ct)

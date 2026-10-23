@@ -4,10 +4,10 @@
 
 **Input**: Feature specification from `specs/006-artifact-storage/spec.md`
 
-**Status**: All 89 implementation tasks, including convergence follow-ups
-T087/T088/T089, are verified with fresh default locked
+**Status**: All 90 implementation tasks, including convergence follow-ups
+T087/T088/T089/T090, are verified with fresh default locked
 test-fixture qualification: 96 entries, 92 passes/four Object AS-41..44 exclusions.
-The [latest follow-up evidence](#unpublished-object-cleanup-implementation-2026-10-22)
+The [latest follow-up evidence](#corruption-quarantine-implementation-2026-10-22)
 supersedes earlier partial checkpoints below; those remain chronological history.
 Convergence/finalization/merge are separate stages. No production/F-07 claim.
 
@@ -1267,3 +1267,89 @@ Object simulation. No production/F-07, remote-service, Windows/network
 filesystem, HA, power-loss/OS/device-failure, merge, publication, infrastructure,
 deployment or dependency-unlock claim follows. PR #16 stays draft. Next:
 separately invoked fresh `converge`.
+
+### Corruption Quarantine Implementation 2026-10-22
+
+The separately invoked installed `speckit-implement` completes T090 in pinned
+`specs/006-artifact-storage`; all 90 tasks are checked. This is implementation,
+not a fresh convergence assessment or finalization.
+
+**Exact corruption fence.** Each independent fixture now routes detected
+committed-content corruption through its own synchronized exact-incarnation
+quarantine. Direct-length validation, missing committed payloads, reuse hashing,
+full-copy completion, publication availability and unresolved reconciliation
+all fence the selected incarnation. Local persists the decision across compatible
+reopen; Object updates its independent process-local pointer and listing revision.
+Missing files are classified via `FileNotFoundException`; permission errors and
+unavailable directories retain their storage-failure classifications instead
+of `File.Exists` suppressing them into corruption. No public API, dependency,
+predecessor package or storage-format change is introduced.
+
+Restoring original length/bytes externally cannot clear quarantine or permit
+opens/evidence/reuse. Delayed opens and reuse recheck the current exact decision
+before delivery. Authorized deletion/recreation produces a fresh incarnation,
+which stale detection cannot quarantine. Already finalized receipts remain
+immutable historical decisions after quarantine and recreation; unresolved
+corrupt publication remains failed, rather than creating successful evidence.
+Authority retention/reader exclusion and borrowed-stream ownership are unchanged.
+
+**Required architecture review.** `f06-t090-architecture` identified two P2
+correctness issues in the first correction: Local reconciliation lacked a final
+quarantine recheck after asynchronous verification, and failed decision writes
+left detected corruption unfenced. Both were reproduced with actual runtime
+assertions before correction. Local reconciliation now revalidates current
+content/operation/quarantine under the state lock before finalization.
+Quarantine installs a bounded in-memory fence and exact pending decision before
+the fallible durable write. A failed write reports its actual storage failure
+with retained cleanup, blocks readiness/new admission and retains root ownership.
+The existing nonduplicating shutdown recovery task retries at most 100 pending
+decisions per call, preserving pending state on failure/timeout and releasing
+root ownership only after persistence. Restore access and retry bounded stop
+before compatible reopen. The review ran no tests and was not repeated;
+the new regressions and full acceptance verify the corrections, not blanket
+architecture approval or reviewer-owned checklist changes.
+
+All artifact commands below set
+`HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022`.
+Private workspaces retain exact package assemblies, failed/passed TRX and
+owned roots outside Git. All intended reds are runtime assertion failures,
+not missing-type/build failures or zero-match tests.
+
+| Exact command / check | Result |
+| --- | --- |
+| `bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Validation_first_corruption\|FullyQualifiedName~Validation_access_failure\|FullyQualifiedName~Every_committed_detection_path\|FullyQualifiedName~Damaged_read_has_no_completion' --evidence ../hoard-artifact-evidence/t090-red-20261023` | Intended initial runtime red: ten failed assertions/six passing controls and existing full-copy cases |
+| `bash scripts/validate-artifacts.sh --filter 'FullyQualifiedName~Admitted_open_rechecks\|FullyQualifiedName~Validation_access_failure' --evidence ../hoard-artifact-evidence/t090-race-red-20261023` | Two actual delayed-open race failures/four passing permission/outage controls |
+| `bash scripts/validate-artifacts.sh --update-locks --filter 'FullyQualifiedName~Local_failed_quarantine_persistence\|FullyQualifiedName~Local_reconciliation_cannot_finalize' --evidence ../hoard-artifact-evidence/t090-review-red-20261023` | Both required-review findings reproduced as intended runtime reds |
+| `bash scripts/validate-artifacts.sh --update-locks --phase logical --evidence ../hoard-artifact-evidence/t090-logical-20261023` | All 255 logical tests and both unchanged consumers passed; nonqualifying intermediate source before final reuse-restoration test/name refinement |
+| `bash scripts/validate-artifacts.sh --update-locks --filter 'FullyQualifiedName~ArtifactEvidenceTests\|FullyQualifiedName~ArtifactReadVerificationTests\|FullyQualifiedName~ArtifactPublicationRaceTests' --evidence ../hoard-artifact-evidence/t090-final-update-20261023` | All 32 focused checks and both unchanged consumers passed; final-source local hash refresh, qualification false |
+| `bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/t090-full-locked-20261023` | Separate default locked full qualification passed: 261 common/crash tests, four measured-transfer proof tests, three architecture checks/eight graphs, both consumers/original marker, four actual size/provider transfers and six owned SIGKILL/reopen barriers; exact 96 entries, 92 passes/four Object AS-41..44 exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | All 105 passed |
+| `dotnet format whitespace tests/fixtures/artifacts --folder --verify-no-changes --verbosity quiet` | Passed; full qualification independently repeats relevant whitespace/analyzer checks |
+| `dotnet format whitespace tests/contracts/Hoard.Artifacts.Tests --folder --verify-no-changes --verbosity quiet` | Passed |
+| `artifact_evidence.verify_manifest(manifest, work, artifact_evidence.source_hash(root))` | Independent current-source/lock full-manifest verification passed |
+| Lock audit against `73a1fc4` | Only 15 local `Hoard.*` content hashes in six locks changed; versions, graphs, external hashes and frozen historical inputs unchanged |
+| Task/checklist integrity, affected local documentation links and `git diff --check` | Passed; only T090's completion marker changes, original task bodies and all reviewer checklist bytes preserved |
+
+Full run `555737ba-995c-4501-b205-b2352da0da9a` binds final source
+`27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4`.
+Every applicable test group has zero failures/skips. Exact catalog additions
+bind validation-first, delayed-open, access/outage and review-correction witnesses
+to AS-09/10/17/21/31/40 as applicable. Existing full-copy/reuse tests now also
+reject externally restored bytes and exercise Local reopen. Three executed
+mutation pairs and all 29 altered-manifest controls pass.
+
+README, development/provider/test guides, quickstart, recovery contract, plan and
+task status are updated. Spec, API/model/research, examples, baseline charter/
+product architecture/diagrams/ADR/governance/backlog, compatibility policy, IaC
+and release guides are unaffected: no signature, dependency boundary, supported
+environment or operational command changes. Reviewer-owned checklists are
+unchanged. No pre/post implementation hooks are configured. The five predecessor
+full gates remain historical; no predecessor source/package changed, so complete
+affected artifact acceptance and tooling regressions run here.
+
+Qualification remains test-only on the recorded macOS 26.5 arm64/.NET 10.0.7/APFS
+environment, Local `Flush(true)` without directory fsync and process-local Object
+simulation. No production/F-07, remote-service, Windows/network-filesystem, HA,
+power-loss/OS/device-failure claim follows. PR #16 remains draft. Next:
+separately invoked fresh `converge`; no finalization, merge, feature completion,
+release, package publication, infrastructure action or dependency unlock.

@@ -32,11 +32,36 @@ public sealed partial class LocalArtifactStore
                     || decision.Removed || decision.Content.Stamp(StoreIdentity) != evidence.Stamp)
                 { throw new LocalStateException(ArtifactFailureCode.Conflict); }
                 if (decision.Corrupt) { throw new LocalStateException(ArtifactFailureCode.CorruptContent); }
-                using var direct = new FileStream(PayloadPath(decision.Content), FileMode.Open, FileAccess.Read, FileShare.Read);
-                if (direct.Length != decision.Content.Length) { throw new LocalStateException(ArtifactFailureCode.CorruptContent); }
+                using var direct = OpenCommittedPayload(decision.Content);
+                if (direct.Length != decision.Content.Length) { throw Quarantine(decision.Content); }
                 token.ThrowIfCancellationRequested();
                 return evidence.Stamp;
             }
         });
+    }
+
+    private LocalStateException Quarantine(LocalContent content)
+    {
+        lock (stateSync)
+        {
+            if (decisions.TryGetValue(content.Digest, out var current)
+                && !current.Removed && !current.Corrupt && current.Content == content)
+            {
+                var corrupt = current with { Corrupt = true };
+                // Failed persistence must not revive this incarnation or release root ownership.
+                pendingQuarantine[content.Digest] = corrupt;
+                decisions[content.Digest] = corrupt;
+                inventoryRevision = checked(inventoryRevision + 1);
+                Save(corrupt);
+                pendingQuarantine.TryRemove(content.Digest, out _);
+            }
+        }
+        return new(ArtifactFailureCode.CorruptContent);
+    }
+
+    private FileStream OpenCommittedPayload(LocalContent content, FileOptions options = FileOptions.None)
+    {
+        try { return new(PayloadPath(content), FileMode.Open, FileAccess.Read, FileShare.Read, 1, options); }
+        catch (FileNotFoundException) { throw Quarantine(content); }
     }
 }

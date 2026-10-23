@@ -29,8 +29,10 @@ public sealed partial class ObjectArtifactStore
                 if (upload.Fenced) { return new ArtifactResolution.NotCommitted(ticket); }
                 if (!upload.Deciding || upload.Selected is not { } selected) { return new ArtifactResolution.Pending(ticket); }
                 pointer = selected;
-                if (!pointers.TryGetValue(pointer.Stamp.Identity.Digest.Hex, out var current) || current != selected)
+                if (!pointers.TryGetValue(pointer.Stamp.Identity.Digest.Hex, out var current)
+                    || current.Removed || current.Stamp != selected.Stamp || current.ObjectId != selected.ObjectId)
                 { throw new ObjectOperationException(ArtifactFailureCode.CorruptState); }
+                pointer = current;
             }
             await faults.ObserveAsync("object.direct");
             lock (pointerSync)
@@ -48,13 +50,15 @@ public sealed partial class ObjectArtifactStore
                 if (upload.Receipt is { } settled) { return new ArtifactResolution.Committed(settled); }
             }
             if (pointer.Corrupt || !await VerifyObjectAsync(pointer, new(), token))
-            { throw new ObjectOperationException(ArtifactFailureCode.CorruptContent); }
+            { throw Quarantine(pointer); }
             lock (pointerSync)
             {
                 token.ThrowIfCancellationRequested();
                 if (upload.Receipt is { } settled) { return new ArtifactResolution.Committed(settled); }
-                if (pointers[pointer.Stamp.Identity.Digest.Hex] != pointer)
+                var current = pointers[pointer.Stamp.Identity.Digest.Hex];
+                if (current.Stamp != pointer.Stamp || current.ObjectId != pointer.ObjectId || current.Removed)
                 { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
+                if (current.Corrupt) { throw new ObjectOperationException(ArtifactFailureCode.CorruptContent); }
                 return new ArtifactResolution.Committed(RecordObjectReceipt(upload));
             }
         }, ticket);

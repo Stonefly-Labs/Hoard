@@ -11,10 +11,10 @@ selection, rejected missing guarantees and successful startup/stop/restart.
 Local reopens its exact known identity; Object replacement uses a fresh root
 and epoch, never a durable-restart claim.
 The unchanged compiled consumer exercises all 16 common operations on both
-choices. Current full acceptance includes 243 logical/crash checks, four actual-transfer
+choices. Current full acceptance includes 261 logical/crash checks, four actual-transfer
 proof tests, three architecture checks, eight graph scans, the original frozen
 marker binary, six Python-owned kill/reopen barriers and 29 altered-manifest
-rejections. See [exact commands and evidence](plan.md#unpublished-object-cleanup-implementation-2026-10-22).
+rejections. See [exact commands and evidence](plan.md#corruption-quarantine-implementation-2026-10-22).
 Every focused mode remains `qualification: false`, even with passing results.
 Expired ticket retirement now restores finite admission; retained identity and
 reclaimed-incarnation history has separate bounded bookkeeping and compacts
@@ -63,7 +63,18 @@ exact maintenance or shutdown reclaims it. Selected content is never scratch;
 settled equivalent-reuse receipts survive cleanup failure. Partial/complete
 assemblies, cancellation, repeated denied cleanup and actual byte/capacity
 restoration are exercised by the final locked run.
-The [follow-up evidence](plan.md#unpublished-object-cleanup-implementation-2026-10-22)
+Detected corruption now quarantines the exact current incarnation across
+validation/open/reuse/copy/publication/reconciliation paths. Neither restoring
+the original length nor replacing the bytes externally clears quarantine.
+Local preserves it across compatible reopen; Object promises only process-local
+retention. Permission and unavailable-directory failures do not quarantine
+intact content. If Local cannot persist a detected quarantine, readiness/new
+admission are fenced and shutdown retains root ownership until persistence
+succeeds: restore access and retry bounded `StopAsync` before reopening.
+Previously finalized receipts remain reconcilable without certifying health;
+unresolved corrupt publication cannot be finalized after an overlapping
+read detects corruption. Authorized delete/recreate uses a fresh incarnation.
+The [follow-up evidence](plan.md#corruption-quarantine-implementation-2026-10-22)
 supersedes earlier source qualification; fresh convergence is still required.
 See the [approved hash refresh and locked replay](plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 

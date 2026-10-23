@@ -84,5 +84,8 @@ public sealed class ArtifactPublicationRaceTests
         Assert.True(duplicate.EofObserved);
         Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
             await driver.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default)).Code);
+        File.WriteAllBytes(Directory.GetFiles(driver.PayloadDirectory).Single(), bytes);
+        Success(await driver.Store.AbandonAsync(staged.Owner, new(), default));
+        await ArtifactEvidenceTests.AssertQuarantinedAsync(driver, receipt, bytes);
     }
 }

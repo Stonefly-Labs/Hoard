@@ -93,6 +93,28 @@ def required_runtime_tests(provider, case):
         tests.update(runtime_test(
             "ArtifactReadVerificationTests.Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence",
             provider, truncate=value) for value in (False, True))
+        tests.update(runtime_test(
+            "ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration",
+            provider, missing=value) for value in (False, True))
+        tests.update(runtime_test(
+            "ArtifactReadVerificationTests.Every_committed_detection_path_quarantines_restored_bytes",
+            provider, detection=value) for value in ("open", "publication", "reconciliation"))
+        tests.add(runtime_test(
+            "ArtifactReadVerificationTests.Admitted_open_rechecks_quarantine_before_delivering_a_session", provider))
+    if case in ("AS-09", "AS-31"):
+        tests.update(runtime_test(
+            "ArtifactEvidenceTests.Validation_first_corruption_cannot_be_revived_by_external_restoration",
+            provider, missing=value) for value in (False, True))
+    if case == "AS-17":
+        tests.update(runtime_test(
+            "ArtifactEvidenceTests.Validation_access_failure_does_not_quarantine_intact_content",
+            provider, unavailable=value) for value in (False, True))
+    if provider == "local" and case in ("AS-10", "AS-17", "AS-40"):
+        tests.add(runtime_test(
+            "ArtifactEvidenceTests.Local_failed_quarantine_persistence_retains_ownership_until_stop_retry_and_reopen"))
+    if provider == "local" and case in ("AS-10", "AS-21"):
+        tests.add(runtime_test(
+            "ArtifactReadVerificationTests.Local_reconciliation_cannot_finalize_after_overlapping_read_quarantines_the_incarnation"))
     if case in ("AS-11", "AS-12"):
         tests.add(runtime_test("ArtifactTransferProofTests.Measured_transfer_binds_actual_bytes_pacing_hashes_and_os_peak",
                                provider, size=268435456 if case == "AS-11" else 4294967296))
