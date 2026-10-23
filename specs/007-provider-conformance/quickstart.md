@@ -36,6 +36,9 @@ Remote/unknown mounts reject before workspace creation. Safe
 `proofs/preflight.json` records observed free bytes, normalized filesystem type
 and monotonic allocation duration without a mount path. It is not a qualifying
 environment/profile report; complete preflight/report integration is pending.
+Insufficient capacity emits safe `Incomplete`/`InsufficientCapacity`, exit `2`,
+without creating a workspace or reducing transfer sizes. Evidence violations
+remain `Failed`/exit `1`; neither outcome qualifies a scope.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

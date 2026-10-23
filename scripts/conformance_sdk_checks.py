@@ -438,8 +438,9 @@ def main():
         return execute(options.root.resolve(), options.evidence)
     except (evidence.ConformanceError, OSError, ValueError, zipfile.BadZipFile) as error:
         code = str(error) if isinstance(error, evidence.ConformanceError) else "PrerequisiteMissing"
-        print(json.dumps({"qualification": False, "code": code}))
-        return 2
+        status = evidence.failure_status(code)
+        print(json.dumps({"qualification": False, "status": status, "code": code}))
+        return 2 if status == "Incomplete" else 1
 
 
 if __name__ == "__main__":

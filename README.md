@@ -1088,9 +1088,13 @@ The next supervisor increment counts admission work in command deadlines,
 reserves termination/cleanup time, and bounds control/barrier scopes. Native
 artifact/baseline allocation now checks both actual capacity and a finite local
 filesystem allowlist before creating a workspace; path-free preflight facts are
-retained separately from synthetic stores. These changes pass 184 tooling checks
-with ten native skips on macOS; their native confirmation and complete T012
-integration remain pending.
+retained separately from synthetic stores. Run `39920220726` passed all 79
+native foundation checks plus its six-baseline SDK/logger diagnostic. A further
+one-writer gate rejects overlapping commands, cleanup and state publication
+before admission. Insufficient scratch now reports explicit `Incomplete`, not
+a reduced run; evidence violations retain `Failed`. These latest changes pass
+187 tooling checks with ten native skips on macOS; their native confirmation
+and complete T012 integration remain pending.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

@@ -4956,7 +4956,22 @@ currently serializes owned commands, stricter than the four-child/one-transfer
 upper bounds. Cleanup-budget expiry records retained ownership and leaves
 synthetic resources intact; an explicit later retry preserves that failed
 observation. All 184 tooling checks pass with ten native skips on macOS.
-Native confirmation and complete T012 integration remain pending.
+Native foundation job `120303380550` in
+[run 39920220726](https://github.com/Stonefly-Labs/Hoard/actions/runs/39920220726)
+at `1675f93` passed all 79 checks with zero failures/errors/skips and
+92,111,450,112 free scratch bytes. Its SDK/logger diagnostic passed all seven
+scenarios/15 observations, reproduced the same six-baseline seal and bound
+input digest `46a16ed43d07b26d2c11cbf5beb19eb0fd157d47c4e01ed9548bd4ad0f198c4d`.
+
+A held-admission regression then demonstrated that another caller could enter
+the same run's ownership work. A nonblocking per-run writer gate now rejects
+overlapping commands, cleanup and transitions before ledger access, while
+allowing cleanup to invoke its own controlled child. Different runs remain
+independent. An actual insufficient-capacity admission now produces safe
+`Incomplete`/`InsufficientCapacity` and exit `2` without creating a workspace or
+altering an outside sentinel. Evidence violations remain `Failed`/exit `1`,
+not prerequisite errors. All 187 tooling checks pass with ten native skips.
+Native confirmation of this increment and full T012 integration remain pending.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

@@ -1,6 +1,7 @@
 """Owned, bounded F-07 execution. Raw child diagnostics are never spooled."""
 
 from dataclasses import dataclass
+from functools import wraps
 import hashlib
 import json
 import math
@@ -14,6 +15,7 @@ import socket
 import stat
 import subprocess
 import sys
+import threading
 import time
 from types import MappingProxyType
 import uuid
@@ -28,6 +30,18 @@ CHILD_DIAGNOSTIC_BYTES = 8 * 1024 * 1024
 PROFILE_DIAGNOSTIC_BYTES = 64 * 1024 * 1024
 MAX_PROCESSES = 256
 PIDFD_SIGNAL_PROCESS_GROUP = 4
+
+
+def single_writer(operation):
+    @wraps(operation)
+    def execute(self, *args, **kwargs):
+        if not self._writer.acquire(blocking=False):
+            raise ConformanceError("OwnershipInvalid")
+        try:
+            return operation(self, *args, **kwargs)
+        finally:
+            self._writer.release()
+    return execute
 
 
 def control_timeout(deadline):
@@ -310,6 +324,7 @@ class OwnedRun:
         self.retained_bytes = 0
         self.command_sequence = 0
         self.cleanup_attempts = []
+        self._writer = threading.RLock()
         self.started = time.monotonic()
         self.deadline = self.started + profile_budget("baseline")
 
@@ -410,6 +425,7 @@ class OwnedRun:
                 or process_identity(self.owner_pid, deadline=deadline) != self.owner_start):
             raise ConformanceError("OwnershipInvalid")
 
+    @single_writer
     def transition(self, state, *, deadline=None):
         allowed = {"Allocated": ("Active", "Settling"), "Active": ("Settling",),
                    "Settling": ("Retained",), "Retained": ("Settling",)}
@@ -486,6 +502,7 @@ class OwnedRun:
         if self._group_members(child.pid, deadline=deadline):
             raise ConformanceError("CleanupIncomplete")
 
+    @single_writer
     def command(self, args, *, cwd=None, timeout=None, kind="events", env=None,
                 scope="ordinary", cache_id="default", deadline=None):
         started = time.monotonic()
@@ -684,6 +701,7 @@ class OwnedRun:
             raise ConformanceError("OwnershipInvalid") from None
         self.retained_bytes += len(data)
 
+    @single_writer
     def release(self):
         started = time.monotonic() * 1000
         deadline = min(started / 1000 + 30, self.deadline)

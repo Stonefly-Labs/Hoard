@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import shutil
 import sys
+import tempfile
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
@@ -230,6 +231,38 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(calls[-1][0], ["stat", "-f", "--format=%T", str(output.parent)])
         self.assertEqual(calls[-1][1], {"limit": 1024, "timeout": 5})
         self.assertNotIn(str(self.directory), json.dumps(checks.CONFIGURATION_POLICY))
+
+    def test_insufficient_scratch_is_reported_as_incomplete_before_any_workspace_is_created(self):
+        parent = Path(tempfile.mkdtemp(prefix="hoard-preflight-test-")).resolve()
+        self.addCleanup(shutil.rmtree, parent)
+        destination = parent / "unallocated"
+        sentinel = parent / "outside"
+        sentinel.write_bytes(b"preserve")
+        output = io.StringIO()
+        with patch.object(sys, "argv", ["conformance_sdk_checks.py", "--evidence", str(destination)]), \
+                patch.object(checks, "native_execution_supported", return_value=True), \
+                patch("conformance_execution.shutil.disk_usage",
+                      return_value=SimpleNamespace(free=24 * 1024**3 - 1)), \
+                contextlib.redirect_stdout(output):
+            code = checks.main()
+        observed = json.loads(output.getvalue())
+        self.assertEqual(code, 2)
+        self.assertEqual(observed["code"], "InsufficientCapacity")
+        self.assertEqual(observed["status"], "Incomplete")
+        self.assertFalse(observed["qualification"])
+        self.assertFalse(destination.exists())
+        self.assertEqual(sentinel.read_bytes(), b"preserve")
+
+    def test_evidence_failure_is_not_relabelled_as_a_prerequisite_problem(self):
+        output = io.StringIO()
+        with patch.object(sys, "argv", ["conformance_sdk_checks.py", "--evidence", "unused"]), \
+                patch.object(checks, "execute", side_effect=checks.evidence.ConformanceError("ProofMismatch")), \
+                contextlib.redirect_stdout(output):
+            code = checks.main()
+        self.assertEqual(code, 1)
+        self.assertEqual(json.loads(output.getvalue()), {
+            "qualification": False, "status": "Failed", "code": "ProofMismatch",
+        })
 
     def test_negative_observations_require_matching_exit_event_inventory_and_failure_kind(self):
         scenario = checks.SCENARIOS[2]

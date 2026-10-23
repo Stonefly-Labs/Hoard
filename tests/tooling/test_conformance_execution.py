@@ -7,6 +7,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import unittest
 from unittest import mock
@@ -324,6 +325,8 @@ print('{"event":"control","code":"None","value":1}')
         ledger.write_text(json.dumps(value))
         with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
             run.release()
+        with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+            run.transition("Settling")
         ledger.write_bytes(original)
         outside = self.parent / "outside"
         outside.mkdir()
@@ -578,6 +581,32 @@ else:
                 run.command([sys.executable, "-c", "pass"], deadline=deadline)
         with self.assertRaisesRegex(ConformanceError, "DeadlineExceeded"):
             run.command([sys.executable, "-c", "pass"], deadline=time.monotonic() - 1)
+        run.transition("Settling")
+        run.release()
+
+    def test_one_owned_writer_rejects_overlapping_commands_and_cleanup_before_admission(self):
+        run = self.workspace()
+        entered = threading.Event()
+        settle = threading.Event()
+        def held_admission(**kwargs):
+            if not entered.is_set():
+                entered.set()
+                if not settle.wait(5):
+                    raise AssertionError("Admission barrier did not settle")
+            raise ConformanceError("EvidenceIncomplete")
+        with mock.patch.object(run, "_check_ledger", side_effect=held_admission):
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                pending = executor.submit(run.command, [sys.executable, "-c", "pass"])
+                try:
+                    self.assertTrue(entered.wait(5))
+                    with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                        run.command([sys.executable, "-c", "pass"])
+                    with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                        run.release()
+                finally:
+                    settle.set()
+                with self.assertRaisesRegex(ConformanceError, "EvidenceIncomplete"):
+                    pending.result(timeout=5)
         run.transition("Settling")
         run.release()
 

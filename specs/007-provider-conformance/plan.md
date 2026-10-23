@@ -254,8 +254,21 @@ against the profile budget. macOS ownership fixtures remain portable but leave
 filesystem identity unobserved; provider execution still rejects.
 An expired cleanup records retained ownership without deleting resources; an
 explicit retry preserves that failure history.
-All 184 tooling checks pass with ten native skips. New native verification and
-complete T012 integration are pending; T012 remains unchecked.
+All 184 tooling checks pass with ten native skips. Native run `39920220726`
+at `1675f93` then passed all 79 foundation checks with zero failures/errors/skips,
+observing 92,111,450,112 free scratch bytes. Its SDK/logger diagnostic passed
+seven scenarios/15 observations, independently reproduced the six-baseline
+seal and bound input digest
+`46a16ed43d07b26d2c11cbf5beb19eb0fd157d47c4e01ed9548bd4ad0f198c4d`.
+
+A further held-admission regression exposed concurrent access to one run's
+writer. A nonblocking per-run gate now rejects overlapping commands, cleanup
+and transitions before ownership access; nested controlled cleanup remains
+allowed. Actual capacity rejection now emits `Incomplete`/exit `2` without
+creating a workspace or changing an outside sentinel. Evidence violations
+remain `Failed`/exit `1`. All 187 tooling checks pass with ten native skips.
+New native verification and complete T012 integration are pending; T012
+remains unchecked.
 
 ## Partial implementation checkpoint
 

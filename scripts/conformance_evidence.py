@@ -39,6 +39,16 @@ class ConformanceError(ValueError):
         super().__init__(code if code in DIAGNOSTIC_CODES else "EvidenceSchemaInvalid")
 
 
+def failure_status(code):
+    if code not in DIAGNOSTIC_CODES or code == "None":
+        raise ConformanceError()
+    return "Incomplete" if code in (
+        "EvidenceIncomplete", "UnsupportedProfile", "PrerequisiteMissing", "InsufficientCapacity",
+        "DeadlineExceeded", "OutputLimitExceeded", "UnknownDiagnostic", "CleanupIncomplete",
+        "OwnershipInvalid", "CommandFailed",
+    ) else "Failed"
+
+
 def _invalid():
     raise ConformanceError()
 
