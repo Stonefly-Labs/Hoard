@@ -1130,11 +1130,16 @@ at `44881ff` verified 99 native foundation checks and eight SDK scenarios.
 The next increment adds immutable typed binding snapshots and shared profile
 capture of actual source, packages, locks, declarations, runtime files,
 synthetic source policy and verified historical baselines. It passes 207 local
-tooling checks (ten native skips) and 57 source SDK tests; its native execution
-is pending. Actual loaded-provider attribution remains T014 work.
+tooling checks (ten native skips) and 57 source SDK tests; native verification
+is recorded below. Actual loaded-provider attribution remains T014 work.
 An additional mutation challenge exposed unbound generated runtime configuration.
 SDK capture now includes dependency/runtime configuration files alongside DLLs;
 changing them after admission also rejects.
+Run [39932469750](https://github.com/Stonefly-Labs/Hoard/actions/runs/39932469750)
+at `525bdf0` verified that repair and shared capture: 102 native checks without
+skips, nine SDK scenarios/27 observations and all six historical baselines.
+T013's input-capture foundation is complete; implementation continues with T014,
+not qualification or merge readiness.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

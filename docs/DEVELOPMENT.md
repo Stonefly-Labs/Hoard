@@ -5066,8 +5066,8 @@ The safe configuration policy comes from verified synthetic source mapping,
 not arbitrary configuration dictionaries. Environment values must already be
 typed observations from the relevant producer; this API is not runtime attestation.
 All 207 tooling checks pass with ten native skips, and all 57 source SDK tests
-pass. Native confirmation of this new shared capture/ninth declaration scenario
-is pending. Loaded-provider attribution continues to belong to T014; no
+pass. Native confirmation of this shared capture/ninth declaration scenario
+is recorded below. Loaded-provider attribution continues to belong to T014; no
 qualification or new CLI is claimed. Production reference edges and architecture
 diagrams are unaffected by this test-only input capture.
 An additional intended regression changed generated `runtimeconfig.json` while
@@ -5075,6 +5075,14 @@ the DLL stayed unchanged; the old inventory missed it. The SDK now inventories
 dependency/runtime configuration files alongside assemblies, so these mutations
 also reject. Their file hashes are runtime-artifact identity, not configuration
 policy values or proof of which runtime loaded.
+Native run
+[39932469750](https://github.com/Stonefly-Labs/Hoard/actions/runs/39932469750)
+at `525bdf0` verified the shared capture and runtime-configuration repair:
+102 foundation checks without failures/errors/skips and nine SDK scenarios/
+27 observations, with all six historical baselines independently reverified.
+T013 is complete as a shared foundation API; actual loaded-provider/session/
+runtime provenance remains T014 work. These 27 observations do not constitute
+a full 57-test source SDK or package-only run.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

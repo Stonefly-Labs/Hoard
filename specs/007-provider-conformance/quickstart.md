@@ -60,10 +60,14 @@ package hashes, actual synthetic source-mapping verification and complete SDK
 diagnostic pre/post input recomputation. Run `39929542533` at `44881ff` verified
 99 native foundation checks and eight SDK scenarios. A shared profile capture
 API and immutable typed binding-declaration producer now pass focused local
-checks; their native execution is pending. They do not prove which provider/
+checks; native execution is recorded below. They do not prove which provider/
 runtime executed or provide a working qualification CLI.
 SDK runtime input hashes also include generated dependency/runtime configuration,
 not just DLLs; post-admission changes reject even when assembly bytes stay fixed.
+Run `39932469750` at `525bdf0` verified this shared path with 102 native
+foundation checks without skips and nine SDK scenarios/27 observations.
+T013's shared capture foundation is complete; T014 and full profile execution
+remain unfinished.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

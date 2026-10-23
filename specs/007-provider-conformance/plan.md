@@ -419,6 +419,23 @@ bytes. These compiled runtime artifacts remain separate from the shared
 synthetic configuration-policy digest. This does not replace T014 loaded-runtime
 proof. The existing focused SDK mutation test now covers that repaired boundary.
 
+Run [39931791961](https://github.com/Stonefly-Labs/Hoard/actions/runs/39931791961)
+at `4a284f8` first verified shared capture: 102 native foundation checks,
+zero failures/errors/skips, nine SDK scenarios/27 observations and all six
+historical baselines. Input digest
+`e0e65eab2797443efa5057091e3675bcfe24e2514f310c865147b30cd5f93358`.
+Final runtime-configuration repair run
+[39932469750](https://github.com/Stonefly-Labs/Hoard/actions/runs/39932469750)
+at `525bdf0` repeated all 102 native checks without failures/errors/skips,
+measured 92,111,089,664 free scratch bytes, and passed the nine SDK scenarios/
+27 observations with complete shared input/environment recomputation. All six
+baselines reverified with the unchanged seal. Input digest
+`3b43174ff47f2604acb6dd67af5d81189538815e80a6d730cc09a54fff078b37`.
+T013 is complete within its shared input-capture foundation scope. T014 retains
+actual loaded-factory/session/runtime provenance; later profile tasks retain
+their real SQLite/environment producer and full orchestration obligations.
+No category or five-profile qualification follows from these diagnostic runs.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;
