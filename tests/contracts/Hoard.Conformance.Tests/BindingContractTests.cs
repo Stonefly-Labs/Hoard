@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using System.Text.Json;
 using Hoard.Abstractions.Metadata;
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Catalog;
@@ -9,6 +10,47 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class BindingContractTests
 {
+    [Fact]
+    public void Binding_snapshots_capture_closed_actual_declarations_without_outcome_labels()
+    {
+        var declaration = Declare(ConformanceCategory.Metadata,
+            ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Metadata));
+        var snapshot = ConformanceBindingSnapshot.Capture(declaration);
+        using var document = JsonDocument.Parse(snapshot.AsMemory());
+        var root = document.RootElement;
+        Assert.Equal<string>(
+            ["schemaVersion", "bindingId", "category", "packageId", "packageVersion",
+             "packageSha256", "capabilities", "faults"],
+            root.EnumerateObject().Select(property => property.Name));
+        Assert.Equal(1, root.GetProperty("schemaVersion").GetInt32());
+        Assert.Equal(declaration.BindingId, root.GetProperty("bindingId").GetString());
+        Assert.Equal("metadata", root.GetProperty("category").GetString());
+        Assert.Equal(declaration.PackageId, root.GetProperty("packageId").GetString());
+        Assert.Equal(declaration.PackageVersion, root.GetProperty("packageVersion").GetString());
+        Assert.Equal(declaration.PackageSha256, root.GetProperty("packageSha256").GetString());
+        Assert.Equal(declaration.Capabilities,
+            root.GetProperty("capabilities").EnumerateArray().Select(value => value.GetString()));
+        Assert.Equal(declaration.Faults.Select(fault => fault.ToString()),
+            root.GetProperty("faults").EnumerateArray().Select(value => value.GetString()));
+        Assert.Equal<byte>(snapshot, ConformanceBindingSnapshot.Capture(declaration));
+    }
+
+    [Fact]
+    public void Binding_snapshots_reject_missing_faults_before_emitting_input_bytes()
+    {
+        foreach (var category in new[] { ConformanceCategory.Metadata, ConformanceCategory.Artifacts })
+        {
+            var faults = ConformanceBindingAdmission.RequiredFaults(category);
+            foreach (var missing in faults)
+            {
+                var declaration = Declare(category, faults.Where(fault => fault != missing));
+                var error = Assert.Throws<ArgumentException>(() => ConformanceBindingSnapshot.Capture(declaration));
+                Assert.Equal("BindingInvalid", error.Message);
+            }
+            Assert.False(ConformanceBindingSnapshot.Capture(Declare(category, faults)).IsEmpty);
+        }
+    }
+
     [Theory]
     [InlineData(ConformanceCategory.Metadata)]
     [InlineData(ConformanceCategory.Artifacts)]

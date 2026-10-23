@@ -55,6 +55,10 @@ SCENARIOS = (
         + f'(range: "{value}")' for value in ("[1.2.0,2.0.0)", "(2.0.0,1.0.0]", "[1.2.3]")),
      "None", "Passed", 0, "None"),
     ("catalog", catalog_admission_witnesses(), "None", "Passed", 0, "None"),
+    ("declarations", tuple("Hoard.Conformance.Tests.BindingContractTests." + method for method in (
+        "Binding_snapshots_capture_closed_actual_declarations_without_outcome_labels",
+        "Binding_snapshots_reject_missing_faults_before_emitting_input_bytes")),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {
@@ -62,18 +66,6 @@ BUDGETS = {
     "transferSeconds": 2400, "recoverySeconds": 300, "terminationSeconds": 10,
     "cleanupSeconds": 30, "profileSeconds": 3600, "baselineSeconds": 28800,
     "maxChildren": 4, "maxTransferChildren": 1,
-}
-CONFIGURATION_POLICY = {
-    "packageSources": {"local": "isolated-current-archives", "nuget.org": "https://api.nuget.org/v3/index.json"},
-    "packageSourceMapping": {"local": ["Hoard.*"], "nuget.org": ["*"]},
-    "restore": "locked-replay-after-isolated-local-hash-preparation",
-    "buildRuntimeRollForward": "Disable",
-    "historicalArchivePreparation": "explicit-alternate-locks-with-unchanged-source-and-graph",
-    "consoleLogger": False, "runtimeLogger": "HoardSafe",
-    "testSelection": [{"identities": list(item[1]), "diagnosticCode": item[2],
-                       "status": item[3], "exitCode": item[4], "failureKind": item[5]}
-                      for item in SCENARIOS],
-    "assertionSymbol": ASSERTION,
 }
 
 
@@ -127,11 +119,6 @@ def prepare_smoke_lock(project, candidate, feed):
     return prepare_project_lock(project, candidate, feed, "candidate")
 
 
-def package_inputs(feed):
-    return [evidence.package_identity(feed, package_id, "0.1.0") for package_id in
-            ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger")]
-
-
 def environment(run, *, phase="admission"):
     # The probe is itself an owned child. Captured SDK text is bounded transient
     # input, validated before serialization, never sent to the console.
@@ -180,46 +167,35 @@ def probe(path):
     write_new(path, evidence.canonical_bytes(value))
 
 
-def make_inputs(run, candidate, sources, packages, prepared, observed_environment, identity, *, group_id=None):
+def make_inputs(run, repository, candidate, sources, observed_environment, identity, seal_sha,
+                *, group_id=None, ci_revision=None):
     run._check_ledger()
     inventory = evidence.proof_manifest(candidate)
-    locks = {name: sha for name, sha in inventory.items() if name.endswith("packages.lock.json")}
+    prefix = candidate.relative_to(run.root).as_posix()
+    locks = [f"{prefix}/{name}" for name in inventory if name.endswith("packages.lock.json")]
     runtime_folders = {f"{TESTS}/bin/Release/net10.0", f"{LOGGER}/Smoke/bin/Release/net10.0"}
-    runtime = {f"{candidate.relative_to(run.root).as_posix()}/{name}": sha
-               for name, sha in inventory.items()
-               if name.endswith(".dll") and Path(name).parent.as_posix() in runtime_folders}
+    runtime = [f"{prefix}/{name}" for name in inventory
+               if name.endswith(".dll") and Path(name).parent.as_posix() in runtime_folders]
     if not runtime or not locks:
         raise evidence.ConformanceError("EvidenceIncomplete")
-    configuration = dict(CONFIGURATION_POLICY)
-    configuration.update(evidence.verify_synthetic_source_mapping(
-        run.root, "stores/candidate.NuGet.Config", "feed/candidate"))
-    baseline_inputs = [{
-        "revision": entry["revision"], "sourceSha256": entry["sourceSha256"],
-        "lockSha256": entry["lockSha256"], "recipeSha256": entry["recipeSha256"],
-        "binarySha256": evidence.digest(entry["binaries"]), "dependencySha256": entry["binaries"],
-        "apiScope": entry["id"],
-    } for entry in prepared["entries"]]
-    inputs = {
-        "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": group_id or str(uuid.uuid4()),
-        "profileId": "harness", "mode": "diagnostic", "catalogRevision": evidence.CATALOG_REVISION,
-        "catalogSha256": sources[f"{SDK}/Catalog/catalog.json"],
-        "sdkSha256": evidence.digest({key: value for key, value in sources.items() if key.startswith(SDK + "/")}),
-        "sourceRevision": identity["sourceRevision"], "sourceState": identity["sourceState"],
-        "sourceManifest": sources, "sourceManifestSha256": evidence.digest(sources),
-        "packages": packages, "locks": locks, "configurationSha256": evidence.digest(configuration),
-        "capabilitySha256": evidence.digest({"qualification": False, "scope": "sdk-logger-diagnostic"}),
-        "bindings": [], "baselines": baseline_inputs, "runtimeAssemblies": runtime,
-        "environment": observed_environment, "environmentSha256": evidence.digest(observed_environment),
-        "budgets": BUDGETS, "invocation": ["sdk-logger-diagnostic"],
-    }
-    admitted = evidence.admit_entity("RunInputs", inputs)
-    run._check_ledger()
-    return admitted
+    inputs = evidence.capture_profile_inputs(
+        run, repository, candidate, profile_id="harness", mode="diagnostic",
+        invocation_group_id=str(uuid.uuid4()) if group_id is None else group_id,
+        package_versions=[{"packageId": name, "version": "0.1.0"} for name in
+                          ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger")],
+        feed="feed/candidate", configuration="stores/candidate.NuGet.Config",
+        lock_paths=locks, runtime_paths=runtime, binding_sources=[],
+        observed_environment=observed_environment, budgets=BUDGETS, invocation=["sdk-logger-diagnostic"],
+        baseline_sha256=seal_sha, ci_revision=ci_revision)
+    if (inputs["sourceManifest"] != sources
+            or any(inputs[key] != value for key, value in identity.items())):
+        raise evidence.ConformanceError("InputChanged")
+    return inputs
 
 
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
-    source_tests = name in ("owned", "ranges", "catalog")
+    source_tests = name in ("owned", "ranges", "catalog", "declarations")
     assembly = candidate / (TESTS if source_tests else LOGGER + "/Smoke") / "bin/Release/net10.0" / (
         "Hoard.Conformance.Tests.dll" if source_tests else "Smoke.dll")
     assembly_path = assembly.relative_to(run.root).as_posix()
@@ -315,7 +291,7 @@ def execute(repository, destination):
         print(json.dumps({"qualification": False, "phase": "baseline-preparation"}), flush=True)
         seal = baselines.prepare(repository, run, prepare_local_archives=True)
         seal_sha = evidence.file_sha256(seal)
-        prepared = baselines.verify_prepared_baselines(run.root, seal_sha)
+        baselines.verify_prepared_baselines(run.root, seal_sha)
         ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
         if os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None:
             raise evidence.ConformanceError("InputChanged")
@@ -348,8 +324,8 @@ def execute(repository, destination):
         build(run, smoke_project, config, "smoke-locked-replay", lock=alternate)
         if evidence.source_identity(repository, ci_revision=ci_revision) != identity:
             raise evidence.ConformanceError("InputChanged")
-        inputs = make_inputs(run, candidate, sources, package_inputs(feed), prepared,
-                             environment(run), identity)
+        inputs = make_inputs(run, repository, candidate, sources, environment(run), identity, seal_sha,
+                             ci_revision=ci_revision)
         for name in sources:
             (candidate / name).chmod(0o400)
         for name in inputs["runtimeAssemblies"]:
@@ -367,7 +343,6 @@ def execute(repository, destination):
                               "completedScenarios": len(observations)}), flush=True)
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion")
-        post_baselines = baselines.verify_prepared_baselines(run.root, seal_sha)
         post_sources = evidence.source_manifest(repository)
         post_identity = evidence.source_identity(repository, ci_revision=ci_revision)
         if post_sources != sources or post_identity != identity:
@@ -376,8 +351,8 @@ def execute(repository, destination):
         if lock_record is not None:
             verify_project_lock(lock_record, candidate, feed)
         post_inputs = make_inputs(
-            run, candidate, post_sources, package_inputs(feed), post_baselines,
-            post_environment, post_identity, group_id=inputs["invocationGroupId"])
+            run, repository, candidate, post_sources, post_environment, post_identity, seal_sha,
+            group_id=inputs["invocationGroupId"], ci_revision=ci_revision)
         evidence.verify_input_recomputation(inputs, post_inputs)
         summary = {"qualification": False, "code": "None", "baselines": 6,
                    "baselineSha256": seal_sha, "inputsSha256": evidence.digest(inputs),

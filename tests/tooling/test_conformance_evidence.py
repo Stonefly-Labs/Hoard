@@ -635,6 +635,117 @@ class ConformanceInputTests(unittest.TestCase):
         with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
             evidence.verify_synthetic_source_mapping(self.parent, "NuGet.Config", feed.name)
 
+    def test_binding_capture_binds_actual_declarations_to_selected_package_bytes(self):
+        path = self.package()
+        package = evidence.package_identity(path.parent, "Hoard.Fixture", "0.1.0")
+        declaration = {
+            "schemaVersion": 1, "bindingId": "fixture", "category": "metadata",
+            "packageId": "Hoard.Fixture", "packageVersion": "0.1.0", "packageSha256": package["sha256"],
+            "capabilities": ["common-logical"],
+            "faults": ["IndependentSnapshot", "WriterContention", "CommitAcknowledgement", "PersistedCorruption",
+                       "Capacity", "SchemaState", "LeaseBoundary", "NativeNonCooperation", "CleanupFailure"],
+        }
+        source = self.parent / "declaration.json"
+        source.write_bytes(evidence.canonical_bytes(declaration))
+        def capture():
+            return evidence.capture_binding(self.parent, source.name, packages=[package], adapter_id="fixture.adapter")
+        admitted = capture()
+        self.assertEqual(admitted["descriptorSha256"], hashlib.sha256(source.read_bytes()).hexdigest())
+        self.assertEqual(admitted["package"], package)
+        self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(admitted))
+        declaration["capabilities"].append("durable-local-process-crash")
+        declaration["faults"].append("BackupRestore")
+        source.write_bytes(evidence.canonical_bytes(declaration))
+        changed = capture()
+        self.assertNotEqual(changed["capabilitySha256"], admitted["capabilitySha256"])
+        self.assertNotEqual(changed["descriptorSha256"], admitted["descriptorSha256"])
+        self.assertEqual(admitted["package"], changed["package"])
+        for field, value in (
+                ("packageSha256", "1" * 64), ("packageId", "Hoard.Unselected"),
+                ("packageVersion", "0.2.0"), ("faults", ["Capacity"]), ("qualified", True),
+                ("capabilities", {"environment": "synthetic-secret-canary"}),
+                ("capabilities", ["/private/synthetic-canary"]),
+                ("connectionString", "synthetic-secret-canary")):
+            modified = copy.deepcopy(declaration)
+            modified[field] = value
+            source.write_bytes(evidence.canonical_bytes(modified))
+            with self.subTest(field=field), self.assertRaises(evidence.ConformanceError):
+                capture()
+
+    def test_binding_capture_rejects_aliases_and_duplicate_keys(self):
+        path = self.package()
+        package = evidence.package_identity(path.parent, "Hoard.Fixture", "0.1.0")
+        source = self.parent / "declaration.json"
+        source.write_bytes(b'{"schemaVersion":1,"schemaVersion":1}')
+        with self.assertRaises(evidence.ConformanceError):
+            evidence.capture_binding(self.parent, source.name, packages=[package], adapter_id="fixture.adapter")
+        source.unlink()
+        source.symlink_to(path)
+        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            evidence.capture_binding(self.parent, source.name, packages=[package], adapter_id="fixture.adapter")
+
+    def test_profile_capture_derives_source_packages_bindings_and_materials_in_one_manifest(self):
+        from conformance_execution import OwnedRun
+        sdk = "tests/contracts/Hoard.Testing.Conformance"
+        (self.repo / sdk / "Catalog").mkdir(parents=True)
+        (self.repo / sdk / "Catalog/catalog.json").write_bytes(b"{}")
+        (self.repo / sdk / "packages.lock.json").write_bytes(b"source lock")
+        subprocess.run(["git", "add", "."], cwd=self.repo, check=True)
+        subprocess.run([
+            "git", "-c", "user.name=Conformance fixture", "-c", "user.email=fixture@example.invalid",
+            "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null",
+            "commit", "--quiet", "-m", "Create synthetic profile inputs",
+        ], cwd=self.repo, check=True)
+        run = OwnedRun.allocate(self.parent / "run", self.repo, profile="metadata")
+        self.addCleanup(lambda: (run.transition("Settling"), run.release()))
+        snapshot, _ = evidence.snapshot_sources(self.repo, run)
+        feed = run.root / "feed/candidate"
+        feed.mkdir(mode=0o700)
+        shutil.copyfile(self.package(), feed / "Hoard.Fixture.0.1.0.nupkg")
+        config = run.root / "stores/candidate.NuGet.Config"
+        config.write_bytes(evidence.synthetic_nuget_configuration(feed))
+        (run.root / "compiled").mkdir(mode=0o700)
+        runtime = run.root / "compiled/Hoard.Fixture.dll"
+        runtime.write_bytes(b"actual compiled fixture")
+        package = evidence.package_identity(feed, "Hoard.Fixture", "0.1.0")
+        declaration = {
+            "schemaVersion": 1, "bindingId": "fixture", "category": "metadata",
+            "packageId": "Hoard.Fixture", "packageVersion": "0.1.0", "packageSha256": package["sha256"],
+            "capabilities": ["common-logical"],
+            "faults": ["IndependentSnapshot", "WriterContention", "CommitAcknowledgement", "PersistedCorruption",
+                       "Capacity", "SchemaState", "LeaseBoundary", "NativeNonCooperation", "CleanupFailure"],
+        }
+        binding = run.root / "binding.json"
+        binding.write_bytes(evidence.canonical_bytes(declaration))
+        fixture = ConformanceAdmissionTests().inputs()
+        group_id = str(uuid.uuid4())
+        def capture():
+            return evidence.capture_profile_inputs(
+                run, self.repo, snapshot, profile_id="metadata", mode="diagnostic",
+                invocation_group_id=group_id,
+                package_versions=[{"packageId": "Hoard.Fixture", "version": "0.1.0"}],
+                feed="feed/candidate", configuration="stores/candidate.NuGet.Config",
+                lock_paths=[f"snapshot/{sdk}/packages.lock.json"],
+                runtime_paths=["compiled/Hoard.Fixture.dll"],
+                binding_sources=[{"path": "binding.json", "adapterId": "fixture.adapter"}],
+                observed_environment=fixture["environment"], budgets=fixture["budgets"],
+                invocation=["profile", "metadata"])
+        before = capture()
+        self.assertEqual(before["catalogSha256"], hashlib.sha256(b"{}").hexdigest())
+        self.assertEqual(before["runtimeAssemblies"]["compiled/Hoard.Fixture.dll"],
+                         hashlib.sha256(b"actual compiled fixture").hexdigest())
+        self.assertEqual(before["packages"][0], package)
+        self.assertEqual(before["bindings"][0]["descriptorSha256"], hashlib.sha256(binding.read_bytes()).hexdigest())
+        self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(before))
+        self.assertEqual(evidence.verify_input_recomputation(before, capture()), evidence.digest(before))
+        declaration["capabilities"].append("additional-fixture-capability")
+        binding.write_bytes(evidence.canonical_bytes(declaration))
+        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            evidence.verify_input_recomputation(before, capture())
+        (self.repo / "src/check.cs").write_text("source changed after selection")
+        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            capture()
+
     def test_source_admission_rejects_symlinked_roots_and_changed_ancestors(self):
         self.assertEqual(set(evidence.source_manifest(self.repo)), {"src/check.cs"})
         linked = self.parent / "linked"

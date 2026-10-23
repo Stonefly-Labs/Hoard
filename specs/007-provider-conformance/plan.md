@@ -373,6 +373,45 @@ subset contains 99 cases. Catalog generation, frozen baseline inventory and
 whitespace checks also pass. No C# or production boundary changed in this
 increment; the earlier 55-test source SDK result is not a fresh native result.
 
+### T013 shared profile and binding-declaration capture
+
+Native run [39929542533](https://github.com/Stonefly-Labs/Hoard/actions/runs/39929542533)
+at `44881ff` passed all 99 foundation checks with zero failures/errors/skips
+and 92,111,134,720 free scratch bytes. SDK job `120334108701` passed eight
+scenarios/25 observations through coherent package capture, real synthetic
+source-mapping verification and complete input/environment recomputation.
+All six baselines reverified with the same seal; input digest
+`9d5195ca7fa08543d24fb92b0b478d2f5bcff06b9f612881ff6f20b955926e96`.
+
+The following increment adds `ConformanceBindingSnapshot.Capture`, emitting
+immutable bounded UTF-8 bytes from the actual typed declaration only after
+mandatory fault admission. The closed eight-field record contains no outcome,
+connection string, environment dump or root path. Python `capture_binding`
+reads the actual pinned file, validates fields/faults and package ID/version/
+archive correspondence, and derives binding-descriptor/capability hashes
+from those bytes, not supplied digest labels. This is the conformance binding
+descriptor, not proof of an entire product `ModuleDescriptor` or loaded factory.
+
+`capture_profile_inputs` now shares actual source/Git identity and exact
+snapshot checks, local packages, selected lock/runtime bytes, binding declarations,
+verified historical seals, synthetic source policy and typed observed environment
+across the five admitted profile IDs. Sources/identity are checked again at
+admission; completion uses the same capture and full comparison. The SDK
+diagnostic delegates to it instead of maintaining a second input assembler.
+An actual private portable fixture covers package/declaration correspondence,
+capability mutation, exact source mismatch and path-free public inputs.
+Its synthetic compiled-byte fixture is not loaded-provider evidence.
+
+The missing C# snapshot API produced four expected CS0103 errors across its two
+new facts; two Python capture tests failed on their missing API before repair.
+These are implementation reds, not qualifying assertion-negative executions.
+All 207 tooling checks pass with ten native skips;
+102 are conformance checks. All 57 source SDK tests and focused C# formatting
+pass. The two new declaration facts form a ninth native diagnostic scenario
+(27 expected observations); native execution is pending. T013 remains unchecked
+until that shared-path verification completes. Profile execution/evaluation,
+actual loaded providers and SQLite environment production remain later tasks.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

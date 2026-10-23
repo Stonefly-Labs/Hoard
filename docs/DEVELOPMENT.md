@@ -5052,9 +5052,24 @@ path-free synthetic policy. Bounded lock/runtime inventories and the complete
 SDK diagnostic input manifest are recomputed after execution, including fresh
 safe environment observations. Free-space variation does not masquerade as
 mutable machine identity: the input manifest retains its admission measurement.
-The new increment's native execution and complete T013 per-profile capability/
-declaration integration remain pending. Actual loaded-provider attribution
-continues to belong to T014; no qualification or new CLI is claimed.
+Native run
+[39929542533](https://github.com/Stonefly-Labs/Hoard/actions/runs/39929542533)
+at `44881ff` verified 99 foundation checks without skips, eight SDK scenarios/
+25 observations and all six historical seals.
+
+The next increment centralizes capture in `capture_profile_inputs` for all five
+admitted profile IDs; the SDK diagnostic now delegates to that shared path.
+Selected package, lock, runtime and typed binding-declaration files are read
+through pinned roots. Binding snapshots are immutable, bounded and admitted
+against actual selected package bytes; capability changes alter their hashes.
+The safe configuration policy comes from verified synthetic source mapping,
+not arbitrary configuration dictionaries. Environment values must already be
+typed observations from the relevant producer; this API is not runtime attestation.
+All 207 tooling checks pass with ten native skips, and all 57 source SDK tests
+pass. Native confirmation of this new shared capture/ninth declaration scenario
+is pending. Loaded-provider attribution continues to belong to T014; no
+qualification or new CLI is claimed. Production reference edges and architecture
+diagrams are unaffected by this test-only input capture.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

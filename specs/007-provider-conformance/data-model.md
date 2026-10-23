@@ -60,6 +60,27 @@ negative. Test-source hashes do not substitute for loaded-provider evidence.
 
 ## Validation and Bounds
 
+### Binding input snapshot
+
+The test SDK's `ConformanceBindingSnapshot.Capture` produces an immutable
+UTF-8 declaration record with exactly `schemaVersion`, `bindingId`, `category`,
+`packageId`, `packageVersion`, `packageSha256`, `capabilities` and `faults`.
+Categories use `metadata`/`artifacts`; faults use the closed
+`ConformanceFault` names. Mandatory category hooks and durable metadata's
+backup hook must be admitted before capture. No pass/exclusion field is accepted.
+
+Python `capture_binding` reads at most 64 KiB from the actual pinned declaration
+file, checks its package against captured archive bytes, hashes that complete
+binding descriptor and separately hashes its category/capabilities/faults.
+The adapter ID is still a selected stable identity; actual loaded factory/
+session provenance belongs to runtime ingestion, not this snapshot.
+`capture_profile_inputs` assembles all source/material/declaration roles from
+actual files and observed producers. Completion recaptures those same roles;
+only measured free-space variation is excluded from immutable machine identity,
+retaining the admission measurement rather than fabricating equal free bytes.
+
+### Shared bounds
+
 - Stable IDs: ASCII `[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}`. Digests:
   lowercase SHA-256 hex; NuGet SHA-512 additionally retained where used.
 - JSON schema revision `1`, catalog revision `f07-v1`; unknown schema/status/

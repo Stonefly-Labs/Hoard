@@ -619,6 +619,117 @@ def verify_input_recomputation(before, after):
     return digest(before)
 
 
+_BINDING_REQUIRED_FAULTS = {
+    "metadata": frozenset((
+        "IndependentSnapshot", "WriterContention", "CommitAcknowledgement", "PersistedCorruption",
+        "Capacity", "SchemaState", "LeaseBoundary", "NativeNonCooperation", "CleanupFailure")),
+    "artifacts": frozenset((
+        "PublicationBoundary", "DirectVisibility", "PayloadDamage", "Capacity", "NativeNonCooperation",
+        "CleanupFailure", "GenerationBoundary", "ReceiptBoundary", "SourceNonCooperation", "SinkNonCooperation")),
+}
+
+
+def capture_binding(root, declaration_path, *, packages, adapter_id):
+    deadline = time.monotonic() + 5
+    declaration_path, adapter_id = relative_path(declaration_path), stable_id(adapter_id)
+    packages = _list(_entity("PackageIdentity"), 1024)(packages)
+    captured = io.BytesIO()
+    with _input_root(root) as (_, descriptor):
+        _source_file(descriptor, declaration_path, remaining=64 * 1024,
+                     deadline=deadline, target=captured)
+    raw = captured.getvalue()
+    faults = frozenset().union(*_BINDING_REQUIRED_FAULTS.values(), ("BackupRestore",))
+    declaration = _record({
+        "schemaVersion": _constant(1), "bindingId": stable_id,
+        "category": _one_of("metadata", "artifacts"), "packageId": stable_id,
+        "packageVersion": stable_id, "packageSha256": sha256,
+        "capabilities": _ids, "faults": _list(_one_of(*sorted(faults)), 128, unique=True),
+    })(load_json(raw))
+    required = _BINDING_REQUIRED_FAULTS[declaration["category"]]
+    if (not required.issubset(declaration["faults"])
+            or (declaration["category"] == "metadata"
+                and "durable-local-process-crash" in declaration["capabilities"]
+                and "BackupRestore" not in declaration["faults"])):
+        raise ConformanceError("BindingInvalid")
+    matching = [package for package in packages
+                if package["packageId"].casefold() == declaration["packageId"].casefold()
+                and package["version"].casefold() == declaration["packageVersion"].casefold()]
+    if len(matching) != 1 or matching[0]["sha256"] != declaration["packageSha256"]:
+        raise ConformanceError("BindingInvalid")
+    admitted = admit_entity("ProviderBinding", {
+        "bindingId": declaration["bindingId"], "package": matching[0], "category": declaration["category"],
+        "descriptorSha256": hashlib.sha256(raw).hexdigest(),
+        "capabilitySha256": digest({field: declaration[field] for field in ("category", "capabilities", "faults")}),
+        "adapterId": adapter_id,
+    })
+    if time.monotonic() >= deadline:
+        raise ConformanceError("DeadlineExceeded")
+    return admitted
+
+
+def capture_profile_inputs(run, repository, snapshot, *, profile_id, mode, invocation_group_id,
+                           package_versions, feed, configuration, lock_paths, runtime_paths,
+                           binding_sources, observed_environment, budgets, invocation,
+                           baseline_sha256=None, ci_revision=None):
+    run._check_ledger()
+    profile_id, mode = _one_of(*PROFILES)(profile_id), _one_of(
+        "qualification", "diagnostic", "preparation")(mode)
+    invocation_group_id = _uuid(invocation_group_id)
+    feed, configuration = relative_path(feed), relative_path(configuration)
+    package_versions = _list(_record({"packageId": stable_id, "version": stable_id}),
+                             1024, unique=True)(package_versions)
+    binding_sources = _list(_record({"path": relative_path, "adapterId": stable_id}),
+                            128, minimum=0, unique=True)(binding_sources)
+    try:
+        snapshot_relative = relative_path(Path(snapshot).relative_to(run.root).as_posix())
+    except ValueError:
+        raise ConformanceError("OwnershipInvalid") from None
+    identity = source_identity(repository, ci_revision=ci_revision)
+    sources = source_manifest(repository)
+    verify_snapshot(run.root / snapshot_relative, sources)
+    sdk = "tests/contracts/Hoard.Testing.Conformance/"
+    catalog = sdk + "Catalog/catalog.json"
+    if catalog not in sources:
+        raise ConformanceError("EvidenceIncomplete")
+    source_mapping = verify_synthetic_source_mapping(run.root, configuration, feed)
+    packages = [package_identity(run.root / feed, item["packageId"], item["version"])
+                for item in package_versions]
+    bindings = [capture_binding(run.root, item["path"], packages=packages, adapter_id=item["adapterId"])
+                for item in binding_sources]
+    baseline_inputs = []
+    if baseline_sha256 is not None:
+        from conformance_baselines import verify_prepared_baselines
+        prepared = verify_prepared_baselines(run.root, sha256(baseline_sha256))
+        baseline_inputs = [{
+            "revision": entry["revision"], "sourceSha256": entry["sourceSha256"],
+            "lockSha256": entry["lockSha256"], "recipeSha256": entry["recipeSha256"],
+            "binarySha256": digest(entry["binaries"]), "dependencySha256": entry["binaries"],
+            "apiScope": entry["id"],
+        } for entry in prepared["entries"]]
+    inputs = admit_entity("RunInputs", {
+        "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": invocation_group_id,
+        "profileId": profile_id, "mode": mode, "catalogRevision": CATALOG_REVISION,
+        "catalogSha256": sources[catalog],
+        "sdkSha256": digest({path: hashed for path, hashed in sources.items() if path.startswith(sdk)}),
+        "sourceRevision": identity["sourceRevision"], "sourceState": identity["sourceState"],
+        "sourceManifest": sources, "sourceManifestSha256": digest(sources),
+        "packages": packages, "locks": input_manifest(run.root, lock_paths),
+        "runtimeAssemblies": input_manifest(run.root, runtime_paths),
+        "configurationSha256": digest({
+            "revision": CATALOG_REVISION, "stores": "fresh-owned-synthetic", "sources": source_mapping,
+            "restore": "locked", "runtimeLogger": "HoardSafe", "consoleLogger": False}),
+        "capabilitySha256": digest({binding["bindingId"]: binding["capabilitySha256"] for binding in bindings}),
+        "bindings": bindings, "baselines": baseline_inputs,
+        "environment": observed_environment, "environmentSha256": digest(observed_environment),
+        "budgets": budgets, "invocation": invocation,
+    })
+    if (source_manifest(repository) != sources
+            or source_identity(repository, ci_revision=ci_revision) != identity):
+        raise ConformanceError("InputChanged")
+    run._check_ledger()
+    return inputs
+
+
 def _git_control(root, arguments, deadline):
     from conformance_execution import capture_control
     remaining = deadline - time.monotonic()

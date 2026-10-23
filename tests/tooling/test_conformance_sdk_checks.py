@@ -162,27 +162,38 @@ class SdkDiagnosticTests(unittest.TestCase):
         (self.directory / "feed").mkdir()
         run = SimpleNamespace(root=self.directory, run_id=str(uuid.uuid4()), _check_ledger=lambda: None)
         config, feed = checks.baselines._config(run, "candidate")
-        with zipfile.ZipFile(feed / "Hoard.Fixture.0.1.0.nupkg", "w") as archive:
-            archive.writestr("Hoard.Fixture.nuspec",
-                            "<package><metadata><id>Hoard.Fixture</id><version>0.1.0</version></metadata></package>")
-            archive.writestr("lib/net10.0/Hoard.Fixture.dll", b"fixture")
-        packages = [checks.evidence.package_identity(feed, "Hoard.Fixture", "0.1.0")]
+        for name in ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger"):
+            with zipfile.ZipFile(feed / f"{name}.0.1.0.nupkg", "w") as archive:
+                archive.writestr(f"{name}.nuspec",
+                                f"<package><metadata><id>{name}</id><version>0.1.0</version></metadata></package>")
+                archive.writestr(f"lib/net10.0/{name}.dll", b"fixture")
+        repository = self.directory / "repository"
+        (repository / checks.SDK / "Catalog").mkdir(parents=True)
+        (repository / checks.SDK / "Catalog/catalog.json").write_bytes(b"{}")
+        (repository / checks.SDK / "packages.lock.json").write_bytes(b"lock")
+        subprocess.run(["git", "init", "--quiet", str(repository)], check=True)
+        subprocess.run(["git", "add", "."], cwd=repository, check=True)
+        subprocess.run([
+            "git", "-c", "user.name=Conformance fixture", "-c", "user.email=fixture@example.invalid",
+            "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null",
+            "commit", "--quiet", "-m", "Create synthetic SDK inputs",
+        ], cwd=repository, check=True)
         candidate = self.directory / "snapshot"
+        shutil.copytree(repository / "tests", candidate / "tests")
         runtime = candidate / checks.TESTS / "bin/Release/net10.0"
         runtime.mkdir(parents=True)
         (runtime / "Tests.dll").write_bytes(b"runtime")
-        (candidate / "packages.lock.json").write_bytes(b"lock")
-        sources = {f"{checks.SDK}/Catalog/catalog.json": "a" * 64}
+        sources = checks.evidence.source_manifest(repository)
         environment = {
             "os": "linux", "osVersion": "test", "architecture": "x86_64",
             "sdk": "10.0.203", "runtime": "10.0.7", "nativeSqlite": "not-used",
             "filesystem": "ext4", "runnerImage": "none", "freeBytes": 100,
             "pragmas": {"journalMode": "none", "synchronous": 0, "foreignKeys": 0, "busyTimeout": 0},
         }
-        identity = {"sourceRevision": "a" * 40, "sourceState": "dirty-local"}
+        identity = checks.evidence.source_identity(repository)
         def capture(group_id=None):
-            return checks.make_inputs(run, candidate, sources, packages, {"entries": []},
-                                      environment, identity, group_id=group_id)
+            return checks.make_inputs(run, repository, candidate, sources,
+                                      environment, identity, None, group_id=group_id)
         before = capture()
         self.assertNotIn(str(self.directory).encode(), checks.evidence.canonical_bytes(before))
         for path in (runtime / "Added.dll", candidate / "added.packages.lock.json"):
@@ -309,7 +320,6 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(observed["runnerImage"], "ubuntu24.20261020.57.1")
         self.assertEqual(calls[-1][0], ["stat", "-f", "--format=%T", str(output.parent)])
         self.assertEqual(calls[-1][1], {"limit": 1024, "timeout": 5})
-        self.assertNotIn(str(self.directory), json.dumps(checks.CONFIGURATION_POLICY))
 
     def test_insufficient_scratch_is_reported_as_incomplete_before_any_workspace_is_created(self):
         parent = Path(tempfile.mkdtemp(prefix="hoard-preflight-test-")).resolve()

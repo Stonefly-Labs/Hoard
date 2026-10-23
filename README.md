@@ -1124,8 +1124,14 @@ eight SDK scenarios/25 observations, and all six historical baselines.
 The following input-sealing increment captures package metadata/archive/runtime
 hashes from one bounded byte sequence, verifies actual synthetic source mapping,
 and recomputes complete SDK diagnostic inputs after execution. Free space remains
-an admission measurement, not a supposedly immutable value. Provider capability/
-loaded-runtime integration and complete T013 acceptance remain outstanding.
+an admission measurement, not a supposedly immutable value. Run
+[39929542533](https://github.com/Stonefly-Labs/Hoard/actions/runs/39929542533)
+at `44881ff` verified 99 native foundation checks and eight SDK scenarios.
+The next increment adds immutable typed binding snapshots and shared profile
+capture of actual source, packages, locks, declarations, runtime files,
+synthetic source policy and verified historical baselines. It passes 207 local
+tooling checks (ten native skips) and 57 source SDK tests; its native execution
+is pending. Actual loaded-provider attribution remains T014 work.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

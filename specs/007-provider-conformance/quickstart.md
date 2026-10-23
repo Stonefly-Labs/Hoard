@@ -57,8 +57,11 @@ lock rather than modifying a frozen source lock. Native run `39927534630` at
 `4e17986` verified this path with 91 foundation checks without skips and eight
 SDK scenarios/25 observations. The next increment adds coherent archive/runtime
 package hashes, actual synthetic source-mapping verification and complete SDK
-diagnostic pre/post input recomputation. Its native execution and complete
-per-profile capability/loaded-runtime integration remain pending.
+diagnostic pre/post input recomputation. Run `39929542533` at `44881ff` verified
+99 native foundation checks and eight SDK scenarios. A shared profile capture
+API and immutable typed binding-declaration producer now pass focused local
+checks; their native execution is pending. They do not prove which provider/
+runtime executed or provide a working qualification CLI.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be
