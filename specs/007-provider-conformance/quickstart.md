@@ -76,9 +76,12 @@ assembly capture and exact selected runtime/package correspondence now pass
 locally and in run `39934964377` at `0a0b1d1` (105 native checks, eleven scenarios/
 31 observations). The next increment performs exact safe discovery before each
 diagnostic execution; its portable VSTest probe passes, while native verification
-of twelve scenarios/35 discovery records/35 execution observations is pending.
-Discovery is not execution proof. These APIs do not yet link loaded session/
-factory instances to their invocation. T014 remains unchecked.
+of twelve scenarios/35 discovery records/35 execution observations passed run
+`39936903326` at `6a04293` with 108 native checks without skips. Discovery is not
+execution proof. The next catalog-owned case-history API preserves failures and
+proofs across retries locally; its native verification is pending. These APIs do
+not yet link loaded session/factory instances to their invocation or implement
+the full controller. T014 remains unchecked.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

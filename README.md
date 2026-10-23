@@ -1153,8 +1153,13 @@ correspondence also passed run
 at `0a0b1d1`: 105 native checks without skips, eleven scenarios/31 observations
 and all six baselines. The next local increment separates exact discovery from
 execution and binds completion to the captured record bytes; actual portable
-VSTest discovery passed, while its twelve-scenario Linux replay is pending.
-Loaded session/invocation integration and complete T014 remain unfinished.
+VSTest discovery and run
+[39936903326](https://github.com/Stonefly-Labs/Hoard/actions/runs/39936903326)
+at `6a04293` passed: 108 native checks without skips, twelve scenarios/
+35 discovery records/35 execution observations and all six baselines. A
+catalog-owned append-only runtime case-history API now passes locally; native
+verification of that increment is pending. Loaded session/invocation integration
+and complete T014 remain unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

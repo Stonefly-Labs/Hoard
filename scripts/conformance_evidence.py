@@ -1305,3 +1305,126 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
         "witnesses": witnesses, "proofs": MappingProxyType(proof_hashes), "completion": completion,
         "attemptId": manifest["attemptId"], "diagnosticCode": code,
     })
+
+
+class RuntimeCaseHistory:
+    """Append-only runtime-bearing case state selected from the independent catalog."""
+
+    def __init__(self, inputs, *, binding_id, matrix_id, case_id, max_attempts=1):
+        from conformance_case_catalog import expected_cases
+        self._inputs = admit_entity("RunInputs", inputs)
+        key = (self._inputs["profileId"], stable_id(binding_id), stable_id(matrix_id), stable_id(case_id))
+        matches = tuple(case for case in expected_cases(key[0]) if case.key == key)
+        if len(matches) != 1:
+            raise ConformanceError("WitnessMissing")
+        if type(max_attempts) is not int or not 1 <= max_attempts <= 3:
+            raise ConformanceError()
+        if binding_id != "none" and not any(
+                binding["bindingId"] == binding_id for binding in self._inputs["bindings"]):
+            raise ConformanceError("InputChanged")
+        self._case = matches[0]
+        self._max_attempts = max_attempts
+        self._attempts = ()
+        self._witnesses = ()
+        self._proofs = MappingProxyType({})
+        self._active = None
+        self._used_attempts = frozenset()
+        self._used_executions = frozenset()
+        self._state = "NotApplicable" if self._case.exclusion is not None else "Expected"
+        self._result = self._make_result("NotApplicable", ()) if self._case.exclusion is not None else None
+
+    @property
+    def state(self):
+        return self._state
+
+    @property
+    def witnesses(self):
+        return self._witnesses
+
+    @property
+    def proofs(self):
+        return self._proofs
+
+    def begin(self, attempt_id):
+        attempt_id = _uuid(attempt_id)
+        if (self._state in ("Running", "NotApplicable") or len(self._attempts) >= self._max_attempts
+                or attempt_id in self._used_attempts or not self._case.witnesses):
+            raise ConformanceError("EvidenceIncomplete")
+        started = _number(time.monotonic() * 1000)
+        if self._attempts and started < self._attempts[-1]["endedMs"]:
+            raise ConformanceError("EvidenceIncomplete")
+        self._used_attempts = self._used_attempts | {attempt_id}
+        self._active = attempt_id, started
+        self._state = "Running"
+        return len(self._attempts) + 1
+
+    def _make_result(self, status, attempts):
+        proofs = {proof for attempt in attempts for proof in attempt["proofSha256"]}
+        if len(proofs) > MAX_WITNESSES:
+            raise ConformanceError("OutputLimitExceeded")
+        return admit_entity("CaseResult", {
+            "runId": self._inputs["runId"], "profileId": self._case.profile_id,
+            "bindingId": self._case.binding_id, "matrixId": self._case.matrix_id,
+            "caseId": self._case.case_id, "status": status, "attempts": attempts,
+            "applicable": self._case.exclusion is None,
+            "exclusionRule": {None: "none", "non-durable fixture": "non-durable-fixture",
+                              "simulation: no durable restart": "simulation-no-durable-restart"}[self._case.exclusion],
+            "proofSha256": sorted(proofs),
+        })
+
+    def _append(self, code, ended, witnesses=(), proofs=MappingProxyType({})):
+        status = "Passed" if code == "None" else failure_status(code)
+        attempt = admit_entity("Attempt", {
+            "sequence": len(self._attempts) + 1, "startedMs": self._active[1], "endedMs": ended,
+            "status": status, "diagnosticCode": code,
+            "witnessIds": tuple(witness["executionId"] for witness in witnesses),
+            "proofSha256": sorted(set(proofs.values())),
+        })
+        result = self._make_result(status, (*self._attempts, attempt))
+        self._attempts = result["attempts"]
+        self._witnesses = (*self._witnesses, *witnesses)
+        self._proofs = MappingProxyType({**self._proofs, **proofs})
+        self._used_executions = self._used_executions | set(attempt["witnessIds"])
+        self._result = result
+        self._state = status
+        self._active = None
+
+    def finish(self, *, manifest_data, owner_data, witnesses_data, proofs, completion_data,
+               manifest_sha256, owner_sha256):
+        if self._active is None:
+            raise ConformanceError("OwnershipInvalid")
+        ended = _number(time.monotonic() * 1000)
+        try:
+            observed = ingest_runtime_attempt(
+                inputs=self._inputs, manifest_data=manifest_data, owner_data=owner_data,
+                witnesses_data=witnesses_data, proofs=proofs, completion_data=completion_data,
+                manifest_sha256=manifest_sha256, owner_sha256=owner_sha256,
+                expected_tests={identity: (self._case.binding_id, self._case.matrix_id)
+                                for identity in self._case.witnesses},
+                started_ms=self._active[1], ended_ms=ended)
+            if (observed["attemptId"] != self._active[0]
+                    or observed["completion"]["attemptSequence"] != len(self._attempts) + 1
+                    or any(witness["executionId"] in self._used_executions for witness in observed["witnesses"])):
+                raise ConformanceError("ProofMismatch")
+            code = observed["diagnosticCode"]
+            if code == "None" and self._case.controls:
+                code = "EvidenceIncomplete"
+            self._append(code, ended, observed["witnesses"], observed["proofs"])
+        except ConformanceError as error:
+            if self._active is not None:
+                self._append(str(error), ended)
+            raise
+        return self.result()
+
+    def interrupt(self, code):
+        if self._active is None:
+            raise ConformanceError("OwnershipInvalid")
+        if code not in DIAGNOSTIC_CODES or code == "None":
+            raise ConformanceError()
+        self._append(code, _number(time.monotonic() * 1000))
+        return self.result()
+
+    def result(self):
+        if self._state in ("Expected", "Running") or self._result is None:
+            raise ConformanceError("EvidenceIncomplete")
+        return self._result

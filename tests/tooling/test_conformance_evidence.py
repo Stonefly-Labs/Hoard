@@ -1000,7 +1000,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             "observedCount": 1, "expectedCount": 1, "complete": True,
         }
 
-    def ingest(self, **overrides):
+    def transport(self, **overrides):
         options = {
             "inputs": self.inputs, "manifest_data": evidence.canonical_bytes(self.manifest),
             "owner_data": evidence.canonical_bytes(self.owner),
@@ -1014,7 +1014,122 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             "started_ms": 9, "ended_ms": 12,
         }
         options.update(overrides)
-        return evidence.ingest_runtime_attempt(**options)
+        return options
+
+    def ingest(self, **overrides):
+        return evidence.ingest_runtime_attempt(**self.transport(**overrides))
+
+    def history(self, *, max_attempts=1):
+        import conformance_case_catalog as catalog
+        case = next(case for case in catalog.expected_cases("composition") if case.case_id == "CP-01")
+        self.inputs.update(profileId="composition", invocation=["profile", "composition"])
+        self.inputs["budgets"]["profileSeconds"] = 3600
+        self.identity = case.witnesses[0]
+        entry = self.manifest["expected"][0]
+        entry.update(testIdentity=self.identity, fullyQualifiedName=self.identity.split("(")[0],
+                     bindingId=case.binding_id, matrixId=case.matrix_id)
+        self.manifest["inputSha256"] = evidence.digest(self.inputs)
+        self.proof.update(testIdentity=self.identity, bindingId=case.binding_id, matrixId=case.matrix_id,
+                          inputSha256=evidence.digest(self.inputs), manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(testIdentity=self.identity, bindingId=case.binding_id, matrixId=case.matrix_id,
+                            inputSha256=evidence.digest(self.inputs), proofSha256=evidence.digest(self.proof))
+        self.completion.update(inputSha256=evidence.digest(self.inputs), manifestSha256=evidence.digest(self.manifest))
+        return evidence.RuntimeCaseHistory(self.inputs, binding_id=case.binding_id,
+                                           matrix_id=case.matrix_id, case_id=case.case_id,
+                                           max_attempts=max_attempts)
+
+    def finish_history(self, history):
+        options = self.transport()
+        for key in ("inputs", "expected_tests", "started_ms", "ended_ms"):
+            del options[key]
+        return history.finish(**options)
+
+    def test_case_execution_preserves_failed_attempt_and_proofs_after_a_passing_retry(self):
+        history = self.history(max_attempts=2)
+        self.assertEqual(history.state, "Expected")
+        self.proof.update(status="Failed", failureKind="Assertion",
+                          assertionSymbol=self.manifest["expected"][0]["assertionSymbol"])
+        self.witness.update(status="Failed", proofSha256=evidence.digest(self.proof))
+        self.completion["diagnosticCode"] = "AssertionFailed"
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin(self.attempt)
+        self.assertEqual(history.state, "Running")
+        with self.assertRaises(evidence.ConformanceError):
+            history.result()
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            self.finish_history(history)
+        first = history.result()
+        self.assertEqual(history.state, "Failed")
+        self.attempt, self.execution = str(uuid.uuid4()), str(uuid.uuid4())
+        self.manifest.update(attemptId=self.attempt, attemptSequence=2)
+        self.proof.update(attemptId=self.attempt, attemptSequence=2, executionId=self.execution,
+                          status="Passed", failureKind="None", assertionSymbol=None,
+                          manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(executionId=self.execution, status="Passed", startedMs=21, endedMs=22,
+                            proofSha256=evidence.digest(self.proof))
+        self.completion.update(attemptId=self.attempt, attemptSequence=2,
+                               diagnosticCode="None", manifestSha256=evidence.digest(self.manifest))
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.020):
+            history.begin(self.attempt)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.023):
+            self.finish_history(history)
+        result = history.result()
+        self.assertEqual(history.state, "Passed")
+        self.assertEqual(tuple(attempt["status"] for attempt in result["attempts"]), ("Failed", "Passed"))
+        self.assertTrue(set(first["proofSha256"]) < set(result["proofSha256"]))
+        self.assertEqual(result["attempts"][0], first["attempts"][0])
+        self.assertEqual(len(history.witnesses), 2)
+        self.assertEqual({witness["executionId"] for witness in history.witnesses},
+                         {execution for attempt in result["attempts"] for execution in attempt["witnessIds"]})
+        self.assertEqual(set(history.proofs.values()), set(result["proofSha256"]))
+        with self.assertRaises(TypeError):
+            result["attempts"][0]["status"] = "Passed"
+        with self.assertRaises(TypeError):
+            history.proofs["invented"] = "a" * 64
+        with self.assertRaises(evidence.ConformanceError):
+            history.begin(str(uuid.uuid4()))
+
+    def test_case_execution_rejects_overlap_and_closes_invalid_provenance_without_inventing_witnesses(self):
+        history = self.history()
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin(self.attempt)
+            with self.assertRaises(evidence.ConformanceError):
+                history.begin(str(uuid.uuid4()))
+        self.proof["attemptId"] = str(uuid.uuid4())
+        self.witness["proofSha256"] = evidence.digest(self.proof)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012), \
+                self.assertRaises(evidence.ConformanceError):
+            self.finish_history(history)
+        result = history.result()
+        self.assertEqual(history.state, "Failed")
+        self.assertEqual(result["attempts"][0]["witnessIds"], ())
+        self.assertEqual(result["attempts"][0]["proofSha256"], ())
+        self.assertEqual(result["attempts"][0]["diagnosticCode"], "ProofMismatch")
+        with self.assertRaises(evidence.ConformanceError):
+            history.begin(str(uuid.uuid4()))
+
+    def test_case_execution_interruption_and_catalog_exclusion_never_invent_runtime_proofs(self):
+        history = self.history()
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin(self.attempt)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            result = history.interrupt("DeadlineExceeded")
+        self.assertEqual(history.state, "Incomplete")
+        self.assertEqual(result["attempts"][0]["witnessIds"], ())
+        self.assertEqual(result["proofSha256"], ())
+        with self.assertRaises(evidence.ConformanceError):
+            history.begin(str(uuid.uuid4()))
+        inputs = ConformanceAdmissionTests().inputs()
+        inputs["bindings"].append({**inputs["bindings"][0], "bindingId": "memory"})
+        excluded = evidence.RuntimeCaseHistory(inputs, binding_id="memory", matrix_id="none", case_id="MP-36")
+        self.assertEqual(excluded.state, "NotApplicable")
+        self.assertEqual(excluded.result()["attempts"], ())
+        self.assertEqual(excluded.result()["exclusionRule"], "non-durable-fixture")
+        with self.assertRaises(evidence.ConformanceError):
+            excluded.begin(str(uuid.uuid4()))
+        for matrix, case in (("unknown", "MP-36"), ("none", "MP-99")):
+            with self.subTest(matrix=matrix, case=case), self.assertRaises(evidence.ConformanceError):
+                evidence.RuntimeCaseHistory(inputs, binding_id="memory", matrix_id=matrix, case_id=case)
 
     def test_safe_logger_records_require_exact_manifest_proof_and_completion_links(self):
         admitted = self.ingest()

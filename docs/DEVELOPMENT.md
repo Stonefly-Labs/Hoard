@@ -5140,9 +5140,28 @@ actual VSTest probe discovered both exact enum rows with no unknown diagnostics;
 its temporary private fixtures were removed and it makes no native/qualification
 claim. Linux diagnostics now discover each selected scope before executing it,
 including four discovery transport regressions: twelve scenarios, 35 selected
-discovery records and 35 execution observations. Native verification is pending.
+discovery records and 35 execution observations. Run
+[39936903326](https://github.com/Stonefly-Labs/Hoard/actions/runs/39936903326)
+at `6a04293` verified all twelve scopes, 108 native foundation checks without
+failures/errors/skips, 92,110,938,112 free scratch bytes and all six baselines.
+Input digest `5d058da1593a05b0dad1a11b061bf35161bee428da73a243295bdbca5116fe41`.
 T014 remains unchecked for its remaining execution-state and loaded-session/
 factory/invocation integration.
+
+`RuntimeCaseHistory` now supplies a single-controller, catalog-owned runtime
+case-state API. It freezes admitted inputs and exact expected witnesses,
+rejects unknown keys/overlapping or replayed attempts, defaults to one attempt
+and permits at most three explicitly selected attempts. Actual transport
+admission precedes append-only terminal observations; interruption fabricates no
+execution, and rejected provenance closes a safely classified attempt before
+surfacing the error. Earlier failures, witnesses and proof references remain
+immutable after a passing retry. A latest `Passed` state is not qualification:
+report admission still rejects any unsuccessful historical attempt.
+`NotApplicable` is selected only from catalog exclusions and carries no runtime
+proof. Runtime observations alone remain `Incomplete` when separate catalog
+controls are outstanding; control-only cases and full controller/profile wiring
+are not implemented by this API. Three focused regressions pass locally;
+native verification and full T014 remain unfinished.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

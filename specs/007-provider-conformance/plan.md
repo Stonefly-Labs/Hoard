@@ -479,6 +479,26 @@ transport regressions: twelve scenarios/35 discovery records/35 execution
 observations, native verification pending. Complete append-only execution state
 and loaded-session/factory/invocation integration remain unfinished T014 work.
 
+Run [39936903326](https://github.com/Stonefly-Labs/Hoard/actions/runs/39936903326)
+at `6a04293` then verified separate discovery: 108 native checks without
+failures/errors/skips, 92,110,938,112 free scratch bytes, all twelve scopes/
+35 selected discovery records/35 execution observations and all six historical
+baselines. Input digest
+`5d058da1593a05b0dad1a11b061bf35161bee428da73a243295bdbca5116fe41`.
+
+The next local increment adds a catalog-owned single-controller runtime
+case-history API, not the full dispatcher. It freezes exact expected keys/
+witnesses and admitted inputs, observes parent monotonic boundaries, rejects
+overlap/replay, and preserves immutable failed attempts/witnesses/proofs through
+a passing retry. Invalid provenance closes an unsuccessful attempt and raises
+its safe error; interruptions and catalog exclusions invent no execution.
+Default one/maximum three attempts and proof bounds remain enforced.
+Outstanding independent controls keep runtime-only observations incomplete.
+Two missing-API regressions preceded implementation; all three focused history
+regressions now pass locally. Native verification, full controller integration
+and actual loaded-session/factory/invocation links remain unfinished; T014 is
+still unchecked.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

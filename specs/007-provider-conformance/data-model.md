@@ -147,6 +147,19 @@ valid exclusions, proofs, input stability and settlement must pass evaluation.
 carry its precise environmental/capability reason. An attempted failure cannot
 be relabelled excluded. A recovered retry remains failure-tainted in that run.
 
+The single-controller `RuntimeCaseHistory` API selects a case's exact key,
+witnesses and authorized exclusion from the independent catalog, never a
+provider-selected expectation list. It captures parent monotonic boundaries,
+admits actual transport records, rejects overlapping/replayed attempts and
+execution UUID reuse, and preserves immutable prior attempts/witnesses/proofs.
+Default attempt count is one; an explicit limit cannot exceed three. Invalid
+provenance surfaces its closed error and appends a failed/incomplete observation
+without inventing an execution. Catalog exclusions and interrupted attempts
+likewise fabricate no witness. A later passing attempt cannot erase the
+report-level failure taint. Outstanding separate catalog controls prevent a
+runtime-only passing case; control-only cases and complete controller wiring
+remain separate unfinished work.
+
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits
 `Released`; expiration/cancellation/observation timeout does not. Retained
