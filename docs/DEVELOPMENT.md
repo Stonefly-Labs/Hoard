@@ -4754,19 +4754,22 @@ A bounded SDK/logger architecture review found no confirmed architectural
 violations, but identified Linux allocator execution and loaded-provider proof
 integration as material gaps. This is not final T081 review.
 
-**Unresolved implementation blocker:** `contracts/matrix.md` CP-11 and FR-007
-require route conflicts to fail before provider construction. Existing Hosting
+**Resolved timing clarification:** the earlier CP-11/FR-007 wording required
+route conflicts to fail before provider construction. Existing Hosting
 receives real routes from constructed modules' `MapEndpoints` callbacks and
 rejects ambiguity before route publication/readiness, not before construction.
 Responsibility IDs are owner-scoped identifiers, not route templates; malformed
 or duplicate IDs cannot honestly stand in for CP-11. Those declaration tests
 are therefore labelled `endpoint-declaration`, not CP-11.
-The requested maintainer decision was unavailable. The recommended resolution
-is to preserve public APIs and clarify the route-conflict boundary while retaining
-preconstruction validation for declaration errors. Alternatively, retaining
-preconstruction route rejection requires an explicitly authorized product
-contract redesign. Neither change has been made. Resume the same running stage
-after resolving that decision; do not mark this blocker or the feature complete.
+The maintainer subsequently directed autonomous continuation and resolution.
+The implementation preserves public APIs and clarifies actual route-conflict
+rejection at mapping, before publication, initialization, readiness or admission;
+declaration errors still reject before construction. The actual ambiguity/repair
+test observes construction and mapping, zero published routes and zero
+initialization/connections/workers/requests for rejection. No product contract
+redesign, duplicate-ID substitute or self-approval of CHK014 is used.
+The spec/matrix/QC-14/task wording records this explicit timing correction.
+Continue the same running implementation stage through all remaining tasks.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

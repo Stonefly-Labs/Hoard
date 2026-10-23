@@ -6,8 +6,8 @@ The SDK, focused tests and fixture project manifests now exist, but the
 journey and CI qualification do not. The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations; complete
 ingestion and Linux allocator evidence remain outstanding. Implementation is
-paused on the CP-11/FR-007 route-validation boundary conflict, not renewed
-generic authorization. The tooling is not acceptance-ready. See the
+continuing with the existing route-mapping boundary explicitly distinguished
+from preconstruction declaration validation. The tooling is not acceptance-ready. See the
 [implementation checkpoint](plan.md#partial-implementation-checkpoint).
 Existing predecessor commands are available.
 

@@ -15,6 +15,17 @@ workflow, production provider or certification result is delivered by this stage
 
 ## Clarifications
 
+### Implementation clarification 2026-10-23
+
+Under the maintainer's direction to resolve ambiguities autonomously, preserve
+the existing Hosting contracts rather than introduce a new route-declaration
+API. Declaration errors reject before provider construction. Actual route
+patterns are supplied by constructed modules during `MapEndpoints`; ownership
+ambiguity must reject there, before publication, initialization, readiness or
+request admission. CP-11 tests that real boundary and its repair, not duplicate
+responsibility IDs. This corrects the impossible timing in FR-007/US2.2/QC-14;
+it does not approve reviewer-owned checklist CHK014 or change product behavior.
+
 ### Session 2026-10-22
 
 No critical ambiguities detected worth formal clarification. Zero questions
@@ -110,8 +121,10 @@ Covers FR-006 through FR-010 and FR-019.
    active, and owned resources follow the documented shutdown outcome.
 2. **Given** duplicate IDs, unknown or missing enabled modules, dependency
    cycles, missing required capabilities, invalid singleton counts or route
-   ownership conflicts, **When** composition is validated, **Then** startup
-   fails actionably before provider construction or external resource work.
+   ownership conflicts, **When** composition is validated, **Then** declaration
+   errors fail actionably before provider construction or external resource work;
+   actual route ambiguity fails during mapping before publication,
+   initialization, readiness or request admission.
 3. **Given** a disabled module with observable construction, route, worker and
    connection hooks, **When** the host starts and receives requests, **Then**
    none of those disabled-module effects occurs.
@@ -282,7 +295,10 @@ Check the reported status and support matrix. Covers FR-018 through FR-024.
 - **FR-007**: Invalid composition checks MUST cover duplicate/unknown/missing
   modules, cycles, incompatible dependencies, missing required capabilities,
   invalid provider cardinality and route ownership conflicts. Validation
-  failures MUST occur before provider construction or external resource work.
+  failures for declarations MUST occur before provider construction or external
+  resource work. Actual route ownership conflicts MUST reject at the existing
+  route-composition boundary before publication, initialization, readiness or
+  request admission; responsibility IDs MUST NOT be treated as route templates.
 - **FR-008**: Disabled-module checks MUST observe absence of construction,
   routes, workers and connections. Multiple protocols and identity schemes
   remain permitted by existing rules; exactly one metadata and one artifact

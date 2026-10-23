@@ -22,7 +22,7 @@ Grouped rows require all subvariants; a total pass count is never sufficient.
 | QC-11 | Real Local crash barriers and readback; ObjectSemantics exclusions do not qualify durability | FR-003,005,023 |
 | QC-12 | Four metadata/artifact authority integrations preserve live references, readers, ABA fencing and uncertain outcomes | FR-004,005 |
 | QC-13 | CP-01/02 package-only baseline/replacement builds and starts/stops with identical consumer | FR-006 |
-| QC-14 | Every CP-04..11 preactivation rejection has zero construction/resource effects and passes after valid repair | FR-007,019 |
+| QC-14 | CP-04..10 declaration rejections have zero construction/resource effects; CP-11 actual route ambiguity rejects during mapping before publication/initialization/readiness/admission; all pass after the corresponding valid repair | FR-007,019 |
 | QC-15 | CP-03 multiplicity and CP-09/10 singleton subvariants preserve cardinality without fallback | FR-007,008 |
 | QC-16 | CP-12 absence of construction/routes/workers/connections is observed independently | FR-008 |
 | QC-17 | CP-14/18 required initialization/recovery failure blocks actual readiness | FR-009 |

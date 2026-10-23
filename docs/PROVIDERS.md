@@ -19,9 +19,10 @@ The corrected executor passed 28 focused native Linux checks without skips.
 The SDK also has an identity-pinned allocator and bounded runtime logger;
 Linux allocator execution, actual loaded-provider attribution and complete
 controller ingestion remain unproven. Focused composition/version fixtures
-do not establish category or host-profile qualification. CP-11's preconstruction
-route-rejection requirement conflicts with the existing mapping lifecycle and
-awaits a maintainer decision; responsibility IDs are not route declarations.
+do not establish category or host-profile qualification. CP-11 preserves actual
+route rejection during mapping before publication/initialization/readiness;
+declaration validation remains preconstruction. Responsibility IDs are not
+route declarations, and product contracts are unchanged.
 Do not use the new executor as acceptance-ready tooling. See the
 [implementation checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
 

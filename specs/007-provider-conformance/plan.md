@@ -4,8 +4,8 @@
 
 **Input**: Feature specification from `specs/007-provider-conformance/spec.md`
 
-**Status**: The authorized implementation remains `implement / running`, with
-the unresolved CP-11 contract conflict recorded below. No completed harness, shared
+**Status**: The authorized implementation continues `implement / running`, with
+the resolved CP-11 timing clarification recorded below. No completed harness, shared
 assertion extraction, five-profile workflow, custom checklist approval or qualification
 result is delivered. Public product contracts and required outcomes remain
 unchanged; necessary fixture-private controls are extended as recorded below.
@@ -77,7 +77,7 @@ Memory bytes; this is a focused regression, not category qualification.
 Subsequent repairs remain subject to full challenge coverage and final
 architecture review before qualification.
 
-### Current SDK/evidence checkpoint and unresolved requirement
+### Current SDK/evidence checkpoint and timing clarification
 
 The test-only SDK now includes a native identity-pinned resource allocator,
 validated cleanup/fault observations and a real bounded VSTest logger with
@@ -102,8 +102,8 @@ architecture review reported no confirmed architectural violations, with Linux
 allocator execution and loaded-provider proof integration still unproven;
 it is not final T081 review.
 
-**Blocker requiring a maintainer decision:** CP-11 and FR-007 require actual
-route conflicts to reject before provider construction, while the existing
+**Resolved under autonomous-continuation direction:** CP-11 and FR-007 formerly
+required actual route conflicts to reject before provider construction, while the existing
 Hosting contract learns routes only through constructed modules' `MapEndpoints`.
 The actual `AmbiguousRoute` check therefore runs at route composition, before
 publication/readiness. Owner-scoped endpoint responsibility IDs do not encode
@@ -111,11 +111,14 @@ routes; malformed/duplicate-ID tests are not CP-11 proof and are labelled
 `endpoint-declaration` instead. Preconstructing modules just to inspect their
 routes would itself violate the requested boundary.
 
-The maintainer was unavailable to decide between preserving APIs and clarifying
-the route-conflict boundary (recommended), or authorizing a product route
-declaration redesign. Requirements and public product contracts remain unchanged;
-no weaker substitute, fabricated preconstruction proof or CP-11 completion is
-claimed. The stage remains running, task/checklist markers unchanged.
+The maintainer directed continued autonomous resolution rather than another
+pause. Preserve existing public APIs and explicitly correct CP-11/FR-007/US2.2/
+QC-14/T042 to the actual mapping boundary before publication, initialization,
+readiness and admission. The real ambiguity/repair test observes that boundary;
+it never claims zero construction or substitutes malformed IDs for routes.
+Public product behavior is unchanged; no route-declaration redesign was added.
+Reviewer-owned CHK014 text/markers remain untouched and are not self-approved.
+Complete profile evidence remains required before task completion.
 
 ## Partial implementation checkpoint
 

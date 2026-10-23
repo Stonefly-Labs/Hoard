@@ -264,7 +264,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
     }
 
     [Fact]
-    public async Task Mapping_ambiguity_rejects_at_later_boundary_and_repair_starts()
+    public async Task CP11_actual_route_ambiguity_rejects_before_publication_and_repair_starts()
     {
         foreach (var repaired in new[] { false, true })
         {
@@ -288,9 +288,13 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                 Assert.Contains(failure.Diagnostics, item => item.RuleCode == "AmbiguousRoute");
                 Safe(failure.Diagnostics);
                 Assert.False(running.Lease.Lifecycle.Snapshot.Ready);
+                Assert.False(running.Lease.Lifecycle.Snapshot.StartupAdmission);
+                Assert.Empty(((Microsoft.AspNetCore.Routing.IEndpointRouteBuilder)running.App).DataSources);
                 Assert.All(registry.Probes.Values, probe =>
                 {
                     Assert.Equal(1, probe.Constructors);
+                    Assert.Equal(1, probe.Maps);
+                    Assert.Equal(0, probe.Initializations);
                     Assert.Equal(0, probe.Requests);
                     Assert.Equal(0, probe.Connections);
                     Assert.Equal(0, probe.Workers);
@@ -298,7 +302,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             }
             await running.DisposeAsync();
             Assert.True(running.Lease.StopResult!.Complete);
-            Observe($"mapping-ambiguity/{(repaired ? "repair" : "rejection")}", registry, running.Lease);
+            Observe($"CP-11/route-conflict.{(repaired ? "repair" : "reject")}", registry, running.Lease);
         }
     }
 

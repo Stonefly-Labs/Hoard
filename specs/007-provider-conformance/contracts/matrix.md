@@ -60,7 +60,7 @@ default or fallback selection.
 | CP-08 | Required capability absent | Same, not weaker fallback behavior |
 | CP-09 | Metadata count zero / two | Both reject before construction |
 | CP-10 | Artifact count zero / two | Both reject before construction |
-| CP-11 | Conflicting route ownership | Reject before construction/routes/workers/connections |
+| CP-11 | Conflicting actual route ownership | Reject during mapping before route publication, initialization, workers/connections, readiness or request admission |
 | CP-12 | Disabled observable module; optional target absent / registered-disabled | Zero construction/routes/workers/connections; unavailable capability and no active dependency edge |
 | CP-13 | Enabled optional compatible / incompatible | Compatible passes; incompatible rejects, never auto-disables |
 | CP-14 | Required initializer fails | Not ready, actual safe failure, owned cleanup observed |
@@ -76,6 +76,11 @@ its declaration/selection. Instrument module constructors, hooks, route requests
 worker starts and connection attempts independently; checking only route count
 does not prove disabled construction/connection absence. CP-14..20 verify actual
 readiness/admission and ownership through existing APIs, not reported flags.
+CP-11 changes only the conflicting mapped route in its repair. Construction and
+mapping are necessary to obtain actual route patterns; neither is reported
+absent. Its rejected composition publishes no routes and starts no initialization,
+workers, connections or request admission. Malformed/duplicate responsibility
+IDs are independent preconstruction declaration checks, not CP-11 proof.
 The composition profile also retains the complete applicable F-02/F-03/F-04
 regression inventories from their existing validation entry points.
 

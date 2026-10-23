@@ -1039,10 +1039,11 @@ The corrected directory-ownership implementation passed 28 native checks without
 skips. The SDK now also has owned-resource allocation and a bounded VSTest logger;
 composition/version fixtures exercise existing Hosting APIs. These remain
 non-qualifying foundations, not shared provider suites or a completed CLI.
-Implementation is paused on a real contract conflict: CP-11/FR-007 require
-route-conflict rejection before construction, but existing Hosting learns actual
-routes only after construction. Neither changing public contracts nor weakening
-that requirement has been approved. See the
+Under the maintainer's autonomous-continuation direction, CP-11/FR-007 now
+explicitly preserve the existing lifecycle: declarations reject before
+construction; actual route conflicts reject during mapping before publication,
+initialization, readiness or admission. No product route-contract redesign or
+duplicate-ID substitute is used. See the
 [implementation checkpoint](specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
