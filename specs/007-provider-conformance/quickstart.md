@@ -91,9 +91,11 @@ cannot lose session cleanup ownership. The current channel sends bounded hash-on
 origin packets through actual VSTest results and their exact case/execution/
 attempt/group/input/owner proofs; independent parent role assignment and cross-
 origin/result/attempt identity checks prevent evidence substitution/replay.
-The fifteen-scope/46-observation native channel selection is pending. Its synthetic
+Run `39943968117` at `0687888` verified the fifteen-scope/46-observation
+native channel and all 116 foundation checks without failures/errors/skips. Its synthetic
 factory output probe is diagnostic, not provider qualification. The full controller
-and SQLite environment producer remain unfinished, and T014 remains unchecked.
+and SQLite environment producer remain unfinished. T014/T015 are complete within
+generic runtime evidence and six-baseline preparation; T016 lock preparation is next.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

@@ -550,6 +550,26 @@ remain explicitly unpackaged test artifacts. Local tooling passes 221 checks
 pending. T014 remains unchecked; concrete adapters, actual SQLite environment
 production and complete CLI/profile/evaluator behavior are not implemented claims.
 
+### T014/T015 foundation closure
+
+Native run [39943968117](https://github.com/Stonefly-Labs/Hoard/actions/runs/39943968117)
+at `068788807481b41eed82c8800f94cd5c2173cafa` passed all 116 foundation checks
+without failures/errors/skips, measured 92,110,667,776 free scratch bytes and
+admitted all fifteen scopes/46 discoveries/46 executions. The synthetic
+package-mode origin channel actually executed without broad output allowlisting.
+Input digest `9b39c7bffc01e32c147d925b741308417eb2e2cc45e796f5af35b72faee18934`.
+All six historical baselines sealed before candidate builds and reverified
+afterwards, with seal
+`41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`.
+T014 is complete within generic runtime discovery/origin/proof/state foundations.
+The existing owned baseline implementation also satisfies T015: exact frozen
+revisions/recipes, independent feeds/caches, original historical source locks,
+explicit graph-preserving alternate-lock derivations when actual local archives
+differ, and source/recipe/lock/dependency/package/binary recomputation. Focused
+substitution/derivation regressions pass; no old SDK release or copied runtime pass
+is invented. T015 is complete. T016 and later controller/category/SQLite/evaluator
+tasks remain open; these observations remain non-qualifying diagnostics.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

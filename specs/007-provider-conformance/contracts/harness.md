@@ -62,7 +62,9 @@ instance identities across origins, results and case attempts reject; failed/
 skipped observations do not fabricate missing origins. Passing provider-bound
 qualification witnesses require attributable origins. The synthetic package-mode
 transport probe is diagnostic, not provider qualification. Its native execution
-is pending, and complete CLI/profile/evaluator integration remains planned.
+passed in run `39943968117` at `0687888` (fifteen scopes/46 observations, all 116
+foundation checks without failures/errors/skips). Complete CLI/profile/evaluator
+integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
 

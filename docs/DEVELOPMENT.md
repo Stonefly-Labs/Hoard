@@ -5228,6 +5228,26 @@ is native-pending. Local tooling passes 221 checks (ten native skips); the compl
 or SQLite producer are claimed, and T014 remains unchecked pending its remaining
 foundation verification.
 
+Native run
+[39943968117](https://github.com/Stonefly-Labs/Hoard/actions/runs/39943968117)
+at `068788807481b41eed82c8800f94cd5c2173cafa` closes that pending channel check:
+116 foundation checks, zero failures/errors/skips, 92,110,667,776 free scratch
+bytes, fifteen scopes/46 exact discoveries/46 execution observations and all six
+baselines. Input digest
+`9b39c7bffc01e32c147d925b741308417eb2e2cc45e796f5af35b72faee18934`;
+baseline seal
+`41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`.
+The real package-mode probe passed without relaxing unknown-output sanitation.
+T014 is complete as the generic discovery/origin/proof/state foundation, not full
+profile/provider qualification. T015's existing owned preparation has now been
+audited against its exact six revisions and recipe/lock/dependency/binary checks;
+the same native run seals/verifies all six before candidate compilation and
+reverifies after execution. Its source/recipe/lock/binary/package substitution
+and alternate-lock derivation regressions pass. T015 is complete; no historical
+SDK release was invented. The next foundation task is the explicit lock-preparation
+entry point and all new project locks (T016). Concrete SQLite observations,
+shared category assertions/adapters and full CLI/evaluator work remain later tasks.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

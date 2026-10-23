@@ -76,8 +76,10 @@ checks the planned role/runtime/package assignments, declaration/environment and
 reopen lineage. One instance UUID cannot change assembly/module/type across origins,
 results or case attempts; fresh execution/attempt IDs cannot launder session replay.
 Passing provider-bound qualification witnesses require attributable origins, while
-failed/skipped observations do not fabricate them. The full native channel remains
-pending; SQLite/PRAGMA production and complete profile evaluation are later work.
+failed/skipped observations do not fabricate them. Native run `39943968117` at
+`0687888` verified the full diagnostic channel: fifteen scopes/46 observations and
+116 foundation checks without failures/errors/skips. SQLite/PRAGMA production and
+complete profile evaluation are later work, not implied by this synthetic probe.
 
 Attempts are append-only. Any genuine contract failure in the run blocks
 qualification even if a retry passes. Deliberate red/green experiments are

@@ -1170,9 +1170,12 @@ at `457c4e5` verified 114 native checks without skips, thirteen scopes/
 failure. The current increment carries bounded hash-only session observations
 through actual VSTest result proofs, binding them to exact case/execution/
 attempt/group/input/owner provenance and independent role assignments. Local
-regressions pass; native verification of fifteen scopes/46 observations is pending.
-Actual SQLite environment production, full controller/profile integration and
-complete T014 remain unfinished.
+regressions pass. Run
+[39943968117](https://github.com/Stonefly-Labs/Hoard/actions/runs/39943968117)
+at `0687888` verified all 116 native checks without skips, fifteen scopes/
+46 discoveries/46 executions and all six baselines. T014/T015 are complete within
+their foundation scope. Lock preparation, actual SQLite environment production
+and full controller/profile integration remain unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
