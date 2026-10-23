@@ -85,6 +85,76 @@ class ConformanceAdmissionTests(unittest.TestCase):
                 self.assertRegex(name, r'axis: "(?:host|abstractions|required|optional)", row: "[a-z0-9-]+"')
                 self.assertIn(name.split('row: "')[1].rstrip('")'), rows)
 
+    def test_architecture_catalog_preserves_all_existing_rule_and_inspection_parameters(self):
+        import conformance_case_catalog as catalog
+        source = (ROOT / "tests/architecture/Hoard.Architecture.Tests/ArchitectureRuleTests.cs").read_text()
+        rows = re.findall(r'\[InlineData\("([^"]+)", "(ARCH-\d{3})"\)\]', source)
+        expected = {
+            "Hoard.Architecture.Tests.ArchitectureRuleTests."
+            + f'Isolated_forbidden_input_is_rejected_by_its_intended_rule(name: "{name}", rule: "{rule}")'
+            for name, rule in rows}
+        expected.add("Hoard.Architecture.Tests.ArchitectureRuleTests.Both_project_and_package_cycles_are_rejected")
+        cases = catalog.expected_cases("compatibility")
+        rejects = [case for case in cases if case.case_id == "ARCHITECTURE" and case.matrix_id.endswith(".reject")]
+        permits = [case for case in cases if case.case_id == "ARCHITECTURE" and case.matrix_id.endswith(".permit")]
+        self.assertEqual({name for case in rejects for name in case.witnesses}, expected)
+        self.assertTrue(all(case.witnesses and case.controls for case in rejects + permits))
+        self.assertEqual({name for case in permits for name in case.witnesses}, {
+            "Hoard.Architecture.Tests.ArchitectureRuleTests."
+            "Actual_platform_provider_packages_and_both_hosts_are_permitted"})
+        special = {case.matrix_id: case for case in cases if case.case_id == "COMPATIBILITY"}
+        inspection = (ROOT / "tests/architecture/Hoard.Architecture.Tests/InspectionFailureTests.cs").read_text()
+        expected_inspection = set()
+        for method, parameter in (
+                ("Omitting_any_required_real_scan_is_an_error", "identity"),
+                ("Incomplete_inputs_are_inspection_errors_not_clean_scans", "failure")):
+            attributes = inspection.split("public void " + method)[0].rsplit("[Theory]", 1)[1]
+            expected_inspection.update(
+                "Hoard.Architecture.Tests.InspectionFailureTests."
+                + f'{method}({parameter}: "{value}")'
+                for value in re.findall(r'\[InlineData\("([^"]+)"\)\]', attributes))
+        self.assertEqual(set(special["inspection-failures"].witnesses), expected_inspection)
+        self.assertIn(
+            "Hoard.Architecture.Tests.ArchitectureRuleTests."
+            "Approved_hosting_path_does_not_hide_an_alternate_forbidden_core_path(reverse: True)",
+            special["identity-paths"].witnesses)
+        self.assertIn(
+            "Hoard.Architecture.Tests.ArchitectureRuleTests."
+            "Approved_hosting_path_does_not_hide_an_alternate_forbidden_core_path(reverse: False)",
+            special["identity-paths"].witnesses)
+        for rule, mode in (("ARCH-009", "reject"), ("ARCH-001", "unknown")):
+            with self.subTest(rule=rule, mode=mode), self.assertRaisesRegex(
+                    evidence.ConformanceError, "WitnessMissing"):
+                catalog.architecture_witnesses(rule, mode)
+        with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+            catalog.compatibility_witnesses("unknown")
+
+    def test_proof_obligations_require_distinct_subproofs_not_one_aggregate_label(self):
+        import conformance_case_catalog as catalog
+        cases = [case for profile in evidence.PROFILES for case in catalog.expected_cases(profile)
+                 if case.case_id.startswith("QC-")]
+        self.assertEqual({case.case_id for case in cases}, {f"QC-{number:02}" for number in range(1, 49)})
+        for case in cases:
+            with self.subTest(case=case.key):
+                self.assertGreater(len(case.controls), 1)
+                self.assertNotIn("obligation:" + case.case_id, case.controls)
+        watchdog = next(case for case in cases if case.case_id == "QC-34")
+        for scope in ("operation", "barrier", "child", "transfer", "recovery", "termination",
+                      "cleanup", "profile", "baseline"):
+            self.assertIn(f"obligation:QC-34.{scope}-budget", watchdog.controls)
+        capacity = next(case for case in cases if case.case_id == "QC-37")
+        self.assertIn("obligation:QC-37.insufficient-scratch-incomplete", capacity.controls)
+        with mock.patch.dict(catalog.QC_CONTROLS):
+            del catalog.QC_CONTROLS[34]
+            with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+                catalog.expected_cases("harness")
+        with mock.patch.dict(catalog.QC_CONTROLS, {49: ("unreviewed",)}):
+            with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+                catalog.expected_cases("harness")
+        with mock.patch.object(catalog, "MAX_RESULTS", 1):
+            with self.assertRaisesRegex(evidence.ConformanceError, "EvidenceIncomplete"):
+                catalog.expected_cases("metadata")
+
     def case(self):
         return {
             "caseId": "MP-01", "contractRevision": "f07-v1", "category": "metadata",

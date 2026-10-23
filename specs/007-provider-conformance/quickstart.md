@@ -7,7 +7,9 @@ journey and CI qualification do not. The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/
 classification identities match package-mode discovery; this is not behavior
-qualification. Loaded-provider attribution, final resource projection and complete
+qualification. Another 41 architecture/inspection and ten SDK catalog identities
+match actual discovery. Explicit QC subproof declarations are expectations, not
+passing observations. Loaded-provider attribution, final resource projection and complete
 profiles remain outstanding. Implementation is
 continuing with the existing route-mapping boundary explicitly distinguished
 from preconstruction declaration validation. The tooling is not acceptance-ready. See the
@@ -39,6 +41,10 @@ environment/profile report; complete preflight/report integration is pending.
 Insufficient capacity emits safe `Incomplete`/`InsufficientCapacity`, exit `2`,
 without creating a workspace or reducing transfer sizes. Evidence violations
 remain `Failed`/exit `1`; neither outcome qualifies a scope.
+Capacity/filesystem probes and workspace creation are anchored to pinned parent
+and root descriptors. Parent substitution or lexical traversal rejects without
+redirecting writes to a different root. The latest allocation/catalog increment
+still awaits native diagnostic confirmation.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

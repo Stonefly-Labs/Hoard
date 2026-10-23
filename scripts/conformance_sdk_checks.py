@@ -21,6 +21,7 @@ from xml.sax.saxutils import escape
 
 import conformance_baselines as baselines
 import conformance_evidence as evidence
+from conformance_case_catalog import catalog_admission_witnesses
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_lock_preparation import rebind_local_archives
 from foundation_evidence import canonicalize_acceptance_archive
@@ -53,6 +54,7 @@ SCENARIOS = (
         "Hoard.Conformance.Tests.RuntimeLoggerTests.Finite_version_ranges_preserve_exact_parameter_identity"
         + f'(range: "{value}")' for value in ("[1.2.0,2.0.0)", "(2.0.0,1.0.0]", "[1.2.3]")),
      "None", "Passed", 0, "None"),
+    ("catalog", catalog_admission_witnesses(), "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {
@@ -251,7 +253,7 @@ def make_inputs(run, candidate, sources, packages, prepared, observed_environmen
 
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
-    source_tests = name in ("owned", "ranges")
+    source_tests = name in ("owned", "ranges", "catalog")
     assembly = candidate / (TESTS if source_tests else LOGGER + "/Smoke") / "bin/Release/net10.0" / (
         "Hoard.Conformance.Tests.dll" if source_tests else "Smoke.dll")
     assembly_path = assembly.relative_to(run.root).as_posix()

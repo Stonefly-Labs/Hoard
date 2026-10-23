@@ -115,7 +115,8 @@ def native_execution_supported():
 def scratch_filesystem(parent, profile):
     if not native_execution_supported():
         return "unobserved"
-    code, output = capture_control(["stat", "-f", "--format=%T", str(parent)], limit=1024, timeout=5)
+    target = f"/proc/{os.getpid()}/fd/{parent}" if type(parent) is int else str(parent)
+    code, output = capture_control(["stat", "-L", "-f", "--format=%T", target], limit=1024, timeout=5)
     if code or re.fullmatch(rb"[a-zA-Z0-9][a-zA-Z0-9._/-]{0,63}\n?", output) is None:
         raise ConformanceError("PrerequisiteMissing")
     filesystem = output.decode("ascii").strip()
@@ -278,38 +279,59 @@ class OwnedRun:
         repository = Path(repository).resolve()
         no_symlinks(destination)
         parent = destination.parent
-        if (destination.exists() or not parent.is_dir() or parent.stat().st_uid != os.getuid()
-                or stat.S_IMODE(parent.stat().st_mode) & 0o077
+        if (".." in destination.parts or destination.exists() or not parent.is_dir()
                 or destination.is_relative_to(repository)):
             raise ConformanceError("OwnershipInvalid")
-        free_bytes = shutil.disk_usage(parent).free
-        check_capacity(profile, free_bytes=free_bytes)
-        filesystem = scratch_filesystem(parent, profile)
-        destination.mkdir(mode=0o700)
-        run = cls(destination.resolve())
-        run.started = started
-        run.deadline = started + profile_budget(profile)
-        for name in ("stores", "feed", "cache", "diagnostics", "proofs"):
-            (run.root / name).mkdir(mode=0o700)
-            info = (run.root / name).stat()
-            run.directory_identities[name] = (info.st_dev, info.st_ino)
-        run._persist(create=True)
-        directory = run._directory_descriptor("proofs")
+        parent_info = parent.stat()
+        if parent_info.st_uid != os.getuid() or stat.S_IMODE(parent_info.st_mode) & 0o077:
+            raise ConformanceError("OwnershipInvalid")
+        parent_descriptor = os.open(parent, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
         try:
-            with os.fdopen(os.open("preflight.json", os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
-                                   0o600, dir_fd=directory), "wb") as output:
-                output.write(canonical_bytes({
-                    "schemaVersion": 1, "qualification": False, "profileId": profile,
-                    "filesystem": filesystem, "freeBytes": free_bytes,
-                    "durationMs": (time.monotonic() - started) * 1000,
-                }))
+            pinned = os.fstat(parent_descriptor)
+            identity = (parent_info.st_dev, parent_info.st_ino)
+            if (pinned.st_dev, pinned.st_ino) != identity:
+                raise ConformanceError("OwnershipInvalid")
+            free_bytes = shutil.disk_usage(parent_descriptor).free
+            check_capacity(profile, free_bytes=free_bytes)
+            filesystem = scratch_filesystem(parent_descriptor, profile)
+            no_symlinks(destination)
+            current = parent.stat(follow_symlinks=False)
+            if (current.st_dev, current.st_ino) != identity:
+                raise ConformanceError("OwnershipInvalid")
+            os.mkdir(destination.name, mode=0o700, dir_fd=parent_descriptor)
+            root = os.open(destination.name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW,
+                           dir_fd=parent_descriptor)
+            try:
+                info = os.fstat(root)
+                run = cls(destination, root_identity=(info.st_dev, info.st_ino))
+                run.started = started
+                run.deadline = started + profile_budget(profile)
+                for name in ("stores", "feed", "cache", "diagnostics", "proofs"):
+                    os.mkdir(name, mode=0o700, dir_fd=root)
+                    info = os.stat(name, dir_fd=root, follow_symlinks=False)
+                    run.directory_identities[name] = (info.st_dev, info.st_ino)
+                run._persist(create=True)
+                directory = run._directory_descriptor("proofs")
+                try:
+                    with os.fdopen(os.open(
+                            "preflight.json", os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                            0o600, dir_fd=directory), "wb") as output:
+                        output.write(canonical_bytes({
+                            "schemaVersion": 1, "qualification": False, "profileId": profile,
+                            "filesystem": filesystem, "freeBytes": free_bytes,
+                            "durationMs": (time.monotonic() - started) * 1000,
+                        }))
+                finally:
+                    os.close(directory)
+                return run
+            finally:
+                os.close(root)
         finally:
-            os.close(directory)
-        return run
+            os.close(parent_descriptor)
 
-    def __init__(self, root):
+    def __init__(self, root, *, root_identity):
         self.root = root
-        self.root_identity = (root.stat().st_dev, root.stat().st_ino)
+        self.root_identity = root_identity
         self.root_id = uuid.uuid4().hex
         self.run_id = str(uuid.uuid4())
         self.owner_pid = os.getpid()

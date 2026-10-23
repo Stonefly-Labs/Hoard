@@ -267,8 +267,41 @@ and transitions before ownership access; nested controlled cleanup remains
 allowed. Actual capacity rejection now emits `Incomplete`/exit `2` without
 creating a workspace or changing an outside sentinel. Evidence violations
 remain `Failed`/exit `1`. All 187 tooling checks pass with ten native skips.
-New native verification and complete T012 integration are pending; T012
-remains unchecked.
+Native run
+[39921337767](https://github.com/Stonefly-Labs/Hoard/actions/runs/39921337767)
+at `b9d335a` passed all 82 foundation checks with zero failures/errors/skips,
+observing 92,111,400,960 free scratch bytes. Its SDK/logger diagnostic passed
+seven scenarios/15 observations and reverified all six baselines, binding input
+digest `ec4c80a84b38a0815d337cac5b121b6e530ff7d34fff718e9a888f69410a8d60`.
+
+### Expanded catalog and allocation-identity increment
+
+Actual architecture discovery now matches all 41 distinct expected
+ARCH-001..008, identity-path and inspection-failure identities, with none
+missing. Together with the earlier 144 composition/version/classification
+identities and ten SDK catalog admission identities, this maps 195 distinct
+non-category runtime names. The 192 inherited category keys and 13 exclusions
+are unchanged. Discovery does not establish architecture/profile behavior.
+
+QC-01..48 now enumerate their individual required subproofs: 299 assignments
+across profile expansions, not 299 observed passes. Missing/extra QC IDs,
+mutable declarations and result overflow reject. Generated SDK bytes agree
+with the independent Python expansion. Intended strict SDK catalog reds
+preceded rejection of unknown profiles, malformed/duplicate/unknown/missing
+fields, invalid strings, missing profiles, duplicate keys and oversized
+input/collections/results. All 55 source SDK tests pass. The new ten catalog
+cases match actual discovery and are selected as an eighth native diagnostic
+scenario; that targeted scenario is not full SDK/package acceptance.
+
+A further intended allocation red reproduced a parent swapped to an outside
+sentinel during capacity preflight being followed for workspace creation.
+Parent/root descriptors now pin capacity/filesystem probes, workspace creation
+and synthetic child directories. Parent replacement and lexical traversal
+reject; a second challenge swaps the parent immediately after root creation
+and preserves the pre-existing outside root unchanged. No outside files or
+directories are created, overwritten or removed. All 190 portable tooling
+checks pass with ten native skips. New native confirmation is pending;
+T008/T012 remain unchecked, and full profile orchestration remains separate.
 
 ## Partial implementation checkpoint
 

@@ -34,7 +34,8 @@ class ConformanceExecutionTests(unittest.TestCase):
         (sentinel / "outside").write_text("untouched")
         link = self.parent / "linked"
         link.symlink_to(sentinel, target_is_directory=True)
-        for destination in (sentinel, link, link / "child", ROOT / ".foundation/conformance-test"):
+        for destination in (sentinel, link, link / "child", sentinel / "../escaped",
+                            ROOT / ".foundation/conformance-test"):
             with self.subTest(destination=destination), self.assertRaises(ConformanceError):
                 execution.OwnedRun.allocate(destination, ROOT)
         self.parent.chmod(0o755)
@@ -523,6 +524,44 @@ else:
                     self.assertRaisesRegex(ConformanceError, "PrerequisiteMissing"):
                 execution.OwnedRun.allocate(self.parent / "rejected", ROOT, profile="artifacts")
             self.assertFalse((self.parent / "rejected").exists())
+
+    def test_preflight_parent_swap_cannot_create_a_workspace_under_an_outside_sentinel(self):
+        disk_usage = execution.shutil.disk_usage
+        mkdir = execution.os.mkdir
+        for stage in ("preflight", "root-created"):
+            with self.subTest(stage=stage):
+                scope = self.parent / stage
+                scope.mkdir(mode=0o700)
+                private = scope / "private"
+                outside = scope / "outside"
+                private.mkdir(mode=0o700)
+                outside.mkdir(mode=0o700)
+                if stage == "root-created":
+                    (outside / "run").mkdir(mode=0o700)
+                (outside / "sentinel").write_bytes(b"preserve")
+                def swap():
+                    private.rename(scope / "moved")
+                    private.symlink_to(outside, target_is_directory=True)
+                def swapped_parent(parent):
+                    capacity = disk_usage(parent)
+                    if stage == "preflight":
+                        swap()
+                    return capacity
+                def swapped_creation(path, *args, **kwargs):
+                    result = mkdir(path, *args, **kwargs)
+                    if stage == "root-created" and path == "run":
+                        swap()
+                    return result
+                with mock.patch.object(execution.shutil, "disk_usage", side_effect=swapped_parent), \
+                        mock.patch.object(execution.os, "mkdir", side_effect=swapped_creation), \
+                        mock.patch.object(execution, "native_execution_supported", return_value=False), \
+                        self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                    execution.OwnedRun.allocate(private / "run", ROOT, profile="artifacts")
+                self.assertEqual({path.name for path in outside.iterdir()},
+                                 {"sentinel", "run"} if stage == "root-created" else {"sentinel"})
+                self.assertEqual((outside / "sentinel").read_bytes(), b"preserve")
+                if stage == "root-created":
+                    self.assertFalse(any((outside / "run").iterdir()))
 
     def test_state_publication_does_not_restart_expired_admission_controls(self):
         run = self.workspace()

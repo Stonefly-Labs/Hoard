@@ -10,5 +10,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="Catalog/catalog.json" LogicalName="Hoard.Conformance.Catalog" />
+    <InternalsVisibleTo Include="Hoard.Conformance.Tests" />
   </ItemGroup>
 </Project>

@@ -1068,10 +1068,15 @@ All 144 distinct composition/version/classification runtime identities now match
 actual package-mode discovery. A separate tracked composition package lock was
 prepared against the sealed historical feed and replayed in an independent fresh
 cache without changing predecessor locks. This verifies discovery, not behavior
-or loaded-provider attribution; remaining control mappings and full runtime/profile
-evaluation keep T008 incomplete. The logger and Python ingestion preserve finite
+or loaded-provider attribution. The logger and Python ingestion preserve finite
 version-range parameter punctuation while still rejecting paths and free text;
-45 current source SDK checks pass, not a current package-acceptance result.
+55 current source SDK checks pass, not a current package-acceptance result.
+The catalog also maps 41 architecture/inspection identities and ten SDK catalog
+admission identities, all matched against actual discovery. QC-01..48 now name
+their individual required subproofs instead of one aggregate label. These are
+expectations, not executed control results. Strict SDK catalog admission rejects
+unknown profiles, malformed/duplicate fields, missing profiles and overflowing
+results without returning a shortened catalog.
 T009's owned-execution regression inventory also passes on Linux, including
 concurrent private caches and containment that leaves the other run alive.
 Cleanup now removes only settled synthetic stores, feeds and caches, retaining
@@ -1092,9 +1097,15 @@ retained separately from synthetic stores. Run `39920220726` passed all 79
 native foundation checks plus its six-baseline SDK/logger diagnostic. A further
 one-writer gate rejects overlapping commands, cleanup and state publication
 before admission. Insufficient scratch now reports explicit `Incomplete`, not
-a reduced run; evidence violations retain `Failed`. These latest changes pass
-187 tooling checks with ten native skips on macOS; their native confirmation
-and complete T012 integration remain pending.
+a reduced run; evidence violations retain `Failed`. Run `39921337767` at
+`b9d335a` passed all 82 native foundation checks and seven SDK scenarios/15
+observations. A subsequent parent-substitution regression exposed allocation
+following a swapped ancestor after preflight. Capacity/filesystem probes and
+workspace creation now use pinned directory descriptors; parent substitution
+or traversal rejects without writing to the outside sentinel.
+The current changes pass 190 tooling checks with ten native skips on macOS.
+Native confirmation of the catalog and allocation repair remains pending;
+T008/T012 and complete profile integration are not yet complete.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

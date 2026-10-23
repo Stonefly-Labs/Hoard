@@ -4882,8 +4882,8 @@ Run [39916071298](https://github.com/Stonefly-Labs/Hoard/actions/runs/3991607129
 at `4678eb8` passed all seven scenarios/15 observations, including those three
 range cases; it reproduced the six-baseline seal above and input digest
 `a807dba086c63476d9b440a0621f0cf7cded31b194a0dae1b7312a8422127a10`.
-This does not imply all 45 source tests ran natively. T008 remains incomplete until the remaining
-control mappings are wired; actual loaded-provider attribution and complete
+This does not imply all 45 source tests ran natively. At that checkpoint T008
+remained incomplete until the remaining control mappings were wired; actual loaded-provider attribution and complete
 profile evaluation are also unfinished.
 
 A new native concurrency regression holds two independently owned runs at
@@ -4971,7 +4971,38 @@ independent. An actual insufficient-capacity admission now produces safe
 `Incomplete`/`InsufficientCapacity` and exit `2` without creating a workspace or
 altering an outside sentinel. Evidence violations remain `Failed`/exit `1`,
 not prerequisite errors. All 187 tooling checks pass with ten native skips.
-Native confirmation of this increment and full T012 integration remain pending.
+Native foundation job `120307028359` in
+[run 39921337767](https://github.com/Stonefly-Labs/Hoard/actions/runs/39921337767)
+at `b9d335a` passed all 82 checks with zero failures/errors/skips and
+92,111,400,960 free scratch bytes. Its SDK/logger job passed seven scenarios/15
+observations, reverified all six baselines and bound input digest
+`ec4c80a84b38a0815d337cac5b121b6e530ff7d34fff718e9a888f69410a8d60`.
+
+The catalog now also maps 41 actual architecture/inspection identities and ten
+SDK catalog admission identities. All match real discovery; the combined
+non-category mapping contains 195 distinct runtime identities. This is not
+architecture/profile qualification. The 192 inherited keys and 13 exclusions
+are unchanged. Every QC-01..48 now names individual required subproofs rather
+than a single aggregate label: 299 assignments across profile expansions, not
+observed passes. Unknown/missing QC maps and overflowing expansions reject.
+The regenerated SDK catalog agrees with the independent Python expansion.
+
+Strict SDK catalog tests first reproduced malformed/unknown profile/field,
+duplicate-field, invalid-string and incomplete-profile defects. Admission now
+rejects those and oversized input/collections/results with closed diagnostics,
+never a shortened catalog. All 55 source SDK tests pass; the ten new catalog
+identities are selected as an eighth native diagnostic scenario, not full
+SDK/package acceptance.
+
+A subsequent allocation challenge reproduced a parent replaced by a symlink
+during preflight redirecting workspace creation into an outside sentinel.
+Parent/root descriptors now pin capacity/filesystem probes and creation of the
+workspace and its synthetic child directories; no resolved replacement path
+can redefine ownership. Lexical traversal and substitution during preflight or
+immediately after root creation reject, preserving the outside directory and
+pre-existing outside root unchanged. All 190 tooling checks pass with ten native
+skips. Native confirmation of this allocation/catalog increment is pending;
+T008/T012 remain unchecked, and complete profile orchestration is unfinished.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
