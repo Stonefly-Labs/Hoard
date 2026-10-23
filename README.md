@@ -1066,6 +1066,8 @@ alternate locks preserve the original dependency graph/source locks and bind
 the platform-built bytes before any candidate compilation.
 All 92 version-catalog runtime identities now match actual discovery; unresolved
 composition mappings and full runtime/profile evaluation keep T008 incomplete.
+T009's owned-execution regression inventory also passes on Linux, including
+concurrent private caches and containment that leaves the other run alive.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

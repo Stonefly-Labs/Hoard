@@ -4863,7 +4863,13 @@ T008 remains incomplete until the composition and remaining mappings are wired.
 A new native concurrency regression holds two independently owned runs at
 explicit file barriers, writes the same cache key with distinct values, lets
 one watchdog contain its child, and verifies the other remains alive until its
-own release. It is pending Linux execution; portable skips do not complete T009.
+own release. [Run 39914002055](https://github.com/Stonefly-Labs/Hoard/actions/runs/39914002055)
+at `6f9e0b7` passed all 62 Python checks with zero failures/errors/skips,
+including this native challenge; T009 is complete. The SDK/logger job also
+passed again and independently reproduced the same six-baseline seal
+`41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`.
+It measured 92,111,634,432 free scratch bytes. These observations do not complete
+the remaining foundation tasks or qualify a profile.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
