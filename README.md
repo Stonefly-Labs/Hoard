@@ -752,7 +752,8 @@ runtime binaries or packages are published. See the
 [merge/release evidence](docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release).
 [Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
 merged into `main`, recording F-05 complete with release metadata.
-**F-06 finalization is complete; maintainer merge is next.**
+**F-06 is merged and its alpha source release is published; the completion
+checkpoint awaits maintainer merge.**
 The additive BCL-only storage contracts have independent Local and simulated
 ObjectSemantics fixtures for verified streaming/publication, protected reads,
 exact-ticket reconciliation, bounded recovery and reference-safe deletion.
@@ -872,12 +873,18 @@ The subsequent finalization verifies all 90 completed tasks, unchanged reviewer
 approvals and corrected architecture findings, and repeats full locked artifact
 qualification and tooling regressions. README, development guidance and feature
 status now record the [finalization evidence](docs/DEVELOPMENT.md#f-06-finalization).
-[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) is ready for maintainer
-review and merge. The next separately invoked stage is **`await_merge`**;
-F-06 remains incomplete and dependent work remains blocked until the merge,
-authorized alpha source release and completion checkpoint are verified.
-No merge, tag/release, package publication, infrastructure action or deployment
-runs in finalization.
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) subsequently merged at
+`9389016c0285c79f6f515f59805a5a41c69b0767`. The separate **`await_merge`** stage
+verified that merge and published
+[`v0.0.6-alpha`](https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.6-alpha)
+at that exact commit. Its successful source-release run, annotated remote tag,
+generated notes and both automatic source archives are verified. The helper
+records F-06 complete with release metadata in
+[completion-checkpoint PR #17](https://github.com/Stonefly-Labs/Hoard/pull/17).
+That PR must merge before a later invocation starts F-07 **`specify`**.
+See the [merge/release evidence](docs/DEVELOPMENT.md#f-06-merge-completion-and-alpha-source-release).
+No runtime binaries, packages, containers, infrastructure action or deployment
+are included; no new spec or PR merge runs in this invocation.
 
 The separately invoked **`specify`** stage creates the
 [F-06 artifact blob storage provider contract](specs/006-artifact-storage/spec.md)

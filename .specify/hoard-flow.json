@@ -1,13 +1,9 @@
 {
   "schema_version": 1,
-  "stage": "await_merge",
+  "stage": "specify",
   "status": "ready",
-  "branch": "feature/006-artifact-storage",
-  "active": {
-    "id": "F-06",
-    "feature_directory": "specs/006-artifact-storage",
-    "pr": 16
-  },
+  "branch": null,
+  "active": null,
   "completed": [
     {
       "id": "F-01",
@@ -42,6 +38,14 @@
       "merge_commit": "81e2e8d41e08aafc9e89f388dab78e7509227dd5",
       "release_tag": "v0.0.5-alpha",
       "release_url": "https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.5-alpha"
+    },
+    {
+      "id": "F-06",
+      "feature_directory": "specs/006-artifact-storage",
+      "pr": 16,
+      "merge_commit": "9389016c0285c79f6f515f59805a5a41c69b0767",
+      "release_tag": "v0.0.6-alpha",
+      "release_url": "https://github.com/Stonefly-Labs/Hoard/releases/tag/v0.0.6-alpha"
     }
   ],
   "history": [
@@ -646,6 +650,13 @@
       "branch": "feature/006-artifact-storage",
       "at": "2026-10-23T02:01:05.124105+00:00",
       "evidence": "F-06 finalization: all 90 tasks complete; clean convergence; unchanged 16/16 built-in and 40/40 reviewer-owned approvals; existing architecture findings have runtime red/green corrections. Fresh full locked run 49189bab-9010-4ec6-a825-2b4d2f2de31b binds source 27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4: 261 logical/crash checks, four transfer-proof tests, three architecture tests/eight graphs, both consumers/original marker, four real transfers, six owned SIGKILL/reopens, 92 passes/four explicit Object exclusions, three mutation pairs and 29 altered-manifest negatives. All 105 tooling tests, independent manifest/source revalidation, 340 local documentation links/anchors, PR-template structure and git diff --check pass. README/development/plan/tasks/quickstart updated; normative contracts, checklists, sources and locks unchanged. PR 16 targets main; no merge, release, production/F-07 claim or infrastructure action."
+    },
+    {
+      "stage": "await_merge",
+      "spec_id": "F-06",
+      "branch": "chore/spec-progress-f-06",
+      "at": "2026-10-23T02:05:51.725814+00:00",
+      "evidence": "F-06 await_merge verified PR #16 merged at 9389016c0285c79f6f515f59805a5a41c69b0767 reachable from fetched origin/main; all 90 tasks and existing 16/16 built-in plus 40/40 reviewer-owned checklist approvals remain complete and unchanged. Retained full acceptance run 49189bab-9010-4ec6-a825-2b4d2f2de31b independently revalidated against unchanged source 27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4 (96 entries); prior qualification and architecture reviews remain historical, not newly executed. Running progress checkpoint f46b561 committed/pushed in draft PR #17 before tagging. Installed hoard-release under standing authorization published v0.0.6-alpha at exact feature merge; annotated remote tag a2b7124ab826c04b43f3dcfc809e1d891f2271bd peels to that commit. Source release run 39887599522 succeeded; non-draft prerelease, generated PR-linked notes/changelog, ZIP full-commit comment and four exact-merge file comparisons in both automatic source archives verified. python3 scripts/release.py v0.0.6-alpha and --check-main passed; python3 -m unittest discover -s tests/tooling -v passed all 105 tests. No product/dependency/runtime support change, package publication, infrastructure plan/apply, cloud mutation, governance change or deployment. Completion PR #17 must merge before another invocation begins specify; no new spec or PR merge performed."
     }
   ]
 }
