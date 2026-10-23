@@ -50,7 +50,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          private_parent="../sdk-diagnostic-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          private_parent="$(dirname "$GITHUB_WORKSPACE")/sdk-diagnostic-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mkdir -m 700 "$private_parent"
           python3 scripts/conformance_sdk_checks.py \
             --root "$GITHUB_WORKSPACE" --evidence "$private_parent/run"

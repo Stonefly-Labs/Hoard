@@ -4781,7 +4781,7 @@ package, assembly, parameter, dimension and monotonic relationships. Proof trees
 are descriptor-walked with byte/file/depth/time bounds and reject symlinked roots
 and special files rather than following them.
 
-`python3 scripts/conformance_sdk_checks.py --evidence <fresh-private-path>`
+`python3 scripts/conformance_sdk_checks.py --evidence <fresh-private-absolute-path>`
 is a **non-qualifying Linux diagnostic**, not the planned conformance CLI.
 It seals/verifies all six historical baselines before candidate compilation,
 then exercises the SDK allocator and safe logger with fixed source-owned test
@@ -4791,6 +4791,12 @@ prepared only in the isolated smoke lock with an explicit preparation record;
 fresh locked replay preserves its dependency graph and leaves tracked locks
 unchanged. Native CI execution is pending. Actual loaded-provider evidence,
 all category assertions, full profile evaluation and final review remain required.
+
+The first combined Linux attempt correctly rejected mocked fixture progress
+as unknown output and the workflow's lexical `repository/../evidence` path
+as repository-relative ownership. Fixture-local capture and an absolute sibling
+path repair those integration issues; neither diagnostic nor ownership
+admission is weakened.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
