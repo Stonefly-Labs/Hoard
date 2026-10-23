@@ -4838,6 +4838,11 @@ verification recomputes that derivation and rejects detached/rehashed graph
 changes, absent archives or a downgrade to the old preparation format. Native
 confirmation of this increment is pending; it is not provider qualification.
 
+A new native concurrency regression holds two independently owned runs at
+explicit file barriers, writes the same cache key with distinct values, lets
+one watchdog contain its child, and verifies the other remains alive until its
+own release. It is pending Linux execution; portable skips do not complete T009.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

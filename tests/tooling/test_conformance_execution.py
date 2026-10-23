@@ -6,6 +6,7 @@ import shutil
 import stat
 import sys
 import tempfile
+import time
 import unittest
 from unittest import mock
 
@@ -54,6 +55,47 @@ class ConformanceExecutionTests(unittest.TestCase):
         run.transition("Settling")
         run.release()
         self.assertFalse(run.root.exists())
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_concurrent_runs_isolate_cache_inputs_and_containment_does_not_end_the_other_child(self):
+        first = self.workspace()
+        second = execution.OwnedRun.allocate(self.parent / "second", ROOT)
+        code = (
+            "import json,os,time\nfrom pathlib import Path\n"
+            "root=Path(os.environ['HOME']).parent\ncache=Path(os.environ['NUGET_PACKAGES'])\n"
+            "(cache/'same-key').write_text(os.environ['HOARD_VALUE'])\n"
+            "(root/'stores/entered').write_text('entered')\n"
+            "deadline=time.monotonic()+12\n"
+            "while not (root/'stores/release').exists():\n"
+            " if time.monotonic()>deadline: raise RuntimeError('deadline')\n"
+            " time.sleep(0.01)\n"
+            "print(json.dumps({'event':'control','code':'None','value':int((cache/'same-key').read_text())}))"
+        )
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            interrupted = executor.submit(
+                first.command, [sys.executable, "-c", code], timeout=5, env={"HOARD_VALUE": "1"})
+            surviving = executor.submit(
+                second.command, [sys.executable, "-c", code], timeout=15, env={"HOARD_VALUE": "2"})
+            try:
+                deadline = time.monotonic() + 3
+                while not all((run.root / "stores/entered").exists() for run in (first, second)):
+                    self.assertLess(time.monotonic(), deadline)
+                    time.sleep(0.01)
+                self.assertEqual((first.root / "cache/default/same-key").read_text(), "1")
+                self.assertEqual((second.root / "cache/default/same-key").read_text(), "2")
+                with self.assertRaisesRegex(ConformanceError, "DeadlineExceeded"):
+                    interrupted.result(timeout=10)
+                self.assertFalse(first.live_children())
+                self.assertTrue(second.live_children())
+            finally:
+                (second.root / "stores/release").write_text("release")
+            observed = surviving.result(timeout=10)
+        self.assertEqual(observed.exit_code, 0)
+        self.assertEqual(observed.events[0]["value"], 2)
+        for run in (first, second):
+            run.transition("Settling")
+            run.release()
+            self.assertFalse(run.root.exists())
 
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_bounded_safe_events_are_retained_without_raw_canary(self):
@@ -329,3 +371,4 @@ else:
 
 if __name__ == "__main__":
     unittest.main()
+from concurrent.futures import ThreadPoolExecutor
