@@ -752,7 +752,7 @@ runtime binaries or packages are published. See the
 [merge/release evidence](docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release).
 [Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
 merged into `main`, recording F-05 complete with release metadata.
-**F-06 T090 implementation completes corruption quarantine; fresh convergence is next.**
+**F-06 clean convergence is complete; finalization is next.**
 The additive BCL-only storage contracts have independent Local and simulated
 ObjectSemantics fixtures for verified streaming/publication, protected reads,
 exact-ticket reconciliation, bounded recovery and reference-safe deletion.
@@ -854,6 +854,19 @@ exact 92-pass/four-exclusion matrix with all transfer/crash/package proofs.
 See the [implementation evidence](specs/006-artifact-storage/plan.md#corruption-quarantine-implementation-2026-10-22).
 The next stage is separately invoked fresh **`converge`**; PR #16 stays draft.
 No finalization, feature completion, merge or release is claimed.
+
+The subsequent installed convergence assessment finds no actionable gaps across
+all 25 functional requirements, eight success criteria, 23 acceptance scenarios,
+15 edge cases, eight plan decisions, 90 existing tasks and eight constitutional
+principles. T087..T090 remain satisfied, including retained failed cleanup,
+consumed-cursor retirement and exact-incarnation corruption quarantine.
+No tasks are appended; all feature artifacts and reviewer-owned checklists
+remain unchanged. Fresh default locked full qualification again passes 261
+logical/crash checks, all transfer/crash/package proofs and the exact
+92-pass/four-exclusion matrix. See the
+[clean convergence checkpoint](docs/DEVELOPMENT.md#f-06-clean-convergence).
+The next separately invoked stage is **`finalize`**. PR #16 remains draft;
+convergence is not finalization, merge readiness, feature completion or release.
 
 The separately invoked **`specify`** stage creates the
 [F-06 artifact blob storage provider contract](specs/006-artifact-storage/spec.md)

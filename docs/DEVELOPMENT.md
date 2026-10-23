@@ -4234,10 +4234,60 @@ historical, not rerun for fixture/catalog-only changes. Qualification remains
 test-only macOS/.NET/APFS Local process-crash evidence plus process-local Object
 simulation, not production/F-07 or power-loss/remote-service/HA certification.
 
-The driver schedules separately invoked **`converge / ready`**.
+That implementation checkpoint scheduled separately invoked **`converge / ready`**.
 [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) remains draft.
 No clean-convergence, finalization, feature completion, merge, release, package
 publication, infrastructure action, deployment or dependency unlock is claimed.
+
+### F-06 clean convergence
+
+The subsequent installed `speckit-converge` assesses the present implementation
+in the pinned `specs/006-artifact-storage` directory, not a branch diff.
+Outcome: **converged**, with zero missing, partial, contradicting or unrequested
+findings and zero findings at any severity. The assessment covers all 25 FRs,
+eight buildable SCs, 23 story acceptance scenarios, 15 edge cases, eight Phase 1
+plan decisions, all 90 existing tasks and eight constitutional principles.
+Corrective chains are assessed by their resulting behavior, including
+T087/T088 failed-prefix ownership and cursor retirement, T089 bounded
+unselected-object cleanup and T090 exact-incarnation corruption quarantine.
+
+No convergence phase or task is appended. Spec, plan, tasks, contracts,
+checklists, product/test/tooling sources and lockfiles remain byte-for-byte
+unchanged. No custom checklist approval or implementation occurs, and no
+extension hooks exist.
+
+| Exact command / check | Result |
+| --- | --- |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/check-prerequisites.sh --json --require-spec --require-tasks --include-tasks` | Passed; exact pinned feature and all required artifacts |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/converge-t090-20261022` | Fresh default locked full qualification passed: 261 logical/crash checks, four measured-transfer proof checks, three architecture checks/eight actual graphs, original frozen marker, both unchanged 16-operation consumers, four actual size/provider measurements and all six owned SIGKILL/fresh-process barriers; exact 96 entries, 92 passes/four Object AS-41..44 exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | All 105 passed |
+| `artifact_evidence.verify_manifest(manifest, work, artifact_evidence.source_hash(root))` | Independent current-source full-manifest revalidation passed |
+| Artifact/task/checklist integrity and `git diff --check` | Passed; all 90 tasks remain checked, no feature artifact or source/lock change |
+
+Run `83c78659-2dc0-4564-93da-f74bdd2fc263` binds unchanged source
+`27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4`.
+Each measured child writes and reads actual paced non-seekable 256 MiB/4 GiB
+payloads. Incremental OS peak RSS is Local 2,244,608/17,924,096 bytes and Object
+2,129,920/18,661,376 bytes, all below 67,108,864 bytes.
+The exact B0/B1/B2/B3/D0/D1 kill/reopen proofs, three executed mutation pairs,
+29 altered-manifest rejections, formatting and build analyzers pass.
+Qualification remains limited to macOS 26.5 arm64, .NET 10.0.7/APFS,
+Local `Flush(true)` without directory fsync and process-local Object simulation.
+It is not production/F-07, remote-service, power-loss, Windows or HA certification.
+
+README and this guide record the assessment and next stage. Provider/test
+guides, examples, quickstart, feature design/evidence artifacts, baseline
+charter/product specification/architecture/diagrams/ADR, governance/backlog,
+compatibility, IaC and release guides are unaffected because no requirement,
+API, mechanism, dependency, command, supported environment or recovery/rollback
+procedure changes. Predecessor acceptance remains historical rather than
+newly rerun; only the full affected artifact suite and tooling regressions run
+for this assessment.
+
+Next separately invoked stage: **`finalize`**. Draft
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) carries this assessment.
+Clean convergence alone does not finalize the feature, authorize merge,
+unlock dependencies, publish a tag/release/package or deploy infrastructure.
 
 ## Releases and deployment
 
