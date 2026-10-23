@@ -9,7 +9,10 @@ opt-in fixture-tested lifecycle in Hosting. F-03 adds fixture-backed configurati
 owner-scoped local secrets and explicit synthetic conversion through that same
 lifecycle. F-04 adds opt-in protected discovery slices in Application and safe
 Hosting observations; F-05 adds separate BCL-only metadata operations with
-independent SQLite/memory qualification fixtures. Core remains empty. No caching engine,
+independent SQLite/memory qualification fixtures. F-06 adds separate BCL-only
+artifact operations with independent Local/ObjectSemantics qualification fixtures,
+shared reference/read/deletion authority and bounded recovery. These remain
+test-only, not production storage or F-07 certification. Core remains empty. No caching engine,
 production providers, curated executable, UI, product CI/CD,
 or deployment exists.
 Azure identity provisioning is a
@@ -4288,6 +4291,63 @@ Next separately invoked stage: **`finalize`**. Draft
 [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) carries this assessment.
 Clean convergence alone does not finalize the feature, authorize merge,
 unlock dependencies, publish a tag/release/package or deploy infrastructure.
+
+### F-06 finalization
+
+The separately invoked finalization stage resumes the recorded
+`feature/006-artifact-storage` branch and explicitly pinned
+`specs/006-artifact-storage` directory. All 90 tasks are complete and convergence
+is clean. The built-in 16/16 and reviewer-owned storage/recovery 40/40 approvals
+remain unchanged, without waivers. All 25 requirements, eight outcomes, 23 story
+scenarios, 15 edge cases and the exact 48-case matrix retain their proof mappings.
+
+The [implementation architecture reviews](../specs/006-artifact-storage/plan.md#final-fixture-qualification-and-handoff-2026-10-22)
+and [T087/T088](../specs/006-artifact-storage/plan.md#convergence-follow-up-implementation-2026-10-22),
+[T089](../specs/006-artifact-storage/plan.md#unpublished-object-cleanup-implementation-2026-10-22)
+and [T090 corrections](../specs/006-artifact-storage/plan.md#corruption-quarantine-implementation-2026-10-22)
+remain applicable. Reported findings were reproduced as runtime assertion reds
+and corrected; focused regressions and fresh full acceptance verify the fixes.
+The T090 reviewer was not rerun after correction. Finalization changes no
+implementation, contract or dependency boundary and does not add another review
+or imply blanket independent approval.
+
+| Exact command / check | Result |
+| --- | --- |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/check-prerequisites.sh --json --require-spec --require-tasks --include-tasks` | Passed; exact pinned feature and required artifacts |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/finalize-f06-20261022` | Fresh default locked full qualification passed: 261 logical/crash checks, four measured-transfer proof checks, three architecture checks/eight actual graphs, original frozen marker, both unchanged 16-operation consumers, four actual transfers and six owned SIGKILL/fresh-reopen barriers; exact 96 entries, 92 passes/four Object AS-41..44 exclusions |
+| `python3 -m unittest discover -s tests/tooling -v` | All 105 passed |
+| `artifact_evidence.verify_manifest(manifest, work, artifact_evidence.source_hash(root))` | Independent current-source full-manifest revalidation passed |
+| Task/checklist/source/lock integrity, affected local documentation links and `git diff --check` | Passed; all task bodies/markers, reviewer approvals, normative contracts, product/test/tooling sources and locks preserved |
+
+Run `49189bab-9010-4ec6-a825-2b4d2f2de31b` binds source
+`27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4`.
+The actual paced non-seekable 256 MiB/4 GiB write/read incremental OS peak RSS
+is Local 9,863,168/17,842,176 bytes and Object 2,195,456/18,366,464 bytes,
+all below 67,108,864 bytes. B0/B1/B2/B3/D0/D1 owned-child crash/reopen proof,
+three executed mutation pairs, 29 altered-manifest negatives, formatting and
+build analyzers pass. The environment remains macOS 26.5 arm64, .NET 10.0.7/APFS,
+Local `Flush(true)` without directory fsync and process-local Object simulation.
+No production/F-07, remote-service, power-loss/OS/device-failure, Windows/
+network-filesystem or HA qualification follows. Raw evidence remains outside Git.
+The five predecessor full gates remain historical, not newly rerun here.
+
+README, this guide and feature plan/task/quickstart status record the merge
+handoff. Provider/test guides, API/model/recovery/acceptance contracts, research
+and examples already describe the implemented interfaces, commands, limits and
+recovery procedures; no behavior changes require further edits. The normative
+specification, constitution and reviewer checklists remain unchanged. Baseline
+charter/product specification/architecture/diagrams/ADR, earlier features,
+governance/backlog, compatibility, release/cloud/UI/IaC guidance and permissions
+are unaffected: no new runtime, capability, dependency or operational procedure
+is introduced.
+
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) is ready for maintainer
+review and merge using the repository template. `finish --pr 16` records
+**`await_merge / ready`**, not completion or dependency eligibility. After the
+maintainer merges, a separate invocation must verify the merge and publish
+`v0.0.6-alpha` at its exact merge commit before recording completion. No merge,
+tag/release, package publication, infrastructure plan/apply, repository-setting
+change, cloud mutation or deployment runs in finalization.
 
 ## Releases and deployment
 

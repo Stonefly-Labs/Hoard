@@ -18,7 +18,10 @@ the [latest follow-up audit](plan.md#corruption-quarantine-implementation-2026-1
 The initial local-package hash blocker is resolved; dependency graphs/versions,
 external hashes and frozen historical inputs remain unchanged. These are
 test-only qualified fixtures, not a production cache/provider or F-07 claim.
-Convergence/finalization/merge/release are separate stages.
+Clean convergence and finalization are complete; PR #16 is ready for maintainer
+review and merge. Next separately invoked stage: `await_merge`; completion and
+dependency eligibility still require verified merge/release/checkpoint gates.
+See the [finalization evidence](plan.md#finalization-evidence).
 The reviewer-owned [storage](checklists/storage.md) and
 [recovery](checklists/recovery.md) checklists are now 20/20 each.
 [RQ-01](checklists/recovery.md#rq-01-finite-release-versus-non-cooperative-work)

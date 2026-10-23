@@ -75,7 +75,11 @@ Previously finalized receipts remain reconcilable without certifying health;
 unresolved corrupt publication cannot be finalized after an overlapping
 read detects corruption. Authorized delete/recreate uses a fresh incarnation.
 The [follow-up evidence](plan.md#corruption-quarantine-implementation-2026-10-22)
-supersedes earlier source qualification; fresh convergence is still required.
+supersedes earlier source qualification. Clean convergence and finalization
+are complete; [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) is ready
+for maintainer review and merge. See the [finalization evidence](plan.md#finalization-evidence).
+The next separately invoked stage is `await_merge`; no merge, source release,
+feature completion or dependency unlock is claimed by this quickstart.
 See the [approved hash refresh and locked replay](plan.md#approved-lock-refresh-and-locked-replay-2026-10-22).
 
 Read [API](contracts/artifact-api.md), [model](data-model.md),

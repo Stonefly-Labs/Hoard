@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "stage": "finalize",
+  "stage": "await_merge",
   "status": "ready",
   "branch": "feature/006-artifact-storage",
   "active": {
     "id": "F-06",
     "feature_directory": "specs/006-artifact-storage",
-    "pr": null
+    "pr": 16
   },
   "completed": [
     {
@@ -639,6 +639,13 @@
       "branch": "feature/006-artifact-storage",
       "at": "2026-10-23T01:54:48.615555+00:00",
       "evidence": "F-06 converge executed through installed speckit-converge with pinned specs/006-artifact-storage. Outcome converged: zero missing/partial/contradicts/unrequested findings at every severity across 25 FRs, eight buildable SCs, 23 acceptance scenarios, 15 edge cases, eight Phase 1 plan decisions, all 90 existing tasks and eight constitutional principles. Verified resulting T087..T090 behavior, including bounded failed-prefix/unselected-object cleanup, consumed cursor retirement, exact-incarnation quarantine and retained Local quarantine persistence. No new task/phase; all feature artifacts, reviewer-owned checklists, product/test/tooling sources and locks unchanged. Fresh HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/converge-t090-20261022 passed full default locked qualification: run 83c78659-2dc0-4564-93da-f74bdd2fc263, source 27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4, exact 96 entries/92 passes/four Object AS-41..44 exclusions; 261 logical/crash checks, four measured-transfer proof tests, three architecture checks/eight actual graphs, original marker and both unchanged 16-operation consumers, four actual 256MiB/4GiB measurements below 64MiB incremental OS peak RSS, six SIGKILL/fresh-process barriers, three executed mutation pairs/29 altered-manifest negatives, formatting/analyzers. Independent final-source full-manifest revalidation passed; python3 -m unittest discover -s tests/tooling -v passed 105 tests; artifact/template/local-document-target integrity and git diff --check passed. README/development synchronized; other guides/examples/design/architecture/governance/IaC/release documents unaffected because requirements, API, mechanisms, graph, commands, support and recovery behavior unchanged. No hooks or implementation; predecessor gates historical. Draft PR #16 retained; next stage finalize separately, not feature completion, merge, dependency unlock or release."
+    },
+    {
+      "stage": "finalize",
+      "spec_id": "F-06",
+      "branch": "feature/006-artifact-storage",
+      "at": "2026-10-23T02:01:05.124105+00:00",
+      "evidence": "F-06 finalization: all 90 tasks complete; clean convergence; unchanged 16/16 built-in and 40/40 reviewer-owned approvals; existing architecture findings have runtime red/green corrections. Fresh full locked run 49189bab-9010-4ec6-a825-2b4d2f2de31b binds source 27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4: 261 logical/crash checks, four transfer-proof tests, three architecture tests/eight graphs, both consumers/original marker, four real transfers, six owned SIGKILL/reopens, 92 passes/four explicit Object exclusions, three mutation pairs and 29 altered-manifest negatives. All 105 tooling tests, independent manifest/source revalidation, 340 local documentation links/anchors, PR-template structure and git diff --check pass. README/development/plan/tasks/quickstart updated; normative contracts, checklists, sources and locks unchanged. PR 16 targets main; no merge, release, production/F-07 claim or infrastructure action."
     }
   ]
 }

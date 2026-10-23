@@ -752,7 +752,7 @@ runtime binaries or packages are published. See the
 [merge/release evidence](docs/DEVELOPMENT.md#f-05-merge-completion-and-alpha-source-release).
 [Completion-checkpoint PR #15](https://github.com/Stonefly-Labs/Hoard/pull/15)
 merged into `main`, recording F-05 complete with release metadata.
-**F-06 clean convergence is complete; finalization is next.**
+**F-06 finalization is complete; maintainer merge is next.**
 The additive BCL-only storage contracts have independent Local and simulated
 ObjectSemantics fixtures for verified streaming/publication, protected reads,
 exact-ticket reconciliation, bounded recovery and reference-safe deletion.
@@ -865,8 +865,19 @@ remain unchanged. Fresh default locked full qualification again passes 261
 logical/crash checks, all transfer/crash/package proofs and the exact
 92-pass/four-exclusion matrix. See the
 [clean convergence checkpoint](docs/DEVELOPMENT.md#f-06-clean-convergence).
-The next separately invoked stage is **`finalize`**. PR #16 remains draft;
-convergence is not finalization, merge readiness, feature completion or release.
+That checkpoint scheduled **`finalize`** and kept PR #16 draft;
+convergence alone did not establish merge readiness or feature completion.
+
+The subsequent finalization verifies all 90 completed tasks, unchanged reviewer
+approvals and corrected architecture findings, and repeats full locked artifact
+qualification and tooling regressions. README, development guidance and feature
+status now record the [finalization evidence](docs/DEVELOPMENT.md#f-06-finalization).
+[PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16) is ready for maintainer
+review and merge. The next separately invoked stage is **`await_merge`**;
+F-06 remains incomplete and dependent work remains blocked until the merge,
+authorized alpha source release and completion checkpoint are verified.
+No merge, tag/release, package publication, infrastructure action or deployment
+runs in finalization.
 
 The separately invoked **`specify`** stage creates the
 [F-06 artifact blob storage provider contract](specs/006-artifact-storage/spec.md)

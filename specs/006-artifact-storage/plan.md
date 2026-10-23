@@ -9,7 +9,10 @@ T087/T088/T089/T090, are verified with fresh default locked
 test-fixture qualification: 96 entries, 92 passes/four Object AS-41..44 exclusions.
 The [latest follow-up evidence](#corruption-quarantine-implementation-2026-10-22)
 supersedes earlier partial checkpoints below; those remain chronological history.
-Convergence/finalization/merge are separate stages. No production/F-07 claim.
+Clean convergence and finalization are complete; PR #16 is ready for maintainer
+review and merge. Next separately invoked stage: `await_merge`, not feature
+completion or dependency eligibility. See the [finalization evidence](#finalization-evidence).
+No production/F-07 claim.
 
 ## Summary
 
@@ -1353,3 +1356,37 @@ simulation. No production/F-07, remote-service, Windows/network-filesystem, HA,
 power-loss/OS/device-failure claim follows. PR #16 remains draft. Next:
 separately invoked fresh `converge`; no finalization, merge, feature completion,
 release, package publication, infrastructure action or dependency unlock.
+
+## Finalization evidence
+
+The separate finalization verifies all 90 completed tasks, unchanged 16/16
+built-in and 40/40 reviewer-owned checklist approvals, clean convergence and
+the architecture-review correction evidence above. No requirement, API, task
+body/marker, checklist approval, implementation, test, tooling source or lock
+changes. Existing reviews remain applicable; their corrections have runtime
+red/green proof and fresh full qualification, not a claim of repeated reviewer
+approval.
+
+| Exact command / check | Result |
+| --- | --- |
+| `SPECIFY_FEATURE_DIRECTORY=specs/006-artifact-storage .specify/scripts/bash/check-prerequisites.sh --json --require-spec --require-tasks --include-tasks` | Passed; exact pinned feature |
+| `HOARD_ARTIFACT_RETAINED_BASELINE=../hoard-artifact-evidence/pre-f06-20261022 bash scripts/validate-artifacts.sh --evidence ../hoard-artifact-evidence/finalize-f06-20261022` | Passed fresh full locked qualification: 261 logical/crash tests, four transfer-proof tests, three architecture tests/eight actual graphs, both consumers, original marker, four measured transfers, six actual crash/reopen barriers and exact 92-pass/four-exclusion matrix |
+| `python3 -m unittest discover -s tests/tooling -v` | All 105 passed |
+| `artifact_evidence.verify_manifest(manifest, work, artifact_evidence.source_hash(root))` | Independent current-source manifest verification passed |
+| Task/checklist/source/lock integrity, affected local documentation links and `git diff --check` | Passed |
+
+Run `49189bab-9010-4ec6-a825-2b4d2f2de31b` binds unchanged source
+`27fada08e37c9fe21949ce5579151e01a1cdafd676b18ae3415fa3950bfd37a4`.
+The full command repeats formatting/analyzers, three executed mutation pairs
+and 29 altered-manifest negatives. Raw evidence remains outside Git. Qualification
+retains the platform, durability and simulation limits above; predecessor gates
+remain historical rather than newly rerun.
+
+README, development guidance and plan/task/quickstart status are synchronized;
+the [development handoff](../../docs/DEVELOPMENT.md#f-06-finalization) records
+measured memory and unaffected-document reasons. [PR #16](https://github.com/Stonefly-Labs/Hoard/pull/16)
+is ready for maintainer review and merge. `finish --pr 16` records
+`await_merge / ready`; F-06 remains incomplete and dependent work stays blocked.
+A later invocation must verify merge and publish `v0.0.6-alpha` at the exact
+feature merge commit before recording completion. No merge, tag/release,
+package publication, infrastructure action or deployment runs here.
