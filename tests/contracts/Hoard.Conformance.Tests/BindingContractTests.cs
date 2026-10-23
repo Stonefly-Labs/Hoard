@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using Hoard.Abstractions.Metadata;
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Catalog;
 using Hoard.Testing.Conformance.Diagnostics;
@@ -88,6 +89,25 @@ public sealed class BindingContractTests
             ConformanceFault.Capacity, "capacity", -1, ConformanceOwnershipState.Active));
         Assert.Throws<ArgumentException>(() => new ConformanceFaultObservation(
             ConformanceFault.Capacity, "capacity", 0, (ConformanceOwnershipState)int.MaxValue));
+    }
+
+    [Fact]
+    public void Corruption_requests_reject_missing_subjects_and_unknown_faults_at_admission()
+    {
+        var selector = new MetadataSelector.Registry(default!);
+        var ticket = new MetadataOperationTicket(default!, default!, default!, default!);
+        Action[] invalid =
+        [
+            () => _ = new MetadataCorruptionRequest.Record(null!, MetadataRecordCorruption.NullLabel),
+            () => _ = new MetadataCorruptionRequest.Record(selector, (MetadataRecordCorruption)int.MaxValue),
+            () => _ = new MetadataCorruptionRequest.Operation(null!, MetadataOperationCorruption.NullTarget, ticket),
+            () => _ = new MetadataCorruptionRequest.Operation(ticket, (MetadataOperationCorruption)int.MaxValue, ticket),
+            () => _ = new MetadataCorruptionRequest.Operation(ticket, MetadataOperationCorruption.MismatchedTicket, null!)
+        ];
+        foreach (var create in invalid)
+        {
+            Assert.Equal("BindingInvalid", Assert.Throws<ArgumentException>(create).Message);
+        }
     }
 
     [Fact]

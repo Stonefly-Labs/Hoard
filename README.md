@@ -1056,6 +1056,9 @@ completes the remaining foundations or grants provider qualification.
 
 The SDK also supplies a bounded safe fault-observation buffer with immutable
 snapshots; observations are setup evidence, never provider-selected pass results.
+T007's typed contracts and strict entities are complete; category adapters,
+runtime attribution, independent evaluation and the remaining foundations are
+not.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

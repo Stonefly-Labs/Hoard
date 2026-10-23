@@ -4812,6 +4812,16 @@ uses its requested runtime rather than a newer runner patch. This is scoped to
 restore/build/pack, not test-runtime selection; missing requested runtime fails
 explicitly. Historical locks are not rebound. Native confirmation is pending.
 
+The next native run produced the same differing assembly hashes, so runtime
+roll-forward alone does not explain the cross-platform baseline mismatch.
+Historical source and locks remain unmodified; the SDK/logger cases have not
+executed on Linux yet.
+
+T007 is complete after typed corruption requests were shown to accept missing
+subjects/unknown enum values, then repaired at admission. The full source SDK
+now passes 42 tests. These contracts and strict evidence entities are not the
+remaining category adapters, runtime-provider attribution or final evaluator.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

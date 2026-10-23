@@ -101,10 +101,21 @@ public abstract record MetadataCorruptionRequest
 {
     private MetadataCorruptionRequest() { }
     public sealed record Record(
-        MetadataSelector Selector, MetadataRecordCorruption Corruption) : MetadataCorruptionRequest;
+        MetadataSelector Selector, MetadataRecordCorruption Corruption) : MetadataCorruptionRequest
+    {
+        public MetadataSelector Selector { get; } = Selector ?? throw new ArgumentException("BindingInvalid");
+        public MetadataRecordCorruption Corruption { get; } = Enum.IsDefined(Corruption)
+            ? Corruption : throw new ArgumentException("BindingInvalid");
+    }
     public sealed record Operation(
         MetadataOperationTicket Ticket, MetadataOperationCorruption Corruption,
-        MetadataOperationTicket ForeignTicket) : MetadataCorruptionRequest;
+        MetadataOperationTicket ForeignTicket) : MetadataCorruptionRequest
+    {
+        public MetadataOperationTicket Ticket { get; } = Ticket ?? throw new ArgumentException("BindingInvalid");
+        public MetadataOperationCorruption Corruption { get; } = Enum.IsDefined(Corruption)
+            ? Corruption : throw new ArgumentException("BindingInvalid");
+        public MetadataOperationTicket ForeignTicket { get; } = ForeignTicket ?? throw new ArgumentException("BindingInvalid");
+    }
 }
 
 public interface IMetadataCorruptionScope : IAsyncDisposable
