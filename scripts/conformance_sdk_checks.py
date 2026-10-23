@@ -23,7 +23,7 @@ import conformance_baselines as baselines
 import conformance_evidence as evidence
 from conformance_case_catalog import catalog_admission_witnesses
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
-from conformance_lock_preparation import rebind_local_archives
+from conformance_lock_preparation import prepare_project_lock, rebind_local_archives, verify_project_lock
 from foundation_evidence import canonicalize_acceptance_archive
 
 
@@ -95,39 +95,16 @@ def read_bounded(path, limit):
 
 
 def snapshot(repository, run):
-    code, raw = capture_control(["git", "ls-files", "-z"], cwd=repository)
-    if code:
-        raise evidence.ConformanceError("InputChanged")
-    target = run.root / "stores/candidate"
-    target.mkdir(mode=0o700)
-    hashes = {}
-    total = 0
-    names = raw.decode("utf-8").split("\0")
-    if len(names) > 50_000:
-        raise evidence.ConformanceError("OutputLimitExceeded")
-    for name in filter(None, names):
-        evidence.relative_path(name)
-        source = repository / name
-        no_symlinks(source)
-        if not source.is_file():
-            raise evidence.ConformanceError("InputChanged")
-        size = source.stat().st_size
-        total += size
-        if total > 256 * 1024 * 1024:
-            raise evidence.ConformanceError("OutputLimitExceeded")
-        destination = target / name
-        destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-        shutil.copyfile(source, destination)
-        hashes[name] = evidence.file_sha256(destination)
-        if evidence.file_sha256(source) != hashes[name]:
-            raise evidence.ConformanceError("InputChanged")
+    target, hashes = evidence.snapshot_sources(repository, run)
     if "Hoard.slnx" not in hashes:
         raise evidence.ConformanceError("PrerequisiteMissing")
     return target, hashes
 
 
-def build(run, project, config, cache_id, *, feed=None):
+def build(run, project, config, cache_id, *, feed=None, lock=None):
     common = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet"]
+    if lock is not None:
+        common.append("-p:NuGetLockFilePath=" + str(lock))
     for args in (
         ["dotnet", "restore", str(project), "--locked-mode", "--configfile", str(config), *common],
         ["dotnet", "build", str(project), "-c", "Release", "--no-restore", *common],
@@ -141,13 +118,13 @@ def build(run, project, config, cache_id, *, feed=None):
         canonicalize_acceptance_archive(feed / f"{project.stem}.0.1.0.nupkg")
 
 
-def replay_lock(path, feed):
-    """Rebind only local archive hashes; preserve the checked-in dependency graph."""
-    prepared, packages, _ = rebind_local_archives(read_bounded(path, 2 * 1024 * 1024), feed)
+def prepare_smoke_lock(project, candidate, feed):
+    _, packages, _ = rebind_local_archives(
+        read_bounded(project.parent / "packages.lock.json", 2 * 1024 * 1024), feed)
     if set(packages) != {f"{name}.0.1.0.nupkg" for name in
                          ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger")}:
         raise evidence.ConformanceError("InputChanged")
-    path.write_bytes(prepared)
+    return prepare_project_lock(project, candidate, feed, "candidate")
 
 
 def package_inputs(feed):
@@ -219,9 +196,9 @@ def probe(path):
     write_new(path, evidence.canonical_bytes(value))
 
 
-def make_inputs(run, candidate, sources, packages, prepared, observed_environment, revision):
+def make_inputs(run, candidate, sources, packages, prepared, observed_environment, identity):
     locks = {path.relative_to(candidate).as_posix(): evidence.file_sha256(path)
-             for path in candidate.rglob("packages.lock.json")}
+             for path in candidate.rglob("*packages.lock.json")}
     runtime = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path)
                for folder in (candidate / TESTS / "bin/Release/net10.0",
                               candidate / LOGGER / "Smoke/bin/Release/net10.0")
@@ -239,8 +216,7 @@ def make_inputs(run, candidate, sources, packages, prepared, observed_environmen
         "profileId": "harness", "mode": "diagnostic", "catalogRevision": evidence.CATALOG_REVISION,
         "catalogSha256": sources[f"{SDK}/Catalog/catalog.json"],
         "sdkSha256": evidence.digest({key: value for key, value in sources.items() if key.startswith(SDK + "/")}),
-        "sourceRevision": revision,
-        "sourceState": "clean-ci" if os.environ.get("GITHUB_ACTIONS") == "true" else "clean-local",
+        "sourceRevision": identity["sourceRevision"], "sourceState": identity["sourceState"],
         "sourceManifest": sources, "sourceManifestSha256": evidence.digest(sources),
         "packages": packages, "locks": locks, "configurationSha256": evidence.digest(CONFIGURATION_POLICY),
         "capabilitySha256": evidence.digest({"qualification": False, "scope": "sdk-logger-diagnostic"}),
@@ -350,6 +326,10 @@ def execute(repository, destination):
         seal = baselines.prepare(repository, run, prepare_local_archives=True)
         seal_sha = evidence.file_sha256(seal)
         prepared = baselines.verify_prepared_baselines(run.root, seal_sha)
+        ci_revision = os.environ.get("GITHUB_SHA") if os.environ.get("GITHUB_ACTIONS") == "true" else None
+        if os.environ.get("GITHUB_ACTIONS") == "true" and ci_revision is None:
+            raise evidence.ConformanceError("InputChanged")
+        identity = evidence.source_identity(repository, ci_revision=ci_revision)
         candidate, sources = snapshot(repository, run)
         config, feed = baselines._config(run, "candidate")
         print(json.dumps({"qualification": False, "phase": "candidate-build"}), flush=True)
@@ -361,22 +341,25 @@ def execute(repository, destination):
         build(run, candidate / TESTS / "Hoard.Conformance.Tests.csproj", config, "candidate-build")
         smoke_lock = candidate / LOGGER / "Smoke/packages.lock.json"
         source_lock_sha = evidence.file_sha256(smoke_lock)
-        replay_lock(smoke_lock, feed)
+        smoke_project = candidate / LOGGER / "Smoke/Smoke.csproj"
+        alternate, lock_record = prepare_smoke_lock(smoke_project, candidate, feed)
+        replayed_lock = alternate if alternate is not None else smoke_lock
+        if lock_record is not None:
+            verify_project_lock(lock_record, candidate, feed)
+            write_new(run.root / "proofs/smoke-lock-derivation.json", evidence.canonical_bytes(lock_record))
         lock_preparation = {
             "qualification": False, "mode": "preparation",
             "sourceLockSha256": source_lock_sha,
-            "preparedLockSha256": evidence.file_sha256(smoke_lock),
+            "preparedLockSha256": evidence.file_sha256(replayed_lock),
         }
         write_new(run.root / "proofs/smoke-lock-preparation.json",
                   evidence.canonical_bytes(lock_preparation))
         print(json.dumps({"qualification": False, "phase": "locked-replay"}), flush=True)
-        build(run, candidate / LOGGER / "Smoke/Smoke.csproj", config, "smoke-locked-replay")
-        code, revision = capture_control(["git", "rev-parse", "HEAD"], cwd=repository)
-        status, dirty = capture_control(["git", "status", "--porcelain"], cwd=repository)
-        if code or status or dirty or not re.fullmatch(rb"[0-9a-f]{40}\n", revision):
+        build(run, smoke_project, config, "smoke-locked-replay", lock=alternate)
+        if evidence.source_identity(repository, ci_revision=ci_revision) != identity:
             raise evidence.ConformanceError("InputChanged")
         inputs = make_inputs(run, candidate, sources, package_inputs(feed), prepared,
-                             environment(run), revision.decode().strip())
+                             environment(run), identity)
         for name in sources:
             (candidate / name).chmod(0o400)
         for name in inputs["runtimeAssemblies"]:
@@ -394,13 +377,13 @@ def execute(repository, destination):
                               "completedScenarios": len(observations)}), flush=True)
             observations.append(test_attempt(run, inputs, candidate, scenario))
         baselines.verify_prepared_baselines(run.root, seal_sha)
-        # Source locks are copied before local archive hash rebinding, not silently redefined.
-        if any(evidence.file_sha256(repository / name) != sha for name, sha in sources.items()):
+        if (evidence.source_manifest(repository) != sources
+                or evidence.source_identity(repository, ci_revision=ci_revision) != identity):
             raise evidence.ConformanceError("InputChanged")
-        replayed_lock = f"{LOGGER}/Smoke/packages.lock.json"
-        if (any(evidence.file_sha256(candidate / name) != sha for name, sha in sources.items()
-                if name != replayed_lock)
-                or any(evidence.file_sha256(candidate / name) != sha for name, sha in inputs["locks"].items())
+        evidence.verify_snapshot(candidate, sources)
+        if lock_record is not None:
+            verify_project_lock(lock_record, candidate, feed)
+        if (any(evidence.file_sha256(candidate / name) != sha for name, sha in inputs["locks"].items())
                 or any(evidence.file_sha256(run.root / name) != sha
                        for name, sha in inputs["runtimeAssemblies"].items())
                 or evidence.digest(package_inputs(feed)) != evidence.digest(inputs["packages"])):

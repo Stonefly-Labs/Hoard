@@ -51,9 +51,9 @@ def control_timeout(deadline):
     return remaining
 
 
-def capture_control(args, *, limit=TRANSIENT_BYTES, timeout=5, cwd=None):
+def capture_control(args, *, limit=TRANSIENT_BYTES, timeout=5, cwd=None, env=None):
     """Bounded transient data from fixed host tools; never diagnostic storage."""
-    child = subprocess.Popen(args, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+    child = subprocess.Popen(args, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
     output = bytearray()
     deadline = time.monotonic() + timeout
     work_deadline = deadline - min(1, timeout / 5)

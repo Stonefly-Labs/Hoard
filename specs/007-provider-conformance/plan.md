@@ -314,6 +314,35 @@ supervisor scope. This is not full 55-test native SDK/package coverage, executed
 QC control coverage or completed profile orchestration. T013/T014 and later
 tasks retain those input/provenance/integration obligations.
 
+### T013 immutable source-snapshot increment
+
+Five intended failures reproduced aliased source/snapshot roots, a source
+ancestor changed after inspection, an unlisted FIFO, and snapshot creation
+following a replaced owned root into an outside directory. Source/root/parent
+descriptors now anchor bounded hashing/copying and exact post-copy traversal;
+no outside directory is modified. Files are read-only before candidate
+compilation; generated outputs are excluded only from source comparison, not
+silently substituted for admitted runtime inputs. Timeout/overflow retain
+their safe incomplete classifications.
+
+Real Git observations now label clean-local, dirty-local and exact clean-CI
+source identity. Ambient Git overrides cannot redirect scope; index
+assume-unchanged/skip-worktree flags cannot produce a clean CI claim.
+CI identity must equal the actual workflow `GITHUB_SHA`, including PR merge-ref
+checkout rather than just a branch-head label. Example/build/ignore sources
+are included. The SDK diagnostic reuses this path and checks source/identity
+again after runtime execution. Its original source smoke lock is immutable;
+the existing graph-preserving helper prepares a separate alternate lock for
+independent explicit locked replay and verifies its derivation afterwards.
+
+All 196 tooling checks pass with ten native skips; the conformance subset has
+91 cases. A focused actual-checkout probe copied and exactly verified 703
+read-only scoped files in 395 ms, labelled actual dirty-local inputs and
+settled its synthetic resources without provider execution. This is not
+qualification. Native execution of the changed SDK snapshot/alternate-lock
+path is pending. T013 remains unchecked until complete package, lock,
+configuration, capability, runtime and environment capture/sealing pass.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

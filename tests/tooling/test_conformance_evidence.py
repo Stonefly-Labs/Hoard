@@ -519,6 +519,129 @@ class ConformanceInputTests(unittest.TestCase):
         (self.repo / "src").mkdir()
         (self.repo / "src/check.cs").write_text("immutable source")
 
+    def test_source_admission_rejects_symlinked_roots_and_changed_ancestors(self):
+        self.assertEqual(set(evidence.source_manifest(self.repo)), {"src/check.cs"})
+        linked = self.parent / "linked"
+        linked.symlink_to(self.repo, target_is_directory=True)
+        with self.subTest(defect="root-link"), \
+                self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            evidence.source_manifest(linked)
+        outside = self.parent / "outside"
+        outside.mkdir()
+        (outside / "check.cs").write_text("outside canary")
+        original = os.stat
+        swapped = []
+        def changed_ancestor(path, *args, **kwargs):
+            observed = original(path, *args, **kwargs)
+            if Path(path).name == "check.cs" and not swapped:
+                (self.repo / "src").rename(self.repo / "original")
+                (self.repo / "src").symlink_to(outside, target_is_directory=True)
+                swapped.append(True)
+            return observed
+        with self.subTest(defect="changed-ancestor"), \
+                mock.patch.object(os, "stat", side_effect=changed_ancestor), \
+                self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            evidence.source_manifest(self.repo)
+        self.assertEqual(swapped, [True])
+
+    def test_snapshot_verification_rejects_borrowed_roots_and_unlisted_special_files(self):
+        snapshot = self.parent / "snapshot"
+        snapshot.mkdir()
+        (snapshot / "check.cs").write_text("immutable source")
+        manifest = {"check.cs": evidence.file_sha256(snapshot / "check.cs")}
+        evidence.verify_snapshot(snapshot, manifest)
+        linked = self.parent / "linked"
+        linked.symlink_to(snapshot, target_is_directory=True)
+        with self.subTest(defect="root-link"), \
+                self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            evidence.verify_snapshot(linked, manifest)
+        os.mkfifo(snapshot / "unlisted.cs")
+        with self.subTest(defect="special-file"), \
+                self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            evidence.verify_snapshot(snapshot, manifest)
+
+    def test_snapshot_creation_cannot_follow_a_replaced_owned_root(self):
+        from conformance_execution import OwnedRun
+        run = OwnedRun.allocate(self.parent / "run", self.repo, profile="harness")
+        outside = self.parent / "outside"
+        outside.mkdir(mode=0o700)
+        (outside / "snapshot").mkdir(mode=0o700)
+        mkdir = os.mkdir
+        swapped = []
+        def substituted_root(path, *args, **kwargs):
+            result = mkdir(path, *args, **kwargs)
+            if Path(path).name == "snapshot" and not swapped:
+                run.root.rename(self.parent / "moved")
+                run.root.symlink_to(outside, target_is_directory=True)
+                swapped.append(True)
+            return result
+        with mock.patch.object(os, "mkdir", side_effect=substituted_root), \
+                self.assertRaises(evidence.ConformanceError):
+            evidence.snapshot_sources(self.repo, run)
+        self.assertEqual(swapped, [True])
+        self.assertFalse(any((outside / "snapshot").iterdir()))
+
+    def test_source_identity_labels_real_dirty_bytes_and_requires_the_exact_clean_ci_revision(self):
+        subprocess.run(["git", "checkout", "--quiet", "-b", "test/conformance-inputs"],
+                       cwd=self.repo, check=True)
+        subprocess.run(["git", "add", "src/check.cs"], cwd=self.repo, check=True)
+        subprocess.run(
+            ["git", "-c", "user.name=Conformance fixture", "-c", "user.email=fixture@example.invalid",
+             "-c", "commit.gpgsign=false", "-c", "core.hooksPath=/dev/null",
+             "commit", "--quiet", "-m", "Create synthetic input fixture"],
+            cwd=self.repo, check=True)
+        revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=self.repo).decode().strip()
+        clean = evidence.source_identity(self.repo)
+        self.assertEqual(dict(clean), {"sourceRevision": revision, "sourceState": "clean-local"})
+        self.assertEqual(evidence.source_identity(self.repo, ci_revision=revision)["sourceState"], "clean-ci")
+        outside = self.parent / "ambient-git"
+        outside.mkdir()
+        with mock.patch.dict(os.environ, {"GIT_WORK_TREE": str(outside),
+                                          "GIT_INDEX_FILE": str(outside / "foreign-index"),
+                                          "GIT_DIR": str(outside / "foreign-git")}):
+            self.assertEqual(dict(evidence.source_identity(self.repo)), dict(clean))
+            self.assertEqual(set(evidence.source_manifest(self.repo)), {"src/check.cs"})
+        self.assertFalse(any(outside.iterdir()))
+        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            evidence.source_identity(self.repo, ci_revision="f" * 40)
+        with self.assertRaises(TypeError):
+            clean["sourceState"] = "dirty-local"
+        for name in ("src/check.cs", "src/extra.cs"):
+            with self.subTest(input=name):
+                path = self.repo / name
+                original = path.read_bytes() if path.exists() else None
+                path.write_bytes(b"changed source")
+                self.assertEqual(evidence.source_identity(self.repo)["sourceState"], "dirty-local")
+                with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                    evidence.source_identity(self.repo, ci_revision=revision)
+                if original is None:
+                    path.unlink()
+                else:
+                    path.write_bytes(original)
+        self.assertEqual(evidence.source_identity(self.repo)["sourceState"], "clean-local")
+        for flag in ("assume-unchanged", "skip-worktree"):
+            with self.subTest(indexFlag=flag):
+                subprocess.run(["git", "update-index", "--" + flag, "src/check.cs"],
+                               cwd=self.repo, check=True)
+                try:
+                    (self.repo / "src/check.cs").write_text("hidden dirty bytes")
+                    self.assertEqual(evidence.source_identity(self.repo)["sourceState"], "dirty-local")
+                    with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                        evidence.source_identity(self.repo, ci_revision=revision)
+                finally:
+                    (self.repo / "src/check.cs").write_text("immutable source")
+                    subprocess.run(["git", "update-index", "--no-" + flag, "src/check.cs"],
+                                   cwd=self.repo, check=True)
+
+    def test_source_limits_preserve_incomplete_codes_instead_of_relabelling_input_mutation(self):
+        with mock.patch.object(evidence, "MAX_PROOF_BYTES", 1), \
+                self.assertRaisesRegex(evidence.ConformanceError, "OutputLimitExceeded"):
+            evidence.source_manifest(self.repo)
+        with mock.patch("conformance_execution.capture_control",
+                        side_effect=evidence.ConformanceError("DeadlineExceeded")), \
+                self.assertRaisesRegex(evidence.ConformanceError, "DeadlineExceeded"):
+            evidence.source_manifest(self.repo)
+
     def test_proof_roots_and_ancestors_cannot_borrow_a_symlinked_tree(self):
         actual = self.parent / "actual-proofs"
         actual.mkdir()

@@ -5015,6 +5015,35 @@ controls executed. Complete immutable input snapshots, actual loaded-provider
 attribution and full profile orchestration remain separate T013/T014 and later
 obligations.
 
+T013 now has descriptor-relative source hashing and copying with bounded reads,
+aggregate bytes, file count, depth and monotonic time. Root/ancestor aliases,
+replacement during creation and unlisted special files reject; post-copy
+verification checks exact source equality while excluding generated
+`bin`/`obj`/`__pycache__` outputs. Timeout/overflow keep their incomplete codes,
+not an invented input-mutation diagnosis. Snapshots include example projects
+and build/ignore policy alongside runtime sources, tests, scripts and workflows.
+Copied source files are read-only before candidate compilation.
+
+Real Git observations produce immutable `sourceRevision`/`sourceState`.
+Ambient Git-directory/index/worktree overrides and global configuration cannot
+redirect these observations. Assumed-unchanged/skip-worktree index entries
+cannot certify clean CI input. CI requires a clean checkout at exactly
+`GITHUB_SHA`, including the actual PR merge-ref checkout rather than silently
+substituting its branch-head label; local dirty bytes are explicitly labelled.
+The SDK diagnostic now uses this shared snapshot/identity path and verifies it
+again after execution, including added files and source-revision changes.
+
+Smoke archive preparation reuses the sealed graph-preserving alternate-lock
+helper; the original copied source lock remains read-only and unchanged.
+Independent restore/build receives the explicit alternate
+`NuGetLockFilePath`, and its derivation/bytes are verified again afterwards.
+Immutable source copies are retained input material, not sanitized diagnostic
+uploads. A focused actual-checkout probe copied and verified all 703 scoped
+files with read-only modes and settled its synthetic resources in 395 ms;
+this is diagnostic evidence only. All 196 tooling checks pass with ten native
+skips. Native confirmation of this increment and complete T013
+package/configuration/capability/environment sealing remain pending.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

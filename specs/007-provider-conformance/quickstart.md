@@ -48,6 +48,14 @@ without skips and eight SDK diagnostic scenarios/25 observations in run
 `39924374116` at `79663dd`. This completes T008/T012's foundation scope, not
 full SDK/package/profile acceptance.
 
+Current source snapshots include runtime/example projects, tests, scripts,
+workflows and build/ignore settings. Sources are copied read-only through pinned
+descriptors; aliases, changed ancestors and unlisted special files reject.
+Local diagnostics label dirty inputs explicitly; CI requires clean Git state
+and the exact workflow checkout SHA. SDK smoke preparation uses an alternate
+lock rather than modifying a frozen source lock. Native confirmation of this
+new shared snapshot path and complete T013 input sealing remain pending.
+
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be
 sanitized; raw child text is transient bounded input, never a saved log/TRX.

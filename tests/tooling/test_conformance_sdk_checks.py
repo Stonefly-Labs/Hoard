@@ -4,6 +4,7 @@ import io
 import json
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 import tempfile
 from types import SimpleNamespace
@@ -95,24 +96,30 @@ class SdkDiagnosticTests(unittest.TestCase):
                          {"qualification": False, "phase": "baseline-preparation"})
 
     def test_snapshot_preserves_solution_ancestry_but_rejects_symlinks(self):
-        repository = self.directory / "repository"
-        repository.mkdir()
-        (repository / "Hoard.slnx").write_text("<Solution/>")
-        (repository / "file.cs").write_text("source")
-        run = SimpleNamespace(root=self.directory / "run")
-        (run.root / "stores").mkdir(parents=True)
-        with patch.object(checks, "capture_control", return_value=(0, b"Hoard.slnx\0file.cs\0")):
+        with tempfile.TemporaryDirectory(prefix="hoard-sdk-snapshot-") as temporary:
+            parent = Path(temporary).resolve()
+            parent.chmod(0o700)
+            repository = parent / "repository"
+            repository.mkdir()
+            subprocess.run(["git", "init", "--quiet", str(repository)], check=True)
+            (repository / "Hoard.slnx").write_text("<Solution/>")
+            (repository / "src").mkdir()
+            (repository / "src/file.cs").write_text("source")
+            run = checks.OwnedRun.allocate(parent / "run", repository, profile="harness")
             candidate, sources = checks.snapshot(repository, run)
-        self.assertEqual((candidate / "Hoard.slnx").read_bytes(), (repository / "Hoard.slnx").read_bytes())
-        self.assertEqual(sources["file.cs"], hashlib.sha256(b"source").hexdigest())
-        (repository / "linked.cs").symlink_to(repository / "file.cs")
-        second = SimpleNamespace(root=self.directory / "second")
-        (second.root / "stores").mkdir(parents=True)
-        with patch.object(checks, "capture_control", return_value=(0, b"Hoard.slnx\0linked.cs\0")):
-            with self.assertRaisesRegex(checks.evidence.ConformanceError, "OwnershipInvalid"):
+            self.assertEqual((candidate / "Hoard.slnx").read_bytes(), (repository / "Hoard.slnx").read_bytes())
+            self.assertEqual(sources["src/file.cs"], hashlib.sha256(b"source").hexdigest())
+            self.assertEqual((candidate / "src/file.cs").stat().st_mode & 0o222, 0)
+            run.transition("Settling")
+            run.release()
+            (repository / "src/linked.cs").symlink_to(repository / "src/file.cs")
+            second = checks.OwnedRun.allocate(parent / "second", repository, profile="harness")
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
                 checks.snapshot(repository, second)
+            second.transition("Settling")
+            second.release()
 
-    def test_package_lock_replay_changes_only_three_local_archive_hashes(self):
+    def test_package_lock_preparation_preserves_source_and_rebinds_only_three_local_archives(self):
         feed = self.directory / "feed"
         feed.mkdir()
         dependencies = {"xunit": {"resolved": "2.9.3", "contentHash": "unchanged"}}
@@ -122,8 +129,13 @@ class SdkDiagnosticTests(unittest.TestCase):
         original = {"version": 2, "dependencies": {"net10.0": dependencies}}
         lock = self.directory / "packages.lock.json"
         lock.write_text(json.dumps(original))
-        checks.replay_lock(lock, feed)
-        replayed = json.loads(lock.read_bytes())
+        project = self.directory / "Smoke.csproj"
+        project.write_text("<Project/>")
+        alternate, record = checks.prepare_smoke_lock(project, self.directory, feed)
+        self.assertEqual(json.loads(lock.read_bytes()), original)
+        self.assertFalse(record["qualification"])
+        checks.verify_project_lock(record, self.directory, feed)
+        replayed = json.loads(alternate.read_bytes())
         for name, dependency in replayed["dependencies"]["net10.0"].items():
             if name.startswith("Hoard."):
                 self.assertNotEqual(dependency["contentHash"], "old")
@@ -131,7 +143,18 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(replayed, original)
         (feed / "Hoard.Conformance.TestLogger.0.1.0.nupkg").unlink()
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "PrerequisiteMissing"):
-            checks.replay_lock(lock, feed)
+            checks.prepare_smoke_lock(project, self.directory, feed)
+
+    def test_smoke_locked_replay_uses_the_explicit_prepared_lock_for_restore_and_build(self):
+        received = []
+        project = self.directory / "Smoke.csproj"
+        lock = self.directory / "obj/F07.preparation.packages.lock.json"
+        with patch.object(checks.baselines, "_command", side_effect=lambda run, args, **kwargs: received.append(args)):
+            checks.build(object(), project, self.directory / "NuGet.Config", "locked-replay", lock=lock)
+        self.assertEqual([args[1] for args in received], ["restore", "build"])
+        self.assertTrue(all("-p:NuGetLockFilePath=" + str(lock) in args for args in received))
+        self.assertIn("--locked-mode", received[0])
+        self.assertIn("--no-restore", received[1])
 
     def test_attempt_uses_exact_identities_disabled_console_and_ingestion(self):
         (self.directory / "proofs").mkdir()

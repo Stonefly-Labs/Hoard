@@ -1111,6 +1111,16 @@ T008/T012 are complete within their catalog/supervisor foundation scope.
 Immutable complete input snapshots, loaded-provider attribution and profile
 integration remain unfinished; no qualification is claimed.
 
+The next T013 increment shares descriptor-anchored read-only source snapshots
+with the SDK diagnostic, including example projects and build/ignore settings.
+Aliased/replaced roots, changed ancestors and unlisted special files reject
+without redirecting writes. Real Git identity distinguishes dirty local bytes
+from a clean CI checkout pinned to the exact workflow SHA, without ambient Git
+overrides. SDK smoke preparation now uses a separate alternate lock; frozen
+source locks are never rewritten. All 196 tooling checks pass with ten native
+skips. Native verification and T013's complete package/configuration/capability/
+environment sealing remain outstanding.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

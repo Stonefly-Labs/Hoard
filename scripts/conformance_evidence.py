@@ -1,6 +1,7 @@
 """Strict test-only F-07 evidence admission; no production certification."""
 
 from collections.abc import Mapping
+from contextlib import contextmanager
 import hashlib
 import json
 import math
@@ -469,80 +470,202 @@ def file_sha256(path):
     return result.hexdigest()
 
 
-def source_manifest(root):
+@contextmanager
+def _input_root(root):
+    from conformance_execution import no_symlinks
+    descriptor = None
+    try:
+        root = Path(root).absolute()
+        if ".." in root.parts:
+            raise ConformanceError("InputChanged")
+        no_symlinks(root)
+        descriptor = os.open(root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        before = os.fstat(descriptor)
+        yield root, descriptor
+        no_symlinks(root)
+        after = root.stat(follow_symlinks=False)
+        if (before.st_dev, before.st_ino) != (after.st_dev, after.st_ino):
+            raise ConformanceError("InputChanged")
+    except ConformanceError as error:
+        if str(error) != "OwnershipInvalid":
+            raise
+        raise ConformanceError("InputChanged") from None
+    except OSError:
+        raise ConformanceError("InputChanged") from None
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+
+
+@contextmanager
+def _input_parent(root, relative, *, create=False):
+    parts = PurePosixPath(relative_path(relative)).parts
+    if len(parts) > 32:
+        raise ConformanceError("OutputLimitExceeded")
+    descriptor = os.dup(root)
+    try:
+        for part in parts[:-1]:
+            if create:
+                try:
+                    os.mkdir(part, mode=0o700, dir_fd=descriptor)
+                except FileExistsError:
+                    pass
+            child = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=descriptor)
+            os.close(descriptor)
+            descriptor = child
+        yield descriptor, parts[-1]
+    finally:
+        os.close(descriptor)
+
+
+def _source_file(root, relative, *, remaining, deadline, target=None):
+    def identity(info):
+        return info.st_dev, info.st_ino, info.st_mode, info.st_size, info.st_mtime_ns, info.st_ctime_ns
+    with _input_parent(root, relative) as (parent, name):
+        before = os.stat(name, dir_fd=parent, follow_symlinks=False)
+        if not stat.S_ISREG(before.st_mode):
+            raise ConformanceError("InputChanged")
+        if before.st_size > remaining:
+            raise ConformanceError("OutputLimitExceeded")
+        if time.monotonic() >= deadline:
+            raise ConformanceError("DeadlineExceeded")
+        descriptor = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+        with os.fdopen(descriptor, "rb") as source:
+            if identity(os.fstat(source.fileno())) != identity(before):
+                raise ConformanceError("InputChanged")
+            hashed = hashlib.sha256()
+            observed = 0
+            while block := source.read(64 * 1024):
+                observed += len(block)
+                if observed > remaining:
+                    raise ConformanceError("OutputLimitExceeded")
+                if time.monotonic() >= deadline:
+                    raise ConformanceError("DeadlineExceeded")
+                hashed.update(block)
+                if target is not None:
+                    target.write(block)
+            if observed != before.st_size or identity(os.fstat(source.fileno())) != identity(before):
+                raise ConformanceError("InputChanged")
+        with _input_parent(root, relative) as (current_parent, current_name):
+            if identity(os.stat(current_name, dir_fd=current_parent, follow_symlinks=False)) != identity(before):
+                raise ConformanceError("InputChanged")
+        if time.monotonic() >= deadline:
+            raise ConformanceError("DeadlineExceeded")
+        return hashed.hexdigest(), observed
+
+
+def _git_control(root, arguments, deadline):
     from conformance_execution import capture_control
-    root = Path(root).resolve()
-    code, output = capture_control(
-        ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard", "--",
-         "src", "tests", "scripts", ".github/workflows", "global.json", "Hoard.slnx",
-         "Directory.Build.props", "Directory.Build.targets", "Directory.Packages.props",
-         "NuGet.Config", "nuget.config", ".editorconfig"], cwd=root,
-    )
+    remaining = deadline - time.monotonic()
+    if remaining <= 0:
+        raise ConformanceError("DeadlineExceeded")
+    environment = {key: os.environ[key] for key in ("PATH", "LANG", "LC_ALL") if key in os.environ}
+    environment.update({"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull, "GIT_OPTIONAL_LOCKS": "0"})
+    code, output = capture_control(["git", "--work-tree=" + str(root), *arguments],
+                                   cwd=root, env=environment, timeout=min(5, remaining))
     if code:
         raise ConformanceError("InputChanged")
-    paths = sorted(set(output.decode("utf-8", errors="strict").rstrip("\0").split("\0")))
-    if not paths or len(paths) > MAX_PROOF_FILES:
-        raise ConformanceError("InputChanged")
-    manifest = {}
-    total = 0
-    for relative in paths:
-        relative_path(relative)
-        candidate = root / relative
-        if {"bin", "obj", "__pycache__"}.intersection(PurePosixPath(relative).parts):
+    return output
+
+
+def source_manifest(root):
+    deadline = time.monotonic() + 5
+    with _input_root(root) as (root, descriptor):
+        output = _git_control(root,
+            ["ls-files", "-z", "--cached", "--others", "--exclude-standard", "--",
+             "src", "tests", "scripts", "examples", ".github/workflows", "global.json", "Hoard.slnx",
+             "Directory.Build.props", "Directory.Build.targets", "Directory.Packages.props",
+             "NuGet.Config", "nuget.config", ".editorconfig", ".gitignore", ".gitattributes"], deadline,
+        )
+        try:
+            paths = sorted(set(output.decode("utf-8", errors="strict").rstrip("\0").split("\0")))
+        except UnicodeError:
+            raise ConformanceError("InputChanged") from None
+        if not paths:
             raise ConformanceError("InputChanged")
-        current = candidate
-        while current != root:
-            if current.is_symlink():
+        if len(paths) > MAX_PROOF_FILES:
+            raise ConformanceError("OutputLimitExceeded")
+        manifest = {}
+        total = 0
+        for relative in paths:
+            if {"bin", "obj", "__pycache__"}.intersection(PurePosixPath(relative).parts):
                 raise ConformanceError("InputChanged")
-            current = current.parent
-        if not candidate.is_file():
-            raise ConformanceError("InputChanged")
-        total += candidate.stat().st_size
-        if total > MAX_PROOF_BYTES:
-            raise ConformanceError("InputChanged")
-        manifest[relative] = file_sha256(candidate)
+            hashed, size = _source_file(
+                descriptor, relative, remaining=MAX_PROOF_BYTES - total, deadline=deadline)
+            manifest[relative] = hashed
+            total += size
+    if time.monotonic() >= deadline:
+        raise ConformanceError("DeadlineExceeded")
     return MappingProxyType(manifest)
 
 
+def source_identity(root, *, ci_revision=None):
+    if ci_revision is not None and (
+            not isinstance(ci_revision, str) or re.fullmatch("[0-9a-f]{40}", ci_revision) is None):
+        raise ConformanceError("InputChanged")
+    deadline = time.monotonic() + 5
+    with _input_root(root) as (root, _):
+        observations = []
+        for arguments in (["rev-parse", "HEAD"], ["status", "--porcelain=v1", "-z", "--untracked-files=all"],
+                          ["ls-files", "-v", "-z"]):
+            observations.append(_git_control(root, arguments, deadline))
+        revision, changes, entries = observations
+        if re.fullmatch(rb"[0-9a-f]{40}\n", revision) is None:
+            raise ConformanceError("InputChanged")
+        revision = revision.decode("ascii").strip()
+        dirty = bool(changes) or any(entry[:2] != b"H " for entry in entries.split(b"\0") if entry)
+        if ci_revision is not None and (dirty or revision != ci_revision):
+            raise ConformanceError("InputChanged")
+        state = "clean-ci" if ci_revision is not None else "dirty-local" if dirty else "clean-local"
+    if time.monotonic() >= deadline:
+        raise ConformanceError("DeadlineExceeded")
+    return MappingProxyType({"sourceRevision": revision, "sourceState": state})
+
+
 def snapshot_sources(root, owned_run):
-    root = Path(root).resolve()
     before = source_manifest(root)
     owned_run._check_ledger()
     snapshot = owned_run.root / "snapshot"
-    snapshot.mkdir(mode=0o700)
-    for relative, expected in before.items():
-        destination = snapshot / relative
-        destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-        with (root / relative).open("rb") as source, destination.open("xb") as target:
-            while block := source.read(64 * 1024):
-                target.write(block)
-        if file_sha256(destination) != expected:
-            raise ConformanceError("InputChanged")
-        destination.chmod(0o400)
+    owner = owned_run._root_descriptor()
+    try:
+        os.mkdir("snapshot", mode=0o700, dir_fd=owner)
+        directory = os.open("snapshot", os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=owner)
+        try:
+            total = 0
+            deadline = time.monotonic() + 5
+            with _input_root(root) as (_, source):
+                for relative, expected in before.items():
+                    with _input_parent(directory, relative, create=True) as (parent, name):
+                        target = os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                                         0o400, dir_fd=parent)
+                        with os.fdopen(target, "wb") as output:
+                            hashed, size = _source_file(
+                                source, relative, remaining=MAX_PROOF_BYTES - total,
+                                deadline=deadline, target=output)
+                        if hashed != expected:
+                            raise ConformanceError("InputChanged")
+                        total += size
+        finally:
+            os.close(directory)
+    finally:
+        os.close(owner)
+    owned_run._check_ledger()
+    verify_snapshot(snapshot, before)
     if dict(source_manifest(root)) != dict(before):
         raise ConformanceError("InputChanged")
     return snapshot, before
 
 
 def verify_snapshot(snapshot, manifest):
-    snapshot = Path(snapshot)
-    for relative, expected in manifest.items():
-        relative_path(relative)
-        candidate = snapshot / relative
-        current = candidate
-        while current != snapshot:
-            if current.is_symlink():
-                raise ConformanceError("InputChanged")
-            current = current.parent
-        if not candidate.is_file() or file_sha256(candidate) != expected:
+    try:
+        admitted = _hash_map(manifest)
+        if proof_manifest(snapshot, exclude_outputs=True) != admitted:
             raise ConformanceError("InputChanged")
-    files = {path.relative_to(snapshot).as_posix() for path in snapshot.rglob("*") if path.is_file()
-             and not {"bin", "obj", "__pycache__"}.intersection(path.relative_to(snapshot).parts)}
-    if files != set(manifest):
-        raise ConformanceError("InputChanged")
+    except ConformanceError:
+        raise ConformanceError("InputChanged") from None
 
 
-def proof_manifest(directory):
+def proof_manifest(directory, *, exclude_outputs=False):
     from conformance_execution import no_symlinks
     directory = Path(directory).absolute()
     files = {}
@@ -559,6 +682,8 @@ def proof_manifest(directory):
                 entries_seen += 1
                 if entries_seen > MAX_PROOF_FILES * 2 or time.monotonic() >= deadline:
                     raise ConformanceError("ProofMismatch")
+                if exclude_outputs and entry.name in ("bin", "obj", "__pycache__"):
+                    continue
                 relative = relative_path(prefix + entry.name)
                 before = os.stat(entry.name, dir_fd=descriptor, follow_symlinks=False)
                 if stat.S_ISDIR(before.st_mode):
