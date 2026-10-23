@@ -5160,8 +5160,35 @@ report admission still rejects any unsuccessful historical attempt.
 `NotApplicable` is selected only from catalog exclusions and carries no runtime
 proof. Runtime observations alone remain `Incomplete` when separate catalog
 controls are outstanding; control-only cases and full controller/profile wiring
-are not implemented by this API. Three focused regressions pass locally;
-native verification and full T014 remain unfinished.
+are not implemented by this API. Run
+[39938028171](https://github.com/Stonefly-Labs/Hoard/actions/runs/39938028171)
+at `a9039fa` verified 111 native checks without failures/errors/skips,
+92,110,921,728 free scratch bytes, all twelve diagnostic scopes/35 observations
+and all six baselines. Input digest
+`dba8a0ef424aa28b2053e7cc0e87a12c66b1b8f9f66227d46071bf218420f6b9`.
+
+Typed observed metadata/artifact session wrappers now actually invoke the supplied
+factory and pin each interface reference used by consumers and component capture.
+Provider getters are lazy: the caller first owns the returned session for cleanup,
+including if a getter, fault-hook admission or origin capture subsequently fails.
+Reopen delegates to the actual session and records parent/new session identities;
+reference-equality instance IDs remain stable across observations without calling
+provider equality, hashing or rendering methods. Real cleanup is delegated, never
+inferred from origin capture. The closed observation includes the actual initial
+declaration digest and executing .NET runtime/architecture; component-byte capture
+shares five seconds and a 256 MiB aggregate bound, with 64 MiB per assembly.
+Factory/provider operations still require the owning controller's finite scopes.
+Parent ingestion independently selects each role's runtime/package bytes, checks
+the immutable declaration, environment and parent identity, and rejects missing or
+inconsistent role/instance projections. An unpackaged factory cannot borrow a
+provider package label. Three C# missing-API regressions and two Python missing-API
+regressions preceded the implementation. All 73 source SDK checks and 218 tooling
+checks pass locally (ten native tooling skips); focused format checks pass.
+The bounded architecture review found no actionable ownership/dependency defects.
+Native session diagnostics are pending; the selection now has thirteen scopes/
+38 discoveries/38 executions. These leaf observations are not yet linked to exact
+platform execution/attempt/group/input evidence. SQLite/PRAGMA production and full
+controller/evaluator integration remain unfinished, and T014 stays unchecked.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

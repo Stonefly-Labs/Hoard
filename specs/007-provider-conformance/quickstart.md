@@ -79,9 +79,16 @@ diagnostic execution; its portable VSTest probe passes, while native verificatio
 of twelve scenarios/35 discovery records/35 execution observations passed run
 `39936903326` at `6a04293` with 108 native checks without skips. Discovery is not
 execution proof. The next catalog-owned case-history API preserves failures and
-proofs across retries locally; its native verification is pending. These APIs do
-not yet link loaded session/factory instances to their invocation or implement
-the full controller. T014 remains unchecked.
+proofs across retries and passed run `39938028171` at `a9039fa` (111 native
+checks without skips, twelve scopes/35 observations and all six baselines).
+The current increment adds typed observed metadata/artifact sessions with actual
+factory invocation, pinned consumer/component references, reopen lineage and
+independent role/runtime/package correspondence. Local checks pass; native
+verification of thirteen scopes/38 observations is pending. Use `await using`
+on the returned session before calling `CaptureOrigin`, so capture/getter failure
+cannot lose session cleanup ownership. These leaf observations do not yet link
+to exact execution/attempt/group/input evidence or implement the full controller
+or SQLite environment producer. T014 remains unchecked.
 
 Do not point qualification at a user/production database, existing artifact
 root or connection string. Private retained diagnostic evidence must already be

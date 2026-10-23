@@ -1,7 +1,8 @@
 # F-07 Shared Harness and Contributor Contract
 
-**Status**: Proposed test-only interfaces and command behavior, not implemented
-APIs. Product [metadata](../../005-metadata-persistence/contracts/metadata-api.md),
+**Status**: Test-only binding/session contracts and the observed-session foundation
+are implemented; complete common consumers and CLI behavior below remain planned.
+Product [metadata](../../005-metadata-persistence/contracts/metadata-api.md),
 [artifact](../../006-artifact-storage/contracts/artifact-api.md),
 [lifecycle](../../002-module-lifecycle/plan.md) and
 [compatibility](../../001-provider-contracts/contracts/compatibility.md)
@@ -39,6 +40,18 @@ and native non-cooperation, payload damage, capacity/cleanup faults, generation
 and receipt/recovery boundaries. Observations are corroborated by public reads,
 receipts and independent common assertions, not trusted fault-driver assertions.
 Durable proof is executed by parent-owned child processes outside the session.
+
+`ConformanceObservedMetadataSession.OpenAsync` and
+`ConformanceObservedArtifactSession.OpenAsync` actually call the supplied typed
+binding. Put the returned session in `await using` before `CaptureOrigin`.
+Potentially failing provider getters run only after cleanup ownership is returned
+to the caller; their exact references are cached for both consumers and capture.
+Reopen creates an observed wrapper around the actual reopened session with parent
+lineage; cleanup/disposal delegate to that real session and confer no release
+claim. Component reads share five seconds/256 MiB (64 MiB per assembly). Factory,
+getter and provider work still require finite owning-controller scopes; these
+wrappers are not a non-cooperation containment mechanism. The leaf origin and
+independent role-byte admission are not yet wired to complete execution evidence.
 
 ## Extraction and Unchanged Consumer Rules
 

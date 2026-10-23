@@ -1228,6 +1228,79 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             with self.subTest(package=package_id, path=runtime_path), self.assertRaises(evidence.ConformanceError):
                 evidence.ingest_loaded_assembly(self.inputs, data, runtime_path=runtime_path, package_id=package_id)
 
+    def session_origin(self):
+        self.inputs["runtimeAssemblies"]["provider/Hoard.Fixture.dll"] = "d" * 64
+        roles = ("authority", "factory", "faults", "schema", "session", "store")
+        assembly = {
+            "assemblyName": "Hoard.Fixture", "assemblyVersion": "0.1.0.0",
+            "moduleVersionId": str(uuid.uuid4()), "assemblySha256": "d" * 64, "typeSha256": "f" * 64,
+        }
+        origin = {
+            "schemaVersion": 1, "runId": self.inputs["runId"], "caseId": "MT-01",
+            "sessionId": str(uuid.uuid4()), "parentSessionId": None, "factoryOperation": "create",
+            "descriptorSha256": "a" * 64, "runtimeVersion": self.inputs["environment"]["runtime"],
+            "processArchitecture": "x64",
+            "components": {role: {"instanceId": str(uuid.uuid4()), "assembly": dict(assembly)} for role in roles},
+        }
+        assignments = {role: ("provider/Hoard.Fixture.dll", "Hoard.Fixture") for role in roles}
+        origin["components"]["factory"]["assembly"].update(assemblyName="Hoard.Tests", assemblySha256="e" * 64)
+        assignments["factory"] = ("consumer/Hoard.Tests.dll", None)
+        return origin, assignments
+
+    def ingest_origin(self, origin, assignments, **overrides):
+        options = dict(binding_id="sqlite", case_id="MT-01", component_inputs=assignments, parent_session_id=None)
+        options.update(overrides)
+        return evidence.ingest_session_origin(self.inputs, evidence.canonical_bytes(origin), **options)
+
+    def test_session_origin_matches_independent_role_bytes_environment_and_reopen_lineage(self):
+        origin, assignments = self.session_origin()
+        admitted = self.ingest_origin(origin, assignments)
+        self.assertEqual(admitted["components"]["store"]["assembly"]["assemblySha256"], "d" * 64)
+        with self.assertRaises(TypeError):
+            admitted["components"]["store"]["instanceId"] = str(uuid.uuid4())
+        parent = origin["sessionId"]
+        origin.update(sessionId=str(uuid.uuid4()), parentSessionId=parent, factoryOperation="reopen")
+        self.assertEqual(self.ingest_origin(origin, assignments, parent_session_id=parent)["parentSessionId"], parent)
+        with self.assertRaises(evidence.ConformanceError):
+            self.ingest_origin(origin, assignments)
+        origin, assignments = self.session_origin()
+        self.inputs["bindings"][0]["category"] = "artifacts"
+        del origin["components"]["schema"]
+        del assignments["schema"]
+        for role in ("validator", "maintenance", "lifetime"):
+            origin["components"][role] = origin["components"]["store"]
+            assignments[role] = assignments["store"]
+        self.assertEqual(len(self.ingest_origin(origin, assignments)["components"]), 8)
+
+    def test_session_origin_cannot_borrow_factory_package_labels_or_changed_runtime_or_component_identity(self):
+        for mutation in ("descriptor", "run", "case", "runtime", "architecture", "package", "missing",
+                         "extra", "instance", "parent", "raw"):
+            origin, assignments = self.session_origin()
+            if mutation == "descriptor":
+                origin["descriptorSha256"] = "b" * 64
+            elif mutation == "run":
+                origin["runId"] = str(uuid.uuid4())
+            elif mutation == "case":
+                origin["caseId"] = "MT-02"
+            elif mutation == "runtime":
+                origin["runtimeVersion"] = "10.0.8"
+            elif mutation == "architecture":
+                origin["processArchitecture"] = "arm64"
+            elif mutation == "package":
+                assignments["factory"] = ("consumer/Hoard.Tests.dll", "Hoard.Fixture")
+            elif mutation == "missing":
+                del origin["components"]["store"]
+            elif mutation == "extra":
+                origin["components"]["private-canary"] = origin["components"]["store"]
+            elif mutation == "instance":
+                origin["components"]["factory"]["instanceId"] = origin["components"]["store"]["instanceId"]
+            elif mutation == "parent":
+                origin.update(parentSessionId=origin["sessionId"], factoryOperation="reopen")
+            else:
+                origin["privatePath"] = "/private/canary"
+            with self.subTest(mutation=mutation), self.assertRaises(evidence.ConformanceError):
+                self.ingest_origin(origin, assignments)
+
     def test_finite_version_ranges_preserve_identity_without_allowing_paths_or_free_text(self):
         for value in ("[1.2.0,2.0.0)", "(2.0.0,1.0.0]", "[1.2.3]",
                       "/private/canary", "private canary", "canary\n", 'canary"'):

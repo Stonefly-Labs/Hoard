@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Hoard.Abstractions.Metadata;
+using Hoard.Abstractions.Storage;
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Catalog;
 using Hoard.Testing.Conformance.Diagnostics;
@@ -12,6 +13,108 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class BindingContractTests
 {
+    [Fact]
+    public async Task Observed_artifact_sessions_pin_all_actual_roles_and_preserve_cleanup_ownership_on_capture_failure()
+    {
+        var binding = new ArtifactProbeBinding();
+        var context = new ConformanceRunContext(Guid.NewGuid(), "runtime-origin", TimeProvider.System,
+            new UnusedResources(), new ConformanceEvidenceBuffer());
+        var observed = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
+        try
+        {
+            var lifetime = observed.Lifetime;
+            Assert.Same(lifetime, observed.Lifetime);
+            var origin = observed.CaptureOrigin();
+            Assert.Equal(1, binding.Session.LifetimeReads);
+            Assert.Equal<string>(["authority", "factory", "faults", "lifetime", "maintenance", "session", "store", "validator"],
+                origin.Components.Keys);
+            Assert.Equal(origin.Components["lifetime"].InstanceId, origin.Components["validator"].InstanceId);
+            Assert.Equal(origin.Components["store"].InstanceId, origin.Components["authority"].InstanceId);
+            await using var reopened = await observed.ReopenAsync(default);
+            var reopenedOrigin = Assert.IsType<ConformanceObservedArtifactSession>(reopened).CaptureOrigin();
+            Assert.Equal(origin.SessionId, reopenedOrigin.ParentSessionId);
+            binding.Session.First.SupportedFaults = [];
+            Assert.Equal("BindingInvalid", Assert.Throws<ArgumentException>(() => observed.CaptureOrigin()).Message);
+        }
+        finally { await observed.DisposeAsync(); }
+        Assert.True(binding.Session.Disposed);
+        var throwing = new ArtifactProbeBinding();
+        throwing.Session.ThrowOnLifetime = true;
+        var owned = await ConformanceObservedArtifactSession.OpenAsync(throwing, context, default);
+        try
+        {
+            Assert.Equal("UnknownDiagnostic",
+                Assert.Throws<InvalidOperationException>(() => owned.CaptureOrigin()).Message);
+        }
+        finally { await owned.DisposeAsync(); }
+        Assert.True(throwing.Session.Disposed);
+    }
+
+    [Fact]
+    public async Task Observed_metadata_sessions_pin_factory_results_and_actual_component_instances()
+    {
+        var binding = new MetadataProbeBinding();
+        var context = new ConformanceRunContext(Guid.NewGuid(), "runtime-origin", TimeProvider.System,
+            new UnusedResources(), new ConformanceEvidenceBuffer());
+        await using var observed = await ConformanceObservedMetadataSession.OpenAsync(binding, context, default);
+        Assert.Equal(0, binding.Session.StoreReads);
+        var first = observed.Store;
+        Assert.Same(first, observed.Store);
+        Assert.Equal(1, binding.Session.StoreReads);
+        await observed.Store.DisposeAsync();
+        Assert.Equal(1, binding.Session.First.DisposeCount);
+        Assert.Equal(0, binding.Session.Second.DisposeCount);
+        var origin = observed.CaptureOrigin();
+        Assert.Equal(1, binding.Creates);
+        Assert.Equal(context.RunId, origin.RunId);
+        Assert.Equal(context.CaseId, origin.CaseId);
+        Assert.Equal(Hash(ConformanceBindingSnapshot.Capture(binding.Declaration).AsSpan()), origin.DescriptorSha256);
+        Assert.Equal<string>(["authority", "factory", "faults", "schema", "session", "store"], origin.Components.Keys);
+        Assert.Equal(origin.Components["store"].InstanceId, origin.Components["schema"].InstanceId);
+        Assert.Equal(origin.Components["store"].InstanceId, origin.Components["authority"].InstanceId);
+        Assert.Equal(origin.Components["store"].InstanceId, origin.Components["faults"].InstanceId);
+        Assert.NotEqual(origin.Components["store"].InstanceId, origin.Components["factory"].InstanceId);
+        Assert.Equal(ConformanceLoadedAssembly.Capture(first).TypeSha256,
+            origin.Components["store"].Assembly.TypeSha256);
+        Assert.Equal(origin.Components["store"].InstanceId, observed.CaptureOrigin().Components["store"].InstanceId);
+        var projection = JsonSerializer.Serialize(origin,
+            new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+        Assert.DoesNotContain(typeof(MetadataProbe).FullName!, projection, StringComparison.Ordinal);
+        Assert.DoesNotContain(typeof(MetadataProbe).Assembly.Location, projection, StringComparison.Ordinal);
+        Assert.DoesNotContain("private-canary", projection, StringComparison.Ordinal);
+        await using var reopened = await observed.ReopenAsync(default);
+        var reopenedOrigin = Assert.IsType<ConformanceObservedMetadataSession>(reopened).CaptureOrigin();
+        Assert.Equal(origin.SessionId, reopenedOrigin.ParentSessionId);
+        Assert.Equal("reopen", reopenedOrigin.FactoryOperation);
+        Assert.NotEqual(origin.SessionId, reopenedOrigin.SessionId);
+        Assert.Equal(origin.Components["factory"].InstanceId, reopenedOrigin.Components["factory"].InstanceId);
+    }
+
+    [Fact]
+    public async Task Observed_metadata_origin_rejects_changed_declarations_and_missing_actual_fault_hooks()
+    {
+        var context = new ConformanceRunContext(Guid.NewGuid(), "runtime-origin", TimeProvider.System,
+            new UnusedResources(), new ConformanceEvidenceBuffer());
+        var binding = new MetadataProbeBinding();
+        await using var observed = await ConformanceObservedMetadataSession.OpenAsync(binding, context, default);
+        binding.Declaration = new("binding", ConformanceCategory.Metadata, "Hoard.Fixture", "0.1.0",
+            new string('a', 64), ["common-logical", "changed"],
+            ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Metadata));
+        Assert.Equal("InputChanged", Assert.Throws<InvalidOperationException>(() => observed.CaptureOrigin()).Message);
+        var missing = new MetadataProbeBinding();
+        missing.Session.First.SupportedFaults = [];
+        await using var invalid = await ConformanceObservedMetadataSession.OpenAsync(missing, context, default);
+        Assert.Equal("BindingInvalid", Assert.Throws<ArgumentException>(() => invalid.CaptureOrigin()).Message);
+        var durable = new MetadataProbeBinding
+        {
+            Declaration = new("binding", ConformanceCategory.Metadata, "Hoard.Fixture", "0.1.0", new string('a', 64),
+                ["durable-local-process-crash"],
+                [.. ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Metadata), ConformanceFault.BackupRestore])
+        };
+        await using var missingBackup = await ConformanceObservedMetadataSession.OpenAsync(durable, context, default);
+        Assert.Equal("BindingInvalid", Assert.Throws<ArgumentException>(() => missingBackup.CaptureOrigin()).Message);
+    }
+
     [Fact]
     public void Loaded_component_capture_observes_instance_bytes_and_type_not_interface_or_declaration_labels()
     {
@@ -274,4 +377,139 @@ public sealed class BindingContractTests
     }
 
     private sealed class OtherObservedBinding : ObservedBinding;
+
+    private static string Hash(ReadOnlySpan<byte> bytes) => Convert.ToHexStringLower(SHA256.HashData(bytes));
+
+    private sealed class MetadataProbeBinding : IMetadataConformanceBinding
+    {
+        public ConformanceBindingDeclaration Declaration { get; set; } = Declare(ConformanceCategory.Metadata,
+            ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Metadata));
+        internal MetadataProbeSession Session { get; } = new();
+        internal int Creates { get; private set; }
+        public ValueTask<IMetadataConformanceSession> CreateSessionAsync(ConformanceRunContext context, CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            Creates++;
+            return ValueTask.FromResult<IMetadataConformanceSession>(Session);
+        }
+    }
+
+    private sealed class MetadataProbeSession : IMetadataConformanceSession
+    {
+        internal MetadataProbe First { get; } = new();
+        internal MetadataProbe Second { get; } = new();
+        internal int StoreReads { get; private set; }
+        public IMetadataStore Store => ++StoreReads == 1 ? First : Second;
+        public IMetadataSchemaAdministration Schema => First;
+        public IMetadataConformanceAuthority Authority => First;
+        public IMetadataConformanceFaultDriver Faults => First;
+        public ValueTask<IMetadataConformanceSession> ReopenAsync(CancellationToken token) =>
+            ValueTask.FromResult<IMetadataConformanceSession>(new MetadataProbeSession());
+        public ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken token) =>
+            ValueTask.FromResult(new ConformanceCleanupObservation(ConformanceOwnershipState.Released, []));
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    private sealed class MetadataProbe : IMetadataStore, IMetadataSchemaAdministration,
+        IMetadataConformanceAuthority, IMetadataConformanceFaultDriver
+    {
+        public override bool Equals(object? other) => throw new InvalidOperationException("private-canary");
+        public override int GetHashCode() => throw new InvalidOperationException("private-canary");
+        public override string ToString() => throw new InvalidOperationException("private-canary");
+        internal int DisposeCount { get; private set; }
+        public ImmutableArray<ConformanceFault> SupportedFaults { get; set; } =
+            ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Metadata);
+        public ValueTask DisposeAsync() { DisposeCount++; return ValueTask.CompletedTask; }
+        public ValueTask<MetadataResult<MetadataOperationTicket>> ReserveOperationAsync(MetadataCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<MetadataResult<MetadataReadSnapshot>> ReadAsync(MetadataReadGroup r, MetadataCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<MetadataResult<MetadataPage>> ReadPageAsync(MetadataPageQuery r, MetadataCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<MetadataResult<MetadataCommitReceipt>> CommitAsync(MetadataMutationBatch r, MetadataCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<MetadataResult<MetadataResolution>> ReconcileAsync(MetadataOperationTicket r, MetadataCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<MetadataResult<MetadataSchemaInspection>> InspectAsync(MetadataAdministrationOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<MetadataResult<MetadataSchemaAdmission>> PrepareAsync(MetadataSchemaRequest r, MetadataAdministrationOptions o, CancellationToken t) => throw new NotSupportedException();
+        public MetadataArtifactEvidence Register(ArtifactDigest d, long l) => throw new NotSupportedException();
+        public ValueTask<MetadataResult<IMetadataPublicationGuard>> AcquireAsync(MetadataArtifactEvidence e, MetadataCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask ArmAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask WaitForBoundaryAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask ReleaseAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ConformanceFaultObservation> ObserveAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<IMetadataCorruptionScope> CorruptAsync(MetadataCorruptionRequest r, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<MetadataResult<MetadataReadSnapshot>> ObserveIndependentSnapshotAsync(MetadataReadGroup r, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<IAsyncDisposable> HoldWriterAsync(CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<MetadataResult<MetadataId>> FillLedgerAsync(CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<MetadataResult<MetadataId>> CorruptRecordAsync(MetadataSelector s, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<MetadataResult<MetadataId>> SetLeaseGenerationAsync(CanonicalText r, long g, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<MetadataResult<MetadataId>> SetFutureSchemaAsync(CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<MetadataResult<MetadataId>> CreateUnrecognizedLayoutAsync(bool p, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<MetadataRecoveryPoint> AuthorizeUpgradeAsync(CancellationToken t) => throw new NotSupportedException();
+        public ValueTask AwaitSettlementAsync(CancellationToken t) => throw new NotSupportedException();
+    }
+
+    private sealed class UnusedResources : IConformanceResourceAllocator
+    {
+        public ValueTask<ConformanceOwnedDirectory> AllocateDirectoryAsync(CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ConformanceCleanupObservation> ReleaseAsync(ConformanceOwnedDirectory r, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ConformanceCleanupObservation> ReleaseAsync(ConformanceOwnedDirectory r, Task s, CancellationToken t) => throw new NotSupportedException();
+    }
+
+    private sealed class ArtifactProbeBinding : IArtifactConformanceBinding
+    {
+        public ConformanceBindingDeclaration Declaration => Declare(ConformanceCategory.Artifacts,
+            ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Artifacts));
+        internal ArtifactProbeSession Session { get; } = new();
+        public ValueTask<IArtifactConformanceSession> CreateSessionAsync(ConformanceRunContext context, CancellationToken token) =>
+            ValueTask.FromResult<IArtifactConformanceSession>(Session);
+    }
+
+    private sealed class ArtifactProbeSession : IArtifactConformanceSession
+    {
+        internal ArtifactProbe First { get; } = new();
+        private readonly ArtifactProbe second = new();
+        internal int LifetimeReads { get; private set; }
+        internal bool Disposed { get; private set; }
+        internal bool ThrowOnLifetime { get; set; }
+        public IArtifactStore Store => First;
+        public IArtifactEvidenceValidator Validator => First;
+        public IArtifactMaintenance Maintenance => First;
+        public IArtifactStoreLifetime Lifetime => ThrowOnLifetime
+            ? throw new InvalidOperationException("UnknownDiagnostic") : ++LifetimeReads == 1 ? First : second;
+        public IArtifactCoordinationAuthority Authority => First;
+        public ArtifactStoreIdentity Identity { get; } = new("synthetic-probe", Guid.NewGuid(), Guid.NewGuid());
+        public IArtifactConformanceFaultDriver Faults => First;
+        public ValueTask<IArtifactConformanceSession> ReopenAsync(CancellationToken token) =>
+            ValueTask.FromResult<IArtifactConformanceSession>(new ArtifactProbeSession());
+        public ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken token) =>
+            ValueTask.FromResult(new ConformanceCleanupObservation(ConformanceOwnershipState.Released, []));
+        public ValueTask DisposeAsync() { Disposed = true; return ValueTask.CompletedTask; }
+    }
+
+    private sealed class ArtifactProbe : IArtifactStore, IArtifactEvidenceValidator, IArtifactMaintenance,
+        IArtifactStoreLifetime, IArtifactCoordinationAuthority, IArtifactConformanceFaultDriver
+    {
+        public ImmutableArray<ConformanceFault> SupportedFaults { get; set; } =
+            ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Artifacts);
+        public ArtifactCapabilities Capabilities => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<ArtifactOperationTicket>> ReserveWriteAsync(ArtifactWriteIntent i, ArtifactCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<ArtifactOperationTicket>> ReserveDeleteAsync(ArtifactDeleteIntent i, ArtifactCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<ArtifactStagedWrite>> StageAsync(ArtifactOperationTicket i, Stream s, ArtifactTransferOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<ArtifactStagingOwner>> RenewAsync(ArtifactStagingOwner i, ArtifactCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<ArtifactMutationReceipt>> CommitAsync(ArtifactStagedWrite i, ArtifactTransferOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<IArtifactReadSession>> OpenReadAsync(ArtifactReadRequest i, ArtifactCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<ArtifactMutationReceipt>> DeleteAsync(ArtifactOperationTicket i, ArtifactCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<ArtifactResolution>> ReconcileAsync(ArtifactOperationTicket i, ArtifactCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<ArtifactCleanupReport>> AbandonAsync(ArtifactStagingOwner i, ArtifactCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<ArtifactStamp>> ValidateAsync(ArtifactCommitEvidence e, IArtifactProtectionGuard p, ArtifactCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<ArtifactRecoveryPage>> ObserveAsync(ArtifactRecoveryQuery q, ArtifactMaintenanceOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<ArtifactCleanupReport>> CleanupAsync(ArtifactCleanupRequest r, ArtifactMaintenanceOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<ArtifactAdmission>> InitializeAsync(ArtifactInitialization r, ArtifactMaintenanceOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<ArtifactShutdown>> StopAsync(ArtifactCleanupOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<IArtifactProtectionGuard>> AcquireAsync(ArtifactProtectionRequest r, ArtifactCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ArtifactResult<IArtifactProtectionGuard>> RetainAsync(IArtifactProtectionGuard p, ArtifactProtectionRequest r, ArtifactCallOptions o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask ArmAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask WaitForBoundaryAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask ReleaseAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<ConformanceFaultObservation> ObserveAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask DamagePayloadAsync(bool truncate, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask AwaitSettlementAsync(CancellationToken t) => throw new NotSupportedException();
+    }
 }

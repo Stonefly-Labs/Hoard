@@ -75,6 +75,11 @@ SCENARIOS = (
            + f'(mutation: "{mutation}", code: {code})') for mutation, code in (
                ("parameter", "WitnessMissing"), ("source", "ProofMismatch"), ("duplicate", "EvidenceIncomplete")))),
      "None", "Passed", 0, "None"),
+    ("sessions", tuple("Hoard.Conformance.Tests.BindingContractTests." + method for method in (
+        "Observed_metadata_sessions_pin_factory_results_and_actual_component_instances",
+        "Observed_metadata_origin_rejects_changed_declarations_and_missing_actual_fault_hooks",
+        "Observed_artifact_sessions_pin_all_actual_roles_and_preserve_cleanup_ownership_on_capture_failure")),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {

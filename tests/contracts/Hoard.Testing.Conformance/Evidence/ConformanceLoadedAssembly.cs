@@ -10,13 +10,14 @@ namespace Hoard.Testing.Conformance.Evidence;
 public sealed class ConformanceLoadedAssembly
 {
     private ConformanceLoadedAssembly(string assemblyName, string assemblyVersion, Guid moduleVersionId,
-        string assemblySha256, string typeSha256)
+        string assemblySha256, string typeSha256, int imageBytes)
     {
         AssemblyName = ConformanceBindingDeclaration.Id(assemblyName);
         AssemblyVersion = ConformanceBindingDeclaration.Id(assemblyVersion);
         ModuleVersionId = moduleVersionId;
         AssemblySha256 = assemblySha256;
         TypeSha256 = typeSha256;
+        ImageBytes = imageBytes;
     }
 
     public string AssemblyName { get; }
@@ -24,12 +25,17 @@ public sealed class ConformanceLoadedAssembly
     public Guid ModuleVersionId { get; }
     public string AssemblySha256 { get; }
     public string TypeSha256 { get; }
+    internal int ImageBytes { get; }
     public override string ToString() => nameof(ConformanceLoadedAssembly);
 
     public static ConformanceLoadedAssembly Capture<TContract>(TContract instance) where TContract : class
+        => Capture(instance, Stopwatch.GetTimestamp(), 64 * 1024 * 1024);
+
+    internal static ConformanceLoadedAssembly Capture<TContract>(
+        TContract instance, long started, int remainingBytes) where TContract : class
     {
         ArgumentNullException.ThrowIfNull(instance);
-        var started = Stopwatch.GetTimestamp();
+        CheckBudget(started);
         try
         {
             var type = instance.GetType();
@@ -43,7 +49,8 @@ public sealed class ConformanceLoadedAssembly
             byte[] bytes;
             using (var source = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read))
             {
-                if (!source.CanSeek || source.Length is <= 0 or > 64 * 1024 * 1024)
+                if (!source.CanSeek || source.Length is <= 0 or > 64 * 1024 * 1024
+                    || source.Length > remainingBytes)
                 { throw new InvalidOperationException("OutputLimitExceeded"); }
                 bytes = new byte[(int)source.Length];
                 for (var offset = 0; offset < bytes.Length;)
@@ -71,7 +78,7 @@ public sealed class ConformanceLoadedAssembly
             { throw new InvalidOperationException("InputChanged"); }
             var result = new ConformanceLoadedAssembly(name.Name!, definition.Version.ToString(), moduleId,
                 Convert.ToHexStringLower(SHA256.HashData(bytes)),
-                Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(type.FullName))));
+                Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(type.FullName))), bytes.Length);
             CheckBudget(started);
             return result;
         }
@@ -80,7 +87,7 @@ public sealed class ConformanceLoadedAssembly
         { throw new InvalidOperationException("ProofMismatch"); }
     }
 
-    private static void CheckBudget(long started)
+    internal static void CheckBudget(long started)
     {
         if (Stopwatch.GetElapsedTime(started) > TimeSpan.FromSeconds(5))
         { throw new InvalidOperationException("DeadlineExceeded"); }

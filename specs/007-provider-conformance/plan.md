@@ -495,9 +495,27 @@ its safe error; interruptions and catalog exclusions invent no execution.
 Default one/maximum three attempts and proof bounds remain enforced.
 Outstanding independent controls keep runtime-only observations incomplete.
 Two missing-API regressions preceded implementation; all three focused history
-regressions now pass locally. Native verification, full controller integration
-and actual loaded-session/factory/invocation links remain unfinished; T014 is
-still unchecked.
+regressions pass locally and run `39938028171` at `a9039fa` verified 111 native
+checks without failures/errors/skips, 92,110,921,728 free scratch bytes, all twelve
+diagnostic scopes/35 observations and all six baselines. Input digest
+`dba8a0ef424aa28b2053e7cc0e87a12c66b1b8f9f66227d46071bf218420f6b9`.
+
+The current increment adds actual typed factory/session origin APIs for both
+categories. Wrappers defer provider getters until callers own cleanup, pin the
+exact interfaces common consumers receive, preserve actual reopen lineage and
+stable reference-equality identities, and delegate cleanup without release claims.
+The closed path-free origin includes actual initial declaration SHA-256 and
+executing .NET runtime/architecture. All component byte reads share five seconds/
+256 MiB, retaining the 64 MiB per-assembly bound. Parent ingestion independently
+selects role-specific runtime/package assignments and rejects immutable declaration,
+environment, parent or repeated-instance inconsistencies. Wrapper/forwarder roles
+need not pretend to belong to one package. Three C# missing-API regressions and two
+Python missing-API regressions preceded implementation. Local source SDK tests
+pass (73), tooling passes (218, ten native skips), and focused formatting passes.
+The bounded architecture review found no actionable ownership/dependency defect.
+The thirteen-scope/38-observation native selection is pending. These leaf APIs
+still need exact execution/attempt/group/input linkage, actual SQLite/PRAGMA
+production and full controller/evaluator integration; T014 remains unchecked.
 
 ## Partial implementation checkpoint
 

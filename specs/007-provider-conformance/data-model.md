@@ -114,6 +114,25 @@ Explicitly unpackaged test artifacts make no package-origin claim. Component
 correspondence alone is not session/factory/invocation attribution or hostile
 provider attestation; those execution links remain required.
 
+`ConformanceSessionOrigin` is a separate closed leaf observation: `schemaVersion`,
+`runId`, `caseId`, fresh `sessionId`, nullable `parentSessionId`, derived
+`factoryOperation`, initial `descriptorSha256`, actual `runtimeVersion`,
+`processArchitecture` and `components`. Each fixed role contains `instanceId` and
+the closed loaded-assembly projection. Metadata roles are factory/session/store/
+schema/authority/faults; artifact roles replace schema with validator/maintenance/
+lifetime. Reference-equality IDs are stable within one factory/reopen lineage
+(at most 1,024 actual instances), without provider equality/hash/rendering.
+No private resource path or opaque store/authority token is projected.
+Typed observed wrappers actually invoke factories/reopen and cache consumer
+references. The caller owns disposal before any potentially failing getter or
+capture; disposal/cleanup observations remain delegated to the actual session.
+Capture shares a five-second/256 MiB component-byte scope, 64 MiB per assembly.
+`ingest_session_origin` checks exact role inventories against independently
+selected runtime/package assignments, immutable declaration/environment and
+expected parent identity; inconsistent records for one instance ID reject.
+This observation is not an execution witness, pass result or qualification.
+Exact platform execution/attempt/group/input linkage remains required.
+
 ### Shared bounds
 
 - Stable IDs: ASCII `[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}`. Digests:

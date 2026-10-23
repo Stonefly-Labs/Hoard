@@ -55,6 +55,18 @@ owner/input/attempt provenance. It emits no execution UUID/status and cannot be
 ingested as a runtime witness. This diagnostic transport does not by itself
 implement the complete profile/evaluator or loaded-session attribution below.
 
+The implemented typed session-origin producer is another leaf, not a replacement
+for that transport. It actually calls the selected metadata/artifact factory,
+pins the exact interfaces consumers use, records reopen lineage and captures
+actual component assemblies and executing .NET runtime/architecture. Parent
+ingestion independently selects every role's admitted runtime/package bytes,
+checks the initial declaration and expected parent, and rejects missing,
+extra or inconsistent instance records. Factory and provider roles may belong
+to different packages. Origins contain no pass status or private tokens/paths.
+The caller must own session disposal before capture, and origin observation
+cannot imply resource release. Exact execution/attempt/group/input linkage,
+native SQLite/PRAGMA production and full evaluator integration are still required.
+
 Attempts are append-only. Any genuine contract failure in the run blocks
 qualification even if a retry passes. Deliberate red/green experiments are
 separate expected-negative child executions: the parent passes only if it

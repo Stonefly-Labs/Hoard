@@ -1052,14 +1052,14 @@ def _runtime_json(data, fields, *, limit=2 * 1024 * 1024):
     return _record(fields)(load_json(data))
 
 
-def ingest_loaded_assembly(inputs, data, *, runtime_path, package_id):
-    """Check a trusted actual-instance producer against independently selected input bytes."""
-    inputs = admit_entity("RunInputs", inputs)
+_LOADED_ASSEMBLY_FIELDS = {
+    "assemblyName": stable_id, "assemblyVersion": stable_id, "moduleVersionId": _uuid,
+    "assemblySha256": sha256, "typeSha256": sha256,
+}
+
+
+def _loaded_assembly_correspondence(inputs, observed, runtime_path, package_id):
     runtime_path = relative_path(runtime_path)
-    observed = _runtime_json(data, {
-        "assemblyName": stable_id, "assemblyVersion": stable_id, "moduleVersionId": _uuid,
-        "assemblySha256": sha256, "typeSha256": sha256,
-    }, limit=64 * 1024)
     parts = observed["assemblyVersion"].split(".")
     if (len(parts) != 4
             or any(not part.isascii() or not part.isdecimal()
@@ -1071,6 +1071,55 @@ def ingest_loaded_assembly(inputs, data, *, runtime_path, package_id):
         stable_id(package_id)
         package = next((item for item in inputs["packages"] if item["packageId"] == package_id), None)
         if package is None or observed["assemblySha256"] not in package["runtimeAssemblies"].values():
+            raise ConformanceError("ProofMismatch")
+    return observed
+
+
+def ingest_loaded_assembly(inputs, data, *, runtime_path, package_id):
+    """Check a trusted actual-instance producer against independently selected input bytes."""
+    return _loaded_assembly_correspondence(
+        admit_entity("RunInputs", inputs),
+        _runtime_json(data, _LOADED_ASSEMBLY_FIELDS, limit=64 * 1024), runtime_path, package_id)
+
+
+def ingest_session_origin(inputs, data, *, binding_id, case_id, component_inputs, parent_session_id=None):
+    """Admit a leaf session observation; this is not an execution witness or qualification."""
+    inputs = admit_entity("RunInputs", inputs)
+    binding_id, case_id = stable_id(binding_id), stable_id(case_id)
+    if parent_session_id is not None:
+        _uuid(parent_session_id)
+    binding = next((item for item in inputs["bindings"] if item["bindingId"] == binding_id), None)
+    if binding is None or binding["category"] not in ("metadata", "artifacts"):
+        raise ConformanceError("BindingInvalid")
+    roles = (("factory", "session", "store", "schema", "authority", "faults")
+             if binding["category"] == "metadata" else
+             ("factory", "session", "store", "validator", "maintenance", "lifetime", "authority", "faults"))
+    if (not isinstance(component_inputs, Mapping) or set(component_inputs) != set(roles)
+            or any(not isinstance(value, tuple) or len(value) != 2 for value in component_inputs.values())):
+        raise ConformanceError("EvidenceIncomplete")
+    component = _record({"instanceId": _uuid, "assembly": _record(_LOADED_ASSEMBLY_FIELDS)})
+    observed = _runtime_json(data, {
+        "schemaVersion": _constant(1), "runId": _uuid, "caseId": stable_id, "sessionId": _uuid,
+        "parentSessionId": lambda value: None if value is None else _uuid(value),
+        "factoryOperation": _one_of("create", "reopen"), "descriptorSha256": sha256,
+        "runtimeVersion": stable_id, "processArchitecture": _one_of("x64", "arm64"),
+        "components": _record({role: component for role in roles}),
+    }, limit=64 * 1024)
+    architecture = {"x64": ("x86_64", "x64"), "arm64": ("aarch64", "arm64")}
+    if (observed["runId"] != inputs["runId"] or observed["caseId"] != case_id
+            or observed["descriptorSha256"] != binding["descriptorSha256"]
+            or observed["runtimeVersion"] != inputs["environment"]["runtime"]
+            or inputs["environment"]["architecture"] not in architecture[observed["processArchitecture"]]
+            or observed["parentSessionId"] != parent_session_id
+            or observed["sessionId"] == parent_session_id
+            or observed["factoryOperation"] != ("create" if parent_session_id is None else "reopen")):
+        raise ConformanceError("ProofMismatch")
+    instances = {}
+    for role, captured in observed["components"].items():
+        runtime_path, package_id = component_inputs[role]
+        assembly = _loaded_assembly_correspondence(inputs, captured["assembly"], runtime_path, package_id)
+        prior = instances.setdefault(captured["instanceId"], assembly)
+        if prior != assembly:
             raise ConformanceError("ProofMismatch")
     return observed
 

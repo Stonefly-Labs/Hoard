@@ -1157,9 +1157,16 @@ VSTest discovery and run
 [39936903326](https://github.com/Stonefly-Labs/Hoard/actions/runs/39936903326)
 at `6a04293` passed: 108 native checks without skips, twelve scenarios/
 35 discovery records/35 execution observations and all six baselines. A
-catalog-owned append-only runtime case-history API now passes locally; native
-verification of that increment is pending. Loaded session/invocation integration
-and complete T014 remain unfinished.
+catalog-owned append-only runtime case-history API also passed run
+[39938028171](https://github.com/Stonefly-Labs/Hoard/actions/runs/39938028171)
+at `a9039fa`: 111 native checks without skips and the same twelve diagnostic
+scopes/35 observations. The next increment adds typed observed metadata/artifact
+sessions: actual factory invocation, cached consumer/component references,
+reopen lineage, actual .NET runtime/architecture and independently checked
+role-specific assembly/package correspondence. Its local regressions pass;
+native verification is pending. Execution/attempt linkage, actual SQLite
+environment production, full controller integration and complete T014 remain
+unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
