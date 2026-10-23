@@ -169,6 +169,22 @@ print('{"event":"control","code":"None","value":1}')
         run.transition("Settling")
         run.release()
 
+    def test_replacing_a_top_level_directory_does_not_recreate_its_ownership(self):
+        run = self.workspace()
+        original = self.parent / "original-cache"
+        (run.root / "cache").rename(original)
+        (run.root / "cache").mkdir(mode=0o700)
+        try:
+            with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                run.command([sys.executable, "-c", "raise AssertionError('must not execute')"])
+            self.assertEqual(list((run.root / "cache").iterdir()), [])
+            self.assertFalse(run.live_children())
+        finally:
+            (run.root / "cache").rmdir()
+            original.rename(run.root / "cache")
+        run.transition("Settling")
+        run.release()
+
     def test_unsupported_containment_fails_before_starting_a_provider(self):
         run = self.workspace()
         with mock.patch.object(execution, "native_execution_supported", return_value=False):

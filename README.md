@@ -1035,8 +1035,11 @@ implemented; full acceptance and final architecture review remain outstanding.
 Native execution admission now requires both inherited Linux confinement and
 kernel PID-handle group signalling, verified before the target is released;
 unsupported hosts fail admission rather than claiming unsafe settlement.
-The foundation workflow has observed a 23-test, zero-skip Linux pass and then
-two intended handle-admission failures; neither is full qualification. See the
+The foundation workflow subsequently passed 26 native checks without skips.
+A new diagnostic-directory replacement challenge then exposed an ownership gap.
+The correction anchors ledger, diagnostic and cleanup operations to verified
+directory identities; its native replay is pending. None of these focused
+results is full qualification. See the
 [implementation checkpoint](specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized

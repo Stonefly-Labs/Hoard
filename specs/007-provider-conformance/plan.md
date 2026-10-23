@@ -58,7 +58,18 @@ passed 23 checks without skips and measured 92,112,142,336 free scratch bytes.
 Subsequent run
 [39904414231](https://github.com/Stonefly-Labs/Hoard/actions/runs/39904414231)
 observed exactly the two intended missing-handle admission failures before
-the handshake/handle correction. A new native replay must confirm the repair.
+the handshake/handle correction. The repair passed 26 native checks without
+skips in
+[39906330789](https://github.com/Stonefly-Labs/Hoard/actions/runs/39906330789).
+The next native challenge,
+[39906992231](https://github.com/Stonefly-Labs/Hoard/actions/runs/39906992231),
+failed exactly the diagnostic-parent directory replacement case. Its correction
+anchors ledger/diagnostic/cleanup operations to verified directory descriptors
+and records original child-directory device/inode identities. Same-name directory
+replacement is rejected before child launch; cleanup depth and entries are
+bounded. Native replay of this correction is pending. Earlier retained private
+ledgers lack these directory identities and are not admitted for ordinary
+resume/cleanup under the new format.
 The unchanged inherited metadata suite also passed 72 tests against candidate
 Memory bytes; this is a focused regression, not category qualification.
 Subsequent repairs remain subject to full challenge coverage and final

@@ -4711,9 +4711,20 @@ not claim qualification. Local skipped native checks are incomplete evidence.
 Run [39901637391](https://github.com/Stonefly-Labs/Hoard/actions/runs/39901637391)
 passed 23 tests without skips and measured 92,112,142,336 free scratch bytes.
 Run [39904414231](https://github.com/Stonefly-Labs/Hoard/actions/runs/39904414231)
-then observed exactly two intended failures for missing process/group handles;
-the repaired handshake and stable-handle implementation require a fresh native
-replay. Separately, all 72 unchanged inherited metadata tests passed against
+then observed exactly two intended failures for missing process/group handles.
+The repaired handshake and stable-handle implementation passed all 26 native
+checks without skips in
+[39906330789](https://github.com/Stonefly-Labs/Hoard/actions/runs/39906330789).
+A new challenge in
+[39906992231](https://github.com/Stonefly-Labs/Hoard/actions/runs/39906992231)
+then failed only the diagnostic-parent directory replacement check. The
+correction uses original directory device/inode identities and descriptor-relative
+ledger writes, diagnostic retention and cleanup; a same-name replacement cannot
+recreate ownership. Cleanup traversal also has finite depth/entry bounds.
+The correction's native replay remains pending. Its private ledger format now
+requires directory identities: do not resume earlier retained roots as though
+they carried the new ownership proof.
+Separately, all 72 unchanged inherited metadata tests passed against
 candidate Memory packages without skips. Neither focused result is complete
 F-07 acceptance. Full challenge coverage remains required before acceptance.
 This is not the final architecture review or T081 completion.

@@ -240,6 +240,8 @@ class OwnedRun:
         run.deadline = run.started + profile_budget(profile)
         for name in ("stores", "feed", "cache", "diagnostics", "proofs"):
             (run.root / name).mkdir(mode=0o700)
+            info = (run.root / name).stat()
+            run.directory_identities[name] = (info.st_dev, info.st_ino)
         run._persist(create=True)
         return run
 
@@ -256,6 +258,7 @@ class OwnedRun:
         self.children = {}
         self.groups = set()
         self._group_handles = {}
+        self.directory_identities = {}
         self.retained_bytes = 0
         self.command_sequence = 0
         self.started = time.monotonic()
@@ -265,32 +268,73 @@ class OwnedRun:
         return {"schemaVersion": 1, "runId": self.run_id, "rootId": self.root_id,
                 "ownerPid": self.owner_pid, "ownerStartSha256": self.owner_start,
                 "state": self.state, "groups": sorted(self.groups),
+                "directories": self.directory_identities,
                 "children": {str(pid): identity for pid, identity in self.children.items()}}
+
+    def _root_descriptor(self):
+        no_symlinks(self.root)
+        try:
+            descriptor = os.open(self.root, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+        except OSError:
+            raise ConformanceError("OwnershipInvalid") from None
+        info = os.fstat(descriptor)
+        if ((info.st_dev, info.st_ino) != self.root_identity or info.st_uid != os.getuid()
+                or stat.S_IMODE(info.st_mode) & 0o077):
+            os.close(descriptor)
+            raise ConformanceError("OwnershipInvalid")
+        return descriptor
+
+    def _directory_descriptor(self, name):
+        if name not in self.directory_identities:
+            raise ConformanceError("OwnershipInvalid")
+        root = self._root_descriptor()
+        descriptor = None
+        try:
+            descriptor = os.open(name, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=root)
+            info = os.fstat(descriptor)
+            if ((info.st_dev, info.st_ino) != self.directory_identities[name]
+                    or info.st_uid != os.getuid() or stat.S_IMODE(info.st_mode) & 0o077):
+                raise ConformanceError("OwnershipInvalid")
+            return descriptor
+        except (ConformanceError, OSError):
+            if descriptor is not None:
+                os.close(descriptor)
+            raise ConformanceError("OwnershipInvalid") from None
+        finally:
+            os.close(root)
 
     def _persist(self, *, create=False):
         data = canonical_bytes(self._ledger())
-        path = self.root / "ownership.json"
-        if create:
-            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
-            with os.fdopen(os.open(path, flags, 0o600), "wb") as output:
-                output.write(data)
-        else:
+        if not create:
             self._check_ledger()
-            temporary = self.root / "ownership.next"
-            with os.fdopen(os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600), "wb") as output:
+        directory = self._root_descriptor()
+        try:
+            name = "ownership.json" if create else "ownership.next"
+            with os.fdopen(os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                                   0o600, dir_fd=directory), "wb") as output:
                 output.write(data)
-            temporary.replace(path)
+            if not create:
+                os.rename("ownership.next", "ownership.json", src_dir_fd=directory, dst_dir_fd=directory)
+        finally:
+            os.close(directory)
         self._persisted = data
 
     def _check_ledger(self, *, deadline=None):
-        no_symlinks(self.root)
-        info = self.root.stat()
-        path = self.root / "ownership.json"
-        if ((info.st_dev, info.st_ino) != self.root_identity or info.st_uid != os.getuid()
-                or stat.S_IMODE(info.st_mode) & 0o077 or path.is_symlink()
-                or not path.is_file() or path.stat().st_size > TRANSIENT_BYTES
-                or path.read_bytes() != self._persisted
-                or self.owner_pid != os.getpid() or process_identity(self.owner_pid, deadline=deadline) != self.owner_start):
+        directory = self._root_descriptor()
+        try:
+            descriptor = os.open("ownership.json", os.O_RDONLY | os.O_NOFOLLOW, dir_fd=directory)
+            with os.fdopen(descriptor, "rb") as source:
+                info = os.fstat(source.fileno())
+                if (not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid()
+                        or stat.S_IMODE(info.st_mode) & 0o077 or info.st_size > TRANSIENT_BYTES
+                        or source.read(TRANSIENT_BYTES + 1) != self._persisted):
+                    raise ConformanceError("OwnershipInvalid")
+        except OSError:
+            raise ConformanceError("OwnershipInvalid") from None
+        finally:
+            os.close(directory)
+        if (self.owner_pid != os.getpid()
+                or process_identity(self.owner_pid, deadline=deadline) != self.owner_start):
             raise ConformanceError("OwnershipInvalid")
 
     def transition(self, state):
@@ -380,6 +424,8 @@ class OwnedRun:
                 self.root_id, str(self.owner_pid), self.owner_start]
                 or env is not None or cwd is not None):
             raise ConformanceError("OwnershipInvalid")
+        for name in (("diagnostics",) if scope == "cleanup" else self.directory_identities):
+            os.close(self._directory_descriptor(name))
         if not isinstance(cache_id, str) or re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}", cache_id) is None:
             raise ConformanceError("OwnershipInvalid")
         cache = self.root / "cache" / cache_id
@@ -507,8 +553,19 @@ class OwnedRun:
         data = b"".join(canonical_bytes(event) + b"\n" for event in events)
         if len(data) > CHILD_DIAGNOSTIC_BYTES or self.retained_bytes + len(data) > PROFILE_DIAGNOSTIC_BYTES:
             raise ConformanceError("OutputLimitExceeded")
-        with os.fdopen(os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600), "wb") as output:
-            output.write(data)
+        try:
+            directory = self._directory_descriptor("diagnostics")
+            try:
+                with os.fdopen(os.open(destination.name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                                       0o600, dir_fd=directory), "wb") as output:
+                    output.write(data)
+            finally:
+                os.close(directory)
+        except (ConformanceError, OSError):
+            if self.state in ("Allocated", "Active"):
+                self.transition("Settling")
+            self.transition("Retained")
+            raise ConformanceError("OwnershipInvalid") from None
         self.retained_bytes += len(data)
         return CommandResult(code, tuple(events), (time.monotonic() - started) * 1000)
 
@@ -528,10 +585,21 @@ class OwnedRun:
                 raise ConformanceError(code)
             self._check_ledger(deadline=deadline)
             control_timeout(deadline)
-            for path in (self.root / "diagnostics").iterdir():
-                path.unlink()
-            (self.root / "diagnostics").rmdir()
-            (self.root / "ownership.json").unlink()
+            directory = self._directory_descriptor("diagnostics")
+            try:
+                with os.scandir(directory) as entries:
+                    for entry in entries:
+                        control_timeout(deadline)
+                        os.unlink(entry.name, dir_fd=directory)
+            finally:
+                os.close(directory)
+            root = self._root_descriptor()
+            try:
+                self._check_ledger(deadline=deadline)
+                os.rmdir("diagnostics", dir_fd=root)
+                os.unlink("ownership.json", dir_fd=root)
+            finally:
+                os.close(root)
             self.root.rmdir()
             self.state = "Released"
         except (ConformanceError, OSError):
