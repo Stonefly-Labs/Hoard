@@ -4806,6 +4806,12 @@ locked restoration reported compiler/NuGet code 1403 before any candidate
 compilation. The locks remain unchanged; bounded archive/assembly fingerprints
 are being used to diagnose the platform difference.
 
+Those fingerprints show different Linux assembly bytes, not just ZIP envelopes.
+Build commands now disable .NET runtime roll-forward so the pinned SDK/compiler
+uses its requested runtime rather than a newer runner patch. This is scoped to
+restore/build/pack, not test-runtime selection; missing requested runtime fails
+explicitly. Historical locks are not rebound. Native confirmation is pending.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

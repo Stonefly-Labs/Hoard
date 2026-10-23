@@ -615,6 +615,17 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
 
 class ConformanceBaselineTests(unittest.TestCase):
+    def test_build_runtime_pin_overrides_ambient_roll_forward_only_for_owned_build_command(self):
+        run = mock.Mock(command_sequence=1)
+        run.command.return_value = mock.Mock(exit_code=0, events=())
+        args = ["dotnet", "build", "fixture.csproj"]
+        with mock.patch.dict(os.environ, {"DOTNET_ROLL_FORWARD": "LatestPatch"}):
+            self.baselines._command(run, args, cwd=self.root, cache_id="diagnostic")
+            self.assertEqual(os.environ["DOTNET_ROLL_FORWARD"], "LatestPatch")
+        run.command.assert_called_once_with(
+            args, cwd=self.root, kind="build", cache_id="diagnostic",
+            env={"DOTNET_ROLL_FORWARD": "Disable"})
+
     def test_local_archive_diagnostics_project_only_fixed_identities_and_actual_hashes(self):
         import zipfile
         with tempfile.TemporaryDirectory() as directory:

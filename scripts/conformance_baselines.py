@@ -38,7 +38,8 @@ BASELINES = (
 
 
 def _command(run, args, *, cwd, cache_id):
-    observed = run.command(args, cwd=cwd, kind="build", cache_id=cache_id)
+    observed = run.command(args, cwd=cwd, kind="build", cache_id=cache_id,
+                           env={"DOTNET_ROLL_FORWARD": "Disable"})
     if observed.exit_code or any(event["code"] != "None" for event in observed.events):
         codes = sorted({event["value"] for event in observed.events if event["code"] == "CommandFailed"})
         diagnostic = {"code": "CommandFailed", "compilerCodes": codes,

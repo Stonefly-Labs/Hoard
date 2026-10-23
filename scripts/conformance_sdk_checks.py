@@ -61,6 +61,7 @@ CONFIGURATION_POLICY = {
     "packageSources": {"local": "isolated-current-archives", "nuget.org": "https://api.nuget.org/v3/index.json"},
     "packageSourceMapping": {"local": ["Hoard.*"], "nuget.org": ["*"]},
     "restore": "locked-replay-after-isolated-local-hash-preparation",
+    "buildRuntimeRollForward": "Disable",
     "consoleLogger": False, "runtimeLogger": "HoardSafe",
     "testSelection": [{"identities": list(item[1]), "diagnosticCode": item[2],
                        "status": item[3], "exitCode": item[4], "failureKind": item[5]}
