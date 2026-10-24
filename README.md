@@ -1537,12 +1537,19 @@ bindings/category/profile qualification.
 Two original storage-failure/reconciliation bodies now also use shared checks,
 preserving four frozen parameters and fixed sanitizer/source behavior. Genuine
 access-denied failures mislabeled as unavailable fail the unchanged code
-assertion; genuine stores pass. The next six-row native request is 70
-scopes/602 observations, pending, not complete category/profile qualification.
+assertion; genuine stores pass. The six-row native request passed at `ff50acd`,
+run [40124374635](https://github.com/Stonefly-Labs/Hoard/actions/runs/40124374635):
+all three jobs, 182 foundations and 70 scopes/602 observations, not complete
+category/profile qualification.
 Three original prefix-cleanup bodies now also share six frozen parameters and
 their original stop/reopen checks. Actual permissions, observers, filesystem
 snapshots and Local-only durable reopen remain fixture-side. The next six-row
 native request is 71 scopes/608 observations, pending, not full qualification.
+Both remaining original object-cleanup bodies now also use shared checks with
+five frozen parameters. Actual Unix permissions, observers, filesystem sizes
+and worker settlement remain fixture-side. The next five-row native request is
+72 scopes/613 observations, pending; full binding/category/profile gates remain
+open.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

@@ -7,6 +7,124 @@ public sealed class ArtifactCleanupAssertions(
     IArtifactStore store, IArtifactMaintenance maintenance, ArtifactStoreIdentity identity,
     Func<bool> ready, Func<string[]> stagingFiles)
 {
+    public async Task ReusedObjectAsync(
+        Func<string[]> objectFiles, Action observeReadOnlyObjects, Action removeObserver,
+        Action restoreObjects, CancellationToken cancellationToken)
+    {
+        var bytes = "reused selected object stays immutable"u8.ToArray();
+        using var control = new ShortSource(bytes);
+        var committed = await PublishAsync(store, control, new(1024), cancellationToken);
+        var selected = Assert.Single(objectFiles());
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        using var source = new ShortSource(bytes);
+        var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
+        observeReadOnlyObjects();
+        try
+        {
+            var failed = Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+                await store.CommitAsync(staged, new(), cancellationToken));
+            Assert.Equal(ArtifactFailureCode.Uncertain, failed.Code);
+            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failed.Cleanup);
+            Assert.False(ready());
+            removeObserver();
+            var receipt = Assert.IsType<ArtifactResolution.Committed>(
+                Success(await store.ReconcileAsync(ticket, new(), cancellationToken))).Receipt;
+            Assert.Equal(ArtifactMutationOutcome.AlreadyPresentVerified, receipt.Outcome);
+            Assert.Equal(committed.Stamp, receipt.Stamp);
+            Assert.Equal(2, objectFiles().Length);
+            var row = Assert.Single(Success(await maintenance.ObserveAsync(
+                new(identity, ArtifactRecoveryKind.Staging), new(), cancellationToken)).Observations);
+            var owner = Assert.IsType<ArtifactOption<ArtifactStagingOwner>.Some>(row.Owner).Value;
+            var request = new ArtifactCleanupRequest(identity, [new ArtifactCleanupTarget.AbandonedStaging(owner)]);
+            Assert.Equal(ArtifactFailureCode.AccessDenied, Assert.IsType<ArtifactResult<ArtifactCleanupReport>.Failure>(
+                await maintenance.CleanupAsync(request, new(), cancellationToken)).Code);
+            restoreObjects();
+            var reclaimed = Success(await maintenance.CleanupAsync(request, new(), cancellationToken));
+            Assert.Equal(2 * bytes.Length, reclaimed.ReclaimedBytes);
+            Assert.Equal(selected, Assert.Single(objectFiles()));
+            Assert.Empty(stagingFiles());
+            Assert.True(ready());
+            Assert.Equal(receipt, Success(await store.CommitAsync(staged, new(), cancellationToken)));
+            Assert.Equal(receipt, Assert.IsType<ArtifactResolution.Committed>(
+                Success(await store.ReconcileAsync(ticket, new(), cancellationToken))).Receipt);
+            Assert.Equal(bytes, await ReadAsync(store, committed.Stamp, cancellationToken));
+            Assert.False(source.WasDisposed);
+            Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        }
+        finally
+        {
+            restoreObjects();
+            removeObserver();
+        }
+    }
+
+    public async Task UnselectedObjectAsync(
+        bool duringAssembly, Func<string[]> objectFiles, Func<string, long> objectLength, Func<Task> whenIdle,
+        Action<CancellationTokenSource> observeFailure, Action removeObserver, Action restoreObjects,
+        Action cleanupFinally, CancellationToken cancellationToken)
+    {
+        const int length = 512 * 1024;
+        using var control = new ShortSource("selected payload must survive scratch cleanup"u8.ToArray());
+        var committed = await PublishAsync(store, control, new(length), cancellationToken);
+        var selected = Assert.Single(objectFiles());
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(length)), new(), cancellationToken));
+        using var source = new ShortSource(new byte[length]);
+        var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
+        using var cancellation = new CancellationTokenSource();
+        observeFailure(cancellation);
+        try
+        {
+            var failed = Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+                await store.CommitAsync(staged, new(), cancellation.Token));
+            await whenIdle();
+            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failed.Cleanup);
+            Assert.False(ready());
+            Assert.False(source.WasDisposed);
+            var residual = Assert.Single(objectFiles(), path => path != selected);
+            var residualBytes = objectLength(residual);
+            Assert.InRange(residualBytes, 1, length);
+            if (duringAssembly) { Assert.True(residualBytes < length); }
+            else { Assert.Equal(length, residualBytes); }
+            for (var attempt = 0; attempt < 3; attempt++)
+            {
+                Assert.Equal(ArtifactFailureCode.CleanupIncomplete, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+                    await store.CommitAsync(staged, new(), cancellationToken)).Code);
+                Assert.Equal(ArtifactFailureCode.CleanupIncomplete, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
+                    await store.ReserveWriteAsync(new(new ArtifactExpectations(length)), new(), cancellationToken)).Code);
+                Assert.Equal(2, objectFiles().Length);
+            }
+            var page = Success(await maintenance.ObserveAsync(
+                new(identity, ArtifactRecoveryKind.Staging), new(), cancellationToken));
+            var row = Assert.Single(page.Observations);
+            Assert.Equal(ArtifactObservationKind.AbandonedStaging, row.Kind);
+            var owner = Assert.IsType<ArtifactOption<ArtifactStagingOwner>.Some>(row.Owner).Value;
+            Assert.Equal(staged.Owner, owner);
+            var request = new ArtifactCleanupRequest(identity, [new ArtifactCleanupTarget.AbandonedStaging(owner)]);
+            for (var attempt = 0; attempt < 2; attempt++)
+            {
+                var retry = Assert.IsType<ArtifactResult<ArtifactCleanupReport>.Failure>(
+                    await maintenance.CleanupAsync(request, new(), cancellationToken));
+                Assert.Equal(ArtifactFailureCode.AccessDenied, retry.Code);
+                Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, retry.Cleanup);
+            }
+            restoreObjects();
+            removeObserver();
+            var reclaimed = Success(await maintenance.CleanupAsync(request, new(), cancellationToken));
+            Assert.Equal(1, reclaimed.Completed);
+            Assert.Equal(length + residualBytes, reclaimed.ReclaimedBytes);
+            Assert.Equal(selected, Assert.Single(objectFiles()));
+            Assert.Empty(stagingFiles());
+            Assert.True(ready());
+            Assert.IsType<ArtifactResolution.NotCommitted>(Success(await store.ReconcileAsync(ticket, new(), cancellationToken)));
+            Assert.Equal("selected payload must survive scratch cleanup"u8.ToArray(), await ReadAsync(store, committed.Stamp, cancellationToken));
+            using var replacement = new ShortSource("fresh selected object after cleanup"u8.ToArray());
+            var fresh = await PublishAsync(store, replacement, new(length), cancellationToken);
+            Assert.Equal(1, Success(await maintenance.CleanupAsync(request, new(), cancellationToken)).Conflicted);
+            Assert.Equal("fresh selected object after cleanup"u8.ToArray(), await ReadAsync(store, fresh.Stamp, cancellationToken));
+        }
+        finally { cleanupFinally(); }
+    }
+
     public async Task CommittedResidualAsync(
         Action blockPrefixCleanup, Action restorePrefixCleanup, CancellationToken cancellationToken)
     {

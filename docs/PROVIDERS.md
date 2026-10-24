@@ -464,6 +464,17 @@ and unchanged stop/reopen assertions. Actual permissions, observer controls,
 filesystem/readiness snapshots and Local-only durable reopen remain
 fixture-side. The next six-row native request is 71 scopes/608 observations,
 pending, not full binding/session/category/profile qualification.
+Both remaining original object-cleanup bodies now also share five frozen
+parameters and unchanged selected-object/owner/reclamation checks. Actual Unix
+permissions, observers, filesystem snapshots/lengths and worker settlement
+remain fixture-side. Private hook names map to the existing logical during/
+after-assembly input, not provider-selected expected results. The next five-row
+request is 72 scopes/613 observations, pending. Original failure-body extraction
+does not complete T027/T030 or full binding/session/category/profile gates.
+
+Storage-failure passed `40124374635` at `ff50acd`, all three jobs,
+182 foundations and 70 scopes/602 observations, all six new rows and actual
+prerequisites/replay, not full category/profile qualification.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

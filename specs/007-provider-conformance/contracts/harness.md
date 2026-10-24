@@ -603,6 +603,19 @@ and Local-only durable reopen stay fixture-side. Original exact receipt/owner/
 cleanup/fencing checks remain common; no simulation durability is borrowed.
 The next six-row native request is 71 scopes/608 observations, pending, not
 complete bindings/category/session or full profile qualification.
+Both remaining original object-cleanup bodies now also execute common checks
+with five frozen parameters, preserving selected-object receipt/ownership/
+reclamation assertions and exact original order. Actual Unix permissions,
+observers, filesystem snapshots/lengths and worker settlement stay fixture-side.
+Private hook names translate into the existing logical during/after-assembly
+input; common checks own all fixed expected codes/sizes/owners/receipts. The
+next five-row request is 72 scopes/613 observations, pending. Original failure-
+body extraction does not complete T027/T030 or full binding/category/profile
+gates.
+
+Storage-failure passed `40124374635` at `ff50acd`, all three jobs,
+182 foundations and 70 scopes/602 observations, including all six new rows and
+every actual prerequisite chain/replay, not full qualification.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

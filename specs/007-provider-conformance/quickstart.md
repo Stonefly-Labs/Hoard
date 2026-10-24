@@ -309,6 +309,12 @@ Three original prefix-cleanup bodies now also share six frozen parameters and
 original stop/reopen assertions. Actual permissions, observers, physical
 snapshots and Local-only durable reopen remain fixture-side. The next six-row
 request is 71 scopes/608 observations, pending, not full profile qualification.
+Both remaining original object-cleanup bodies now also share five frozen
+parameters. Actual permissions, observers, physical lengths and worker
+settlement stay fixture-side. The next five-row request is 72 scopes/613
+observations, pending, not complete binding/session/category/profile acceptance.
+Storage-failure passed `40124374635` at `ff50acd`, all three jobs,
+182 foundations and 70 scopes/602 observations, not complete qualification.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

@@ -3034,6 +3034,55 @@ Previously measured transfer packets remain unchanged, not fresh session/
 category origins or new durable proof. Historical consumers/binaries, tracked
 locks and production APIs remain unchanged.
 
+Both remaining original object-cleanup bodies now execute common interface-only
+checks with all five frozen parameters, completing original failure-body
+extraction without claiming T027/T030 complete. Selected-object receipt/reuse,
+unselected assembly ownership/retry, exact reclaimed bytes and fresh-owner
+fencing assertions preserve original tokens/order. Actual permission changes,
+observer registration/removal, filesystem snapshots/lengths and physical worker
+settlement stay fixture-side. The private progress/compare hook translates to
+the existing logical during/after-assembly input; shared checks own all fixed
+expected codes/sizes/owners/receipts. SDK code has no private hook names,
+filesystem operations or concrete-provider switches.
+
+Missing consumers first failed actual package-mode compilation with CS1061;
+the missing exact scope failed its named tooling regression. The intermediate
+`object-cleanup` preparation failed CA1416 because an outer platform guard
+does not flow into deferred restore lambdas. Reusing a fixture-side restoration
+helper with its own existing Unix guard fixes the actual cause, without
+suppressions or changes to physical restoration/order. Mechanical comparison
+verifies both bodies, actual observer callbacks, exact semantic phase mapping,
+guarded restore helper and unchanged other cleanup bodies/helpers after explicit
+seams. Only the non-I/O path calculation moved into fixture setup.
+
+Tooling passed 292 discovered / 275 passed / seventeen native macOS skips.
+SDK/accepted-wrapper whitespace, compiled/frozen catalogs, exact comparisons
+and patch integrity passed. The new five-row native request is 72 scopes/
+613 observations, pending. The preceding prefix request binds exact head
+`871e3a860a07646c513de01095cc29ad3e4add70`, run `40125248164`, pending
+separate strict admission. Broad tasks, reviewer-owned checklists and stage
+gates remain open.
+
+Storage-failure run
+[40124374635](https://github.com/Stonefly-Labs/Hoard/actions/runs/40124374635)
+passed at exact head `ff50acda07e9bc8eb00277de2eb20140d2f39e5f`: all three
+jobs, 182 foundations without failures/errors/skips, 70 scopes/602 exact
+discoveries/executions and all six storage-failure/mutation rows. Every actual
+recovery/transfer/retention/external/native prerequisite chain, native containment
+and eighteen-package/thirteen-lock replay passed strict admission. Input:
+`af73ffddfa86f65c5855735147a1d7ad4da4bdb06e123601cd023587d26a7a7a`;
+preparation:
+`9a90d9553f8c410ccf50b6222ad4f5bb156cc1645412ac138d307449f27f8355`.
+
+`object-cleanup-fixed` and independent `object-cleanup-replay` each passed all
+295 artifact cases and 89 metadata cases per provider without skips. Eleven
+archives and ten actual loaded dependency images reproduce exactly; combined
+archive-map SHA-256:
+`d0a046589837aa55c1dd6ccac19965ba7c6bce41a89d1592ab569a7f9339a5f5`.
+Previously measured transfer packets remain unchanged, not fresh session/
+category origins or new durable proof. Historical consumers/binaries, tracked
+locks and production APIs remain unchanged.
+
 Three original prefix-cleanup bodies now execute interface-only shared checks
 with all six frozen parameters: committed receipts with residual staging,
 failed prefix reclamation/fencing and failed-prefix stop/settlement. Original

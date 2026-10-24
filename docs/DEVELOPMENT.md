@@ -6753,6 +6753,27 @@ assertions and do not pretend ObjectSemantics has durable restart. The next
 six-row native request is 71 scopes/608 observations, pending, not complete
 bindings/category/session or full profile acceptance.
 
+Both remaining original object-cleanup bodies now execute common checks with
+five frozen parameters: reused selected-object receipt/cleanup and unselected
+assembly ownership/retry/reclamation. Actual Unix permission changes, observers,
+filesystem snapshots/lengths and physical worker settlement stay fixture-side.
+The fixture translates its private progress/compare hook into the existing
+logical during/after-assembly input; common checks own every fixed code, size,
+owner and receipt expectation. Guarded physical restoration remains fixture-side,
+without analyzer suppressions. The next five-row request is 72 scopes/613
+observations, pending. Original failure-body extraction is complete, not full
+T027/T030, binding/session/category or profile acceptance.
+
+Storage-failure run `40124374635` at exact head
+`ff50acda07e9bc8eb00277de2eb20140d2f39e5f` passed all three jobs,
+182 foundations without failures/errors/skips and 70 scopes/602 exact
+discoveries/executions, including all six failure/mutation rows and every
+actual prerequisite chain/native containment/eighteen-package/thirteen-lock
+replay. Input:
+`af73ffddfa86f65c5855735147a1d7ad4da4bdb06e123601cd023587d26a7a7a`;
+preparation:
+`9a90d9553f8c410ccf50b6222ad4f5bb156cc1645412ac138d307449f27f8355`.
+
 The expanded budget request passed `40119412481` at exact head
 `70dfdf63f59a13ba39d934a7ef09f148bfc58c57`: all three jobs, 176 foundations
 without failures/errors/skips, 64 scopes/542 exact discoveries/executions, all
