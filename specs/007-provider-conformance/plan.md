@@ -802,6 +802,36 @@ failed safely during candidate construction with `Incomplete`/
 that failed checkpoint. Full extraction/parity, typed adapters and their task
 acceptance remain open.
 
+### Typed receipt-corruption consumer and repaired native package execution
+
+The twentieth actual common consumer covers all fourteen typed operation
+corruptions without provider encoding knowledge. It owns the original operation,
+expected failure code/phase/retry/ticket, independent aggregate count, damaged
+fingerprint stability, exact restored replay/reconciliation receipts and foreign
+ticket abandonment. Its control accepts only existing typed corruption requests
+and checksum scopes; a full session can pass `Faults.CorruptAsync` directly.
+Actual Memory private mutations are shared with the retained independent
+mechanism test; no provider-selected expected result or passing flag was added.
+A missing-common-API compiler failure preceded implementation. The temporary
+source-only probe now passes 23 tests without skips, including all twenty
+consumers. This is not complete MP-15/session diagnostic extraction or T019/T021
+acceptance. Source SDK tests pass 105; all 236 tooling tests pass with ten native
+macOS skips. The current exact native selection is 24 scopes/94 observations,
+not yet observed.
+
+Run [40053903410](https://github.com/Stonefly-Labs/Hoard/actions/runs/40053903410)
+at `5bdfc98ca5c8586416c4cfa096c243c44dc1f298` verified the archive-name repair:
+all three jobs succeeded, 131 native foundation tests without failures/errors/
+skips, 21 scopes/89 discoveries/89 executions, six historical baselines and
+byte-identical replay of eighteen packages/thirteen locks. This includes the
+first fifteen actual Memory-package consumers and the aliasing negative/control.
+Input digest:
+`3d8f73bbf2b089f602a3654a45194c4f50b338981e4ba25b31ca30a994d43aec`;
+preparation proof:
+`7fd01849664c83ca59b1617edbd2eec0a3937b320bca2e2b0797fa452a5c09f6`.
+Free scratch was 91,725,619,200 bytes. This remains non-qualifying package
+diagnostics, not complete metadata/profile qualification.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

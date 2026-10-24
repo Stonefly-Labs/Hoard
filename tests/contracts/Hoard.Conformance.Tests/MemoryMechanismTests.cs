@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
+using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Hoard.Abstractions.Metadata;
@@ -11,6 +12,14 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class MemoryMechanismTests
 {
+    [Fact]
+    public async Task Compiled_receipt_corruption_consumer_preserves_all_shapes_and_original_ticket_classification()
+    {
+        await using var store = await OpenAsync();
+        var control = new ReceiptCorruptionControl(store);
+        await MetadataReconciliationAssertions.CorruptReceiptsAsync(store, control.CorruptAsync, default);
+    }
+
     [Fact]
     public async Task Partition_aliasing_fails_the_common_assertion_and_correct_memory_passes_unchanged()
     {
@@ -166,33 +175,7 @@ public sealed class MemoryMechanismTests
             "short-fingerprint", "missing-fingerprint", "invalid-fingerprint", "reserved-receipt",
             "abandoned-receipt", "fractional-state" })
         {
-            var payload = Assert.IsType<JsonObject>(JsonNode.Parse(Assert.IsType<string>(original.Receipt)));
-            var damaged = original;
-            switch (shape)
-            {
-                case "null-target": payload["Revisions"]![0]!["Target"] = null; break;
-                case "null-revision": payload["Revisions"]![0]!["Revision"] = null; break;
-                case "missing-revisions": Assert.True(payload.Remove("Revisions")); break;
-                case "oversized-revisions":
-                    payload["Revisions"] = new JsonArray(Enumerable.Range(0, 65).Select(_ => payload["Revisions"]![0]!.DeepClone()).ToArray()); break;
-                case "mismatched-ticket": payload["Ticket"] = JsonSerializer.SerializeToNode(foreign); break;
-                case "short-fingerprint": damaged = damaged with { Fingerprint = new string('a', 62) }; break;
-                case "missing-fingerprint": damaged = damaged with { Fingerprint = null }; break;
-                case "invalid-fingerprint": damaged = damaged with { Fingerprint = new string('z', 64) }; break;
-                case "reserved-receipt": damaged = damaged with { State = 0 }; break;
-                case "abandoned-receipt": damaged = damaged with { State = 2 }; break;
-                case "fractional-state": damaged = damaged with { State = 1.5 }; break;
-            }
-            damaged = damaged with
-            {
-                Receipt = shape switch
-                {
-                    "malformed" => "{",
-                    "oversized-payload" => new string(' ', MetadataEncoding.MaximumBytes) + original.Receipt,
-                    "missing-receipt" => null,
-                    _ => payload.ToJsonString()
-                }
-            };
+            var damaged = DamageOperation(original, shape, foreign);
             Success(await store.ReplaceOperationImageForTestAsync(ticket, damaged));
             try
             {
@@ -210,6 +193,94 @@ public sealed class MemoryMechanismTests
             }
             finally { Success(await store.ReplaceOperationImageForTestAsync(ticket, original)); }
             Assert.Equal<byte>(MetadataEncoding.Encode(receipt), MetadataEncoding.Encode(Success(await store.CommitAsync(batch, new(), default))));
+        }
+    }
+
+    private static MemoryOperationTestImage DamageOperation(
+        MemoryOperationTestImage original, string shape, MetadataOperationTicket foreign)
+    {
+        var payload = Assert.IsType<JsonObject>(JsonNode.Parse(Assert.IsType<string>(original.Receipt)));
+        var damaged = original;
+        switch (shape)
+        {
+            case "null-target": payload["Revisions"]![0]!["Target"] = null; break;
+            case "null-revision": payload["Revisions"]![0]!["Revision"] = null; break;
+            case "missing-revisions": Assert.True(payload.Remove("Revisions")); break;
+            case "oversized-revisions":
+                payload["Revisions"] = new JsonArray(Enumerable.Range(0, 65).Select(_ => payload["Revisions"]![0]!.DeepClone()).ToArray()); break;
+            case "mismatched-ticket": payload["Ticket"] = JsonSerializer.SerializeToNode(foreign); break;
+            case "short-fingerprint": damaged = damaged with { Fingerprint = new string('a', 62) }; break;
+            case "missing-fingerprint": damaged = damaged with { Fingerprint = null }; break;
+            case "invalid-fingerprint": damaged = damaged with { Fingerprint = new string('z', 64) }; break;
+            case "reserved-receipt": damaged = damaged with { State = 0 }; break;
+            case "abandoned-receipt": damaged = damaged with { State = 2 }; break;
+            case "fractional-state": damaged = damaged with { State = 1.5 }; break;
+            case "malformed" or "oversized-payload" or "missing-receipt": break;
+            default: throw new ArgumentException("BindingInvalid");
+        }
+        return damaged with
+        {
+            Receipt = shape switch
+            {
+                "malformed" => "{" + MetadataReconciliationAssertions.CorruptionCanary,
+                "oversized-payload" => new string(' ', MetadataEncoding.MaximumBytes) + original.Receipt,
+                "missing-receipt" => null,
+                _ => payload.ToJsonString()
+            }
+        };
+    }
+
+    private sealed class ReceiptCorruptionControl(MemoryMetadataStore store)
+    {
+        public async ValueTask<IMetadataCorruptionScope> CorruptAsync(
+            MetadataCorruptionRequest request, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var operation = request as MetadataCorruptionRequest.Operation ?? throw new ArgumentException("BindingInvalid");
+            var original = Success(await store.OperationImageForTestAsync(operation.Ticket));
+            var scope = new ReceiptScope(store, operation.Ticket, original);
+            var shape = operation.Corruption switch
+            {
+                MetadataOperationCorruption.NullTarget => "null-target",
+                MetadataOperationCorruption.NullRevision => "null-revision",
+                MetadataOperationCorruption.MalformedEncoding => "malformed",
+                MetadataOperationCorruption.MissingRevisions => "missing-revisions",
+                MetadataOperationCorruption.OversizedRevisions => "oversized-revisions",
+                MetadataOperationCorruption.OversizedEncoding => "oversized-payload",
+                MetadataOperationCorruption.MismatchedTicket => "mismatched-ticket",
+                MetadataOperationCorruption.MissingReceipt => "missing-receipt",
+                MetadataOperationCorruption.ShortFingerprint => "short-fingerprint",
+                MetadataOperationCorruption.MissingFingerprint => "missing-fingerprint",
+                MetadataOperationCorruption.InvalidFingerprintEncoding => "invalid-fingerprint",
+                MetadataOperationCorruption.ReservedReceipt => "reserved-receipt",
+                MetadataOperationCorruption.AbandonedReceipt => "abandoned-receipt",
+                MetadataOperationCorruption.InvalidState => "fractional-state",
+                _ => throw new ArgumentException("BindingInvalid")
+            };
+            var damaged = DamageOperation(original, shape, operation.ForeignTicket);
+            cancellationToken.ThrowIfCancellationRequested();
+            Success(await store.ReplaceOperationImageForTestAsync(operation.Ticket, damaged));
+            return scope;
+        }
+
+        private sealed class ReceiptScope(
+            MemoryMetadataStore store, MetadataOperationTicket ticket, MemoryOperationTestImage original) : IMetadataCorruptionScope
+        {
+            private bool restored;
+            public ConformanceStateFingerprint Original { get; } = Fingerprint(original);
+            public async ValueTask<ConformanceStateFingerprint> ObserveAsync(CancellationToken cancellationToken)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return Fingerprint(Success(await store.OperationImageForTestAsync(ticket)));
+            }
+            public async ValueTask DisposeAsync()
+            {
+                if (restored) { return; }
+                Success(await store.ReplaceOperationImageForTestAsync(ticket, original));
+                restored = true;
+            }
+            private static ConformanceStateFingerprint Fingerprint(MemoryOperationTestImage image) =>
+                new(Convert.ToHexStringLower(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(image))));
         }
     }
 

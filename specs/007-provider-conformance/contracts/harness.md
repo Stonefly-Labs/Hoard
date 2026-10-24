@@ -68,11 +68,12 @@ integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
 
-The initial executable SDK slice exposes nineteen methods across
+The initial executable SDK slice exposes twenty methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,
 `MetadataIdentityAssertions`, `MetadataEntityAssertions` and
-`MetadataReferenceAssertions` and `MetadataTimeAssertions`. They consume an already-prepared fresh
+`MetadataReferenceAssertions`, `MetadataTimeAssertions` and
+`MetadataReconciliationAssertions`. They consume an already-prepared fresh
 `IMetadataStore`, a caller cancellation token and, for publication cases, the
 session's `IMetadataConformanceAuthority`; the caller retains store ownership.
 They cover entity round trips, identity/partition isolation, final-graph deletion,
@@ -88,6 +89,15 @@ scope/size/epoch rejection and live resume are observed through public operation
 without interpreting a provider's private token encoding.
 Canonical identity checks preserve case, Unicode normalization distinctions and
 encoded separators, and reject synthetic user-info/header/secret-reference inputs.
+The receipt-corruption consumer uses the existing typed
+`MetadataCorruptionRequest`/`IMetadataCorruptionScope` control signature (the
+session fault driver's `CorruptAsync` method group). All fourteen logical shapes,
+failure phases/retries/original tickets, unchanged damaged fingerprints,
+independent aggregate effects, restored exact receipts and foreign-ticket
+abandonment are checked in common code. Private encodings remain in the fixture.
+Its public failure strings reject a shared synthetic canary; the focused Memory
+probe rejects every provider diagnostic rather than retaining raw output.
+Full session-level diagnostic integration and extraction parity remain pending.
 No method accepts a provider name or expected outcome. Session/adapter routing,
 all other inherited assertions and unchanged-wrapper forwarding remain pending.
 Invoking this partial slice cannot qualify a metadata binding.

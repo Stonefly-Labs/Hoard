@@ -1218,20 +1218,23 @@ verified those guards: 127 foundation checks without failures/errors/skips,
 seventeen scopes/69 discoveries/69 executions, all six historical baselines and
 byte-identical replay of eighteen packages/thirteen locks.
 
-The SDK now contains nineteen executable metadata consumers: entity round trips,
+The SDK now contains twenty executable metadata consumers: entity round trips,
 registry/authorization isolation, graph deletion, reference replacement/ABA,
 telemetry rollback, aggregate bounds, all seven page queries and oversized/
 bounded paging, competing creates, revision/delete-recreate races and lease
 fences, exact canonical text, opaque continuation scope/epoch binding, exact
-ticket expiry and clock rollback. They accept public store/authority
-contracts, a harness-owned clock where needed and cancellation;
-expected outcomes stay in the SDK. A focused source probe executes all nineteen
+ticket expiry and clock rollback, and fourteen receipt-corruption shapes. They
+accept public store/authority contracts, a harness-owned clock or typed corruption
+control where needed and cancellation; expected outcomes stay in the SDK.
+A focused source probe executes all twenty
 against unchanged Memory source, and a contradictory-success store fails the
 competing-create assertion. This is partial extraction: existing
-wrappers, full shared suites, typed adapters and package-only provider execution
-remain outstanding. The next non-qualifying native diagnostic now selects nineteen
-Memory package-consumer witnesses after independent fresh-cache locked build;
-its result is pending. No category/profile qualification is claimed.
+wrappers, full shared suites and complete typed adapters remain outstanding.
+Native run [40053903410](https://github.com/Stonefly-Labs/Hoard/actions/runs/40053903410)
+verified the first fifteen against the actual Memory package: all three jobs
+passed, with 131 foundation checks and 21 scopes/89 exact observations.
+The current twenty-consumer selection is pending. No category/profile
+qualification is claimed.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

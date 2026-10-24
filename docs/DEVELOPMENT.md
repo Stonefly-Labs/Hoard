@@ -5473,10 +5473,31 @@ paired aliasing/control. Focused formatting and all 236 tooling checks pass
 Native run `40053284658` at `3714a91` safely failed its SDK diagnostic during
 candidate construction with `Incomplete`/`PrerequisiteMissing`, before any
 provider-consumer observations. That is consistent with the archive-name
-assumption corrected in `5bdfc98`; the corrected native result remains pending.
-The current exact selection is twenty-four scopes/93 discovery/execution
+assumption corrected in `5bdfc98`; the corrected native result is recorded below.
+That checkpoint selected twenty-four scopes/93 discovery/execution
 observations. No failed native checkpoint or portable source probe is promoted
 to package/category qualification, and T019..T024 remain open.
+
+The next common consumer adds fourteen typed receipt-corruption shapes. Common
+code owns failure classification, exact original tickets, unchanged damaged
+state, independent effects and restored replay/reconciliation; private encodings
+stay in the Memory probe. The source-only probe passes 23 tests without skips,
+including twenty actual consumers, and ordinary SDK tests pass 105. Source
+controls are not complete admitted bindings; full session diagnostic integration
+and parity remain open. Current native selection: 24 scopes/94 observations,
+pending.
+
+The repaired native run
+[40053903410](https://github.com/Stonefly-Labs/Hoard/actions/runs/40053903410)
+at `5bdfc98ca5c8586416c4cfa096c243c44dc1f298` succeeded in all three jobs:
+131 foundation checks without failures/errors/skips, 21 scopes/89 discoveries/
+89 executions and six baselines. This verifies the first fifteen actual
+Memory-package consumers, the paired aliasing/control and identical replay of
+eighteen packages/thirteen locks. Input digest:
+`3d8f73bbf2b089f602a3654a45194c4f50b338981e4ba25b31ca30a994d43aec`;
+preparation proof:
+`7fd01849664c83ca59b1617edbd2eec0a3937b320bca2e2b0797fa452a5c09f6`.
+This is package diagnostic execution, not category qualification.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

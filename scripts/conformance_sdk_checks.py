@@ -142,6 +142,7 @@ SCENARIOS = (
             "reference-replacement", "reference-aba", "telemetry-rollback", "all-page-queries",
             "oversized-pages")), "None", "Passed", 0, "None"),
     ("memory-mechanisms", tuple(PACKAGE_TEST_PREFIX + method for method in (
+        "Compiled_receipt_corruption_consumer_preserves_all_shapes_and_original_ticket_classification",
         "Targeted_record_damage_fails_group_and_page_without_changing_the_damage",
         "Targeted_receipt_damage_preserves_original_ticket_and_independent_effects",
         "Partition_aliasing_fails_the_common_assertion_and_correct_memory_passes_unchanged")),
