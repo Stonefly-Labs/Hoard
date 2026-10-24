@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Collections.Immutable;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Hoard.Abstractions.Metadata;
@@ -13,11 +14,59 @@ namespace Hoard.Conformance.Tests;
 public sealed class MemoryMechanismTests
 {
     [Fact]
+    public async Task Noop_corruption_fails_the_common_assertion_and_real_memory_damage_passes_unchanged()
+    {
+        Func<IMetadataStore, Func<MetadataCorruptionRequest, CancellationToken, ValueTask<IMetadataCorruptionScope>>,
+            CancellationToken, Task> check = MetadataReconciliationAssertions.CorruptReceiptsAsync;
+        await using var undamaged = await OpenAsync();
+        var failure = await Assert.ThrowsAsync<Xunit.Sdk.NotEqualException>(
+            () => check(undamaged, (_, token) =>
+            {
+                token.ThrowIfCancellationRequested();
+                return ValueTask.FromResult<IMetadataCorruptionScope>(new UnchangedCorruptionScope());
+            }, default));
+        Assert.Contains(nameof(MetadataReconciliationAssertions.CorruptReceiptsAsync), failure.StackTrace);
+        await using var corrected = await OpenAsync();
+        var control = new MemoryCorruptionControl(corrected);
+        await check(corrected, control.CorruptAsync, default);
+    }
+
+    [Fact]
     public async Task Compiled_receipt_corruption_consumer_preserves_all_shapes_and_original_ticket_classification()
     {
         await using var store = await OpenAsync();
-        var control = new ReceiptCorruptionControl(store);
+        var control = new MemoryCorruptionControl(store);
         await MetadataReconciliationAssertions.CorruptReceiptsAsync(store, control.CorruptAsync, default);
+    }
+
+    [Fact]
+    public async Task Compiled_page_corruption_consumer_preserves_complete_failures_and_restoration()
+    {
+        await using var store = await OpenAsync();
+        var control = new MemoryCorruptionControl(store);
+        await MetadataCorruptionAssertions.PageRecordsAsync(store, control.CorruptAsync, control.CorruptRecordAsync, default);
+    }
+
+    [Fact]
+    public async Task Compiled_absence_consumer_distinguishes_missing_records_from_corrupt_groups()
+    {
+        await using var store = await OpenAsync();
+        var control = new MemoryCorruptionControl(store);
+        await MetadataCorruptionAssertions.AbsenceAndCorruptGroupsAsync(store, control.CorruptRecordAsync, default);
+    }
+
+    [Theory]
+    [InlineData(MetadataRecordCorruption.CacheAuthorization)]
+    [InlineData(MetadataRecordCorruption.AggregateAuthorization)]
+    [InlineData(MetadataRecordCorruption.AggregateStart)]
+    [InlineData(MetadataRecordCorruption.AggregateEnd)]
+    [InlineData(MetadataRecordCorruption.LeaseResource)]
+    public async Task Compiled_query_dimension_consumer_rejects_corruption_before_filtering(MetadataRecordCorruption corruption)
+    {
+        var authority = new RegisteredAuthority();
+        await using var store = await OpenAsync(authority);
+        var control = new MemoryCorruptionControl(store);
+        await MetadataCorruptionAssertions.QueryDimensionsAsync(store, authority, control.CorruptAsync, corruption, default);
     }
 
     [Fact]
@@ -129,15 +178,7 @@ public sealed class MemoryMechanismTests
         var baseline = Success(await store.ReadPageAsync(query, new(), default));
         foreach (var shape in new[] { "null-label", "oversized-label", "null-revision", "malformed", "wrong-key" })
         {
-            var record = Assert.IsType<JsonObject>(JsonNode.Parse(original));
-            switch (shape)
-            {
-                case "null-label": record["Label"] = null; break;
-                case "oversized-label": record["Label"]!["Value"] = new string('x', 513); break;
-                case "null-revision": record["Revision"] = null; break;
-                case "wrong-key": record["Id"] = JsonSerializer.SerializeToNode(new MetadataId(Guid.NewGuid())); break;
-            }
-            var damaged = shape == "malformed" ? "{" : record.ToJsonString();
+            var damaged = DamageRecord(original, shape);
             Success(await store.ReplaceRecordPayloadForTestAsync(registry.Selector, damaged));
             try
             {
@@ -230,12 +271,63 @@ public sealed class MemoryMechanismTests
         };
     }
 
-    private sealed class ReceiptCorruptionControl(MemoryMetadataStore store)
+    private static string DamageRecord(string original, string shape)
     {
+        var record = Assert.IsType<JsonObject>(JsonNode.Parse(original));
+        switch (shape)
+        {
+            case "null-label": record["Label"] = null; break;
+            case "oversized-label":
+                record["Label"]!["Value"] = new string('x', 513) + MetadataReconciliationAssertions.CorruptionCanary; break;
+            case "null-revision": record["Revision"] = null; break;
+            case "wrong-key": record["Id"] = JsonSerializer.SerializeToNode(new MetadataId(Guid.NewGuid())); break;
+            case "cache-auth": record["Identity"]!["AuthorizationPartition"] = null; break;
+            case "aggregate-auth": record["Key"]!["AuthorizationPartition"] = null; break;
+            case "aggregate-start": record["Key"]!["Start"] = null; break;
+            case "aggregate-end": record["Key"]!["End"] = null; break;
+            case "lease-resource": record["Resource"] = null; break;
+            case "malformed": break;
+            default: throw new ArgumentException("BindingInvalid");
+        }
+        return shape == "malformed" ? "{" + MetadataReconciliationAssertions.CorruptionCanary : record.ToJsonString();
+    }
+
+    private sealed class MemoryCorruptionControl(MemoryMetadataStore store)
+    {
+        public ValueTask<MetadataResult<MetadataId>> CorruptRecordAsync(
+            MetadataSelector selector, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return store.CorruptRecordForTestAsync(selector);
+        }
+
         public async ValueTask<IMetadataCorruptionScope> CorruptAsync(
             MetadataCorruptionRequest request, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (request is MetadataCorruptionRequest.Record record)
+            {
+                var originalRecord = Success(await store.RecordPayloadForTestAsync(record.Selector));
+                var recordScope = new RecordScope(store, record.Selector, originalRecord);
+                var recordShape = record.Corruption switch
+                {
+                    MetadataRecordCorruption.NullLabel => "null-label",
+                    MetadataRecordCorruption.OversizedLabel => "oversized-label",
+                    MetadataRecordCorruption.NullRevision => "null-revision",
+                    MetadataRecordCorruption.MalformedEncoding => "malformed",
+                    MetadataRecordCorruption.MismatchedKey => "wrong-key",
+                    MetadataRecordCorruption.CacheAuthorization => "cache-auth",
+                    MetadataRecordCorruption.AggregateAuthorization => "aggregate-auth",
+                    MetadataRecordCorruption.AggregateStart => "aggregate-start",
+                    MetadataRecordCorruption.AggregateEnd => "aggregate-end",
+                    MetadataRecordCorruption.LeaseResource => "lease-resource",
+                    _ => throw new ArgumentException("BindingInvalid")
+                };
+                var damagedRecord = DamageRecord(originalRecord, recordShape);
+                cancellationToken.ThrowIfCancellationRequested();
+                Success(await store.ReplaceRecordPayloadForTestAsync(record.Selector, damagedRecord));
+                return recordScope;
+            }
             var operation = request as MetadataCorruptionRequest.Operation ?? throw new ArgumentException("BindingInvalid");
             var original = Success(await store.OperationImageForTestAsync(operation.Ticket));
             var scope = new ReceiptScope(store, operation.Ticket, original);
@@ -263,6 +355,26 @@ public sealed class MemoryMechanismTests
             return scope;
         }
 
+        private sealed class RecordScope(
+            MemoryMetadataStore store, MetadataSelector selector, string original) : IMetadataCorruptionScope
+        {
+            private bool restored;
+            public ConformanceStateFingerprint Original { get; } = Fingerprint(original);
+            public async ValueTask<ConformanceStateFingerprint> ObserveAsync(CancellationToken cancellationToken)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                return Fingerprint(Success(await store.RecordPayloadForTestAsync(selector)));
+            }
+            public async ValueTask DisposeAsync()
+            {
+                if (restored) { return; }
+                Success(await store.ReplaceRecordPayloadForTestAsync(selector, original));
+                restored = true;
+            }
+            private static ConformanceStateFingerprint Fingerprint(string payload) =>
+                new(Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(payload))));
+        }
+
         private sealed class ReceiptScope(
             MemoryMetadataStore store, MetadataOperationTicket ticket, MemoryOperationTestImage original) : IMetadataCorruptionScope
         {
@@ -282,6 +394,17 @@ public sealed class MemoryMechanismTests
             private static ConformanceStateFingerprint Fingerprint(MemoryOperationTestImage image) =>
                 new(Convert.ToHexStringLower(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(image))));
         }
+    }
+
+    private sealed class UnchangedCorruptionScope : IMetadataCorruptionScope
+    {
+        public ConformanceStateFingerprint Original { get; } = new(new string('a', 64));
+        public ValueTask<ConformanceStateFingerprint> ObserveAsync(CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(Original);
+        }
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     private static async Task<MemoryMetadataStore> OpenAsync(

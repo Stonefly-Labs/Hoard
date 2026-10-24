@@ -45,11 +45,8 @@ public static class MetadataReconciliationAssertions
 
         void AssertFailure<T>(MetadataResult<T>.Failure failure, MetadataPhase phase) where T : notnull
         {
-            Assert.Equal(MetadataFailureCode.CorruptState, failure.Code);
-            Assert.Equal(MetadataRetryDisposition.OperatorRecovery, failure.Retry);
-            Assert.Equal(phase, failure.Phase);
+            CorruptFailure<T>(failure, phase);
             Assert.Equal(batch.Ticket, Assert.IsType<MetadataOption<MetadataOperationTicket>.Some>(failure.Ticket).Value);
-            Assert.DoesNotContain(CorruptionCanary, failure.ToString());
         }
         async Task AssertEffects() =>
             Assert.Equal(3, (await Read<MetadataAccessAggregate>(store,

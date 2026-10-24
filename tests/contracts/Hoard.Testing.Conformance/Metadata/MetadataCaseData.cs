@@ -16,6 +16,15 @@ internal static class MetadataCaseData
     };
     public static MetadataFailureCode Failed<T>(MetadataResult<T> result) where T : notnull =>
         Assert.IsType<MetadataResult<T>.Failure>(result).Code;
+    public static MetadataResult<T>.Failure CorruptFailure<T>(MetadataResult<T> result, MetadataPhase phase) where T : notnull
+    {
+        var failure = Assert.IsType<MetadataResult<T>.Failure>(result);
+        Assert.Equal(MetadataFailureCode.CorruptState, failure.Code);
+        Assert.Equal(MetadataRetryDisposition.OperatorRecovery, failure.Retry);
+        Assert.Equal(phase, failure.Phase);
+        Assert.DoesNotContain(MetadataReconciliationAssertions.CorruptionCanary, failure.ToString());
+        return failure;
+    }
     public static async ValueTask<MetadataOperationTicket> Ticket(IMetadataStore store, CancellationToken cancellationToken) =>
         Success(await store.ReserveOperationAsync(new(), cancellationToken));
     public static MetadataMutationBatch Batch(MetadataOperationTicket ticket, params MetadataMutation[] mutations) =>

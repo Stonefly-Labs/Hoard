@@ -832,6 +832,49 @@ preparation proof:
 Free scratch was 91,725,619,200 bytes. This remains non-qualifying package
 diagnostics, not complete metadata/profile qualification.
 
+### Shared record/group/query-dimension corruption checks
+
+Three more actual common consumers bring the slice to 23 methods. They preserve
+missing-versus-corrupt complete groups, five page-record damage shapes plus
+permanent corruption, invalid page requests, exact restored pages and all five
+query-dimension shapes. Selected counts, foreign empty scopes, complete page/
+group failures, phases/retries, damaged fingerprints, exact restoration and
+single-row traversal stay SDK-owned. Typed controls retain the existing fault
+signatures; private Memory encodings remain solely in its test probe.
+Memory now actually exercises the query-dimension damage skipped by the
+inherited SQLite-only branches. The private record mutation helper is shared
+with the independent mechanism check instead of duplicating mutation logic.
+
+A paired unchanged-scope negative fails the common receipt consumer's exact
+`NotEqualException`; the identical compiled delegate passes with actual Memory
+damage/restoration. This is a corruption-control behavioral negative, not T034's
+required stale-operation/artifact binding proof. Missing record consumer APIs
+also failed compilation before implementation. The full source-only probe
+passes 31 tests without skips; ordinary SDK tests pass 105, tooling 236 with ten
+native macOS skips, and focused formatting/catalog/inventory checks pass.
+The native selection is now 26 scopes/102 observations, still pending.
+
+Native run [40054314377](https://github.com/Stonefly-Labs/Hoard/actions/runs/40054314377)
+at `52043f4108949db8f07b4ed0ff677e4481600b65` then verified all nineteen earlier
+consumers against the actual Memory package: all three jobs succeeded, 131
+foundation tests without failures/errors/skips, 24 scopes/93 discoveries/
+93 executions, six baselines and byte-identical eighteen-package/thirteen-lock
+replay. Input digest:
+`e52695f91f85dd6661bdf7c3e2593a736106c4a1013a0f5dd62a7bb97c1f150d`;
+preparation proof:
+`8005f7bedeaab8720c7db522a33f1e125f759d727cb9f848db290ebdfbac7689`.
+Free scratch was 91,721,003,008 bytes. The four new corruption consumers and
+no-op negative/control still await their native package run.
+
+The bounded `hoard-architecture-review` found no actionable violations or
+unresolved design questions in the receipt/record consumers, existing typed
+controls and concrete Memory mechanism bridge. It specifically checked
+SDK-owned expectations, private encoding separation, restoration independent
+of caller cancellation, unchanged-delegate negatives and Abstractions/xUnit-only
+SDK dependencies. This is not final review of the unfinished full provider/
+package graph. Full bindings, wrapper parity and diagnostic integration remain
+open; T019..T024 are not complete.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

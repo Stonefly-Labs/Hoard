@@ -68,12 +68,13 @@ integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
 
-The initial executable SDK slice exposes twenty methods across
+The initial executable SDK slice exposes twenty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,
 `MetadataIdentityAssertions`, `MetadataEntityAssertions` and
 `MetadataReferenceAssertions`, `MetadataTimeAssertions` and
-`MetadataReconciliationAssertions`. They consume an already-prepared fresh
+`MetadataReconciliationAssertions` and `MetadataCorruptionAssertions`.
+They consume an already-prepared fresh
 `IMetadataStore`, a caller cancellation token and, for publication cases, the
 session's `IMetadataConformanceAuthority`; the caller retains store ownership.
 They cover entity round trips, identity/partition isolation, final-graph deletion,
@@ -98,6 +99,15 @@ abandonment are checked in common code. Private encodings remain in the fixture.
 Its public failure strings reject a shared synthetic canary; the focused Memory
 probe rejects every provider diagnostic rather than retaining raw output.
 Full session-level diagnostic integration and extraction parity remain pending.
+Record consumers use those same typed scopes plus the existing
+`CorruptRecordAsync` signature for permanent corruption. The SDK owns five
+record-damage shapes, missing-versus-corrupt complete groups, invalid page
+requests, exact restored pages and all five query-dimension cases. The latter
+check selected counts, whole failures before filtering, stable damaged state,
+exact restoration, single-row traversal and empty foreign scopes. Actual Memory
+mutations now exercise paths that the inherited SQLite-only branches skipped.
+An unchanged corruption scope must fail the named common assertion; the same
+compiled receipt consumer then passes with actual Memory mutation/restoration.
 No method accepts a provider name or expected outcome. Session/adapter routing,
 all other inherited assertions and unchanged-wrapper forwarding remain pending.
 Invoking this partial slice cannot qualify a metadata binding.

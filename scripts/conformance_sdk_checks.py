@@ -142,10 +142,20 @@ SCENARIOS = (
             "reference-replacement", "reference-aba", "telemetry-rollback", "all-page-queries",
             "oversized-pages")), "None", "Passed", 0, "None"),
     ("memory-mechanisms", tuple(PACKAGE_TEST_PREFIX + method for method in (
+        "Noop_corruption_fails_the_common_assertion_and_real_memory_damage_passes_unchanged",
         "Compiled_receipt_corruption_consumer_preserves_all_shapes_and_original_ticket_classification",
         "Targeted_record_damage_fails_group_and_page_without_changing_the_damage",
         "Targeted_receipt_damage_preserves_original_ticket_and_independent_effects",
         "Partition_aliasing_fails_the_common_assertion_and_correct_memory_passes_unchanged")),
+     "None", "Passed", 0, "None"),
+    ("memory-record-consumers", tuple(PACKAGE_TEST_PREFIX + method for method in (
+        "Compiled_page_corruption_consumer_preserves_complete_failures_and_restoration",
+        "Compiled_absence_consumer_distinguishes_missing_records_from_corrupt_groups")),
+     "None", "Passed", 0, "None"),
+    ("memory-query-dimensions", tuple(
+        PACKAGE_TEST_PREFIX + "Compiled_query_dimension_consumer_rejects_corruption_before_filtering"
+        + f"(corruption: {corruption})" for corruption in (
+            "CacheAuthorization", "AggregateAuthorization", "AggregateStart", "AggregateEnd", "LeaseResource")),
      "None", "Passed", 0, "None"),
     ("memory-time-consumers", tuple(
         PACKAGE_TEST_PREFIX + "Compiled_time_consumers_retain_exact_expiry_and_rollback_fences"
