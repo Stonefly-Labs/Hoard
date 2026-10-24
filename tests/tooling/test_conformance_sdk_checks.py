@@ -566,6 +566,28 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_budget_scope_preserves_frozen_admission_cleanup_and_authority_cases(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_budget_scenarios", None)),
+                        "Shared finite-budget checks need exact owned wrapper transport.")
+        methods = {
+            "Failed_unclaimed_result_cleanup_blocks_admission_and_stop_until_exact_retry",
+            "Cancelled_commit_before_decision_fences_the_ticket_and_cannot_publish_on_retry",
+            "Full_transfer_queue_rejects_without_input_io_and_capacity_returns_after_release",
+            "Cap_crossing_rejects_excess_before_append_and_capacity_recovers",
+            "Total_deadline_includes_shared_authority_contention_before_publication",
+            "Cooperative_cancellation_stops_input_without_disposing_borrowed_stream"}
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.split("(", 1)[0].split(".")[-1] in methods}
+        self.assertEqual(len(original), 16)
+        mutations = {
+            "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+            "Shared_cap_assertion_rejects_misclassified_limit_and_accepts_original_store"
+            f'(provider: "{provider}")' for provider in ("local", "object")}
+        scenario, = checks.original_artifact_budget_scenarios()
+        self.assertEqual(scenario, ("original-artifact-budget", tuple(sorted(original | mutations)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_handoff_scope_preserves_all_frozen_results_and_actual_discard_mutations(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_handoff_scenarios", None)),
                         "Shared result-handoff checks need exact owned wrapper transport.")

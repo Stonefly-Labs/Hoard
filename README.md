@@ -1485,6 +1485,12 @@ A real reserved ticket deliberately hidden after cancellation fails the
 unchanged success assertion; that same actual ticket still publishes, and
 genuine stores pass. The next fourteen-row native request is
 63 scopes/524 observations, pending, not complete feature acceptance.
+The six remaining original budget bodies now also delegate to shared checks,
+preserving sixteen frozen parameters for failed cleanup, terminal cancellation,
+queue/capacity, authority deadlines and cooperative cancellation. A genuine
+input-limit failure deliberately mislabeled as capacity fails the unchanged
+code assertion; genuine stores pass. The next eighteen-row native request is
+64 scopes/542 observations, pending; complete bindings/profiles remain unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

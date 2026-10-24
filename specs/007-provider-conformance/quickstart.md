@@ -250,6 +250,12 @@ pending, not complete qualification.
 Stream ownership passed `40116943400` at `5974f38`, all three jobs,
 173 foundations and 61 scopes/498 observations; this does not complete
 category/session/profile gates.
+The remaining six original budget bodies now also execute shared checks,
+preserving sixteen frozen parameters and actual fixture controls/settlement/
+stop/limits/authority setup. Mislabeled actual input-limit failures fail the
+unchanged expected-code assertion on both providers; genuine stores pass.
+The next eighteen-row native request is 64 scopes/542 observations, pending;
+complete category/session/profile gates remain open.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

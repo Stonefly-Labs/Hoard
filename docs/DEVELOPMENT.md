@@ -6618,6 +6618,18 @@ package/thirteen-lock replay. Input:
 preparation:
 `405328324fd3fbb4f5c6d06017f0475b31387e56edc18c015abdf0bcf989cc90`.
 
+The six remaining original budget bodies now run shared consumers with sixteen
+frozen parameters and unchanged assertion tokens/order. They cover failed
+unclaimed-result cleanup/retry, terminal cancelled publication, full transfer
+queue, cap crossing, authority contention and cooperative cancellation.
+Actual completion/reclaim/queue observers, boundaries, real settlement/stop,
+limits and authority creation remain fixture-side. Shared authority checks take
+only the Abstractions interface and actual identity. A genuine input-limit
+failure deliberately mislabeled as capacity fails the unchanged expected-code
+assertion on both providers; genuine stores pass unchanged. The next eighteen-
+row native request is 64 scopes/542 observations, pending, not complete
+category/session/profile proof.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

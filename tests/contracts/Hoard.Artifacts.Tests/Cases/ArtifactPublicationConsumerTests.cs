@@ -212,6 +212,43 @@ public sealed class ArtifactPublicationConsumerTests
         }
     }
 
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Shared_cap_assertion_rejects_misclassified_limit_and_accepts_original_store(string provider)
+    {
+        await using (var driver = await ArtifactProviderDriver.CreateAsync(provider, limits: new ArtifactLimits(10, 10, 1)))
+        {
+            var mutation = new MisclassifiedLimit(driver.Store);
+            await Assert.ThrowsAsync<Xunit.Sdk.EqualException>(() =>
+                ArtifactBudgetAssertions.CapCrossingAsync(mutation, default));
+            Assert.Equal(1, mutation.StageCalls);
+            Assert.Equal(1, mutation.MisclassifiedFailures);
+        }
+        await using (var driver = await ArtifactProviderDriver.CreateAsync(provider, limits: new ArtifactLimits(10, 10, 1)))
+        {
+            await ArtifactBudgetAssertions.CapCrossingAsync(driver.Store, default);
+        }
+    }
+
+    private sealed class MisclassifiedLimit(IArtifactStore store) : ForwardingStore(store)
+    {
+        public int StageCalls { get; private set; }
+        public int MisclassifiedFailures { get; private set; }
+
+        public override async ValueTask<ArtifactResult<ArtifactStagedWrite>> StageAsync(
+            ArtifactOperationTicket ticket, Stream source, ArtifactTransferOptions options, CancellationToken ct)
+        {
+            StageCalls++;
+            var result = await Store.StageAsync(ticket, source, options, ct);
+            if (result is not ArtifactResult<ArtifactStagedWrite>.Failure { Code: ArtifactFailureCode.LimitExceeded } failed)
+            { throw new InvalidOperationException("Mutation requires an actual input-limit failure."); }
+            MisclassifiedFailures++;
+            return new ArtifactResult<ArtifactStagedWrite>.Failure(
+                ArtifactFailureCode.Capacity, failed.Phase, failed.Action, failed.CorrelationId, failed.Ticket, failed.Cleanup);
+        }
+    }
+
     private sealed class DiscardedReservation(IArtifactStore store) : ForwardingStore(store)
     {
         public int ReserveCalls { get; private set; }

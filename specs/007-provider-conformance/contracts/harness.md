@@ -512,6 +512,18 @@ Stream ownership passed `40116943400` at `5974f38`, all three jobs,
 173 foundations and 61 scopes/498 observations, with actual prerequisite chains
 and eighteen-package/thirteen-lock replay admitted; complete gates remain open.
 
+The remaining six original budget bodies now also execute shared consumers,
+preserving sixteen frozen parameters and exact assertion tokens/order: failed
+unclaimed cleanup/retry, terminal cancelled publication, full transfer queue,
+cap crossing, authority contention and cooperative cancellation. Actual
+completion/reclaim/queue observers, barriers, real settlement/stop, limits and
+authority creation stay fixture-side. Shared checks use only the Abstractions
+authority interface and actual identity, never concrete host adapters. A genuine
+input-limit failure mislabeled as capacity fails the unchanged expected-code
+assertion on both providers; one actual staging call and one observed limit
+failure corroborate it. Genuine stores pass unchanged. The next eighteen-row
+native request is 64 scopes/542 observations, pending, not full qualification.
+
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,

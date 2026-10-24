@@ -2830,6 +2830,42 @@ actual loaded dependency images reproduce exactly; combined archive-map SHA-256:
 Earlier measured transfer packets remain unchanged, not fresh session/category
 origins. No tracked locks, historical binaries or production APIs changed.
 
+The remaining six original `ArtifactBudgetTests` bodies now execute provider-
+free shared consumers: failed unclaimed-result cleanup/retry, terminal cancelled
+publication, full transfer queue, cap crossing, authority contention and
+cooperative cancellation. All sixteen frozen parameters and exact original
+assertion tokens/order match mechanically after explicit setup/seam/helper/
+cancellation forwarding. Actual completion/reclaim/queue observers, barriers,
+real worker settlement/stop, limits and authority creation remain fixture-side.
+The common authority checks accept only the Abstractions interface and actual
+identity, not the concrete host adapter.
+
+A genuine-store mutation requires the actual input-limit failure before
+misclassifying it as capacity. The unchanged shared expected-code equality
+assertion fails on each provider; one actual staging call and one observed
+limit failure corroborate the intended fault. Fresh genuine providers pass
+unchanged. Missing common consumers first failed actual compilation with
+CS0103; the missing exact native scope failed its named tooling regression.
+The eighteen-row scope requests sixteen frozen witnesses plus two mutations,
+64 scopes/542 observations, pending, not category/session/profile acceptance.
+The preceding handoff request binds exact head
+`ffda43a96151de9c71dfc99dda5b22c374739b24`, run `40118782562`, pending
+separate strict admission.
+
+Tooling passed 284 discovered / 267 passed / seventeen native macOS skips.
+SDK/accepted-wrapper whitespace checks, compiled/frozen catalogs and six-body
+mechanical comparison passed. Complete task, reviewer-checklist and stage gates
+remain open; this finishes the original budget-body extraction, not T027/T030
+or the complete artifact binding/profile.
+
+`budget` and independent `budget-replay` preparations each passed all 288
+artifact cases plus 89 metadata cases per provider without skips. Eleven
+archives and ten actual loaded dependency images reproduce exactly; combined
+archive-map SHA-256:
+`7b31d0e687344cc81863a4c2fc1e40b977e3fac648c65694337df249246aa439`.
+Previously measured transfer packets remain unchanged, not fresh session/
+category origins; tracked locks and historical consumers/binaries are unchanged.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

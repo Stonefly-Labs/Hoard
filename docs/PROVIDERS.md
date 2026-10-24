@@ -392,6 +392,14 @@ cancellation fails the unchanged success assertion on both providers; publishing
 that same ticket corroborates the intended ownership fault and genuine stores
 pass unchanged. The next fourteen-row native scope requests
 63 scopes/524 observations, pending, not full qualification.
+The remaining six original budget bodies also use shared checks with sixteen
+frozen parameters, covering failed unclaimed cleanup/retry, terminal cancelled
+publication, queue/capacity, authority deadlines and cooperative cancellation.
+Actual controls, limits, settlement/stop and authority setup stay fixture-side;
+shared authority checks use only Abstractions. A genuine input-limit failure
+mislabeled as capacity fails the unchanged expected-code assertion; genuine
+stores pass. The next eighteen-row native request is 64 scopes/542 observations,
+pending, not complete qualification.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
