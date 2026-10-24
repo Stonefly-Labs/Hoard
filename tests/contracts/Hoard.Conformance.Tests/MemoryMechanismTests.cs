@@ -13,6 +13,56 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class MemoryMechanismTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Grouped_read_failure_joins_the_started_writer_before_returning(bool cancelRead)
+    {
+        var control = new MemoryObservationControl();
+        await using var store = await OpenAsync(observer: control.ObserveAsync, diagnostic: control.Diagnose);
+        var delayed = new DelayedWriterStore(store, cancelRead);
+        var checking = MetadataAtomicityAssertions.GroupedReadsAsync(delayed, control.ObserveBoundaryAsync, default);
+        try
+        {
+            await delayed.WriterStarted.WaitAsync(TimeSpan.FromSeconds(5));
+            await Assert.ThrowsAsync<TimeoutException>(() => checking.WaitAsync(TimeSpan.FromMilliseconds(200)));
+        }
+        finally
+        {
+            delayed.ReleaseWriter();
+            var failure = await Record.ExceptionAsync(() => checking);
+            if (cancelRead) { Assert.IsAssignableFrom<OperationCanceledException>(failure); }
+            else { Assert.IsType<SyntheticReadFailure>(failure); }
+            await delayed.WriterFinished.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+    }
+
+    [Theory]
+    [InlineData("independent-candidate")]
+    [InlineData("faulted-candidates")]
+    [InlineData("grouped-root")]
+    [InlineData("reconciliation-io")]
+    [InlineData("lost-acknowledgment")]
+    [InlineData("distinct-contributions")]
+    public async Task Compiled_observation_consumers_preserve_atomicity_and_uncertain_outcomes(string consumer)
+    {
+        var control = new MemoryObservationControl();
+        await using var store = await OpenAsync(observer: control.ObserveAsync, diagnostic: control.Diagnose);
+        await (consumer switch
+        {
+            "independent-candidate" => MetadataAtomicityAssertions.IndependentCandidateAsync(
+                store, control.ObserveBoundaryAsync, (request, token) => store.ReadAsync(request, new(), token), default),
+            "faulted-candidates" => MetadataAtomicityAssertions.FaultedCandidatesAsync(store, control.ObserveBoundaryAsync, default),
+            "grouped-root" => MetadataAtomicityAssertions.GroupedReadsAsync(store, control.ObserveBoundaryAsync, default),
+            "reconciliation-io" => MetadataReconciliationAssertions.IoFailureAsync(store, control.ObserveBoundaryAsync, default),
+            "lost-acknowledgment" => MetadataReconciliationAssertions.LostAcknowledgmentAndAbandonmentAsync(
+                store, control.ObserveBoundaryAsync, default),
+            "distinct-contributions" => MetadataReconciliationAssertions.DistinctContributionsAsync(
+                store, control.ObserveBoundaryAsync, default),
+            _ => throw new ArgumentException("Unknown common consumer.")
+        });
+    }
+
     [Fact]
     public async Task Noop_corruption_fails_the_common_assertion_and_real_memory_damage_passes_unchanged()
     {
@@ -408,10 +458,12 @@ public sealed class MemoryMechanismTests
     }
 
     private static async Task<MemoryMetadataStore> OpenAsync(
-        IMetadataPublicationAuthority? authority = null, TimeProvider? clock = null)
+        IMetadataPublicationAuthority? authority = null, TimeProvider? clock = null,
+        Func<string, ValueTask>? observer = null, Action<string>? diagnostic = null)
     {
-        var store = new MemoryMetadataStore(authority ?? new UnusedAuthority(), clock ?? TimeProvider.System, _ => ValueTask.CompletedTask,
-            _ => throw new Xunit.Sdk.XunitException("Unexpected provider diagnostic."));
+        var store = new MemoryMetadataStore(authority ?? new UnusedAuthority(), clock ?? TimeProvider.System,
+            observer ?? (_ => ValueTask.CompletedTask),
+            diagnostic ?? (_ => throw new Xunit.Sdk.XunitException("Unexpected provider diagnostic.")));
         Success(await store.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
         return store;
     }
@@ -434,6 +486,102 @@ public sealed class MemoryMechanismTests
     {
         var ticket = Success(await store.ReserveOperationAsync(new(), default));
         Success(await store.CommitAsync(new(ticket, [.. mutations], new MetadataOption<MetadataLeaseGuard>.None()), new(), default));
+    }
+
+    private sealed class MemoryObservationControl
+    {
+        private readonly ConcurrentDictionary<string, Func<ValueTask>> observers = new(StringComparer.Ordinal);
+
+        public ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
+            MetadataObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            ArgumentNullException.ThrowIfNull(observer);
+            var key = point switch
+            {
+                MetadataObservationPoint.BeforeCommitDecision => "M0",
+                MetadataObservationPoint.AfterCommitDecision => "M1",
+                MetadataObservationPoint.MutationApplied => "mutation.applied",
+                MetadataObservationPoint.ReadItem => "read.item",
+                MetadataObservationPoint.BeforeReconciliationDecision => "reconcile.before_decision",
+                _ => throw new ArgumentException("BindingInvalid")
+            };
+            if (!observers.TryAdd(key, observer)) { throw new ArgumentException("BindingInvalid"); }
+            return ValueTask.FromResult<IAsyncDisposable>(new Registration(observers, key, observer));
+        }
+
+        public ValueTask ObserveAsync(string point) =>
+            observers.TryGetValue(point, out var observer) ? observer() : ValueTask.CompletedTask;
+
+        public void Diagnose(string diagnostic)
+        {
+            if (diagnostic != "metadata.internal_failure")
+            { throw new Xunit.Sdk.XunitException("Unexpected provider diagnostic."); }
+        }
+
+        private sealed class Registration(
+            ConcurrentDictionary<string, Func<ValueTask>> observers, string key, Func<ValueTask> observer) : IAsyncDisposable
+        {
+            private int disposed;
+            public ValueTask DisposeAsync()
+            {
+                if (Interlocked.Exchange(ref disposed, 1) == 0
+                    && !observers.TryRemove(new KeyValuePair<string, Func<ValueTask>>(key, observer)))
+                { throw new InvalidOperationException("BindingInvalid"); }
+                return ValueTask.CompletedTask;
+            }
+        }
+    }
+
+    private sealed class SyntheticReadFailure : Exception { }
+
+    private sealed class DelayedWriterStore(IMetadataStore store, bool cancelRead) : IMetadataStore
+    {
+        private readonly TaskCompletionSource writerStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource writerReleased = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource writerFinished = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private int commits;
+        public Task WriterStarted => writerStarted.Task;
+        public Task WriterFinished => writerFinished.Task;
+        public void ReleaseWriter() => writerReleased.TrySetResult();
+
+        public async ValueTask<MetadataResult<MetadataReadSnapshot>> ReadAsync(
+            MetadataReadGroup request, MetadataCallOptions options, CancellationToken cancellationToken)
+        {
+            var result = await store.ReadAsync(request, options, cancellationToken);
+            if (request.Selectors.Length == 2)
+            {
+                await writerStarted.Task.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+                if (cancelRead) { throw new OperationCanceledException(new CancellationToken(true)); }
+                throw new SyntheticReadFailure();
+            }
+            return result;
+        }
+
+        public async ValueTask<MetadataResult<MetadataCommitReceipt>> CommitAsync(
+            MetadataMutationBatch request, MetadataCallOptions options, CancellationToken cancellationToken)
+        {
+            if (Interlocked.Increment(ref commits) != 2)
+            { return await store.CommitAsync(request, options, cancellationToken); }
+            writerStarted.TrySetResult();
+            try
+            {
+                await writerReleased.Task.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+                return await store.CommitAsync(request, options, cancellationToken);
+            }
+            finally { writerFinished.TrySetResult(); }
+        }
+
+        public ValueTask<MetadataResult<MetadataOperationTicket>> ReserveOperationAsync(
+            MetadataCallOptions options, CancellationToken cancellationToken) =>
+            store.ReserveOperationAsync(options, cancellationToken);
+        public ValueTask<MetadataResult<MetadataPage>> ReadPageAsync(
+            MetadataPageQuery request, MetadataCallOptions options, CancellationToken cancellationToken) =>
+            store.ReadPageAsync(request, options, cancellationToken);
+        public ValueTask<MetadataResult<MetadataResolution>> ReconcileAsync(
+            MetadataOperationTicket ticket, MetadataCallOptions options, CancellationToken cancellationToken) =>
+            store.ReconcileAsync(ticket, options, cancellationToken);
+        public ValueTask DisposeAsync() => store.DisposeAsync();
     }
 
     private sealed class UnusedAuthority : IMetadataPublicationAuthority

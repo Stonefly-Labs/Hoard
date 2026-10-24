@@ -8,6 +8,89 @@ public static class MetadataReconciliationAssertions
 {
     public const string CorruptionCanary = "f07-synthetic-corrupt-receipt";
 
+    public static async Task IoFailureAsync(
+        IMetadataStore store, MetadataObservationControl observeAsync, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(observeAsync);
+        var ticket = await Ticket(store, cancellationToken);
+        var observed = 0;
+        await using (var observation = await observeAsync(MetadataObservationPoint.BeforeReconciliationDecision,
+            () =>
+            {
+                Interlocked.Increment(ref observed);
+                throw new IOException(CorruptionCanary);
+            }, cancellationToken))
+        {
+            var failure = Assert.IsType<MetadataResult<MetadataResolution>.Failure>(
+                await store.ReconcileAsync(ticket, new(), cancellationToken));
+            Assert.Equal(MetadataFailureCode.Uncertain, failure.Code);
+            Assert.Equal(MetadataRetryDisposition.Reconcile, failure.Retry);
+            Assert.Equal(MetadataPhase.Reconcile, failure.Phase);
+            Assert.Equal(ticket, Assert.IsType<MetadataOption<MetadataOperationTicket>.Some>(failure.Ticket).Value);
+            Assert.DoesNotContain(CorruptionCanary, failure.ToString());
+            Assert.Equal(1, observed);
+        }
+        Success(await store.CommitAsync(Batch(ticket,
+            new MetadataMutation.PutRegistry(Registry(), new ExpectedRevision.Absent())), new(), cancellationToken));
+        await Read<MetadataRegistry>(store, Registry().Selector, cancellationToken);
+    }
+
+    public static async Task LostAcknowledgmentAndAbandonmentAsync(
+        IMetadataStore store, MetadataObservationControl observeAsync, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(observeAsync);
+        var batch = Batch(await Ticket(store, cancellationToken),
+            new MetadataMutation.PutRegistry(Registry(), new ExpectedRevision.Absent()));
+        await LoseAcknowledgment(store, observeAsync, batch, cancellationToken);
+        var resolved = Assert.IsType<MetadataResolution.Committed>(
+            Success(await store.ReconcileAsync(batch.Ticket, new(), cancellationToken)));
+        Assert.Equal(resolved.Receipt.CommitId, Success(await store.CommitAsync(batch, new(), cancellationToken)).CommitId);
+        var abandoned = await Ticket(store, cancellationToken);
+        Assert.Equal(abandoned, Assert.IsType<MetadataResolution.NotCommitted>(
+            Success(await store.ReconcileAsync(abandoned, new(), cancellationToken))).AbandonedTicket);
+        Assert.Equal(MetadataFailureCode.Conflict, Failed(await store.CommitAsync(Batch(abandoned,
+            new MetadataMutation.PutRegistry(Registry(2), new ExpectedRevision.Absent())), new(), cancellationToken)));
+        await Missing(store, Registry(2).Selector, cancellationToken);
+    }
+
+    public static async Task DistinctContributionsAsync(
+        IMetadataStore store, MetadataObservationControl observeAsync, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(observeAsync);
+        var (registry, _) = await Seed(store, cancellationToken);
+        var key = Aggregate(registry);
+        var batch = Batch(await Ticket(store, cancellationToken),
+            new MetadataMutation.AddAggregateContribution(key, Delta(3)));
+        await LoseAcknowledgment(store, observeAsync, batch, cancellationToken);
+        var original = Assert.IsType<MetadataResolution.Committed>(
+            Success(await store.ReconcileAsync(batch.Ticket, new(), cancellationToken))).Receipt;
+        Assert.Equal(original.CommitId, Success(await store.CommitAsync(batch, new(), cancellationToken)).CommitId);
+        var tickets = await Task.WhenAll(Enumerable.Range(1, 8).Select(async _ => await Ticket(store, cancellationToken)));
+        var outcomes = await Task.WhenAll(tickets.Select(ticket => store.CommitAsync(
+            Batch(ticket, new MetadataMutation.AddAggregateContribution(key, Delta(2))), new(), cancellationToken).AsTask()));
+        Assert.All(outcomes, result => Success(result));
+        Assert.Equal(19, (await Read<MetadataAccessAggregate>(store, new MetadataSelector.Aggregate(key), cancellationToken)).Counters.Hits);
+    }
+
+    private static async Task LoseAcknowledgment(
+        IMetadataStore store, MetadataObservationControl observeAsync, MetadataMutationBatch batch, CancellationToken cancellationToken)
+    {
+        var observed = 0;
+        await using var observation = await observeAsync(MetadataObservationPoint.AfterCommitDecision, () =>
+        {
+            Interlocked.Increment(ref observed);
+            throw new InvalidOperationException(CorruptionCanary);
+        }, cancellationToken);
+        var failure = Assert.IsType<MetadataResult<MetadataCommitReceipt>.Failure>(
+            await store.CommitAsync(batch, new(), cancellationToken));
+        Assert.Equal(MetadataFailureCode.Uncertain, failure.Code);
+        Assert.Equal(MetadataRetryDisposition.Reconcile, failure.Retry);
+        Assert.Equal(MetadataPhase.Commit, failure.Phase);
+        Assert.Equal(batch.Ticket, Assert.IsType<MetadataOption<MetadataOperationTicket>.Some>(failure.Ticket).Value);
+        Assert.DoesNotContain(CorruptionCanary, failure.ToString());
+        Assert.Equal(1, observed);
+    }
+
     public static async Task CorruptReceiptsAsync(
         IMetadataStore store,
         Func<MetadataCorruptionRequest, CancellationToken, ValueTask<IMetadataCorruptionScope>> corruptAsync,

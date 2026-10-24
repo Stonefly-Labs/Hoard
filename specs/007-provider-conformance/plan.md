@@ -875,6 +875,49 @@ SDK dependencies. This is not final review of the unfinished full provider/
 package graph. Full bindings, wrapper parity and diagnostic integration remain
 open; T019..T024 are not complete.
 
+### Typed observation boundaries and atomic/uncertain outcomes
+
+Six actual consumers bring the executable slice to 29 methods. Three preserve
+independent candidate invisibility, faults after each of three mutations and
+complete success, and grouped-root reads versus later independent reads. Three
+preserve reconciliation I/O uncertainty and original-ticket usability, lost
+acknowledgment/replay/abandonment, and eight independent contributions totaling
+19 without duplicate uncertain replay. SDK-owned callback counters corroborate
+the intended mutation/reconciliation/acknowledgment fault boundaries.
+
+The test SDK adds five closed `MetadataObservationPoint` values and
+`MetadataObservationControl`, with matching required `ObserveBoundaryAsync`
+on the typed metadata fault driver. No provider name, private boundary string
+or expected-result override enters common code. The Memory test bridge maps
+logical points to its actual private observations, rejects duplicate/unknown
+registration and validates `metadata.internal_failure` immediately without raw
+diagnostic retention. Observation disposal removes a registration only; store
+work remains session-owned. The common barrier bounds real entry/hold/settlement
+waits to 10/15/10 seconds; no controlled UTC clock can extend those waits.
+
+Missing common APIs failed before implementation. A bounded architecture review
+then found that a failed/canceled grouped read could skip joining its already
+started writer. Both focused regressions failed before repair; cleanup now uses
+`Task.WhenAll` to join both public tasks regardless of the read outcome. This
+does not claim settlement of underlying work. The source-only probe passes 39
+tests without skips, including both failure modes and all 29 consumers.
+Ordinary SDK tests pass 105, tooling 236 with ten native skips, and changed
+format/catalog/inventory checks pass. Current native vector: 27 scopes/
+110 observations, pending. Full adapters, unchanged-wrapper forwarding, parity,
+session diagnostics and actual profile execution remain unfinished.
+
+Native run [40054937445](https://github.com/Stonefly-Labs/Hoard/actions/runs/40054937445)
+at `cf5afb3946871676296322808d5a51f113cd3da8` separately verified the twentieth
+receipt-corruption consumer through the actual Memory package: all three jobs
+succeeded, 131 foundation tests without failures/errors/skips, 24 scopes/
+94 discoveries/94 executions, six historical baselines and byte-identical
+eighteen-package/thirteen-lock replay. Input digest:
+`bafcb0ad8ade5f137ab53c76ccd418c2a4d129a95362fe9c645d62b7642c1f1a`;
+preparation proof:
+`b673a1828e80f56052739a36fcb7fb3dab3866677bc201e928733c5d2e14a864`.
+Free scratch was 92,110,262,272 bytes. Newer source results are not substituted
+for native package observations.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

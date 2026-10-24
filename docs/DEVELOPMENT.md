@@ -5524,6 +5524,32 @@ Bounded architecture review found no actionable defects in this extraction/
 mechanism bridge; complete bindings, parity, diagnostic integration and final
 provider/package graph review remain outstanding.
 
+Six typed observation consumers bring the slice to 29 methods: independent
+candidate reads, each partial-candidate rollback, grouped root snapshots,
+reconciliation I/O uncertainty, lost acknowledgment/abandonment and distinct
+contributions without duplicate replay. The metadata fault driver now requires
+`ObserveBoundaryAsync` over five closed logical points; private Memory strings
+remain in its test bridge. SDK-owned counters prove intended callbacks occurred.
+Registration disposal does not claim store settlement. Bounded real-time
+barriers retain independent cleanup and no raw diagnostics are retained.
+Architecture review identified a skipped writer join when a grouped read
+faulted/canceled; both regressions failed before repair and pass after joining
+both public tasks. Underlying store ownership remains separate.
+
+The source-only probe passes 39 tests without skips and ordinary SDK tests pass
+105; tooling 236 with ten native skips and changed format/catalog/inventory
+checks pass. Current native vector: 27 scopes/110 observations, pending.
+Run [40054937445](https://github.com/Stonefly-Labs/Hoard/actions/runs/40054937445)
+at `cf5afb3946871676296322808d5a51f113cd3da8` verified all twenty earlier consumers
+including receipt damage through actual Memory packages: all three jobs
+succeeded, 131 foundation tests without failures/errors/skips, 24 scopes/
+94 observations, six baselines and identical eighteen-package/thirteen-lock
+replay. Input digest:
+`bafcb0ad8ade5f137ab53c76ccd418c2a4d129a95362fe9c645d62b7642c1f1a`;
+preparation proof:
+`b673a1828e80f56052739a36fcb7fb3dab3866677bc201e928733c5d2e14a864`.
+This remains partial extraction/package diagnostics, not category qualification.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

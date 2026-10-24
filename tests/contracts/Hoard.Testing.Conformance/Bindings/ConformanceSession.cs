@@ -68,6 +68,9 @@ public interface IMetadataConformanceAuthority : IMetadataPublicationAuthority
 
 public interface IMetadataConformanceFaultDriver : IConformanceFaultDriver
 {
+    /// <summary>Disposes the observation registration, not the store work that may already be invoking it.</summary>
+    ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
+        MetadataObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken);
     ValueTask<IMetadataCorruptionScope> CorruptAsync(
         MetadataCorruptionRequest request, CancellationToken cancellationToken);
     ValueTask<MetadataResult<MetadataReadSnapshot>> ObserveIndependentSnapshotAsync(

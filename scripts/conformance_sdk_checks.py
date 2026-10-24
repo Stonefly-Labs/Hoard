@@ -167,6 +167,14 @@ SCENARIOS = (
     ("memory-identity-consumer", (PACKAGE_TEST_PREFIX
         + "Compiled_canonical_identity_consumer_preserves_text_and_rejects_forbidden_values",),
      "None", "Passed", 0, "None"),
+    ("memory-observation-consumers", tuple(
+        PACKAGE_TEST_PREFIX + "Compiled_observation_consumers_preserve_atomicity_and_uncertain_outcomes"
+        + f'(consumer: "{consumer}")' for consumer in (
+            "independent-candidate", "faulted-candidates", "grouped-root", "reconciliation-io",
+            "lost-acknowledgment", "distinct-contributions"))
+     + tuple(PACKAGE_TEST_PREFIX + "Grouped_read_failure_joins_the_started_writer_before_returning"
+             + f"(cancelRead: {cancel})" for cancel in ("False", "True")),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {

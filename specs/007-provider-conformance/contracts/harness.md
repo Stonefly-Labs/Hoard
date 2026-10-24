@@ -68,12 +68,13 @@ integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
 
-The initial executable SDK slice exposes twenty-three methods across
+The initial executable SDK slice exposes twenty-nine methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,
 `MetadataIdentityAssertions`, `MetadataEntityAssertions` and
 `MetadataReferenceAssertions`, `MetadataTimeAssertions` and
-`MetadataReconciliationAssertions` and `MetadataCorruptionAssertions`.
+`MetadataReconciliationAssertions`, `MetadataCorruptionAssertions` and
+`MetadataAtomicityAssertions`.
 They consume an already-prepared fresh
 `IMetadataStore`, a caller cancellation token and, for publication cases, the
 session's `IMetadataConformanceAuthority`; the caller retains store ownership.
@@ -108,6 +109,18 @@ exact restoration, single-row traversal and empty foreign scopes. Actual Memory
 mutations now exercise paths that the inherited SQLite-only branches skipped.
 An unchanged corruption scope must fail the named common assertion; the same
 compiled receipt consumer then passes with actual Memory mutation/restoration.
+Six observation-based consumers use `MetadataObservationControl`, matching the
+session fault driver's required `ObserveBoundaryAsync` signature. Its five
+closed logical points cover before/after commit decisions, each mutation, each
+read item and reconciliation decisions; private boundary strings stay in the
+fixture. Callback counts prove the selected failure boundaries were reached.
+They retain independent candidate reads, every partial-candidate rollback,
+grouped root snapshots, reconciliation I/O uncertainty, lost acknowledgment/
+abandonment and distinct aggregate contributions without duplicate replay.
+Barrier entry/hold/settlement waits use real bounded time. Observation disposal
+removes registration only: pending store work remains session-owned. Failure
+cleanup joins every launched public read/write task even when the read faults
+or cancels; that is not proof of underlying store settlement.
 No method accepts a provider name or expected outcome. Session/adapter routing,
 all other inherited assertions and unchanged-wrapper forwarding remain pending.
 Invoking this partial slice cannot qualify a metadata binding.
