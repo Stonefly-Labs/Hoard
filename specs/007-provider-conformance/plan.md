@@ -779,6 +779,29 @@ diagnostics: eighteen scopes/71 discoveries/71 executions, 127 native foundation
 checks without failures/errors/skips, six baselines and eighteen-package/
 thirteen-lock replay. This predates actual Memory-package consumer execution.
 
+### Exact time, cursor and canonical identity consumers
+
+Four further inherited checks bring the executable slice to nineteen consumers:
+exact ticket expiry/rollback, lease rollback/next-generation fencing, opaque
+continuation scope/size/foreign-epoch rejection with live resume, and exact
+canonical text/forbidden-value handling. A typed harness-owned UTC clock retains
+real timestamps/timers; no sleeps or provider-returned expectations replace the
+original decisions. The continuation consumer uses two independent prepared
+stores and does not parse private token representations. Synthetic user-info
+values are constructed for the URI rejection checks. Missing APIs were observed
+first; that compiler red remains distinct from the observed aliasing mutation.
+
+The complete temporary source probe passes 22 checks without skips, including
+all nineteen consumers, private corruption regressions and paired aliasing/
+correct-store execution. Focused formatting and all 236 tooling tests pass
+(ten native skips). The current exact native diagnostic vector is twenty-four
+scopes/93 observations; that result is pending. Run `40053284658` at `3714a91`
+failed safely during candidate construction with `Incomplete`/
+`PrerequisiteMissing`, consistent with the archive-name assumption repaired in
+`5bdfc98`. No consumer observation or package/category success is claimed for
+that failed checkpoint. Full extraction/parity, typed adapters and their task
+acceptance remain open.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

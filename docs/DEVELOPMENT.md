@@ -5457,6 +5457,27 @@ preparation proof:
 `641ff322e4c09f5ba56ae3ed2ab8e8adb99af6228ec38e1376ee2722ce1bae2d`.
 It did not yet contain the actual Memory-package consumer execution extension.
 
+Four more inherited consumers now preserve exact ticket expiry/rollback, lease
+rollback/next-generation fencing, opaque cursor scope/size/foreign-epoch rejection
+with live resume, and exact canonical text/forbidden-value handling. The typed
+`MetadataConformanceClock` controls only metadata UTC time; timestamps, timers
+and outer deadlines remain real. Cursor checks use two independent prepared
+stores without interpreting token encoding. Forbidden URI inputs are constructed
+from explicitly synthetic user-info, not credentials. Each missing API was
+observed before implementation; these compiler failures are not behavioral
+mutation proof. The temporary source probe now passes 22 tests without skips:
+nineteen actual common consumers, both private corruption mechanisms and the
+paired aliasing/control. Focused formatting and all 236 tooling checks pass
+(ten native skips on macOS).
+
+Native run `40053284658` at `3714a91` safely failed its SDK diagnostic during
+candidate construction with `Incomplete`/`PrerequisiteMissing`, before any
+provider-consumer observations. That is consistent with the archive-name
+assumption corrected in `5bdfc98`; the corrected native result remains pending.
+The current exact selection is twenty-four scopes/93 discovery/execution
+observations. No failed native checkpoint or portable source probe is promoted
+to package/category qualification, and T019..T024 remain open.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

@@ -6,6 +6,29 @@ namespace Hoard.Testing.Conformance.Metadata;
 
 public static class MetadataIdentityAssertions
 {
+    public static async Task CanonicalTextAndForbiddenValuesAsync(
+        IMetadataStore store, CancellationToken cancellationToken)
+    {
+        var (registry, _) = await Seed(store, cancellationToken);
+        var names = new[] { "Case", "case", "\u00e9", "e\u0301", "%2F", "/" };
+        foreach (var name in names)
+        { await Commit(store, cancellationToken, new MetadataMutation.PutPackage(Package(registry, name), new ExpectedRevision.Absent())); }
+        foreach (var name in names)
+        { Assert.Equal(name, (await Read<MetadataPackage>(store, Package(registry, name).Selector, cancellationToken)).Key.Name.Value); }
+        Assert.Equal(MetadataFailureCode.Conflict, Failed(await store.CommitAsync(Batch(await Ticket(store, cancellationToken),
+            new MetadataMutation.PutPackage(Package(registry, names[0]), new ExpectedRevision.Absent())), new(), cancellationToken)));
+        Assert.Throws<ArgumentException>(() => new CanonicalText("\ud800"));
+        var userInfo = new UriBuilder(Uri.UriSchemeHttps, "example.invalid")
+        { UserName = "synthetic", Password = "synthetic" };
+        Assert.Throws<ArgumentException>(() => new MetadataUpstream(userInfo.Uri.AbsoluteUri));
+        userInfo.Path = "/private";
+        Assert.Throws<ArgumentException>(() => new MetadataRequestIdentity(registry.Id, registry.Ecosystem,
+            new(userInfo.Uri.AbsoluteUri), "GET", new("anonymous")));
+        Assert.Throws<ArgumentException>(() => new MetadataHeader("authorization", "synthetic"));
+        Assert.Throws<ArgumentException>(() => new MetadataHeader("etag", "bad\r\nvalue"));
+        Assert.Throws<ArgumentException>(() => new MetadataSecretReference("owner", "resolver", new string('a', 129)));
+    }
+
     public static async Task RegistryIsolationAsync(
         IMetadataStore store, IMetadataConformanceAuthority authority, CancellationToken cancellationToken)
     {

@@ -27,6 +27,36 @@ public sealed class MemoryMechanismTests
     }
 
     [Theory]
+    [InlineData("ticket-expiry")]
+    [InlineData("lease-rollback")]
+    public async Task Compiled_time_consumers_retain_exact_expiry_and_rollback_fences(string consumer)
+    {
+        var clock = new MetadataConformanceClock(new(1_800_000_000_000));
+        await using var store = await OpenAsync(clock: clock);
+        await (consumer switch
+        {
+            "ticket-expiry" => MetadataTimeAssertions.TicketExpiryAndRollbackAsync(store, clock, default),
+            "lease-rollback" => MetadataTimeAssertions.LeaseRollbackAsync(store, clock, default),
+            _ => throw new ArgumentException("Unknown common consumer.")
+        });
+    }
+
+    [Fact]
+    public async Task Compiled_cursor_consumer_checks_scope_size_foreign_epoch_and_live_resume()
+    {
+        await using var store = await OpenAsync();
+        await using var foreign = await OpenAsync();
+        await MetadataPagingAssertions.ContinuationScopeAndEpochAsync(store, foreign, default);
+    }
+
+    [Fact]
+    public async Task Compiled_canonical_identity_consumer_preserves_text_and_rejects_forbidden_values()
+    {
+        await using var store = await OpenAsync();
+        await MetadataIdentityAssertions.CanonicalTextAndForbiddenValuesAsync(store, default);
+    }
+
+    [Theory]
     [InlineData("competing-creates")]
     [InlineData("revision-races")]
     [InlineData("exact-bounds")]
@@ -183,9 +213,10 @@ public sealed class MemoryMechanismTests
         }
     }
 
-    private static async Task<MemoryMetadataStore> OpenAsync(IMetadataPublicationAuthority? authority = null)
+    private static async Task<MemoryMetadataStore> OpenAsync(
+        IMetadataPublicationAuthority? authority = null, TimeProvider? clock = null)
     {
-        var store = new MemoryMetadataStore(authority ?? new UnusedAuthority(), TimeProvider.System, _ => ValueTask.CompletedTask,
+        var store = new MemoryMetadataStore(authority ?? new UnusedAuthority(), clock ?? TimeProvider.System, _ => ValueTask.CompletedTask,
             _ => throw new Xunit.Sdk.XunitException("Unexpected provider diagnostic."));
         Success(await store.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
         return store;

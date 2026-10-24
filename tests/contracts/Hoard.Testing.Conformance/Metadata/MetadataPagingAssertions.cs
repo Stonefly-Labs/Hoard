@@ -79,4 +79,28 @@ public static class MetadataPagingAssertions
         Assert.Equal(MetadataFailureCode.InvalidInput, Failed(await store.ReadPageAsync(Registries(101), new(), cancellationToken)));
         Assert.Throws<ArgumentException>(() => new MetadataReadGroup(new MetadataSelector[65].ToImmutableArray()));
     }
+
+    public static async Task ContinuationScopeAndEpochAsync(
+        IMetadataStore store, IMetadataStore foreign, CancellationToken cancellationToken)
+    {
+        await Commit(store, cancellationToken, Enumerable.Range(1, 4).Select(number =>
+            (MetadataMutation)new MetadataMutation.PutRegistry(Registry(number), new ExpectedRevision.Absent())).ToArray());
+        var query = Registries(1);
+        var first = Success(await store.ReadPageAsync(query, new(), cancellationToken));
+        Assert.Single(first.Records);
+        var next = query with { Continuation = first.Continuation };
+        Assert.Equal(MetadataFailureCode.InvalidInput, Failed(await store.ReadPageAsync(next with { PageSize = 2 }, new(), cancellationToken)));
+        Assert.Equal(MetadataFailureCode.InvalidInput, Failed(await store.ReadPageAsync(
+            new MetadataPageQuery.Packages(Id(1)) { PageSize = 1, Continuation = first.Continuation }, new(), cancellationToken)));
+        Assert.Equal(MetadataFailureCode.InvalidInput, Failed(await foreign.ReadPageAsync(next, new(), cancellationToken)));
+        var two = await Read<MetadataRegistry>(store, new MetadataSelector.Registry(Id(2)), cancellationToken);
+        await Commit(store, cancellationToken, new MetadataMutation.DeleteRegistry(two.Id, two.Revision),
+            new MetadataMutation.PutRegistry(Registry(5), new ExpectedRevision.Absent()));
+        var three = await Read<MetadataRegistry>(store, new MetadataSelector.Registry(Id(3)), cancellationToken);
+        await Commit(store, cancellationToken, new MetadataMutation.PutRegistry(
+            three with { Label = new("updated") }, new ExpectedRevision.Match(three.Revision)));
+        var remainder = await Traverse(store, next, cancellationToken);
+        Assert.Equal(new[] { Id(3), Id(4), Id(5) }, remainder.Cast<MetadataRegistry>().Select(record => record.Id));
+        Assert.Equal("updated", ((MetadataRegistry)remainder[0]).Label.Value);
+    }
 }

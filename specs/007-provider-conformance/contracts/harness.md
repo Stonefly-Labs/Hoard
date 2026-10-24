@@ -68,16 +68,26 @@ integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
 
-The initial executable SDK slice exposes fifteen methods across
+The initial executable SDK slice exposes nineteen methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,
 `MetadataIdentityAssertions`, `MetadataEntityAssertions` and
-`MetadataReferenceAssertions`. They consume an already-prepared fresh
+`MetadataReferenceAssertions` and `MetadataTimeAssertions`. They consume an already-prepared fresh
 `IMetadataStore`, a caller cancellation token and, for publication cases, the
 session's `IMetadataConformanceAuthority`; the caller retains store ownership.
 They cover entity round trips, identity/partition isolation, final-graph deletion,
 page kinds/bounds, conditional races, reference accounting/ABA, telemetry rollback
-and lease fences, not all inherited witnesses for the corresponding case IDs.
+and lease/ticket expiry fences, not all inherited witnesses for the corresponding case IDs.
+Time assertions additionally require the same harness-owned
+`MetadataConformanceClock` supplied when constructing the store.
+Only metadata UTC time is controlled; inherited timestamps/timers and outer
+execution budgets still use real time. The assertions exercise exact expiry and
+rollback without sleeping or trusting provider-supplied expected results.
+The continuation consumer also requires a separately prepared foreign store;
+scope/size/epoch rejection and live resume are observed through public operations,
+without interpreting a provider's private token encoding.
+Canonical identity checks preserve case, Unicode normalization distinctions and
+encoded separators, and reject synthetic user-info/header/secret-reference inputs.
 No method accepts a provider name or expected outcome. Session/adapter routing,
 all other inherited assertions and unchanged-wrapper forwarding remain pending.
 Invoking this partial slice cannot qualify a metadata binding.

@@ -146,6 +146,16 @@ SCENARIOS = (
         "Targeted_receipt_damage_preserves_original_ticket_and_independent_effects",
         "Partition_aliasing_fails_the_common_assertion_and_correct_memory_passes_unchanged")),
      "None", "Passed", 0, "None"),
+    ("memory-time-consumers", tuple(
+        PACKAGE_TEST_PREFIX + "Compiled_time_consumers_retain_exact_expiry_and_rollback_fences"
+        + f'(consumer: "{consumer}")' for consumer in ("ticket-expiry", "lease-rollback")),
+     "None", "Passed", 0, "None"),
+    ("memory-cursor-consumer", (PACKAGE_TEST_PREFIX
+        + "Compiled_cursor_consumer_checks_scope_size_foreign_epoch_and_live_resume",),
+     "None", "Passed", 0, "None"),
+    ("memory-identity-consumer", (PACKAGE_TEST_PREFIX
+        + "Compiled_canonical_identity_consumer_preserves_text_and_rejects_forbidden_values",),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {
