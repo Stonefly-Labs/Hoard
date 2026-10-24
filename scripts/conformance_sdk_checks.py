@@ -81,6 +81,7 @@ SCENARIOS = (
                ("parameter", "WitnessMissing"), ("source", "ProofMismatch"), ("duplicate", "EvidenceIncomplete")))),
      "None", "Passed", 0, "None"),
     ("sessions", tuple("Hoard.Conformance.Tests.BindingContractTests." + method for method in (
+        "Observed_legacy_factory_uses_explicit_setup_without_case_id_routing",
         "Observed_metadata_sessions_pin_factory_results_and_actual_component_instances",
         "Observed_metadata_origin_rejects_changed_declarations_and_missing_actual_fault_hooks",
         "Observed_artifact_sessions_pin_all_actual_roles_and_preserve_cleanup_ownership_on_capture_failure")),
@@ -179,6 +180,9 @@ SCENARIOS = (
      + tuple(PACKAGE_TEST_PREFIX + "Grouped_read_failure_joins_the_started_writer_before_returning"
              + f"(cancelRead: {cancel})" for cancel in ("False", "True"))
      + (PACKAGE_TEST_PREFIX + "Compiled_writer_contention_consumer_never_classifies_an_unobserved_noncommit",),
+     "None", "Passed", 0, "None"),
+    ("memory-genuine-settlement", (PACKAGE_TEST_PREFIX
+        + "Actual_work_settlement_task_remains_pending_after_the_public_deadline",),
      "None", "Passed", 0, "None"),
     ("memory-authority-consumers", tuple(
         PACKAGE_TEST_PREFIX + "Compiled_authority_consumers_preserve_evidence_protection_and_replay"

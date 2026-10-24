@@ -14,6 +14,24 @@ namespace Hoard.Conformance.Tests;
 public sealed class BindingContractTests
 {
     [Fact]
+    public async Task Observed_legacy_factory_uses_explicit_setup_without_case_id_routing()
+    {
+        var binding = new MetadataProbeBinding();
+        var context = new ConformanceRunContext(Guid.NewGuid(), "arbitrary-case", TimeProvider.System,
+            new UnusedResources(), new ConformanceEvidenceBuffer());
+        await using var observed = await ConformanceObservedMetadataSession.OpenLegacyAsync(binding, context, default);
+        Assert.Equal(0, binding.Creates);
+        Assert.Equal(1, binding.LegacyCreates);
+        Assert.Equal(0, binding.Session.StoreReads);
+        Assert.Same(binding.Session.First, observed.Store);
+        var origin = observed.CaptureOrigin();
+        Assert.Equal("create", origin.FactoryOperation);
+        Assert.Null(origin.ParentSessionId);
+        Assert.Equal(context.CaseId, origin.CaseId);
+        Assert.Equal(origin.Components["store"].InstanceId, origin.Components["schema"].InstanceId);
+    }
+
+    [Fact]
     public async Task Observed_artifact_sessions_pin_all_actual_roles_and_preserve_cleanup_ownership_on_capture_failure()
     {
         var binding = new ArtifactProbeBinding();
@@ -404,10 +422,17 @@ public sealed class BindingContractTests
             ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Metadata));
         internal MetadataProbeSession Session { get; } = new();
         internal int Creates { get; private set; }
+        internal int LegacyCreates { get; private set; }
         public ValueTask<IMetadataConformanceSession> CreateSessionAsync(ConformanceRunContext context, CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
             Creates++;
+            return ValueTask.FromResult<IMetadataConformanceSession>(Session);
+        }
+        public ValueTask<IMetadataConformanceSession> CreateLegacySessionAsync(ConformanceRunContext context, CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            LegacyCreates++;
             return ValueTask.FromResult<IMetadataConformanceSession>(Session);
         }
     }

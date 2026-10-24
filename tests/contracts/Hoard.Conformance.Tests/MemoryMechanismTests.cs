@@ -13,6 +13,37 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class MemoryMechanismTests
 {
+    [Fact]
+    public async Task Actual_work_settlement_task_remains_pending_after_the_public_deadline()
+    {
+        var control = new MemoryObservationControl();
+        await using var store = await OpenAsync(observer: control.ObserveAsync, diagnostic: control.Diagnose);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var observation = await control.ObserveBoundaryAsync(
+            MetadataObservationPoint.BeforeCommitDecision,
+            () => { entered.TrySetResult(); return new(release.Task); }, default);
+        var ticket = Success(await store.ReserveOperationAsync(new(), default));
+        var batch = new MetadataMutationBatch(ticket, [new MetadataMutation.PutRegistry(Registry(1), new ExpectedRevision.Absent())],
+            new MetadataOption<MetadataLeaseGuard>.None());
+        var committing = store.CommitAsync(batch, new(TimeSpan.FromMilliseconds(200)), default).AsTask();
+        Task? settlement = null;
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(10));
+            settlement = store.ObserveWorkSettlementForTest();
+            Assert.Equal(MetadataFailureCode.DeadlineExceeded,
+                Assert.IsType<MetadataResult<MetadataCommitReceipt>.Failure>(await committing).Code);
+            Assert.False(settlement.IsCompleted);
+            Assert.Same(settlement, store.ObserveWorkSettlementForTest());
+        }
+        finally
+        {
+            release.TrySetResult();
+            await Task.WhenAll(committing, settlement ?? store.ObserveWorkSettlementForTest()).WaitAsync(TimeSpan.FromSeconds(10));
+        }
+    }
+
     [Theory]
     [InlineData(MetadataContinuationCorruption.Null)]
     [InlineData(MetadataContinuationCorruption.Omitted)]

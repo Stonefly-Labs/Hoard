@@ -1109,6 +1109,39 @@ preparation proof:
 Free scratch was 92,109,975,552 bytes. Schema/newer source results are not
 substituted for native execution or qualification.
 
+### Explicit legacy factories and genuine settlement identity
+
+Typed bindings now expose `CreateLegacySessionAsync`; the observed wrapper's
+`OpenLegacyAsync` uses the same admission, cleanup ownership and lazy-getter
+path as current creation, without case-ID routing. Both represent fresh root
+creation in the existing origin protocol; reopen lineage is unchanged. A
+regression uses an arbitrary case ID, proves only the legacy factory ran, and
+captures the actual pinned roles without early getters.
+
+Memory's fixture exposes `ObserveWorkSettlementForTest` separately from its
+existing ten-second bounded `WhenIdleAsync` observer. A held-worker regression
+observes the public deadline, verifies the genuine task remains pending with
+stable identity, then releases and joins public/actual work. This is a prerequisite
+for concrete adapters passing genuine settlement to the resource ledger, not
+proof of resource release or a completed adapter.
+
+Missing APIs failed compilation first. Ordinary SDK tests pass 109 and source-
+only Memory passes 75 without skips. Tooling236/ten native macOS skips, focused
+SDK/Memory formatting, catalog, frozen inventory and whitespace checks pass.
+Current native selection is 34 scopes/150 observations, pending; the shared
+consumer count remains 53.
+
+Native run [40058954688](https://github.com/Stonefly-Labs/Hoard/actions/runs/40058954688)
+at `cf9c20f2d9bdbc797ce5c4cacddd13966b02fa3d` verified all 52 earlier consumers,
+including actual schema upgrade/reopen/exclusion and raw fingerprint mutation.
+All three jobs passed: 131 foundation checks without failures/errors/skips,
+32 scopes/141 discoveries/141 executions, six historical baselines and identical
+eighteen-package/thirteen-lock replay. Input digest:
+`f3f0c286237ef7f0708ffd9a14d0434ca6070b2b08128470fc2dd6c319d629b9`;
+preparation proof:
+`035624cf6eebad450d3f1e50b919466ef363cd6227180639b0d0a2472a04c5ab`.
+Free scratch was 91,725,152,256 bytes. Complete bindings/parity remain open.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

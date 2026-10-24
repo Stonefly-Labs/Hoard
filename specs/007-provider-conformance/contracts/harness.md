@@ -44,6 +44,11 @@ Durable proof is executed by parent-owned child processes outside the session.
 `ConformanceObservedMetadataSession.OpenAsync` and
 `ConformanceObservedArtifactSession.OpenAsync` actually call the supplied typed
 binding. Put the returned session in `await using` before `CaptureOrigin`.
+Metadata's `OpenLegacyAsync` invokes the binding's explicit
+`CreateLegacySessionAsync` entry point through the same declaration/ownership/
+lazy-getter gate; it never interprets case IDs to choose setup. Both factory
+entries create fresh root sessions (`FactoryOperation: create`), while reopen
+retains its distinct parent lineage. Complete concrete factories remain planned.
 Potentially failing provider getters run only after cleanup ownership is returned
 to the caller; their exact references are cached for both consumers and capture.
 Reopen creates an observed wrapper around the actual reopened session with parent

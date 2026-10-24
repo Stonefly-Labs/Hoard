@@ -122,9 +122,11 @@ public sealed partial class MemoryMetadataStore : IMetadataStore, IMetadataSchem
         return new(WaitAsync(result, activity, phase, ticket));
     }
 
-    public Task WhenIdleAsync()
+    public Task WhenIdleAsync() => ObserveWorkSettlementForTest().WaitAsync(TimeSpan.FromSeconds(10));
+
+    public Task ObserveWorkSettlementForTest()
     {
-        lock (activitiesLock) { return (idle?.Task ?? Task.CompletedTask).WaitAsync(TimeSpan.FromSeconds(10)); }
+        lock (activitiesLock) { return idle?.Task ?? Task.CompletedTask; }
     }
 
     public MemoryFixtureImage CaptureLogicalImage()

@@ -5673,6 +5673,26 @@ preparation proof:
 `e88a943cd304ee70607ccc074f35af2a49be5bcc5db45cdbcec666d071e1b705`.
 Full binding admission/parity and category qualification remain unfinished.
 
+Observed metadata creation now has an explicit legacy factory entry using the
+same declaration/lazy-getter/ownership gate as current creation; arbitrary case
+IDs do not select setup. Memory exposes the genuine stable pending-work task
+separately from its existing bounded settlement observer. Missing APIs failed
+first; the new regressions verify actual factory selection and retained work
+after a public deadline. SDK109 and source-only Memory75 pass without skips;
+tooling236/ten native skips and focused checks pass. Current native selection:
+34 scopes/150 observations, pending. Concrete adapters remain unfinished.
+
+Run [40058954688](https://github.com/Stonefly-Labs/Hoard/actions/runs/40058954688)
+at `cf9c20f2d9bdbc797ce5c4cacddd13966b02fa3d` verified all 52 earlier consumers
+including schema upgrade/reopen/exclusion and raw fingerprint mutation: all
+three jobs passed, 131 foundation checks without failures/errors/skips,
+32 scopes/141 observations, six baselines and identical eighteen-package/
+thirteen-lock replay. Input digest:
+`f3f0c286237ef7f0708ffd9a14d0434ca6070b2b08128470fc2dd6c319d629b9`;
+preparation proof:
+`035624cf6eebad450d3f1e50b919466ef363cd6227180639b0d0a2472a04c5ab`.
+Newer source results do not substitute for native execution or qualification.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

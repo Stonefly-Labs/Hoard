@@ -32,8 +32,16 @@ public sealed class ConformanceObservedMetadataSession : IMetadataConformanceSes
     public IMetadataConformanceAuthority Authority => authority.Value;
     public IMetadataConformanceFaultDriver Faults => faults.Value;
 
-    public static async ValueTask<ConformanceObservedMetadataSession> OpenAsync(
-        IMetadataConformanceBinding binding, ConformanceRunContext context, CancellationToken cancellationToken)
+    public static ValueTask<ConformanceObservedMetadataSession> OpenAsync(
+        IMetadataConformanceBinding binding, ConformanceRunContext context, CancellationToken cancellationToken) =>
+        OpenCoreAsync(binding, context, cancellationToken, false);
+
+    public static ValueTask<ConformanceObservedMetadataSession> OpenLegacyAsync(
+        IMetadataConformanceBinding binding, ConformanceRunContext context, CancellationToken cancellationToken) =>
+        OpenCoreAsync(binding, context, cancellationToken, true);
+
+    private static async ValueTask<ConformanceObservedMetadataSession> OpenCoreAsync(
+        IMetadataConformanceBinding binding, ConformanceRunContext context, CancellationToken cancellationToken, bool legacy)
     {
         ArgumentNullException.ThrowIfNull(binding);
         ArgumentNullException.ThrowIfNull(context);
@@ -41,7 +49,8 @@ public sealed class ConformanceObservedMetadataSession : IMetadataConformanceSes
         var declaration = binding.Declaration;
         ConformanceBindingAdmission.Validate(declaration, ConformanceCategory.Metadata);
         var origins = new ConformanceSessionOriginTracker(binding, context, declaration);
-        var session = await binding.CreateSessionAsync(context, cancellationToken).ConfigureAwait(false);
+        var session = await (legacy ? binding.CreateLegacySessionAsync(context, cancellationToken)
+            : binding.CreateSessionAsync(context, cancellationToken)).ConfigureAwait(false);
         return new(session, origins, null);
     }
 

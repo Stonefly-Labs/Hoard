@@ -71,6 +71,8 @@ public interface IMetadataConformanceBinding : IConformanceBinding
 {
     ValueTask<IMetadataConformanceSession> CreateSessionAsync(
         ConformanceRunContext context, CancellationToken cancellationToken);
+    ValueTask<IMetadataConformanceSession> CreateLegacySessionAsync(
+        ConformanceRunContext context, CancellationToken cancellationToken);
 }
 
 public interface IArtifactConformanceBinding : IConformanceBinding
