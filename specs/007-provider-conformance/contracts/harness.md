@@ -68,13 +68,13 @@ integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
 
-The initial executable SDK slice exposes twenty-nine methods across
+The initial executable SDK slice exposes thirty-four methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,
 `MetadataIdentityAssertions`, `MetadataEntityAssertions` and
 `MetadataReferenceAssertions`, `MetadataTimeAssertions` and
 `MetadataReconciliationAssertions`, `MetadataCorruptionAssertions` and
-`MetadataAtomicityAssertions`.
+`MetadataAtomicityAssertions` and `MetadataPublicationAssertions`.
 They consume an already-prepared fresh
 `IMetadataStore`, a caller cancellation token and, for publication cases, the
 session's `IMetadataConformanceAuthority`; the caller retains store ownership.
@@ -121,6 +121,16 @@ Barrier entry/hold/settlement waits use real bounded time. Observation disposal
 removes registration only: pending store work remains session-owned. Failure
 cleanup joins every launched public read/write task even when the read faults
 or cancels; that is not proof of underlying store settlement.
+Writer-contention checks additionally take the typed `HoldWriterAsync` and
+`AwaitSettlementAsync` signatures. Both normal and pre-canceled reconciliation
+must stay uncertain without exclusion; cleanup always releases exclusion then
+joins actual settlement with a non-cancelable cleanup token.
+The typed publication authority now exposes actual acquisition/active-guard
+counts and evidence revocation. Four consumers preserve forged/mismatched/
+revoked evidence rejection, orphan-versus-rollback, guard protection through
+caller timeout and actual settlement, and replay without authority reacquisition.
+The focused registration authority supplies logical evidence and guard lifetime
+only, not real artifact retention or cross-store integration.
 No method accepts a provider name or expected outcome. Session/adapter routing,
 all other inherited assertions and unchanged-wrapper forwarding remain pending.
 Invoking this partial slice cannot qualify a metadata binding.

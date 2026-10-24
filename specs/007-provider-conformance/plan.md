@@ -918,6 +918,57 @@ preparation proof:
 Free scratch was 92,110,262,272 bytes. Newer source results are not substituted
 for native package observations.
 
+### Writer exclusion and publication-authority consumers
+
+Five more consumers bring the executable slice to 34 methods. Writer contention
+preserves uncertainty for normal/pre-canceled reconciliation without exclusion,
+original tickets and exact committed readback after release. Four publication
+consumers preserve forged/mismatched/revoked evidence rejection, orphan rather
+than blob rollback, protection across the caller's timeout through actual owned
+settlement, and replay without authority reacquisition or duplicate references.
+The typed authority adds acquisition/active-guard observations and evidence
+revocation; no provider-selected outcome flag or concrete artifact type was
+introduced. The source probe's guard tracks real acquisition/disposal calls
+idempotently, but remains logical evidence/guard simulation, not T033.
+
+Missing APIs failed before implementation. Bounded architecture review found
+writer-contention failure cleanup could skip actual settlement or use a canceled
+caller token. Two focused failure/canceled-caller regressions failed first;
+outer cleanup now drains actual settlement with `CancellationToken.None` after
+writer exclusion disposal, even when assertions fail. Protection cleanup likewise
+joins its public commit and genuine settlement callback without caller
+cancellation. These joins do not infer session/resource release.
+
+The source-only Memory probe passes 44 tests without skips, covering all 34
+methods; ordinary SDK tests pass 107, including both cleanup regressions.
+All 236 tooling checks pass with ten native macOS skips; focused formatting,
+catalog and frozen inventory checks pass. The current native vector is 28
+scopes/117 observations, pending. Full typed bindings, unchanged wrapper parity,
+all metadata cases and actual cross-store authority integration remain open.
+
+Native run [40055429472](https://github.com/Stonefly-Labs/Hoard/actions/runs/40055429472)
+at `2c70dc692c5be088db3dea6f27e56bff8396e9d2` verified all 23 earlier consumers
+including actual record/query-dimension corruption and no-op negative/control:
+all three jobs succeeded, 131 foundation checks without failures/errors/skips,
+26 scopes/102 discoveries/102 executions, six baselines and identical
+eighteen-package/thirteen-lock replay. Input digest:
+`0e87cd4b3fa1076ab99c1d99db9474d6e500b305e4bbe6e80dc3b030d42c8544`;
+preparation proof:
+`c0e9d29c9f47d67976adc306aff8859c978d38fd970dae558465f8ff9d6db2e0`.
+Free scratch was 92,110,331,904 bytes.
+
+Native run [40056205385](https://github.com/Stonefly-Labs/Hoard/actions/runs/40056205385)
+at `a1c4a1fd58f9c872e97160397b9d4015ddfb55a2` then verified all 29 earlier
+consumers, including atomicity/uncertainty and both failed/canceled-read joins:
+all three jobs succeeded, 131 foundation checks without failures/errors/skips,
+27 scopes/110 discoveries/110 executions, six baselines and identical
+eighteen-package/thirteen-lock replay. Input digest:
+`ad3ea626a69e4bea331f987c9b716b00cc2aa10f1c5394db4cf8852589fbc525`;
+preparation proof:
+`18f093bf8be4763ea434961a9a785dcbeaa053dd51530e182b80b31a94c21d00`.
+Free scratch was 92,108,992,512 bytes. The five newer writer/authority consumers
+and ordinary SDK settlement regressions still await their native run.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

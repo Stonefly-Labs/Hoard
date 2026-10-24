@@ -446,6 +446,9 @@ public sealed class BindingContractTests
         public ValueTask<MetadataResult<MetadataSchemaInspection>> InspectAsync(MetadataAdministrationOptions o, CancellationToken t) => throw new NotSupportedException();
         public ValueTask<MetadataResult<MetadataSchemaAdmission>> PrepareAsync(MetadataSchemaRequest r, MetadataAdministrationOptions o, CancellationToken t) => throw new NotSupportedException();
         public MetadataArtifactEvidence Register(ArtifactDigest d, long l) => throw new NotSupportedException();
+        public int Acquisitions => throw new NotSupportedException();
+        public int ActiveGuards => throw new NotSupportedException();
+        public void Revoke(MetadataArtifactEvidence e) => throw new NotSupportedException();
         public ValueTask<MetadataResult<IMetadataPublicationGuard>> AcquireAsync(MetadataArtifactEvidence e, MetadataCallOptions o, CancellationToken t) => throw new NotSupportedException();
         public ValueTask ArmAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
         public ValueTask WaitForBoundaryAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();

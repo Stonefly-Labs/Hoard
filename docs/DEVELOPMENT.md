@@ -5550,6 +5550,41 @@ preparation proof:
 `b673a1828e80f56052739a36fcb7fb3dab3866677bc201e928733c5d2e14a864`.
 This remains partial extraction/package diagnostics, not category qualification.
 
+Five further consumers bring the slice to 34 methods: writer-contention
+uncertainty and four publication-authority checks for matching evidence,
+orphan-versus-rollback, protection across timeout/settlement and replay without
+reacquisition. Authority observations count actual acquisition/disposal calls;
+revocation changes logical evidence availability. This test probe is not an
+artifact store or cross-store integration proof.
+Architecture review found skipped/cancelable settlement on writer-contention
+failure; both regressions failed first and now pass after unconditional
+non-cancelable settlement following exclusion release. Public task completion
+does not imply session/resource release.
+
+The source-only probe passes 44 tests without skips, ordinary SDK tests 107,
+tooling 236 with ten native skips, and focused format/catalog/inventory checks
+pass. Current native selection: 28 scopes/117 observations, pending.
+Run [40055429472](https://github.com/Stonefly-Labs/Hoard/actions/runs/40055429472)
+at `2c70dc692c5be088db3dea6f27e56bff8396e9d2` verified all 23 earlier consumers,
+including actual page/query-dimension corruption and no-op negative/control:
+all three jobs succeeded, 131 foundation checks without failures/errors/skips,
+26 scopes/102 observations, six baselines and identical eighteen-package/
+thirteen-lock replay. Input digest:
+`0e87cd4b3fa1076ab99c1d99db9474d6e500b305e4bbe6e80dc3b030d42c8544`;
+preparation proof:
+`c0e9d29c9f47d67976adc306aff8859c978d38fd970dae558465f8ff9d6db2e0`.
+Run [40056205385](https://github.com/Stonefly-Labs/Hoard/actions/runs/40056205385)
+at `a1c4a1fd58f9c872e97160397b9d4015ddfb55a2` subsequently verified all 29 earlier
+consumers, including atomicity/uncertainty and both failed/canceled-read joins:
+all three jobs succeeded, 131 foundation checks without failures/errors/skips,
+27 scopes/110 observations, six baselines and identical eighteen-package/
+thirteen-lock replay. Input digest:
+`ad3ea626a69e4bea331f987c9b716b00cc2aa10f1c5394db4cf8852589fbc525`;
+preparation proof:
+`18f093bf8be4763ea434961a9a785dcbeaa053dd51530e182b80b31a94c21d00`.
+The five newer writer/authority consumers remain pending native execution; all
+remaining full task obligations are unchanged.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

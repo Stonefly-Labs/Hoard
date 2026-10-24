@@ -5,6 +5,37 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class MetadataConsumerTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Writer_contention_failure_releases_exclusion_and_joins_uncancelled_settlement(bool cancelCaller)
+    {
+        using var cancellation = new CancellationTokenSource();
+        await using var store = new SuccessfulLosers(() => { if (cancelCaller) { cancellation.Cancel(); } });
+        var hold = new ObservedWriterHold();
+        var settlementEntered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var settlementReleased = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var checking = MetadataReconciliationAssertions.WriterContentionAsync(store,
+            _ => ValueTask.FromResult<IAsyncDisposable>(hold), token =>
+            {
+                Assert.True(hold.Released);
+                Assert.False(token.CanBeCanceled);
+                settlementEntered.TrySetResult();
+                return new(settlementReleased.Task);
+            }, cancellation.Token);
+        try
+        {
+            await Assert.ThrowsAsync<TimeoutException>(() => checking.WaitAsync(TimeSpan.FromMilliseconds(200)));
+            await settlementEntered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        finally
+        {
+            settlementReleased.TrySetResult();
+            var failure = Assert.IsType<Xunit.Sdk.XunitException>(await Record.ExceptionAsync(() => checking));
+            Assert.Equal("Unexpected reconcile.", failure.Message);
+        }
+    }
+
     [Fact]
     public async Task Competing_create_consumer_rejects_successful_losers_instead_of_accepting_provider_results()
     {
@@ -25,7 +56,17 @@ public sealed class MetadataConsumerTests
         Assert.Equal(0, store.Commits);
     }
 
-    private sealed class SuccessfulLosers : IMetadataStore
+    private sealed class ObservedWriterHold : IAsyncDisposable
+    {
+        public bool Released { get; private set; }
+        public ValueTask DisposeAsync()
+        {
+            Released = true;
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class SuccessfulLosers(Action? onReconcile = null) : IMetadataStore
     {
         public int Commits { get; private set; }
         public ValueTask<MetadataResult<MetadataOperationTicket>> ReserveOperationAsync(
@@ -57,8 +98,11 @@ public sealed class MetadataConsumerTests
             throw new Xunit.Sdk.XunitException("Unexpected page after contradictory commits.");
 
         public ValueTask<MetadataResult<MetadataResolution>> ReconcileAsync(
-            MetadataOperationTicket ticket, MetadataCallOptions options, CancellationToken cancellationToken) =>
+            MetadataOperationTicket ticket, MetadataCallOptions options, CancellationToken cancellationToken)
+        {
+            onReconcile?.Invoke();
             throw new Xunit.Sdk.XunitException("Unexpected reconcile.");
+        }
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }

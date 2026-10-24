@@ -8,6 +8,39 @@ public static class MetadataReconciliationAssertions
 {
     public const string CorruptionCanary = "f07-synthetic-corrupt-receipt";
 
+    public static async Task WriterContentionAsync(
+        IMetadataStore store, Func<CancellationToken, ValueTask<IAsyncDisposable>> holdWriterAsync,
+        Func<CancellationToken, ValueTask> awaitSettlementAsync, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(holdWriterAsync);
+        ArgumentNullException.ThrowIfNull(awaitSettlementAsync);
+        var batch = Batch(await Ticket(store, cancellationToken),
+            new MetadataMutation.PutRegistry(Registry(), new ExpectedRevision.Absent()));
+        var receipt = Success(await store.CommitAsync(batch, new(), cancellationToken));
+        try
+        {
+            await using (var writer = await holdWriterAsync(cancellationToken))
+            {
+                using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                cancellation.Cancel();
+                foreach (var token in new[] { cancellationToken, cancellation.Token })
+                {
+                    var failure = Assert.IsType<MetadataResult<MetadataResolution>.Failure>(
+                        await store.ReconcileAsync(batch.Ticket, new(TimeSpan.FromMilliseconds(50)), token));
+                    Assert.Equal(MetadataFailureCode.Uncertain, failure.Code);
+                    Assert.Equal(MetadataPhase.Reconcile, failure.Phase);
+                    Assert.Equal(MetadataRetryDisposition.Reconcile, failure.Retry);
+                    Assert.Equal(batch.Ticket, Assert.IsType<MetadataOption<MetadataOperationTicket>.Some>(failure.Ticket).Value);
+                    await awaitSettlementAsync(cancellationToken);
+                }
+            }
+        }
+        finally { await awaitSettlementAsync(CancellationToken.None); }
+        Assert.Equal<byte>(MetadataEncoding.Encode(receipt), MetadataEncoding.Encode(
+            Assert.IsType<MetadataResolution.Committed>(
+                Success(await store.ReconcileAsync(batch.Ticket, new(), cancellationToken))).Receipt));
+    }
+
     public static async Task IoFailureAsync(
         IMetadataStore store, MetadataObservationControl observeAsync, CancellationToken cancellationToken)
     {

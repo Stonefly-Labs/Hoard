@@ -63,7 +63,10 @@ public interface IMetadataConformanceSession : IAsyncDisposable
 
 public interface IMetadataConformanceAuthority : IMetadataPublicationAuthority
 {
+    int Acquisitions { get; }
+    int ActiveGuards { get; }
     MetadataArtifactEvidence Register(ArtifactDigest digest, long length);
+    void Revoke(MetadataArtifactEvidence evidence);
 }
 
 public interface IMetadataConformanceFaultDriver : IConformanceFaultDriver

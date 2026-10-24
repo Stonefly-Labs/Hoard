@@ -14,6 +14,40 @@ namespace Hoard.Conformance.Tests;
 public sealed class MemoryMechanismTests
 {
     [Theory]
+    [InlineData("matching-evidence")]
+    [InlineData("orphan-not-rollback")]
+    [InlineData("protection-through-settlement")]
+    [InlineData("replay-without-reacquisition")]
+    public async Task Compiled_authority_consumers_preserve_evidence_protection_and_replay(string consumer)
+    {
+        var control = new MemoryObservationControl();
+        var authority = new RegisteredAuthority();
+        await using var store = await OpenAsync(authority, observer: control.ObserveAsync, diagnostic: control.Diagnose);
+        await (consumer switch
+        {
+            "matching-evidence" => MetadataPublicationAssertions.MatchingEvidenceAsync(store, authority, default),
+            "orphan-not-rollback" => MetadataPublicationAssertions.OrphanNotRollbackAsync(
+                store, authority, control.ObserveBoundaryAsync, default),
+            "protection-through-settlement" => MetadataPublicationAssertions.ProtectionThroughSettlementAsync(
+                store, authority, control.ObserveBoundaryAsync,
+                token => new ValueTask(store.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(5), token)), default),
+            "replay-without-reacquisition" => MetadataPublicationAssertions.ReplayWithoutReacquisitionAsync(store, authority, default),
+            _ => throw new ArgumentException("Unknown common consumer.")
+        });
+    }
+
+    [Fact]
+    public async Task Compiled_writer_contention_consumer_never_classifies_an_unobserved_noncommit()
+    {
+        await using var store = await OpenAsync();
+        await MetadataReconciliationAssertions.WriterContentionAsync(store, async token =>
+        {
+            token.ThrowIfCancellationRequested();
+            return new AsyncWriterHold(await store.HoldWriterForTestAsync());
+        }, token => new ValueTask(store.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(5), token)), default);
+    }
+
+    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public async Task Grouped_read_failure_joins_the_started_writer_before_returning(bool cancelRead)
@@ -533,6 +567,16 @@ public sealed class MemoryMechanismTests
         }
     }
 
+    private sealed class AsyncWriterHold(IDisposable owned) : IAsyncDisposable
+    {
+        private IDisposable? writer = owned;
+        public ValueTask DisposeAsync()
+        {
+            Interlocked.Exchange(ref writer, null)?.Dispose();
+            return ValueTask.CompletedTask;
+        }
+    }
+
     private sealed class SyntheticReadFailure : Exception { }
 
     private sealed class DelayedWriterStore(IMetadataStore store, bool cancelRead) : IMetadataStore
@@ -594,6 +638,10 @@ public sealed class MemoryMechanismTests
     private sealed class RegisteredAuthority : IMetadataConformanceAuthority
     {
         private readonly ConcurrentDictionary<string, MetadataCommittedArtifact> artifacts = new(StringComparer.Ordinal);
+        private int acquisitions;
+        private int active;
+        public int Acquisitions => Volatile.Read(ref acquisitions);
+        public int ActiveGuards => Volatile.Read(ref active);
 
         public MetadataArtifactEvidence Register(ArtifactDigest digest, long length)
         {
@@ -602,21 +650,36 @@ public sealed class MemoryMechanismTests
             return evidence;
         }
 
+        public void Revoke(MetadataArtifactEvidence evidence)
+        {
+            if (!artifacts.TryRemove(evidence.Value, out _)) { throw new ArgumentException("BindingInvalid"); }
+        }
+
         public ValueTask<MetadataResult<IMetadataPublicationGuard>> AcquireAsync(
             MetadataArtifactEvidence evidence, MetadataCallOptions options, CancellationToken cancellationToken)
         {
+            Interlocked.Increment(ref acquisitions);
             cancellationToken.ThrowIfCancellationRequested();
-            return ValueTask.FromResult<MetadataResult<IMetadataPublicationGuard>>(
-                artifacts.TryGetValue(evidence.Value, out var artifact)
-                    ? new MetadataResult<IMetadataPublicationGuard>.Success(new Guard(artifact))
-                    : new MetadataResult<IMetadataPublicationGuard>.Failure(MetadataFailureCode.InvalidInput,
+            if (!artifacts.TryGetValue(evidence.Value, out var artifact))
+            {
+                return ValueTask.FromResult<MetadataResult<IMetadataPublicationGuard>>(
+                    new MetadataResult<IMetadataPublicationGuard>.Failure(MetadataFailureCode.InvalidInput,
                         MetadataPhase.Publication, MetadataRetryDisposition.CorrectInput, new(Guid.NewGuid())));
+            }
+            Interlocked.Increment(ref active);
+            return ValueTask.FromResult<MetadataResult<IMetadataPublicationGuard>>(
+                new MetadataResult<IMetadataPublicationGuard>.Success(new Guard(this, artifact)));
         }
 
-        private sealed class Guard(MetadataCommittedArtifact artifact) : IMetadataPublicationGuard
+        private sealed class Guard(RegisteredAuthority owner, MetadataCommittedArtifact artifact) : IMetadataPublicationGuard
         {
+            private int disposed;
             public MetadataCommittedArtifact Artifact { get; } = artifact;
-            public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+            public ValueTask DisposeAsync()
+            {
+                if (Interlocked.Exchange(ref disposed, 1) == 0) { Interlocked.Decrement(ref owner.active); }
+                return ValueTask.CompletedTask;
+            }
         }
     }
 

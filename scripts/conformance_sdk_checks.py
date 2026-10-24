@@ -128,7 +128,10 @@ SCENARIOS = (
     ), "None", "Passed", 0, "None"),
     ("metadata-consumers", tuple("Hoard.Conformance.Tests.MetadataConsumerTests." + method for method in (
         "Competing_create_consumer_rejects_successful_losers_instead_of_accepting_provider_results",
-        "Common_consumer_propagates_cancellation_to_the_store_without_publishing_a_candidate")),
+        "Common_consumer_propagates_cancellation_to_the_store_without_publishing_a_candidate"))
+     + tuple("Hoard.Conformance.Tests.MetadataConsumerTests."
+             + "Writer_contention_failure_releases_exclusion_and_joins_uncancelled_settlement"
+             + f"(cancelCaller: {cancel})" for cancel in ("False", "True")),
      "None", "Passed", 0, "None"),
     ("memory-consumers", tuple(
         PACKAGE_TEST_METHOD + f'(consumer: "{consumer}")' for consumer in (
@@ -173,7 +176,13 @@ SCENARIOS = (
             "independent-candidate", "faulted-candidates", "grouped-root", "reconciliation-io",
             "lost-acknowledgment", "distinct-contributions"))
      + tuple(PACKAGE_TEST_PREFIX + "Grouped_read_failure_joins_the_started_writer_before_returning"
-             + f"(cancelRead: {cancel})" for cancel in ("False", "True")),
+             + f"(cancelRead: {cancel})" for cancel in ("False", "True"))
+     + (PACKAGE_TEST_PREFIX + "Compiled_writer_contention_consumer_never_classifies_an_unobserved_noncommit",),
+     "None", "Passed", 0, "None"),
+    ("memory-authority-consumers", tuple(
+        PACKAGE_TEST_PREFIX + "Compiled_authority_consumers_preserve_evidence_protection_and_replay"
+        + f'(consumer: "{consumer}")' for consumer in (
+            "matching-evidence", "orphan-not-rollback", "protection-through-settlement", "replay-without-reacquisition")),
      "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
