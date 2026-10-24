@@ -23,8 +23,8 @@ class MetadataEvidenceTests(unittest.TestCase):
         module = self.load()
         commands = []
         with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory) / "source"
-            work = Path(directory) / "work"
+            root = Path(directory).resolve() / "source"
+            work = Path(directory).resolve() / "work"
             root.mkdir()
             work.mkdir()
             for name in ("Directory.Build.props", "Directory.Packages.props", "global.json", "Hoard.slnx"):
@@ -43,6 +43,14 @@ class MetadataEvidenceTests(unittest.TestCase):
                 target = root / relative
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_text("tooling-only")
+                if relative.endswith(".csproj"):
+                    lock = target.parent / ("PackageAcceptance/packages.lock.json"
+                        if target.stem == "Hoard.Metadata.Tests" else "packages.lock.json")
+                    lock.parent.mkdir(parents=True, exist_ok=True)
+                    lock.write_text('{"version":2,"dependencies":{"net10.0":{}}}')
+                    if target.stem == "HostAdapters":
+                        lock.write_text('{"version":2,"dependencies":{"net10.0":{'
+                            '"Hoard.Fixtures.Metadata.Sqlite":{"resolved":"0.1.0","contentHash":"original"}}}}')
 
             def command(*args, **kwargs):
                 commands.append(args)
@@ -70,6 +78,11 @@ class MetadataEvidenceTests(unittest.TestCase):
             self.assertLess(sdk, wrappers)
             self.assertIn("Hoard.Testing.Conformance.0.1.0.nupkg",
                           [item["id"] for item in inputs["packageInventory"]])
+            self.assertEqual(len(inputs["lockDerivations"]), 1)
+            self.assertTrue(any(any(arg.startswith("-p:NuGetLockFilePath=") for arg in args)
+                                for args in commands if Path(args[2]).stem == "HostAdapters"))
+            self.assertIn('"contentHash":"original"',
+                          (root / "tests/fixtures/metadata/HostAdapters/packages.lock.json").read_text())
 
     def cases(self, module, work):
         proof = work / "proof.json"

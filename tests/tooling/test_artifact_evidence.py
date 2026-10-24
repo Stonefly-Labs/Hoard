@@ -29,6 +29,74 @@ class ArtifactEvidenceTests(unittest.TestCase):
         path.write_text(json.dumps(value))
         return {"proof": name, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()}
 
+    def test_current_preparation_uses_current_metadata_and_sdk_not_a_rebuilt_historical_recipe(self):
+        root = self.work / "source"
+        work = self.work / "prepared"
+        root.mkdir()
+        work.mkdir()
+        for relative in (
+                "Directory.Build.props", "Directory.Packages.props", "global.json",
+                "specs/004-module-discovery/contracts/openapi.json",
+                *(f"src/Hoard.{name}/Hoard.{name}.csproj"
+                  for name in ("Abstractions", "Core", "Hosting", "Application")),
+                *(f"tests/fixtures/artifacts/{name}/{name}.csproj" for name in (
+                    "Local", "ObjectSemantics", "HostAdapters", "Consumer",
+                    "CrashRunner", "TransferRunner", "BoundaryLeak")),
+                "tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj"):
+            target = root / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text("tooling-only-current-source")
+            if relative.endswith(".csproj"):
+                for lock in (target.parent / "packages.lock.json",
+                             target.parent / "PackageAcceptance/packages.lock.json"):
+                    lock.parent.mkdir(parents=True, exist_ok=True)
+                    lock.write_text('{"version":2,"dependencies":{"net10.0":{}}}')
+                    if target.stem == "Hoard.Artifacts.Tests" and lock.parent.name == "PackageAcceptance":
+                        lock.write_text('{"version":2,"dependencies":{"net10.0":{'
+                            '"Hoard.Testing.Conformance":{"resolved":"0.1.0","contentHash":"original"}}}}')
+        commands = []
+
+        def metadata_packages(source, destination, update):
+            self.assertEqual(source, root)
+            self.assertFalse(update)
+            (destination / "feed").mkdir()
+            for name in ("Sqlite", "Memory", "HostAdapters"):
+                (destination / "feed" / f"Hoard.Fixtures.Metadata.{name}.0.1.0.nupkg").write_bytes(
+                    b"tooling-only-current-metadata")
+            (destination / "feed/Hoard.Testing.Conformance.0.1.0.nupkg").write_bytes(
+                b"tooling-only-current-sdk")
+
+        def command(*args, **kwargs):
+            self.assertEqual(args[0], "dotnet",
+                             "Current source preparation must not rebuild a historical metadata recipe.")
+            commands.append(args)
+            project = Path(args[2])
+            self.assertTrue(project.is_file())
+            if project.stem == "Hoard.Artifacts.Tests":
+                self.assertEqual((work / "feed/Hoard.Testing.Conformance.0.1.0.nupkg").read_bytes(),
+                                 b"tooling-only-current-sdk")
+                if "-p:ArtifactPackageAcceptance=true" in args:
+                    self.assertTrue(any(arg.startswith("-p:NuGetLockFilePath=") for arg in args))
+            if args[1] == "pack":
+                name = ("Hoard.Fixtures.Artifacts." + project.stem
+                        if "fixtures" in project.parts else project.stem)
+                (work / "feed" / f"{name}.0.1.0.nupkg").write_bytes(b"tooling-only-current-package")
+            return ""
+
+        with (patch.object(artifact.metadata, "prepare_packages", side_effect=metadata_packages) as metadata,
+              patch.object(artifact, "run", side_effect=command),
+              patch.object(artifact.foundation, "canonicalize_acceptance_archive"),
+              patch.object(artifact, "source_hash", return_value="a" * 64),
+              patch.object(artifact, "lock_hashes", return_value={})):
+            inputs = artifact.prepare_packages(root, work, False)
+        metadata.assert_called_once_with(root, work / "metadata-packages", False)
+        self.assertFalse(inputs["qualification"])
+        self.assertEqual({item["id"] for item in inputs["packages"]}, set(artifact.PACKAGES))
+        self.assertEqual(len(inputs["lockDerivations"]), 1)
+        self.assertIn('"contentHash":"original"',
+                      (root / "tests/contracts/Hoard.Artifacts.Tests/PackageAcceptance/packages.lock.json").read_text())
+        self.assertTrue(any("-p:ArtifactPackageAcceptance=true" in args for args in commands))
+
     def cases(self):
         witness = self.work / "synthetic.trx"
         bindings = {key: "a" * 64 for key in artifact.CASE_BINDINGS}

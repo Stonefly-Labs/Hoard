@@ -294,9 +294,21 @@ Sixteen identities are frozen category witnesses; the existing cross-process
 root-ownership fact is additional, not a new frozen category entry.
 Two fresh-cache locked builds pass all 21 cases and verify ten dependency images.
 Child captures are bounded before return/persistence; healthy legacy empty error
-files remain, but failure stderr is not copied into proof files. The expanded
-56-scope/448-observation Linux request and complete session/category imports
-remain pending.
+files remain, but failure stderr is not copied into proof files. Linux execution passed at
+`4e3ef47`, run `40111391053`, with all three jobs, 167 foundation checks and
+56 scopes/448 exact observations, including all 21 external/capture identities.
+Complete session/category imports remain pending.
+
+Current package preparation now uses current metadata/SDK sources and an
+eleven-archive artifact feed; it does not rebuild historical metadata with
+today's SDK-dependent recipe. Shared explicit lock derivation changes only local
+archive hashes in private alternate locks, verifies original/prepared/feed bytes
+and preserves tracked locks plus all external graph pins. Ordinary and
+package-acceptance lock paths cannot be substituted. Two fresh-cache locked
+preparations reproduce all eleven archives, verify ten loaded dependency images,
+and each pass all 273 artifact cases plus 89 metadata cases on each provider.
+These are actual functional/preparation results, not complete input-bound
+legacy/session/category imports or replacement historical binaries.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

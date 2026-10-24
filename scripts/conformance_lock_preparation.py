@@ -66,13 +66,16 @@ def rebind_local_archives(raw, feed):
     return prepared + b"\n", packages, prepared != original
 
 
-def prepare_project_lock(project, source, feed, feed_id):
-    original = project.parent / "packages.lock.json"
+def prepare_project_lock(project, source, feed, feed_id, *, acceptance=False):
+    if type(acceptance) is not bool:
+        raise ConformanceError("InputChanged")
+    original = project.parent / ("PackageAcceptance/packages.lock.json" if acceptance else "packages.lock.json")
     raw = read_lock(original)
     prepared, packages, changed = rebind_local_archives(raw, feed)
     if not changed:
         return None, None
-    alternate = project.parent / "obj/F07.preparation.packages.lock.json"
+    filename = "F07.preparation.acceptance.packages.lock.json" if acceptance else "F07.preparation.packages.lock.json"
+    alternate = project.parent / "obj" / filename
     no_symlinks(alternate)
     alternate.parent.mkdir(exist_ok=True, mode=0o700)
     with alternate.open("xb") as output:
@@ -98,8 +101,11 @@ def verify_project_lock(record, source, feed):
             or record["mode"] != "preparation" or record["qualification"] is not False):
         raise ConformanceError("InputChanged")
     project = Path(relative_path(record["project"]))
-    if (record["originalLock"] != (project.parent / "packages.lock.json").as_posix()
-            or record["preparedLock"] != (project.parent / "obj/F07.preparation.packages.lock.json").as_posix()):
+    acceptance = record["originalLock"] == (project.parent / "PackageAcceptance/packages.lock.json").as_posix()
+    filename = "F07.preparation.acceptance.packages.lock.json" if acceptance else "F07.preparation.packages.lock.json"
+    if (record["originalLock"] != (project.parent / (
+            "PackageAcceptance/packages.lock.json" if acceptance else "packages.lock.json")).as_posix()
+            or record["preparedLock"] != (project.parent / "obj" / filename).as_posix()):
         raise ConformanceError("InputChanged")
     raw = read_lock(source / relative_path(record["originalLock"]))
     actual = read_lock(source / relative_path(record["preparedLock"]))

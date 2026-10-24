@@ -19,6 +19,7 @@ from xml.sax.saxutils import escape
 
 import foundation_evidence as foundation
 import lifecycle_evidence as lifecycle
+from conformance_lock_preparation import prepare_project_lock, verify_project_lock
 
 
 BASELINE = "10ce78851b97b02bd83a8ef7da7ffdc2381d6519"
@@ -286,9 +287,17 @@ def prepare_packages(root, work, update):
         '<package pattern="Hoard.*"/></packageSource><packageSource key="nuget.org">'
         '<package pattern="*"/></packageSource></packageSourceMapping></configuration>')
     environment = {"NUGET_PACKAGES": str(work / "cache")}
+    derivations = []
 
     def build(relative, pack=False, properties=()):
         project = current / relative
+        record = None
+        if not update:
+            lock, record = prepare_project_lock(
+                project, current, feed, "metadata-current",
+                acceptance="-p:MetadataPackageAcceptance=true" in properties)
+            if lock is not None:
+                properties = (*properties, "-p:NuGetLockFilePath=" + str(lock))
         run("dotnet", "restore", str(project), "--configfile", str(config),
             "--force-evaluate" if update else "--locked-mode", *properties, "-v", "quiet", env=environment)
         if update:
@@ -305,6 +314,9 @@ def prepare_packages(root, work, update):
                 "--no-restore", "-o", str(feed), "-v", "quiet", env=environment)
             name = ("Hoard.Fixtures.Metadata." + project.stem if "fixtures" in project.parts else project.stem)
             foundation.canonicalize_acceptance_archive(feed / f"{name}.0.1.0.nupkg")
+        if record is not None:
+            verify_project_lock(record, current, feed)
+            derivations.append(record)
 
     for name in ("Abstractions", "Core", "Hosting", "Application"):
         build(f"src/Hoard.{name}/Hoard.{name}.csproj", pack=True)
@@ -318,7 +330,7 @@ def prepare_packages(root, work, update):
     verify_packages(packages, work)
     inputs = {"sourceSha256": source_hash(root), "baseline": True, "packages": True,
               "schemaVersion": 1, "qualification": False, "packageInventory": packages,
-              "locks": lock_hashes(root)}
+              "locks": lock_hashes(root), "lockDerivations": derivations}
     (work / "prerequisites.json").write_text(json.dumps(inputs, indent=2) + "\n")
     return inputs
 

@@ -180,8 +180,18 @@ The next diagnostic requests seventeen original external-proof wrappers
 (sixteen frozen identities and the existing cross-process root-owner fact)
 plus four bounded child-output cases. Two independent fresh-cache locked
 builds pass all 21 without skips, reproduce normalized assembly bytes and
-verify ten dependency images. The 56-scope/448-observation Linux request is
-pending; these are not complete legacy/session/category imports.
+verify ten dependency images. Linux run `40111391053` at `4e3ef47` passed all
+three jobs, 167 foundation checks and 56 scopes/448 observations, including all
+21 external/capture identities. These are not complete legacy/session/category imports.
+Current artifact package preparation separately builds current metadata and the
+SDK rather than passing pre-F-06 source to today's recipe. Explicit private
+alternate locks preserve original/tracked locks and all external graph pins;
+actual local archive hashes and both lock versions are recorded and verified.
+Two independent fresh-cache locked preparations reproduce eleven archives,
+verify ten loaded artifact dependency images and each pass all 273 artifact
+cases plus 89 metadata cases per provider. Preparation remains
+`qualification: false`; sealed historical binaries are not rebuilt/substituted,
+and copied actual transfer packets are not fresh session-origin/category proof.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

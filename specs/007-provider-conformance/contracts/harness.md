@@ -393,8 +393,24 @@ failure diagnostics. Transfer proof admission also recognizes actual kernel
 checks; an unmeasured `declared` method remains rejected.
 Two fresh-cache locked builds pass all 21 actual cases, reproduce test assembly
 bytes after normalizing source/cache debug paths and verify ten dependency
-images. The expanded 56-scope/448-observation Linux request and complete
-legacy/session/category attribution remain open.
+images. Linux run `40111391053` at `4e3ef47` passed all three jobs, 167 foundation
+checks and 56 scopes/448 exact observations, including all 21 external/capture
+identities and the actual recovery/transfer/retention prerequisites. Complete
+legacy/session/category attribution remains open.
+Current package preparation uses current metadata/SDK sources, independently
+of sealed historical source/binary recipes. The artifact feed contains eleven
+archives, including the SDK. Existing strict local-archive derivation now also
+supports the exact package-acceptance lock path through a distinct private
+alternate; ordinary and acceptance locks cannot be relabeled/substituted.
+Only local archive content hashes can change. Original source locks, external
+versions/hashes/edges and package bytes are verified; tracked locks are untouched
+by default locked execution. Both metadata and artifact preparations retain
+their verified non-qualifying derivation records.
+Two fresh-cache locked preparations reproduce all eleven archives, verify ten
+loaded dependency images and each execute all 273 original/current artifact
+cases plus 89 metadata cases per provider without skips. Actual previously
+measured transfer packets are unchanged when exercising their original proof
+consumers; this is not fresh measurement/session-origin/category acceptance.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

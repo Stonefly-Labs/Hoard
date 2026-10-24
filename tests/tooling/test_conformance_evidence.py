@@ -1527,6 +1527,31 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
 
 class ConformanceBaselineTests(unittest.TestCase):
+    def test_package_acceptance_lock_derivation_preserves_ordinary_lock_and_closed_paths(self):
+        import conformance_lock_preparation as preparation
+        source = self.root / "stores/registration"
+        project = source / "retained/Consumer.csproj"
+        ordinary = project.parent / "packages.lock.json"
+        ordinary.write_bytes(b"ordinary-lock-sentinel")
+        before = ordinary.read_bytes()
+        original = project.parent / "PackageAcceptance/packages.lock.json"
+        original.parent.mkdir()
+        original.write_bytes(evidence.canonical_bytes({"version": 1, "dependencies": {"net10.0": {
+            "Hoard.Example": {"resolved": "0.1.0", "contentHash": "original"},
+            "External.Dependency": {"resolved": "1.0.0", "contentHash": "untouched"}}}}))
+        acceptance_before = original.read_bytes()
+        prepared, record = preparation.prepare_project_lock(
+            project, source, self.root / "feed/registration", "registration", acceptance=True)
+        self.assertEqual(ordinary.read_bytes(), before)
+        self.assertEqual(original.read_bytes(), acceptance_before)
+        self.assertEqual(record["originalLock"], "retained/PackageAcceptance/packages.lock.json")
+        self.assertEqual(prepared.name, "F07.preparation.acceptance.packages.lock.json")
+        preparation.verify_project_lock(record, source, self.root / "feed/registration")
+        for changed in (record | {"originalLock": "retained/packages.lock.json"},
+                        record | {"preparedLock": "retained/obj/F07.preparation.packages.lock.json"}):
+            with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                preparation.verify_project_lock(changed, source, self.root / "feed/registration")
+
     def test_explicit_local_archive_preparation_preserves_source_and_graph_then_verifies_actual_bytes(self):
         import conformance_lock_preparation as preparation
         source = self.root / "stores/registration"

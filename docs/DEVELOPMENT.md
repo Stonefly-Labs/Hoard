@@ -6421,8 +6421,31 @@ cache debug paths in the private recipe reproduces identical test assembly bytes
 `python3 -m unittest discover -s tests/tooling -q` passes 274 tests
 (257 passes, seventeen native macOS skips); compiled/frozen catalog, accepted
 package-mode whitespace and patch integrity checks pass.
-The expanded 56-scope/448-observation Linux request, full original wrapper/session
-imports, all authority combinations and complete category/profile acceptance
+Current artifact package preparation now builds current metadata plus the SDK,
+not pre-F-06 source through today's SDK-dependent recipe. Historical source/
+binary seals and strict legacy comparison helpers remain unchanged and are not
+replaced by current preparation. A real initial default build exposed NU1403
+from stale local fixture package hashes. Both current preparers now reuse
+explicit non-qualifying local archive derivation: default execution stays locked,
+only private alternate local hashes change, original/tracked locks and external
+dependency versions/hashes/edges remain unchanged. Package-acceptance locks have
+a distinct alternate path; relabeling them as ordinary locks or vice versa is
+rejected. Records verify original/prepared locks and actual feed bytes.
+Two independent fresh-cache locked preparations reproduce all eleven artifact
+archives and ten loaded dependency images. Both pass all 273 artifact cases and
+89 metadata cases on each provider without skips. Actual previously measured
+transfer packets are consumed unchanged; this is not fresh transfer/session
+attribution. Metadata/artifact preparation retains four/five verified lock
+derivations, including one package-acceptance lock each. All 276 tooling tests
+pass (259 passes/seventeen native macOS skips), with compiled/frozen catalogs
+and patch integrity passing.
+The expanded Linux request subsequently passed at
+[40111391053](https://github.com/Stonefly-Labs/Hoard/actions/runs/40111391053),
+head `4e3ef47`: all three jobs, 167 foundation checks without failures/errors/
+skips, 56 scopes/448 exact observations and all 21 external/capture identities,
+plus actual recovery/transfer/retention prerequisites and identical eighteen-
+package/thirteen-lock replay. Full original wrapper/session imports, all
+authority combinations and complete category/profile acceptance
 remain pending. Product architecture/ADRs/diagrams and deployment examples
 remain unaffected by this test-only transport and parent evidence work.
 

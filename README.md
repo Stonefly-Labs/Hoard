@@ -1414,8 +1414,18 @@ The diagnostic now also requests all seventeen original external-proof artifact
 wrappers (sixteen frozen identities plus the existing cross-process root-owner
 fact) and four bounded child-capture tests. Two fresh-cache locked builds pass
 all 21 cases with identical normalized assembly bytes and ten verified dependency
-images. The expanded Linux request is 56 scopes/448 observations, pending;
-complete legacy/session/category attribution remains unfinished.
+images. Linux execution passed at
+[40111391053](https://github.com/Stonefly-Labs/Hoard/actions/runs/40111391053):
+all three jobs, 167 foundation checks, 56 scopes/448 exact observations and all
+21 external/capture identities. Complete legacy/session/category attribution
+remains unfinished.
+Current artifact package preparation now builds current metadata plus the shared
+SDK, rather than applying today's SDK recipe to pre-F-06 source. Strict private
+lock derivations preserve tracked locks and external dependency graphs. Two
+fresh-cache locked preparations reproduce eleven archives and verify ten loaded
+artifact dependency images; actual functional execution passes all 273 artifact
+cases and 89 metadata cases on each provider. This is non-qualifying preparation,
+not a rebuild/replacement of sealed historical binaries or full profile evidence.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

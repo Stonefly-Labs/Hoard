@@ -17,7 +17,6 @@ import shutil
 import signal
 import subprocess
 import sys
-import tarfile
 import time
 import uuid
 from xml.etree import ElementTree
@@ -27,6 +26,7 @@ from artifact_case_catalog import required_runtime_tests
 import foundation_evidence as foundation
 import lifecycle_evidence as lifecycle
 import metadata_evidence as metadata
+from conformance_lock_preparation import prepare_project_lock, verify_project_lock
 
 BASELINE = "830972f24795ffaaaa18cb35138db7da59022313"
 PROVIDERS = ("local", "object")
@@ -41,7 +41,8 @@ CONSUMER_OPERATIONS = (
 PACKAGES = tuple(f"Hoard.{name}.0.1.0.nupkg" for name in (
     "Abstractions", "Core", "Hosting", "Application",
     "Fixtures.Metadata.Sqlite", "Fixtures.Metadata.Memory", "Fixtures.Metadata.HostAdapters",
-    "Fixtures.Artifacts.Local", "Fixtures.Artifacts.ObjectSemantics", "Fixtures.Artifacts.HostAdapters"))
+    "Fixtures.Artifacts.Local", "Fixtures.Artifacts.ObjectSemantics", "Fixtures.Artifacts.HostAdapters",
+    "Testing.Conformance"))
 CASE_BINDINGS = ("sourceSha256", "lockSha256", "configurationSha256",
                  "capabilitiesSha256", "environmentSha256", "packageSha256")
 lock_hashes = lifecycle.lock_hashes
@@ -546,22 +547,9 @@ def verify_metadata_input(previous, current):
 
 
 def prepare_packages(root, work, update):
-    historical = work / "metadata-input"
-    historical.mkdir()
-    archive = work / "metadata-input.tar"
-    run("git", "archive", "--format=tar", f"--output={archive}", BASELINE,
-        "Directory.Build.props", "Directory.Packages.props", "global.json", "Hoard.slnx", "src",
-        "tests/fixtures/metadata", "tests/contracts/Hoard.Metadata.Tests",
-        "specs/004-module-discovery/contracts/openapi.json", cwd=root)
-    with tarfile.open(archive) as entries:
-        entries.extractall(historical, filter="data")
-    for base in ("tests/fixtures/metadata", "tests/contracts/Hoard.Metadata.Tests"):
-        for old in (historical / base).rglob("*"):
-            if old.is_file() and old.suffix in (".cs", ".csproj", ".props", ".sql", ".json"):
-                verify_metadata_input(old, root / old.relative_to(historical))
     metadata_work = work / "metadata-packages"
     metadata_work.mkdir()
-    metadata.prepare_packages(historical, metadata_work, False)
+    metadata.prepare_packages(root, metadata_work, update)
     current = work / "current"
     current.mkdir()
     for name in ("Directory.Build.props", "Directory.Packages.props", "global.json"):
@@ -580,6 +568,8 @@ def prepare_packages(root, work, update):
     for name in ("Sqlite", "Memory", "HostAdapters"):
         package = f"Hoard.Fixtures.Metadata.{name}.0.1.0.nupkg"
         shutil.copy2(metadata_work / "feed" / package, feed / package)
+    sdk = "Hoard.Testing.Conformance.0.1.0.nupkg"
+    shutil.copy2(metadata_work / "feed" / sdk, feed / sdk)
     from xml.sax.saxutils import escape
     config.write_text(
         '<configuration><packageSources><clear/>'
@@ -588,9 +578,17 @@ def prepare_packages(root, work, update):
         '</packageSources><packageSourceMapping><packageSource key="local">'
         '<package pattern="Hoard.*"/></packageSource><packageSource key="nuget.org">'
         '<package pattern="*"/></packageSource></packageSourceMapping></configuration>')
+    derivations = []
 
     def build(relative, pack=False, properties=()):
         project = current / relative
+        record = None
+        if not update:
+            lock, record = prepare_project_lock(
+                project, current, feed, "artifacts-current",
+                acceptance="-p:ArtifactPackageAcceptance=true" in properties)
+            if lock is not None:
+                properties = (*properties, "-p:NuGetLockFilePath=" + str(lock))
         run("dotnet", "restore", str(project), "--configfile", str(config),
             "--force-evaluate" if update else "--locked-mode", *properties, "-v", "quiet", env=environment)
         if update:
@@ -608,6 +606,9 @@ def prepare_packages(root, work, update):
                 "--no-restore", "-o", str(work / "feed"), "-v", "quiet", env=environment)
             package_id = project.stem if project.stem.startswith("Hoard.") else f"Hoard.Fixtures.Artifacts.{project.stem}"
             foundation.canonicalize_acceptance_archive(work / "feed" / f"{package_id}.0.1.0.nupkg")
+        if record is not None:
+            verify_project_lock(record, current, feed)
+            derivations.append(record)
 
     for name in ("Abstractions", "Core", "Hosting", "Application"):
         build(f"src/Hoard.{name}/Hoard.{name}.csproj", pack=True)
@@ -621,7 +622,8 @@ def prepare_packages(root, work, update):
                 for path in sorted((work / "feed").glob("*.nupkg"))]
     verify_files(packages, work, PACKAGES)
     inputs = {"schemaVersion": 1, "qualification": False, "sourceSha256": source_hash(root),
-              "baseline": True, "packages": packages, "locks": lock_hashes(root)}
+              "baseline": True, "packages": packages, "locks": lock_hashes(root),
+              "lockDerivations": derivations}
     (work / "prerequisites.json").write_text(json.dumps(inputs, indent=2) + "\n")
     return inputs
 

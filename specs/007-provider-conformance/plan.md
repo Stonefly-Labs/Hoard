@@ -2465,6 +2465,66 @@ complete legacy/session origins, all authority combinations or full profiles.
 No task/checklist/stage advances; production APIs/edges/ADRs/diagrams and
 deployment examples remain unaffected by this test-transport increment.
 
+### Current package preparation separated from historical recipes
+
+Current artifact preparation no longer archives pre-F-06 metadata source and
+then passes it to today's SDK-dependent metadata build recipe. It builds the
+current metadata fixtures and SDK explicitly, copies those actual archives to
+the current artifact feed and includes the SDK in its exact eleven-package
+inventory. This intentionally supports F-07's authorized current wrapper
+extraction; it does not claim current wrappers equal historical F-06 source.
+Historical source/binary preparation and seals remain separate and unchanged;
+the strict legacy source/lock comparison helper is not weakened.
+
+A named current-source regression first rejected the historical archive command.
+The first actual build then failed NU1403 on stale local fixture hashes, while
+independent comparison confirmed produced archives matched the existing current
+feed. Both current preparers now reuse the existing strict local-archive
+derivation helper instead of force-resolving a new graph or changing tracked
+predecessor locks. Default restore/build stays locked against a private alternate,
+recording/verifying original/prepared hashes and exact local archive bytes.
+External package hashes/versions/edges and every original source lock remain
+unchanged. Explicit update-lock behavior remains separate.
+
+The shared helper adds only an explicit package-acceptance option. Its exact
+`PackageAcceptance/packages.lock.json` input and distinct
+`obj/F07.preparation.acceptance.packages.lock.json` output cannot be relabeled
+as ordinary lock paths or substituted. The named missing-option regression
+failed first; closed-path and original-lock preservation cases pass. Ordinary
+historical derivation records retain their unchanged shape and behavior.
+
+Two actual independent fresh-cache locked current preparations reproduce all
+eleven archives with combined archive-map SHA-256
+`5d98baea004102cdb99dd29b6f1566e0acf1720ed2e3d9b920ba0b817b44933c`.
+All ten loaded artifact dependency images match their archives. Both complete
+runs pass all 273 artifact cases, plus 89 metadata cases on memory and 89 on
+SQLite, without skips. Metadata/artifact preparation retains four/five verified
+lock derivations, with one acceptance lock each. Previously measured actual
+macOS transfer packets are unchanged when consumed by their original assertions;
+they are not new current-run transfer/session-origin/category proof.
+All 276 tooling tests pass (259 passes/seventeen native macOS skips), with
+compiled/frozen catalogs and patch integrity passing. Source and tracked locks
+are not rewritten by these default locked preparations.
+
+This is non-qualifying preparation/functional evidence, not complete safe
+legacy runtime import, profile/controller integration or the catalog's 179
+applicable category passes. No task/checklist/stage advances. Product APIs,
+dependency edges, architecture/ADRs/diagrams and deployment examples are
+unaffected by this current tooling/preparation correction.
+
+The preceding original-wrapper native diagnostic subsequently passed at
+[40111391053](https://github.com/Stonefly-Labs/Hoard/actions/runs/40111391053),
+head `4e3ef47c1b200251c0e12c258317e5a43d2d0957`. All three jobs passed:
+167 foundation checks without failures/errors/skips, 56 scopes/448 exact
+discoveries/executions, including all 21 original external/capture identities,
+all ten SQLite/six Local recovery rows, actual paced transfer/RSS/settlement
+rows and retained-worker inspection/termination chains, native containment and
+unchanged eighteen-package/thirteen-lock replay.
+Input: `92aadefd023ac0519274d5f097fb813c43c508c934e21a92a50bc7fe3cd2f64c`.
+Preparation: `42e787cc053ea1e1465aadbed898362c59d1dd8d5b2ffa53ffd68d8d8e16b8a7`.
+Free scratch: 91,723,743,232 bytes. These are actual owned diagnostics,
+not complete category/session-origin imports.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now
