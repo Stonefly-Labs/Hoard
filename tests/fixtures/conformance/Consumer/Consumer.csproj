@@ -5,6 +5,7 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="SqliteEnvironmentProbe.cs" />
     <PackageReference Include="Hoard.Testing.Conformance" />
     <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Sqlite" />
     <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Memory" />

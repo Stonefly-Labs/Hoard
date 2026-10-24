@@ -1381,6 +1381,41 @@ preparation proof:
 Free scratch: 92,109,443,072 bytes. It predates the environment producer and
 additional SQLite logical rows; no SQLite execution is attributed to it.
 
+### Native environment repairs and explicitly gated SQLite diagnostic selection
+
+Native run
+[40065028512](https://github.com/Stonefly-Labs/Hoard/actions/runs/40065028512)
+at `2ba946511971bb47a5186f1e6bbac28f61c97c80` passed 132 foundation checks with
+zero failures/errors/skips, but SDK diagnostics failed with `InputChanged` and
+preparation failed with `CS8892` at command 169. Neither job qualified.
+The real restored signed native archive reproduced the mistaken comparison of
+normalized NuGet content hash with raw archive SHA-512. The parent now checks
+both separate fresh locked-restore receipts: normalized content remains pinned
+through NuGet metadata, raw archive SHA-512 matches the cache receipt, and
+selected member bytes match the observed runtime native file. Full provenance
+must remain identical after execution; no dependency/hash pin is edited.
+The focused normalized-versus-raw regression failed first and now passes, as
+does preparation using actual restored signed archive/member bytes.
+
+The probe's source is explicitly excluded from the general package consumer,
+preserving its generated test entry point. That exact consumer now restores
+through private graph-preserving locks and builds from a fresh cache against
+eleven actual current archives with zero warnings/errors. The additional
+artifact manifests remain stubs, not new artifact bindings or qualification.
+Missing temporary-directory routing also failed first: all owned child temp
+variables now target private cache directories. A Linux-only child regression
+checks actual temporary-file placement, not environment labels alone.
+
+The request expands to 50 diagnostic scopes/254 exact observations, including
+all 84 actual SQLite test identities. Local package-mode discovery matches that
+entire SQLite set. Missing/unused environment, wrong PRAGMAs or absent native
+runtime hashes reject before discovery; positive routing selects the exact
+package-mode assembly. Those routing regressions failed before repair.
+Portable tooling239 passes (228 passed, eleven native macOS skips).
+Successful Linux producer/SQLite-case execution remains pending, and no catalog
+qualification, durable crash proof, wrapper parity or origin/controller pass is
+inferred. Existing 37-scope native receipts remain historical and unchanged.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

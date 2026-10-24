@@ -42,8 +42,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             source = not all(identity.startswith(checks.SMOKE) for identity in identities)
             folder = checks.TESTS if source else checks.LOGGER + "/Smoke"
             output = (checks.PACKAGE_TEST_OUTPUT
-                      if all(identity.startswith((checks.PACKAGE_TEST_PREFIX, checks.BINDING_TEST_PREFIX,
-                                                  checks.BINDING_OWNERSHIP_PREFIX))
+                      if all(identity.startswith((checks.PACKAGE_TEST_PREFIX, *checks.BINDING_TEST_PREFIXES))
                              for identity in identities) else "bin")
             assembly = candidate / folder / output / "Release/net10.0" / (
                 "Hoard.Conformance.Tests.dll" if source else "Smoke.dll")
@@ -52,7 +51,11 @@ class SdkDiagnosticTests(unittest.TestCase):
                 "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
                 "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
                 "packages": [{"packageId": package, "sha256": "b" * 64}],
+                "environment": {**ENVIRONMENT, "nativeSqlite": "3.50.4", "pragmas": {
+                    "journalMode": "wal", "synchronous": 2, "foreignKeys": 1, "busyTimeout": 0}},
             }
+            inputs["runtimeAssemblies"][(assembly.parent / "runtimes/linux-x64/native/libe_sqlite3.so"
+                                         ).relative_to(self.directory).as_posix()] = "c" * 64
             with self.subTest(scenario=name), patch.object(
                     checks, "runtime_command", side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
                 with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
@@ -81,6 +84,39 @@ class SdkDiagnosticTests(unittest.TestCase):
                 with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
                     checks.test_attempt(SimpleNamespace(root=self.directory), {}, self.directory, scenario)
                 launch.assert_not_called()
+
+    def test_sqlite_diagnostics_require_actual_environment_and_fingerprinted_native_runtime(self):
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.TESTS / checks.PACKAGE_TEST_OUTPUT / "Release/net10.0/Hoard.Conformance.Tests.dll"
+        native_path = (assembly.parent / "runtimes/linux-x64/native/libe_sqlite3.so").relative_to(self.directory).as_posix()
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64, native_path: "c" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+            "environment": {**ENVIRONMENT, "nativeSqlite": "3.50.4", "pragmas": {
+                "journalMode": "wal", "synchronous": 2, "foreignKeys": 1, "busyTimeout": 0}},
+        }
+        identity = "Hoard.Fixtures.Conformance.Consumer.SqliteBindingTests.Reopen_transfers_one_directory_without_settling_it_under_an_old_worker"
+        scenario = ("sqlite-ownership", (identity,), "None", "Passed", 0, "None")
+        for mutation in ("missing-environment", "not-used", "wrong-pragmas", "missing-native"):
+            changed = json.loads(json.dumps(inputs))
+            if mutation == "missing-environment":
+                changed.pop("environment")
+            elif mutation == "not-used":
+                changed["environment"]["nativeSqlite"] = "not-used"
+            elif mutation == "wrong-pragmas":
+                changed["environment"]["pragmas"]["synchronous"] = 1
+            else:
+                changed["runtimeAssemblies"].pop(native_path)
+            with self.subTest(mutation=mutation), patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "EvidenceIncomplete"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), changed, candidate, scenario)
+                launch.assert_not_called()
+        with patch.object(checks, "runtime_command", side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+            self.assertEqual(launch.call_args.args[1], assembly)
+            self.assertEqual(launch.call_args.args[2]["purpose"], "discovery")
 
     def test_package_consumer_lock_preparation_is_exact_and_preserves_source_graph(self):
         candidate = self.directory / "candidate"
@@ -129,6 +165,10 @@ class SdkDiagnosticTests(unittest.TestCase):
             archive.writestr(native.relative_to(runtime).as_posix(), native.read_bytes())
         locked = {"resolved": "2.1.13", "contentHash": base64.b64encode(
             hashlib.sha512(package.read_bytes()).digest()).decode()}
+        metadata = package.parent / ".nupkg.metadata"
+        metadata.write_text(json.dumps({"version": 2, "contentHash": locked["contentHash"],
+                                       "source": "https://api.nuget.org/v3/index.json"}))
+        package.with_suffix(".nupkg.sha512").write_text(locked["contentHash"])
         platform = {"architecture": "x86_64", "runtime": "10.0.7"}
         observation = {
             "schemaVersion": 1, "runtime": "10.0.7", "architecture": "X64",
@@ -142,6 +182,27 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(observation, before)
         self.assertEqual(receipt["nativeSha256"], observation["nativeLibrary"]["sha256"])
         self.assertEqual(receipt["packageSha256"], hashlib.sha256(package.read_bytes()).hexdigest())
+        normalized = base64.b64encode(b"n" * 64).decode()
+        locked["contentHash"] = normalized
+        metadata.write_text(json.dumps({"version": 2, "contentHash": normalized,
+                                       "source": "https://api.nuget.org/v3/index.json"}))
+        receipt = checks.admit_sqlite_environment(observation, platform, runtime, package, locked)
+        self.assertEqual(receipt["nugetSha512"], (b"n" * 64).hex())
+        self.assertEqual(receipt["archiveSha512"], hashlib.sha512(package.read_bytes()).hexdigest())
+        restored_metadata = metadata.read_bytes()
+        for field, invalid in (("contentHash", "foreign"), ("source", "https://example.invalid/v3/index.json")):
+            changed = json.loads(restored_metadata)
+            changed[field] = invalid
+            metadata.write_text(json.dumps(changed))
+            with self.subTest(cache_field=field), self.assertRaises(checks.evidence.ConformanceError):
+                checks.admit_sqlite_environment(observation, platform, runtime, package, locked)
+            metadata.write_bytes(restored_metadata)
+        cached_hash = package.with_suffix(".nupkg.sha512")
+        restored_hash = cached_hash.read_bytes()
+        cached_hash.write_text(base64.b64encode(b"z" * 64).decode())
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.admit_sqlite_environment(observation, platform, runtime, package, locked)
+        cached_hash.write_bytes(restored_hash)
         for mutate in (
                 lambda value: value.update(nativeSqlite="not-used"),
                 lambda value: value.update(runtime="10.0.8"),

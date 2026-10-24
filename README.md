@@ -1260,6 +1260,8 @@ These are focused local package checks, not complete category, Linux-supervisor
 or profile qualification. An owned SQLite environment probe now captures actual
 PRAGMAs/native version and verifies the loaded library against locked archive
 bytes; Linux execution of that producer remains unverified.
+The expanded diagnostic request includes 50 scopes/254 exact observations,
+gating all SQLite cases on actual environment and native-runtime admission.
 All 53 current shared logical metadata assertion methods now execute through
 the SQLite binding too. These local checks are not the catalog's 179 applicable
 category results or proof of complete frozen-wrapper parity.

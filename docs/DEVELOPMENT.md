@@ -5803,6 +5803,26 @@ preparation proof:
 Free scratch: 92,109,443,072 bytes. It verifies package preparation, not the
 subsequently added SQLite environment producer or SQLite test execution.
 
+The initial environment checkpoint
+[40065028512](https://github.com/Stonefly-Labs/Hoard/actions/runs/40065028512)
+passed 132 native foundation checks, then failed safely: SDK diagnostics rejected
+`InputChanged`, and lock replay reported compiler `CS8892` at command 169.
+Real restored signed SQLite package bytes reproduced the distinction between
+NuGet's normalized pinned content hash and raw archive SHA-512. Both identities
+are now checked through the fresh locked-restore receipts, with exact member
+comparison and unchanged pre/post provenance; no package pin changed.
+The probe entry point is excluded from the general consumer, whose actual
+fresh-cache eleven-archive locked build now passes without warnings/errors.
+Missing owned temporary routing also failed first; child temporary files now
+stay beneath private owned caches, with a Linux-only actual-child regression.
+
+The expanded diagnostic request selects all 84 SQLite identities alongside the
+previous 170 observations: 50 scopes/254 exact discoveries/executions requested,
+not yet a passing Linux result. Exact compiled SQLite discovery matches all
+84 identities. Dispatch refuses missing/unused/mismatched environment or native
+runtime inputs. Tooling239 passes locally (228 passed, eleven native macOS skips).
+No failed native run is reported as qualification or as verified SQLite execution.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

@@ -379,14 +379,36 @@ print('{"event":"control","code":"None","value":1}')
 
     def test_child_environment_is_explicit_and_cannot_inject_a_native_loader(self):
         run = self.workspace()
-        with mock.patch.dict(os.environ, {"UNRELATED_SECRET": "synthetic-canary", "LD_PRELOAD": "/private/canary"}):
+        with mock.patch.dict(os.environ, {"UNRELATED_SECRET": "synthetic-canary", "LD_PRELOAD": "/private/canary",
+                                         "TMPDIR": "/private/canary"}):
             environment = execution.command_environment(run.root, run.root / "cache", {"HOARD_TEST": "synthetic"})
         self.assertNotIn("UNRELATED_SECRET", environment)
         self.assertNotIn("LD_PRELOAD", environment)
         self.assertEqual(environment["HOARD_TEST"], "synthetic")
+        self.assertEqual(environment["TMPDIR"], str(run.root / "cache/tmp"))
         for supplied in ({"LD_PRELOAD": "/private/canary"}, {"HOARD_TEST": "x\x00"}, {"HOARD_TEST": "x" * 16385}):
             with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
                 execution.command_environment(run.root, run.root / "cache", supplied)
+        run.transition("Settling")
+        run.release()
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "requires native Linux containment")
+    def test_actual_child_temporary_files_stay_beneath_its_private_owned_cache(self):
+        run = self.workspace()
+        code = (
+            "import json,os,tempfile\nfrom pathlib import Path\n"
+            "expected=Path(os.environ['NUGET_PACKAGES'])/'tmp'\n"
+            "assert expected.stat().st_mode & 0o777 == 0o700\n"
+            "with tempfile.NamedTemporaryFile() as value:\n"
+            " assert Path(value.name).parent == expected\n"
+            "print(json.dumps({'event':'control','code':'None','value':1}))\n"
+        )
+        result = run.command([sys.executable, "-c", code], cache_id="temporary-probe", timeout=5)
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual([dict(event) for event in result.events],
+                         [{"event": "control", "code": "None", "value": 1}])
+        self.assertTrue((run.root / "cache/temporary-probe/tmp").is_dir())
+        self.assertFalse(run.live_children())
         run.transition("Settling")
         run.release()
 

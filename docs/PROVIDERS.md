@@ -57,12 +57,17 @@ adds only the SQLite binding/provider and six pinned SQLite dependencies,
 preserving prior graphs/third-party hashes. A separate empty-cache locked build
 passes. All 179 selected Memory/SQLite package tests pass locally without skips
 (95 Memory, 84 SQLite); this includes actual incomplete cleanup, not Linux
-supervisor/category qualification. Native diagnostics still select only the
-37 Memory/SDK/logger scopes. An owned package-only environment probe now observes
+supervisor/category qualification. The last verified native diagnostics contain
+37 Memory/SDK/logger scopes; the expanded request selects 50 scopes/254 exact
+observations, pending successful Linux execution. An owned package-only environment probe observes
 actual SQLite PRAGMAs/version and the loaded native module, validates its bytes
 against the pinned NuGet archive, and fingerprints runtime native assets.
-Its Linux execution is not yet verified; SQLite test scopes remain unselected
-and never borrow `nativeSqlite: not-used`.
+Its successful Linux execution is not yet verified. SQLite test dispatch rejects
+missing actual environment/native-runtime inputs and never borrows `nativeSqlite: not-used`.
+NuGet's normalized signed-package content hash remains pinned separately from
+the downloaded archive hash; both fresh locked-restore receipts and exact native
+member bytes are verified, with unchanged pre/post provenance. Child temporary
+files are routed into private owned caches, not global temporary storage.
 All 53 current SDK logical assertion methods now execute through SQLite too;
 the additional 44 parameterized rows cover actual independent reads, clocks,
 publication, corruption and decision/settlement controls. This local 179-test

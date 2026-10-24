@@ -132,13 +132,19 @@ prepares/derives/reverifies seven local archives. Its selected 179 tests pass
 locally (95 Memory/84 SQLite) with separate empty-cache locked build replay.
 All 53 current shared logical assertion methods execute through SQLite; these
 179 unit identities are not the catalog's 179 applicable category results.
-Linux diagnostic selection deliberately stays at 37 Memory/SDK/logger scopes
-pending verified Linux execution of the new owned environment producer. It
+The last verified native selection has 37 Memory/SDK/logger scopes. The expanded
+request selects 50 scopes/254 exact observations; successful Linux execution is
+pending, with SQLite dispatch gated on actual environment/native-runtime inputs. The producer
 observes actual configured PRAGMAs/native version and the loaded module, validates
 the library against the exact pinned NuGet archive, and fingerprints native
 runtime assets before/after execution. A compiled SQLite archive is not execution
 evidence; `nativeSqlite: not-used` cannot label an executing SQLite scope.
 Complete adapters/category/provenance acceptance remains unfinished.
+Fresh locked-restore metadata binds NuGet's normalized signed content hash to
+the pinned lock, while the cache's archive SHA-512 and exact native member bytes
+are independently checked. Pre/post native provenance must match. Runtime child
+temporary files are contained beneath private owned caches. The environment-only
+entry point is excluded from the general consumer's default compile items.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

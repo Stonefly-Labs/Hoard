@@ -145,6 +145,7 @@ def command_environment(root, cache, supplied):
         raise ConformanceError("OwnershipInvalid")
     environment.update({
         "NUGET_PACKAGES": str(cache), "HOME": str(root / "cache"), "DOTNET_CLI_HOME": str(cache),
+        "TMPDIR": str(cache / "tmp"), "TMP": str(cache / "tmp"), "TEMP": str(cache / "tmp"),
         "DOTNET_CLI_TELEMETRY_OPTOUT": "1", "DOTNET_NOLOGO": "1",
         "DOTNET_CLI_USE_MSBUILD_SERVER": "0", "MSBUILDDISABLENODEREUSE": "1",
     })
@@ -582,6 +583,9 @@ class OwnedRun:
         no_symlinks(cache)
         if scope != "cleanup":
             cache.mkdir(exist_ok=True, mode=0o700)
+            temporary = cache / "tmp"
+            no_symlinks(temporary)
+            temporary.mkdir(exist_ok=True, mode=0o700)
         if (self.state not in ("Allocated", "Active") and not (scope == "cleanup" and self.state == "Settling")
                 or self.live_children(deadline=deadline)
                 or not isinstance(args, (list, tuple)) or not args

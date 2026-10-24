@@ -44,6 +44,9 @@ LOCAL_PACKAGES = (
 )
 BINDING_TEST_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingTests."
 BINDING_OWNERSHIP_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingOwnershipTests."
+SQLITE_BINDING_PREFIX = "Hoard.Fixtures.Conformance.Consumer.SqliteBindingTests."
+SQLITE_MECHANISM_PREFIX = "Hoard.Fixtures.Conformance.Consumer.SqliteMechanismTests."
+BINDING_TEST_PREFIXES = (BINDING_TEST_PREFIX, BINDING_OWNERSHIP_PREFIX, SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX)
 PACKAGE_TEST_OUTPUT = "bin/package-diagnostic"
 PACKAGE_TEST_PREFIX = "Hoard.Conformance.Tests.MemoryMechanismTests."
 PACKAGE_TEST_METHOD = (PACKAGE_TEST_PREFIX +
@@ -246,6 +249,64 @@ SCENARIOS = (
     ("memory-binding-owned-resource", (BINDING_OWNERSHIP_PREFIX
         + "Actual_allocator_retains_pending_memory_work_and_retry_preserves_the_failed_observation",),
      "None", "Passed", 0, "None"),
+    ("sqlite-logical", tuple(SQLITE_BINDING_PREFIX
+        + 'Compiled_logical_consumers_execute_through_the_independent_sqlite_binding(consumer: "' + consumer + '")'
+        for consumer in (
+            "competing-creates", "revision-races", "exact-bounds", "scopes-and-intervals", "bounded-pages",
+            "lease-fences", "registry-isolation", "authorization-isolation", "final-graph", "reference-replacement",
+            "reference-aba", "telemetry-rollback", "all-page-queries", "oversized-pages", "canonical-identity",
+            "ticket-expiry", "lease-rollback", "independent-candidate", "faulted-candidates", "grouped-root",
+            "reconciliation-io", "lost-acknowledgment", "distinct-contributions", "reconciliation-writer",
+            "cancellation-decision", "queue-capacity", "disposal-ownership", "known-exceptions",
+            "matching-evidence", "orphan-not-rollback", "replay-without-reacquisition", "lease-overflow",
+            "absence-and-corruption")), "None", "Passed", 0, "None"),
+    ("sqlite-admission", tuple(SQLITE_BINDING_PREFIX
+        + 'Compiled_admission_consumers_execute_before_actual_schema_admission(consumer: "' + consumer + '")'
+        for consumer in ("explicit-admission", "invalid-budgets")), "None", "Passed", 0, "None"),
+    ("sqlite-query-dimensions", tuple(SQLITE_BINDING_PREFIX
+        + "Compiled_query_dimension_consumers_check_raw_sqlite_damage_before_filtering(corruption: " + corruption + ")"
+        for corruption in ("CacheAuthorization", "AggregateAuthorization", "AggregateStart", "AggregateEnd", "LeaseResource")),
+     "None", "Passed", 0, "None"),
+    ("sqlite-lease-expiry", tuple(SQLITE_BINDING_PREFIX
+        + "Compiled_lease_expiry_consumer_rechecks_the_actual_sqlite_decision(action: " + action + ")"
+        for action in ("Renew", "Release", "Guard")), "None", "Passed", 0, "None"),
+    ("sqlite-cursor", (SQLITE_BINDING_PREFIX
+        + "Compiled_cursor_consumer_checks_actual_sqlite_foreign_epoch_and_live_resume",), "None", "Passed", 0, "None"),
+    ("sqlite-binding-controls", tuple(SQLITE_BINDING_PREFIX
+        + 'Typed_adapter_controls_execute_unchanged_common_consumers(consumer: "' + consumer + '")'
+        for consumer in ("receipts", "record-pages", "capacity", "ledger", "writer", "diagnostics", "publication", "cleanup")),
+     "None", "Passed", 0, "None"),
+    ("sqlite-continuations", tuple(SQLITE_BINDING_PREFIX
+        + "Typed_continuation_damage_preserves_exact_valid_resume(corruption: " + corruption + ")"
+        for corruption in ("Null", "Omitted", "WrongType", "Empty", "OddHex", "InvalidHex")), "None", "Passed", 0, "None"),
+    ("sqlite-schema", (
+        *(SQLITE_BINDING_PREFIX + "Unrecognized_layouts_reject_without_raw_state_repair(partial: " + partial + ")"
+          for partial in ("False", "True")),
+        *(SQLITE_BINDING_PREFIX
+          + 'Explicit_legacy_factory_executes_unchanged_schema_consumers_on_the_same_database(consumer: "' + consumer + '")'
+          for consumer in ("upgrade", "invalid-upgrade", "upgrade-contention"))), "None", "Passed", 0, "None"),
+    ("sqlite-ownership", tuple(SQLITE_BINDING_PREFIX + method for method in (
+        "Cancelled_reopen_preserves_the_original_root_and_genuine_pending_worker_for_disposal",
+        "Future_and_corrupt_schemas_reject_after_actual_same_database_reopen",
+        "Reopen_transfers_one_directory_without_settling_it_under_an_old_worker")), "None", "Passed", 0, "None"),
+    ("sqlite-raw-records", tuple(SQLITE_MECHANISM_PREFIX
+        + "Raw_record_controls_preserve_damaged_bytes_and_restore_exact_committed_state(oversized: " + oversized + ")"
+        for oversized in ("False", "True")), "None", "Passed", 0, "None"),
+    ("sqlite-raw-operations", tuple(SQLITE_MECHANISM_PREFIX
+        + 'Raw_operation_controls_preserve_native_storage_types_and_restore_exact_replay(damage: "' + damage + '")'
+        for damage in ("short", "missing", "text", "fractional", "text-limit")), "None", "Passed", 0, "None"),
+    ("sqlite-raw-layouts", tuple(SQLITE_MECHANISM_PREFIX
+        + 'Raw_fingerprint_observes_rejected_layouts_without_admitting_or_repairing_them(layout: "' + layout + '")'
+        for layout in ("empty", "unrecognized", "partial", "future")), "None", "Passed", 0, "None"),
+    ("sqlite-native-lifetimes", tuple(SQLITE_MECHANISM_PREFIX + method for method in (
+        "Raw_fingerprint_rejects_oversized_unindexed_native_rows_before_materialization",
+        "Cancelled_writer_acquisition_keeps_late_native_handles_owned_until_they_close",
+        "Cancelled_independent_read_does_not_release_the_underlying_work",
+        "Independent_diagnostic_failure_is_surfaced_and_faults_the_actual_lifetime",
+        "Independent_read_work_is_included_in_idle_and_actual_worker_termination",
+        "Independent_writer_lease_is_not_ordinary_work_but_closes_before_lifetime_settlement",
+        "Genuine_worker_termination_outlives_public_deadline_and_includes_native_handle_cleanup")),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {
@@ -359,8 +420,23 @@ def admit_sqlite_environment(observed, platform, runtime, package, locked):
     native_sha = hashlib.sha256(native).hexdigest()
     archive = read_bounded(package, 64 * 1024 * 1024)
     archive_sha512 = hashlib.sha512(archive).digest()
+    metadata_raw = read_bounded(package.parent / ".nupkg.metadata", 64 * 1024)
+    metadata = evidence.load_json(metadata_raw)
+    # NuGet records normalized signed-package content and downloaded archive
+    # hashes separately. Both receipts come from the fresh locked restore.
+    cached_sha512 = read_bounded(package.with_suffix(".nupkg.sha512"), 1024).decode("ascii").strip()
     if (observed["nativeLibrary"]["sha256"] != native_sha
-            or base64.b64encode(archive_sha512).decode("ascii") != locked["contentHash"]):
+            or not isinstance(metadata, dict)
+            or type(metadata.get("version")) is not int or metadata["version"] != 2
+            or metadata.get("source") != "https://api.nuget.org/v3/index.json"
+            or metadata.get("contentHash") != locked["contentHash"]
+            or base64.b64encode(archive_sha512).decode("ascii") != cached_sha512):
+        raise evidence.ConformanceError("InputChanged")
+    try:
+        content_sha512 = base64.b64decode(locked["contentHash"], validate=True)
+    except (ValueError, TypeError):
+        raise evidence.ConformanceError("InputChanged") from None
+    if len(content_sha512) != 64:
         raise evidence.ConformanceError("InputChanged")
     with zipfile.ZipFile(io.BytesIO(archive)) as packed:
         entries = packed.infolist()
@@ -371,7 +447,8 @@ def admit_sqlite_environment(observed, platform, runtime, package, locked):
     return {"qualification": False, "packageId": "SQLitePCLRaw.lib.e_sqlite3",
             "packageVersion": evidence.stable_id(locked["resolved"]),
             "packageSha256": hashlib.sha256(archive).hexdigest(),
-            "nugetSha512": archive_sha512.hex(), "sourceMapping": "nuget.org",
+            "archiveSha512": archive_sha512.hex(), "nugetSha512": content_sha512.hex(),
+            "cacheMetadataSha256": hashlib.sha256(metadata_raw).hexdigest(), "sourceMapping": "nuget.org",
             "nativePath": native_path, "nativeSha256": native_sha}
 
 
@@ -400,7 +477,11 @@ def sqlite_environment(run, candidate, platform, *, phase):
     package = run.root / "cache/consumer-locked-replay/sqlitepclraw.lib.e_sqlite3" / version / (
         f"sqlitepclraw.lib.e_sqlite3.{version}.nupkg")
     provenance = admit_sqlite_environment(observed, platform, runtime, package, locked)
-    write_new(run.root / f"proofs/sqlite-native-provenance-{phase}.json", evidence.canonical_bytes(provenance))
+    provenance_data = evidence.canonical_bytes(provenance)
+    if phase == "completion" and read_bounded(
+            run.root / "proofs/sqlite-native-provenance-admission.json", 64 * 1024) != provenance_data:
+        raise evidence.ConformanceError("InputChanged")
+    write_new(run.root / f"proofs/sqlite-native-provenance-{phase}.json", provenance_data)
     output.chmod(0o400)
     return {**platform, "nativeSqlite": observed["nativeSqlite"], "pragmas": observed["pragmas"]}
 
@@ -487,7 +568,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
 
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
-    binding_tests = all(identity.startswith((BINDING_TEST_PREFIX, BINDING_OWNERSHIP_PREFIX)) for identity in identities)
+    binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
+    sqlite_tests = any(identity.startswith((SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX)) for identity in identities)
     source_tests = all(identity.startswith("Hoard.Conformance.Tests.") for identity in identities) or binding_tests
     smoke_tests = all(identity.startswith(SMOKE) for identity in identities)
     package_tests = binding_tests or any(identity.startswith(PACKAGE_TEST_PREFIX) for identity in identities)
@@ -498,6 +580,16 @@ def test_attempt(run, inputs, candidate, scenario):
     output = PACKAGE_TEST_OUTPUT if package_tests else "bin"
     assembly = candidate / (TESTS if source_tests else LOGGER + "/Smoke") / output / "Release/net10.0" / (
         "Hoard.Conformance.Tests.dll" if source_tests else "Smoke.dll")
+    if sqlite_tests:
+        observed = inputs.get("environment", {})
+        rid = {"x86_64": "linux-x64", "aarch64": "linux-arm64"}.get(observed.get("architecture"))
+        native = (assembly.parent / f"runtimes/{rid}/native/libe_sqlite3.so").relative_to(run.root).as_posix()
+        if (observed.get("os") != "linux" or rid is None
+                or not isinstance(observed.get("nativeSqlite"), str)
+                or re.fullmatch(r"3\.[0-9]{1,6}\.[0-9]{1,6}", observed["nativeSqlite"]) is None
+                or observed.get("pragmas") != {"journalMode": "wal", "synchronous": 2, "foreignKeys": 1, "busyTimeout": 0}
+                or native not in inputs.get("runtimeAssemblies", {})):
+            raise evidence.ConformanceError("EvidenceIncomplete")
     assembly_path = assembly.relative_to(run.root).as_posix()
     package_id = "Hoard.Testing.Conformance" if source_tests or name == "origin-output" else "Hoard.Conformance.TestLogger"
     package = next(package for package in inputs["packages"] if package["packageId"] == package_id)
@@ -755,9 +847,19 @@ def execute(repository, destination):
             run, repository, candidate, post_sources, post_environment, post_identity, seal_sha,
             group_id=inputs["invocationGroupId"], ci_revision=ci_revision, binding_sources=binding_sources)
         evidence.verify_input_recomputation(inputs, post_inputs)
+        native_provenance = evidence.load_json(read_bounded(
+            run.root / "proofs/sqlite-native-provenance-completion.json", 64 * 1024))
         summary = {"qualification": False, "code": "None", "baselines": 6,
                    "baselineSha256": seal_sha, "inputsSha256": evidence.digest(inputs),
                    "lockPreparation": lock_preparation,
+                   "sqliteEnvironment": {
+                       "nativeVersion": inputs["environment"]["nativeSqlite"],
+                       "pragmas": dict(inputs["environment"]["pragmas"]),
+                       "nativeLibrarySha256": native_provenance["nativeSha256"],
+                       "packageArchiveSha256": native_provenance["packageSha256"],
+                       "archiveSha512": native_provenance["archiveSha512"],
+                       "nugetContentSha512": native_provenance["nugetSha512"],
+                   },
                    "observations": observations}
         write_new(run.root / "proofs/sdk-diagnostic-summary.json", evidence.canonical_bytes(summary))
         run.transition("Settling")
