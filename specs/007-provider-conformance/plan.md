@@ -2000,6 +2000,35 @@ safe witness import, full artifact adapters, actual crash/transfer proofs and
 all category/profile gates remain unfinished. T027/T030/T031 and reviewer-owned
 checklist markers remain unchecked.
 
+### Safe original artifact publication transport
+
+The owned Linux diagnostic now builds the actual original artifact assembly
+against its existing ten-package graph. One source-owned scope selects all
+twelve frozen publication parameters, including the original staging-boundary
+pair, plus the two actual-store duplicate-source mutation pairs. Both providers
+remain in that one exact scope: method-based test filters cannot distinguish
+their parameters, and a falsely reduced expectation must not pass. Shortened,
+renamed and foreign scopes reject before launch; exact safe discovery precedes
+execution through the existing bounded projection/ingestion.
+
+Local/ObjectSemantics/artifact HostAdapters are independently packed after the
+original metadata dependencies. This extends the diagnostic feed to thirteen
+archives without changing the separate eighteen-package/thirteen-lock job.
+The safe logger is byte-verified and installed only as an adapter. All ten
+actual wrapper dependency DLLs must match their archives; original artifact
+runtime/dependency/native files join immutable pre/post capture. Both source
+locks and historical recipes remain unchanged by this transport increment.
+
+Two named missing-dispatch assertions failed before wiring. All 250 tooling
+tests pass locally (239 passes, eleven native macOS skips). The existing
+runtime-image regression now rejects replacement of every dependency for both
+original assemblies; graph-preserving lock tests cover both wrappers and input
+recapture rejects a changed artifact-wrapper SDK image. Frozen inventory/catalog
+and patch-integrity checks pass. Native selection expands to 53 scopes/398
+observations, pending Linux execution. This is not completed artifact binding,
+session-origin attribution, safe legacy import or recovery/transfer acceptance.
+No task/checklist marker or driver stage is advanced.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

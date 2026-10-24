@@ -115,6 +115,11 @@ pass; that explicit selection excludes seventeen actual process/transfer-proof
 tests whose prerequisites were not prepared. These are focused package checks,
 not artifact acceptance. The legacy artifact preparation/import upgrade,
 complete bindings and real recovery/large-transfer evidence remain open.
+The owned native diagnostic now requests all twelve frozen publication
+parameters plus both actual-store source-substitution pairs from the original
+artifact assembly, using its unchanged ten-package graph and verified logger.
+The expanded 53-scope/398-observation request awaits Linux execution; missing
+process/transfer and session-origin obligations remain separate.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

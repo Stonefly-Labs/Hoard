@@ -6132,6 +6132,27 @@ README, provider guide and feature artifacts distinguish this bounded increment
 from full qualification. Architecture/ADRs/diagrams/deployment examples remain
 unaffected: only test consumers and package-only wrappers change.
 
+The owned Linux diagnostic now builds that actual original artifact assembly
+against its ten-package graph. Its exact scope contains all twelve frozen
+publication parameters, including the original staging-boundary pair, plus
+both actual-store duplicate-source mutation pairs. Both providers' parameters
+share one exact scope so method-based selection cannot accidentally omit the
+other parameter. Incomplete/renamed/foreign scopes reject before launch.
+The safe logger is installed without a predecessor NuGet dependency; every
+wrapper SDK/provider/Hosting/logger DLL must match its actual archive.
+Original artifact runtime/dependency/native bytes enter pre/post immutable
+inputs. The diagnostic feed grows from ten to thirteen archives; the separate
+eighteen-package/thirteen-lock preparation graph is unchanged.
+
+Two named missing-dispatch assertions first failed before wiring. All 250
+tooling tests now pass locally (239 passes, eleven native macOS skips).
+Existing image-replacement tests cover every dependency of both original
+assemblies; lock tests preserve both original graphs, and recapture rejects a
+changed artifact-wrapper SDK. Frozen inventory/catalog and patch checks pass.
+The expanded native request is 53 scopes/398 observations, pending execution.
+No recovery/transfer proof, full session origin, safe legacy import or category
+qualification is inferred.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

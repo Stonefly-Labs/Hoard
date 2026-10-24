@@ -1361,6 +1361,11 @@ and 250 non-external-proof artifact tests pass. Seventeen process/transfer-proof
 tests still require their actual prepared runners and evidence; this is not
 artifact qualification. The legacy artifact preparation/import path, complete
 bindings, recovery and large transfers remain unfinished.
+The owned Linux diagnostic now requests the original publication assembly too:
+all twelve frozen publication parameters plus both source-substitution pairs,
+with exact discovery and byte-verified dependencies. Its expanded 53-scope/
+398-observation request is pending Linux execution; it does not supply those
+missing process/transfer proofs or complete session-origin attribution.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

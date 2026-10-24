@@ -284,6 +284,15 @@ the unmodified store passes. Eleven-archive fresh locked replay and 250 explicit
 non-external-proof tests pass. Seventeen actual process/transfer-proof tests are
 not satisfied by this selection. Full artifact sessions, historical/candidate
 preparation, safe import and qualification remain separate unfinished gates.
+The owned Linux diagnostic compiles the actual original artifact assembly and
+selects twelve frozen publication parameters plus both source-substitution
+pairs as one complete scope. Exact discovery precedes execution; shortened,
+renamed or foreign scopes reject. Its existing ten-package graph is privately
+rebound and every dependency/logger DLL is archive-verified, without a new
+predecessor logger dependency. Artifact runtime/dependency/native bytes enter
+immutable pre/post inputs. The thirteen-archive diagnostic feed leaves the
+separate eighteen-package/thirteen-lock preparation graph unchanged.
+The expanded 53-scope/398-observation native request is pending execution.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

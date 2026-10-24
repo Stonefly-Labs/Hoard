@@ -225,6 +225,12 @@ durability exclusion or category acceptance is replaced by this focused result.
 The legacy artifact preparer still assumes unchanged F-06 metadata and an old
 SDK-free source tree; its historical/candidate recipe split and safe import
 remain unfinished.
+The Linux diagnostic additionally selects all twelve frozen publication
+parameters and both actual-store source-substitution pairs from the original
+artifact test assembly. Its ten-package graph is privately rebound without
+editing tracked locks, and every dependency/logger image is archive-verified.
+The expanded 53-scope/398-observation request awaits native execution; it remains
+diagnostic transport, not artifact binding/session-origin or category evidence.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

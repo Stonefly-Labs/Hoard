@@ -35,6 +35,53 @@ class SdkDiagnosticTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.directory)
 
+    def test_artifact_wrapper_scope_preserves_frozen_publication_parameters_and_actual_assembly(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_publication_scenarios", None)),
+                        "Artifact publication needs exact source-owned wrapper transport.")
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        expected = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"]
+                    if name.startswith("Hoard.Artifacts.Tests.ArtifactPublicationTests.")}
+        expected.update(
+            'Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests.'
+            'Shared_duplicate_assertion_rejects_substituted_source_and_accepts_original_store'
+            f'(provider: "{provider}")' for provider in ("local", "object"))
+        scenario, = checks.original_artifact_publication_scenarios()
+        self.assertEqual(set(scenario[1]), expected)
+        self.assertEqual(len(scenario[1]), 14)
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.ARTIFACT_TESTS / checks.ARTIFACT_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Artifacts.Tests.dll")
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+        }
+        with patch.object(checks, "runtime_command",
+                          side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+            launch.assert_called_once()
+            self.assertEqual(launch.call_args.args[1], assembly)
+            self.assertFalse(launch.call_args.kwargs)
+            manifest = launch.call_args.args[2]
+            self.assertEqual(manifest["purpose"], "discovery")
+            self.assertEqual({item["testIdentity"] for item in manifest["expected"]}, expected)
+            self.assertEqual({item["caseId"] for item in manifest["expected"]}, {scenario[0]})
+
+    def test_artifact_wrapper_scope_cannot_drop_parameters_or_borrow_other_methods(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_publication_scenarios", None)),
+                        "Artifact wrapper dispatch must reject shortened frozen scopes.")
+        scenario, = checks.original_artifact_publication_scenarios()
+        for changed in (
+                (scenario[0], scenario[1][:-1], *scenario[2:]),
+                ("original-artifact-provider-selected", *scenario[1:]),
+                (scenario[0], (*scenario[1][:-1], "Hoard.Artifacts.Tests.Provider.Check"), *scenario[2:])):
+            with self.subTest(scope=changed[0]), patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, self.directory, changed)
+                launch.assert_not_called()
+
     def test_original_wrapper_scopes_use_every_frozen_parameter_and_the_original_assembly(self):
         self.assertTrue(callable(getattr(checks, "original_metadata_scenarios", None)),
                         "Original wrappers need source-owned exact discovery scopes.")
@@ -86,15 +133,21 @@ class SdkDiagnosticTests(unittest.TestCase):
 
     def test_original_wrapper_logger_and_shared_runtime_must_match_the_actual_archives(self):
         logger = "Hoard.Conformance.TestLogger"
-        for mutation in (None, "Hoard.Testing.Conformance", logger):
-            with self.subTest(mutation=mutation):
-                candidate = self.directory / ("candidate-" + str(mutation))
-                output = candidate / checks.METADATA_TESTS / checks.METADATA_TEST_OUTPUT / "Release/net10.0"
+        variants = (
+            (checks.METADATA_TESTS, checks.METADATA_TEST_OUTPUT, checks.METADATA_PACKAGES,
+             checks.metadata_wrapper_runtime),
+            (checks.ARTIFACT_TESTS, checks.ARTIFACT_TEST_OUTPUT, checks.ARTIFACT_PACKAGES,
+             checks.artifact_wrapper_runtime),
+        )
+        for project, folder, packages, admit in variants:
+            for mutation in (None, *packages, logger):
+                candidate = self.directory / (Path(project).name + "-" + str(mutation))
+                output = candidate / project / folder / "Release/net10.0"
                 output.mkdir(parents=True)
                 source = candidate / checks.LOGGER / f"bin/Release/net10.0/{logger}.dll"
                 source.parent.mkdir(parents=True)
                 source.write_bytes(b"logger" if mutation != logger else b"replaced")
-                for package in checks.METADATA_PACKAGES:
+                for package in packages:
                     (output / f"{package}.dll").write_bytes(
                         b"shared" if mutation != package else b"replaced")
 
@@ -102,15 +155,16 @@ class SdkDiagnosticTests(unittest.TestCase):
                     digest = hashlib.sha256(b"logger" if package == logger else b"shared").hexdigest()
                     return {"runtimeAssemblies": {f"lib/net10.0/{package}.dll": digest}}
 
-                with patch.object(checks.evidence, "package_identity", side_effect=identity) as observed:
+                with self.subTest(project=project, mutation=mutation), patch.object(
+                        checks.evidence, "package_identity", side_effect=identity) as observed:
                     if mutation is None:
-                        checks.metadata_wrapper_runtime(candidate, self.directory)
+                        admit(candidate, self.directory)
                         self.assertEqual((output / f"{logger}.dll").read_bytes(), b"logger")
                         self.assertEqual({call.args[1] for call in observed.call_args_list},
-                                         {*checks.METADATA_PACKAGES, logger})
+                                         {*packages, logger})
                     else:
                         with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
-                            checks.metadata_wrapper_runtime(candidate, self.directory)
+                            admit(candidate, self.directory)
 
     def test_original_provider_selection_is_closed_and_reaches_the_actual_test_host_settings(self):
         (self.directory / "stores").mkdir()
@@ -264,31 +318,32 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(original.read_bytes(), raw)
         self.assertFalse((original.parents[1] / "obj/F07.consumer.packages.lock.json").exists())
 
-    def test_original_wrapper_preparation_rebinds_only_its_existing_seven_package_graph(self):
-        candidate = self.directory / "candidate"
-        original = candidate / checks.METADATA_TESTS / "PackageAcceptance/packages.lock.json"
-        original.parent.mkdir(parents=True)
+    def test_original_wrapper_preparation_preserves_each_existing_package_graph(self):
         feed = self.directory / "feed"
         feed.mkdir()
-        dependencies = {"xunit": {"resolved": "2.9.3", "contentHash": "unchanged"}}
-        for package in checks.METADATA_PACKAGES:
+        for package in checks.INPUT_PACKAGES:
             (feed / f"{package}.0.1.0.nupkg").write_bytes(package.encode())
-            dependencies[package] = {"resolved": "0.1.0", "contentHash": "old"}
-        raw = json.dumps({"version": 2, "dependencies": {"net10.0": dependencies}}).encode()
-        original.write_bytes(raw)
-        alternate, receipt = checks.prepare_package_consumer_lock(
-            candidate, feed, project=checks.METADATA_TESTS, local_packages=checks.METADATA_PACKAGES)
-        self.assertEqual(original.read_bytes(), raw)
-        self.assertEqual(alternate.parent, candidate / checks.METADATA_TESTS / "obj")
-        self.assertEqual(json.loads(alternate.read_bytes())["dependencies"]["net10.0"]["xunit"],
-                         dependencies["xunit"])
-        self.assertEqual(set(receipt["packages"]), {f"{package}.0.1.0.nupkg" for package in (
-            "Hoard.Abstractions", "Hoard.Core", "Hoard.Hosting", "Hoard.Fixtures.Metadata.Memory",
-            "Hoard.Fixtures.Metadata.Sqlite", "Hoard.Fixtures.Metadata.HostAdapters",
-            "Hoard.Testing.Conformance")})
-        checks.verify_package_consumer_lock(candidate, feed, alternate, receipt, project=checks.METADATA_TESTS)
-        self.assertNotIn("Hoard.Conformance.TestLogger", json.loads(
-            alternate.read_bytes())["dependencies"]["net10.0"])
+        for project, packages in (
+                (checks.METADATA_TESTS, checks.METADATA_PACKAGES),
+                (checks.ARTIFACT_TESTS, checks.ARTIFACT_PACKAGES)):
+            with self.subTest(project=project):
+                candidate = self.directory / Path(project).name
+                original = candidate / project / "PackageAcceptance/packages.lock.json"
+                original.parent.mkdir(parents=True)
+                dependencies = {"xunit": {"resolved": "2.9.3", "contentHash": "unchanged"}}
+                dependencies.update({package: {"resolved": "0.1.0", "contentHash": "old"} for package in packages})
+                raw = json.dumps({"version": 2, "dependencies": {"net10.0": dependencies}}).encode()
+                original.write_bytes(raw)
+                alternate, receipt = checks.prepare_package_consumer_lock(
+                    candidate, feed, project=project, local_packages=packages)
+                self.assertEqual(original.read_bytes(), raw)
+                self.assertEqual(alternate.parent, candidate / project / "obj")
+                prepared = json.loads(alternate.read_bytes())["dependencies"]["net10.0"]
+                self.assertEqual(set(prepared), set(dependencies))
+                self.assertEqual(prepared["xunit"], dependencies["xunit"])
+                self.assertEqual(set(receipt["packages"]), {f"{package}.0.1.0.nupkg" for package in packages})
+                checks.verify_package_consumer_lock(candidate, feed, alternate, receipt, project=project)
+                self.assertNotIn("Hoard.Conformance.TestLogger", prepared)
 
     def test_sqlite_environment_requires_actual_configuration_and_locked_native_archive_bytes(self):
         runtime = self.directory / "runtime"
@@ -615,6 +670,10 @@ class SdkDiagnosticTests(unittest.TestCase):
             "Release/net10.0/Hoard.Testing.Conformance.dll")
         wrapped.parent.mkdir(parents=True)
         wrapped.write_bytes(b"shared-sdk")
+        artifact_wrapped = candidate / checks.ARTIFACT_TESTS / checks.ARTIFACT_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Testing.Conformance.dll")
+        artifact_wrapped.parent.mkdir(parents=True)
+        artifact_wrapped.write_bytes(b"shared-sdk")
         sources = checks.evidence.source_manifest(repository)
         environment = {
             "os": "linux", "osVersion": "test", "architecture": "x86_64",
@@ -627,9 +686,9 @@ class SdkDiagnosticTests(unittest.TestCase):
             return checks.make_inputs(run, repository, candidate, sources,
                                       environment, identity, None, group_id=group_id)
         before = capture()
-        self.assertEqual(len(before["packages"]), 10)
+        self.assertEqual(len(before["packages"]), 13)
         self.assertNotIn(str(self.directory).encode(), checks.evidence.canonical_bytes(before))
-        for path in (native, wrapped, runtime / "Added.dll", runtime / "Tests.runtimeconfig.json",
+        for path in (native, wrapped, artifact_wrapped, runtime / "Added.dll", runtime / "Tests.runtimeconfig.json",
                      candidate / "added.packages.lock.json"):
             with self.subTest(path=path.name):
                 original = path.read_bytes() if path.exists() else None
