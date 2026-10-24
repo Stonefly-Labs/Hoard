@@ -1,0 +1,42 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <Using Include="Xunit" />
+    <EmbeddedResource Include="../../fixtures/conformance/baselines/inventory.json"
+                      LogicalName="Hoard.Conformance.FrozenInventory" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ConformancePackageAcceptance)' != 'true'">
+    <ProjectReference Include="../Hoard.Conformance.TestLogger/Hoard.Conformance.TestLogger.csproj" />
+    <ProjectReference Include="../Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj" />
+    <Compile Remove="MemoryMechanismTests.cs" />
+  </ItemGroup>
+  <PropertyGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
+    <NuGetLockFilePath>PackageAcceptance/packages.lock.json</NuGetLockFilePath>
+    <OutputType>Exe</OutputType>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <UseAppHost>false</UseAppHost>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
+    <PackageVersion Include="Hoard.Testing.Conformance" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Metadata.Memory" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Conformance.Bindings.Memory" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Conformance.Bindings.Sqlite" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Conformance.TestLogger" Version="[0.1.0]" />
+    <PackageReference Include="Hoard.Testing.Conformance" />
+    <PackageReference Include="Hoard.Fixtures.Metadata.Memory" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Memory" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Sqlite" />
+    <PackageReference Include="Hoard.Conformance.TestLogger" />
+    <Compile Include="../../fixtures/conformance/Consumer/MemoryBindingTests.cs" Link="MemoryBindingTests.cs" />
+    <Compile Include="../../fixtures/conformance/Consumer/MemoryBindingOwnershipTests.cs" Link="MemoryBindingOwnershipTests.cs" />
+    <Compile Include="../../fixtures/conformance/Consumer/SqliteBindingTests.cs" Link="SqliteBindingTests.cs" />
+    <Compile Include="../../fixtures/conformance/Consumer/SqliteMechanismTests.cs" Link="SqliteMechanismTests.cs" />
+    <Compile Include="../../fixtures/conformance/Consumer/SqliteEnvironmentProbe.cs" Link="SqliteEnvironmentProbe.cs" />
+    <Compile Include="../../fixtures/conformance/Consumer/SqliteNativeOwnershipProbe.cs" Link="SqliteNativeOwnershipProbe.cs" />
+  </ItemGroup>
+</Project>

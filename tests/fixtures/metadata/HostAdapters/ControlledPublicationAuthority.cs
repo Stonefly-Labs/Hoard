@@ -12,12 +12,33 @@ public sealed class MetadataFixtureControls
     public string[] Diagnostics => diagnostics.ToArray();
     public void SetObserver(string point, Func<ValueTask> observer) => observers[point] = observer;
     public void RemoveObserver(string point) => observers.TryRemove(point, out _);
+    public IAsyncDisposable RegisterObserver(string point, Func<ValueTask> observer)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(point);
+        ArgumentNullException.ThrowIfNull(observer);
+        var registration = new Observation(this, point, observer);
+        if (!observers.TryAdd(point, registration.InvokeAsync))
+        { throw new InvalidOperationException("Metadata observation already registered."); }
+        return registration;
+    }
     public ValueTask ObserveAsync(string point)
     {
         Interlocked.Increment(ref activities);
         return observers.TryGetValue(point, out var observer) ? observer() : ValueTask.CompletedTask;
     }
     public void Diagnose(string code) => diagnostics.Enqueue(code);
+
+    private sealed class Observation(MetadataFixtureControls owner, string point, Func<ValueTask> observer) : IAsyncDisposable
+    {
+        private int disposed;
+        public ValueTask InvokeAsync() => observer();
+        public ValueTask DisposeAsync()
+        {
+            if (Interlocked.Exchange(ref disposed, 1) == 0)
+            { owner.observers.TryRemove(new KeyValuePair<string, Func<ValueTask>>(point, InvokeAsync)); }
+            return ValueTask.CompletedTask;
+        }
+    }
 }
 
 public sealed class ControlledPublicationAuthority(MetadataFixtureControls controls) : IMetadataPublicationAuthority

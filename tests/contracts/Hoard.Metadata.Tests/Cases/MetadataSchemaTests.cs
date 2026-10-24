@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Hoard.Abstractions.Metadata;
 using Hoard.Fixtures.Metadata.Hosting;
+using Hoard.Testing.Conformance.Bindings;
 using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
@@ -119,7 +120,8 @@ public sealed class MetadataSchemaTests
         var request = new MetadataSchemaRequest.Upgrade(point.SchemaVersion,
             point.SchemaVersion.Replace("-v1", "-v2", StringComparison.Ordinal), point);
         await using var barrier = new MetadataTestBarrier();
-        current.Controls.SetObserver(current.Provider == "sqlite" ? "U1" : "memory.upgrade.before_decision", () => new(barrier.HoldAsync()));
+        await using var observation = await CommonObservations(current)(
+            MetadataObservationPoint.SchemaCandidatePrepared, () => new(barrier.HoldAsync()), default);
         var first = current.Schema.PrepareAsync(request, new(), default).AsTask();
         await barrier.Entered;
         var second = current.Schema.PrepareAsync(request, new(), default).AsTask();

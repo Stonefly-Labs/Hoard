@@ -9,6 +9,161 @@ Hosting; F-04 adds protected metadata/observations, not provider operations. Sta
 [validation quickstart](../specs/001-provider-contracts/quickstart.md).
 For lifecycle use, see the [package-only lifecycle host](../examples/LifecycleHost/README.md).
 
+F-07 shared conformance is partially implemented, not available as provider
+certification. Its SDK now has 53 executable metadata methods, typed sessions,
+an identity-pinned allocator, bounded runtime logger and exact discovery/origin
+transport. Native run
+[40059814134](https://github.com/Stonefly-Labs/Hoard/actions/runs/40059814134)
+verified those initial consumers and factory/settlement prerequisites:
+131 foundation checks without failures/errors/skips, 34 scopes/150 observations,
+six historical baselines and eighteen-package/thirteen-lock replay.
+
+`Hoard.Fixtures.Conformance.Bindings.Memory` now implements explicit current/
+legacy setup, typed logical controls, independent committed snapshots and atomic
+logical reopen. Its `MemoryBinding` constructor requires the provider archive's
+actual SHA-256 (and version); declarations do not independently prove package
+provenance. The harness supplies `ConformanceRunContext`, owns cleanup and must
+bind actual observed role/assembly/package origins. The adapter closes admission
+before pinning the genuine work task, preserves that identity on retries, and
+never reports physical `Released`. Memory remains non-durable; logical image/
+upgrade controls grant no backup, durable restart or process-crash guarantee.
+Private encoding mutation is shared by the adapter and existing focused tests,
+without an SDK reference in Memory or private provider types in the SDK.
+Twenty focused adapter rows pass against locally packed packages, including the
+real 30-second incomplete cleanup and actual allocator retention/retry.
+Native run [40061416909](https://github.com/Stonefly-Labs/Hoard/actions/runs/40061416909)
+verified those rows within 37 scopes/170 exact observations, alongside all
+131 foundation checks and unchanged six-baseline/eighteen-package/thirteen-lock replay.
+The SQLite fixture now exposes genuine worker-lifetime settlement and tracked
+async independent read/writer controls. Cancellation of a control caller does
+not release the underlying work; shutdown waits for late native handles.
+The initial SQLite binding uses those tracked controls, with explicit current/
+legacy factories and same-database reopen. A single directory transfers only
+after the old worker actually closes; no old lifetime task is bound to a
+directory subsequently reused by a new worker. Only the final head registers
+that directory's genuine lifetime with the resource observer. Failed/canceled
+handoff keeps the original owner and pending work available for final disposal.
+Real fixture backups authorize upgrades; raw record/operation/token corruption
+preserves SQLite BLOB/TEXT/NULL/REAL distinctions and exact restoration.
+Raw fingerprints use read-only transactions without schema admission/repair,
+native value/progress limits, bounded size preflight and sorted row digests,
+not a native full-payload sorter. The existing synchronous fixture helpers
+retain their caller-owned semantics.
+
+The same logical publication authority source is compiled into both binding
+assemblies, without cross-provider delegation or a new SDK dependency.
+The package-mode graph now has seven local archives. Its intentional NuGet lock
+adds only the SQLite binding/provider and six pinned SQLite dependencies,
+preserving prior graphs/third-party hashes. A separate empty-cache locked build
+passes. All 179 selected Memory/SQLite package tests pass locally without skips
+(95 Memory, 84 SQLite); this includes actual incomplete cleanup, not Linux
+supervisor/category qualification. Native run
+[40066075996](https://github.com/Stonefly-Labs/Hoard/actions/runs/40066075996)
+passed all three jobs, 134 foundation checks without failures/errors/skips and
+50 scopes/254 exact observations, including all 84 SQLite identities.
+An owned package-only environment probe observes
+actual SQLite PRAGMAs/version and the loaded native module, validates its bytes
+against the pinned NuGet archive, and fingerprints runtime native assets.
+That run verified actual SQLite 3.53.3 loading. SQLite test dispatch rejects
+missing actual environment/native-runtime inputs and never borrows `nativeSqlite: not-used`.
+NuGet's normalized signed-package content hash remains pinned separately from
+the downloaded archive hash; both fresh locked-restore receipts and exact native
+member bytes are verified, with unchanged pre/post provenance. Child temporary
+files are routed into private owned caches, not global temporary storage.
+The isolated diagnostic requests actual native non-cooperation in a dedicated owned
+child: publication guards remain held after the caller deadline and failed
+cleanup, and the parent admits proof only after its PID/start-bound watchdog
+confirms SIGKILL and group exit. Native run
+[40067365972](https://github.com/Stonefly-Labs/Hoard/actions/runs/40067365972)
+at `7530cad` verified this complete observation/containment pair; this does not
+complete inherited crash/recovery or category qualification.
+All 53 current SDK logical assertion methods now execute through SQLite too;
+the additional 44 parameterized rows cover actual independent reads, clocks,
+publication, corruption and decision/settlement controls. This local 179-test
+selection is not the catalog's 179 applicable category results or wrapper parity.
+The original MP-01..06/13 wrappers now invoke the same packaged SDK assertions.
+A thin test-side authority bridge delegates to the original fixture authority;
+it does not replace provider setup, clocks, schema preparation or disposal.
+All 72 predecessor tests pass against each provider using the identical compiled
+suite and SDK. Ten more original wrappers now share paging, concurrency,
+publication-evidence and reference assertions (17 delegated methods total);
+all 21 affected class tests pass against each provider without skips.
+Its eight-archive preparation adds the SDK, while the independent binding
+diagnostic still uses seven archives. Other wrappers remain unextracted.
+Five further atomicity/publication wrappers now use scoped typed observations
+(22 delegated methods total). The original fixture adds ownership-safe
+registration and a cancellation-aware independent-read overload without SDK
+dependencies or changing existing operation signatures. Unregistration removes
+only that registration, never another owner or active work. The full 76-test
+suite passed against both providers; after adding the actual schema-hook check
+and SDK-canary assertion, all 16 affected tests passed against each provider.
+Only the additive HostAdapters fixture archive changed; SDK/provider/platform
+archives and repository/historical locks remain unchanged by this increment.
+The subsequent schema-boundary repair adds `SchemaCandidatePrepared`: SQLite
+maps it to U1 after candidate creation with the native writer held, while its
+existing `BeforeSchemaUpgrade` remains U0 before the transaction. Memory maps
+both observations to its actual upgrade decision. The unchanged shared
+exclusion consumer and original MP-35 now select the distinct candidate hook.
+A second real SQLite connection must receive BUSY (5); the regression failed
+at U0 before repair. Final packages pass 180 selected binding/SDK tests and
+11 original schema/observer tests per provider without skips. Fresh locked
+eight-archive replay reproduces exact DLLs; only the tracked SDK archive hash
+changes, preserving the predecessor dependency graph and all other lock entries.
+The requested Linux vector becomes 50 scopes/255 observations, including
+85 SQLite identities. Native
+[40070802352](https://github.com/Stonefly-Labs/Hoard/actions/runs/40070802352)
+at `3bca09c` verified that vector, 136 foundation checks without skips,
+native containment and identical eighteen-package/thirteen-lock replay.
+The six original MP-08 malformed-continuation rows now use the same shared
+consumer, bringing adoption to 23 original methods. Fixture-private mapping
+forwards to each provider's existing independent payload-damage helper.
+A parity guard enumerates every actual cursor field and proves typed omission
+covers it while preserving all other values. Memory's combined epoch/schema
+field is covered without inventing a separate encoded field. Cancelled and
+unknown controls reject without modifying the valid continuation. All 79
+current predecessor tests pass without skips against each provider using the
+same SDK/suite bytes. Fresh locked replay reproduces eight archives and exact
+DLLs; only the additive HostAdapters archive changes from the schema repair.
+Six further original MP-19/20/28/32 wrappers now delegate to the existing
+admission, storage/ledger capacity and lease-generation/fencing consumers
+(29 delegated methods total). Admission still uses fresh unadmitted stores,
+not the prepared ordinary-case helper. A thin counter bridge observes actual
+fixture activity and diagnostic counts; capacity/generation callbacks preserve
+existing controls and check cancellation before dispatch. All 16 affected
+class tests pass against each provider without skips using the same compiled
+suite and seven byte-matched dependencies. No package or source-lock changes
+accompany these delegates.
+Three more MP-17/29/30 wrappers now share clock-dependent consumers through
+callbacks that drive the original `MetadataTestClock` supplied to the store
+(32 delegated methods). Existing SDK clock signatures forward to those same
+assertion bodies. All three final-decision lease actions retain independent
+fresh fixtures. A new actual-store regression proves clock rollback reaches
+the original clock while issued tickets retain their monotonic floor.
+All 80 predecessor tests pass on each provider without skips, alongside
+180 selected SDK/binding tests. Fresh locked replay reproduces eight archives
+and exact DLLs, with the identical SDK archive in both feed families. Only its
+SDK hash changes in the tracked predecessor lock; other entries remain pinned.
+Eleven more original deadline/reconciliation/replay methods now use shared
+consumers (43 delegated methods). The fixture adds a cancellation-aware writer
+overload while preserving its old signature; a test-side disposable lease
+releases only its own holder. Settlement forwards the original actual idle
+observation, not caller-task completion. A new cancellation/ownership regression
+first failed the missing overload assertion, then proved cancellation leaves
+the existing writer held, the timed-out commit absent and same-ticket retry
+successful only after release. All 81 current predecessor tests pass on each
+provider without skips, including genuine 30-second incomplete cleanup.
+Fresh locked replay reproduces eight archives and exact DLLs; only the
+additive HostAdapters archive changes from the clock increment. SDK/provider/
+platform archives and source locks are unchanged.
+Complete category suites/adapters, contributor workflow and controller/profile
+ingestion remain unfinished. Focused composition/version fixtures
+do not establish category or host-profile qualification. CP-11 preserves actual
+route rejection during mapping before publication/initialization/readiness;
+declaration validation remains preconstruction. Responsibility IDs are not
+route declarations, and product contracts are unchanged.
+Do not use the new executor as acceptance-ready tooling. See the
+[implementation checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
+
 F-06 adds **fixture-qualified** BCL-only operations in
 `Hoard.Abstractions.Storage`, separate from the unchanged `IArtifactProvider`
 marker and historical `Metadata.ArtifactDigest`. Initialization/coordination

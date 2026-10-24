@@ -881,7 +881,8 @@ at that exact commit. Its successful source-release run, annotated remote tag,
 generated notes and both automatic source archives are verified. The helper
 records F-06 complete with release metadata in
 [completion-checkpoint PR #17](https://github.com/Stonefly-Labs/Hoard/pull/17).
-That PR must merge before a later invocation starts F-07 **`specify`**.
+That completion checkpoint subsequently merged through PR #17, enabling the
+separately invoked F-07 specification stage below.
 See the [merge/release evidence](docs/DEVELOPMENT.md#f-06-merge-completion-and-alpha-source-release).
 No runtime binaries, packages, containers, infrastructure action or deployment
 are included; no new spec or PR merge runs in this invocation.
@@ -968,6 +969,345 @@ remained unchanged by analysis. The full report is recorded in draft
 That checkpoint scheduled **`implement / ready`** for a separate invocation,
 with the existing 40/40 custom-review gate satisfied. Analysis supplies no
 runtime evidence and executes no implementation or qualification.
+
+The separately invoked **F-07 `specify`** stage creates the
+[provider conformance, compatibility and composition specification](specs/007-provider-conformance/spec.md).
+Five journeys define reusable category checks, safe host compositions, version
+and consumer compatibility, contributor templates, and attributable local/CI
+reports. Its [built-in quality checklist](specs/007-provider-conformance/checklists/requirements.md)
+passes 16/16 criteria across 24 requirements and eight measurable outcomes.
+The planned baseline uses the existing independent metadata/artifact fixtures,
+keeping logical, durable-local and simulated qualification distinct. It does
+not deliver a harness, CI workflow, production provider or certification result;
+operational protocol/identity and native-client checks remain separately scoped.
+See the [stage scope](docs/DEVELOPMENT.md#f-07-provider-conformance-specification).
+The subsequent [clarification review](specs/007-provider-conformance/spec.md#clarifications)
+found no critical ambiguities across all ten review categories: zero questions
+and no requirement or scope changes. The built-in checklist remains 16/16;
+custom reviewer approval and qualification evidence are not implied.
+Exact interfaces, report formats, budgets and the bounded matrix remain
+planning decisions. See the [review scope](docs/DEVELOPMENT.md#f-07-provider-conformance-clarification).
+The subsequent [implementation plan](specs/007-provider-conformance/plan.md)
+defines a test-only shared SDK, explicit provider bindings, five local/CI
+profiles, a finite composition/version matrix and fail-closed evidence.
+It retains all 192 inherited metadata/artifact entries and adds 48 focused
+proof obligations, including contributor red/green examples and exact runtime
+witness attribution. Real durable-local, simulated and unqualified service
+scopes remain separate. These are design artifacts, not implemented commands,
+CI, approved custom checklists or certification results. See the
+[planning scope](docs/DEVELOPMENT.md#f-07-provider-conformance-planning).
+The subsequent checklist stage creates standard-depth
+[conformance](specs/007-provider-conformance/checklists/conformance.md) and
+[evidence](specs/007-provider-conformance/checklists/evidence.md)
+requirements-quality checklists, 20 criteria each, for maintainer review before
+implementation. The requested assisted assessment finds written support for all
+40 criteria and no unresolved requirements blocker or product decision.
+All 40 reviewer-owned markers remain unchecked; assessment is not approval.
+Preserving inherited assertion coverage, actual large-transfer/recovery proof,
+CI scratch capacity and sanitation before diagnostic persistence remain
+implementation obligations. See the
+[assessment scope](docs/DEVELOPMENT.md#f-07-provider-conformance-checklists-and-assisted-assessment).
+The subsequent [task list](specs/007-provider-conformance/tasks.md) defines 86
+unchecked tasks across setup, shared foundations, five story increments and
+final acceptance. It maps all 24 requirements, eight outcomes and QC-01..48
+to implementation and focused proof, preserving all inherited cases and
+subvariants. Explicit prerequisites serialize shared tooling edits and seal
+old binaries before candidate builds. The MVP is complete category-scoped US1,
+not full five-profile qualification. No implementation or qualification ran.
+The subsequent read-only analysis finds no actionable cross-artifact or
+constitutional findings. All 24 requirements and eight outcomes have
+implementation and focused proof tasks; all 86 tasks have complete acyclic
+prerequisites. Feature artifacts and checklist markers remain unchanged.
+At that analysis checkpoint, **`implement`** required reviewer approval or
+explicit authorization for the 40 unchecked custom checklist items.
+Analysis supplies no runtime qualification. See the
+[analysis scope](docs/DEVELOPMENT.md#f-07-provider-conformance-analysis).
+
+Implementation subsequently began with explicit maintainer authorization;
+the reviewer-owned checklist markers remain unchanged. Partial test SDK,
+catalog, baseline-preparation and evidence/execution foundations are checked in,
+but no common-suite extraction or five-profile qualification is delivered.
+Implementation continues under the maintainer's direction to resolve issues
+autonomously. The Memory fixture now has bounded, targeted corruption controls
+and real stored-payload/receipt validation without a dependency on the SDK.
+Witness binding/matrix admission and initial ownership/cleanup fixes are
+implemented; full acceptance and final architecture review remain outstanding.
+Native execution admission now requires both inherited Linux confinement and
+kernel PID-handle group signalling, verified before the target is released;
+unsupported hosts fail admission rather than claiming unsafe settlement.
+The corrected directory-ownership implementation passed 28 native checks without
+skips. The SDK now also has owned-resource allocation and a bounded VSTest logger;
+composition/version fixtures exercise existing Hosting APIs. These remain
+non-qualifying foundations, not shared provider suites or a completed CLI.
+Under the maintainer's autonomous-continuation direction, CP-11/FR-007 now
+explicitly preserve the existing lifecycle: declarations reject before
+construction; actual route conflicts reject during mapping before publication,
+initialization, readiness or admission. No product route-contract redesign or
+duplicate-ID substitute is used. See the
+[implementation checkpoint](specs/007-provider-conformance/plan.md#partial-implementation-checkpoint).
+
+Setup tasks T001..T006 are now complete, including all six historical revision
+pins and strict required-field/extension checks for every evidence entity.
+Actual safe-logger records can now be ingested with exact manifest/proof/
+completion relationships; proof walking rejects symlinked roots and bounded
+overflow. A separate diagnostic Linux SDK/logger job seals historical baselines
+before candidate compilation. Its [Linux run](https://github.com/Stonefly-Labs/Hoard/actions/runs/39913608773)
+passed all six allocator facts and five logger smoke scenarios, including the
+required negative/incomplete classifications. None of this
+completes the remaining foundations or grants provider qualification.
+
+The SDK also supplies a bounded safe fault-observation buffer with immutable
+snapshots; observations are setup evidence, never provider-selected pass results.
+T007's typed contracts and strict entities are complete; category adapters,
+runtime attribution, independent evaluation and the remaining foundations are
+not.
+Cross-platform historical archive preparation is explicit and non-qualifying:
+alternate locks preserve the original dependency graph/source locks and bind
+the platform-built bytes before any candidate compilation.
+All 144 distinct composition/version/classification runtime identities now match
+actual package-mode discovery. A separate tracked composition package lock was
+prepared against the sealed historical feed and replayed in an independent fresh
+cache without changing predecessor locks. This verifies discovery, not behavior
+or loaded-provider attribution. The logger and Python ingestion preserve finite
+version-range parameter punctuation while still rejecting paths and free text;
+55 current source SDK checks pass, not a current package-acceptance result.
+The catalog also maps 41 architecture/inspection identities and ten SDK catalog
+admission identities, all matched against actual discovery. QC-01..48 now name
+their individual required subproofs instead of one aggregate label. These are
+expectations, not executed control results. Strict SDK catalog admission rejects
+unknown profiles, malformed/duplicate fields, missing profiles and overflowing
+results without returning a shortened catalog.
+T009's owned-execution regression inventory also passes on Linux, including
+concurrent private caches and containment that leaves the other run alive.
+Cleanup now removes only settled synthetic stores, feeds and caches, retaining
+proofs, safe diagnostics and the ownership ledger. Live work and failed ledger
+publication remain `Retained`; explicit retries preserve earlier cleanup failures.
+T010's controller helper/private ledger passed all 70 native foundation checks;
+end-to-end profile integration remains unfinished. Diagnostic capture now also
+checks the 1 KiB event limit before JSON expansion, bounds raw line buffering,
+and preserves safe prefixes plus closed failure codes. T011 passed all 72 native
+foundation checks in run `39918257385`; its SDK/logger diagnostic also passed.
+This is not completed-profile evidence.
+
+The next supervisor increment counts admission work in command deadlines,
+reserves termination/cleanup time, and bounds control/barrier scopes. Native
+artifact/baseline allocation now checks both actual capacity and a finite local
+filesystem allowlist before creating a workspace; path-free preflight facts are
+retained separately from synthetic stores. Run `39920220726` passed all 79
+native foundation checks plus its six-baseline SDK/logger diagnostic. A further
+one-writer gate rejects overlapping commands, cleanup and state publication
+before admission. Insufficient scratch now reports explicit `Incomplete`, not
+a reduced run; evidence violations retain `Failed`. Run `39921337767` at
+`b9d335a` passed all 82 native foundation checks and seven SDK scenarios/15
+observations. A subsequent parent-substitution regression exposed allocation
+following a swapped ancestor after preflight. Capacity/filesystem probes and
+workspace creation now use pinned directory descriptors; parent substitution
+or traversal rejects without writing to the outside sentinel.
+The current changes pass 190 tooling checks with ten native skips on macOS.
+Run [39924374116](https://github.com/Stonefly-Labs/Hoard/actions/runs/39924374116)
+at `79663dd` then passed all 85 native foundation checks without skips and eight
+SDK diagnostic scenarios/25 observations, including the ten catalog cases.
+T008/T012 are complete within their catalog/supervisor foundation scope.
+Immutable complete input snapshots, loaded-provider attribution and profile
+integration remain unfinished; no qualification is claimed.
+
+The next T013 increment shares descriptor-anchored read-only source snapshots
+with the SDK diagnostic, including example projects and build/ignore settings.
+Aliased/replaced roots, changed ancestors and unlisted special files reject
+without redirecting writes. Real Git identity distinguishes dirty local bytes
+from a clean CI checkout pinned to the exact workflow SHA, without ambient Git
+overrides. SDK smoke preparation now uses a separate alternate lock; frozen
+source locks are never rewritten. Run
+[39927534630](https://github.com/Stonefly-Labs/Hoard/actions/runs/39927534630)
+at `4e17986` verified this path: 91 native foundation checks without skips,
+eight SDK scenarios/25 observations, and all six historical baselines.
+The following input-sealing increment captures package metadata/archive/runtime
+hashes from one bounded byte sequence, verifies actual synthetic source mapping,
+and recomputes complete SDK diagnostic inputs after execution. Free space remains
+an admission measurement, not a supposedly immutable value. Run
+[39929542533](https://github.com/Stonefly-Labs/Hoard/actions/runs/39929542533)
+at `44881ff` verified 99 native foundation checks and eight SDK scenarios.
+The next increment adds immutable typed binding snapshots and shared profile
+capture of actual source, packages, locks, declarations, runtime files,
+synthetic source policy and verified historical baselines. It passes 207 local
+tooling checks (ten native skips) and 57 source SDK tests; native verification
+is recorded below. Actual loaded-provider attribution remains T014 work.
+An additional mutation challenge exposed unbound generated runtime configuration.
+SDK capture now includes dependency/runtime configuration files alongside DLLs;
+changing them after admission also rejects.
+Run [39932469750](https://github.com/Stonefly-Labs/Hoard/actions/runs/39932469750)
+at `525bdf0` verified that repair and shared capture: 102 native checks without
+skips, nine SDK scenarios/27 observations and all six historical baselines.
+T013's input-capture foundation is complete; implementation continues with T014,
+not qualification or merge readiness.
+
+T014's first repair admits bounded enum parameter tokens in both runtime
+transports while retaining exact independently expected identities. Local
+regressions pass, and a tenth native diagnostic scenario now selects the two
+actual enum theory rows. Run
+[39933805476](https://github.com/Stonefly-Labs/Hoard/actions/runs/39933805476)
+at `a1fe180` verified 103 native checks without skips and ten scenarios/
+29 observations. Actual-instance assembly capture and strict runtime/package
+correspondence also passed run
+[39934964377](https://github.com/Stonefly-Labs/Hoard/actions/runs/39934964377)
+at `0a0b1d1`: 105 native checks without skips, eleven scenarios/31 observations
+and all six baselines. The next local increment separates exact discovery from
+execution and binds completion to the captured record bytes; actual portable
+VSTest discovery and run
+[39936903326](https://github.com/Stonefly-Labs/Hoard/actions/runs/39936903326)
+at `6a04293` passed: 108 native checks without skips, twelve scenarios/
+35 discovery records/35 execution observations and all six baselines. A
+catalog-owned append-only runtime case-history API also passed run
+[39938028171](https://github.com/Stonefly-Labs/Hoard/actions/runs/39938028171)
+at `a9039fa`: 111 native checks without skips and the same twelve diagnostic
+scopes/35 observations. The next increment adds typed observed metadata/artifact
+sessions: actual factory invocation, cached consumer/component references,
+reopen lineage, actual .NET runtime/architecture and independently checked
+role-specific assembly/package correspondence. Run
+[39940194762](https://github.com/Stonefly-Labs/Hoard/actions/runs/39940194762)
+at `457c4e5` verified 114 native checks without skips, thirteen scopes/
+38 observations and all six baselines after repairing a diagnostic source-routing
+failure. The current increment carries bounded hash-only session observations
+through actual VSTest result proofs, binding them to exact case/execution/
+attempt/group/input/owner provenance and independent role assignments. Local
+regressions pass. Run
+[39943968117](https://github.com/Stonefly-Labs/Hoard/actions/runs/39943968117)
+at `0687888` verified all 116 native checks without skips, fifteen scopes/
+46 discoveries/46 executions and all six baselines. T014/T015 are complete within
+their foundation scope. Actual SQLite environment production
+and full controller/profile integration remain unfinished.
+
+The T016 preparation entry point now exists as
+`bash scripts/validate-conformance.sh --update-locks --evidence <fresh-private-path>`.
+It is explicitly non-qualifying: it seals six historical baselines first, builds
+the current package graph, and requires a second fresh source/cache/feed locked
+replay before publishing only the reviewable conformance locks. Native run
+[39947737831](https://github.com/Stonefly-Labs/Hoard/actions/runs/39947737831)
+at `585970d` verified identical bytes for all 18 packages and 13 locks across both
+fresh builds. The reviewed inventory adds seven locks and updates only local-archive
+hashes in three existing F-07 variants; all dependency graphs and 20 third-party
+identities are unchanged. T016 is complete; default profile/verify/aggregate CLI
+behavior is not implemented yet. The dedicated CI preparation job retains source
+locks only, not raw test output or synthetic store data.
+The initial native preparation failed safely on a missing embedded F-04 OpenAPI
+contract (`CS1566`); a red snapshot regression confirmed the omission. That exact
+compiled resource is now included in source fingerprints/snapshots; the repaired
+native replay passed.
+
+The T017 foundation admits exact profile/catalog selectors, mutually
+exclusive preparation/verification/aggregation requests, explicit category project
+paths and fresh private evidence destinations. `--help` describes the current
+boundary. Only preparation executes; admitted runtime/verify/aggregate requests
+currently return sanitized `Incomplete`/`EvidenceIncomplete`, exit `2`, without
+creating an evidence root. They do not fall back to a different profile or qualify
+from an optimistic report. Native run
+[39949986671](https://github.com/Stonefly-Labs/Hoard/actions/runs/39949986671)
+verified the real CLI-to-preparation route and both fresh locked-build graphs.
+T017/T018 complete the foundation gate only; profile implementations and the
+independent evaluator remain mandatory later tasks, not delivered behavior.
+
+Initial T019/T020 guards now compare the compiled SDK catalog against the frozen
+192-entry inventory, including every parameter/control and the 13 exclusions.
+Safe discovery challenges reject missing/altered metadata rows, foreign artifact
+provider rows and shortened owned manifests. These are pre-extraction regression
+guards, not execution of shared assertions against the four adapters; T019/T020
+remain open for their complete extraction tests.
+
+Native run [39953736120](https://github.com/Stonefly-Labs/Hoard/actions/runs/39953736120)
+verified those guards: 127 foundation checks without failures/errors/skips,
+seventeen scopes/69 discoveries/69 executions, all six historical baselines and
+byte-identical replay of eighteen packages/thirteen locks.
+
+The SDK now contains fifty-three executable metadata consumers: entity round trips,
+registry/authorization isolation, graph deletion, reference replacement/ABA,
+telemetry rollback, aggregate bounds, all seven page queries and oversized/
+bounded paging, competing creates, revision/delete-recreate races and lease
+fences, exact canonical text, opaque continuation scope/epoch binding, exact
+ticket expiry and clock rollback, fourteen receipt-corruption shapes, page/group
+corruption and all five query-dimension corruptions, atomic/grouped snapshots,
+faulted candidates, lost acknowledgments, distinct contribution replay,
+writer-contention uncertainty, publication evidence/protection and replay
+without authority reacquisition, lease-generation overflow/final-decision expiry,
+writer deadlines, cancellation decisions, queue bounds, disposal ownership and
+known exception classification, storage/ledger capacity, explicit admission,
+invalid budgets, incomplete cleanup, sanitized diagnostics and explicit schema
+upgrade/rejection with unchanged-state and reopen checks, and malformed
+continuation components with exact valid resume. They
+accept public store/authority contracts, a harness-owned clock or typed boundary/corruption
+control where needed and cancellation; expected outcomes stay in the SDK.
+A focused source probe executes all fifty-three
+against unchanged Memory source, and a contradictory-success store fails the
+competing-create assertion. This is partial extraction: existing
+wrappers, full shared suites and complete typed adapters remain outstanding.
+Native run [40059814134](https://github.com/Stonefly-Labs/Hoard/actions/runs/40059814134)
+verified all fifty-three against the actual Memory package, plus explicit legacy
+factory/genuine settlement prerequisites: all three jobs passed, with
+131 foundation checks and 34 scopes/150 exact observations. No category/profile
+qualification is claimed.
+Observed metadata factories now expose explicit legacy-session setup without
+case-ID routing, and Memory exposes its genuine pending-work task separately
+from bounded settlement observers. The first concrete Memory adapter now has
+explicit current/legacy factories, typed controls, atomic logical reopen and
+actual-work ownership integration; its 20 focused adapter rows also passed in
+native run [40061416909](https://github.com/Stonefly-Labs/Hoard/actions/runs/40061416909):
+all three jobs, 131 foundation checks and 37 scopes/170 exact observations.
+The initial SQLite binding now adds explicit current/legacy factories, actual
+same-database reopen with exclusive directory handoff, verified backup-based
+upgrade authorization and typed raw-state controls. The package-only graph
+passes 179 selected checks across Memory and SQLite, including native storage
+types, cancellation/late cleanup and real 30-second incomplete cleanup.
+These are focused local package checks, not complete category, Linux-supervisor
+or profile qualification. An owned SQLite environment probe captures actual
+PRAGMAs/native version and verifies the loaded library against locked archive
+bytes. Native run [40066075996](https://github.com/Stonefly-Labs/Hoard/actions/runs/40066075996)
+passed all three jobs, 134 foundation checks without skips and 50 scopes/254 exact
+observations, including all 84 SQLite identities and actual SQLite 3.53.3 loading.
+All SQLite cases require actual environment and native-runtime admission.
+Native run [40067365972](https://github.com/Stonefly-Labs/Hoard/actions/runs/40067365972)
+at `7530cad` also verified the isolated, controller-owned native non-cooperation
+child: 136 foundation checks without skips, the same 50 scopes/254 observations,
+and matching producer/containment receipts. The five-minute native stall never
+runs inside the test process, and retention is not release.
+All 53 current shared logical metadata assertion methods now execute through
+the SQLite binding too. These local checks are not the catalog's 179 applicable
+category results or proof of complete frozen-wrapper parity.
+Twenty-two original wrappers across MP-01..13/23..27/31 now delegate to
+the same packaged SDK
+assertions without changing their frozen names or original fixture lifecycle.
+The package-only predecessor suite passes all 72 tests against each actual
+provider. Its preparation includes eight archives; this is separate from the
+seven-archive binding diagnostic. The next ten delegates pass all 21 affected
+tests against each provider. Five further control-dependent wrappers now share
+atomicity/publication consumers through scoped observation registration.
+Unregistering a hook neither removes a newer owner nor settles an active
+callback. Full wrapper extraction/parity is unfinished.
+The shared schema-exclusion consumer now preserves the original SQLite U1
+writer-held boundary through a distinct `SchemaCandidatePrepared` observation;
+the existing pre-transaction U0 hook is unchanged. A real second connection
+must observe SQLite BUSY (5). Focused final-package checks pass 180 binding/SDK
+tests and 11 original schema/observer tests per provider, without skips.
+Native run [40070802352](https://github.com/Stonefly-Labs/Hoard/actions/runs/40070802352)
+at `3bca09c` verified the expanded 50-scope/255-observation vector, including
+the writer-held regression, native containment and all three successful jobs.
+This is not category qualification.
+The six original malformed-continuation rows now share the SDK corruption
+consumer through fixture-private encoding controls (23 delegated methods).
+An actual-cursor parity check proves every original field is covered without
+changing unrelated fields; all 79 current predecessor tests pass against each
+provider using identical SDK/suite bytes. Full extraction remains unfinished.
+Six further admission, capacity and lease-fencing wrappers now share existing
+consumers (29 delegated methods). Their 16 affected class tests pass against
+each provider; fresh unadmitted stores, original controls and disposal remain
+fixture-owned, with no SDK/provider package changes.
+Three clock-dependent wrappers now share consumers through callbacks that
+drive the original store clock (32 delegated methods). Existing SDK clock
+signatures remain available. All 80 predecessor tests pass on each provider,
+alongside 180 SDK/binding tests; complete extraction/origin import is unfinished.
+Eleven further deadline/reconciliation wrappers now share consumers through
+original writer/settlement controls (43 delegated methods). All 81 current
+predecessor tests pass on each provider, including real 30-second incomplete
+cleanup and cancellation that cannot release another writer's ownership.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

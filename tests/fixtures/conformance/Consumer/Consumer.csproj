@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <AssemblyName>Hoard.Fixtures.Conformance.Consumer</AssemblyName>
+    <IsTestProject>true</IsTestProject>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="SqliteEnvironmentProbe.cs;SqliteNativeOwnershipProbe.cs" />
+    <PackageReference Include="Hoard.Testing.Conformance" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Sqlite" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Memory" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Local" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.ObjectSemantics" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+    <Using Include="Xunit" />
+  </ItemGroup>
+</Project>

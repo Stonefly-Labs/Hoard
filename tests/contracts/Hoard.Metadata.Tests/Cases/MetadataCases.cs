@@ -1,11 +1,100 @@
 using System.Collections.Immutable;
 using Hoard.Abstractions.Metadata;
 using Hoard.Fixtures.Metadata.Hosting;
+using Hoard.Testing.Conformance.Bindings;
 
 namespace Hoard.Metadata.Tests;
 
 internal static class MetadataCases
 {
+    public static IMetadataConformanceAuthority CommonAuthority(MetadataFixtureSession fixture) =>
+        new PublicationAuthority(fixture.Authority);
+
+    public static MetadataFaultCounters CommonCounters(MetadataFixtureSession fixture)
+    {
+        var diagnostics = fixture.Controls.Diagnostics;
+        return new(fixture.Controls.ActivityCount,
+            diagnostics.LongCount(code => code == "metadata.internal_failure"),
+            diagnostics.LongCount(code => code == "metadata.cleanup_incomplete"));
+    }
+
+    public static ValueTask CommonSettlementAsync(MetadataFixtureSession fixture, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return new(fixture.WhenIdleAsync().WaitAsync(cancellationToken));
+    }
+
+    public static async ValueTask<IAsyncDisposable> CommonWriterAsync(
+        MetadataFixtureSession fixture, CancellationToken cancellationToken)
+    {
+        var writer = await fixture.HoldWriterForTestAsync(cancellationToken);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            writer.Dispose();
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        return new WriterLease(writer);
+    }
+
+    private sealed class WriterLease(IDisposable writer) : IAsyncDisposable
+    {
+        private IDisposable? held = writer;
+        public ValueTask DisposeAsync()
+        {
+            Interlocked.Exchange(ref held, null)?.Dispose();
+            return ValueTask.CompletedTask;
+        }
+    }
+
+    public static MetadataContinuationCorruptionControl CommonContinuationCorruption(MetadataFixtureSession fixture) =>
+        (continuation, component, corruption, cancellationToken) =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!Enum.IsDefined(component)) { throw new ArgumentOutOfRangeException(nameof(component)); }
+            var shape = corruption switch
+            {
+                MetadataContinuationCorruption.Null => "null",
+                MetadataContinuationCorruption.Omitted => "omitted",
+                MetadataContinuationCorruption.WrongType => "wrong-type",
+                MetadataContinuationCorruption.Empty => "empty",
+                MetadataContinuationCorruption.OddHex => "odd-hex",
+                MetadataContinuationCorruption.InvalidHex => "invalid-hex",
+                _ => throw new ArgumentOutOfRangeException(nameof(corruption))
+            };
+            return ValueTask.FromResult(fixture.CorruptContinuationForTest(continuation, component.ToString(), shape));
+        };
+
+    public static MetadataObservationControl CommonObservations(MetadataFixtureSession fixture) =>
+        (point, observer, cancellationToken) =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (point == MetadataObservationPoint.BeforeSchemaUpgrade)
+            { return ValueTask.FromResult(fixture.ObserveBeforeSchemaUpgrade(observer)); }
+            if (point == MetadataObservationPoint.SchemaCandidatePrepared)
+            { return ValueTask.FromResult(fixture.ObserveSchemaCandidatePrepared(observer)); }
+            var boundary = point switch
+            {
+                MetadataObservationPoint.BeforeCommitDecision => "M0",
+                MetadataObservationPoint.AfterCommitDecision => "M1",
+                MetadataObservationPoint.MutationApplied => "mutation.applied",
+                MetadataObservationPoint.ReadItem => "read.item",
+                MetadataObservationPoint.BeforeReconciliationDecision => "reconcile.before_decision",
+                _ => throw new ArgumentOutOfRangeException(nameof(point))
+            };
+            return ValueTask.FromResult(fixture.Controls.RegisterObserver(boundary, observer));
+        };
+
+    private sealed class PublicationAuthority(ControlledPublicationAuthority authority) : IMetadataConformanceAuthority
+    {
+        public int Acquisitions => authority.Acquisitions;
+        public int ActiveGuards => authority.ActiveGuards;
+        public MetadataArtifactEvidence Register(ArtifactDigest digest, long length) => authority.Register(digest, length);
+        public void Revoke(MetadataArtifactEvidence evidence) => authority.Revoke(evidence);
+        public ValueTask<MetadataResult<IMetadataPublicationGuard>> AcquireAsync(
+            MetadataArtifactEvidence evidence, MetadataCallOptions options, CancellationToken cancellationToken) =>
+            authority.AcquireAsync(evidence, options, cancellationToken);
+    }
+
     public static MetadataId Id(int value) => new(MetadataTestData.Id(value));
     public static MetadataRevision Revision() => new(Guid.NewGuid());
     public static MetadataOption<T> None<T>() where T : notnull => new MetadataOption<T>.None();

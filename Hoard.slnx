@@ -11,7 +11,33 @@
   </Folder>
   <Folder Name="/tests/contracts/">
     <Project Path="tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj" />
+    <Project Path="tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj" />
+    <Project Path="tests/contracts/Hoard.Conformance.TestLogger/Hoard.Conformance.TestLogger.csproj" />
     <Project Path="tests/contracts/Hoard.Metadata.Tests/Hoard.Metadata.Tests.csproj" />
+    <Project Path="tests/contracts/Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj" />
+  </Folder>
+  <Folder Name="/tests/fixtures/conformance/">
+    <Project Path="tests/fixtures/conformance/Bindings/Local/Local.csproj">
+      <Build Project="false" />
+    </Project>
+    <Project Path="tests/fixtures/conformance/Bindings/Memory/Memory.csproj">
+      <Build Project="false" />
+    </Project>
+    <Project Path="tests/fixtures/conformance/Bindings/ObjectSemantics/ObjectSemantics.csproj">
+      <Build Project="false" />
+    </Project>
+    <Project Path="tests/fixtures/conformance/Bindings/Sqlite/Sqlite.csproj">
+      <Build Project="false" />
+    </Project>
+    <Project Path="tests/fixtures/conformance/Consumer/Consumer.csproj">
+      <Build Project="false" />
+    </Project>
+    <Project Path="tests/fixtures/conformance/Contributor/Contributor.csproj">
+      <Build Project="false" />
+    </Project>
+    <Project Path="tests/fixtures/conformance/Host/Host.csproj">
+      <Build Project="false" />
+    </Project>
   </Folder>
   <Folder Name="/tests/integration/">
     <Project Path="tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj" />
