@@ -12,7 +12,8 @@ public sealed class LocalFaultControls
         "initialize.before-root", "initialize.admitted", "stage.prefix", "stage.verified",
         "publish.admitted", "publish.before-decision", "publish.decided", "publish.receipted", "publish.progress",
         "read.opened", "read.copy", "delete.removed", "delete.reclaimed", "cleanup.candidate", "transfer.queued",
-        "reconcile.before-resolution", "reconcile.verified", "operation.released", "operation.completed", "operation.reclaim"
+        "reconcile.before-resolution", "reconcile.verified", "operation.released", "operation.completed", "operation.reclaim",
+        "payload.damage"
     };
     public string[] Observed => observed.ToArray();
     public Action? BeforeRecordWrite { get; set; }

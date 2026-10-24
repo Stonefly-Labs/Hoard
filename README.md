@@ -1611,9 +1611,20 @@ queries without case-ID setup switches or SDK provider dependencies. Both real
 providers enforce configured limits before/after reopen and consult the current
 query under their real authority. Missing/unavailable queries remain fail-closed;
 timed-out query work stays owned through reopen/final cleanup. Eleven additional
-package-only rows cover this setup; the next native request is
-78 scopes/670 observations, pending. Full bindings, mandatory fault controls and
-category/profile acceptance remain unfinished.
+package-only rows cover this setup. Exact `853c669`, run `40136186008`,
+passed all three jobs, 193 foundations without skips and strict
+78-scope/670-observation admission.
+
+Both partial projections now damage an exact current payload through their own
+provider's actual worker supervisor, not untracked binding-side file writes.
+The typed damage boundary holds a real native file handle; canceled callers
+cannot let reopen/final settlement release that work early. Twenty-three
+package-only cases cover real truncation/byte corruption, quarantine, observer
+failure, stale sessions/epochs/incarnations, empty payloads and conflicting open
+handles. Fresh replay passes all 65 Consumer cases and reproduces fifteen
+archives. The next native request is 79 scopes/693 observations, pending.
+Full bindings, remaining mandatory fault controls and category/profile
+acceptance remain unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

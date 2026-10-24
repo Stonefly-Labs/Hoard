@@ -13,7 +13,8 @@ public sealed class ObjectFaultControls
         "object.publication-admitted", "pointer.compare", "pointer.selected", "object.direct", "object.list",
         "object.read", "pointer.tombstone", "object.reclaimed", "multipart.cleanup", "object.commit-progress", "object.transfer-queued",
         "object.operation-released", "object.operation-completed", "object.operation-reclaim",
-        "object.receipted", "object.read-opened", "object.reconcile-before-resolution", "object.reconcile-verified"
+        "object.receipted", "object.read-opened", "object.reconcile-before-resolution", "object.reconcile-verified",
+        "object.payload-damage"
     };
     public string[] Observed => points.ToArray();
     public Action? BeforeObjectDelete { get; set; }

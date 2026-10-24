@@ -703,8 +703,22 @@ contradictory counts and available snapshots without revisions; unavailable
 zero-count results cannot authorize deletion. Actual source work remains owned
 after caller timeout, and reopening/final settlement must join it. Eleven
 configured cases cover both providers, pre/post-reopen enforcement, changing
-references, unavailable results and retained queries. The next exact request is
-78 scopes/670 observations, pending, not full metadata/artifact integration.
+references, unavailable results and retained queries. Exact `853c669`, run
+`40136186008`, passed all three jobs, 193 foundations without skips and strict
+78-scope/670-observation admission.
+
+Partial exact-stamp payload damage runs inside each provider's own actual worker
+supervisor, including native open/observation/mutation/flush/disposal. The SDK
+contains no filesystem operations or provider dependency. `PayloadDamage`
+observes a real open handle before physical damage; cancellation does not settle
+that worker until the callback and native disposal finish. Reopen/final cleanup
+must join it. Mutation does not fabricate receipt or quarantine state, and
+current full-stamp checks reject old epochs/incarnations. Twenty-three cases
+include actual corrupt copy/later quarantine, held native work, failed observers
+with unchanged content and faulted final settlement, stale sessions, real ABA,
+empty payloads and conflicting reads. The next exact request is
+79 scopes/693 observations, pending, not complete fault-driver/category admission
+or full metadata/artifact integration.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

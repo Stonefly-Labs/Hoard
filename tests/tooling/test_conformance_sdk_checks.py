@@ -656,6 +656,31 @@ class SdkDiagnosticTests(unittest.TestCase):
         scenario, = factory()
         self.assertEqual(scenario, ("configured-artifact-session", tuple(sorted(identities)), "None", "Passed", 0, "None"))
 
+    def test_payload_artifact_scope_requires_real_corruption_and_native_handle_ownership(self):
+        factory = getattr(checks, "payload_artifact_session_scenarios", None)
+        self.assertTrue(callable(factory), "Payload controls need exact owned native-work transport.")
+        prefix = "Hoard.Fixtures.Conformance.Consumer.ArtifactPayloadSessionTests."
+        identities = {
+            prefix + f'Actual_payload_damage_invalidates_copy_and_later_open(provider: "{provider}", truncate: {truncate})'
+            for provider in ("local", "object") for truncate in ("False", "True")}
+        identities.update(prefix
+            + f'Held_native_payload_handle_stays_owned_through_reopen_or_final_settlement(provider: "{provider}", reopen: {reopen})'
+            for provider in ("local", "object") for reopen in ("False", "True"))
+        identities.update(prefix + f'Foreign_incarnation_cannot_damage_current_payload(provider: "{provider}")'
+                          for provider in ("local", "object"))
+        identities.update(prefix + method + f'(provider: "{provider}")' for method in (
+            "Failed_damage_observer_preserves_bytes_and_faults_final_settlement",
+            "Removed_incarnation_cannot_damage_same_digest_replacement",
+            "Stale_session_cannot_damage_reopened_payload",
+            "Incompatible_open_read_handle_rejects_damage_without_changing_bytes")
+            for provider in ("local", "object"))
+        identities.update(prefix
+            + f'Empty_payload_damage_is_explicit_and_never_false_success(provider: "{provider}", truncate: {truncate})'
+            for provider in ("local", "object") for truncate in ("False", "True"))
+        identities.add(prefix + "Object_old_epoch_cannot_damage_current_incarnation")
+        scenario, = factory()
+        self.assertEqual(scenario, ("payload-artifact-session", tuple(sorted(identities)), "None", "Passed", 0, "None"))
+
     def test_owned_artifact_scopes_discover_their_actual_distinct_assemblies(self):
         candidate = self.directory / "candidate"
         for scenario, folder, assembly_name in (
@@ -665,6 +690,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                 (checks.object_artifact_session_scenarios()[0], checks.ARTIFACT_CONSUMER,
                  "Hoard.Fixtures.Conformance.Consumer.dll"),
                 (checks.configured_artifact_session_scenarios()[0], checks.ARTIFACT_CONSUMER,
+                 "Hoard.Fixtures.Conformance.Consumer.dll"),
+                (checks.payload_artifact_session_scenarios()[0], checks.ARTIFACT_CONSUMER,
                  "Hoard.Fixtures.Conformance.Consumer.dll")):
             output = checks.ARTIFACT_TEST_OUTPUT if folder == checks.ARTIFACT_TESTS else checks.PACKAGE_TEST_OUTPUT
             assembly = candidate / folder / output / "Release/net10.0" / assembly_name
@@ -709,7 +736,7 @@ class SdkDiagnosticTests(unittest.TestCase):
 
     def test_incomplete_or_foreign_owned_local_vectors_never_launch(self):
         for scenario in (*checks.local_artifact_session_scenarios(), *checks.object_artifact_session_scenarios(),
-                         *checks.configured_artifact_session_scenarios()):
+                         *checks.configured_artifact_session_scenarios(), *checks.payload_artifact_session_scenarios()):
             name, identities, *outcome = scenario
             for invalid in (identities[:-1], identities + ("Foreign.Test",),
                             ("Foreign.Test", *identities[1:])):

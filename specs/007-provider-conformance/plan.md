@@ -3617,11 +3617,51 @@ compiled catalogs and patch checks pass. Real scratch fell below the unchanged
 24 GiB full-artifact gate; 76 explicitly inspected completed-mode dependency
 caches were recovered, preserving sources/feeds/manifests/historical seals/
 runtime images and observing more than 28 GiB free before full tooling.
-This increment requests 193 native foundations and 78 scopes/670 observations,
-pending. Full artifact fault drivers, category/session origins and four-way
+Run `40136186008` at exact `853c669abb6554efaddc95a49d9fdf9a61f250ad`
+passed all three jobs, 193 foundations without failures/errors/skips and strict
+78-scope/670-observation admission with all actual prerequisites and independent
+eighteen-package/thirteen-lock replay. Input:
+`c4104825bfe5fc601fb7a053e04002be75dbbfcea90d8da81799a99b5eee2f9b`;
+preparation:
+`60b8884d1bb7f40c3689ee07d8a2dea553fc7b31f8cd759745a1e39c13dec77f`.
+Full artifact fault drivers, category/session origins and four-way
 metadata/artifact integration acceptance remain unfinished. Product contracts,
 architecture diagrams, deployment examples, tracked locks, tasks and reviewer
 checklists are unaffected.
+
+### Actual owned artifact payload damage
+
+Both partial sessions now forward exact-stamp payload damage into their own
+independent provider's actual worker supervisor. Local uses `ExecuteAsync`;
+Object uses `OwnedAsync`. Each resolves its own current nonremoved incarnation,
+opens its own private file, observes the typed boundary with that real handle
+held, then performs bounded one-byte damage or truncation and flushes/disposes
+inside actual worker settlement. No SDK/provider dependency or public product
+contract changes. Receipt/quarantine bookkeeping is not forged: unchanged
+public copy/open detects corruption. Empty truncation explicitly fails; byte
+damage also corrupts an empty payload by adding one byte.
+
+New cases first rejected the old API with CS1061/CS0117; the exact transport
+regression separately failed its intended single missing-factory assertion.
+Ten initial rows pass with all 52 Consumer, 306 artifact and 89+89 metadata
+cases. Bounded architecture review found no confirmed defect. Added coverage
+exercises failed observers and unchanged bytes with faulted final settlement,
+actual same-digest deletion/replacement, stale sessions/Object epochs, empty
+content and incompatible read handles. Independent fresh replay passes all
+65 Consumer (23 payload), 306 artifact and 89+89 metadata cases without skips.
+Fifteen archives reproduce exactly, canonical archive-map SHA-256
+`a19809e0bcb89f0cb1269443063ad2681048b4015ad0dff6e8e800ea68268e4d`;
+ten Consumer dependency images match package bytes. Existing measured transfer
+packets remain reused unchanged, not fresh category/session origins.
+Full tooling passes 302 discovered / 285 passed / seventeen macOS-native skips;
+76 SDK tooling checks, all six affected prepared project whitespace checks,
+frozen inventory, catalogs and patch checks pass.
+
+The next request is 194 native foundations and 79 scopes/693 observations,
+pending. Complete fault-driver/category admission, origins and four-way
+integration acceptance remain unfinished. Tasks/checklist markers, historical
+seals, tracked locks, production APIs, architecture/ADR diagrams and deployment
+examples are unaffected.
 
 ## Summary
 

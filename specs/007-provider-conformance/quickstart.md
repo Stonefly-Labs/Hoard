@@ -359,9 +359,17 @@ and strict 77-scope/659-observation admission.
 Explicit `ArtifactAssertionOptions` now carries actual limits and a live typed
 reference query through both factories/reopen modes. Missing/unavailable queries
 remain fail-closed; actual post-reopen enforcement and retained timed-out query
-work are covered by eleven more package-only rows. Their next native request is
-78 scopes/670 observations, pending, not complete category bindings, metadata
-integration or profile acceptance.
+work are covered by eleven more package-only rows. Exact `853c669`, run
+`40136186008`, passed all three jobs, 193 foundations without skips and strict
+78-scope/670-observation admission.
+Exact-stamp payload damage now executes inside each provider's actual worker
+supervisor, with a typed boundary holding a real native file handle. Reopen and
+final cleanup must join that work after caller cancellation. Twenty-three
+package-only rows cover real corruption/quarantine, failed observers, stale
+sessions/epochs/incarnations, empty content and conflicting open reads.
+Fresh replay passes all 65 Consumer rows and reproduces fifteen archives.
+The next native request is 79 scopes/693 observations, pending, not complete
+category bindings, metadata integration or profile acceptance.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

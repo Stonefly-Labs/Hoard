@@ -147,6 +147,42 @@ public sealed partial class LocalArtifactStore
         finally { lock (stateSync) { waiters--; } }
     }
 
+    public ValueTask<ArtifactResult<long>> DamagePayloadForQualificationAsync(
+        ArtifactStamp stamp, bool truncate, CancellationToken ct)
+    {
+        ArgumentNullException.ThrowIfNull(stamp);
+        return ExecuteAsync(ArtifactPhase.Maintenance, TimeSpan.FromSeconds(5), ct, async token =>
+        {
+            LocalContent content;
+            lock (stateSync)
+            {
+                if (!decisions.TryGetValue(stamp.Identity.Digest.Hex, out var decision)
+                    || decision.Removed || decision.Content.Stamp(StoreIdentity) != stamp)
+                { throw new LocalStateException(ArtifactFailureCode.Conflict); }
+                content = decision.Content;
+            }
+            await using var file = new FileStream(PayloadPath(content), FileMode.Open, FileAccess.ReadWrite,
+                FileShare.None, 1, FileOptions.Asynchronous);
+            await faults.ObserveAsync("payload.damage");
+            token.ThrowIfCancellationRequested();
+            if (truncate)
+            {
+                if (file.Length == 0) { throw new LocalStateException(ArtifactFailureCode.InvalidInput); }
+                file.SetLength(file.Length - 1);
+            }
+            else
+            {
+                var first = new byte[1];
+                if (file.Length != 0) { await file.ReadExactlyAsync(first, token); }
+                first[0] ^= 0xff;
+                file.Position = 0;
+                await file.WriteAsync(first, token);
+            }
+            await file.FlushAsync(token);
+            return file.Length;
+        });
+    }
+
     private async ValueTask<ArtifactResult<T>> ExecuteAsync<T>(ArtifactPhase phase, TimeSpan budget,
         CancellationToken ct, Func<CancellationToken, Task<T>> work, ArtifactOperationTicket? ticket = null,
         Action? settled = null, Action? cancellationSettled = null, Func<T, ValueTask>? undelivered = null)

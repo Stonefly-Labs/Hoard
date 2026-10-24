@@ -31,6 +31,9 @@ public static class LocalArtifactAssertionSessions
         public override IArtifactStoreLifetime Lifetime => store;
         protected override bool ProviderReady => store.Ready;
         public override Task ObserveWorkerSettlement() => store.WhenIdleForQualificationAsync();
+        protected override ValueTask<ArtifactResult<long>> DamageProviderPayloadAsync(
+            ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken) =>
+            store.DamagePayloadForQualificationAsync(stamp, truncate, cancellationToken);
         protected override void SetObserver(string boundary, Func<ValueTask> observer) => controls.SetObserver(boundary, observer);
         protected override void RemoveObserver(string boundary) => controls.RemoveObserver(boundary);
 
@@ -53,6 +56,7 @@ public static class LocalArtifactAssertionSessions
             ArtifactObservationPoint.OperationReleased => "operation.released",
             ArtifactObservationPoint.OperationCompleted => "operation.completed",
             ArtifactObservationPoint.OperationReclaim => "operation.reclaim",
+            ArtifactObservationPoint.PayloadDamage => "payload.damage",
             _ => throw new ArgumentException("BindingInvalid")
         };
     }

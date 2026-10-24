@@ -300,6 +300,32 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
 
     public abstract Task ObserveWorkerSettlement();
 
+    protected abstract ValueTask<ArtifactResult<long>> DamageProviderPayloadAsync(
+        ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken);
+
+    public ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(stamp);
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false })
+            { throw new InvalidOperationException("BindingInvalid"); }
+            return DamageCoreAsync(stamp, truncate, cancellationToken);
+        }
+    }
+
+    private async ValueTask DamageCoreAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken)
+    {
+        var result = await DamageProviderPayloadAsync(stamp, truncate, cancellationToken);
+        if (result is not ArtifactResult<long>.Success)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            throw new InvalidOperationException("BindingInvalid");
+        }
+    }
+
     public ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken cancellationToken) =>
         ownership.ObserveCleanupAsync(cancellationToken);
 

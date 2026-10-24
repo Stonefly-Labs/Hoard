@@ -161,6 +161,42 @@ public sealed partial class ObjectArtifactStore
         }
     }
 
+    public ValueTask<ArtifactResult<long>> DamagePayloadForQualificationAsync(
+        ArtifactStamp stamp, bool truncate, CancellationToken caller)
+    {
+        ArgumentNullException.ThrowIfNull(stamp);
+        return OwnedAsync(ArtifactPhase.Maintenance, TimeSpan.FromSeconds(5), caller, async token =>
+        {
+            ObjectPointer pointer;
+            lock (pointerSync)
+            {
+                if (!pointers.TryGetValue(stamp.Identity.Digest.Hex, out var selected)
+                    || selected.Removed || selected.Stamp != stamp)
+                { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
+                pointer = selected;
+            }
+            await using var file = new FileStream(ObjectPath(pointer.ObjectId), FileMode.Open, FileAccess.ReadWrite,
+                FileShare.None, 1, FileOptions.Asynchronous);
+            await faults.ObserveAsync("object.payload-damage");
+            token.ThrowIfCancellationRequested();
+            if (truncate)
+            {
+                if (file.Length == 0) { throw new ObjectOperationException(ArtifactFailureCode.InvalidInput); }
+                file.SetLength(file.Length - 1);
+            }
+            else
+            {
+                var first = new byte[1];
+                if (file.Length != 0) { await file.ReadExactlyAsync(first, token); }
+                first[0] ^= 0xff;
+                file.Position = 0;
+                await file.WriteAsync(first, token);
+            }
+            await file.FlushAsync(token);
+            return file.Length;
+        });
+    }
+
     private async ValueTask<ArtifactResult<T>> OwnedAsync<T>(ArtifactPhase phase, TimeSpan timeout,
         CancellationToken caller, Func<CancellationToken, Task<T>> operation, ArtifactOperationTicket? ticket = null,
         Action? onSettled = null, Action? cancellationSettled = null, Func<T, ValueTask>? undelivered = null) where T : notnull

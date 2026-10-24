@@ -558,7 +558,22 @@ Four held-query cases prove that caller timeout does not settle real query work
 or let reopen/final cleanup finish early. Eleven configured rows pass alongside
 the existing thirty-one owned rows. This is test-fixture setup, not product
 configuration or complete fault-driver/metadata integration acceptance.
-The next native request is 78 scopes/670 observations, pending.
+Run `40136186008` at exact `853c669` passed all three jobs, 193 foundations
+without skips and strict 78-scope/670-observation admission.
+
+The partial sessions also expose exact-stamp payload damage. Local admits the
+physical mutation through its own `ExecuteAsync`; Object uses its independent
+`OwnedAsync`. Neither moves native file operations into the SDK/binding nor
+changes receipt/quarantine state to fabricate public corruption detection.
+An actual open-file boundary is observed inside that owned work. All observers,
+native disposal and final callbacks must settle before reopen/root cleanup;
+caller cancellation alone cannot release them. Truncating an empty payload
+fails explicitly; byte damage changes the first byte, or adds one to an empty
+payload. Foreign stamps, stale sessions/epochs and removed incarnations cannot
+damage the current replacement. Twenty-three cases cover actual copy/quarantine,
+held work, failed observers, conflicting reads and these boundaries.
+The next native request is 79 scopes/693 observations, pending, not complete
+fault-driver/category/profile admission.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

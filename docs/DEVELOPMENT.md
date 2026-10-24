@@ -6960,8 +6960,38 @@ Real local free capacity fell below the unchanged 24 GiB full-artifact gate.
 Only 76 explicitly inspected completed-mode dependency caches were removed,
 preserving sources, feeds, manifests, historical seals and actual runtime
 images; measured free scratch then exceeded 28 GiB. No capacity guard, transfer
-size or proof was relaxed. This increment requests 193 native foundations and
-78 scopes/670 observations, pending, not full category/profile acceptance.
+size or proof was relaxed. Run `40136186008` at exact
+`853c669abb6554efaddc95a49d9fdf9a61f250ad` passed all three jobs,
+193 foundations without failures/errors/skips and strict
+78-scope/670-observation admission, including eleven configured rows and all
+actual prerequisites/eighteen-package/thirteen-lock replay.
+Input: `c4104825bfe5fc601fb7a053e04002be75dbbfcea90d8da81799a99b5eee2f9b`;
+preparation:
+`60b8884d1bb7f40c3689ee07d8a2dea553fc7b31f8cd759745a1e39c13dec77f`.
+
+The next partial artifact control performs exact-stamp payload damage through
+each independent provider's real worker supervisor. Native open/observer/
+mutation/flush/disposal remain inside actual settlement; bindings only forward
+typed requests. The new boundary holds a real read-write file handle and caller
+cancellation cannot let reopen/final cleanup finish early. Physical changes do
+not alter receipt or quarantine bookkeeping; public read/copy discovers damage.
+The intended missing API first produced CS1061/CS0117. Exact transport first
+failed its single named missing-factory assertion. Ten initial payload rows pass
+with all 52 Consumer, 306 artifact and 89+89 metadata cases. Bounded architecture
+review found no confirmed defect; the final 23 payload rows also cover failed
+observers, real same-digest replacement, stale sessions/Object epochs, empty
+content and incompatible open readers. Independent fresh locked replay passes
+all 65 Consumer, 306 artifact and 89+89 metadata cases without skips; fifteen
+archives reproduce exactly, canonical archive-map SHA-256
+`a19809e0bcb89f0cb1269443063ad2681048b4015ad0dff6e8e800ea68268e4d`.
+Ten dependency images match archive bytes. Full tooling passes 302 discovered /
+285 passed / seventeen macOS-native skips; 76 SDK tooling checks, prepared
+SDK/providers/bindings/Consumer whitespace, frozen inventory and catalogs pass.
+Existing measured transfer packets are reused unchanged, not fresh origins.
+The next request is 194 native foundations and 79 scopes/693 observations,
+pending, not full category/profile acceptance. Production contracts,
+architecture/ADR diagrams, custom-host examples, historical seals, tracked locks,
+tasks and reviewer-owned checklists are unaffected by this test-private control.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
