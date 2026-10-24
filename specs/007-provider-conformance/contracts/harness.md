@@ -145,7 +145,7 @@ the pinned lock, while the cache's archive SHA-512 and exact native member bytes
 are independently checked. Pre/post native provenance must match. Runtime child
 temporary files are contained beneath private owned caches. The environment-only
 entry point is excluded from the general consumer's default compile items.
-The next diagnostic runs native non-cooperation only in an isolated owned child.
+The isolated diagnostic runs native non-cooperation only in an isolated owned child.
 It observes publication guard counts at the native boundary, caller deadline and
 failed cleanup, uncertain outcome/original ticket, disposed admission, genuine
 pending settlement and the allocator's retained history. A separate parent-written
@@ -154,7 +154,15 @@ signal exit and observed group exit. Only that complete matching pair can admit
 the intentionally contained diagnostic; normal exit, missing proof, setup failure
 or an arbitrary timeout cannot pass. The fixed child watchdog is 45 seconds,
 inside the five-minute recovery ceiling; cleanup remains 30 seconds and exact
-owned termination 10 seconds. Native execution of this new diagnostic is pending.
+owned termination 10 seconds. Native run `40067365972` at `7530cad` verified
+the actual producer/controller pair; full inherited recovery remains unfinished.
+
+The original MP-01..06/13 wrappers delegate to the same packaged SDK methods,
+preserving their exact names and original fixture setup/disposal. The bridge
+adapts only the existing authority interface, not provider behavior or expected
+results. Predecessor preparation includes the SDK as its eighth archive and
+checks the unchanged SDK output DLL alongside the test and consumer assemblies
+after each composition. Exact safe runtime-origin ingestion remains T025 work.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

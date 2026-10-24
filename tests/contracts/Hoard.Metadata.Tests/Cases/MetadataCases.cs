@@ -1,11 +1,26 @@
 using System.Collections.Immutable;
 using Hoard.Abstractions.Metadata;
 using Hoard.Fixtures.Metadata.Hosting;
+using Hoard.Testing.Conformance.Bindings;
 
 namespace Hoard.Metadata.Tests;
 
 internal static class MetadataCases
 {
+    public static IMetadataConformanceAuthority CommonAuthority(MetadataFixtureSession fixture) =>
+        new PublicationAuthority(fixture.Authority);
+
+    private sealed class PublicationAuthority(ControlledPublicationAuthority authority) : IMetadataConformanceAuthority
+    {
+        public int Acquisitions => authority.Acquisitions;
+        public int ActiveGuards => authority.ActiveGuards;
+        public MetadataArtifactEvidence Register(ArtifactDigest digest, long length) => authority.Register(digest, length);
+        public void Revoke(MetadataArtifactEvidence evidence) => authority.Revoke(evidence);
+        public ValueTask<MetadataResult<IMetadataPublicationGuard>> AcquireAsync(
+            MetadataArtifactEvidence evidence, MetadataCallOptions options, CancellationToken cancellationToken) =>
+            authority.AcquireAsync(evidence, options, cancellationToken);
+    }
+
     public static MetadataId Id(int value) => new(MetadataTestData.Id(value));
     public static MetadataRevision Revision() => new(Guid.NewGuid());
     public static MetadataOption<T> None<T>() where T : notnull => new MetadataOption<T>.None();

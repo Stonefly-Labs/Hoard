@@ -1441,7 +1441,7 @@ verified independently through their fresh locked-restore receipts. This run
 establishes actual selected Linux SQLite execution, not full frozen-wrapper
 parity, abrupt recovery, origin/controller qualification or a category pass.
 
-### Isolated native non-cooperation diagnostic, pending Linux execution
+### Isolated native non-cooperation diagnostic
 
 The next increment requests the real five-minute SQLite native stall through
 the typed binding at its post-commit boundary, exclusively in a dedicated
@@ -1469,11 +1469,75 @@ restore and package test passes 179/no skips, with all seven output DLLs
 byte-identical to current archives. The two probe sources are excluded from
 the general consumer; its actual package build and the package-mode producer
 compile with zero warnings/errors. Focused whitespace checks pass.
-Bounded architecture review found no actionable issues; actual Linux behavior
-remains pending. T022/T026 and full category/wrapper/origin gates remain
+Bounded architecture review found no actionable issues. Actual Linux verification
+is recorded below. T022/T026 and full category/wrapper/origin gates remain
 unchecked; no existing historical receipts or source locks changed.
 
+### Verified actual native non-cooperation and exact-owned containment
+
+Native run
+[40067365972](https://github.com/Stonefly-Labs/Hoard/actions/runs/40067365972)
+at `7530cad06a9010b69b570d48610e3a7479a4f852` passed all three jobs:
+136 foundation checks without failures/errors/skips, the same 50 scopes/254
+exact discoveries/executions with expected diagnostic codes, and the dedicated
+native producer/controller pair. Actual SQLite 3.53.3, WAL/FULL/foreign-keys/
+busy-timeout-zero, loaded native/archive provenance, six sealed baselines and
+identical eighteen-package/thirteen-lock replay also passed.
+Free scratch: 92,109,389,824 bytes.
+
+Baseline seal:
+`41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`;
+input:
+`9446cd06ee92bbb30603ee5d611f8c1089de307cfdd1c25d53b314ba2cf05a30`;
+preparation:
+`a2260c969ae7f9b5ab6f886a19c6e6505d5e65f1e798800ed579f0ee4e85ec25`;
+native producer:
+`d309875c00837713387d60d35f60759cf45a18bff927def1e325fdd86ec0ad64`;
+controller:
+`52f0919856d3c19355be49443c5780a4dce727cf83da962c4829091f021388e7`;
+child start:
+`c0ad251e40f4fc0f1dd8022ddafbc5af6eafcc9d8e737a646343ef51d57d9eec`.
+The native library and native archive SHA-256 remain respectively
+`b0f5c48026fedcf9f05cf31c6fadf9e1e001ca59cd85aa68b8b6814e52c18a07`
+and `d07d13b4779123cfa56b3348b504d57a2ab6fc10c764fb6e2c9d787987e39201`.
+This remains `qualification: false`, `mode: native-noncooperation`, `code: None`.
+It proves the actual selected native ownership/containment diagnostic, not all
+inherited abrupt recovery, frozen-wrapper parity, origin/controller imports or
+category qualification. No broad task marker changes follow from this result.
+
 ## Partial implementation checkpoint
+
+### First frozen logical wrappers use the packaged common assertions
+
+The seven original MP-01..06/13 wrappers now delegate to the existing SDK
+entity/identity/bounds methods. Their fully qualified method names and `[Fact]`
+attributes remain unchanged. The original fixture factory, schema preparation,
+clock and disposal remain in place; a private authority-interface bridge
+forwards registration, revocation, guard counts and acquisition without owning
+another authority, changing expected results or introducing provider switches.
+The SDK itself is unchanged and still references only Abstractions and xUnit.
+
+Metadata preparation copies/packs the SDK before the package-only wrappers and
+admits eight archives. The tracked package-mode test lock adds only the SDK
+entry; all existing entries, graphs and third-party pins remain unchanged.
+A private source snapshot prepared current local archive identities without
+editing repository or retained historical locks. An independent default locked
+replay with a fresh cache reproduced all eight archives byte-for-byte; all seven
+actual wrapper dependency DLLs and Application's separately built DLL matched
+their respective archive members. An initial verification helper incorrectly
+looked for Application in the wrapper output, although the suite does not
+reference it; checking its actual build output repaired that evidence check,
+not a runtime or dependency failure.
+
+The identical package-backed predecessor suite executed all 72 tests against
+Memory and all 72 against SQLite, with no failures/skips. The frozen SDK output
+now joins test/consumer hashes and is checked after each composition. Missing
+SDK preparation first failed with absent pack discovery; an SDK-only mutation
+first passed incorrectly, then failed after the guard. Tooling243 passes
+(232 passed, eleven native macOS skips); focused package-backed whitespace
+verification, frozen inventory and SDK catalog checks pass. These local results
+are not new native CI receipts, full wrapper parity, exact safe origin imports
+or a category pass. T019/T021..T025 remain unchecked.
 
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86

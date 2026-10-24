@@ -28,7 +28,8 @@ PROVIDERS = ("sqlite", "memory")
 BARRIERS = ("M0", "M1", "M2", "U0", "U1", "U2", "U3", "U4")
 PACKAGES = tuple(f"Hoard.{name}.0.1.0.nupkg" for name in (
     "Abstractions", "Core", "Hosting", "Application",
-    "Fixtures.Metadata.Sqlite", "Fixtures.Metadata.Memory", "Fixtures.Metadata.HostAdapters"))
+    "Fixtures.Metadata.Sqlite", "Fixtures.Metadata.Memory", "Fixtures.Metadata.HostAdapters",
+    "Testing.Conformance"))
 create_workspace = lifecycle.create_workspace
 cleanup_workspace = lifecycle.cleanup_workspace
 lock_hashes = lifecycle.lock_hashes
@@ -272,6 +273,8 @@ def prepare_packages(root, work, update):
     foundation.copy_source(root / "tests/fixtures/metadata", current / "tests/fixtures/metadata")
     foundation.copy_source(root / "tests/contracts/Hoard.Metadata.Tests",
                            current / "tests/contracts/Hoard.Metadata.Tests")
+    foundation.copy_source(root / "tests/contracts/Hoard.Testing.Conformance",
+                           current / "tests/contracts/Hoard.Testing.Conformance")
     feed = work / "feed"
     feed.mkdir()
     config = work / "NuGet.Config"
@@ -305,6 +308,7 @@ def prepare_packages(root, work, update):
 
     for name in ("Abstractions", "Core", "Hosting", "Application"):
         build(f"src/Hoard.{name}/Hoard.{name}.csproj", pack=True)
+    build("tests/contracts/Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj", pack=True)
     for name in ("Sqlite", "Memory", "HostAdapters", "Consumer", "CrashRunner", "BoundaryLeak"):
         build(f"tests/fixtures/metadata/{name}/{name}.csproj", pack=name in ("Sqlite", "Memory", "HostAdapters"))
     build("tests/contracts/Hoard.Metadata.Tests/Hoard.Metadata.Tests.csproj",
@@ -514,8 +518,10 @@ def trx_results(path):
 def logical_cases(work):
     output = work / "current/tests/contracts/Hoard.Metadata.Tests/bin/Release/net10.0"
     binary = output / "Hoard.Metadata.Tests.dll"
+    common = output / "Hoard.Testing.Conformance.dll"
     consumer = work / "current/tests/fixtures/metadata/Consumer/bin/Release/net10.0/Hoard.Fixtures.Metadata.Consumer.dll"
-    frozen = {str(path): sha256(path) for path in (binary, consumer)}
+    binaries = (binary, consumer, common)
+    frozen = {str(path): sha256(path) for path in binaries}
     inventories = {}
     required = set(CASES) - DURABLE_CASES - {"MP-47", "MP-48"}
     for provider in PROVIDERS:
@@ -540,10 +546,11 @@ def logical_cases(work):
             raise RuntimeError("Unchanged metadata consumer did not execute.")
         cases["MP-46"]["tests"].append("unchanged-package-consumer")
         inventories[provider] = cases
-    if frozen != {str(path): sha256(path) for path in (binary, consumer)}:
-        raise RuntimeError("Metadata common suite or consumer binary changed between compositions.")
+        if frozen != {str(path): sha256(path) for path in binaries}:
+            raise RuntimeError("Metadata common suite, SDK or consumer binary changed between compositions.")
     write_proof(work, "unchanged-consumers.json", {
         "testAssemblySha256": frozen[str(binary)], "consumerSha256": frozen[str(consumer)],
+        "commonAssemblySha256": frozen[str(common)],
         "providers": list(PROVIDERS), "unchanged": True})
     return inventories
 

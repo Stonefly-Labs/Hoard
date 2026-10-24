@@ -5826,7 +5826,7 @@ native archive/member provenance were observed; native temporary placement and
 identical eighteen-package/thirteen-lock replay also passed. Full receipt hashes
 are in the F-07 plan. This remains a non-qualifying diagnostic run.
 
-The next increment runs real SQLite native non-cooperation only in a dedicated
+The isolated diagnostic runs real SQLite native non-cooperation only in a dedicated
 controller-owned child. The typed fault stops at the actual post-commit native
 boundary, retaining the publication guard through a one-second caller deadline
 and genuine 30-second incomplete cleanup. The producer records actual guard
@@ -5841,8 +5841,31 @@ package tests pass 179/no skips, with output DLL bytes matching all seven
 archives. Package-mode probe compilation and general-consumer entry-point
 isolation build without warnings/errors. Bounded architecture review found no
 actionable issues, while explicitly excluding unobserved native behavior.
-Actual Linux execution of this new child remains pending, and T026 stays
-unchecked until every inherited recovery barrier and full provenance gate passes.
+Native run
+[40067365972](https://github.com/Stonefly-Labs/Hoard/actions/runs/40067365972)
+at `7530cad06a9010b69b570d48610e3a7479a4f852` passed all three jobs:
+136 foundation checks without failures/errors/skips, the same 50 scopes/254
+exact observations, and matching actual native producer/controller containment
+proofs. SQLite 3.53.3/native provenance, six sealed baselines and identical
+eighteen-package/thirteen-lock replay also passed. T026 stays unchecked until
+every inherited recovery barrier and full provenance gate passes.
+
+The first seven original metadata wrappers (MP-01..06/13) now delegate to the
+existing packaged SDK entity/identity/bounds assertions. Their frozen names,
+fixture factory, schema preparation, clock and disposal remain unchanged; a
+private authority adapter forwards to the original fixture authority. Metadata
+preparation copies/packs the SDK before the package-only suite and includes it
+in the eight-archive inventory. Its unchanged-consumer proof now hashes the SDK
+DLL as well and rejects changes after either composition. The missing SDK build
+and previously undetected SDK mutation both failed focused regressions first.
+All 72 actual package-backed predecessor tests passed against Memory and all 72
+against SQLite, with no skips. Fresh default locked replay reproduced all eight
+archives from an empty cache; seven wrapper dependency DLLs and the separately
+built Application DLL matched their archives byte-for-byte. Only the SDK entry
+is added to the tracked predecessor test lock; prior entries and third-party
+pins are preserved. Private preparation rebounded local payload hashes without
+altering historical source locks. Full extraction, typed-control forwarding,
+frozen-parameter parity and safe exact witness imports remain unfinished.
 
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)

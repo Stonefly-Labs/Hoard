@@ -27,12 +27,19 @@ join pre/post input hashing; SQLite never borrows `nativeSqlite: not-used`.
 Signed-package normalized NuGet content hashes and raw archive hashes are
 checked separately against fresh locked-restore receipts. Child temporary files
 stay under owned private caches; entry-point isolation preserves the general consumer.
-The next diagnostic adds a dedicated native non-cooperation child with actual
+The isolated diagnostic adds a dedicated native non-cooperation child with actual
 guard/cleanup/settlement observations and a separate controller-written PID/start/
-SIGKILL/exit receipt. Its Linux execution is pending. Never select the five-minute
+SIGKILL/exit receipt. Native run `40067365972` at `7530cad` verified both reports,
+136 foundation checks without skips and the same 50 scopes/254 observations.
+Never select the five-minute
 native stall inside an ordinary test process or treat arbitrary timeout as success.
 All 53 current common logical assertion methods execute through SQLite. These
 179 local checks are not the catalog's 179 applicable category results.
+The first seven original MP-01..06/13 wrappers now call the packaged SDK directly
+through the original fixture lifecycle. Both actual predecessor compositions
+pass all 72 tests. Metadata preparation copies/packs the SDK before these
+package-only wrappers and freezes its output DLL across compositions; this
+does not finish frozen-wrapper parity or safe exact witness imports.
 Existing synchronous fixture helpers remain caller-owned.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator

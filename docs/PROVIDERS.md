@@ -70,15 +70,23 @@ NuGet's normalized signed-package content hash remains pinned separately from
 the downloaded archive hash; both fresh locked-restore receipts and exact native
 member bytes are verified, with unchanged pre/post provenance. Child temporary
 files are routed into private owned caches, not global temporary storage.
-The next diagnostic requests actual native non-cooperation in a dedicated owned
+The isolated diagnostic requests actual native non-cooperation in a dedicated owned
 child: publication guards remain held after the caller deadline and failed
 cleanup, and the parent admits proof only after its PID/start-bound watchdog
-confirms SIGKILL and group exit. Its Linux execution is pending; this does not
-complete crash/recovery or category qualification.
+confirms SIGKILL and group exit. Native run
+[40067365972](https://github.com/Stonefly-Labs/Hoard/actions/runs/40067365972)
+at `7530cad` verified this complete observation/containment pair; this does not
+complete inherited crash/recovery or category qualification.
 All 53 current SDK logical assertion methods now execute through SQLite too;
 the additional 44 parameterized rows cover actual independent reads, clocks,
 publication, corruption and decision/settlement controls. This local 179-test
 selection is not the catalog's 179 applicable category results or wrapper parity.
+The original MP-01..06/13 wrappers now invoke the same packaged SDK assertions.
+A thin test-side authority bridge delegates to the original fixture authority;
+it does not replace provider setup, clocks, schema preparation or disposal.
+All 72 predecessor tests pass against each provider using the identical compiled
+suite and SDK. Its eight-archive preparation adds the SDK, while the independent
+binding diagnostic still uses seven archives. Other wrappers remain unextracted.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

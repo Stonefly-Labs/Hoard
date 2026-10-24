@@ -1263,12 +1263,19 @@ bytes. Native run [40066075996](https://github.com/Stonefly-Labs/Hoard/actions/r
 passed all three jobs, 134 foundation checks without skips and 50 scopes/254 exact
 observations, including all 84 SQLite identities and actual SQLite 3.53.3 loading.
 All SQLite cases require actual environment and native-runtime admission.
-The next diagnostic adds an isolated, controller-owned native non-cooperation
-child; its Linux execution is pending. The five-minute native stall never runs
-inside the test process, and retention is not release.
+Native run [40067365972](https://github.com/Stonefly-Labs/Hoard/actions/runs/40067365972)
+at `7530cad` also verified the isolated, controller-owned native non-cooperation
+child: 136 foundation checks without skips, the same 50 scopes/254 observations,
+and matching producer/containment receipts. The five-minute native stall never
+runs inside the test process, and retention is not release.
 All 53 current shared logical metadata assertion methods now execute through
 the SQLite binding too. These local checks are not the catalog's 179 applicable
 category results or proof of complete frozen-wrapper parity.
+Seven original MP-01..06/13 wrappers now delegate to those same packaged SDK
+assertions without changing their frozen names or original fixture lifecycle.
+The package-only predecessor suite passes all 72 tests against each actual
+provider. Its preparation includes eight archives; this is separate from the
+seven-archive binding diagnostic. Full wrapper extraction/parity is unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
