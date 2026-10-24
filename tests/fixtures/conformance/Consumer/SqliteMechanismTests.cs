@@ -7,6 +7,136 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class SqliteMechanismTests
 {
     [Fact]
+    public async Task Raw_fingerprint_rejects_oversized_unindexed_native_rows_before_materialization()
+    {
+        await using var fixture = new StoreFixture(_ => ValueTask.CompletedTask);
+        Success(await fixture.Store.CreateUnrecognizedLayoutForTestAsync(false));
+        using (var connection = new Microsoft.Data.Sqlite.SqliteConnection(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+        { DataSource = fixture.DatabasePath, Pooling = false }.ConnectionString))
+        {
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "ALTER TABLE unrelated ADD COLUMN extra BLOB; "
+                + "INSERT INTO unrelated(value,extra) VALUES(zeroblob(1310720),zeroblob(1310720));";
+            command.ExecuteNonQuery();
+        }
+        Assert.Equal(MetadataFailureCode.Capacity,
+            Assert.IsType<MetadataResult<string>.Failure>(await fixture.Store.RawStateFingerprintForTestAsync(default)).Code);
+        await fixture.Store.WhenIdleAsync();
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Raw_record_controls_preserve_damaged_bytes_and_restore_exact_committed_state(bool oversized)
+    {
+        await using var fixture = new StoreFixture(_ => ValueTask.CompletedTask);
+        var store = fixture.Store;
+        Success(await store.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        var record = Registry();
+        var ticket = Success(await store.ReserveOperationAsync(new(), default));
+        Success(await store.CommitAsync(new(ticket, [new MetadataMutation.PutRegistry(record, new ExpectedRevision.Absent())],
+            new MetadataOption<MetadataLeaseGuard>.None()), new(), default));
+        var original = Success(await store.RecordPayloadForTestAsync(record.Selector));
+        var before = Success(await store.RawStateFingerprintForTestAsync(default));
+        var damaged = oversized ? new string(' ', MetadataEncoding.MaximumBytes) + original : "{synthetic";
+        try
+        {
+            Success(await store.ReplaceRecordPayloadForTestAsync(record.Selector, damaged));
+            var fingerprint = Success(await store.RawStateFingerprintForTestAsync(default));
+            Assert.NotEqual(before, fingerprint);
+            Assert.Equal(MetadataFailureCode.CorruptState,
+                Assert.IsType<MetadataResult<MetadataReadSnapshot>.Failure>(
+                    await store.ReadAsync(new([record.Selector]), new(), default)).Code);
+            Assert.Equal(damaged, Success(await store.RecordPayloadForTestAsync(record.Selector)));
+            Assert.Equal(fingerprint, Success(await store.RawStateFingerprintForTestAsync(default)));
+        }
+        finally { Success(await store.ReplaceRecordPayloadForTestAsync(record.Selector, original)); }
+        Assert.Equal(before, Success(await store.RawStateFingerprintForTestAsync(default)));
+        Assert.IsType<MetadataReadItem.Found>(Assert.Single(Success(
+            await store.ReadAsync(new([record.Selector]), new(), default)).Items));
+    }
+
+    [Theory]
+    [InlineData("short")]
+    [InlineData("missing")]
+    [InlineData("text")]
+    [InlineData("fractional")]
+    [InlineData("text-limit")]
+    public async Task Raw_operation_controls_preserve_native_storage_types_and_restore_exact_replay(string damage)
+    {
+        await using var fixture = new StoreFixture(_ => ValueTask.CompletedTask);
+        var store = fixture.Store;
+        Success(await store.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        var record = Registry();
+        var ticket = Success(await store.ReserveOperationAsync(new(), default));
+        var batch = new MetadataMutationBatch(ticket, [new MetadataMutation.PutRegistry(record, new ExpectedRevision.Absent())],
+            new MetadataOption<MetadataLeaseGuard>.None());
+        var receipt = MetadataEncoding.Encode(Success(await store.CommitAsync(batch, new(), default)));
+        var original = Success(await store.OperationImageForTestAsync(ticket));
+        var before = Success(await store.RawStateFingerprintForTestAsync(default));
+        var damaged = damage switch
+        {
+            "short" => original with { FingerprintHex = "aa" },
+            "missing" => original with { FingerprintHex = null },
+            "text" => original with { FingerprintHex = null, FingerprintText = new string('x', 32) },
+            "fractional" => original with { State = 1.5 },
+            "text-limit" => original with { FingerprintHex = null, FingerprintText = new string('\u0100', 128) },
+            _ => throw new ArgumentException("BindingInvalid")
+        };
+        try
+        {
+            if (damage == "text-limit")
+            {
+                Assert.Equal(MetadataFailureCode.InvalidInput,
+                    Assert.IsType<MetadataResult<MetadataId>.Failure>(
+                        await store.ReplaceOperationImageForTestAsync(ticket, damaged)).Code);
+                Assert.Equal(before, Success(await store.RawStateFingerprintForTestAsync(default)));
+                return;
+            }
+            Success(await store.ReplaceOperationImageForTestAsync(ticket, damaged));
+            var fingerprint = Success(await store.RawStateFingerprintForTestAsync(default));
+            Assert.NotEqual(before, fingerprint);
+            Assert.Equal(MetadataFailureCode.CorruptState,
+                Assert.IsType<MetadataResult<MetadataResolution>.Failure>(
+                    await store.ReconcileAsync(ticket, new(), default)).Code);
+            Assert.Equal(MetadataFailureCode.CorruptState,
+                Assert.IsType<MetadataResult<MetadataCommitReceipt>.Failure>(
+                    await store.CommitAsync(batch, new(), default)).Code);
+            Assert.Equal(damaged, Success(await store.OperationImageForTestAsync(ticket)));
+            Assert.Equal(fingerprint, Success(await store.RawStateFingerprintForTestAsync(default)));
+        }
+        finally { Success(await store.ReplaceOperationImageForTestAsync(ticket, original)); }
+        Assert.Equal(before, Success(await store.RawStateFingerprintForTestAsync(default)));
+        Assert.Equal<byte>(receipt, MetadataEncoding.Encode(Success(await store.CommitAsync(batch, new(), default))));
+    }
+
+    [Theory]
+    [InlineData("empty")]
+    [InlineData("unrecognized")]
+    [InlineData("partial")]
+    [InlineData("future")]
+    public async Task Raw_fingerprint_observes_rejected_layouts_without_admitting_or_repairing_them(string layout)
+    {
+        await using var fixture = new StoreFixture(_ => ValueTask.CompletedTask);
+        var store = fixture.Store;
+        if (layout is "unrecognized" or "partial")
+        { Success(await store.CreateUnrecognizedLayoutForTestAsync(layout == "partial")); }
+        if (layout == "future")
+        {
+            Success(await store.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+            Success(await store.MakeFutureSchemaForTestAsync());
+        }
+        var before = Success(await store.RawStateFingerprintForTestAsync(default));
+        Assert.Equal(64, before.Length);
+        Success(await store.InspectAsync(new(), default));
+        Assert.Equal(MetadataFailureCode.IncompatibleSchema,
+            Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Failure>(await store.PrepareAsync(
+                new MetadataSchemaRequest.InspectOnly(), new(), default)).Code);
+        Assert.Equal(before, Success(await store.RawStateFingerprintForTestAsync(default)));
+    }
+
+    [Fact]
     public async Task Cancelled_writer_acquisition_keeps_late_native_handles_owned_until_they_close()
     {
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -249,6 +379,18 @@ public sealed class SqliteMechanismTests
     private static T Success<T>(MetadataResult<T> result) where T : notnull =>
         Assert.IsType<MetadataResult<T>.Success>(result).Value;
 
+    private static MetadataRegistry Registry() => new()
+    {
+        Id = new(Guid.NewGuid()),
+        Ecosystem = new("nuget"),
+        Upstream = new("https://example.invalid/v3/"),
+        Enabled = true,
+        Label = new("synthetic"),
+        PolicyId = new MetadataOption<MetadataId>.None(),
+        Secret = new MetadataOption<MetadataSecretReference>.None(),
+        Revision = new(Guid.NewGuid())
+    };
+
     private sealed class RejectingAuthority : IMetadataPublicationAuthority
     {
         public ValueTask<MetadataResult<IMetadataPublicationGuard>> AcquireAsync(
@@ -261,11 +403,12 @@ public sealed class SqliteMechanismTests
         private readonly string directory = Directory.CreateTempSubdirectory("hoard-sqlite-auxiliary-").FullName;
         public StoreFixture(Func<string, ValueTask> observer)
         {
-            Store = new(Path.Combine(directory, "metadata.db"), new RejectingAuthority(),
+            Store = new(DatabasePath, new RejectingAuthority(),
                 new MetadataConformanceClock(new(1_800_000_000_000)), observer,
                 _ => throw new InvalidOperationException("UnexpectedDiagnostic"));
         }
         public SqliteMetadataStore Store { get; }
+        public string DatabasePath => Path.Combine(directory, "metadata.db");
         public async ValueTask DisposeAsync()
         {
             await Store.DisposeAsync();

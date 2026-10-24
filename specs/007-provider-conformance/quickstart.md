@@ -13,10 +13,14 @@ Latest verified native run:
 all three jobs, 131 foundation checks without failures/errors/skips,
 37 scopes/170 observations, the concrete Memory adapter and all 53 prior shared consumers, six historical
 baselines and eighteen-package/thirteen-lock replay.
-SQLite's genuine lifetime and tracked async independent read/writer controls
-pass six source-only checks, including canceled work/late acquisition and
-diagnostic failure. They are prerequisites, not a SQLite binding or native
-qualification; existing synchronous fixture helpers remain caller-owned.
+The initial SQLite binding now has explicit current/legacy factories,
+same-database directory handoff, actual backup-authorized upgrades, tracked
+independent work and typed raw corruption/fingerprints. The seven-archive
+package graph passes 135 selected checks locally (95 Memory/40 SQLite), with
+separate empty-cache locked build replay. The SQLite rows are not yet selected
+by Linux diagnostics: the actual SQLite environment producer is still missing,
+so its execution must not borrow the current `nativeSqlite: not-used` value.
+Existing synchronous fixture helpers remain caller-owned.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

@@ -1251,11 +1251,13 @@ explicit current/legacy factories, typed controls, atomic logical reopen and
 actual-work ownership integration; its 20 focused adapter rows also passed in
 native run [40061416909](https://github.com/Stonefly-Labs/Hoard/actions/runs/40061416909):
 all three jobs, 131 foundation checks and 37 scopes/170 exact observations.
-SQLite now has tracked asynchronous independent reads/writer leases and a
-genuine worker-lifetime observation, with six focused source checks covering
-cancellation, late native-handle cleanup and surfaced diagnostic failure.
-The SQLite adapter, complete category suites and profile qualification remain
-unfinished; source checks do not establish native qualification.
+The initial SQLite binding now adds explicit current/legacy factories, actual
+same-database reopen with exclusive directory handoff, verified backup-based
+upgrade authorization and typed raw-state controls. The package-only graph
+passes 135 selected checks across Memory and SQLite, including native storage
+types, cancellation/late cleanup and real 30-second incomplete cleanup.
+These are focused local package checks, not complete category, Linux-supervisor
+or profile qualification; native SQLite environment production remains open.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

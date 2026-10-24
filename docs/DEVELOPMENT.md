@@ -5750,6 +5750,44 @@ package/native SQLite evidence, durable reopen or category qualification.
 Legacy synchronous fixture helpers remain caller-owned. No product contract,
 project reference, schema, public API or architecture diagram changed.
 
+The initial SQLite binding now implements current/legacy factories, actual
+same-database directory handoff, verified backup authorization and typed
+record/operation/continuation controls. Old workers close before ownership
+transfers; only final-head disposal binds the directory's actual lifetime.
+Canceled reopen preserves the original owner and pending work. Raw state
+observation requires no schema admission or repair and preserves native storage
+classes. The logical publication authority is compiled from shared fixture
+source into both binding assemblies without cross-provider delegation.
+
+Bounded architecture review found full-payload native sorting before size
+limits. An intended oversized-unindexed-row failure drove native value/progress
+guards, bounded size/count preflight and managed sorting of bounded row digests.
+Native limits alone did not reject the existing aggregate row; the test stayed
+red until preflight was added. The repair passes in actual package mode.
+The reviewed seven-archive graph adds only SQLite binding/provider and six
+pinned dependencies, preserving existing third-party hashes/graphs. A separate
+empty-cache default locked restore/build passed. Selected package tests pass
+135/no skips (~33s): 95 Memory and 40 SQLite, including real 30-second cleanup.
+The UTF-8 fingerprint bound rejects multi-byte text before mutation; its intended
+failure now passes. Fresh package caches and build output directories prevent
+same-version, canonical-timestamp archives from leaving stale copied assemblies.
+Memory source94, tooling236/ten native skips and focused checks also pass.
+These do not establish Linux-supervisor or complete category qualification.
+Native selection remains 37 Memory/SDK/logger scopes until actual SQLite
+environment production can replace the deliberately unused SQLite observation.
+
+Native prerequisite run
+[40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
+at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,
+131 foundation checks without failures/errors/skips, earlier 37 scopes/
+170 observations, six baselines and identical eighteen-package/thirteen-lock
+replay. Input:
+`12d9b6f9217f8bcd55f59657d41972652d746d71e44fb4fc6d55fb43a7c3a381`;
+preparation proof:
+`70790529869264a78361c61119a4184b4c900f9887490d46d6746fcee0574f23`.
+Free scratch: 92,109,668,352 bytes. It predates the concrete SQLite binding
+and seven-archive graph; no SQLite execution is attributed to it.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

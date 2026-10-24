@@ -7,6 +7,7 @@ public sealed partial class SqliteMetadataStore
 {
     private int failNextWrite;
     public void InjectStorageCapacityForTest() => Interlocked.Exchange(ref failNextWrite, 1);
+    public void ClearStorageCapacityForTest() => Interlocked.Exchange(ref failNextWrite, 0);
 
     public ValueTask<MetadataResult<MetadataId>> CreateUnrecognizedLayoutForTestAsync(bool partial) =>
         worker.Submit(TimeSpan.FromSeconds(5), default, MetadataPhase.Schema, null, budget =>

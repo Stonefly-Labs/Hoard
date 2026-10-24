@@ -18,14 +18,14 @@ public sealed class MemoryBinding : IMetadataConformanceBinding
 
     public ValueTask<IMetadataConformanceSession> CreateSessionAsync(
         ConformanceRunContext context, CancellationToken cancellationToken) =>
-        CreateAsync(context, new MemoryPublicationAuthority(), null, 2, cancellationToken);
+        CreateAsync(context, new FixturePublicationAuthority(), null, 2, cancellationToken);
 
     public ValueTask<IMetadataConformanceSession> CreateLegacySessionAsync(
         ConformanceRunContext context, CancellationToken cancellationToken) =>
-        CreateAsync(context, new MemoryPublicationAuthority(), null, 1, cancellationToken);
+        CreateAsync(context, new FixturePublicationAuthority(), null, 1, cancellationToken);
 
     private static async ValueTask<IMetadataConformanceSession> CreateAsync(
-        ConformanceRunContext context, MemoryPublicationAuthority authority,
+        ConformanceRunContext context, FixturePublicationAuthority authority,
         MemoryFixtureImage? image, int compatibleSchema, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -39,7 +39,7 @@ public sealed class MemoryBinding : IMetadataConformanceBinding
         private readonly SemaphoreSlim reopening = new(1, 1);
         private readonly ConformanceRunContext context;
         private readonly ConformanceOwnedDirectory resource;
-        private readonly MemoryPublicationAuthority authority;
+        private readonly FixturePublicationAuthority authority;
         private readonly MemoryMetadataStore store;
         private readonly MemoryMetadataFaults faults;
         private Task? disposal;
@@ -49,7 +49,7 @@ public sealed class MemoryBinding : IMetadataConformanceBinding
         private bool reopened;
 
         public Session(ConformanceRunContext context, ConformanceOwnedDirectory resource,
-            MemoryPublicationAuthority authority, MemoryFixtureImage? image, int compatibleSchema)
+            FixturePublicationAuthority authority, MemoryFixtureImage? image, int compatibleSchema)
         {
             this.context = context;
             this.resource = resource;

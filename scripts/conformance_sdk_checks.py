@@ -33,6 +33,13 @@ LOGGER = f"{CONTRACTS}/Hoard.Conformance.TestLogger"
 TESTS = f"{CONTRACTS}/Hoard.Conformance.Tests"
 MEMORY = "tests/fixtures/metadata/Memory/Memory.csproj"
 MEMORY_BINDING = "tests/fixtures/conformance/Bindings/Memory/Memory.csproj"
+SQLITE = "tests/fixtures/metadata/Sqlite/Sqlite.csproj"
+SQLITE_BINDING = "tests/fixtures/conformance/Bindings/Sqlite/Sqlite.csproj"
+LOCAL_PACKAGES = (
+    "Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger",
+    "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Conformance.Bindings.Memory",
+    "Hoard.Fixtures.Metadata.Sqlite", "Hoard.Fixtures.Conformance.Bindings.Sqlite",
+)
 BINDING_TEST_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingTests."
 BINDING_OWNERSHIP_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingOwnershipTests."
 PACKAGE_TEST_OUTPUT = "bin/package-diagnostic"
@@ -301,9 +308,7 @@ def prepare_package_consumer_lock(candidate, feed):
     original = candidate / TESTS / "PackageAcceptance/packages.lock.json"
     raw = read_bounded(original, 2 * 1024 * 1024)
     prepared, packages, _ = rebind_local_archives(raw, feed)
-    expected = {f"{name}.0.1.0.nupkg" for name in (
-        "Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger",
-        "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Conformance.Bindings.Memory")}
+    expected = {f"{name}.0.1.0.nupkg" for name in LOCAL_PACKAGES}
     if set(packages) != expected:
         raise evidence.ConformanceError("InputChanged")
     alternate = candidate / TESTS / "obj/F07.consumer.packages.lock.json"
@@ -393,9 +398,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     inputs = evidence.capture_profile_inputs(
         run, repository, candidate, profile_id="harness", mode="diagnostic",
         invocation_group_id=str(uuid.uuid4()) if group_id is None else group_id,
-        package_versions=[{"packageId": name, "version": "0.1.0"} for name in
-                          ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger",
-                           "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Conformance.Bindings.Memory")],
+        package_versions=[{"packageId": name, "version": "0.1.0"} for name in LOCAL_PACKAGES],
         feed="feed/candidate", configuration="stores/candidate.NuGet.Config",
         lock_paths=locks, runtime_paths=runtime, binding_sources=list(binding_sources),
         observed_environment=observed_environment, budgets=BUDGETS, invocation=["sdk-logger-diagnostic"],
@@ -594,6 +597,18 @@ def execute(repository, destination):
         if binding_record is not None:
             verify_project_lock(binding_record, candidate, feed)
             write_new(run.root / "proofs/memory-binding-lock-derivation.json", evidence.canonical_bytes(binding_record))
+        sqlite_lock, sqlite_record = prepare_project_lock(candidate / SQLITE, candidate, feed, "candidate")
+        build(run, candidate / SQLITE, config, "sqlite-package", lock=sqlite_lock, feed=feed,
+              package_id="Hoard.Fixtures.Metadata.Sqlite")
+        if sqlite_record is not None:
+            verify_project_lock(sqlite_record, candidate, feed)
+            write_new(run.root / "proofs/sqlite-lock-derivation.json", evidence.canonical_bytes(sqlite_record))
+        sqlite_binding_lock, sqlite_binding_record = prepare_project_lock(candidate / SQLITE_BINDING, candidate, feed, "candidate")
+        build(run, candidate / SQLITE_BINDING, config, "sqlite-binding-package", lock=sqlite_binding_lock, feed=feed,
+              package_id="Hoard.Fixtures.Conformance.Bindings.Sqlite")
+        if sqlite_binding_record is not None:
+            verify_project_lock(sqlite_binding_record, candidate, feed)
+            write_new(run.root / "proofs/sqlite-binding-lock-derivation.json", evidence.canonical_bytes(sqlite_binding_record))
         consumer_lock, consumer_receipt = prepare_package_consumer_lock(candidate, feed)
         verify_package_consumer_lock(candidate, feed, consumer_lock, consumer_receipt)
         write_new(run.root / "proofs/consumer-lock-derivation.json", evidence.canonical_bytes(consumer_receipt))

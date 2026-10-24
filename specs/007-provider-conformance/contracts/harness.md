@@ -106,14 +106,35 @@ SDK/provider/binding packages; native run `40061416909` verified the expanded
 These remain extraction diagnostics, not T023 completion,
 full origin/controller integration or category qualification.
 
-SQLite's fixture-only asynchronous independent read/writer controls now retain
+SQLite's fixture-only asynchronous independent read/writer controls retain
 underlying work through the genuine worker lifetime, including cancellation and
 late acquisition/cleanup. Ordinary idle includes reads, not held writer leases.
 Shutdown closes admission, requests writer release, waits for independent work
 and closes primary native handles. Escaped diagnostic/cleanup failure faults
-that lifetime. Six source-only checks cover these prerequisites; synchronous
-legacy controls remain caller-owned. The SQLite binding and package/native
-attribution are not yet implemented by this increment.
+that lifetime. Synchronous legacy controls remain caller-owned.
+
+The initial SQLite binding now uses those controls. Reopen closes and joins the
+old store before handing the same directory/database to a fresh compatible
+session; it neither copies database files nor settles the directory under an
+old task before reuse. Only final-head disposal binds the root to its genuine
+worker lifetime. Canceled handoff retains the original owner and pending worker.
+Upgrade authorization uses actual verified fixture backup files under that
+owned root. Typed damage preserves native state/fingerprint storage classes,
+opaque continuation fields and exact raw restoration. Raw-state observation
+uses a read-only transaction without admission/repair; native value/progress
+guards and bounded size preflight precede full-row hashing. Only bounded
+32-byte row digests are sorted in managed code, never native full payloads.
+
+A logical publication authority helper is compiled into both independent
+binding assemblies; provider transactions/encodings/native mechanisms remain
+private and no SDK dependency changes. The package-mode graph now explicitly
+prepares/derives/reverifies seven local archives. Its selected 135 tests pass
+locally (95 Memory/40 SQLite) with separate empty-cache locked build replay.
+Linux diagnostic selection deliberately stays at 37 Memory/SDK/logger scopes
+until actual SQLite environment production is implemented. A compiled SQLite
+archive is not execution evidence; `nativeSqlite: not-used` cannot label an
+executing SQLite scope. Complete adapters/category/provenance acceptance remains
+unfinished.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

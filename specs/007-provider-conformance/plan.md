@@ -1251,6 +1251,89 @@ T022 acceptance. No public operation contract, schema, project reference or
 production architecture changes. T019..T086 remain unchecked and implementation
 continues; the reviewer-owned checklist markers remain untouched.
 
+### Initial concrete SQLite binding and seven-archive package execution
+
+`SqliteBinding` now supplies explicit current/legacy factories, actual typed
+roles, harness clock and tracked async independent controls. Reopen closes and
+joins the old native worker before transferring the same owned directory and
+database to a current-compatible session. It does not copy database files,
+allocate a replacement root or bind the old task to a directory subsequently
+reused by another worker. Old-session disposal cannot release the new head's
+root. Final-head disposal closes admission, pins the genuine final worker task,
+preserves identity on retries and never reports physical `Released`.
+Canceled reopen preserves the original owner/actual pending work for disposal.
+Actual verified backup files under that root authorize upgrades.
+
+Provider-private raw record/operation controls preserve exact encoded data,
+native BLOB/TEXT/NULL fingerprints and fractional REAL state. Typed scopes
+fingerprint damage, corroborate public failures/effects, restore exact original
+rows and verify original-ticket replay. Continuation mutation uses SQLite's
+actual six opaque fields. Raw state observation works before admission and on
+unrecognized/future/corrupt/oversized state, without decoding or repair.
+
+The bounded custom architecture review found a MEDIUM native-sort defect:
+full-payload SQL ordering could sort excessive input before managed size limits.
+The intended regression first accepted an oversized unindexed native row.
+Native value-size/progress limits and a bounded size/count preflight now precede
+full-row hashing; native full-payload sorting was removed. Managed sorting
+retains only bounded 32-byte row digests. Native limits alone did not reject
+the aggregate existing row, so the regression remained red until size preflight
+was added. It now passes alongside exact raw preservation/restoration.
+Bounds are 128 schema objects, 64 columns/table, one million rows total,
+2 MiB/cell, 2 MiB + 64 KiB/native row and 256 MiB hashed input; the actual
+five-second worker budget also drives SQLite's progress handler. Existing
+incompatible state rejects explicitly when it exceeds those fixture controls.
+
+The logical publication authority implementation is compiled from one shared
+BCL-only fixture source into both independent binding assemblies, rather than
+SQLite calling Memory or adding provider/encoding types to the SDK. Provider
+mechanisms and product reference edges remain unchanged.
+
+Actual package-only selection passes 135 tests without skips: 95 existing
+Memory/adapter rows and 40 SQLite mechanism/adapter rows, including real
+30-second incomplete cleanup, three actual schema/backup consumers, same-root
+handoff, canceled handoff, six continuation shapes, fourteen receipt shapes
+and five record shapes within their shared consumers. The absent binding/raw
+APIs failed compilation before implementation. The earlier source-only SQLite
+run passed 37, the canceled-handoff case then passed separately, and the
+native-bound regression subsequently passed after its intended failures.
+Memory source94 also passed after sharing authority.
+
+An additional intended failure supplied 128 multi-byte fingerprint characters
+(256 UTF-8 bytes). Replacement now enforces the same 128-byte bound as raw
+capture before any mutation, with structured `InvalidInput` and unchanged state.
+All five raw-operation cases and the full 135-case package selection pass.
+Fresh cache and build output directories were required: canonical archive
+timestamps otherwise left an earlier same-version DLL in reused build output.
+The updated archive/cache DLL hashes were checked against the actual output;
+no earlier feed/cache evidence was overwritten.
+
+Seven current local archives were packed through private graph-preserving
+derived locks. NuGet deliberately generated the package-mode lock addition:
+only the SQLite binding/provider and six pinned SQLite dependencies were added;
+prior graphs and all existing third-party hashes are unchanged. A second empty
+cache default locked restore/build passed without warnings/errors or lock
+changes. Tooling236 (ten native macOS skips), focused formatting, frozen
+inventory, SDK catalog and whitespace checks pass. The native SDK diagnostic
+now prepares/derives/reverifies all seven archives, but its selected executions
+remain the existing 37 Memory/SDK/logger scopes until actual SQLite environment
+production is implemented. SQLite must not borrow `nativeSqlite: not-used`.
+No SQLite Linux-supervisor, abrupt-crash, role-origin/controller or full
+category qualification follows from these local package checks.
+
+Native prerequisite run
+[40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
+at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs:
+131 foundation checks without failures/errors/skips, the earlier 37 scopes/
+170 exact observations, six baselines and eighteen-package/thirteen-lock replay.
+Input digest:
+`12d9b6f9217f8bcd55f59657d41972652d746d71e44fb4fc6d55fb43a7c3a381`;
+preparation proof:
+`70790529869264a78361c61119a4184b4c900f9887490d46d6746fcee0574f23`.
+Free scratch: 92,109,668,352 bytes. It predates the concrete SQLite binding and
+seven-archive diagnostic graph; no expanded execution is attributed to it.
+T022/T023 and full category/parity acceptance remain unchecked.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

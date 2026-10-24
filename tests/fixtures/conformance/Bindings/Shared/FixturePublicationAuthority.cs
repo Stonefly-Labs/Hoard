@@ -3,9 +3,9 @@ using Hoard.Abstractions.Metadata;
 using Hoard.Abstractions.Storage;
 using Hoard.Testing.Conformance.Bindings;
 
-namespace Hoard.Fixtures.Conformance.Bindings.Memory;
+namespace Hoard.Fixtures.Conformance.Bindings;
 
-internal sealed class MemoryPublicationAuthority : IMetadataConformanceAuthority
+internal sealed class FixturePublicationAuthority : IMetadataConformanceAuthority
 {
     private readonly ConcurrentDictionary<string, MetadataCommittedArtifact> artifacts = new(StringComparer.Ordinal);
     private int acquisitions;
@@ -45,7 +45,7 @@ internal sealed class MemoryPublicationAuthority : IMetadataConformanceAuthority
             new MetadataResult<IMetadataPublicationGuard>.Success(new Guard(this, artifact)));
     }
 
-    private sealed class Guard(MemoryPublicationAuthority owner, MetadataCommittedArtifact artifact) : IMetadataPublicationGuard
+    private sealed class Guard(FixturePublicationAuthority owner, MetadataCommittedArtifact artifact) : IMetadataPublicationGuard
     {
         private int disposed;
         public MetadataCommittedArtifact Artifact { get; } = artifact;

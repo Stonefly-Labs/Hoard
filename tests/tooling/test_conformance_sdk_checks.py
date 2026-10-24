@@ -82,7 +82,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         feed.mkdir()
         local = ("Hoard.Abstractions", "Hoard.Testing.Conformance",
                  "Hoard.Conformance.TestLogger", "Hoard.Fixtures.Metadata.Memory",
-                 "Hoard.Fixtures.Conformance.Bindings.Memory")
+                 "Hoard.Fixtures.Conformance.Bindings.Memory", "Hoard.Fixtures.Metadata.Sqlite",
+                 "Hoard.Fixtures.Conformance.Bindings.Sqlite")
         dependencies = {"xunit": {"resolved": "2.9.3", "contentHash": "unchanged"}}
         for package in local:
             (feed / (package + ".0.1.0.nupkg")).write_bytes(package.encode())
@@ -273,7 +274,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         run = SimpleNamespace(root=self.directory, run_id=str(uuid.uuid4()), _check_ledger=lambda: None)
         config, feed = checks.baselines._config(run, "candidate")
         for name in ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger",
-                     "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Conformance.Bindings.Memory"):
+                     "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Conformance.Bindings.Memory",
+                     "Hoard.Fixtures.Metadata.Sqlite", "Hoard.Fixtures.Conformance.Bindings.Sqlite"):
             with zipfile.ZipFile(feed / f"{name}.0.1.0.nupkg", "w") as archive:
                 archive.writestr(f"{name}.nuspec",
                                 f"<package><metadata><id>{name}</id><version>0.1.0</version></metadata></package>")
@@ -307,6 +309,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             return checks.make_inputs(run, repository, candidate, sources,
                                       environment, identity, None, group_id=group_id)
         before = capture()
+        self.assertEqual(len(before["packages"]), 7)
         self.assertNotIn(str(self.directory).encode(), checks.evidence.canonical_bytes(before))
         for path in (runtime / "Added.dll", runtime / "Tests.runtimeconfig.json",
                      candidate / "added.packages.lock.json"):

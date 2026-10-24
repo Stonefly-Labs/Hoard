@@ -37,9 +37,29 @@ verified those rows within 37 scopes/170 exact observations, alongside all
 The SQLite fixture now exposes genuine worker-lifetime settlement and tracked
 async independent read/writer controls. Cancellation of a control caller does
 not release the underlying work; shutdown waits for late native handles.
-Six focused source-only checks pass, including escaped diagnostic failure.
-The existing synchronous fixture helpers retain their caller-owned semantics;
-the unfinished SQLite binding must use the tracked asynchronous controls.
+The initial SQLite binding uses those tracked controls, with explicit current/
+legacy factories and same-database reopen. A single directory transfers only
+after the old worker actually closes; no old lifetime task is bound to a
+directory subsequently reused by a new worker. Only the final head registers
+that directory's genuine lifetime with the resource observer. Failed/canceled
+handoff keeps the original owner and pending work available for final disposal.
+Real fixture backups authorize upgrades; raw record/operation/token corruption
+preserves SQLite BLOB/TEXT/NULL/REAL distinctions and exact restoration.
+Raw fingerprints use read-only transactions without schema admission/repair,
+native value/progress limits, bounded size preflight and sorted row digests,
+not a native full-payload sorter. The existing synchronous fixture helpers
+retain their caller-owned semantics.
+
+The same logical publication authority source is compiled into both binding
+assemblies, without cross-provider delegation or a new SDK dependency.
+The package-mode graph now has seven local archives. Its intentional NuGet lock
+adds only the SQLite binding/provider and six pinned SQLite dependencies,
+preserving prior graphs/third-party hashes. A separate empty-cache locked build
+passes. All 135 selected Memory/SQLite package tests pass locally without skips
+(95 Memory, 40 SQLite); this includes actual incomplete cleanup, not Linux
+supervisor/category qualification. Native diagnostics still select only the
+37 Memory/SDK/logger scopes: SQLite execution awaits its actual environment
+producer rather than borrowing the current `nativeSqlite: not-used` observation.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual
