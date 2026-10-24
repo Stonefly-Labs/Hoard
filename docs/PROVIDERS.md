@@ -425,14 +425,16 @@ ObjectSemantics combinations. Actual composition, proof encoding, waiting
 counters, M1 controls and physical settlement stay fixture-side. An actual
 reference-denial result mislabeled as conflict fails the unchanged expected-
 code assertion in every combination; genuine stores pass unchanged.
-The next twenty-row native request is 67 scopes/587 observations, pending,
-not full bindings/category/session or authority-integration task acceptance.
+The twenty-row native request passed at `4c87667`, run `40121897879`,
+all three jobs, 179 foundations and 67 scopes/587 observations, not full
+bindings/category/session or authority-integration task acceptance.
 Three original metadata-bridge bodies now use shared interface-only checks.
 The mismatched-authority witness is frozen; exact-evidence and invalid-evidence
 facts are additional existing cases. Actual host bridge/controlled validator,
 encoding, expiry and observed counters remain fixture-side; the validator's
 recognized-reference operation/stamp checks delegate unchanged to the SDK.
-The next three-row native request is 68 scopes/590 observations, pending.
+The bridge-only native request was canceled while pending; its three rows are
+included in the expanded lifecycle request, not separately accepted.
 These host-bridge unit checks are not full provider/category qualification.
 Three remaining original lifecycle bodies now use interface-only common checks:
 retained reference-query shutdown, concurrent close/slow guard release and held
@@ -441,6 +443,18 @@ cases are additional existing facts. Actual composition, query drain, slow
 guard implementation, physical holds/releases and settlement stay fixture-side.
 The next six-row request is 69 scopes/596 observations, pending, not complete
 bindings/category/session or full profile qualification.
+Two original storage-failure/reconciliation bodies now also share fixed
+classification, sanitizer, borrowed-source, committed-byte and receipt checks
+with four frozen parameters. Actual post-visibility fault registration remains
+fixture-side. Real access-denied failures relabeled as unavailable fail the
+unchanged common code assertion on both providers; genuine stores pass.
+The next six-row request is 70 scopes/602 observations, pending, not complete
+bindings/category/session or full profile qualification.
+
+Four-way integration passed `40121897879` at `4c87667`, all three jobs,
+179 foundations and 67 scopes/587 observations including twenty integration
+rows and all actual prerequisites/replay. These are still diagnostic counts,
+not the 179 applicable category results.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

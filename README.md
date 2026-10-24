@@ -1516,19 +1516,27 @@ Four original metadata/artifact integration bodies now also run shared checks
 on all four SQLite/Memory and Local/ObjectSemantics combinations, preserving
 sixteen frozen parameters. Real reference-denial mutations fail the unchanged
 expected-code assertion on each combination; genuine stores pass unchanged.
-The next twenty-row native request is 67 scopes/587 observations, pending;
+The twenty-row native request passed at `4c87667`, run
+[40121897879](https://github.com/Stonefly-Labs/Hoard/actions/runs/40121897879):
+all three jobs, 179 foundations and 67 scopes/587 diagnostic observations;
 complete typed bindings, category/session imports and feature gates remain open.
 Three original metadata-bridge bodies now also run interface-only shared checks,
 preserving the frozen mismatched-authority witness and two additional existing
 facts. Actual bridge/validator construction, encoding, expiry and ownership
 counters remain fixture-side; recognized-reference checks are shared unchanged.
-The next three-row native request is 68 scopes/590 observations, pending.
+The bridge-only native request was canceled while pending; its three rows are
+included in the expanded lifecycle request below, not separately accepted.
 These host-bridge unit checks are not complete provider/category qualification.
 Three remaining original lifecycle bodies now use shared interface-only checks,
 preserving four frozen parameters and two additional composed-shutdown cases.
 Actual reference queries, slow guard release, native I/O holds and settlement
 remain fixture-side. The next six-row native request is 69 scopes/596
 observations, pending, not complete bindings/category/profile qualification.
+Two original storage-failure/reconciliation bodies now also use shared checks,
+preserving four frozen parameters and fixed sanitizer/source behavior. Genuine
+access-denied failures mislabeled as unavailable fail the unchanged code
+assertion; genuine stores pass. The next six-row native request is 70
+scopes/602 observations, pending, not complete category/profile qualification.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

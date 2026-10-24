@@ -276,15 +276,17 @@ Four original metadata/artifact integration bodies now also execute shared
 checks with sixteen frozen parameters on all four actual provider combinations.
 Composition, proof encoding, waiting/M1 controls and physical settlement stay
 fixture-side. Hidden actual reference denials fail the unchanged expected-code
-assertion in each combination; genuine stores pass. The next twenty-row native
-request is 67 scopes/587 observations, pending, not complete qualification.
+assertion in each combination; genuine stores pass. The twenty-row native
+request passed at `4c87667`, run `40121897879`, all three jobs,
+179 foundations and 67 scopes/587 observations, not complete qualification.
 Authority passed `40120167356` at `7ee1c61`, all three jobs,
 177 foundations and 65 scopes/549 observations, not complete qualification.
 Three original metadata-bridge bodies now also use shared checks, preserving
 the frozen authority-mismatch witness and two additional existing facts.
 Actual bridge/controlled-validator setup, encoding, expiry and counters stay
-fixture-side. The next three-row native request is 68 scopes/590 observations,
-pending; these host-bridge unit checks are not full provider qualification.
+fixture-side. The bridge-only native request was canceled while pending; its
+three rows are included in the expanded lifecycle request, not separately
+accepted. These host-bridge unit checks are not full provider qualification.
 Capability passed `40120937967` at `2a7be14`, all three jobs,
 178 foundations and 66 scopes/567 observations, not complete qualification.
 Three remaining lifecycle bodies now also use shared checks, preserving four
@@ -292,6 +294,14 @@ frozen parameters plus two existing composed-shutdown cases. Actual query
 completion/drain, slow guard release and native I/O hold/release remain
 fixture-side. The next six-row request is 69 scopes/596 observations, pending,
 not complete binding/session/category or full profile acceptance.
+Two original storage-failure/reconciliation bodies now also use shared checks
+with four frozen parameters and real-store misclassified-denial negative/
+control pairs. Actual post-visibility fault registration remains fixture-side.
+The next six-row request is 70 scopes/602 observations, pending, not full
+category/profile acceptance.
+
+Four-way integration passed `40121897879` at `4c87667`, all three jobs,
+179 foundations and 67 scopes/587 observations, not complete qualification.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

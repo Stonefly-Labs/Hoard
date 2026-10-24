@@ -6667,8 +6667,9 @@ reference removal and stale-proof rejection, and lost-acknowledgment protection.
 An actual reference denial deliberately mislabeled as conflict fails the
 unchanged expected-code assertion in all four combinations, with exactly one
 actual deletion and denial observed; genuine stores pass unchanged.
-The next twenty-row native request is 67 scopes/587 observations, pending,
-not complete typed bindings, category/session imports or T033 acceptance.
+The twenty-row native request passed at `4c87667`, run `40121897879`,
+all three jobs, 179 foundations and 67 scopes/587 observations, not complete
+typed bindings, category/session imports or T033 acceptance.
 
 Authority run `40120167356` at exact head
 `7ee1c61a26fc9fb55473dcbc1c7890d2675ba579` passed all three jobs,
@@ -6686,8 +6687,9 @@ encoding, expiry injection and waiting/retained/call counters stay fixture-side.
 The validator's exact recognized-reference operation/stamp assertions now call
 the shared helper; its remaining real retention/decision logic is unchanged.
 Original exact-evidence protection, invalid evidence and authority mismatch
-checks preserve all assertion tokens/order. The next three-row native request
-is 68 scopes/590 observations, pending. These are host-bridge unit checks, not
+checks preserve all assertion tokens/order. The bridge-only native request was
+canceled while pending; its three rows are included in the expanded lifecycle
+request, not separately accepted. These are host-bridge unit checks, not
 complete four-provider binding/category/session proof.
 
 Capability run `40120937967` at exact head
@@ -6709,6 +6711,27 @@ settlement stay fixture-side. Shared checks retain original ownership, fencing,
 deadline, retry and shutdown assertions, including the generic bounded-failure
 helper. The next six-row request is 69 scopes/596 observations, pending, not
 complete binding/session/category or full profile acceptance.
+
+Two original storage-failure/reconciliation bodies now use shared consumers,
+preserving four frozen parameters, fixed error classifications, exact failure
+actions, borrowed-source handling, fixed sanitizer checks and committed-byte/
+receipt retry checks. Actual post-visibility fault registration stays
+fixture-side. A real access-denied staging failure relabeled as unavailable
+fails the unchanged code assertion on each provider; actual stage/observed
+denial counts each equal one and genuine stores pass unchanged. The next
+six-row request is 70 scopes/602 observations, pending, not complete bindings/
+category/session or full profiles. The original foundation harness remains
+SDK-independent; its fixed sanitizer is preserved rather than introducing a
+reverse dependency.
+
+Four-way integration run `40121897879` at exact head
+`4c876675728a7fa21b47942c816e065cafdeb140` passed all three jobs,
+179 foundations without failures/errors/skips and 67 scopes/587 exact
+discoveries/executions, including all twenty integration rows and every actual
+prerequisite chain/native containment/eighteen-package/thirteen-lock replay.
+Input: `a5869dfd419f2fcc869633479bc99c4524ad1affa9fec306c8496079583047ea`;
+preparation:
+`f15f9d1ec24f010e0e96d50e15ab3a1aa16c94a46e9bca929e5fca0596fb9c24`.
 
 The expanded budget request passed `40119412481` at exact head
 `70dfdf63f59a13ba39d934a7ef09f148bfc58c57`: all three jobs, 176 foundations

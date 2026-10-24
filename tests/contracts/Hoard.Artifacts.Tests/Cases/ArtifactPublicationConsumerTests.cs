@@ -260,6 +260,43 @@ public sealed class ArtifactPublicationConsumerTests
         }
     }
 
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Shared_storage_failure_assertion_rejects_misclassified_denial_and_accepts_original_store(string provider)
+    {
+        await using (var driver = await ArtifactProviderDriver.CreateAsync(provider))
+        {
+            var mutation = new MisclassifiedStorageFailure(driver.Store);
+            await Assert.ThrowsAsync<Xunit.Sdk.EqualException>(() =>
+                ArtifactFailureAssertions.StorageFailuresAsync(mutation, default));
+            Assert.Equal(1, mutation.StageCalls);
+            Assert.Equal(1, mutation.MisclassifiedFailures);
+        }
+        await using (var driver = await ArtifactProviderDriver.CreateAsync(provider))
+        {
+            await ArtifactFailureAssertions.StorageFailuresAsync(driver.Store, default);
+        }
+    }
+
+    private sealed class MisclassifiedStorageFailure(IArtifactStore store) : ForwardingStore(store)
+    {
+        public int StageCalls { get; private set; }
+        public int MisclassifiedFailures { get; private set; }
+
+        public override async ValueTask<ArtifactResult<ArtifactStagedWrite>> StageAsync(
+            ArtifactOperationTicket ticket, Stream source, ArtifactTransferOptions options, CancellationToken ct)
+        {
+            StageCalls++;
+            var result = await Store.StageAsync(ticket, source, options, ct);
+            if (result is not ArtifactResult<ArtifactStagedWrite>.Failure { Code: ArtifactFailureCode.AccessDenied } failed)
+            { throw new InvalidOperationException("Mutation requires an actual storage access-denied failure."); }
+            MisclassifiedFailures++;
+            return new ArtifactResult<ArtifactStagedWrite>.Failure(
+                ArtifactFailureCode.Unavailable, failed.Phase, failed.Action, failed.CorrelationId, failed.Ticket, failed.Cleanup);
+        }
+    }
+
     private sealed class HiddenReferenceDenial(IArtifactStore store) : ForwardingStore(store)
     {
         public int DeleteCalls { get; private set; }

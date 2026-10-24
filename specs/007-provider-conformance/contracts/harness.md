@@ -553,8 +553,9 @@ composition, proof encoding, waiting counters, M1 hold/entry/release and both
 stores' physical settlement stay fixture-side. A real reference-denial result
 mislabeled as conflict fails the unchanged expected-code assertion in all four
 combinations. One actual deletion/observed denial per negative corroborates it;
-genuine stores pass unchanged. The next twenty-row native request is
-67 scopes/587 observations, pending, not full typed binding/category/session or
+genuine stores pass unchanged. The twenty-row native request passed at
+`4c87667`, run `40121897879`, all three jobs, 179 foundations and
+67 scopes/587 observations, not full typed binding/category/session or
 authority-integration task acceptance.
 Authority passed `40120167356` at `7ee1c61`, all three jobs,
 177 foundations and 65 scopes/549 observations, including all seven authority
@@ -565,7 +566,8 @@ existing exact/invalid-evidence facts. Actual host bridge/controlled-validator
 construction, encoding, expiry and observed counters stay fixture-side. The
 validator's recognized-reference operation/stamp assertions call the unchanged
 shared checks; remaining real retention/decision logic stays fixture-side.
-The next three-row native request is 68 scopes/590 observations, pending.
+The bridge-only native request was canceled while pending; its three rows are
+included in the expanded lifecycle request, not separately accepted.
 These host-bridge unit checks do not complete provider/category/session proof.
 Capability passed `40120937967` at `2a7be14`, all three jobs,
 178 foundations and 66 scopes/567 observations, all eighteen capability rows
@@ -577,6 +579,19 @@ native I/O holds, physical release/removal and settlement stay fixture-side.
 Original assertions/order and the generic bounded-failure helper are unchanged
 after explicit seams. The next six-row request is 69 scopes/596 observations,
 pending, not complete provider/category/session or full profile qualification.
+Two original storage-failure/reconciliation bodies now also use shared checks,
+preserving four frozen parameters, fixed classifications/sanitizer/source
+behavior and original assertion tokens/order. Actual post-visibility fault
+registration stays fixture-side. Real access-denied staging failures relabeled
+as unavailable fail the unchanged code assertion on both providers; actual
+stage/observed denial counts corroborate each negative and genuine stores pass.
+The next six-row request is 70 scopes/602 observations, pending, not complete
+bindings/category/session or full profile qualification.
+
+Four-way integration passed `40121897879` at `4c87667`, all three jobs,
+179 foundations and 67 scopes/587 observations, all twenty integration rows and
+actual prerequisite chains/replay. These are diagnostic counts, not complete
+category results.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

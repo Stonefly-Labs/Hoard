@@ -566,6 +566,25 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_failure_scope_preserves_frozen_classification_and_reconciliation_cases(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_failure_scenarios", None)),
+                        "Shared failure checks need exact owned wrapper transport.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactFailureTests."
+        methods = (
+            "Storage_failures_remain_distinct_and_sanitized_and_do_not_publish_partial_content",
+            "Unexpected_fault_after_visibility_requires_exact_ticket_reconciliation")
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if any(name.startswith(prefix + method + "(") for method in methods)}
+        self.assertEqual(len(original), 4)
+        mutations = {
+            "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+            + f'Shared_storage_failure_assertion_rejects_misclassified_denial_and_accepts_original_store(provider: "{provider}")'
+            for provider in ("local", "object")}
+        scenario, = checks.original_artifact_failure_scenarios()
+        self.assertEqual(scenario, ("original-artifact-failure", tuple(sorted(original | mutations)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_lifecycle_scope_preserves_frozen_and_additional_shutdown_cases(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_lifecycle_scenarios", None)),
                         "Shared lifecycle checks need exact owned wrapper transport.")

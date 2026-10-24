@@ -2985,6 +2985,55 @@ actual loaded dependency images reproduce exactly; combined archive-map SHA-256:
 Previously measured transfer packets remain unchanged, not fresh session/
 category origins or new durable proof.
 
+Two original storage-failure/reconciliation bodies now execute interface-only
+shared consumers with all four frozen parameters, fixed classification/
+sanitizer checks and the unchanged failing-source helper. Actual post-visibility
+fault registration stays fixture-side. Common checks preserve original borrowed
+source, unpublished staging, committed-byte, exact-ticket/action and receipt
+retry assertions. Actual access-denied staging failures deliberately relabeled
+as unavailable fail the unchanged code assertion on both providers; exactly one
+stage/observed denial each corroborates the mutation. Genuine stores pass the
+unchanged consumers.
+
+Missing consumers first failed actual package-mode compilation with CS0103;
+the missing exact scope failed its named tooling regression. The intermediate
+`failures` preparation rejected an attempted SDK dependency from the separate
+foundation-only harness. That harness remains unchanged and SDK-independent;
+the common consumers retain the same fixed canaries and two sanitizer checks
+rather than introducing a reverse dependency or provider-selected verifier.
+Mechanical comparison checks both original bodies, failing-source helper,
+sanitizer tokens/fixed values and unchanged remaining physical-cleanup bodies/
+helpers. The new six-row request is 70 scopes/602 observations, pending.
+
+Tooling passed 290 discovered / 273 passed / seventeen native macOS skips.
+SDK/accepted-wrapper whitespace, compiled/frozen catalogs, exact mechanical
+comparisons and patch integrity passed. The preceding lifecycle request binds
+exact head `f2cc84decfbd1b099f57e82b40d9636b65b8695e`, run `40123477371`,
+pending separate strict admission. Bridge-only run `40122736140` at `b4d4517`
+was canceled while pending, not accepted; the expanded lifecycle request
+includes its three rows, still pending. Broad tasks/checklists/stage remain
+open; no full binding/session/category/profile qualification is claimed.
+
+Four-way integration run
+[40121897879](https://github.com/Stonefly-Labs/Hoard/actions/runs/40121897879)
+passed at exact head `4c876675728a7fa21b47942c816e065cafdeb140`: all three
+jobs, 179 foundations without failures/errors/skips, 67 scopes/587 exact
+discoveries/executions and all twenty integration rows. Every actual recovery/
+transfer/retention/external/native prerequisite chain, native containment and
+eighteen-package/thirteen-lock replay passed strict admission. Input:
+`a5869dfd419f2fcc869633479bc99c4524ad1affa9fec306c8496079583047ea`;
+preparation:
+`f15f9d1ec24f010e0e96d50e15ab3a1aa16c94a46e9bca929e5fca0596fb9c24`.
+These are diagnostic results, not complete T033 or category qualification.
+
+`failures-fixed` and independent `failures-replay` each passed all 295 artifact
+cases and 89 metadata cases per provider without skips. Eleven archives and ten
+actual loaded dependency images reproduce exactly; combined archive-map SHA-256:
+`6ceb368a187a5d85704bfe409a9f71a35c7f071b2d3276223ad465b6ba50a9eb`.
+Previously measured transfer packets remain unchanged, not fresh session/
+category origins or new durable proof. Historical consumers/binaries, tracked
+locks and production APIs remain unchanged.
+
 `handoff` and independent `handoff-replay` preparations each passed 286 artifact
 cases plus 89 metadata cases per provider, without skips. Eleven archives and ten
 actual loaded dependency images reproduce exactly; combined archive-map SHA-256:
