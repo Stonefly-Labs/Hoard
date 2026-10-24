@@ -2838,7 +2838,7 @@ missing exact native scope failed its named tooling regression before wiring.
 The new eighteen-row scope requests 66 scopes/567 observations, pending, not
 complete category/session/profile proof. The preceding authority request binds
 exact head `7ee1c61a26fc9fb55473dcbc1c7890d2675ba579`, run `40120167356`,
-pending separate strict admission. Tooling passed 286 discovered / 269 passed /
+now admitted below. Tooling passed 286 discovered / 269 passed /
 seventeen native macOS skips. SDK/accepted-wrapper whitespace, compiled/frozen
 catalogs and two-body mechanical comparison passed. Task, reviewer-checklist and
 stage acceptance remain open.
@@ -2863,6 +2863,53 @@ admission. Input:
 preparation:
 `6916185a0c4940561f05c14fdf31883391b5f35e4992d35ac28b50e955b6730a`.
 This admits handoff at `70dfdf6`, not the canceled handoff-only run.
+
+Four original metadata/artifact integration bodies now execute interface-only
+shared consumers on all four actual SQLite/Memory and Local/ObjectSemantics
+combinations, preserving sixteen frozen parameter identities. Exact assertion
+tokens/order, waiting/stream/commit/evidence helpers and seed data match
+mechanically after explicit setup/seam/cancellation forwarding. Actual
+composition, proof encoding, waiting counters, M1 hold/entry/release and both
+stores' physical settlement remain fixture-side at the original boundaries.
+The shared consumer retains reference-versus-deletion ordering, failed-
+transaction orphan visibility, actual reference removal/stale-proof rejection
+and lost-acknowledgment reference protection without concrete provider types.
+
+A real-store mutation requires an actual reference-denied deletion before
+misclassifying that result as conflict. The unchanged shared expected-code
+assertion fails on each of the four combinations; exactly one actual deletion
+and observed denial corroborate each negative, and fresh genuine stores pass
+unchanged. Missing shared type first failed actual compilation with CS0246;
+the missing exact twenty-row scope failed its named tooling regression before
+wiring. It requests 67 scopes/587 observations, pending, not complete
+category/session/profile proof or T033 acceptance.
+
+The preceding capability request binds exact head
+`2a7be14b5a32b2a11e28f582448977d89c346778`, run `40120937967`, pending
+separate strict admission. Tooling passed 287 discovered / 270 passed /
+seventeen native macOS skips. SDK/accepted-wrapper whitespace, compiled/frozen
+catalogs, four-body and helper/data mechanical comparisons and patch integrity
+passed. Complete task, reviewer-checklist and stage acceptance remain open.
+
+`integration` and independent `integration-replay` each passed all 293 artifact
+cases plus 89 metadata cases per provider without skips. Eleven archives and
+ten actual loaded dependency images reproduce exactly; combined archive-map
+SHA-256:
+`a2dbaeef9d08c7d257c4111450e711a0f6f6c3e87f97e46cf7c1d3ea296cd154`.
+Previously measured transfer packets remain unchanged, not fresh session/
+category origins. Tracked locks, historical consumers/binaries and production
+APIs are unchanged.
+
+Authority run
+[40120167356](https://github.com/Stonefly-Labs/Hoard/actions/runs/40120167356)
+passed at exact head `7ee1c61a26fc9fb55473dcbc1c7890d2675ba579`: all three
+jobs, 177 foundations without failures/errors/skips, 65 scopes/549 exact
+discoveries/executions and all seven authority rows. Every actual recovery/
+transfer/retention/external/native prerequisite chain, native containment and
+eighteen-package/thirteen-lock replay passed strict admission. Input:
+`8bb1f75b731599fe38faefa2ef2ca84be4debc749f4b3a4cac566a7ae8fff303`;
+preparation:
+`126ca87d840a7576d8ac58b045ba3b14a1627d9ba7fb4542e76e2bca39724cf2`.
 
 `handoff` and independent `handoff-replay` preparations each passed 286 artifact
 cases plus 89 metadata cases per provider, without skips. Eleven archives and ten

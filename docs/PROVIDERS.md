@@ -408,7 +408,8 @@ copied-guard helper. Actual authority creation, clock, waiting/retained counters
 reference completion and drain remain fixture-side. Repairing an actual copied-
 handle rejection through genuine recognized retention fails the unchanged
 failure-type assertion; genuine authority passes. The next seven-row native
-request is 65 scopes/549 observations, pending. Handoff run `40118782562` was
+request passed at `7ee1c61`, run `40120167356`, all three jobs,
+177 foundations and 65 scopes/549 observations. Handoff run `40118782562` was
 canceled while pending, not admitted; later expanded requests retain that scope.
 Both original capability bodies now run shared interface-only checks, with
 sixteen frozen gap parameters and two additional existing complete profiles.
@@ -417,6 +418,14 @@ remain fixture-side. Original rejection-before-I/O, readiness, configured
 limits, optional ranges, SHA-512 and stop checks remain unchanged.
 The next eighteen-row native scope requests 66 scopes/567 observations, pending,
 not full qualification.
+Four original metadata/artifact integration bodies now also use shared checks
+with sixteen frozen parameters over all four SQLite/Memory and Local/
+ObjectSemantics combinations. Actual composition, proof encoding, waiting
+counters, M1 controls and physical settlement stay fixture-side. An actual
+reference-denial result mislabeled as conflict fails the unchanged expected-
+code assertion in every combination; genuine stores pass unchanged.
+The next twenty-row native request is 67 scopes/587 observations, pending,
+not full bindings/category/session or authority-integration task acceptance.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

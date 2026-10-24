@@ -6657,6 +6657,28 @@ readiness, configured limits, optional ranges, SHA-512 and stop/release.
 The next eighteen-row native scope requests 66 scopes/567 observations, pending,
 not complete category/session/profile proof.
 
+Four original metadata/artifact integration bodies now execute shared checks
+across every SQLite/Memory and Local/ObjectSemantics combination, preserving
+sixteen frozen parameters, exact original assertions/order and helpers/data.
+Actual composition, proof encoding, waiting counters, M1 hold/entry/release and
+both stores' physical settlement remain fixture-side. Common checks retain
+reference-versus-deletion ordering, failed transaction orphan visibility, actual
+reference removal and stale-proof rejection, and lost-acknowledgment protection.
+An actual reference denial deliberately mislabeled as conflict fails the
+unchanged expected-code assertion in all four combinations, with exactly one
+actual deletion and denial observed; genuine stores pass unchanged.
+The next twenty-row native request is 67 scopes/587 observations, pending,
+not complete typed bindings, category/session imports or T033 acceptance.
+
+Authority run `40120167356` at exact head
+`7ee1c61a26fc9fb55473dcbc1c7890d2675ba579` passed all three jobs,
+177 foundations without failures/errors/skips, 65 scopes/549 exact discoveries/
+executions, all seven authority rows and every actual recovery/transfer/
+retention/external/native prerequisite plus eighteen-package/thirteen-lock replay.
+Input: `8bb1f75b731599fe38faefa2ef2ca84be4debc749f4b3a4cac566a7ae8fff303`;
+preparation:
+`126ca87d840a7576d8ac58b045ba3b14a1627d9ba7fb4542e76e2bca39724cf2`.
+
 The expanded budget request passed `40119412481` at exact head
 `70dfdf63f59a13ba39d934a7ef09f148bfc58c57`: all three jobs, 176 foundations
 without failures/errors/skips, 64 scopes/542 exact discoveries/executions, all

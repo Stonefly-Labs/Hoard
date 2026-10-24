@@ -1003,6 +1003,19 @@ def artifact_noncooperation_diagnostics(run, inputs, candidate):
     return result
 
 
+def original_artifact_metadata_integration_scenarios():
+    prefix = "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests."
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.startswith(prefix)}
+    identities.update(
+        "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+        "Shared_metadata_reference_assertion_rejects_hidden_denial_and_accepts_original_stores"
+        f'(provider: "{provider}", metadataProvider: "{metadata}")'
+        for provider in ("local", "object") for metadata in ("sqlite", "memory"))
+    return (("original-artifact-metadata-integration", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def original_artifact_capability_scenarios():
     prefix = "Hoard.Artifacts.Tests.ArtifactCapabilityTests."
     identities = {
@@ -1272,7 +1285,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "artifact-noncooperation", "original-artifact-external", "original-artifact-races",
             "original-artifact-reconciliation", "original-artifact-visibility", "original-artifact-history",
             "original-artifact-ownership", "original-artifact-cancellation", "original-artifact-handoff",
-            "original-artifact-budget", "original-artifact-authority", "original-artifact-capability"],
+            "original-artifact-budget", "original-artifact-authority", "original-artifact-capability",
+            "original-artifact-metadata-integration"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1297,7 +1311,8 @@ def test_attempt(run, inputs, candidate, scenario):
             *original_artifact_visibility_scenarios(), *original_artifact_history_scenarios(),
             *original_artifact_ownership_scenarios(), *original_artifact_cancellation_scenarios(),
             *original_artifact_handoff_scenarios(), *original_artifact_budget_scenarios(),
-            *original_artifact_authority_scenarios(), *original_artifact_capability_scenarios()):
+            *original_artifact_authority_scenarios(), *original_artifact_capability_scenarios(),
+            *original_artifact_metadata_integration_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
     sqlite_tests = metadata_provider == "sqlite" or any(
@@ -1708,6 +1723,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "original-artifact-capability"}), flush=True)
         for scenario in original_artifact_capability_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "original-artifact-metadata-integration"}), flush=True)
+        for scenario in original_artifact_metadata_integration_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

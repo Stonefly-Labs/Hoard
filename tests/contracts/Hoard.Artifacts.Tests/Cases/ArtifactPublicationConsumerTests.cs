@@ -231,6 +231,53 @@ public sealed class ArtifactPublicationConsumerTests
         }
     }
 
+    [Theory]
+    [InlineData("local", "sqlite")]
+    [InlineData("local", "memory")]
+    [InlineData("object", "sqlite")]
+    [InlineData("object", "memory")]
+    public async Task Shared_metadata_reference_assertion_rejects_hidden_denial_and_accepts_original_stores(
+        string provider, string metadataProvider)
+    {
+        using (var root = ArtifactMetadataIntegrationTests.PrivateRoot())
+        {
+            await using var session = await Hoard.Fixtures.Artifacts.HostAdapters.ArtifactMetadataFixtureSession
+                .CreateForQualificationAsync(provider, metadataProvider, root.Path);
+            var mutation = new HiddenReferenceDenial(session.Artifacts.Store);
+            var assertions = new ArtifactMetadataIntegrationAssertions(mutation, session.Metadata,
+                session.Artifacts.Identity, session.Artifacts.Authority, session.Publication.Encode);
+            await Assert.ThrowsAsync<Xunit.Sdk.EqualException>(() => assertions.ActualReferencesAsync(default));
+            Assert.Equal(1, mutation.DeleteCalls);
+            Assert.Equal(1, mutation.HiddenDenials);
+        }
+        using (var root = ArtifactMetadataIntegrationTests.PrivateRoot())
+        {
+            await using var session = await Hoard.Fixtures.Artifacts.HostAdapters.ArtifactMetadataFixtureSession
+                .CreateForQualificationAsync(provider, metadataProvider, root.Path);
+            await new ArtifactMetadataIntegrationAssertions(session.Artifacts.Store, session.Metadata,
+                session.Artifacts.Identity, session.Artifacts.Authority, session.Publication.Encode)
+                .ActualReferencesAsync(default);
+        }
+    }
+
+    private sealed class HiddenReferenceDenial(IArtifactStore store) : ForwardingStore(store)
+    {
+        public int DeleteCalls { get; private set; }
+        public int HiddenDenials { get; private set; }
+
+        public override async ValueTask<ArtifactResult<ArtifactMutationReceipt>> DeleteAsync(
+            ArtifactOperationTicket ticket, ArtifactCallOptions options, CancellationToken ct)
+        {
+            DeleteCalls++;
+            var result = await Store.DeleteAsync(ticket, options, ct);
+            if (result is not ArtifactResult<ArtifactMutationReceipt>.Failure { Code: ArtifactFailureCode.Denied } failed)
+            { throw new InvalidOperationException("Mutation requires actual live-reference deletion denial."); }
+            HiddenDenials++;
+            return new ArtifactResult<ArtifactMutationReceipt>.Failure(
+                ArtifactFailureCode.Conflict, failed.Phase, failed.Action, failed.CorrelationId, failed.Ticket, failed.Cleanup);
+        }
+    }
+
     private sealed class MisclassifiedLimit(IArtifactStore store) : ForwardingStore(store)
     {
         public int StageCalls { get; private set; }
@@ -458,7 +505,7 @@ public sealed class ArtifactPublicationConsumerTests
         public ValueTask<ArtifactResult<IArtifactReadSession>> OpenReadAsync(
             ArtifactReadRequest request, ArtifactCallOptions options, CancellationToken ct) =>
             Store.OpenReadAsync(request, options, ct);
-        public ValueTask<ArtifactResult<ArtifactMutationReceipt>> DeleteAsync(
+        public virtual ValueTask<ArtifactResult<ArtifactMutationReceipt>> DeleteAsync(
             ArtifactOperationTicket ticket, ArtifactCallOptions options, CancellationToken ct) =>
             Store.DeleteAsync(ticket, options, ct);
         public virtual ValueTask<ArtifactResult<ArtifactResolution>> ReconcileAsync(

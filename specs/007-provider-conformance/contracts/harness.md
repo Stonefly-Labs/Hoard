@@ -545,6 +545,20 @@ Expanded budget passed `40119412481` at `70dfdf6`, all three jobs,
 176 foundations and 64 scopes/542 observations, including all fourteen handoff
 and eighteen budget rows, actual prerequisite chains and replay. This admits
 handoff at `70dfdf6`, not the canceled handoff-only run.
+Four original metadata/artifact integration bodies now execute shared checks,
+preserving sixteen frozen parameters on all four actual SQLite/Memory and
+Local/ObjectSemantics combinations. Exact assertions/order, waiting/stream/
+commit/evidence helpers and seed data match after explicit forwarding. Actual
+composition, proof encoding, waiting counters, M1 hold/entry/release and both
+stores' physical settlement stay fixture-side. A real reference-denial result
+mislabeled as conflict fails the unchanged expected-code assertion in all four
+combinations. One actual deletion/observed denial per negative corroborates it;
+genuine stores pass unchanged. The next twenty-row native request is
+67 scopes/587 observations, pending, not full typed binding/category/session or
+authority-integration task acceptance.
+Authority passed `40120167356` at `7ee1c61`, all three jobs,
+177 foundations and 65 scopes/549 observations, including all seven authority
+rows, actual prerequisite chains and replay; complete gates remain open.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

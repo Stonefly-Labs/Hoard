@@ -566,6 +566,23 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_metadata_integration_scope_preserves_all_four_actual_combinations(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_metadata_integration_scenarios", None)),
+                        "Shared metadata/artifact integration checks need exact owned wrapper transport.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests."
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.startswith(prefix)}
+        self.assertEqual(len(original), 16)
+        mutations = {
+            "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+            "Shared_metadata_reference_assertion_rejects_hidden_denial_and_accepts_original_stores"
+            f'(provider: "{provider}", metadataProvider: "{metadata}")'
+            for provider in ("local", "object") for metadata in ("sqlite", "memory")}
+        scenario, = checks.original_artifact_metadata_integration_scenarios()
+        self.assertEqual(scenario, ("original-artifact-metadata-integration", tuple(sorted(original | mutations)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_capability_scope_preserves_frozen_gaps_and_existing_complete_profiles(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_capability_scenarios", None)),
                         "Shared capability checks need exact owned wrapper transport.")

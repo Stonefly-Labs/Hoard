@@ -272,6 +272,14 @@ remain fixture-side. The next eighteen-row native request is
 Expanded budget passed `40119412481` at `70dfdf6`, all three jobs,
 176 foundations and 64 scopes/542 observations, including all fourteen handoff
 and eighteen budget rows. This does not admit the canceled handoff-only run.
+Four original metadata/artifact integration bodies now also execute shared
+checks with sixteen frozen parameters on all four actual provider combinations.
+Composition, proof encoding, waiting/M1 controls and physical settlement stay
+fixture-side. Hidden actual reference denials fail the unchanged expected-code
+assertion in each combination; genuine stores pass. The next twenty-row native
+request is 67 scopes/587 observations, pending, not complete qualification.
+Authority passed `40120167356` at `7ee1c61`, all three jobs,
+177 foundations and 65 scopes/549 observations, not complete qualification.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

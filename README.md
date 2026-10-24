@@ -1499,14 +1499,22 @@ Six original authority bodies now also run shared interface-only checks,
 preserving three frozen witnesses, three additional existing facts and the
 copied-guard helper. Repairing an actually rejected copied handle into a real
 recognized retention fails the unchanged failure-type assertion; the genuine
-authority passes. The next seven-row native request is 65 scopes/549 observations,
-pending. Handoff-only run `40118782562` was canceled while pending, not accepted;
+authority passes. The seven-row native request passed at `7ee1c61`, run
+[40120167356](https://github.com/Stonefly-Labs/Hoard/actions/runs/40120167356):
+all three jobs, 177 foundations and 65 scopes/549 observations.
+Handoff-only run `40118782562` was canceled while pending, not accepted;
 later expanded requests include its scope.
 Both original capability bodies now also execute shared interface-only checks,
 preserving sixteen frozen gap parameters and two additional existing complete-
 profile cases. Actual injection, provider creation, filesystem/readiness
 observation and private-root cleanup remain fixture-side. The next eighteen-row native
 request is 66 scopes/567 observations, pending, not complete qualification.
+Four original metadata/artifact integration bodies now also run shared checks
+on all four SQLite/Memory and Local/ObjectSemantics combinations, preserving
+sixteen frozen parameters. Real reference-denial mutations fail the unchanged
+expected-code assertion on each combination; genuine stores pass unchanged.
+The next twenty-row native request is 67 scopes/587 observations, pending;
+complete typed bindings, category/session imports and feature gates remain open.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
