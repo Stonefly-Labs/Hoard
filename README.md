@@ -1382,6 +1382,9 @@ The preceding publication transport is verified on Linux:
 [40103524667](https://github.com/Stonefly-Labs/Hoard/actions/runs/40103524667)
 passed all three jobs, including 53 scopes/398 exact observations and actual
 original publication/mutation execution; this is not complete category evidence.
+The owning controller now has a bounded observed-barrier stop path; its Linux
+signal/exit regressions are pending. It does not yet execute the inherited
+SQLite/Local recovery matrices.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

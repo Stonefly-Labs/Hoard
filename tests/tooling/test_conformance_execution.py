@@ -313,6 +313,87 @@ print('{"event":"control","code":"None","value":1}')
         run.transition("Settling")
         run.release()
 
+    def test_barrier_stop_requires_recovery_events_scope_and_a_bounded_target(self):
+        run = self.workspace()
+        for options in (
+                {"stop_at_barrier": True}, {"stop_at_barrier": -1},
+                {"stop_at_barrier": 65536}, {"stop_at_barrier": 1.0},
+                {"stop_at_barrier": "M0"}, {"stop_at_barrier": 7, "scope": "ordinary"},
+                {"stop_at_barrier": 7, "kind": "build"},
+                {"stop_at_barrier": 7, "timeout": 15.1}):
+            with self.subTest(options=options), mock.patch.object(execution.subprocess, "Popen") as launch:
+                with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                    run.command([sys.executable, "-c", "pass"],
+                                **({"scope": "recovery"} | options))
+                launch.assert_not_called()
+        self.assertEqual(run.command_sequence, 0)
+        run.transition("Settling")
+        run.release()
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_observed_barrier_precedes_owned_signal_and_confirmed_process_tree_exit(self):
+        run = self.workspace()
+        program = (
+            "import subprocess,sys,time; "
+            "subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)']); "
+            "print('{\"event\":\"barrier\",\"code\":\"None\",\"value\":7}',flush=True); time.sleep(60)")
+        result = run.command([sys.executable, "-c", program], scope="recovery", stop_at_barrier=7)
+        self.assertEqual(result.exit_code, -9)
+        self.assertEqual([dict(event) for event in result.events],
+                         [{"event": "barrier", "code": "None", "value": 7}])
+        self.assertFalse(run.live_children())
+        receipt = json.loads((run.root / "proofs/recovery-command-0001.json").read_bytes())
+        self.assertEqual((receipt["exitCode"], receipt["diagnosticCode"], receipt["groupState"]),
+                         (-9, "None", "Exited"))
+        self.assertNotEqual(receipt["childStartSha256"], "0" * 64)
+        barrier = receipt["barrier"]
+        self.assertEqual(set(barrier), {"value", "observedMs", "signalMs"})
+        self.assertEqual(barrier["value"], 7)
+        self.assertLessEqual(receipt["startedMs"], barrier["observedMs"])
+        self.assertLessEqual(barrier["observedMs"], barrier["signalMs"])
+        self.assertLessEqual(barrier["signalMs"], receipt["endedMs"])
+        with mock.patch.object(run, "terminate", return_value=False):
+            with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                run.command([sys.executable, "-c", program], scope="recovery", stop_at_barrier=7)
+        self.assertFalse(run.live_children())
+        run.transition("Settling")
+        run.release()
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_normal_exit_without_the_requested_barrier_is_not_a_crash_proof(self):
+        run = self.workspace()
+        with self.assertRaisesRegex(ConformanceError, "EvidenceIncomplete"):
+            run.command([sys.executable, "-c", "pass"], scope="recovery", stop_at_barrier=7)
+        receipt = json.loads((run.root / "proofs/recovery-command-0001.json").read_bytes())
+        self.assertEqual(receipt["exitCode"], 0)
+        self.assertEqual(receipt["diagnosticCode"], "EvidenceIncomplete")
+        self.assertEqual(receipt["barrier"], {"value": 7, "observedMs": None, "signalMs": None})
+        self.assertFalse(run.live_children())
+        run.transition("Settling")
+        run.release()
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_wrong_repeated_or_unobserved_barriers_cannot_turn_containment_into_success(self):
+        run = self.workspace()
+        for payload, expected in (
+                ('{"event":"barrier","code":"None","value":8}\\n', "ProofMismatch"),
+                ('{"event":"barrier","code":"EvidenceIncomplete","value":7}\\n', "ProofMismatch"),
+                ('{"event":"control","code":"AssertionFailed","value":0}\\n'
+                 '{"event":"barrier","code":"None","value":7}\\n', "ProofMismatch"),
+                ('{"event":"barrier","code":"None","value":7}\\n' * 2, "ProofMismatch"),
+                ("", "DeadlineExceeded")):
+            program = f"import os,time; os.write(1,{payload.encode()!r}); time.sleep(60)"
+            with self.subTest(payload=payload), self.assertRaisesRegex(ConformanceError, expected):
+                run.command([sys.executable, "-c", program], scope="recovery",
+                            stop_at_barrier=7, timeout=0.5)
+            self.assertFalse(run.live_children())
+            receipt = json.loads((run.root / "proofs" /
+                                  f"recovery-command-{run.command_sequence:04}.json").read_bytes())
+            self.assertEqual(receipt["diagnosticCode"], expected)
+            self.assertEqual(receipt["groupState"], "Exited")
+        run.transition("Settling")
+        run.release()
+
     def test_foreign_process_identity_cannot_be_terminated_or_cleaned(self):
         run = self.workspace()
         run.children[os.getpid()] = "0" * 64

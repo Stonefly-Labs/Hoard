@@ -2125,6 +2125,29 @@ child start: `8ca395b6e6656e825bb79bad8c807523e83efba3e2cb96ad0763fecc18478b57`.
 Free scratch: 92,108,894,208 bytes. This verifies publication transport, not the
 subsequent protected-read/deletion/evidence increments or category qualification.
 
+### Observed-barrier owning-controller primitive
+
+`OwnedRun.command(stop_at_barrier=...)` now restricts requested targets to bounded
+integers, recovery/event scope and a fifteen-second ceiling. Safe projection
+observes the matching barrier before checking the exact live child/start identity
+and requesting pidfd group termination. The termination primitive reports
+whether the owned signal was actually accepted. Successful barrier receipts
+require that signal, actual SIGKILL exit and complete group exit; normal exit,
+timeout, wrong/repeated barriers and failure events reject. Parent-recorded
+barrier value/monotonic observation/signal-request times augment the existing
+PID/start/interval/exit evidence only for this opt-in path. Existing command
+behavior and receipt shape are unchanged otherwise.
+
+The missing API was observed failing the new admission test before
+implementation. All 256 tooling tests pass locally (242 passes, fourteen native
+macOS skips), with frozen inventory/catalog and patch-integrity checks passing.
+Three new Linux regressions cover owned tree termination after observation,
+ordinary exit without proof, wrong/repeated/failed/unobserved barriers and
+rejected signal delivery. Their native execution is pending. This is a
+controller prerequisite, not actual SQLite/Local crash-matrix execution or
+T026/T032 completion; runner integration/readback and complete witness
+attribution remain unfinished.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

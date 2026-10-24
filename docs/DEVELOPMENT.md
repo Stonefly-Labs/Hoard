@@ -6198,6 +6198,20 @@ evidence parameters, the relevant quarantine read parameters and the mutation
 pair: 55 scopes/427 observations are requested, pending. Full category bindings,
 origins, safe imports and seventeen external-proof obligations remain open.
 
+The owning controller's opt-in `stop_at_barrier` path admits only a bounded
+numeric target in recovery/event scope, with a fifteen-second ceiling. It
+observes the safe event before verifying the actual child identity and issuing
+owned pidfd group termination. A successful receipt requires that signal to
+have been accepted, actual SIGKILL exit and complete group settlement; ordinary
+exit, timeout, wrong/repeated barriers or any failure event cannot become a
+barrier proof. The parent receipt adds the requested value and monotonic
+observation/signal-request times, not child-declared pass booleans. Normal
+command/recovery behavior and old receipt shapes are unchanged.
+The missing API first failed its admission regression. All 256 tooling tests
+pass locally (242 passes, fourteen native macOS skips); the three new Linux
+process regressions remain pending native execution. This controller primitive
+alone neither drives nor completes the inherited SQLite/Local crash matrices.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

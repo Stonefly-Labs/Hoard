@@ -515,7 +515,7 @@ class OwnedRun:
         self._check_ledger(deadline=deadline)
         if pid not in self.children or process_identity(pid, deadline=deadline) != self.children[pid]:
             raise ConformanceError("OwnershipInvalid")
-        self._terminate_group(pid, deadline)
+        return self._terminate_group(pid, deadline)
 
     def _terminate_group(self, group, deadline):
         if group not in self._group_handles:
@@ -523,11 +523,12 @@ class OwnedRun:
         try:
             signal.pidfd_send_signal(self._group_handles[group], signal.SIGKILL, None, PIDFD_SIGNAL_PROCESS_GROUP)
         except ProcessLookupError:
-            return
+            return False
         except OSError:
             raise ConformanceError("CleanupIncomplete") from None
         while self._group_members(group, deadline=deadline):
             time.sleep(0.01)
+        return True
 
     def _contain(self, child):
         deadline = min(time.monotonic() + 10, self.deadline)
@@ -544,8 +545,13 @@ class OwnedRun:
 
     @single_writer
     def command(self, args, *, cwd=None, timeout=None, kind="events", env=None,
-                scope="ordinary", cache_id="default", deadline=None, discovery_tests=frozenset()):
+                scope="ordinary", cache_id="default", deadline=None, discovery_tests=frozenset(),
+                stop_at_barrier=None):
         started = time.monotonic()
+        if stop_at_barrier is not None and (
+                type(stop_at_barrier) is not int or not 0 <= stop_at_barrier <= 65535
+                or scope != "recovery" or kind != "events"):
+            raise ConformanceError("OwnershipInvalid")
         if kind == "discovery":
             if not isinstance(discovery_tests, frozenset) or not 0 < len(discovery_tests) <= MAX_RESULTS:
                 raise ConformanceError("OwnershipInvalid")
@@ -557,8 +563,9 @@ class OwnedRun:
                     "transfer": 2400, "recovery": 300, "cleanup": 20}
         if scope not in ceilings:
             raise ConformanceError("OwnershipInvalid")
-        timeout = ceilings[scope] if timeout is None else timeout
-        if (type(timeout) not in (int, float) or not 0 < timeout <= ceilings[scope]
+        ceiling = 15 if stop_at_barrier is not None else ceilings[scope]
+        timeout = ceiling if timeout is None else timeout
+        if (type(timeout) not in (int, float) or not 0 < timeout <= ceiling
                 or deadline is not None and (type(deadline) not in (int, float) or not math.isfinite(deadline))):
             raise ConformanceError("OwnershipInvalid")
         reserve = 0 if scope == "cleanup" else 40
@@ -624,6 +631,7 @@ class OwnedRun:
         failure = None
         identity = None
         exited = False
+        barrier = {"value": stop_at_barrier, "observedMs": None, "signalMs": None}
 
         def observe(line):
             nonlocal retained
@@ -642,6 +650,18 @@ class OwnedRun:
                     raise ConformanceError("OutputLimitExceeded")
                 events.append(event)
                 retained += size
+                if stop_at_barrier is not None and event["code"] != "None":
+                    raise ConformanceError("ProofMismatch")
+                if stop_at_barrier is not None and event["event"] == "barrier":
+                    if barrier["observedMs"] is not None or event["value"] != stop_at_barrier:
+                        raise ConformanceError("ProofMismatch")
+                    barrier["observedMs"] = time.monotonic() * 1000
+                    if (identity is None or child.poll() is not None
+                            or process_identity(child.pid, deadline=deadline) != identity):
+                        raise ConformanceError("OwnershipInvalid")
+                    barrier["signalMs"] = time.monotonic() * 1000
+                    if not self.terminate(child.pid, deadline=deadline):
+                        raise ConformanceError("OwnershipInvalid")
 
         try:
             self.groups.add(child.pid)
@@ -725,6 +745,9 @@ class OwnedRun:
                 self._persist()
         if failure is None and time.monotonic() >= deadline:
             failure = ConformanceError("DeadlineExceeded")
+        if failure is None and stop_at_barrier is not None and (
+                barrier["signalMs"] is None or child.returncode != -signal.SIGKILL or not exited):
+            failure = ConformanceError("EvidenceIncomplete")
         if failure is not None:
             events.append(MappingProxyType({
                 "event": "control", "code": str(failure) if isinstance(failure, ConformanceError)
@@ -740,6 +763,7 @@ class OwnedRun:
                 "diagnosticCode": ("None" if failure is None else
                                    str(failure) if isinstance(failure, ConformanceError) else "EvidenceIncomplete"),
                 "groupState": "Exited" if exited else "Retained", "scope": scope,
+                **({"barrier": barrier} if stop_at_barrier is not None else {}),
             })
             directory = self._directory_descriptor("proofs")
             try:

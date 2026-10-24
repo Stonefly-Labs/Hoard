@@ -315,6 +315,15 @@ tests and 252 non-external-proof artifact tests without skips. A new 23-identity
 scope preserves original evidence/quarantine parameters and the mutation pair,
 expanding the pending native request to 55 scopes/427 observations. This is
 diagnostic evidence, not full category/binding/session-origin completion.
+The owning controller now exposes opt-in bounded `stop_at_barrier` recovery
+commands. Safe event observation precedes actual child identity verification and
+owned pidfd group signaling; success requires accepted signal, actual SIGKILL
+exit and complete observed group exit. Wrong/repeated/missing barriers, failure
+events, timeout and ordinary exit reject. Parent receipts bind the requested
+numeric target and monotonic observation/signal-request times to existing exact
+PID/start/exit evidence. Existing command receipts remain unchanged when the
+option is absent. Linux process regressions are pending; this primitive is not
+execution of the inherited recovery matrices or category proof.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
