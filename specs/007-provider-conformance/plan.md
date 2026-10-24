@@ -1602,6 +1602,46 @@ exclusion wrapper observes U1, whereas the existing SDK's `BeforeSchemaUpgrade`
 mapping observes U0. Full parity must preserve the original U1 subproof rather
 than silently substituting the new hook. T019/T021..T026 remain unchecked.
 
+### Preserve the actual writer-held schema exclusion boundary
+
+The new real-connection regression initially observed `BeforeSchemaUpgrade`
+at U0. An independent `BEGIN IMMEDIATE` succeeded, failing the named expected
+SQLite BUSY (5) assertion with actual null. The repair adds the distinct
+`SchemaCandidatePrepared` enum member at the end, preserving existing values
+and U0 semantics. SQLite maps it to U1 after candidate-table creation within
+the native write transaction; Memory maps it to its real upgrade decision.
+The unchanged shared exclusion consumer and original MP-35 use that boundary,
+with concrete hook names remaining fixture-private.
+
+Final formatted archives pass 180 selected SDK/binding tests without skips.
+The independent original-wrapper preparation/default locked replay reproduces
+eight archives and exact seven dependency DLLs plus the separate Application
+DLL. Its SDK archive is byte-identical to the seven-archive binding feed.
+All 11 original schema/observer tests pass without skips against each provider.
+Only the SDK content hash changes in the tracked predecessor test lock; its
+dependency graph, all other entries and historical pins remain unchanged.
+Tooling243 passes (232 passed, eleven native macOS skips), frozen catalogs and
+focused whitespace checks pass. The requested native vector grows to
+50 scopes/255 observations, including 85 SQLite identities; its Linux execution
+is pending. This repairs the focused U1 parity gap, not complete extraction,
+abrupt recovery or exact origin/controller ingestion. T019/T021..T026 remain
+unchecked.
+
+Earlier native run
+[40068886475](https://github.com/Stonefly-Labs/Hoard/actions/runs/40068886475)
+at `5528ecd0042e2efe38cbcbc2d02ee2824859f1ca` passed all three jobs: 136
+foundation checks without failures/errors/skips, 50 scopes/254 observations,
+actual native containment, six baselines and identical eighteen-package/
+thirteen-lock replay. Free scratch: 92,109,242,368 bytes. Input:
+`b48a18e304c759ec50856c694fc1de816180c0006c5d34f158e6e88d70666d04`;
+preparation: `6a97865603dadee2f809ac3d0f1364a04959f2967ade03a06b9e8ec5fd898551`;
+producer: `fecbaafa13859dbd633a934adffc4495727ebff678424eddf9e9bbb68593d8c9`;
+controller: `67e7e728fd8319965925e02492558e2fe3caa76eff96831a979c8ceb100b2cf3`;
+child start: `f6eac5a379d3d34ccde54da8bb0696b3cdadf3d07f41255bc383bf2fdc087b1a`;
+baseline seal: `41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`.
+That run does not execute original predecessor wrappers or the new U1
+regression. SQLite remains 3.53.3 with unchanged pinned native provenance.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

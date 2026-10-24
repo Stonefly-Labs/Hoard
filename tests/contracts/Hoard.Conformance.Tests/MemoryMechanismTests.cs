@@ -822,7 +822,7 @@ public sealed class MemoryMechanismTests
                 MetadataObservationPoint.MutationApplied => "mutation.applied",
                 MetadataObservationPoint.ReadItem => "read.item",
                 MetadataObservationPoint.BeforeReconciliationDecision => "reconcile.before_decision",
-                MetadataObservationPoint.BeforeSchemaUpgrade => "memory.upgrade.before_decision",
+                MetadataObservationPoint.BeforeSchemaUpgrade or MetadataObservationPoint.SchemaCandidatePrepared => "memory.upgrade.before_decision",
                 _ => throw new ArgumentException("BindingInvalid")
             };
             if (!observers.TryAdd(key, observer)) { throw new ArgumentException("BindingInvalid"); }

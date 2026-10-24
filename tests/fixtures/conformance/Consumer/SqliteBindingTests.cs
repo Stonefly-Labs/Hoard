@@ -316,6 +316,50 @@ public sealed class SqliteBindingTests
         Assert.All(resources.Settlements.Values, task => Assert.True(task.IsCompletedSuccessfully));
     }
 
+    [Fact]
+    public async Task Schema_exclusion_observation_retains_the_native_writer_after_candidate_creation()
+    {
+        await using var resources = new RecordingDirectories();
+        await using var legacy = await new SqliteBinding(new string('a', 64)).CreateLegacySessionAsync(Context(resources), default);
+        Success(await legacy.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        await using var current = await legacy.ReopenAsync(default);
+        var inspection = Success(await current.Schema.InspectAsync(new(), default));
+        var point = await current.Faults.AuthorizeUpgradeAsync(default);
+        int? code = null;
+        var calls = 0;
+        await using var observation = await current.Faults.ObserveBoundaryAsync(
+            MetadataObservationPoint.SchemaCandidatePrepared, () =>
+            {
+                calls++;
+                using var independent = new Microsoft.Data.Sqlite.SqliteConnection(
+                    new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder
+                    {
+                        DataSource = Path.Combine(Assert.Single(resources.Directories).DirectoryPath, "metadata.db"),
+                        Pooling = false,
+                        DefaultTimeout = 1
+                    }.ConnectionString);
+                independent.Open();
+                using var command = independent.CreateCommand();
+                command.CommandText = "BEGIN IMMEDIATE";
+                try
+                {
+                    command.ExecuteNonQuery();
+                }
+                catch (Microsoft.Data.Sqlite.SqliteException error)
+                {
+                    code = error.SqliteErrorCode;
+                    return ValueTask.CompletedTask;
+                }
+                command.CommandText = "ROLLBACK";
+                command.ExecuteNonQuery();
+                return ValueTask.CompletedTask;
+            }, default);
+        Success(await current.Schema.PrepareAsync(
+            new MetadataSchemaRequest.Upgrade(point.SchemaVersion, inspection.TargetVersion, point), new(), default));
+        Assert.Equal(1, calls);
+        Assert.Equal(5, code);
+    }
+
     private static ConformanceRunContext Context(RecordingDirectories resources) => new(
         Guid.NewGuid(), "arbitrary-case-not-a-setup-selector", new MetadataConformanceClock(new(1_800_000_000_000)),
         resources, new ConformanceEvidenceBuffer());

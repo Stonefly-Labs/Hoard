@@ -50,6 +50,13 @@ corruption, schema and malformed-continuation extraction remains unfinished.
 Actual callback retention, duplicate/replacement ownership, cancelled/unknown
 requests and schema-hook invocation have focused package-backed checks.
 Existing synchronous fixture helpers remain caller-owned.
+The shared and original MP-35 exclusion checks now select the distinct
+`SchemaCandidatePrepared` hook, preserving SQLite U1 with its native writer
+held; the older U0 observation is unchanged. A real second connection must
+receive BUSY (5). Final package checks pass 180 binding/SDK tests and 11 original
+schema/observer tests per provider without skips. The expanded 50-scope/
+255-observation Linux request remains pending; complete extraction and recovery
+are still unfinished.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

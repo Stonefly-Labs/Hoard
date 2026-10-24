@@ -99,6 +99,18 @@ suite passed against both providers; after adding the actual schema-hook check
 and SDK-canary assertion, all 16 affected tests passed against each provider.
 Only the additive HostAdapters fixture archive changed; SDK/provider/platform
 archives and repository/historical locks remain unchanged by this increment.
+The subsequent schema-boundary repair adds `SchemaCandidatePrepared`: SQLite
+maps it to U1 after candidate creation with the native writer held, while its
+existing `BeforeSchemaUpgrade` remains U0 before the transaction. Memory maps
+both observations to its actual upgrade decision. The unchanged shared
+exclusion consumer and original MP-35 now select the distinct candidate hook.
+A second real SQLite connection must receive BUSY (5); the regression failed
+at U0 before repair. Final packages pass 180 selected binding/SDK tests and
+11 original schema/observer tests per provider without skips. Fresh locked
+eight-archive replay reproduces exact DLLs; only the tracked SDK archive hash
+changes, preserving the predecessor dependency graph and all other lock entries.
+The requested Linux vector becomes 50 scopes/255 observations, including
+85 SQLite identities; execution of this expanded vector remains pending.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

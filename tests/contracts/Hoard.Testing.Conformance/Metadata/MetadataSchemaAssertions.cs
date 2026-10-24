@@ -98,7 +98,7 @@ public static class MetadataSchemaAssertions
         var request = new MetadataSchemaRequest.Upgrade(point.SchemaVersion, inspection.TargetVersion, point);
         await using var barrier = new MetadataConformanceBarrier();
         await using var observation = await current.Faults.ObserveBoundaryAsync(
-            MetadataObservationPoint.BeforeSchemaUpgrade, barrier.HoldAsync, cancellationToken);
+            MetadataObservationPoint.SchemaCandidatePrepared, barrier.HoldAsync, cancellationToken);
         var first = current.Schema.PrepareAsync(request, new(), cancellationToken).AsTask();
         Task<MetadataResult<MetadataSchemaAdmission>>? second = null;
         try

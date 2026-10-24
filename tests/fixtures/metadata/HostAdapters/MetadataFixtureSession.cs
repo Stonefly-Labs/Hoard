@@ -57,6 +57,14 @@ public sealed class MetadataFixtureSession : IAsyncDisposable
             _ => throw new InvalidOperationException("Unknown metadata fixture.")
         }, observer);
 
+    public IAsyncDisposable ObserveSchemaCandidatePrepared(Func<ValueTask> observer) =>
+        Controls.RegisterObserver(Store switch
+        {
+            SqliteMetadataStore => "U1",
+            MemoryMetadataStore => "memory.upgrade.before_decision",
+            _ => throw new InvalidOperationException("Unknown metadata fixture.")
+        }, observer);
+
     public static MetadataFixtureSession Create(string provider, TimeProvider clock, string? databasePath = null,
         int initialSchema = 0, string compatibleSchema = "fixture-sqlite-v2") =>
         new(provider, clock, databasePath, initialSchema, compatibleSchema);

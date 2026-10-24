@@ -53,7 +53,7 @@ internal sealed partial class MemoryMetadataFaults(
             MetadataObservationPoint.MutationApplied => "mutation.applied",
             MetadataObservationPoint.ReadItem => "read.item",
             MetadataObservationPoint.BeforeReconciliationDecision => "reconcile.before_decision",
-            MetadataObservationPoint.BeforeSchemaUpgrade => "memory.upgrade.before_decision",
+            MetadataObservationPoint.BeforeSchemaUpgrade or MetadataObservationPoint.SchemaCandidatePrepared => "memory.upgrade.before_decision",
             _ => throw new ArgumentException("BindingInvalid")
         }, observer, cancellationToken);
 

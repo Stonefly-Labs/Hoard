@@ -285,7 +285,10 @@ SCENARIOS = (
           for partial in ("False", "True")),
         *(SQLITE_BINDING_PREFIX
           + 'Explicit_legacy_factory_executes_unchanged_schema_consumers_on_the_same_database(consumer: "' + consumer + '")'
-          for consumer in ("upgrade", "invalid-upgrade", "upgrade-contention"))), "None", "Passed", 0, "None"),
+          for consumer in ("upgrade", "invalid-upgrade", "upgrade-contention")),
+        SQLITE_BINDING_PREFIX
+        + "Schema_exclusion_observation_retains_the_native_writer_after_candidate_creation"),
+     "None", "Passed", 0, "None"),
     ("sqlite-ownership", tuple(SQLITE_BINDING_PREFIX + method for method in (
         "Cancelled_reopen_preserves_the_original_root_and_genuine_pending_worker_for_disposal",
         "Future_and_corrupt_schemas_reject_after_actual_same_database_reopen",

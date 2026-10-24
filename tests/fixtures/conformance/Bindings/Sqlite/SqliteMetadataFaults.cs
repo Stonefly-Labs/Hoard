@@ -54,6 +54,7 @@ internal sealed partial class SqliteMetadataFaults(
             MetadataObservationPoint.ReadItem => "read.item",
             MetadataObservationPoint.BeforeReconciliationDecision => "reconcile.before_decision",
             MetadataObservationPoint.BeforeSchemaUpgrade => "U0",
+            MetadataObservationPoint.SchemaCandidatePrepared => "U1",
             _ => throw new ArgumentException("BindingInvalid")
         }, observer, cancellationToken);
 

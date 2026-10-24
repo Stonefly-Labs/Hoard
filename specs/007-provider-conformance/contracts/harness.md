@@ -175,6 +175,17 @@ propagates cancellation to managed reads. Schema-hook names remain fixture-
 private; this partial bridge does not prove unchanged schema-exclusion/barrier
 parity or replace the original SQLite U1 exclusion witness.
 
+The subsequent additive `SchemaCandidatePrepared` observation preserves that
+U1 witness: SQLite holds its native write transaction after creating the
+candidate schema; Memory observes its actual upgrade decision. The existing
+`BeforeSchemaUpgrade` mapping remains SQLite U0 before transaction acquisition.
+Both the common exclusion consumer and original MP-35 use the candidate hook.
+A provider-specific real-connection regression requires SQLite BUSY (5) at
+that boundary; it failed when observing U0. Final package checks pass 180
+binding/SDK tests and 11 original schema/observer tests per provider.
+The expanded Linux request is 50 scopes/255 observations (85 SQLite identities),
+pending native execution; it does not establish full recovery/parity acceptance.
+
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,

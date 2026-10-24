@@ -5899,6 +5899,28 @@ wrapper/fixture whitespace checks pass. Full schema/corruption/control parity
 and safe origin imports remain open; SQLite's original U1 exclusion witness is
 not replaced by the new SDK U0 mapping.
 
+The next focused repair preserves both boundaries explicitly:
+`BeforeSchemaUpgrade` remains SQLite U0 before the transaction;
+`SchemaCandidatePrepared` observes U1 after candidate creation with the native
+writer held. Memory maps both to its real decision boundary. The shared
+exclusion consumer and original MP-35 now select the candidate hook. A real
+second connection initially acquired `BEGIN IMMEDIATE` at U0, failing the
+expected SQLite BUSY (5) assertion; the U1 repair passes.
+Final formatted packages pass 180 selected SDK/binding tests and 11 original
+schema/observer tests per provider without skips. An independent empty-cache
+locked replay reproduces all eight archives and actual dependency DLLs; its
+SDK archive is identical to the seven-archive binding feed. Only the SDK hash
+changes in the tracked predecessor test lock, not its graph or other pins.
+The expanded native request is 50 scopes/255 observations, including 85 SQLite
+identities; that vector has not yet been observed on Linux.
+
+Native run
+[40068886475](https://github.com/Stonefly-Labs/Hoard/actions/runs/40068886475)
+at `5528ecd` independently passed all three jobs: 136 foundation checks without
+failures/errors/skips, the earlier 50/254 vector, native containment and identical
+eighteen-package/thirteen-lock replay. It does not run the original predecessor
+wrapper suite or the new candidate-boundary regression.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

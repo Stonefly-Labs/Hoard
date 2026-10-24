@@ -1281,6 +1281,13 @@ tests against each provider. Five further control-dependent wrappers now share
 atomicity/publication consumers through scoped observation registration.
 Unregistering a hook neither removes a newer owner nor settles an active
 callback. Full wrapper extraction/parity is unfinished.
+The shared schema-exclusion consumer now preserves the original SQLite U1
+writer-held boundary through a distinct `SchemaCandidatePrepared` observation;
+the existing pre-transaction U0 hook is unchanged. A real second connection
+must observe SQLite BUSY (5). Focused final-package checks pass 180 binding/SDK
+tests and 11 original schema/observer tests per provider, without skips.
+The expanded Linux diagnostic requests 50 scopes/255 observations; that new
+vector awaits native execution and is not category qualification.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

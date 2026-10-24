@@ -78,8 +78,10 @@ public sealed class MetadataObservationTests
             MetadataObservationPoint.BeforeCommitDecision, () => ValueTask.CompletedTask, default);
     }
 
-    [Fact]
-    public async Task Typed_schema_upgrade_observation_runs_on_the_actual_provider_boundary()
+    [Theory]
+    [InlineData(MetadataObservationPoint.BeforeSchemaUpgrade)]
+    [InlineData(MetadataObservationPoint.SchemaCandidatePrepared)]
+    public async Task Typed_schema_upgrade_observation_runs_on_the_actual_provider_boundary(MetadataObservationPoint boundary)
     {
         var provider = Environment.GetEnvironmentVariable("HOARD_METADATA_PROVIDER")
             ?? throw new InvalidOperationException("Metadata acceptance requires an explicit provider.");
@@ -90,7 +92,7 @@ public sealed class MetadataObservationTests
         var point = await current.AuthorizeUpgradeAsync();
         var calls = 0;
         await using var registration = await CommonObservations(current)(
-            MetadataObservationPoint.BeforeSchemaUpgrade, () => { calls++; return ValueTask.CompletedTask; }, default);
+            boundary, () => { calls++; return ValueTask.CompletedTask; }, default);
         Success(await current.Schema.PrepareAsync(new MetadataSchemaRequest.Upgrade(
             point.SchemaVersion, point.SchemaVersion.Replace("-v1", "-v2", StringComparison.Ordinal), point), new(), default));
         Assert.Equal(1, calls);

@@ -16,6 +16,8 @@ internal static class MetadataCases
             cancellationToken.ThrowIfCancellationRequested();
             if (point == MetadataObservationPoint.BeforeSchemaUpgrade)
             { return ValueTask.FromResult(fixture.ObserveBeforeSchemaUpgrade(observer)); }
+            if (point == MetadataObservationPoint.SchemaCandidatePrepared)
+            { return ValueTask.FromResult(fixture.ObserveSchemaCandidatePrepared(observer)); }
             var boundary = point switch
             {
                 MetadataObservationPoint.BeforeCommitDecision => "M0",
