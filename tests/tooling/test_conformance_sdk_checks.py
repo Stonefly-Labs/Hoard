@@ -574,6 +574,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             prefix + f'Owned_local_projection_executes_unchanged_common_consumers(consumer: "{consumer}")'
             for consumer in ("publication", "expectations", "private-staging")}
         identities.update(prefix + method for method in (
+            "All_typed_observation_points_can_be_registered_together_and_removed_without_overwrite",
             "Scoped_observation_cannot_overwrite_a_live_registration_or_remove_its_replacement",
             "Local_reopen_keeps_identity_authority_content_and_allocation_without_stale_disposal",
             "Physical_store_stop_cannot_release_a_live_authority_guard_or_erase_retained_observation",
@@ -603,6 +604,16 @@ class SdkDiagnosticTests(unittest.TestCase):
         scenario, = factory()
         self.assertEqual(scenario, ("original-artifact-authority-ownership", tuple(sorted(identities)),
                                     "None", "Passed", 0, "None"))
+
+    def test_artifact_observation_scope_requires_actual_independent_transition_cases(self):
+        prefix = "Hoard.Artifacts.Tests.ArtifactObservationTests."
+        identities = tuple(sorted(prefix + method + f'(provider: "{provider}")' for method in (
+            "Persisted_receipt_boundary_exposes_the_same_actual_reconciled_receipt",
+            "Failed_opened_read_callback_reclaims_real_stream_guard_and_single_transfer_slot",
+            "Verified_reconciliation_callback_failure_keeps_actual_uncertain_publication_recoverable")
+            for provider in ("local", "object")))
+        scenario, = checks.artifact_observation_scenarios()
+        self.assertEqual(scenario, ("original-artifact-observations", identities, "None", "Passed", 0, "None"))
 
     def test_owned_artifact_scopes_discover_their_actual_distinct_assemblies(self):
         candidate = self.directory / "candidate"
@@ -1640,7 +1651,27 @@ class SdkDiagnosticTests(unittest.TestCase):
         def capture(group_id=None):
             return checks.make_inputs(run, repository, candidate, sources,
                                       environment, identity, None, group_id=group_id)
+        unconsumed = runtime / "unused-native-build.a"
+        with unconsumed.open("wb") as output:
+            output.truncate(checks.evidence.MAX_PROOF_BYTES + 1)
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+            checks.evidence.proof_manifest(candidate)
         before = capture()
+        selected_large = runtime / "Oversized.dll"
+        with selected_large.open("wb") as output:
+            output.truncate(checks.evidence.MAX_PROOF_BYTES + 1)
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+            capture(before["invocationGroupId"])
+        selected_large.unlink()
+        foreign_native = native.parent.parent.parent / "linux-arm64/native/libe_sqlite3.so"
+        foreign_native.parent.mkdir(parents=True)
+        foreign_native.write_bytes(b"unexecuted architecture")
+        self.assertEqual(dict(before["runtimeAssemblies"]), dict(capture(before["invocationGroupId"])["runtimeAssemblies"]))
+        foreign_native.unlink()
+        foreign_native.symlink_to(native)
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+            capture(before["invocationGroupId"])
+        foreign_native.unlink()
         self.assertEqual(len(before["packages"]), 15)
         self.assertNotIn(str(self.directory).encode(), checks.evidence.canonical_bytes(before))
         for path in (native, wrapped, artifact_wrapped, artifact_consumer,

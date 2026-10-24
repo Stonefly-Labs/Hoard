@@ -3448,7 +3448,77 @@ Only T001–T018 remain checked; complete Local/Object category bindings and
 controls, parity/import/profile gates, contributor/aggregate work and final
 architecture review remain unfinished. No convergence, finish, merge or release.
 
+### Actual Object observation transitions and bounded consumed-input capture
+
+The next bounded architecture review recommends sharing only internal owned-
+session lifecycle machinery between bindings, with provider construction/control
+mapping independent. Local compatible reopen must retain identity/authority;
+Object logical restart must instead join the old generation before creating a
+fresh epoch/authority/private child, keeping original-session identity immutable
+and retaining failed replacements under the original cleanup handle. This
+coordinator/Object session is still planned, not implemented.
+
+Review identified missing Object transition hooks and a sixteen-observer ceiling
+incompatible with the seventeen-point typed surface. Both fixture dictionaries
+are already finitely bounded by their closed supported-name sets. Removing the
+contradictory count limit admits every supported registration without admitting
+unknown names; session-level duplicate/replacement protection remains unchanged.
+The new complete-registration Local case first failed with fourteen existing
+cases passing. All fifteen now pass, including actual invocation and removal.
+
+Four Object hooks now expose actual receipt recording, opened streams and
+reconciliation before/after verification. They do not alias `object.direct`,
+which occurs before those distinct transitions. Receipt notification follows
+actual in-memory simulation receipt recording; no durability is invented.
+Read-open notification stays inside the existing stream/guard/slot cleanup
+scope, and verified notification follows actual content verification before
+final recovery recording. Three provider-free consumers run on both choices,
+checking real receipt equality while notification is held, reclamation after
+opened-read callback failure under one transfer slot, and actual uncertain-
+publication recovery after verified callback failure. The deletion fixture
+explicitly supplies a successful zero-reference decision; its original default
+authority correctly denied deletion rather than proving a resource leak.
+All 306 artifact and 89 metadata cases per choice pass without skips.
+
+Native run
+[40131392286](https://github.com/Stonefly-Labs/Hoard/actions/runs/40131392286)
+at exact head `88c5d0182ad68dd65006e2ae3c86f3dce90a4525` passed 190
+foundations without failures/errors/skips and eighteen-package/thirteen-lock
+replay, but failed SDK diagnostics pre-runtime with `ProofMismatch` after
+locked build replay. Preparation proof:
+`9936626469727a04d13147f3e510ea336ec32f3cfe5a82d97b318a4645a1a11c`.
+No runtime input receipt, authority/Local discovery or passing diagnostic is
+admitted for this run.
+
+Candidate enumeration previously hashed all copied outputs before selecting
+runtime inputs, allowing unconsumed build/native assets to exhaust the bounded
+inventory. It now selects the existing consumed managed/runtime formats,
+admitted-architecture native assets and all locks during the same descriptor-
+safe traversal. It does not increase the default 256 MiB, file-count or time
+caps. Full manifests remain strict; every tree entry still receives type/
+identity/race checks, including excluded-architecture symlinks. All source,
+package, selected-native, lock and recomputation seals remain. A sparse
+unconsumed archive above the old limit reproduces full-manifest rejection but
+no longer blocks selected capture; an oversized selected DLL still rejects,
+selected native mutation still invalidates inputs, and a foreign-native symlink
+still rejects. New phase markers distinguish actual SQLite environment
+admission from runtime capture. The native failure's exact source is not
+claimed confirmed until replacement evidence is available.
+
+Two independent preparations each passed all 306 artifact cases, fifteen Local
+Consumer cases and 89 metadata cases per choice without skips. The reproduced
+fifteen-archive map is
+`bc1945e3f1ad5f5b9a7425aef9e026faea3a62909c925e7d6c67913a206a29a5`;
+ten Consumer dependency images match their actual archives. Tooling passes
+299 discovered / 282 passed /
+seventeen macOS-native skips; whitespace, frozen/compiled catalogs and patch
+checks pass. Replacement execution requests 191 foundations and 76 scopes/
+643 observations, pending. This remains partial F-07 implementation, not
+complete Local/Object bindings, category/profile gates or a 192/179/13 result.
+Tracked locks, historical seals and reviewer-owned checklists remain unchanged.
+
 ## Summary
+
 
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately

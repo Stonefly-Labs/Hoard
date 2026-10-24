@@ -23,7 +23,7 @@ public sealed class LocalFaultControls
         => InitializationFailure = error.GetType().Name + ":" + error.TargetSite?.Name;
     public void SetObserver(string point, Func<ValueTask> observer)
     {
-        if (!Points.Contains(point) || observers.Count >= 16) { throw new ArgumentException("Invalid local fixture boundary."); }
+        if (!Points.Contains(point)) { throw new ArgumentException("Invalid local fixture boundary."); }
         ArgumentNullException.ThrowIfNull(observer);
         observers[point] = observer;
     }

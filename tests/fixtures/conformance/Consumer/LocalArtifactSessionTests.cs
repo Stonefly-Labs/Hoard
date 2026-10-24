@@ -10,6 +10,36 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 
 public sealed class LocalArtifactSessionTests
 {
+    [Fact]
+    public async Task All_typed_observation_points_can_be_registered_together_and_removed_without_overwrite()
+    {
+        await using var resources = new RecordingDirectories();
+        await using var session = await LocalArtifactAssertionSessions.CreateAsync(Context(resources), default);
+        var arrivals = new ConcurrentQueue<ArtifactObservationPoint>();
+        var registrations = new List<IAsyncDisposable>();
+        try
+        {
+            foreach (var point in Enum.GetValues<ArtifactObservationPoint>())
+            {
+                registrations.Add(await session.ObserveBoundaryAsync(point, () =>
+                {
+                    arrivals.Enqueue(point);
+                    return ValueTask.CompletedTask;
+                }, default));
+            }
+            await ArtifactPublicationAssertions.UnknownLengthAndRealEofAsync(session.Store, default);
+            Assert.Contains(ArtifactObservationPoint.StageVerified, arrivals);
+            Assert.Contains(ArtifactObservationPoint.ReceiptPersisted, arrivals);
+        }
+        finally
+        {
+            foreach (var registration in registrations) { await registration.DisposeAsync(); }
+        }
+        var observed = arrivals.Count;
+        await ArtifactPublicationAssertions.UnknownLengthAndRealEofAsync(session.Store, default);
+        Assert.Equal(observed, arrivals.Count);
+    }
+
     [Theory]
     [InlineData("publication")]
     [InlineData("expectations")]

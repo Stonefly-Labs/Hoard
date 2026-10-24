@@ -6851,6 +6851,45 @@ frozen inventory, compiled catalogs and patch checks pass. Replacement native
 execution requests 75 scopes/636 observations, pending. T027–T030 and full
 category/profile gates remain open; the stage remains `implement / running`.
 
+The next owned-Object design review identified missing genuine transition hooks
+and an observer-capacity contradiction: seventeen typed Local points could not
+all register under a sixteen-callback ceiling. Closed supported-name sets
+already bound both fixture dictionaries, so every supported observer can now
+coexist without admitting unknown names. A new Local case first failed with
+fourteen existing cases passing; all fifteen now pass.
+
+Object receipt/read/reconciliation callbacks now occur at distinct actual
+transitions, not aliases of the earlier `object.direct` boundary. Receipt
+notification follows actual recording, opened-read notification is inside
+stream/guard/transfer reclamation, and reconciliation notification follows
+actual content verification. Three provider-free consumers execute six actual
+Local/Object rows. The single-slot callback-failure fixture supplies an explicit
+successful zero-reference decision: its first deletion attempt correctly failed
+under the default fail-closed authority, not because resources leaked.
+All 306 artifact cases and both 89-case metadata choices pass without skips.
+This prepares real controls; the Object owned session/shared coordinator is
+still unimplemented.
+
+Native run `40131392286` at exact head
+`88c5d0182ad68dd65006e2ae3c86f3dce90a4525` passed 190 foundations without
+failures/errors/skips and eighteen-package/thirteen-lock replay, but SDK
+diagnostics failed pre-runtime with `ProofMismatch` after locked build replay.
+No authority/Local discovery or passing receipt is admitted for that run.
+
+Diagnostic inventory now hashes consumed managed/runtime formats, admitted-
+architecture native assets and every lock, rather than all copied build assets.
+The full-tree walk still rejects symlinks/special entries and identity races,
+including excluded-architecture symlinks; source/lock/package seals and input
+recomputation remain. Default full manifests and the existing 256 MiB/file/time
+limits are unchanged. A sparse unconsumed build archive over the existing limit
+reproduces the old rejection and now leaves selected inputs unchanged; an
+oversized selected DLL still rejects. New phase markers separate actual SQLite
+environment admission from runtime inventory capture so replacement failures
+remain diagnosable. Native diagnosis is not claimed closed before replacement
+execution. Tooling passes 299 discovered / 282 passed / seventeen macOS-native
+skips; the next request is 191 native foundations and 76 scopes/643 observations,
+pending, not full category/profile acceptance.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

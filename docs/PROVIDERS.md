@@ -506,8 +506,26 @@ same actual task; observer failures remain faulted after physical joins rather
 than becoming successful cleanup. It never deletes roots or reports `Released`.
 Both providers separately track release-callback settlement from public
 operation admission, preserving inherited cancellation/handoff/capacity checks.
-Fourteen package-only Local cases and two common Local/Object callback cases
-pass; the replacement native request is 75 scopes/636 observations, pending.
+Fifteen package-only Local cases and two common Local/Object callback cases
+pass. All seventeen typed observers can coexist: closed supported-name sets
+already impose a finite bound, so the contradictory sixteen-callback ceiling
+is removed on both fixtures.
+
+Object now has distinct actual receipt-recorded, read-opened and reconciliation
+before/verified hooks. Receipt notification follows the actual receipt mutation;
+opened-read notification remains inside stream/guard/transfer cleanup ownership;
+verified notification follows actual content verification. Six common Local/
+Object checks retain real receipt equality, reclaim resources after callback
+failure with one transfer slot and recover actual uncertain publication after
+verified-callback failure. The deletion fixture explicitly supplies a successful
+zero-reference decision; the default authority correctly denies unproven deletion.
+This does not implement the Object owned session or complete fault driver.
+
+Run `40131392286` at `88c5d01` passed foundations/lock replay but failed
+pre-runtime with `ProofMismatch`; it is not admitted. Input enumeration now
+hashes consumed managed/runtime images, active-architecture native assets and
+all locks under unchanged bounds, retaining full-tree symlink/type/race checks.
+Replacement native execution requests 76 scopes/643 observations, pending.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

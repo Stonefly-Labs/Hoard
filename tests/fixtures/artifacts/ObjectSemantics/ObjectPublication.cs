@@ -124,15 +124,17 @@ public sealed partial class ObjectArtifactStore
                 {
                     if (direct.Length != current.Stamp.Identity.Length) { throw Quarantine(current); }
                 }
+                ArtifactMutationReceipt persisted;
                 lock (pointerSync)
                 {
                     var latest = pointers[staged.Identity.Digest.Hex];
                     if (latest.Stamp != current.Stamp || latest.ObjectId != current.ObjectId || latest.Removed)
                     { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
                     if (latest.Corrupt) { throw new ObjectOperationException(ArtifactFailureCode.CorruptContent); }
-                    return RecordObjectReceipt(upload);
+                    persisted = RecordObjectReceipt(upload);
                 }
-
+                await faults.ObserveAsync("object.receipted");
+                return persisted;
             }
             finally
             {

@@ -1057,8 +1057,10 @@ def verify_snapshot(snapshot, manifest):
         raise ConformanceError("InputChanged") from None
 
 
-def proof_manifest(directory, *, exclude_outputs=False):
+def proof_manifest(directory, *, exclude_outputs=False, include_file=None):
     from conformance_execution import no_symlinks
+    if include_file is not None and not callable(include_file):
+        raise ConformanceError("ProofMismatch")
     directory = Path(directory).absolute()
     files = {}
     total = 0
@@ -1087,7 +1089,7 @@ def proof_manifest(directory, *, exclude_outputs=False):
                         visit(child, relative + "/", depth + 1)
                     finally:
                         os.close(child)
-                elif stat.S_ISREG(before.st_mode):
+                elif stat.S_ISREG(before.st_mode) and (include_file is None or include_file(relative)):
                     if len(files) >= MAX_PROOF_FILES or total + before.st_size > MAX_PROOF_BYTES:
                         raise ConformanceError("ProofMismatch")
                     child = os.open(entry.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=descriptor)
@@ -1107,7 +1109,7 @@ def proof_manifest(directory, *, exclude_outputs=False):
                             raise ConformanceError("ProofMismatch")
                         files[relative] = hashed.hexdigest()
                         total += observed
-                else:
+                elif not stat.S_ISREG(before.st_mode):
                     raise ConformanceError("ProofMismatch")
                 after = os.stat(entry.name, dir_fd=descriptor, follow_symlinks=False)
                 if ((after.st_dev, after.st_ino, after.st_mode, after.st_size, after.st_mtime_ns)

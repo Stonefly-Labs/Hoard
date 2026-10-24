@@ -1577,11 +1577,23 @@ observers, compatible reopen and joined provider/authority settlement. Stale
 sessions cannot dispose replacements; retries preserve the same actual task and
 pending allocator observation, including callback failure. Separate callback
 ownership keeps idle/stop honest without changing frozen public result-handoff
-or capacity behavior on either artifact provider. Fourteen package-only Local
-cases include real native-allocator overlap rejection; two common Local/Object
-checks hold actual release callbacks through stop. The replacement native
-request is 75 scopes/636 observations, pending. Full bindings, mandatory fault
-controls and category/profile acceptance remain unfinished.
+or capacity behavior on either artifact provider. Fifteen package-only Local
+cases include real native-allocator overlap rejection and concurrent registration
+of every typed observer; two common Local/Object checks hold actual release
+callbacks through stop. Six further common checks now observe real persisted
+receipts, opened-read failure reclamation and verified reconciliation on both
+providers, without aliasing Object's distinct transitions to `object.direct`.
+Closed supported-point sets bound observer registration, not an arbitrary
+sixteen-slot limit.
+
+Native run `40131392286` at `88c5d01` passed 190 foundations and lock replay but
+failed before runtime scopes with `ProofMismatch`; it is not admitted. Runtime
+input enumeration now hashes consumed managed images, active-architecture
+native assets and locks within unchanged bounds, not unrelated copied build
+assets; full-tree symlink/type/race checks and default full-manifest limits
+remain. Replacement native execution requests 76 scopes/643 observations,
+pending. Full bindings, mandatory fault controls and category/profile acceptance
+remain unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

@@ -1039,6 +1039,7 @@ def local_artifact_session_scenarios():
         ARTIFACT_CONSUMER_PREFIX + f'Owned_local_projection_executes_unchanged_common_consumers(consumer: "{consumer}")'
         for consumer in ("publication", "expectations", "private-staging")}
     identities.update(ARTIFACT_CONSUMER_PREFIX + method for method in (
+        "All_typed_observation_points_can_be_registered_together_and_removed_without_overwrite",
         "Scoped_observation_cannot_overwrite_a_live_registration_or_remove_its_replacement",
         "Local_reopen_keeps_identity_authority_content_and_allocation_without_stale_disposal",
         "Physical_store_stop_cannot_release_a_live_authority_guard_or_erase_retained_observation",
@@ -1065,6 +1066,16 @@ def artifact_authority_ownership_scenarios():
     identities.update(prefix + "Released_operation_callback_remains_real_owned_work_until_final_settlement"
                       + f'(provider: "{provider}")' for provider in ("local", "object"))
     return (("original-artifact-authority-ownership", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
+def artifact_observation_scenarios():
+    prefix = "Hoard.Artifacts.Tests.ArtifactObservationTests."
+    identities = tuple(sorted(prefix + method + f'(provider: "{provider}")' for method in (
+        "Persisted_receipt_boundary_exposes_the_same_actual_reconciled_receipt",
+        "Failed_opened_read_callback_reclaims_real_stream_guard_and_single_transfer_slot",
+        "Verified_reconciliation_callback_failure_keeps_actual_uncertain_publication_recoverable")
+        for provider in ("local", "object")))
+    return (("original-artifact-observations", identities, "None", "Passed", 0, "None"),)
 
 
 def original_artifact_configured_store_scenarios():
@@ -1390,9 +1401,6 @@ def probe(path):
 def make_inputs(run, repository, candidate, sources, observed_environment, identity, seal_sha,
                 *, group_id=None, ci_revision=None, binding_sources=()):
     run._check_ledger()
-    inventory = evidence.proof_manifest(candidate)
-    prefix = candidate.relative_to(run.root).as_posix()
-    locks = [f"{prefix}/{name}" for name in inventory if name.endswith("packages.lock.json")]
     runtime_folders = {f"{TESTS}/bin/Release/net10.0", f"{LOGGER}/Smoke/bin/Release/net10.0",
                        f"{TESTS}/{PACKAGE_TEST_OUTPUT}/Release/net10.0",
                        f"{ARTIFACT_CONSUMER}/{PACKAGE_TEST_OUTPUT}/Release/net10.0",
@@ -1401,11 +1409,20 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     runtime_folders.add(f"{METADATA_RECOVERY}/bin/Release/net10.0")
     runtime_folders.add(f"{ARTIFACT_RECOVERY}/bin/Release/net10.0")
     runtime_folders.add(f"{ARTIFACT_TRANSFER}/bin/Release/net10.0")
-    runtime = [f"{prefix}/{name}" for name in inventory if (
-        name.endswith((".dll", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))
-        and Path(name).parent.as_posix() in runtime_folders) or (
-        name.endswith((".so", ".dylib", ".dll"))
-        and any(name.startswith(folder + "/runtimes/") for folder in runtime_folders))]
+    native_rid = {"x86_64": "linux-x64", "aarch64": "linux-arm64"}.get(observed_environment.get("architecture"))
+    if native_rid is None:
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    def runtime_input(name):
+        return (name.endswith((".dll", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))
+                and Path(name).parent.as_posix() in runtime_folders) or (
+                    name.endswith((".so", ".dylib", ".dll"))
+                    and any(name.startswith(folder + "/runtimes/" + native_rid + "/") for folder in runtime_folders))
+    # Hash consumed inputs within existing budgets while retaining full-tree safety checks.
+    inventory = evidence.proof_manifest(
+        candidate, include_file=lambda name: name.endswith("packages.lock.json") or runtime_input(name))
+    prefix = candidate.relative_to(run.root).as_posix()
+    locks = [f"{prefix}/{name}" for name in inventory if name.endswith("packages.lock.json")]
+    runtime = [f"{prefix}/{name}" for name in inventory if runtime_input(name)]
     if not runtime or not locks:
         raise evidence.ConformanceError("EvidenceIncomplete")
     inputs = evidence.capture_profile_inputs(
@@ -1425,7 +1442,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-metadata-integration", "original-artifact-metadata-bridge",
             "original-artifact-lifecycle", "original-artifact-failure", "original-artifact-prefix-cleanup",
             "original-artifact-object-cleanup", "original-artifact-configured-store", "original-artifact-authority-ownership",
-            "local-artifact-session"],
+            "local-artifact-session", "original-artifact-observations"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1458,7 +1475,8 @@ def test_attempt(run, inputs, candidate, scenario):
             *original_artifact_metadata_integration_scenarios(), *original_artifact_metadata_bridge_scenarios(),
             *original_artifact_lifecycle_scenarios(), *original_artifact_failure_scenarios(),
             *original_artifact_prefix_cleanup_scenarios(), *original_artifact_object_cleanup_scenarios(),
-            *original_artifact_configured_store_scenarios(), *artifact_authority_ownership_scenarios()):
+            *original_artifact_configured_store_scenarios(), *artifact_authority_ownership_scenarios(),
+            *artifact_observation_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
     sqlite_tests = metadata_provider == "sqlite" or any(
@@ -1811,7 +1829,10 @@ def execute(repository, destination):
         write_new(run.root / "stores/origin-probe.json",
                   json.dumps(declaration, separators=(",", ":"), ensure_ascii=True).encode("ascii"))
         binding_sources = [{"path": "stores/origin-probe.json", "adapterId": "sdk-origin-probe"}]
-        inputs = make_inputs(run, repository, candidate, sources, environment(run, candidate=candidate), identity, seal_sha,
+        print(json.dumps({"qualification": False, "phase": "sqlite-environment-admission"}), flush=True)
+        admitted_environment = environment(run, candidate=candidate)
+        print(json.dumps({"qualification": False, "phase": "runtime-input-capture"}), flush=True)
+        inputs = make_inputs(run, repository, candidate, sources, admitted_environment, identity, seal_sha,
                              ci_revision=ci_revision, binding_sources=binding_sources)
         for name in sources:
             (candidate / name).chmod(0o400)
@@ -1899,6 +1920,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "local-artifact-session"}), flush=True)
         for scenario in local_artifact_session_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "artifact-observations"}), flush=True)
+        for scenario in artifact_observation_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

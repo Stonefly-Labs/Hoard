@@ -331,11 +331,20 @@ routing prefix. The routing is corrected, not accepted as a passing run.
 The partial `LocalArtifactAssertionSessions` projection now uses real typed
 observers, compatible reopen and stable joined provider/authority ownership,
 without advertising complete binding/fault controls or physical release.
-Fourteen package-only Local cases cover stale disposal, callback settlement/
+Fifteen package-only Local cases cover complete simultaneous typed registration,
+stale disposal, callback settlement/
 failure, retained guards and retry with both recorded and actual native
 allocation. Two common checks retain real Local/Object release callbacks through
 idle/stop without changing original public handoff/capacity behavior. The
-replacement native request is 75 scopes/636 observations, pending.
+75-scope/636-observation replacement run `40131392286` at `88c5d01` failed
+pre-runtime with `ProofMismatch` after successful foundations/lock replay;
+it is not admitted. Six additional common checks now use actual distinct
+Object receipt/read/reconciliation hooks, retaining Local parity, actual
+single-slot resource reclamation and uncertain-publication recovery.
+Runtime capture selects consumed managed images, active-architecture native
+assets and locks without increasing bounds or relaxing full-tree safety.
+The next native request is 76 scopes/643 observations, pending, not complete
+Object sessions, category or profile acceptance.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

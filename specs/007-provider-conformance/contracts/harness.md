@@ -652,10 +652,27 @@ workers only, not authority closure or controller release.
 
 Local/Object provider callbacks have separate final-settlement tracking so idle
 and stop retain their work without changing frozen public cancellation/handoff
-or admission capacity. Fourteen package-only Local cases include actual native
-allocator overlap enforcement; two interface-only common checks exercise real
-release ownership on both providers. The replacement exact native request is
-75 scopes/636 observations, pending, not complete category/profile proof.
+or admission capacity. Fifteen package-only Local cases include actual native allocator overlap
+enforcement and simultaneous registration of every typed observation. Two
+interface-only common checks exercise real release ownership on both providers.
+Closed supported-name sets bound callback count without a contradictory
+sixteen-observer ceiling.
+
+Six further common checks exercise actual receipt-recorded, read-opened and
+reconciliation before/verified transitions on both providers. Object uses distinct
+new hooks, never unrelated `object.direct` callbacks. Callback failure after a
+real stream opens must release stream/guard/single transfer capacity; failure
+after content verification must leave actual uncertain publication recoverable.
+These are hook prerequisites, not a completed Object session/fault driver.
+
+Run `40131392286` at `88c5d01` failed pre-runtime with `ProofMismatch`, despite
+190 successful foundations and lock replay; it is not admitted. Diagnostic
+enumeration now hashes the same consumed managed/runtime formats plus only
+the admitted architecture's native assets and all lockfiles. Unconsumed build
+assets do not exhaust the input budget. Default full manifests and selected
+input caps remain unchanged; traversal still rejects symlinks, non-regular
+entries and identity races even outside the selected inputs. The next exact
+native request is 76 scopes/643 observations, pending, not category/profile proof.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and
