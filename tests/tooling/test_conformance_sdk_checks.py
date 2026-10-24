@@ -256,6 +256,14 @@ class SdkDiagnosticTests(unittest.TestCase):
             self.assertNotIn("--force-evaluate", args)
             self.assertEqual(kwargs["cache_id"], "consumer-locked-replay")
 
+    def test_pack_uses_the_explicit_package_identity_not_the_fixture_project_filename(self):
+        feed = self.directory / "feed"
+        with patch.object(checks.baselines, "_command"), \
+                patch.object(checks, "canonicalize_acceptance_archive") as canonicalize:
+            checks.build(object(), self.directory / "Memory.csproj", self.directory / "NuGet.Config",
+                         "memory-package", feed=feed, package_id="Hoard.Fixtures.Metadata.Memory")
+        canonicalize.assert_called_once_with(feed / "Hoard.Fixtures.Metadata.Memory.0.1.0.nupkg")
+
     def test_capture_recomputes_added_runtime_and_locks_and_rejects_remapped_sources(self):
         (self.directory / "stores").mkdir()
         (self.directory / "feed").mkdir()

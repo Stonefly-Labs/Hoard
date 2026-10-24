@@ -5441,6 +5441,22 @@ regressions: twenty-one scopes/89 expected observations, not yet observed.
 The two new paging APIs were also absent in the initial source-probe compile
 before their inherited assertions were introduced.
 
+Review of the native package extension found that the shared build helper used
+the project filename as archive identity. That holds for the SDK/logger, but
+`Memory.csproj` packs `Hoard.Fixtures.Metadata.Memory`. A focused failing
+regression preceded an explicit package-identity parameter at that call site.
+The source lock/graph and qualification boundary are unchanged.
+
+Run [40053085598](https://github.com/Stonefly-Labs/Hoard/actions/runs/40053085598)
+at `69e5e7e0357e559d0ca077ab71ddaafd62dbdc50` verified the earlier six-consumer
+slice's unit diagnostics: 127 foundation checks without failures/errors/skips,
+eighteen scopes/71 discoveries/71 executions, all six baselines and identical
+eighteen-package/thirteen-lock replay. SDK input digest:
+`3396b23f888f1a498cfe7415a7ddf598a7deffa2bc1f4ccdfdecddbd7fd2e60b`;
+preparation proof:
+`641ff322e4c09f5ba56ae3ed2ab8e8adb99af6228ec38e1376ee2722ce1bae2d`.
+It did not yet contain the actual Memory-package consumer execution extension.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

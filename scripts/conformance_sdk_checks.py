@@ -180,7 +180,7 @@ def snapshot(repository, run):
     return target, hashes
 
 
-def build(run, project, config, cache_id, *, feed=None, lock=None, properties=()):
+def build(run, project, config, cache_id, *, feed=None, lock=None, properties=(), package_id=None):
     common = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet", *properties]
     if lock is not None:
         common.append("-p:NuGetLockFilePath=" + str(lock))
@@ -194,7 +194,7 @@ def build(run, project, config, cache_id, *, feed=None, lock=None, properties=()
             run, ["dotnet", "pack", str(project), "-c", "Release", "--no-build",
                   "--no-restore", "-o", str(feed), *common],
             cwd=project.parent, cache_id=cache_id)
-        canonicalize_acceptance_archive(feed / f"{project.stem}.0.1.0.nupkg")
+        canonicalize_acceptance_archive(feed / f"{project.stem if package_id is None else package_id}.0.1.0.nupkg")
 
 
 def prepare_smoke_lock(project, candidate, feed):
@@ -490,7 +490,8 @@ def execute(repository, destination):
             build(run, candidate / folder / f"{project_name}.csproj", config, "candidate-build", feed=feed)
         build(run, candidate / TESTS / "Hoard.Conformance.Tests.csproj", config, "candidate-build")
         memory_lock, memory_record = prepare_project_lock(candidate / MEMORY, candidate, feed, "candidate")
-        build(run, candidate / MEMORY, config, "memory-package", lock=memory_lock, feed=feed)
+        build(run, candidate / MEMORY, config, "memory-package", lock=memory_lock, feed=feed,
+              package_id="Hoard.Fixtures.Metadata.Memory")
         if memory_record is not None:
             verify_project_lock(memory_record, candidate, feed)
             write_new(run.root / "proofs/memory-lock-derivation.json", evidence.canonical_bytes(memory_record))

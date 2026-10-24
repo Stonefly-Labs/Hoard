@@ -768,6 +768,17 @@ mechanism regressions; the total becomes twenty-one scopes/89 observations.
 Actual native execution is pending; full task acceptance and all four-provider
 extraction parity remain incomplete.
 
+The Memory diagnostic pack call now supplies its explicit NuGet identity:
+`Memory.csproj` does not produce `Memory.0.1.0.nupkg`. A focused intended-red
+regression preceded correcting the helper's original SDK/logger filename
+assumption. No dependency graph or expected assertion changes.
+
+Native run `40053085598` at `69e5e7e0357e559d0ca077ab71ddaafd62dbdc50`
+verified the first slice's two source consumer tests alongside all earlier
+diagnostics: eighteen scopes/71 discoveries/71 executions, 127 native foundation
+checks without failures/errors/skips, six baselines and eighteen-package/
+thirteen-lock replay. This predates actual Memory-package consumer execution.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;
