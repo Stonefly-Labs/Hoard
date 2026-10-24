@@ -265,8 +265,10 @@ The safe logger is installed as a verified adapter without adding a predecessor
 NuGet dependency. Provider selection is closed and reaches both discovery and
 execution test-host settings; console logging stays disabled. Discovery must
 match every original parameter before execution; transport uses existing owned,
-bounded pre-persistence projection and ingestion. The expanded 52-scope/384-
-observation request awaits Linux execution. Binding/session-origin attribution,
+bounded pre-persistence projection and ingestion. Native run `40101331484` at
+`8065dfc` verified all 52 scopes/384 exact discoveries and executions, including
+63 original identities per provider, with actual native containment.
+Binding/session-origin attribution,
 legacy metadata acceptance import and category qualification remain separate,
 unfinished gates.
 

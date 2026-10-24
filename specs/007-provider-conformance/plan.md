@@ -1939,10 +1939,26 @@ images, closed provider settings and unchanged original package graph. All 248
 tooling tests pass locally (237 passes, eleven native macOS skips); frozen
 inventory/catalog and patch integrity checks pass. The expanded native request
 is 52 scopes/384 observations: the prior 50/258 vector plus 63 original wrappers
-per provider, pending Linux execution. This is diagnostic execution evidence,
+per provider. This is diagnostic execution evidence,
 not completed extraction parity or binding/session-origin/controller import.
 Legacy `metadata_evidence.py` runtime import, actual recovery and full category/
 profile acceptance remain unfinished. No task/checklist marker is completed.
+
+Native run [40101331484](https://github.com/Stonefly-Labs/Hoard/actions/runs/40101331484)
+at `8065dfcea7e180d10b097899117d8d25eed17aa0` verified all three jobs:
+141 foundation checks without failures/errors/skips, all 52 scopes/384 exact
+discoveries/executions with the expected diagnostic vector, all 63 original
+identities independently on Memory and SQLite, actual native containment and
+identical eighteen-package/thirteen-lock replay. Six-baseline seal:
+`41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`;
+input: `f3104f9ad2ae1fc5ac8311e06fbb87458ae1c79d3a59ba7a9aaf4118766f53f5`;
+preparation: `b14732b6f47bc0b0305832362f3baedf6ae46e7107be165aeb1feb2b92c43084`;
+producer: `810a2f8b1f6f723e067e03934a55c12fb88d4add56f356787aae93125f685925`;
+controller: `aa4c67d3e787292f365049d3700c8b1c4f3590df00f1e7ef18139b573040a849`;
+child start: `56ee92225e02d89f457c7c4233021c17562e8c6c6fd71d0af0d306d401bb334d`.
+Free scratch was 91,724,349,440 bytes. SQLite/native/PRAGMA pins are unchanged.
+This verifies original-wrapper execution transport, not complete session origins,
+extraction parity or category/profile acceptance.
 
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86

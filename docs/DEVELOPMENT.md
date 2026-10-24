@@ -6084,8 +6084,12 @@ shortened or renamed scopes, replaced SDK/logger images, actual closed provider
 settings and graph-preserving original lock preparation. Runtime-input
 recomputation also rejects changes to the added wrapper SDK image. All 248
 tooling tests pass locally (237 passes, eleven native macOS skips), with frozen
-inventory/catalog and patch-integrity checks passing. The expanded Linux request
-is 52 scopes/384 exact observations, pending execution. These remain harness
+inventory/catalog and patch-integrity checks passing. Native run
+[40101331484](https://github.com/Stonefly-Labs/Hoard/actions/runs/40101331484)
+at `8065dfc` verified all three jobs: 141 foundation checks without failures,
+errors or skips, all 52 scopes/384 exact discoveries and executions (including
+63 frozen original identities per provider), actual native containment and
+identical eighteen-package/thirteen-lock replay. These remain harness
 diagnostics, not complete binding/session origins, safe legacy metadata imports,
 inherited recovery or category/profile qualification. Production architecture,
 ADRs, diagrams and deployment examples remain unaffected.

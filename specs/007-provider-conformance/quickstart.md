@@ -104,8 +104,9 @@ import remain outstanding.
 The diagnostic now also selects all 63 frozen original metadata runtime
 identities against each provider using the actual packaged original test
 assembly. Safe discovery must match before execution; no reduced wrapper
-inventory can substitute. The new request is 52 scopes/384 observations,
-pending Linux execution. This does not replace the unfinished legacy acceptance
+inventory can substitute. Native run `40101331484` at `8065dfc` verified all
+52 scopes/384 exact discoveries and executions, including 63 original identities
+per provider, and actual native containment. This does not replace the unfinished legacy acceptance
 import or establish complete session-origin/category evidence.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator

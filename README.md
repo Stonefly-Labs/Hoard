@@ -1344,7 +1344,9 @@ The Linux diagnostic now also builds the actual original metadata test assembly
 against its existing seven-package graph and selects all 63 frozen runtime
 identities independently for Memory and SQLite. Safe discovery must match before
 execution; shortened/renamed scopes and replaced SDK/logger bytes reject.
-The expanded request is 52 scopes/384 observations, pending Linux execution.
+Native run [40101331484](https://github.com/Stonefly-Labs/Hoard/actions/runs/40101331484)
+at `8065dfc` verified all 52 scopes/384 exact discoveries and executions,
+including all 63 frozen identities per provider, with actual native containment.
 This is diagnostic transport, not category qualification or completed session-
 origin/controller integration; the legacy metadata acceptance import remains
 unfinished.

@@ -205,8 +205,10 @@ The diagnostic now includes the original packaged test assembly, selecting all
 Its seven-package graph is privately rebound without changing tracked locks;
 the logger is installed only as a byte-verified runtime adapter. Original
 wrapper, provider, Hosting and shared SDK images enter immutable pre/post inputs.
-Exact safe discovery precedes execution. The expanded 52-scope/384-observation
-request awaits Linux execution. These harness diagnostics do not establish
+Exact safe discovery precedes execution. Native run
+[40101331484](https://github.com/Stonefly-Labs/Hoard/actions/runs/40101331484)
+at `8065dfc` verified all 52 scopes/384 observations, including all 63 original
+identities per provider, and actual native containment. These diagnostics do not establish
 session-origin completeness, legacy acceptance-import safety, recovery controls
 or category qualification.
 Complete category suites/adapters, contributor workflow and controller/profile
