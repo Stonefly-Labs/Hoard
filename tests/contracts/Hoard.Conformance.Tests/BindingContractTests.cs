@@ -456,6 +456,7 @@ public sealed class BindingContractTests
         public ValueTask<ConformanceFaultObservation> ObserveAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
         public ValueTask<IMetadataCorruptionScope> CorruptAsync(MetadataCorruptionRequest r, CancellationToken t) => throw new NotSupportedException();
         public MetadataFaultCounters Counters => throw new NotSupportedException();
+        public ValueTask<ConformanceStateFingerprint> ObserveStateAsync(CancellationToken t) => throw new NotSupportedException();
         public ValueTask<IAsyncDisposable> ObserveBoundaryAsync(MetadataObservationPoint p, Func<ValueTask> o, CancellationToken t) => throw new NotSupportedException();
         public ValueTask<MetadataResult<MetadataReadSnapshot>> ObserveIndependentSnapshotAsync(MetadataReadGroup r, CancellationToken t) => throw new NotSupportedException();
         public ValueTask<IAsyncDisposable> HoldWriterAsync(CancellationToken t) => throw new NotSupportedException();

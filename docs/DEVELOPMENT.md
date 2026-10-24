@@ -5628,6 +5628,31 @@ architecture review found no actionable defects. Current native selection:
 31 scopes/134 observations, pending. Full schema extraction, actual adapters,
 wrapper parity and qualification remain unfinished.
 
+Five schema consumers bring the slice to 52 methods: unrecognized/partial
+layouts, authorized legacy upgrade with entity/epoch/receipt checks, invalid
+authorization, concurrent exclusion and future/corrupt reopen. Common code uses
+the inspected target version, never provider names or version suffixes. Required
+typed state fingerprints preserve actual raw state without decoding or repair;
+the Memory helper frames all logical state sections and raw records. A focused
+mutation regression verifies distinct hashes. The schema session probe remains
+explicitly non-admitted, not a complete binding. Concurrent upgrades always
+release and join both started tasks plus actual settlement.
+
+Source-only Memory: 67 passed; ordinary SDK: 108 passed, without skips.
+Tooling: 236 checks/ten native skips; focused SDK/Memory formatting and catalog/
+inventory checks pass. Architecture review found no actionable defects.
+Current native selection: 32 scopes/141 observations, pending.
+Run [40057842920](https://github.com/Stonefly-Labs/Hoard/actions/runs/40057842920)
+at `8df0cc67c183bf3d9f7ef016f716a9bae9039aa4` verified all 41 earlier consumers
+including lease/deadline rows and pre-canceled reservation ordering: all three
+jobs succeeded, 131 foundation checks without failures/errors/skips, 30 scopes/
+127 observations, six baselines and identical eighteen-package/thirteen-lock
+replay. Input digest:
+`66c0778b4286c575a33d24e289da68758199371bb9f043ecf00669c285dc5762`;
+preparation proof:
+`17711c00cfeee7698e747b0f98de5d6ace3a00ecee3a667ca7c34fd35ee30a20`.
+No complete adapter/parity or category qualification is implied.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

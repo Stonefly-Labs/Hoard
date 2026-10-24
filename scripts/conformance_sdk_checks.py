@@ -202,6 +202,12 @@ SCENARIOS = (
             "incomplete-cleanup", "safe-diagnostics"))
      + (PACKAGE_TEST_PREFIX + "Dropped_diagnostic_fails_the_common_assertion_and_observed_memory_passes_unchanged",),
      "None", "Passed", 0, "None"),
+    ("memory-schema-consumers", tuple(
+        PACKAGE_TEST_PREFIX + "Compiled_schema_consumers_preserve_explicit_upgrade_and_rejection"
+        + f'(consumer: "{consumer}")' for consumer in (
+            "unrecognized", "partial", "upgrade", "invalid-upgrade", "upgrade-contention", "future-corruption"))
+     + (PACKAGE_TEST_PREFIX + "Logical_schema_fingerprint_tracks_raw_damage_without_decoding_or_repair",),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {

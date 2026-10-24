@@ -1035,6 +1035,47 @@ Current native selection is 31 scopes/134 observations, pending. Full schema
 setup/upgrade extraction, actual adapters, unchanged wrapper parity and complete
 category acceptance remain open; T019..T086 are still unchecked.
 
+### Typed schema consumers and actual state fingerprints
+
+Five methods bring the executable slice to 52, covering six schema rows:
+unrecognized and partial layouts, authorized legacy upgrade, invalid/foreign
+authorization, concurrent upgrade exclusion, and future/recognized-corrupt
+state across reopen. Common code takes typed sessions and uses actual inspected
+current/target versions; no provider-name branch, private schema number or
+version-suffix rewrite enters its expectations. Legacy setup remains caller-
+owned. It preserves registry/package/cache-entry/aggregate readback, changes
+admission epoch, expires the old receipt and re-admits the same epoch on reopen.
+Rejected layouts/upgrades also preserve state hashes and deny ordinary admission.
+
+The required typed `ObserveStateAsync` returns an actual private state hash.
+Memory's fixture-only helper hashes schema/epoch/time/change state, raw encoded
+records, reference edges, dependent sets and operation ledger. Domain/section
+tags, collection counts, length frames and deterministic order preserve structure;
+raw damaged payloads are neither decoded nor repaired. A focused regression
+observes unchanged hashes, distinct actual record damage and schema mutation.
+The nested schema probe reopens real Memory images and explicitly cannot be
+admitted as a complete binding; missing generic controls/cleanup observation
+throw, rather than supplying passing observations.
+
+The six consumer rows initially failed missing API/probe compilation. The full
+source-only probe now passes 67 tests without skips; SDK tests pass 108. All 236
+tooling checks pass with ten native macOS skips; focused SDK and Memory formatting,
+catalog, frozen inventory and whitespace checks pass. Bounded architecture review
+found no actionable defects in extraction, raw fingerprints or upgrade ownership.
+Current native selection is 32 scopes/141 observations, pending. Full adapters,
+factory admission, unchanged wrappers and complete category parity remain open.
+
+Native run [40057842920](https://github.com/Stonefly-Labs/Hoard/actions/runs/40057842920)
+at `8df0cc67c183bf3d9f7ef016f716a9bae9039aa4` verified all 41 earlier consumers,
+including the lease/deadline rows and pre-canceled reservation ordering repair.
+All three jobs succeeded: 131 foundation checks without failures/errors/skips,
+30 scopes/127 discoveries/127 executions, six historical baselines and identical
+eighteen-package/thirteen-lock replay. Input digest:
+`66c0778b4286c575a33d24e289da68758199371bb9f043ecf00669c285dc5762`;
+preparation proof:
+`17711c00cfeee7698e747b0f98de5d6ace3a00ecee3a667ca7c34fd35ee30a20`.
+Free scratch was 92,110,221,312 bytes. This remains non-qualifying diagnostics.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

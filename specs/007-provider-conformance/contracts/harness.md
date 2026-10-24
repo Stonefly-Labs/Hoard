@@ -68,7 +68,7 @@ integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
 
-The initial executable SDK slice exposes forty-seven methods across
+The initial executable SDK slice exposes fifty-two methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,
 `MetadataIdentityAssertions`, `MetadataEntityAssertions` and
@@ -76,7 +76,7 @@ The initial executable SDK slice exposes forty-seven methods across
 `MetadataReconciliationAssertions`, `MetadataCorruptionAssertions` and
 `MetadataAtomicityAssertions`, `MetadataPublicationAssertions` and
 `MetadataDeadlineAssertions`, `MetadataAdmissionAssertions` and
-`MetadataFailureAssertions`.
+`MetadataFailureAssertions` and `MetadataSchemaAssertions`.
 They consume an already-prepared fresh
 `IMetadataStore`, a caller cancellation token and, for publication cases, the
 session's `IMetadataConformanceAuthority`; the caller retains store ownership.
@@ -156,6 +156,19 @@ ledger capacity cannot evict the original receipt. The diagnostic consumer
 checks actual injected failure, closed diagnostic observation and public
 diagnostic/debugger redaction. A dropped-diagnostic negative must fail that
 unchanged common consumer before actual observation passes.
+Five schema consumers take typed metadata sessions; the caller supplies fresh
+unadmitted or legacy-compatible sessions as appropriate. They cover unrecognized/
+partial layouts, authorized upgrade with entity preservation and receipt epoch
+expiry, invalid authorization, concurrent exclusion and future/corrupt reopen.
+The upgrade target comes from actual `MetadataSchemaInspection.TargetVersion`,
+not a provider name or version-suffix rewrite. Required `ObserveStateAsync`
+returns a private-mechanism-derived hash; the SDK checks unchanged state alongside
+public rejection/admission/readback. Memory's fixture hash frames and orders raw
+stored payloads and every logical state section without decoding or repair.
+Concurrent upgrades release their barrier and join both started tasks plus
+actual settlement on failure/cancellation. The focused schema session is an
+explicitly non-admitted probe with unsupported generic controls; it is not the
+complete Memory binding or origin-attributed qualification.
 No method accepts a provider name or expected outcome. Session/adapter routing,
 all other inherited assertions and unchanged-wrapper forwarding remain pending.
 Invoking this partial slice cannot qualify a metadata binding.

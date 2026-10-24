@@ -19,6 +19,7 @@ internal sealed class MemoryStoredRecords
     private MemoryStoredRecords(ImmutableDictionary<MetadataSelector, string> payloads) => this.payloads = payloads;
 
     public static MemoryStoredRecords Empty { get; } = new(ImmutableDictionary<MetadataSelector, string>.Empty);
+    internal IEnumerable<KeyValuePair<MetadataSelector, string>> Encoded => payloads;
     public IEnumerable<MetadataRecord> Values => payloads.Select(pair => Decode(pair.Key, pair.Value));
     public MetadataRecord this[MetadataSelector selector] => Decode(selector, payloads[selector]);
     public bool ContainsKey(MetadataSelector selector) => payloads.ContainsKey(selector);

@@ -14,6 +14,45 @@ namespace Hoard.Conformance.Tests;
 public sealed class MemoryMechanismTests
 {
     [Fact]
+    public async Task Logical_schema_fingerprint_tracks_raw_damage_without_decoding_or_repair()
+    {
+        await using var store = await OpenAsync();
+        var registry = Registry(1);
+        await Commit(store, new MetadataMutation.PutRegistry(registry, new ExpectedRevision.Absent()));
+        var original = store.CaptureLogicalImage().ComputeFingerprint(default);
+        Assert.Equal(original, store.CaptureLogicalImage().ComputeFingerprint(default));
+        Success(await store.CorruptRecordForTestAsync(registry.Selector));
+        var damaged = store.CaptureLogicalImage().ComputeFingerprint(default);
+        Assert.NotEqual(original, damaged);
+        Assert.Equal(damaged, store.CaptureLogicalImage().ComputeFingerprint(default));
+        Success(await store.MakeFutureSchemaForTestAsync());
+        Assert.NotEqual(damaged, store.CaptureLogicalImage().ComputeFingerprint(default));
+    }
+
+    [Theory]
+    [InlineData("unrecognized")]
+    [InlineData("partial")]
+    [InlineData("upgrade")]
+    [InlineData("invalid-upgrade")]
+    [InlineData("upgrade-contention")]
+    [InlineData("future-corruption")]
+    public async Task Compiled_schema_consumers_preserve_explicit_upgrade_and_rejection(string consumer)
+    {
+        await using var original = new MemorySchemaProbe(consumer is "upgrade" or "invalid-upgrade" or "upgrade-contention" ? 1 : 2);
+        await using var corrupt = new MemorySchemaProbe();
+        await (consumer switch
+        {
+            "unrecognized" => MetadataSchemaAssertions.UnrecognizedLayoutAsync(original, false, default),
+            "partial" => MetadataSchemaAssertions.UnrecognizedLayoutAsync(original, true, default),
+            "upgrade" => MetadataSchemaAssertions.UpgradeAsync(original, default),
+            "invalid-upgrade" => MetadataSchemaAssertions.InvalidUpgradeAsync(original, default),
+            "upgrade-contention" => MetadataSchemaAssertions.UpgradeExclusionAsync(original, default),
+            "future-corruption" => MetadataSchemaAssertions.FutureAndCorruptAsync(original, corrupt, default),
+            _ => throw new ArgumentException("Unknown common consumer.")
+        });
+    }
+
+    [Fact]
     public async Task Dropped_diagnostic_fails_the_common_assertion_and_observed_memory_passes_unchanged()
     {
         var faultyControl = new MemoryObservationControl();
@@ -631,6 +670,93 @@ public sealed class MemoryMechanismTests
         Success(await store.CommitAsync(new(ticket, [.. mutations], new MetadataOption<MetadataLeaseGuard>.None()), new(), default));
     }
 
+    private sealed class MemorySchemaProbe : IMetadataConformanceSession, IMetadataConformanceFaultDriver
+    {
+        private readonly MemoryMetadataStore store;
+        private readonly MemoryObservationControl control = new();
+        private readonly MetadataConformanceClock clock;
+        private readonly RegisteredAuthority authority;
+
+        public MemorySchemaProbe(int compatibleSchema = 2) : this(
+            new MetadataConformanceClock(new(1_800_000_000_000)), new RegisteredAuthority(), null, compatibleSchema) { }
+
+        private MemorySchemaProbe(MetadataConformanceClock clock, RegisteredAuthority authority,
+            MemoryFixtureImage? image, int compatibleSchema)
+        {
+            this.clock = clock;
+            this.authority = authority;
+            store = new(authority, clock, control.ObserveAsync, control.Diagnose,
+                compatibleSchema: compatibleSchema, logicalImage: image);
+        }
+
+        public IMetadataStore Store => store;
+        public IMetadataSchemaAdministration Schema => store;
+        public IMetadataConformanceAuthority Authority => authority;
+        public IMetadataConformanceFaultDriver Faults => this;
+        public MetadataFaultCounters Counters => control.Counters;
+        public ImmutableArray<ConformanceFault> SupportedFaults => [ConformanceFault.SchemaState, ConformanceFault.PersistedCorruption];
+        public async ValueTask<IMetadataConformanceSession> ReopenAsync(CancellationToken token)
+        {
+            await AwaitSettlementAsync(token);
+            var image = store.CaptureLogicalImage();
+            await store.DisposeAsync();
+            return new MemorySchemaProbe(clock, authority, image, 2);
+        }
+        public ValueTask DisposeAsync() => store.DisposeAsync();
+        public ValueTask AwaitSettlementAsync(CancellationToken token) =>
+            new(store.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(5), token));
+        public ValueTask<ConformanceStateFingerprint> ObserveStateAsync(CancellationToken token) =>
+            ValueTask.FromResult(new ConformanceStateFingerprint(store.CaptureLogicalImage().ComputeFingerprint(token)));
+        public ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
+            MetadataObservationPoint point, Func<ValueTask> observer, CancellationToken token) =>
+            control.ObserveBoundaryAsync(point, observer, token);
+        public ValueTask<MetadataRecoveryPoint> AuthorizeUpgradeAsync(CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(store.AuthorizeLogicalUpgrade());
+        }
+        public ValueTask<MetadataResult<MetadataId>> SetFutureSchemaAsync(CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            return store.MakeFutureSchemaForTestAsync();
+        }
+        public ValueTask<MetadataResult<MetadataId>> CreateUnrecognizedLayoutAsync(bool partial, CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            return store.CreateUnrecognizedLayoutForTestAsync(partial);
+        }
+        public ValueTask<MetadataResult<MetadataId>> CorruptRecordAsync(MetadataSelector selector, CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            return store.CorruptRecordForTestAsync(selector);
+        }
+        public ValueTask<IMetadataCorruptionScope> CorruptAsync(MetadataCorruptionRequest request, CancellationToken token) =>
+            new MemoryCorruptionControl(store).CorruptAsync(request, token);
+        public ValueTask<MetadataResult<MetadataReadSnapshot>> ObserveIndependentSnapshotAsync(
+            MetadataReadGroup request, CancellationToken token) => store.ReadAsync(request, new(), token);
+        public async ValueTask<IAsyncDisposable> HoldWriterAsync(CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            return new AsyncWriterHold(await store.HoldWriterForTestAsync());
+        }
+        public ValueTask<MetadataResult<MetadataId>> FillLedgerAsync(CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            return store.FillLedgerForTestAsync();
+        }
+        public ValueTask<MetadataResult<MetadataId>> SetLeaseGenerationAsync(CanonicalText resource, long generation, CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            return store.SetLeaseGenerationForTestAsync(resource, generation);
+        }
+        public ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken token) => throw Unsupported();
+        public ValueTask ArmAsync(ConformanceFault fault, CancellationToken token) => throw Unsupported();
+        public ValueTask WaitForBoundaryAsync(ConformanceFault fault, CancellationToken token) => throw Unsupported();
+        public ValueTask ReleaseAsync(ConformanceFault fault, CancellationToken token) => throw Unsupported();
+        public ValueTask<ConformanceFaultObservation> ObserveAsync(ConformanceFault fault, CancellationToken token) => throw Unsupported();
+        private static NotSupportedException Unsupported() => new("Source-only schema probe is not an admitted binding.");
+    }
+
     private sealed class MemoryObservationControl
     {
         private readonly ConcurrentDictionary<string, Func<ValueTask>> observers = new(StringComparer.Ordinal);
@@ -652,6 +778,7 @@ public sealed class MemoryMechanismTests
                 MetadataObservationPoint.MutationApplied => "mutation.applied",
                 MetadataObservationPoint.ReadItem => "read.item",
                 MetadataObservationPoint.BeforeReconciliationDecision => "reconcile.before_decision",
+                MetadataObservationPoint.BeforeSchemaUpgrade => "memory.upgrade.before_decision",
                 _ => throw new ArgumentException("BindingInvalid")
             };
             if (!observers.TryAdd(key, observer)) { throw new ArgumentException("BindingInvalid"); }
