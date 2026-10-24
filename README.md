@@ -1530,13 +1530,19 @@ These host-bridge unit checks are not complete provider/category qualification.
 Three remaining original lifecycle bodies now use shared interface-only checks,
 preserving four frozen parameters and two additional composed-shutdown cases.
 Actual reference queries, slow guard release, native I/O holds and settlement
-remain fixture-side. The next six-row native request is 69 scopes/596
-observations, pending, not complete bindings/category/profile qualification.
+remain fixture-side. The six-row native request passed at `f2cc84d`, run
+[40123477371](https://github.com/Stonefly-Labs/Hoard/actions/runs/40123477371):
+all three jobs, 181 foundations and 69 scopes/596 observations, not complete
+bindings/category/profile qualification.
 Two original storage-failure/reconciliation bodies now also use shared checks,
 preserving four frozen parameters and fixed sanitizer/source behavior. Genuine
 access-denied failures mislabeled as unavailable fail the unchanged code
 assertion; genuine stores pass. The next six-row native request is 70
 scopes/602 observations, pending, not complete category/profile qualification.
+Three original prefix-cleanup bodies now also share six frozen parameters and
+their original stop/reopen checks. Actual permissions, observers, filesystem
+snapshots and Local-only durable reopen remain fixture-side. The next six-row
+native request is 71 scopes/608 observations, pending, not full qualification.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

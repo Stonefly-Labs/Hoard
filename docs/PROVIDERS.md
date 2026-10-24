@@ -443,6 +443,10 @@ cases are additional existing facts. Actual composition, query drain, slow
 guard implementation, physical holds/releases and settlement stay fixture-side.
 The next six-row request is 69 scopes/596 observations, pending, not complete
 bindings/category/session or full profile qualification.
+That lifecycle request passed `40123477371` at `f2cc84d`, all three jobs,
+181 foundations and 69 scopes/596 observations, including the three bridge and
+six lifecycle rows plus actual prerequisites/replay. The canceled bridge-only
+run is not separately accepted.
 Two original storage-failure/reconciliation bodies now also share fixed
 classification, sanitizer, borrowed-source, committed-byte and receipt checks
 with four frozen parameters. Actual post-visibility fault registration remains
@@ -455,6 +459,11 @@ Four-way integration passed `40121897879` at `4c87667`, all three jobs,
 179 foundations and 67 scopes/587 observations including twenty integration
 rows and all actual prerequisites/replay. These are still diagnostic counts,
 not the 179 applicable category results.
+Three original prefix-cleanup bodies now also share all six frozen parameters
+and unchanged stop/reopen assertions. Actual permissions, observer controls,
+filesystem/readiness snapshots and Local-only durable reopen remain
+fixture-side. The next six-row native request is 71 scopes/608 observations,
+pending, not full binding/session/category/profile qualification.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

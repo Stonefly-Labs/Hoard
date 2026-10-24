@@ -294,6 +294,9 @@ frozen parameters plus two existing composed-shutdown cases. Actual query
 completion/drain, slow guard release and native I/O hold/release remain
 fixture-side. The next six-row request is 69 scopes/596 observations, pending,
 not complete binding/session/category or full profile acceptance.
+That lifecycle request passed `40123477371` at `f2cc84d`, all three jobs,
+181 foundations and 69 scopes/596 observations, including three bridge and six
+lifecycle rows, not separate acceptance of the canceled bridge-only run.
 Two original storage-failure/reconciliation bodies now also use shared checks
 with four frozen parameters and real-store misclassified-denial negative/
 control pairs. Actual post-visibility fault registration remains fixture-side.
@@ -302,6 +305,10 @@ category/profile acceptance.
 
 Four-way integration passed `40121897879` at `4c87667`, all three jobs,
 179 foundations and 67 scopes/587 observations, not complete qualification.
+Three original prefix-cleanup bodies now also share six frozen parameters and
+original stop/reopen assertions. Actual permissions, observers, physical
+snapshots and Local-only durable reopen remain fixture-side. The next six-row
+request is 71 scopes/608 observations, pending, not full profile qualification.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

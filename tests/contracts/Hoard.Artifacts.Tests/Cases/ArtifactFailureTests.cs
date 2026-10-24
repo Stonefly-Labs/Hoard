@@ -157,43 +157,11 @@ public sealed class ArtifactFailureTests
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider,
             limits: new(artifactBytes: 1024, stagingBytes: 1024));
-        using var original = new ShortSource("committed bytes survive residual cleanup"u8.ToArray());
-        var committed = await PublishAsync(driver, original, new(1024));
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        using var duplicate = new ShortSource("committed bytes survive residual cleanup"u8.ToArray());
-        var staged = Success(await driver.Store.StageAsync(ticket, duplicate, new(), default));
-        if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix staging proof required."); }
-        File.SetUnixFileMode(driver.StagingDirectory, UnixFileMode.UserRead | UnixFileMode.UserExecute);
-        try
+        await CleanupAssertions(driver).CommittedResidualAsync(() =>
         {
-            var failed = Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
-                await driver.Store.CommitAsync(staged, new(), default));
-            Assert.Equal(ArtifactFailureCode.Uncertain, failed.Code);
-            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failed.Cleanup);
-            Assert.False(driver.Ready);
-            var receipt = Assert.IsType<ArtifactResolution.Committed>(
-                Success(await driver.Store.ReconcileAsync(ticket, new(), default))).Receipt;
-            Assert.Equal(committed.Stamp, receipt.Stamp);
-            var page = Success(await driver.Maintenance.ObserveAsync(
-                new(driver.Identity, ArtifactRecoveryKind.Staging), new(), default));
-            var row = Assert.Single(page.Observations);
-            Assert.Equal(ArtifactObservationKind.AbandonedStaging, row.Kind);
-            var owner = Assert.IsType<ArtifactOption<ArtifactStagingOwner>.Some>(row.Owner).Value;
-            var request = new ArtifactCleanupRequest(driver.Identity, [new ArtifactCleanupTarget.AbandonedStaging(owner)]);
-            Assert.Equal(ArtifactFailureCode.AccessDenied, Assert.IsType<ArtifactResult<ArtifactCleanupReport>.Failure>(
-                await driver.Maintenance.CleanupAsync(request, new(), default)).Code);
-            RestorePrefixCleanup(driver);
-            Assert.Equal(1, Success(await driver.Maintenance.CleanupAsync(request, new(), default)).Completed);
-            Assert.True(driver.Ready);
-            Assert.Empty(Directory.GetFiles(driver.StagingDirectory));
-            Assert.Equal(receipt, Success(await driver.Store.CommitAsync(staged, new(), default)));
-            Assert.Equal(receipt, Assert.IsType<ArtifactResolution.Committed>(
-                Success(await driver.Store.ReconcileAsync(ticket, new(), default))).Receipt);
-            Assert.Equal("committed bytes survive residual cleanup"u8.ToArray(), await ReadAsync(driver, receipt.Stamp));
-            Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-            Assert.False(duplicate.WasDisposed);
-        }
-        finally { RestorePrefixCleanup(driver); }
+            if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix staging proof required."); }
+            File.SetUnixFileMode(driver.StagingDirectory, UnixFileMode.UserRead | UnixFileMode.UserExecute);
+        }, () => RestorePrefixCleanup(driver), default);
     }
 
     [Theory]
@@ -204,55 +172,8 @@ public sealed class ArtifactFailureTests
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock,
             new(artifactBytes: 1024, stagingBytes: 1024));
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        using var source = new ShortSource("unreclaimed failed prefix"u8.ToArray());
-        DenyPrefixCleanup(driver);
-        try
-        {
-            var failed = Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(
-                await driver.Store.StageAsync(ticket, source, new(), default));
-            Assert.Equal(ArtifactFailureCode.AccessDenied, failed.Code);
-            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failed.Cleanup);
-            Assert.False(driver.Ready);
-            Assert.False(source.WasDisposed);
-            Assert.True(source.BytesRead > 0);
-            Assert.Single(Directory.GetFiles(driver.StagingDirectory));
-            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
-                await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default)).Code);
-            var page = Success(await driver.Maintenance.ObserveAsync(
-                new(driver.Identity, ArtifactRecoveryKind.Staging), new(), default));
-            var row = Assert.Single(page.Observations);
-            Assert.Equal(ArtifactObservationKind.AbandonedStaging, row.Kind);
-            var owner = Assert.IsType<ArtifactOption<ArtifactStagingOwner>.Some>(row.Owner).Value;
-            var request = new ArtifactCleanupRequest(driver.Identity, [new ArtifactCleanupTarget.AbandonedStaging(owner)]);
-            for (var attempt = 0; attempt < 2; attempt++)
-            {
-                var retry = Assert.IsType<ArtifactResult<ArtifactCleanupReport>.Failure>(
-                    await driver.Maintenance.CleanupAsync(request, new(), default));
-                Assert.Equal(ArtifactFailureCode.AccessDenied, retry.Code);
-                Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, retry.Cleanup);
-                Assert.False(driver.Ready);
-            }
-            RestorePrefixCleanup(driver);
-            var reclaimed = Success(await driver.Maintenance.CleanupAsync(request, new(), default));
-            Assert.Equal(1, reclaimed.Completed);
-            Assert.True(reclaimed.ReclaimedBytes > 0);
-            Assert.Empty(Directory.GetFiles(driver.StagingDirectory));
-            Assert.True(driver.Ready);
-            Assert.IsType<ArtifactResolution.NotCommitted>(Success(await driver.Store.ReconcileAsync(ticket, new(), default)));
-            using var replay = new ShortSource([1]);
-            Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(await driver.Store.StageAsync(ticket, replay, new(), default));
-            Assert.Equal(0, replay.BytesRead);
-            var fresh = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-            using var replacement = new ShortSource("fresh owner after reclamation"u8.ToArray());
-            var staged = Success(await driver.Store.StageAsync(fresh, replacement, new(), default));
-            Assert.Equal(1, Success(await driver.Maintenance.CleanupAsync(request, new(), default)).Conflicted);
-            Assert.IsType<ArtifactResult<ArtifactStagingOwner>.Failure>(await driver.Store.RenewAsync(owner, new(), default));
-            Assert.IsType<ArtifactResult<ArtifactCleanupReport>.Failure>(await driver.Store.AbandonAsync(owner, new(), default));
-            var receipt = Success(await driver.Store.CommitAsync(staged, new(), default));
-            Assert.Equal("fresh owner after reclamation"u8.ToArray(), await ReadAsync(driver, receipt.Stamp));
-        }
-        finally { RestorePrefixCleanup(driver); }
+        await CleanupAssertions(driver).FailedPrefixAsync(
+            () => DenyPrefixCleanup(driver), () => RestorePrefixCleanup(driver), default);
     }
 
     [Theory]
@@ -265,21 +186,8 @@ public sealed class ArtifactFailureTests
         var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
         using var source = new ShortSource("prefix retained through stop"u8.ToArray());
         DenyPrefixCleanup(driver);
-        try
-        {
-            Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(await driver.Store.StageAsync(ticket, source, new(), default));
-            for (var attempt = 0; attempt < 2; attempt++)
-            {
-                var failed = Assert.IsType<ArtifactResult<ArtifactShutdown>.Failure>(await driver.StopAsync(new()));
-                Assert.Equal(ArtifactFailureCode.CleanupIncomplete, failed.Code);
-                Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failed.Cleanup);
-                Assert.Single(Directory.GetFiles(driver.StagingDirectory));
-                Assert.False(source.WasDisposed);
-            }
-        }
-        finally { RestorePrefixCleanup(driver); }
-        Assert.Equal(ArtifactCleanupState.Released, Success(await driver.StopAsync(new())).State);
-        Assert.Empty(Directory.GetFiles(driver.StagingDirectory));
+        await CleanupAssertions(driver).FailedPrefixStopAsync(
+            ticket, source, driver.StopAsync, () => RestorePrefixCleanup(driver), default);
         if (provider == "local")
         {
             var reopened = new LocalArtifactStore(Path.GetDirectoryName(driver.StagingDirectory)!);
@@ -287,16 +195,15 @@ public sealed class ArtifactFailureTests
                 driver.Authority, new(artifactBytes: 1024, stagingBytes: 1024)), new(), default));
             try
             {
-                Assert.True(reopened.Ready);
-                Assert.IsType<ArtifactResolution.NotCommitted>(Success(await reopened.ReconcileAsync(ticket, new(), default)));
-                Success(await reopened.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-                using var replay = new ShortSource([1]);
-                Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(await reopened.StageAsync(ticket, replay, new(), default));
-                Assert.Equal(0, replay.BytesRead);
+                await ArtifactCleanupAssertions.ReopenedAfterPrefixStopAsync(reopened, () => reopened.Ready, ticket, default);
             }
             finally { Success(await reopened.StopAsync(new(), default)); }
         }
     }
+
+    private static ArtifactCleanupAssertions CleanupAssertions(ArtifactProviderDriver driver) =>
+        new(driver.Store, driver.Maintenance, driver.Identity, () => driver.Ready,
+            () => Directory.GetFiles(driver.StagingDirectory));
 
     private static void DenyPrefixCleanup(ArtifactProviderDriver driver)
     {

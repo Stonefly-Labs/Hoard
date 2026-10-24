@@ -6712,6 +6712,17 @@ deadline, retry and shutdown assertions, including the generic bounded-failure
 helper. The next six-row request is 69 scopes/596 observations, pending, not
 complete binding/session/category or full profile acceptance.
 
+That lifecycle request passed `40123477371` at exact head
+`f2cc84decfbd1b099f57e82b40d9636b65b8695e`: all three jobs,
+181 foundations without failures/errors/skips and 69 scopes/596 exact
+discoveries/executions, including all three bridge and six lifecycle rows.
+Every actual prerequisite chain/native containment/eighteen-package/thirteen-
+lock replay passed strict admission. Input:
+`bf6e1a22dac1c6c3a58b55f70430e981eeffb67d443dc64dbba19cab031e1643`;
+preparation:
+`01f0cb2c3088be6ea79682ab8bb10d5359e703d40f31907f9ab1f43c50800bf9`.
+This does not accept the canceled bridge-only run.
+
 Two original storage-failure/reconciliation bodies now use shared consumers,
 preserving four frozen parameters, fixed error classifications, exact failure
 actions, borrowed-source handling, fixed sanitizer checks and committed-byte/
@@ -6732,6 +6743,15 @@ prerequisite chain/native containment/eighteen-package/thirteen-lock replay.
 Input: `a5869dfd419f2fcc869633479bc99c4524ad1affa9fec306c8496079583047ea`;
 preparation:
 `f15f9d1ec24f010e0e96d50e15ab3a1aa16c94a46e9bca929e5fca0596fb9c24`.
+
+Three original prefix-cleanup bodies now use interface-only common checks with
+all six frozen parameters, including the original post-stop Local reopen
+assertions. Actual permission changes, observer registration/removal, readiness
+and directory snapshots, stop implementation and Local-only durable reopen
+remain fixture-side. Common checks preserve exact receipt/owner/cleanup/fencing
+assertions and do not pretend ObjectSemantics has durable restart. The next
+six-row native request is 71 scopes/608 observations, pending, not complete
+bindings/category/session or full profile acceptance.
 
 The expanded budget request passed `40119412481` at exact head
 `70dfdf63f59a13ba39d934a7ef09f148bfc58c57`: all three jobs, 176 foundations

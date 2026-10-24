@@ -579,6 +579,10 @@ native I/O holds, physical release/removal and settlement stay fixture-side.
 Original assertions/order and the generic bounded-failure helper are unchanged
 after explicit seams. The next six-row request is 69 scopes/596 observations,
 pending, not complete provider/category/session or full profile qualification.
+That lifecycle request passed `40123477371` at `f2cc84d`, all three jobs,
+181 foundations and 69 scopes/596 observations, including three bridge and six
+lifecycle rows plus actual prerequisites/replay. The canceled bridge-only run
+is not separately accepted.
 Two original storage-failure/reconciliation bodies now also use shared checks,
 preserving four frozen parameters, fixed classifications/sanitizer/source
 behavior and original assertion tokens/order. Actual post-visibility fault
@@ -592,6 +596,13 @@ Four-way integration passed `40121897879` at `4c87667`, all three jobs,
 179 foundations and 67 scopes/587 observations, all twenty integration rows and
 actual prerequisite chains/replay. These are diagnostic counts, not complete
 category results.
+Three original prefix-cleanup bodies now also use interface-only common checks
+with all six frozen parameters and unchanged stop/reopen assertions. Actual
+permission changes, observer registration/removal, readiness/directory snapshots
+and Local-only durable reopen stay fixture-side. Original exact receipt/owner/
+cleanup/fencing checks remain common; no simulation durability is borrowed.
+The next six-row native request is 71 scopes/608 observations, pending, not
+complete bindings/category/session or full profile qualification.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

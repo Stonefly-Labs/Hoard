@@ -3034,6 +3034,50 @@ Previously measured transfer packets remain unchanged, not fresh session/
 category origins or new durable proof. Historical consumers/binaries, tracked
 locks and production APIs remain unchanged.
 
+Three original prefix-cleanup bodies now execute interface-only shared checks
+with all six frozen parameters: committed receipts with residual staging,
+failed prefix reclamation/fencing and failed-prefix stop/settlement. Original
+Local post-stop reopen assertions also execute shared checks. Actual permission
+changes, observer registration/removal, readiness/directory snapshots, concrete
+stop implementation and Local-only reopen/initialization/final stop remain
+fixture-side. The same borrowed source survives the stop/reopen fixture scope.
+Common checks preserve exact receipt/owner/cleanup/fencing assertions and every
+operation/order; ObjectSemantics gains no claimed durable restart.
+
+Missing common type first failed actual package-mode compilation with CS0246;
+the missing exact scope failed its named tooling regression. Mechanical
+comparison verifies all three bodies, post-stop reopen checks and unchanged
+actual stop/reopen/control setup after explicit seams. The new six-row request
+is 71 scopes/608 observations, pending. Tooling passed 291 discovered /
+274 passed / seventeen native macOS skips. SDK/accepted-wrapper whitespace,
+compiled/frozen catalogs, exact comparisons and patch integrity passed. Broad
+tasks, reviewer-owned checklists and stage gates remain open.
+
+Lifecycle run
+[40123477371](https://github.com/Stonefly-Labs/Hoard/actions/runs/40123477371)
+passed at exact head `f2cc84decfbd1b099f57e82b40d9636b65b8695e`: all three
+jobs, 181 foundations without failures/errors/skips and 69 scopes/596 exact
+discoveries/executions, including all three bridge and six lifecycle rows.
+Every actual recovery/transfer/retention/external/native prerequisite chain,
+native containment and eighteen-package/thirteen-lock replay passed strict
+admission. Input:
+`bf6e1a22dac1c6c3a58b55f70430e981eeffb67d443dc64dbba19cab031e1643`;
+preparation:
+`01f0cb2c3088be6ea79682ab8bb10d5359e703d40f31907f9ab1f43c50800bf9`.
+The first observer invocation expected 180 foundations and correctly rejected
+that mismatch; rerunning with the observed exact 181 passed. This is observer
+configuration, not a failing CI run or acceptance of the canceled bridge-only
+run. Storage-failure run `40124374635` binds exact head
+`ff50acda07e9bc8eb00277de2eb20140d2f39e5f`, pending separate strict admission.
+
+`prefix` and independent `prefix-replay` each passed all 295 artifact cases
+and 89 metadata cases per provider without skips. Eleven archives and ten
+actual loaded dependency images reproduce exactly; combined archive-map SHA-256:
+`d79953069b35ca32f181a4e6f3f1a08e68e0841424c052efb00d024e1eee8511`.
+Previously measured transfer packets remain unchanged, not fresh session/
+category origins or new durable proof. Historical consumers/binaries, tracked
+locks and production APIs remain unchanged.
+
 `handoff` and independent `handoff-replay` preparations each passed 286 artifact
 cases plus 89 metadata cases per provider, without skips. Eleven archives and ten
 actual loaded dependency images reproduce exactly; combined archive-map SHA-256:

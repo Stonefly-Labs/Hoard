@@ -566,6 +566,22 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_prefix_cleanup_scope_preserves_all_frozen_reclamation_and_stop_cases(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_prefix_cleanup_scenarios", None)),
+                        "Shared prefix cleanup checks need exact owned wrapper transport.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactFailureTests."
+        methods = (
+            "Committed_receipts_remain_reconcilable_while_exact_residual_staging_is_reclaimed",
+            "Failed_prefix_reclamation_retains_ownership_until_exact_bounded_cleanup",
+            "Stop_retains_failed_prefix_ownership_until_reclamation_can_settle")
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if any(name.startswith(prefix + method + "(") for method in methods)}
+        self.assertEqual(len(original), 6)
+        scenario, = checks.original_artifact_prefix_cleanup_scenarios()
+        self.assertEqual(scenario, ("original-artifact-prefix-cleanup", tuple(sorted(original)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_failure_scope_preserves_frozen_classification_and_reconciliation_cases(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_failure_scenarios", None)),
                         "Shared failure checks need exact owned wrapper transport.")
