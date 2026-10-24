@@ -126,6 +126,15 @@ Their six frozen parameters form a separate exact scope: the expanded native
 request is 54 scopes/404 observations, pending. Thirty-seven affected class
 tests, 250 non-external-proof artifact tests and 89 metadata tests per provider
 pass against independently replayed eleven-archive bytes.
+Exact receipt/protection and permanent quarantine consumers now also share SDK
+assertions, preserving Local-only durable reopen outside the common checks.
+Both actual-validator mutation pairs fail the named common receipt assertion
+and pass with the original validators. Fresh replay passes 252 non-external-proof
+artifact tests; the expanded 55-scope/427-observation native request is pending.
+The earlier publication transport is verified at native
+[40103524667](https://github.com/Stonefly-Labs/Hoard/actions/runs/40103524667),
+including all three jobs and 53 scopes/398 exact observations, not these later
+consumers or complete category qualification.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

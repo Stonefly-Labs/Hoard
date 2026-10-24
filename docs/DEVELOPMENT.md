@@ -6174,6 +6174,30 @@ The expanded native request is 54 scopes/404 observations, pending Linux
 execution. The seventeen external proof prerequisites, full bindings/origins,
 safe legacy imports and category/profile gates remain unfinished.
 
+Publication transport subsequently passed on Linux:
+[40103524667](https://github.com/Stonefly-Labs/Hoard/actions/runs/40103524667)
+at `dcb777e5a24665e569f029c1d359060319bfefcf` passed all three jobs,
+143 foundation checks without failures/errors/skips, 53 scopes/398 exact
+discoveries/executions (including original artifact publication/mutation),
+native containment and identical eighteen-package/thirteen-lock replay.
+
+`ArtifactEvidenceAssertions` now also shares exact receipt/protection validation
+and permanent quarantine checks. Both inherited bodies mechanically match after
+only dependency/helper/cancellation substitutions. Local durable reopen stays
+fixture-owned and is not borrowed by ObjectSemantics. A real validator decorator
+accepting the second, wrong-receipt request fails the common `Assert.IsType`
+assertion on both providers after a genuine successful validation; the unchanged
+validators pass the same consumer. The missing shared consumer and missing
+native dispatch were observed failing first, not mistaken for behavioral proof.
+Fresh eleven-archive locked replay passes 28 affected class tests, then all
+252 non-external-proof artifact tests and 89 metadata tests per provider,
+without skips. Both predecessor locks change only the SDK pin. All 252 tooling
+tests pass locally (241 passes, eleven native macOS skips), along with format
+and frozen catalog checks. The 23-identity native scope retains all original
+evidence parameters, the relevant quarantine read parameters and the mutation
+pair: 55 scopes/427 observations are requested, pending. Full category bindings,
+origins, safe imports and seventeen external-proof obligations remain open.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

@@ -240,6 +240,18 @@ All 37 affected class tests, 250 non-external-proof artifact tests and 89 metada
 tests per provider pass with independently replayed eleven-archive bytes.
 The six exact frozen read/deletion parameters are selected separately in the
 native diagnostic, expanding it to 54 scopes/404 observations, pending.
+Exact receipt/protection validation and permanent quarantine assertions now
+share common consumers as well. Fixture-owned Local durable reopen remains
+separate; ObjectSemantics never borrows that proof. Actual-validator mutation
+pairs fail the common receipt assertion and pass with the original validators.
+Fresh eleven-archive replay passes 252 non-external-proof artifact tests and
+89 metadata tests per provider. Their 23-identity diagnostic scope expands the
+pending native request to 55 scopes/427 observations.
+Publication transport is verified by native
+[40103524667](https://github.com/Stonefly-Labs/Hoard/actions/runs/40103524667):
+143 foundation checks, 53 scopes/398 exact observations, actual original
+publication/mutation execution, native containment and eighteen-package/
+thirteen-lock replay. It does not verify these subsequent extractions.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

@@ -302,6 +302,19 @@ a separate exact diagnostic scope; shortened or renamed scopes reject.
 Thirty-seven affected class tests and 250 non-external-proof artifact tests pass
 with fresh eleven-archive replay. The expanded 54-scope/404-observation native
 request is pending; full bindings/origins and external proofs remain separate.
+Native [40103524667](https://github.com/Stonefly-Labs/Hoard/actions/runs/40103524667)
+at `dcb777e5a24665e569f029c1d359060319bfefcf` verifies the earlier publication
+transport: all three jobs, 143 foundation checks, 53 scopes/398 exact
+discoveries/executions, actual original artifact publication/mutation, native
+containment and eighteen-package/thirteen-lock replay.
+Exact receipt/protection and permanent quarantine assertions now share SDK
+consumers too. Local durable reopen stays fixture-owned; no simulation borrows
+it. An actual-validator wrong-receipt mutation fails the common assertion on
+both providers while original validators pass. Fresh replay passes 28 affected
+tests and 252 non-external-proof artifact tests without skips. A new 23-identity
+scope preserves original evidence/quarantine parameters and the mutation pair,
+expanding the pending native request to 55 scopes/427 observations. This is
+diagnostic evidence, not full category/binding/session-origin completion.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

@@ -1,6 +1,7 @@
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Fixtures.Artifacts.Local;
+using Hoard.Testing.Conformance.Artifacts;
 using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
 
 namespace Hoard.Artifacts.Tests;
@@ -118,16 +119,7 @@ public sealed class ArtifactEvidenceTests
 
     internal static async Task AssertQuarantinedAsync(ArtifactProviderDriver driver, ArtifactMutationReceipt receipt, byte[] bytes)
     {
-        Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
-            await driver.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default)).Code);
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        using var duplicate = new ShortSource(bytes);
-        var staged = Success(await driver.Store.StageAsync(ticket, duplicate, new(), default));
-        Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
-            await driver.Store.CommitAsync(staged, new(), default)).Code);
-        Success(await driver.Store.AbandonAsync(staged.Owner, new(), default));
-        Assert.Equal(receipt, Assert.IsType<ArtifactResolution.Committed>(
-            Success(await driver.Store.ReconcileAsync(receipt.Ticket, new(), default))).Receipt);
+        await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(driver.Store, receipt, bytes, default);
         if (driver.ProviderId == "local")
         {
             Success(await driver.StopAsync(new()));
@@ -151,33 +143,7 @@ public sealed class ArtifactEvidenceTests
     public async Task Only_exact_current_receipts_with_opaque_same_operation_protection_validate(string provider)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
-        using var source = new ShortSource("attributable evidence"u8.ToArray());
-        var receipt = await PublishAsync(driver, source, new(1024));
-        var proof = Assert.IsType<ArtifactOption<ArtifactCommitEvidence>.Some>(receipt.Evidence).Value;
-        var request = new ArtifactProtectionRequest(Guid.NewGuid(), ArtifactProtectionOperation.Reference,
-            driver.Identity, receipt.Stamp.Identity.Digest, new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp));
-        var protection = Success(await driver.Authority.AcquireAsync(request, new(), default));
-        try
-        {
-            Assert.Equal(receipt.Stamp, Success(await driver.Validator.ValidateAsync(proof, protection, new(), default)));
-            var wrong = new ArtifactCommitEvidence(proof.Stamp, proof.TicketId, Guid.NewGuid(), proof.ProofHandle, proof.Outcome);
-            Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(await driver.Validator.ValidateAsync(wrong, protection, new(), default));
-            await using var copied = new CopiedGuard(protection.Grant);
-            Assert.Equal(ArtifactFailureCode.Denied, Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(
-                await driver.Validator.ValidateAsync(proof, copied, new(), default)).Code);
-            var foreignStamp = new ArtifactStamp(new ArtifactStoreIdentity(driver.Identity.ProviderModuleId,
-                driver.Identity.InstanceId, Guid.NewGuid()), proof.Stamp.Identity, proof.Stamp.Incarnation);
-            var foreign = new ArtifactCommitEvidence(foreignStamp, proof.TicketId, proof.ReceiptId, proof.ProofHandle, proof.Outcome);
-            Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(await driver.Validator.ValidateAsync(foreign, protection, new(), default));
-        }
-        finally { await protection.DisposeAsync(); }
-        Assert.Equal(ArtifactFailureCode.Denied, Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(
-            await driver.Validator.ValidateAsync(proof, protection, new(), default)).Code);
-    }
-
-    private sealed class CopiedGuard(ArtifactProtectionGrant grant) : IArtifactProtectionGuard
-    {
-        public ArtifactProtectionGrant Grant => grant;
-        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        await ArtifactEvidenceAssertions.ExactCurrentReceiptsAsync(
+            driver.Store, driver.Validator, driver.Authority, driver.Identity, default);
     }
 }

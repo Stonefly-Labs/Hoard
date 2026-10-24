@@ -2073,6 +2073,58 @@ are unchanged. This verifies the first artifact SDK archive with existing
 metadata/SDK scopes, not original artifact execution or this read/deletion
 increment.
 
+### Shared exact evidence and permanent quarantine
+
+The ninth original artifact wrapper delegates exact receipt/protection
+validation to `ArtifactEvidenceAssertions`; the reused quarantine helper now
+shares its logical assertions too. Both inherited bodies mechanically match
+after only store/validator/authority/identity/helper/cancellation substitutions.
+The common checks retain wrong receipt rejection, opaque same-operation guard
+identity, copied/disposed guard denial, foreign epochs, permanent corruption
+after restored bytes, duplicate-publication rejection, abandonment and original
+receipt reconciliation. The existing Local durable reopen remains outside the
+SDK and is never borrowed by ObjectSemantics.
+
+The missing shared consumer first failed by name. A narrowly scoped validator
+decorator forwards the first valid request to the actual provider and accepts
+the second wrong receipt. The unchanged common `Assert.IsType` rejects this
+mutation after two calls on both providers; fresh actual validators pass the
+same assertion bytes. This is a behavioral negative, unlike the initial
+missing-consumer setup failure, and is not a completed category mutation binding.
+Fresh preparation and independent empty-cache default locked replay reproduce
+eleven archives and every actual dependency image. Twenty-eight affected tests
+pass, followed by all 252 non-external-proof artifact tests and 89 original
+metadata tests per provider, without skips. Both predecessor locks refresh only
+the SDK pin; historical graphs/vendor entries remain unchanged.
+
+The new exact native scope selects 21 frozen evidence/quarantine parameters and
+two actual-validator mutation parameters. Its named missing-dispatch assertion
+failed first; complete routing and shortened/renamed-scope rejection now pass.
+All 252 tooling tests pass locally (241 passes, eleven native macOS skips),
+with formatting, catalog/inventory and patch-integrity checks. The expanded
+native request is 55 scopes/427 observations, pending. Seventeen external-proof
+prerequisites, full category bindings/session origins, safe legacy imports and
+all profile/evaluator acceptance remain unfinished; no task/checklist or driver
+stage advances.
+
+### Verified original artifact publication transport
+
+Native [40103524667](https://github.com/Stonefly-Labs/Hoard/actions/runs/40103524667)
+at `dcb777e5a24665e569f029c1d359060319bfefcf` passed all three jobs:
+143 foundation checks without failures/errors/skips, 53 scopes/398 exact
+discoveries/executions including all twelve original publication parameters
+and the two actual-store source-substitution mutations, real native containment,
+and identical eighteen-package/thirteen-lock replay. Six-baseline seal and
+SQLite/native/PRAGMA pins remain unchanged.
+
+Input: `0309c9865b7319d393b0c2006ef0f2d159f36e8c9b0f43f7b50f896e02c1fca9`;
+preparation: `8e1ab1e63d37a2e3bc201b700d0b1bc7bc4898243e4d388d70e470d6a39c4539`;
+producer: `7cf8c51cd88be2b59bd5a10792efd9110904be800c1bac47b6de0d5b24b34121`;
+controller: `be1ed47d468062e026dd55dd418df81be45b4958a2b528c1b03e5e9472db117e`;
+child start: `8ca395b6e6656e825bb79bad8c807523e83efba3e2cb96ad0763fecc18478b57`.
+Free scratch: 92,108,894,208 bytes. This verifies publication transport, not the
+subsequent protected-read/deletion/evidence increments or category qualification.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

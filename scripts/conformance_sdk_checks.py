@@ -369,6 +369,25 @@ def original_artifact_read_delete_scenarios():
     return (("original-artifact-read-delete", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
+def original_artifact_evidence_scenarios():
+    read_methods = {
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests."
+        "Every_committed_detection_path_quarantines_restored_bytes",
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests."
+        "Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence",
+    }
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.startswith("Hoard.Artifacts.Tests.ArtifactEvidenceTests.")
+        or witness.split("(")[0] in read_methods
+    }
+    identities.update(
+        "Hoard.Artifacts.Tests.ArtifactEvidenceConsumerTests."
+        "Shared_receipt_assertion_rejects_wrong_receipt_acceptance_and_accepts_original_validator"
+        f'(provider: "{provider}")' for provider in ("local", "object"))
+    return (("original-artifact-evidence", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 BUDGETS = {
     "operationSeconds": 5, "barrierSeconds": 15, "childSeconds": 600,
     "transferSeconds": 2400, "recoverySeconds": 300, "terminationSeconds": 10,
@@ -742,7 +761,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
         lock_paths=locks, runtime_paths=runtime, binding_sources=list(binding_sources),
         observed_environment=observed_environment, budgets=BUDGETS, invocation=[
             "sdk-logger-diagnostic", "original-metadata-memory", "original-metadata-sqlite",
-            "original-artifact-publication", "original-artifact-read-delete"],
+            "original-artifact-publication", "original-artifact-read-delete", "original-artifact-evidence"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -761,7 +780,8 @@ def test_attempt(run, inputs, candidate, scenario):
             raise evidence.ConformanceError("WitnessMissing")
         metadata_provider = name.removeprefix("original-metadata-")
     if original_artifacts and scenario not in (
-            *original_artifact_publication_scenarios(), *original_artifact_read_delete_scenarios()):
+            *original_artifact_publication_scenarios(), *original_artifact_read_delete_scenarios(),
+            *original_artifact_evidence_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
     sqlite_tests = metadata_provider == "sqlite" or any(
@@ -1068,7 +1088,7 @@ def execute(repository, destination):
         }))
         observations = []
         for scenario in (*SCENARIOS, *original_metadata_scenarios(), *original_artifact_publication_scenarios(),
-                         *original_artifact_read_delete_scenarios()):
+                         *original_artifact_read_delete_scenarios(), *original_artifact_evidence_scenarios()):
             print(json.dumps({"qualification": False, "phase": "runtime-tests",
                               "completedScenarios": len(observations)}), flush=True)
             observations.append(test_attempt(run, inputs, candidate, scenario))

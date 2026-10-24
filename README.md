@@ -1373,6 +1373,15 @@ once before awaiting deletion, including when an assertion fails. All 37
 affected class tests and 250 non-external-proof artifact tests pass, alongside
 89 metadata tests per provider and fresh eleven-archive replay. Their six frozen
 parameters expand the native request to 54 scopes/404 observations, pending.
+Exact receipt/protection and permanent quarantine assertions are now shared
+too, retaining Local-only durable reopen checks outside the common SDK.
+Both actual validators reject a wrong-receipt mutation through the unchanged
+consumer; corrected validators pass. Fresh replay passes 252 non-external-proof
+artifact tests. The next native request is 55 scopes/427 observations, pending.
+The preceding publication transport is verified on Linux:
+[40103524667](https://github.com/Stonefly-Labs/Hoard/actions/runs/40103524667)
+passed all three jobs, including 53 scopes/398 exact observations and actual
+original publication/mutation execution; this is not complete category evidence.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
