@@ -1401,12 +1401,21 @@ The transfer diagnostic now requests actual paced, generated, non-seekable
 256 MiB/4 GiB reads/writes for both artifact providers. Parent-controlled
 handshakes bracket independent Linux kernel RSS/high-water measurements and
 enforce the 64 MiB incremental peak bound. Two locked builds and all four real
-macOS transfer rows pass, including actual `getrusage` peaks; Linux owned
-measurement and complete wrapper/category attribution remain pending.
+macOS transfer rows pass, including actual `getrusage` peaks. Linux owned
+measurement passed all four rows at
+[40109299238](https://github.com/Stonefly-Labs/Hoard/actions/runs/40109299238).
 The artifact runner now also requests two actual live inspections of retained
 source, destination and native workers on both providers before parent-owned
-termination. All six macOS functional rows pass; Linux inspection/termination
-execution remains pending. This is explicitly not durable crash evidence.
+termination. Linux inspection/termination passed all six rows at
+[40110165383](https://github.com/Stonefly-Labs/Hoard/actions/runs/40110165383),
+with all three jobs, 165 foundation checks and 55 scopes/427 observations.
+This is explicitly not durable crash evidence.
+The diagnostic now also requests all seventeen original external-proof artifact
+wrappers (sixteen frozen identities plus the existing cross-process root-owner
+fact) and four bounded child-capture tests. Two fresh-cache locked builds pass
+all 21 cases with identical normalized assembly bytes and ten verified dependency
+images. The expanded Linux request is 56 scopes/448 observations, pending;
+complete legacy/session/category attribution remains unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

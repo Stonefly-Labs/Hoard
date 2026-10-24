@@ -166,15 +166,22 @@ The new transfer controller requests both providers' actual paced, non-seekable
 256 MiB/4 GiB write/read rows with independent parent kernel RSS/high-water
 observation, a 64 MiB incremental peak bound and exact producer/receipt binding.
 Two locked builds and all four real macOS rows pass, including actual
-`getrusage` peaks. Linux owning-controller measurement and original wrapper/
-session/category attribution remain pending.
+`getrusage` peaks. Linux owning-controller measurement subsequently passed all
+four rows at `d429dd2`, run `40109299238`; full session/category attribution
+remains pending.
 The actual artifact runner also exposes two-phase safe inspection of retained
 source/destination/native workers on both providers, preserving default output.
 The owning controller requests the second original inspection before observed
 termination, admitting the complete parent chain and both matching producer
-records. Two locked builds and all six macOS functional rows pass; Linux
-execution and complete wrapper/session/category evidence remain pending.
+records. Linux execution passed all six rows at `c7eb90c`, run `40110165383`,
+with 165 foundation checks and all three jobs successful.
 No durable crash proof is inferred from these retained-worker rows.
+The next diagnostic requests seventeen original external-proof wrappers
+(sixteen frozen identities and the existing cross-process root-owner fact)
+plus four bounded child-output cases. Two independent fresh-cache locked
+builds pass all 21 without skips, reproduce normalized assembly bytes and
+verify ten dependency images. The 56-scope/448-observation Linux request is
+pending; these are not complete legacy/session/category imports.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

@@ -418,6 +418,48 @@ class SdkDiagnosticTests(unittest.TestCase):
                     run, {"runtimeAssemblies": {assembly.relative_to(root).as_posix(): "0" * 64}}, candidate)
             execute.assert_not_called()
 
+    def test_external_artifact_scope_preserves_frozen_rows_and_original_cross_process_ownership(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_external_scenarios", None)),
+                        "All seventeen original external-proof wrappers need exact owned transport.")
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        prefixes = ("Hoard.Artifacts.Tests.ArtifactCrashTests.",
+                    "Hoard.Artifacts.Tests.ArtifactNonCooperativeChildTests.",
+                    "Hoard.Artifacts.Tests.ArtifactTransferProofTests.")
+        admission = "Hoard.Artifacts.Tests.ArtifactAdmissionTests.Local_root_is_exclusively_owned_across_real_processes_not_a_lock_filename"
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.startswith(prefixes) or name == admission}
+        scenario, = checks.original_artifact_external_scenarios()
+        self.assertEqual(len(original), 16)
+        self.assertEqual({name for name in scenario[1] if not name.startswith(
+            "Hoard.Artifacts.Tests.ArtifactChildOutputTests.")}, original | {admission})
+        self.assertEqual(len(scenario[1]), 21)
+        candidate = self.directory / "candidate"
+        runner = candidate / checks.ARTIFACT_RECOVERY / (
+            "bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll")
+        runner.parent.mkdir(parents=True)
+        runner.write_bytes(b"external-wrapper-unit-double")
+        assembly = candidate / checks.ARTIFACT_TESTS / checks.ARTIFACT_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Artifacts.Tests.dll")
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {
+                assembly.relative_to(self.directory).as_posix(): "a" * 64,
+                runner.relative_to(self.directory).as_posix(): hashlib.sha256(runner.read_bytes()).hexdigest()},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+        }
+        with patch.object(checks, "runtime_command",
+                          side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+            self.assertEqual(launch.call_args.kwargs["artifact_runner"], runner)
+            manifest = launch.call_args.args[2]
+            self.assertEqual({item["testIdentity"] for item in manifest["expected"]}, set(scenario[1]))
+        runner.write_bytes(b"changed")
+        with patch.object(checks, "runtime_command") as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+            launch.assert_not_called()
+
     def test_artifact_wrapper_scope_preserves_frozen_publication_parameters_and_actual_assembly(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_publication_scenarios", None)),
                         "Artifact publication needs exact source-owned wrapper transport.")
@@ -627,6 +669,36 @@ class SdkDiagnosticTests(unittest.TestCase):
                     else:
                         with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
                             admit(candidate, self.directory)
+
+    def test_external_artifact_settings_bind_the_actual_runner_current_run_and_parent_transfer_proofs(self):
+        (self.directory / "stores").mkdir()
+        (self.directory / "proofs/artifact-transfers").mkdir(parents=True)
+        (self.directory / "runtime-owner.json").write_bytes(b"{}")
+        runner = self.directory / "Hoard.Fixtures.Artifacts.CrashRunner.dll"
+        runner.write_bytes(b"runner-unit-double")
+        assembly = self.directory / "Hoard.Artifacts.Tests.dll"
+        received = []
+        run = SimpleNamespace(root=self.directory, command=lambda args, **options: (
+            received.append(args) or SimpleNamespace(exit_code=0, events=())))
+        scenario, = checks.original_artifact_external_scenarios()
+        manifest = {
+            "attemptId": str(uuid.uuid4()), "runId": str(uuid.uuid4()), "purpose": "discovery",
+            "expected": [{"testIdentity": name, "fullyQualifiedName": name.split("(")[0]} for name in scenario[1]],
+        }
+        checks.runtime_command(run, assembly, manifest, artifact_runner=runner)
+        settings = ET.fromstring(Path(next(arg.removeprefix("--Settings:") for arg in received[0]
+                                          if arg.startswith("--Settings:"))).read_bytes())
+        variables = {item.tag: item.text for item in settings.findall("./RunConfiguration/EnvironmentVariables/*")}
+        self.assertEqual(variables["HOARD_ARTIFACT_CRASH_RUNNER"], str(runner))
+        self.assertEqual(variables["HOARD_ARTIFACT_TRANSFER_PROOFS"], str(self.directory / "proofs/artifact-transfers"))
+        self.assertEqual(variables["HOARD_ARTIFACT_RUN_ID"], manifest["runId"])
+        self.assertEqual(Path(variables["HOARD_ARTIFACT_CRASH_PROOFS"]).parent, self.directory / "stores")
+        self.assertNotIn("HOARD_CONFORMANCE_SAFE_EVENTS", variables)
+        for target, expected in ((self.directory / "Foreign.dll", manifest["expected"]),
+                                 (assembly, [{"testIdentity": "foreign", "fullyQualifiedName": "foreign"}])):
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                checks.runtime_command(run, target, manifest | {"expected": expected}, artifact_runner=runner)
+        self.assertEqual(len(received), 1)
 
     def test_original_provider_selection_is_closed_and_reaches_the_actual_test_host_settings(self):
         (self.directory / "stores").mkdir()

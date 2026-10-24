@@ -28,7 +28,7 @@ public sealed class ArtifactNonCooperativeChildTests
         { start.ArgumentList.Add(argument); }
         using var child = Process.Start(start) ?? throw new InvalidOperationException("Artifact owned child did not start.");
         root.AllowCleanup = false;
-        var errors = child.StandardError.ReadToEndAsync();
+        var errors = ArtifactChildOutput.ReadToEndAsync(child.StandardError);
         var proofs = new List<JsonElement>();
         try
         {
@@ -66,7 +66,7 @@ public sealed class ArtifactNonCooperativeChildTests
 
         async Task ReadProofAsync(string phase)
         {
-            var line = await child.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(60));
+            var line = await ArtifactChildOutput.ReadLineAsync(child.StandardOutput);
             Assert.NotNull(line);
             Assert.InRange(line.Length, 1, 16384);
             using var document = JsonDocument.Parse(line);

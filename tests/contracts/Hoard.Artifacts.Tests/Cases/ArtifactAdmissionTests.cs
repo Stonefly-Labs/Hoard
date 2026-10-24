@@ -176,8 +176,8 @@ public sealed class ArtifactAdmissionTests
             identity.InstanceId.ToString(), identity.Epoch.ToString() }) { start.ArgumentList.Add(argument); }
         root.AllowCleanup = false;
         using var process = Process.Start(start) ?? throw new InvalidOperationException("Artifact owned child did not start.");
-        var output = process.StandardOutput.ReadToEndAsync();
-        var errors = process.StandardError.ReadToEndAsync();
+        var output = ArtifactChildOutput.ReadToEndAsync(process.StandardOutput);
+        var errors = ArtifactChildOutput.ReadToEndAsync(process.StandardError);
         try { await process.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(15)); }
         finally
         {

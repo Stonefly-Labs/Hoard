@@ -2403,6 +2403,68 @@ authority combinations and complete category/profile acceptance remain pending.
 Production architecture/ADRs/diagrams and deployment examples remain unaffected
 by test transport and parent evidence changes. No task/checklist/stage advances.
 
+### Native transfer/retention verification and original external wrapper transport
+
+Complete native
+[40109299238](https://github.com/Stonefly-Labs/Hoard/actions/runs/40109299238)
+at `d429dd24fb18efda382502ff0a3461ab9ffc6b4f` passed all three jobs:
+159 foundation checks without failures/errors/skips, 55 scopes/427 exact
+observations, ten SQLite and six Local recovery rows, all four actual paced
+256 MiB/4 GiB Local/ObjectSemantics write/read rows, native containment and
+eighteen-package/thirteen-lock replay. Parent kernel RSS/high-water observations
+and acknowledged settlement were admitted for each actual transfer.
+Input: `f36b1b808151c587387efae9f67ba60b726e6e5375fdaa23ac3244450b19f13e`.
+Preparation: `a81a10ab8b8589894c52411cd29c8bea28facf28c0f62ce491b6ee5bf0dbe1d5`.
+Free scratch: 92,108,427,264 bytes.
+
+Native
+[40110165383](https://github.com/Stonefly-Labs/Hoard/actions/runs/40110165383)
+at `c7eb90cb44bdddc9f63d570ccc96ccba821a6b01` then passed all three jobs:
+165 foundation checks without failures/errors/skips, the same 55/427 vector,
+all recovery/transfer rows and six actual retained-worker two-phase
+inspection/termination chains. Exact producer phase/run/PID/retention records,
+parent observation/request/signal/exit ordering and distinct controller/child-start
+hashes were safely verified. These rows explicitly have `durableCrashProof: false`.
+Input: `5cf3e4daba4401d70831f94cc4d44079f889ff46def27b92f36c68a3947da4ef`.
+Preparation: `02de92c9d78b68ab324e3243e9caca9ff85da094f431d79e0d773e792c3bf8a3`.
+Free scratch: 91,723,952,128 bytes. Six historical baseline seals, SQLite/native
+pins and eighteen-package/thirteen-lock replay remain unchanged.
+
+The next diagnostic adds all seventeen existing external-proof artifact
+wrappers: sixteen frozen crash/noncooperation/transfer identities plus the
+independent existing cross-process root-owner fact. Four new bounded child-output
+cases make one exact 21-identity scope. A named failing scope test caught the
+distinction between the sixteen frozen witnesses and that additional original
+fact; both are now preserved without modifying the frozen inventory.
+The actual test host receives only closed settings for the input-captured
+runner, current run ID, parent-admitted transfer proofs and fresh private
+per-attempt crash captures. No safe-event flag is inherited into original
+legacy child wrappers. This scope runs after real diagnostic prerequisites.
+
+The original wrappers now share an internal bounded text reader, with a finite
+deadline, exact 16,384-character limit and CRLF allowance that never consumes
+the next packet. Crash-state length is checked before allocation/copy; recovery
+stderr is asserted empty before creating the healthy empty legacy error file,
+never copied on failure. The original transfer predicate adds actual kernel
+`getrusage`/`proc-status` methods while preserving all byte/hash/pacing/RSS/buffer
+assertions; an unmeasured `declared` method remains rejected.
+Actual compiler CS0103 exposed the missing reader before implementation.
+
+Two actual fresh-cache locked builds pass all 21 cases without skips and verify
+ten dependency images. Initial assembly byte replay exposed the test SDK's
+generated source path outside the source-only debug map; mapping both private
+source/cache roots reproduces assembly SHA-256
+`1d980fc8946c268247f802cf674bdb9155caba5eed8119f5647a8b4670f890ec`.
+The copied actual transfer packets are unchanged, with real `getrusage` peaks,
+not fabricated method substitutions. All 274 tooling tests pass locally
+(257 passes/seventeen native macOS skips); compiled SDK/frozen catalog,
+accepted package-mode whitespace and patch integrity checks pass.
+The expanded native request is 56 scopes/448 observations, pending.
+These remain diagnostics, not the catalog's 179 applicable category passes,
+complete legacy/session origins, all authority combinations or full profiles.
+No task/checklist/stage advances; production APIs/edges/ADRs/diagrams and
+deployment examples remain unaffected by this test-transport increment.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

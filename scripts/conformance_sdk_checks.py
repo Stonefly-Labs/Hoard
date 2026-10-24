@@ -1003,6 +1003,25 @@ def artifact_noncooperation_diagnostics(run, inputs, candidate):
     return result
 
 
+def original_artifact_external_scenarios():
+    prefixes = ("Hoard.Artifacts.Tests.ArtifactCrashTests.", "Hoard.Artifacts.Tests.ArtifactNonCooperativeChildTests.",
+                "Hoard.Artifacts.Tests.ArtifactTransferProofTests.")
+    admission = ("Hoard.Artifacts.Tests.ArtifactAdmissionTests."
+                 "Local_root_is_exclusively_owned_across_real_processes_not_a_lock_filename")
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.startswith(prefixes) or witness == admission}
+    identities.add(admission)
+    prefix = "Hoard.Artifacts.Tests.ArtifactChildOutputTests."
+    identities.update((
+        *(prefix + "Child_capture_accepts_the_exact_bound_and_rejects_overflow_before_return(line: " + value + ")"
+          for value in ("False", "True")),
+        prefix + "Line_capture_preserves_the_next_packet_and_distinguishes_empty_line_from_eof",
+        prefix + "Capture_bounds_unterminated_packets_and_preserves_empty_completed_output",
+    ))
+    return (("original-artifact-external", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def environment(run, *, phase="admission", candidate=None):
     # The probe is itself an owned child. Captured SDK text is bounded transient
     # input, validated before serialization, never sent to the console.
@@ -1084,7 +1103,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "sdk-logger-diagnostic", "original-metadata-memory", "original-metadata-sqlite",
             "original-artifact-publication", "original-artifact-read-delete", "original-artifact-evidence",
             "sqlite-recovery-barriers", "local-recovery-barriers", "paced-artifact-transfers",
-            "artifact-noncooperation"],
+            "artifact-noncooperation", "original-artifact-external"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1104,7 +1123,7 @@ def test_attempt(run, inputs, candidate, scenario):
         metadata_provider = name.removeprefix("original-metadata-")
     if original_artifacts and scenario not in (
             *original_artifact_publication_scenarios(), *original_artifact_read_delete_scenarios(),
-            *original_artifact_evidence_scenarios()):
+            *original_artifact_evidence_scenarios(), *original_artifact_external_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
     sqlite_tests = metadata_provider == "sqlite" or any(
@@ -1152,6 +1171,11 @@ def test_attempt(run, inputs, candidate, scenario):
     }
     discovery_manifest = {**manifest, "purpose": "discovery", "attemptId": str(uuid.uuid4())}
     runtime_options = {"metadata_provider": metadata_provider} if original_metadata else {}
+    if name == "original-artifact-external":
+        runner = candidate / ARTIFACT_RECOVERY / "bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll"
+        if inputs["runtimeAssemblies"].get(runner.relative_to(run.root).as_posix()) != evidence.file_sha256(runner):
+            raise evidence.ConformanceError("InputChanged")
+        runtime_options["artifact_runner"] = runner
     discovery_result, discovery_output, discovery_transport = runtime_command(
         run, assembly, discovery_manifest, **runtime_options)
     files = set()
@@ -1203,7 +1227,7 @@ def test_attempt(run, inputs, candidate, scenario):
             "completionSha256": evidence.file_sha256(output / "completion.json")}
 
 
-def runtime_command(run, assembly, manifest, *, metadata_provider=None):
+def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact_runner=None):
     attempt_id = manifest["attemptId"]
     identities = tuple(entry["testIdentity"] for entry in manifest["expected"])
     if manifest["purpose"] not in ("discovery", "execution"):
@@ -1217,6 +1241,30 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None):
             "<EnvironmentVariables>"
             f"<HOARD_METADATA_PROVIDER>{metadata_provider}</HOARD_METADATA_PROVIDER>"
             "</EnvironmentVariables>")
+    if artifact_runner is not None:
+        allowed = set(original_artifact_external_scenarios()[0][1])
+        if (metadata_provider is not None or assembly.name != "Hoard.Artifacts.Tests.dll"
+                or set(identities) != allowed):
+            raise evidence.ConformanceError("WitnessMissing")
+        if (not isinstance(artifact_runner, Path) or not artifact_runner.is_relative_to(run.root)
+                or ".." in artifact_runner.parts or artifact_runner.name != "Hoard.Fixtures.Artifacts.CrashRunner.dll"):
+            raise evidence.ConformanceError("InputChanged")
+        transfer_proofs = run.root / "proofs/artifact-transfers"
+        no_symlinks(artifact_runner)
+        no_symlinks(transfer_proofs)
+        if not artifact_runner.is_file() or not transfer_proofs.is_dir():
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        capture = run.root / "stores" / ("original-artifact-" + attempt_id)
+        no_symlinks(capture)
+        capture.mkdir(mode=0o700)
+        variables = {
+            "HOARD_ARTIFACT_CRASH_RUNNER": str(artifact_runner),
+            "HOARD_ARTIFACT_CRASH_PROOFS": str(capture),
+            "HOARD_ARTIFACT_TRANSFER_PROOFS": str(transfer_proofs),
+            "HOARD_ARTIFACT_RUN_ID": manifest["runId"],
+        }
+        origin_environment = ("<EnvironmentVariables>" + "".join(
+            f"<{key}>{escape(value)}</{key}>" for key, value in variables.items()) + "</EnvironmentVariables>")
     if any(entry["fullyQualifiedName"] == SMOKE + "OriginOutput" for entry in manifest["expected"]):
         package = next((item for item in manifest["packages"] if item["id"] == "Hoard.Testing.Conformance"), None)
         if package is None:
@@ -1454,6 +1502,9 @@ def execute(repository, destination):
         artifact_transfers = artifact_transfer_diagnostics(run, inputs, candidate)
         print(json.dumps({"qualification": False, "phase": "artifact-noncooperation"}), flush=True)
         artifact_noncooperative = artifact_noncooperation_diagnostics(run, inputs, candidate)
+        print(json.dumps({"qualification": False, "phase": "original-artifact-external"}), flush=True)
+        for scenario in original_artifact_external_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)
         post_identity = evidence.source_identity(repository, ci_revision=ci_revision)

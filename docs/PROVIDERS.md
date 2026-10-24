@@ -278,14 +278,25 @@ subsequently passed on Linux at `62c149c`, with all three jobs successful.
 The transfer controller now requests both artifact providers' actual paced
 256 MiB/4 GiB writes and reads, with parent-owned kernel RSS/high-water
 observation and exact producer binding. All four real macOS rows and their OS
-peak bounds pass; Linux owned measurement, original wrapper/session imports
+peak bounds pass; Linux owned measurement subsequently passed all four rows at
+`d429dd2`, run `40109299238`. Original wrapper/session imports
 and full category acceptance remain pending. ObjectSemantics borrows no
 SQLite/Local durable recovery proof.
 The same actual runner now exposes safe two-phase live inspection for retained
 source/destination/native workers on both providers. The parent requests the
 second original inspection before owned termination and admits matching
-phase/run/PID/retention records. All six macOS functional rows pass; Linux
-execution remains pending. This work explicitly supplies no durable crash proof.
+phase/run/PID/retention records. Linux execution passed all six rows at
+`c7eb90c`, run `40110165383`, with 165 foundation checks and all three jobs
+successful. This work explicitly supplies no durable crash proof.
+All seventeen original external-proof artifact wrappers and four bounded
+child-output cases are now requested after these real diagnostic prerequisites.
+Sixteen identities are frozen category witnesses; the existing cross-process
+root-ownership fact is additional, not a new frozen category entry.
+Two fresh-cache locked builds pass all 21 cases and verify ten dependency images.
+Child captures are bounded before return/persistence; healthy legacy empty error
+files remain, but failure stderr is not copied into proof files. The expanded
+56-scope/448-observation Linux request and complete session/category imports
+remain pending.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

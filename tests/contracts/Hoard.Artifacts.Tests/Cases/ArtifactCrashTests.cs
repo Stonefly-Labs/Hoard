@@ -30,10 +30,10 @@ public sealed class ArtifactCrashTests
         {
             root.AllowCleanup = false;
             control.AllowCleanup = false;
-            var errors = child.StandardError.ReadToEndAsync();
+            var errors = ArtifactChildOutput.ReadToEndAsync(child.StandardError);
             try
             {
-                var line = await child.StandardOutput.ReadLineAsync().WaitAsync(TimeSpan.FromSeconds(60));
+                var line = await ArtifactChildOutput.ReadLineAsync(child.StandardOutput);
                 Assert.NotNull(line);
                 Assert.InRange(line.Length, 1, 16384);
                 using var document = JsonDocument.Parse(line);
@@ -42,6 +42,7 @@ public sealed class ArtifactCrashTests
                 Assert.Equal(child.Id, observed.GetProperty("pid").GetInt32());
                 Assert.Equal(barrier, observed.GetProperty("barrier").GetString());
                 Assert.Equal(run, observed.GetProperty("runId").GetString());
+                Assert.InRange(new FileInfo(state).Length, 1, 16384);
                 Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(state))),
                     observed.GetProperty("stateSha256").GetString());
                 Assert.Equal(barrier == "B3", observed.GetProperty("acknowledged").GetBoolean());
@@ -62,14 +63,14 @@ public sealed class ArtifactCrashTests
         }
         using var reopened = Start("recover");
         root.AllowCleanup = control.AllowCleanup = false;
-        var output = reopened.StandardOutput.ReadToEndAsync();
-        var recoveryErrors = reopened.StandardError.ReadToEndAsync();
+        var output = ArtifactChildOutput.ReadToEndAsync(reopened.StandardOutput);
+        var recoveryErrors = ArtifactChildOutput.ReadToEndAsync(reopened.StandardError);
         try
         {
             await reopened.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(60));
             var errors = await recoveryErrors;
-            File.WriteAllText(System.IO.Path.Combine(capture, barrier + "-recovery-errors.txt"), errors);
             Assert.True(errors.Length == 0, errors);
+            File.WriteAllText(System.IO.Path.Combine(capture, barrier + "-recovery-errors.txt"), "");
             Assert.Equal(0, reopened.ExitCode);
             Assert.NotEqual(killedPid, reopened.Id);
             var text = await output;

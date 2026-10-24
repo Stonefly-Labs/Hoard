@@ -365,8 +365,9 @@ supply the inclusive 64 MiB incremental peak check. Exact producer bytes,
 hashes, pacing, runtime, PID, run, buffer/slot limits and normal group settlement
 are required. Full runtime bytes enter pre/post immutable capture. Two fresh
 locked builds and all four real macOS rows pass, including actual `getrusage`
-peak bounds, not Linux pidfd/status measurement. Actual Linux measurement and
-complete wrapper/session/category imports remain pending.
+peak bounds. Actual Linux pidfd/status measurement subsequently passed all four
+rows at `d429dd2`, run `40109299238`; complete session/category imports remain
+pending.
 For retained artifact work, explicit safe mode writes bounded closed original
 observations before contained/inspected barriers. The owning parent requests
 the second actual inspection, then observes its target and signals only that
@@ -374,8 +375,26 @@ owned group. Admission requires the exact ordered live-child request/signal/
 exit chain, both matching phase/run/PID/provider/scenario records and unchanged
 retention/protection/failure assertions. Six actual source/destination/native
 rows are requested across both providers; every result explicitly disclaims
-durable crash proof. Two locked builds and all six macOS functional rows pass;
-actual Linux execution and full wrapper/session/category attribution remain open.
+durable crash proof. Actual Linux execution passed all six rows at `c7eb90c`,
+run `40110165383`, with 165 foundation checks and all three jobs successful.
+
+An additional exact owned scope requests all seventeen original external-proof
+artifact wrappers: sixteen frozen crash/noncooperation/transfer identities and
+the existing independent cross-process root-owner fact. Four bounded child-text
+capture cases make 21 selected identities. Actual runner bytes must match captured
+inputs; private per-attempt settings supply its path, the current run ID, fresh
+crash-capture storage and parent-admitted transfer proofs. Original legacy child
+output is preserved; safe-event mode is not inherited into these wrappers.
+Child stdout/stderr is bounded before returning; crash-state size is checked
+before read/copy. Recovery error files are written only after the original
+empty-stderr assertion, preserving healthy empty captures without persisting raw
+failure diagnostics. Transfer proof admission also recognizes actual kernel
+`getrusage`/`proc-status` methods while retaining all byte/hash/pacing/RSS/buffer
+checks; an unmeasured `declared` method remains rejected.
+Two fresh-cache locked builds pass all 21 actual cases, reproduce test assembly
+bytes after normalizing source/cache debug paths and verify ten dependency
+images. The expanded 56-scope/448-observation Linux request and complete
+legacy/session/category attribution remain open.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

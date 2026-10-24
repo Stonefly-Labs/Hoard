@@ -30,7 +30,8 @@ public sealed class ArtifactTransferProofTests
             ("independentExpectedHash", JsonValue.Create(false)), ("baselineRssBytes", JsonValue.Create(0L)),
             ("osPeakRssBytes", JsonValue.Create(proof["baselineRssBytes"]!.GetValue<long>() + 67108865)),
             ("bufferBytes", JsonValue.Create(4194304)), ("slots", JsonValue.Create(4)),
-            ("samples", JsonValue.Create(0)), ("exitCode", JsonValue.Create(1))
+            ("samples", JsonValue.Create(0)), ("exitCode", JsonValue.Create(1)),
+            ("osPeakMethod", JsonValue.Create("declared"))
         })
         {
             var changed = Assert.IsType<JsonObject>(proof.DeepClone());
@@ -61,7 +62,7 @@ public sealed class ArtifactTransferProofTests
             Assert.True(value["pid"]!.GetValue<int>() > 0);
             Assert.Equal(0, value["exitCode"]!.GetValue<int>());
             Assert.Equal("bytes", value["rssUnits"]!.GetValue<string>());
-            Assert.Contains(value["osPeakMethod"]!.GetValue<string>(), new[] { "time-l", "time-v" });
+            Assert.Contains(value["osPeakMethod"]!.GetValue<string>(), new[] { "time-l", "time-v", "getrusage", "proc-status" });
             Assert.False(string.IsNullOrWhiteSpace(value["runtime"]!.GetValue<string>()));
             Assert.Equal(262144, value["bufferBytes"]!.GetValue<int>());
             Assert.Equal(2097152, value["providerBufferLimit"]!.GetValue<int>());

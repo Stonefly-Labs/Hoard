@@ -6392,7 +6392,36 @@ termination for all six safe rows, an unchanged legacy source row and invalid
 mode rejection. These are not Linux pidfd/group receipts.
 All 272 tooling tests pass locally (255 passes, seventeen native macOS skips),
 with compiled catalog, runner whitespace and patch integrity passing.
-Actual Linux retained-worker inspection, exact original wrapper/session
+Subsequently, complete Linux run
+[40109299238](https://github.com/Stonefly-Labs/Hoard/actions/runs/40109299238)
+at `d429dd2` passed all four actual paced 256 MiB/4 GiB write/read rows with
+parent kernel RSS/high-water and acknowledged settlement, not just controller
+regressions. Run
+[40110165383](https://github.com/Stonefly-Labs/Hoard/actions/runs/40110165383)
+at `c7eb90c` then passed all six retained-worker inspection/termination rows,
+165 foundation checks, 55 scopes/427 observations, all recovery/transfer
+diagnostics and eighteen-package/thirteen-lock replay. All three jobs passed
+in both runs.
+
+The diagnostic now requests all seventeen original external-proof artifact
+wrappers after their real prerequisites: sixteen frozen identities plus the
+existing cross-process root-owner fact. Four new bounded child-output cases
+bring this scope to 21. Actual captured runner bytes, current run ID,
+parent-admitted transfer proofs and private per-attempt crash storage reach the
+actual test host through closed settings; the legacy child protocol is preserved.
+Child output and crash-state reads are bounded before return/copy; raw failure
+stderr is never written as a recovery-error proof. Healthy empty legacy captures
+remain. The original transfer predicate now also accepts actual kernel
+`getrusage`/`proc-status` methods, retaining every byte/hash/pacing/RSS/buffer check
+and rejecting an unmeasured `declared` method.
+Two fresh-cache locked builds pass all 21 actual cases without skips and verify
+ten dependency images. The first byte replay exposed an unmapped generated
+test-SDK source path in portable debug metadata; normalizing both source and
+cache debug paths in the private recipe reproduces identical test assembly bytes.
+`python3 -m unittest discover -s tests/tooling -q` passes 274 tests
+(257 passes, seventeen native macOS skips); compiled/frozen catalog, accepted
+package-mode whitespace and patch integrity checks pass.
+The expanded 56-scope/448-observation Linux request, full original wrapper/session
 imports, all authority combinations and complete category/profile acceptance
 remain pending. Product architecture/ADRs/diagrams and deployment examples
 remain unaffected by this test-only transport and parent evidence work.
