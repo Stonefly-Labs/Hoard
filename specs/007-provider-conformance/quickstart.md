@@ -280,6 +280,13 @@ assertion in each combination; genuine stores pass. The next twenty-row native
 request is 67 scopes/587 observations, pending, not complete qualification.
 Authority passed `40120167356` at `7ee1c61`, all three jobs,
 177 foundations and 65 scopes/549 observations, not complete qualification.
+Three original metadata-bridge bodies now also use shared checks, preserving
+the frozen authority-mismatch witness and two additional existing facts.
+Actual bridge/controlled-validator setup, encoding, expiry and counters stay
+fixture-side. The next three-row native request is 68 scopes/590 observations,
+pending; these host-bridge unit checks are not full provider qualification.
+Capability passed `40120937967` at `2a7be14`, all three jobs,
+178 foundations and 66 scopes/567 observations, not complete qualification.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

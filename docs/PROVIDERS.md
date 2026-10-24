@@ -416,8 +416,9 @@ sixteen frozen gap parameters and two additional existing complete profiles.
 Actual injection, construction, filesystem/readiness observation and private-root cleanup
 remain fixture-side. Original rejection-before-I/O, readiness, configured
 limits, optional ranges, SHA-512 and stop checks remain unchanged.
-The next eighteen-row native scope requests 66 scopes/567 observations, pending,
-not full qualification.
+The eighteen-row native scope passed at `2a7be14`, run `40120937967`,
+all three jobs, 178 foundations and 66 scopes/567 observations, not full
+qualification.
 Four original metadata/artifact integration bodies now also use shared checks
 with sixteen frozen parameters over all four SQLite/Memory and Local/
 ObjectSemantics combinations. Actual composition, proof encoding, waiting
@@ -426,6 +427,13 @@ reference-denial result mislabeled as conflict fails the unchanged expected-
 code assertion in every combination; genuine stores pass unchanged.
 The next twenty-row native request is 67 scopes/587 observations, pending,
 not full bindings/category/session or authority-integration task acceptance.
+Three original metadata-bridge bodies now use shared interface-only checks.
+The mismatched-authority witness is frozen; exact-evidence and invalid-evidence
+facts are additional existing cases. Actual host bridge/controlled validator,
+encoding, expiry and observed counters remain fixture-side; the validator's
+recognized-reference operation/stamp checks delegate unchanged to the SDK.
+The next three-row native request is 68 scopes/590 observations, pending.
+These host-bridge unit checks are not full provider/category qualification.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

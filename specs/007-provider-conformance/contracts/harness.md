@@ -559,6 +559,17 @@ authority-integration task acceptance.
 Authority passed `40120167356` at `7ee1c61`, all three jobs,
 177 foundations and 65 scopes/549 observations, including all seven authority
 rows, actual prerequisite chains and replay; complete gates remain open.
+Three original metadata-bridge bodies now also execute interface-only shared
+checks, preserving one frozen authority-mismatch witness and two additional
+existing exact/invalid-evidence facts. Actual host bridge/controlled-validator
+construction, encoding, expiry and observed counters stay fixture-side. The
+validator's recognized-reference operation/stamp assertions call the unchanged
+shared checks; remaining real retention/decision logic stays fixture-side.
+The next three-row native request is 68 scopes/590 observations, pending.
+These host-bridge unit checks do not complete provider/category/session proof.
+Capability passed `40120937967` at `2a7be14`, all three jobs,
+178 foundations and 66 scopes/567 observations, all eighteen capability rows
+and actual prerequisites/replay; complete gates remain open.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

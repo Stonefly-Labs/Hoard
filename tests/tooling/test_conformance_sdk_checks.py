@@ -566,6 +566,22 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_metadata_bridge_scope_preserves_frozen_and_additional_evidence_cases(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_metadata_bridge_scenarios", None)),
+                        "Shared metadata bridge checks need exact owned wrapper transport.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactMetadataAuthorityTests."
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.startswith(prefix)}
+        self.assertEqual(len(original), 1)
+        additional = {prefix + name for name in (
+            "Bridge_binds_exact_evidence_and_keeps_recognized_shared_protection_until_metadata_settlement",
+            "Foreign_malformed_expired_and_unrecognized_evidence_cannot_publish_metadata_or_leak_a_guard")}
+        self.assertTrue(original.isdisjoint(additional))
+        scenario, = checks.original_artifact_metadata_bridge_scenarios()
+        self.assertEqual(scenario, ("original-artifact-metadata-bridge", tuple(sorted(original | additional)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_metadata_integration_scope_preserves_all_four_actual_combinations(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_metadata_integration_scenarios", None)),
                         "Shared metadata/artifact integration checks need exact owned wrapper transport.")

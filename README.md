@@ -1508,13 +1508,22 @@ Both original capability bodies now also execute shared interface-only checks,
 preserving sixteen frozen gap parameters and two additional existing complete-
 profile cases. Actual injection, provider creation, filesystem/readiness
 observation and private-root cleanup remain fixture-side. The next eighteen-row native
-request is 66 scopes/567 observations, pending, not complete qualification.
+request passed at `2a7be14`, run
+[40120937967](https://github.com/Stonefly-Labs/Hoard/actions/runs/40120937967):
+all three jobs, 178 foundations and 66 scopes/567 observations, not complete
+qualification.
 Four original metadata/artifact integration bodies now also run shared checks
 on all four SQLite/Memory and Local/ObjectSemantics combinations, preserving
 sixteen frozen parameters. Real reference-denial mutations fail the unchanged
 expected-code assertion on each combination; genuine stores pass unchanged.
 The next twenty-row native request is 67 scopes/587 observations, pending;
 complete typed bindings, category/session imports and feature gates remain open.
+Three original metadata-bridge bodies now also run interface-only shared checks,
+preserving the frozen mismatched-authority witness and two additional existing
+facts. Actual bridge/validator construction, encoding, expiry and ownership
+counters remain fixture-side; recognized-reference checks are shared unchanged.
+The next three-row native request is 68 scopes/590 observations, pending.
+These host-bridge unit checks are not complete provider/category qualification.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

@@ -2885,8 +2885,8 @@ wiring. It requests 67 scopes/587 observations, pending, not complete
 category/session/profile proof or T033 acceptance.
 
 The preceding capability request binds exact head
-`2a7be14b5a32b2a11e28f582448977d89c346778`, run `40120937967`, pending
-separate strict admission. Tooling passed 287 discovered / 270 passed /
+`2a7be14b5a32b2a11e28f582448977d89c346778`, run `40120937967`, now admitted
+below. Tooling passed 287 discovered / 270 passed /
 seventeen native macOS skips. SDK/accepted-wrapper whitespace, compiled/frozen
 catalogs, four-body and helper/data mechanical comparisons and patch integrity
 passed. Complete task, reviewer-checklist and stage acceptance remain open.
@@ -2910,6 +2910,49 @@ eighteen-package/thirteen-lock replay passed strict admission. Input:
 `8bb1f75b731599fe38faefa2ef2ca84be4debc749f4b3a4cac566a7ae8fff303`;
 preparation:
 `126ca87d840a7576d8ac58b045ba3b14a1627d9ba7fb4542e76e2bca39724cf2`.
+
+Three original metadata-bridge bodies now execute interface-only shared
+consumers, preserving one frozen authority-mismatch witness and two additional
+existing exact/invalid-evidence facts. Actual host bridge/controlled-validator
+construction, encoding, expiry and observed waiting/retained/call counters stay
+fixture-side. The validator delegates its exact recognized-reference operation/
+stamp assertions to the shared helper; all remaining real retention/decision
+logic stays unchanged in the fixture. Mechanical comparison preserves original
+assertion tokens/order and that validator body after explicit seams.
+
+The missing common type first failed actual compilation with CS0246; the
+missing scope failed its named tooling regression. The exact-scope check then
+exposed that the frozen witness is the mismatch fact, not the positive bridge
+fact. The two non-frozen existing identities are now explicit without changing
+the baseline. The new three-row request is 68 scopes/590 observations, pending,
+not complete provider/category/session qualification; these remain host-bridge
+unit checks with a controlled validator.
+
+The preceding four-way integration request binds exact head
+`4c876675728a7fa21b47942c816e065cafdeb140`, run `40121897879`, pending
+separate strict admission. Tooling passed 288 discovered / 271 passed /
+seventeen native macOS skips. SDK/accepted-wrapper whitespace, compiled/frozen
+catalogs, three-body/recognized-reference/validator mechanical comparisons and
+patch integrity passed. Task, reviewer-checklist and stage gates remain open.
+
+`bridge` and independent `bridge-replay` each passed all 293 artifact cases
+plus 89 metadata cases per provider without skips. Eleven archives and ten
+actual loaded dependency images reproduce exactly; combined archive-map SHA-256:
+`9f6e6dc8112844aa28f250f8f26308f3209476b0be31808114e00e47b53f6cae`.
+Previously measured transfer packets remain unchanged, not fresh session/
+category origins. Tracked locks, historical consumers/binaries and production
+APIs are unchanged.
+
+Capability run
+[40120937967](https://github.com/Stonefly-Labs/Hoard/actions/runs/40120937967)
+passed at exact head `2a7be14b5a32b2a11e28f582448977d89c346778`: all three
+jobs, 178 foundations without failures/errors/skips, 66 scopes/567 exact
+discoveries/executions and all eighteen capability rows. Every actual recovery/
+transfer/retention/external/native prerequisite chain, native containment and
+eighteen-package/thirteen-lock replay passed strict admission. Input:
+`fca6f8887233d4f1d32430c41520fdbf276c763dbd2f3b6b685f796e0950c649`;
+preparation:
+`9966fd10a5f0c49b1d2b026339153ec7a350030aa07972e2a91ae39762be4297`.
 
 `handoff` and independent `handoff-replay` preparations each passed 286 artifact
 cases plus 89 metadata cases per provider, without skips. Eleven archives and ten

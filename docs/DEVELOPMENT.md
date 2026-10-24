@@ -6679,6 +6679,26 @@ Input: `8bb1f75b731599fe38faefa2ef2ca84be4debc749f4b3a4cac566a7ae8fff303`;
 preparation:
 `126ca87d840a7576d8ac58b045ba3b14a1627d9ba7fb4542e76e2bca39724cf2`.
 
+Three original metadata-bridge bodies now execute interface-only shared
+consumers, preserving the frozen mismatched-authority witness plus two
+additional existing facts. Actual host bridge/controlled-validator construction,
+encoding, expiry injection and waiting/retained/call counters stay fixture-side.
+The validator's exact recognized-reference operation/stamp assertions now call
+the shared helper; its remaining real retention/decision logic is unchanged.
+Original exact-evidence protection, invalid evidence and authority mismatch
+checks preserve all assertion tokens/order. The next three-row native request
+is 68 scopes/590 observations, pending. These are host-bridge unit checks, not
+complete four-provider binding/category/session proof.
+
+Capability run `40120937967` at exact head
+`2a7be14b5a32b2a11e28f582448977d89c346778` passed all three jobs,
+178 foundations without failures/errors/skips, 66 scopes/567 exact discoveries/
+executions, all eighteen capability rows and every actual recovery/transfer/
+retention/external/native prerequisite plus eighteen-package/thirteen-lock replay.
+Input: `fca6f8887233d4f1d32430c41520fdbf276c763dbd2f3b6b685f796e0950c649`;
+preparation:
+`9966fd10a5f0c49b1d2b026339153ec7a350030aa07972e2a91ae39762be4297`.
+
 The expanded budget request passed `40119412481` at exact head
 `70dfdf63f59a13ba39d934a7ef09f148bfc58c57`: all three jobs, 176 foundations
 without failures/errors/skips, 64 scopes/542 exact discoveries/executions, all

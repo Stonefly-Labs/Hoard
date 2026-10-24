@@ -1,6 +1,7 @@
 using Hoard.Abstractions.Metadata;
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
+using Hoard.Testing.Conformance.Artifacts;
 
 namespace Hoard.Artifacts.Tests;
 
@@ -16,17 +17,8 @@ public sealed class ArtifactMetadataAuthorityTests
             ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
         var validator = new CurrentValidator(authority, proof);
         var bridge = new ArtifactMetadataPublicationAuthority(store, validator, authority);
-        var result = await bridge.AcquireAsync(bridge.Encode(proof), new(), default);
-        var guard = Assert.IsType<MetadataResult<IMetadataPublicationGuard>.Success>(result).Value;
-        Assert.Equal(new MetadataCommittedArtifact(stamp.Identity.Digest, 1), guard.Artifact);
-        Assert.Equal(1, validator.Calls);
-        var deletion = authority.AcquireAsync(new(Guid.NewGuid(), ArtifactProtectionOperation.Deletion, store,
-            stamp.Identity.Digest, new ArtifactOption<ArtifactStamp>.Some(stamp)), new(), default).AsTask();
-        Assert.Equal(1, authority.WaitingAdmissions);
-        Assert.False(deletion.IsCompleted);
-        await guard.DisposeAsync();
-        await guard.DisposeAsync();
-        await using var exclusive = Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Success>(await deletion).Value;
+        await new ArtifactMetadataBridgeAssertions(store, proof, bridge, bridge.Encode)
+            .ExactEvidenceProtectionAsync(authority, () => validator.Calls, () => authority.WaitingAdmissions, default);
     }
 
     [Fact]
@@ -38,20 +30,9 @@ public sealed class ArtifactMetadataAuthorityTests
         var authority = new ArtifactCoordinationAuthority(store);
         var validator = new CurrentValidator(authority, proof);
         var bridge = new ArtifactMetadataPublicationAuthority(store, validator, authority);
-        Assert.IsType<MetadataResult<IMetadataPublicationGuard>.Failure>(
-            await bridge.AcquireAsync(new MetadataArtifactEvidence("not-base64"), new(), default));
-        Assert.Equal(0, validator.Calls);
-        var foreign = new ArtifactCommitEvidence(new ArtifactStamp(
-            new ArtifactStoreIdentity(store.ProviderModuleId, store.InstanceId, Guid.NewGuid()), stamp.Identity, stamp.Incarnation),
-            proof.TicketId, proof.ReceiptId, proof.ProofHandle, proof.Outcome);
-        Assert.Throws<ArgumentException>(() => bridge.Encode(foreign));
-        var unknown = new ArtifactCommitEvidence(stamp, Guid.NewGuid(), proof.ReceiptId, "different", proof.Outcome);
-        Assert.IsType<MetadataResult<IMetadataPublicationGuard>.Failure>(
-            await bridge.AcquireAsync(bridge.Encode(unknown), new(), default));
-        validator.Expired = true;
-        Assert.IsType<MetadataResult<IMetadataPublicationGuard>.Failure>(
-            await bridge.AcquireAsync(bridge.Encode(proof), new(), default));
-        Assert.False(authority.HasRetainedWork);
+        await new ArtifactMetadataBridgeAssertions(store, proof, bridge, bridge.Encode)
+            .RejectInvalidEvidenceAsync(() => validator.Calls, () => validator.Expired = true,
+                () => authority.HasRetainedWork, default);
     }
 
     [Fact]
@@ -63,8 +44,8 @@ public sealed class ArtifactMetadataAuthorityTests
         var actual = new ArtifactCoordinationAuthority(store);
         var other = new ArtifactCoordinationAuthority(store);
         var bridge = new ArtifactMetadataPublicationAuthority(store, new CurrentValidator(actual, proof), other);
-        Assert.IsType<MetadataResult<IMetadataPublicationGuard>.Failure>(
-            await bridge.AcquireAsync(bridge.Encode(proof), new(), default));
+        await new ArtifactMetadataBridgeAssertions(store, proof, bridge, bridge.Encode)
+            .RejectMismatchedAuthorityAsync(default);
     }
 
     private sealed class CurrentValidator(IArtifactCoordinationAuthority authority, ArtifactCommitEvidence current)
@@ -83,8 +64,7 @@ public sealed class ArtifactMetadataAuthorityTests
                     ArtifactFailureCode.Denied, ArtifactPhase.Publication, ArtifactAction.Reobserve, Guid.NewGuid());
             }
             await using var guard = recognized.Value;
-            Assert.Equal(ArtifactProtectionOperation.Reference, guard.Grant.Request.Operation);
-            Assert.Equal(new ArtifactOption<ArtifactStamp>.Some(evidence.Stamp), guard.Grant.Request.Stamp);
+            ArtifactMetadataBridgeAssertions.ReferenceProtection(guard, evidence);
             return !Expired && evidence == current
                 ? new ArtifactResult<ArtifactStamp>.Success(current.Stamp)
                 : new ArtifactResult<ArtifactStamp>.Failure(ArtifactFailureCode.ReconciliationExpired,
