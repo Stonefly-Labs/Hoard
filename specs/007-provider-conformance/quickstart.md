@@ -264,6 +264,14 @@ native scope is 65 scopes/549 observations, pending. Cancellation passed
 `40118166329` at `631f9c4`, all three jobs, 174 foundations and 62 scopes/
 510 observations. Handoff-only `40118782562` was canceled while pending, not
 accepted; later requests retain its scope. Full qualification remains unfinished.
+Both original capability bodies now also execute shared interface-only checks,
+preserving sixteen frozen gaps and two additional existing complete profiles.
+Actual provider injection, construction and filesystem/readiness observations
+remain fixture-side. The next eighteen-row native request is
+66 scopes/567 observations, pending, not complete qualification.
+Expanded budget passed `40119412481` at `70dfdf6`, all three jobs,
+176 foundations and 64 scopes/542 observations, including all fourteen handoff
+and eighteen budget rows. This does not admit the canceled handoff-only run.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

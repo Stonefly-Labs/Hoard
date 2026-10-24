@@ -1491,7 +1491,10 @@ preserving sixteen frozen parameters for failed cleanup, terminal cancellation,
 queue/capacity, authority deadlines and cooperative cancellation. A genuine
 input-limit failure deliberately mislabeled as capacity fails the unchanged
 code assertion; genuine stores pass. The next eighteen-row native request is
-64 scopes/542 observations, pending; complete bindings/profiles remain unfinished.
+64 scopes/542 observations. It passed at `70dfdf6`, run
+[40119412481](https://github.com/Stonefly-Labs/Hoard/actions/runs/40119412481):
+all three jobs, 176 foundations and both handoff/budget scopes. Complete
+bindings/profiles remain unfinished.
 Six original authority bodies now also run shared interface-only checks,
 preserving three frozen witnesses, three additional existing facts and the
 copied-guard helper. Repairing an actually rejected copied handle into a real
@@ -1499,6 +1502,11 @@ recognized retention fails the unchanged failure-type assertion; the genuine
 authority passes. The next seven-row native request is 65 scopes/549 observations,
 pending. Handoff-only run `40118782562` was canceled while pending, not accepted;
 later expanded requests include its scope.
+Both original capability bodies now also execute shared interface-only checks,
+preserving sixteen frozen gap parameters and two additional existing complete-
+profile cases. Actual injection, provider creation, filesystem/readiness
+observation and private-root cleanup remain fixture-side. The next eighteen-row native
+request is 66 scopes/567 observations, pending, not complete qualification.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

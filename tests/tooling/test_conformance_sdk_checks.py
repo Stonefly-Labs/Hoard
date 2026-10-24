@@ -566,6 +566,22 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_capability_scope_preserves_frozen_gaps_and_existing_complete_profiles(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_capability_scenarios", None)),
+                        "Shared capability checks need exact owned wrapper transport.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactCapabilityTests."
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.startswith(prefix)}
+        self.assertEqual(len(original), 16)
+        additional = {
+            prefix + "Complete_capability_profile_accepts_configured_limits_and_keeps_ranges_optional"
+            f'(provider: "{provider}")' for provider in ("local", "object")}
+        self.assertTrue(original.isdisjoint(additional))
+        scenario, = checks.original_artifact_capability_scenarios()
+        self.assertEqual(scenario, ("original-artifact-capability", tuple(sorted(original | additional)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_authority_scope_preserves_frozen_and_additional_recognized_handle_cases(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_authority_scenarios", None)),
                         "Shared authority checks need exact owned wrapper transport.")

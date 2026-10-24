@@ -399,8 +399,9 @@ publication, queue/capacity, authority deadlines and cooperative cancellation.
 Actual controls, limits, settlement/stop and authority setup stay fixture-side;
 shared authority checks use only Abstractions. A genuine input-limit failure
 mislabeled as capacity fails the unchanged expected-code assertion; genuine
-stores pass. The next eighteen-row native request is 64 scopes/542 observations,
-pending, not complete qualification.
+stores pass. The next eighteen-row native request is 64 scopes/542 observations.
+It passed at `70dfdf6`, run `40119412481`, all three jobs and 176 foundations,
+including the fourteen-row handoff scope, not complete qualification.
 Six original authority bodies now also use shared interface-only checks,
 preserving three frozen witnesses, three additional existing facts and the
 copied-guard helper. Actual authority creation, clock, waiting/retained counters,
@@ -409,6 +410,13 @@ handle rejection through genuine recognized retention fails the unchanged
 failure-type assertion; genuine authority passes. The next seven-row native
 request is 65 scopes/549 observations, pending. Handoff run `40118782562` was
 canceled while pending, not admitted; later expanded requests retain that scope.
+Both original capability bodies now run shared interface-only checks, with
+sixteen frozen gap parameters and two additional existing complete profiles.
+Actual injection, construction, filesystem/readiness observation and private-root cleanup
+remain fixture-side. Original rejection-before-I/O, readiness, configured
+limits, optional ranges, SHA-512 and stop checks remain unchanged.
+The next eighteen-row native scope requests 66 scopes/567 observations, pending,
+not full qualification.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

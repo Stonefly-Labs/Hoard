@@ -6648,6 +6648,25 @@ preparation:
 Handoff-only run `40118782562` was canceled while pending, not accepted.
 Later expanded requests include its full scope.
 
+Both original capability bodies now run shared interface-only consumers,
+preserving sixteen frozen missing-guarantee/version/authority parameters plus
+two additional existing complete-profile cases. Actual capability injection,
+provider construction, filesystem and readiness observation stay fixture-side.
+Common checks preserve exact assertions/order for rejection before I/O,
+readiness, configured limits, optional ranges, SHA-512 and stop/release.
+The next eighteen-row native scope requests 66 scopes/567 observations, pending,
+not complete category/session/profile proof.
+
+The expanded budget request passed `40119412481` at exact head
+`70dfdf63f59a13ba39d934a7ef09f148bfc58c57`: all three jobs, 176 foundations
+without failures/errors/skips, 64 scopes/542 exact discoveries/executions, all
+fourteen handoff and eighteen budget rows plus every actual recovery/transfer/
+retention/external/native prerequisite and eighteen-package/thirteen-lock replay.
+Input: `d5769b5f8fa45e080866fc154d65c9764ccb1d9e70cdd906af8811ff5b22f8cd`;
+preparation:
+`6916185a0c4940561f05c14fdf31883391b5f35e4992d35ac28b50e955b6730a`.
+This admits handoff at `70dfdf6`, not the canceled handoff-only run.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

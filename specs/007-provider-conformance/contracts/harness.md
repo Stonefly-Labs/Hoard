@@ -534,6 +534,17 @@ genuine authority passes unchanged. The next seven-row native scope is
 `631f9c4`, all three jobs, 174 foundations, 62 scopes/510 observations and
 all actual prerequisites/replay. Handoff-only `40118782562` was canceled while
 pending, not admitted; later expanded requests retain its scope.
+Both original capability bodies now also run shared interface-only consumers,
+preserving sixteen frozen gap parameters, two additional existing complete
+profiles and exact original assertion tokens/order. Actual capability injection,
+provider construction, filesystem/readiness observation and private-root cleanup remain
+fixture-side. Rejection-before-I/O, actual readiness, configured limits, optional
+ranges, SHA-512 and stop/release checks remain unchanged. The next eighteen-row
+native request is 66 scopes/567 observations, pending, not full qualification.
+Expanded budget passed `40119412481` at `70dfdf6`, all three jobs,
+176 foundations and 64 scopes/542 observations, including all fourteen handoff
+and eighteen budget rows, actual prerequisite chains and replay. This admits
+handoff at `70dfdf6`, not the canceled handoff-only run.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

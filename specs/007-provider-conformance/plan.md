@@ -2823,6 +2823,47 @@ seventeen native macOS skips. SDK/accepted-wrapper whitespace checks, compiled/
 frozen catalogs and four-body mechanical comparison passed. Complete task,
 reviewer-checklist and stage acceptance remain open.
 
+Both original capability bodies now execute interface-only shared consumers,
+preserving sixteen frozen missing-guarantee/version/authority parameters and
+two additional existing complete-capability cases. Actual injection, provider
+construction, filesystem/readiness observation and private-root cleanup remain
+fixture-side. Exact original assertion tokens/order match mechanically after
+explicit setup/observation/cancellation forwarding: rejection before I/O,
+actual readiness, configured limits, optional ranges, SHA-512 and stop/release.
+The complete-capability consumer owns its original fixed configured limits;
+providers do not supply expected capability values.
+
+Missing shared consumers first failed actual compilation with CS0103; the
+missing exact native scope failed its named tooling regression before wiring.
+The new eighteen-row scope requests 66 scopes/567 observations, pending, not
+complete category/session/profile proof. The preceding authority request binds
+exact head `7ee1c61a26fc9fb55473dcbc1c7890d2675ba579`, run `40120167356`,
+pending separate strict admission. Tooling passed 286 discovered / 269 passed /
+seventeen native macOS skips. SDK/accepted-wrapper whitespace, compiled/frozen
+catalogs and two-body mechanical comparison passed. Task, reviewer-checklist and
+stage acceptance remain open.
+
+`capability` and independent `capability-replay` each passed 289 artifact cases
+plus 89 metadata cases per provider, without skips. Eleven archives and ten
+actual loaded dependency images reproduce exactly; combined archive-map SHA-256:
+`9a9c1292007452bdbc978884184e0aca00c6d404840e207e8af9236db736293e`.
+Previously measured transfer packets remain unchanged, not fresh session/
+category origins. Tracked locks, historical consumers/binaries and production
+APIs remain unchanged.
+
+Expanded budget run
+[40119412481](https://github.com/Stonefly-Labs/Hoard/actions/runs/40119412481)
+passed at exact head `70dfdf63f59a13ba39d934a7ef09f148bfc58c57`: all three
+jobs, 176 foundations without failures/errors/skips, 64 scopes/542 exact
+discoveries/executions, all fourteen handoff rows and eighteen budget rows.
+All actual recovery/transfer/retention/external/native prerequisite chains,
+native containment and eighteen-package/thirteen-lock replay passed strict
+admission. Input:
+`d5769b5f8fa45e080866fc154d65c9764ccb1d9e70cdd906af8811ff5b22f8cd`;
+preparation:
+`6916185a0c4940561f05c14fdf31883391b5f35e4992d35ac28b50e955b6730a`.
+This admits handoff at `70dfdf6`, not the canceled handoff-only run.
+
 `handoff` and independent `handoff-replay` preparations each passed 286 artifact
 cases plus 89 metadata cases per provider, without skips. Eleven archives and ten
 actual loaded dependency images reproduce exactly; combined archive-map SHA-256:
@@ -2893,9 +2934,9 @@ thirteen-lock replay. Input:
 preparation:
 `8a3b47f7297e523d12ae142b6da3d7ade1c43bd37552696087d4e1a076cbd420`.
 The budget request binds exact head
-`70dfdf63f59a13ba39d934a7ef09f148bfc58c57`, run `40119412481`, pending
-separate strict admission. It includes the canceled handoff-only request's
-scope, but that does not make the canceled run successful.
+`70dfdf63f59a13ba39d934a7ef09f148bfc58c57`, run `40119412481`, now admitted
+below. It includes the canceled handoff-only request's scope, but that does not
+make the canceled run successful.
 
 `authority-fixed` and independent `authority-replay` each passed 289 artifact
 cases plus 89 metadata cases per provider, without skips. Eleven archives and
