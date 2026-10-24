@@ -5405,8 +5405,15 @@ not the behavioral faulty-binding proof required by T034. An initial malformed
 synthetic ticket was corrected to the public 24-hour ticket contract so rejection
 now reaches the intended assertion rather than failing setup.
 
-The native SDK diagnostic selection adds these two unit tests; it does not yet
-execute the six real-Memory consumers. Existing witnesses/wrappers and all
+The next native SDK diagnostic increment also builds the actual Memory archive,
+rebinds only the four local archives in the existing package-acceptance lock and
+builds that consumer in an independent fresh cache with locked restore. Its
+output is separate from source SDK tests; mixed source/package diagnostic
+identities reject before launch. Source locks and third-party graphs are
+unchanged and all derivations/archives reverify before completion. The six
+real-Memory witnesses enter exact safe discovery and execution ingestion, but
+this increment's native result is still pending. Two missing-helper reds and
+one mixed-assembly routing failure preceded implementation. Existing witnesses/wrappers and all
 remaining common assertions are preserved pending full extraction/adapter
 rewiring. T019..T024 remain unchecked; no complete parity or category outcome is
 claimed.

@@ -31,6 +31,10 @@ CONTRACTS = "tests/contracts"
 SDK = f"{CONTRACTS}/Hoard.Testing.Conformance"
 LOGGER = f"{CONTRACTS}/Hoard.Conformance.TestLogger"
 TESTS = f"{CONTRACTS}/Hoard.Conformance.Tests"
+MEMORY = "tests/fixtures/metadata/Memory/Memory.csproj"
+PACKAGE_TEST_OUTPUT = "bin/package-diagnostic"
+PACKAGE_TEST_METHOD = ("Hoard.Conformance.Tests.MemoryMechanismTests."
+                       "Compiled_common_consumers_execute_against_the_independent_memory_store")
 OWNED = "Hoard.Conformance.Tests.OwnedResourceTests."
 OWNED_FACTS = (
     "Fresh_private_leases_reject_forged_foreign_and_second_writer_authority",
@@ -125,6 +129,10 @@ SCENARIOS = (
         "Competing_create_consumer_rejects_successful_losers_instead_of_accepting_provider_results",
         "Common_consumer_propagates_cancellation_to_the_store_without_publishing_a_candidate")),
      "None", "Passed", 0, "None"),
+    ("memory-consumers", tuple(
+        PACKAGE_TEST_METHOD + f'(consumer: "{consumer}")' for consumer in (
+            "competing-creates", "revision-races", "exact-bounds", "scopes-and-intervals",
+            "bounded-pages", "lease-fences")), "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {
@@ -159,8 +167,8 @@ def snapshot(repository, run):
     return target, hashes
 
 
-def build(run, project, config, cache_id, *, feed=None, lock=None):
-    common = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet"]
+def build(run, project, config, cache_id, *, feed=None, lock=None, properties=()):
+    common = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet", *properties]
     if lock is not None:
         common.append("-p:NuGetLockFilePath=" + str(lock))
     for args in (
@@ -183,6 +191,38 @@ def prepare_smoke_lock(project, candidate, feed):
                          ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger")}:
         raise evidence.ConformanceError("InputChanged")
     return prepare_project_lock(project, candidate, feed, "candidate")
+
+
+def prepare_package_consumer_lock(candidate, feed):
+    original = candidate / TESTS / "PackageAcceptance/packages.lock.json"
+    raw = read_bounded(original, 2 * 1024 * 1024)
+    prepared, packages, _ = rebind_local_archives(raw, feed)
+    expected = {f"{name}.0.1.0.nupkg" for name in (
+        "Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger",
+        "Hoard.Fixtures.Metadata.Memory")}
+    if set(packages) != expected:
+        raise evidence.ConformanceError("InputChanged")
+    alternate = candidate / TESTS / "obj/F07.consumer.packages.lock.json"
+    no_symlinks(alternate)
+    alternate.parent.mkdir(exist_ok=True, mode=0o700)
+    write_new(alternate, prepared)
+    return alternate, {
+        "qualification": False, "mode": "preparation",
+        "sourceLockSha256": hashlib.sha256(raw).hexdigest(),
+        "preparedLockSha256": hashlib.sha256(prepared).hexdigest(), "packages": packages,
+    }
+
+
+def verify_package_consumer_lock(candidate, feed, alternate, receipt):
+    raw = read_bounded(candidate / TESTS / "PackageAcceptance/packages.lock.json", 2 * 1024 * 1024)
+    prepared, packages, _ = rebind_local_archives(raw, feed)
+    if (set(receipt) != {"qualification", "mode", "sourceLockSha256", "preparedLockSha256", "packages"}
+            or receipt["qualification"] is not False or receipt["mode"] != "preparation"
+            or hashlib.sha256(raw).hexdigest() != receipt["sourceLockSha256"]
+            or hashlib.sha256(prepared).hexdigest() != receipt["preparedLockSha256"]
+            or packages != receipt["packages"]
+            or read_bounded(alternate, 2 * 1024 * 1024) != prepared):
+        raise evidence.ConformanceError("InputChanged")
 
 
 def environment(run, *, phase="admission"):
@@ -239,7 +279,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     inventory = evidence.proof_manifest(candidate)
     prefix = candidate.relative_to(run.root).as_posix()
     locks = [f"{prefix}/{name}" for name in inventory if name.endswith("packages.lock.json")]
-    runtime_folders = {f"{TESTS}/bin/Release/net10.0", f"{LOGGER}/Smoke/bin/Release/net10.0"}
+    runtime_folders = {f"{TESTS}/bin/Release/net10.0", f"{LOGGER}/Smoke/bin/Release/net10.0",
+                       f"{TESTS}/{PACKAGE_TEST_OUTPUT}/Release/net10.0"}
     runtime = [f"{prefix}/{name}" for name in inventory
                if name.endswith((".dll", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))
                and Path(name).parent.as_posix() in runtime_folders]
@@ -249,7 +290,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
         run, repository, candidate, profile_id="harness", mode="diagnostic",
         invocation_group_id=str(uuid.uuid4()) if group_id is None else group_id,
         package_versions=[{"packageId": name, "version": "0.1.0"} for name in
-                          ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger")],
+                          ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger",
+                           "Hoard.Fixtures.Metadata.Memory")],
         feed="feed/candidate", configuration="stores/candidate.NuGet.Config",
         lock_paths=locks, runtime_paths=runtime, binding_sources=list(binding_sources),
         observed_environment=observed_environment, budgets=BUDGETS, invocation=["sdk-logger-diagnostic"],
@@ -264,9 +306,13 @@ def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
     source_tests = all(identity.startswith("Hoard.Conformance.Tests.") for identity in identities)
     smoke_tests = all(identity.startswith(SMOKE) for identity in identities)
-    if source_tests == smoke_tests:
+    package_prefix = "Hoard.Conformance.Tests.MemoryMechanismTests."
+    package_tests = any(identity.startswith(package_prefix) for identity in identities)
+    if (source_tests == smoke_tests
+            or package_tests and not all(identity.startswith(package_prefix) for identity in identities)):
         raise evidence.ConformanceError("WitnessMissing")
-    assembly = candidate / (TESTS if source_tests else LOGGER + "/Smoke") / "bin/Release/net10.0" / (
+    output = PACKAGE_TEST_OUTPUT if package_tests else "bin"
+    assembly = candidate / (TESTS if source_tests else LOGGER + "/Smoke") / output / "Release/net10.0" / (
         "Hoard.Conformance.Tests.dll" if source_tests else "Smoke.dll")
     assembly_path = assembly.relative_to(run.root).as_posix()
     package_id = "Hoard.Testing.Conformance" if source_tests or name == "origin-output" else "Hoard.Conformance.TestLogger"
@@ -431,6 +477,17 @@ def execute(repository, destination):
         ):
             build(run, candidate / folder / f"{project_name}.csproj", config, "candidate-build", feed=feed)
         build(run, candidate / TESTS / "Hoard.Conformance.Tests.csproj", config, "candidate-build")
+        memory_lock, memory_record = prepare_project_lock(candidate / MEMORY, candidate, feed, "candidate")
+        build(run, candidate / MEMORY, config, "memory-package", lock=memory_lock, feed=feed)
+        if memory_record is not None:
+            verify_project_lock(memory_record, candidate, feed)
+            write_new(run.root / "proofs/memory-lock-derivation.json", evidence.canonical_bytes(memory_record))
+        consumer_lock, consumer_receipt = prepare_package_consumer_lock(candidate, feed)
+        verify_package_consumer_lock(candidate, feed, consumer_lock, consumer_receipt)
+        write_new(run.root / "proofs/consumer-lock-derivation.json", evidence.canonical_bytes(consumer_receipt))
+        build(run, candidate / TESTS / "Hoard.Conformance.Tests.csproj", config,
+              "consumer-locked-replay", lock=consumer_lock, properties=(
+                  "-p:ConformancePackageAcceptance=true", "-p:BaseOutputPath=" + PACKAGE_TEST_OUTPUT + "/"))
         smoke_lock = candidate / LOGGER / "Smoke/packages.lock.json"
         source_lock_sha = evidence.file_sha256(smoke_lock)
         smoke_project = candidate / LOGGER / "Smoke/Smoke.csproj"
@@ -486,6 +543,9 @@ def execute(repository, destination):
         evidence.verify_snapshot(candidate, sources)
         if lock_record is not None:
             verify_project_lock(lock_record, candidate, feed)
+        if memory_record is not None:
+            verify_project_lock(memory_record, candidate, feed)
+        verify_package_consumer_lock(candidate, feed, consumer_lock, consumer_receipt)
         post_inputs = make_inputs(
             run, repository, candidate, post_sources, post_environment, post_identity, seal_sha,
             group_id=inputs["invocationGroupId"], ci_revision=ci_revision, binding_sources=binding_sources)

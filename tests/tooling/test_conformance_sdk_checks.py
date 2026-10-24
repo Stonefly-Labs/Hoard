@@ -33,7 +33,8 @@ class SdkDiagnosticTests(unittest.TestCase):
             name, identities = scenario[:2]
             source = not all(identity.startswith(checks.SMOKE) for identity in identities)
             folder = checks.TESTS if source else checks.LOGGER + "/Smoke"
-            assembly = candidate / folder / "bin/Release/net10.0" / (
+            output = checks.PACKAGE_TEST_OUTPUT if name == "memory-consumers" else "bin"
+            assembly = candidate / folder / output / "Release/net10.0" / (
                 "Hoard.Conformance.Tests.dll" if source else "Smoke.dll")
             package = "Hoard.Testing.Conformance" if source or name == "origin-output" else "Hoard.Conformance.TestLogger"
             inputs = {
@@ -61,12 +62,49 @@ class SdkDiagnosticTests(unittest.TestCase):
 
     def test_unknown_mixed_or_empty_diagnostic_names_never_fall_back_to_an_assembly(self):
         for identities in ((), ("Foreign.Provider.Check",),
-                           (checks.SCENARIOS[0][1][0], checks.SMOKE + "Assertion")):
+                           (checks.SCENARIOS[0][1][0], checks.SMOKE + "Assertion"),
+                           (checks.SCENARIOS[0][1][0],
+                            "Hoard.Conformance.Tests.MemoryMechanismTests.Mixed")):
             scenario = ("unrecognized", identities, "None", "Passed", 0, "None")
             with self.subTest(identities=identities), patch.object(checks, "runtime_command") as launch:
                 with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
                     checks.test_attempt(SimpleNamespace(root=self.directory), {}, self.directory, scenario)
                 launch.assert_not_called()
+
+    def test_package_consumer_lock_preparation_is_exact_and_preserves_source_graph(self):
+        candidate = self.directory / "candidate"
+        original = candidate / checks.TESTS / "PackageAcceptance/packages.lock.json"
+        original.parent.mkdir(parents=True)
+        feed = self.directory / "feed"
+        feed.mkdir()
+        local = ("Hoard.Abstractions", "Hoard.Testing.Conformance",
+                 "Hoard.Conformance.TestLogger", "Hoard.Fixtures.Metadata.Memory")
+        dependencies = {"xunit": {"resolved": "2.9.3", "contentHash": "unchanged"}}
+        for package in local:
+            (feed / (package + ".0.1.0.nupkg")).write_bytes(package.encode())
+            dependencies[package] = {"resolved": "0.1.0", "contentHash": "old"}
+        raw = json.dumps({"version": 2, "dependencies": {"net10.0": dependencies}}).encode()
+        original.write_bytes(raw)
+        lock, receipt = checks.prepare_package_consumer_lock(candidate, feed)
+        self.assertEqual(original.read_bytes(), raw)
+        self.assertEqual(json.loads(lock.read_bytes())["dependencies"]["net10.0"]["xunit"],
+                         dependencies["xunit"])
+        self.assertEqual(set(receipt["packages"]), {name + ".0.1.0.nupkg" for name in local})
+        checks.verify_package_consumer_lock(candidate, feed, lock, receipt)
+        (feed / "Hoard.Testing.Conformance.0.1.0.nupkg").write_bytes(b"changed")
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+            checks.verify_package_consumer_lock(candidate, feed, lock, receipt)
+
+    def test_package_consumer_lock_rejects_foreign_inventory_without_publishing(self):
+        candidate = self.directory / "candidate"
+        original = candidate / checks.TESTS / "PackageAcceptance/packages.lock.json"
+        original.parent.mkdir(parents=True)
+        raw = b'{"version":2,"dependencies":{"net10.0":{"xunit":{"resolved":"2.9.3"}}}}'
+        original.write_bytes(raw)
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+            checks.prepare_package_consumer_lock(candidate, self.directory)
+        self.assertEqual(original.read_bytes(), raw)
+        self.assertFalse((original.parents[1] / "obj/F07.consumer.packages.lock.json").exists())
 
     def test_preparation_and_seal_verification_precede_candidate_snapshot(self):
         calls = []
@@ -199,12 +237,31 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertIn("--locked-mode", received[0])
         self.assertIn("--no-restore", received[1])
 
+    def test_package_consumer_replay_is_locked_and_keeps_source_output_separate(self):
+        received = []
+        project = self.directory / "Tests.csproj"
+        lock = self.directory / "obj/F07.consumer.packages.lock.json"
+        with patch.object(checks.baselines, "_command",
+                          side_effect=lambda run, args, **kwargs: received.append((args, kwargs))):
+            checks.build(object(), project, self.directory / "NuGet.Config", "consumer-locked-replay",
+                         lock=lock, properties=("-p:ConformancePackageAcceptance=true",
+                                                "-p:BaseOutputPath=" + checks.PACKAGE_TEST_OUTPUT + "/"))
+        self.assertEqual([args[1] for args, _ in received], ["restore", "build"])
+        self.assertIn("--locked-mode", received[0][0])
+        for args, kwargs in received:
+            self.assertIn("-p:ConformancePackageAcceptance=true", args)
+            self.assertIn("-p:BaseOutputPath=bin/package-diagnostic/", args)
+            self.assertIn("-p:NuGetLockFilePath=" + str(lock), args)
+            self.assertNotIn("--force-evaluate", args)
+            self.assertEqual(kwargs["cache_id"], "consumer-locked-replay")
+
     def test_capture_recomputes_added_runtime_and_locks_and_rejects_remapped_sources(self):
         (self.directory / "stores").mkdir()
         (self.directory / "feed").mkdir()
         run = SimpleNamespace(root=self.directory, run_id=str(uuid.uuid4()), _check_ledger=lambda: None)
         config, feed = checks.baselines._config(run, "candidate")
-        for name in ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger"):
+        for name in ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger",
+                     "Hoard.Fixtures.Metadata.Memory"):
             with zipfile.ZipFile(feed / f"{name}.0.1.0.nupkg", "w") as archive:
                 archive.writestr(f"{name}.nuspec",
                                 f"<package><metadata><id>{name}</id><version>0.1.0</version></metadata></package>")

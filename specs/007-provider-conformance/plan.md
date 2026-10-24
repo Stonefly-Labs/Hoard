@@ -733,8 +733,14 @@ proof. A malformed test ticket initially rejected during receipt construction;
 correcting it to the public 24-hour lifetime makes the test reach the intended
 common assertion. All 105 source SDK tests and focused formatting pass.
 
-The native diagnostic selection adds only those two unit tests (eighteen scopes/
-71 observations); actual execution is pending. Full executable parity tests,
+The next diagnostic increment adds actual Memory package construction and a
+separate package-mode test output. Exact four-local-archive lock derivation
+preserves the source variant and third-party graph; independent fresh-cache
+locked restore/build precedes six actual Memory consumer witnesses. Mixed
+source/package test identities reject. Two absent-helper errors and one
+mixed-assembly routing failure were observed before the fix. Expected diagnostic
+total is nineteen scopes/77 observations; actual execution is pending.
+Full executable parity tests,
 the remaining consumers, typed adapters, existing-wrapper forwarding and
 package-only category runs remain incomplete; T019..T024 stay unchecked.
 

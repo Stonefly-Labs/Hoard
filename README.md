@@ -1225,7 +1225,9 @@ cancellation token; expected outcomes stay in the SDK. A focused source probe
 executes all six against unchanged Memory source, and a contradictory-success
 store fails the competing-create assertion. This is partial extraction: existing
 wrappers, full shared suites, typed adapters and package-only provider execution
-remain outstanding. No category/profile qualification is claimed.
+remain outstanding. The next non-qualifying native diagnostic now selects six
+Memory package-consumer witnesses after independent fresh-cache locked build;
+its result is pending. No category/profile qualification is claimed.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
