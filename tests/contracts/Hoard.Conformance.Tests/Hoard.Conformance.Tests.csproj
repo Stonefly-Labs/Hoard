@@ -17,6 +17,9 @@
   </ItemGroup>
   <PropertyGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
     <NuGetLockFilePath>PackageAcceptance/packages.lock.json</NuGetLockFilePath>
+    <OutputType>Exe</OutputType>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <UseAppHost>false</UseAppHost>
   </PropertyGroup>
   <ItemGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
     <PackageVersion Include="Hoard.Testing.Conformance" Version="[0.1.0]" />
@@ -33,5 +36,6 @@
     <Compile Include="../../fixtures/conformance/Consumer/MemoryBindingOwnershipTests.cs" Link="MemoryBindingOwnershipTests.cs" />
     <Compile Include="../../fixtures/conformance/Consumer/SqliteBindingTests.cs" Link="SqliteBindingTests.cs" />
     <Compile Include="../../fixtures/conformance/Consumer/SqliteMechanismTests.cs" Link="SqliteMechanismTests.cs" />
+    <Compile Include="../../fixtures/conformance/Consumer/SqliteEnvironmentProbe.cs" Link="SqliteEnvironmentProbe.cs" />
   </ItemGroup>
 </Project>

@@ -58,8 +58,11 @@ preserving prior graphs/third-party hashes. A separate empty-cache locked build
 passes. All 135 selected Memory/SQLite package tests pass locally without skips
 (95 Memory, 40 SQLite); this includes actual incomplete cleanup, not Linux
 supervisor/category qualification. Native diagnostics still select only the
-37 Memory/SDK/logger scopes: SQLite execution awaits its actual environment
-producer rather than borrowing the current `nativeSqlite: not-used` observation.
+37 Memory/SDK/logger scopes. An owned package-only environment probe now observes
+actual SQLite PRAGMAs/version and the loaded native module, validates its bytes
+against the pinned NuGet archive, and fingerprints runtime native assets.
+Its Linux execution is not yet verified; SQLite test scopes remain unselected
+and never borrow `nativeSqlite: not-used`.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

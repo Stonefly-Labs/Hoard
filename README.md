@@ -1257,7 +1257,9 @@ upgrade authorization and typed raw-state controls. The package-only graph
 passes 135 selected checks across Memory and SQLite, including native storage
 types, cancellation/late cleanup and real 30-second incomplete cleanup.
 These are focused local package checks, not complete category, Linux-supervisor
-or profile qualification; native SQLite environment production remains open.
+or profile qualification. An owned SQLite environment probe now captures actual
+PRAGMAs/native version and verifies the loaded library against locked archive
+bytes; Linux execution of that producer remains unverified.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

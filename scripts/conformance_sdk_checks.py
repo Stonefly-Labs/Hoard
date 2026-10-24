@@ -7,7 +7,9 @@ independent fresh cache then replays that unchanged graph in locked mode.
 """
 
 import argparse
+import base64
 import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -334,7 +336,76 @@ def verify_package_consumer_lock(candidate, feed, alternate, receipt):
         raise evidence.ConformanceError("InputChanged")
 
 
-def environment(run, *, phase="admission"):
+def admit_sqlite_environment(observed, platform, runtime, package, locked):
+    if (not isinstance(observed, dict)
+            or set(observed) != {"schemaVersion", "runtime", "architecture", "nativeSqlite", "pragmas", "nativeLibrary"}
+            or type(observed["schemaVersion"]) is not int or observed["schemaVersion"] != 1
+            or observed["runtime"] != platform["runtime"]
+            or not isinstance(observed["nativeSqlite"], str)
+            or re.fullmatch(r"3\.[0-9]{1,6}\.[0-9]{1,6}", observed["nativeSqlite"]) is None
+            or not isinstance(observed["pragmas"], dict)
+            or observed["pragmas"] != {"journalMode": "wal", "synchronous": 2, "foreignKeys": 1, "busyTimeout": 0}
+            or any(type(observed["pragmas"][key]) is not int for key in ("synchronous", "foreignKeys", "busyTimeout"))
+            or not isinstance(observed["nativeLibrary"], dict)
+            or set(observed["nativeLibrary"]) != {"path", "sha256"}):
+        raise evidence.ConformanceError("ProofMismatch")
+    architectures = {"x86_64": ("X64", "linux-x64"), "aarch64": ("Arm64", "linux-arm64")}
+    expected_architecture, rid = architectures.get(platform["architecture"], (None, None))
+    native_path = f"runtimes/{rid}/native/libe_sqlite3.so"
+    if (expected_architecture is None or observed["architecture"] != expected_architecture
+            or observed["nativeLibrary"]["path"] != native_path):
+        raise evidence.ConformanceError("ProofMismatch")
+    native = read_bounded(runtime / native_path, 32 * 1024 * 1024)
+    native_sha = hashlib.sha256(native).hexdigest()
+    archive = read_bounded(package, 64 * 1024 * 1024)
+    archive_sha512 = hashlib.sha512(archive).digest()
+    if (observed["nativeLibrary"]["sha256"] != native_sha
+            or base64.b64encode(archive_sha512).decode("ascii") != locked["contentHash"]):
+        raise evidence.ConformanceError("InputChanged")
+    with zipfile.ZipFile(io.BytesIO(archive)) as packed:
+        entries = packed.infolist()
+        matching = [entry for entry in entries if entry.filename == native_path]
+        if (len(entries) > 4096 or len(matching) != 1 or matching[0].file_size != len(native)
+                or matching[0].flag_bits & 1 or packed.read(matching[0]) != native):
+            raise evidence.ConformanceError("InputChanged")
+    return {"qualification": False, "packageId": "SQLitePCLRaw.lib.e_sqlite3",
+            "packageVersion": evidence.stable_id(locked["resolved"]),
+            "packageSha256": hashlib.sha256(archive).hexdigest(),
+            "nugetSha512": archive_sha512.hex(), "sourceMapping": "nuget.org",
+            "nativePath": native_path, "nativeSha256": native_sha}
+
+
+def sqlite_environment(run, candidate, platform, *, phase):
+    runtime = candidate / TESTS / PACKAGE_TEST_OUTPUT / "Release/net10.0"
+    output = run.root / f"proofs/sqlite-environment-{phase}.json"
+    parent = run.root / f"stores/sqlite-environment-{phase}"
+    no_symlinks(parent)
+    parent.mkdir(mode=0o700)
+    provider_sha = evidence.package_identity(
+        run.root / "feed/candidate", "Hoard.Fixtures.Metadata.Sqlite", "0.1.0")["sha256"]
+    result = run.command(
+        ["dotnet", str(runtime / "Hoard.Conformance.Tests.dll"), "sqlite-environment",
+         str(output), str(parent), str(candidate), provider_sha],
+        cwd=runtime, kind="build", timeout=60, cache_id=f"sqlite-environment-{phase}")
+    if result.exit_code or result.events:
+        code = result.events[0]["code"] if len(result.events) == 1 else "PrerequisiteMissing"
+        if code not in ("PrerequisiteMissing", "ProofMismatch", "OutputLimitExceeded", "CleanupIncomplete", "OwnershipInvalid"):
+            code = "PrerequisiteMissing"
+        raise evidence.ConformanceError(code)
+    observed = evidence.load_json(read_bounded(output, 64 * 1024))
+    lock = evidence.load_json(read_bounded(
+        candidate / TESTS / "PackageAcceptance/packages.lock.json", 2 * 1024 * 1024))
+    locked = lock["dependencies"]["net10.0"]["SQLitePCLRaw.lib.e_sqlite3"]
+    version = evidence.stable_id(locked["resolved"])
+    package = run.root / "cache/consumer-locked-replay/sqlitepclraw.lib.e_sqlite3" / version / (
+        f"sqlitepclraw.lib.e_sqlite3.{version}.nupkg")
+    provenance = admit_sqlite_environment(observed, platform, runtime, package, locked)
+    write_new(run.root / f"proofs/sqlite-native-provenance-{phase}.json", evidence.canonical_bytes(provenance))
+    output.chmod(0o400)
+    return {**platform, "nativeSqlite": observed["nativeSqlite"], "pragmas": observed["pragmas"]}
+
+
+def environment(run, *, phase="admission", candidate=None):
     # The probe is itself an owned child. Captured SDK text is bounded transient
     # input, validated before serialization, never sent to the console.
     if phase not in ("admission", "completion"):
@@ -351,7 +422,10 @@ def environment(run, *, phase="admission"):
         env={"HOARD_RUNNER_IMAGE": image})
     if result.exit_code or result.events:
         raise evidence.ConformanceError("PrerequisiteMissing")
-    return evidence.load_json(read_bounded(path, 64 * 1024))
+    observed = evidence.admit_entity("Environment", evidence.load_json(read_bounded(path, 64 * 1024)))
+    if candidate is not None:
+        observed = sqlite_environment(run, candidate, observed, phase=phase)
+    return evidence.admit_entity("Environment", observed)
 
 
 def probe(path):
@@ -390,9 +464,11 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     locks = [f"{prefix}/{name}" for name in inventory if name.endswith("packages.lock.json")]
     runtime_folders = {f"{TESTS}/bin/Release/net10.0", f"{LOGGER}/Smoke/bin/Release/net10.0",
                        f"{TESTS}/{PACKAGE_TEST_OUTPUT}/Release/net10.0"}
-    runtime = [f"{prefix}/{name}" for name in inventory
-               if name.endswith((".dll", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))
-               and Path(name).parent.as_posix() in runtime_folders]
+    runtime = [f"{prefix}/{name}" for name in inventory if (
+        name.endswith((".dll", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))
+        and Path(name).parent.as_posix() in runtime_folders) or (
+        name.endswith((".so", ".dylib", ".dll"))
+        and any(name.startswith(folder + "/runtimes/") for folder in runtime_folders))]
     if not runtime or not locks:
         raise evidence.ConformanceError("EvidenceIncomplete")
     inputs = evidence.capture_profile_inputs(
@@ -644,7 +720,7 @@ def execute(repository, destination):
         write_new(run.root / "stores/origin-probe.json",
                   json.dumps(declaration, separators=(",", ":"), ensure_ascii=True).encode("ascii"))
         binding_sources = [{"path": "stores/origin-probe.json", "adapterId": "sdk-origin-probe"}]
-        inputs = make_inputs(run, repository, candidate, sources, environment(run), identity, seal_sha,
+        inputs = make_inputs(run, repository, candidate, sources, environment(run, candidate=candidate), identity, seal_sha,
                              ci_revision=ci_revision, binding_sources=binding_sources)
         for name in sources:
             (candidate / name).chmod(0o400)
@@ -662,7 +738,7 @@ def execute(repository, destination):
             print(json.dumps({"qualification": False, "phase": "runtime-tests",
                               "completedScenarios": len(observations)}), flush=True)
             observations.append(test_attempt(run, inputs, candidate, scenario))
-        post_environment = environment(run, phase="completion")
+        post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)
         post_identity = evidence.source_identity(repository, ci_revision=ci_revision)
         if post_sources != sources or post_identity != identity:

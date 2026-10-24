@@ -5773,8 +5773,14 @@ failure now passes. Fresh package caches and build output directories prevent
 same-version, canonical-timestamp archives from leaving stale copied assemblies.
 Memory source94, tooling236/ten native skips and focused checks also pass.
 These do not establish Linux-supervisor or complete category qualification.
-Native selection remains 37 Memory/SDK/logger scopes until actual SQLite
-environment production can replace the deliberately unused SQLite observation.
+Native selection remains 37 Memory/SDK/logger scopes. A package-only owned
+environment entry point now observes actual configured SQLite state/version
+and the loaded native module, compares the library with the exact SHA-512-pinned
+NuGet archive, and includes native runtime assets in pre/post input hashing.
+The package tests still pass 135/no skips after adding this entry point.
+Missing environment admission and omitted native-asset hashing first failed
+focused regressions; both repairs pass. Linux producer execution remains pending,
+not a verified SQLite scope or category pass.
 
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)

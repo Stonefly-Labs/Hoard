@@ -18,8 +18,10 @@ same-database directory handoff, actual backup-authorized upgrades, tracked
 independent work and typed raw corruption/fingerprints. The seven-archive
 package graph passes 135 selected checks locally (95 Memory/40 SQLite), with
 separate empty-cache locked build replay. The SQLite rows are not yet selected
-by Linux diagnostics: the actual SQLite environment producer is still missing,
-so its execution must not borrow the current `nativeSqlite: not-used` value.
+by Linux diagnostics. An owned package-only environment producer now captures
+actual SQLite PRAGMAs/version and verifies the loaded native library against
+the pinned archive, but its Linux execution is still unverified. Native assets
+join pre/post input hashing; SQLite never borrows `nativeSqlite: not-used`.
 Existing synchronous fixture helpers remain caller-owned.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator

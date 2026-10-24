@@ -1334,6 +1334,27 @@ Free scratch: 92,109,668,352 bytes. It predates the concrete SQLite binding and
 seven-archive diagnostic graph; no expanded execution is attributed to it.
 T022/T023 and full category/parity acceptance remain unchecked.
 
+### Actual SQLite environment producer, pending Linux verification
+
+The package-mode test assembly now has an explicitly selected test-only entry
+point for owned environment observation, not a product executable. The test SDK's
+generated entry point is disabled only in package mode. The producer opens the
+real SQLite binding through the native resource allocator, prepares its schema,
+reads actual PRAGMAs/native version and captures the loaded `libe_sqlite3.so`
+module path relative to immutable runtime output plus its SHA-256. It awaits
+genuine session settlement before writing a path-free report; physical release
+remains the parent controller's responsibility after actual exit.
+
+The parent checks exact schema/configuration/runtime/architecture, compares the
+loaded file with the selected member of the exact locked NuGet archive, and
+records external archive SHA-256/SHA-512/source mapping provenance. Native runtime
+assets now join pre/post input hashing. A missing-API environment admission
+regression and a native-asset mutation escaping recomputation both failed first;
+the repairs pass, with all 135 existing package-selected tests still passing.
+Linux producer execution is not yet observed. Selection stays at the existing
+37 Memory/SDK/logger scopes; no SQLite-case or full category pass is inferred.
+No new dependency/package/project, product executable or qualification is added.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

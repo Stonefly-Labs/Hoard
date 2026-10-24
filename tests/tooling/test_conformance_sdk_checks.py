@@ -1,4 +1,5 @@
 import contextlib
+import base64
 import hashlib
 import io
 import json
@@ -17,6 +18,13 @@ import zipfile
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "scripts"))
 import conformance_sdk_checks as checks
+
+ENVIRONMENT = {
+    "os": "linux", "osVersion": "test", "architecture": "x86_64",
+    "sdk": "10.0.203", "runtime": "10.0.7", "nativeSqlite": "not-used",
+    "filesystem": "ext4", "runnerImage": "none", "freeBytes": 100,
+    "pragmas": {"journalMode": "none", "synchronous": 0, "foreignKeys": 0, "busyTimeout": 0},
+}
 
 
 class SdkDiagnosticTests(unittest.TestCase):
@@ -110,6 +118,51 @@ class SdkDiagnosticTests(unittest.TestCase):
             checks.prepare_package_consumer_lock(candidate, self.directory)
         self.assertEqual(original.read_bytes(), raw)
         self.assertFalse((original.parents[1] / "obj/F07.consumer.packages.lock.json").exists())
+
+    def test_sqlite_environment_requires_actual_configuration_and_locked_native_archive_bytes(self):
+        runtime = self.directory / "runtime"
+        native = runtime / "runtimes/linux-x64/native/libe_sqlite3.so"
+        native.parent.mkdir(parents=True)
+        native.write_bytes(b"actual-native")
+        package = self.directory / "sqlite.nupkg"
+        with zipfile.ZipFile(package, "w") as archive:
+            archive.writestr(native.relative_to(runtime).as_posix(), native.read_bytes())
+        locked = {"resolved": "2.1.13", "contentHash": base64.b64encode(
+            hashlib.sha512(package.read_bytes()).digest()).decode()}
+        platform = {"architecture": "x86_64", "runtime": "10.0.7"}
+        observation = {
+            "schemaVersion": 1, "runtime": "10.0.7", "architecture": "X64",
+            "nativeSqlite": "3.50.4", "pragmas": {
+                "journalMode": "wal", "synchronous": 2, "foreignKeys": 1, "busyTimeout": 0},
+            "nativeLibrary": {"path": native.relative_to(runtime).as_posix(),
+                              "sha256": hashlib.sha256(native.read_bytes()).hexdigest()},
+        }
+        before = json.loads(json.dumps(observation))
+        receipt = checks.admit_sqlite_environment(observation, platform, runtime, package, locked)
+        self.assertEqual(observation, before)
+        self.assertEqual(receipt["nativeSha256"], observation["nativeLibrary"]["sha256"])
+        self.assertEqual(receipt["packageSha256"], hashlib.sha256(package.read_bytes()).hexdigest())
+        for mutate in (
+                lambda value: value.update(nativeSqlite="not-used"),
+                lambda value: value.update(runtime="10.0.8"),
+                lambda value: value.update(architecture="Arm64"),
+                lambda value: value["pragmas"].update(synchronous=1),
+                lambda value: value["nativeLibrary"].update(path="../outside.so"),
+                lambda value: value["nativeLibrary"].update(sha256="a" * 64),
+                lambda value: value.update(extra=True)):
+            with self.subTest(mutation=mutate):
+                changed = json.loads(json.dumps(before))
+                mutate(changed)
+                with self.assertRaises(checks.evidence.ConformanceError):
+                    checks.admit_sqlite_environment(changed, platform, runtime, package, locked)
+        native.write_bytes(b"substituted-native")
+        observation["nativeLibrary"]["sha256"] = hashlib.sha256(native.read_bytes()).hexdigest()
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.admit_sqlite_environment(observation, platform, runtime, package, locked)
+        native.write_bytes(b"actual-native")
+        locked["contentHash"] = base64.b64encode(b"x" * 64).decode()
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.admit_sqlite_environment(before, platform, runtime, package, locked)
 
     def test_preparation_and_seal_verification_precede_candidate_snapshot(self):
         calls = []
@@ -297,6 +350,10 @@ class SdkDiagnosticTests(unittest.TestCase):
         runtime.mkdir(parents=True)
         (runtime / "Tests.dll").write_bytes(b"runtime")
         (runtime / "Tests.runtimeconfig.json").write_bytes(b'{"runtimeOptions":{}}')
+        native = candidate / checks.TESTS / checks.PACKAGE_TEST_OUTPUT / (
+            "Release/net10.0/runtimes/linux-x64/native/libe_sqlite3.so")
+        native.parent.mkdir(parents=True)
+        native.write_bytes(b"native")
         sources = checks.evidence.source_manifest(repository)
         environment = {
             "os": "linux", "osVersion": "test", "architecture": "x86_64",
@@ -311,7 +368,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         before = capture()
         self.assertEqual(len(before["packages"]), 7)
         self.assertNotIn(str(self.directory).encode(), checks.evidence.canonical_bytes(before))
-        for path in (runtime / "Added.dll", runtime / "Tests.runtimeconfig.json",
+        for path in (native, runtime / "Added.dll", runtime / "Tests.runtimeconfig.json",
                      candidate / "added.packages.lock.json"):
             with self.subTest(path=path.name):
                 original = path.read_bytes() if path.exists() else None
@@ -413,7 +470,7 @@ class SdkDiagnosticTests(unittest.TestCase):
 
         def command(args, **kwargs):
             observed.append(kwargs)
-            Path(args[-1]).write_text("{}")
+            Path(args[-1]).write_text(json.dumps(ENVIRONMENT))
             return SimpleNamespace(exit_code=0, events=())
 
         run = SimpleNamespace(root=self.directory, command=command)
@@ -435,7 +492,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         observed = []
         def command(args, **kwargs):
             with Path(args[-1]).open("xb") as target:
-                target.write(b"{}")
+                target.write(json.dumps(ENVIRONMENT).encode())
             observed.append((Path(args[-1]).name, kwargs["cache_id"]))
             return SimpleNamespace(exit_code=0, events=())
         run = SimpleNamespace(root=self.directory, command=command)

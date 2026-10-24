@@ -131,10 +131,12 @@ private and no SDK dependency changes. The package-mode graph now explicitly
 prepares/derives/reverifies seven local archives. Its selected 135 tests pass
 locally (95 Memory/40 SQLite) with separate empty-cache locked build replay.
 Linux diagnostic selection deliberately stays at 37 Memory/SDK/logger scopes
-until actual SQLite environment production is implemented. A compiled SQLite
-archive is not execution evidence; `nativeSqlite: not-used` cannot label an
-executing SQLite scope. Complete adapters/category/provenance acceptance remains
-unfinished.
+pending verified Linux execution of the new owned environment producer. It
+observes actual configured PRAGMAs/native version and the loaded module, validates
+the library against the exact pinned NuGet archive, and fingerprints native
+runtime assets before/after execution. A compiled SQLite archive is not execution
+evidence; `nativeSqlite: not-used` cannot label an executing SQLite scope.
+Complete adapters/category/provenance acceptance remains unfinished.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
