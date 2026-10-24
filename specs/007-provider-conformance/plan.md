@@ -1690,6 +1690,48 @@ assets are restored. No SDK/provider/fixture archive or source lock changes.
 Clock/deadline/corruption/session extraction and exact origin/controller imports
 remain unfinished. These six delegates do not complete T019/T021..T026.
 
+### Original clock ownership and three time-dependent delegates
+
+MP-17 ticket expiry/rollback and MP-29/30 lease decision/rollback now share
+SDK consumers (32 original delegated methods). Additive callback overloads
+drive the original `MetadataTestClock` actually supplied to the fixture store;
+the existing SDK clock-object signatures forward to the same assertion bodies.
+There is no alternate clock, provider-selected expectation or duplicated
+consumer logic. MP-29 retains all three renew/release/guard subproofs with
+separate fresh fixtures and final-decision observations.
+
+A new regression first failed the missing callback-overload assertion in a
+successfully compiled package-mode assembly. Its repaired actual-store body
+drives the original clock backward and verifies new ticket issuance keeps
+the expiry-based monotonic floor. All 80 current predecessor tests pass on
+each provider without skips. All 180 selected SDK/binding tests pass against
+final formatted archives, including existing clock-object call sites.
+Fresh empty-cache locked replay reproduces eight archives and seven wrapper
+DLLs plus the separate Application DLL. The seven-archive binding output DLLs
+match archive members and its SDK archive is identical to the wrapper feed.
+Only the SDK hash changes in the tracked predecessor lock; graphs, other
+entries and historical pins are unchanged. Tooling243 (232 passed, eleven
+macOS-native skips), frozen catalogs and focused formatting pass.
+
+### Native writer-held exclusion confirmed
+
+[40070802352](https://github.com/Stonefly-Labs/Hoard/actions/runs/40070802352)
+at `3bca09c36a15f29279de6f4d28c498cdd47e6a56` passed all three jobs:
+136 foundation checks without failures/errors/skips and exactly 50 scopes/
+255 discoveries/executions with expected diagnostics, including all 85 SQLite
+identities and the real BUSY (5) candidate-boundary regression. Actual SQLite
+3.53.3/PRAGMAs/native member provenance, native non-cooperation containment,
+six baselines and identical eighteen-package/thirteen-lock replay also pass.
+Free scratch: 92,109,254,656 bytes. Input:
+`44d6e93b40e2eb6e89f120fc6b95c94848c293023647910cb9045b5edec1dc58`;
+preparation: `a3dc25aa986c12802ee7df4ee615b9098e1eecd5220d45286cf7969542317f72`;
+producer: `73e2d0e4180c0d44fb4ebe735a1dcfcb8832770cc829bcecbce0e484d7d7d55b`;
+controller: `8aec3e932c184d2eff293a606d02960c4a9f7dced12c292cfe3586cc0c05da9d`;
+child start: `c620ce3e9f495fe0ff220977b69ed5575a6f093df7f9fda5b851d9d016c1c3fe`.
+The baseline seal and pinned native provenance are unchanged. This checkpoint
+predates the callback-clock changes and does not run original predecessor
+wrappers. Complete recovery, extraction and exact origin imports remain open.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

@@ -110,7 +110,10 @@ at U0 before repair. Final packages pass 180 selected binding/SDK tests and
 eight-archive replay reproduces exact DLLs; only the tracked SDK archive hash
 changes, preserving the predecessor dependency graph and all other lock entries.
 The requested Linux vector becomes 50 scopes/255 observations, including
-85 SQLite identities; execution of this expanded vector remains pending.
+85 SQLite identities. Native
+[40070802352](https://github.com/Stonefly-Labs/Hoard/actions/runs/40070802352)
+at `3bca09c` verified that vector, 136 foundation checks without skips,
+native containment and identical eighteen-package/thirteen-lock replay.
 The six original MP-08 malformed-continuation rows now use the same shared
 consumer, bringing adoption to 23 original methods. Fixture-private mapping
 forwards to each provider's existing independent payload-damage helper.
@@ -130,6 +133,16 @@ existing controls and check cancellation before dispatch. All 16 affected
 class tests pass against each provider without skips using the same compiled
 suite and seven byte-matched dependencies. No package or source-lock changes
 accompany these delegates.
+Three more MP-17/29/30 wrappers now share clock-dependent consumers through
+callbacks that drive the original `MetadataTestClock` supplied to the store
+(32 delegated methods). Existing SDK clock signatures forward to those same
+assertion bodies. All three final-decision lease actions retain independent
+fresh fixtures. A new actual-store regression proves clock rollback reaches
+the original clock while issued tickets retain their monotonic floor.
+All 80 predecessor tests pass on each provider without skips, alongside
+180 selected SDK/binding tests. Fresh locked replay reproduces eight archives
+and exact DLLs, with the identical SDK archive in both feed families. Only its
+SDK hash changes in the tracked predecessor lock; other entries remain pinned.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

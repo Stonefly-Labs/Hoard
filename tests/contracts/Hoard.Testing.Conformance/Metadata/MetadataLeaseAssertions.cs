@@ -29,17 +29,25 @@ public static class MetadataLeaseAssertions
         Assert.IsType<MetadataOption<MetadataId>.None>(retained.Owner);
     }
 
-    public static async Task ExpiryAtDecisionAsync(
+    public static Task ExpiryAtDecisionAsync(
         IMetadataStore store, MetadataConformanceClock clock, MetadataObservationControl observeAsync,
         MetadataLeaseExpiryAction action, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(clock);
+        return ExpiryAtDecisionAsync(store, clock.Set, observeAsync, action, cancellationToken);
+    }
+
+    public static async Task ExpiryAtDecisionAsync(
+        IMetadataStore store, Action<MetadataInstant> setTime, MetadataObservationControl observeAsync,
+        MetadataLeaseExpiryAction action, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(setTime);
         ArgumentNullException.ThrowIfNull(observeAsync);
         if (!Enum.IsDefined(action)) { throw new ArgumentException("BindingInvalid", nameof(action)); }
         var resource = new CanonicalText("maintenance");
         await Commit(store, cancellationToken, new MetadataMutation.AcquireLease(resource, Id(1), 1));
         var lease = await Read<MetadataWorkLease>(store, new MetadataSelector.Lease(resource), cancellationToken);
-        clock.Set(new(lease.Expires.UnixMilliseconds - 1));
+        setTime(new(lease.Expires.UnixMilliseconds - 1));
         var ticket = await Ticket(store, cancellationToken);
         MetadataMutation mutation = action switch
         {
@@ -54,7 +62,7 @@ public static class MetadataLeaseAssertions
         await using (var observation = await observeAsync(MetadataObservationPoint.BeforeCommitDecision, () =>
         {
             Interlocked.Increment(ref observed);
-            clock.Set(lease.Expires);
+            setTime(lease.Expires);
             return ValueTask.CompletedTask;
         }, cancellationToken))
         {
@@ -63,7 +71,7 @@ public static class MetadataLeaseAssertions
         }
         Assert.Equal(lease, await Read<MetadataWorkLease>(store, lease.Selector, cancellationToken));
         await Missing(store, Registry().Selector, cancellationToken);
-        clock.Set(new(lease.Expires.UnixMilliseconds - 1));
+        setTime(new(lease.Expires.UnixMilliseconds - 1));
         Assert.Equal(MetadataFailureCode.Conflict, Failed(await store.CommitAsync(Batch(await Ticket(store, cancellationToken),
             new MetadataMutation.ReleaseLease(resource, Id(1), lease.Generation, lease.Revision)), new(), cancellationToken)));
         await Commit(store, cancellationToken, new MetadataMutation.AcquireLease(resource, Id(2), 1));

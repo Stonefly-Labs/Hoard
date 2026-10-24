@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Hoard.Abstractions.Metadata;
+using Hoard.Testing.Conformance.Metadata;
 using Microsoft.Data.Sqlite;
 using static Hoard.Metadata.Tests.MetadataCases;
 
@@ -227,18 +228,6 @@ public sealed class MetadataReconciliationTests
     {
         var clock = new MetadataTestClock();
         await using var fixture = await OpenAsync(clock);
-        var batch = Batch(await Ticket(fixture), new MetadataMutation.PutRegistry(Registry(), new ExpectedRevision.Absent()));
-        Success(await fixture.Store.CommitAsync(batch, new(), default));
-        Assert.IsType<MetadataResolution.Committed>(Success(await fixture.Store.ReconcileAsync(batch.Ticket, new(), default)));
-        clock.Set(batch.Ticket.Expires.UnixMilliseconds);
-        Assert.Equal(MetadataFailureCode.ReconciliationExpired, Failed(await fixture.Store.CommitAsync(batch, new(), default)));
-        clock.Set(batch.Ticket.Issued.UnixMilliseconds);
-        Assert.Equal(MetadataFailureCode.ReconciliationExpired, Failed(await fixture.Store.CommitAsync(batch, new(), default)));
-        await Ticket(fixture);
-        Assert.Equal(MetadataFailureCode.ReconciliationExpired, Failed(await fixture.Store.ReconcileAsync(batch.Ticket, new(), default)));
-        var forged = batch.Ticket with { Epoch = Id(99) };
-        Assert.Equal(MetadataFailureCode.ReconciliationExpired, Failed(await fixture.Store.CommitAsync(
-            Batch(forged, new MetadataMutation.PutRegistry(Registry(2), new ExpectedRevision.Absent())), new(), default)));
-        await Missing(fixture, Registry(2).Selector);
+        await MetadataTimeAssertions.TicketExpiryAndRollbackAsync(fixture.Store, instant => clock.Set(instant.UnixMilliseconds), default);
     }
 }

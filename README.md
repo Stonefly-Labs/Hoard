@@ -1286,8 +1286,10 @@ writer-held boundary through a distinct `SchemaCandidatePrepared` observation;
 the existing pre-transaction U0 hook is unchanged. A real second connection
 must observe SQLite BUSY (5). Focused final-package checks pass 180 binding/SDK
 tests and 11 original schema/observer tests per provider, without skips.
-The expanded Linux diagnostic requests 50 scopes/255 observations; that new
-vector awaits native execution and is not category qualification.
+Native run [40070802352](https://github.com/Stonefly-Labs/Hoard/actions/runs/40070802352)
+at `3bca09c` verified the expanded 50-scope/255-observation vector, including
+the writer-held regression, native containment and all three successful jobs.
+This is not category qualification.
 The six original malformed-continuation rows now share the SDK corruption
 consumer through fixture-private encoding controls (23 delegated methods).
 An actual-cursor parity check proves every original field is covered without
@@ -1297,6 +1299,10 @@ Six further admission, capacity and lease-fencing wrappers now share existing
 consumers (29 delegated methods). Their 16 affected class tests pass against
 each provider; fresh unadmitted stores, original controls and disposal remain
 fixture-owned, with no SDK/provider package changes.
+Three clock-dependent wrappers now share consumers through callbacks that
+drive the original store clock (32 delegated methods). Existing SDK clock
+signatures remain available. All 80 predecessor tests pass on each provider,
+alongside 180 SDK/binding tests; complete extraction/origin import is unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

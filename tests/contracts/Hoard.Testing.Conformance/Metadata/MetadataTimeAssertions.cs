@@ -5,15 +5,23 @@ namespace Hoard.Testing.Conformance.Metadata;
 
 public static class MetadataTimeAssertions
 {
-    public static async Task TicketExpiryAndRollbackAsync(
+    public static Task TicketExpiryAndRollbackAsync(
         IMetadataStore store, MetadataConformanceClock clock, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(clock);
+        return TicketExpiryAndRollbackAsync(store, clock.Set, cancellationToken);
+    }
+
+    public static async Task TicketExpiryAndRollbackAsync(
+        IMetadataStore store, Action<MetadataInstant> setTime, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(setTime);
         var batch = Batch(await Ticket(store, cancellationToken), new MetadataMutation.PutRegistry(Registry(), new ExpectedRevision.Absent()));
         Success(await store.CommitAsync(batch, new(), cancellationToken));
         Assert.IsType<MetadataResolution.Committed>(Success(await store.ReconcileAsync(batch.Ticket, new(), cancellationToken)));
-        clock.Set(batch.Ticket.Expires);
+        setTime(batch.Ticket.Expires);
         Assert.Equal(MetadataFailureCode.ReconciliationExpired, Failed(await store.CommitAsync(batch, new(), cancellationToken)));
-        clock.Set(batch.Ticket.Issued);
+        setTime(batch.Ticket.Issued);
         Assert.Equal(MetadataFailureCode.ReconciliationExpired, Failed(await store.CommitAsync(batch, new(), cancellationToken)));
         await Ticket(store, cancellationToken);
         Assert.Equal(MetadataFailureCode.ReconciliationExpired, Failed(await store.ReconcileAsync(batch.Ticket, new(), cancellationToken)));
@@ -23,16 +31,24 @@ public static class MetadataTimeAssertions
         await Missing(store, Registry(2).Selector, cancellationToken);
     }
 
-    public static async Task LeaseRollbackAsync(
+    public static Task LeaseRollbackAsync(
         IMetadataStore store, MetadataConformanceClock clock, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(clock);
+        return LeaseRollbackAsync(store, clock.Set, cancellationToken);
+    }
+
+    public static async Task LeaseRollbackAsync(
+        IMetadataStore store, Action<MetadataInstant> setTime, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(setTime);
         var resource = new CanonicalText("maintenance");
         await Commit(store, cancellationToken, new MetadataMutation.AcquireLease(resource, Id(1), 1));
         var first = await Read<MetadataWorkLease>(store, new MetadataSelector.Lease(resource), cancellationToken);
-        clock.Set(first.Expires);
+        setTime(first.Expires);
         Assert.Equal(MetadataFailureCode.Conflict, Failed(await store.CommitAsync(Batch(await Ticket(store, cancellationToken),
             new MetadataMutation.RenewLease(resource, Id(1), first.Generation, first.Revision, 1)), new(), cancellationToken)));
-        clock.Set(first.Acquired);
+        setTime(first.Acquired);
         await Commit(store, cancellationToken, new MetadataMutation.AcquireLease(resource, Id(2), 1));
         var next = await Read<MetadataWorkLease>(store, first.Selector, cancellationToken);
         Assert.Equal(first.Generation + 1, next.Generation);

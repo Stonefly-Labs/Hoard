@@ -5912,7 +5912,7 @@ locked replay reproduces all eight archives and actual dependency DLLs; its
 SDK archive is identical to the seven-archive binding feed. Only the SDK hash
 changes in the tracked predecessor test lock, not its graph or other pins.
 The expanded native request is 50 scopes/255 observations, including 85 SQLite
-identities; that vector has not yet been observed on Linux.
+identities. Native run `40070802352` at `3bca09c` subsequently verified it.
 
 Native run
 [40068886475](https://github.com/Stonefly-Labs/Hoard/actions/runs/40068886475)
@@ -5951,6 +5951,29 @@ freshly compiled suite passed all 16 affected class tests against each provider,
 without skips. Its seven dependency DLLs match the archives. Focused whitespace
 and frozen inventory checks pass; ordinary source-mode assets are restored.
 SDK/provider/fixture archives are unchanged by these six delegates.
+
+Three MP-17/29/30 clock-dependent methods now additionally delegate to shared
+consumers (32 original methods total). Additive SDK callback overloads target
+the original `MetadataTestClock`; existing clock-object signatures remain and
+forward to the same assertion bodies. The store's actual `TimeProvider` is
+never replaced. MP-29 still runs renew/release/guard with separate fresh
+fixtures, including observation at the final decision and the rollback fence.
+The new bridge regression first failed the missing callback-overload assertion.
+Its repaired actual-store proof observes the original clock rolled back while
+new ticket issuance retains the monotonic expiry floor.
+All 80 predecessor tests pass on each provider without skips, and all 180
+selected SDK/binding tests pass against final formatted packages. Independent
+fresh locked replay reproduces eight archives and exact DLLs; both feed
+families have the identical SDK archive. Only the SDK hash changes in the
+tracked predecessor lock, preserving its graph and other entries. Tooling243,
+frozen catalogs and focused formatting pass.
+
+Native [40070802352](https://github.com/Stonefly-Labs/Hoard/actions/runs/40070802352)
+at `3bca09c` passed all three jobs: 136 foundation checks without failures/
+errors/skips, 50 scopes/255 observations including 85 SQLite identities,
+actual native containment and identical eighteen-package/thirteen-lock replay.
+This verifies the U1 regression, not the later clock-callback or original-wrapper
+suites; those were validated locally. Full category/recovery/origin gates remain.
 
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)

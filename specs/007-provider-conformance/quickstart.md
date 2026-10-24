@@ -55,8 +55,8 @@ The shared and original MP-35 exclusion checks now select the distinct
 held; the older U0 observation is unchanged. A real second connection must
 receive BUSY (5). Final package checks pass 180 binding/SDK tests and 11 original
 schema/observer tests per provider without skips. The expanded 50-scope/
-255-observation Linux request remains pending; complete extraction and recovery
-are still unfinished.
+255-observation Linux vector passed in run `40070802352` at `3bca09c`; complete
+extraction and recovery are still unfinished.
 The six original malformed-continuation rows now also share the SDK consumer
 (23 delegated original methods). Fixture-private controls preserve each
 provider's encoding, and an actual-cursor guard proves every inherited field
@@ -67,6 +67,11 @@ Six more admission/capacity/lease-fencing wrappers now delegate as well
 (29 original methods total). All 16 affected class tests pass on both providers
 using identical suite/dependency bytes; no SDK/provider packages change.
 Fresh admission fixtures remain unprepared and retain their original disposal.
+Three clock-dependent wrappers now also share consumers through additive clock
+callbacks (32 methods total), driving the actual original store clock. Existing
+SDK clock signatures remain available. All 80 predecessor tests pass on each
+provider and 180 SDK/binding tests pass locally. The native U1 checkpoint
+predates these clock changes and does not run the original wrapper suite.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

@@ -184,7 +184,8 @@ A provider-specific real-connection regression requires SQLite BUSY (5) at
 that boundary; it failed when observing U0. Final package checks pass 180
 binding/SDK tests and 11 original schema/observer tests per provider.
 The expanded Linux request is 50 scopes/255 observations (85 SQLite identities),
-pending native execution; it does not establish full recovery/parity acceptance.
+verified by native run `40070802352` at `3bca09c`; it does not establish full
+recovery/parity acceptance.
 
 The original MP-08 malformed-continuation theory now retains all six exact
 rows while delegating to the same shared SDK consumer. Fixture-private
@@ -200,6 +201,14 @@ bringing original adoption to 29 methods. Fresh unadmitted stores and existing
 fixture controls/disposal remain intact. The counter bridge reads real boundary
 activity and diagnostic occurrences. All 16 affected class tests pass against
 both providers with identical suite/dependency bytes and unchanged packages.
+Three further clock-dependent wrappers use additive callback overloads
+(32 original delegated methods). Existing SDK clock-object signatures forward
+to the same assertion bodies. The callback changes the actual original clock
+supplied to the store, never a detached substitute. A new actual-store proof
+checks original-clock rollback with monotonic ticket issuance; all 80
+predecessor tests pass on each provider and 180 SDK/binding tests pass.
+The native U1 checkpoint predates these clock changes and does not execute
+the original wrapper suite.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
