@@ -5585,6 +5585,30 @@ preparation proof:
 The five newer writer/authority consumers remain pending native execution; all
 remaining full task obligations are unchanged.
 
+Seven new lease/deadline consumers bring the slice to 41 methods. They cover
+generation overflow, expiry at the final renew/release/guard decision, writer
+budget, cancellation decisions, bounded pending readers, disposal ownership and
+known exception classification. A full-slice failure exposed a definite canceled
+reservation returning while work was still owned; the next reservation correctly
+reported Unavailable. The common consumer now joins actual settlement first,
+with a focused ordering regression and non-cancelable cleanup. The shared join
+helper preserves publication cleanup. Bounded architecture review found no
+actionable defects. Source-only Memory: 53 passed; ordinary SDK: 108 passed,
+all without skips. Tooling: 236 checks/ten native skips; focused format/catalog/
+inventory checks pass. Current native selection: 30 scopes/127 observations,
+pending; the inherited incomplete-cleanup case and full extraction remain open.
+
+Run [40057148652](https://github.com/Stonefly-Labs/Hoard/actions/runs/40057148652)
+at `bb7478ca56634f085cc0b7f05f0926823ad7639c` verified all 34 earlier consumers
+including publication authority and both writer-settlement regressions: all
+three jobs succeeded, 131 foundation checks without failures/errors/skips,
+28 scopes/117 observations, six historical baselines and identical
+eighteen-package/thirteen-lock replay. Input digest:
+`de9197030e3a8b8675334191edc4bae59dbb874850a72c52a06fc72c918e0e37`;
+preparation proof:
+`dfb1356f57a03483dff44f9b8b092c7e58bb26bf33ea21add85344cad184a9e6`.
+No current source result substitutes for native package evidence.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

@@ -13,6 +13,61 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class MemoryMechanismTests
 {
+    [Fact]
+    public async Task Compiled_lease_overflow_consumer_preserves_the_group_and_tombstone()
+    {
+        var clock = new MetadataConformanceClock(new(1_800_000_000_000));
+        await using var store = await OpenAsync(clock: clock);
+        await MetadataLeaseAssertions.GenerationOverflowAsync(store, (resource, generation, token) =>
+        {
+            token.ThrowIfCancellationRequested();
+            return store.SetLeaseGenerationForTestAsync(resource, generation);
+        }, default);
+    }
+
+    [Theory]
+    [InlineData(MetadataLeaseExpiryAction.Renew)]
+    [InlineData(MetadataLeaseExpiryAction.Release)]
+    [InlineData(MetadataLeaseExpiryAction.Guard)]
+    public async Task Compiled_lease_expiry_consumer_rechecks_the_final_decision(MetadataLeaseExpiryAction action)
+    {
+        var clock = new MetadataConformanceClock(new(1_800_000_000_000));
+        var control = new MemoryObservationControl();
+        await using var store = await OpenAsync(clock: clock, observer: control.ObserveAsync, diagnostic: control.Diagnose);
+        await MetadataLeaseAssertions.ExpiryAtDecisionAsync(store, clock, control.ObserveBoundaryAsync, action, default);
+    }
+
+    [Theory]
+    [InlineData("writer-budget")]
+    [InlineData("cancellation-decision")]
+    [InlineData("queue-capacity")]
+    [InlineData("disposal-ownership")]
+    [InlineData("known-exceptions")]
+    public async Task Compiled_deadline_consumers_preserve_decision_and_work_ownership(string consumer)
+    {
+        var control = new MemoryObservationControl();
+        await using var store = await OpenAsync(observer: control.ObserveAsync, diagnostic: control.Diagnose);
+        ValueTask<IAsyncDisposable> HoldWriter(CancellationToken token)
+        {
+            token.ThrowIfCancellationRequested();
+            return Acquire();
+            async ValueTask<IAsyncDisposable> Acquire() => new AsyncWriterHold(await store.HoldWriterForTestAsync());
+        }
+        ValueTask Settle(CancellationToken token) =>
+            new(store.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(5), token));
+        await (consumer switch
+        {
+            "writer-budget" => MetadataDeadlineAssertions.WriterBudgetAsync(store, HoldWriter, Settle, default),
+            "cancellation-decision" => MetadataDeadlineAssertions.CancellationDecisionsAsync(
+                store, control.ObserveBoundaryAsync, Settle, default),
+            "queue-capacity" => MetadataDeadlineAssertions.QueueCapacityAsync(store, control.ObserveBoundaryAsync, Settle, default),
+            "disposal-ownership" => MetadataDeadlineAssertions.DisposalOwnershipAsync(
+                store, control.ObserveBoundaryAsync, store.DisposeAsync, default),
+            "known-exceptions" => MetadataDeadlineAssertions.KnownExceptionsAsync(store, control.ObserveBoundaryAsync, default),
+            _ => throw new ArgumentException("Unknown common consumer.")
+        });
+    }
+
     [Theory]
     [InlineData("matching-evidence")]
     [InlineData("orphan-not-rollback")]

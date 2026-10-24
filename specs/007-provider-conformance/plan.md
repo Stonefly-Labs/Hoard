@@ -969,6 +969,43 @@ preparation proof:
 Free scratch was 92,108,992,512 bytes. The five newer writer/authority consumers
 and ordinary SDK settlement regressions still await their native run.
 
+### Lease decision and deadline ownership consumers
+
+Seven additional methods bring the executable slice to 41: generation overflow,
+expiry at the final renew/release/guard decision, writer budget, cancellation
+decisions, queue capacity, disposal ownership and known exception classification.
+The overflow probe uses the same fixed harness clock as the store so its 1 ms
+lease cannot expire incidentally. The typed logical controls keep private
+observation strings and generation mutation in the concrete fixture.
+
+The full source probe initially failed because a pre-canceled reservation could
+return definite cancellation while dispatched work remained owned; the next
+reservation correctly reported Unavailable. The consumer now unconditionally
+joins genuine settlement before requesting a fresh ticket. A focused SDK
+regression verifies this ordering and the non-cancelable cleanup token.
+Started public tasks and actual settlement are joined together, including
+failure paths; the shared helper also preserves publication cleanup. Bounded
+architecture review found no actionable defects in this increment.
+
+The source-only Memory probe passes 53 tests without skips; ordinary SDK tests
+pass 108. Tooling passes 236 checks with ten native macOS skips; focused
+formatting, catalog, frozen inventory and whitespace checks pass. Exact discovery
+confirmed all nine new Memory wrapper rows. Current native selection:
+30 scopes/127 observations, pending. Full extraction, schema/diagnostic controls,
+the inherited incomplete-cleanup case, typed adapters and wrapper parity remain
+open; T019..T086 are not marked complete.
+
+Native run [40057148652](https://github.com/Stonefly-Labs/Hoard/actions/runs/40057148652)
+at `bb7478ca56634f085cc0b7f05f0926823ad7639c` verified all 34 earlier consumers,
+including publication authority and both writer-settlement regressions. All
+three jobs succeeded: 131 foundation checks without failures/errors/skips,
+28 scopes/117 discoveries/117 executions, six historical baselines and
+byte-identical eighteen-package/thirteen-lock replay. Input digest:
+`de9197030e3a8b8675334191edc4bae59dbb874850a72c52a06fc72c918e0e37`;
+preparation proof:
+`dfb1356f57a03483dff44f9b8b092c7e58bb26bf33ea21add85344cad184a9e6`.
+Free scratch was 92,110,127,104 bytes. This remains non-qualifying diagnostics.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

@@ -108,7 +108,7 @@ public static class MetadataPublicationAssertions
             finally
             {
                 barrier.Release();
-                await Task.WhenAll(committing, Settle());
+                await JoinSettlement(committing, awaitSettlementAsync);
             }
         }
         Assert.Equal(0, authority.ActiveGuards);
@@ -118,6 +118,5 @@ public static class MetadataPublicationAssertions
         Success(await store.CommitAsync(batch, new(), cancellationToken));
         Assert.Equal(acquisitions, authority.Acquisitions);
 
-        async Task Settle() => await awaitSettlementAsync(CancellationToken.None);
     }
 }

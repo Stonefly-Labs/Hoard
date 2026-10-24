@@ -25,6 +25,11 @@ internal static class MetadataCaseData
         Assert.DoesNotContain(MetadataReconciliationAssertions.CorruptionCanary, failure.ToString());
         return failure;
     }
+    public static Task JoinSettlement(Task operation, Func<CancellationToken, ValueTask> awaitSettlementAsync)
+    {
+        return Task.WhenAll(operation, Settle());
+        async Task Settle() => await awaitSettlementAsync(CancellationToken.None);
+    }
     public static async ValueTask<MetadataOperationTicket> Ticket(IMetadataStore store, CancellationToken cancellationToken) =>
         Success(await store.ReserveOperationAsync(new(), cancellationToken));
     public static MetadataMutationBatch Batch(MetadataOperationTicket ticket, params MetadataMutation[] mutations) =>

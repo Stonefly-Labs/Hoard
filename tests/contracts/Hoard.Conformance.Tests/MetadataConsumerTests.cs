@@ -5,6 +5,23 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class MetadataConsumerTests
 {
+    [Fact]
+    public async Task Precancelled_reservation_is_settled_before_the_next_operation()
+    {
+        await using var store = new PrecancelledReservation();
+        var failure = await Assert.ThrowsAsync<Xunit.Sdk.XunitException>(() =>
+            MetadataDeadlineAssertions.CancellationDecisionsAsync(store,
+                (_, _, _) => throw new Xunit.Sdk.XunitException("Unexpected observation."),
+                token =>
+                {
+                    Assert.False(token.CanBeCanceled);
+                    store.SettlementJoins++;
+                    return ValueTask.CompletedTask;
+                }, default));
+        Assert.Equal("Stopped after settled reservation.", failure.Message);
+        Assert.Equal(1, store.SettlementJoins);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -54,6 +71,38 @@ public sealed class MetadataConsumerTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
             () => MetadataConcurrencyAssertions.CompetingCreatesAsync(store, cancellation.Token));
         Assert.Equal(0, store.Commits);
+    }
+
+    private sealed class PrecancelledReservation : IMetadataStore
+    {
+        private int reservations;
+        public int SettlementJoins { get; set; }
+        public ValueTask<MetadataResult<MetadataOperationTicket>> ReserveOperationAsync(
+            MetadataCallOptions options, CancellationToken cancellationToken)
+        {
+            if (++reservations == 1)
+            {
+                Assert.True(cancellationToken.IsCancellationRequested);
+                return ValueTask.FromResult<MetadataResult<MetadataOperationTicket>>(
+                    new MetadataResult<MetadataOperationTicket>.Failure(MetadataFailureCode.CancelledBeforeCommit,
+                        MetadataPhase.Reserve, MetadataRetryDisposition.RetrySameTicket, new(Guid.NewGuid())));
+            }
+            throw new Xunit.Sdk.XunitException(SettlementJoins == 1
+                ? "Stopped after settled reservation." : "Reservation before settlement.");
+        }
+        public ValueTask<MetadataResult<MetadataCommitReceipt>> CommitAsync(
+            MetadataMutationBatch request, MetadataCallOptions options, CancellationToken cancellationToken) =>
+            throw new Xunit.Sdk.XunitException("Unexpected commit.");
+        public ValueTask<MetadataResult<MetadataReadSnapshot>> ReadAsync(
+            MetadataReadGroup request, MetadataCallOptions options, CancellationToken cancellationToken) =>
+            throw new Xunit.Sdk.XunitException("Unexpected read.");
+        public ValueTask<MetadataResult<MetadataPage>> ReadPageAsync(
+            MetadataPageQuery request, MetadataCallOptions options, CancellationToken cancellationToken) =>
+            throw new Xunit.Sdk.XunitException("Unexpected page.");
+        public ValueTask<MetadataResult<MetadataResolution>> ReconcileAsync(
+            MetadataOperationTicket ticket, MetadataCallOptions options, CancellationToken cancellationToken) =>
+            throw new Xunit.Sdk.XunitException("Unexpected reconcile.");
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 
     private sealed class ObservedWriterHold : IAsyncDisposable

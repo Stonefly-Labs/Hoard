@@ -68,13 +68,14 @@ integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
 
-The initial executable SDK slice exposes thirty-four methods across
+The initial executable SDK slice exposes forty-one methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,
 `MetadataIdentityAssertions`, `MetadataEntityAssertions` and
 `MetadataReferenceAssertions`, `MetadataTimeAssertions` and
 `MetadataReconciliationAssertions`, `MetadataCorruptionAssertions` and
-`MetadataAtomicityAssertions` and `MetadataPublicationAssertions`.
+`MetadataAtomicityAssertions`, `MetadataPublicationAssertions` and
+`MetadataDeadlineAssertions`.
 They consume an already-prepared fresh
 `IMetadataStore`, a caller cancellation token and, for publication cases, the
 session's `IMetadataConformanceAuthority`; the caller retains store ownership.
@@ -131,6 +132,15 @@ revoked evidence rejection, orphan-versus-rollback, guard protection through
 caller timeout and actual settlement, and replay without authority reacquisition.
 The focused registration authority supplies logical evidence and guard lifetime
 only, not real artifact retention or cross-store integration.
+Lease controls additionally cover generation overflow and exact expiry at the
+final renew/release/guard decision. The deadline consumers preserve real writer
+budget, cancellation before/after the commit decision, bounded pending readers,
+disposal awaiting owned work and known post-decision exception classification.
+A pre-canceled reservation is settled before the next operation: definite public
+cancellation does not prove that dispatched work has ended. Cleanup releases
+held work and joins public tasks and actual settlement without caller
+cancellation; disposal still does not imply authoritative resource release.
+The inherited incomplete-cleanup/retained-work case remains unextracted.
 No method accepts a provider name or expected outcome. Session/adapter routing,
 all other inherited assertions and unchanged-wrapper forwarding remain pending.
 Invoking this partial slice cannot qualify a metadata binding.

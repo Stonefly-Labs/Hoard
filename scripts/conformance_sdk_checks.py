@@ -127,6 +127,7 @@ SCENARIOS = (
         "Simulation_cannot_take_local_restart_witnesses_or_remove_its_frozen_exclusions",
     ), "None", "Passed", 0, "None"),
     ("metadata-consumers", tuple("Hoard.Conformance.Tests.MetadataConsumerTests." + method for method in (
+        "Precancelled_reservation_is_settled_before_the_next_operation",
         "Competing_create_consumer_rejects_successful_losers_instead_of_accepting_provider_results",
         "Common_consumer_propagates_cancellation_to_the_store_without_publishing_a_candidate"))
      + tuple("Hoard.Conformance.Tests.MetadataConsumerTests."
@@ -183,6 +184,16 @@ SCENARIOS = (
         PACKAGE_TEST_PREFIX + "Compiled_authority_consumers_preserve_evidence_protection_and_replay"
         + f'(consumer: "{consumer}")' for consumer in (
             "matching-evidence", "orphan-not-rollback", "protection-through-settlement", "replay-without-reacquisition")),
+     "None", "Passed", 0, "None"),
+    ("memory-lease-decision-consumers", (
+        PACKAGE_TEST_PREFIX + "Compiled_lease_overflow_consumer_preserves_the_group_and_tombstone",
+        *(PACKAGE_TEST_PREFIX + "Compiled_lease_expiry_consumer_rechecks_the_final_decision"
+          + f"(action: {action})" for action in ("Renew", "Release", "Guard"))),
+     "None", "Passed", 0, "None"),
+    ("memory-deadline-consumers", tuple(
+        PACKAGE_TEST_PREFIX + "Compiled_deadline_consumers_preserve_decision_and_work_ownership"
+        + f'(consumer: "{consumer}")' for consumer in (
+            "writer-budget", "cancellation-decision", "queue-capacity", "disposal-ownership", "known-exceptions")),
      "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
