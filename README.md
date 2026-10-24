@@ -1333,9 +1333,21 @@ tests pass on each provider and 183 selected SDK/binding tests pass locally.
 Fresh independent locked replay reproduces eight archives and exact DLLs.
 Native run [40098981184](https://github.com/Stonefly-Labs/Hoard/actions/runs/40098981184)
 at `11875e5` verified the preceding diagnostics checkpoint (50 scopes/256
-observations); the new 50-scope/258-observation request remains pending.
+observations). Schema run
+[40100325269](https://github.com/Stonefly-Labs/Hoard/actions/runs/40100325269)
+at `82a9b09` subsequently verified all 50 scopes/258 observations, including
+physical fingerprints and in-flight stream cancellation, with native containment.
 Neither native checkpoint executes the original wrapper suite; exact frozen
 parity/controller-origin integration and full feature acceptance remain open.
+
+The Linux diagnostic now also builds the actual original metadata test assembly
+against its existing seven-package graph and selects all 63 frozen runtime
+identities independently for Memory and SQLite. Safe discovery must match before
+execution; shortened/renamed scopes and replaced SDK/logger bytes reject.
+The expanded request is 52 scopes/384 observations, pending Linux execution.
+This is diagnostic transport, not category qualification or completed session-
+origin/controller integration; the legacy metadata acceptance import remains
+unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

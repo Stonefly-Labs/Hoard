@@ -6060,11 +6060,35 @@ Native run `40098981184` at `11875e5` passed all three jobs, 136 foundation
 checks, 50 scopes/256 exact discoveries/executions, native containment and
 eighteen-package/thirteen-lock replay. It predates this schema increment and
 does not execute original wrappers. The new request is 50 scopes/258
-observations (88 SQLite identities), pending Linux execution. Exact frozen
+observations (88 SQLite identities); schema run `40100325269` at `82a9b09`
+subsequently verified it, all 136 foundation checks, genuine native containment
+and identical eighteen-package/thirteen-lock replay. Exact frozen
 parity/controller-origin imports and complete feature gates remain open.
 Product architecture, ADRs, diagrams and deployment examples are unaffected:
 this changes test-only assertion/session controls, not production contracts,
 provider composition, infrastructure or deployment.
+
+The native SDK diagnostic now builds and selects the actual original metadata
+test assembly as well: all 63 frozen runtime identities run independently for
+Memory and SQLite, after exact safe discovery. It privately rebinds the original
+seven-package graph without adding logger dependencies or changing tracked
+locks. The logger is installed as a byte-verified adapter; all seven actual
+wrapper dependency images must match their archives. Original runtime,
+dependency and native files join pre/post immutable input capture. The diagnostic
+feed now has ten archives; the separate lock-preparation job's eighteen-package/
+thirteen-lock graph is unchanged.
+
+Two named missing-dispatch assertions failed before implementation. Five new
+focused regressions cover frozen parameters/assembly selection, refusal of
+shortened or renamed scopes, replaced SDK/logger images, actual closed provider
+settings and graph-preserving original lock preparation. Runtime-input
+recomputation also rejects changes to the added wrapper SDK image. All 248
+tooling tests pass locally (237 passes, eleven native macOS skips), with frozen
+inventory/catalog and patch-integrity checks passing. The expanded Linux request
+is 52 scopes/384 exact observations, pending execution. These remain harness
+diagnostics, not complete binding/session origins, safe legacy metadata imports,
+inherited recovery or category/profile qualification. Production architecture,
+ADRs, diagrams and deployment examples remain unaffected.
 
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)

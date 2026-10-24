@@ -1888,10 +1888,61 @@ reproduces eight archives, seven wrapper DLLs and the separate Application
 DLL. All seven actual binding output DLLs match archives; SDK bytes agree
 across feed families. Only the SDK hash changes in the tracked predecessor
 lock, preserving other/historical pins. The expanded native request is 50
-scopes/258 observations (88 SQLite identities), pending Linux execution.
+scopes/258 observations (88 SQLite identities), subsequently verified below.
 Exact frozen/runtime/controller-origin integration, actual inherited recovery
 and complete category/profile acceptance remain unfinished. No additional task
 or reviewer-owned checklist is marked complete by this checkpoint.
+
+Native run [40100325269](https://github.com/Stonefly-Labs/Hoard/actions/runs/40100325269)
+at `82a9b0912a21e5e3986271287d0a8be71c5cd9ee` passed all three jobs:
+136 foundation checks without failures/errors/skips, exactly 50 scopes/258
+discoveries/executions with expected diagnostics, all 88 SQLite identities,
+actual native containment and eighteen-package/thirteen-lock replay. Free
+scratch: 91,724,460,032 bytes. Input:
+`b14dbdf8efb765d9982c64ec3dbda2defe41ca3a40797b337a5c899072825812`;
+preparation:
+`b5ab83472771b403020cded50b3ee7af3a078bf29b2fac55b7188c7aa4e8448b`;
+producer:
+`7a0b2e1acd86a77e1aef266d1b52d5542b2b7b56674358127881e9625c8eda29`;
+controller:
+`a79ae525c7509b80f9d0ff8bb689ed6d2af2e3e952b8b9b36226271dcbb8eba0`;
+child start:
+`56343d36650030db00b5194c19f427f7d7de135580d4466f2b0be6af8b7d1753`.
+Baseline seal and actual SQLite/native/PRAGMA pins remain unchanged. This gate
+does not execute original wrappers.
+
+### Frozen original-wrapper diagnostic transport
+
+The native diagnostic now compiles the actual original metadata test assembly
+against its existing seven-package graph, then independently selects all 63
+frozen runtime identities for Memory and SQLite. Expectations come from the
+immutable F-06 catalog, not provider declarations, discovery totals or method
+prefix counting. Shortened, renamed or foreign scopes reject before launch.
+Exact safe discovery must match before executing the same selected parameters.
+Both phases receive closed provider selection in actual test-host settings,
+with the default console logger disabled.
+
+The original graph is privately rebound through the existing preparation helper
+and reverified before/after execution; tracked and historical locks remain
+unchanged. Core/Hosting/HostAdapters are independently packed for this diagnostic,
+extending its feed from seven to ten archives without changing SDK dependency
+edges. All seven wrapper dependency DLLs must match archive members. The safe
+logger is installed as a byte-verified adapter, not a new predecessor NuGet
+dependency. Original runtime, dependency and native images enter immutable input
+capture, whose recomputation rejects a changed wrapper SDK image. The separate
+eighteen-package/thirteen-lock preparation job remains unchanged.
+
+Two missing-dispatch assertions failed by name before implementation. Five new
+focused regressions now cover every frozen parameter and actual original
+assembly selection, shortened/renamed-scope rejection, replaced SDK/logger
+images, closed provider settings and unchanged original package graph. All 248
+tooling tests pass locally (237 passes, eleven native macOS skips); frozen
+inventory/catalog and patch integrity checks pass. The expanded native request
+is 52 scopes/384 observations: the prior 50/258 vector plus 63 original wrappers
+per provider, pending Linux execution. This is diagnostic execution evidence,
+not completed extraction parity or binding/session-origin/controller import.
+Legacy `metadata_evidence.py` runtime import, actual recovery and full category/
+profile acceptance remain unfinished. No task/checklist marker is completed.
 
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86

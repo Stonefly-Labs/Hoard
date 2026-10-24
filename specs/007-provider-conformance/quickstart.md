@@ -97,9 +97,16 @@ In-flight cancellation settles without false internal-failure diagnostics.
 All 89 original tests pass per provider; 183 selected SDK/binding tests pass
 locally with byte-matched independent package replay. Native run `40098981184`
 at `11875e5` verified the preceding 50-scope/256-observation diagnostics
-checkpoint; the new 50-scope/258-observation vector awaits Linux execution.
+checkpoint. Schema run `40100325269` at `82a9b09` subsequently verified all 50
+scopes/258 observations, 88 SQLite identities and native containment.
 That gate does not execute original wrappers. Exact frozen parity and origin
 import remain outstanding.
+The diagnostic now also selects all 63 frozen original metadata runtime
+identities against each provider using the actual packaged original test
+assembly. Safe discovery must match before execution; no reduced wrapper
+inventory can substitute. The new request is 52 scopes/384 observations,
+pending Linux execution. This does not replace the unfinished legacy acceptance
+import or establish complete session-origin/category evidence.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

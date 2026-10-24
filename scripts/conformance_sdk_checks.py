@@ -24,7 +24,7 @@ from xml.sax.saxutils import escape
 
 import conformance_baselines as baselines
 import conformance_evidence as evidence
-from conformance_case_catalog import catalog_admission_witnesses
+from conformance_case_catalog import catalog_admission_witnesses, category_cases
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_lock_preparation import prepare_project_lock, rebind_local_archives, verify_project_lock
 from foundation_evidence import canonicalize_acceptance_archive
@@ -38,11 +38,18 @@ MEMORY = "tests/fixtures/metadata/Memory/Memory.csproj"
 MEMORY_BINDING = "tests/fixtures/conformance/Bindings/Memory/Memory.csproj"
 SQLITE = "tests/fixtures/metadata/Sqlite/Sqlite.csproj"
 SQLITE_BINDING = "tests/fixtures/conformance/Bindings/Sqlite/Sqlite.csproj"
+METADATA_TESTS = f"{CONTRACTS}/Hoard.Metadata.Tests"
+METADATA_TEST_OUTPUT = "bin/wrapper-diagnostic"
 LOCAL_PACKAGES = (
     "Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger",
     "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Conformance.Bindings.Memory",
     "Hoard.Fixtures.Metadata.Sqlite", "Hoard.Fixtures.Conformance.Bindings.Sqlite",
 )
+METADATA_PACKAGES = (
+    "Hoard.Abstractions", "Hoard.Core", "Hoard.Hosting", "Hoard.Fixtures.Metadata.HostAdapters",
+    "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite", "Hoard.Testing.Conformance",
+)
+INPUT_PACKAGES = tuple(dict.fromkeys((*LOCAL_PACKAGES, *METADATA_PACKAGES)))
 BINDING_TEST_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingTests."
 BINDING_OWNERSHIP_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingOwnershipTests."
 SQLITE_BINDING_PREFIX = "Hoard.Fixtures.Conformance.Consumer.SqliteBindingTests."
@@ -317,6 +324,18 @@ SCENARIOS = (
      "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
+
+
+def original_metadata_scenarios():
+    frozen = category_cases()
+    return tuple(
+        ("original-metadata-" + provider, tuple(sorted({
+            witness for case in frozen if case.profile_id == "metadata" and case.binding_id == provider
+            for witness in case.witnesses if witness.startswith("Hoard.Metadata.Tests.")
+        })), "None", "Passed", 0, "None")
+        for provider in ("memory", "sqlite"))
+
+
 BUDGETS = {
     "operationSeconds": 5, "barrierSeconds": 15, "childSeconds": 600,
     "transferSeconds": 2400, "recoverySeconds": 300, "terminationSeconds": 10,
@@ -375,14 +394,14 @@ def prepare_smoke_lock(project, candidate, feed):
     return prepare_project_lock(project, candidate, feed, "candidate")
 
 
-def prepare_package_consumer_lock(candidate, feed):
-    original = candidate / TESTS / "PackageAcceptance/packages.lock.json"
+def prepare_package_consumer_lock(candidate, feed, *, project=TESTS, local_packages=LOCAL_PACKAGES):
+    original = candidate / project / "PackageAcceptance/packages.lock.json"
     raw = read_bounded(original, 2 * 1024 * 1024)
     prepared, packages, _ = rebind_local_archives(raw, feed)
-    expected = {f"{name}.0.1.0.nupkg" for name in LOCAL_PACKAGES}
+    expected = {f"{name}.0.1.0.nupkg" for name in local_packages}
     if set(packages) != expected:
         raise evidence.ConformanceError("InputChanged")
-    alternate = candidate / TESTS / "obj/F07.consumer.packages.lock.json"
+    alternate = candidate / project / "obj/F07.consumer.packages.lock.json"
     no_symlinks(alternate)
     alternate.parent.mkdir(exist_ok=True, mode=0o700)
     write_new(alternate, prepared)
@@ -393,8 +412,8 @@ def prepare_package_consumer_lock(candidate, feed):
     }
 
 
-def verify_package_consumer_lock(candidate, feed, alternate, receipt):
-    raw = read_bounded(candidate / TESTS / "PackageAcceptance/packages.lock.json", 2 * 1024 * 1024)
+def verify_package_consumer_lock(candidate, feed, alternate, receipt, *, project=TESTS):
+    raw = read_bounded(candidate / project / "PackageAcceptance/packages.lock.json", 2 * 1024 * 1024)
     prepared, packages, _ = rebind_local_archives(raw, feed)
     if (set(receipt) != {"qualification", "mode", "sourceLockSha256", "preparedLockSha256", "packages"}
             or receipt["qualification"] is not False or receipt["mode"] != "preparation"
@@ -403,6 +422,19 @@ def verify_package_consumer_lock(candidate, feed, alternate, receipt):
             or packages != receipt["packages"]
             or read_bounded(alternate, 2 * 1024 * 1024) != prepared):
         raise evidence.ConformanceError("InputChanged")
+
+
+def metadata_wrapper_runtime(candidate, feed):
+    output = candidate / METADATA_TESTS / METADATA_TEST_OUTPUT / "Release/net10.0"
+    logger = "Hoard.Conformance.TestLogger"
+    write_new(output / f"{logger}.dll", read_bounded(
+        candidate / LOGGER / f"bin/Release/net10.0/{logger}.dll", 64 * 1024 * 1024))
+    for package in (*METADATA_PACKAGES, logger):
+        identity = evidence.package_identity(feed, package, "0.1.0")
+        assembly = f"{package}.dll"
+        if evidence.file_sha256(output / assembly) != identity["runtimeAssemblies"].get(
+                f"lib/net10.0/{assembly}"):
+            raise evidence.ConformanceError("InputChanged")
 
 
 def admit_sqlite_environment(observed, platform, runtime, package, locked):
@@ -651,7 +683,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     prefix = candidate.relative_to(run.root).as_posix()
     locks = [f"{prefix}/{name}" for name in inventory if name.endswith("packages.lock.json")]
     runtime_folders = {f"{TESTS}/bin/Release/net10.0", f"{LOGGER}/Smoke/bin/Release/net10.0",
-                       f"{TESTS}/{PACKAGE_TEST_OUTPUT}/Release/net10.0"}
+                       f"{TESTS}/{PACKAGE_TEST_OUTPUT}/Release/net10.0",
+                       f"{METADATA_TESTS}/{METADATA_TEST_OUTPUT}/Release/net10.0"}
     runtime = [f"{prefix}/{name}" for name in inventory if (
         name.endswith((".dll", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))
         and Path(name).parent.as_posix() in runtime_folders) or (
@@ -662,10 +695,11 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     inputs = evidence.capture_profile_inputs(
         run, repository, candidate, profile_id="harness", mode="diagnostic",
         invocation_group_id=str(uuid.uuid4()) if group_id is None else group_id,
-        package_versions=[{"packageId": name, "version": "0.1.0"} for name in LOCAL_PACKAGES],
+        package_versions=[{"packageId": name, "version": "0.1.0"} for name in INPUT_PACKAGES],
         feed="feed/candidate", configuration="stores/candidate.NuGet.Config",
         lock_paths=locks, runtime_paths=runtime, binding_sources=list(binding_sources),
-        observed_environment=observed_environment, budgets=BUDGETS, invocation=["sdk-logger-diagnostic"],
+        observed_environment=observed_environment, budgets=BUDGETS, invocation=[
+            "sdk-logger-diagnostic", "original-metadata-memory", "original-metadata-sqlite"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -675,18 +709,28 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
 
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
+    original_tests = name.startswith("original-metadata-")
+    metadata_provider = None
+    if original_tests:
+        if scenario not in original_metadata_scenarios():
+            raise evidence.ConformanceError("WitnessMissing")
+        metadata_provider = name.removeprefix("original-metadata-")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
-    sqlite_tests = any(identity.startswith((SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX)) for identity in identities)
-    source_tests = all(identity.startswith("Hoard.Conformance.Tests.") for identity in identities) or binding_tests
+    sqlite_tests = metadata_provider == "sqlite" or any(
+        identity.startswith((SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX)) for identity in identities)
+    source_tests = original_tests or all(
+        identity.startswith("Hoard.Conformance.Tests.") for identity in identities) or binding_tests
     smoke_tests = all(identity.startswith(SMOKE) for identity in identities)
     package_tests = binding_tests or any(identity.startswith(PACKAGE_TEST_PREFIX) for identity in identities)
     if (source_tests == smoke_tests
             or package_tests and not binding_tests
             and not all(identity.startswith(PACKAGE_TEST_PREFIX) for identity in identities)):
         raise evidence.ConformanceError("WitnessMissing")
-    output = PACKAGE_TEST_OUTPUT if package_tests else "bin"
-    assembly = candidate / (TESTS if source_tests else LOGGER + "/Smoke") / output / "Release/net10.0" / (
+    output = METADATA_TEST_OUTPUT if original_tests else PACKAGE_TEST_OUTPUT if package_tests else "bin"
+    folder = METADATA_TESTS if original_tests else TESTS if source_tests else LOGGER + "/Smoke"
+    assembly_name = "Hoard.Metadata.Tests.dll" if original_tests else (
         "Hoard.Conformance.Tests.dll" if source_tests else "Smoke.dll")
+    assembly = candidate / folder / output / "Release/net10.0" / assembly_name
     if sqlite_tests:
         require_sqlite_environment(inputs, assembly, run.root)
     assembly_path = assembly.relative_to(run.root).as_posix()
@@ -708,11 +752,13 @@ def test_attempt(run, inputs, candidate, scenario):
             "assemblyId": "test-assembly", "packageId": package_id,
             "bindingId": binding, "matrixId": matrix,
             "assertionSymbol": ASSERTION if name == "assertion" else None,
-            "caseId": "runtime",
+            "caseId": name if original_tests else "runtime",
         } for identity, (binding, matrix) in expected.items()],
     }
     discovery_manifest = {**manifest, "purpose": "discovery", "attemptId": str(uuid.uuid4())}
-    discovery_result, discovery_output, discovery_transport = runtime_command(run, assembly, discovery_manifest)
+    runtime_options = {"metadata_provider": metadata_provider} if original_tests else {}
+    discovery_result, discovery_output, discovery_transport = runtime_command(
+        run, assembly, discovery_manifest, **runtime_options)
     files = set()
     for path in discovery_output.iterdir():
         files.add(path.name)
@@ -730,7 +776,7 @@ def test_attempt(run, inputs, candidate, scenario):
                 {"event": "control", "code": "None", "value": len(identities)},)
             or {record["testIdentity"] for record in discovery["discoveries"]} != set(identities)):
         raise evidence.ConformanceError("EvidenceIncomplete")
-    result, output, transport = runtime_command(run, assembly, manifest)
+    result, output, transport = runtime_command(run, assembly, manifest, **runtime_options)
     files = set()
     for path in output.iterdir():
         files.add(path.name)
@@ -762,13 +808,20 @@ def test_attempt(run, inputs, candidate, scenario):
             "completionSha256": evidence.file_sha256(output / "completion.json")}
 
 
-def runtime_command(run, assembly, manifest):
+def runtime_command(run, assembly, manifest, *, metadata_provider=None):
     attempt_id = manifest["attemptId"]
     identities = tuple(entry["testIdentity"] for entry in manifest["expected"])
     if manifest["purpose"] not in ("discovery", "execution"):
         raise evidence.ConformanceError()
     discovery = manifest["purpose"] == "discovery"
     origin_environment = ""
+    if metadata_provider is not None:
+        if metadata_provider not in ("memory", "sqlite") or assembly.name != "Hoard.Metadata.Tests.dll":
+            raise evidence.ConformanceError("WitnessMissing")
+        origin_environment = (
+            "<EnvironmentVariables>"
+            f"<HOARD_METADATA_PROVIDER>{metadata_provider}</HOARD_METADATA_PROVIDER>"
+            "</EnvironmentVariables>")
     if any(entry["fullyQualifiedName"] == SMOKE + "OriginOutput" for entry in manifest["expected"]):
         package = next((item for item in manifest["packages"] if item["id"] == "Hoard.Testing.Conformance"), None)
         if package is None:
@@ -849,6 +902,7 @@ def execute(repository, destination):
         for folder, project_name in (
             ("src/Hoard.Abstractions", "Hoard.Abstractions"), (SDK, "Hoard.Testing.Conformance"),
             (LOGGER, "Hoard.Conformance.TestLogger"),
+            ("src/Hoard.Core", "Hoard.Core"), ("src/Hoard.Hosting", "Hoard.Hosting"),
         ):
             build(run, candidate / folder / f"{project_name}.csproj", config, "candidate-build", feed=feed)
         build(run, candidate / TESTS / "Hoard.Conformance.Tests.csproj", config, "candidate-build")
@@ -876,6 +930,13 @@ def execute(repository, destination):
         if sqlite_binding_record is not None:
             verify_project_lock(sqlite_binding_record, candidate, feed)
             write_new(run.root / "proofs/sqlite-binding-lock-derivation.json", evidence.canonical_bytes(sqlite_binding_record))
+        adapter_project = candidate / "tests/fixtures/metadata/HostAdapters/HostAdapters.csproj"
+        adapter_lock, adapter_record = prepare_project_lock(adapter_project, candidate, feed, "candidate")
+        build(run, adapter_project, config, "metadata-host-package", lock=adapter_lock, feed=feed,
+              package_id="Hoard.Fixtures.Metadata.HostAdapters")
+        if adapter_record is not None:
+            verify_project_lock(adapter_record, candidate, feed)
+            write_new(run.root / "proofs/metadata-host-lock-derivation.json", evidence.canonical_bytes(adapter_record))
         consumer_lock, consumer_receipt = prepare_package_consumer_lock(candidate, feed)
         verify_package_consumer_lock(candidate, feed, consumer_lock, consumer_receipt)
         write_new(run.root / "proofs/consumer-lock-derivation.json", evidence.canonical_bytes(consumer_receipt))
@@ -899,6 +960,14 @@ def execute(repository, destination):
                   evidence.canonical_bytes(lock_preparation))
         print(json.dumps({"qualification": False, "phase": "locked-replay"}), flush=True)
         build(run, smoke_project, config, "smoke-locked-replay", lock=alternate)
+        wrapper_lock, wrapper_receipt = prepare_package_consumer_lock(
+            candidate, feed, project=METADATA_TESTS, local_packages=METADATA_PACKAGES)
+        verify_package_consumer_lock(candidate, feed, wrapper_lock, wrapper_receipt, project=METADATA_TESTS)
+        write_new(run.root / "proofs/metadata-wrapper-lock-derivation.json", evidence.canonical_bytes(wrapper_receipt))
+        build(run, candidate / METADATA_TESTS / "Hoard.Metadata.Tests.csproj", config,
+              "metadata-wrapper-locked-replay", lock=wrapper_lock, properties=(
+                  "-p:MetadataPackageAcceptance=true", "-p:BaseOutputPath=" + METADATA_TEST_OUTPUT + "/"))
+        metadata_wrapper_runtime(candidate, feed)
         if evidence.source_identity(repository, ci_revision=ci_revision) != identity:
             raise evidence.ConformanceError("InputChanged")
         # This is an independently planned diagnostic declaration, not observed provider behavior.
@@ -925,7 +994,7 @@ def execute(repository, destination):
             "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest(),
         }))
         observations = []
-        for scenario in SCENARIOS:
+        for scenario in (*SCENARIOS, *original_metadata_scenarios()):
             print(json.dumps({"qualification": False, "phase": "runtime-tests",
                               "completedScenarios": len(observations)}), flush=True)
             observations.append(test_attempt(run, inputs, candidate, scenario))
@@ -943,6 +1012,9 @@ def execute(repository, destination):
             verify_project_lock(memory_record, candidate, feed)
         if binding_record is not None:
             verify_project_lock(binding_record, candidate, feed)
+        if adapter_record is not None:
+            verify_project_lock(adapter_record, candidate, feed)
+        verify_package_consumer_lock(candidate, feed, wrapper_lock, wrapper_receipt, project=METADATA_TESTS)
         verify_package_consumer_lock(candidate, feed, consumer_lock, consumer_receipt)
         post_inputs = make_inputs(
             run, repository, candidate, post_sources, post_environment, post_identity, seal_sha,

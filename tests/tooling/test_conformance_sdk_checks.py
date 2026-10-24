@@ -35,6 +35,115 @@ class SdkDiagnosticTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.directory)
 
+    def test_original_wrapper_scopes_use_every_frozen_parameter_and_the_original_assembly(self):
+        self.assertTrue(callable(getattr(checks, "original_metadata_scenarios", None)),
+                        "Original wrappers need source-owned exact discovery scopes.")
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        scenarios = checks.original_metadata_scenarios()
+        self.assertEqual(len(scenarios), 2)
+        for scenario, provider in zip(scenarios, ("memory", "sqlite"), strict=True):
+            expected = {name for entry in frozen["entries"]
+                        if entry["profileId"] == "metadata" and entry["bindingId"] == provider
+                        for name in entry["runtimeTests"] if name.startswith("Hoard.Metadata.Tests.")}
+            self.assertEqual(set(scenario[1]), expected)
+            self.assertEqual(len(scenario[1]), len(expected))
+            candidate = self.directory / "candidate"
+            assembly = candidate / checks.METADATA_TESTS / checks.METADATA_TEST_OUTPUT / (
+                "Release/net10.0/Hoard.Metadata.Tests.dll")
+            inputs = {
+                "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+                "runtimeAssemblies": {
+                    assembly.relative_to(self.directory).as_posix(): "a" * 64,
+                    (assembly.parent / "runtimes/linux-x64/native/libe_sqlite3.so"
+                     ).relative_to(self.directory).as_posix(): "c" * 64},
+                "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+                "environment": {**ENVIRONMENT, "nativeSqlite": "3.50.4", "pragmas": {
+                    "journalMode": "wal", "synchronous": 2, "foreignKeys": 1, "busyTimeout": 0}},
+            }
+            with self.subTest(provider=provider), patch.object(
+                    checks, "runtime_command", side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+                launch.assert_called_once()
+                self.assertEqual(launch.call_args.args[1], assembly)
+                self.assertEqual(launch.call_args.kwargs["metadata_provider"], provider)
+                manifest = launch.call_args.args[2]
+                self.assertEqual(manifest["purpose"], "discovery")
+                self.assertEqual({item["testIdentity"] for item in manifest["expected"]}, expected)
+
+    def test_shortened_or_renamed_original_wrapper_scope_never_launches(self):
+        self.assertTrue(callable(getattr(checks, "original_metadata_scenarios", None)),
+                        "Original wrapper dispatch must reject shortened frozen scopes.")
+        scenario = checks.original_metadata_scenarios()[0]
+        for changed in (
+                (scenario[0], scenario[1][:-1], *scenario[2:]),
+                ("original-metadata-provider-selected", *scenario[1:]),
+                (scenario[0], (*scenario[1][:-1], "Hoard.Metadata.Tests.Provider.Check"), *scenario[2:])):
+            with self.subTest(scope=changed[0]), patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, self.directory, changed)
+                launch.assert_not_called()
+
+    def test_original_wrapper_logger_and_shared_runtime_must_match_the_actual_archives(self):
+        logger = "Hoard.Conformance.TestLogger"
+        for mutation in (None, "Hoard.Testing.Conformance", logger):
+            with self.subTest(mutation=mutation):
+                candidate = self.directory / ("candidate-" + str(mutation))
+                output = candidate / checks.METADATA_TESTS / checks.METADATA_TEST_OUTPUT / "Release/net10.0"
+                output.mkdir(parents=True)
+                source = candidate / checks.LOGGER / f"bin/Release/net10.0/{logger}.dll"
+                source.parent.mkdir(parents=True)
+                source.write_bytes(b"logger" if mutation != logger else b"replaced")
+                for package in checks.METADATA_PACKAGES:
+                    (output / f"{package}.dll").write_bytes(
+                        b"shared" if mutation != package else b"replaced")
+
+                def identity(feed, package, version):
+                    digest = hashlib.sha256(b"logger" if package == logger else b"shared").hexdigest()
+                    return {"runtimeAssemblies": {f"lib/net10.0/{package}.dll": digest}}
+
+                with patch.object(checks.evidence, "package_identity", side_effect=identity) as observed:
+                    if mutation is None:
+                        checks.metadata_wrapper_runtime(candidate, self.directory)
+                        self.assertEqual((output / f"{logger}.dll").read_bytes(), b"logger")
+                        self.assertEqual({call.args[1] for call in observed.call_args_list},
+                                         {*checks.METADATA_PACKAGES, logger})
+                    else:
+                        with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                            checks.metadata_wrapper_runtime(candidate, self.directory)
+
+    def test_original_provider_selection_is_closed_and_reaches_the_actual_test_host_settings(self):
+        (self.directory / "stores").mkdir()
+        (self.directory / "runtime-owner.json").write_bytes(b"{}")
+        received = []
+
+        def command(args, **kwargs):
+            received.append(args)
+            return SimpleNamespace(exit_code=0, events=())
+
+        run = SimpleNamespace(root=self.directory, command=command)
+        assembly = self.directory / "Hoard.Metadata.Tests.dll"
+        for provider in ("memory", "sqlite"):
+            manifest = {
+                "attemptId": str(uuid.uuid4()), "purpose": "discovery",
+                "expected": [{"testIdentity": "Hoard.Metadata.Tests.Original.Check",
+                              "fullyQualifiedName": "Hoard.Metadata.Tests.Original.Check"}],
+            }
+            checks.runtime_command(run, assembly, manifest, metadata_provider=provider)
+            settings_path = Path(next(arg.removeprefix("--Settings:") for arg in received[-1]
+                                      if arg.startswith("--Settings:")))
+            settings = ET.fromstring(settings_path.read_bytes())
+            self.assertEqual(settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_METADATA_PROVIDER"),
+                             provider)
+            self.assertEqual(settings.find("./LoggerRunSettings/Loggers/Logger[@friendlyName='console']")
+                             .get("enabled"), "False")
+            self.assertIn("--ListTests", received[-1])
+        for provider, target in (("provider-selected", assembly), ("sqlite", self.directory / "Foreign.dll")):
+            with self.subTest(provider=provider, target=target.name):
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.runtime_command(run, target, manifest, metadata_provider=provider)
+        self.assertEqual(len(received), 2)
+
     def test_each_diagnostic_discovers_its_actual_selected_assembly_before_execution(self):
         candidate = self.directory / "candidate"
         for scenario in checks.SCENARIOS:
@@ -154,6 +263,32 @@ class SdkDiagnosticTests(unittest.TestCase):
             checks.prepare_package_consumer_lock(candidate, self.directory)
         self.assertEqual(original.read_bytes(), raw)
         self.assertFalse((original.parents[1] / "obj/F07.consumer.packages.lock.json").exists())
+
+    def test_original_wrapper_preparation_rebinds_only_its_existing_seven_package_graph(self):
+        candidate = self.directory / "candidate"
+        original = candidate / checks.METADATA_TESTS / "PackageAcceptance/packages.lock.json"
+        original.parent.mkdir(parents=True)
+        feed = self.directory / "feed"
+        feed.mkdir()
+        dependencies = {"xunit": {"resolved": "2.9.3", "contentHash": "unchanged"}}
+        for package in checks.METADATA_PACKAGES:
+            (feed / f"{package}.0.1.0.nupkg").write_bytes(package.encode())
+            dependencies[package] = {"resolved": "0.1.0", "contentHash": "old"}
+        raw = json.dumps({"version": 2, "dependencies": {"net10.0": dependencies}}).encode()
+        original.write_bytes(raw)
+        alternate, receipt = checks.prepare_package_consumer_lock(
+            candidate, feed, project=checks.METADATA_TESTS, local_packages=checks.METADATA_PACKAGES)
+        self.assertEqual(original.read_bytes(), raw)
+        self.assertEqual(alternate.parent, candidate / checks.METADATA_TESTS / "obj")
+        self.assertEqual(json.loads(alternate.read_bytes())["dependencies"]["net10.0"]["xunit"],
+                         dependencies["xunit"])
+        self.assertEqual(set(receipt["packages"]), {f"{package}.0.1.0.nupkg" for package in (
+            "Hoard.Abstractions", "Hoard.Core", "Hoard.Hosting", "Hoard.Fixtures.Metadata.Memory",
+            "Hoard.Fixtures.Metadata.Sqlite", "Hoard.Fixtures.Metadata.HostAdapters",
+            "Hoard.Testing.Conformance")})
+        checks.verify_package_consumer_lock(candidate, feed, alternate, receipt, project=checks.METADATA_TESTS)
+        self.assertNotIn("Hoard.Conformance.TestLogger", json.loads(
+            alternate.read_bytes())["dependencies"]["net10.0"])
 
     def test_sqlite_environment_requires_actual_configuration_and_locked_native_archive_bytes(self):
         runtime = self.directory / "runtime"
@@ -450,9 +585,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         (self.directory / "feed").mkdir()
         run = SimpleNamespace(root=self.directory, run_id=str(uuid.uuid4()), _check_ledger=lambda: None)
         config, feed = checks.baselines._config(run, "candidate")
-        for name in ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger",
-                     "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Conformance.Bindings.Memory",
-                     "Hoard.Fixtures.Metadata.Sqlite", "Hoard.Fixtures.Conformance.Bindings.Sqlite"):
+        for name in checks.INPUT_PACKAGES:
             with zipfile.ZipFile(feed / f"{name}.0.1.0.nupkg", "w") as archive:
                 archive.writestr(f"{name}.nuspec",
                                 f"<package><metadata><id>{name}</id><version>0.1.0</version></metadata></package>")
@@ -478,6 +611,10 @@ class SdkDiagnosticTests(unittest.TestCase):
             "Release/net10.0/runtimes/linux-x64/native/libe_sqlite3.so")
         native.parent.mkdir(parents=True)
         native.write_bytes(b"native")
+        wrapped = candidate / checks.METADATA_TESTS / checks.METADATA_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Testing.Conformance.dll")
+        wrapped.parent.mkdir(parents=True)
+        wrapped.write_bytes(b"shared-sdk")
         sources = checks.evidence.source_manifest(repository)
         environment = {
             "os": "linux", "osVersion": "test", "architecture": "x86_64",
@@ -490,9 +627,9 @@ class SdkDiagnosticTests(unittest.TestCase):
             return checks.make_inputs(run, repository, candidate, sources,
                                       environment, identity, None, group_id=group_id)
         before = capture()
-        self.assertEqual(len(before["packages"]), 7)
+        self.assertEqual(len(before["packages"]), 10)
         self.assertNotIn(str(self.directory).encode(), checks.evidence.canonical_bytes(before))
-        for path in (native, runtime / "Added.dll", runtime / "Tests.runtimeconfig.json",
+        for path in (native, wrapped, runtime / "Added.dll", runtime / "Tests.runtimeconfig.json",
                      candidate / "added.packages.lock.json"):
             with self.subTest(path=path.name):
                 original = path.read_bytes() if path.exists() else None

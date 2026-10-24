@@ -252,8 +252,23 @@ All 89 current original tests pass per provider and 183 selected SDK/binding
 tests pass locally; fresh locked replay reproduces eight archives and exact
 DLLs. Native run `40098981184` at `11875e5` verified the preceding diagnostics
 checkpoint (50 scopes/256 observations), not original wrapper execution.
-The new 50-scope/258-observation request remains pending; frozen parity and
+Schema run `40100325269` at `82a9b09` subsequently verified all 50 scopes/258
+observations, 88 SQLite identities and native containment. Frozen parity and
 exact runtime/controller imports remain open.
+
+The diagnostic now adds two exact original-wrapper scopes: 63 frozen runtime
+identities each for Memory and SQLite, selected independently from the immutable
+F-06 inventory. It compiles the actual original test assembly against the
+existing seven-package graph, verifies SDK/provider/Hosting/logger DLLs against
+archives and captures its runtime/dependency/native files in immutable inputs.
+The safe logger is installed as a verified adapter without adding a predecessor
+NuGet dependency. Provider selection is closed and reaches both discovery and
+execution test-host settings; console logging stays disabled. Discovery must
+match every original parameter before execution; transport uses existing owned,
+bounded pre-persistence projection and ingestion. The expanded 52-scope/384-
+observation request awaits Linux execution. Binding/session-origin attribution,
+legacy metadata acceptance import and category qualification remain separate,
+unfinished gates.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

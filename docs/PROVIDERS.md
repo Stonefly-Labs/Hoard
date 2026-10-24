@@ -197,8 +197,18 @@ All 89 current predecessor tests pass on each provider and 183 selected
 SDK/binding tests pass locally, with independently replayed exact package/DLL
 bytes. Run `40098981184` at `11875e5` verified the previous diagnostics checkpoint,
 50 scopes/256 observations and native containment; it does not run original
-wrappers. The new 50-scope/258-observation request awaits Linux execution.
+wrappers. Schema run `40100325269` at `82a9b09` subsequently verified 50 scopes/
+258 observations, all 88 SQLite identities and actual native containment.
 Exact frozen parity and controller-origin integration remain unfinished.
+The diagnostic now includes the original packaged test assembly, selecting all
+63 frozen original runtime identities per provider, not only newer binding tests.
+Its seven-package graph is privately rebound without changing tracked locks;
+the logger is installed only as a byte-verified runtime adapter. Original
+wrapper, provider, Hosting and shared SDK images enter immutable pre/post inputs.
+Exact safe discovery precedes execution. The expanded 52-scope/384-observation
+request awaits Linux execution. These harness diagnostics do not establish
+session-origin completeness, legacy acceptance-import safety, recovery controls
+or category qualification.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual
