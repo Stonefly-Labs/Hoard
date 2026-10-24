@@ -409,6 +409,84 @@ print('{"event":"control","code":"None","value":1}')
         run.transition("Settling")
         run.release()
 
+    def test_transfer_measurement_requires_qualified_bytes_and_the_owned_transfer_event_scope(self):
+        run = self.workspace()
+        for options in (
+                {"measure_transfer_bytes": True}, {"measure_transfer_bytes": 1},
+                {"measure_transfer_bytes": 268435456.0}, {"measure_transfer_bytes": "268435456"},
+                {"measure_transfer_bytes": 268435456, "scope": "ordinary"},
+                {"measure_transfer_bytes": 268435456, "kind": "build"},
+                {"measure_transfer_bytes": 268435456, "stop_at_barrier": 7}):
+            with self.subTest(options=options), mock.patch.object(execution.subprocess, "Popen") as launch:
+                with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                    run.command([sys.executable, "-c", "pass"], **({"scope": "transfer"} | options))
+                launch.assert_not_called()
+        run.transition("Settling")
+        run.release()
+
+    def test_linux_memory_projection_requires_exact_bounded_kernel_rss_and_high_water_fields(self):
+        self.assertTrue(callable(getattr(execution, "linux_process_memory", None)),
+                        "Measured transfers need bounded independent kernel RSS observations.")
+        observed = b"Name:\tsynthetic\nVmHWM:\t2048 kB\nVmRSS:\t1024 kB\n"
+        self.assertEqual(execution.linux_process_memory(observed), (1048576, 2097152))
+        for changed in (
+                observed.replace(b"1024", b"0"), observed.replace(b"2048", b"1"),
+                observed.replace(b"1024", b"-1"), observed.replace(b" kB", b" bytes"),
+                observed + b"VmRSS:\t1024 kB\n", b"x" * 8193,
+                observed.replace(b"1024", b"99999999999999999999"), b"VmRSS:\t1024 kB\n"):
+            with self.subTest(changed=changed), self.assertRaisesRegex(ConformanceError, "ProofMismatch"):
+                execution.linux_process_memory(changed)
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_owned_transfer_measures_kernel_peak_between_exact_start_and_settlement_handshakes(self):
+        run = self.workspace()
+        program = """
+import json,sys
+print(json.dumps({"event":"control","code":"None","value":0}),flush=True)
+assert sys.stdin.readline()=="transfer\\n"
+buffer=bytearray(4*1024**2)
+print(json.dumps({"event":"test","code":"None","value":268435456}),flush=True)
+assert sys.stdin.readline()=="settle\\n"
+print(json.dumps({"event":"control","code":"None","value":1}),flush=True)
+"""
+        result = run.command([sys.executable, "-c", program], scope="transfer", measure_transfer_bytes=268435456)
+        self.assertEqual(result.exit_code, 0)
+        receipt = json.loads((run.root / "proofs/transfer-command-0001.json").read_bytes())
+        self.assertEqual((receipt["exitCode"], receipt["diagnosticCode"], receipt["groupState"]), (0, "None", "Exited"))
+        measured = receipt["transfer"]
+        self.assertEqual(measured["bytes"], 268435456)
+        self.assertEqual(measured["phase"], "complete")
+        self.assertEqual(measured["osPeakMethod"], "proc-status")
+        self.assertGreater(measured["baselineRssBytes"], 0)
+        self.assertGreaterEqual(measured["samples"], 2)
+        self.assertLessEqual(measured["baselineRssBytes"], measured["sampledPeakRssBytes"])
+        self.assertLessEqual(measured["sampledPeakRssBytes"], measured["osPeakRssBytes"])
+        self.assertLessEqual(measured["osPeakRssBytes"] - measured["baselineRssBytes"], 67108864)
+        self.assertFalse(run.live_children())
+        run.transition("Settling")
+        run.release()
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_transfer_peak_and_protocol_failures_cannot_become_measured_success(self):
+        run = self.workspace()
+        for program, expected in (
+                ("pass", "EvidenceIncomplete"),
+                ('print(\'{"event":"test","code":"None","value":268435456}\',flush=True)', "ProofMismatch"),
+                ('print(\'{"event":"control","code":"None","value":1}\',flush=True)', "ProofMismatch"),
+                ('import sys; print(\'{"event":"control","code":"None","value":0}\',flush=True); '
+                 'sys.stdin.readline(); print(\'{"event":"test","code":"None","value":268435456}\',flush=True); '
+                 'sys.stdin.readline()', "EvidenceIncomplete"),
+                ('import sys,time; print(\'{"event":"control","code":"None","value":0}\',flush=True); '
+                 'sys.stdin.readline(); buffer=bytearray(70*1024**2); '
+                 'print(\'{"event":"test","code":"None","value":268435456}\',flush=True); time.sleep(60)',
+                 "ProofMismatch")):
+            with self.subTest(expected=expected), self.assertRaisesRegex(ConformanceError, expected):
+                run.command([sys.executable, "-c", program], scope="transfer",
+                            measure_transfer_bytes=268435456, timeout=5)
+            self.assertFalse(run.live_children())
+        run.transition("Settling")
+        run.release()
+
     def test_linux_identity_distinguishes_kernel_start_ticks_and_ignores_process_names(self):
         def image(name, ticks):
             fields = [b"S", b"1", b"7", b"7"] + [b"0"] * 15 + [str(ticks).encode("ascii")]

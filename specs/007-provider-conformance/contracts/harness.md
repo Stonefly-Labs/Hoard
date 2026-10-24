@@ -334,15 +334,19 @@ backup/restore walkthrough. Parent admission requires exact target/sequence,
 PID/start, SIGKILL/group exit and bounded monotonic observe/signal order.
 All final records are closed IDs/hashes bound to the current inputs, never raw
 legacy logs or imported pass labels. Fresh locked local walkthroughs pass;
-Linux crash execution, live-held probes and full legacy/category attribution
-remain pending.
+subsequent Linux verification is below. Live-held probes and full legacy/
+category attribution remain pending.
 Native [40105402168](https://github.com/Stonefly-Labs/Hoard/actions/runs/40105402168)
 at `d7ef7cc3cdc20822c79b340a42e12eef0cbbe383` verifies the earlier exact
 evidence/quarantine/mutation transport: all three jobs, 145 foundation checks,
 55 scopes/427 observations, native containment and eighteen-package/thirteen-lock
 replay, not the subsequent controller/recovery integration.
 The corrected native process gate at `62c149c` passed 151 tests without
-failures/errors/skips; complete SQLite execution remains running. Local's
+failures/errors/skips; complete SQLite execution also passed all ten seed/
+barrier/kill/readback rows and the actual backup/restore walkthrough at
+[40107305423](https://github.com/Stonefly-Labs/Hoard/actions/runs/40107305423).
+All three jobs passed, including 55 scopes/427 exact observations and identical
+eighteen-package/thirteen-lock replay. Local's
 actual runner now has the same explicit safe-event mode, retaining legacy
 output when unset and rejecting invalid mode before store creation. Its
 unchanged nine-package graph and complete runtime bytes are independently
@@ -351,6 +355,15 @@ parent-owned observation/signal/exit gate and original Local assertions,
 not ObjectSemantics or metadata provider delegation. Two locked runner builds
 and six macOS functional readbacks pass; actual Linux ownership and complete
 legacy/session/category proof remain pending.
+The transfer diagnostic now requests both providers' actual paced non-seekable
+256 MiB/4 GiB writes and reads. Parent handshakes bracket kernel `/proc` RSS/
+high-water observation on the exact owned child; only those kernel values can
+supply the inclusive 64 MiB incremental peak check. Exact producer bytes,
+hashes, pacing, runtime, PID, run, buffer/slot limits and normal group settlement
+are required. Full runtime bytes enter pre/post immutable capture. Two fresh
+locked builds and all four real macOS rows pass, including actual `getrusage`
+peak bounds, not Linux pidfd/status measurement. Actual Linux measurement and
+complete wrapper/session/category imports remain pending.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

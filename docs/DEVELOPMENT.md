@@ -6258,8 +6258,8 @@ backup/restore walkthroughs pass with unchanged legacy output and the new safe
 event; invalid mode rejects before store creation. All 258 tooling tests pass
 locally (244 passes, fourteen native macOS skips), alongside format/catalog
 checks. Controller unit doubles verify all 31 requested scopes and rejection
-paths; these are not crash evidence. Linux execution of the ten real
-barrier/termination/readback rows is pending. Live-held independent schema/
+paths; these are not crash evidence. Subsequent Linux verification is below.
+Live-held independent schema/
 owner probes, safe legacy witness imports and full T026/category completion
 remain open; no memory durability or Local crash proof is inferred.
 
@@ -6268,7 +6268,10 @@ The corrected native process gate passed at
 head `62c149c51b039724938e6547806626bdee8630f4`: 151 foundation tests, no
 failures/errors/skips, including observed-barrier/tree-exit, rejected signal,
 ordinary-exit and all correctly framed rejection cases. Its complete SQLite
-recovery diagnostic remains running. The superseded failed `0af7c98` run was
+recovery diagnostic subsequently passed: all ten actual seed/barrier/kill/
+readback rows and the real backup/restore walkthrough, with 55 scopes/427 exact
+observations, genuine native containment and identical eighteen-package/
+thirteen-lock replay. All three jobs passed. The superseded failed `0af7c98` run was
 canceled after recording its closed failure projection, never accepted.
 
 Local's actual CrashRunner now supports the same explicit safe-event mode.
@@ -6293,6 +6296,57 @@ scopes and rejects changed runner bytes. Actual Linux Local execution, safe
 legacy witness/session imports and full T032/category completion remain pending.
 The real paced 256 MiB/4 GiB/RSS obligations are not replaced by these small
 recovery payloads.
+
+### Owned large-transfer measurement
+
+The actual TransferRunner now has explicit safe-event mode. Unset preserves
+legacy output; invalid values reject before store creation. Safe mode emits
+one closed idle event after the original warmup/GC and waits for the parent's
+literal transfer handshake. Actual generated non-seekable source and paced sink
+still perform the original full stage/commit/read operation, checking all byte
+counts, independent hashes, pacing and exact lengths. The bounded closed
+producer proof is written only after those assertions. A second closed event
+then holds the child for the parent's final observation and settlement handshake.
+
+The owning command's opt-in mode admits only 256 MiB/4 GiB event transfers.
+It validates the live PID/start identity for each bounded `/proc/PID/status`
+read, observes kernel `VmRSS` after warmup and monotonic kernel `VmHWM`
+throughout/before settlement, and enforces an inclusive 64 MiB incremental peak
+ceiling. It does not substitute sampled RSS, GC counters or child-declared
+memory for the OS high-water mark. Missing/repeated/reordered events, wrong
+sizes, failure events, excessive memory, ordinary exit and missing settlement
+cannot produce success. Warmup is bounded to fifteen seconds, settlement to
+thirty and the complete transfer to forty minutes, under the existing profile
+deadline. Existing commands/receipts are unchanged without this opt-in mode.
+
+Parent receipts contain only bounded numeric measurements, monotonic times,
+closed states and child identity hashes. Producer PID, current run, actual CLR,
+all expected hashes, exact bytes, pacing and original buffer/slot limits must
+match before a proof is admitted. Only the parent may supply RSS fields. The
+existing transfer predicate is reused with an explicit `proc-status` method;
+legacy validation retains its original default methods and capture rules.
+The controller builds/byte-verifies the actual nine-package runner graph,
+captures all runtime bytes before/after, runs four real rows serially and
+emits only closed row IDs and controller/producer/proof hashes.
+
+Missing admission/controller tests failed by name first. Focused mutations
+reject changed PID/hash/runtime/pacing, unknown fields, missing completion and
+unbounded memory. Native primitive tests are controller doubles, not transfer
+proof. Two fresh-cache locked actual builds reproduce identical runner bytes
+and nine dependency images; actual macOS execution passes all four safe
+256 MiB/4 GiB read/write rows, an unchanged legacy 256 MiB row and invalid-mode
+rejection. Every real row verifies actual hashes/pacing and independent
+`getrusage` peak within 64 MiB of the observed idle RSS. This does not claim
+Linux pidfd/group/kernel-status evidence; that execution remains pending.
+Full original wrapper/session imports and T032/category completion remain open.
+Production architecture, ADRs, diagrams and deployment examples are unaffected:
+only test-runner transport and parent execution evidence change.
+Final checks pass: `python3 -m unittest discover -s tests/tooling -q`
+(266 discovered, 250 passes, sixteen native macOS skips),
+`python3 scripts/conformance_case_catalog.py --check-sdk`, unchanged frozen
+inventory, `dotnet format whitespace` for the runner and `git diff --check`.
+The actual runner also acknowledges the literal settlement handshake before
+normal exit; missing acknowledgement is not a completed parent measurement.
 
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)

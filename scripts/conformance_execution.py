@@ -195,6 +195,31 @@ def linux_process_identity(pid, encoded):
     return hashlib.sha256(identity).hexdigest()
 
 
+def linux_process_memory(encoded):
+    if not isinstance(encoded, bytes) or len(encoded) > 8192:
+        raise ConformanceError("ProofMismatch")
+    values = []
+    for field in (b"VmRSS", b"VmHWM"):
+        lines = [line for line in encoded.splitlines() if line.startswith(field + b":")]
+        matched = re.fullmatch(field + rb":[ \t]+([0-9]{1,19}) kB", lines[0]) if len(lines) == 1 else None
+        if matched is None or not 0 < int(matched[1]) <= (2**63 - 1) // 1024:
+            raise ConformanceError("ProofMismatch")
+        values.append(int(matched[1]) * 1024)
+    if values[0] > values[1]:
+        raise ConformanceError("ProofMismatch")
+    return tuple(values)
+
+
+def process_memory(pid, *, deadline=None):
+    if not native_execution_supported() or type(pid) is not int or pid <= 0:
+        raise ConformanceError("OwnershipInvalid")
+    control_timeout(deadline)
+    with os.fdopen(os.open(f"/proc/{pid}/status", os.O_RDONLY | os.O_NOFOLLOW), "rb") as source:
+        if os.fstat(source.fileno()).st_uid != os.getuid():
+            raise ConformanceError("OwnershipInvalid")
+        return linux_process_memory(source.read(8193))
+
+
 def process_group(group, *, deadline=None):
     code, output = capture_control(["ps", "-axo", "pid=,pgid=,uid=,stat="],
                                    timeout=control_timeout(deadline))
@@ -546,8 +571,12 @@ class OwnedRun:
     @single_writer
     def command(self, args, *, cwd=None, timeout=None, kind="events", env=None,
                 scope="ordinary", cache_id="default", deadline=None, discovery_tests=frozenset(),
-                stop_at_barrier=None):
+                stop_at_barrier=None, measure_transfer_bytes=None):
         started = time.monotonic()
+        if measure_transfer_bytes is not None and (
+                type(measure_transfer_bytes) is not int or measure_transfer_bytes not in (268435456, 4294967296)
+                or scope != "transfer" or kind != "events" or stop_at_barrier is not None):
+            raise ConformanceError("OwnershipInvalid")
         if stop_at_barrier is not None and (
                 type(stop_at_barrier) is not int or not 0 <= stop_at_barrier <= 65535
                 or scope != "recovery" or kind != "events"):
@@ -615,6 +644,7 @@ class OwnedRun:
         try:
             child = subprocess.Popen(
                 launch, cwd=cwd, env=environment,
+                stdin=subprocess.PIPE if measure_transfer_bytes is not None else None,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True,
                 pass_fds=(() if scope == "cleanup" else (writer.fileno(),)))
         except OSError:
@@ -632,9 +662,27 @@ class OwnedRun:
         identity = None
         exited = False
         barrier = {"value": stop_at_barrier, "observedMs": None, "signalMs": None}
+        transfer = {"bytes": measure_transfer_bytes, "phase": "waiting", "baselineRssBytes": None,
+                    "osPeakRssBytes": 0, "sampledPeakRssBytes": 0, "samples": 0,
+                    "osPeakMethod": "proc-status", "baselineMs": None, "completedMs": None}
+        transfer_deadline = min(deadline, started + 15) if measure_transfer_bytes is not None else deadline
+
+        def measure():
+            if (identity is None or child.poll() is not None
+                    or process_identity(child.pid, deadline=transfer_deadline) != identity):
+                raise ConformanceError("OwnershipInvalid")
+            rss, peak = process_memory(child.pid, deadline=transfer_deadline)
+            if transfer["baselineRssBytes"] is None:
+                transfer["baselineRssBytes"] = rss
+                transfer["baselineMs"] = time.monotonic() * 1000
+            transfer["osPeakRssBytes"] = max(transfer["osPeakRssBytes"], peak)
+            transfer["sampledPeakRssBytes"] = max(transfer["sampledPeakRssBytes"], rss)
+            transfer["samples"] += 1
+            if transfer["osPeakRssBytes"] - transfer["baselineRssBytes"] > 67108864:
+                raise ConformanceError("ProofMismatch")
 
         def observe(line):
-            nonlocal retained
+            nonlocal retained, transfer_deadline
             try:
                 event = (project_discovery_line(line, discovery_tests) if kind == "discovery"
                          else {"build": project_build_line, "tests": project_test_line,
@@ -650,6 +698,28 @@ class OwnedRun:
                     raise ConformanceError("OutputLimitExceeded")
                 events.append(event)
                 retained += size
+                if measure_transfer_bytes is not None:
+                    if (transfer["phase"] == "waiting"
+                            and event == {"event": "control", "code": "None", "value": 0}):
+                        measure()
+                        transfer["phase"] = "transferring"
+                        transfer_deadline = deadline
+                        handshake = b"transfer\n"
+                    elif (transfer["phase"] == "transferring"
+                          and event == {"event": "test", "code": "None", "value": measure_transfer_bytes}):
+                        measure()
+                        transfer["phase"] = "settling"
+                        transfer["completedMs"] = time.monotonic() * 1000
+                        transfer_deadline = min(deadline, time.monotonic() + 30)
+                        handshake = b"settle\n"
+                    elif (transfer["phase"] == "settling"
+                          and event == {"event": "control", "code": "None", "value": 1}):
+                        transfer["phase"] = "complete"
+                        return
+                    else:
+                        raise ConformanceError("ProofMismatch")
+                    if os.write(child.stdin.fileno(), handshake) != len(handshake):
+                        raise ConformanceError("CommandFailed")
                 if stop_at_barrier is not None and event["code"] != "None":
                     raise ConformanceError("ProofMismatch")
                 if stop_at_barrier is not None and event["event"] == "barrier":
@@ -685,9 +755,11 @@ class OwnedRun:
             with selectors.DefaultSelector() as selector:
                 selector.register(child.stdout, selectors.EVENT_READ)
                 while selector.get_map():
-                    remaining = deadline - time.monotonic()
+                    remaining = transfer_deadline - time.monotonic()
                     if remaining <= 0:
                         raise ConformanceError("DeadlineExceeded")
+                    if measure_transfer_bytes is not None and transfer["phase"] == "transferring":
+                        measure()
                     for key, _ in selector.select(min(0.1, remaining)):
                         block = os.read(key.fileobj.fileno(), READ_BYTES)
                         if not block:
@@ -711,7 +783,7 @@ class OwnedRun:
                     if len(buffer) > READ_BYTES:
                         raise ConformanceError("OutputLimitExceeded")
                     observe(bytes(buffer))
-            code = child.wait(timeout=max(0.001, deadline - time.monotonic()))
+            code = child.wait(timeout=max(0.001, transfer_deadline - time.monotonic()))
             if self._group_members(child.pid, deadline=deadline):
                 raise ConformanceError("CleanupIncomplete")
         except (ConformanceError, OSError, subprocess.SubprocessError, KeyboardInterrupt) as error:
@@ -735,6 +807,8 @@ class OwnedRun:
         finally:
             acknowledgement.close()
             child.stdout.close()
+            if child.stdin is not None:
+                child.stdin.close()
             if child.poll() is not None and not self._group_members(child.pid):
                 exited = True
                 self.children.pop(child.pid, None)
@@ -743,8 +817,11 @@ class OwnedRun:
                 if handle is not None:
                     os.close(handle)
                 self._persist()
-        if failure is None and time.monotonic() >= deadline:
+        if failure is None and time.monotonic() >= transfer_deadline:
             failure = ConformanceError("DeadlineExceeded")
+        if failure is None and measure_transfer_bytes is not None and (
+                transfer["phase"] != "complete" or child.returncode != 0 or not exited):
+            failure = ConformanceError("EvidenceIncomplete")
         if failure is None and stop_at_barrier is not None and (
                 barrier["signalMs"] is None or child.returncode != -signal.SIGKILL or not exited):
             failure = ConformanceError("EvidenceIncomplete")
@@ -754,7 +831,7 @@ class OwnedRun:
                 else "EvidenceIncomplete", "value": 0,
             }))
         self._retain_diagnostics(destination.name, events)
-        if scope == "recovery":
+        if scope == "recovery" or measure_transfer_bytes is not None:
             receipt = canonical_bytes({
                 "schemaVersion": 1, "sequence": self.command_sequence,
                 "childPid": child.pid, "childStartSha256": identity or "0" * 64,
@@ -764,10 +841,11 @@ class OwnedRun:
                                    str(failure) if isinstance(failure, ConformanceError) else "EvidenceIncomplete"),
                 "groupState": "Exited" if exited else "Retained", "scope": scope,
                 **({"barrier": barrier} if stop_at_barrier is not None else {}),
+                **({"transfer": transfer} if measure_transfer_bytes is not None else {}),
             })
             directory = self._directory_descriptor("proofs")
             try:
-                name = f"recovery-command-{self.command_sequence:04}.json"
+                name = f"{scope}-command-{self.command_sequence:04}.json"
                 with os.fdopen(os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
                                        0o600, dir_fd=directory), "wb") as output:
                     output.write(receipt)

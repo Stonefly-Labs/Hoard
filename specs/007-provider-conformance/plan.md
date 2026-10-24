@@ -2265,6 +2265,83 @@ T032/category completion remain pending. Small recovery payloads do not
 substitute for actual paced 256 MiB/4 GiB transfers or incremental OS peak RSS.
 No task/checklist/stage advances.
 
+### Native SQLite recovery verified; owned transfer integration
+
+Native
+[40107305423](https://github.com/Stonefly-Labs/Hoard/actions/runs/40107305423)
+at `62c149c51b039724938e6547806626bdee8630f4` subsequently passed all three
+jobs, including 151 foundation checks without failures/errors/skips,
+55 scopes/427 exact discoveries/executions, genuine native containment, all
+ten actual SQLite seed/barrier/kill/readback rows and the actual backup/restore
+walkthrough. Separate preparation replays the unchanged eighteen-package/
+thirteen-lock graph. Closed receipts:
+
+- Baseline seal: `41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`.
+- Input: `d25705becfb777ccaffb80e3679b0361d29dd4bc3c5c22878f57c937d932607e`.
+- Walkthrough: `74780450ba91bb05571def5745b138cbab41d02e62da0eda42527b33df22803a`.
+- Preparation: `2ebbd2f2232a44e0e64ca773e8721f7c58db1b5c5bfd9dc3cb49b07d33520b2c`.
+- Free scratch: 91,724,234,752 bytes.
+
+All ten closed parent controller/readback records have distinct child-start
+and controller hashes and bind this exact input; no raw legacy log is imported.
+This does not complete live-held independent probes, legacy/session/category
+attribution or T026. Local integration is published at `e6d79f4`; exact native
+run `40107826472` remains running, never inferred from SQLite or simulation.
+
+The actual TransferRunner now supports the same opt-in safe-event mode,
+preserving legacy output when absent and rejecting invalid mode before store
+creation. Safe mode emits idle after original warmup/GC, waits for the parent's
+literal transfer handshake, performs the original actual stage/commit/full read
+and verifies generated non-seekable bytes, both paced directions, exact counts,
+independent hashes and lengths. It writes only a bounded closed producer proof,
+then holds for final parent observation. The final settlement acknowledgement
+follows the literal parent handshake; normal process/group exit remains required.
+
+The owning command admits this mode only for exact qualified sizes in transfer/
+event scope. Bounded kernel `/proc/PID/status` reads require stable live owned
+PID/start identity and exact positive RSS/high-water fields. The parent observes
+idle `VmRSS`, samples actual kernel `VmHWM` throughout/before settlement and
+enforces the inclusive 64 MiB incremental peak. This is not a sampled-RSS or GC
+counter substitute. Startup is bounded to fifteen seconds, settlement to thirty
+and the entire transfer to forty minutes under the unchanged profile deadline.
+Ordinary exit, missing/repeated/reordered events, wrong sizes, excessive RSS,
+failed diagnostics and missing settlement acknowledgement cannot pass.
+Non-opted-in commands and receipts preserve their existing behavior.
+
+The common parent receipt admission is reused by recovery and transfer paths.
+Transfer admission additionally requires exact metric/time shape, bounded
+monotonic observation and completed protocol. Producer PID/run/runtime, exact
+independent hashes/bytes, pacing and original buffer/slot limits must match.
+Only parent observations supply memory. The existing transfer predicate is
+reused with an explicit `proc-status` method; default legacy methods and
+historical measurement capture rules remain unchanged. The actual nine-package
+runner graph and full runtime bytes enter locked build, image verification and
+pre/post immutable capture. Four real Local/ObjectSemantics rows are requested
+serially; final summaries contain only closed IDs and bound proof hashes.
+
+Missing measurement/admission/controller assertions failed by name before
+implementation. Focused mutation tests reject changed PID/hash/runtime/pacing,
+extra fields, missing completion, invalid ordering and unbounded memory. Native
+primitive tests use labeled controller doubles, never claimed real transfer
+proof. Two actual independent fresh-cache locked builds reproduce identical
+runner bytes and verify nine dependency images. Actual macOS safe-mode
+execution passes both sizes for both providers, plus an unchanged legacy
+256 MiB row and invalid-mode rejection. All real rows verify both actual
+read/write hashes/pacing and independent `getrusage` peak within 64 MiB of
+observed idle RSS. These are not Linux pidfd/status or category receipts.
+
+Actual Linux owned transfer measurement, original wrapper/session imports,
+noncooperative artifact children, four actual authority combinations and full
+T032/category/profile completion remain pending. No task/checklist/stage
+advances. Product architecture/ADRs/diagrams and deployment examples are
+unaffected: only test-runner transport and parent evidence change.
+Final `python3 -m unittest discover -s tests/tooling -q` passes 266 tests
+(250 passes, sixteen native macOS skips). The compiled SDK catalog, unchanged
+frozen inventory, runner whitespace verification and patch integrity pass.
+The final acknowledged protocol was recompiled in two fresh caches and all
+five actual macOS transfer rows rerun successfully after adding the explicit
+settlement acknowledgement.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

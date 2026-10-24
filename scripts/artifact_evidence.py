@@ -231,7 +231,7 @@ def is_hash(value):
     return isinstance(value, str) and re.fullmatch("[a-f0-9]{64}", value) is not None
 
 
-def verify_transfer(proof, provider, size, run_id):
+def verify_transfer(proof, provider, size, run_id, *, peak_methods=("getrusage", "time-l", "time-v")):
     numeric = ("pid", "size", "written", "read", "baselineRssBytes", "osPeakRssBytes",
                "sampledPeakRssBytes", "samples", "bufferBytes", "providerBufferLimit", "slots", "exitCode")
     if (not isinstance(proof, dict) or any(type(proof.get(key)) is not int for key in numeric)
@@ -241,7 +241,7 @@ def verify_transfer(proof, provider, size, run_id):
             or any(proof[key] != size for key in ("size", "written", "read"))
             or not is_hash(proof.get("expectedSha256"))
             or any(proof.get(key) != proof["expectedSha256"] for key in ("sourceSha256", "sinkSha256"))
-            or proof.get("rssUnits") != "bytes" or proof.get("osPeakMethod") not in ("getrusage", "time-l", "time-v")
+            or proof.get("rssUnits") != "bytes" or proof.get("osPeakMethod") not in peak_methods
             or not 0 < proof["baselineRssBytes"] <= proof["osPeakRssBytes"]
             or proof["osPeakRssBytes"] - proof["baselineRssBytes"] > 67108864
             or proof["sampledPeakRssBytes"] < proof["baselineRssBytes"]

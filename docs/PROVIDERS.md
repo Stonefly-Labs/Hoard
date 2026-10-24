@@ -272,6 +272,14 @@ with SQLite, never provider mechanisms or simulation durability. Fresh locked
 runner builds and macOS functional readbacks pass; actual Linux owning-controller
 execution remains pending. Large transfer/RSS proofs and category/session/
 legacy witness integration remain unfinished.
+SQLite's ten actual kill/readback rows and backup/restore walkthrough have
+subsequently passed on Linux at `62c149c`, with all three jobs successful.
+The transfer controller now requests both artifact providers' actual paced
+256 MiB/4 GiB writes and reads, with parent-owned kernel RSS/high-water
+observation and exact producer binding. All four real macOS rows and their OS
+peak bounds pass; Linux owned measurement, original wrapper/session imports
+and full category acceptance remain pending. ObjectSemantics borrows no
+SQLite/Local durable recovery proof.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

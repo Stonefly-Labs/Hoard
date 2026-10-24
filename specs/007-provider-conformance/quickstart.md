@@ -142,18 +142,29 @@ The SQLite diagnostic now requests actual mutation/upgrade/restore barriers
 through an explicit safe-event runner mode, parent-owned termination and
 readback. Fresh locked runner builds and actual local backup/restore
 walkthroughs pass, preserving legacy output when the mode is absent.
-Linux crash execution and complete witness/category attribution remain pending.
+Subsequent Linux execution is recorded below; complete witness/category
+attribution remains pending.
 The intervening native
 [40105402168](https://github.com/Stonefly-Labs/Hoard/actions/runs/40105402168)
 verifies evidence/quarantine transport and mutation pairs: all three jobs,
 145 foundation checks and 55 scopes/427 observations. It does not verify the
 subsequent controller/recovery changes.
 The corrected process-regression gate subsequently passed 151 native tests at
-`62c149c` without failures/errors/skips; its complete SQLite diagnostic remains
-running. Local now requests six actual publication/deletion crash/readback
+`62c149c` without failures/errors/skips; its complete SQLite diagnostic also
+passed all ten seed/barrier/kill/readback rows and the actual backup/restore
+walkthrough at
+[40107305423](https://github.com/Stonefly-Labs/Hoard/actions/runs/40107305423).
+All three jobs passed, with 55 scopes/427 exact observations and unchanged
+eighteen-package/thirteen-lock replay. Local now requests six actual publication/deletion crash/readback
 pairs through the same safe parent gate. Fresh locked builds and all six
 macOS functional readbacks pass, not Linux ownership/category proof. Actual
 Linux Local execution and large transfer/RSS obligations remain pending.
+The new transfer controller requests both providers' actual paced, non-seekable
+256 MiB/4 GiB write/read rows with independent parent kernel RSS/high-water
+observation, a 64 MiB incremental peak bound and exact producer/receipt binding.
+Two locked builds and all four real macOS rows pass, including actual
+`getrusage` peaks. Linux owning-controller measurement and original wrapper/
+session/category attribution remain pending.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

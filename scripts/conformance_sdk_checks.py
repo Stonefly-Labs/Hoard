@@ -23,6 +23,7 @@ import zipfile
 from xml.sax.saxutils import escape
 
 import conformance_baselines as baselines
+import artifact_evidence as artifacts
 import conformance_evidence as evidence
 from conformance_case_catalog import catalog_admission_witnesses, category_cases
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
@@ -40,6 +41,7 @@ SQLITE = "tests/fixtures/metadata/Sqlite/Sqlite.csproj"
 SQLITE_BINDING = "tests/fixtures/conformance/Bindings/Sqlite/Sqlite.csproj"
 METADATA_RECOVERY = "tests/fixtures/metadata/CrashRunner"
 ARTIFACT_RECOVERY = "tests/fixtures/artifacts/CrashRunner"
+ARTIFACT_TRANSFER = "tests/fixtures/artifacts/TransferRunner"
 METADATA_TESTS = f"{CONTRACTS}/Hoard.Metadata.Tests"
 METADATA_TEST_OUTPUT = "bin/wrapper-diagnostic"
 ARTIFACT_TESTS = f"{CONTRACTS}/Hoard.Artifacts.Tests"
@@ -693,12 +695,12 @@ def sqlite_noncooperation(run, inputs, candidate):
     }
 
 
-def admit_recovery_barrier(command, sequence, value):
+def admit_owned_command(command, sequence, *, scope, detail, exit_code, max_duration):
     fields = {
         "schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
-        "exitCode", "diagnosticCode", "groupState", "scope", "barrier",
+        "exitCode", "diagnosticCode", "groupState", "scope", detail,
     }
-    if (type(sequence) is not int or sequence <= 0 or type(value) is not int or not 0 <= value <= 65535
+    if (type(sequence) is not int or sequence <= 0
             or not isinstance(command, dict) or set(command) != fields
             or type(command["schemaVersion"]) is not int or command["schemaVersion"] != 1
             or type(command["sequence"]) is not int or command["sequence"] != sequence
@@ -706,10 +708,19 @@ def admit_recovery_barrier(command, sequence, value):
             or not isinstance(command["childStartSha256"], str)
             or re.fullmatch("[0-9a-f]{64}", command["childStartSha256"]) is None
             or command["childStartSha256"] == "0" * 64
-            or type(command["exitCode"]) is not int or command["exitCode"] != -9
+            or type(command["exitCode"]) is not int or command["exitCode"] != exit_code
             or command["diagnosticCode"] != "None" or command["groupState"] != "Exited"
-            or command["scope"] != "recovery"
-            or not isinstance(command["barrier"], dict)
+            or command["scope"] != scope):
+        raise evidence.ConformanceError("ProofMismatch")
+    times = (command["startedMs"], command["endedMs"])
+    if (any(type(item) not in (int, float) or not math.isfinite(item) or not 0 <= item <= 2**63 - 1
+            for item in times) or times[0] > times[1] or times[1] - times[0] > max_duration):
+        raise evidence.ConformanceError("ProofMismatch")
+
+
+def admit_recovery_barrier(command, sequence, value):
+    admit_owned_command(command, sequence, scope="recovery", detail="barrier", exit_code=-9, max_duration=15000)
+    if (type(value) is not int or not 0 <= value <= 65535 or not isinstance(command["barrier"], dict)
             or set(command["barrier"]) != {"value", "observedMs", "signalMs"}
             or type(command["barrier"]["value"]) is not int or command["barrier"]["value"] != value):
         raise evidence.ConformanceError("ProofMismatch")
@@ -718,6 +729,98 @@ def admit_recovery_barrier(command, sequence, value):
     if (any(type(item) not in (int, float) or not math.isfinite(item) or not 0 <= item <= 2**63 - 1
             for item in times) or tuple(sorted(times)) != times or times[-1] - times[0] > 15000):
         raise evidence.ConformanceError("ProofMismatch")
+
+
+def admit_transfer_measurement(command, sequence, size):
+    admit_owned_command(command, sequence, scope="transfer", detail="transfer", exit_code=0, max_duration=2400000)
+    measured = command["transfer"]
+    fields = {"bytes", "phase", "baselineRssBytes", "osPeakRssBytes", "sampledPeakRssBytes",
+              "samples", "osPeakMethod", "baselineMs", "completedMs"}
+    if (type(size) is not int or size not in (268435456, 4294967296)
+            or not isinstance(measured, dict) or set(measured) != fields
+            or any(type(measured[key]) is not int or not 0 < measured[key] <= 2**63 - 1
+                   for key in ("bytes", "baselineRssBytes", "osPeakRssBytes", "sampledPeakRssBytes", "samples"))
+            or measured["bytes"] != size or measured["phase"] != "complete"
+            or measured["osPeakMethod"] != "proc-status" or measured["samples"] < 2
+            or not measured["baselineRssBytes"] <= measured["sampledPeakRssBytes"] <= measured["osPeakRssBytes"]
+            or measured["osPeakRssBytes"] - measured["baselineRssBytes"] > 67108864):
+        raise evidence.ConformanceError("ProofMismatch")
+    times = (command["startedMs"], measured["baselineMs"], measured["completedMs"], command["endedMs"])
+    if (any(type(item) not in (int, float) or not math.isfinite(item) or not 0 <= item <= 2**63 - 1
+            for item in times) or tuple(sorted(times)) != times):
+        raise evidence.ConformanceError("ProofMismatch")
+
+
+def measured_artifact_transfer(run, inputs, assembly, provider, size, expected_hash):
+    store = run.root / f"stores/artifact-transfers/transfer-{provider}-{size}"
+    store.mkdir(mode=0o700)
+    sequence = run.command_sequence + 1
+    result = run.command(
+        ["dotnet", str(assembly), provider, str(store), str(size), expected_hash, run.run_id],
+        cwd=assembly.parent, scope="transfer", measure_transfer_bytes=size, cache_id="artifact-transfers",
+        env={"HOARD_CONFORMANCE_SAFE_EVENTS": "1"})
+    if run.live_children():
+        raise evidence.ConformanceError("CleanupIncomplete")
+    if result.exit_code or tuple(dict(item) for item in result.events) != (
+            {"event": "control", "code": "None", "value": 0},
+            {"event": "test", "code": "None", "value": size},
+            {"event": "control", "code": "None", "value": 1}):
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    raw = read_bounded(run.root / f"proofs/transfer-command-{sequence:04}.json", 64 * 1024)
+    command = evidence.load_json(raw)
+    admit_transfer_measurement(command, sequence, size)
+    producer_path = store / "transfer-proof.json"
+    producer_raw = read_bounded(producer_path, 8192)
+    producer = evidence.load_json(producer_raw)
+    fields = {
+        "eventName", "provider", "runId", "pid", "size", "written", "read", "expectedSha256",
+        "sourceSha256", "sinkSha256", "runtime", "sourcePaced", "sinkPaced", "nonSeekable",
+        "generated", "independentExpectedHash", "warmupComplete", "bufferBytes", "providerBufferLimit", "slots",
+    }
+    if (not isinstance(producer, dict) or set(producer) != fields or producer["eventName"] != "complete"
+            or producer["pid"] != command["childPid"] or producer["expectedSha256"] != expected_hash
+            or producer["runtime"] != ".NET " + inputs["environment"]["runtime"]):
+        raise evidence.ConformanceError("ProofMismatch")
+    measured = command["transfer"]
+    proof = {**producer, **{name: measured[name] for name in (
+        "baselineRssBytes", "osPeakRssBytes", "sampledPeakRssBytes", "samples", "osPeakMethod")},
+             "rssUnits": "bytes", "exitCode": command["exitCode"]}
+    try:
+        artifacts.verify_transfer(proof, provider, size, run.run_id, peak_methods=("proc-status",))
+    except RuntimeError:
+        raise evidence.ConformanceError("ProofMismatch") from None
+    directory = run.root / f"proofs/artifact-transfers/transfer-{provider}-{size}"
+    directory.mkdir(mode=0o700)
+    proof_path = directory / "proof.json"
+    write_new(proof_path, evidence.canonical_bytes(proof))
+    producer_path.chmod(0o400)
+    return {
+        "provider": provider, "size": size, "controllerSha256": hashlib.sha256(raw).hexdigest(),
+        "producerSha256": hashlib.sha256(producer_raw).hexdigest(),
+        "proofSha256": evidence.file_sha256(proof_path), "childStartSha256": command["childStartSha256"],
+    }
+
+
+def artifact_transfer_diagnostics(run, inputs, candidate):
+    runtime = candidate / ARTIFACT_TRANSFER / "bin/Release/net10.0"
+    assembly = runtime / "Hoard.Fixtures.Artifacts.TransferRunner.dll"
+    verify_runtime_packages(runtime, run.root / "feed/candidate", ARTIFACT_RECOVERY_PACKAGES)
+    if inputs.get("runtimeAssemblies", {}).get(assembly.relative_to(run.root).as_posix()) != evidence.file_sha256(assembly):
+        raise evidence.ConformanceError("InputChanged")
+    for folder in ("stores", "proofs"):
+        parent = run.root / folder / "artifact-transfers"
+        no_symlinks(parent)
+        parent.mkdir(mode=0o700)
+    hashes = {size: artifacts.expected_transfer_hash(size) for size in (268435456, 4294967296)}
+    observations = [
+        measured_artifact_transfer(run, inputs, assembly, provider, size, hashes[size])
+        for provider in ("local", "object") for size in hashes]
+    result = {
+        "qualification": False, "mode": "artifact-transfers", "code": "None",
+        "inputsSha256": evidence.digest(inputs), "transfers": observations,
+    }
+    write_new(run.root / "proofs/artifact-transfers.json", evidence.canonical_bytes(result))
+    return result
 
 
 def recovery_command(run, assembly, arguments, *, cache_id, value=None):
@@ -880,6 +983,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
                        f"{ARTIFACT_TESTS}/{ARTIFACT_TEST_OUTPUT}/Release/net10.0"}
     runtime_folders.add(f"{METADATA_RECOVERY}/bin/Release/net10.0")
     runtime_folders.add(f"{ARTIFACT_RECOVERY}/bin/Release/net10.0")
+    runtime_folders.add(f"{ARTIFACT_TRANSFER}/bin/Release/net10.0")
     runtime = [f"{prefix}/{name}" for name in inventory if (
         name.endswith((".dll", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))
         and Path(name).parent.as_posix() in runtime_folders) or (
@@ -896,7 +1000,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
         observed_environment=observed_environment, budgets=BUDGETS, invocation=[
             "sdk-logger-diagnostic", "original-metadata-memory", "original-metadata-sqlite",
             "original-artifact-publication", "original-artifact-read-delete", "original-artifact-evidence",
-            "sqlite-recovery-barriers", "local-recovery-barriers"],
+            "sqlite-recovery-barriers", "local-recovery-barriers", "paced-artifact-transfers"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1174,6 +1278,16 @@ def execute(repository, destination):
                       evidence.canonical_bytes(artifact_recovery_record))
         verify_runtime_packages(candidate / ARTIFACT_RECOVERY / "bin/Release/net10.0",
                                 feed, ARTIFACT_RECOVERY_PACKAGES)
+        artifact_transfer_project = candidate / ARTIFACT_TRANSFER / "TransferRunner.csproj"
+        artifact_transfer_lock, artifact_transfer_record = prepare_project_lock(
+            artifact_transfer_project, candidate, feed, "candidate")
+        build(run, artifact_transfer_project, config, "artifact-transfers", lock=artifact_transfer_lock)
+        if artifact_transfer_record is not None:
+            verify_project_lock(artifact_transfer_record, candidate, feed)
+            write_new(run.root / "proofs/artifact-transfer-lock-derivation.json",
+                      evidence.canonical_bytes(artifact_transfer_record))
+        verify_runtime_packages(candidate / ARTIFACT_TRANSFER / "bin/Release/net10.0",
+                                feed, ARTIFACT_RECOVERY_PACKAGES)
         consumer_lock, consumer_receipt = prepare_package_consumer_lock(candidate, feed)
         verify_package_consumer_lock(candidate, feed, consumer_lock, consumer_receipt)
         write_new(run.root / "proofs/consumer-lock-derivation.json", evidence.canonical_bytes(consumer_receipt))
@@ -1252,6 +1366,8 @@ def execute(repository, destination):
         metadata_recovery = metadata_recovery_diagnostics(run, inputs, candidate)
         print(json.dumps({"qualification": False, "phase": "artifact-recovery"}), flush=True)
         artifact_recovery = artifact_recovery_diagnostics(run, inputs, candidate)
+        print(json.dumps({"qualification": False, "phase": "artifact-transfers"}), flush=True)
+        artifact_transfers = artifact_transfer_diagnostics(run, inputs, candidate)
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)
         post_identity = evidence.source_identity(repository, ci_revision=ci_revision)
@@ -1264,6 +1380,8 @@ def execute(repository, destination):
             verify_project_lock(recovery_record, candidate, feed)
         if artifact_recovery_record is not None:
             verify_project_lock(artifact_recovery_record, candidate, feed)
+        if artifact_transfer_record is not None:
+            verify_project_lock(artifact_transfer_record, candidate, feed)
         if memory_record is not None:
             verify_project_lock(memory_record, candidate, feed)
         if binding_record is not None:
@@ -1288,6 +1406,7 @@ def execute(repository, destination):
                    "nativeNonCooperation": native_noncooperation,
                    "metadataRecovery": metadata_recovery,
                    "artifactRecovery": artifact_recovery,
+                   "artifactTransfers": artifact_transfers,
                    "sqliteEnvironment": {
                        "nativeVersion": inputs["environment"]["nativeSqlite"],
                        "pragmas": dict(inputs["environment"]["pragmas"]),

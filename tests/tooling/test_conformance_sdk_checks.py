@@ -35,6 +35,127 @@ class SdkDiagnosticTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.directory)
 
+    def test_transfer_measurement_admits_only_exact_parent_memory_and_settlement_proof(self):
+        self.assertTrue(callable(getattr(checks, "admit_transfer_measurement", None)),
+                        "Actual large transfers need parent kernel memory and settlement admission.")
+        command = {
+            "schemaVersion": 1, "sequence": 3, "childPid": 200, "childStartSha256": "a" * 64,
+            "startedMs": 1000, "endedMs": 1200, "exitCode": 0, "diagnosticCode": "None",
+            "groupState": "Exited", "scope": "transfer", "transfer": {
+                "bytes": 268435456, "phase": "complete", "baselineRssBytes": 1048576,
+                "osPeakRssBytes": 2097152, "sampledPeakRssBytes": 2097152, "samples": 2,
+                "osPeakMethod": "proc-status", "baselineMs": 1050, "completedMs": 1150,
+            },
+        }
+        checks.admit_transfer_measurement(command, 3, 268435456)
+        for change in (
+                {"sequence": True}, {"childPid": True}, {"childStartSha256": "0" * 64},
+                {"scope": "ordinary"}, {"exitCode": True}, {"groupState": "Retained"},
+                {"diagnosticCode": "DeadlineExceeded"}, {"startedMs": float("nan")},
+                {"endedMs": 2401001}, {"extra": "ignored"}, {"transfer": None},
+                *({"transfer": command["transfer"] | item} for item in (
+                    {"bytes": 4294967296}, {"bytes": True}, {"phase": "transferring"},
+                    {"osPeakMethod": "declared"}, {"baselineRssBytes": 0},
+                    {"osPeakRssBytes": 1048576 + 67108865}, {"sampledPeakRssBytes": 2097153},
+                    {"sampledPeakRssBytes": 1}, {"samples": 1}, {"samples": True}, {"extra": "ignored"},
+                    {"baselineMs": 999}, {"completedMs": 1201}, {"completedMs": 1049},
+                    {"baselineMs": False}, {"completedMs": float("nan")}))):
+            with self.subTest(change=change), self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.admit_transfer_measurement(command | change, 3, 268435456)
+
+    def test_measured_transfer_binds_actual_producer_pid_hash_runtime_and_unchanged_memory_receipt(self):
+        for mutation in (None, "pid", "hash", "runtime", "pacing", "extra", "memory", "event"):
+            root = self.directory / str(mutation)
+            (root / "stores/artifact-transfers").mkdir(parents=True)
+            (root / "proofs/artifact-transfers").mkdir(parents=True)
+            run = SimpleNamespace(root=root, run_id=str(uuid.uuid4()), command_sequence=0, live_children=lambda: ())
+            expected_hash = "a" * 64
+            captured = []
+
+            def command(args, **options):
+                run.command_sequence += 1
+                captured.append((args, options))
+                measured = {
+                    "bytes": 268435456, "phase": "complete", "baselineRssBytes": 1048576,
+                    "osPeakRssBytes": 2097152, "sampledPeakRssBytes": 2097152, "samples": 2,
+                    "osPeakMethod": "proc-status", "baselineMs": 1050, "completedMs": 1150,
+                }
+                if mutation == "memory":
+                    measured["osPeakRssBytes"] = 2**40
+                receipt = {
+                    "schemaVersion": 1, "sequence": 1, "childPid": 200, "childStartSha256": "b" * 64,
+                    "startedMs": 1000, "endedMs": 1200, "exitCode": 0, "diagnosticCode": "None",
+                    "groupState": "Exited", "scope": "transfer", "transfer": measured,
+                }
+                (root / "proofs/transfer-command-0001.json").write_text(json.dumps(receipt))
+                producer = {
+                    "eventName": "complete", "provider": "local", "runId": run.run_id, "pid": 200,
+                    "size": 268435456, "written": 268435456, "read": 268435456,
+                    "expectedSha256": expected_hash, "sourceSha256": expected_hash, "sinkSha256": expected_hash,
+                    "runtime": ".NET 10.0.7", "sourcePaced": True, "sinkPaced": True, "nonSeekable": True,
+                    "generated": True, "independentExpectedHash": True, "warmupComplete": True,
+                    "bufferBytes": 262144, "providerBufferLimit": 2097152, "slots": 1,
+                }
+                changes = {
+                    "pid": {"pid": 201}, "hash": {"expectedSha256": "0" * 64},
+                    "runtime": {"runtime": "foreign"}, "pacing": {"sinkPaced": False}, "extra": {"extra": True},
+                }
+                producer.update(changes.get(mutation, {}))
+                (Path(args[3]) / "transfer-proof.json").write_text(json.dumps(producer))
+                events = ({"event": "control", "code": "None", "value": 0},
+                          {"event": "test", "code": "None", "value": 268435456},
+                          {"event": "control", "code": "None", "value": 1})
+                return SimpleNamespace(exit_code=0, events=events if mutation != "event" else events[:1])
+
+            run.command = command
+            with self.subTest(mutation=mutation):
+                if mutation is not None:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError,
+                                                "EvidenceIncomplete" if mutation == "event" else "ProofMismatch"):
+                        checks.measured_artifact_transfer(
+                            run, {"environment": ENVIRONMENT}, root / "runner.dll", "local", 268435456, expected_hash)
+                    self.assertFalse((root / "proofs/artifact-transfers/transfer-local-268435456/proof.json").exists())
+                    continue
+                result = checks.measured_artifact_transfer(
+                    run, {"environment": ENVIRONMENT}, root / "runner.dll", "local", 268435456, expected_hash)
+                self.assertEqual(result["childStartSha256"], "b" * 64)
+                self.assertEqual(captured[0][1]["measure_transfer_bytes"], 268435456)
+                self.assertEqual(captured[0][1]["env"], {"HOARD_CONFORMANCE_SAFE_EVENTS": "1"})
+                proof = json.loads((root / "proofs/artifact-transfers/transfer-local-268435456/proof.json").read_bytes())
+                self.assertEqual(proof["osPeakRssBytes"], 2097152)
+                self.assertEqual(proof["osPeakMethod"], "proc-status")
+                self.assertEqual(proof["runId"], run.run_id)
+
+    def test_actual_transfer_controller_requests_both_qualified_sizes_and_providers(self):
+        self.assertTrue(callable(getattr(checks, "artifact_transfer_diagnostics", None)),
+                        "Large transfer proof requires actual owned runner invocations for every frozen row.")
+        root = self.directory
+        candidate = root / "candidate"
+        assembly = candidate / checks.ARTIFACT_TRANSFER / (
+            "bin/Release/net10.0/Hoard.Fixtures.Artifacts.TransferRunner.dll")
+        assembly.parent.mkdir(parents=True)
+        assembly.write_bytes(b"transfer-controller-unit-double")
+        (root / "stores").mkdir()
+        (root / "proofs").mkdir()
+        run = SimpleNamespace(root=root, run_id=str(uuid.uuid4()))
+        inputs = {"runtimeAssemblies": {
+            assembly.relative_to(root).as_posix(): hashlib.sha256(assembly.read_bytes()).hexdigest()}}
+        with patch.object(checks, "verify_runtime_packages") as images, patch.object(
+                checks, "measured_artifact_transfer", return_value={"proofSha256": "a" * 64}) as execute:
+            result = checks.artifact_transfer_diagnostics(run, inputs, candidate)
+            self.assertFalse(result["qualification"])
+            self.assertEqual(result["inputsSha256"], checks.evidence.digest(inputs))
+            self.assertEqual([call.args[3:5] for call in execute.call_args_list],
+                             [("local", 268435456), ("local", 4294967296),
+                              ("object", 268435456), ("object", 4294967296)])
+            images.assert_called_once_with(assembly.parent, root / "feed/candidate",
+                                           checks.ARTIFACT_RECOVERY_PACKAGES)
+        with patch.object(checks, "verify_runtime_packages"), patch.object(checks, "measured_artifact_transfer") as execute:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                checks.artifact_transfer_diagnostics(
+                    run, {"runtimeAssemblies": {assembly.relative_to(root).as_posix(): "0" * 64}}, candidate)
+            execute.assert_not_called()
+
     def test_metadata_recovery_barrier_requires_exact_observe_signal_exit_chain(self):
         self.assertTrue(callable(getattr(checks, "admit_recovery_barrier", None)),
                         "Real recovery needs an admitted parent-owned observation/signal/exit chain.")

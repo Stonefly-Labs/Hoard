@@ -1385,17 +1385,22 @@ The preceding publication transport is verified on Linux:
 [40103524667](https://github.com/Stonefly-Labs/Hoard/actions/runs/40103524667)
 passed all three jobs, including 53 scopes/398 exact observations and actual
 original publication/mutation execution; this is not complete category evidence.
-The owning controller now has a bounded observed-barrier stop path; its Linux
-signal/exit regressions are pending. It does not yet execute the inherited
-SQLite/Local recovery matrices.
-The SQLite runner now has an explicit safe-event mode, and the diagnostic
-controller requests all ten mutation/upgrade/restore barriers, owned termination
-and recovery readback plus the real backup/restore walkthrough. Linux execution
-is pending; legacy output is preserved when the mode is absent.
+The owning controller's observed-barrier stop path and all ten actual SQLite
+mutation/upgrade/restore kill/readback rows, plus the real backup/restore
+walkthrough, passed on Linux at
+[40107305423](https://github.com/Stonefly-Labs/Hoard/actions/runs/40107305423).
+All three jobs passed, including 151 foundation checks and 55 scopes/427
+observations. This is recovery diagnostic evidence, not complete category proof.
 The same parent receipt gate now requests Local B0..B3/D0..D1 crash/readback
 rows through the actual artifact runner. Two fresh locked builds reproduce
 identical runner bytes and nine dependency images; all six safe-mode local
 readbacks pass on macOS. Linux owning-controller execution remains pending.
+The transfer diagnostic now requests actual paced, generated, non-seekable
+256 MiB/4 GiB reads/writes for both artifact providers. Parent-controlled
+handshakes bracket independent Linux kernel RSS/high-water measurements and
+enforce the 64 MiB incremental peak bound. Two locked builds and all four real
+macOS transfer rows pass, including actual `getrusage` peaks; Linux owned
+measurement and complete wrapper/category attribution remain pending.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
