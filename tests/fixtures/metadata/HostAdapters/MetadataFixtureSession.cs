@@ -49,6 +49,14 @@ public sealed class MetadataFixtureSession : IAsyncDisposable
     public MetadataFixtureControls Controls { get; }
     public ControlledPublicationAuthority Authority { get; }
 
+    public IAsyncDisposable ObserveBeforeSchemaUpgrade(Func<ValueTask> observer) =>
+        Controls.RegisterObserver(Store switch
+        {
+            SqliteMetadataStore => "U0",
+            MemoryMetadataStore => "memory.upgrade.before_decision",
+            _ => throw new InvalidOperationException("Unknown metadata fixture.")
+        }, observer);
+
     public static MetadataFixtureSession Create(string provider, TimeProvider clock, string? databasePath = null,
         int initialSchema = 0, string compatibleSchema = "fixture-sqlite-v2") =>
         new(provider, clock, databasePath, initialSchema, compatibleSchema);
@@ -105,9 +113,16 @@ public sealed class MetadataFixtureSession : IAsyncDisposable
     };
 
     public ValueTask<MetadataResult<MetadataReadSnapshot>> ObserveIndependentSnapshotAsync(MetadataReadGroup request) =>
-        Store is SqliteMetadataStore sqlite
+        ObserveIndependentSnapshotAsync(request, default);
+
+    public ValueTask<MetadataResult<MetadataReadSnapshot>> ObserveIndependentSnapshotAsync(
+        MetadataReadGroup request, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Store is SqliteMetadataStore sqlite
             ? ValueTask.FromResult<MetadataResult<MetadataReadSnapshot>>(new MetadataResult<MetadataReadSnapshot>.Success(sqlite.ObserveCommittedSnapshot(request)))
-            : Store.ReadAsync(request, new(), default);
+            : Store.ReadAsync(request, new(), cancellationToken);
+    }
 
     public ValueTask<IDisposable> HoldWriterForTestAsync() => Store switch
     {

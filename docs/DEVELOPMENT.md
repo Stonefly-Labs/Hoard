@@ -5877,6 +5877,28 @@ passed all 21 affected class tests against Memory and all 21 against SQLite,
 without failures/skips; focused whitespace and frozen inventory checks pass.
 The SDK and provider packages themselves are unchanged by these ten delegates.
 
+Five additional original MP-09/10/26/27 wrappers now delegate to unchanged SDK
+atomicity/publication consumers, bringing adoption to 22 methods. A typed
+test-side observation bridge uses new scoped registration in the original
+HostAdapters fixture. Duplicate registration rejects without replacing the
+owner; idempotent scope disposal cannot remove a newer legacy observer and
+does not settle an active callback. Existing fixture methods remain available;
+an additive independent-snapshot overload honors cancellation and the fixture
+keeps concrete schema-hook mapping private.
+
+Three new ownership tests first failed the missing-registration assertion.
+After repair, the complete 76-test suite passed on each actual provider.
+A fifth observer test subsequently exercised the real schema-upgrade hook and
+the atomicity wrapper now checks the SDK's injected canary as well as its
+original canary; all 16 affected tests pass on both providers. Fresh default
+locked replay reproduced eight archives and their actual DLLs; only the
+additive HostAdapters archive differs from the prior preparation. Repository/
+historical locks, SDK, provider and platform archives remain unchanged.
+Tooling243 (232 passed, eleven macOS-native skips), frozen catalogs and focused
+wrapper/fixture whitespace checks pass. Full schema/corruption/control parity
+and safe origin imports remain open; SQLite's original U1 exclusion witness is
+not replaced by the new SDK U0 mapping.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

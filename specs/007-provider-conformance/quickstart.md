@@ -44,6 +44,11 @@ Ten further wrappers delegate MP-07 query/bounds, MP-08 scope/epoch,
 MP-11/12 concurrency and MP-23..25/31 publication/reference checks to the
 unchanged SDK. All 21 affected class tests pass on each actual provider.
 Control-dependent and malformed-continuation wrappers are still separate work.
+Five atomicity/publication control-dependent wrappers now also delegate through
+ownership-safe scoped observations (22 original methods total). Complete control,
+corruption, schema and malformed-continuation extraction remains unfinished.
+Actual callback retention, duplicate/replacement ownership, cancelled/unknown
+requests and schema-hook invocation have focused package-backed checks.
 Existing synchronous fixture helpers remain caller-owned.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator

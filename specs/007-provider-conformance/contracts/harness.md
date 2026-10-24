@@ -167,6 +167,13 @@ Ten additional delegates reuse the existing SDK paging/concurrency/publication/
 reference methods, preserving the original method names and the six malformed
 continuation theory rows. Control-dependent methods have not been replaced by
 synthetic successes or dropped during this partial adoption.
+Five additional atomicity/publication wrappers now use the SDK's observation
+delegate through the original fixture. Scoped registration rejects duplicates,
+removes only its own callback and does not cancel or settle an invocation already
+underway. The independent-snapshot overload preserves the old signature and
+propagates cancellation to managed reads. Schema-hook names remain fixture-
+private; this partial bridge does not prove unchanged schema-exclusion/barrier
+parity or replace the original SQLite U1 exclusion witness.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

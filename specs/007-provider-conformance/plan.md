@@ -1558,6 +1558,50 @@ failures/skips; the second composition used `--no-build`. Focused whitespace
 and frozen inventory checks pass. These are focused local wrapper regressions,
 not complete category, native recovery or exact runtime-origin acceptance.
 
+### Scoped original observation controls and five more common wrappers
+
+Original MP-09's independent/faulted candidate wrappers, MP-10 grouped reads
+and MP-26/27 orphan/retained-publication wrappers now call unchanged SDK
+consumers through typed observations (22 original delegated methods total).
+The original atomicity diagnostic check remains and additionally rejects the
+SDK's injected canary. Store setup, original authority and lifecycle ownership
+remain fixture-owned; the SDK does not depend on HostAdapters or providers.
+
+The fixture adds scoped observation registration using an atomic dictionary
+admission and registration-specific callback identity. Duplicate admission
+rejects without replacing the current observer. Idempotent disposal removes
+only its own callback, leaves a newer legacy registration intact and neither
+cancels nor settles an in-flight callback. A cancellation-aware independent
+read overload preserves the original signature; concrete schema-hook mapping
+stays in the fixture. The typed bridge rejects cancelled/unknown requests
+without leaked registrations.
+
+Three focused ownership tests first failed the missing-method assertion in an
+otherwise successfully compiled package-mode test assembly. They subsequently
+use the typed API directly. The first control preparation encountered a nested
+test declaration (`CS0106`); this was repaired before execution and is not
+counted as an intended behavioral red. A fresh preparation passed all 76 tests
+against Memory and all 76 against SQLite without skips. After adding the
+actual schema-hook test and SDK-canary assertion, a fresh default locked replay
+passed all 16 affected tests against each provider. The latter includes all
+five observation tests and actual legacy-schema upgrade callbacks on both
+implementations.
+
+The independent fresh-cache replay reproduced all eight archives. All seven
+wrapper dependency DLLs and the separately built Application DLL matched
+archive members. Only the additive HostAdapters fixture archive differs from
+the prior increment; SDK, providers and platform archives are identical.
+Current source and historical locks remain unchanged; private preparation
+rebinds only current local archive identities while preserving graphs/pins.
+Tooling243 passes (232 passed, eleven macOS-native skips), as do frozen
+catalogs and focused compiled wrapper/fixture whitespace checks.
+
+This is not complete control/schema/corruption extraction, safe exact origin
+ingestion or category qualification. In particular, the original SQLite MP-35
+exclusion wrapper observes U1, whereas the existing SDK's `BeforeSchemaUpgrade`
+mapping observes U0. Full parity must preserve the original U1 subproof rather
+than silently substituting the new hook. T019/T021..T026 remain unchecked.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

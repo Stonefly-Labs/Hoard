@@ -1271,13 +1271,16 @@ runs inside the test process, and retention is not release.
 All 53 current shared logical metadata assertion methods now execute through
 the SQLite binding too. These local checks are not the catalog's 179 applicable
 category results or proof of complete frozen-wrapper parity.
-Seventeen original wrappers across MP-01..08/11..13/23..25/31 now delegate to
+Twenty-two original wrappers across MP-01..13/23..27/31 now delegate to
 the same packaged SDK
 assertions without changing their frozen names or original fixture lifecycle.
 The package-only predecessor suite passes all 72 tests against each actual
 provider. Its preparation includes eight archives; this is separate from the
 seven-archive binding diagnostic. The next ten delegates pass all 21 affected
-tests against each provider. Full wrapper extraction/parity is unfinished.
+tests against each provider. Five further control-dependent wrappers now share
+atomicity/publication consumers through scoped observation registration.
+Unregistering a hook neither removes a newer owner nor settles an active
+callback. Full wrapper extraction/parity is unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

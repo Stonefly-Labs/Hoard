@@ -10,6 +10,24 @@ internal static class MetadataCases
     public static IMetadataConformanceAuthority CommonAuthority(MetadataFixtureSession fixture) =>
         new PublicationAuthority(fixture.Authority);
 
+    public static MetadataObservationControl CommonObservations(MetadataFixtureSession fixture) =>
+        (point, observer, cancellationToken) =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (point == MetadataObservationPoint.BeforeSchemaUpgrade)
+            { return ValueTask.FromResult(fixture.ObserveBeforeSchemaUpgrade(observer)); }
+            var boundary = point switch
+            {
+                MetadataObservationPoint.BeforeCommitDecision => "M0",
+                MetadataObservationPoint.AfterCommitDecision => "M1",
+                MetadataObservationPoint.MutationApplied => "mutation.applied",
+                MetadataObservationPoint.ReadItem => "read.item",
+                MetadataObservationPoint.BeforeReconciliationDecision => "reconcile.before_decision",
+                _ => throw new ArgumentOutOfRangeException(nameof(point))
+            };
+            return ValueTask.FromResult(fixture.Controls.RegisterObserver(boundary, observer));
+        };
+
     private sealed class PublicationAuthority(ControlledPublicationAuthority authority) : IMetadataConformanceAuthority
     {
         public int Acquisitions => authority.Acquisitions;

@@ -90,6 +90,15 @@ publication-evidence and reference assertions (17 delegated methods total);
 all 21 affected class tests pass against each provider without skips.
 Its eight-archive preparation adds the SDK, while the independent binding
 diagnostic still uses seven archives. Other wrappers remain unextracted.
+Five further atomicity/publication wrappers now use scoped typed observations
+(22 delegated methods total). The original fixture adds ownership-safe
+registration and a cancellation-aware independent-read overload without SDK
+dependencies or changing existing operation signatures. Unregistration removes
+only that registration, never another owner or active work. The full 76-test
+suite passed against both providers; after adding the actual schema-hook check
+and SDK-canary assertion, all 16 affected tests passed against each provider.
+Only the additive HostAdapters fixture archive changed; SDK/provider/platform
+archives and repository/historical locks remain unchanged by this increment.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual
