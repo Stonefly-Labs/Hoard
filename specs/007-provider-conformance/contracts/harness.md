@@ -442,6 +442,19 @@ The extra exact native scope has eight frozen reconciliation witnesses and two
 mutation parameters, requesting 58 scopes/466 observations in total, pending.
 These remain diagnostics rather than full binding/session/category attribution.
 
+The three original direct/listing visibility methods now execute shared
+consumers with exact original checks/order preserved mechanically. Fixture
+callbacks retain actual observer registration and hold/release operations,
+including direct-observer removal before release. A Local mutation starts the
+actual held commit and immediately returns a genuine earlier receipt, failing
+the unchanged pending-task assertion. The test releases the real hold, awaits
+actual commit settlement and verifies its distinct published stamp; a fresh
+genuine provider passes unchanged. Three frozen visibility facts plus this
+mutation request the next 59-scope/470-observation vector, pending.
+The preceding race-only vector passed run `40113497329` at `91da8f4`, all three
+jobs and 169 foundations, with 57 scopes/456 exact observations and all actual
+recovery/transfer/retention prerequisites. Neither vector is category acceptance.
+
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,

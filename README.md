@@ -1433,8 +1433,10 @@ fixture observers and payload mutation stay outside the SDK. A real-store
 forged-length mutation fails the named unchanged consumer on both providers;
 the genuine stores pass. Two fresh-cache locked builds reproduce eleven
 archives and each pass 275 artifact cases plus 89 metadata cases per provider.
-The expanded native request adds those six witnesses
-and two mutation rows (57 scopes/456 observations), pending.
+The expanded native request adds those six witnesses and two mutation rows.
+It passed at `91da8f4`, run
+[40113497329](https://github.com/Stonefly-Labs/Hoard/actions/runs/40113497329):
+all three jobs, 169 foundation checks and 57 scopes/456 exact observations.
 Private staging and all four original reconciliation methods now also delegate
 to shared consumers, retaining their ten frozen parameters and fixture-side
 barrier, clock and lost-acknowledgment controls. A real-store foreign-receipt
@@ -1442,6 +1444,12 @@ mutation fails the unchanged receipt-equality assertion on both providers;
 genuine stores pass. The next exact native request adds eight reconciliation
 witnesses and two mutation rows (58 scopes/466 observations), pending. This
 remains partial implementation, not complete category or profile qualification.
+All three original direct/listing visibility bodies also now execute shared
+consumers with real fixture-side hold/release controls. A genuine pending Local
+commit paired with a premature acknowledgment fails the unchanged shared
+pending-task assertion; the genuine store passes. The next native request adds
+three frozen visibility witnesses and that mutation (59 scopes/470 observations),
+pending, without expanding qualification claims.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

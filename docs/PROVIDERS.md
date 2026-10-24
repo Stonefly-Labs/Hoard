@@ -321,7 +321,8 @@ Two fresh-cache locked builds reproduce eleven archives, verify ten loaded
 artifact dependency images and each pass 275 artifact cases plus 89 metadata
 cases per provider without skips; accepted-source formatting also passes.
 The additional exact native scope is six original rows plus two named mutation
-rows, pending (57 scopes/456 observations), not category completion.
+rows. It passed at `91da8f4`, run `40113497329`, with all three jobs, 169
+foundation checks and 57 scopes/456 observations, not category completion.
 
 Private staging and all four original reconciliation methods now use shared
 consumers with their ten frozen parameters intact. Actual prefix barriers,
@@ -334,6 +335,15 @@ counters prove the intended mutation, and fresh genuine stores pass unchanged.
 The next exact native scope adds eight original reconciliation witnesses plus
 two mutation parameters (58 scopes/466 observations), pending, not category
 or complete session evidence.
+
+The three original visibility bodies now run provider-free shared checks while
+fixture callbacks retain actual receipt/listing/direct-availability boundaries.
+Their exact checks/order are mechanically preserved. A Local mutation starts
+the actual held commit but returns a genuine earlier receipt immediately;
+the unchanged pending-task assertion fails. The test releases the actual hold,
+awaits the genuine commit and verifies its distinct published stamp; a fresh
+genuine provider passes unchanged. The next native request adds these three
+frozen witnesses and the mutation: 59 scopes/470 observations, pending.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

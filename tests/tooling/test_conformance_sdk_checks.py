@@ -492,6 +492,20 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-reconciliation", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_visibility_scope_preserves_frozen_rows_and_premature_acknowledgment_mutation(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_visibility_scenarios", None)),
+                        "Shared direct/listing visibility needs exact owned wrapper transport.")
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.startswith(
+                        "Hoard.Artifacts.Tests.ArtifactVisibilityTests.")}
+        self.assertEqual(len(original), 3)
+        mutation = ("Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+                    "Shared_visibility_assertion_rejects_premature_acknowledgment_and_accepts_original_store")
+        scenario, = checks.original_artifact_visibility_scenarios()
+        self.assertEqual(scenario, ("original-artifact-visibility", tuple(sorted(original | {mutation})),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_wrapper_scope_preserves_frozen_publication_parameters_and_actual_assembly(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_publication_scenarios", None)),
                         "Artifact publication needs exact source-owned wrapper transport.")

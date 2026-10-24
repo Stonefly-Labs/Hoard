@@ -210,6 +210,14 @@ foreign-publication receipt through the unchanged shared equality assertion;
 fresh genuine providers pass. The next exact native scope adds eight original
 reconciliation rows plus two mutation parameters (58 scopes/466 observations),
 pending, not full category/session acceptance.
+All three original visibility bodies now also run shared checks with actual
+fixture hold/release controls. A genuine held Local commit with a premature
+acknowledgment fails the unchanged pending-task assertion; after real release,
+the test awaits actual settlement and verifies a distinct published stamp.
+The genuine provider passes unchanged. The next native vector adds these three
+frozen facts and the mutation (59 scopes/470 observations), pending. The preceding
+race-only request passed run `40113497329` at `91da8f4`: all three jobs, 169
+foundation checks and 57 scopes/456 observations, not full category evidence.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

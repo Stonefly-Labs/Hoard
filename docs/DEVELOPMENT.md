@@ -6495,6 +6495,33 @@ seventeen native macOS skips). Earlier actual transfer packets remain unchanged,
 not fresh session/category origins. Production APIs/edges/ADRs/diagrams and
 deployment examples remain unaffected.
 
+All three original direct/listing visibility bodies now execute shared
+provider-free checks with actual fixture hold/release controls. Mechanical
+comparison preserves their original checks and ordering. The premature-
+acknowledgment negative starts an actual held Local commit, returns a genuine
+earlier receipt immediately and fails the unchanged pending-task assertion.
+It releases the real hold, awaits actual commit settlement and verifies the
+distinct published stamp; the fresh genuine provider passes unchanged.
+Missing shared consumers first failed actual compilation with CS0103, and a
+missing exact visibility scope failed its named tooling regression. The next
+native vector is 59 scopes/470 observations (three frozen visibility facts plus
+the mutation added), pending. Complete category/session/profile work remains.
+
+The preceding race request passed at
+[40113497329](https://github.com/Stonefly-Labs/Hoard/actions/runs/40113497329),
+head `91da8f4`: all three jobs, 169 foundation checks without failures/errors/
+skips and 57 scopes/456 exact discoveries/executions. The eight new race rows,
+all actual recovery/transfer/retention/external prerequisites, native containment
+and eighteen-package/thirteen-lock replay passed strict closed admission.
+Two fresh-cache locked visibility builds independently reproduce eleven
+archives and verify ten loaded dependency images. Each passes 278 artifact cases
+and 89 metadata cases per provider without skips. SDK/accepted-source formatting,
+compiled/frozen catalogs, mechanical comparison and all 279 tooling tests pass
+(262 passes/seventeen native macOS skips). Earlier actual transfer packets and
+tracked locks remain unchanged; these are not fresh category/session origins.
+Input: `d76fa0b400774c50f771b733de73a71bc9b0c4c6622097c896b06fff5fc7f664`;
+preparation: `ab5517a180e177c516a886857cd9a79809af8c1757bd5b61d64dfe9e1555396b`.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

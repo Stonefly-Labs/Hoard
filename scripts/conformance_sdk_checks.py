@@ -1003,6 +1003,17 @@ def artifact_noncooperation_diagnostics(run, inputs, candidate):
     return result
 
 
+def original_artifact_visibility_scenarios():
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.startswith(
+            "Hoard.Artifacts.Tests.ArtifactVisibilityTests.")}
+    identities.add(
+        "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+        "Shared_visibility_assertion_rejects_premature_acknowledgment_and_accepts_original_store")
+    return (("original-artifact-visibility", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def original_artifact_reconciliation_scenarios():
     identities = {
         witness for case in category_cases() if case.profile_id == "artifacts"
@@ -1128,7 +1139,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-publication", "original-artifact-read-delete", "original-artifact-evidence",
             "sqlite-recovery-barriers", "local-recovery-barriers", "paced-artifact-transfers",
             "artifact-noncooperation", "original-artifact-external", "original-artifact-races",
-            "original-artifact-reconciliation"],
+            "original-artifact-reconciliation", "original-artifact-visibility"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1149,7 +1160,8 @@ def test_attempt(run, inputs, candidate, scenario):
     if original_artifacts and scenario not in (
             *original_artifact_publication_scenarios(), *original_artifact_read_delete_scenarios(),
             *original_artifact_evidence_scenarios(), *original_artifact_external_scenarios(),
-            *original_artifact_race_scenarios(), *original_artifact_reconciliation_scenarios()):
+            *original_artifact_race_scenarios(), *original_artifact_reconciliation_scenarios(),
+            *original_artifact_visibility_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
     sqlite_tests = metadata_provider == "sqlite" or any(
@@ -1536,6 +1548,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "original-artifact-reconciliation"}), flush=True)
         for scenario in original_artifact_reconciliation_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "original-artifact-visibility"}), flush=True)
+        for scenario in original_artifact_visibility_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

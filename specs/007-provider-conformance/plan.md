@@ -2616,6 +2616,46 @@ macOS skips), mechanical five-body comparison and patch integrity pass.
 Tracked locks, production contracts/edges/ADRs/diagrams and deployment examples
 are unaffected by this test-only extraction.
 
+All three original direct/listing visibility bodies now execute provider-free
+shared checks. Exact assertion tokens/order match mechanically after explicit
+setup/seam/helper/cancellation forwarding. Receipt/listing/direct-availability
+observer registration, finite actual fixture entry waits and release controls
+remain fixture-side, including direct-observer removal before release.
+
+A real Local negative starts the actual held commit but immediately returns a
+genuine earlier publication receipt. The unchanged shared pending-task
+assertion fails. The test releases the actual hold, awaits actual commit
+settlement, verifies one mutated commit call and a distinct Published stamp;
+the fresh genuine store passes that same consumer unchanged. Actual missing
+shared consumers first failed package-mode compilation with CS0103, and the
+missing exact visibility scope failed its named tooling regression. The new
+scope appends three frozen visibility identities and this mutation to request
+59 scopes/470 observations, pending. No category/task/checklist/stage advance.
+
+The preceding native race request passed
+[40113497329](https://github.com/Stonefly-Labs/Hoard/actions/runs/40113497329)
+at exact head `91da8f433af10b19924f45365b9eea6938101612`. All three jobs passed,
+169 foundation checks had no failures/errors/skips, and strict admission verified
+57 scopes/456 exact discoveries/executions, including all eight race rows.
+Actual SQLite/Local recovery, all four paced transfer/RSS rows, all six
+two-phase retained-worker chains, original external wrappers, native containment
+and eighteen-package/thirteen-lock replay also passed. Retained-worker receipts
+remain explicitly non-durable. Input:
+`d76fa0b400774c50f771b733de73a71bc9b0c4c6622097c896b06fff5fc7f664`;
+preparation:
+`ab5517a180e177c516a886857cd9a79809af8c1757bd5b61d64dfe9e1555396b`.
+The new reconciliation/visibility requests remain separate and pending.
+Two actual independent fresh-cache locked preparations reproduce eleven archives
+with combined archive-map SHA-256
+`546ba43f818b769a3c6286e8efcae631087b31d8fdbb1acb43905af770c32e5b`;
+ten loaded dependency images match their archives. Each run passes 278 artifact
+cases and 89 metadata cases per provider without skips. Previously measured
+actual transfer packets are unchanged, not fresh session/category origins.
+All 279 tooling tests pass (262 passes/seventeen native macOS skips), alongside
+SDK/accepted-source formatting, compiled/frozen catalogs, mechanical three-body
+comparison and patch integrity. Product APIs/edges/ADRs/diagrams, deployment
+examples and tracked locks remain unaffected.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

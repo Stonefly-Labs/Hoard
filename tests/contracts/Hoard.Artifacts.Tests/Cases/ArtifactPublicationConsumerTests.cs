@@ -63,6 +63,54 @@ public sealed class ArtifactPublicationConsumerTests
         }
     }
 
+    [Fact]
+    public async Task Shared_visibility_assertion_rejects_premature_acknowledgment_and_accepts_original_store()
+    {
+        static async Task CheckAsync(IArtifactStore store, Action<Func<ValueTask>> observeAcknowledgment)
+        {
+            await using var boundary = new ArtifactTestBarrier("shared-receipt-before-acknowledgment");
+            await ArtifactVisibilityAssertions.VisibleBeforeAcknowledgmentAsync(store,
+                () => observeAcknowledgment(() => new(boundary.HoldAsync())),
+                token => boundary.Entered.WaitAsync(token), boundary.Release, default);
+        }
+
+        await using (var driver = await ArtifactProviderDriver.CreateAsync("local"))
+        {
+            using var source = new ArtifactPublicationAssertions.ShortSource("actual premature acknowledgment control"u8.ToArray());
+            var foreign = await ArtifactPublicationAssertions.PublishAsync(driver.Store, source, new(1024), default);
+            var mutation = new PrematureAcknowledgment(driver.Store, foreign);
+            await Assert.ThrowsAsync<Xunit.Sdk.FalseException>(() =>
+                CheckAsync(mutation, observer => driver.LocalControls!.SetObserver("publish.receipted", observer)));
+            Assert.Equal(1, mutation.CommitCalls);
+            var actual = ArtifactPublicationTests.Success(await mutation.WaitForCommitAsync());
+            Assert.NotEqual(foreign.Stamp, actual.Stamp);
+            Assert.Equal(ArtifactMutationOutcome.Published, actual.Outcome);
+        }
+        await using (var driver = await ArtifactProviderDriver.CreateAsync("local"))
+        {
+            await CheckAsync(driver.Store, observer => driver.LocalControls!.SetObserver("publish.receipted", observer));
+        }
+    }
+
+    private sealed class PrematureAcknowledgment(IArtifactStore store, ArtifactMutationReceipt foreign) : ForwardingStore(store)
+    {
+        private Task<ArtifactResult<ArtifactMutationReceipt>>? actualCommit;
+        public int CommitCalls { get; private set; }
+
+        public override ValueTask<ArtifactResult<ArtifactMutationReceipt>> CommitAsync(
+            ArtifactStagedWrite staged, ArtifactTransferOptions options, CancellationToken ct)
+        {
+            CommitCalls++;
+            actualCommit = Store.CommitAsync(staged, options, ct).AsTask();
+            return ValueTask.FromResult<ArtifactResult<ArtifactMutationReceipt>>(
+                new ArtifactResult<ArtifactMutationReceipt>.Success(foreign));
+        }
+
+        public Task<ArtifactResult<ArtifactMutationReceipt>> WaitForCommitAsync() =>
+            (actualCommit ?? throw new InvalidOperationException("Mutation requires an actual pending commit."))
+            .WaitAsync(TimeSpan.FromSeconds(5));
+    }
+
     private sealed class ForeignReconciledReceipt(IArtifactStore store) : ForwardingStore(store)
     {
         public int ReconcileCalls { get; private set; }
