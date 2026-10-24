@@ -2342,6 +2342,67 @@ The final acknowledged protocol was recompiled in two fresh caches and all
 five actual macOS transfer rows rerun successfully after adding the explicit
 settlement acknowledgement.
 
+### Native Local recovery verified; live artifact worker inspection
+
+Native
+[40107826472](https://github.com/Stonefly-Labs/Hoard/actions/runs/40107826472)
+at `e6d79f4ad5da3496f4c29038e55e16f64b8e7688` passed all three jobs:
+152 foundation checks without failures/errors/skips, 55 scopes/427 exact
+discoveries/executions, ten SQLite and six actual Local observed-barrier kill/
+readback rows plus the actual backup/restore walkthrough, genuine native
+containment and identical eighteen-package/thirteen-lock replay.
+Input: `167511b7f2a68798a14d65b42a3332a3045a673013c9948b933ddd30deb8833b`.
+Preparation: `baf0643822c7cbdb6e08a6c991ecb0374256b274013ac96bc43dded08316939e`.
+Baseline seal remains `41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`;
+free scratch is 91,724,165,120 bytes. Each Local row has distinct controller and
+child-start hashes and the exact successful original readback. This is not
+ObjectSemantics durability or complete legacy/session/category attribution.
+
+Native process/memory/settlement regressions at
+`d429dd24fb18efda382502ff0a3461ab9ffc6b4f`, run `40109299238`,
+job `120917473901`, passed all 159 foundation tests without failures/errors/
+skips. This includes the real owned-controller memory and acknowledgement
+regressions, not actual large-transfer proof; the complete run remains running.
+
+The actual noncooperative artifact runner now supports opt-in safe events,
+preserving legacy output and rejecting invalid mode before store creation.
+Original code still stalls actual source/destination/native work, checks
+pending worker, untouched borrowed streams, retained root/cleanup, blocked
+readiness/admission/shutdown and appropriate read/delete protection, then repeats
+those original inspections after the literal parent request while work remains
+live. Bounded closed observation files are flushed before numeric barriers.
+No provider pass label replaces these actual assertions.
+
+The owning command adds an opt-in contained-barrier inspection request before
+its existing observed-stop target. Both targets must be distinct bounded
+integers in recovery/event scope; the same fifteen-second bound remains.
+Live exact PID/start is required before the request, then observed target,
+accepted owned SIGKILL and confirmed group exit. Parent receipt admission
+checks exact ordered observation/request/observation/signal/exit times and both
+matching phase/run/PID/provider/scenario producer records, with unchanged
+retention/failure predicates. Old barriers/receipts are unchanged without opt-in.
+Six actual Local/ObjectSemantics source/destination/native rows are requested;
+their final record explicitly has `durableCrashProof: false`.
+
+Named missing dispatch, producer admission and parent handshake assertions
+failed first. Focused negatives reject foreign/mismatched second observations,
+changed retention/protection, absent request and reversed/repeated barriers.
+Numeric timestamp validation now checks bounds before floating finiteness:
+the regression observed an escaping overflow on huge integers first, and those
+values now fail closed as `ProofMismatch`. No receipt or diagnostic fallback
+was added. Two independent fresh-cache locked builds reproduce actual runner
+bytes and all nine local dependency images. Actual macOS execution passes both
+original inspections and parent termination for all six safe rows, an unchanged
+legacy source row and invalid-mode rejection. These are not Linux pidfd/group
+or durable crash receipts.
+
+All 272 tooling tests pass locally (255 passes, seventeen native macOS skips),
+with SDK catalog, runner whitespace and patch integrity passing. Actual Linux
+retained-worker inspection, original wrapper/session/legacy imports, all four
+authority combinations and complete category/profile acceptance remain pending.
+Production architecture/ADRs/diagrams and deployment examples remain unaffected
+by test transport and parent evidence changes. No task/checklist/stage advances.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

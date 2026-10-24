@@ -51,7 +51,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         for change in (
                 {"sequence": True}, {"childPid": True}, {"childStartSha256": "0" * 64},
                 {"scope": "ordinary"}, {"exitCode": True}, {"groupState": "Retained"},
-                {"diagnosticCode": "DeadlineExceeded"}, {"startedMs": float("nan")},
+                {"diagnosticCode": "DeadlineExceeded"}, {"startedMs": float("nan")}, {"startedMs": 10**400},
                 {"endedMs": 2401001}, {"extra": "ignored"}, {"transfer": None},
                 *({"transfer": command["transfer"] | item} for item in (
                     {"bytes": 4294967296}, {"bytes": True}, {"phase": "transferring"},
@@ -59,7 +59,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     {"osPeakRssBytes": 1048576 + 67108865}, {"sampledPeakRssBytes": 2097153},
                     {"sampledPeakRssBytes": 1}, {"samples": 1}, {"samples": True}, {"extra": "ignored"},
                     {"baselineMs": 999}, {"completedMs": 1201}, {"completedMs": 1049},
-                    {"baselineMs": False}, {"completedMs": float("nan")}))):
+                    {"baselineMs": False}, {"completedMs": float("nan")}, {"baselineMs": 10**400}))):
             with self.subTest(change=change), self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
                 checks.admit_transfer_measurement(command | change, 3, 268435456)
 
@@ -153,6 +153,136 @@ class SdkDiagnosticTests(unittest.TestCase):
         with patch.object(checks, "verify_runtime_packages"), patch.object(checks, "measured_artifact_transfer") as execute:
             with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
                 checks.artifact_transfer_diagnostics(
+                    run, {"runtimeAssemblies": {assembly.relative_to(root).as_posix(): "0" * 64}}, candidate)
+            execute.assert_not_called()
+
+    def test_noncooperative_observations_require_real_retention_and_matching_live_child(self):
+        self.assertTrue(callable(getattr(checks, "admit_artifact_noncooperation", None)),
+                        "Retained-work observations must be checked before their numeric barriers qualify.")
+        run_id = str(uuid.uuid4())
+        observation = {
+            "eventName": "noncooperative", "phase": "contained", "pid": 200, "runId": run_id,
+            "provider": "local", "scenario": "source", "durableCrashProof": False,
+            "cleanup": "RetainedLiveOwnership", "callerCode": "CancelledBeforeCommit",
+            "admissionCode": "CleanupIncomplete", "shutdownCode": "CleanupIncomplete",
+            "enteredWorkers": 1, "workerPending": True, "borrowedStreamsIntact": True,
+            "rootStillOwned": True, "readinessBlocked": True, "protectionRetained": False,
+        }
+        checks.admit_artifact_noncooperation(observation, "local", "source", "contained", 200, run_id)
+        for change in (
+                {"pid": 201}, {"pid": True}, {"runId": str(uuid.uuid4())}, {"provider": "object"},
+                {"scenario": "native"}, {"phase": "inspected"}, {"durableCrashProof": True},
+                {"cleanup": "Released"}, {"callerCode": "None"}, {"admissionCode": "None"},
+                {"shutdownCode": "None"}, {"enteredWorkers": 2}, {"enteredWorkers": True},
+                {"workerPending": False}, {"borrowedStreamsIntact": False}, {"rootStillOwned": False},
+                {"readinessBlocked": False}, {"protectionRetained": True}, {"extra": True}):
+            with self.subTest(change=change), self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.admit_artifact_noncooperation(
+                    observation | change, "local", "source", "contained", 200, run_id)
+        for code in ("Uncertain", "DeadlineExceeded"):
+            changed = observation | {"scenario": "native", "callerCode": code, "protectionRetained": True}
+            checks.admit_artifact_noncooperation(changed, "local", "native", "contained", 200, run_id)
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.admit_artifact_noncooperation(
+                    changed | {"protectionRetained": False}, "local", "native", "contained", 200, run_id)
+
+    def test_inspection_receipts_reject_missing_reordered_and_foreign_handshakes(self):
+        command = {
+            "schemaVersion": 1, "sequence": 1, "childPid": 200, "childStartSha256": "a" * 64,
+            "startedMs": 1000, "endedMs": 1500, "exitCode": -9, "diagnosticCode": "None",
+            "groupState": "Exited", "scope": "recovery", "barrier": {
+                "value": 70, "observedMs": 1300, "signalMs": 1400,
+                "inspection": {"value": 60, "observedMs": 1100, "requestMs": 1200},
+            },
+        }
+        checks.admit_recovery_barrier(command, 1, 70, inspection=60)
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+            checks.admit_recovery_barrier(command, 1, 70)
+        for change in (
+                {"value": 61}, {"value": True}, {"observedMs": 999}, {"requestMs": 1099},
+                {"requestMs": 1301}, {"requestMs": None}, {"requestMs": float("nan")}, {"extra": True}):
+            changed = command | {"barrier": command["barrier"] | {
+                "inspection": command["barrier"]["inspection"] | change}}
+            with self.subTest(change=change), self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.admit_recovery_barrier(changed, 1, 70, inspection=60)
+
+    def test_noncooperative_controller_requires_both_matching_producers_and_exact_parent_inspection(self):
+        for mutation in (None, "foreign", "wrong-second", "handoff", "event"):
+            root = self.directory / str(mutation)
+            (root / "stores/artifact-noncooperation").mkdir(parents=True)
+            (root / "proofs").mkdir()
+            run = SimpleNamespace(root=root, command_sequence=0, live_children=lambda: ())
+            invocations = []
+
+            def command(args, **options):
+                run.command_sequence += 1
+                invocations.append((args, options))
+                receipt = {
+                    "schemaVersion": 1, "sequence": 1, "childPid": 200, "childStartSha256": "a" * 64,
+                    "startedMs": 1000, "endedMs": 1500, "exitCode": -9, "diagnosticCode": "None",
+                    "groupState": "Exited", "scope": "recovery", "barrier": {
+                        "value": 70, "observedMs": 1300, "signalMs": 1400,
+                        "inspection": {"value": 60, "observedMs": 1100, "requestMs": 1200},
+                    },
+                }
+                if mutation == "handoff":
+                    receipt["barrier"]["inspection"]["requestMs"] = None
+                (root / "proofs/recovery-command-0001.json").write_text(json.dumps(receipt))
+                for phase in ("contained", "inspected"):
+                    producer = {
+                        "eventName": "noncooperative", "phase": phase, "pid": 200, "runId": args[6],
+                        "provider": "local", "scenario": "source", "durableCrashProof": False,
+                        "cleanup": "RetainedLiveOwnership", "callerCode": "CancelledBeforeCommit",
+                        "admissionCode": "CleanupIncomplete", "shutdownCode": "CleanupIncomplete",
+                        "enteredWorkers": 1, "workerPending": True, "borrowedStreamsIntact": True,
+                        "rootStillOwned": True, "readinessBlocked": True, "protectionRetained": False,
+                    }
+                    if mutation == "foreign":
+                        producer["pid"] = 201
+                    if mutation == "wrong-second" and phase == "inspected":
+                        producer["runId"] = str(uuid.uuid4())
+                    (Path(args[3]) / f"noncooperative-{phase}.json").write_text(json.dumps(producer))
+                events = ({"event": "barrier", "code": "None", "value": 60},
+                          {"event": "barrier", "code": "None", "value": 70})
+                return SimpleNamespace(exit_code=-9, events=events if mutation != "event" else events[:1])
+
+            run.command = command
+            with self.subTest(mutation=mutation):
+                if mutation is not None:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                        checks.artifact_noncooperation(run, root / "runner.dll", "local", "source")
+                    continue
+                observed = checks.artifact_noncooperation(run, root / "runner.dll", "local", "source")
+                self.assertEqual(observed["childStartSha256"], "a" * 64)
+                self.assertNotEqual(observed["containedSha256"], observed["inspectedSha256"])
+                self.assertEqual(invocations[0][1]["inspect_at_barrier"], 60)
+                self.assertEqual(invocations[0][1]["stop_at_barrier"], 70)
+                self.assertEqual(invocations[0][1]["env"], {"HOARD_CONFORMANCE_SAFE_EVENTS": "1"})
+
+    def test_noncooperative_controller_requests_source_sink_and_native_inspection_on_both_actual_providers(self):
+        self.assertTrue(callable(getattr(checks, "artifact_noncooperation_diagnostics", None)),
+                        "Artifact retained work requires actual owned inspection/termination on both providers.")
+        root = self.directory
+        candidate = root / "candidate"
+        assembly = candidate / checks.ARTIFACT_RECOVERY / (
+            "bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll")
+        assembly.parent.mkdir(parents=True)
+        assembly.write_bytes(b"noncooperative-controller-unit-double")
+        (root / "stores").mkdir()
+        (root / "proofs").mkdir()
+        run = SimpleNamespace(root=root)
+        inputs = {"runtimeAssemblies": {
+            assembly.relative_to(root).as_posix(): hashlib.sha256(assembly.read_bytes()).hexdigest()}}
+        with patch.object(checks, "verify_runtime_packages"), patch.object(
+                checks, "artifact_noncooperation", return_value={"controllerSha256": "a" * 64}) as execute:
+            result = checks.artifact_noncooperation_diagnostics(run, inputs, candidate)
+            self.assertFalse(result["qualification"])
+            self.assertEqual(result["inputsSha256"], checks.evidence.digest(inputs))
+            self.assertEqual([call.args[2:4] for call in execute.call_args_list], [
+                (provider, scenario) for provider in ("local", "object") for scenario in ("source", "destination", "native")])
+        with patch.object(checks, "verify_runtime_packages"), patch.object(checks, "artifact_noncooperation") as execute:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                checks.artifact_noncooperation_diagnostics(
                     run, {"runtimeAssemblies": {assembly.relative_to(root).as_posix(): "0" * 64}}, candidate)
             execute.assert_not_called()
 

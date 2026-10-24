@@ -1394,13 +1394,19 @@ observations. This is recovery diagnostic evidence, not complete category proof.
 The same parent receipt gate now requests Local B0..B3/D0..D1 crash/readback
 rows through the actual artifact runner. Two fresh locked builds reproduce
 identical runner bytes and nine dependency images; all six safe-mode local
-readbacks pass on macOS. Linux owning-controller execution remains pending.
+readbacks pass on macOS. Linux owning-controller execution subsequently passed
+at [40107826472](https://github.com/Stonefly-Labs/Hoard/actions/runs/40107826472):
+all three jobs, 152 foundation checks, all six Local and ten SQLite rows.
 The transfer diagnostic now requests actual paced, generated, non-seekable
 256 MiB/4 GiB reads/writes for both artifact providers. Parent-controlled
 handshakes bracket independent Linux kernel RSS/high-water measurements and
 enforce the 64 MiB incremental peak bound. Two locked builds and all four real
 macOS transfer rows pass, including actual `getrusage` peaks; Linux owned
 measurement and complete wrapper/category attribution remain pending.
+The artifact runner now also requests two actual live inspections of retained
+source, destination and native workers on both providers before parent-owned
+termination. All six macOS functional rows pass; Linux inspection/termination
+execution remains pending. This is explicitly not durable crash evidence.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

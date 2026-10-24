@@ -571,8 +571,12 @@ class OwnedRun:
     @single_writer
     def command(self, args, *, cwd=None, timeout=None, kind="events", env=None,
                 scope="ordinary", cache_id="default", deadline=None, discovery_tests=frozenset(),
-                stop_at_barrier=None, measure_transfer_bytes=None):
+                stop_at_barrier=None, measure_transfer_bytes=None, inspect_at_barrier=None):
         started = time.monotonic()
+        if inspect_at_barrier is not None and (
+                type(inspect_at_barrier) is not int or not 0 <= inspect_at_barrier <= 65535
+                or stop_at_barrier is None or inspect_at_barrier == stop_at_barrier):
+            raise ConformanceError("OwnershipInvalid")
         if measure_transfer_bytes is not None and (
                 type(measure_transfer_bytes) is not int or measure_transfer_bytes not in (268435456, 4294967296)
                 or scope != "transfer" or kind != "events" or stop_at_barrier is not None):
@@ -644,7 +648,7 @@ class OwnedRun:
         try:
             child = subprocess.Popen(
                 launch, cwd=cwd, env=environment,
-                stdin=subprocess.PIPE if measure_transfer_bytes is not None else None,
+                stdin=subprocess.PIPE if measure_transfer_bytes is not None or inspect_at_barrier is not None else None,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True,
                 pass_fds=(() if scope == "cleanup" else (writer.fileno(),)))
         except OSError:
@@ -662,6 +666,8 @@ class OwnedRun:
         identity = None
         exited = False
         barrier = {"value": stop_at_barrier, "observedMs": None, "signalMs": None}
+        if inspect_at_barrier is not None:
+            barrier["inspection"] = {"value": inspect_at_barrier, "observedMs": None, "requestMs": None}
         transfer = {"bytes": measure_transfer_bytes, "phase": "waiting", "baselineRssBytes": None,
                     "osPeakRssBytes": 0, "sampledPeakRssBytes": 0, "samples": 0,
                     "osPeakMethod": "proc-status", "baselineMs": None, "completedMs": None}
@@ -723,6 +729,21 @@ class OwnedRun:
                 if stop_at_barrier is not None and event["code"] != "None":
                     raise ConformanceError("ProofMismatch")
                 if stop_at_barrier is not None and event["event"] == "barrier":
+                    if inspect_at_barrier is not None:
+                        inspection = barrier["inspection"]
+                        if event["value"] == inspect_at_barrier:
+                            if inspection["requestMs"] is not None or barrier["observedMs"] is not None:
+                                raise ConformanceError("ProofMismatch")
+                            inspection["observedMs"] = time.monotonic() * 1000
+                            if (identity is None or child.poll() is not None
+                                    or process_identity(child.pid, deadline=deadline) != identity):
+                                raise ConformanceError("OwnershipInvalid")
+                            inspection["requestMs"] = time.monotonic() * 1000
+                            if os.write(child.stdin.fileno(), b"inspect\n") != len(b"inspect\n"):
+                                raise ConformanceError("CommandFailed")
+                            return
+                        if inspection["requestMs"] is None:
+                            raise ConformanceError("ProofMismatch")
                     if barrier["observedMs"] is not None or event["value"] != stop_at_barrier:
                         raise ConformanceError("ProofMismatch")
                     barrier["observedMs"] = time.monotonic() * 1000

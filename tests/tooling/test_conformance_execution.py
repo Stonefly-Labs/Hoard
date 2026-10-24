@@ -409,6 +409,53 @@ print('{"event":"control","code":"None","value":1}')
         run.transition("Settling")
         run.release()
 
+    def test_barrier_inspection_requires_a_distinct_owned_recovery_stop_target(self):
+        run = self.workspace()
+        for options in (
+                {"inspect_at_barrier": 60}, {"inspect_at_barrier": True, "stop_at_barrier": 70},
+                {"inspect_at_barrier": 60.0, "stop_at_barrier": 70},
+                {"inspect_at_barrier": -1, "stop_at_barrier": 70},
+                {"inspect_at_barrier": 60, "stop_at_barrier": 60},
+                {"inspect_at_barrier": 60, "stop_at_barrier": 70, "kind": "build"}):
+            with self.subTest(options=options), mock.patch.object(execution.subprocess, "Popen") as launch:
+                with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                    run.command([sys.executable, "-c", "pass"], **({"scope": "recovery"} | options))
+                launch.assert_not_called()
+        run.transition("Settling")
+        run.release()
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
+    def test_owned_inspection_observes_both_live_boundaries_before_terminating_the_exact_child(self):
+        run = self.workspace()
+        program = """
+import json,sys,time
+print(json.dumps({"event":"barrier","code":"None","value":60}),flush=True)
+assert sys.stdin.readline()=="inspect\\n"
+print(json.dumps({"event":"barrier","code":"None","value":70}),flush=True)
+time.sleep(60)
+"""
+        result = run.command([sys.executable, "-c", program], scope="recovery",
+                             inspect_at_barrier=60, stop_at_barrier=70)
+        self.assertEqual(result.exit_code, -9)
+        receipt = json.loads((run.root / "proofs/recovery-command-0001.json").read_bytes())
+        barrier = receipt["barrier"]
+        self.assertEqual(barrier["inspection"]["value"], 60)
+        self.assertLessEqual(barrier["inspection"]["observedMs"], barrier["inspection"]["requestMs"])
+        self.assertLessEqual(barrier["inspection"]["requestMs"], barrier["observedMs"])
+        self.assertLessEqual(barrier["observedMs"], barrier["signalMs"])
+        self.assertEqual((receipt["diagnosticCode"], receipt["groupState"]), ("None", "Exited"))
+        self.assertFalse(run.live_children())
+        for program in (
+                'print(\'{"event":"barrier","code":"None","value":70}\',flush=True)',
+                'import sys,time; print(\'{"event":"barrier","code":"None","value":60}\',flush=True); '
+                'sys.stdin.readline(); print(\'{"event":"barrier","code":"None","value":60}\',flush=True); time.sleep(60)'):
+            with self.subTest(program=program), self.assertRaisesRegex(ConformanceError, "ProofMismatch"):
+                run.command([sys.executable, "-c", program], scope="recovery",
+                            inspect_at_barrier=60, stop_at_barrier=70)
+            self.assertFalse(run.live_children())
+        run.transition("Settling")
+        run.release()
+
     def test_transfer_measurement_requires_qualified_bytes_and_the_owned_transfer_event_scope(self):
         run = self.workspace()
         for options in (

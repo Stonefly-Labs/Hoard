@@ -158,13 +158,23 @@ All three jobs passed, with 55 scopes/427 exact observations and unchanged
 eighteen-package/thirteen-lock replay. Local now requests six actual publication/deletion crash/readback
 pairs through the same safe parent gate. Fresh locked builds and all six
 macOS functional readbacks pass, not Linux ownership/category proof. Actual
-Linux Local execution and large transfer/RSS obligations remain pending.
+Linux Local execution subsequently passed all six rows at
+[40107826472](https://github.com/Stonefly-Labs/Hoard/actions/runs/40107826472),
+with all three jobs, 152 foundation checks and 55 scopes/427 exact observations.
+Large transfer/RSS obligations remain pending.
 The new transfer controller requests both providers' actual paced, non-seekable
 256 MiB/4 GiB write/read rows with independent parent kernel RSS/high-water
 observation, a 64 MiB incremental peak bound and exact producer/receipt binding.
 Two locked builds and all four real macOS rows pass, including actual
 `getrusage` peaks. Linux owning-controller measurement and original wrapper/
 session/category attribution remain pending.
+The actual artifact runner also exposes two-phase safe inspection of retained
+source/destination/native workers on both providers, preserving default output.
+The owning controller requests the second original inspection before observed
+termination, admitting the complete parent chain and both matching producer
+records. Two locked builds and all six macOS functional rows pass; Linux
+execution and complete wrapper/session/category evidence remain pending.
+No durable crash proof is inferred from these retained-worker rows.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

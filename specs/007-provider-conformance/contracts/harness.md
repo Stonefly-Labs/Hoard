@@ -353,8 +353,11 @@ unchanged nine-package graph and complete runtime bytes are independently
 verified/captured. Six fresh run-bound crash/readback pairs use the same
 parent-owned observation/signal/exit gate and original Local assertions,
 not ObjectSemantics or metadata provider delegation. Two locked runner builds
-and six macOS functional readbacks pass; actual Linux ownership and complete
-legacy/session/category proof remain pending.
+and six macOS functional readbacks pass; actual Linux ownership/readback
+subsequently passed all six rows at
+[40107826472](https://github.com/Stonefly-Labs/Hoard/actions/runs/40107826472).
+All three jobs passed, with 152 foundation checks and 55 scopes/427 observations.
+Complete legacy/session/category proof remains pending.
 The transfer diagnostic now requests both providers' actual paced non-seekable
 256 MiB/4 GiB writes and reads. Parent handshakes bracket kernel `/proc` RSS/
 high-water observation on the exact owned child; only those kernel values can
@@ -364,6 +367,15 @@ are required. Full runtime bytes enter pre/post immutable capture. Two fresh
 locked builds and all four real macOS rows pass, including actual `getrusage`
 peak bounds, not Linux pidfd/status measurement. Actual Linux measurement and
 complete wrapper/session/category imports remain pending.
+For retained artifact work, explicit safe mode writes bounded closed original
+observations before contained/inspected barriers. The owning parent requests
+the second actual inspection, then observes its target and signals only that
+owned group. Admission requires the exact ordered live-child request/signal/
+exit chain, both matching phase/run/PID/provider/scenario records and unchanged
+retention/protection/failure assertions. Six actual source/destination/native
+rows are requested across both providers; every result explicitly disclaims
+durable crash proof. Two locked builds and all six macOS functional rows pass;
+actual Linux execution and full wrapper/session/category attribution remain open.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

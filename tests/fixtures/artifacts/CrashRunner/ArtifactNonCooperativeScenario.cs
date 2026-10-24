@@ -8,6 +8,12 @@ internal static class ArtifactNonCooperativeScenario
 {
     public static async Task<int> ExecuteAsync(string[] args)
     {
+        var safeEvents = Environment.GetEnvironmentVariable("HOARD_CONFORMANCE_SAFE_EVENTS") switch
+        {
+            null => false,
+            "1" => true,
+            _ => throw new ArgumentException("Unsupported artifact non-cooperative event mode.")
+        };
         var root = Path.GetFullPath(args[1]);
         var provider = args[2];
         var scenario = args[3];
@@ -124,7 +130,7 @@ internal static class ArtifactNonCooperativeScenario
                 _ => throw new InvalidOperationException("Unknown artifact child store.")
             };
             Require(!ready && !idle.IsCompleted && stall.Count == 1);
-            Console.WriteLine(JsonSerializer.Serialize(new
+            var observation = JsonSerializer.Serialize(new
             {
                 eventName = "noncooperative",
                 phase,
@@ -143,7 +149,24 @@ internal static class ArtifactNonCooperativeScenario
                 rootStillOwned = true,
                 readinessBlocked = !ready,
                 protectionRetained
-            }));
+            });
+            if (safeEvents)
+            {
+                var bytes = System.Text.Encoding.UTF8.GetBytes(observation);
+                if (bytes.Length > 8192)
+                { throw new InvalidOperationException("Artifact non-cooperative proof exceeded its bound."); }
+                using (var output = new FileStream(Path.Combine(root, $"noncooperative-{phase}.json"),
+                    FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                {
+                    output.Write(bytes);
+                    output.Flush(flushToDisk: true);
+                }
+                var offset = scenario switch { "source" => 0, "destination" => 1, "native" => 2, _ => throw new InvalidOperationException() };
+                var value = (phase == "contained" ? 60 : 70) + offset;
+                Console.WriteLine(JsonSerializer.Serialize(new { @event = "barrier", code = "None", value }));
+            }
+            else
+            { Console.WriteLine(observation); }
             await Console.Out.FlushAsync();
         }
     }

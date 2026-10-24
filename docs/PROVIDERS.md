@@ -270,7 +270,8 @@ Local now has the same explicit safe-event runner integration for its six
 publication/deletion crash/readback rows, sharing only parent receipt admission
 with SQLite, never provider mechanisms or simulation durability. Fresh locked
 runner builds and macOS functional readbacks pass; actual Linux owning-controller
-execution remains pending. Large transfer/RSS proofs and category/session/
+execution subsequently passed at `e6d79f4`, including all six Local rows.
+Large transfer/RSS proofs and category/session/
 legacy witness integration remain unfinished.
 SQLite's ten actual kill/readback rows and backup/restore walkthrough have
 subsequently passed on Linux at `62c149c`, with all three jobs successful.
@@ -280,6 +281,11 @@ observation and exact producer binding. All four real macOS rows and their OS
 peak bounds pass; Linux owned measurement, original wrapper/session imports
 and full category acceptance remain pending. ObjectSemantics borrows no
 SQLite/Local durable recovery proof.
+The same actual runner now exposes safe two-phase live inspection for retained
+source/destination/native workers on both providers. The parent requests the
+second original inspection before owned termination and admits matching
+phase/run/PID/retention records. All six macOS functional rows pass; Linux
+execution remains pending. This work explicitly supplies no durable crash proof.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

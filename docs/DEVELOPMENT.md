@@ -6292,8 +6292,8 @@ runner validation, explicitly not the Linux pidfd/group ownership proof.
 All 259 tooling tests pass locally (245 passes, fourteen native macOS skips),
 with formatting and frozen catalogs passing. The new Local controller test first
 failed for missing dispatch; its unit double verifies all twelve requested
-scopes and rejects changed runner bytes. Actual Linux Local execution, safe
-legacy witness/session imports and full T032/category completion remain pending.
+scopes and rejects changed runner bytes. Subsequent Linux verification is below;
+safe legacy witness/session imports and full T032/category completion remain pending.
 The real paced 256 MiB/4 GiB/RSS obligations are not replaced by these small
 recovery payloads.
 
@@ -6347,6 +6347,55 @@ Final checks pass: `python3 -m unittest discover -s tests/tooling -q`
 inventory, `dotnet format whitespace` for the runner and `git diff --check`.
 The actual runner also acknowledges the literal settlement handshake before
 normal exit; missing acknowledgement is not a completed parent measurement.
+
+### Actual Local recovery and retained artifact work
+
+Native
+[40107826472](https://github.com/Stonefly-Labs/Hoard/actions/runs/40107826472)
+at `e6d79f4ad5da3496f4c29038e55e16f64b8e7688` passed all three jobs,
+152 foundation checks without failures/errors/skips, 55 scopes/427 exact
+observations, all ten SQLite and all six actual Local observed-barrier kill/
+readback rows plus the real backup/restore walkthrough, native containment
+and unchanged eighteen-package/thirteen-lock replay. ObjectSemantics borrows
+no durable recovery row. Native transfer-process regressions also passed 159
+tests without failures/errors/skips at `d429dd2`; actual Linux large-transfer
+execution remains running, not inferred from these controller tests.
+
+The actual artifact noncooperative runner now supports explicit safe mode.
+Default output is preserved; invalid mode rejects before store creation.
+Original code still blocks actual source/destination/native workers, checks
+borrowed streams, retained work/root ownership, blocked readiness/admission/
+shutdown and appropriate read/delete protection. It repeats every inspection
+after the parent's literal request while the same worker remains pending.
+Bounded closed observation files precede numeric contained/inspected barriers.
+
+The owning controller's opt-in inspection handshake requires distinct numeric
+targets and the existing fifteen-second recovery stop limit. It checks the
+live PID/start before sending the bounded literal request; the final observed
+barrier then requires accepted owned SIGKILL and confirmed group exit.
+Parent receipt admission checks the entire ordered observation/request/
+observation/signal/exit chain. Missing, duplicate, reversed, foreign or failed
+observations cannot qualify. This option leaves old barrier receipts unchanged.
+Producer phase/run/PID/provider/scenario, all original retention flags and
+allowed original failure codes must match both records before emitting hashes.
+All six source/destination/native rows use actual Local/ObjectSemantics code;
+the result explicitly says `durableCrashProof: false`.
+
+Named missing admission/dispatch/handshake assertions failed first. Focused
+mutations reject foreign children, mismatched second observations, changed
+retention, missing parent request and wrong event chains. Shared receipt
+admission now checks numeric bounds before float finiteness, so huge integers
+produce `ProofMismatch`, not an escaping overflow; the regression failed first.
+Two fresh-cache locked builds reproduce actual runner bytes and verify all nine
+dependency images. Actual macOS execution passes both inspections and owned
+termination for all six safe rows, an unchanged legacy source row and invalid
+mode rejection. These are not Linux pidfd/group receipts.
+All 272 tooling tests pass locally (255 passes, seventeen native macOS skips),
+with compiled catalog, runner whitespace and patch integrity passing.
+Actual Linux retained-worker inspection, exact original wrapper/session
+imports, all authority combinations and complete category/profile acceptance
+remain pending. Product architecture/ADRs/diagrams and deployment examples
+remain unaffected by this test-only transport and parent evidence work.
 
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)

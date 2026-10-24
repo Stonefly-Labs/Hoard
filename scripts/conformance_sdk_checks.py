@@ -713,20 +713,28 @@ def admit_owned_command(command, sequence, *, scope, detail, exit_code, max_dura
             or command["scope"] != scope):
         raise evidence.ConformanceError("ProofMismatch")
     times = (command["startedMs"], command["endedMs"])
-    if (any(type(item) not in (int, float) or not math.isfinite(item) or not 0 <= item <= 2**63 - 1
+    if (any(type(item) not in (int, float) or not 0 <= item <= 2**63 - 1 or not math.isfinite(item)
             for item in times) or times[0] > times[1] or times[1] - times[0] > max_duration):
         raise evidence.ConformanceError("ProofMismatch")
 
 
-def admit_recovery_barrier(command, sequence, value):
+def admit_recovery_barrier(command, sequence, value, *, inspection=None):
     admit_owned_command(command, sequence, scope="recovery", detail="barrier", exit_code=-9, max_duration=15000)
+    fields = {"value", "observedMs", "signalMs"} | ({"inspection"} if inspection is not None else set())
     if (type(value) is not int or not 0 <= value <= 65535 or not isinstance(command["barrier"], dict)
-            or set(command["barrier"]) != {"value", "observedMs", "signalMs"}
+            or set(command["barrier"]) != fields
             or type(command["barrier"]["value"]) is not int or command["barrier"]["value"] != value):
         raise evidence.ConformanceError("ProofMismatch")
     barrier = command["barrier"]
     times = (command["startedMs"], barrier["observedMs"], barrier["signalMs"], command["endedMs"])
-    if (any(type(item) not in (int, float) or not math.isfinite(item) or not 0 <= item <= 2**63 - 1
+    if inspection is not None:
+        observed = barrier["inspection"]
+        if (type(inspection) is not int or not 0 <= inspection <= 65535 or inspection == value
+                or not isinstance(observed, dict) or set(observed) != {"value", "observedMs", "requestMs"}
+                or type(observed["value"]) is not int or observed["value"] != inspection):
+            raise evidence.ConformanceError("ProofMismatch")
+        times = (times[0], observed["observedMs"], observed["requestMs"], *times[1:])
+    if (any(type(item) not in (int, float) or not 0 <= item <= 2**63 - 1 or not math.isfinite(item)
             for item in times) or tuple(sorted(times)) != times or times[-1] - times[0] > 15000):
         raise evidence.ConformanceError("ProofMismatch")
 
@@ -746,7 +754,7 @@ def admit_transfer_measurement(command, sequence, size):
             or measured["osPeakRssBytes"] - measured["baselineRssBytes"] > 67108864):
         raise evidence.ConformanceError("ProofMismatch")
     times = (command["startedMs"], measured["baselineMs"], measured["completedMs"], command["endedMs"])
-    if (any(type(item) not in (int, float) or not math.isfinite(item) or not 0 <= item <= 2**63 - 1
+    if (any(type(item) not in (int, float) or not 0 <= item <= 2**63 - 1 or not math.isfinite(item)
             for item in times) or tuple(sorted(times)) != times):
         raise evidence.ConformanceError("ProofMismatch")
 
@@ -920,6 +928,81 @@ def artifact_recovery_diagnostics(run, inputs, candidate):
     return result
 
 
+def admit_artifact_noncooperation(observed, provider, scenario, phase, pid, run_id):
+    fields = {
+        "eventName", "phase", "pid", "runId", "provider", "scenario", "durableCrashProof",
+        "cleanup", "callerCode", "admissionCode", "shutdownCode", "enteredWorkers",
+        "workerPending", "borrowedStreamsIntact", "rootStillOwned", "readinessBlocked", "protectionRetained",
+    }
+    if (provider not in ("local", "object") or scenario not in ("source", "destination", "native")
+            or phase not in ("contained", "inspected") or not isinstance(observed, dict) or set(observed) != fields
+            or observed["eventName"] != "noncooperative" or observed["phase"] != phase
+            or type(observed["pid"]) is not int or observed["pid"] != pid
+            or observed["runId"] != run_id or observed["provider"] != provider or observed["scenario"] != scenario
+            or observed["durableCrashProof"] is not False or observed["cleanup"] != "RetainedLiveOwnership"
+            or observed["callerCode"] not in (
+                ("DeadlineExceeded", "Uncertain") if scenario == "native" else ("CancelledBeforeCommit",))
+            or observed["admissionCode"] != "CleanupIncomplete" or observed["shutdownCode"] != "CleanupIncomplete"
+            or type(observed["enteredWorkers"]) is not int or observed["enteredWorkers"] != 1
+            or any(observed[key] is not True for key in (
+                "workerPending", "borrowedStreamsIntact", "rootStillOwned", "readinessBlocked"))
+            or observed["protectionRetained"] is not (scenario != "source")):
+        raise evidence.ConformanceError("ProofMismatch")
+
+
+def artifact_noncooperation(run, assembly, provider, scenario):
+    directory = run.root / f"stores/artifact-noncooperation/{provider}-{scenario}"
+    directory.mkdir(mode=0o700)
+    run_id = str(uuid.uuid4())
+    offset = ("source", "destination", "native").index(scenario)
+    first, last = 60 + offset, 70 + offset
+    sequence = run.command_sequence + 1
+    result = run.command(
+        ["dotnet", str(assembly), "noncooperative", str(directory), provider, scenario, run_id],
+        cwd=assembly.parent, scope="recovery", inspect_at_barrier=first, stop_at_barrier=last,
+        env={"HOARD_CONFORMANCE_SAFE_EVENTS": "1"}, cache_id="artifact-noncooperation")
+    if run.live_children():
+        raise evidence.ConformanceError("CleanupIncomplete")
+    if result.exit_code != -9 or tuple(dict(item) for item in result.events) != (
+            {"event": "barrier", "code": "None", "value": first},
+            {"event": "barrier", "code": "None", "value": last}):
+        raise evidence.ConformanceError("ProofMismatch")
+    raw = read_bounded(run.root / f"proofs/recovery-command-{sequence:04}.json", 64 * 1024)
+    command = evidence.load_json(raw)
+    admit_recovery_barrier(command, sequence, last, inspection=first)
+    hashes = {}
+    for phase in ("contained", "inspected"):
+        path = directory / f"noncooperative-{phase}.json"
+        data = read_bounded(path, 8192)
+        observed = evidence.load_json(data)
+        admit_artifact_noncooperation(observed, provider, scenario, phase, command["childPid"], run_id)
+        hashes[phase + "Sha256"] = hashlib.sha256(data).hexdigest()
+        path.chmod(0o400)
+    return {
+        "provider": provider, "scenario": scenario, **hashes,
+        "controllerSha256": hashlib.sha256(raw).hexdigest(), "childStartSha256": command["childStartSha256"],
+    }
+
+
+def artifact_noncooperation_diagnostics(run, inputs, candidate):
+    runtime = candidate / ARTIFACT_RECOVERY / "bin/Release/net10.0"
+    assembly = runtime / "Hoard.Fixtures.Artifacts.CrashRunner.dll"
+    verify_runtime_packages(runtime, run.root / "feed/candidate", ARTIFACT_RECOVERY_PACKAGES)
+    if inputs.get("runtimeAssemblies", {}).get(assembly.relative_to(run.root).as_posix()) != evidence.file_sha256(assembly):
+        raise evidence.ConformanceError("InputChanged")
+    parent = run.root / "stores/artifact-noncooperation"
+    no_symlinks(parent)
+    parent.mkdir(mode=0o700)
+    observations = [artifact_noncooperation(run, assembly, provider, scenario)
+                    for provider in ("local", "object") for scenario in ("source", "destination", "native")]
+    result = {
+        "qualification": False, "durableCrashProof": False, "mode": "artifact-noncooperation", "code": "None",
+        "inputsSha256": evidence.digest(inputs), "observations": observations,
+    }
+    write_new(run.root / "proofs/artifact-noncooperation.json", evidence.canonical_bytes(result))
+    return result
+
+
 def environment(run, *, phase="admission", candidate=None):
     # The probe is itself an owned child. Captured SDK text is bounded transient
     # input, validated before serialization, never sent to the console.
@@ -1000,7 +1083,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
         observed_environment=observed_environment, budgets=BUDGETS, invocation=[
             "sdk-logger-diagnostic", "original-metadata-memory", "original-metadata-sqlite",
             "original-artifact-publication", "original-artifact-read-delete", "original-artifact-evidence",
-            "sqlite-recovery-barriers", "local-recovery-barriers", "paced-artifact-transfers"],
+            "sqlite-recovery-barriers", "local-recovery-barriers", "paced-artifact-transfers",
+            "artifact-noncooperation"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1368,6 +1452,8 @@ def execute(repository, destination):
         artifact_recovery = artifact_recovery_diagnostics(run, inputs, candidate)
         print(json.dumps({"qualification": False, "phase": "artifact-transfers"}), flush=True)
         artifact_transfers = artifact_transfer_diagnostics(run, inputs, candidate)
+        print(json.dumps({"qualification": False, "phase": "artifact-noncooperation"}), flush=True)
+        artifact_noncooperative = artifact_noncooperation_diagnostics(run, inputs, candidate)
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)
         post_identity = evidence.source_identity(repository, ci_revision=ci_revision)
@@ -1407,6 +1493,7 @@ def execute(repository, destination):
                    "metadataRecovery": metadata_recovery,
                    "artifactRecovery": artifact_recovery,
                    "artifactTransfers": artifact_transfers,
+                   "artifactNonCooperation": artifact_noncooperative,
                    "sqliteEnvironment": {
                        "nativeVersion": inputs["environment"]["nativeSqlite"],
                        "pragmas": dict(inputs["environment"]["pragmas"]),
