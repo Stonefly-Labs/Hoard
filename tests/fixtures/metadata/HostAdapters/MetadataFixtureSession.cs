@@ -157,12 +157,18 @@ public sealed class MetadataFixtureSession : IAsyncDisposable
             : Store.ReadAsync(request, new(), cancellationToken);
     }
 
-    public ValueTask<IDisposable> HoldWriterForTestAsync() => Store switch
+    public ValueTask<IDisposable> HoldWriterForTestAsync() => HoldWriterForTestAsync(default);
+
+    public ValueTask<IDisposable> HoldWriterForTestAsync(CancellationToken cancellationToken)
     {
-        SqliteMetadataStore sqlite => ValueTask.FromResult(sqlite.HoldIndependentWriterForTest()),
-        MemoryMetadataStore memory => memory.HoldWriterForTestAsync(),
-        _ => throw new InvalidOperationException("Unknown metadata fixture.")
-    };
+        cancellationToken.ThrowIfCancellationRequested();
+        return Store switch
+        {
+            SqliteMetadataStore sqlite => ValueTask.FromResult(sqlite.HoldIndependentWriterForTest()),
+            MemoryMetadataStore memory => memory.HoldWriterForTestAsync(cancellationToken),
+            _ => throw new InvalidOperationException("Unknown metadata fixture.")
+        };
+    }
 
     public ValueTask<MetadataResult<MetadataId>> SetLeaseGenerationForTestAsync(CanonicalText resource, long generation) => Store switch
     {

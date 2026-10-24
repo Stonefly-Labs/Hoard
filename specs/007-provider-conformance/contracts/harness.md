@@ -209,6 +209,13 @@ checks original-clock rollback with monotonic ticket issuance; all 80
 predecessor tests pass on each provider and 180 SDK/binding tests pass.
 The native U1 checkpoint predates these clock changes and does not execute
 the original wrapper suite.
+Eleven more deadline/reconciliation/replay wrappers forward original writer,
+idle-settlement and scoped observation controls (43 delegated methods). The old
+writer signature remains; its additive cancellation-aware overload and
+registration-owned async lease cannot release a different holder. All 81
+predecessor tests pass on both providers, including actual 30-second incomplete
+cleanup and cancellation/queue/disposal ownership. This does not establish
+full corruption/schema extraction or exact controller-origin import.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

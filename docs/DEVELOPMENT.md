@@ -5975,6 +5975,24 @@ actual native containment and identical eighteen-package/thirteen-lock replay.
 This verifies the U1 regression, not the later clock-callback or original-wrapper
 suites; those were validated locally. Full category/recovery/origin gates remain.
 
+Eleven original deadline/reconciliation/replay wrappers now additionally share
+consumers (43 delegated methods). Scoped observation and actual idle settlement
+forward through the original fixture, retaining its original writer mechanism.
+The additive cancellation-aware writer overload preserves the old signature,
+propagates Memory acquisition cancellation and checks native pre-admission.
+The test-side async lease disposes only the holder it acquired; cancellation
+after acquisition disposes that holder before reporting cancellation.
+A new ownership regression first failed the missing-overload assertion.
+After repair, it proves a cancelled acquisition does not release the original
+writer: the held commit expires without effects, then the same ticket succeeds
+after release. All 81 predecessor tests pass on each provider without skips,
+including actual 30-second cleanup failure/retention, both cancellation
+decision boundaries, full queue ownership and original-ticket reconciliation.
+Fresh default locked replay reproduces eight archives and exact DLLs; only the
+additive HostAdapters archive changes. SDK/provider/platform archives and source
+locks remain unchanged. Focused compiled whitespace and frozen inventory pass.
+Complete corruption/schema extraction and safe exact origin ingestion remain.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

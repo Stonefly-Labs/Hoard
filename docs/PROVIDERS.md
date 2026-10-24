@@ -143,6 +143,18 @@ All 80 predecessor tests pass on each provider without skips, alongside
 180 selected SDK/binding tests. Fresh locked replay reproduces eight archives
 and exact DLLs, with the identical SDK archive in both feed families. Only its
 SDK hash changes in the tracked predecessor lock; other entries remain pinned.
+Eleven more original deadline/reconciliation/replay methods now use shared
+consumers (43 delegated methods). The fixture adds a cancellation-aware writer
+overload while preserving its old signature; a test-side disposable lease
+releases only its own holder. Settlement forwards the original actual idle
+observation, not caller-task completion. A new cancellation/ownership regression
+first failed the missing overload assertion, then proved cancellation leaves
+the existing writer held, the timed-out commit absent and same-ticket retry
+successful only after release. All 81 current predecessor tests pass on each
+provider without skips, including genuine 30-second incomplete cleanup.
+Fresh locked replay reproduces eight archives and exact DLLs; only the
+additive HostAdapters archive changes from the clock increment. SDK/provider/
+platform archives and source locks are unchanged.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

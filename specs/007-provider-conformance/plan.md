@@ -1732,6 +1732,37 @@ The baseline seal and pinned native provenance are unchanged. This checkpoint
 predates the callback-clock changes and does not run original predecessor
 wrappers. Complete recovery, extraction and exact origin imports remain open.
 
+### Original deadline and reconciliation ownership controls
+
+Six original MP-18/19/37 deadline methods and five MP-14/15/16 reconciliation/
+replay methods now call existing shared consumers (43 original delegated
+methods). Frozen names/attributes, original fixture setup and actual writer
+mechanisms remain unchanged. Settlement forwards the original actual idle
+observation, not merely the caller result. Shared scopes own observation
+registration; complete cleanup still requires the original fixture's disposal.
+
+The fixture adds a cancellation-aware writer overload and preserves the prior
+signature. Memory acquisition receives its cancellation token; native
+pre-admission checks cancellation before the existing immediate writer hold.
+A test-side async lease disposes only its acquired holder and is idempotent;
+cancellation detected after acquisition disposes that holder before throwing.
+A new regression first failed the missing-overload assertion. Its repaired
+body proves cancelled acquisition cannot release an existing holder: the
+held commit times out without effects and same-ticket retry succeeds after
+the original holder releases.
+
+All 81 current predecessor tests pass without skips against each provider,
+including actual 30-second incomplete cleanup/retention, cancellation before/
+after the decision, full queue ownership, concurrent disposal and uncertain
+reconciliation preserving the original ticket. The same suite/SDK bytes serve
+both compositions. Fresh empty-cache default locked replay reproduces eight
+archives, seven wrapper dependency DLLs and the separate Application DLL.
+Only the additive HostAdapters archive changes from the clock increment;
+SDK/provider/platform archives and repository/historical locks remain identical.
+Frozen inventory and focused compiled whitespace checks pass.
+Corruption/schema extraction and safe exact runtime/controller-origin imports
+remain unfinished; T019/T021..T026 stay unchecked.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

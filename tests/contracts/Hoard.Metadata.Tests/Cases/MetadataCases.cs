@@ -18,6 +18,34 @@ internal static class MetadataCases
             diagnostics.LongCount(code => code == "metadata.cleanup_incomplete"));
     }
 
+    public static ValueTask CommonSettlementAsync(MetadataFixtureSession fixture, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return new(fixture.WhenIdleAsync().WaitAsync(cancellationToken));
+    }
+
+    public static async ValueTask<IAsyncDisposable> CommonWriterAsync(
+        MetadataFixtureSession fixture, CancellationToken cancellationToken)
+    {
+        var writer = await fixture.HoldWriterForTestAsync(cancellationToken);
+        if (cancellationToken.IsCancellationRequested)
+        {
+            writer.Dispose();
+            cancellationToken.ThrowIfCancellationRequested();
+        }
+        return new WriterLease(writer);
+    }
+
+    private sealed class WriterLease(IDisposable writer) : IAsyncDisposable
+    {
+        private IDisposable? held = writer;
+        public ValueTask DisposeAsync()
+        {
+            Interlocked.Exchange(ref held, null)?.Dispose();
+            return ValueTask.CompletedTask;
+        }
+    }
+
     public static MetadataContinuationCorruptionControl CommonContinuationCorruption(MetadataFixtureSession fixture) =>
         (continuation, component, corruption, cancellationToken) =>
         {

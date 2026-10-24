@@ -1303,6 +1303,10 @@ Three clock-dependent wrappers now share consumers through callbacks that
 drive the original store clock (32 delegated methods). Existing SDK clock
 signatures remain available. All 80 predecessor tests pass on each provider,
 alongside 180 SDK/binding tests; complete extraction/origin import is unfinished.
+Eleven further deadline/reconciliation wrappers now share consumers through
+original writer/settlement controls (43 delegated methods). All 81 current
+predecessor tests pass on each provider, including real 30-second incomplete
+cleanup and cancellation that cannot release another writer's ownership.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

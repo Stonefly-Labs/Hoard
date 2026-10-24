@@ -72,6 +72,11 @@ callbacks (32 methods total), driving the actual original store clock. Existing
 SDK clock signatures remain available. All 80 predecessor tests pass on each
 provider and 180 SDK/binding tests pass locally. The native U1 checkpoint
 predates these clock changes and does not run the original wrapper suite.
+Eleven more deadline/reconciliation/replay wrappers now share consumers through
+original writer/idle-settlement controls (43 methods total). All 81 predecessor
+tests pass on both providers, including genuine 30-second incomplete cleanup
+and cancellation that preserves the current writer's ownership. Only the
+additive original fixture archive changes; SDK/provider archives stay identical.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

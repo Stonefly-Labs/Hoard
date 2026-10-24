@@ -8,6 +8,25 @@ namespace Hoard.Metadata.Tests;
 public sealed class MetadataObservationTests
 {
     [Fact]
+    public async Task Typed_writer_cancellation_preserves_the_original_holder()
+    {
+        await using var fixture = await OpenAsync();
+        var batch = Batch(await Ticket(fixture), new MetadataMutation.PutRegistry(Registry(), new ExpectedRevision.Absent()));
+        await using (var owner = await CommonWriterAsync(fixture, default))
+        {
+            using var cancelled = new CancellationTokenSource();
+            cancelled.Cancel();
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => CommonWriterAsync(fixture, cancelled.Token).AsTask());
+            Assert.Equal(MetadataFailureCode.DeadlineExceeded, Failed(await fixture.Store.CommitAsync(
+                batch, new(TimeSpan.FromMilliseconds(50)), default)));
+            await CommonSettlementAsync(fixture, default);
+            await Missing(fixture, Registry().Selector);
+        }
+        Success(await fixture.Store.CommitAsync(batch, new(), default));
+        await Read<MetadataRegistry>(fixture, Registry().Selector);
+    }
+
+    [Fact]
     public async Task Scoped_observation_rejects_duplicate_registration_without_replacing_the_owner()
     {
         var controls = new MetadataFixtureControls();
