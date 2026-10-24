@@ -55,14 +55,18 @@ assemblies, without cross-provider delegation or a new SDK dependency.
 The package-mode graph now has seven local archives. Its intentional NuGet lock
 adds only the SQLite binding/provider and six pinned SQLite dependencies,
 preserving prior graphs/third-party hashes. A separate empty-cache locked build
-passes. All 135 selected Memory/SQLite package tests pass locally without skips
-(95 Memory, 40 SQLite); this includes actual incomplete cleanup, not Linux
+passes. All 179 selected Memory/SQLite package tests pass locally without skips
+(95 Memory, 84 SQLite); this includes actual incomplete cleanup, not Linux
 supervisor/category qualification. Native diagnostics still select only the
 37 Memory/SDK/logger scopes. An owned package-only environment probe now observes
 actual SQLite PRAGMAs/version and the loaded native module, validates its bytes
 against the pinned NuGet archive, and fingerprints runtime native assets.
 Its Linux execution is not yet verified; SQLite test scopes remain unselected
 and never borrow `nativeSqlite: not-used`.
+All 53 current SDK logical assertion methods now execute through SQLite too;
+the additional 44 parameterized rows cover actual independent reads, clocks,
+publication, corruption and decision/settlement controls. This local 179-test
+selection is not the catalog's 179 applicable category results or wrapper parity.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

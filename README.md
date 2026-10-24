@@ -1254,12 +1254,15 @@ all three jobs, 131 foundation checks and 37 scopes/170 exact observations.
 The initial SQLite binding now adds explicit current/legacy factories, actual
 same-database reopen with exclusive directory handoff, verified backup-based
 upgrade authorization and typed raw-state controls. The package-only graph
-passes 135 selected checks across Memory and SQLite, including native storage
+passes 179 selected checks across Memory and SQLite, including native storage
 types, cancellation/late cleanup and real 30-second incomplete cleanup.
 These are focused local package checks, not complete category, Linux-supervisor
 or profile qualification. An owned SQLite environment probe now captures actual
 PRAGMAs/native version and verifies the loaded library against locked archive
 bytes; Linux execution of that producer remains unverified.
+All 53 current shared logical metadata assertion methods now execute through
+the SQLite binding too. These local checks are not the catalog's 179 applicable
+category results or proof of complete frozen-wrapper parity.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

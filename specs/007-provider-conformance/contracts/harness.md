@@ -128,8 +128,10 @@ guards and bounded size preflight precede full-row hashing. Only bounded
 A logical publication authority helper is compiled into both independent
 binding assemblies; provider transactions/encodings/native mechanisms remain
 private and no SDK dependency changes. The package-mode graph now explicitly
-prepares/derives/reverifies seven local archives. Its selected 135 tests pass
-locally (95 Memory/40 SQLite) with separate empty-cache locked build replay.
+prepares/derives/reverifies seven local archives. Its selected 179 tests pass
+locally (95 Memory/84 SQLite) with separate empty-cache locked build replay.
+All 53 current shared logical assertion methods execute through SQLite; these
+179 unit identities are not the catalog's 179 applicable category results.
 Linux diagnostic selection deliberately stays at 37 Memory/SDK/logger scopes
 pending verified Linux execution of the new owned environment producer. It
 observes actual configured PRAGMAs/native version and the loaded module, validates

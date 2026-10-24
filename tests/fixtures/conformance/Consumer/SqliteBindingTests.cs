@@ -10,6 +10,153 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 
 public sealed class SqliteBindingTests
 {
+    [Theory]
+    [InlineData("competing-creates")]
+    [InlineData("revision-races")]
+    [InlineData("exact-bounds")]
+    [InlineData("scopes-and-intervals")]
+    [InlineData("bounded-pages")]
+    [InlineData("lease-fences")]
+    [InlineData("registry-isolation")]
+    [InlineData("authorization-isolation")]
+    [InlineData("final-graph")]
+    [InlineData("reference-replacement")]
+    [InlineData("reference-aba")]
+    [InlineData("telemetry-rollback")]
+    [InlineData("all-page-queries")]
+    [InlineData("oversized-pages")]
+    [InlineData("canonical-identity")]
+    [InlineData("ticket-expiry")]
+    [InlineData("lease-rollback")]
+    [InlineData("independent-candidate")]
+    [InlineData("faulted-candidates")]
+    [InlineData("grouped-root")]
+    [InlineData("reconciliation-io")]
+    [InlineData("lost-acknowledgment")]
+    [InlineData("distinct-contributions")]
+    [InlineData("reconciliation-writer")]
+    [InlineData("cancellation-decision")]
+    [InlineData("queue-capacity")]
+    [InlineData("disposal-ownership")]
+    [InlineData("known-exceptions")]
+    [InlineData("matching-evidence")]
+    [InlineData("orphan-not-rollback")]
+    [InlineData("replay-without-reacquisition")]
+    [InlineData("lease-overflow")]
+    [InlineData("absence-and-corruption")]
+    public async Task Compiled_logical_consumers_execute_through_the_independent_sqlite_binding(string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = Context(resources);
+        var clock = Assert.IsType<MetadataConformanceClock>(context.Clock);
+        await using var session = await new SqliteBinding(new string('a', 64)).CreateSessionAsync(context, default);
+        Success(await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        var store = session.Store;
+        var authority = session.Authority;
+        var faults = session.Faults;
+        await (consumer switch
+        {
+            "competing-creates" => MetadataConcurrencyAssertions.CompetingCreatesAsync(store, default),
+            "revision-races" => MetadataConcurrencyAssertions.RevisionRacesAsync(store, default),
+            "exact-bounds" => MetadataBoundsAssertions.ExactBoundsAsync(store, default),
+            "scopes-and-intervals" => MetadataBoundsAssertions.ScopesAndIntervalsAsync(store, default),
+            "bounded-pages" => MetadataPagingAssertions.BoundedDatasetsAsync(store, default),
+            "lease-fences" => MetadataLeaseAssertions.OwnerGenerationAndRevisionFencesAsync(store, default),
+            "registry-isolation" => MetadataIdentityAssertions.RegistryIsolationAsync(store, authority, default),
+            "authorization-isolation" => MetadataIdentityAssertions.AuthorizationPartitionIsolationAsync(store, authority, default),
+            "final-graph" => MetadataEntityAssertions.FinalGraphDeletionAndDisabledRetentionAsync(store, authority, default),
+            "reference-replacement" => MetadataReferenceAssertions.EntryReplacementAndRemovalAsync(store, authority, default),
+            "reference-aba" => MetadataReferenceAssertions.ZeroReferenceAbaFencingAsync(store, authority, default),
+            "telemetry-rollback" => MetadataReferenceAssertions.InvalidTelemetryRollsBackEntryAndReferencesAsync(store, authority, default),
+            "all-page-queries" => MetadataPagingAssertions.AllQueryKindsAsync(store, authority, default),
+            "oversized-pages" => MetadataPagingAssertions.OversizedRequestsAndResultsAsync(store, authority, default),
+            "canonical-identity" => MetadataIdentityAssertions.CanonicalTextAndForbiddenValuesAsync(store, default),
+            "ticket-expiry" => MetadataTimeAssertions.TicketExpiryAndRollbackAsync(store, clock, default),
+            "lease-rollback" => MetadataTimeAssertions.LeaseRollbackAsync(store, clock, default),
+            "independent-candidate" => MetadataAtomicityAssertions.IndependentCandidateAsync(
+                store, faults.ObserveBoundaryAsync, faults.ObserveIndependentSnapshotAsync, default),
+            "faulted-candidates" => MetadataAtomicityAssertions.FaultedCandidatesAsync(store, faults.ObserveBoundaryAsync, default),
+            "grouped-root" => MetadataAtomicityAssertions.GroupedReadsAsync(store, faults.ObserveBoundaryAsync, default),
+            "reconciliation-io" => MetadataReconciliationAssertions.IoFailureAsync(store, faults.ObserveBoundaryAsync, default),
+            "lost-acknowledgment" => MetadataReconciliationAssertions.LostAcknowledgmentAndAbandonmentAsync(
+                store, faults.ObserveBoundaryAsync, default),
+            "distinct-contributions" => MetadataReconciliationAssertions.DistinctContributionsAsync(store, faults.ObserveBoundaryAsync, default),
+            "reconciliation-writer" => MetadataReconciliationAssertions.WriterContentionAsync(
+                store, faults.HoldWriterAsync, faults.AwaitSettlementAsync, default),
+            "cancellation-decision" => MetadataDeadlineAssertions.CancellationDecisionsAsync(
+                store, faults.ObserveBoundaryAsync, faults.AwaitSettlementAsync, default),
+            "queue-capacity" => MetadataDeadlineAssertions.QueueCapacityAsync(
+                store, faults.ObserveBoundaryAsync, faults.AwaitSettlementAsync, default),
+            "disposal-ownership" => MetadataDeadlineAssertions.DisposalOwnershipAsync(
+                store, faults.ObserveBoundaryAsync, session.DisposeAsync, default),
+            "known-exceptions" => MetadataDeadlineAssertions.KnownExceptionsAsync(store, faults.ObserveBoundaryAsync, default),
+            "matching-evidence" => MetadataPublicationAssertions.MatchingEvidenceAsync(store, authority, default),
+            "orphan-not-rollback" => MetadataPublicationAssertions.OrphanNotRollbackAsync(store, authority, faults.ObserveBoundaryAsync, default),
+            "replay-without-reacquisition" => MetadataPublicationAssertions.ReplayWithoutReacquisitionAsync(store, authority, default),
+            "lease-overflow" => MetadataLeaseAssertions.GenerationOverflowAsync(store, faults.SetLeaseGenerationAsync, default),
+            "absence-and-corruption" => MetadataCorruptionAssertions.AbsenceAndCorruptGroupsAsync(store, faults.CorruptRecordAsync, default),
+            _ => throw new ArgumentException("BindingInvalid")
+        });
+    }
+
+    [Theory]
+    [InlineData("explicit-admission")]
+    [InlineData("invalid-budgets")]
+    public async Task Compiled_admission_consumers_execute_before_actual_schema_admission(string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        await using var session = await new SqliteBinding(new string('a', 64)).CreateSessionAsync(Context(resources), default);
+        await (consumer switch
+        {
+            "explicit-admission" => MetadataAdmissionAssertions.ExplicitAdmissionAsync(
+                session.Store, session.Schema, () => session.Faults.Counters, default),
+            "invalid-budgets" => MetadataAdmissionAssertions.InvalidBudgetsAsync(
+                session.Store, session.Schema, () => session.Faults.Counters, session.DisposeAsync, default),
+            _ => throw new ArgumentException("BindingInvalid")
+        });
+    }
+
+    [Theory]
+    [InlineData(MetadataRecordCorruption.CacheAuthorization)]
+    [InlineData(MetadataRecordCorruption.AggregateAuthorization)]
+    [InlineData(MetadataRecordCorruption.AggregateStart)]
+    [InlineData(MetadataRecordCorruption.AggregateEnd)]
+    [InlineData(MetadataRecordCorruption.LeaseResource)]
+    public async Task Compiled_query_dimension_consumers_check_raw_sqlite_damage_before_filtering(MetadataRecordCorruption corruption)
+    {
+        await using var resources = new RecordingDirectories();
+        await using var session = await new SqliteBinding(new string('a', 64)).CreateSessionAsync(Context(resources), default);
+        Success(await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        await MetadataCorruptionAssertions.QueryDimensionsAsync(
+            session.Store, session.Authority, session.Faults.CorruptAsync, corruption, default);
+    }
+
+    [Theory]
+    [InlineData(MetadataLeaseExpiryAction.Renew)]
+    [InlineData(MetadataLeaseExpiryAction.Release)]
+    [InlineData(MetadataLeaseExpiryAction.Guard)]
+    public async Task Compiled_lease_expiry_consumer_rechecks_the_actual_sqlite_decision(MetadataLeaseExpiryAction action)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = Context(resources);
+        await using var session = await new SqliteBinding(new string('a', 64)).CreateSessionAsync(context, default);
+        Success(await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        await MetadataLeaseAssertions.ExpiryAtDecisionAsync(session.Store,
+            Assert.IsType<MetadataConformanceClock>(context.Clock), session.Faults.ObserveBoundaryAsync, action, default);
+    }
+
+    [Fact]
+    public async Task Compiled_cursor_consumer_checks_actual_sqlite_foreign_epoch_and_live_resume()
+    {
+        await using var resources = new RecordingDirectories();
+        var binding = new SqliteBinding(new string('a', 64));
+        await using var session = await binding.CreateSessionAsync(Context(resources), default);
+        await using var foreign = await binding.CreateSessionAsync(Context(resources), default);
+        Success(await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        Success(await foreign.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        await MetadataPagingAssertions.ContinuationScopeAndEpochAsync(session.Store, foreign.Store, default);
+    }
+
     [Fact]
     public async Task Cancelled_reopen_preserves_the_original_root_and_genuine_pending_worker_for_disposal()
     {

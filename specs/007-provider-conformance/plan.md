@@ -1355,6 +1355,32 @@ Linux producer execution is not yet observed. Selection stays at the existing
 37 Memory/SDK/logger scopes; no SQLite-case or full category pass is inferred.
 No new dependency/package/project, product executable or qualification is added.
 
+### Complete current logical consumer coverage through the SQLite binding
+
+The remaining 38 current SDK assertion methods now execute through the actual
+SQLite binding, adding 44 exact parameterized rows. They use the same compiled
+assertions as Memory and typed independent-read, corruption, publication,
+writer, clock and settlement controls. No SDK assertion or provider-selected
+expectation changed. All 44 added rows pass; full package selection passes
+179/no skips (95 Memory, 84 SQLite). All 53 current SDK metadata assertion
+methods are invoked by the SQLite binding suite, including previously checked
+schema/receipt/cleanup paths. These 179 local unit identities are not the
+catalog's 179 applicable category keys. Full frozen-wrapper parity, abrupt
+recovery, native origin/controller imports and category qualification remain
+unchecked; T019..T086 are not advanced by this focused coverage increment.
+
+Native seven-archive checkpoint
+[40064540294](https://github.com/Stonefly-Labs/Hoard/actions/runs/40064540294)
+at `721231acffcc801d8b60467391f0c4ac7cdb43ed` passed all three jobs:
+131 foundation checks without failures/errors/skips, 37 scopes/170 exact
+observations, six historical baselines and identical eighteen-package/
+thirteen-lock replay. Input digest:
+`b3cfcb3f9e0bf3dd02784ca2699eb1392f89d2963425b9beb537ed222a80b6f3`;
+preparation proof:
+`738dbcf048cb1b58193f954caf0130b706e49f2f3d329448cb765016db2e9e90`.
+Free scratch: 92,109,443,072 bytes. It predates the environment producer and
+additional SQLite logical rows; no SQLite execution is attributed to it.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

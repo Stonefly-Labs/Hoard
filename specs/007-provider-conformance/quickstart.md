@@ -16,12 +16,14 @@ baselines and eighteen-package/thirteen-lock replay.
 The initial SQLite binding now has explicit current/legacy factories,
 same-database directory handoff, actual backup-authorized upgrades, tracked
 independent work and typed raw corruption/fingerprints. The seven-archive
-package graph passes 135 selected checks locally (95 Memory/40 SQLite), with
+package graph passes 179 selected checks locally (95 Memory/84 SQLite), with
 separate empty-cache locked build replay. The SQLite rows are not yet selected
 by Linux diagnostics. An owned package-only environment producer now captures
 actual SQLite PRAGMAs/version and verifies the loaded native library against
 the pinned archive, but its Linux execution is still unverified. Native assets
 join pre/post input hashing; SQLite never borrows `nativeSqlite: not-used`.
+All 53 current common logical assertion methods execute through SQLite. These
+179 local checks are not the catalog's 179 applicable category results.
 Existing synchronous fixture helpers remain caller-owned.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator

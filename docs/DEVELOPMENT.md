@@ -5782,6 +5782,27 @@ Missing environment admission and omitted native-asset hashing first failed
 focused regressions; both repairs pass. Linux producer execution remains pending,
 not a verified SQLite scope or category pass.
 
+The remaining current logical consumers now run through the SQLite binding,
+including independent candidate reads, exact time/expiry decisions, native writer
+contention, query corruption, publication and actual disposal ownership.
+All 44 added rows pass; the full selected package suite passes 179/no skips:
+95 Memory and 84 SQLite. Every one of the current 53 SDK assertion methods
+executes through SQLite. No provider-specific expected results or altered SDK
+assertions were added. This local count is not the catalog's 179 applicable
+category keys, complete frozen-wrapper parity or Linux SQLite case execution.
+
+Published seven-archive checkpoint
+[40064540294](https://github.com/Stonefly-Labs/Hoard/actions/runs/40064540294)
+at `721231acffcc801d8b60467391f0c4ac7cdb43ed` passed all three jobs:
+131 foundation checks without failures/errors/skips, 37 scopes/170 exact
+observations, six historical baselines and identical eighteen-package/
+thirteen-lock replay. Input:
+`b3cfcb3f9e0bf3dd02784ca2699eb1392f89d2963425b9beb537ed222a80b6f3`;
+preparation proof:
+`738dbcf048cb1b58193f954caf0130b706e49f2f3d329448cb765016db2e9e90`.
+Free scratch: 92,109,443,072 bytes. It verifies package preparation, not the
+subsequently added SQLite environment producer or SQLite test execution.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,
