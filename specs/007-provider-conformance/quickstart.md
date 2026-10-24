@@ -77,6 +77,15 @@ original writer/idle-settlement controls (43 methods total). All 81 predecessor
 tests pass on both providers, including genuine 30-second incomplete cleanup
 and cancellation that preserves the current writer's ownership. Only the
 additive original fixture archive changes; SDK/provider archives stay identical.
+Four further corruption wrappers now delegate (47 methods total), retaining
+all inherited parameters. Original scopes reject overlap/closure races and
+retain failed restoration for explicit recovery; conditional replacement cannot
+undo an intervening commit. Native observations read committed rows independently
+of a held primary candidate. All 87 current predecessor tests pass against each
+provider and 181 SDK/binding tests pass locally with byte-matched packages.
+The expanded Linux request is 50 scopes/256 observations (86 SQLite identities),
+not yet verified. Complete diagnostics/schema extraction and origin import
+remain outstanding.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

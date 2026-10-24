@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using Hoard.Abstractions.Metadata;
 using Hoard.Fixtures.Metadata.Hosting;
 using Hoard.Testing.Conformance.Bindings;
+using Hoard.Testing.Conformance.Metadata;
 
 namespace Hoard.Metadata.Tests;
 
@@ -16,6 +17,22 @@ internal static class MetadataCases
         return new(fixture.Controls.ActivityCount,
             diagnostics.LongCount(code => code == "metadata.internal_failure"),
             diagnostics.LongCount(code => code == "metadata.cleanup_incomplete"));
+    }
+
+    public static void CommonDiagnosticAssertions(MetadataFixtureSession fixture)
+    {
+        foreach (var diagnostic in fixture.Controls.Diagnostics)
+        {
+            MetadataTestData.AssertSanitized(diagnostic);
+            Assert.DoesNotContain(MetadataReconciliationAssertions.CorruptionCanary, diagnostic);
+        }
+    }
+
+    public static ValueTask<MetadataResult<MetadataId>> CommonCorruptRecordAsync(
+        MetadataFixtureSession fixture, MetadataSelector selector, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return fixture.CorruptRecordForTestAsync(selector);
     }
 
     public static ValueTask CommonSettlementAsync(MetadataFixtureSession fixture, CancellationToken cancellationToken)
@@ -63,6 +80,60 @@ internal static class MetadataCases
             };
             return ValueTask.FromResult(fixture.CorruptContinuationForTest(continuation, component.ToString(), shape));
         };
+
+    public static async ValueTask<IMetadataCorruptionScope> CommonCorruptionAsync(
+        MetadataFixtureSession fixture, MetadataCorruptionRequest request, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var scope = request switch
+        {
+            MetadataCorruptionRequest.Record record => await fixture.CorruptRecordPayloadForTestAsync(
+                record.Selector, record.Corruption switch
+                {
+                    MetadataRecordCorruption.NullLabel => "null-label",
+                    MetadataRecordCorruption.OversizedLabel => "oversized-label",
+                    MetadataRecordCorruption.NullRevision => "null-revision",
+                    MetadataRecordCorruption.MalformedEncoding => "malformed",
+                    MetadataRecordCorruption.MismatchedKey => "wrong-key",
+                    MetadataRecordCorruption.CacheAuthorization => "cache-auth",
+                    MetadataRecordCorruption.AggregateAuthorization => "aggregate-auth",
+                    MetadataRecordCorruption.AggregateStart => "aggregate-start",
+                    MetadataRecordCorruption.AggregateEnd => "aggregate-end",
+                    MetadataRecordCorruption.LeaseResource => "lease-resource",
+                    _ => throw new ArgumentOutOfRangeException(nameof(request))
+                }, MetadataReconciliationAssertions.CorruptionCanary, cancellationToken),
+            MetadataCorruptionRequest.Operation operation => await fixture.CorruptOperationPayloadForTestAsync(
+                operation.Ticket, operation.Corruption switch
+                {
+                    MetadataOperationCorruption.NullTarget => "null-target",
+                    MetadataOperationCorruption.NullRevision => "null-revision",
+                    MetadataOperationCorruption.MalformedEncoding => "malformed",
+                    MetadataOperationCorruption.MissingRevisions => "missing-revisions",
+                    MetadataOperationCorruption.OversizedRevisions => "oversized-revisions",
+                    MetadataOperationCorruption.OversizedEncoding => "oversized-payload",
+                    MetadataOperationCorruption.MismatchedTicket => "mismatched-ticket",
+                    MetadataOperationCorruption.MissingReceipt => "missing-receipt",
+                    MetadataOperationCorruption.ShortFingerprint => "short-fingerprint",
+                    MetadataOperationCorruption.MissingFingerprint => "missing-fingerprint",
+                    MetadataOperationCorruption.InvalidFingerprintEncoding => "invalid-fingerprint",
+                    MetadataOperationCorruption.ReservedReceipt => "reserved-receipt",
+                    MetadataOperationCorruption.AbandonedReceipt => "abandoned-receipt",
+                    MetadataOperationCorruption.InvalidState => "fractional-state",
+                    _ => throw new ArgumentOutOfRangeException(nameof(request))
+                }, operation.ForeignTicket, MetadataReconciliationAssertions.CorruptionCanary,
+                cancellationToken),
+            _ => throw new ArgumentOutOfRangeException(nameof(request))
+        };
+        return new CorruptionScope(scope);
+    }
+
+    private sealed class CorruptionScope(MetadataFixtureCorruptionScope scope) : IMetadataCorruptionScope
+    {
+        public ConformanceStateFingerprint Original { get; } = new(scope.OriginalSha256);
+        public async ValueTask<ConformanceStateFingerprint> ObserveAsync(CancellationToken cancellationToken) =>
+            new(await scope.ObserveSha256Async(cancellationToken));
+        public ValueTask DisposeAsync() => scope.DisposeAsync();
+    }
 
     public static MetadataObservationControl CommonObservations(MetadataFixtureSession fixture) =>
         (point, observer, cancellationToken) =>

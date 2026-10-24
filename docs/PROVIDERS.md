@@ -155,6 +155,23 @@ provider without skips, including genuine 30-second incomplete cleanup.
 Fresh locked replay reproduces eight archives and exact DLLs; only the
 additive HostAdapters archive changes from the clock increment. SDK/provider/
 platform archives and source locks are unchanged.
+Four original corruption wrappers now also share consumers (47 delegated
+methods), including all five query-dimension rows and fourteen receipt shapes.
+Original fixture scopes own target-specific corruption, reject overlapping
+owners and atomically exclude new owners once closure/reopen is admitted.
+Failed restoration retains a recoverable owner; cancellation after mutation
+restores before release. Native capture/observation uses actual separate,
+bounded read-only connections. Replacement checks the captured record/image
+inside the real writer transaction; Memory checks under its own writer.
+An intervening commit yields `Conflict` without restoring the obsolete image.
+Restoration waits for genuine idle settlement before deciding whether mutation
+occurred and verifies original bytes before releasing an applied scope.
+All 87 current predecessor tests pass on each provider, and 181 selected
+SDK/binding tests pass locally. Fresh locked replay reproduces eight archives
+and exact DLLs; seven binding output DLLs match their archives and both feed
+families retain the unchanged SDK. The new 50-scope/256-observation Linux request
+(86 SQLite identities) is pending; original diagnostics/schema extraction and
+exact origin integration remain unfinished.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

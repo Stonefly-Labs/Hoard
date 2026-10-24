@@ -1307,6 +1307,14 @@ Eleven further deadline/reconciliation wrappers now share consumers through
 original writer/settlement controls (43 delegated methods). All 81 current
 predecessor tests pass on each provider, including real 30-second incomplete
 cleanup and cancellation that cannot release another writer's ownership.
+Four further corruption wrappers now share consumers (47 delegated methods),
+retaining every original corruption parameter. Fixture-owned scopes reject
+overlap and closure races, retain failed restoration for recovery and reject
+stale replacements without rolling back an intervening commit. Independent
+native readers preserve committed-row visibility while a candidate is held.
+All 87 current predecessor tests pass on each provider; 181 selected SDK/binding
+tests pass locally. The expanded Linux request is 50 scopes/256 observations
+(86 SQLite identities); that new vector is not yet verified on Linux.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

@@ -4,7 +4,7 @@ using Hoard.Fixtures.Metadata.Sqlite;
 
 namespace Hoard.Fixtures.Metadata.Hosting;
 
-public sealed class MetadataFixtureSession : IAsyncDisposable
+public sealed partial class MetadataFixtureSession : IAsyncDisposable
 {
     private string? ownedDirectory;
     private readonly TimeProvider clock;
@@ -107,6 +107,7 @@ public sealed class MetadataFixtureSession : IAsyncDisposable
 
     public async ValueTask<MetadataFixtureSession> ReopenAsync(string compatibleSchema = "fixture-sqlite-v2")
     {
+        BeginCorruptionClosure();
         await WhenIdleAsync();
         var image = Store is MemoryMetadataStore memory ? memory.CaptureLogicalImage() : null;
         await Store.DisposeAsync();
@@ -196,6 +197,7 @@ public sealed class MetadataFixtureSession : IAsyncDisposable
 
     public async ValueTask DisposeAsync()
     {
+        BeginCorruptionClosure();
         await Store.DisposeAsync();
         if (ownedDirectory is not null && Directory.Exists(ownedDirectory)) { Directory.Delete(ownedDirectory, recursive: true); }
     }

@@ -360,6 +360,53 @@ public sealed class SqliteBindingTests
         Assert.Equal(5, code);
     }
 
+    [Fact]
+    public async Task Raw_corruption_observations_read_committed_rows_while_the_primary_candidate_is_held()
+    {
+        await using var resources = new RecordingDirectories();
+        await using var session = await new SqliteBinding(new string('a', 64)).CreateSessionAsync(Context(resources), default);
+        Success(await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        await MetadataEntityAssertions.RoundTripAndInvalidRelationshipsAsync(session.Store, session.Authority, default);
+        var page = Success(await session.Store.ReadPageAsync(new MetadataPageQuery.Registries
+        {
+            PageSize = 10,
+            Continuation = new MetadataOption<MetadataContinuation>.None()
+        }, new(), default));
+        var registry = Assert.IsType<MetadataRegistry>(Assert.Single(page.Records));
+        var native = Assert.IsType<SqliteMetadataStore>(session.Store);
+        var original = Success(await native.ObserveRecordPayloadForTestAsync(registry.Selector, default));
+        var ticket = Success(await session.Store.ReserveOperationAsync(new(), default));
+        var reserved = Success(await native.ObserveOperationImageForTestAsync(ticket, default));
+        var calls = 0;
+        await using var observation = await session.Faults.ObserveBoundaryAsync(
+            MetadataObservationPoint.MutationApplied, async () =>
+            {
+                calls++;
+                Assert.Equal(original, Success(await native.ObserveRecordPayloadForTestAsync(registry.Selector, default)));
+                Assert.Equal(reserved, Success(await native.ObserveOperationImageForTestAsync(ticket, default)));
+            }, default);
+        Success(await session.Store.CommitAsync(new(ticket,
+            [new MetadataMutation.PutRegistry(registry with { Label = new("updated") },
+                new ExpectedRevision.Match(registry.Revision))],
+            new MetadataOption<MetadataLeaseGuard>.None()), new(), default));
+        Assert.Equal(1, calls);
+        var snapshot = Success(await session.Store.ReadAsync(new([registry.Selector]), new(), default));
+        Assert.Equal("updated", Assert.IsType<MetadataRegistry>(
+            Assert.IsType<MetadataReadItem.Found>(Assert.Single(snapshot.Items)).Record).Label.Value);
+        var committedRecord = Success(await native.ObserveRecordPayloadForTestAsync(registry.Selector, default));
+        var committedOperation = Success(await native.ObserveOperationImageForTestAsync(ticket, default));
+        Assert.NotEqual(original, committedRecord);
+        Assert.NotEqual(reserved, committedOperation);
+        var applied = 0;
+        Assert.Equal(MetadataFailureCode.Conflict, Assert.IsType<MetadataResult<MetadataId>.Failure>(
+            await native.CompareExchangeRecordPayloadForTestAsync(registry.Selector, original, original, () => applied++)).Code);
+        Assert.Equal(MetadataFailureCode.Conflict, Assert.IsType<MetadataResult<MetadataId>.Failure>(
+            await native.CompareExchangeOperationImageForTestAsync(ticket, reserved, reserved, () => applied++)).Code);
+        Assert.Equal(0, applied);
+        Assert.Equal(committedRecord, Success(await native.ObserveRecordPayloadForTestAsync(registry.Selector, default)));
+        Assert.Equal(committedOperation, Success(await native.ObserveOperationImageForTestAsync(ticket, default)));
+    }
+
     private static ConformanceRunContext Context(RecordingDirectories resources) => new(
         Guid.NewGuid(), "arbitrary-case-not-a-setup-selector", new MetadataConformanceClock(new(1_800_000_000_000)),
         resources, new ConformanceEvidenceBuffer());

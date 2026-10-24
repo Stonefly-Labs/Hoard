@@ -309,7 +309,9 @@ SCENARIOS = (
         "Independent_diagnostic_failure_is_surfaced_and_faults_the_actual_lifetime",
         "Independent_read_work_is_included_in_idle_and_actual_worker_termination",
         "Independent_writer_lease_is_not_ordinary_work_but_closes_before_lifetime_settlement",
-        "Genuine_worker_termination_outlives_public_deadline_and_includes_native_handle_cleanup")),
+        "Genuine_worker_termination_outlives_public_deadline_and_includes_native_handle_cleanup"))
+     + (SQLITE_BINDING_PREFIX
+        + "Raw_corruption_observations_read_committed_rows_while_the_primary_candidate_is_held",),
      "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"

@@ -5993,6 +5993,31 @@ additive HostAdapters archive changes. SDK/provider/platform archives and source
 locks remain unchanged. Focused compiled whitespace and frozen inventory pass.
 Complete corruption/schema extraction and safe exact origin ingestion remain.
 
+Four further original corruption methods now delegate (47 total), preserving
+all five stored-query rows and fourteen receipt-corruption shapes. Scoped
+fixture controls retain original target ownership, exact restoration, failed
+cleanup recovery and close/reopen protection. Native raw reads now use actual
+independent bounded connections instead of queueing behind a held primary
+candidate. A deliberate queued-reader substitution failed its named fact.
+Bounded architecture review found two races: close/reopen could admit an owner
+after its empty-owner check, and independent capture could become stale before
+replacement. A lifecycle gate makes closure/registration atomic; provider-private
+compare/exchange rejects changed images under the actual writer. A real
+intervening-commit regression first failed its payload equality assertion before
+that repair. Failed or timed-out application settles actual worker activity
+before deciding whether restoration is required; failed settlement retains the
+owner rather than treating a caller result as release.
+
+All 87 current predecessor tests pass on each provider without skips, and 181
+selected SDK/binding tests pass locally. Independent fresh locked replay
+reproduces eight archives, seven wrapper DLLs and the separate Application DLL.
+Seven actual binding output DLLs match their archives; both feed families keep
+the unchanged SDK. Source/historical locks remain unchanged. The expanded Linux
+request is 50 scopes/256 observations, including 86 SQLite identities; its new
+execution remains pending. Product architecture, ADRs, diagrams and deployment
+examples are unaffected: these are test-only controls with no production API,
+dependency-edge, composition or infrastructure changes.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

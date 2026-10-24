@@ -216,6 +216,18 @@ registration-owned async lease cannot release a different holder. All 81
 predecessor tests pass on both providers, including actual 30-second incomplete
 cleanup and cancellation/queue/disposal ownership. This does not establish
 full corruption/schema extraction or exact controller-origin import.
+Four additional corruption wrappers delegate through the original fixture's
+typed scope bridge (47 original methods). Scopes own one target, reject
+overlap and atomically exclude registration after close/reopen admission.
+An apply/cancellation failure restores only an actually applied mutation;
+genuine idle settlement precedes that decision and restored-byte verification.
+Failed settlement/restoration retains ownership for explicit recovery. Native
+raw observations use independent bounded read-only connections, including from
+inside a held primary candidate. Initial captured images are checked under the
+writer before replacement; stale images reject without restoring over a newer
+commit. All 87 current predecessor tests pass on each provider; 181 selected
+SDK/binding tests pass locally. The expanded 50-scope/256-observation Linux
+request (86 SQLite identities) remains unverified.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

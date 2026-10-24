@@ -1763,6 +1763,44 @@ Frozen inventory and focused compiled whitespace checks pass.
 Corruption/schema extraction and safe exact runtime/controller-origin imports
 remain unfinished; T019/T021..T026 stay unchecked.
 
+### Original corruption ownership and independent native observations
+
+Three original MP-21 methods and the MP-15 persisted-receipt method now call
+existing shared consumers (47 delegated methods). All five query-dimension
+rows and fourteen receipt shapes remain unchanged. A typed test-side bridge
+maps corruption requests to fixture-private controls; no provider switch or
+private database type enters the SDK/common consumers.
+
+Original fixture scopes exclusively own each target, restore cancelled or
+failed applied mutations, verify original raw hashes and retain failed cleanup
+for explicit recovery. Disposal/reopen cannot abandon a live or retained owner.
+Independent SQLite capture/observation reuses existing owned independent-work
+execution and bounded native row readers, preserving BLOB/TEXT/NULL/fractional
+state distinctions. The held-candidate fact reads both committed record and
+reserved operation rows; substituting the queued getters failed that named
+test. It also proves stale record/operation replacement returns `Conflict`
+without mutation notification or changing committed images.
+
+Bounded architecture review identified two real races. Atomic lifecycle
+admission now excludes new corruption owners once closure/reopen begins.
+Compare/exchange checks captured images under the actual native transaction or
+Memory writer, so stale capture cannot overwrite a later acknowledged commit.
+The controlled intervening-commit regression first failed its payload equality
+assertion against the unguarded SQLite package. Actual idle settlement precedes
+the applied-mutation decision and restoration verification; caller timeout is
+not release, and failed settlement/restoration retains the recovery owner.
+Closure/reopen ordering, overlap, cancellation and retry regressions pass.
+
+All 87 current predecessor tests pass without skips on each provider using the
+same compiled suite/SDK; 181 selected SDK/binding tests pass locally. Independent
+fresh default locked replay reproduces eight archives and all actual DLLs.
+Seven binding output DLLs match archives, and the shared SDK archive remains
+identical in both feed families and to the prior clock increment. Repository
+and historical locks remain unchanged. The expanded Linux request is 50
+scopes/256 observations (86 SQLite identities); it is pending, not qualification.
+Original diagnostics/schema extraction, exact runtime/controller-origin
+integration and complete category/recovery gates remain open.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now
