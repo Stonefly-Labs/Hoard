@@ -310,6 +310,19 @@ and each pass all 273 artifact cases plus 89 metadata cases on each provider.
 These are actual functional/preparation results, not complete input-bound
 legacy/session/category imports or replacement historical binaries.
 
+The original publication race wrappers now forward all three methods/six frozen
+parameters to provider-free consumers. Real fixture observer and payload
+damage/restore operations remain fixture-side; expectations and ordering remain
+shared. A real-store adapter that repairs a forged length fails the original
+`InvalidInput` type assertion on both providers, while fresh genuine stores pass
+the same unchanged consumer. Mechanical body comparison preserves all original
+checks and control ordering after explicit seam/token forwarding.
+Two fresh-cache locked builds reproduce eleven archives, verify ten loaded
+artifact dependency images and each pass 275 artifact cases plus 89 metadata
+cases per provider without skips; accepted-source formatting also passes.
+The additional exact native scope is six original rows plus two named mutation
+rows, pending (57 scopes/456 observations), not category completion.
+
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

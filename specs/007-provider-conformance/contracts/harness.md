@@ -411,6 +411,23 @@ loaded dependency images and each execute all 273 original/current artifact
 cases plus 89 metadata cases per provider without skips. Actual previously
 measured transfer packets are unchanged when exercising their original proof
 consumers; this is not fresh measurement/session-origin/category acceptance.
+Three original publication race bodies now live in the shared publication
+consumer: equivalent concurrent writers, forged staged length and preserving
+corrupt evidence. Actual observer registration and payload damage/restore are
+fixture-side callbacks; common code accepts no provider ID, concrete type,
+filesystem path or provider-selected expected result. All six frozen parameter
+identities are retained. Mechanical body comparison preserves every original
+check and operation order after explicit store/helper/token/control forwarding.
+A real-store adapter that repairs forged staged length demonstrably fails the
+unchanged consumer's expected failure-type assertion on both providers; commit
+and repaired-claim counters prove the mutation occurred. Fresh genuine stores
+pass unchanged. The extra native scope requests those six frozen identities and
+two named mutation parameters, expanding the pending vector to 57 scopes/456
+observations, not complete session/category attribution.
+Two actual fresh-cache locked builds reproduce eleven archives, verify ten
+loaded artifact dependency images and each pass 275 artifact cases plus 89
+metadata cases per provider without skips. Accepted SDK/package-mode whitespace
+and all 277 tooling tests pass (260 passes/seventeen native macOS skips).
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

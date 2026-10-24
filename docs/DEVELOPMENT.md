@@ -6449,6 +6449,32 @@ authority combinations and complete category/profile acceptance
 remain pending. Product architecture/ADRs/diagrams and deployment examples
 remain unaffected by this test-only transport and parent evidence work.
 
+The next extraction moves all three original publication race bodies behind
+provider-free common consumers and leaves actual observers/payload mutation
+fixture-side. All six frozen parameters, EOF/receipt/stamp/outcome assertions,
+concurrent admission ordering, invalid-length rejection and permanent quarantine
+remain intact. Mechanical body comparison passes after explicit seam/helper/
+token forwarding. Actual missing consumers first failed compilation with CS0117.
+A real-store forged-length adapter fails the named unchanged consumer on both
+providers; commit/repaired-claim counters prove the intended mutation. Fresh
+genuine stores pass unchanged. A missing exact owned scope failed first; its
+six frozen identities plus two mutation rows now expand the pending Linux
+request to 57 scopes/456 observations. This is still partial extraction/
+diagnostic work, not complete category or profile evidence.
+Two actual independent fresh-cache locked builds reproduce eleven archives
+and ten loaded dependency images, each passing all 275 artifact cases plus
+89 metadata cases per provider without skips. Accepted SDK/package-mode
+whitespace, compiled/frozen catalogs, all 277 tooling tests (260 passes/seventeen
+native macOS skips) and patch integrity pass. Source/tracked locks remain
+unchanged; the newly built SDK is admitted through exact private derivation.
+The preceding preparation checkpoint also passed native
+[40112542005](https://github.com/Stonefly-Labs/Hoard/actions/runs/40112542005)
+at `6de5933`: all three jobs, 168 foundation checks without failures/errors/
+skips and the unchanged 56 scopes/448 observations, including all recovery/
+transfer/retention/external-wrapper rows and eighteen-package/thirteen-lock
+replay. Those Linux diagnostics do not substitute for full current-only recipe
+or category/session acceptance.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

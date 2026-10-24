@@ -460,6 +460,22 @@ class SdkDiagnosticTests(unittest.TestCase):
                 checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
             launch.assert_not_called()
 
+    def test_artifact_race_scope_preserves_all_frozen_parameters_and_named_length_mutations(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_race_scenarios", None)),
+                        "Shared artifact publication races need exact owned wrapper transport.")
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.startswith(
+                        "Hoard.Artifacts.Tests.ArtifactPublicationRaceTests.")}
+        self.assertEqual(len(original), 6)
+        mutations = {
+            "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+            "Shared_conflicting_length_assertion_rejects_repaired_forgery_and_accepts_original_store"
+            f'(provider: "{provider}")' for provider in ("local", "object")}
+        scenario, = checks.original_artifact_race_scenarios()
+        self.assertEqual(scenario, ("original-artifact-races", tuple(sorted(original | mutations)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_wrapper_scope_preserves_frozen_publication_parameters_and_actual_assembly(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_publication_scenarios", None)),
                         "Artifact publication needs exact source-owned wrapper transport.")

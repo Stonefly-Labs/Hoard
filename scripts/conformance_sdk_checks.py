@@ -1003,6 +1003,18 @@ def artifact_noncooperation_diagnostics(run, inputs, candidate):
     return result
 
 
+def original_artifact_race_scenarios():
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.startswith(
+            "Hoard.Artifacts.Tests.ArtifactPublicationRaceTests.")}
+    identities.update(
+        "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+        "Shared_conflicting_length_assertion_rejects_repaired_forgery_and_accepts_original_store"
+        f'(provider: "{provider}")' for provider in ("local", "object"))
+    return (("original-artifact-races", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def original_artifact_external_scenarios():
     prefixes = ("Hoard.Artifacts.Tests.ArtifactCrashTests.", "Hoard.Artifacts.Tests.ArtifactNonCooperativeChildTests.",
                 "Hoard.Artifacts.Tests.ArtifactTransferProofTests.")
@@ -1103,7 +1115,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "sdk-logger-diagnostic", "original-metadata-memory", "original-metadata-sqlite",
             "original-artifact-publication", "original-artifact-read-delete", "original-artifact-evidence",
             "sqlite-recovery-barriers", "local-recovery-barriers", "paced-artifact-transfers",
-            "artifact-noncooperation", "original-artifact-external"],
+            "artifact-noncooperation", "original-artifact-external", "original-artifact-races"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1123,7 +1135,8 @@ def test_attempt(run, inputs, candidate, scenario):
         metadata_provider = name.removeprefix("original-metadata-")
     if original_artifacts and scenario not in (
             *original_artifact_publication_scenarios(), *original_artifact_read_delete_scenarios(),
-            *original_artifact_evidence_scenarios(), *original_artifact_external_scenarios()):
+            *original_artifact_evidence_scenarios(), *original_artifact_external_scenarios(),
+            *original_artifact_race_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
     sqlite_tests = metadata_provider == "sqlite" or any(
@@ -1504,6 +1517,9 @@ def execute(repository, destination):
         artifact_noncooperative = artifact_noncooperation_diagnostics(run, inputs, candidate)
         print(json.dumps({"qualification": False, "phase": "original-artifact-external"}), flush=True)
         for scenario in original_artifact_external_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "original-artifact-races"}), flush=True)
+        for scenario in original_artifact_race_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

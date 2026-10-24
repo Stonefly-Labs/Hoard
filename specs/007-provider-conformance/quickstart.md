@@ -192,6 +192,16 @@ verify ten loaded artifact dependency images and each pass all 273 artifact
 cases plus 89 metadata cases per provider. Preparation remains
 `qualification: false`; sealed historical binaries are not rebuilt/substituted,
 and copied actual transfer packets are not fresh session-origin/category proof.
+The original publication race methods now forward to common consumers with
+actual fixture-side publication observers and damage/restore controls. All six
+frozen parameters and original checks/order remain. A real-store forged-length
+mutation pair fails the shared named type assertion, and genuine providers pass
+it unchanged. The extra eight-row native scope is pending, expanding the request
+to 57 scopes/456 observations without claiming full category/session evidence.
+Two fresh-cache locked builds reproduce eleven archives and ten actual
+dependency images; each passes 275 artifact cases and 89 metadata cases on each
+provider without skips. Accepted SDK/package-mode whitespace and all 277 tooling
+tests pass (260 passes/seventeen native macOS skips).
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

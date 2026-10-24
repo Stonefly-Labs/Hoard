@@ -103,6 +103,80 @@ public static class ArtifactPublicationAssertions
         Assert.Equal(bytes, await ReadAsync(store, original.Stamp, cancellationToken));
     }
 
+    public static async Task ConcurrentEquivalentWritersAsync(
+        IArtifactStore store, Action<Func<ValueTask>> observeAdmission, CancellationToken cancellationToken)
+    {
+        var bytes = "equivalent writers"u8.ToArray();
+        using var first = new ShortSource(bytes);
+        using var second = new ShortSource(bytes);
+        var a = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        var b = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        var staged = await Task.WhenAll(store.StageAsync(a, first, new(), cancellationToken).AsTask(),
+            store.StageAsync(b, second, new(), cancellationToken).AsTask());
+        var admitted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var arrivals = 0;
+        ValueTask Hold()
+        {
+            if (Interlocked.Increment(ref arrivals) == 2) { admitted.TrySetResult(); }
+            return new(release.Task);
+        }
+        observeAdmission(Hold);
+        var committing = Task.WhenAll(staged.Select(value => store.CommitAsync(Success(value), new(), cancellationToken).AsTask()));
+        try
+        {
+            await admitted.Task.WaitAsync(TimeSpan.FromSeconds(2), cancellationToken);
+            Assert.False(committing.IsCompleted);
+        }
+        finally { release.TrySetResult(); }
+        var commits = await committing;
+        var receipts = commits.Select(Success).ToArray();
+        Assert.True(first.EofObserved && second.EofObserved);
+        Assert.Equal(receipts[0].Stamp, receipts[1].Stamp);
+        Assert.NotEqual(receipts[0].ReceiptId, receipts[1].ReceiptId);
+        Assert.Single(receipts, receipt => receipt.Outcome == ArtifactMutationOutcome.Published);
+        Assert.Single(receipts, receipt => receipt.Outcome == ArtifactMutationOutcome.AlreadyPresentVerified);
+        Assert.Equal(bytes, await ReadAsync(store, receipts[0].Stamp, cancellationToken));
+    }
+
+    public static async Task ConflictingStagedLengthAsync(IArtifactStore store, CancellationToken cancellationToken)
+    {
+        var bytes = "valid content survives a conflicting claim"u8.ToArray();
+        using var source = new ShortSource(bytes);
+        var original = await PublishAsync(store, source, new(1024), cancellationToken);
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        using var duplicate = new ShortSource(bytes);
+        var staged = Success(await store.StageAsync(ticket, duplicate, new(), cancellationToken));
+        var conflicting = new ArtifactStagedWrite(staged.Owner,
+            new(staged.Identity.Digest, staged.Identity.Length + 1), staged.VerifiedCompletion, staged.PrivateHandle);
+        Assert.Equal(ArtifactFailureCode.InvalidInput, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+            await store.CommitAsync(conflicting, new(), cancellationToken)).Code);
+        var reused = Success(await store.CommitAsync(staged, new(), cancellationToken));
+        Assert.Equal(original.Stamp, reused.Stamp);
+        Assert.Equal(ArtifactMutationOutcome.AlreadyPresentVerified, reused.Outcome);
+        Assert.Equal(bytes, await ReadAsync(store, original.Stamp, cancellationToken));
+    }
+
+    public static async Task CorruptExistingContentAsync(
+        IArtifactStore store, Action damagePayload, Action<byte[]> restorePayload, CancellationToken cancellationToken)
+    {
+        var bytes = "preserve corrupt evidence"u8.ToArray();
+        using var original = new ShortSource(bytes);
+        var receipt = await PublishAsync(store, original, new(1024), cancellationToken);
+        damagePayload();
+        using var duplicate = new ShortSource(bytes);
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        var staged = Success(await store.StageAsync(ticket, duplicate, new(), cancellationToken));
+        Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+            await store.CommitAsync(staged, new(), cancellationToken)).Code);
+        Assert.True(duplicate.EofObserved);
+        Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+            await store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken)).Code);
+        restorePayload(bytes);
+        Success(await store.AbandonAsync(staged.Owner, new(), cancellationToken));
+        await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken);
+    }
+
     public static async Task<ArtifactMutationReceipt> PublishAsync(
         IArtifactStore store, Stream source, ArtifactExpectations expectations, CancellationToken cancellationToken)
     {

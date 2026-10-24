@@ -2525,6 +2525,62 @@ Preparation: `42e787cc053ea1e1465aadbed898362c59d1dd8d5b2ffa53ffd68d8d8e16b8a7`.
 Free scratch: 91,723,743,232 bytes. These are actual owned diagnostics,
 not complete category/session-origin imports.
 
+### Shared publication race assertions and real-store negative control
+
+The preceding preparation checkpoint passed native
+[40112542005](https://github.com/Stonefly-Labs/Hoard/actions/runs/40112542005)
+at `6de5933db158923413d084cf5673e561661f2e76`: all three jobs, 168 foundation
+checks without failures/errors/skips, the unchanged 56-scope/448-observation
+vector including all 21 external/capture rows, real recovery/transfer/retention
+diagnostics, native containment and eighteen-package/thirteen-lock replay.
+Input: `9dca6ddbdbcc8305dc9f2b46a5e8bb1907d41d8651fa9c95ad6473a2007d5504`.
+Preparation: `7268c461265ec64f2491319d72c3cb1d72927e1f07016eb13eca07fb84571f1b`.
+Free scratch: 91,723,599,872 bytes. The actual current-only package recipes
+were separately exercised on macOS above; native diagnostics are not relabeled
+as those recipe runs or full category/session evidence.
+
+All three original publication race methods now forward to provider-free
+publication consumers, retaining all six frozen parameter identities.
+Equivalent concurrent writers still enter the actual provider publication
+admission barrier together, stay pending until release, fully consume sources
+and return one stamp, distinct receipts and exactly one published/one verified-
+duplicate outcome. The forged staged-length case still rejects with InvalidInput
+before accepting the original staged descriptor and preserving original bytes.
+Corrupt content is still neither overwritten nor reused, and restored bytes
+remain quarantined after exact staging abandonment.
+
+Actual observer registration and payload damage/restore stay fixture-side;
+common code receives only store/control callbacks and cancellation, never
+provider IDs/types, filesystem paths or provider-selected expectations.
+Mechanical body comparison of every original method passes after only explicit
+store/helper/token/control forwarding; original checks and order are intact.
+Actual package-mode compilation failed first with CS0117 for the missing shared
+methods, then passed after extraction.
+
+The focused negative uses the actual Local/ObjectSemantics stores. A forwarding
+adapter repairs a forged length to the actually staged length, so the provider
+commits it and the unchanged consumer's expected failure-type assertion fails.
+Two commit calls and one repaired claim prove the intended mutation, not an
+incidental setup/compilation failure. Fresh genuine providers pass that same
+consumer unchanged. Existing duplicate-source negative controls retain their
+behavior through a shared test-only forwarding base.
+
+A named missing exact scope failed first. The requested new native scope has
+the six frozen race witnesses and two named length-mutation parameters, appended
+after original external wrappers. Expected vector: 57 scopes/456 observations,
+pending Linux execution. Complete binding/session/category/profile evidence
+remains separate; no task/checklist/stage advances.
+Two actual independent fresh-cache locked preparations reproduce eleven
+archives with combined archive-map SHA-256
+`64ad96aa8bcd1a24cd971053260e3c6d7d3867739238196c61d593cfae65ec3f`.
+Ten loaded artifact dependency images match their actual archives. Each run
+passes all 275 artifact cases plus 89 metadata cases on each provider, without
+skips. The new SDK is resolved through explicit private lock derivation; tracked
+source locks stay unchanged. Accepted SDK/package-mode whitespace, compiled/
+frozen catalogs, all 277 tooling tests (260 passes/seventeen native macOS skips)
+and patch integrity pass. Product APIs/edges/ADRs/diagrams and deployment
+examples remain unaffected by this test-only extraction.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

@@ -1426,6 +1426,15 @@ fresh-cache locked preparations reproduce eleven archives and verify ten loaded
 artifact dependency images; actual functional execution passes all 273 artifact
 cases and 89 metadata cases on each provider. This is non-qualifying preparation,
 not a rebuild/replacement of sealed historical binaries or full profile evidence.
+Three original publication-race methods now forward to shared provider-free
+consumers, preserving all six frozen parameters, concurrent admission ordering,
+conflicting-length rejection and permanent corrupt-content quarantine. Actual
+fixture observers and payload mutation stay outside the SDK. A real-store
+forged-length mutation fails the named unchanged consumer on both providers;
+the genuine stores pass. Two fresh-cache locked builds reproduce eleven
+archives and each pass 275 artifact cases plus 89 metadata cases per provider.
+The expanded native request adds those six witnesses
+and two mutation rows (57 scopes/456 observations), pending.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
