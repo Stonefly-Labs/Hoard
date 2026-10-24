@@ -605,6 +605,30 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-authority-ownership", tuple(sorted(identities)),
                                     "None", "Passed", 0, "None"))
 
+    def test_object_artifact_session_scope_requires_fresh_epochs_and_actual_ownership(self):
+        factory = getattr(checks, "object_artifact_session_scenarios", None)
+        self.assertTrue(callable(factory), "Owned Object sessions need exact package-only transport.")
+        prefix = "Hoard.Fixtures.Conformance.Consumer.ObjectArtifactSessionTests."
+        identities = {
+            prefix + f'Owned_object_projection_executes_unchanged_common_consumers(consumer: "{consumer}")'
+            for consumer in ("publication", "expectations", "private-staging")}
+        identities.update(prefix + method for method in (
+            "All_typed_observations_register_together_and_stale_disposal_cannot_remove_a_replacement",
+            "Object_restart_joins_old_authority_and_uses_fresh_epoch_authority_and_private_child",
+            "Failed_replacement_keeps_the_original_as_cleanup_handle",
+            "Failed_initialization_joins_actual_shutdown_without_erasing_foreign_content",
+            "Cancellation_while_joining_old_authority_does_not_admit_a_replacement",
+            "Cancellation_during_replacement_admission_retains_the_unpublished_generation",
+            "Retained_authority_and_concurrent_disposers_retry_the_same_settlement"))
+        for method, parameter in (
+            ("Released_callback_stays_owned_until_restart_or_final_settlement", "restart"),
+            ("Observer_failure_before_or_during_cleanup_faults_the_same_actual_settlement", "duringCleanup"),
+            ("Direct_stop_and_disposal_retries_reuse_the_pending_allocator_observation", "actualAllocator"),
+        ):
+            identities.update(prefix + method + f"({parameter}: {value})" for value in ("False", "True"))
+        scenario, = factory()
+        self.assertEqual(scenario, ("object-artifact-session", tuple(sorted(identities)), "None", "Passed", 0, "None"))
+
     def test_artifact_observation_scope_requires_actual_independent_transition_cases(self):
         prefix = "Hoard.Artifacts.Tests.ArtifactObservationTests."
         identities = tuple(sorted(prefix + method + f'(provider: "{provider}")' for method in (
@@ -620,6 +644,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         for scenario, folder, assembly_name in (
                 (checks.artifact_authority_ownership_scenarios()[0], checks.ARTIFACT_TESTS, "Hoard.Artifacts.Tests.dll"),
                 (checks.local_artifact_session_scenarios()[0], checks.ARTIFACT_CONSUMER,
+                 "Hoard.Fixtures.Conformance.Consumer.dll"),
+                (checks.object_artifact_session_scenarios()[0], checks.ARTIFACT_CONSUMER,
                  "Hoard.Fixtures.Conformance.Consumer.dll")):
             output = checks.ARTIFACT_TEST_OUTPUT if folder == checks.ARTIFACT_TESTS else checks.PACKAGE_TEST_OUTPUT
             assembly = candidate / folder / output / "Release/net10.0" / assembly_name
@@ -663,14 +689,15 @@ class SdkDiagnosticTests(unittest.TestCase):
                                         checks.PACKAGE_TEST_OUTPUT, checks.ARTIFACT_CONSUMER_PACKAGES)
 
     def test_incomplete_or_foreign_owned_local_vectors_never_launch(self):
-        name, identities, *outcome = checks.local_artifact_session_scenarios()[0]
-        for invalid in (identities[:-1], identities + ("Foreign.Test",),
-                        (identities[0].replace("LocalArtifactSessionTests", "ForeignTests"), *identities[1:])):
-            with self.subTest(vector=invalid), patch.object(checks, "runtime_command") as launch:
-                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
-                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, self.directory / "candidate",
-                                        (name, invalid, *outcome))
-                launch.assert_not_called()
+        for scenario in (*checks.local_artifact_session_scenarios(), *checks.object_artifact_session_scenarios()):
+            name, identities, *outcome = scenario
+            for invalid in (identities[:-1], identities + ("Foreign.Test",),
+                            ("Foreign.Test", *identities[1:])):
+                with self.subTest(scope=name, vector=invalid), patch.object(checks, "runtime_command") as launch:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                        checks.test_attempt(SimpleNamespace(root=self.directory), {}, self.directory / "candidate",
+                                            (name, invalid, *outcome))
+                    launch.assert_not_called()
 
     def test_artifact_configured_store_scope_preserves_all_frozen_host_selection_cases(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_configured_store_scenarios", None)),

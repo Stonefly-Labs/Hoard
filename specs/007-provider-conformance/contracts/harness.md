@@ -663,7 +663,21 @@ reconciliation before/verified transitions on both providers. Object uses distin
 new hooks, never unrelated `object.direct` callbacks. Callback failure after a
 real stream opens must release stream/guard/single transfer capacity; failure
 after content verification must leave actual uncertain publication recoverable.
-These are hook prerequisites, not a completed Object session/fault driver.
+These hooks are prerequisites, not a completed category fault driver.
+
+The partial Local/Object projections source-link one internal provider-free
+ownership/session coordinator. Each still constructs its own real provider and
+maps its own private controls; the SDK gains no concrete provider dependency.
+Local compatible reopen retains identity/authority/root/content. Object logical
+restart must join the old provider and authority before admitting an empty
+private child with a fresh epoch/authority under the same allocation. Original
+sessions retain immutable identity/authority. Every replacement is tracked
+before initialization, including failed/canceled unpublished generations;
+only successful admission changes the current cleanup handle. Final settlement
+joins every provider/authority generation. Partial projections do not satisfy
+mandatory category fault-driver admission or imply durable Object restart.
+Sixteen package-only Object cases cover these semantics alongside fifteen Local
+cases, including actual allocator overlap and admission-clock cancellation.
 
 Run `40131392286` at `88c5d01` failed pre-runtime with `ProofMismatch`, despite
 190 successful foundations and lock replay; it is not admitted. Diagnostic
@@ -672,7 +686,11 @@ the admitted architecture's native assets and all lockfiles. Unconsumed build
 assets do not exhaust the input budget. Default full manifests and selected
 input caps remain unchanged; traversal still rejects symlinks, non-regular
 entries and identity races even outside the selected inputs. The next exact
-native request is 76 scopes/643 observations, pending, not category/profile proof.
+native run `40133457888` at exact `c58978e` passed all three jobs, 191 foundations
+without skips, independent lock replay and strict 76-scope/643-observation
+admission; the earlier failed run remains unadmitted.
+The owned-Object increment adds exact 77-scope/659-observation transport, pending,
+not category/profile proof.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

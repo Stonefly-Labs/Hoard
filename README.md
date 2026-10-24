@@ -1591,7 +1591,19 @@ failed before runtime scopes with `ProofMismatch`; it is not admitted. Runtime
 input enumeration now hashes consumed managed images, active-architecture
 native assets and locks within unchanged bounds, not unrelated copied build
 assets; full-tree symlink/type/race checks and default full-manifest limits
-remain. Replacement native execution requests 76 scopes/643 observations,
+remain. Replacement run `40133457888` at exact `c58978e` passed all three jobs,
+191 foundations without skips and strict 76-scope/643-observation admission.
+The earlier failed run is not retroactively admitted.
+
+Both partial artifact projections now use one internal, provider-free,
+source-linked lifecycle coordinator while constructing their own independent
+providers. Object logical restart joins the old provider and authority before
+admitting an empty private child with a fresh epoch/authority; it is not durable
+recovery. Old identity/authority remain immutable, and failed or canceled
+replacements remain owned through original-session cleanup. Sixteen Object
+package-only cases cover actual observations, publication, restart, callback
+failure, stale disposal and allocator retry alongside the fifteen Local cases.
+The next native selection adds their exact transport: 77 scopes/659 observations,
 pending. Full bindings, mandatory fault controls and category/profile acceptance
 remain unfinished.
 

@@ -310,7 +310,7 @@ public sealed class LocalArtifactSessionTests
         Guid.NewGuid(), "arbitrary-not-a-setup-selector", TimeProvider.System, resources, new ConformanceEvidenceBuffer());
 
     // Records real fixture ownership; optional native allocation is not controller/category-origin proof.
-    private sealed class RecordingDirectories(
+    internal sealed class RecordingDirectories(
         TimeSpan? observationBudget = null, Action<string>? beforeAdmission = null, bool allowFailedSettlement = false,
         bool useActualAllocator = false)
         : IConformanceResourceAllocator, IAsyncDisposable

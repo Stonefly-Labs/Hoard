@@ -519,13 +519,31 @@ Object checks retain real receipt equality, reclaim resources after callback
 failure with one transfer slot and recover actual uncertain publication after
 verified-callback failure. The deletion fixture explicitly supplies a successful
 zero-reference decision; the default authority correctly denies unproven deletion.
-This does not implement the Object owned session or complete fault driver.
+These hooks are prerequisites, not a complete fault driver.
+
+`ObjectArtifactAssertionSessions` now supplies the corresponding partial owned
+projection. Both artifact binding packages compile one internal source-linked
+ownership/session coordinator; actual provider construction, readiness, worker
+joins and private boundary mappings remain separate. There are no new package
+dependencies on the other provider, Hosting or HostAdapters.
+Local reopen preserves identity/authority/content. Object logical restart joins
+the old store and authority, then uses a new empty child and fresh epoch/authority
+under the same allocation. Old sessions retain immutable identity/authority;
+failed or canceled replacement generations stay tracked until original-handle
+cleanup. This is simulation, never Local recovery or a durability exclusion
+substitute. `CleanupCandidate` maps Object's actual per-target `multipart.cleanup`
+transition, not its synchronous history-index callback. Sixteen package-only
+Object cases and the unchanged fifteen Local cases exercise these surfaces.
 
 Run `40131392286` at `88c5d01` passed foundations/lock replay but failed
 pre-runtime with `ProofMismatch`; it is not admitted. Input enumeration now
 hashes consumed managed/runtime images, active-architecture native assets and
 all locks under unchanged bounds, retaining full-tree symlink/type/race checks.
-Replacement native execution requests 76 scopes/643 observations, pending.
+Replacement run `40133457888` at exact `c58978e` passed all three jobs,
+191 foundations without skips and strict 76-scope/643-observation admission.
+The earlier failed run remains unadmitted. The owned-Object increment requests
+77 scopes/659 observations, pending;
+neither partial projection admits a full artifact binding/category/profile.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

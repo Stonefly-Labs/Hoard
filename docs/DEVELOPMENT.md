@@ -6867,8 +6867,7 @@ Local/Object rows. The single-slot callback-failure fixture supplies an explicit
 successful zero-reference decision: its first deletion attempt correctly failed
 under the default fail-closed authority, not because resources leaked.
 All 306 artifact cases and both 89-case metadata choices pass without skips.
-This prepares real controls; the Object owned session/shared coordinator is
-still unimplemented.
+This prepared real controls without claiming a complete category fault driver.
 
 Native run `40131392286` at exact head
 `88c5d0182ad68dd65006e2ae3c86f3dce90a4525` passed 190 foundations without
@@ -6887,8 +6886,48 @@ oversized selected DLL still rejects. New phase markers separate actual SQLite
 environment admission from runtime inventory capture so replacement failures
 remain diagnosable. Native diagnosis is not claimed closed before replacement
 execution. Tooling passes 299 discovered / 282 passed / seventeen macOS-native
-skips; the next request is 191 native foundations and 76 scopes/643 observations,
-pending, not full category/profile acceptance.
+skips. Replacement run `40133457888` at exact
+`c58978ef016f53ab3fc8898b62b61b7bdd7d2631` passed all three jobs, 191 native
+foundations without failures/errors/skips, independent eighteen-package/
+thirteen-lock replay and strict 76-scope/643-observation admission, including
+all fifteen Local and six observation rows plus actual prerequisite chains.
+Input: `0e910492b63112b05c09277e70402c5c81fc6f1541a7cf938d8e3d3ee690b0e9`;
+preparation:
+`feef714d4c3428eda397c0440a8c7a63284ef8b1d4e285f1b33bdeb2e9b23439`.
+This verifies the replacement, not the earlier failed run or full category/
+profile acceptance.
+
+The partial Object projection and shared internal artifact lifecycle coordinator
+are now implemented. Local/Object packages source-link the same provider-free
+owner/session code and existing internal authority algorithm, while keeping
+actual construction and private controls independent. Compatible Local reopen
+is unchanged. Object logical restart joins the old store/authority before
+creating an empty private child with a fresh epoch/authority; it cannot recover
+old content or borrow Local's durable behavior. Each session retains its original
+identity/authority, and failed/unpublished generations remain tracked until
+cleanup through the original handle.
+
+The first fresh package preparation passed 306 artifact cases and both 89-case
+metadata choices; its final package-only Consumer passed fifteen Local and
+sixteen Object rows. Bounded architecture review found no confirmed defect and
+identified two coverage gaps, now covered: actual direct-stop/disposal allocator
+overlap and cancellation after replacement admission has begun. The latter
+cancels through the actual admission clock after a new child exists, not a
+timing delay. Provider/authority joins, failed observer tasks and pending
+allocator observations retain their original ownership semantics. Formatting
+passes for SDK, both bindings and Consumer; tooling passes 300 discovered /
+283 passed / seventeen macOS-native skips. Independent fresh replay passes all
+306 artifact, 31 Local/Object and 89+89 metadata cases without skips. Fifteen
+archives reproduce exactly, canonical archive-map SHA-256
+`727d42f8e1fdb9829e83e10f6a2d615a220f9fab425489b9892205c8cac51f99`;
+ten Consumer runtime images match their archives. Previously measured transfer
+packets remain reused unchanged, not fresh category/session origins.
+Run `40133457888` verifies the preceding 76-scope vector; this increment requests
+192 native foundations and 77 scopes/659 observations, pending.
+These are diagnostic projections, not complete bindings, a 192/179/13 category
+result or profile acceptance. T027–T030 and subsequent gates remain open.
+Product architecture/ADR diagrams and custom-host examples are unaffected:
+only test-private source composition and diagnostic consumers change.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

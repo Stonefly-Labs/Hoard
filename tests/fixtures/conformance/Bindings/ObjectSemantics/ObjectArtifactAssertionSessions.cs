@@ -1,0 +1,55 @@
+using Hoard.Abstractions.Storage;
+using Hoard.Fixtures.Artifacts.ObjectSemantics;
+using Hoard.Fixtures.Conformance.Bindings.Shared;
+using Hoard.Testing.Conformance.Bindings;
+
+namespace Hoard.Fixtures.Conformance.Bindings.ObjectSemantics;
+
+public static class ObjectArtifactAssertionSessions
+{
+    public static ValueTask<IArtifactAssertionSession> CreateAsync(
+        ConformanceRunContext context, CancellationToken cancellationToken) =>
+        ArtifactAssertionOwnership.CreateAsync(context, "fixture.artifact.object", ArtifactAssertionRestart.FreshEpoch,
+            (ownership, generation) => new Session(ownership, generation), cancellationToken);
+
+    private sealed class Session : ArtifactAssertionSession
+    {
+        private readonly ObjectArtifactStore store;
+        private readonly ObjectFaultControls controls = new();
+
+        public Session(ArtifactAssertionOwnership ownership, ArtifactAssertionGeneration generation)
+            : base(ownership, generation) =>
+            store = new(generation.DirectoryPath, ownership.Context.Clock, controls);
+
+        public override IArtifactStore Store => store;
+        public override IArtifactEvidenceValidator Validator => store;
+        public override IArtifactMaintenance Maintenance => store;
+        public override IArtifactStoreLifetime Lifetime => store;
+        protected override bool ProviderReady => store.Ready;
+        public override Task ObserveWorkerSettlement() => store.WhenIdleForQualificationAsync();
+        protected override void SetObserver(string boundary, Func<ValueTask> observer) => controls.SetObserver(boundary, observer);
+        protected override void RemoveObserver(string boundary) => controls.RemoveObserver(boundary);
+
+        protected override string Boundary(ArtifactObservationPoint point) => point switch
+        {
+            ArtifactObservationPoint.StagePrefix => "multipart.part",
+            ArtifactObservationPoint.StageVerified => "multipart.complete",
+            ArtifactObservationPoint.PublicationAdmitted => "object.publication-admitted",
+            ArtifactObservationPoint.BeforePublicationDecision => "pointer.compare",
+            ArtifactObservationPoint.PublicationSelected => "pointer.selected",
+            ArtifactObservationPoint.ReceiptPersisted => "object.receipted",
+            ArtifactObservationPoint.ReadOpened => "object.read-opened",
+            ArtifactObservationPoint.ReadCopy => "object.read",
+            ArtifactObservationPoint.DeleteRemoved => "pointer.tombstone",
+            ArtifactObservationPoint.DeleteReclaimed => "object.reclaimed",
+            ArtifactObservationPoint.CleanupCandidate => "multipart.cleanup",
+            ArtifactObservationPoint.TransferQueued => "object.transfer-queued",
+            ArtifactObservationPoint.BeforeReconciliation => "object.reconcile-before-resolution",
+            ArtifactObservationPoint.ReconciliationVerified => "object.reconcile-verified",
+            ArtifactObservationPoint.OperationReleased => "object.operation-released",
+            ArtifactObservationPoint.OperationCompleted => "object.operation-completed",
+            ArtifactObservationPoint.OperationReclaim => "object.operation-reclaim",
+            _ => throw new ArgumentException("BindingInvalid")
+        };
+    }
+}

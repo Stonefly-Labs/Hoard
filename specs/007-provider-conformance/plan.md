@@ -3512,10 +3512,69 @@ fifteen-archive map is
 ten Consumer dependency images match their actual archives. Tooling passes
 299 discovered / 282 passed /
 seventeen macOS-native skips; whitespace, frozen/compiled catalogs and patch
-checks pass. Replacement execution requests 191 foundations and 76 scopes/
-643 observations, pending. This remains partial F-07 implementation, not
+checks pass. Replacement run `40133457888` at exact
+`c58978ef016f53ab3fc8898b62b61b7bdd7d2631` passed all three jobs: 191 foundations
+without failures/errors/skips, independent eighteen-package/thirteen-lock replay
+and strict 76-scope/643-observation admission, including fifteen Local and six
+observation rows and all actual prerequisite chains.
+Input: `0e910492b63112b05c09277e70402c5c81fc6f1541a7cf938d8e3d3ee690b0e9`;
+preparation:
+`feef714d4c3428eda397c0440a8c7a63284ef8b1d4e285f1b33bdeb2e9b23439`.
+The replacement verifies input capture through completion; it does not
+retroactively admit the earlier failure or establish its precise root cause.
+This remains partial F-07 implementation, not
 complete Local/Object bindings, category/profile gates or a 192/179/13 result.
 Tracked locks, historical seals and reviewer-owned checklists remain unchanged.
+
+### Shared artifact ownership and partial Object assertion session
+
+Local/Object now source-link one internal provider-free lifecycle coordinator
+and session base, retaining separate actual construction, readiness, worker
+settlement and private typed-boundary mappings. The SDK still references only
+Abstractions/test dependencies; neither binding imports the other provider,
+Hosting or the HostAdapters package. The existing source-linked authority is
+the only authority algorithm.
+
+Local compatible reopen keeps identity/authority/root/content. Object accepts
+only `CreateEmpty`; its logical restart first joins old provider/authority work,
+then creates an empty private child and fresh epoch/authority under the same
+allocation. Original identity/authority remain immutable. Replacement authority
+and session generations are tracked before initialization; only successful
+admission changes `Current`. Failed/canceled replacements are joined through
+the original cleanup handle. Final stable settlement joins every generation,
+preserves observer failures and reuses pending allocator observations; neither
+binding deletes allocator roots or reports `Released`.
+
+Object's `CleanupCandidate` maps the actual per-target `multipart.cleanup`
+callback in `CleanupAsync`, equivalent to Local's per-target cleanup observation.
+It is not an alias of the synchronous history-candidate index hook. All seventeen
+typed observers can register together. Sixteen Object package-only cases cover
+unchanged publication/expectation/private-stage consumers, scoped observations,
+fresh logical restart, stale disposal, callback joins/failure, failed replacement
+and initialization, cancellation before/during replacement admission, retained
+authority and direct provider stop/disposal retries with real native allocation.
+The existing fifteen Local cases remain unchanged apart from sharing the
+provider-neutral recording allocator helper. Bounded architecture review found
+no confirmed defect; its two coverage gaps were closed before publication.
+
+The intended exact-Object-vector regression failed before transport was added;
+missing scenario references also produced two expected harness lookup errors,
+not runtime assertion failures. All 74 SDK tooling checks now pass. The first
+fresh package preparation passed 306 artifact cases and 89 metadata cases per
+provider; the final Consumer passed all 31 Local/Object cases without skips.
+Formatting passes for SDK/both bindings/Consumer. Tooling passes 300 discovered /
+283 passed / seventeen macOS-native skips. Independent fresh replay passes all
+306 artifact cases, 31 Local/Object cases and 89 metadata cases per choice without
+skips; fifteen archives reproduce exactly, canonical archive-map SHA-256
+`727d42f8e1fdb9829e83e10f6a2d615a220f9fab425489b9892205c8cac51f99`.
+Ten Consumer dependency images match their actual archives. Previously measured
+transfer packets remain reused unchanged, not fresh category/session origins.
+The preceding 76-scope request passed at exact `c58978e`,
+run `40133457888`; this increment requests 192 native foundations and
+77 scopes/659 observations. Neither is full category/profile qualification.
+Tracked locks, historical seals, tasks and reviewer-owned checklists remain
+unchanged. Product contracts, architecture/ADR diagrams and custom-host examples
+are unaffected by this test-only ownership extraction.
 
 ## Summary
 

@@ -343,8 +343,19 @@ Object receipt/read/reconciliation hooks, retaining Local parity, actual
 single-slot resource reclamation and uncertain-publication recovery.
 Runtime capture selects consumed managed images, active-architecture native
 assets and locks without increasing bounds or relaxing full-tree safety.
-The next native request is 76 scopes/643 observations, pending, not complete
-Object sessions, category or profile acceptance.
+Run `40133457888` at exact `c58978e` passed all three jobs, 191 foundations
+without skips and strict 76-scope/643-observation admission; the earlier failed
+run remains unadmitted.
+Partial owned Local/Object assertion sessions now share one internal
+provider-free source-linked lifecycle coordinator, not concrete provider logic.
+Local compatible reopen preserves content/identity/authority. Object logical
+restart joins old ownership before creating a fresh empty child/epoch/authority;
+old session identity/authority do not change. Failed/canceled replacements remain
+owned by the original cleanup handle. Fifteen Local and sixteen Object
+package-only cases exercise actual consumers/observations, cancellation,
+callback failure and allocator retry. Their next exact native request is
+77 scopes/659 observations, pending, not complete category bindings or profile
+acceptance.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,
