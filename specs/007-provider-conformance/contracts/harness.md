@@ -484,6 +484,21 @@ request passed `40115175363` at `793ad65`, all three jobs, 171 foundations and
 59 scopes/470 observations, with all actual prerequisites and eighteen-package/
 thirteen-lock replay admitted. Complete category/session/profile gates remain.
 
+Three original cancellation/current-owner bodies now also execute shared
+assertions with ten unchanged existing parameters: two frozen category witnesses
+and eight explicitly requested additional fixture identities. Actual clock,
+publication/progress observers, boundary removal/release and worker settlement
+remain fixture-side. A real-store negative waits for the rejected commit's
+actual settlement before abandoning the current verified owner, failing the
+unchanged pending-state type assertion on each provider. One stage, one commit
+and one actual abandonment corroborate the intended mutation; genuine stores
+pass unchanged. Its initial setup guard correctly rejected abandonment before
+physical settlement under whole-suite concurrency; actual settlement, not
+logical return, now precedes the mutation. The next twelve-row scope requests
+62 scopes/510 observations, pending. The history request passed `40116055015`
+at `37ec19a`, all three jobs, 172 foundations and 60 scopes/488 observations,
+with actual prerequisites and eighteen-package/thirteen-lock replay admitted.
+
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,

@@ -357,7 +357,8 @@ injected candidate failure behind one actual retry, causing the unchanged
 consumer's expected failure-type assertion to fail on both providers. Counters
 corroborate actual candidate observation, 106 reservations, one hidden failure
 and one retry; genuine stores pass unchanged. The next native vector adds these
-sixteen originals and two mutations: 60 scopes/488 observations, pending.
+sixteen originals and two mutations: 60 scopes/488 observations. It passed at
+`37ec19a`, run `40116055015`, all three jobs and 172 foundations.
 
 Four original stream-ownership bodies now run shared checks: cooperative
 inactivity, idle-read expiry, noncooperative source and noncooperative destination.
@@ -370,6 +371,18 @@ assertion fails on both providers. The original release runs, actual work
 settles, and fresh genuine stores pass unchanged. This is logical stream-
 ownership proof, not a new durable crash or kernel RSS claim. The next ten-row
 native scope requests 61 scopes/498 observations, pending.
+
+Three original cancellation/current-owner bodies now run shared assertions:
+external renewal survives older cancellation, progress renewal fences the same
+admitted owner, and invalid/stale cancelled descriptors preserve the current
+verified handle. Two identities are frozen category witnesses; eight are
+additional existing fixture cases. Actual clocks, publication/progress observers,
+boundary removal/release and worker settlement remain fixture-side. A real-store
+mutation waits for the actual rejected commit to settle, then abandons the
+current verified owner. The unchanged pending-state type assertion fails on
+both providers; one stage, one commit and one actual abandonment corroborate it.
+Fresh genuine stores pass unchanged. The next twelve-row native scope requests
+62 scopes/510 observations, pending, not complete binding/category/session proof.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

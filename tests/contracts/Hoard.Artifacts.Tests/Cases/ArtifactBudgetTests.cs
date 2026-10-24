@@ -98,35 +98,16 @@ public sealed class ArtifactBudgetTests
     {
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        using var source = new ShortSource("renewed owner survives older cancellation"u8.ToArray());
-        var staged = Success(await driver.Store.StageAsync(ticket, source, new(), default));
         await using var barrier = new ArtifactTestBarrier("renew-before-cancellation-settlement");
-        SetObserver(driver, "publish.before-decision", "pointer.compare", () => new(barrier.HoldAsync()));
-        using var cancellation = new CancellationTokenSource();
-        var committing = driver.Store.CommitAsync(staged, new(), cancellation.Token).AsTask();
-        ArtifactStagingOwner renewed;
-        try
-        {
-            await barrier.Entered;
-            clock.Advance(TimeSpan.FromSeconds(10));
-            renewed = Success(await driver.Store.RenewAsync(staged.Owner, new(), default));
-            cancellation.Cancel();
-            Assert.Equal(ArtifactFailureCode.CancelledBeforeCommit,
-                Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
-                    await committing.WaitAsync(TimeSpan.FromSeconds(2))).Code);
-        }
-        finally
-        {
-            if (driver.LocalControls is { } local) { local.RemoveObserver("publish.before-decision"); }
-            else { driver.ObjectControls!.RemoveObserver("pointer.compare"); }
-            barrier.Release();
-        }
-        await driver.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(2));
-        Assert.IsType<ArtifactResolution.Pending>(Success(await driver.Store.ReconcileAsync(ticket, new(), default)));
-        var current = new ArtifactStagedWrite(renewed, staged.Identity, staged.VerifiedCompletion, staged.PrivateHandle);
-        var receipt = Success(await driver.Store.CommitAsync(current, new(), default));
-        Assert.Equal("renewed owner survives older cancellation"u8.ToArray(), await ReadAsync(driver, receipt.Stamp));
+        await ArtifactOwnershipAssertions.ExternalRenewalCancellationAsync(driver.Store, clock.Advance, driver.WhenIdleAsync,
+            () => SetObserver(driver, "publish.before-decision", "pointer.compare", () => new(barrier.HoldAsync())),
+            token => barrier.Entered.WaitAsync(token),
+            () =>
+            {
+                if (driver.LocalControls is { } local) { local.RemoveObserver("publish.before-decision"); }
+                else { driver.ObjectControls!.RemoveObserver("pointer.compare"); }
+                barrier.Release();
+            }, default);
     }
 
     [Theory]
@@ -136,28 +117,8 @@ public sealed class ArtifactBudgetTests
     {
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
-        var bytes = new byte[1048576];
-        using var initial = new MemoryStream(bytes, writable: false);
-        var original = await PublishAsync(driver, initial, new(2097152));
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(2097152)), new(), default));
-        using var duplicate = new MemoryStream(bytes, writable: false);
-        var staged = Success(await driver.Store.StageAsync(ticket, duplicate, new(), default));
-        using var cancellation = new CancellationTokenSource();
-        var progress = 0;
-        ValueTask Advance()
-        {
-            clock.Advance(TimeSpan.FromSeconds(11));
-            if (Interlocked.Increment(ref progress) == 2) { cancellation.Cancel(); }
-            return ValueTask.CompletedTask;
-        }
-        SetObserver(driver, "publish.progress", "object.commit-progress", Advance);
-        Assert.Equal(ArtifactFailureCode.CancelledBeforeCommit,
-            Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
-                await driver.Store.CommitAsync(staged, new(), cancellation.Token)).Code);
-        await driver.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(2));
-        Assert.Equal(2, progress);
-        Assert.IsType<ArtifactResolution.NotCommitted>(Success(await driver.Store.ReconcileAsync(ticket, new(), default)));
-        Assert.Equal(bytes, await ReadAsync(driver, original.Stamp));
+        await ArtifactOwnershipAssertions.ProgressRenewalCancellationAsync(driver.Store, clock.Advance, driver.WhenIdleAsync,
+            observe => SetObserver(driver, "publish.progress", "object.commit-progress", observe), default);
     }
 
     [Theory]
@@ -172,33 +133,8 @@ public sealed class ArtifactBudgetTests
     {
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        using var source = new ShortSource("preserve current verified ownership"u8.ToArray());
-        var original = Success(await driver.Store.StageAsync(ticket, source, new(), default));
-        var current = original;
-        ArtifactStagedWrite invalid;
-        if (alteration == "renewed")
-        {
-            clock.Advance(TimeSpan.FromSeconds(10));
-            var renewed = Success(await driver.Store.RenewAsync(original.Owner, new(), default));
-            current = new(renewed, original.Identity, original.VerifiedCompletion, original.PrivateHandle);
-            invalid = original;
-        }
-        else
-        {
-            invalid = new(original.Owner, original.Identity,
-                alteration == "completion" ? Guid.NewGuid() : original.VerifiedCompletion,
-                alteration == "handle" ? original.PrivateHandle + "-forged" : original.PrivateHandle);
-        }
-        using var cancellation = new CancellationTokenSource();
-        cancellation.Cancel();
-        Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
-            await driver.Store.CommitAsync(invalid, new(), cancellation.Token));
-        await driver.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(2));
-        Assert.IsType<ArtifactResolution.Pending>(Success(await driver.Store.ReconcileAsync(ticket, new(), default)));
-        var receipt = Success(await driver.Store.CommitAsync(current, new(), default));
-        Assert.Equal(ArtifactMutationOutcome.Published, receipt.Outcome);
-        Assert.Equal("preserve current verified ownership"u8.ToArray(), await ReadAsync(driver, receipt.Stamp));
+        await ArtifactOwnershipAssertions.CancelledStagedDescriptorAsync(
+            driver.Store, clock.Advance, driver.WhenIdleAsync, alteration, default);
     }
 
     [Theory]

@@ -147,6 +147,65 @@ public sealed class ArtifactPublicationConsumerTests
         }
     }
 
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Shared_cancelled_descriptor_assertion_rejects_abandoned_current_owner_and_accepts_original_store(string provider)
+    {
+        {
+            var clock = new ArtifactTestClock();
+            await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
+            var mutation = new AbandonedCurrentOwner(driver.Store, driver.WhenIdleAsync);
+            await Assert.ThrowsAsync<Xunit.Sdk.IsTypeException>(() =>
+                ArtifactOwnershipAssertions.CancelledStagedDescriptorAsync(
+                    mutation, clock.Advance, driver.WhenIdleAsync, "completion", default));
+            Assert.Equal(1, mutation.StageCalls);
+            Assert.Equal(1, mutation.CommitCalls);
+            Assert.Equal(1, mutation.AbandonedOwners);
+        }
+        {
+            var clock = new ArtifactTestClock();
+            await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
+            await ArtifactOwnershipAssertions.CancelledStagedDescriptorAsync(
+                driver.Store, clock.Advance, driver.WhenIdleAsync, "completion", default);
+        }
+    }
+
+    private sealed class AbandonedCurrentOwner(IArtifactStore store, Func<Task> whenIdle) : ForwardingStore(store)
+    {
+        private ArtifactStagedWrite? current;
+        public int StageCalls { get; private set; }
+        public int CommitCalls { get; private set; }
+        public int AbandonedOwners { get; private set; }
+
+        public override async ValueTask<ArtifactResult<ArtifactStagedWrite>> StageAsync(
+            ArtifactOperationTicket ticket, Stream source, ArtifactTransferOptions options, CancellationToken ct)
+        {
+            StageCalls++;
+            var result = await Store.StageAsync(ticket, source, options, ct);
+            if (result is ArtifactResult<ArtifactStagedWrite>.Success staged) { current = staged.Value; }
+            return result;
+        }
+
+        public override async ValueTask<ArtifactResult<ArtifactMutationReceipt>> CommitAsync(
+            ArtifactStagedWrite staged, ArtifactTransferOptions options, CancellationToken ct)
+        {
+            CommitCalls++;
+            var verified = current ?? throw new InvalidOperationException("Mutation requires actual verified staging.");
+            if (!ct.IsCancellationRequested || staged.VerifiedCompletion == verified.VerifiedCompletion)
+            { throw new InvalidOperationException("Mutation requires a cancelled altered completion claim."); }
+            var result = await Store.CommitAsync(staged, options, ct);
+            if (result is not ArtifactResult<ArtifactMutationReceipt>.Failure)
+            { throw new InvalidOperationException("Mutation requires actual rejected commit."); }
+            await whenIdle().WaitAsync(TimeSpan.FromSeconds(2));
+            var abandoned = await Store.AbandonAsync(verified.Owner, new(), CancellationToken.None);
+            if (abandoned is not ArtifactResult<ArtifactCleanupReport>.Success { Value.Completed: 1 })
+            { throw new InvalidOperationException("Mutation requires actual current-owner abandonment."); }
+            AbandonedOwners++;
+            return result;
+        }
+    }
+
     private sealed class OptimisticSourceCleanup(IArtifactStore store) : ForwardingStore(store)
     {
         public int StageCalls { get; private set; }

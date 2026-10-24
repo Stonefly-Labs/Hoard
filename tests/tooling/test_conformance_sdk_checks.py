@@ -566,6 +566,32 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_cancellation_scope_preserves_frozen_and_additional_current_owner_cases(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_cancellation_scenarios", None)),
+                        "Shared cancellation/current-owner checks need exact owned wrapper transport.")
+        method = ("Hoard.Artifacts.Tests.ArtifactBudgetTests."
+                  "Cancellation_of_an_admitted_commit_cannot_fence_an_externally_renewed_owner")
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.split("(", 1)[0] == method}
+        self.assertEqual(len(original), 2)
+        additional = {
+            "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_after_progress_renewal_fences_the_same_admitted_owner"
+            f'(provider: "{provider}")' for provider in ("local", "object")}
+        additional.update(
+            "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancelled_invalid_or_stale_commit_cannot_fence_the_current_verified_handle"
+            f'(provider: "{provider}", alteration: "{alteration}")'
+            for provider in ("local", "object") for alteration in ("renewed", "completion", "handle"))
+        self.assertEqual(len(additional), 8)
+        self.assertTrue(original.isdisjoint(additional))
+        mutations = {
+            "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+            "Shared_cancelled_descriptor_assertion_rejects_abandoned_current_owner_and_accepts_original_store"
+            f'(provider: "{provider}")' for provider in ("local", "object")}
+        scenario, = checks.original_artifact_cancellation_scenarios()
+        self.assertEqual(scenario, ("original-artifact-cancellation", tuple(sorted(original | additional | mutations)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_wrapper_scope_preserves_frozen_publication_parameters_and_actual_assembly(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_publication_scenarios", None)),
                         "Artifact publication needs exact source-owned wrapper transport.")

@@ -1003,6 +1003,26 @@ def artifact_noncooperation_diagnostics(run, inputs, candidate):
     return result
 
 
+def original_artifact_cancellation_scenarios():
+    method = ("Hoard.Artifacts.Tests.ArtifactBudgetTests."
+              "Cancellation_of_an_admitted_commit_cannot_fence_an_externally_renewed_owner")
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.split("(", 1)[0] == method}
+    identities.update(
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_after_progress_renewal_fences_the_same_admitted_owner"
+        f'(provider: "{provider}")' for provider in ("local", "object"))
+    identities.update(
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancelled_invalid_or_stale_commit_cannot_fence_the_current_verified_handle"
+        f'(provider: "{provider}", alteration: "{alteration}")'
+        for provider in ("local", "object") for alteration in ("renewed", "completion", "handle"))
+    identities.update(
+        "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+        "Shared_cancelled_descriptor_assertion_rejects_abandoned_current_owner_and_accepts_original_store"
+        f'(provider: "{provider}")' for provider in ("local", "object"))
+    return (("original-artifact-cancellation", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def original_artifact_ownership_scenarios():
     methods = {
         "Hoard.Artifacts.Tests.ArtifactBudgetTests."
@@ -1186,7 +1206,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "sqlite-recovery-barriers", "local-recovery-barriers", "paced-artifact-transfers",
             "artifact-noncooperation", "original-artifact-external", "original-artifact-races",
             "original-artifact-reconciliation", "original-artifact-visibility", "original-artifact-history",
-            "original-artifact-ownership"],
+            "original-artifact-ownership", "original-artifact-cancellation"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1209,7 +1229,7 @@ def test_attempt(run, inputs, candidate, scenario):
             *original_artifact_evidence_scenarios(), *original_artifact_external_scenarios(),
             *original_artifact_race_scenarios(), *original_artifact_reconciliation_scenarios(),
             *original_artifact_visibility_scenarios(), *original_artifact_history_scenarios(),
-            *original_artifact_ownership_scenarios()):
+            *original_artifact_ownership_scenarios(), *original_artifact_cancellation_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
     sqlite_tests = metadata_provider == "sqlite" or any(
@@ -1605,6 +1625,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "original-artifact-ownership"}), flush=True)
         for scenario in original_artifact_ownership_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "original-artifact-cancellation"}), flush=True)
+        for scenario in original_artifact_cancellation_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

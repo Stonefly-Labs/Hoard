@@ -2745,6 +2745,57 @@ source formatting, compiled/frozen catalogs, mechanical four-body/three-helper
 comparison and patch integrity. Production APIs/edges/ADRs/diagrams, deployment
 examples and tracked locks are unaffected.
 
+Three original cancellation/current-owner bodies now execute shared checks:
+external renewal survives an older cancellation, progress renewal fences the
+same admitted owner, and invalid/stale cancelled descriptors preserve the
+current verified handle. Exact original assertion tokens/order match
+mechanically after explicit setup/seam/helper/cancellation forwarding. Actual
+clock, publication/progress observer registration, boundary removal/release and
+worker settlement stay fixture-side. Two identities are frozen category
+witnesses and eight are additional existing fixture cases, not new frozen
+entries.
+
+A real-store mutation captures actual verified staging, forwards the cancelled
+altered-completion commit to the genuine provider, waits for actual worker
+settlement and abandons that current verified owner. The unchanged consumer's
+pending-state type assertion fails on both providers. Exactly one stage, one
+commit and one actual abandonment corroborate the intended failure, while
+fresh genuine stores pass unchanged. The first version attempted abandonment
+after logical return but before physical settlement: its strict setup guard
+failed for both providers under whole-suite concurrency despite focused
+success. Actual fixture settlement before abandonment fixes that race without
+sleeps/retries, changed shared expectations or relaxed exception guards.
+
+Actual missing shared methods first failed package-mode compilation with
+CS0117; the missing exact scope failed its named tooling regression. The new
+twelve-row scope appends ten original cases plus two mutations, requesting
+62 scopes/510 observations, pending. Complete task/checklist/stage acceptance
+does not advance.
+
+Corrected `cancellation-settled` and independent `cancellation-replay` private
+preparations each passed all 284 artifact cases and 89 metadata cases per provider,
+without skips. Eleven archives and ten actual loaded dependency images reproduce
+exactly; combined archive-map SHA-256:
+`44f0c0efc66c7dcb83d809b90e8d5c1e6238397ae83a9b2c99f8b26d14d95826`.
+Earlier measured transfer packets are unchanged, not fresh session/category
+origins. `python3 -m unittest discover -s tests/tooling -v` passed:
+282 discovered, 265 passed and seventeen native macOS skips. SDK and accepted
+artifact whitespace checks, compiled/frozen catalogs, three-body mechanical
+comparison and patch integrity passed.
+
+The preceding history request
+[40116055015](https://github.com/Stonefly-Labs/Hoard/actions/runs/40116055015)
+passed at exact head `37ec19a9e6f203106088b37a0ac696c6aab9111d`: all three jobs,
+172 foundations without failures/errors/skips, 60 scopes/488 exact discoveries/
+executions and all eighteen history rows. All actual SQLite/Local recovery,
+four paced transfer/RSS rows, six retained-worker chains, external wrappers,
+native containment and eighteen-package/thirteen-lock replay passed admission.
+Input: `4e103311ace86f8845a03cd53ac86133ccd912051d6b794b9c7caea7ecdd985b`;
+preparation:
+`d5169e04bb38147d9de543490952e264146aa6f6955c5798b85180766b199f8f`.
+Stream-ownership run `40116943400` binds exact head
+`5974f38025d550fab727e3a8bb878077af2e6749` and remains pending separate admission.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

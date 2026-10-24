@@ -92,6 +92,98 @@ public static class ArtifactOwnershipAssertions
         }
     }
 
+    public static async Task ExternalRenewalCancellationAsync(
+        IArtifactStore store, Action<TimeSpan> advanceClock, Func<Task> whenIdle, Action blockDecision,
+        Func<CancellationToken, Task> waitForDecision, Action releaseDecision, CancellationToken cancellationToken)
+    {
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        using var source = new ShortSource("renewed owner survives older cancellation"u8.ToArray());
+        var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
+        blockDecision();
+        using var cancellation = new CancellationTokenSource();
+        var committing = store.CommitAsync(staged, new(), cancellation.Token).AsTask();
+        ArtifactStagingOwner renewed;
+        try
+        {
+            await waitForDecision(cancellationToken);
+            advanceClock(TimeSpan.FromSeconds(10));
+            renewed = Success(await store.RenewAsync(staged.Owner, new(), cancellationToken));
+            cancellation.Cancel();
+            Assert.Equal(ArtifactFailureCode.CancelledBeforeCommit,
+                Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+                    await committing.WaitAsync(TimeSpan.FromSeconds(2))).Code);
+        }
+        finally { releaseDecision(); }
+        await whenIdle().WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.IsType<ArtifactResolution.Pending>(Success(await store.ReconcileAsync(ticket, new(), cancellationToken)));
+        var current = new ArtifactStagedWrite(renewed, staged.Identity, staged.VerifiedCompletion, staged.PrivateHandle);
+        var receipt = Success(await store.CommitAsync(current, new(), cancellationToken));
+        Assert.Equal("renewed owner survives older cancellation"u8.ToArray(),
+            await ReadAsync(store, receipt.Stamp, cancellationToken));
+    }
+
+    public static async Task ProgressRenewalCancellationAsync(
+        IArtifactStore store, Action<TimeSpan> advanceClock, Func<Task> whenIdle,
+        Action<Func<ValueTask>> observeProgress, CancellationToken cancellationToken)
+    {
+        var bytes = new byte[1048576];
+        using var initial = new MemoryStream(bytes, writable: false);
+        var original = await PublishAsync(store, initial, new(2097152), cancellationToken);
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(2097152)), new(), cancellationToken));
+        using var duplicate = new MemoryStream(bytes, writable: false);
+        var staged = Success(await store.StageAsync(ticket, duplicate, new(), cancellationToken));
+        using var cancellation = new CancellationTokenSource();
+        var progress = 0;
+        ValueTask Advance()
+        {
+            advanceClock(TimeSpan.FromSeconds(11));
+            if (Interlocked.Increment(ref progress) == 2) { cancellation.Cancel(); }
+            return ValueTask.CompletedTask;
+        }
+        observeProgress(Advance);
+        Assert.Equal(ArtifactFailureCode.CancelledBeforeCommit,
+            Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+                await store.CommitAsync(staged, new(), cancellation.Token)).Code);
+        await whenIdle().WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.Equal(2, progress);
+        Assert.IsType<ArtifactResolution.NotCommitted>(Success(await store.ReconcileAsync(ticket, new(), cancellationToken)));
+        Assert.Equal(bytes, await ReadAsync(store, original.Stamp, cancellationToken));
+    }
+
+    public static async Task CancelledStagedDescriptorAsync(
+        IArtifactStore store, Action<TimeSpan> advanceClock, Func<Task> whenIdle,
+        string alteration, CancellationToken cancellationToken)
+    {
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        using var source = new ShortSource("preserve current verified ownership"u8.ToArray());
+        var original = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
+        var current = original;
+        ArtifactStagedWrite invalid;
+        if (alteration == "renewed")
+        {
+            advanceClock(TimeSpan.FromSeconds(10));
+            var renewed = Success(await store.RenewAsync(original.Owner, new(), cancellationToken));
+            current = new(renewed, original.Identity, original.VerifiedCompletion, original.PrivateHandle);
+            invalid = original;
+        }
+        else
+        {
+            invalid = new(original.Owner, original.Identity,
+                alteration == "completion" ? Guid.NewGuid() : original.VerifiedCompletion,
+                alteration == "handle" ? original.PrivateHandle + "-forged" : original.PrivateHandle);
+        }
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+            await store.CommitAsync(invalid, new(), cancellation.Token));
+        await whenIdle().WaitAsync(TimeSpan.FromSeconds(2));
+        Assert.IsType<ArtifactResolution.Pending>(Success(await store.ReconcileAsync(ticket, new(), cancellationToken)));
+        var receipt = Success(await store.CommitAsync(current, new(), cancellationToken));
+        Assert.Equal(ArtifactMutationOutcome.Published, receipt.Outcome);
+        Assert.Equal("preserve current verified ownership"u8.ToArray(),
+            await ReadAsync(store, receipt.Stamp, cancellationToken));
+    }
+
     public class PendingSource(bool cooperative) : Stream
     {
         public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);

@@ -233,6 +233,14 @@ actual release/settlement complete and genuine stores pass. The next ten-row
 native scope requests 61 scopes/498 observations, pending. The preceding
 visibility request passed `40115175363` at `793ad65`, all three jobs, 171
 foundations and 59 scopes/470 observations, not complete category/session proof.
+Three original cancellation/current-owner bodies now also run shared checks,
+preserving two frozen witnesses and eight additional existing fixture cases.
+Actual clocks/observers/boundaries/settlement remain fixture-side. A real-store
+current-owner abandonment after actual rejected-work settlement fails the
+unchanged pending-state assertion; genuine providers pass. The next native
+request is 62 scopes/510 observations, pending. The history request passed
+`40116055015` at `37ec19a`, all three jobs, 172 foundations and
+60 scopes/488 observations, not complete category/session/profile acceptance.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

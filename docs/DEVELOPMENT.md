@@ -6575,6 +6575,30 @@ eighteen-package/thirteen-lock replay. Input:
 preparation:
 `ea2609497216261e1c752d4376603f80f60c64f267ffdbdb711309c42ca8688a`.
 
+Three original cancellation/current-owner bodies now use shared checks with
+all ten existing parameters intact: two frozen category witnesses and eight
+additional fixture identities. Mechanical comparison preserves exact original
+assertion tokens/order after explicit clock/observer/boundary/settlement seams.
+A real-store mutation waits for actual rejected-work settlement, then abandons
+the current verified owner; the unchanged pending-state assertion fails on
+both providers, while genuine stores pass unchanged. The first mutation tried
+abandonment after logical return but before physical settlement, so its setup
+guard failed under whole-suite concurrency despite focused success. Waiting on
+the actual fixture settlement fixed that race without sleeps, weakened guards
+or relaxed expected exceptions. The next twelve-row scope requests
+62 scopes/510 observations, pending. Remaining budget/ownership and complete
+binding/session/category/profile work stays unfinished.
+
+The history request passed
+[40116055015](https://github.com/Stonefly-Labs/Hoard/actions/runs/40116055015)
+at `37ec19a`: all three jobs, 172 foundations without failures/errors/skips,
+60 scopes/488 exact discoveries/executions, all eighteen history rows and every
+actual recovery/transfer/retention/external/native prerequisite plus eighteen-
+package/thirteen-lock replay. Input:
+`4e103311ace86f8845a03cd53ac86133ccd912051d6b794b9c7caea7ecdd985b`;
+preparation:
+`d5169e04bb38147d9de543490952e264146aa6f6955c5798b85180766b199f8f`.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,
