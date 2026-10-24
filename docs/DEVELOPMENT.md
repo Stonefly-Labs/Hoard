@@ -6263,6 +6263,37 @@ barrier/termination/readback rows is pending. Live-held independent schema/
 owner probes, safe legacy witness imports and full T026/category completion
 remain open; no memory durability or Local crash proof is inferred.
 
+The corrected native process gate passed at
+[40107305423](https://github.com/Stonefly-Labs/Hoard/actions/runs/40107305423),
+head `62c149c51b039724938e6547806626bdee8630f4`: 151 foundation tests, no
+failures/errors/skips, including observed-barrier/tree-exit, rejected signal,
+ordinary-exit and all correctly framed rejection cases. Its complete SQLite
+recovery diagnostic remains running. The superseded failed `0af7c98` run was
+canceled after recording its closed failure projection, never accepted.
+
+Local's actual CrashRunner now supports the same explicit safe-event mode.
+Unset preserves legacy output; unsupported values reject before store creation.
+The controller builds it against its unchanged nine-package local graph,
+verifies actual DLLs and captures the complete runtime tree before/after.
+It drives B0..B3/D0..D1 crash/readback pairs with fresh run IDs, using the same
+owned command, exact event and parent receipt admission as SQLite. Logical
+receipt stability, staging-generation fencing, committed/control readback,
+pending/reclaimed deletion, ABA safety and no duplicate effect remain asserted
+by the original runner. ObjectSemantics borrows no durable rows.
+
+Two fresh-cache locked builds reproduce identical runner DLLs and verify all
+nine dependency images. A bounded macOS transport exercise observes the actual
+barriers, kills only its own child and passes all six safe-mode readbacks, plus
+an unchanged legacy B0 pair and invalid-mode rejection. This is functional
+runner validation, explicitly not the Linux pidfd/group ownership proof.
+All 259 tooling tests pass locally (245 passes, fourteen native macOS skips),
+with formatting and frozen catalogs passing. The new Local controller test first
+failed for missing dispatch; its unit double verifies all twelve requested
+scopes and rejects changed runner bytes. Actual Linux Local execution, safe
+legacy witness/session imports and full T032/category completion remain pending.
+The real paced 256 MiB/4 GiB/RSS obligations are not replaced by these small
+recovery payloads.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

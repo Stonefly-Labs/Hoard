@@ -2228,6 +2228,43 @@ child start: `c9386051ef170a11d8bdfc2933e01dad51cda9f7a23063a4324bef46010bb4a9`.
 Free scratch: 91,724,279,808 bytes. It does not verify the subsequent owning
 controller/recovery changes or advance any category/task/stage.
 
+### Safe Local crash runner integration
+
+The corrected native owning-process gate at
+[40107305423](https://github.com/Stonefly-Labs/Hoard/actions/runs/40107305423),
+head `62c149c51b039724938e6547806626bdee8630f4`, passed 151 foundation tests
+without failures/errors/skips, including every corrected rejection variant,
+actual owned tree exit, rejected signal delivery and normal-exit denial.
+Its complete SQLite diagnostic is still running. The superseded failed
+`0af7c98` run was canceled after recording its closed failure projection;
+no failed/canceled checkpoint is accepted as passing.
+
+Local's actual CrashRunner now accepts explicit safe-event mode, preserves
+legacy output when unset and rejects invalid values before store creation.
+The diagnostic builds it against its unchanged nine-package local graph,
+verifies every actual local image and input-captures its entire runtime tree.
+It drives B0..B3/D0..D1 with fresh run IDs and separate crash/readback scopes.
+Only parent command/event/receipt admission is shared with SQLite; provider
+publication/recovery implementations remain independent, and ObjectSemantics
+borrows no durable proof. Original control/content readback, exact receipts,
+generation fencing, reconstruction, pending/reclaimed deletion, ABA safety and
+no duplicate effect assertions remain intact.
+
+The missing Local controller assertion failed by name first. Its unit double
+now verifies all twelve scopes, matching run arguments/targets and changed
+runner-byte rejection. Two independent fresh-cache locked builds reproduce
+identical actual runner bytes and verify all nine local dependency images.
+A bounded macOS functional exercise observes actual barrier events, kills
+only its own child and passes all six safe-mode readbacks, an unchanged legacy
+B0 pair and invalid-mode rejection. This is not a Linux pidfd/group ownership
+receipt or category acceptance. All 259 tooling tests pass locally (245 passes,
+fourteen native macOS skips), with format/catalog/inventory checks passing.
+
+Actual Linux Local crash execution, full legacy/session attribution and
+T032/category completion remain pending. Small recovery payloads do not
+substitute for actual paced 256 MiB/4 GiB transfers or incremental OS peak RSS.
+No task/checklist/stage advances.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

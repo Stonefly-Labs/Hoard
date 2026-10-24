@@ -266,6 +266,13 @@ output and pass in safe mode. Linux crash execution is pending, and live-held
 probes, exact wrapper/session attribution and full category qualification remain
 open. These diagnostics confer no memory or ObjectSemantics durability.
 
+Local now has the same explicit safe-event runner integration for its six
+publication/deletion crash/readback rows, sharing only parent receipt admission
+with SQLite, never provider mechanisms or simulation durability. Fresh locked
+runner builds and macOS functional readbacks pass; actual Linux owning-controller
+execution remains pending. Large transfer/RSS proofs and category/session/
+legacy witness integration remain unfinished.
+
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

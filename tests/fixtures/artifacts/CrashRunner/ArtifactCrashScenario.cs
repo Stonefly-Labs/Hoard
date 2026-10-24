@@ -37,15 +37,29 @@ internal static class ArtifactCrashScenario
         var run = Guid.Parse(args[4]);
         if (barrier is not ("B0" or "B1" or "B2" or "B3" or "D0" or "D1"))
         { throw new ArgumentException("Unknown artifact crash boundary."); }
-        if (args[0] == "crash") { await CrashAsync(root, record, barrier, run); }
-        else { await RecoverAsync(root, record, barrier, run); }
+        var safeEvents = Environment.GetEnvironmentVariable("HOARD_CONFORMANCE_SAFE_EVENTS") switch
+        {
+            null => false,
+            "1" => true,
+            _ => throw new ArgumentException("Invalid artifact recovery event mode.")
+        };
+        if (args[0] == "crash") { await CrashAsync(root, record, barrier, run, safeEvents); }
+        else { await RecoverAsync(root, record, barrier, run, safeEvents); }
         return 0;
     }
+
+    private static void Emit(bool safeEvents, string legacy, int? barrier = null) =>
+        Console.WriteLine(safeEvents ? JsonSerializer.Serialize(new
+        {
+            @event = barrier is null ? "test" : "barrier",
+            code = "None",
+            value = barrier ?? 1
+        }) : legacy);
 
     private static ArtifactCoordinationAuthority Authority(ArtifactStoreIdentity store)
         => new(store, references: (_, _) => ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
 
-    private static async Task CrashAsync(string root, string record, string barrier, Guid run)
+    private static async Task CrashAsync(string root, string record, string barrier, Guid run, bool safeEvents)
     {
         var identity = new ArtifactStoreIdentity("fixture.artifact.local", Guid.NewGuid(), Guid.NewGuid());
         var faults = new LocalFaultControls();
@@ -74,7 +88,17 @@ internal static class ArtifactCrashScenario
                 state = state with { Target = CrashStamp.From(((ArtifactOption<ArtifactStamp>.Some)stamp).Value) };
             }
             Save(record, state);
-            Console.WriteLine(JsonSerializer.Serialize(new
+            var value = barrier switch
+            {
+                "B0" => 40,
+                "B1" => 41,
+                "B2" => 42,
+                "B3" => 43,
+                "D0" => 44,
+                "D1" => 45,
+                _ => throw new ArgumentException("Unknown artifact crash boundary.")
+            };
+            Emit(safeEvents, JsonSerializer.Serialize(new
             {
                 eventName = "barrier",
                 pid = Environment.ProcessId,
@@ -82,7 +106,7 @@ internal static class ArtifactCrashScenario
                 barrier,
                 stateSha256 = Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(record))),
                 acknowledged = barrier == "B3"
-            }));
+            }), value);
             await Console.Out.FlushAsync();
             await Task.Delay(TimeSpan.FromMinutes(4));
             throw new TimeoutException("Artifact crash child did not receive its owned parent signal.");
@@ -113,7 +137,7 @@ internal static class ArtifactCrashScenario
         throw new InvalidOperationException("Artifact crash child passed its required parent-kill boundary.");
     }
 
-    private static async Task RecoverAsync(string root, string record, string barrier, Guid run)
+    private static async Task RecoverAsync(string root, string record, string barrier, Guid run, bool safeEvents)
     {
         var state = JsonSerializer.Deserialize<CrashState>(File.ReadAllBytes(record))
             ?? throw new InvalidOperationException("Artifact crash state is missing.");
@@ -211,7 +235,7 @@ internal static class ArtifactCrashScenario
             };
             Require(outcome.ReceiptId == repeatedReceipt.ReceiptId && outcome.Stamp == repeatedReceipt.Stamp
                 && outcome.Outcome == repeatedReceipt.Outcome, "Recovered logical receipt was not stable.");
-            Console.WriteLine(JsonSerializer.Serialize(new
+            Emit(safeEvents, JsonSerializer.Serialize(new
             {
                 eventName = "recovered",
                 provider = "local",

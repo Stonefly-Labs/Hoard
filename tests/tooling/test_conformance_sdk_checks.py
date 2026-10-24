@@ -36,7 +36,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         shutil.rmtree(self.directory)
 
     def test_metadata_recovery_barrier_requires_exact_observe_signal_exit_chain(self):
-        self.assertTrue(callable(getattr(checks, "admit_metadata_recovery_barrier", None)),
+        self.assertTrue(callable(getattr(checks, "admit_recovery_barrier", None)),
                         "Real recovery needs an admitted parent-owned observation/signal/exit chain.")
         command = {
             "schemaVersion": 1, "sequence": 3, "childPid": 200,
@@ -44,7 +44,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             "exitCode": -9, "diagnosticCode": "None", "groupState": "Exited", "scope": "recovery",
             "barrier": {"value": 10, "observedMs": 1050, "signalMs": 1100},
         }
-        checks.admit_metadata_recovery_barrier(command, 3, 10)
+        checks.admit_recovery_barrier(command, 3, 10)
         changes = (
             {"sequence": 4}, {"sequence": True}, {"schemaVersion": True},
             {"childPid": 0}, {"childPid": True}, {"childStartSha256": "0" * 64},
@@ -62,7 +62,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         for change in changes:
             with self.subTest(change=change), self.assertRaisesRegex(
                     checks.evidence.ConformanceError, "ProofMismatch"):
-                checks.admit_metadata_recovery_barrier(command | change, 3, 10)
+                checks.admit_recovery_barrier(command | change, 3, 10)
 
     def test_metadata_recovery_controller_drives_each_real_runner_mode_and_rejects_missing_proof(self):
         for mutation in (None, "normal-exit", "missing-event", "wrong-receipt"):
@@ -125,6 +125,47 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertEqual(options["scope"], "recovery")
                     self.assertEqual(options["env"], {"HOARD_CONFORMANCE_SAFE_EVENTS": "1"})
                     self.assertEqual(Path(args[3]).parent, Path(args[4]))
+
+    def test_local_recovery_uses_each_real_crash_boundary_without_borrowing_simulation_proof(self):
+        self.assertTrue(callable(getattr(checks, "artifact_recovery_diagnostics", None)),
+                        "Local needs actual owned crash/readback scopes, not metadata or simulation receipts.")
+        root = self.directory
+        candidate = root / "candidate"
+        assembly = candidate / checks.ARTIFACT_RECOVERY / (
+            "bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll")
+        assembly.parent.mkdir(parents=True)
+        assembly.write_bytes(b"local-controller-unit-double")
+        (root / "stores").mkdir()
+        (root / "proofs").mkdir()
+        inputs = {"runtimeAssemblies": {
+            assembly.relative_to(root).as_posix(): hashlib.sha256(assembly.read_bytes()).hexdigest()}}
+        run = SimpleNamespace(root=root)
+        with patch.object(checks, "verify_runtime_packages") as images, patch.object(
+                checks, "recovery_command", return_value=("a" * 64, {"childStartSha256": "b" * 64})) as execute:
+            result = checks.artifact_recovery_diagnostics(run, inputs, candidate)
+            self.assertFalse(result["qualification"])
+            self.assertEqual(result["inputsSha256"], checks.evidence.digest(inputs))
+            self.assertEqual([item["barrierId"] for item in result["barriers"]],
+                             ["B0", "B1", "B2", "B3", "D0", "D1"])
+            self.assertEqual([item["value"] for item in result["barriers"]], list(range(40, 46)))
+            self.assertEqual(execute.call_count, 12)
+            for index, barrier in enumerate(("B0", "B1", "B2", "B3", "D0", "D1")):
+                crash, recover = execute.call_args_list[index * 2:index * 2 + 2]
+                self.assertEqual(crash.args[:2], (run, assembly))
+                self.assertEqual(crash.args[2][0], "crash")
+                self.assertEqual(recover.args[2][0], "recover")
+                self.assertEqual(crash.args[2][1:], recover.args[2][1:])
+                self.assertEqual(crash.args[2][3], barrier)
+                self.assertEqual(str(uuid.UUID(crash.args[2][4])), crash.args[2][4])
+                self.assertEqual(crash.kwargs["value"], 40 + index)
+                self.assertNotIn("value", recover.kwargs)
+            images.assert_called_once_with(
+                assembly.parent, root / "feed/candidate", checks.ARTIFACT_RECOVERY_PACKAGES)
+        with patch.object(checks, "verify_runtime_packages"), patch.object(checks, "recovery_command") as execute:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                checks.artifact_recovery_diagnostics(
+                    run, {"runtimeAssemblies": {assembly.relative_to(root).as_posix(): "0" * 64}}, candidate)
+            execute.assert_not_called()
 
     def test_artifact_wrapper_scope_preserves_frozen_publication_parameters_and_actual_assembly(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_publication_scenarios", None)),

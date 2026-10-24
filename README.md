@@ -1392,6 +1392,10 @@ The SQLite runner now has an explicit safe-event mode, and the diagnostic
 controller requests all ten mutation/upgrade/restore barriers, owned termination
 and recovery readback plus the real backup/restore walkthrough. Linux execution
 is pending; legacy output is preserved when the mode is absent.
+The same parent receipt gate now requests Local B0..B3/D0..D1 crash/readback
+rows through the actual artifact runner. Two fresh locked builds reproduce
+identical runner bytes and nine dependency images; all six safe-mode local
+readbacks pass on macOS. Linux owning-controller execution remains pending.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

@@ -341,6 +341,16 @@ at `d7ef7cc3cdc20822c79b340a42e12eef0cbbe383` verifies the earlier exact
 evidence/quarantine/mutation transport: all three jobs, 145 foundation checks,
 55 scopes/427 observations, native containment and eighteen-package/thirteen-lock
 replay, not the subsequent controller/recovery integration.
+The corrected native process gate at `62c149c` passed 151 tests without
+failures/errors/skips; complete SQLite execution remains running. Local's
+actual runner now has the same explicit safe-event mode, retaining legacy
+output when unset and rejecting invalid mode before store creation. Its
+unchanged nine-package graph and complete runtime bytes are independently
+verified/captured. Six fresh run-bound crash/readback pairs use the same
+parent-owned observation/signal/exit gate and original Local assertions,
+not ObjectSemantics or metadata provider delegation. Two locked runner builds
+and six macOS functional readbacks pass; actual Linux ownership and complete
+legacy/session/category proof remain pending.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

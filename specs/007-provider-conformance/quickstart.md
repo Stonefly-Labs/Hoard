@@ -148,6 +148,12 @@ The intervening native
 verifies evidence/quarantine transport and mutation pairs: all three jobs,
 145 foundation checks and 55 scopes/427 observations. It does not verify the
 subsequent controller/recovery changes.
+The corrected process-regression gate subsequently passed 151 native tests at
+`62c149c` without failures/errors/skips; its complete SQLite diagnostic remains
+running. Local now requests six actual publication/deletion crash/readback
+pairs through the same safe parent gate. Fresh locked builds and all six
+macOS functional readbacks pass, not Linux ownership/category proof. Actual
+Linux Local execution and large transfer/RSS obligations remain pending.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

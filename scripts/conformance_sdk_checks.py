@@ -39,6 +39,7 @@ MEMORY_BINDING = "tests/fixtures/conformance/Bindings/Memory/Memory.csproj"
 SQLITE = "tests/fixtures/metadata/Sqlite/Sqlite.csproj"
 SQLITE_BINDING = "tests/fixtures/conformance/Bindings/Sqlite/Sqlite.csproj"
 METADATA_RECOVERY = "tests/fixtures/metadata/CrashRunner"
+ARTIFACT_RECOVERY = "tests/fixtures/artifacts/CrashRunner"
 METADATA_TESTS = f"{CONTRACTS}/Hoard.Metadata.Tests"
 METADATA_TEST_OUTPUT = "bin/wrapper-diagnostic"
 ARTIFACT_TESTS = f"{CONTRACTS}/Hoard.Artifacts.Tests"
@@ -55,6 +56,7 @@ METADATA_PACKAGES = (
 METADATA_RECOVERY_PACKAGES = tuple(name for name in METADATA_PACKAGES if name != "Hoard.Testing.Conformance")
 ARTIFACT_PACKAGES = (*METADATA_PACKAGES, "Hoard.Fixtures.Artifacts.Local",
                      "Hoard.Fixtures.Artifacts.ObjectSemantics", "Hoard.Fixtures.Artifacts.HostAdapters")
+ARTIFACT_RECOVERY_PACKAGES = tuple(name for name in ARTIFACT_PACKAGES if name != "Hoard.Testing.Conformance")
 INPUT_PACKAGES = tuple(dict.fromkeys((*LOCAL_PACKAGES, *METADATA_PACKAGES, *ARTIFACT_PACKAGES)))
 BINDING_TEST_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingTests."
 BINDING_OWNERSHIP_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingOwnershipTests."
@@ -691,7 +693,7 @@ def sqlite_noncooperation(run, inputs, candidate):
     }
 
 
-def admit_metadata_recovery_barrier(command, sequence, value):
+def admit_recovery_barrier(command, sequence, value):
     fields = {
         "schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
         "exitCode", "diagnosticCode", "groupState", "scope", "barrier",
@@ -718,6 +720,27 @@ def admit_metadata_recovery_barrier(command, sequence, value):
         raise evidence.ConformanceError("ProofMismatch")
 
 
+def recovery_command(run, assembly, arguments, *, cache_id, value=None):
+    sequence = run.command_sequence + 1
+    result = run.command(
+        ["dotnet", str(assembly), *arguments], cwd=assembly.parent, scope="recovery",
+        env={"HOARD_CONFORMANCE_SAFE_EVENTS": "1"}, stop_at_barrier=value, cache_id=cache_id)
+    if run.live_children():
+        raise evidence.ConformanceError("CleanupIncomplete")
+    if value is None:
+        if result.exit_code or tuple(dict(item) for item in result.events) != (
+                {"event": "test", "code": "None", "value": 1},):
+            raise evidence.ConformanceError("EvidenceIncomplete")
+    elif result.exit_code != -9 or tuple(dict(item) for item in result.events) != (
+            {"event": "barrier", "code": "None", "value": value},):
+        raise evidence.ConformanceError("ProofMismatch")
+    raw = read_bounded(run.root / f"proofs/recovery-command-{sequence:04}.json", 64 * 1024)
+    command = evidence.load_json(raw)
+    if value is not None:
+        admit_recovery_barrier(command, sequence, value)
+    return hashlib.sha256(raw).hexdigest(), command
+
+
 def metadata_recovery_diagnostics(run, inputs, candidate):
     runtime = candidate / METADATA_RECOVERY / "bin/Release/net10.0"
     assembly = runtime / "Hoard.Fixtures.Metadata.CrashRunner.dll"
@@ -729,28 +752,11 @@ def metadata_recovery_diagnostics(run, inputs, candidate):
     parent = run.root / "stores/sqlite-recovery"
     no_symlinks(parent)
     parent.mkdir(mode=0o700)
-    environment = {"HOARD_CONFORMANCE_SAFE_EVENTS": "1"}
 
     def execute(mode, directory, barrier, value=None):
-        sequence = run.command_sequence + 1
-        result = run.command(
-            ["dotnet", str(assembly), mode, str(directory / "metadata.db"), str(directory), barrier],
-            cwd=runtime, scope="recovery", env=environment, stop_at_barrier=value,
-            cache_id="sqlite-recovery")
-        if run.live_children():
-            raise evidence.ConformanceError("CleanupIncomplete")
-        if value is None:
-            if result.exit_code or tuple(dict(item) for item in result.events) != (
-                    {"event": "test", "code": "None", "value": 1},):
-                raise evidence.ConformanceError("EvidenceIncomplete")
-        elif result.exit_code != -9 or tuple(dict(item) for item in result.events) != (
-                {"event": "barrier", "code": "None", "value": value},):
-            raise evidence.ConformanceError("ProofMismatch")
-        raw = read_bounded(run.root / f"proofs/recovery-command-{sequence:04}.json", 64 * 1024)
-        command = evidence.load_json(raw)
-        if value is not None:
-            admit_metadata_recovery_barrier(command, sequence, value)
-        return hashlib.sha256(raw).hexdigest(), command
+        return recovery_command(
+            run, assembly, [mode, str(directory / "metadata.db"), str(directory), barrier],
+            cache_id="sqlite-recovery", value=value)
 
     observations = []
     for kind, barriers in (
@@ -777,6 +783,37 @@ def metadata_recovery_diagnostics(run, inputs, candidate):
         "walkthroughSha256": walkthrough_sha,
     }
     write_new(run.root / "proofs/sqlite-recovery.json", evidence.canonical_bytes(result))
+    return result
+
+
+def artifact_recovery_diagnostics(run, inputs, candidate):
+    runtime = candidate / ARTIFACT_RECOVERY / "bin/Release/net10.0"
+    assembly = runtime / "Hoard.Fixtures.Artifacts.CrashRunner.dll"
+    verify_runtime_packages(runtime, run.root / "feed/candidate", ARTIFACT_RECOVERY_PACKAGES)
+    assembly_key = assembly.relative_to(run.root).as_posix()
+    if inputs.get("runtimeAssemblies", {}).get(assembly_key) != evidence.file_sha256(assembly):
+        raise evidence.ConformanceError("InputChanged")
+    parent = run.root / "stores/local-recovery"
+    no_symlinks(parent)
+    parent.mkdir(mode=0o700)
+    observations = []
+    for value, barrier in enumerate(("B0", "B1", "B2", "B3", "D0", "D1"), 40):
+        directory = parent / barrier
+        directory.mkdir(mode=0o700)
+        arguments = [str(directory / "store"), str(directory / "state.json"), barrier, str(uuid.uuid4())]
+        controller_sha, command = recovery_command(
+            run, assembly, ["crash", *arguments], cache_id="local-recovery", value=value)
+        readback_sha, _ = recovery_command(
+            run, assembly, ["recover", *arguments], cache_id="local-recovery")
+        observations.append({
+            "barrierId": barrier, "value": value, "controllerSha256": controller_sha,
+            "readbackSha256": readback_sha, "childStartSha256": command["childStartSha256"],
+        })
+    result = {
+        "qualification": False, "mode": "artifact-recovery", "code": "None",
+        "inputsSha256": evidence.digest(inputs), "barriers": observations,
+    }
+    write_new(run.root / "proofs/local-recovery.json", evidence.canonical_bytes(result))
     return result
 
 
@@ -842,6 +879,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
                        f"{METADATA_TESTS}/{METADATA_TEST_OUTPUT}/Release/net10.0",
                        f"{ARTIFACT_TESTS}/{ARTIFACT_TEST_OUTPUT}/Release/net10.0"}
     runtime_folders.add(f"{METADATA_RECOVERY}/bin/Release/net10.0")
+    runtime_folders.add(f"{ARTIFACT_RECOVERY}/bin/Release/net10.0")
     runtime = [f"{prefix}/{name}" for name in inventory if (
         name.endswith((".dll", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))
         and Path(name).parent.as_posix() in runtime_folders) or (
@@ -858,7 +896,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
         observed_environment=observed_environment, budgets=BUDGETS, invocation=[
             "sdk-logger-diagnostic", "original-metadata-memory", "original-metadata-sqlite",
             "original-artifact-publication", "original-artifact-read-delete", "original-artifact-evidence",
-            "sqlite-recovery-barriers"],
+            "sqlite-recovery-barriers", "local-recovery-barriers"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1126,6 +1164,16 @@ def execute(repository, destination):
                 artifact_records.append(artifact_record)
                 write_new(run.root / f"proofs/artifact-{name}-lock-derivation.json",
                           evidence.canonical_bytes(artifact_record))
+        artifact_recovery_project = candidate / ARTIFACT_RECOVERY / "CrashRunner.csproj"
+        artifact_recovery_lock, artifact_recovery_record = prepare_project_lock(
+            artifact_recovery_project, candidate, feed, "candidate")
+        build(run, artifact_recovery_project, config, "artifact-recovery", lock=artifact_recovery_lock)
+        if artifact_recovery_record is not None:
+            verify_project_lock(artifact_recovery_record, candidate, feed)
+            write_new(run.root / "proofs/artifact-recovery-lock-derivation.json",
+                      evidence.canonical_bytes(artifact_recovery_record))
+        verify_runtime_packages(candidate / ARTIFACT_RECOVERY / "bin/Release/net10.0",
+                                feed, ARTIFACT_RECOVERY_PACKAGES)
         consumer_lock, consumer_receipt = prepare_package_consumer_lock(candidate, feed)
         verify_package_consumer_lock(candidate, feed, consumer_lock, consumer_receipt)
         write_new(run.root / "proofs/consumer-lock-derivation.json", evidence.canonical_bytes(consumer_receipt))
@@ -1202,6 +1250,8 @@ def execute(repository, destination):
         native_noncooperation = sqlite_noncooperation(run, inputs, candidate)
         print(json.dumps({"qualification": False, "phase": "metadata-recovery"}), flush=True)
         metadata_recovery = metadata_recovery_diagnostics(run, inputs, candidate)
+        print(json.dumps({"qualification": False, "phase": "artifact-recovery"}), flush=True)
+        artifact_recovery = artifact_recovery_diagnostics(run, inputs, candidate)
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)
         post_identity = evidence.source_identity(repository, ci_revision=ci_revision)
@@ -1212,6 +1262,8 @@ def execute(repository, destination):
             verify_project_lock(lock_record, candidate, feed)
         if recovery_record is not None:
             verify_project_lock(recovery_record, candidate, feed)
+        if artifact_recovery_record is not None:
+            verify_project_lock(artifact_recovery_record, candidate, feed)
         if memory_record is not None:
             verify_project_lock(memory_record, candidate, feed)
         if binding_record is not None:
@@ -1235,6 +1287,7 @@ def execute(repository, destination):
                    "lockPreparation": lock_preparation,
                    "nativeNonCooperation": native_noncooperation,
                    "metadataRecovery": metadata_recovery,
+                   "artifactRecovery": artifact_recovery,
                    "sqliteEnvironment": {
                        "nativeVersion": inputs["environment"]["nativeSqlite"],
                        "pragmas": dict(inputs["environment"]["pragmas"]),
