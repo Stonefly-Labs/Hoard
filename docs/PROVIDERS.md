@@ -111,6 +111,16 @@ eight-archive replay reproduces exact DLLs; only the tracked SDK archive hash
 changes, preserving the predecessor dependency graph and all other lock entries.
 The requested Linux vector becomes 50 scopes/255 observations, including
 85 SQLite identities; execution of this expanded vector remains pending.
+The six original MP-08 malformed-continuation rows now use the same shared
+consumer, bringing adoption to 23 original methods. Fixture-private mapping
+forwards to each provider's existing independent payload-damage helper.
+A parity guard enumerates every actual cursor field and proves typed omission
+covers it while preserving all other values. Memory's combined epoch/schema
+field is covered without inventing a separate encoded field. Cancelled and
+unknown controls reject without modifying the valid continuation. All 79
+current predecessor tests pass without skips against each provider using the
+same SDK/suite bytes. Fresh locked replay reproduces eight archives and exact
+DLLs; only the additive HostAdapters archive changes from the schema repair.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

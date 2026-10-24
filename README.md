@@ -1288,6 +1288,11 @@ must observe SQLite BUSY (5). Focused final-package checks pass 180 binding/SDK
 tests and 11 original schema/observer tests per provider, without skips.
 The expanded Linux diagnostic requests 50 scopes/255 observations; that new
 vector awaits native execution and is not category qualification.
+The six original malformed-continuation rows now share the SDK corruption
+consumer through fixture-private encoding controls (23 delegated methods).
+An actual-cursor parity check proves every original field is covered without
+changing unrelated fields; all 79 current predecessor tests pass against each
+provider using identical SDK/suite bytes. Full extraction remains unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

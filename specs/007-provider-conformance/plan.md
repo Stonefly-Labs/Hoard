@@ -1642,6 +1642,34 @@ baseline seal: `41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081
 That run does not execute original predecessor wrappers or the new U1
 regression. SQLite remains 3.53.3 with unchanged pinned native provenance.
 
+### Original malformed-continuation wrapper extraction
+
+The six frozen MP-08 malformed-continuation rows now delegate to the existing
+shared SDK consumer (23 original delegated methods total). A typed test-side
+bridge forwards semantic component/shape requests to the original fixture;
+concrete field mapping stays fixture-private and reuses each provider's existing
+independent payload-damage helper. Neither shared assertions nor the bridge
+select a concrete provider. Memory's combined epoch/schema field remains
+covered rather than inventing another encoded property.
+
+A new parity guard first failed the named missing-fixture-method assertion
+in an otherwise successfully compiled package-mode test assembly. After repair
+it decodes an actual valid continuation, exercises every typed component and
+proves all original fields are covered, exactly one is omitted per request and
+other values remain unchanged. Cancelled/unknown requests reject and valid
+continuation bytes remain unchanged. All six inherited shape rows still check
+structured failure, valid resume and complete subsequent traversal through the
+unchanged SDK consumer.
+
+All 79 current predecessor tests pass without skips against Memory and SQLite
+using the identical compiled suite and SDK. Fresh empty-cache default locked
+replay reproduces all eight archives and seven wrapper dependency DLLs plus
+the separate Application DLL. Only the additive HostAdapters fixture archive
+changes from the schema repair; SDK/provider/platform archives and repository/
+historical locks remain unchanged. Frozen inventory and focused compiled
+whitespace checks pass. Complete control/session extraction, exact safe origin
+ingestion and category acceptance remain open; T019/T021..T026 are unchecked.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

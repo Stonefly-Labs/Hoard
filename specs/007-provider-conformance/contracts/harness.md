@@ -186,6 +186,16 @@ binding/SDK tests and 11 original schema/observer tests per provider.
 The expanded Linux request is 50 scopes/255 observations (85 SQLite identities),
 pending native execution; it does not establish full recovery/parity acceptance.
 
+The original MP-08 malformed-continuation theory now retains all six exact
+rows while delegating to the same shared SDK consumer. Fixture-private
+component mapping calls the existing independent encoding damage helpers.
+An actual-cursor parity guard proves every original field is omitted by some
+typed component and no unrelated values change, including Memory's combined
+epoch/schema representation. Cancellation and unknown controls reject without
+modifying a valid continuation. All 79 current predecessor tests pass on both
+providers, with identical SDK/suite bytes; exact runtime-origin import and full
+extraction remain unfinished.
+
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,

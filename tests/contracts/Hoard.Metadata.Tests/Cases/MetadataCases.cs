@@ -10,6 +10,24 @@ internal static class MetadataCases
     public static IMetadataConformanceAuthority CommonAuthority(MetadataFixtureSession fixture) =>
         new PublicationAuthority(fixture.Authority);
 
+    public static MetadataContinuationCorruptionControl CommonContinuationCorruption(MetadataFixtureSession fixture) =>
+        (continuation, component, corruption, cancellationToken) =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!Enum.IsDefined(component)) { throw new ArgumentOutOfRangeException(nameof(component)); }
+            var shape = corruption switch
+            {
+                MetadataContinuationCorruption.Null => "null",
+                MetadataContinuationCorruption.Omitted => "omitted",
+                MetadataContinuationCorruption.WrongType => "wrong-type",
+                MetadataContinuationCorruption.Empty => "empty",
+                MetadataContinuationCorruption.OddHex => "odd-hex",
+                MetadataContinuationCorruption.InvalidHex => "invalid-hex",
+                _ => throw new ArgumentOutOfRangeException(nameof(corruption))
+            };
+            return ValueTask.FromResult(fixture.CorruptContinuationForTest(continuation, component.ToString(), shape));
+        };
+
     public static MetadataObservationControl CommonObservations(MetadataFixtureSession fixture) =>
         (point, observer, cancellationToken) =>
         {

@@ -5921,6 +5921,23 @@ failures/errors/skips, the earlier 50/254 vector, native containment and identic
 eighteen-package/thirteen-lock replay. It does not run the original predecessor
 wrapper suite or the new candidate-boundary regression.
 
+The next original MP-08 extraction preserves all six frozen malformed-cursor
+rows and delegates their assertions to the existing shared SDK consumer
+(23 original delegated methods). The original fixture maps semantic components
+to its actual provider encoding and reuses the independent provider payload
+damage helpers. A new parity guard decodes an actual continuation and proves
+typed omission covers every original field, removes only that field and leaves
+other values unchanged. Memory's combined epoch/schema mapping remains real,
+not an extra synthetic field. Cancelled/unknown typed requests reject and the
+valid continuation stays unchanged.
+The new guard first failed the missing original-fixture corruption-method
+assertion in a successfully compiled package-mode assembly. After repair,
+all 79 current predecessor tests pass against each provider without skips.
+Fresh default locked replay reproduces eight archives and exact DLLs, using
+the same SDK/suite bytes for both compositions. Only the additive HostAdapters
+archive changes; SDK/provider/platform archives and source locks are unchanged.
+This is not complete metadata extraction or safe exact runtime-origin import.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

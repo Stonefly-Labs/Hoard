@@ -65,6 +65,31 @@ public sealed class MetadataFixtureSession : IAsyncDisposable
             _ => throw new InvalidOperationException("Unknown metadata fixture.")
         }, observer);
 
+    public MetadataContinuation CorruptContinuationForTest(
+        MetadataContinuation continuation, string component, string shape) => Store switch
+        {
+            SqliteMetadataStore => SqlitePayloadDamage.Continuation(continuation, component switch
+            {
+                "ContractVersion" => "ContractVersion",
+                "Epoch" => "Epoch",
+                "Schema" => "Schema",
+                "Query" => "Query",
+                "PageSize" => "PageSize",
+                "Position" => "LastKey",
+                _ => throw new ArgumentException("Unknown continuation component.", nameof(component))
+            }, shape),
+            MemoryMetadataStore => MemoryPayloadDamage.Continuation(continuation, component switch
+            {
+                "ContractVersion" => "Contract",
+                "Epoch" or "Schema" => "Epoch",
+                "Query" => "Query",
+                "PageSize" => "Size",
+                "Position" => "After",
+                _ => throw new ArgumentException("Unknown continuation component.", nameof(component))
+            }, shape),
+            _ => throw new InvalidOperationException("Unknown metadata fixture.")
+        };
+
     public static MetadataFixtureSession Create(string provider, TimeProvider clock, string? databasePath = null,
         int initialSchema = 0, string compatibleSchema = "fixture-sqlite-v2") =>
         new(provider, clock, databasePath, initialSchema, compatibleSchema);
