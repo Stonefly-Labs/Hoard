@@ -163,6 +163,10 @@ adapts only the existing authority interface, not provider behavior or expected
 results. Predecessor preparation includes the SDK as its eighth archive and
 checks the unchanged SDK output DLL alongside the test and consumer assemblies
 after each composition. Exact safe runtime-origin ingestion remains T025 work.
+Ten additional delegates reuse the existing SDK paging/concurrency/publication/
+reference methods, preserving the original method names and the six malformed
+continuation theory rows. Control-dependent methods have not been replaced by
+synthetic successes or dropped during this partial adoption.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

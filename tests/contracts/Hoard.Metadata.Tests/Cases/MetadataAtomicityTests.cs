@@ -1,4 +1,5 @@
 using Hoard.Abstractions.Metadata;
+using Hoard.Testing.Conformance.Metadata;
 using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
@@ -86,32 +87,13 @@ public sealed class MetadataAtomicityTests
     public async Task MP11_Competing_creates_have_one_winner()
     {
         await using var fixture = await OpenAsync();
-        var tickets = await Task.WhenAll(Enumerable.Range(0, 8).Select(async _ => await Ticket(fixture)));
-        var outcomes = await Task.WhenAll(tickets.Select(ticket => fixture.Store.CommitAsync(
-            Batch(ticket, new MetadataMutation.PutRegistry(Registry(), new ExpectedRevision.Absent())), new(), default).AsTask()));
-        Assert.Single(outcomes.OfType<MetadataResult<MetadataCommitReceipt>.Success>());
-        Assert.Equal(7, outcomes.OfType<MetadataResult<MetadataCommitReceipt>.Failure>().Count(outcome => outcome.Code == MetadataFailureCode.Conflict));
-        Assert.Single(await Traverse(fixture, Registries()));
+        await MetadataConcurrencyAssertions.CompetingCreatesAsync(fixture.Store, default);
     }
 
     [Fact]
     public async Task MP12_Revision_races_and_delete_recreate_are_fenced()
     {
         await using var fixture = await OpenAsync();
-        var (registry, _) = await Seed(fixture);
-        var tickets = await Task.WhenAll(Enumerable.Range(0, 4).Select(async _ => await Ticket(fixture)));
-        var outcomes = await Task.WhenAll(tickets.Select((ticket, number) => fixture.Store.CommitAsync(
-            Batch(ticket, new MetadataMutation.PutRegistry(registry with { Label = new(number.ToString(System.Globalization.CultureInfo.InvariantCulture)) },
-                new ExpectedRevision.Match(registry.Revision))), new(), default).AsTask()));
-        Assert.Single(outcomes.OfType<MetadataResult<MetadataCommitReceipt>.Success>());
-        Assert.Equal(3, outcomes.OfType<MetadataResult<MetadataCommitReceipt>.Failure>().Count(outcome => outcome.Code == MetadataFailureCode.Conflict));
-        var package = Package(registry, "recreated");
-        await Commit(fixture, new MetadataMutation.PutPackage(package, new ExpectedRevision.Absent()));
-        package = await Read<MetadataPackage>(fixture, package.Selector);
-        await Commit(fixture, new MetadataMutation.DeletePackage(package.Key, package.Revision));
-        await Commit(fixture, new MetadataMutation.PutPackage(package, new ExpectedRevision.Absent()));
-        Assert.NotEqual(package.Revision, (await Read<MetadataPackage>(fixture, package.Selector)).Revision);
-        Assert.Equal(MetadataFailureCode.Conflict, Failed(await fixture.Store.CommitAsync(Batch(await Ticket(fixture),
-            new MetadataMutation.DeletePackage(package.Key, package.Revision)), new(), default)));
+        await MetadataConcurrencyAssertions.RevisionRacesAsync(fixture.Store, default);
     }
 }

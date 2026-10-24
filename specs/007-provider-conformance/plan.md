@@ -1539,6 +1539,25 @@ verification, frozen inventory and SDK catalog checks pass. These local results
 are not new native CI receipts, full wrapper parity, exact safe origin imports
 or a category pass. T019/T021..T025 remain unchecked.
 
+### Further pure paging, concurrency and reference wrapper adoption
+
+Ten further original methods now delegate to unchanged SDK methods:
+MP-07's three query/bounds/dataset wrappers, MP-08 scope/epoch, MP-11/12
+create/revision races, MP-23 publication evidence and MP-24/25/31 reference/
+ABA/telemetry checks. This brings actual adoption to 17 methods across fifteen
+MP keys. Existing frozen names/attributes, six malformed-continuation theory
+rows and all remaining control-dependent assertions are preserved. The foreign
+store required by MP-08 still uses the original independent fixture factory
+and owned disposal; the common consumer chooses no provider.
+
+The actual repository package-mode project restored in locked mode against the
+previously verified eight-archive private graph with an explicit private lock.
+No source lock or SDK/provider archive changed. One fresh test assembly passed
+all 21 affected class tests against Memory and all 21 against SQLite without
+failures/skips; the second composition used `--no-build`. Focused whitespace
+and frozen inventory checks pass. These are focused local wrapper regressions,
+not complete category, native recovery or exact runtime-origin acceptance.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

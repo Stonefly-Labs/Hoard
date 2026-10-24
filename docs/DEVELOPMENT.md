@@ -5867,6 +5867,16 @@ pins are preserved. Private preparation rebounded local payload hashes without
 altering historical source locks. Full extraction, typed-control forwarding,
 frozen-parameter parity and safe exact witness imports remain unfinished.
 
+A further ten wrappers now delegate shared paging/query/bounds, continuation
+scope/epoch, competing-create/revision races and publication/reference/telemetry
+assertions, bringing adoption to 17 original methods. The six malformed-cursor
+theory rows and control-dependent cases remain unchanged. An actual locked
+restore of the repository's package-mode test project used the verified private
+eight-archive graph without editing source locks. The same freshly built suite
+passed all 21 affected class tests against Memory and all 21 against SQLite,
+without failures/skips; focused whitespace and frozen inventory checks pass.
+The SDK and provider packages themselves are unchanged by these ten delegates.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

@@ -85,8 +85,11 @@ The original MP-01..06/13 wrappers now invoke the same packaged SDK assertions.
 A thin test-side authority bridge delegates to the original fixture authority;
 it does not replace provider setup, clocks, schema preparation or disposal.
 All 72 predecessor tests pass against each provider using the identical compiled
-suite and SDK. Its eight-archive preparation adds the SDK, while the independent
-binding diagnostic still uses seven archives. Other wrappers remain unextracted.
+suite and SDK. Ten more original wrappers now share paging, concurrency,
+publication-evidence and reference assertions (17 delegated methods total);
+all 21 affected class tests pass against each provider without skips.
+Its eight-archive preparation adds the SDK, while the independent binding
+diagnostic still uses seven archives. Other wrappers remain unextracted.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual
