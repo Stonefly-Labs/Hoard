@@ -566,6 +566,24 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_lifecycle_scope_preserves_frozen_and_additional_shutdown_cases(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_lifecycle_scenarios", None)),
+                        "Shared lifecycle checks need exact owned wrapper transport.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactNonCooperationTests."
+        methods = (
+            "Concurrent_close_waits_for_the_same_physical_guard_release_and_fences_new_copy",
+            "Deadline_and_stop_return_while_a_native_io_boundary_holds_provider_state")
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if any(name.startswith(prefix + method + "(") for method in methods)}
+        self.assertEqual(len(original), 4)
+        additional = {prefix + "Composed_shutdown_cannot_release_store_while_authority_retains_a_reference_query"
+                      + f'(provider: "{provider}")' for provider in ("local", "object")}
+        self.assertTrue(original.isdisjoint(additional))
+        scenario, = checks.original_artifact_lifecycle_scenarios()
+        self.assertEqual(scenario, ("original-artifact-lifecycle", tuple(sorted(original | additional)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_metadata_bridge_scope_preserves_frozen_and_additional_evidence_cases(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_metadata_bridge_scenarios", None)),
                         "Shared metadata bridge checks need exact owned wrapper transport.")

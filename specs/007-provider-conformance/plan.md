@@ -2954,6 +2954,37 @@ eighteen-package/thirteen-lock replay passed strict admission. Input:
 preparation:
 `9966fd10a5f0c49b1d2b026339153ec7a350030aa07972e2a91ae39762be4297`.
 
+The three remaining original noncooperation/lifecycle bodies now execute shared
+interface-only consumers: composed shutdown with an actual retained reference
+query, concurrent close with real slow physical guard release, and deadline/
+stop with held native I/O. Four parameters are frozen category witnesses; two
+composed-shutdown cases are additional existing facts. Actual composition,
+query setup/completion/drain, slow guard implementation, native I/O holds,
+physical release/removal and settlement stay fixture-side. Shared consumers
+own the unchanged shutdown/ownership/fencing/deadline/retry checks and generic
+bounded-failure helper. Mechanical comparison verifies their exact tokens/order
+and unchanged fixture setup/release/slow-guard logic after explicit seams.
+
+Missing shared consumers first failed actual package-mode compilation with
+CS0103; the missing exact scope failed its named tooling regression. The new
+six-row native request is 69 scopes/596 observations, pending, not complete
+bindings/category/session or full profile qualification. The preceding bridge
+request binds exact head `b4d4517d82515534afe1b84ad5f7d81245916f82`,
+run `40122736140`, pending separate strict admission.
+
+Tooling passed 289 discovered / 272 passed / seventeen native macOS skips.
+SDK/accepted-wrapper whitespace, compiled/frozen catalogs, three-body/helper/
+fixture-seam mechanical comparison and patch integrity passed. Tracked locks,
+historical consumers/binaries, production APIs and reviewer-owned checklists
+are unchanged. Broad task and stage gates remain open.
+
+`lifecycle` and independent `lifecycle-replay` each passed all 293 artifact
+cases and 89 metadata cases per provider without skips. Eleven archives and ten
+actual loaded dependency images reproduce exactly; combined archive-map SHA-256:
+`2370051325ecef8fbb98849c1efee3018e93d44901d009b61aae2a8c6b27d238`.
+Previously measured transfer packets remain unchanged, not fresh session/
+category origins or new durable proof.
+
 `handoff` and independent `handoff-replay` preparations each passed 286 artifact
 cases plus 89 metadata cases per provider, without skips. Eleven archives and ten
 actual loaded dependency images reproduce exactly; combined archive-map SHA-256:

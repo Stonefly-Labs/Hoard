@@ -6699,6 +6699,17 @@ Input: `fca6f8887233d4f1d32430c41520fdbf276c763dbd2f3b6b685f796e0950c649`;
 preparation:
 `9966fd10a5f0c49b1d2b026339153ec7a350030aa07972e2a91ae39762be4297`.
 
+The three remaining original noncooperation/lifecycle bodies now use shared
+interface-only consumers: composed shutdown with a retained reference query,
+concurrent close with actual slow guard release, and deadline/stop with held
+native I/O. Four parameters are frozen; two composed-shutdown cases are
+additional existing facts. Actual composition, query completion/drain, slow
+guard implementation, held native boundaries, physical release/removal and
+settlement stay fixture-side. Shared checks retain original ownership, fencing,
+deadline, retry and shutdown assertions, including the generic bounded-failure
+helper. The next six-row request is 69 scopes/596 observations, pending, not
+complete binding/session/category or full profile acceptance.
+
 The expanded budget request passed `40119412481` at exact head
 `70dfdf63f59a13ba39d934a7ef09f148bfc58c57`: all three jobs, 176 foundations
 without failures/errors/skips, 64 scopes/542 exact discoveries/executions, all

@@ -570,6 +570,13 @@ These host-bridge unit checks do not complete provider/category/session proof.
 Capability passed `40120937967` at `2a7be14`, all three jobs,
 178 foundations and 66 scopes/567 observations, all eighteen capability rows
 and actual prerequisites/replay; complete gates remain open.
+Three remaining original lifecycle bodies now use interface-only shared
+consumers, preserving four frozen parameters and two existing composed-shutdown
+cases. Actual reference-query setup/completion/drain, slow guard implementation,
+native I/O holds, physical release/removal and settlement stay fixture-side.
+Original assertions/order and the generic bounded-failure helper are unchanged
+after explicit seams. The next six-row request is 69 scopes/596 observations,
+pending, not complete provider/category/session or full profile qualification.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

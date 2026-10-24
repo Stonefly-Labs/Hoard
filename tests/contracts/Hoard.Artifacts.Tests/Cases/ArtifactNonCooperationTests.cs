@@ -28,17 +28,8 @@ public sealed class ArtifactNonCooperationTests
             provider, root.Path, (_, _) => new(query.Task));
         try
         {
-            var ticket = Success(await session.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-            using var source = new ShortSource("authority shutdown"u8.ToArray());
-            var staged = Success(await session.Store.StageAsync(ticket, source, new(), default));
-            var receipt = Success(await session.Store.CommitAsync(staged, new(), default));
-            var request = new ArtifactProtectionRequest(Guid.NewGuid(), ArtifactProtectionOperation.Deletion,
-                session.Identity, receipt.Stamp.Identity.Digest, new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp));
-            Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Failure>(
-                await session.Authority.AcquireAsync(request, new(TimeSpan.FromMilliseconds(20)), default));
-            Assert.True(session.Authority.HasRetainedWork);
-            await Assert.ThrowsAsync<InvalidOperationException>(() => session.DisposeAsync().AsTask());
-            Assert.True(session.Authority.HasRetainedWork);
+            await ArtifactLifecycleAssertions.ComposedShutdownAsync(session.Store, session.Authority, session.Identity,
+                () => session.Authority.HasRetainedWork, session.DisposeAsync, default);
         }
         finally
         {
@@ -56,28 +47,8 @@ public sealed class ArtifactNonCooperationTests
         SlowReleaseAuthority? authority = null;
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider,
             decorate: inner => authority = new(inner));
-        using var source = new ShortSource("concurrent close"u8.ToArray());
-        var receipt = await PublishAsync(driver, source, new(1024));
-        authority!.DelayRelease = true;
-        var session = Success(await driver.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default));
-        var close = session.CloseAsync(new(), default).AsTask();
-        try
-        {
-            await authority.Entered.Task.WaitAsync(TimeSpan.FromSeconds(2));
-            var retry = await session.CloseAsync(new(TimeSpan.FromMilliseconds(20)), default);
-            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, Assert.IsType<ArtifactResult<ArtifactShutdown>.Failure>(retry).Code);
-            using var destination = new MemoryStream();
-            Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactReadCompletion>.Failure>(
-                await session.CopyToAsync(destination, new(), default)).Code);
-            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
-                await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default)).Code);
-        }
-        finally
-        {
-            authority.Released.TrySetResult();
-            Success(await close);
-            Success(await session.CloseAsync(new(), default));
-        }
+        await ArtifactLifecycleAssertions.ConcurrentCloseAsync(driver.Store, () => authority!.DelayRelease = true,
+            () => authority!.Entered.Task, () => authority!.Released.TrySetResult(), default);
     }
 
     [Theory]
@@ -94,7 +65,7 @@ public sealed class ArtifactNonCooperationTests
         if (driver.LocalControls is { } local)
         {
             local.BeforeRecordWrite = StalledIo;
-            mutation = AssertBoundedFailure(driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)),
+            mutation = ArtifactLifecycleAssertions.BoundedFailureAsync(driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)),
                 new(TimeSpan.FromMilliseconds(100)), default).AsTask());
         }
         else
@@ -103,27 +74,19 @@ public sealed class ArtifactNonCooperationTests
             var receipt = await PublishAsync(driver, source, new(1024));
             var deletion = Success(await driver.Store.ReserveDeleteAsync(new(receipt.Stamp), new(), default));
             driver.ObjectControls!.BeforeObjectDelete = StalledIo;
-            mutation = AssertBoundedFailure(driver.Store.DeleteAsync(deletion, new(TimeSpan.FromMilliseconds(100)), default).AsTask());
+            mutation = ArtifactLifecycleAssertions.BoundedFailureAsync(
+                driver.Store.DeleteAsync(deletion, new(TimeSpan.FromMilliseconds(100)), default).AsTask());
         }
         try
         {
-            Assert.True(await Task.Run(() => entered.Wait(TimeSpan.FromSeconds(2))));
-            await mutation.WaitAsync(TimeSpan.FromSeconds(2));
-            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, Assert.IsType<ArtifactResult<ArtifactShutdown>.Failure>(
-                await driver.StopAsync(new(TimeSpan.FromMilliseconds(20))).AsTask().WaitAsync(TimeSpan.FromSeconds(2))).Code);
+            await ArtifactLifecycleAssertions.NativeBoundaryAsync(mutation,
+                () => entered.Wait(TimeSpan.FromSeconds(2)), options => driver.StopAsync(options));
         }
         finally
         {
             release.Set();
             if (driver.LocalControls is { } localControls) { localControls.BeforeRecordWrite = null; }
             if (driver.ObjectControls is { } objects) { objects.BeforeObjectDelete = null; }
-        }
-
-        static async Task AssertBoundedFailure<T>(Task<ArtifactResult<T>> task) where T : notnull
-        {
-            var failure = Assert.IsType<ArtifactResult<T>.Failure>(await task);
-            Assert.True(failure.Code is ArtifactFailureCode.DeadlineExceeded or ArtifactFailureCode.Uncertain);
-            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failure.Cleanup);
         }
     }
 

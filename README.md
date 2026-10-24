@@ -1524,6 +1524,11 @@ facts. Actual bridge/validator construction, encoding, expiry and ownership
 counters remain fixture-side; recognized-reference checks are shared unchanged.
 The next three-row native request is 68 scopes/590 observations, pending.
 These host-bridge unit checks are not complete provider/category qualification.
+Three remaining original lifecycle bodies now use shared interface-only checks,
+preserving four frozen parameters and two additional composed-shutdown cases.
+Actual reference queries, slow guard release, native I/O holds and settlement
+remain fixture-side. The next six-row native request is 69 scopes/596
+observations, pending, not complete bindings/category/profile qualification.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

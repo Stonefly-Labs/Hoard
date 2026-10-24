@@ -434,6 +434,13 @@ encoding, expiry and observed counters remain fixture-side; the validator's
 recognized-reference operation/stamp checks delegate unchanged to the SDK.
 The next three-row native request is 68 scopes/590 observations, pending.
 These host-bridge unit checks are not full provider/category qualification.
+Three remaining original lifecycle bodies now use interface-only common checks:
+retained reference-query shutdown, concurrent close/slow guard release and held
+native I/O deadline/stop. Four parameters are frozen; two composed-shutdown
+cases are additional existing facts. Actual composition, query drain, slow
+guard implementation, physical holds/releases and settlement stay fixture-side.
+The next six-row request is 69 scopes/596 observations, pending, not complete
+bindings/category/session or full profile qualification.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

@@ -287,6 +287,11 @@ fixture-side. The next three-row native request is 68 scopes/590 observations,
 pending; these host-bridge unit checks are not full provider qualification.
 Capability passed `40120937967` at `2a7be14`, all three jobs,
 178 foundations and 66 scopes/567 observations, not complete qualification.
+Three remaining lifecycle bodies now also use shared checks, preserving four
+frozen parameters plus two existing composed-shutdown cases. Actual query
+completion/drain, slow guard release and native I/O hold/release remain
+fixture-side. The next six-row request is 69 scopes/596 observations, pending,
+not complete binding/session/category or full profile acceptance.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/
