@@ -63,6 +63,10 @@ provider's encoding, and an actual-cursor guard proves every inherited field
 is still covered without unrelated mutation. All 79 current predecessor tests
 pass on each provider with identical suite/SDK bytes; this does not finish
 category acceptance or safe origin ingestion.
+Six more admission/capacity/lease-fencing wrappers now delegate as well
+(29 original methods total). All 16 affected class tests pass on both providers
+using identical suite/dependency bytes; no SDK/provider packages change.
+Fresh admission fixtures remain unprepared and retain their original disposal.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

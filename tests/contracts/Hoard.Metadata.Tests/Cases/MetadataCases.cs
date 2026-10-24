@@ -10,6 +10,14 @@ internal static class MetadataCases
     public static IMetadataConformanceAuthority CommonAuthority(MetadataFixtureSession fixture) =>
         new PublicationAuthority(fixture.Authority);
 
+    public static MetadataFaultCounters CommonCounters(MetadataFixtureSession fixture)
+    {
+        var diagnostics = fixture.Controls.Diagnostics;
+        return new(fixture.Controls.ActivityCount,
+            diagnostics.LongCount(code => code == "metadata.internal_failure"),
+            diagnostics.LongCount(code => code == "metadata.cleanup_incomplete"));
+    }
+
     public static MetadataContinuationCorruptionControl CommonContinuationCorruption(MetadataFixtureSession fixture) =>
         (continuation, component, corruption, cancellationToken) =>
         {

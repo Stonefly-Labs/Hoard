@@ -1670,6 +1670,26 @@ historical locks remain unchanged. Frozen inventory and focused compiled
 whitespace checks pass. Complete control/session extraction, exact safe origin
 ingestion and category acceptance remain open; T019/T021..T026 are unchecked.
 
+### Original admission, capacity and pure lease wrappers
+
+Six MP-19/20/28/32 methods now delegate to existing shared admission,
+storage/ledger capacity and lease overflow/owner-generation-revision fencing
+consumers (29 original delegated methods total). Exact names/attributes are
+unchanged. Admission retains its fresh unprepared fixture; invalid budgets
+still guarantee disposal in the shared consumer's `finally`. Capacity and
+generation callbacks check cancellation before forwarding original controls.
+A test-side counter bridge reads actual fixture boundary activity and diagnostic
+occurrences; it supplies no provider-selected expectations.
+
+The actual repository test project restored in locked package mode against the
+previously verified eight-archive graph with an explicit private lock.
+The same freshly compiled suite passed all 16 affected class tests against
+Memory and SQLite without skips. Its seven actual dependency DLLs match archive
+members. Focused whitespace and frozen inventory checks pass; ordinary source
+assets are restored. No SDK/provider/fixture archive or source lock changes.
+Clock/deadline/corruption/session extraction and exact origin/controller imports
+remain unfinished. These six delegates do not complete T019/T021..T026.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

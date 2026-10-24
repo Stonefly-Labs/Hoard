@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Hoard.Abstractions.Metadata;
+using Hoard.Testing.Conformance.Metadata;
 using Microsoft.Data.Sqlite;
 using static Hoard.Metadata.Tests.MetadataCases;
 
@@ -13,25 +14,23 @@ public sealed class MetadataFailureTests
     public async Task MP20_Injected_storage_capacity_rolls_back_and_allows_same_ticket_retry()
     {
         await using var fixture = await OpenAsync();
-        var batch = Batch(await Ticket(fixture), new MetadataMutation.PutRegistry(Registry(), new ExpectedRevision.Absent()));
-        fixture.InjectStorageCapacityForTest();
-        Assert.Equal(MetadataFailureCode.Capacity, Failed(await fixture.Store.CommitAsync(batch, new(), default)));
-        await Missing(fixture, Registry().Selector);
-        Success(await fixture.Store.CommitAsync(batch, new(), default));
-        await Read<MetadataRegistry>(fixture, Registry().Selector);
+        await MetadataFailureAssertions.StorageCapacityAsync(fixture.Store, cancellationToken =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            fixture.InjectStorageCapacityForTest();
+            return ValueTask.CompletedTask;
+        }, default);
     }
 
     [Fact]
     public async Task MP20_Live_ledger_capacity_is_classified_without_evicting_a_receipt()
     {
         await using var fixture = await OpenAsync();
-        var batch = Batch(await Ticket(fixture), new MetadataMutation.PutRegistry(Registry(), new ExpectedRevision.Absent()));
-        var receipt = Success(await fixture.Store.CommitAsync(batch, new(), default));
-        Success(await fixture.FillLedgerForTestAsync());
-        Assert.Equal(MetadataFailureCode.Capacity, Failed(await fixture.Store.ReserveOperationAsync(new(), default)));
-        var stored = Assert.IsType<MetadataResolution.Committed>(Success(await fixture.Store.ReconcileAsync(batch.Ticket, new(), default)));
-        Assert.Equal(receipt.CommitId, stored.Receipt.CommitId);
-        Assert.Equal(receipt.CommitId, Success(await fixture.Store.CommitAsync(batch, new(), default)).CommitId);
+        await MetadataFailureAssertions.LedgerCapacityAsync(fixture.Store, cancellationToken =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return fixture.FillLedgerForTestAsync();
+        }, default);
     }
 
     [Fact]
@@ -159,11 +158,12 @@ public sealed class MetadataFailureTests
         MetadataPageQuery query = shape switch
         {
             "cache-auth" => new MetadataPageQuery.CacheEntries(registry.Id, new("anonymous"),
-                new MetadataOption<MetadataPackageKey>.Some(package.Key)) { PageSize = 100, Continuation = None<MetadataContinuation>() },
+                new MetadataOption<MetadataPackageKey>.Some(package.Key))
+            { PageSize = 100, Continuation = None<MetadataContinuation>() },
             "lease-resource" => new MetadataPageQuery.Leases(new("maintenance-"))
-                { PageSize = 100, Continuation = None<MetadataContinuation>() },
+            { PageSize = 100, Continuation = None<MetadataContinuation>() },
             _ => new MetadataPageQuery.Aggregates(registry.Id, new("anonymous"), aggregate.Start, aggregate.End)
-                { PageSize = 100, Continuation = None<MetadataContinuation>() }
+            { PageSize = 100, Continuation = None<MetadataContinuation>() }
         };
         MetadataSelector selector = shape switch
         {

@@ -5938,6 +5938,20 @@ the same SDK/suite bytes for both compositions. Only the additive HostAdapters
 archive changes; SDK/provider/platform archives and source locks are unchanged.
 This is not complete metadata extraction or safe exact runtime-origin import.
 
+Six original MP-19/20/28/32 wrappers now additionally share admission,
+storage/ledger capacity and lease overflow/owner-generation-revision fencing
+consumers, bringing adoption to 29 methods. Fresh admission fixtures remain
+unprepared; invalid-budget disposal is still guaranteed by the shared
+consumer's `finally`, and capacity/generation callbacks forward the original
+controls after cancellation checks. The counter bridge reads actual boundary
+activity and diagnostic occurrences, not provider-returned success flags.
+An actual locked restore of the repository test project used the already
+verified eight-archive graph without source-lock changes. The identical
+freshly compiled suite passed all 16 affected class tests against each provider,
+without skips. Its seven dependency DLLs match the archives. Focused whitespace
+and frozen inventory checks pass; ordinary source-mode assets are restored.
+SDK/provider/fixture archives are unchanged by these six delegates.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

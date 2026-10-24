@@ -1293,6 +1293,10 @@ consumer through fixture-private encoding controls (23 delegated methods).
 An actual-cursor parity check proves every original field is covered without
 changing unrelated fields; all 79 current predecessor tests pass against each
 provider using identical SDK/suite bytes. Full extraction remains unfinished.
+Six further admission, capacity and lease-fencing wrappers now share existing
+consumers (29 delegated methods). Their 16 affected class tests pass against
+each provider; fresh unadmitted stores, original controls and disposal remain
+fixture-owned, with no SDK/provider package changes.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

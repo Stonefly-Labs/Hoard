@@ -195,6 +195,11 @@ epoch/schema representation. Cancellation and unknown controls reject without
 modifying a valid continuation. All 79 current predecessor tests pass on both
 providers, with identical SDK/suite bytes; exact runtime-origin import and full
 extraction remain unfinished.
+Six further admission/capacity/lease wrappers share the same SDK consumers,
+bringing original adoption to 29 methods. Fresh unadmitted stores and existing
+fixture controls/disposal remain intact. The counter bridge reads real boundary
+activity and diagnostic occurrences. All 16 affected class tests pass against
+both providers with identical suite/dependency bytes and unchanged packages.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

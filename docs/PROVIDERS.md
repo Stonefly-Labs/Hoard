@@ -121,6 +121,15 @@ unknown controls reject without modifying the valid continuation. All 79
 current predecessor tests pass without skips against each provider using the
 same SDK/suite bytes. Fresh locked replay reproduces eight archives and exact
 DLLs; only the additive HostAdapters archive changes from the schema repair.
+Six further original MP-19/20/28/32 wrappers now delegate to the existing
+admission, storage/ledger capacity and lease-generation/fencing consumers
+(29 delegated methods total). Admission still uses fresh unadmitted stores,
+not the prepared ordinary-case helper. A thin counter bridge observes actual
+fixture activity and diagnostic counts; capacity/generation callbacks preserve
+existing controls and check cancellation before dispatch. All 16 affected
+class tests pass against each provider without skips using the same compiled
+suite and seven byte-matched dependencies. No package or source-lock changes
+accompany these delegates.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

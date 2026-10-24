@@ -1,4 +1,5 @@
 using Hoard.Abstractions.Metadata;
+using Hoard.Testing.Conformance.Metadata;
 using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
@@ -9,40 +10,18 @@ public sealed class MetadataLeaseTests
     public async Task MP28_Generation_overflow_rejects_the_whole_group_and_preserves_tombstone()
     {
         await using var fixture = await OpenAsync();
-        var resource = new CanonicalText("overflow-lease");
-        await Commit(fixture, new MetadataMutation.AcquireLease(resource, Id(3), 1));
-        var lease = await Read<MetadataWorkLease>(fixture, new MetadataSelector.Lease(resource));
-        await Commit(fixture, new MetadataMutation.ReleaseLease(resource, Id(3), lease.Generation, lease.Revision));
-        Success(await fixture.SetLeaseGenerationForTestAsync(resource, long.MaxValue));
-        Assert.Equal(MetadataFailureCode.Capacity, Failed(await fixture.Store.CommitAsync(Batch(await Ticket(fixture),
-            new MetadataMutation.PutRegistry(Registry(), new ExpectedRevision.Absent()),
-            new MetadataMutation.AcquireLease(resource, Id(4), 1)), new(), default)));
-        await Missing(fixture, Registry().Selector);
-        var retained = await Read<MetadataWorkLease>(fixture, new MetadataSelector.Lease(resource));
-        Assert.Equal(long.MaxValue, retained.Generation);
-        Assert.IsType<MetadataOption<MetadataId>.None>(retained.Owner);
+        await MetadataLeaseAssertions.GenerationOverflowAsync(fixture.Store, (resource, generation, cancellationToken) =>
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return fixture.SetLeaseGenerationForTestAsync(resource, generation);
+        }, default);
     }
 
     [Fact]
     public async Task MP28_Lease_owners_generations_and_revisions_are_fenced()
     {
         await using var fixture = await OpenAsync();
-        var resource = new CanonicalText("maintenance");
-        await Commit(fixture, new MetadataMutation.AcquireLease(resource, Id(1), 300));
-        var lease = await Read<MetadataWorkLease>(fixture, new MetadataSelector.Lease(resource));
-        Assert.Equal(MetadataFailureCode.Conflict, Failed(await fixture.Store.CommitAsync(Batch(await Ticket(fixture),
-            new MetadataMutation.AcquireLease(resource, Id(2), 300)), new(), default)));
-        await Commit(fixture, new MetadataMutation.RenewLease(resource, Id(1), lease.Generation, lease.Revision, 300));
-        var renewed = await Read<MetadataWorkLease>(fixture, lease.Selector);
-        Assert.NotEqual(lease.Revision, renewed.Revision);
-        Assert.Equal(lease.Generation, renewed.Generation);
-        await Commit(fixture, new MetadataMutation.ReleaseLease(resource, Id(1), renewed.Generation, renewed.Revision));
-        await Commit(fixture, new MetadataMutation.AcquireLease(resource, Id(2), 300));
-        var next = await Read<MetadataWorkLease>(fixture, lease.Selector);
-        Assert.Equal(lease.Generation + 1, next.Generation);
-        Assert.Equal(MetadataFailureCode.Conflict, Failed(await fixture.Store.CommitAsync(Batch(await Ticket(fixture),
-            new MetadataMutation.ReleaseLease(resource, Id(1), lease.Generation, lease.Revision)), new(), default)));
-        Assert.Equal(next, await Read<MetadataWorkLease>(fixture, lease.Selector));
+        await MetadataLeaseAssertions.OwnerGenerationAndRevisionFencesAsync(fixture.Store, default);
     }
 
     [Fact]
