@@ -14,6 +14,60 @@ namespace Hoard.Conformance.Tests;
 public sealed class MemoryMechanismTests
 {
     [Fact]
+    public async Task Dropped_diagnostic_fails_the_common_assertion_and_observed_memory_passes_unchanged()
+    {
+        var faultyControl = new MemoryObservationControl();
+        await using var faulty = await OpenAsync(observer: faultyControl.ObserveAsync, diagnostic: _ => { });
+        Func<MemoryMetadataStore, MemoryObservationControl, Task> consumer = (store, control) =>
+            MetadataFailureAssertions.DiagnosticsAsync(store, control.ObserveBoundaryAsync, () => control.Counters, default);
+        await Assert.ThrowsAsync<Xunit.Sdk.EqualException>(() => consumer(faulty, faultyControl));
+        var correctedControl = new MemoryObservationControl();
+        await using var corrected = await OpenAsync(observer: correctedControl.ObserveAsync, diagnostic: correctedControl.Diagnose);
+        await consumer(corrected, correctedControl);
+    }
+
+    [Theory]
+    [InlineData("storage-capacity")]
+    [InlineData("ledger-capacity")]
+    [InlineData("explicit-admission")]
+    [InlineData("invalid-budgets")]
+    [InlineData("incomplete-cleanup")]
+    [InlineData("safe-diagnostics")]
+    public async Task Compiled_failure_and_admission_consumers_observe_actual_controls(string consumer)
+    {
+        var control = new MemoryObservationControl();
+        await using var store = new MemoryMetadataStore(new UnusedAuthority(), TimeProvider.System,
+            control.ObserveAsync, control.Diagnose);
+        ValueTask Settle(CancellationToken token) =>
+            new(store.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(5), token));
+        if (consumer is not "explicit-admission" and not "invalid-budgets")
+        { Success(await store.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default)); }
+        await (consumer switch
+        {
+            "storage-capacity" => MetadataFailureAssertions.StorageCapacityAsync(store, token =>
+            {
+                token.ThrowIfCancellationRequested();
+                store.InjectStorageCapacityForTest();
+                return ValueTask.CompletedTask;
+            }, default),
+            "ledger-capacity" => MetadataFailureAssertions.LedgerCapacityAsync(store, token =>
+            {
+                token.ThrowIfCancellationRequested();
+                return store.FillLedgerForTestAsync();
+            }, default),
+            "explicit-admission" => MetadataAdmissionAssertions.ExplicitAdmissionAsync(
+                store, store, () => control.Counters, default),
+            "invalid-budgets" => MetadataAdmissionAssertions.InvalidBudgetsAsync(
+                store, store, () => control.Counters, store.DisposeAsync, default),
+            "incomplete-cleanup" => MetadataDeadlineAssertions.IncompleteCleanupAsync(store,
+                control.ObserveBoundaryAsync, () => control.Counters, store.DisposeAsync, Settle, default),
+            "safe-diagnostics" => MetadataFailureAssertions.DiagnosticsAsync(
+                store, control.ObserveBoundaryAsync, () => control.Counters, default),
+            _ => throw new ArgumentException("Unknown common consumer.")
+        });
+    }
+
+    [Fact]
     public async Task Compiled_lease_overflow_consumer_preserves_the_group_and_tombstone()
     {
         var clock = new MetadataConformanceClock(new(1_800_000_000_000));
@@ -580,6 +634,11 @@ public sealed class MemoryMechanismTests
     private sealed class MemoryObservationControl
     {
         private readonly ConcurrentDictionary<string, Func<ValueTask>> observers = new(StringComparer.Ordinal);
+        private long boundaryObservations;
+        private long internalFailures;
+        private long incompleteCleanups;
+        public MetadataFaultCounters Counters => new(Interlocked.Read(ref boundaryObservations),
+            Interlocked.Read(ref internalFailures), Interlocked.Read(ref incompleteCleanups));
 
         public ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
             MetadataObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken)
@@ -599,13 +658,20 @@ public sealed class MemoryMechanismTests
             return ValueTask.FromResult<IAsyncDisposable>(new Registration(observers, key, observer));
         }
 
-        public ValueTask ObserveAsync(string point) =>
-            observers.TryGetValue(point, out var observer) ? observer() : ValueTask.CompletedTask;
+        public ValueTask ObserveAsync(string point)
+        {
+            Interlocked.Increment(ref boundaryObservations);
+            return observers.TryGetValue(point, out var observer) ? observer() : ValueTask.CompletedTask;
+        }
 
         public void Diagnose(string diagnostic)
         {
-            if (diagnostic != "metadata.internal_failure")
-            { throw new Xunit.Sdk.XunitException("Unexpected provider diagnostic."); }
+            switch (diagnostic)
+            {
+                case "metadata.internal_failure": Interlocked.Increment(ref internalFailures); break;
+                case "metadata.cleanup_incomplete": Interlocked.Increment(ref incompleteCleanups); break;
+                default: throw new Xunit.Sdk.XunitException("Unexpected provider diagnostic.");
+            }
         }
 
         private sealed class Registration(

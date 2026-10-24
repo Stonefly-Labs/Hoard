@@ -5609,6 +5609,25 @@ preparation proof:
 `dfb1356f57a03483dff44f9b8b092c7e58bb26bf33ea21add85344cad184a9e6`.
 No current source result substitutes for native package evidence.
 
+Six capacity/admission/diagnostic consumers bring the executable slice to 47.
+They preserve storage rollback/same-ticket retry, live-ledger receipt retention,
+explicit admission, invalid budgets/closed stores, actual incomplete cleanup and
+safe public/debugger diagnostics. Required typed counters record only boundary
+and closed diagnostic counts; unknown diagnostic text rejects without retention.
+The incomplete-cleanup check holds actual work for up to 60 seconds, outlasting
+the real 30-second cleanup limit, while ordinary barriers remain unchanged.
+It verifies failed cleanup with settlement still pending, then joins every
+started task and genuine settlement before retrying disposal. No early resource
+release is inferred. A dropped-diagnostic negative fails the identical common
+consumer that passes with actual observation.
+
+Source-only Memory: 60 passed without skips in 33 seconds, including real ledger
+filling and cleanup timeout; ordinary SDK: 108 passed. Tooling: 236 checks/ten
+native skips; focused formatting/catalog/inventory checks pass. Bounded
+architecture review found no actionable defects. Current native selection:
+31 scopes/134 observations, pending. Full schema extraction, actual adapters,
+wrapper parity and qualification remain unfinished.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

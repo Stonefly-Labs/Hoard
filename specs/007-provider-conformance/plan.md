@@ -1006,6 +1006,35 @@ preparation proof:
 `dfb1356f57a03483dff44f9b8b092c7e58bb26bf33ea21add85344cad184a9e6`.
 Free scratch was 92,110,127,104 bytes. This remains non-qualifying diagnostics.
 
+### Capacity, admission and incomplete-cleanup consumers
+
+Six further methods bring the executable slice to 47. They preserve injected
+storage-capacity rollback/same-ticket retry, live-ledger capacity without receipt
+eviction, explicit schema admission, invalid-budget/closed-store rejection,
+incomplete cleanup with actual retained work and safe diagnostic projections.
+The required typed fault counters expose only nonnegative boundary/internal-
+failure/incomplete-cleanup counts; fixture mapping rejects unknown diagnostic
+strings immediately, without storing raw text or accepting expected-result flags.
+
+Six missing common APIs failed compilation first. The source-only probe then
+passed all 60 tests without skips, including real ledger filling, the provider's
+actual 30-second cleanup failure and a paired dropped-diagnostic assertion
+negative/unchanged observed control. The complete probe took 33 seconds.
+Ordinary SDK tests pass 108; tooling passes 236 with ten native macOS skips;
+focused formatting, catalog, frozen inventory and whitespace checks pass.
+Bounded architecture review found no actionable defects in the new controls,
+failure/admission consumers or incomplete-cleanup ownership paths.
+
+The special cleanup hold is 60 seconds, not a shortened substitute; ordinary
+holds remain 15 seconds with ten-second entry waits. First disposal failure is
+observed through its actual task. Final cleanup releases the barrier, joins
+public commit, first disposal, every started settlement observation and actual
+settlement, then retries disposal even if a join fails. No returned failure or
+completed public task is promoted to resource release.
+Current native selection is 31 scopes/134 observations, pending. Full schema
+setup/upgrade extraction, actual adapters, unchanged wrapper parity and complete
+category acceptance remain open; T019..T086 are still unchecked.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

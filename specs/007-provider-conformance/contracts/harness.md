@@ -68,14 +68,15 @@ integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
 
-The initial executable SDK slice exposes forty-one methods across
+The initial executable SDK slice exposes forty-seven methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,
 `MetadataIdentityAssertions`, `MetadataEntityAssertions` and
 `MetadataReferenceAssertions`, `MetadataTimeAssertions` and
 `MetadataReconciliationAssertions`, `MetadataCorruptionAssertions` and
 `MetadataAtomicityAssertions`, `MetadataPublicationAssertions` and
-`MetadataDeadlineAssertions`.
+`MetadataDeadlineAssertions`, `MetadataAdmissionAssertions` and
+`MetadataFailureAssertions`.
 They consume an already-prepared fresh
 `IMetadataStore`, a caller cancellation token and, for publication cases, the
 session's `IMetadataConformanceAuthority`; the caller retains store ownership.
@@ -140,7 +141,21 @@ A pre-canceled reservation is settled before the next operation: definite public
 cancellation does not prove that dispatched work has ended. Cleanup releases
 held work and joins public tasks and actual settlement without caller
 cancellation; disposal still does not imply authoritative resource release.
-The inherited incomplete-cleanup/retained-work case remains unextracted.
+The incomplete-cleanup case uses a separate 60-second hold to outlast the real
+30-second provider cleanup limit; ordinary holds remain 15 seconds and entry
+remains bounded to ten seconds. It observes the cleanup failure and closed
+diagnostic count while actual settlement is pending, then releases and joins
+every started public operation, disposal and settlement observation before
+retrying disposal. It does not claim resource release from the failed cleanup.
+Required `MetadataFaultCounters` retain only nonnegative counts of concrete
+boundary observations and the two closed internal-failure/cleanup diagnostics.
+Unknown diagnostics reject at the fixture boundary without retaining raw text.
+Admission/budget consumers check no observed boundary work before admission or
+for invalid budgets. Storage capacity preserves atomic same-ticket retry; live
+ledger capacity cannot evict the original receipt. The diagnostic consumer
+checks actual injected failure, closed diagnostic observation and public
+diagnostic/debugger redaction. A dropped-diagnostic negative must fail that
+unchanged common consumer before actual observation passes.
 No method accepts a provider name or expected outcome. Session/adapter routing,
 all other inherited assertions and unchanged-wrapper forwarding remain pending.
 Invoking this partial slice cannot qualify a metadata binding.

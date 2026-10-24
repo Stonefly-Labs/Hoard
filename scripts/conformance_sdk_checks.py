@@ -195,6 +195,13 @@ SCENARIOS = (
         + f'(consumer: "{consumer}")' for consumer in (
             "writer-budget", "cancellation-decision", "queue-capacity", "disposal-ownership", "known-exceptions")),
      "None", "Passed", 0, "None"),
+    ("memory-failure-admission-consumers", tuple(
+        PACKAGE_TEST_PREFIX + "Compiled_failure_and_admission_consumers_observe_actual_controls"
+        + f'(consumer: "{consumer}")' for consumer in (
+            "storage-capacity", "ledger-capacity", "explicit-admission", "invalid-budgets",
+            "incomplete-cleanup", "safe-diagnostics"))
+     + (PACKAGE_TEST_PREFIX + "Dropped_diagnostic_fails_the_common_assertion_and_observed_memory_passes_unchanged",),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {

@@ -7,6 +7,49 @@ namespace Hoard.Testing.Conformance.Metadata;
 
 public static class MetadataDeadlineAssertions
 {
+    public static async Task IncompleteCleanupAsync(
+        IMetadataStore store, MetadataObservationControl observeAsync, Func<MetadataFaultCounters> observeCounters,
+        Func<ValueTask> disposeAsync, Func<CancellationToken, ValueTask> awaitSettlementAsync,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(observeAsync);
+        ArgumentNullException.ThrowIfNull(observeCounters);
+        ArgumentNullException.ThrowIfNull(disposeAsync);
+        ArgumentNullException.ThrowIfNull(awaitSettlementAsync);
+        await using var barrier = new MetadataConformanceBarrier(TimeSpan.FromSeconds(60));
+        var batch = Batch(await Ticket(store, cancellationToken),
+            new MetadataMutation.PutRegistry(Registry(), new ExpectedRevision.Absent()));
+        var before = observeCounters();
+        await using var observation = await observeAsync(
+            MetadataObservationPoint.BeforeCommitDecision, barrier.HoldAsync, cancellationToken);
+        var committing = store.CommitAsync(batch, new(TimeSpan.FromMilliseconds(200)), cancellationToken).AsTask();
+        Task<Exception?>? disposing = null;
+        Task? settling = null;
+        try
+        {
+            await barrier.WaitForEntryAsync(cancellationToken);
+            Assert.Equal(MetadataFailureCode.DeadlineExceeded, Failed(await committing));
+            disposing = Record.ExceptionAsync(async () => await disposeAsync());
+            var error = Assert.IsType<InvalidOperationException>(await disposing.WaitAsync(TimeSpan.FromSeconds(35)));
+            Assert.True(error.Message.Contains("cleanup incomplete", StringComparison.Ordinal),
+                "Cleanup did not report incomplete owned work.");
+            Assert.Equal(before.IncompleteCleanups + 1, observeCounters().IncompleteCleanups);
+            settling = awaitSettlementAsync(CancellationToken.None).AsTask();
+            Assert.False(settling.IsCompleted);
+            Assert.Equal(MetadataFailureCode.Disposed, Failed(await store.ReserveOperationAsync(new(), cancellationToken)));
+        }
+        finally
+        {
+            barrier.Release();
+            try
+            {
+                await JoinSettlement(Task.WhenAll(committing, disposing ?? Task.CompletedTask,
+                    settling ?? Task.CompletedTask), awaitSettlementAsync);
+            }
+            finally { await disposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(35)); }
+        }
+    }
+
     public static async Task WriterBudgetAsync(
         IMetadataStore store, Func<CancellationToken, ValueTask<IAsyncDisposable>> holdWriterAsync,
         Func<CancellationToken, ValueTask> awaitSettlementAsync, CancellationToken cancellationToken)
