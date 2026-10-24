@@ -121,6 +121,10 @@ SCENARIOS = (
         "Hoard.Conformance.Tests.ArtifactBindingTests."
         "Simulation_cannot_take_local_restart_witnesses_or_remove_its_frozen_exclusions",
     ), "None", "Passed", 0, "None"),
+    ("metadata-consumers", tuple("Hoard.Conformance.Tests.MetadataConsumerTests." + method for method in (
+        "Competing_create_consumer_rejects_successful_losers_instead_of_accepting_provider_results",
+        "Common_consumer_propagates_cancellation_to_the_store_without_publishing_a_candidate")),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {

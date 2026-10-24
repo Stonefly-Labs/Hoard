@@ -5370,7 +5370,16 @@ simulation retains its frozen restart exclusions.
 
 All 103 source SDK tests pass without skips, including these 23 new guards;
 focused formatting passes. The new native diagnostic selection contains seventeen
-scopes/69 expected observations, pending actual execution. An intended routing
+scopes/69 expected observations. Native run
+[39953736120](https://github.com/Stonefly-Labs/Hoard/actions/runs/39953736120)
+at `fa334245ddac4d6e380faf541aeeeb71dc9f5eaa` verified all seventeen scopes/
+69 discoveries/69 executions, 127 foundation checks without failures/errors/
+skips and six historical baselines. Independent preparation/replay reproduced
+all eighteen package/thirteen lock byte sequences. SDK input digest:
+`4732cfb3a9872d8361a56da48dbd0ab5d5a4b1e6607be6931eab02401843f6fd`;
+preparation proof:
+`40632d60679a7d6311d245af98967ab611638673fcec7564ea185c5e2b728a56`.
+An intended routing
 regression exposed two new scopes going to the smoke assembly and unknown/mixed
 names falling through. The controller now admits only homogeneous SDK-test or
 smoke namespaces and rejects unknown/mixed/empty selections before launch. It no
@@ -5379,6 +5388,28 @@ assembly. All 232 tooling checks pass (ten native skips). This is partial test
 preparation: actual compiled common-consumer parity, four adapters, unchanged
 behavioral assertions and real-provider category proof remain unbuilt;
 T019/T020 stay unchecked.
+
+The next partial extraction introduces six actual SDK consumers under
+`Hoard.Testing.Conformance/Metadata/`: aggregate overflow/bounds, registry scope/
+interval isolation, bounded-page traversal, competing creates, revision races/
+delete-recreate fencing and lease owner/generation/revision fencing. Assertion
+bodies and synthetic data follow the inherited tests; public operations receive
+the caller's cancellation token. Consumers take the public store only, not a
+provider name, private representation or expected result. They do not own or
+dispose the caller's store. A focused portable source probe runs all six against
+unchanged Memory source; this is not a package-only or native qualification run.
+Two source SDK tests reject a structurally valid contradictory-success store at
+the common competing-create assertion and propagate cancellation before commit.
+The missing namespace was observed before implementation; that compiler red is
+not the behavioral faulty-binding proof required by T034. An initial malformed
+synthetic ticket was corrected to the public 24-hour ticket contract so rejection
+now reaches the intended assertion rather than failing setup.
+
+The native SDK diagnostic selection adds these two unit tests; it does not yet
+execute the six real-Memory consumers. Existing witnesses/wrappers and all
+remaining common assertions are preserved pending full extraction/adapter
+rewiring. T019..T024 remain unchecked; no complete parity or category outcome is
+claimed.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

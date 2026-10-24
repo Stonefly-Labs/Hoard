@@ -696,7 +696,14 @@ the smoke assembly, and unknown/mixed namespaces had no safe rejection. Explicit
 homogeneous SDK-test/smoke namespace admission fixes the routing without
 service/unknown fallback or another scenario-name allowlist. All 232 portable
 tooling checks pass (ten native skips); catalog/frozen inventory/whitespace checks
-pass. Actual native execution remains pending.
+pass. Native run `39953736120` at
+`fa334245ddac4d6e380faf541aeeeb71dc9f5eaa` subsequently verified all seventeen
+scopes/69 discoveries/69 executions, 127 foundation checks without failures/
+errors/skips, six baselines and byte-identical eighteen-package/thirteen-lock
+preparation/replay. Input digest:
+`4732cfb3a9872d8361a56da48dbd0ab5d5a4b1e6607be6931eab02401843f6fd`;
+preparation proof:
+`40632d60679a7d6311d245af98967ab611638673fcec7564ea185c5e2b728a56`.
 
 T019/T020 remain unchecked: these inventory/transport guards cannot establish that
 actual common consumers were extracted, execute unchanged for all four adapters
@@ -705,6 +712,31 @@ no category/story qualification is claimed. README/development guidance reflects
 this boundary; provider/contributor examples, product architecture/ADR/diagrams,
 governance, predecessor, infrastructure, release and UI guides are unaffected by
 test-only guard additions with no new working product/qualification command.
+
+### Initial executable metadata consumer slice
+
+Six inherited assertion bodies now exist in the SDK behind `IMetadataStore`
+and cancellation only: MP-05 exact bounds/aggregate overflow, MP-06 registry/
+interval isolation, MP-07 bounded datasets, MP-11 competing creates, MP-12
+revision races/delete-recreate and MP-28 owner/generation/revision fences.
+Common synthetic data and expected results remain SDK-owned. The consumers
+do not construct/select/dispose providers, accept expected-result callbacks,
+refer to private storage formats or alter production contracts.
+
+A focused temporary source probe executed all six against unchanged Memory
+source (six passed, no skips). It is not package-only evidence: source was
+compiled into the probe. Two normal SDK tests prove a structurally valid store
+returning eight successful competing creates fails the common `Assert.Single`,
+and cancellation reaches reservation before any commit. The absent namespace
+was observed first; that compiler failure is not T034's behavioral mutation
+proof. A malformed test ticket initially rejected during receipt construction;
+correcting it to the public 24-hour lifetime makes the test reach the intended
+common assertion. All 105 source SDK tests and focused formatting pass.
+
+The native diagnostic selection adds only those two unit tests (eighteen scopes/
+71 observations); actual execution is pending. Full executable parity tests,
+the remaining consumers, typed adapters, existing-wrapper forwarding and
+package-only category runs remain incomplete; T019..T024 stay unchecked.
 
 ## Partial implementation checkpoint
 
@@ -721,7 +753,7 @@ contracts, an independently expanded catalog, strict Python evidence entities,
 source snapshots, initial witness admission, owned execution and historical
 baseline preparation. The solution registers SDK unit tests normally and
 excludes package-only fixture projects from default builds. Production
-reference edges and production provider contracts are unchanged. Common consumers,
+reference edges and production provider contracts are unchanged. Complete common consumers,
 adapters, the conformance CLI/evaluator/reports, complete compatibility/composition
 profiles, contributor example and five-profile CI are not delivered.
 

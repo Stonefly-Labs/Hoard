@@ -1213,6 +1213,20 @@ provider rows and shortened owned manifests. These are pre-extraction regression
 guards, not execution of shared assertions against the four adapters; T019/T020
 remain open for their complete extraction tests.
 
+Native run [39953736120](https://github.com/Stonefly-Labs/Hoard/actions/runs/39953736120)
+verified those guards: 127 foundation checks without failures/errors/skips,
+seventeen scopes/69 discoveries/69 executions, all six historical baselines and
+byte-identical replay of eighteen packages/thirteen locks.
+
+The SDK now contains the first six executable metadata consumers: aggregate
+bounds, registry scopes/intervals, bounded paging, competing creates, revision/
+delete-recreate races and lease fences. They accept only the public store and
+cancellation token; expected outcomes stay in the SDK. A focused source probe
+executes all six against unchanged Memory source, and a contradictory-success
+store fails the competing-create assertion. This is partial extraction: existing
+wrappers, full shared suites, typed adapters and package-only provider execution
+remain outstanding. No category/profile qualification is claimed.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

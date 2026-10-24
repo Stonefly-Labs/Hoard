@@ -2,11 +2,34 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Hoard.Abstractions.Metadata;
 using Hoard.Fixtures.Metadata.Memory;
+using Hoard.Testing.Conformance.Metadata;
 
 namespace Hoard.Conformance.Tests;
 
 public sealed class MemoryMechanismTests
 {
+    [Theory]
+    [InlineData("competing-creates")]
+    [InlineData("revision-races")]
+    [InlineData("exact-bounds")]
+    [InlineData("scopes-and-intervals")]
+    [InlineData("bounded-pages")]
+    [InlineData("lease-fences")]
+    public async Task Compiled_common_consumers_execute_against_the_independent_memory_store(string consumer)
+    {
+        await using var store = await OpenAsync();
+        await (consumer switch
+        {
+            "competing-creates" => MetadataConcurrencyAssertions.CompetingCreatesAsync(store, default),
+            "revision-races" => MetadataConcurrencyAssertions.RevisionRacesAsync(store, default),
+            "exact-bounds" => MetadataBoundsAssertions.ExactBoundsAsync(store, default),
+            "scopes-and-intervals" => MetadataBoundsAssertions.ScopesAndIntervalsAsync(store, default),
+            "bounded-pages" => MetadataPagingAssertions.BoundedDatasetsAsync(store, default),
+            "lease-fences" => MetadataLeaseAssertions.OwnerGenerationAndRevisionFencesAsync(store, default),
+            _ => throw new ArgumentException("Unknown common consumer.")
+        });
+    }
+
     [Fact]
     public async Task Targeted_record_damage_fails_group_and_page_without_changing_the_damage()
     {

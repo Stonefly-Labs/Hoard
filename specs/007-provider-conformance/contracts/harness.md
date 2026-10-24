@@ -68,6 +68,16 @@ integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
 
+The first executable SDK slice exposes `MetadataBoundsAssertions`,
+`MetadataPagingAssertions`, `MetadataConcurrencyAssertions` and
+`MetadataLeaseAssertions`. Their six methods consume an already-prepared fresh
+`IMetadataStore` and a caller cancellation token; the caller retains store
+ownership. They contain the inherited MP-05/06, bounded MP-07, MP-11/12 and
+owner/generation/revision MP-28 checks, not all witnesses for those case IDs.
+No method accepts a provider name or expected outcome. Session/adaptor routing,
+all other inherited assertions and unchanged-wrapper forwarding remain pending.
+Invoking this partial slice cannot qualify a metadata binding.
+
 1. Preserve all inherited case identities, runtime parameter distinctions and
    positive/negative subproofs before extracting common consumers.
 2. Remove common-suite references/switches on concrete provider/session types.
