@@ -33,7 +33,8 @@ LOGGER = f"{CONTRACTS}/Hoard.Conformance.TestLogger"
 TESTS = f"{CONTRACTS}/Hoard.Conformance.Tests"
 MEMORY = "tests/fixtures/metadata/Memory/Memory.csproj"
 PACKAGE_TEST_OUTPUT = "bin/package-diagnostic"
-PACKAGE_TEST_METHOD = ("Hoard.Conformance.Tests.MemoryMechanismTests."
+PACKAGE_TEST_PREFIX = "Hoard.Conformance.Tests.MemoryMechanismTests."
+PACKAGE_TEST_METHOD = (PACKAGE_TEST_PREFIX +
                        "Compiled_common_consumers_execute_against_the_independent_memory_store")
 OWNED = "Hoard.Conformance.Tests.OwnedResourceTests."
 OWNED_FACTS = (
@@ -133,6 +134,18 @@ SCENARIOS = (
         PACKAGE_TEST_METHOD + f'(consumer: "{consumer}")' for consumer in (
             "competing-creates", "revision-races", "exact-bounds", "scopes-and-intervals",
             "bounded-pages", "lease-fences")), "None", "Passed", 0, "None"),
+    ("memory-publication-consumers", tuple(
+        PACKAGE_TEST_PREFIX
+        + "Compiled_publication_consumers_corroborate_actual_memory_records_and_references"
+        + f'(consumer: "{consumer}")' for consumer in (
+            "registry-isolation", "authorization-isolation", "entity-round-trips", "final-graph",
+            "reference-replacement", "reference-aba", "telemetry-rollback", "all-page-queries",
+            "oversized-pages")), "None", "Passed", 0, "None"),
+    ("memory-mechanisms", tuple(PACKAGE_TEST_PREFIX + method for method in (
+        "Targeted_record_damage_fails_group_and_page_without_changing_the_damage",
+        "Targeted_receipt_damage_preserves_original_ticket_and_independent_effects",
+        "Partition_aliasing_fails_the_common_assertion_and_correct_memory_passes_unchanged")),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {
@@ -306,10 +319,9 @@ def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
     source_tests = all(identity.startswith("Hoard.Conformance.Tests.") for identity in identities)
     smoke_tests = all(identity.startswith(SMOKE) for identity in identities)
-    package_prefix = "Hoard.Conformance.Tests.MemoryMechanismTests."
-    package_tests = any(identity.startswith(package_prefix) for identity in identities)
+    package_tests = any(identity.startswith(PACKAGE_TEST_PREFIX) for identity in identities)
     if (source_tests == smoke_tests
-            or package_tests and not all(identity.startswith(package_prefix) for identity in identities)):
+            or package_tests and not all(identity.startswith(PACKAGE_TEST_PREFIX) for identity in identities)):
         raise evidence.ConformanceError("WitnessMissing")
     output = PACKAGE_TEST_OUTPUT if package_tests else "bin"
     assembly = candidate / (TESTS if source_tests else LOGGER + "/Smoke") / output / "Release/net10.0" / (

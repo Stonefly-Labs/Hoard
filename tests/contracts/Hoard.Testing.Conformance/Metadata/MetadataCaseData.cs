@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using Hoard.Abstractions.Metadata;
+using Hoard.Testing.Conformance.Bindings;
 
 namespace Hoard.Testing.Conformance.Metadata;
 
@@ -60,6 +61,24 @@ internal static class MetadataCaseData
         new(registry.Id, new(partition), new(0), new(86400000));
     public static MetadataAggregateDelta Delta(long hits = 1) => new()
     { Hits = hits, Misses = 0, BytesServed = 0, BytesFetched = 0, LatencyMilliseconds = 0, Samples = 1 };
+    public static ArtifactDigest Digest(int value = 1) => new(value.ToString("x64"));
+    public static MetadataCacheEntry Entry(MetadataPackage package, string partition = "anonymous",
+        string target = "/flat/example/1.0.0") => new()
+        {
+            Identity = new(package.Key.RegistryId, package.Key.Ecosystem, new(target), "GET", new(partition)),
+            Package = package.Key,
+            Digest = Digest(),
+            Length = 1024,
+            Status = 200,
+            Headers = new([new("etag", "\"synthetic\""), new("cache-control", "max-age=60")]),
+            Created = new(0),
+            Validated = new(1),
+            FreshUntil = new(253402300799999),
+            Revision = new(Guid.NewGuid())
+        };
+    public static MetadataMutation.PublishCacheEntry Publish(
+        IMetadataConformanceAuthority authority, MetadataCacheEntry entry, ExpectedRevision? expected = null) =>
+        new(entry, expected ?? new ExpectedRevision.Absent(), authority.Register(entry.Digest, entry.Length));
     public static async ValueTask<(MetadataRegistry Registry, MetadataPackage Package)> Seed(
         IMetadataStore store, CancellationToken cancellationToken)
     {

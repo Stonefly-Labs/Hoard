@@ -33,7 +33,8 @@ class SdkDiagnosticTests(unittest.TestCase):
             name, identities = scenario[:2]
             source = not all(identity.startswith(checks.SMOKE) for identity in identities)
             folder = checks.TESTS if source else checks.LOGGER + "/Smoke"
-            output = checks.PACKAGE_TEST_OUTPUT if name == "memory-consumers" else "bin"
+            output = (checks.PACKAGE_TEST_OUTPUT
+                      if all(identity.startswith(checks.PACKAGE_TEST_PREFIX) for identity in identities) else "bin")
             assembly = candidate / folder / output / "Release/net10.0" / (
                 "Hoard.Conformance.Tests.dll" if source else "Smoke.dll")
             package = "Hoard.Testing.Conformance" if source or name == "origin-output" else "Hoard.Conformance.TestLogger"

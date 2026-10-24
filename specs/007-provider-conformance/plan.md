@@ -744,6 +744,30 @@ Full executable parity tests,
 the remaining consumers, typed adapters, existing-wrapper forwarding and
 package-only category runs remain incomplete; T019..T024 stay unchecked.
 
+### Publication-backed executable slice
+
+Nine additional SDK consumers preserve entity round trips, registry/auth
+partition isolation, final-graph deletion/disabled retention, reference
+replacement/removal races, zero-reference ABA, invalid telemetry rollback,
+all seven page query kinds and oversized request/result rejection. They use
+only public store and typed conformance publication authority contracts;
+synthetic records and expected outcomes stay in the SDK. The temporary source
+probe executes all fifteen consumers against unchanged Memory code.
+The test-only registration authority supplies matching logical evidence, not
+real artifact storage, protected-reader lifetime or cross-provider integration.
+
+The two paging consumers initially produced intended missing-member compiler
+errors. A separate actual Memory-backed aliasing wrapper then failed the
+unchanged authorization-partition consumer at its digest equality assertion;
+the paired test requires that exact assertion failure and invokes the same
+compiled delegate on a fresh corrected Memory store. No expected result is
+supplied by the store. This observed behavioral negative is not T034's required
+stale-operation/artifact binding evidence. Native diagnostics select the nine
+additional consumers, the paired aliasing test and both existing private Memory
+mechanism regressions; the total becomes twenty-one scopes/89 observations.
+Actual native execution is pending; full task acceptance and all four-provider
+extraction parity remain incomplete.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

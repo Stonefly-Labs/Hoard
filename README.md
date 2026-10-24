@@ -1218,14 +1218,16 @@ verified those guards: 127 foundation checks without failures/errors/skips,
 seventeen scopes/69 discoveries/69 executions, all six historical baselines and
 byte-identical replay of eighteen packages/thirteen locks.
 
-The SDK now contains the first six executable metadata consumers: aggregate
-bounds, registry scopes/intervals, bounded paging, competing creates, revision/
-delete-recreate races and lease fences. They accept only the public store and
-cancellation token; expected outcomes stay in the SDK. A focused source probe
-executes all six against unchanged Memory source, and a contradictory-success
-store fails the competing-create assertion. This is partial extraction: existing
+The SDK now contains fifteen executable metadata consumers: entity round trips,
+registry/authorization isolation, graph deletion, reference replacement/ABA,
+telemetry rollback, aggregate bounds, all seven page queries and oversized/
+bounded paging, competing creates, revision/delete-recreate races and lease
+fences. They accept public store/authority contracts and cancellation only;
+expected outcomes stay in the SDK. A focused source probe executes all fifteen
+against unchanged Memory source, and a contradictory-success store fails the
+competing-create assertion. This is partial extraction: existing
 wrappers, full shared suites, typed adapters and package-only provider execution
-remain outstanding. The next non-qualifying native diagnostic now selects six
+remain outstanding. The next non-qualifying native diagnostic now selects fifteen
 Memory package-consumer witnesses after independent fresh-cache locked build;
 its result is pending. No category/profile qualification is claimed.
 

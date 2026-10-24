@@ -5418,6 +5418,29 @@ remaining common assertions are preserved pending full extraction/adapter
 rewiring. T019..T024 remain unchecked; no complete parity or category outcome is
 claimed.
 
+The executable slice now also includes nine publication-backed consumers:
+entity round trips, registry and authorization-partition isolation, atomic
+final-graph deletion/disabled retention, competing reference replacement/
+removal, zero-reference ABA fencing, telemetry rollback, all seven page query
+kinds and oversized request/result rejection. All fifteen common methods run
+against unchanged Memory source. A separate test-only registration authority
+supplies typed evidence; it is not an artifact provider or proof of live reader/
+publication-guard lifetime. Private provider state and algorithms stay outside
+the SDK.
+
+An actual Memory-backed partition-aliasing wrapper was observed failing
+`MetadataIdentityAssertions.AuthorizationPartitionIsolationAsync` at its digest
+equality assertion. The paired control now requires that exact assertion failure
+and runs the same compiled delegate against a fresh correct Memory store. No
+common assertion changes between the two executions. This is an observed
+behavioral negative, not the initial API compiler red; it does not complete
+T034's separately required stale-operation/artifact mutation bindings or their
+full runtime evidence. The native selection includes these nine consumers,
+the paired negative/control and both existing private record/receipt mechanism
+regressions: twenty-one scopes/89 expected observations, not yet observed.
+The two new paging APIs were also absent in the initial source-probe compile
+before their inherited assertions were introduced.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

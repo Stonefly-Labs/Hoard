@@ -1,13 +1,31 @@
+using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Hoard.Abstractions.Metadata;
 using Hoard.Fixtures.Metadata.Memory;
+using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Metadata;
 
 namespace Hoard.Conformance.Tests;
 
 public sealed class MemoryMechanismTests
 {
+    [Fact]
+    public async Task Partition_aliasing_fails_the_common_assertion_and_correct_memory_passes_unchanged()
+    {
+        Func<IMetadataStore, IMetadataConformanceAuthority, CancellationToken, Task> check =
+            MetadataIdentityAssertions.AuthorizationPartitionIsolationAsync;
+        var faultyAuthority = new RegisteredAuthority();
+        await using var faultyStore = await OpenAsync(faultyAuthority);
+        var failure = await Assert.ThrowsAsync<Xunit.Sdk.EqualException>(
+            () => check(new PartitionAliasingStore(faultyStore), faultyAuthority, default));
+        Assert.Contains(nameof(MetadataIdentityAssertions.AuthorizationPartitionIsolationAsync), failure.StackTrace);
+        var correctedAuthority = new RegisteredAuthority();
+        await using var correctedStore = await OpenAsync(correctedAuthority);
+        await check(correctedStore, correctedAuthority, default);
+    }
+
     [Theory]
     [InlineData("competing-creates")]
     [InlineData("revision-races")]
@@ -26,6 +44,35 @@ public sealed class MemoryMechanismTests
             "scopes-and-intervals" => MetadataBoundsAssertions.ScopesAndIntervalsAsync(store, default),
             "bounded-pages" => MetadataPagingAssertions.BoundedDatasetsAsync(store, default),
             "lease-fences" => MetadataLeaseAssertions.OwnerGenerationAndRevisionFencesAsync(store, default),
+            _ => throw new ArgumentException("Unknown common consumer.")
+        });
+    }
+
+    [Theory]
+    [InlineData("registry-isolation")]
+    [InlineData("authorization-isolation")]
+    [InlineData("entity-round-trips")]
+    [InlineData("final-graph")]
+    [InlineData("reference-replacement")]
+    [InlineData("reference-aba")]
+    [InlineData("telemetry-rollback")]
+    [InlineData("all-page-queries")]
+    [InlineData("oversized-pages")]
+    public async Task Compiled_publication_consumers_corroborate_actual_memory_records_and_references(string consumer)
+    {
+        var authority = new RegisteredAuthority();
+        await using var store = await OpenAsync(authority);
+        await (consumer switch
+        {
+            "registry-isolation" => MetadataIdentityAssertions.RegistryIsolationAsync(store, authority, default),
+            "authorization-isolation" => MetadataIdentityAssertions.AuthorizationPartitionIsolationAsync(store, authority, default),
+            "entity-round-trips" => MetadataEntityAssertions.RoundTripAndInvalidRelationshipsAsync(store, authority, default),
+            "final-graph" => MetadataEntityAssertions.FinalGraphDeletionAndDisabledRetentionAsync(store, authority, default),
+            "reference-replacement" => MetadataReferenceAssertions.EntryReplacementAndRemovalAsync(store, authority, default),
+            "reference-aba" => MetadataReferenceAssertions.ZeroReferenceAbaFencingAsync(store, authority, default),
+            "telemetry-rollback" => MetadataReferenceAssertions.InvalidTelemetryRollsBackEntryAndReferencesAsync(store, authority, default),
+            "all-page-queries" => MetadataPagingAssertions.AllQueryKindsAsync(store, authority, default),
+            "oversized-pages" => MetadataPagingAssertions.OversizedRequestsAndResultsAsync(store, authority, default),
             _ => throw new ArgumentException("Unknown common consumer.")
         });
     }
@@ -136,9 +183,9 @@ public sealed class MemoryMechanismTests
         }
     }
 
-    private static async Task<MemoryMetadataStore> OpenAsync()
+    private static async Task<MemoryMetadataStore> OpenAsync(IMetadataPublicationAuthority? authority = null)
     {
-        var store = new MemoryMetadataStore(new UnusedAuthority(), TimeProvider.System, _ => ValueTask.CompletedTask,
+        var store = new MemoryMetadataStore(authority ?? new UnusedAuthority(), TimeProvider.System, _ => ValueTask.CompletedTask,
             _ => throw new Xunit.Sdk.XunitException("Unexpected provider diagnostic."));
         Success(await store.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
         return store;
@@ -169,5 +216,64 @@ public sealed class MemoryMechanismTests
         public ValueTask<MetadataResult<IMetadataPublicationGuard>> AcquireAsync(
             MetadataArtifactEvidence evidence, MetadataCallOptions options, CancellationToken cancellationToken) =>
             throw new Xunit.Sdk.XunitException("Unexpected publication authority invocation.");
+    }
+
+    private sealed class RegisteredAuthority : IMetadataConformanceAuthority
+    {
+        private readonly ConcurrentDictionary<string, MetadataCommittedArtifact> artifacts = new(StringComparer.Ordinal);
+
+        public MetadataArtifactEvidence Register(ArtifactDigest digest, long length)
+        {
+            var evidence = new MetadataArtifactEvidence(Guid.NewGuid().ToString("N"));
+            Assert.True(artifacts.TryAdd(evidence.Value, new(digest, length)));
+            return evidence;
+        }
+
+        public ValueTask<MetadataResult<IMetadataPublicationGuard>> AcquireAsync(
+            MetadataArtifactEvidence evidence, MetadataCallOptions options, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult<MetadataResult<IMetadataPublicationGuard>>(
+                artifacts.TryGetValue(evidence.Value, out var artifact)
+                    ? new MetadataResult<IMetadataPublicationGuard>.Success(new Guard(artifact))
+                    : new MetadataResult<IMetadataPublicationGuard>.Failure(MetadataFailureCode.InvalidInput,
+                        MetadataPhase.Publication, MetadataRetryDisposition.CorrectInput, new(Guid.NewGuid())));
+        }
+
+        private sealed class Guard(MetadataCommittedArtifact artifact) : IMetadataPublicationGuard
+        {
+            public MetadataCommittedArtifact Artifact { get; } = artifact;
+            public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class PartitionAliasingStore(IMetadataStore store) : IMetadataStore
+    {
+        public async ValueTask<MetadataResult<MetadataReadSnapshot>> ReadAsync(
+            MetadataReadGroup request, MetadataCallOptions options, CancellationToken cancellationToken)
+        {
+            var result = await store.ReadAsync(request, options, cancellationToken);
+            return result is MetadataResult<MetadataReadSnapshot>.Success success
+                ? new MetadataResult<MetadataReadSnapshot>.Success(new(success.Value.Items.Select(item =>
+                    item is MetadataReadItem.Found { Record: MetadataCacheEntry entry }
+                        && entry.Identity.AuthorizationPartition.Value == "subject-opaque"
+                        ? (MetadataReadItem)new MetadataReadItem.Found(entry with { Digest = new(1.ToString("x64")) })
+                        : item).ToImmutableArray()))
+                : result;
+        }
+
+        public ValueTask<MetadataResult<MetadataOperationTicket>> ReserveOperationAsync(
+            MetadataCallOptions options, CancellationToken cancellationToken) =>
+            store.ReserveOperationAsync(options, cancellationToken);
+        public ValueTask<MetadataResult<MetadataPage>> ReadPageAsync(
+            MetadataPageQuery request, MetadataCallOptions options, CancellationToken cancellationToken) =>
+            store.ReadPageAsync(request, options, cancellationToken);
+        public ValueTask<MetadataResult<MetadataCommitReceipt>> CommitAsync(
+            MetadataMutationBatch request, MetadataCallOptions options, CancellationToken cancellationToken) =>
+            store.CommitAsync(request, options, cancellationToken);
+        public ValueTask<MetadataResult<MetadataResolution>> ReconcileAsync(
+            MetadataOperationTicket ticket, MetadataCallOptions options, CancellationToken cancellationToken) =>
+            store.ReconcileAsync(ticket, options, cancellationToken);
+        public ValueTask DisposeAsync() => store.DisposeAsync();
     }
 }
