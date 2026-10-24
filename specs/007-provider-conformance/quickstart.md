@@ -120,6 +120,12 @@ parameters plus both actual-store source-substitution pairs from the original
 artifact assembly, using its unchanged ten-package graph and verified logger.
 The expanded 53-scope/398-observation request awaits Linux execution; missing
 process/transfer and session-origin obligations remain separate.
+Three additional original read/deletion wrappers share SDK consumers while
+retaining borrowed streams, receipt/ABA fencing and held-reader exclusion.
+Their six frozen parameters form a separate exact scope: the expanded native
+request is 54 scopes/404 observations, pending. Thirty-seven affected class
+tests, 250 non-external-proof artifact tests and 89 metadata tests per provider
+pass against independently replayed eleven-archive bytes.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

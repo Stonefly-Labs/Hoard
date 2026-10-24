@@ -1,4 +1,5 @@
 using Hoard.Abstractions.Storage;
+using Hoard.Testing.Conformance.Artifacts;
 using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
 
 namespace Hoard.Artifacts.Tests;
@@ -175,21 +176,6 @@ public sealed class ArtifactReadVerificationTests
     public async Task Destination_failure_and_second_copy_never_return_verified_completion_or_dispose_borrowed_streams(string provider)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
-        using var source = new ShortSource("borrowed streams"u8.ToArray());
-        var receipt = await PublishAsync(driver, source, new(1024));
-        await using var session = Success(await driver.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default));
-        using var destination = new FailingDestination();
-        Assert.IsType<ArtifactResult<ArtifactReadCompletion>.Failure>(await session.CopyToAsync(destination, new(), default));
-        Assert.False(destination.WasDisposed);
-        Assert.False(source.WasDisposed);
-        Assert.IsType<ArtifactResult<ArtifactReadCompletion>.Failure>(await session.CopyToAsync(Stream.Null, new(), default));
-    }
-
-    private sealed class FailingDestination : MemoryStream
-    {
-        public bool WasDisposed { get; private set; }
-        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
-            => ValueTask.FromException(new IOException(ArtifactTestData.Canary));
-        protected override void Dispose(bool disposing) { WasDisposed = true; base.Dispose(disposing); }
+        await ArtifactReadAssertions.DestinationFailureAsync(driver.Store, ArtifactTestData.Canary, default);
     }
 }

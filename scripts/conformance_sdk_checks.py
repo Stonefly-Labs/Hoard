@@ -353,6 +353,22 @@ def original_artifact_publication_scenarios():
     return (("original-artifact-publication", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
+def original_artifact_read_delete_scenarios():
+    methods = {
+        "Hoard.Artifacts.Tests.ArtifactReadVerificationTests."
+        "Destination_failure_and_second_copy_never_return_verified_completion_or_dispose_borrowed_streams",
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests."
+        "Exact_delete_receipts_and_recreation_never_remove_the_new_incarnation",
+        "Hoard.Artifacts.Tests.ArtifactDeletionTests."
+        "A_held_reader_finishes_before_exclusive_deletion_and_later_opens_cannot_enter",
+    }
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.split("(")[0] in methods
+    }
+    return (("original-artifact-read-delete", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 BUDGETS = {
     "operationSeconds": 5, "barrierSeconds": 15, "childSeconds": 600,
     "transferSeconds": 2400, "recoverySeconds": 300, "terminationSeconds": 10,
@@ -726,7 +742,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
         lock_paths=locks, runtime_paths=runtime, binding_sources=list(binding_sources),
         observed_environment=observed_environment, budgets=BUDGETS, invocation=[
             "sdk-logger-diagnostic", "original-metadata-memory", "original-metadata-sqlite",
-            "original-artifact-publication"],
+            "original-artifact-publication", "original-artifact-read-delete"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -744,7 +760,8 @@ def test_attempt(run, inputs, candidate, scenario):
         if scenario not in original_metadata_scenarios():
             raise evidence.ConformanceError("WitnessMissing")
         metadata_provider = name.removeprefix("original-metadata-")
-    if original_artifacts and scenario not in original_artifact_publication_scenarios():
+    if original_artifacts and scenario not in (
+            *original_artifact_publication_scenarios(), *original_artifact_read_delete_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
     sqlite_tests = metadata_provider == "sqlite" or any(
@@ -1050,7 +1067,8 @@ def execute(repository, destination):
             "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest(),
         }))
         observations = []
-        for scenario in (*SCENARIOS, *original_metadata_scenarios(), *original_artifact_publication_scenarios()):
+        for scenario in (*SCENARIOS, *original_metadata_scenarios(), *original_artifact_publication_scenarios(),
+                         *original_artifact_read_delete_scenarios()):
             print(json.dumps({"qualification": False, "phase": "runtime-tests",
                               "completedScenarios": len(observations)}), flush=True)
             observations.append(test_attempt(run, inputs, candidate, scenario))

@@ -123,7 +123,7 @@ public static class ArtifactPublicationAssertions
         return destination.ToArray();
     }
 
-    private static T Success<T>(ArtifactResult<T> result) where T : notnull =>
+    internal static T Success<T>(ArtifactResult<T> result) where T : notnull =>
         Assert.IsType<ArtifactResult<T>.Success>(result).Value;
 
     public class ShortSource(byte[] bytes) : Stream

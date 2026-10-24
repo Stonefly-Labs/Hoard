@@ -6153,6 +6153,27 @@ The expanded native request is 53 scopes/398 observations, pending execution.
 No recovery/transfer proof, full session origin, safe legacy import or category
 qualification is inferred.
 
+Three more original two-provider wrappers now forward to shared
+`ArtifactReadAssertions`/`ArtifactDeletionAssertions`. These retain destination
+failure/second-copy and borrowed-stream checks, exact delete receipts,
+AlreadyAbsent behavior, recreation/ABA fencing, stale cleanup safety and
+held-reader exclusion. The fixture still installs the actual reference
+authority. The consumer's scoped reader releases exactly once before awaiting
+deletion and on failed assertions; it neither leaks the guard nor double-disposes
+it. No concrete provider or fixture-private fault type enters the SDK.
+
+All 37 affected class tests pass, followed by all 250 non-external-proof
+artifact tests and 89 original metadata tests per provider, without skips.
+Fresh empty-cache default locked replay reproduces eleven archives and actual
+dependency images; both predecessor locks refresh only their common SDK hash.
+The new native scope independently selects all six frozen read/deletion
+parameters and rejects shortened/renamed expectations. Its missing-dispatch
+assertion first failed by name; all 251 tooling tests now pass locally
+(240 passes, eleven native macOS skips), with formatting/catalog checks passing.
+The expanded native request is 54 scopes/404 observations, pending Linux
+execution. The seventeen external proof prerequisites, full bindings/origins,
+safe legacy imports and category/profile gates remain unfinished.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

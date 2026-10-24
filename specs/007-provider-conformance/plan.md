@@ -2029,6 +2029,50 @@ observations, pending Linux execution. This is not completed artifact binding,
 session-origin attribution, safe legacy import or recovery/transfer acceptance.
 No task/checklist marker or driver stage is advanced.
 
+### Shared protected reads and exact deletion semantics
+
+Three more original two-provider wrappers delegate to provider-free
+`ArtifactReadAssertions`/`ArtifactDeletionAssertions`: destination failure and
+second-copy rejection without disposing borrowed streams, exact delete receipts
+with recreation/stale-incarnation fencing, and held-reader exclusion. All
+inherited assertions remain, including AlreadyAbsent behavior and stale cleanup
+preserving the recreated bytes. Actual reference-authority setup remains
+fixture-owned. The reader uses one lexical asynchronous disposal scope before
+awaiting deletion, preserving the same successful ordering while also releasing
+the guard on failed assertions; no double-disposal is introduced.
+
+All 37 affected class tests pass. Independent empty-cache default locked replay
+reproduces eleven archives and every actual dependency image. Its explicit
+non-external-proof artifact selection passes 250 tests, and both original
+metadata suites pass 89 each, without skips. Both predecessor locks refresh
+only the common SDK hash; old graph entries and vendor pins remain unchanged.
+No durable/external-proof obligation is waived by those focused results.
+
+An independent native scope selects the six exact frozen read/deletion
+parameters. Its named missing-dispatch assertion failed before wiring, then
+correct routing/complete selection and shortened/renamed-scope rejection pass.
+All 251 tooling tests pass locally (240 passes, eleven native macOS skips);
+formatting, frozen inventory/catalog and patch-integrity checks pass.
+The expanded native request is 54 scopes/404 observations, pending Linux
+execution. Complete artifact adapters/origins, safe legacy preparation/import,
+actual recovery/transfers and all category/profile gates remain unfinished.
+No task, reviewer checklist or driver stage is advanced.
+
+Native [40103235096](https://github.com/Stonefly-Labs/Hoard/actions/runs/40103235096)
+at `665b537e9b6e5377b90cd39f579a82c687e46255` verified all three jobs,
+141 foundation checks without failures/errors/skips, 52 scopes/384 exact
+discoveries/executions, native containment and identical eighteen-package/
+thirteen-lock replay. Input:
+`2fb427ab4d5c59c2835adc7e3c11070dbc76b7841b82d8d237e34ec04c67b3f8`;
+preparation: `2e2db7eff237f93969b31a62ad51bb659d494e8a557771c58c020377b9ce5c25`;
+producer: `9ac918d304b9354c9be4956b2d27a5ed7ba5b336559bab6c10102c813bbd4564`;
+controller: `d113eff6e93385331e6965e652f673edd025fcf326f1db309eedc86f98ae6605`;
+child start: `a3b9418cf9646b9537bd70b668c7517d864393d490274e4de4af0420107a4da0`.
+Free scratch: 91,724,251,136 bytes; six-baseline and SQLite/native/PRAGMA pins
+are unchanged. This verifies the first artifact SDK archive with existing
+metadata/SDK scopes, not original artifact execution or this read/deletion
+increment.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

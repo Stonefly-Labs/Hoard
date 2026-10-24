@@ -1366,6 +1366,13 @@ all twelve frozen publication parameters plus both source-substitution pairs,
 with exact discovery and byte-verified dependencies. Its expanded 53-scope/
 398-observation request is pending Linux execution; it does not supply those
 missing process/transfer proofs or complete session-origin attribution.
+Three more original artifact wrappers now share protected-read/deletion
+assertions, preserving borrowed stream ownership, exact receipts, stale
+incarnation fencing and held-reader exclusion. The reader is released exactly
+once before awaiting deletion, including when an assertion fails. All 37
+affected class tests and 250 non-external-proof artifact tests pass, alongside
+89 metadata tests per provider and fresh eleven-archive replay. Their six frozen
+parameters expand the native request to 54 scopes/404 observations, pending.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

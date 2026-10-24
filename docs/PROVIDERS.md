@@ -231,6 +231,15 @@ artifact test assembly. Its ten-package graph is privately rebound without
 editing tracked locks, and every dependency/logger image is archive-verified.
 The expanded 53-scope/398-observation request awaits native execution; it remains
 diagnostic transport, not artifact binding/session-origin or category evidence.
+Three further original wrappers share provider-free read/deletion checks:
+destination failure/borrowed streams, exact delete receipts with recreation and
+stale-incarnation fencing, and a reader held across deletion admission.
+Original authority setup remains in each fixture; the common reader scope
+releases exactly once before observing deletion, also on assertion failure.
+All 37 affected class tests, 250 non-external-proof artifact tests and 89 metadata
+tests per provider pass with independently replayed eleven-archive bytes.
+The six exact frozen read/deletion parameters are selected separately in the
+native diagnostic, expanding it to 54 scopes/404 observations, pending.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

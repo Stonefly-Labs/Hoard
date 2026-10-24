@@ -293,6 +293,15 @@ predecessor logger dependency. Artifact runtime/dependency/native bytes enter
 immutable pre/post inputs. The thirteen-archive diagnostic feed leaves the
 separate eighteen-package/thirteen-lock preparation graph unchanged.
 The expanded 53-scope/398-observation native request is pending execution.
+Three additional original read/deletion wrappers preserve destination failure,
+borrowed stream ownership, exact receipts, recreation/ABA fencing and held-reader
+exclusion through shared SDK consumers. Original reference-authority setup
+stays in the fixture. A lexical reader scope releases exactly once before
+awaiting deletion, including assertion failures. All six frozen parameters form
+a separate exact diagnostic scope; shortened or renamed scopes reject.
+Thirty-seven affected class tests and 250 non-external-proof artifact tests pass
+with fresh eleven-archive replay. The expanded 54-scope/404-observation native
+request is pending; full bindings/origins and external proofs remain separate.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
