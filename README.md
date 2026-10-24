@@ -1351,6 +1351,17 @@ This is diagnostic transport, not category qualification or completed session-
 origin/controller integration; the legacy metadata acceptance import remains
 unfinished.
 
+Five original artifact publication wrappers now share provider-free SDK
+assertions for absence/empty content, real EOF, every expectation, unsupported
+requests and fully verified duplicates. Existing helper signatures and the
+short-read stream surface remain available to all other wrappers. Actual Local
+and ObjectSemantics stores reject a substituted duplicate source at the shared
+EOF assertion and pass without that mutation. Fresh eleven-archive locked replay
+and 250 non-external-proof artifact tests pass. Seventeen process/transfer-proof
+tests still require their actual prepared runners and evidence; this is not
+artifact qualification. The legacy artifact preparation/import path, complete
+bindings, recovery and large transfers remain unfinished.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

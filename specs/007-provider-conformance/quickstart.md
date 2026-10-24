@@ -108,6 +108,13 @@ inventory can substitute. Native run `40101331484` at `8065dfc` verified all
 52 scopes/384 exact discoveries and executions, including 63 original identities
 per provider, and actual native containment. This does not replace the unfinished legacy acceptance
 import or establish complete session-origin/category evidence.
+Five original artifact publication wrappers also share provider-free SDK
+consumers. Both actual options pass the common assertions and reject a
+substituted duplicate source. Fresh eleven-archive replay and 250 artifact tests
+pass; that explicit selection excludes seventeen actual process/transfer-proof
+tests whose prerequisites were not prepared. These are focused package checks,
+not artifact acceptance. The legacy artifact preparation/import upgrade,
+complete bindings and real recovery/large-transfer evidence remain open.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

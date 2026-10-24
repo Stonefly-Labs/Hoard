@@ -1960,6 +1960,46 @@ Free scratch was 91,724,349,440 bytes. SQLite/native/PRAGMA pins are unchanged.
 This verifies original-wrapper execution transport, not complete session origins,
 extraction parity or category/profile acceptance.
 
+### Initial original artifact publication extraction
+
+Five original two-provider wrappers delegate to provider-free
+`ArtifactPublicationAssertions` over `IArtifactStore`: absence/empty content,
+unknown length/positive short reads/true EOF, every declared expectation,
+unsupported checksum/range and fully verified duplicate incarnation. Assertion
+bodies and frozen wrapper names/parameters are preserved. The staging-prefix
+boundary wrapper stays original-owned. Existing shared publish/read signatures
+forward to the same SDK helpers; the original nested `ShortSource` remains as
+a sealed derived compatibility surface over the shared implementation.
+No full-category session, provider-selected expectation or no-op hook is added.
+
+Both named missing-consumer assertions first failed `Assert.NotNull`, not a
+compiler/setup error. After extraction, a bounded mutation consumes the first
+source, then stages the recorded bytes instead of reading the duplicate caller's
+source. Each actual Local/ObjectSemantics store completes two real stages and
+commits; the common consumer rejects the unread duplicate at `Assert.True` on
+EOF. Its undecorated store passes the unchanged consumer. All fourteen selected
+publication/mutation tests pass without skips.
+
+The first unrestricted artifact attempt observed 250 passes and seventeen
+setup failures: actual transfer proof files, crash/noncooperative runner and
+cross-process admission prerequisites were absent. These are not behavioral
+negatives or accepted exclusions. The explicit non-external-proof selection
+then passes all 250 tests without skips. Private non-qualifying preparation and
+independent empty-cache default locked replay reproduce all eleven archives,
+verify ten actual wrapper dependency DLLs and the separate Application DLL.
+The artifact package-only manifest/lock add only the SDK; all prior entries and
+vendor pins remain unchanged. The metadata predecessor lock refreshes only its
+SDK hash; historical sources/graphs/binaries remain unchanged.
+
+The standalone legacy artifact preparer remains unconverted: its unchanged-F-06
+metadata comparison cannot accept intentional F-07 fixture changes, and its call
+to the current metadata recipe on a historical SDK-free source tree cannot
+build. This increment uses separate current-candidate preparation, not weakened
+historical comparisons. A deliberate pinned historical/current-candidate split,
+safe witness import, full artifact adapters, actual crash/transfer proofs and
+all category/profile gates remain unfinished. T027/T030/T031 and reviewer-owned
+checklist markers remain unchecked.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

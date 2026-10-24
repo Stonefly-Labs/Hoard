@@ -211,6 +211,20 @@ at `8065dfc` verified all 52 scopes/384 observations, including all 63 original
 identities per provider, and actual native containment. These diagnostics do not establish
 session-origin completeness, legacy acceptance-import safety, recovery controls
 or category qualification.
+Five original artifact publication wrappers now forward to common SDK assertions
+using only `IArtifactStore`. Both actual independent options retain absence/empty
+content, positive short reads and true EOF, exact expectations, unsupported
+requests and fully verified immutable duplicate incarnations. Existing wrapper
+helpers and nested short-read type forward to that same implementation.
+An actual-store source-substitution mutation reaches two successful native
+stages/commits but fails the common duplicate EOF assertion; each unchanged
+store then passes. Fresh eleven-archive locked replay verifies every dependency
+image, and 250 artifact tests pass without skips. This selection excludes the
+seventeen tests requiring actual process/transfer proofs; no inherited proof,
+durability exclusion or category acceptance is replaced by this focused result.
+The legacy artifact preparer still assumes unchanged F-06 metadata and an old
+SDK-free source tree; its historical/candidate recipe split and safe import
+remain unfinished.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

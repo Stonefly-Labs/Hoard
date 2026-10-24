@@ -6094,6 +6094,44 @@ diagnostics, not complete binding/session origins, safe legacy metadata imports,
 inherited recovery or category/profile qualification. Production architecture,
 ADRs, diagrams and deployment examples remain unaffected.
 
+### Partial artifact publication extraction
+
+Five original two-provider publication wrappers now delegate to
+`ArtifactPublicationAssertions`, which depends only on `IArtifactStore` and
+preserves their existing assertion bodies. The actual staging-boundary wrapper
+remains original-owned. Shared publish/read helpers and `ShortSource` keep their
+existing wrapper signatures; the latter derives from the same SDK short-read
+implementation used by common consumers, rather than maintaining a second copy.
+SDK dependencies and production reference edges are unchanged.
+
+Two named missing-consumer assertions failed before extraction. The repaired
+paired regression decorates each actual Local/ObjectSemantics store, consuming
+the first source but substituting its bytes for the next caller's source.
+Two real stages/commits succeed; the unchanged shared consumer rejects the
+unread duplicate at its EOF assertion. The undecorated store passes the same
+consumer. No unsupported full-session hook or fabricated category binding is
+introduced.
+
+Fourteen publication/mutation tests pass. An initial unrestricted run observed
+250 passes and seventeen setup failures because actual transfer proofs,
+crash/noncooperative runners and cross-process admission prerequisites were not
+prepared. The explicit non-external-proof selection then passes all 250 tests
+without skips. Those seventeen obligations remain required, not waived.
+Private non-qualifying preparation and independent empty-cache default locked
+replay reproduce eleven archives and byte-verify ten actual wrapper dependency
+DLLs plus the separate Application DLL. This is package/extraction evidence,
+not a replacement for category acceptance or the unfinished legacy artifact
+preparation/import upgrade. The latter still compares current metadata against
+unchanged F-06 inputs and calls today's SDK-dependent recipe on an old SDK-free
+tree; it must be split deliberately before full artifact acceptance.
+
+The artifact package-only manifest/lock add only the SDK dependency; all old
+entries and vendor pins are preserved. The metadata predecessor lock refreshes
+only its SDK hash. Historical recipes, locks and retained binaries are unchanged.
+README, provider guide and feature artifacts distinguish this bounded increment
+from full qualification. Architecture/ADRs/diagrams/deployment examples remain
+unaffected: only test consumers and package-only wrappers change.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

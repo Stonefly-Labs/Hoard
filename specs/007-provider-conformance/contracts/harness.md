@@ -272,6 +272,19 @@ Binding/session-origin attribution,
 legacy metadata acceptance import and category qualification remain separate,
 unfinished gates.
 
+The artifact SDK slice starts with five provider-free publication assertions:
+absence/empty content, unknown length/true EOF, every expectation, unsupported
+checksum/range and verified duplicate incarnation. Five original two-provider
+wrappers preserve their frozen names and delegate; staging-boundary observation
+stays original-owned. Existing wrapper publish/read helpers and nested short-read
+type retain their signatures while sharing the SDK implementation.
+The paired actual-store mutation replaces the second submitted source after two
+genuine successful stages/commits; the common EOF assertion rejects it, while
+the unmodified store passes. Eleven-archive fresh locked replay and 250 explicit
+non-external-proof tests pass. Seventeen actual process/transfer-proof tests are
+not satisfied by this selection. Full artifact sessions, historical/candidate
+preparation, safe import and qualification remain separate unfinished gates.
+
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,
