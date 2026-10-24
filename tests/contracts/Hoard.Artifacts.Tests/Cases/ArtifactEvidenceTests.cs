@@ -119,23 +119,21 @@ public sealed class ArtifactEvidenceTests
 
     internal static async Task AssertQuarantinedAsync(ArtifactProviderDriver driver, ArtifactMutationReceipt receipt, byte[] bytes)
     {
-        await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(driver.Store, receipt, bytes, default);
-        if (driver.ProviderId == "local")
-        {
-            Success(await driver.StopAsync(new()));
-            var reopened = new LocalArtifactStore(Path.GetDirectoryName(driver.PayloadDirectory)!);
-            try
-            {
-                Success(await reopened.InitializeAsync(new(ArtifactInitializationMode.ReopenCompatible,
-                    driver.Identity, driver.Authority), new(), default));
-                Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
-                    await reopened.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default)).Code);
-            }
-            finally { Success(await reopened.StopAsync(new(), default)); }
-            Success(await ((IArtifactStoreLifetime)driver.Store).InitializeAsync(new(ArtifactInitializationMode.ReopenCompatible,
-                driver.Identity, driver.Authority), new(), default));
-        }
+        await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(
+            driver.Store, receipt, bytes, default, QuarantineReopen(driver));
     }
+
+    internal static ArtifactQuarantineReopen? QuarantineReopen(ArtifactProviderDriver driver) =>
+        driver.ProviderId switch
+        {
+            "local" => new((IArtifactStoreLifetime)driver.Store, driver.Identity, driver.Authority, () =>
+            {
+                var reopened = new LocalArtifactStore(Path.GetDirectoryName(driver.PayloadDirectory)!);
+                return (reopened, reopened);
+            }),
+            "object" => null,
+            _ => throw new ArgumentException("Unknown frozen test variant.")
+        };
 
     [Theory]
     [InlineData("local")]

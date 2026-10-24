@@ -382,13 +382,21 @@ The original Local read/reconciliation quarantine race and both admitted-open
 revalidation rows also now use provider-free consumers with identical checks
 and public-operation order; actual provider observers, physical restoration and
 named barriers remain fixture-side. Independent fresh preparations pass all
-308 artifact and 65 Consumer cases. The latest native request is
-81 scopes/702 observations, pending, not complete category/profile acceptance.
+308 artifact and 65 Consumer cases. Run `40139402208` at exact `f05851a`
+passed all three jobs, 196 foundations without skips and strict
+81-scope/702-observation diagnostic admission, not full qualification.
 All six original committed-detection parameters now also use a provider-free
 consumer with identical checks/order and a fixed inherited durability
 expectation from the independent test variant, not advertised capabilities.
 Fresh replay passes 308 artifact and 65 Consumer cases; the newest native
 request is 82 scopes/708 observations, pending, not full qualification.
+Three earlier helper extractions omitted Local quarantine stop/reopen checks;
+transitive review has restored their complete unchanged helper through a
+typed fixture-side factory. Three real reopened-store mutation pairs and a
+frozen helper/owner guard protect the restored checks. Prior normalized-helper
+comparisons did not prove these durable checks. Fresh replay passes 311
+artifact and 65 Consumer cases; the newest request is 83 scopes/717
+observations, pending, not full qualification.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

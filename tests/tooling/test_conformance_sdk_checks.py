@@ -1047,6 +1047,70 @@ class SdkDiagnosticTests(unittest.TestCase):
                     checks.test_attempt(SimpleNamespace(root=self.directory), {}, candidate, changed)
                 launch.assert_not_called()
 
+    def test_quarantine_extraction_preserves_transitive_original_assertions_and_wrapper_ownership(self):
+        sdk = ROOT / "tests/contracts/Hoard.Testing.Conformance/Artifacts/ArtifactEvidenceAssertions.cs"
+        text = sdk.read_text()
+        start = text.index("{", text.index("public static async Task QuarantineIsPermanentAsync("))
+        body = text[start:text.index("\n    }", start) + 6]
+        # Preserve the entire d7ef7cc^ helper after explicit interface/factory/token forwarding.
+        self.assertEqual(hashlib.sha256("".join(body.split()).encode()).hexdigest(),
+                         "9b54ea0c474c6d0aad0fb3616b338244e6e25add2c6c4f28ebf9d9bcd47677e2")
+        cases = ROOT / "tests/contracts/Hoard.Artifacts.Tests/Cases"
+        for filename, method in (
+            ("ArtifactReadVerificationTests.cs", "Every_committed_detection_path_quarantines_restored_bytes"),
+            ("ArtifactReadVerificationTests.cs", "Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence"),
+            ("ArtifactPublicationRaceTests.cs", "Corrupt_existing_bytes_are_not_overwritten_or_reused"),
+        ):
+            with self.subTest(method=method):
+                text = (cases / filename).read_text()
+                start = text.index("public async Task " + method + "(")
+                body = text[start:text.index("\n    }", start)]
+                self.assertIn("ArtifactEvidenceTests.QuarantineReopen(driver)", body)
+        text = (cases / "ArtifactEvidenceTests.cs").read_text()
+        start = text.index("internal static async Task AssertQuarantinedAsync(")
+        self.assertIn("QuarantineReopen(driver)", text[start:text.index("\n    }", start)])
+
+    def test_quarantine_reopen_scope_retains_local_witnesses_and_all_three_lost_denial_mutations(self):
+        factory = getattr(checks, "original_artifact_quarantine_reopen_scenarios", None)
+        self.assertTrue(callable(factory), "Quarantine extraction must retain transitive Local reopen assertions.")
+        methods = {
+            "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Every_committed_detection_path_quarantines_restored_bytes",
+            "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence",
+            "Hoard.Artifacts.Tests.ArtifactPublicationRaceTests.Corrupt_existing_bytes_are_not_overwritten_or_reused",
+        }
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        expected = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"]
+                    if name.split("(")[0] in methods and '(provider: "local"' in name}
+        expected.update(
+            "Hoard.Artifacts.Tests.ArtifactEvidenceConsumerTests."
+            "Shared_quarantine_consumers_reject_lost_reopen_denial_and_accept_original_store"
+            f'(consumer: "{consumer}")'
+            for consumer in ("damaged-read", "committed-detection", "corrupt-existing"))
+        scenario, = factory()
+        self.assertEqual(scenario, ("original-artifact-quarantine-reopen", tuple(sorted(expected)), "None", "Passed", 0, "None"))
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.ARTIFACT_TESTS / checks.ARTIFACT_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Artifacts.Tests.dll")
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+        }
+        with patch.object(checks, "runtime_command",
+                          side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+            self.assertEqual(launch.call_args.args[1], assembly)
+            self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, expected)
+        for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+                        (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
+                        ("original-artifact-quarantine-reopen-foreign", *scenario[1:])):
+            with patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, candidate, changed)
+                launch.assert_not_called()
+
     def test_detection_scope_preserves_every_frozen_open_publication_and_reconciliation_variant(self):
         factory = getattr(checks, "original_artifact_detection_scenarios", None)
         self.assertTrue(callable(factory), "Committed-detection extraction needs all fixed inherited variants.")

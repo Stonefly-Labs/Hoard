@@ -32,6 +32,7 @@ public sealed class ArtifactPublicationRaceTests
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactPublicationAssertions.CorruptExistingContentAsync(driver.Store,
             () => driver.DamageOnlyPayload(truncate: false),
-            bytes => File.WriteAllBytes(Directory.GetFiles(driver.PayloadDirectory).Single(), bytes), default);
+            bytes => File.WriteAllBytes(Directory.GetFiles(driver.PayloadDirectory).Single(), bytes),
+            default, ArtifactEvidenceTests.QuarantineReopen(driver));
     }
 }

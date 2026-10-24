@@ -1634,13 +1634,21 @@ exact `4a907c5` passed all three jobs, 195 foundations without skips and strict
 The original admitted-open and overlapping read/reconciliation quarantine races
 also now use provider-free consumers with identical checks/public-operation
 order and original fixture-side barriers. Both fresh preparations pass all
-308 artifact and 65 Consumer cases; the latest native request is
-81 scopes/702 observations, pending.
+308 artifact and 65 Consumer cases. Run `40139402208` at exact `f05851a`
+passed all three jobs, 196 foundations without skips and strict
+81-scope/702-observation diagnostic admission.
 All six original committed-detection variants now also use one provider-free
 consumer with identical checks/order. Their inherited durability expectation
 is fixed by the independent test variant, never provider-advertised capability.
 Fresh replay passes 308 artifact and 65 Consumer cases; the newest native
 request is 82 scopes/708 observations, pending.
+Transitive review found that three earlier extractions omitted the original
+Local quarantine stop/reopen check. That complete helper is now shared and
+restored in all three paths, with fixture-only construction and identical
+lifecycle/assertion order. Three actual reopened-store mutation pairs and a
+frozen helper/ownership guard protect it; earlier helper-normalization parity
+claims did not establish this durable check. Fresh replay passes 311 artifact
+and 65 Consumer cases; the newest request is 83 scopes/717 observations, pending.
 Full bindings, remaining mandatory fault controls and category/profile
 acceptance remain unfinished.
 

@@ -3736,8 +3736,14 @@ All 304 tooling checks pass (287 passed/seventeen macOS-native skips), including
 78 SDK transport checks; prepared SDK/wrapper whitespace, frozen inventory,
 compiled catalogs and patch checks pass.
 
-The next native request is 196 foundations and 81 scopes/702 observations,
-pending. Full drivers, origins and category/integration/profile gates remain
+Read-race run `40139402208` at exact
+`f05851abac1421518824782860e6db0ba24ab984` passed all three jobs,
+196 foundations without failures/errors/skips, independent eighteen-package/
+thirteen-lock replay and strict 81-scope/702-observation diagnostic admission.
+Input: `303eeb1b8c696bc06d5e523e08b39947583e57237f420ba4d12b489e5b4b95fa`;
+preparation:
+`7ddb771f7d4e378bb8567796a12eb31f68b9f1008cd2aca463dfd85362a4bc29`.
+Full drivers, origins and category/integration/profile gates remain
 unfinished. Tasks, reviewer markers, tracked locks, historical seals and
 product/architecture/deployment examples are unchanged.
 
@@ -3768,6 +3774,39 @@ pass. The next request is 197 foundations and 82 scopes/708 observations,
 pending. Full drivers, origins and category/integration/profile gates remain
 unfinished. Tasks, reviewer markers, tracked locks, historical seals and
 product/architecture/deployment examples remain unchanged.
+
+### Restored transitive Local quarantine ownership
+
+Review found that corrupt-existing, damaged-read and committed-detection
+extraction had replaced the complete quarantine helper with only its immediate
+common checks, omitting Local's durable stop/reopen check. Earlier normalized-
+helper parity claims did not establish that check; historical diagnostic
+receipts prove only the assertions actually executed, not omitted checks.
+The complete original helper is now provider-free common code. A typed context
+supplies the original public lifetime/identity/authority and fixture-only fresh
+store factory for the fixed Local variant; Object has no durable-restart claim.
+Every stop/factory/initialize/corrupt-read/finally-stop/original-reinitialize
+operation and enclosing source/duplicate/guard lifetime is preserved.
+No callback supplies assertions or expected results.
+Whole-helper comparison against `d7ef7cc^` matches exactly after explicit
+interface/factory/token forwarding. A frozen normalized-body and per-wrapper
+owner guard now protect that transitive obligation.
+
+Three real reopened-store mutation pairs require actual `CorruptContent`
+denial before substituting `NotFound`, fail the unchanged common equality
+assertion, and pass with genuine stores. Initial compilation first fails with
+missing-context `CS0246`; exact nine-row transport first fails its named
+missing-factory assertion. Fresh preparation/replay pass 311 artifact,
+65 Consumer and 89+89 metadata cases without skips; fifteen archives reproduce,
+canonical map SHA-256
+`9f08a15f5fd77ecffa4aaad4e5c05d6e333ba282e3ce1b23d5e606a67d593fb3`;
+ten Consumer dependency images match package bytes. All 307 tooling checks pass
+(290 passed/seventeen macOS-native skips), including 81 SDK checks; prepared
+formatting, frozen inventory, catalogs and patch checks pass. The next request
+is 199 foundations and 83 scopes/717 observations, pending. Full drivers,
+origins and category/integration/profile gates remain unfinished; tasks,
+reviewer markers, tracked locks, historical seals and product/architecture/
+deployment examples remain unchanged.
 
 ## Summary
 

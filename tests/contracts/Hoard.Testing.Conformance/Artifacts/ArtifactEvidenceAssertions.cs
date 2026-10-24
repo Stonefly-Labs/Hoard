@@ -3,6 +3,10 @@ using static Hoard.Testing.Conformance.Artifacts.ArtifactPublicationAssertions;
 
 namespace Hoard.Testing.Conformance.Artifacts;
 
+public sealed record ArtifactQuarantineReopen(
+    IArtifactStoreLifetime Current, ArtifactStoreIdentity Identity, IArtifactCoordinationAuthority Authority,
+    Func<(IArtifactStore Store, IArtifactStoreLifetime Lifetime)> Create);
+
 public static class ArtifactEvidenceAssertions
 {
     public static async Task ExactCurrentReceiptsAsync(
@@ -34,7 +38,8 @@ public static class ArtifactEvidenceAssertions
     }
 
     public static async Task QuarantineIsPermanentAsync(
-        IArtifactStore store, ArtifactMutationReceipt receipt, byte[] bytes, CancellationToken cancellationToken)
+        IArtifactStore store, ArtifactMutationReceipt receipt, byte[] bytes, CancellationToken cancellationToken,
+        ArtifactQuarantineReopen? reopen = null)
     {
         Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
             await store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken)).Code);
@@ -46,6 +51,21 @@ public static class ArtifactEvidenceAssertions
         Success(await store.AbandonAsync(staged.Owner, new(), cancellationToken));
         Assert.Equal(receipt, Assert.IsType<ArtifactResolution.Committed>(
             Success(await store.ReconcileAsync(receipt.Ticket, new(), cancellationToken))).Receipt);
+        if (reopen is not null)
+        {
+            Success(await reopen.Current.StopAsync(new(), cancellationToken));
+            var reopened = reopen.Create();
+            try
+            {
+                Success(await reopened.Lifetime.InitializeAsync(new(ArtifactInitializationMode.ReopenCompatible,
+                    reopen.Identity, reopen.Authority), new(), cancellationToken));
+                Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+                    await reopened.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken)).Code);
+            }
+            finally { Success(await reopened.Lifetime.StopAsync(new(), cancellationToken)); }
+            Success(await reopen.Current.InitializeAsync(new(ArtifactInitializationMode.ReopenCompatible,
+                reopen.Identity, reopen.Authority), new(), cancellationToken));
+        }
     }
 
     private sealed class CopiedGuard(ArtifactProtectionGrant grant) : IArtifactProtectionGuard

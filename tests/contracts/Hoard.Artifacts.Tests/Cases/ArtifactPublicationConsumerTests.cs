@@ -519,7 +519,7 @@ public sealed class ArtifactPublicationConsumerTests
         }
     }
 
-    private abstract class ForwardingStore(IArtifactStore store) : IArtifactStore
+    internal abstract class ForwardingStore(IArtifactStore store) : IArtifactStore
     {
         protected IArtifactStore Store { get; } = store;
         public ArtifactCapabilities Capabilities => Store.Capabilities;
@@ -539,7 +539,7 @@ public sealed class ArtifactPublicationConsumerTests
         public ValueTask<ArtifactResult<ArtifactStagingOwner>> RenewAsync(
             ArtifactStagingOwner owner, ArtifactCallOptions options, CancellationToken ct) =>
             Store.RenewAsync(owner, options, ct);
-        public ValueTask<ArtifactResult<IArtifactReadSession>> OpenReadAsync(
+        public virtual ValueTask<ArtifactResult<IArtifactReadSession>> OpenReadAsync(
             ArtifactReadRequest request, ArtifactCallOptions options, CancellationToken ct) =>
             Store.OpenReadAsync(request, options, ct);
         public virtual ValueTask<ArtifactResult<ArtifactMutationReceipt>> DeleteAsync(

@@ -7056,8 +7056,15 @@ Ten dependency images match archive bytes. All 304 tooling checks pass
 (287 passed/seventeen macOS-native skips), including 78 SDK transport checks;
 prepared SDK/wrapper whitespace, frozen inventory, catalogs and patch checks
 pass. Previously measured transfer packets remain reused unchanged.
-The latest native request is 196 foundations and 81 scopes/702 observations,
-pending. Complete fault drivers, origins and category/integration/profile gates
+Read-race run `40139402208` at exact
+`f05851abac1421518824782860e6db0ba24ab984` passed all three jobs,
+196 foundations without failures/errors/skips and strict
+81-scope/702-observation diagnostic admission, including independent
+eighteen-package/thirteen-lock replay and all actual prerequisite chains.
+Input: `303eeb1b8c696bc06d5e523e08b39947583e57237f420ba4d12b489e5b4b95fa`;
+preparation:
+`7ddb771f7d4e378bb8567796a12eb31f68b9f1008cd2aca463dfd85362a4bc29`.
+Complete fault drivers, origins and category/integration/profile gates
 remain unfinished. Tasks, reviewer markers, tracked locks, historical seals and
 product/architecture/deployment examples remain unchanged.
 
@@ -7085,6 +7092,37 @@ pass. The newest native request is 197 foundations and 82 scopes/708
 observations, pending, not complete fault-driver/category/profile acceptance.
 Tasks, reviewer markers, tracked locks and production/deployment documents
 remain unchanged; measured transfer packets remain reused, not fresh origins.
+
+Transitive-helper review found that the corrupt-existing, damaged-read and
+committed-detection extractions had replaced the full original quarantine
+helper with only its immediate common checks, omitting Local's durable
+stop/reopen check. Earlier normalized-helper parity claims did not establish
+that check; historical diagnostic receipts remain evidence only of the
+assertions actually executed, not the omitted checks or full qualification.
+The complete original helper now executes in common code, including every
+stop/factory/initialize/corrupt-read/finally-stop/original-reinitialize operation.
+`ArtifactQuarantineReopen` carries only public interfaces/identity/authority
+and a fixture-only fresh-store factory; the fixed Local variant supplies it
+and Object supplies none. Enclosing source, duplicate and guard lifetimes
+remain intact; no callback supplies assertions or expected results.
+Whole-helper comparison against `d7ef7cc^` is exactly equal after explicit
+interface/factory/token forwarding. A frozen whitespace-normalized body and
+per-wrapper owner guard now protect that transitive obligation.
+Three actual reopened-store mutation pairs require real `CorruptContent`
+denial before changing it to `NotFound`; all fail the unchanged common equality
+assertion and pass with genuine stores. Their initial compilation produced
+the intended missing-context `CS0246`; exact nine-row transport first failed
+its named missing-factory assertion.
+Fresh preparation/replay pass 311 artifact, 65 Consumer and 89+89 metadata cases
+without skips; fifteen archives reproduce exactly, canonical archive-map
+SHA-256 `9f08a15f5fd77ecffa4aaad4e5c05d6e333ba282e3ce1b23d5e606a67d593fb3`;
+ten Consumer dependency images match package bytes.
+All 307 tooling checks pass (290 passed/seventeen macOS-native skips), including
+81 SDK checks; prepared formatting, frozen inventory, catalogs and patch checks
+pass. The newest native request is 199 foundations and 83 scopes/717
+observations, pending, not full binding/category/profile admission.
+Tasks, reviewer markers, tracked locks, historical seals and production/
+architecture/deployment examples remain unchanged; transfer origins are reused.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

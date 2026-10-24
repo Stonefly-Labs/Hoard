@@ -740,8 +740,9 @@ public-operation order are mechanically preserved; common checks never choose
 by provider ID or change expected quarantine outcomes. Named barrier objects
 live in wrapper scope while actual observations/releases remain at the original
 transition points. Exact transport requires all three unchanged identities and
-rejects shortened/foreign vectors before launch. The latest native request is
-81 scopes/702 observations, pending, not complete category/profile admission.
+rejects shortened/foreign vectors before launch. Run `40139402208` at exact
+`f05851a` passed all three jobs, 196 foundations without skips and strict
+81-scope/702-observation diagnostic admission, not full qualification.
 
 All six original committed-detection parameters now share one provider-free
 consumer with mechanically identical assertions/public-operation order.
@@ -751,6 +752,21 @@ Physical removal/restoration and publication fault mapping stay fixture-side;
 these legacy callbacks do not establish complete owned fault-driver admission.
 Exact transport rejects missing/foreign parameters or a changed scope name
 before launch. The newest request is 82 scopes/708 observations, pending.
+
+Transitive review found omitted Local quarantine stop/reopen checks in three
+earlier consumers. Their complete original helper now lives in common code;
+only construction stays fixture-side in `ArtifactQuarantineReopen`. The
+fixed original Local test variant supplies its actual current lifetime,
+identity, authority and fresh-store factory; Object supplies no durable probe.
+Every original stop, construction, initialization, corrupt read, finally-stop
+and original-store reinitialization remains in order while enclosing streams
+and guards retain their original lifetimes. No callback supplies an assertion
+or expected result. Three real reopened-store mutation pairs require actual
+corruption denial before substituting its code and fail the unchanged common
+assertion; genuine stores pass. A frozen transitive-helper/owner guard rejects
+omissions. Earlier helper-normalization claims did not prove these durable
+checks. Exact new transport requires six inherited Local parameters plus all
+three mutation rows; the newest request is 83 scopes/717 observations, pending.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

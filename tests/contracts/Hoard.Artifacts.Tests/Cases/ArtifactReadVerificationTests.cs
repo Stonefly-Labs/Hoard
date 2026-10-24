@@ -85,7 +85,8 @@ public sealed class ArtifactReadVerificationTests
                 else { driver.ObjectControls!.RemoveObserver("pointer.selected"); }
             },
             () => driver.DamageOnlyPayload(truncate: false),
-            bytes => File.WriteAllBytes(Directory.GetFiles(driver.PayloadDirectory).Single(), bytes), default);
+            bytes => File.WriteAllBytes(Directory.GetFiles(driver.PayloadDirectory).Single(), bytes),
+            default, ArtifactEvidenceTests.QuarantineReopen(driver));
     }
 
     [Theory]
@@ -109,7 +110,7 @@ public sealed class ArtifactReadVerificationTests
             {
                 File.WriteAllBytes(path ?? throw new InvalidOperationException("Payload was not captured."), bytes);
                 return ValueTask.CompletedTask;
-            }, default);
+            }, default, ArtifactEvidenceTests.QuarantineReopen(driver));
     }
 
     [Theory]

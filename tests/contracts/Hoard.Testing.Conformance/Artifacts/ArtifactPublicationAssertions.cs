@@ -178,7 +178,8 @@ public static class ArtifactPublicationAssertions
     }
 
     public static async Task CorruptExistingContentAsync(
-        IArtifactStore store, Action damagePayload, Action<byte[]> restorePayload, CancellationToken cancellationToken)
+        IArtifactStore store, Action damagePayload, Action<byte[]> restorePayload, CancellationToken cancellationToken,
+        ArtifactQuarantineReopen? reopen = null)
     {
         var bytes = "preserve corrupt evidence"u8.ToArray();
         using var original = new ShortSource(bytes);
@@ -194,7 +195,7 @@ public static class ArtifactPublicationAssertions
             await store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken)).Code);
         restorePayload(bytes);
         Success(await store.AbandonAsync(staged.Owner, new(), cancellationToken));
-        await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken);
+        await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen);
     }
 
     public static async Task<ArtifactMutationReceipt> PublishAsync(

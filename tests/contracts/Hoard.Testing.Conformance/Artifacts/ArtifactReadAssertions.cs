@@ -8,7 +8,8 @@ public static class ArtifactReadAssertions
     public static async Task CommittedDetectionQuarantineAsync(
         IArtifactStore store, string detection, ArtifactDurability expectedDurability,
         Action removePayload, Action<byte[]> restoreRemovedPayload, Action observePublicationDecision,
-        Action removePublicationObserver, Action damage, Action<byte[]> restorePayload, CancellationToken cancellationToken)
+        Action removePublicationObserver, Action damage, Action<byte[]> restorePayload, CancellationToken cancellationToken,
+        ArtifactQuarantineReopen? reopen = null)
     {
         var bytes = "quarantine at each committed detection boundary"u8.ToArray();
         using var source = new ShortSource(bytes);
@@ -52,7 +53,7 @@ public static class ArtifactReadAssertions
             receipt = Assert.IsType<ArtifactResolution.Committed>(
                 Success(await store.ReconcileAsync(ticket, new(), cancellationToken))).Receipt;
         }
-        await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken);
+        await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen);
     }
 
     public static async Task ReconciliationQuarantineRaceAsync(
@@ -124,7 +125,8 @@ public static class ArtifactReadAssertions
     public static async Task DamagedReadAsync(
         IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
         ArtifactStoreIdentity identity, bool truncate, Func<ValueTask<byte[]>> capture,
-        Func<bool, ValueTask> damage, Func<byte[], ValueTask> restore, CancellationToken cancellationToken)
+        Func<bool, ValueTask> damage, Func<byte[], ValueTask> restore, CancellationToken cancellationToken,
+        ArtifactQuarantineReopen? reopen = null)
     {
         using var source = new ShortSource("detect stored corruption"u8.ToArray());
         var receipt = await PublishAsync(store, source, new(1024), cancellationToken);
@@ -146,7 +148,7 @@ public static class ArtifactReadAssertions
         Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(await validator.ValidateAsync(proof, guard, new(), cancellationToken));
         await restore(bytes);
         await guard.DisposeAsync();
-        await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken);
+        await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen);
     }
 
     public static async Task DestinationFailureAsync(
