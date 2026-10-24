@@ -7,6 +7,36 @@ namespace Hoard.Testing.Conformance.Metadata;
 
 public static class MetadataPagingAssertions
 {
+    public static async Task MalformedContinuationFieldsAsync(
+        IMetadataStore store, MetadataContinuationCorruptionControl corruptAsync,
+        MetadataContinuationCorruption corruption, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(corruptAsync);
+        if (!Enum.IsDefined(corruption)) { throw new ArgumentException("BindingInvalid"); }
+        await Commit(store, cancellationToken, Enumerable.Range(1, 3).Select(number =>
+            (MetadataMutation)new MetadataMutation.PutRegistry(Registry(number), new ExpectedRevision.Absent())).ToArray());
+        var query = Registries(1);
+        var first = Success(await store.ReadPageAsync(query, new(), cancellationToken));
+        var continuation = Assert.IsType<MetadataOption<MetadataContinuation>.Some>(first.Continuation).Value;
+        var valid = query with { Continuation = first.Continuation };
+        foreach (var component in Enum.GetValues<MetadataContinuationComponent>())
+        {
+            var damaged = await corruptAsync(continuation, component, corruption, cancellationToken);
+            var invalid = query with { Continuation = new MetadataOption<MetadataContinuation>.Some(damaged) };
+            var failure = Assert.IsType<MetadataResult<MetadataPage>.Failure>(
+                await store.ReadPageAsync(invalid, new(), cancellationToken));
+            Assert.Equal(MetadataFailureCode.InvalidInput, failure.Code);
+            Assert.Equal(MetadataRetryDisposition.CorrectInput, failure.Retry);
+            Assert.Equal(MetadataPhase.Page, failure.Phase);
+            var resumed = Success(await store.ReadPageAsync(valid, new(), cancellationToken));
+            Assert.Equal(Id(2), Assert.IsType<MetadataRegistry>(Assert.Single(resumed.Records)).Id);
+        }
+        Assert.Equal(new[] { Id(2), Id(3) },
+            (await Traverse(store, valid, cancellationToken)).Cast<MetadataRegistry>().Select(record => record.Id));
+        Assert.Equal(new[] { Id(1), Id(2), Id(3) },
+            (await Traverse(store, query, cancellationToken)).Cast<MetadataRegistry>().Select(record => record.Id));
+    }
+
     public static async Task AllQueryKindsAsync(
         IMetadataStore store, IMetadataConformanceAuthority authority, CancellationToken cancellationToken)
     {

@@ -2,7 +2,7 @@
 
 **Status**: Future acceptance guide with partial implementation foundations.
 The SDK, focused tests, fixture project manifests, preparation command and
-CLI admission and fifty-two initial executable metadata consumers now exist; complete profile execution,
+CLI admission and fifty-three initial executable metadata consumers now exist; complete profile execution,
 shared suites, adapters, contributor journey and CI qualification do not.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator

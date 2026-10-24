@@ -1076,6 +1076,39 @@ preparation proof:
 `17711c00cfeee7698e747b0f98de5d6ace3a00ecee3a667ca7c34fd35ee30a20`.
 Free scratch was 92,110,221,312 bytes. This remains non-qualifying diagnostics.
 
+### Typed malformed-continuation consumer
+
+The 53rd method preserves all six malformed cursor shapes across closed logical
+contract-version/epoch/schema/query/page-size/position controls. Common code owns
+the component inventory, InvalidInput/CorrectInput/Page classification, exact
+valid resume after every failure and complete remaining/full traversal. Private
+field names, JSON and base64 stay in the concrete bridge. Memory's schema
+identity uses its epoch, so both controls target that field while all five
+physical cursor fields remain covered. The new required method signature is
+also exposed as a typed delegate for prepared stores.
+
+Missing typed-control compilation failed first. All six source rows pass; a
+paired no-op mutation fails the exact common IsType assertion, and real Memory
+damage passes the unchanged compiled delegate. Source-only Memory now passes 74
+tests without skips, ordinary SDK 108; tooling 236 with ten native macOS skips,
+focused formatting, catalog, frozen inventory and whitespace checks pass.
+Actual discovery confirms the six enum identities and paired negative.
+Current native vector is 33 scopes/148 observations, pending. This does not
+complete typed adapters, inherited wrapper parity or T019/T021 acceptance.
+
+Native run [40058311447](https://github.com/Stonefly-Labs/Hoard/actions/runs/40058311447)
+at `449636a677ea6ee8f7a3c6380e8773ddbf4f3eb4` verified all 47 earlier consumers,
+including actual ledger filling, the real 30-second cleanup failure with work
+still owned, and the dropped-diagnostic negative/control. All three jobs passed:
+131 foundation checks without failures/errors/skips, 31 scopes/134 discoveries/
+134 executions, six historical baselines and identical eighteen-package/
+thirteen-lock replay. Input digest:
+`e3206dfcb1ab2685463eb3647cb91c07c9e4a946343cbf4bc0d500b7a6499aff`;
+preparation proof:
+`e88a943cd304ee70607ccc074f35af2a49be5bcc5db45cdbcec666d071e1b705`.
+Free scratch was 92,109,975,552 bytes. Schema/newer source results are not
+substituted for native execution or qualification.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

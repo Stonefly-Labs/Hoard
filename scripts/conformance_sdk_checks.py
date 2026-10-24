@@ -208,6 +208,13 @@ SCENARIOS = (
             "unrecognized", "partial", "upgrade", "invalid-upgrade", "upgrade-contention", "future-corruption"))
      + (PACKAGE_TEST_PREFIX + "Logical_schema_fingerprint_tracks_raw_damage_without_decoding_or_repair",),
      "None", "Passed", 0, "None"),
+    ("memory-continuation-corruption-consumers", tuple(
+        PACKAGE_TEST_PREFIX + "Compiled_continuation_corruption_consumer_preserves_valid_resume"
+        + f"(corruption: {corruption})" for corruption in (
+            "Null", "Omitted", "WrongType", "Empty", "OddHex", "InvalidHex"))
+     + (PACKAGE_TEST_PREFIX
+        + "Noop_continuation_damage_fails_the_common_assertion_and_real_memory_damage_passes_unchanged",),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {

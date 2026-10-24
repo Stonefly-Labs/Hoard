@@ -5653,6 +5653,26 @@ preparation proof:
 `17711c00cfeee7698e747b0f98de5d6ace3a00ecee3a667ca7c34fd35ee30a20`.
 No complete adapter/parity or category qualification is implied.
 
+The 53rd consumer preserves malformed continuation fields through closed typed
+controls: six shapes across contract/epoch/schema/query/size/position, with
+classification and exact valid resume/traversal checked in common code.
+Private JSON/field names stay in the fixture; Memory schema identity uses its
+epoch. A no-op mutation fails the named common assertion and real damage passes
+the unchanged delegate. Source-only Memory: 74 passed; SDK108 passed, without
+skips. Tooling236/ten native skips and focused format/catalog/inventory checks
+pass. Current native selection: 33 scopes/148 observations, pending.
+
+Run [40058311447](https://github.com/Stonefly-Labs/Hoard/actions/runs/40058311447)
+at `449636a677ea6ee8f7a3c6380e8773ddbf4f3eb4` verified all 47 earlier consumers
+including actual ledger fill, real 30-second cleanup failure with retained work
+and dropped-diagnostic negative/control: all three jobs succeeded, 131 foundation
+checks without failures/errors/skips, 31 scopes/134 observations, six baselines
+and identical eighteen-package/thirteen-lock replay. Input digest:
+`e3206dfcb1ab2685463eb3647cb91c07c9e4a946343cbf4bc0d500b7a6499aff`;
+preparation proof:
+`e88a943cd304ee70607ccc074f35af2a49be5bcc5db45cdbcec666d071e1b705`.
+Full binding admission/parity and category qualification remain unfinished.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

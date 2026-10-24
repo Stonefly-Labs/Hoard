@@ -1218,7 +1218,7 @@ verified those guards: 127 foundation checks without failures/errors/skips,
 seventeen scopes/69 discoveries/69 executions, all six historical baselines and
 byte-identical replay of eighteen packages/thirteen locks.
 
-The SDK now contains fifty-two executable metadata consumers: entity round trips,
+The SDK now contains fifty-three executable metadata consumers: entity round trips,
 registry/authorization isolation, graph deletion, reference replacement/ABA,
 telemetry rollback, aggregate bounds, all seven page queries and oversized/
 bounded paging, competing creates, revision/delete-recreate races and lease
@@ -1231,17 +1231,18 @@ without authority reacquisition, lease-generation overflow/final-decision expiry
 writer deadlines, cancellation decisions, queue bounds, disposal ownership and
 known exception classification, storage/ledger capacity, explicit admission,
 invalid budgets, incomplete cleanup, sanitized diagnostics and explicit schema
-upgrade/rejection with unchanged-state and reopen checks. They
+upgrade/rejection with unchanged-state and reopen checks, and malformed
+continuation components with exact valid resume. They
 accept public store/authority contracts, a harness-owned clock or typed boundary/corruption
 control where needed and cancellation; expected outcomes stay in the SDK.
-A focused source probe executes all fifty-two
+A focused source probe executes all fifty-three
 against unchanged Memory source, and a contradictory-success store fails the
 competing-create assertion. This is partial extraction: existing
 wrappers, full shared suites and complete typed adapters remain outstanding.
-Native run [40057842920](https://github.com/Stonefly-Labs/Hoard/actions/runs/40057842920)
-verified the first forty-one against the actual Memory package: all three jobs
-passed, with 131 foundation checks and 30 scopes/127 exact observations.
-The current fifty-two-consumer selection is pending. No category/profile
+Native run [40058311447](https://github.com/Stonefly-Labs/Hoard/actions/runs/40058311447)
+verified the first forty-seven against the actual Memory package: all three jobs
+passed, with 131 foundation checks and 31 scopes/134 exact observations.
+The current fifty-three-consumer selection is pending. No category/profile
 qualification is claimed.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized

@@ -13,6 +13,37 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class MemoryMechanismTests
 {
+    [Theory]
+    [InlineData(MetadataContinuationCorruption.Null)]
+    [InlineData(MetadataContinuationCorruption.Omitted)]
+    [InlineData(MetadataContinuationCorruption.WrongType)]
+    [InlineData(MetadataContinuationCorruption.Empty)]
+    [InlineData(MetadataContinuationCorruption.OddHex)]
+    [InlineData(MetadataContinuationCorruption.InvalidHex)]
+    public async Task Compiled_continuation_corruption_consumer_preserves_valid_resume(MetadataContinuationCorruption corruption)
+    {
+        await using var store = await OpenAsync();
+        await MetadataPagingAssertions.MalformedContinuationFieldsAsync(
+            store, CorruptMemoryContinuation, corruption, default);
+    }
+
+    [Fact]
+    public async Task Noop_continuation_damage_fails_the_common_assertion_and_real_memory_damage_passes_unchanged()
+    {
+        Func<MemoryMetadataStore, MetadataContinuationCorruptionControl, Task> consumer = (store, corrupt) =>
+            MetadataPagingAssertions.MalformedContinuationFieldsAsync(
+                store, corrupt, MetadataContinuationCorruption.Null, default);
+        await using var faulty = await OpenAsync();
+        await Assert.ThrowsAsync<Xunit.Sdk.IsTypeException>(() => consumer(faulty,
+            (continuation, _, _, token) =>
+            {
+                token.ThrowIfCancellationRequested();
+                return ValueTask.FromResult(continuation);
+            }));
+        await using var corrected = await OpenAsync();
+        await consumer(corrected, CorruptMemoryContinuation);
+    }
+
     [Fact]
     public async Task Logical_schema_fingerprint_tracks_raw_damage_without_decoding_or_repair()
     {
@@ -670,6 +701,38 @@ public sealed class MemoryMechanismTests
         Success(await store.CommitAsync(new(ticket, [.. mutations], new MetadataOption<MetadataLeaseGuard>.None()), new(), default));
     }
 
+    private static ValueTask<MetadataContinuation> CorruptMemoryContinuation(
+        MetadataContinuation continuation, MetadataContinuationComponent component,
+        MetadataContinuationCorruption corruption, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        var field = component switch
+        {
+            MetadataContinuationComponent.ContractVersion => "Contract",
+            MetadataContinuationComponent.Epoch or MetadataContinuationComponent.Schema => "Epoch",
+            MetadataContinuationComponent.Query => "Query",
+            MetadataContinuationComponent.PageSize => "Size",
+            MetadataContinuationComponent.Position => "After",
+            _ => throw new ArgumentException("BindingInvalid")
+        };
+        var cursor = Assert.IsType<JsonObject>(JsonNode.Parse(Convert.FromBase64String(continuation.Value)));
+        Assert.True(cursor.ContainsKey(field));
+        if (corruption == MetadataContinuationCorruption.Omitted) { Assert.True(cursor.Remove(field)); }
+        else
+        {
+            cursor[field] = corruption switch
+            {
+                MetadataContinuationCorruption.Null => null,
+                MetadataContinuationCorruption.WrongType => JsonValue.Create(42),
+                MetadataContinuationCorruption.Empty => JsonValue.Create(""),
+                MetadataContinuationCorruption.OddHex => JsonValue.Create("000"),
+                MetadataContinuationCorruption.InvalidHex => JsonValue.Create("zz"),
+                _ => throw new ArgumentException("BindingInvalid")
+            };
+        }
+        return ValueTask.FromResult(new MetadataContinuation(Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(cursor))));
+    }
+
     private sealed class MemorySchemaProbe : IMetadataConformanceSession, IMetadataConformanceFaultDriver
     {
         private readonly MemoryMetadataStore store;
@@ -707,6 +770,9 @@ public sealed class MemoryMechanismTests
             new(store.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(5), token));
         public ValueTask<ConformanceStateFingerprint> ObserveStateAsync(CancellationToken token) =>
             ValueTask.FromResult(new ConformanceStateFingerprint(store.CaptureLogicalImage().ComputeFingerprint(token)));
+        public ValueTask<MetadataContinuation> CorruptContinuationAsync(MetadataContinuation continuation,
+            MetadataContinuationComponent component, MetadataContinuationCorruption corruption, CancellationToken token) =>
+            CorruptMemoryContinuation(continuation, component, corruption, token);
         public ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
             MetadataObservationPoint point, Func<ValueTask> observer, CancellationToken token) =>
             control.ObserveBoundaryAsync(point, observer, token);

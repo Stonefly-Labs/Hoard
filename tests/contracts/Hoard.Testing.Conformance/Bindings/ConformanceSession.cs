@@ -73,6 +73,9 @@ public interface IMetadataConformanceFaultDriver : IConformanceFaultDriver
 {
     MetadataFaultCounters Counters { get; }
     ValueTask<ConformanceStateFingerprint> ObserveStateAsync(CancellationToken cancellationToken);
+    ValueTask<MetadataContinuation> CorruptContinuationAsync(
+        MetadataContinuation continuation, MetadataContinuationComponent component,
+        MetadataContinuationCorruption corruption, CancellationToken cancellationToken);
     /// <summary>Disposes the observation registration, not the store work that may already be invoking it.</summary>
     ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
         MetadataObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken);

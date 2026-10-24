@@ -68,7 +68,7 @@ integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
 
-The initial executable SDK slice exposes fifty-two methods across
+The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,
 `MetadataIdentityAssertions`, `MetadataEntityAssertions` and
@@ -169,6 +169,15 @@ Concurrent upgrades release their barrier and join both started tasks plus
 actual settlement on failure/cancellation. The focused schema session is an
 explicitly non-admitted probe with unsupported generic controls; it is not the
 complete Memory binding or origin-attributed qualification.
+The continuation-corruption consumer owns six malformed shapes and all six
+logical contract/epoch/schema/query/page-size/position components. The required
+typed control mutates only an opaque token; private field names, JSON and base64
+stay in the fixture. Memory schema identity is represented by its epoch, so those
+two logical controls mutate the same physical field; every Memory cursor field
+is still exercised. Each rejected token must preserve exact valid resume and
+complete traversal. A no-op mutation fails the same compiled common consumer
+that passes with real field damage; no binding-supplied shortened component list
+or expected outcome is accepted.
 No method accepts a provider name or expected outcome. Session/adapter routing,
 all other inherited assertions and unchanged-wrapper forwarding remain pending.
 Invoking this partial slice cannot qualify a metadata binding.
