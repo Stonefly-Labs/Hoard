@@ -241,6 +241,15 @@ unchanged pending-state assertion; genuine providers pass. The next native
 request is 62 scopes/510 observations, pending. The history request passed
 `40116055015` at `37ec19a`, all three jobs, 172 foundations and
 60 scopes/488 observations, not complete category/session/profile acceptance.
+Four original result-handoff/expiry bodies now also execute shared checks,
+preserving twelve frozen parameters and actual fixture-side observers/barriers/
+clock/settlement. A genuine reserved ticket hidden after cancellation fails the
+unchanged success assertion; that same ticket still publishes, and genuine
+stores pass. The next fourteen-row native request is 63 scopes/524 observations,
+pending, not complete qualification.
+Stream ownership passed `40116943400` at `5974f38`, all three jobs,
+173 foundations and 61 scopes/498 observations; this does not complete
+category/session/profile gates.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

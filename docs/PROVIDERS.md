@@ -370,7 +370,9 @@ ownership, then falsely reports released cleanup. The unchanged shared equality
 assertion fails on both providers. The original release runs, actual work
 settles, and fresh genuine stores pass unchanged. This is logical stream-
 ownership proof, not a new durable crash or kernel RSS claim. The next ten-row
-native scope requests 61 scopes/498 observations, pending.
+native scope requests 61 scopes/498 observations. It passed at `5974f38`,
+run `40116943400`, all three jobs and 173 foundations; complete qualification
+remains unfinished.
 
 Three original cancellation/current-owner bodies now run shared assertions:
 external renewal survives older cancellation, progress renewal fences the same
@@ -383,6 +385,13 @@ current verified owner. The unchanged pending-state type assertion fails on
 both providers; one stage, one commit and one actual abandonment corroborate it.
 Fresh genuine stores pass unchanged. The next twelve-row native scope requests
 62 scopes/510 observations, pending, not complete binding/category/session proof.
+Four original result-handoff/expiry bodies now also run common checks with all
+twelve frozen parameters. Actual completion/release observers, barriers, clock
+and settlement remain fixture-side. Hiding a genuinely reserved ticket after
+cancellation fails the unchanged success assertion on both providers; publishing
+that same ticket corroborates the intended ownership fault and genuine stores
+pass unchanged. The next fourteen-row native scope requests
+63 scopes/524 observations, pending, not full qualification.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

@@ -171,6 +171,65 @@ public sealed class ArtifactPublicationConsumerTests
         }
     }
 
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Shared_result_handoff_assertion_rejects_discarded_reservation_and_accepts_original_store(string provider)
+    {
+        static async Task CheckAsync(IArtifactStore store, ArtifactProviderDriver driver)
+        {
+            await using var released = new ArtifactTestBarrier("shared-successful-result-handoff");
+            await ArtifactHandoffAssertions.SuccessfulResultAsync(store, false,
+                observe =>
+                {
+                    if (driver.LocalControls is { } local) { local.SetObserver("operation.released", observe); }
+                    else { driver.ObjectControls!.SetObserver("object.operation-released", observe); }
+                }, released.HoldAsync, () => released.Entered,
+                () =>
+                {
+                    driver.LocalControls?.RemoveObserver("operation.released");
+                    driver.ObjectControls?.RemoveObserver("object.operation-released");
+                }, released.Release, default);
+        }
+
+        await using (var driver = await ArtifactProviderDriver.CreateAsync(provider,
+            limits: new(artifactBytes: 1024, stagingBytes: 1024, transferSlots: 1, waitingCalls: 0)))
+        {
+            var mutation = new DiscardedReservation(driver.Store);
+            await Assert.ThrowsAsync<Xunit.Sdk.IsTypeException>(() => CheckAsync(mutation, driver));
+            Assert.Equal(1, mutation.ReserveCalls);
+            var ticket = mutation.DiscardedTicket
+                ?? throw new InvalidOperationException("Mutation requires an actual discarded reservation.");
+            using var source = new ArtifactPublicationAssertions.ShortSource("actual discarded reservation recovery"u8.ToArray());
+            var staged = ArtifactPublicationTests.Success(await driver.Store.StageAsync(ticket, source, new(), default));
+            var receipt = ArtifactPublicationTests.Success(await driver.Store.CommitAsync(staged, new(), default));
+            Assert.Equal(ArtifactMutationOutcome.Published, receipt.Outcome);
+        }
+        await using (var driver = await ArtifactProviderDriver.CreateAsync(provider,
+            limits: new(artifactBytes: 1024, stagingBytes: 1024, transferSlots: 1, waitingCalls: 0)))
+        {
+            await CheckAsync(driver.Store, driver);
+        }
+    }
+
+    private sealed class DiscardedReservation(IArtifactStore store) : ForwardingStore(store)
+    {
+        public int ReserveCalls { get; private set; }
+        public ArtifactOperationTicket? DiscardedTicket { get; private set; }
+
+        public override async ValueTask<ArtifactResult<ArtifactOperationTicket>> ReserveWriteAsync(
+            ArtifactWriteIntent intent, ArtifactCallOptions options, CancellationToken ct)
+        {
+            ReserveCalls++;
+            var result = await Store.ReserveWriteAsync(intent, options, ct);
+            if (!ct.IsCancellationRequested || result is not ArtifactResult<ArtifactOperationTicket>.Success reserved)
+            { throw new InvalidOperationException("Mutation requires an actual successful reservation after cancellation."); }
+            DiscardedTicket = reserved.Value;
+            return new ArtifactResult<ArtifactOperationTicket>.Failure(
+                ArtifactFailureCode.CancelledBeforeCommit, ArtifactPhase.Reserve, ArtifactAction.None, Guid.NewGuid());
+        }
+    }
+
     private sealed class AbandonedCurrentOwner(IArtifactStore store, Func<Task> whenIdle) : ForwardingStore(store)
     {
         private ArtifactStagedWrite? current;

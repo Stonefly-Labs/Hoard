@@ -1468,7 +1468,10 @@ checks with all eight frozen parameters and all three stream-helper bodies
 preserved. Real-store optimistic-cleanup mutations fail the unchanged retained-
 ownership assertion on both providers; actual work settles after real release,
 and genuine stores pass. The next ten-row native scope requests
-61 scopes/498 observations, pending, not complete category/profile acceptance.
+61 scopes/498 observations. It passed at `5974f38`, run
+[40116943400](https://github.com/Stonefly-Labs/Hoard/actions/runs/40116943400):
+all three jobs, 173 foundations and the exact requested scope, not complete
+category/profile acceptance.
 Three original cancellation/current-owner bodies now also use shared checks,
 retaining two frozen category witnesses plus eight additional existing cases.
 A real-store mutation waits for actual rejected-work settlement, then abandons
@@ -1476,6 +1479,12 @@ the current verified owner; the unchanged pending-state assertion fails on
 both providers and genuine stores pass. The next twelve-row native scope
 requests 62 scopes/510 observations, pending. Full feature acceptance remains
 unfinished.
+Four original result-handoff/expiry bodies now also execute shared checks,
+preserving twelve frozen parameters and fixture-side completion/release barriers.
+A real reserved ticket deliberately hidden after cancellation fails the
+unchanged success assertion; that same actual ticket still publishes, and
+genuine stores pass. The next fourteen-row native request is
+63 scopes/524 observations, pending, not complete feature acceptance.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

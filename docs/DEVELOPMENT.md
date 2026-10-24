@@ -6599,6 +6599,25 @@ package/thirteen-lock replay. Input:
 preparation:
 `d5169e04bb38147d9de543490952e264146aa6f6955c5798b85180766b199f8f`.
 
+Four original result-handoff/expiry bodies now execute shared consumers with
+twelve frozen parameters and exact assertion tokens/order preserved. Actual
+completion/release observers, holds, entry, removal/release, clocks and worker
+settlement remain fixture-side. A real-store negative hides a genuine reserved
+ticket after cancellation; the unchanged success assertion fails on both
+providers. Publishing that same actual ticket corroborates retained ownership;
+fresh genuine stores pass unchanged. The next fourteen-row native scope requests
+63 scopes/524 observations, pending, not complete category/session/profile proof.
+
+The stream-ownership request passed
+[40116943400](https://github.com/Stonefly-Labs/Hoard/actions/runs/40116943400)
+at `5974f38`: all three jobs, 173 foundations without failures/errors/skips,
+61 scopes/498 exact discoveries/executions, all ten ownership rows and every
+actual recovery/transfer/retention/external/native prerequisite plus eighteen-
+package/thirteen-lock replay. Input:
+`6fad4115ca745592821a96dae8607e8171065480706f50f5f68ef777f78ef61f`;
+preparation:
+`405328324fd3fbb4f5c6d06017f0475b31387e56edc18c015abdf0bcf989cc90`.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

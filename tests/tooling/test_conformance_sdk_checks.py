@@ -566,6 +566,26 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_handoff_scope_preserves_all_frozen_results_and_actual_discard_mutations(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_handoff_scenarios", None)),
+                        "Shared result-handoff checks need exact owned wrapper transport.")
+        methods = {
+            "Cancellation_after_resource_release_cannot_retain_an_already_settled_operation",
+            "Cancellation_at_result_handoff_cannot_discard_a_reserved_ticket_or_live_read",
+            "Cancellation_before_result_handoff_reclaims_the_unclaimed_ticket_or_read",
+            "Undelivered_verified_staging_is_reclaimed_after_ownership_expiry"}
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.split("(", 1)[0].split(".")[-1] in methods}
+        self.assertEqual(len(original), 12)
+        mutations = {
+            "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+            "Shared_result_handoff_assertion_rejects_discarded_reservation_and_accepts_original_store"
+            f'(provider: "{provider}")' for provider in ("local", "object")}
+        scenario, = checks.original_artifact_handoff_scenarios()
+        self.assertEqual(scenario, ("original-artifact-handoff", tuple(sorted(original | mutations)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_cancellation_scope_preserves_frozen_and_additional_current_owner_cases(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_cancellation_scenarios", None)),
                         "Shared cancellation/current-owner checks need exact owned wrapper transport.")

@@ -2793,8 +2793,42 @@ native containment and eighteen-package/thirteen-lock replay passed admission.
 Input: `4e103311ace86f8845a03cd53ac86133ccd912051d6b794b9c7caea7ecdd985b`;
 preparation:
 `d5169e04bb38147d9de543490952e264146aa6f6955c5798b85180766b199f8f`.
-Stream-ownership run `40116943400` binds exact head
-`5974f38025d550fab727e3a8bb878077af2e6749` and remains pending separate admission.
+Stream-ownership run `40116943400` passed at exact head
+`5974f38025d550fab727e3a8bb878077af2e6749`: all three jobs, 173 foundations
+without failures/errors/skips, 61 scopes/498 exact discoveries/executions and all
+ten ownership rows. All actual recovery/transfer/retention/external/native
+prerequisites and eighteen-package/thirteen-lock replay passed strict admission.
+Input: `6fad4115ca745592821a96dae8607e8171065480706f50f5f68ef777f78ef61f`;
+preparation:
+`405328324fd3fbb4f5c6d06017f0475b31387e56edc18c015abdf0bcf989cc90`.
+
+Four original result-handoff/expiry bodies now execute provider-free shared
+consumers, preserving all twelve frozen parameter identities and exact original
+assertion tokens/order after explicit setup/seam/helper/cancellation forwarding.
+Actual completion/release observers, holds, entry, observer removal, boundary
+release, clocks and worker settlement stay fixture-side at the original control
+boundaries. A genuine-store mutation hides a successful reservation after
+actual cancellation at release. The unchanged success-type assertion fails on
+each provider; exactly one reservation and actual publication with that same
+hidden ticket corroborate the intended fault. Fresh genuine providers pass
+unchanged. Missing consumers first failed actual compilation with CS0103, and
+the missing exact native scope failed its named tooling regression.
+
+The new fourteen-row scope requests twelve frozen witnesses plus two mutations,
+63 scopes/524 observations, pending, not complete category/session/profile proof.
+The preceding cancellation request binds exact head
+`631f9c46a90936361c04aa431e5a6f1f5a19b41b`, run `40118166329`, pending
+separate strict admission. Tooling passed 283 discovered / 266 passed /
+seventeen native macOS skips. SDK/accepted-wrapper whitespace checks, compiled/
+frozen catalogs and four-body mechanical comparison passed. Complete task,
+reviewer-checklist and stage acceptance remain open.
+
+`handoff` and independent `handoff-replay` preparations each passed 286 artifact
+cases plus 89 metadata cases per provider, without skips. Eleven archives and ten
+actual loaded dependency images reproduce exactly; combined archive-map SHA-256:
+`5f0303c67e701e52fd8df820dd4564f238959233251906c2b7939e1aafd78745`.
+Earlier measured transfer packets remain unchanged, not fresh session/category
+origins. No tracked locks, historical binaries or production APIs changed.
 
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86

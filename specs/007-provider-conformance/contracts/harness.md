@@ -499,6 +499,19 @@ logical return, now precedes the mutation. The next twelve-row scope requests
 at `37ec19a`, all three jobs, 172 foundations and 60 scopes/488 observations,
 with actual prerequisites and eighteen-package/thirteen-lock replay admitted.
 
+Four original result-handoff/expiry bodies now also run shared consumers,
+preserving all twelve frozen parameters and exact original assertions/order.
+Actual completion/release observers, holds, entry, observer removal, boundary
+release, clocks and worker settlement stay fixture-side at the original control
+boundaries. Hiding a genuinely reserved ticket after cancellation fails the
+unchanged success-type assertion on both providers. Publishing that same actual
+ticket corroborates the intended ownership fault, while fresh genuine stores
+pass unchanged. The next fourteen-row scope requests 63 scopes/524 observations,
+pending, not complete category/session/profile acceptance.
+Stream ownership passed `40116943400` at `5974f38`, all three jobs,
+173 foundations and 61 scopes/498 observations, with actual prerequisite chains
+and eighteen-package/thirteen-lock replay admitted; complete gates remain open.
+
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,
