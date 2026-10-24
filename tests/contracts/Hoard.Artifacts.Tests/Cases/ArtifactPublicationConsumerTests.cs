@@ -126,6 +126,46 @@ public sealed class ArtifactPublicationConsumerTests
         }
     }
 
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Shared_source_ownership_assertion_rejects_optimistic_cleanup_and_accepts_original_store(string provider)
+    {
+        await using (var driver = await ArtifactProviderDriver.CreateAsync(provider))
+        {
+            var mutation = new OptimisticSourceCleanup(driver.Store);
+            await Assert.ThrowsAsync<Xunit.Sdk.EqualException>(() =>
+                ArtifactOwnershipAssertions.NoncooperativeSourceAsync(mutation, default));
+            await driver.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(2));
+            Assert.Equal(1, mutation.StageCalls);
+            Assert.Equal(1, mutation.ReportedReleased);
+        }
+        await using (var driver = await ArtifactProviderDriver.CreateAsync(provider))
+        {
+            await ArtifactOwnershipAssertions.NoncooperativeSourceAsync(driver.Store, default);
+            await driver.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(2));
+        }
+    }
+
+    private sealed class OptimisticSourceCleanup(IArtifactStore store) : ForwardingStore(store)
+    {
+        public int StageCalls { get; private set; }
+        public int ReportedReleased { get; private set; }
+
+        public override async ValueTask<ArtifactResult<ArtifactStagedWrite>> StageAsync(
+            ArtifactOperationTicket ticket, Stream source, ArtifactTransferOptions options, CancellationToken ct)
+        {
+            StageCalls++;
+            var result = await Store.StageAsync(ticket, source, options, ct);
+            if (result is not ArtifactResult<ArtifactStagedWrite>.Failure
+                { Code: ArtifactFailureCode.CancelledBeforeCommit, Cleanup: ArtifactCleanupState.RetainedLiveOwnership } failed)
+            { throw new InvalidOperationException("Mutation requires actual retained source ownership."); }
+            ReportedReleased++;
+            return new ArtifactResult<ArtifactStagedWrite>.Failure(
+                failed.Code, failed.Phase, failed.Action, failed.CorrelationId, failed.Ticket, ArtifactCleanupState.Released);
+        }
+    }
+
     private sealed class HiddenCandidateFailure(IArtifactStore store) : ForwardingStore(store)
     {
         public int ReserveCalls { get; private set; }

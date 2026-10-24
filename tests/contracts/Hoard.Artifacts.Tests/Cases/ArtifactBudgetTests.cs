@@ -88,33 +88,7 @@ public sealed class ArtifactBudgetTests
         string provider)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        using var stalled = new PendingSource(cooperative: true);
-        Assert.Equal(ArtifactFailureCode.DeadlineExceeded, Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(
-            await driver.Store.StageAsync(ticket, stalled,
-                new(TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(20)), default)
-                .AsTask().WaitAsync(TimeSpan.FromSeconds(3))).Code);
-        await driver.WhenIdleAsync().WaitAsync(TimeSpan.FromSeconds(2));
-        Assert.False(stalled.WasDisposed);
-        Assert.IsType<ArtifactResolution.NotCommitted>(Success(await driver.Store.ReconcileAsync(ticket, new(), default)));
-        using var source = new ShortSource("cooperative inactivity recovery"u8.ToArray());
-        var receipt = await PublishAsync(driver, source, new(1024));
-        await using (var read = Success(await driver.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default)))
-        {
-            using var destination = new StalledDestination();
-            Assert.Equal(ArtifactFailureCode.DeadlineExceeded, Assert.IsType<ArtifactResult<ArtifactReadCompletion>.Failure>(
-                await read.CopyToAsync(destination, new(TimeSpan.FromSeconds(2), TimeSpan.FromMilliseconds(20)), default)
-                    .AsTask().WaitAsync(TimeSpan.FromSeconds(3))).Code);
-            Assert.True(destination.CanWrite);
-            Success(await read.CloseAsync(new(), default));
-        }
-        Assert.Equal("cooperative inactivity recovery"u8.ToArray(), await ReadAsync(driver, receipt.Stamp));
-    }
-
-    private sealed class StalledDestination : MemoryStream
-    {
-        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
-            => new(Task.Delay(Timeout.InfiniteTimeSpan, cancellationToken));
+        await ArtifactOwnershipAssertions.CooperativeInactivityAsync(driver.Store, driver.WhenIdleAsync, default);
     }
 
     [Theory]
@@ -585,26 +559,5 @@ public sealed class ArtifactBudgetTests
         Assert.False(source.WasDisposed);
     }
 
-    internal sealed class PendingSource(bool cooperative) : Stream
-    {
-        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        public TaskCompletionSource<int> Released { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        public bool WasDisposed { get; private set; }
-        public override bool CanRead => true;
-        public override bool CanSeek => false;
-        public override bool CanWrite => false;
-        public override long Length => throw new NotSupportedException();
-        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
-        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
-        {
-            Entered.TrySetResult();
-            return new(cooperative ? Released.Task.WaitAsync(cancellationToken) : Released.Task);
-        }
-        protected override void Dispose(bool disposing) { WasDisposed = true; base.Dispose(disposing); }
-        public override void Flush() => throw new NotSupportedException();
-        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
-        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
-        public override void SetLength(long value) => throw new NotSupportedException();
-        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
-    }
+    internal sealed class PendingSource(bool cooperative) : ArtifactOwnershipAssertions.PendingSource(cooperative);
 }

@@ -1449,9 +1449,11 @@ This remains partial implementation, not complete category/profile qualification
 All three original direct/listing visibility bodies also now execute shared
 consumers with real fixture-side hold/release controls. A genuine pending Local
 commit paired with a premature acknowledgment fails the unchanged shared
-pending-task assertion; the genuine store passes. The next native request adds
-three frozen visibility witnesses and that mutation (59 scopes/470 observations),
-pending, without expanding qualification claims.
+pending-task assertion; the genuine store passes. The expanded native request added
+three frozen visibility witnesses and that mutation (59 scopes/470 observations) and
+passed at `793ad65`, run
+[40115175363](https://github.com/Stonefly-Labs/Hoard/actions/runs/40115175363),
+with all three jobs, 171 foundations and 59 scopes/470 observations.
 Five original history/budget methods now also use shared checks, preserving
 eight frozen category witnesses plus eight additional existing fixture cases.
 Actual clocks, authority setup and candidate observers remain fixture-side.
@@ -1459,6 +1461,12 @@ Real-store hidden-candidate-failure mutations fail the unchanged shared type
 assertion on both providers; genuine stores pass. The next native request adds
 all sixteen original rows plus two mutations (60 scopes/488 observations),
 pending. Remaining budget and ownership cases are not claimed complete.
+Four cooperative/noncooperative stream-ownership methods now also use shared
+checks with all eight frozen parameters and all three stream-helper bodies
+preserved. Real-store optimistic-cleanup mutations fail the unchanged retained-
+ownership assertion on both providers; actual work settles after real release,
+and genuine stores pass. The next ten-row native scope requests
+61 scopes/498 observations, pending, not complete category/profile acceptance.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

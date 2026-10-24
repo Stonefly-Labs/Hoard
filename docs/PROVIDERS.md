@@ -344,7 +344,8 @@ the actual held commit but returns a genuine earlier receipt immediately;
 the unchanged pending-task assertion fails. The test releases the actual hold,
 awaits the genuine commit and verifies its distinct published stamp; a fresh
 genuine provider passes unchanged. The next native request adds these three
-frozen witnesses and the mutation: 59 scopes/470 observations, pending.
+frozen witnesses and the mutation: 59 scopes/470 observations. It passed at
+`793ad65`, run `40115175363`, all three jobs and 171 foundations.
 
 Five original history/budget bodies now run shared checks: incarnation/history
 capacity, bounded candidate examination/resumption and ticket-expiry capacity.
@@ -357,6 +358,18 @@ consumer's expected failure-type assertion to fail on both providers. Counters
 corroborate actual candidate observation, 106 reservations, one hidden failure
 and one retry; genuine stores pass unchanged. The next native vector adds these
 sixteen originals and two mutations: 60 scopes/488 observations, pending.
+
+Four original stream-ownership bodies now run shared checks: cooperative
+inactivity, idle-read expiry, noncooperative source and noncooperative destination.
+All eight frozen parameters and all three real stream-helper bodies are
+preserved. The legacy pending-source name forwards to the same SDK helper,
+not a separate implementation. Actual clock and settlement remain fixture-side.
+A real-store mutation requires an actual cancelled source with retained live
+ownership, then falsely reports released cleanup. The unchanged shared equality
+assertion fails on both providers. The original release runs, actual work
+settles, and fresh genuine stores pass unchanged. This is logical stream-
+ownership proof, not a new durable crash or kernel RSS claim. The next ten-row
+native scope requests 61 scopes/498 observations, pending.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

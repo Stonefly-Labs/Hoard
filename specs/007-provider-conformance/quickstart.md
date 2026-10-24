@@ -226,6 +226,13 @@ mutations fail the unchanged type assertion; genuine stores pass. The next nativ
 request is 60 scopes/488 observations, pending. The reconciliation-only request
 passed run `40114439905` at `517b911`, all three jobs, 170 foundations and
 58 scopes/466 observations; complete category/session profiles remain unfinished.
+Four original stream-ownership methods now also run shared checks with eight
+frozen parameters and three identical stream-helper bodies. Real-store
+optimistic-cleanup mutations fail the unchanged retained-ownership assertion;
+actual release/settlement complete and genuine stores pass. The next ten-row
+native scope requests 61 scopes/498 observations, pending. The preceding
+visibility request passed `40115175363` at `793ad65`, all three jobs, 171
+foundations and 59 scopes/470 observations, not complete category/session proof.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

@@ -6553,6 +6553,28 @@ tests pass (263 passes/seventeen native macOS skips). Earlier measured transfer
 packets and tracked locks are unchanged, not fresh session/category origins.
 Production contracts/edges/ADRs/diagrams and deployment examples are unaffected.
 
+Four cooperative/noncooperative stream-ownership bodies now delegate to shared
+consumers, preserving all eight frozen parameters and all three stream-helper
+bodies by mechanical token/order comparison. Actual clock/settlement controls
+remain fixture-side, and the legacy pending-source name forwards to the shared
+implementation. A real-store mutation requires actual cancelled source work
+with retained ownership before falsely reporting released cleanup; the unchanged
+shared equality assertion fails on both providers. The actual release and
+settlement complete, and fresh genuine providers pass unchanged. Missing
+consumers first failed actual compilation with CS0103; the missing exact scope
+failed its named regression. The next ten-row native scope requests
+61 scopes/498 observations, pending, not category or full binding/session proof.
+
+The visibility request passed
+[40115175363](https://github.com/Stonefly-Labs/Hoard/actions/runs/40115175363)
+at `793ad65`: all three jobs, 171 foundations without failures/errors/skips,
+59 scopes/470 exact discoveries/executions, all four new visibility rows and
+all actual recovery/transfer/retention/external/native prerequisites plus
+eighteen-package/thirteen-lock replay. Input:
+`d4db9e7fe5f3788b99f5a2a8fd5f6c1e708f18639894afd71c3c8edf5dc949fd`;
+preparation:
+`ea2609497216261e1c752d4376603f80f60c64f267ffdbdb711309c42ca8688a`.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

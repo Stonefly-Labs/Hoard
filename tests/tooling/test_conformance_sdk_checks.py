@@ -542,6 +542,30 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-history", tuple(sorted(original | additional | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_ownership_scope_preserves_frozen_parameters_and_optimistic_cleanup_mutations(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_ownership_scenarios", None)),
+                        "Shared stream ownership needs exact owned wrapper transport.")
+        methods = {
+            "Hoard.Artifacts.Tests.ArtifactBudgetTests."
+            "Producer_and_consumer_inactivity_deadlines_release_cooperative_work_without_closing_borrowed_streams",
+            *(
+                f"Hoard.Artifacts.Tests.ArtifactNonCooperationTests.{method}" for method in (
+                    "Idle_read_expiry_fences_copy_without_touching_the_destination",
+                    "Noncooperative_source_retains_bounded_ownership_and_blocks_admission_until_real_settlement",
+                    "Noncooperative_destination_cannot_release_live_read_protection_via_close_or_dispose")),
+        }
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.split("(", 1)[0] in methods}
+        self.assertEqual(len(original), 8)
+        mutations = {
+            "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+            "Shared_source_ownership_assertion_rejects_optimistic_cleanup_and_accepts_original_store"
+            f'(provider: "{provider}")' for provider in ("local", "object")}
+        scenario, = checks.original_artifact_ownership_scenarios()
+        self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_wrapper_scope_preserves_frozen_publication_parameters_and_actual_assembly(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_publication_scenarios", None)),
                         "Artifact publication needs exact source-owned wrapper transport.")

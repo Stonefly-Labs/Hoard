@@ -2700,6 +2700,51 @@ with SDK/accepted-source whitespace, compiled/frozen catalogs, mechanical
 five-body comparison and patch integrity. Product APIs/edges/ADRs/diagrams,
 deployment examples and tracked locks are unaffected by this extraction.
 
+Four original stream-ownership methods now execute provider-free shared checks:
+cooperative source/destination inactivity, idle-read expiry, retained
+noncooperative source and retained noncooperative destination. All eight frozen
+parameters and original assertion tokens/order match mechanically after explicit
+setup/seam/helper/cancellation forwarding. All three stream-helper bodies also
+match exactly. The legacy pending-source type forwards to that same shared
+implementation, preserving remaining fixture consumers rather than duplicating
+it. Actual clock and provider settlement remain fixture-side.
+
+A genuine-store mutation requires actual source cancellation with retained live
+ownership before falsely reporting Released cleanup. The unchanged shared
+retained-ownership equality assertion fails on both providers. Actual source
+release and provider settlement complete; one actual stage and one altered
+report corroborate the mutation. Fresh genuine providers pass unchanged.
+This is logical stream/ownership proof, not durable crash or new kernel RSS
+measurement. Missing consumers first failed actual package-mode compilation
+with CS0103; the missing exact scope failed its named tooling regression.
+The new ten-row scope appends eight frozen originals plus two mutation
+parameters, requesting 61 scopes/498 observations, pending. Remaining budget/
+ownership and complete binding/session/category/profile work is not supplied.
+
+The preceding visibility run
+[40115175363](https://github.com/Stonefly-Labs/Hoard/actions/runs/40115175363)
+passed at exact head `793ad65639f5671bcdf6493299a50b2d80525b38`: all three jobs,
+171 foundations without failures/errors/skips and 59 scopes/470 exact
+discoveries/executions, including all four new visibility rows. All actual
+SQLite/Local recovery, four paced transfer/RSS rows, six retained-worker chains,
+external wrappers, native containment and eighteen-package/thirteen-lock replay
+also passed strict admission. Input:
+`d4db9e7fe5f3788b99f5a2a8fd5f6c1e708f18639894afd71c3c8edf5dc949fd`;
+preparation:
+`ea2609497216261e1c752d4376603f80f60c64f267ffdbdb711309c42ca8688a`.
+History run `40116055015` binds exact head
+`37ec19a9e6f203106088b37a0ac696c6aab9111d` and remains pending separate admission.
+Two actual independent fresh-cache locked builds reproduce eleven archives
+with combined archive-map SHA-256
+`6f0ca1bf3a3c4a189675211cf3e38eba7f67dfe874383dad494f76d822ecfa32`;
+ten loaded dependency images match their archives. Each passes 282 artifact
+cases and 89 metadata cases per provider without skips. Earlier actual transfer
+packets are unchanged, not fresh session/category origins. All 281 tooling
+tests pass (264 passes/seventeen native macOS skips), along with SDK/accepted-
+source formatting, compiled/frozen catalogs, mechanical four-body/three-helper
+comparison and patch integrity. Production APIs/edges/ADRs/diagrams, deployment
+examples and tracked locks are unaffected.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

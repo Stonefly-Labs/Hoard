@@ -1,4 +1,5 @@
 using Hoard.Abstractions.Storage;
+using Hoard.Testing.Conformance.Artifacts;
 using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
 
 namespace Hoard.Artifacts.Tests;
@@ -12,15 +13,7 @@ public sealed class ArtifactNonCooperationTests
     {
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
-        using var source = new ShortSource("idle read"u8.ToArray());
-        var receipt = await PublishAsync(driver, source, new(1024));
-        await using var read = Success(await driver.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default));
-        clock.Advance(TimeSpan.FromSeconds(30));
-        using var destination = new MemoryStream();
-        Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactReadCompletion>.Failure>(
-            await read.CopyToAsync(destination, new(), default)).Code);
-        Assert.Equal(0, destination.Length);
-        Success(await read.CloseAsync(new(), default));
+        await ArtifactOwnershipAssertions.IdleReadExpiryAsync(driver.Store, clock.Advance, default);
     }
 
     [Theory]
@@ -140,23 +133,7 @@ public sealed class ArtifactNonCooperationTests
     public async Task Noncooperative_source_retains_bounded_ownership_and_blocks_admission_until_real_settlement(string provider)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
-        using var source = new ArtifactBudgetTests.PendingSource(cooperative: false);
-        using var cancellation = new CancellationTokenSource();
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        var work = driver.Store.StageAsync(ticket, source, new(), cancellation.Token).AsTask();
-        try
-        {
-            await source.Entered.Task.WaitAsync(TimeSpan.FromSeconds(2));
-            cancellation.Cancel();
-            var failed = Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(
-                await work.WaitAsync(TimeSpan.FromSeconds(2)));
-            Assert.Equal(ArtifactFailureCode.CancelledBeforeCommit, failed.Code);
-            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failed.Cleanup);
-            Assert.False(source.WasDisposed);
-            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
-                await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default)).Code);
-        }
-        finally { source.Released.TrySetResult(0); }
+        await ArtifactOwnershipAssertions.NoncooperativeSourceAsync(driver.Store, default);
     }
 
     [Theory]
@@ -165,41 +142,7 @@ public sealed class ArtifactNonCooperationTests
     public async Task Noncooperative_destination_cannot_release_live_read_protection_via_close_or_dispose(string provider)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
-        using var source = new ShortSource("live destination ownership"u8.ToArray());
-        var receipt = await PublishAsync(driver, source, new(1024));
-        var session = Success(await driver.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default));
-        using var destination = new PendingDestination();
-        using var cancellation = new CancellationTokenSource();
-        var copy = session.CopyToAsync(destination, new(), cancellation.Token).AsTask();
-        try
-        {
-            await destination.Entered.Task.WaitAsync(TimeSpan.FromSeconds(2));
-            cancellation.Cancel();
-            var result = Assert.IsType<ArtifactResult<ArtifactReadCompletion>.Failure>(
-                await copy.WaitAsync(TimeSpan.FromSeconds(2)));
-            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, result.Cleanup);
-            var close = await session.CloseAsync(new(TimeSpan.FromMilliseconds(20)), default);
-            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, Assert.IsType<ArtifactResult<ArtifactShutdown>.Failure>(close).Code);
-            Assert.False(destination.WasDisposed);
-        }
-        finally
-        {
-            destination.Released.TrySetResult();
-            Success(await session.CloseAsync(new(), default));
-        }
-    }
-
-    private sealed class PendingDestination : MemoryStream
-    {
-        public TaskCompletionSource Entered { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        public TaskCompletionSource Released { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);
-        public bool WasDisposed { get; private set; }
-        public override ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken = default)
-        {
-            Entered.TrySetResult();
-            return new(Released.Task);
-        }
-        protected override void Dispose(bool disposing) { WasDisposed = true; base.Dispose(disposing); }
+        await ArtifactOwnershipAssertions.NoncooperativeDestinationAsync(driver.Store, default);
     }
 
     private sealed class SlowReleaseAuthority(IArtifactCoordinationAuthority inner) : IArtifactCoordinationAuthority

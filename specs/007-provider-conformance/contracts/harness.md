@@ -471,6 +471,19 @@ jobs, 170 foundations and 58 scopes/466 observations, with all actual
 recovery/transfer/retention/native prerequisites and eighteen-package/thirteen-
 lock replay admitted independently.
 
+Four original cooperative/noncooperative stream-ownership bodies now execute
+shared consumers with eight frozen parameters and three unchanged actual
+stream-helper bodies. Clock/settlement controls stay fixture-side; the legacy
+pending-source name forwards to the shared helper. A real-store mutation first
+requires actual cancelled source work with retained live ownership, then
+misreports released cleanup. The unchanged equality assertion fails on each
+provider, actual release/settlement completes, and genuine stores pass unchanged.
+The next ten-row native scope requests 61 scopes/498 observations, pending,
+without adding durable crash or kernel RSS claims. The preceding visibility
+request passed `40115175363` at `793ad65`, all three jobs, 171 foundations and
+59 scopes/470 observations, with all actual prerequisites and eighteen-package/
+thirteen-lock replay admitted. Complete category/session/profile gates remain.
+
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,
