@@ -6784,6 +6784,41 @@ No Hosting/Core dependency enters the SDK. All four frozen host cases remain
 unchanged; the next native request is 73 scopes/617 observations, pending,
 not complete binding/session/category or composition-profile acceptance.
 
+The owned artifact adapter prerequisite now has an opt-in authority closing
+fence. It synchronously rejects new acquisitions, preserves same-operation
+retention, drains already queued admissions, and completes one stable task only
+after all guards, waiters and real retained reference queries settle. Reopen is
+rejected while live work remains and creates a fresh settlement generation.
+Default authority behavior is unchanged until the fence is explicitly requested.
+
+Architecture review rejected adding HostAdapters merely to reuse the authority:
+Local/Object bindings instead source-link the existing authority with a binding-
+only symbol making both authority/reference-decision types internal. Existing
+HostAdapters public types remain public; there are no new package dependencies,
+provider algorithm copies or SDK Core/Hosting references. This does not implement
+complete category sessions or mandatory fault controls.
+
+The missing lifecycle hooks first failed actual compilation with CS1061, and
+missing exact transport failed its named tooling regression. Two independent
+preparations each passed 298 artifacts and 89 metadata cases per provider with
+no skips, reproducing eleven archives/ten loaded dependency images. Two separate
+binding-package builds also reproduced both archives; runtime probes exercised
+both actual private authority copies and rejected public type/dependency leakage.
+Tooling passed 294 discovered / 277 passed / seventeen native macOS skips;
+SDK, accepted-wrapper and authority whitespace plus frozen/compiled catalogs
+passed. The next three-row native request is 74 scopes/620 observations,
+pending, not full qualification.
+
+Object-cleanup run `40126135553` at exact head
+`3de87aadf19bc83da2a8dc229335a19630d77ae5` passed all three jobs,
+184 foundations without failures/errors/skips and 72 scopes/613 exact
+discoveries/executions, including all five new object-cleanup rows and every
+actual prerequisite chain/native containment plus eighteen-package/thirteen-lock
+replay. Input:
+`b7b093f225913a2cf45192913ed1deafc54bd0d1e205fb008743a0e37f919bd0`;
+preparation:
+`a9a2e018a0f4f2f2b6cafcc64a998704fc65e03197d1df57fc09575e6c6aac18`.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

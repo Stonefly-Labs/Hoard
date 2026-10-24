@@ -107,6 +107,90 @@ public sealed class ArtifactAuthorityAssertions(ArtifactStoreIdentity store)
         await using var read = Guard(await authority.AcquireAsync(Request(), Options, cancellationToken));
     }
 
+    public async Task ShutdownHoldingsAsync(
+        IArtifactCoordinationAuthority authority, Func<Task> closeAdmissions, Action reopenAdmissions,
+        Func<int> waitingAdmissions, CancellationToken cancellationToken)
+    {
+        var request = Request();
+        await using var read = Guard(await authority.AcquireAsync(request, Options, cancellationToken));
+        await using var retained = Guard(await authority.RetainAsync(read, request, Options, cancellationToken));
+        var deletion = authority.AcquireAsync(Request(ArtifactProtectionOperation.Deletion), Options, cancellationToken).AsTask();
+        var nextRead = authority.AcquireAsync(Request(), Options, cancellationToken).AsTask();
+        Assert.Equal(2, waitingAdmissions());
+        var settlement = closeAdmissions();
+        Assert.Same(settlement, closeAdmissions());
+        Assert.False(settlement.IsCompleted);
+        Assert.Throws<InvalidOperationException>(reopenAdmissions);
+        Assert.Equal(ArtifactFailureCode.Unavailable, Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Failure>(
+            await authority.AcquireAsync(Request(), Options, cancellationToken)).Code);
+        await using var retainedAfterClose = Guard(
+            await authority.RetainAsync(retained, request, Options, cancellationToken));
+        await read.DisposeAsync();
+        await retained.DisposeAsync();
+        Assert.False(deletion.IsCompleted);
+        await retainedAfterClose.DisposeAsync();
+        await using var exclusive = Guard(await deletion);
+        Assert.False(nextRead.IsCompleted);
+        Assert.False(settlement.IsCompleted);
+        await exclusive.DisposeAsync();
+        await using var queued = Guard(await nextRead);
+        Assert.False(settlement.IsCompleted);
+        await queued.DisposeAsync();
+        await settlement.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+        Assert.Same(settlement, closeAdmissions());
+        reopenAdmissions();
+        await using var reopened = Guard(await authority.AcquireAsync(Request(), Options, cancellationToken));
+        var currentSettlement = closeAdmissions();
+        Assert.NotSame(settlement, currentSettlement);
+        Assert.False(currentSettlement.IsCompleted);
+        await reopened.DisposeAsync();
+        await currentSettlement.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+    }
+
+    public async Task ShutdownRetainedReferenceAsync(
+        IArtifactCoordinationAuthority authority, Func<Task> closeAdmissions, Action reopenAdmissions,
+        Func<bool> hasRetainedWork, Action completeReference, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await authority.AcquireAsync(Request(ArtifactProtectionOperation.Deletion),
+                new ArtifactCallOptions(TimeSpan.FromMilliseconds(20)), cancellationToken);
+            Assert.Equal(ArtifactFailureCode.CleanupIncomplete,
+                Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Failure>(result).Code);
+            Assert.True(hasRetainedWork());
+            var settlement = closeAdmissions();
+            Assert.False(settlement.IsCompleted);
+            Assert.Throws<InvalidOperationException>(reopenAdmissions);
+            Assert.Equal(ArtifactFailureCode.Unavailable, Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Failure>(
+                await authority.AcquireAsync(Request(), Options, cancellationToken)).Code);
+            completeReference();
+            await settlement.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+            Assert.False(hasRetainedWork());
+            reopenAdmissions();
+            await using var read = Guard(await authority.AcquireAsync(Request(), Options, cancellationToken));
+        }
+        finally { completeReference(); }
+    }
+
+    public async Task ShutdownCanceledWaiterAsync(
+        IArtifactCoordinationAuthority authority, Func<Task> closeAdmissions,
+        Func<int> waitingAdmissions, CancellationToken cancellationToken)
+    {
+        await using var read = Guard(await authority.AcquireAsync(Request(), Options, cancellationToken));
+        using var cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var deletion = authority.AcquireAsync(Request(ArtifactProtectionOperation.Deletion), Options, cancellation.Token).AsTask();
+        Assert.Equal(1, waitingAdmissions());
+        var settlement = closeAdmissions();
+        Assert.False(settlement.IsCompleted);
+        await cancellation.CancelAsync();
+        Assert.Equal(ArtifactFailureCode.CancelledBeforeCommit,
+            Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Failure>(await deletion).Code);
+        Assert.Equal(0, waitingAdmissions());
+        Assert.False(settlement.IsCompleted);
+        await read.DisposeAsync();
+        await settlement.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+    }
+
     private sealed class CopiedGuard(ArtifactProtectionGrant grant) : IArtifactProtectionGuard
     {
         public ArtifactProtectionGrant Grant => grant;

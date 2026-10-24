@@ -483,6 +483,21 @@ dependency enters the SDK. The next four-row request preserves all frozen host
 cases at 73 scopes/617 observations, pending, not full binding/category/profile
 qualification.
 
+Owned artifact sessions now have an authority-quiescence prerequisite: an
+explicit closing fence rejects new acquisitions while retaining existing handles
+and queued work until every recognized guard and retained reference query settles.
+Reopen cannot reuse a completed prior-generation settlement. Both binding
+packages source-link that same fixture authority as internal types, preserving
+their SDK/own-provider-only dependencies instead of importing HostAdapters,
+Hosting or the other provider. No complete binding/fault-control admission or
+physical release is claimed. Three new common checks request 74 scopes/620
+observations, pending. Two independent package builds reproduce both private
+authority archives and exercise actual retained-guard/reopen behavior.
+
+Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
+184 foundations and 72 scopes/613 observations, all five object-cleanup rows and
+actual prerequisites/replay, not full category/profile qualification.
+
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,
 183 foundations and 71 scopes/608 observations, all six cleanup/stop/reopen rows
 and actual prerequisites/replay, not full category/profile qualification.

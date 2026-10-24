@@ -1003,6 +1003,15 @@ def artifact_noncooperation_diagnostics(run, inputs, candidate):
     return result
 
 
+def artifact_authority_ownership_scenarios():
+    prefix = "Hoard.Artifacts.Tests.ArtifactAuthorityOwnershipTests."
+    identities = tuple(sorted(prefix + name for name in (
+        "Shutdown_fence_joins_recognized_retained_and_queued_guards_before_reopen",
+        "Shutdown_fence_joins_actual_noncooperating_reference_query_before_reopen",
+        "Shutdown_fence_observes_canceled_waiter_without_losing_the_current_guard")))
+    return (("artifact-authority-ownership", identities, "None", "Passed", 0, "None"),)
+
+
 def original_artifact_configured_store_scenarios():
     prefix = "Hoard.Artifacts.Tests.ArtifactCompositionTests."
     identities = {
@@ -1359,7 +1368,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-budget", "original-artifact-authority", "original-artifact-capability",
             "original-artifact-metadata-integration", "original-artifact-metadata-bridge",
             "original-artifact-lifecycle", "original-artifact-failure", "original-artifact-prefix-cleanup",
-            "original-artifact-object-cleanup", "original-artifact-configured-store"],
+            "original-artifact-object-cleanup", "original-artifact-configured-store", "artifact-authority-ownership"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1388,7 +1397,7 @@ def test_attempt(run, inputs, candidate, scenario):
             *original_artifact_metadata_integration_scenarios(), *original_artifact_metadata_bridge_scenarios(),
             *original_artifact_lifecycle_scenarios(), *original_artifact_failure_scenarios(),
             *original_artifact_prefix_cleanup_scenarios(), *original_artifact_object_cleanup_scenarios(),
-            *original_artifact_configured_store_scenarios()):
+            *original_artifact_configured_store_scenarios(), *artifact_authority_ownership_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
     sqlite_tests = metadata_provider == "sqlite" or any(
@@ -1820,6 +1829,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "original-artifact-configured-store"}), flush=True)
         for scenario in original_artifact_configured_store_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "artifact-authority-ownership"}), flush=True)
+        for scenario in artifact_authority_ownership_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

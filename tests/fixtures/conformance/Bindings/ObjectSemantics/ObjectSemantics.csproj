@@ -4,8 +4,10 @@
     <PackageId>Hoard.Fixtures.Conformance.Bindings.ObjectSemantics</PackageId>
     <Description>Test-only adapter for the independent object-semantics simulation.</Description>
     <IsPackable>true</IsPackable>
+    <DefineConstants>$(DefineConstants);HOARD_CONFORMANCE_BINDING</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../../artifacts/HostAdapters/ArtifactCoordinationAuthority.cs" Link="ArtifactCoordinationAuthority.cs" />
     <PackageReference Include="Hoard.Testing.Conformance" />
     <PackageReference Include="Hoard.Fixtures.Artifacts.ObjectSemantics" />
   </ItemGroup>

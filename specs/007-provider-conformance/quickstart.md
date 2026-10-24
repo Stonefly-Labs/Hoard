@@ -320,6 +320,13 @@ also share consumers. Actual hosting/DI/mapping/readiness/restart/stop and
 missing-guarantee checks remain fixture-side, without a Hosting dependency in
 the SDK. The next four-row native request preserves all frozen host cases at
 73 scopes/617 observations, pending, not full category/profile acceptance.
+An explicit authority shutdown fence now joins guards, queued admissions and
+actual retained reference queries before reopen. Local/Object binding packages
+compile the same authority source internally without new cross-provider/Hosting
+dependencies. This is an owned-session prerequisite, not complete bindings.
+Three new shared checks request 74 scopes/620 observations, pending.
+Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
+184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,
 183 foundations and 71 scopes/608 observations, not complete qualification.
 The allocator, runtime logger and focused

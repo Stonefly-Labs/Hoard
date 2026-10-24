@@ -566,6 +566,18 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_authority_ownership_scope_requires_all_live_settlement_cases(self):
+        factory = getattr(checks, "artifact_authority_ownership_scenarios", None)
+        self.assertTrue(callable(factory), "Owned artifact adapters need actual authority-quiescence transport.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactAuthorityOwnershipTests."
+        identities = {
+            prefix + "Shutdown_fence_joins_recognized_retained_and_queued_guards_before_reopen",
+            prefix + "Shutdown_fence_joins_actual_noncooperating_reference_query_before_reopen",
+            prefix + "Shutdown_fence_observes_canceled_waiter_without_losing_the_current_guard"}
+        scenario, = factory()
+        self.assertEqual(scenario, ("artifact-authority-ownership", tuple(sorted(identities)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_configured_store_scope_preserves_all_frozen_host_selection_cases(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_configured_store_scenarios", None)),
                         "Shared configured-store checks need exact owned host wrapper transport.")

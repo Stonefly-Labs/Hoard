@@ -3320,6 +3320,62 @@ diagrams, predecessor artifacts, governance, release/IaC/UI guidance remain
 unchanged because no supported product API, provider implementation,
 production graph or operational procedure changed.
 
+### Authority quiescence before owned artifact adapters
+
+Architecture review identified that retained-query drain and provider idle
+snapshots do not account for ordinary/retained guards or queued authority
+admissions. An explicit test-fixture closing fence now rejects new acquisitions
+and exposes one stable settlement task covering all those owners plus actual
+retained reference queries. Existing same-operation retention and already queued
+admission remain valid until their guards settle. Reopen rejects live ownership
+and creates a fresh settlement generation; the default unfenced behavior is
+unchanged. This does not add a production contract or a second authority engine.
+
+Local/Object binding projects source-link the single existing authority source.
+A binding-only compilation symbol makes both authority/reference-decision types
+internal while preserving their public HostAdapters form. No new package
+dependency, Hosting/cross-provider edge or public binding type collision is
+introduced. Complete owned category sessions and mandatory fault controls remain
+unfinished; T028/T029 are not checked.
+
+Three common interface-only checks exercise retained/queued guards, actual
+noncooperating reference settlement, canceled waiters and reopen generations.
+Missing lifecycle hooks first failed actual package-mode compilation with CS1061;
+missing transport failed its exact-scope tooling regression. The next three-row
+native request is 74 scopes/620 observations, pending. Tooling passed 294
+discovered / 277 passed / seventeen native macOS skips. SDK, accepted-wrapper
+and authority whitespace, compiled/frozen catalogs and patch checks passed.
+
+`authority-ownership` and independent `authority-ownership-replay` each passed
+298 artifacts and 89 metadata cases per provider without skips. Eleven archives
+and ten loaded dependency images reproduce exactly; combined archive-map SHA-256:
+`7d459f8975685ec1b67efaeaba8bf8b42a8707dc48244c5a0915ef7a4d16d28a`.
+Two additional independent source-linked package builds reproduced Local
+`a1187da22da2f26329977f14adcb19a99e0f575a714bd02fe5a50db6a4782435`
+and ObjectSemantics
+`01c740523891b11ec1a28d56c17615f74eea7c256d9b756866bafcb143cb2212`.
+Runtime probes exercised actual private authority copies, retained guard
+settlement and reopen, and inspected actual public visibility and dependency
+closures. The first private recipe omitted nested central package policy and
+failed NU1010; copying that existing policy corrected the recipe, not project
+dependencies. Tracked locks and historical sources/binaries remain unchanged.
+Previously measured transfer packets are unchanged, not fresh category origins.
+
+Object-cleanup run
+[40126135553](https://github.com/Stonefly-Labs/Hoard/actions/runs/40126135553)
+passed at exact head `3de87aadf19bc83da2a8dc229335a19630d77ae5`: all three
+jobs, 184 foundations without failures/errors/skips, 72 scopes/613 exact
+discoveries/executions and all five new rows. Every actual prerequisite chain,
+native containment and eighteen-package/thirteen-lock replay passed strict
+admission. Input:
+`b7b093f225913a2cf45192913ed1deafc54bd0d1e205fb008743a0e37f919bd0`;
+preparation:
+`a9a2e018a0f4f2f2b6cafcc64a998704fc65e03197d1df57fc09575e6c6aac18`.
+Configured-store run `40127065375` binds exact head
+`9ce6b252918149d225a0794fe168989dc317692f`, pending separate strict admission.
+The driver remains `implement / running`; broad tasks, reviewer-owned
+checklists and full profile/category gates remain open.
+
 ## Summary
 
 Extract reusable, test-only category suites from the existing package-acceptance

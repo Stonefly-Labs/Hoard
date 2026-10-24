@@ -625,6 +625,19 @@ fixture-side; no Hosting/Core dependency enters the SDK. The next four-row
 native request preserves all frozen host cases at 73 scopes/617 observations,
 pending, not complete bindings/category/session or composition-profile proof.
 
+Owned-session preparation now includes an explicit authority closing fence that
+joins recognized/retained guards, queued admissions and actual retained reference
+queries before reopen. Its task is stable within a closing generation; reopening
+creates a new task rather than borrowing a completed predecessor. Binding-only
+compilation makes the same source-linked authority/reference-decision internal,
+without importing HostAdapters, Hosting or the other provider. These are not
+complete category bindings or substitute mandatory fault controls. Three common
+checks request 74 scopes/620 observations, pending.
+
+Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
+184 foundations and 72 scopes/613 observations, including all five new rows and
+every actual prerequisite chain/replay, not full qualification.
+
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,
 183 foundations and 71 scopes/608 observations, including all six cleanup/stop/
 reopen rows and every actual prerequisite chain/replay, not full qualification.
