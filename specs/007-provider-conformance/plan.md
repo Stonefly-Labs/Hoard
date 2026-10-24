@@ -3663,6 +3663,43 @@ integration acceptance remain unfinished. Tasks/checklist markers, historical
 seals, tracked locks, production APIs, architecture/ADR diagrams and deployment
 examples are unaffected.
 
+### Unchanged damaged-read consumer and actual-validator mutation
+
+The four original damaged-read provider/truncation parameters now execute
+`ArtifactReadAssertions.DamagedReadAsync`. Mechanical whole-body comparison
+preserves exact assertions and operation order after explicit fixture callback,
+interface, helper and cancellation forwarding. Actual capture/damage/restore
+remain at the original legacy fixture boundaries; this extraction does not
+claim complete owned fault-driver admission. SDK checks retain corrupt copy,
+borrowed destination, subsequent open/evidence invalidation and permanent
+quarantine after actual restoration.
+
+The missing method first produced CS0117, confirmed independently in the
+isolated compiler output. A real validator mutation requires one actual corrupt
+denial before returning success; the unchanged common type assertion fails on
+both providers, and genuine fresh validators pass. Its exact six-row transport
+first failed the named missing-factory assertion and now passes alongside all
+77 SDK tooling checks, including original assembly routing and missing/foreign
+vector rejection. Independent fresh preparations each pass 308 artifact,
+65 Consumer and 89+89 metadata cases without skips; fifteen archives reproduce
+exactly, canonical archive-map SHA-256
+`85e853c19f63153a3abb5a454bf24369b85a9f7678fed3b49a5ece6c141a398f`;
+ten dependency images match package bytes. Previously measured transfer packets
+remain reused unchanged, not fresh origins.
+
+Real scratch again fell below the unchanged 24 GiB gate; initial full tooling
+reported five failures/nineteen errors. Removing only 55 explicitly inspected
+inactive dependency caches preserves source/feeds/manifests/historical seals/
+intermediates/runtime images. With 25.188 GiB observed, all 303 tooling checks
+pass (286 passed/seventeen macOS-native skips); SDK/wrapper whitespace,
+frozen inventory, compiled catalogs and patch checks pass.
+Payload run `40137341231` at exact `1367a51` remains pending. This increment
+requests 195 native foundations and 80 scopes/699 observations, pending.
+Remaining common consumers, complete fault drivers, origins and full category/
+integration/profile gates remain unfinished. Tasks, reviewer markers, tracked
+locks, historical seals, product contracts, architecture/ADR diagrams and
+deployment examples are unchanged.
+
 ## Summary
 
 

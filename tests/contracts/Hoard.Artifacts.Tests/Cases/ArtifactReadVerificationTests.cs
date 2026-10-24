@@ -146,28 +146,20 @@ public sealed class ArtifactReadVerificationTests
     public async Task Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence(string provider, bool truncate)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
-        using var source = new ShortSource("detect stored corruption"u8.ToArray());
-        var receipt = await PublishAsync(driver, source, new(1024));
-        var path = Directory.GetFiles(driver.PayloadDirectory).Single();
-        var bytes = File.ReadAllBytes(path);
-        driver.DamageOnlyPayload(truncate);
-        var proof = Assert.IsType<ArtifactOption<ArtifactCommitEvidence>.Some>(receipt.Evidence).Value;
-        await using (var session = Success(await driver.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default)))
-        {
-            using var destination = new MemoryStream();
-            Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<ArtifactReadCompletion>.Failure>(
-                await session.CopyToAsync(destination, new(), default)).Code);
-            Assert.True(destination.CanWrite);
-        }
-        Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
-            await driver.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default)).Code);
-        var scope = new ArtifactProtectionRequest(Guid.NewGuid(), ArtifactProtectionOperation.Reference,
-            driver.Identity, receipt.Stamp.Identity.Digest, new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp));
-        await using var guard = Success(await driver.Authority.AcquireAsync(scope, new(), default));
-        Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(await driver.Validator.ValidateAsync(proof, guard, new(), default));
-        File.WriteAllBytes(path, bytes);
-        await guard.DisposeAsync();
-        await ArtifactEvidenceTests.AssertQuarantinedAsync(driver, receipt, bytes);
+        string? path = null;
+        await ArtifactReadAssertions.DamagedReadAsync(
+            driver.Store, driver.Validator, driver.Authority, driver.Identity, truncate,
+            () =>
+            {
+                path = Directory.GetFiles(driver.PayloadDirectory).Single();
+                return ValueTask.FromResult(File.ReadAllBytes(path));
+            },
+            damage => { driver.DamageOnlyPayload(damage); return ValueTask.CompletedTask; },
+            bytes =>
+            {
+                File.WriteAllBytes(path ?? throw new InvalidOperationException("Payload was not captured."), bytes);
+                return ValueTask.CompletedTask;
+            }, default);
     }
 
     [Theory]

@@ -716,9 +716,18 @@ must join it. Mutation does not fabricate receipt or quarantine state, and
 current full-stamp checks reject old epochs/incarnations. Twenty-three cases
 include actual corrupt copy/later quarantine, held native work, failed observers
 with unchanged content and faulted final settlement, stale sessions, real ABA,
-empty payloads and conflicting reads. The next exact request is
-79 scopes/693 observations, pending, not complete fault-driver/category admission
-or full metadata/artifact integration.
+empty payloads and conflicting reads. Payload run `40137341231` at exact
+`1367a51` remains pending.
+
+The four frozen damaged-read parameters also now execute one provider-free
+consumer with mechanically identical checks/order. Actual capture, damage and
+restoration retain their legacy fixture boundaries; this is not an owned full
+fault driver. Two real-validator mutations require actual corrupt-evidence
+failure before substituting success. The unchanged common type assertion fails
+and fresh genuine validators pass. Exact transport requires all four frozen
+rows plus both mutation rows, rejecting shortened or foreign vectors before
+launch. The next exact request is 80 scopes/699 observations, pending, not
+complete fault-driver/category admission or full metadata/artifact integration.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

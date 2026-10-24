@@ -572,8 +572,15 @@ fails explicitly; byte damage changes the first byte, or adds one to an empty
 payload. Foreign stamps, stale sessions/epochs and removed incarnations cannot
 damage the current replacement. Twenty-three cases cover actual copy/quarantine,
 held work, failed observers, conflicting reads and these boundaries.
-The next native request is 79 scopes/693 observations, pending, not complete
-fault-driver/category/profile admission.
+Payload run `40137341231` at exact `1367a51` remains pending.
+The frozen four-parameter damaged-read case also now executes the same
+provider-free consumer on both implementations, preserving exact assertions
+and operation order. Actual file capture/damage/restoration remain in the
+legacy fixture; this does not convert those callbacks into owned full-driver
+admission. A real validator's actual corrupt-evidence denial, deliberately
+reported as success, fails the unchanged common assertion on both providers;
+fresh genuine validators pass. The next native request is 80 scopes/699
+observations, pending, not complete fault-driver/category/profile admission.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

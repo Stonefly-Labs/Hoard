@@ -368,8 +368,14 @@ final cleanup must join that work after caller cancellation. Twenty-three
 package-only rows cover real corruption/quarantine, failed observers, stale
 sessions/epochs/incarnations, empty content and conflicting open reads.
 Fresh replay passes all 65 Consumer rows and reproduces fifteen archives.
-The next native request is 79 scopes/693 observations, pending, not complete
-category bindings, metadata integration or profile acceptance.
+Payload run `40137341231` at exact `1367a51` remains pending.
+The original four-parameter damaged-read wrapper now uses a provider-free common
+consumer with mechanically identical assertions/order and actual fixture-side
+capture/damage/restoration. Genuine-validator mutation pairs demonstrate that
+revived corrupt evidence fails its unchanged assertion. Fresh replay passes
+308 artifact and 65 Consumer cases. The next native request is
+80 scopes/699 observations, pending, not complete category bindings, metadata
+integration or profile acceptance.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

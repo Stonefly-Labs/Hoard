@@ -6993,6 +6993,34 @@ pending, not full category/profile acceptance. Production contracts,
 architecture/ADR diagrams, custom-host examples, historical seals, tracked locks,
 tasks and reviewer-owned checklists are unaffected by this test-private control.
 
+The original damaged-read body now executes `ArtifactReadAssertions.DamagedReadAsync`.
+All four frozen provider/truncation parameters, exact assertions and operation
+order are mechanically identical after explicit interface/callback/helper/token
+forwarding. Physical capture/damage/restoration stay at their original legacy
+fixture boundaries, not inside the SDK and not falsely advertised as complete
+owned fault-driver admission. Two real-validator mutations require one actual
+corrupt-evidence denial before deliberately returning success; each fails the
+unchanged common type assertion and a fresh genuine validator passes.
+
+The missing shared method first produced the intended CS0117, independently
+confirmed in the isolated compiler output. Exact transport first failed its
+single named missing-factory assertion. Both fresh preparations pass all
+308 artifact, 65 Consumer and 89+89 metadata cases without skips; fifteen
+archives reproduce exactly, canonical archive-map SHA-256
+`85e853c19f63153a3abb5a454bf24369b85a9f7678fed3b49a5ece6c141a398f`;
+ten Consumer dependency images match package bytes. Initial full tooling
+correctly rejected real scratch below 24 GiB (five failures/nineteen errors).
+Only 55 explicitly inspected inactive dependency caches were removed across
+completed preparations/wrappers; sources, feeds, manifests, historical seals,
+intermediates and runtime images remain. After observing 25.188 GiB free, all
+303 tooling checks pass (286 passed/seventeen macOS-native skips). SDK/wrapper
+whitespace, all 77 SDK tooling checks, frozen inventory and catalogs pass.
+Payload run `40137341231` at exact `1367a51` remains pending; the next request is
+195 native foundations and 80 scopes/699 observations, also pending. No full
+category/profile result, new transfer origin or additional completed task is
+claimed. Architecture/ADR diagrams and deployment/custom-host examples remain
+unaffected by this assertion-only extraction.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact
