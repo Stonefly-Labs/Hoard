@@ -10,15 +10,30 @@ Hosting; F-04 adds protected metadata/observations, not provider operations. Sta
 For lifecycle use, see the [package-only lifecycle host](../examples/LifecycleHost/README.md).
 
 F-07 shared conformance is partially implemented, not available as provider
-certification. Its test SDK contracts/catalog and package manifests are
-foundations only: common assertions, independent adapters and the contributor
-workflow are not delivered. Memory now exposes targeted test-only record and
-receipt controls, with bounded private encoding and real corruption validation;
-its independent copy-on-write mechanism and public operation contracts remain.
-The corrected executor passed 28 focused native Linux checks without skips.
-The SDK also has an identity-pinned allocator and bounded runtime logger;
-Linux allocator execution, actual loaded-provider attribution and complete
-controller ingestion remain unproven. Focused composition/version fixtures
+certification. Its SDK now has 53 executable metadata methods, typed sessions,
+an identity-pinned allocator, bounded runtime logger and exact discovery/origin
+transport. Native run
+[40059814134](https://github.com/Stonefly-Labs/Hoard/actions/runs/40059814134)
+verified those initial consumers and factory/settlement prerequisites:
+131 foundation checks without failures/errors/skips, 34 scopes/150 observations,
+six historical baselines and eighteen-package/thirteen-lock replay.
+
+`Hoard.Fixtures.Conformance.Bindings.Memory` now implements explicit current/
+legacy setup, typed logical controls, independent committed snapshots and atomic
+logical reopen. Its `MemoryBinding` constructor requires the provider archive's
+actual SHA-256 (and version); declarations do not independently prove package
+provenance. The harness supplies `ConformanceRunContext`, owns cleanup and must
+bind actual observed role/assembly/package origins. The adapter closes admission
+before pinning the genuine work task, preserves that identity on retries, and
+never reports physical `Released`. Memory remains non-durable; logical image/
+upgrade controls grant no backup, durable restart or process-crash guarantee.
+Private encoding mutation is shared by the adapter and existing focused tests,
+without an SDK reference in Memory or private provider types in the SDK.
+Twenty focused adapter rows pass against locally packed packages, including the
+real 30-second incomplete cleanup and actual allocator retention/retry; native
+execution of the expanded 37-scope/170-observation diagnostic is pending.
+Complete category suites/adapters, contributor workflow and controller/profile
+ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual
 route rejection during mapping before publication/initialization/readiness;
 declaration validation remains preconstruction. Responsibility IDs are not

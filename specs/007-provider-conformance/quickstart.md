@@ -3,7 +3,17 @@
 **Status**: Future acceptance guide with partial implementation foundations.
 The SDK, focused tests, fixture project manifests, preparation command and
 CLI admission and fifty-three initial executable metadata consumers now exist; complete profile execution,
-shared suites, adapters, contributor journey and CI qualification do not.
+shared suites, complete adapters, contributor journey and CI qualification do not.
+The initial concrete Memory adapter has explicit current/legacy factories,
+typed controls, independent committed reads, atomic logical reopen and genuine
+settlement-ledger integration. Its twenty focused adapter rows pass against
+locally packed packages; they are not complete category or provenance proof.
+Native verification of the new 37-scope/170-observation diagnostic remains
+pending. Last verified native run:
+[40059814134](https://github.com/Stonefly-Labs/Hoard/actions/runs/40059814134),
+all three jobs, 131 foundation checks without failures/errors/skips,
+34 scopes/150 observations, all 53 prior shared consumers, six historical
+baselines and eighteen-package/thirteen-lock replay.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

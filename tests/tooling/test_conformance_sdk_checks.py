@@ -34,7 +34,9 @@ class SdkDiagnosticTests(unittest.TestCase):
             source = not all(identity.startswith(checks.SMOKE) for identity in identities)
             folder = checks.TESTS if source else checks.LOGGER + "/Smoke"
             output = (checks.PACKAGE_TEST_OUTPUT
-                      if all(identity.startswith(checks.PACKAGE_TEST_PREFIX) for identity in identities) else "bin")
+                      if all(identity.startswith((checks.PACKAGE_TEST_PREFIX, checks.BINDING_TEST_PREFIX,
+                                                  checks.BINDING_OWNERSHIP_PREFIX))
+                             for identity in identities) else "bin")
             assembly = candidate / folder / output / "Release/net10.0" / (
                 "Hoard.Conformance.Tests.dll" if source else "Smoke.dll")
             package = "Hoard.Testing.Conformance" if source or name == "origin-output" else "Hoard.Conformance.TestLogger"
@@ -79,7 +81,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         feed = self.directory / "feed"
         feed.mkdir()
         local = ("Hoard.Abstractions", "Hoard.Testing.Conformance",
-                 "Hoard.Conformance.TestLogger", "Hoard.Fixtures.Metadata.Memory")
+                 "Hoard.Conformance.TestLogger", "Hoard.Fixtures.Metadata.Memory",
+                 "Hoard.Fixtures.Conformance.Bindings.Memory")
         dependencies = {"xunit": {"resolved": "2.9.3", "contentHash": "unchanged"}}
         for package in local:
             (feed / (package + ".0.1.0.nupkg")).write_bytes(package.encode())
@@ -270,7 +273,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         run = SimpleNamespace(root=self.directory, run_id=str(uuid.uuid4()), _check_ledger=lambda: None)
         config, feed = checks.baselines._config(run, "candidate")
         for name in ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger",
-                     "Hoard.Fixtures.Metadata.Memory"):
+                     "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Conformance.Bindings.Memory"):
             with zipfile.ZipFile(feed / f"{name}.0.1.0.nupkg", "w") as archive:
                 archive.writestr(f"{name}.nuspec",
                                 f"<package><metadata><id>{name}</id><version>0.1.0</version></metadata></package>")

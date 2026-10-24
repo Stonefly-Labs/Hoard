@@ -23,6 +23,7 @@ public sealed partial class MemoryMetadataStore
             try
             {
                 Volatile.Write(ref state, state with { Records = state.Records.WithPayload(selector, payload) });
+                await observe("memory.persisted.changed");
                 return Success(state.Epoch);
             }
             finally { writer.Release(); }
@@ -58,6 +59,7 @@ public sealed partial class MemoryMetadataStore
                 { throw new ArgumentException("Missing synthetic operation."); }
                 var replacement = operation with { State = image.State, Fingerprint = image.Fingerprint, Receipt = image.Receipt };
                 Volatile.Write(ref state, state with { Operations = state.Operations.SetItem(ticket.Id, replacement) });
+                await observe("memory.persisted.changed");
                 return Success(state.Epoch);
             }
             finally { writer.Release(); }

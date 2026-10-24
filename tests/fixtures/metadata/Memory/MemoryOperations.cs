@@ -175,7 +175,11 @@ public sealed partial class MemoryMetadataStore
                 {
                     activity.Check();
                     candidate = Mutate(candidate, mutation, now, artifacts);
-                    if (Interlocked.Exchange(ref failNextWrite, 0) != 0) { throw new MemoryContractFailure(MetadataFailureCode.Capacity); }
+                    if (Interlocked.Exchange(ref failNextWrite, 0) != 0)
+                    {
+                        await observe("memory.storage_capacity");
+                        throw new MemoryContractFailure(MetadataFailureCode.Capacity);
+                    }
                     await observe("mutation.applied");
                 }
                 ValidateGraph(candidate, request.Mutations, activity);

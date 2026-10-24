@@ -5693,6 +5693,38 @@ preparation proof:
 `035624cf6eebad450d3f1e50b919466ef363cd6227180639b0d0a2472a04c5ab`.
 Newer source results do not substitute for native execution or qualification.
 
+The first concrete Memory binding now implements explicit current/legacy
+factories, typed controls, atomic close/capture/reopen and genuine settlement
+ledger integration. Independent committed reads remain tracked actual work;
+public operations and SDK/provider dependency boundaries are unchanged.
+Reusable provider-private payload damage replaces duplicate JSON mutation in
+the existing probes. Disposal pins the actual task after admission closes,
+preserves identity on retries, surfaces observation failures and never claims
+physical release.
+
+Its 19 allocator-double rows plus one real SDK-allocator integration pass
+alongside the earlier 75 Memory probes against actual packed SDK/provider/
+binding packages: 95 tests, no skips, ~34s, including real 30-second incomplete
+cleanup. Ordinary source SDK109, tooling236/ten native skips and focused checks
+pass. The package-mode consumer deliberately adds the existing Memory binding
+reference and generated lock; native preparation captures/derives/reverifies
+five actual package identities. A bounded custom architecture review found no
+actionable defects. Current native vector: 37 scopes/170 observations, pending;
+T023 and complete qualification remain unchecked.
+
+Native continuation run
+[40059263911](https://github.com/Stonefly-Labs/Hoard/actions/runs/40059263911)
+verified all 53 earlier consumers, 33 scopes/148 observations. Latest verified
+factory/settlement run
+[40059814134](https://github.com/Stonefly-Labs/Hoard/actions/runs/40059814134)
+at `46be806d30be26f47fafaa9b064241c48759d75c` passed all three jobs,
+131 foundation checks without failures/errors/skips, 34 scopes/150 observations,
+six baselines and eighteen-package/thirteen-lock replay. Input digest:
+`be49fdd9b29de2382622b3dc2d77166d5b680fd6b8c76511433725626998becd`;
+preparation proof:
+`bd7ecd7d3a3e27b88232c8625ca037fd45d7b2a7df2cb445fc1dfcb6603d6c3d`.
+Those runs predate the new concrete adapter; do not relabel their scope.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

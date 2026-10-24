@@ -1142,6 +1142,74 @@ preparation proof:
 `035624cf6eebad450d3f1e50b919466ef363cd6227180639b0d0a2472a04c5ab`.
 Free scratch was 91,725,152,256 bytes. Complete bindings/parity remain open.
 
+### Concrete Memory adapter and package-only control execution
+
+`tests/fixtures/conformance/Bindings/Memory/MemoryBinding.cs` now implements
+explicit current/legacy creation, actual store/schema/authority/fault roles,
+controlled UTC time, logical image reopen and resource-ledger ownership.
+Atomic close/capture excludes new work before preserving immutable raw state.
+An independent committed-read seam remains inside the provider's actual
+activity ledger and bypasses only held test observers/late public-call admission,
+without changing public provider operations.
+
+Required typed controls use actual Memory mechanisms. Generic gates expose
+named actual boundaries; one-shot capacity consumption and typed raw mutation
+observations are non-holding. Memory's managed held callback is not a native
+database or process-crash guarantee. Private record/operation/continuation
+damage now lives in reusable provider-private `MemoryPayloadDamage`, also used
+by the existing probes. SDK references remain provider-neutral.
+
+Disposal closes admission before capturing the genuine stable idle promise.
+Allocator observations run alongside public disposal, never replace its task
+with a timeout/public-completion promise, preserve identity on retries and never
+claim physical `Released`. Resource-observer errors surface rather than becoming
+settled observations. A real-allocator integration holds actual work, observes
+retention, rejects premature allocator disposal, then retries with the same
+genuine task while preserving prior failure history. Only that allocator's
+observation budget is 20ms; the provider's real 30-second cleanup stays intact.
+
+The first adapter test failed compilation for the absent binding. The focused
+snapshot test initially compared caller-supplied revision bytes instead of the
+actual committed public snapshot; it now compares exact committed encoding.
+The cleanup double initially threw a raw observation timeout; matching the
+allocator's structured `Retained/CleanupIncomplete` semantics preserves the
+actual provider's incomplete-cleanup failure. Nineteen adapter unit rows and
+one actual-allocator row now pass with all 75 earlier Memory probes against
+freshly packed SDK/provider/binding packages: 95 tests, no skips, ~34s. Shared
+source SDK109, tooling236/ten native skips, catalog, frozen inventory and
+focused whitespace/format checks pass. A bounded custom architecture review
+found no actionable defects in the adapter/ownership/package boundary.
+
+The package-mode test graph deliberately adds the existing Memory binding
+package and links the same Consumer test source; its tracked lock was generated
+with the package manager. Native preparation now builds/derives/reverifies the
+binding archive and captures all five actual package identities/runtime bytes.
+Current diagnostic vector: 37 scopes/170 observations, pending. Source/local
+package success is not Linux supervisor, full role-origin or category proof;
+T023 and complete bindings/parity remain unchecked.
+
+Native continuation run
+[40059263911](https://github.com/Stonefly-Labs/Hoard/actions/runs/40059263911)
+at `f7d7756910f9ca47ae4ed696094a7c50b2288160` verified all 53 earlier consumers:
+all three jobs, 131 foundation checks without failures/errors/skips,
+33 scopes/148 discoveries/148 executions, six historical baselines and
+eighteen-package/thirteen-lock replay. Input digest:
+`a6c7d76fead1013ff1cbdd71db4bef9e8b25d27e250bf936a05ff4c20873171f`;
+preparation proof:
+`433c6a0ceed8fad880a5eeed6130e74188e83b49b9af96f3402bc44d9b240719`.
+Free scratch: 92,109,885,440 bytes.
+
+Native factory/settlement run
+[40059814134](https://github.com/Stonefly-Labs/Hoard/actions/runs/40059814134)
+at `46be806d30be26f47fafaa9b064241c48759d75c` also passed all three jobs and
+131 foundation checks without failures/errors/skips, 34 scopes/150 exact
+discovery/execution observations, six baselines and eighteen-package/thirteen-
+lock replay. Input digest:
+`be49fdd9b29de2382622b3dc2d77166d5b680fd6b8c76511433725626998becd`;
+preparation proof:
+`bd7ecd7d3a3e27b88232c8625ca037fd45d7b2a7df2cb445fc1dfcb6603d6c3d`.
+Free scratch: 92,109,897,728 bytes. Neither run includes the new concrete adapter.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

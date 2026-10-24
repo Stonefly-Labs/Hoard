@@ -6,6 +6,7 @@ public sealed partial class MemoryMetadataStore
 {
     private int failNextWrite;
     public void InjectStorageCapacityForTest() => Interlocked.Exchange(ref failNextWrite, 1);
+    public void ClearStorageCapacityForTest() => Interlocked.Exchange(ref failNextWrite, 0);
 
     public ValueTask<MetadataResult<MetadataId>> CreateUnrecognizedLayoutForTestAsync(bool partial) =>
         Dispatch(TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(30), default, MetadataPhase.Schema, null, false, async activity =>
@@ -19,9 +20,10 @@ public sealed partial class MemoryMetadataStore
             finally { writer.Release(); }
         });
 
-    public async ValueTask<IDisposable> HoldWriterForTestAsync()
+    public async ValueTask<IDisposable> HoldWriterForTestAsync(CancellationToken cancellationToken = default)
     {
-        if (!await writer.WaitAsync(TimeSpan.FromSeconds(5))) { throw new TimeoutException("Synthetic writer acquisition timed out."); }
+        if (!await writer.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken))
+        { throw new TimeoutException("Synthetic writer acquisition timed out."); }
         return new WriterHold(writer);
     }
 
@@ -73,6 +75,7 @@ public sealed partial class MemoryMetadataStore
             try
             {
                 Volatile.Write(ref state, state with { Records = state.Records.WithPayload(selector, "{") });
+                await observe("memory.persisted.changed");
                 return Success(state.Epoch);
             }
             finally { writer.Release(); }

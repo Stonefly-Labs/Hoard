@@ -6,17 +6,27 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "U2YemV6QBqKjidMi1LNBHGP+e/pQFTuDrMR5XhUDHifazHjLaK+xVWq3X8acG3xu/+dD7UKCp00FWBngVqvAbA==",
+        "contentHash": "ZZj+G0q1Ypp1H06vVd0DTr2b2WUcyyy06VtIX5NUB8ekZ2bgRb6P8RIBbeWDAZdaz9MTi7naVGC/rGPEMBHcsQ==",
         "dependencies": {
           "Hoard.Testing.Conformance": "0.1.0",
           "Microsoft.TestPlatform.ObjectModel": "18.11.0"
+        }
+      },
+      "Hoard.Fixtures.Conformance.Bindings.Memory": {
+        "type": "Direct",
+        "requested": "[0.1.0, 0.1.0]",
+        "resolved": "0.1.0",
+        "contentHash": "SJSjLptVXqJ6rISvT/WDEm10KogQfizRqa5/S88/8f7s+oAVYrCcl6NQl5/p7ywdtmC667VoXyO4rol5K828Lg==",
+        "dependencies": {
+          "Hoard.Fixtures.Metadata.Memory": "[0.1.0]",
+          "Hoard.Testing.Conformance": "[0.1.0]"
         }
       },
       "Hoard.Fixtures.Metadata.Memory": {
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "gxOGttPHwPcwIh+mdifXw6mQiK7klamBCDXgXyKBXZyh1JaM3kNhmfQoFFOgMEHURGVZFhEBVd+xAnmPk51erw==",
+        "contentHash": "yftR+hAnixw3ENTxaEWzLywCkDSIz4D0mBRJEuuH0GHEWjLU+qwuqqbEW5lN7C3w7BqV4Zqw+Ro+Z866+FqlWA==",
         "dependencies": {
           "Hoard.Abstractions": "[0.1.0]"
         }
@@ -25,7 +35,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "XuFpBK4cJGbMTWF01/A3y3oIQGCOpes/lIWN0MLVf+rs+iBdC8Yiyvj2oyj2vrzzzgOgLLUymGIVftNhzy55DQ==",
+        "contentHash": "EDkUxktNuDkpr3rT8+gGdBxZlnL4fgkURPtAFL42yCI6JCHS4ffVxixKkurAD1uA0Jw80FbAK77tnYCi/9unHw==",
         "dependencies": {
           "Hoard.Abstractions": "0.1.0",
           "xunit": "2.9.3"
@@ -50,7 +60,7 @@
       "Hoard.Abstractions": {
         "type": "Transitive",
         "resolved": "0.1.0",
-        "contentHash": "HZylpjIPqehMredl4GYUADu4JRHhISRxRK83Nhgja8/St2hUuVuSCPhWiphKxH37TDzQpRPRbBh8fcCzEpCVZw=="
+        "contentHash": "dby5DzQL0BHdNdtvrZeMk+aWHcsuGA2YnqqCJ5B+kMjjchsf//HKFOr+spKMah6Qr16I5IBcCdhxhmfBPWHCZQ=="
       },
       "Microsoft.CodeCoverage": {
         "type": "Transitive",

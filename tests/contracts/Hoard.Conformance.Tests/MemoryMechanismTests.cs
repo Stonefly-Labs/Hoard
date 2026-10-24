@@ -3,7 +3,6 @@ using System.Collections.Immutable;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using Hoard.Abstractions.Metadata;
 using Hoard.Fixtures.Metadata.Memory;
 using Hoard.Testing.Conformance.Bindings;
@@ -532,59 +531,11 @@ public sealed class MemoryMechanismTests
     }
 
     private static MemoryOperationTestImage DamageOperation(
-        MemoryOperationTestImage original, string shape, MetadataOperationTicket foreign)
-    {
-        var payload = Assert.IsType<JsonObject>(JsonNode.Parse(Assert.IsType<string>(original.Receipt)));
-        var damaged = original;
-        switch (shape)
-        {
-            case "null-target": payload["Revisions"]![0]!["Target"] = null; break;
-            case "null-revision": payload["Revisions"]![0]!["Revision"] = null; break;
-            case "missing-revisions": Assert.True(payload.Remove("Revisions")); break;
-            case "oversized-revisions":
-                payload["Revisions"] = new JsonArray(Enumerable.Range(0, 65).Select(_ => payload["Revisions"]![0]!.DeepClone()).ToArray()); break;
-            case "mismatched-ticket": payload["Ticket"] = JsonSerializer.SerializeToNode(foreign); break;
-            case "short-fingerprint": damaged = damaged with { Fingerprint = new string('a', 62) }; break;
-            case "missing-fingerprint": damaged = damaged with { Fingerprint = null }; break;
-            case "invalid-fingerprint": damaged = damaged with { Fingerprint = new string('z', 64) }; break;
-            case "reserved-receipt": damaged = damaged with { State = 0 }; break;
-            case "abandoned-receipt": damaged = damaged with { State = 2 }; break;
-            case "fractional-state": damaged = damaged with { State = 1.5 }; break;
-            case "malformed" or "oversized-payload" or "missing-receipt": break;
-            default: throw new ArgumentException("BindingInvalid");
-        }
-        return damaged with
-        {
-            Receipt = shape switch
-            {
-                "malformed" => "{" + MetadataReconciliationAssertions.CorruptionCanary,
-                "oversized-payload" => new string(' ', MetadataEncoding.MaximumBytes) + original.Receipt,
-                "missing-receipt" => null,
-                _ => payload.ToJsonString()
-            }
-        };
-    }
+        MemoryOperationTestImage original, string shape, MetadataOperationTicket foreign) =>
+        MemoryPayloadDamage.Operation(original, shape, foreign, MetadataReconciliationAssertions.CorruptionCanary);
 
-    private static string DamageRecord(string original, string shape)
-    {
-        var record = Assert.IsType<JsonObject>(JsonNode.Parse(original));
-        switch (shape)
-        {
-            case "null-label": record["Label"] = null; break;
-            case "oversized-label":
-                record["Label"]!["Value"] = new string('x', 513) + MetadataReconciliationAssertions.CorruptionCanary; break;
-            case "null-revision": record["Revision"] = null; break;
-            case "wrong-key": record["Id"] = JsonSerializer.SerializeToNode(new MetadataId(Guid.NewGuid())); break;
-            case "cache-auth": record["Identity"]!["AuthorizationPartition"] = null; break;
-            case "aggregate-auth": record["Key"]!["AuthorizationPartition"] = null; break;
-            case "aggregate-start": record["Key"]!["Start"] = null; break;
-            case "aggregate-end": record["Key"]!["End"] = null; break;
-            case "lease-resource": record["Resource"] = null; break;
-            case "malformed": break;
-            default: throw new ArgumentException("BindingInvalid");
-        }
-        return shape == "malformed" ? "{" + MetadataReconciliationAssertions.CorruptionCanary : record.ToJsonString();
-    }
+    private static string DamageRecord(string original, string shape) =>
+        MemoryPayloadDamage.Record(original, shape, MetadataReconciliationAssertions.CorruptionCanary);
 
     private sealed class MemoryCorruptionControl(MemoryMetadataStore store)
     {
@@ -746,22 +697,17 @@ public sealed class MemoryMechanismTests
             MetadataContinuationComponent.Position => "After",
             _ => throw new ArgumentException("BindingInvalid")
         };
-        var cursor = Assert.IsType<JsonObject>(JsonNode.Parse(Convert.FromBase64String(continuation.Value)));
-        Assert.True(cursor.ContainsKey(field));
-        if (corruption == MetadataContinuationCorruption.Omitted) { Assert.True(cursor.Remove(field)); }
-        else
+        var shape = corruption switch
         {
-            cursor[field] = corruption switch
-            {
-                MetadataContinuationCorruption.Null => null,
-                MetadataContinuationCorruption.WrongType => JsonValue.Create(42),
-                MetadataContinuationCorruption.Empty => JsonValue.Create(""),
-                MetadataContinuationCorruption.OddHex => JsonValue.Create("000"),
-                MetadataContinuationCorruption.InvalidHex => JsonValue.Create("zz"),
-                _ => throw new ArgumentException("BindingInvalid")
-            };
-        }
-        return ValueTask.FromResult(new MetadataContinuation(Convert.ToBase64String(JsonSerializer.SerializeToUtf8Bytes(cursor))));
+            MetadataContinuationCorruption.Null => "null",
+            MetadataContinuationCorruption.Omitted => "omitted",
+            MetadataContinuationCorruption.WrongType => "wrong-type",
+            MetadataContinuationCorruption.Empty => "empty",
+            MetadataContinuationCorruption.OddHex => "odd-hex",
+            MetadataContinuationCorruption.InvalidHex => "invalid-hex",
+            _ => throw new ArgumentException("BindingInvalid")
+        };
+        return ValueTask.FromResult(MemoryPayloadDamage.Continuation(continuation, field, shape));
     }
 
     private sealed class MemorySchemaProbe : IMetadataConformanceSession, IMetadataConformanceFaultDriver
@@ -772,7 +718,8 @@ public sealed class MemoryMechanismTests
         private readonly RegisteredAuthority authority;
 
         public MemorySchemaProbe(int compatibleSchema = 2) : this(
-            new MetadataConformanceClock(new(1_800_000_000_000)), new RegisteredAuthority(), null, compatibleSchema) { }
+            new MetadataConformanceClock(new(1_800_000_000_000)), new RegisteredAuthority(), null, compatibleSchema)
+        { }
 
         private MemorySchemaProbe(MetadataConformanceClock clock, RegisteredAuthority authority,
             MemoryFixtureImage? image, int compatibleSchema)

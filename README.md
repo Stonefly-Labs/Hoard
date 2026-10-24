@@ -1239,14 +1239,19 @@ A focused source probe executes all fifty-three
 against unchanged Memory source, and a contradictory-success store fails the
 competing-create assertion. This is partial extraction: existing
 wrappers, full shared suites and complete typed adapters remain outstanding.
-Native run [40058954688](https://github.com/Stonefly-Labs/Hoard/actions/runs/40058954688)
-verified the first fifty-two against the actual Memory package: all three jobs
-passed, with 131 foundation checks and 32 scopes/141 exact observations.
-The current fifty-three-consumer selection is pending. No category/profile
+Native run [40059814134](https://github.com/Stonefly-Labs/Hoard/actions/runs/40059814134)
+verified all fifty-three against the actual Memory package, plus explicit legacy
+factory/genuine settlement prerequisites: all three jobs passed, with
+131 foundation checks and 34 scopes/150 exact observations. No category/profile
 qualification is claimed.
 Observed metadata factories now expose explicit legacy-session setup without
 case-ID routing, and Memory exposes its genuine pending-work task separately
-from bounded settlement observers. Complete admitted adapters remain unfinished.
+from bounded settlement observers. The first concrete Memory adapter now has
+explicit current/legacy factories, typed controls, atomic logical reopen and
+actual-work ownership integration; its 20 focused adapter rows pass locally
+against packed packages. Native verification of the expanded 37-scope/
+170-observation diagnostic and complete adapter/category qualification remain
+unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

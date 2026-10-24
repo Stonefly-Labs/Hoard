@@ -32,6 +32,9 @@ SDK = f"{CONTRACTS}/Hoard.Testing.Conformance"
 LOGGER = f"{CONTRACTS}/Hoard.Conformance.TestLogger"
 TESTS = f"{CONTRACTS}/Hoard.Conformance.Tests"
 MEMORY = "tests/fixtures/metadata/Memory/Memory.csproj"
+MEMORY_BINDING = "tests/fixtures/conformance/Bindings/Memory/Memory.csproj"
+BINDING_TEST_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingTests."
+BINDING_OWNERSHIP_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingOwnershipTests."
 PACKAGE_TEST_OUTPUT = "bin/package-diagnostic"
 PACKAGE_TEST_PREFIX = "Hoard.Conformance.Tests.MemoryMechanismTests."
 PACKAGE_TEST_METHOD = (PACKAGE_TEST_PREFIX +
@@ -219,6 +222,21 @@ SCENARIOS = (
      + (PACKAGE_TEST_PREFIX
         + "Noop_continuation_damage_fails_the_common_assertion_and_real_memory_damage_passes_unchanged",),
      "None", "Passed", 0, "None"),
+    ("memory-binding-legacy", tuple(BINDING_TEST_PREFIX +
+        'Explicit_legacy_factory_executes_unchanged_schema_consumers(consumer: "' + consumer + '")'
+        for consumer in ("upgrade", "invalid-upgrade", "upgrade-contention")),
+     "None", "Passed", 0, "None"),
+    ("memory-binding-controls", (
+        *(BINDING_TEST_PREFIX + 'Typed_adapter_controls_execute_unchanged_common_consumers(consumer: "' + consumer + '")'
+          for consumer in ("receipts", "record-pages", "capacity", "ledger", "writer", "diagnostics", "publication", "cleanup")),
+        *(BINDING_TEST_PREFIX + "Typed_adapter_continuation_damage_preserves_exact_valid_resume(corruption: " + corruption + ")"
+          for corruption in ("Null", "Omitted", "WrongType", "Empty", "OddHex", "InvalidHex")),
+        BINDING_TEST_PREFIX + "Disposal_registers_actual_pending_work_and_never_claims_physical_release",
+        BINDING_TEST_PREFIX + "Independent_snapshot_observes_committed_state_while_a_read_is_held"),
+     "None", "Passed", 0, "None"),
+    ("memory-binding-owned-resource", (BINDING_OWNERSHIP_PREFIX
+        + "Actual_allocator_retains_pending_memory_work_and_retry_preserves_the_failed_observation",),
+     "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"
 BUDGETS = {
@@ -285,7 +303,7 @@ def prepare_package_consumer_lock(candidate, feed):
     prepared, packages, _ = rebind_local_archives(raw, feed)
     expected = {f"{name}.0.1.0.nupkg" for name in (
         "Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger",
-        "Hoard.Fixtures.Metadata.Memory")}
+        "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Conformance.Bindings.Memory")}
     if set(packages) != expected:
         raise evidence.ConformanceError("InputChanged")
     alternate = candidate / TESTS / "obj/F07.consumer.packages.lock.json"
@@ -377,7 +395,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
         invocation_group_id=str(uuid.uuid4()) if group_id is None else group_id,
         package_versions=[{"packageId": name, "version": "0.1.0"} for name in
                           ("Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger",
-                           "Hoard.Fixtures.Metadata.Memory")],
+                           "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Conformance.Bindings.Memory")],
         feed="feed/candidate", configuration="stores/candidate.NuGet.Config",
         lock_paths=locks, runtime_paths=runtime, binding_sources=list(binding_sources),
         observed_environment=observed_environment, budgets=BUDGETS, invocation=["sdk-logger-diagnostic"],
@@ -390,11 +408,13 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
 
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
-    source_tests = all(identity.startswith("Hoard.Conformance.Tests.") for identity in identities)
+    binding_tests = all(identity.startswith((BINDING_TEST_PREFIX, BINDING_OWNERSHIP_PREFIX)) for identity in identities)
+    source_tests = all(identity.startswith("Hoard.Conformance.Tests.") for identity in identities) or binding_tests
     smoke_tests = all(identity.startswith(SMOKE) for identity in identities)
-    package_tests = any(identity.startswith(PACKAGE_TEST_PREFIX) for identity in identities)
+    package_tests = binding_tests or any(identity.startswith(PACKAGE_TEST_PREFIX) for identity in identities)
     if (source_tests == smoke_tests
-            or package_tests and not all(identity.startswith(PACKAGE_TEST_PREFIX) for identity in identities)):
+            or package_tests and not binding_tests
+            and not all(identity.startswith(PACKAGE_TEST_PREFIX) for identity in identities)):
         raise evidence.ConformanceError("WitnessMissing")
     output = PACKAGE_TEST_OUTPUT if package_tests else "bin"
     assembly = candidate / (TESTS if source_tests else LOGGER + "/Smoke") / output / "Release/net10.0" / (
@@ -568,6 +588,12 @@ def execute(repository, destination):
         if memory_record is not None:
             verify_project_lock(memory_record, candidate, feed)
             write_new(run.root / "proofs/memory-lock-derivation.json", evidence.canonical_bytes(memory_record))
+        binding_lock, binding_record = prepare_project_lock(candidate / MEMORY_BINDING, candidate, feed, "candidate")
+        build(run, candidate / MEMORY_BINDING, config, "memory-binding-package", lock=binding_lock, feed=feed,
+              package_id="Hoard.Fixtures.Conformance.Bindings.Memory")
+        if binding_record is not None:
+            verify_project_lock(binding_record, candidate, feed)
+            write_new(run.root / "proofs/memory-binding-lock-derivation.json", evidence.canonical_bytes(binding_record))
         consumer_lock, consumer_receipt = prepare_package_consumer_lock(candidate, feed)
         verify_package_consumer_lock(candidate, feed, consumer_lock, consumer_receipt)
         write_new(run.root / "proofs/consumer-lock-derivation.json", evidence.canonical_bytes(consumer_receipt))
@@ -631,6 +657,8 @@ def execute(repository, destination):
             verify_project_lock(lock_record, candidate, feed)
         if memory_record is not None:
             verify_project_lock(memory_record, candidate, feed)
+        if binding_record is not None:
+            verify_project_lock(binding_record, candidate, feed)
         verify_package_consumer_lock(candidate, feed, consumer_lock, consumer_receipt)
         post_inputs = make_inputs(
             run, repository, candidate, post_sources, post_environment, post_identity, seal_sha,

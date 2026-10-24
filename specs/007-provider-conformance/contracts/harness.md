@@ -48,7 +48,8 @@ Metadata's `OpenLegacyAsync` invokes the binding's explicit
 `CreateLegacySessionAsync` entry point through the same declaration/ownership/
 lazy-getter gate; it never interprets case IDs to choose setup. Both factory
 entries create fresh root sessions (`FactoryOperation: create`), while reopen
-retains its distinct parent lineage. Complete concrete factories remain planned.
+retains its distinct parent lineage. Memory's concrete factories now implement
+this explicit setup; remaining factories and complete qualification are planned.
 Potentially failing provider getters run only after cleanup ownership is returned
 to the caller; their exact references are cached for both consumers and capture.
 Reopen creates an observed wrapper around the actual reopened session with parent
@@ -72,6 +73,37 @@ foundation checks without failures/errors/skips). Complete CLI/profile/evaluator
 integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
+
+The Memory binding package now supplies current/legacy factories, the same
+controlled clock/authority across logical reopen, all required typed controls
+and genuine settlement-ledger integration. Reopen atomically closes old
+admission before capturing the immutable image, settles the old session and
+allocates a new owned resource. Independent committed reads use an explicit
+fixture-only path that remains tracked by the same actual-work promise while
+bypassing held read observers/late public-call admission; public operation
+behavior is unchanged.
+
+Generic controls expose actual named boundaries: independent reads at
+`read.item`, writer ownership through the actual semaphore, acknowledgment at
+`M1`, schema inspection, and lease/non-cooperation/cleanup at `M0`. Memory
+non-cooperation is a held managed callback, not a native database/crash claim.
+Capacity injects an actual one-shot write failure and observes its consumption;
+persisted corruption observes actual typed raw payload changes. Those two
+observations are non-holding; neither substitutes for the typed mutation or
+common public-read/fingerprint/receipt checks. Ordinary holds are bounded at
+15 seconds; the dedicated cleanup hold is 60 seconds so the real 30-second
+provider cleanup deadline can be observed.
+
+The package-mode diagnostic now explicitly references the Memory binding and
+derives/reverifies five local package identities/locks. Its shared consumer
+source is also in the existing package-only Consumer project. Nineteen focused
+adapter rows use a clearly labeled allocator double; a twentieth uses the actual
+SDK allocator, proving retained work, rejected premature allocator disposal,
+stable-task retry, preserved failure history and no physical release claim.
+All 95 selected Memory/adapter tests pass locally against actual packed
+SDK/provider/binding packages; the expanded 37-scope/170-observation native
+diagnostic is pending. These remain extraction diagnostics, not T023 completion,
+full origin/controller integration or category qualification.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
