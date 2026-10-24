@@ -616,6 +616,18 @@ gates.
 Storage-failure passed `40124374635` at `ff50acd`, all three jobs,
 182 foundations and 70 scopes/602 observations, including all six new rows and
 every actual prerequisite chain/replay, not full qualification.
+Configured publication, compatible reopen and fresh-epoch artifact operations
+now also execute interface-only shared consumers, retaining fixed original
+content, identity/epoch, exact ticket/receipt and protected-read assertions.
+Actual hosting/DI/configuration/mapping, module cardinality/identity/readiness,
+disabled roots, restart/stop and missing-guarantee inert-start rejection remain
+fixture-side; no Hosting/Core dependency enters the SDK. The next four-row
+native request preserves all frozen host cases at 73 scopes/617 observations,
+pending, not complete bindings/category/session or composition-profile proof.
+
+Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,
+183 foundations and 71 scopes/608 observations, including all six cleanup/stop/
+reopen rows and every actual prerequisite chain/replay, not full qualification.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

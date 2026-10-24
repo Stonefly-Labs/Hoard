@@ -1543,13 +1543,21 @@ all three jobs, 182 foundations and 70 scopes/602 observations, not complete
 category/profile qualification.
 Three original prefix-cleanup bodies now also share six frozen parameters and
 their original stop/reopen checks. Actual permissions, observers, filesystem
-snapshots and Local-only durable reopen remain fixture-side. The next six-row
-native request is 71 scopes/608 observations, pending, not full qualification.
+snapshots and Local-only durable reopen remain fixture-side. The six-row native
+request passed at `871e3a8`, run
+[40125248164](https://github.com/Stonefly-Labs/Hoard/actions/runs/40125248164):
+all three jobs, 183 foundations and 71 scopes/608 observations, not full
+qualification.
 Both remaining original object-cleanup bodies now also use shared checks with
 five frozen parameters. Actual Unix permissions, observers, filesystem sizes
 and worker settlement remain fixture-side. The next five-row native request is
 72 scopes/613 observations, pending; full binding/category/profile gates remain
 open.
+Configured publication, compatible reopen and fresh-epoch artifact checks now
+also share interface-only consumers. Actual host/DI/mapping/readiness/restart
+and missing-guarantee checks remain in the hosting fixture. The next four-row
+native request preserves all frozen host cases at 73 scopes/617 observations,
+pending, not complete binding/category/profile qualification.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

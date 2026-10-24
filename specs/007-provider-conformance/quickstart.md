@@ -315,6 +315,13 @@ settlement stay fixture-side. The next five-row request is 72 scopes/613
 observations, pending, not complete binding/session/category/profile acceptance.
 Storage-failure passed `40124374635` at `ff50acd`, all three jobs,
 182 foundations and 70 scopes/602 observations, not complete qualification.
+Configured publication, compatible reopen and fresh-epoch artifact checks now
+also share consumers. Actual hosting/DI/mapping/readiness/restart/stop and
+missing-guarantee checks remain fixture-side, without a Hosting dependency in
+the SDK. The next four-row native request preserves all frozen host cases at
+73 scopes/617 observations, pending, not full category/profile acceptance.
+Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,
+183 foundations and 71 scopes/608 observations, not complete qualification.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

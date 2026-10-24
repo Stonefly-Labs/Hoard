@@ -475,6 +475,17 @@ does not complete T027/T030 or full binding/session/category/profile gates.
 Storage-failure passed `40124374635` at `ff50acd`, all three jobs,
 182 foundations and 70 scopes/602 observations, all six new rows and actual
 prerequisites/replay, not full category/profile qualification.
+Configured publication, compatible reopen and fresh-epoch artifact operations
+now also share interface-only checks. Actual host construction/DI/configuration,
+mapping, module identity/readiness, disabled-root checks, restart/stop and
+missing-guarantee inert-start rejection remain fixture-side. No Hosting/Core
+dependency enters the SDK. The next four-row request preserves all frozen host
+cases at 73 scopes/617 observations, pending, not full binding/category/profile
+qualification.
+
+Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,
+183 foundations and 71 scopes/608 observations, all six cleanup/stop/reopen rows
+and actual prerequisites/replay, not full category/profile qualification.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

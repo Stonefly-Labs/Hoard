@@ -1003,6 +1003,14 @@ def artifact_noncooperation_diagnostics(run, inputs, candidate):
     return result
 
 
+def original_artifact_configured_store_scenarios():
+    prefix = "Hoard.Artifacts.Tests.ArtifactCompositionTests."
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.startswith(prefix)}
+    return (("original-artifact-configured-store", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def original_artifact_object_cleanup_scenarios():
     prefix = "Hoard.Artifacts.Tests.ArtifactFailureTests."
     methods = (
@@ -1351,7 +1359,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-budget", "original-artifact-authority", "original-artifact-capability",
             "original-artifact-metadata-integration", "original-artifact-metadata-bridge",
             "original-artifact-lifecycle", "original-artifact-failure", "original-artifact-prefix-cleanup",
-            "original-artifact-object-cleanup"],
+            "original-artifact-object-cleanup", "original-artifact-configured-store"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1379,7 +1387,8 @@ def test_attempt(run, inputs, candidate, scenario):
             *original_artifact_authority_scenarios(), *original_artifact_capability_scenarios(),
             *original_artifact_metadata_integration_scenarios(), *original_artifact_metadata_bridge_scenarios(),
             *original_artifact_lifecycle_scenarios(), *original_artifact_failure_scenarios(),
-            *original_artifact_prefix_cleanup_scenarios(), *original_artifact_object_cleanup_scenarios()):
+            *original_artifact_prefix_cleanup_scenarios(), *original_artifact_object_cleanup_scenarios(),
+            *original_artifact_configured_store_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
     sqlite_tests = metadata_provider == "sqlite" or any(
@@ -1808,6 +1817,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "original-artifact-object-cleanup"}), flush=True)
         for scenario in original_artifact_object_cleanup_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "original-artifact-configured-store"}), flush=True)
+        for scenario in original_artifact_configured_store_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

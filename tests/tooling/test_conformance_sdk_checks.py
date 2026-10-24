@@ -566,6 +566,18 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_configured_store_scope_preserves_all_frozen_host_selection_cases(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_configured_store_scenarios", None)),
+                        "Shared configured-store checks need exact owned host wrapper transport.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactCompositionTests."
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.startswith(prefix)}
+        self.assertEqual(len(original), 4)
+        scenario, = checks.original_artifact_configured_store_scenarios()
+        self.assertEqual(scenario, ("original-artifact-configured-store", tuple(sorted(original)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_object_cleanup_scope_preserves_all_frozen_residual_ownership_cases(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_object_cleanup_scenarios", None)),
                         "Shared object cleanup checks need exact owned wrapper transport.")

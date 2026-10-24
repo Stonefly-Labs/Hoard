@@ -6774,6 +6774,26 @@ replay. Input:
 preparation:
 `9a90d9553f8c410ccf50b6222ad4f5bb156cc1645412ac138d307449f27f8355`.
 
+Configured publication, compatible reopen and fresh-epoch artifact operations
+now execute interface-only shared consumers with fixed original content,
+identity/epoch, exact receipt/ticket and protected-read expectations. Actual
+host construction, DI selection, configuration evaluation, mapping, module
+cardinality/identity/readiness, disabled-root observations, restart selection,
+stop and missing-guarantee inert-start rejection remain in the hosting fixture.
+No Hosting/Core dependency enters the SDK. All four frozen host cases remain
+unchanged; the next native request is 73 scopes/617 observations, pending,
+not complete binding/session/category or composition-profile acceptance.
+
+Prefix-cleanup run `40125248164` at exact head
+`871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
+183 foundations without failures/errors/skips and 71 scopes/608 exact
+discoveries/executions, including all six cleanup/stop/reopen rows and every
+actual prerequisite chain/native containment/eighteen-package/thirteen-lock
+replay. Input:
+`43b6d2627018f373112f5c9fc9e905e204b6bc291b0ed528d77f755d2b9117e3`;
+preparation:
+`86efcad80e99ec07ca0f96bbc7dcba8b4ef98a237780a71c764e063839f4e0d1`.
+
 The expanded budget request passed `40119412481` at exact head
 `70dfdf63f59a13ba39d934a7ef09f148bfc58c57`: all three jobs, 176 foundations
 without failures/errors/skips, 64 scopes/542 exact discoveries/executions, all

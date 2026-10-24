@@ -3034,6 +3034,49 @@ Previously measured transfer packets remain unchanged, not fresh session/
 category origins or new durable proof. Historical consumers/binaries, tracked
 locks and production APIs remain unchanged.
 
+Configured publication, compatible reopen and fresh-epoch artifact operations
+now execute interface-only shared consumers, preserving fixed original content,
+identity/epoch, exact ticket/receipt and protected-read assertions. Actual host
+construction, DI/configuration evaluation, mapping, module cardinality/identity/
+readiness, disabled-root observations, restart selection, stop and missing-
+guarantee inert-start rejection remain in the hosting fixture. No Hosting/Core
+dependency enters the SDK. Mechanical comparison verifies all three artifact
+operation blocks and unchanged complete host orchestration/defaults/inert-start
+body after explicit store/identity/cancellation forwarding.
+
+Missing consumers first failed actual package-mode compilation with CS0103;
+the missing exact scope failed its named tooling regression. All four frozen
+host cases remain unchanged. The new four-row native request is 73 scopes/
+617 observations, pending, not complete binding/session/category/composition
+profile acceptance. Tooling initially rejected local scratch below its actual
+24 GiB gate; reclaiming only 32 inspected completed-session NuGet caches restored
+capacity without changing that guard or deleting source, package archives,
+manifests or loaded images. The rerun passed 293 discovered / 276 passed /
+seventeen native macOS skips. SDK/accepted-wrapper whitespace, compiled/frozen
+catalogs, exact comparisons and patch integrity passed.
+
+Prefix-cleanup run
+[40125248164](https://github.com/Stonefly-Labs/Hoard/actions/runs/40125248164)
+passed at exact head `871e3a860a07646c513de01095cc29ad3e4add70`: all three
+jobs, 183 foundations without failures/errors/skips, 71 scopes/608 exact
+discoveries/executions and all six cleanup/stop/reopen rows. Every actual
+recovery/transfer/retention/external/native prerequisite chain, native containment
+and eighteen-package/thirteen-lock replay passed strict admission. Input:
+`43b6d2627018f373112f5c9fc9e905e204b6bc291b0ed528d77f755d2b9117e3`;
+preparation:
+`86efcad80e99ec07ca0f96bbc7dcba8b4ef98a237780a71c764e063839f4e0d1`.
+Object-cleanup run `40126135553` binds exact head
+`3de87aadf19bc83da2a8dc229335a19630d77ae5`, pending separate strict admission.
+Broad tasks, reviewer-owned checklists and stage gates remain open.
+
+`configured` and independent `configured-replay` each passed all 295 artifact
+cases and 89 metadata cases per provider without skips. Eleven archives and ten
+actual loaded dependency images reproduce exactly; combined archive-map SHA-256:
+`499229ddb0e58c9b57ed2c1cf59a44142e25b7bcd29c3cbe04867d767c56b1ce`.
+Previously measured transfer packets remain unchanged, not fresh session/
+category origins or new durable proof. Historical consumers/binaries, tracked
+locks and production APIs remain unchanged.
+
 Both remaining original object-cleanup bodies now execute common interface-only
 checks with all five frozen parameters, completing original failure-body
 extraction without claiming T027/T030 complete. Selected-object receipt/reuse,
