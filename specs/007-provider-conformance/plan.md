@@ -3372,9 +3372,81 @@ admission. Input:
 preparation:
 `a9a2e018a0f4f2f2b6cafcc64a998704fc65e03197d1df57fc09575e6c6aac18`.
 Configured-store run `40127065375` binds exact head
-`9ce6b252918149d225a0794fe168989dc317692f`, pending separate strict admission.
+`9ce6b252918149d225a0794fe168989dc317692f` and passed strict admission:
+all three jobs, 185 foundations without failures/errors/skips and 73 scopes/
+617 exact discoveries/executions, including all four frozen host cases,
+every actual prerequisite/native containment chain and eighteen-package/
+thirteen-lock replay. Input:
+`3efc4e7b362041d781d77b0f3f9b5338907723485e4b6cbfdea472f9e8e7949f`;
+preparation:
+`494dbcfb5394f72be741bc448043709b0fa30d54536f0a9fce648698968d595b`.
 The driver remains `implement / running`; broad tasks, reviewer-owned
 checklists and full profile/category gates remain open.
+
+### Partial owned Local artifact assertion session
+
+`IArtifactAssertionSession` and typed `ArtifactObservationPoint` expose only an
+explicit partial assertion projection, not a complete category binding or
+mandatory fault-driver stubs. The Local factory allocates before construction,
+uses the real provider beneath the allocator root's `store` child and joins
+failed admission. Actual validator, maintenance/lifetime, scoped observer
+registration and compatible reopen preserve one resource/identity/authority;
+stale disposal cannot release a replacement. No root is physically deleted and
+no `Released` observation is fabricated.
+
+Disposal serializes transitions, shares concurrent attempts, reuses unfinished
+allocator observations, and preserves one actual settlement task through retry.
+That task joins real store/worker/authority ownership; actual observer failures
+fault it only after physical joins, including failures completed before cleanup
+and failures while stop is already awaiting a callback. Ready remains false
+after a recorded observer failure. `AwaitSettlementAsync` documents its narrower
+provider-worker-only guarantee.
+
+Bounded architecture review identified optimistic callback ownership and
+overlapping allocator observation. Four new regressions first failed with eight
+existing Local cases passing. Delaying removal of original activity/retained
+entries passed those twelve cases but broke eight frozen public handoff/
+cancellation assertions in the full 300-case suite. Separate final-settlement
+tracking now joins actual release callbacks/token disposal/final callbacks on
+both providers while preserving original public admission, ticket-use, mutation
+and cancellation seams. The reviewer found no further correctness issue in
+this split; follow-up cases close the identified real-allocator-overlap and
+callback-throw-during-stop coverage gaps.
+
+The final package-only Consumer has fourteen Local rows, including scoped
+registration, unchanged publication/expectation/staging consumers, compatible
+reopen/stale disposal, retained guards, shared disposal, failed admission and
+both recorded/native allocation retries. Two additional actual Local/Object
+wrapper rows share a provider-free callback-ownership assertion. Both
+independent package preparations pass all 300 artifact cases and 89 metadata
+cases per provider without skips; the final Consumer passes fourteen without
+skips. Fifteen archives reproduce exactly, manifest SHA-256:
+`c90b76c93373d9b104d2b9a5d0326685a7ab88759a5f04572fa376c3e8a34cc8`.
+Ten Consumer dependency images match package bytes. Previously measured
+transfer packets are reused unchanged, not fresh category/session origins.
+Historical sources/binaries and tracked dependency locks remain unchanged.
+
+Native run `40128473761` at `1dc7ccf923adf6d19d3ee487e2abf5e87efdc025`
+passed foundations and lock replay but failed SDK transport with `WitnessMissing`
+before authority discovery. Its scope omitted the `original-artifact-` routing
+prefix. An exact assembly-routing regression first reproduced that failure and
+now passes; the failed run is never admitted. Local/Object binding preparation,
+isolated package-only Consumer runtime/logger/dependency verification, complete
+input capture and exact fourteen-row Local-vector rejection are now wired into
+the diagnostic. Replacement execution requests 75 scopes/636 observations,
+pending. These are diagnostic observations, not 192/179/13 category results.
+
+Tooling passed 298 discovered / 281 passed / seventeen macOS-native skips.
+Initial full tooling honestly hit the existing real 24 GiB scratch gate; only
+inspected completed private package caches were removed before successful
+rerun. SDK/provider/wrapper/binding/Consumer whitespace, compiled/frozen
+catalogs and patch hygiene pass. README, development/provider guides, quickstart
+and harness contract reflect this partial state. Product APIs, architecture/
+ADR/diagrams and custom-host examples are unaffected: no production contract,
+dependency graph, supported hosting/deployment or configuration behavior changed.
+Only T001–T018 remain checked; complete Local/Object category bindings and
+controls, parity/import/profile gates, contributor/aggregate work and final
+architecture review remain unfinished. No convergence, finish, merge or release.
 
 ## Summary
 

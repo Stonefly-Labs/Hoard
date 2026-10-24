@@ -16,6 +16,7 @@ public sealed partial class LocalArtifactStore
     private readonly Dictionary<string, LocalDecision> decisions = new(StringComparer.Ordinal);
     private readonly SemaphoreSlim[] digestGates = Enumerable.Range(0, 64).Select(_ => new SemaphoreSlim(1, 1)).ToArray();
     private readonly Dictionary<Guid, Task> activities = [];
+    private readonly Dictionary<Guid, Task> settlements = [];
     private readonly HashSet<Guid> retained = [];
     private readonly HashSet<Guid> busyTickets = [];
     private readonly Dictionary<Guid, Guid> ticketUses = [];
@@ -90,7 +91,7 @@ public sealed partial class LocalArtifactStore
     private bool IsBusy(Guid id) { lock (activitySync) { return busyTickets.Contains(id); } }
     private bool TicketInUse(Guid ticket) { lock (activitySync) { return ticketUses.ContainsValue(ticket); } }
     public Task WhenIdleForQualificationAsync()
-    { lock (activitySync) { return Task.WhenAll(activities.Values.ToArray()); } }
+    { lock (activitySync) { return Task.WhenAll(settlements.Values.ToArray()); } }
     private readonly Dictionary<Guid, Func<ValueTask>> incompleteHandoffs = [];
     private readonly Dictionary<Guid, Task> handoffRetries = [];
 
@@ -236,17 +237,30 @@ public sealed partial class LocalArtifactStore
                     lock (activitySync)
                     {
                         activities.Remove(id);
-                        ticketUses.Remove(id);
                         retained.Remove(id);
+                        ticketUses.Remove(id);
                         if (mutation) { busyTickets.Remove(ticket!.Id); }
                     }
-                    await faults.ObserveAsync("operation.released");
-                    cancellation.Dispose();
-                    deadline.Dispose();
-                    settled?.Invoke();
+                    try { await faults.ObserveAsync("operation.released"); }
+                    finally
+                    {
+                        try { cancellation.Dispose(); deadline.Dispose(); }
+                        finally
+                        {
+                            try { settled?.Invoke(); }
+                            finally
+                            {
+                                lock (activitySync)
+                                {
+                                    settlements.Remove(id);
+                                }
+                            }
+                        }
+                    }
                 }
             }, CancellationToken.None);
             activities.Add(id, activity);
+            settlements.Add(id, activity);
         }
         try { return await activity.WaitAsync(token); }
         catch (OperationCanceledException)

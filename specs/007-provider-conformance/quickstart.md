@@ -319,12 +319,23 @@ Configured publication, compatible reopen and fresh-epoch artifact checks now
 also share consumers. Actual hosting/DI/mapping/readiness/restart/stop and
 missing-guarantee checks remain fixture-side, without a Hosting dependency in
 the SDK. The next four-row native request preserves all frozen host cases at
-73 scopes/617 observations, pending, not full category/profile acceptance.
+73 scopes/617 observations passed at `9ce6b25`, run `40127065375`, with all
+three jobs and 185 foundations, not full category/profile acceptance.
 An explicit authority shutdown fence now joins guards, queued admissions and
 actual retained reference queries before reopen. Local/Object binding packages
 compile the same authority source internally without new cross-provider/Hosting
 dependencies. This is an owned-session prerequisite, not complete bindings.
-Three new shared checks request 74 scopes/620 observations, pending.
+Three shared checks requested 74 scopes/620 observations; run `40128473761`
+failed before authority discovery because its scope lacked the original-artifact
+routing prefix. The routing is corrected, not accepted as a passing run.
+The partial `LocalArtifactAssertionSessions` projection now uses real typed
+observers, compatible reopen and stable joined provider/authority ownership,
+without advertising complete binding/fault controls or physical release.
+Fourteen package-only Local cases cover stale disposal, callback settlement/
+failure, retained guards and retry with both recorded and actual native
+allocation. Two common checks retain real Local/Object release callbacks through
+idle/stop without changing original public handoff/capacity behavior. The
+replacement native request is 75 scopes/636 observations, pending.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

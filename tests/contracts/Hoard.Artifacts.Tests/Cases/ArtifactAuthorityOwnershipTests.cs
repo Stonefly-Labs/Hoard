@@ -8,6 +8,20 @@ public sealed class ArtifactAuthorityOwnershipTests
 {
     private readonly ArtifactStoreIdentity store = new("fixture.artifact", Guid.NewGuid(), Guid.NewGuid());
 
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Released_operation_callback_remains_real_owned_work_until_final_settlement(string provider)
+    {
+        await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
+        await ArtifactLifecycleAssertions.ReleasedBoundaryOwnershipAsync(driver.Store,
+            observer =>
+            {
+                if (driver.LocalControls is { } local) { local.SetObserver("operation.released", observer); }
+                else { driver.ObjectControls!.SetObserver("object.operation-released", observer); }
+            }, driver.WhenIdleAsync, () => driver.StopAsync(new(TimeSpan.FromSeconds(5))), default);
+    }
+
     [Fact]
     public async Task Shutdown_fence_joins_recognized_retained_and_queued_guards_before_reopen()
     {

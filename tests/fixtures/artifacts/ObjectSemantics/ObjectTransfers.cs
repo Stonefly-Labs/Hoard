@@ -44,6 +44,7 @@ public sealed partial class ObjectArtifactStore
     private readonly ConcurrentDictionary<Guid, byte> failedAssemblyCleanup = [];
     private readonly Dictionary<string, ObjectPointer> pointers = new(StringComparer.Ordinal);
     private readonly Dictionary<Guid, Task> ownedWork = [];
+    private readonly Dictionary<Guid, Task> settlements = [];
     private readonly HashSet<Guid> lateWork = [];
     private readonly Dictionary<Guid, Func<ValueTask>> incompleteHandoffs = [];
     private readonly Dictionary<Guid, Task> handoffRetries = [];
@@ -123,7 +124,7 @@ public sealed partial class ObjectArtifactStore
     private bool MutationActive(Guid ticket) { lock (workSync) { return activeMutations.Contains(ticket); } }
     private bool TicketObserved(Guid ticket) { lock (workSync) { return ticketReaders.ContainsValue(ticket); } }
     public Task WhenIdleForQualificationAsync()
-    { lock (workSync) { return Task.WhenAll(ownedWork.Values.ToArray()); } }
+    { lock (workSync) { return Task.WhenAll(settlements.Values.ToArray()); } }
 
     private async ValueTask ReclaimUndeliveredAsync<T>(Guid id, T value, Func<T, ValueTask> reclaim)
     {
@@ -242,17 +243,30 @@ public sealed partial class ObjectArtifactStore
                     lock (workSync)
                     {
                         ownedWork.Remove(id);
-                        ticketReaders.Remove(id);
                         lateWork.Remove(id);
+                        ticketReaders.Remove(id);
                         if (mutating) { activeMutations.Remove(ticket!.Id); }
                     }
-                    await faults.ObserveAsync("object.operation-released");
-                    cancellation.Dispose();
-                    deadline.Dispose();
-                    onSettled?.Invoke();
+                    try { await faults.ObserveAsync("object.operation-released"); }
+                    finally
+                    {
+                        try { cancellation.Dispose(); deadline.Dispose(); }
+                        finally
+                        {
+                            try { onSettled?.Invoke(); }
+                            finally
+                            {
+                                lock (workSync)
+                                {
+                                    settlements.Remove(id);
+                                }
+                            }
+                        }
+                    }
                 }
             }, CancellationToken.None);
             ownedWork.Add(id, work);
+            settlements.Add(id, work);
         }
         try { return await work.WaitAsync(token); }
         catch (OperationCanceledException)

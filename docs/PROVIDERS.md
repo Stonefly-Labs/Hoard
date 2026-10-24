@@ -480,8 +480,8 @@ now also share interface-only checks. Actual host construction/DI/configuration,
 mapping, module identity/readiness, disabled-root checks, restart/stop and
 missing-guarantee inert-start rejection remain fixture-side. No Hosting/Core
 dependency enters the SDK. The next four-row request preserves all frozen host
-cases at 73 scopes/617 observations, pending, not full binding/category/profile
-qualification.
+cases passed at `9ce6b25`, run `40127065375`: all three jobs, 185 foundations
+and 73 scopes/617 observations, not full binding/category/profile qualification.
 
 Owned artifact sessions now have an authority-quiescence prerequisite: an
 explicit closing fence rejects new acquisitions while retaining existing handles
@@ -490,9 +490,24 @@ Reopen cannot reuse a completed prior-generation settlement. Both binding
 packages source-link that same fixture authority as internal types, preserving
 their SDK/own-provider-only dependencies instead of importing HostAdapters,
 Hosting or the other provider. No complete binding/fault-control admission or
-physical release is claimed. Three new common checks request 74 scopes/620
-observations, pending. Two independent package builds reproduce both private
+physical release is claimed. Three common checks requested 74 scopes/620
+observations; run `40128473761` failed before authority discovery because its
+scope lacked the original-artifact routing prefix. That routing is corrected;
+the failed run is not admitted. Two independent package builds reproduce both private
 authority archives and exercise actual retained-guard/reopen behavior.
+
+`LocalArtifactAssertionSessions` is a partial assertion projection, not an
+`IArtifactConformanceBinding` or complete fault driver. It constructs the real
+Local store beneath an allocator-owned child, registers scoped typed observers,
+reopens with the same identity/authority, and joins actual stop, callback work
+and fenced authority before settling ownership. Disposing a stale session cannot
+release its replacement. Retry reuses a pending allocator observation and the
+same actual task; observer failures remain faulted after physical joins rather
+than becoming successful cleanup. It never deletes roots or reports `Released`.
+Both providers separately track release-callback settlement from public
+operation admission, preserving inherited cancellation/handoff/capacity checks.
+Fourteen package-only Local cases and two common Local/Object callback cases
+pass; the replacement native request is 75 scopes/636 observations, pending.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

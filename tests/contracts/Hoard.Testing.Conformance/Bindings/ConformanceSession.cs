@@ -158,6 +158,32 @@ public sealed record ConformanceStateFingerprint
     public string Sha256 { get; }
 }
 
+public enum ArtifactObservationPoint
+{
+    StagePrefix, StageVerified, PublicationAdmitted, BeforePublicationDecision,
+    PublicationSelected, ReceiptPersisted, ReadOpened, ReadCopy, DeleteRemoved,
+    DeleteReclaimed, CleanupCandidate, TransferQueued, BeforeReconciliation,
+    ReconciliationVerified, OperationReleased, OperationCompleted, OperationReclaim
+}
+
+/// <summary>An owned assertion projection, not admission as a complete artifact category binding.</summary>
+public interface IArtifactAssertionSession : IAsyncDisposable
+{
+    IArtifactStore Store { get; }
+    IArtifactEvidenceValidator Validator { get; }
+    IArtifactMaintenance Maintenance { get; }
+    IArtifactStoreLifetime Lifetime { get; }
+    IArtifactCoordinationAuthority Authority { get; }
+    ArtifactStoreIdentity Identity { get; }
+    bool Ready { get; }
+    ValueTask<IArtifactAssertionSession> ReopenAsync(CancellationToken cancellationToken);
+    ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
+        ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken);
+    /// <summary>Joins current provider workers; this does not close authority admission or release owned roots.</summary>
+    ValueTask AwaitSettlementAsync(CancellationToken cancellationToken);
+    ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken cancellationToken);
+}
+
 public interface IArtifactConformanceSession : IAsyncDisposable
 {
     IArtifactStore Store { get; }

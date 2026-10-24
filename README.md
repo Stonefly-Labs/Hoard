@@ -1556,17 +1556,32 @@ open.
 Configured publication, compatible reopen and fresh-epoch artifact checks now
 also share interface-only consumers. Actual host/DI/mapping/readiness/restart
 and missing-guarantee checks remain in the hosting fixture. The next four-row
-native request preserves all frozen host cases at 73 scopes/617 observations,
-pending, not complete binding/category/profile qualification.
+native request passed at `9ce6b25`, run
+[40127065375](https://github.com/Stonefly-Labs/Hoard/actions/runs/40127065375):
+all three jobs, 185 foundations and 73 scopes/617 observations, not complete
+binding/category/profile qualification.
 
 An opt-in authority shutdown fence now joins recognized/retained guards, queued
 admissions and actual retained reference queries before allowing reopen. Local
 and Object binding packages compile the same authority source as internal types,
 without adding Hosting or the other provider to their dependency closures.
 This is an owned-session prerequisite, not a complete binding. Three new shared
-checks request 74 scopes/620 observations; native execution is pending. The
+checks requested 74 scopes/620 observations. Run `40128473761` failed before
+authority discovery because its scope lacked the original-artifact routing
+prefix; that transport is corrected, not accepted as a passing run. The
 preceding object-cleanup run `40126135553` at `3de87aa` passed all three jobs,
 184 foundations and 72 scopes/613 observations, not full qualification.
+
+An explicitly partial owned Local assertion session now supports typed real
+observers, compatible reopen and joined provider/authority settlement. Stale
+sessions cannot dispose replacements; retries preserve the same actual task and
+pending allocator observation, including callback failure. Separate callback
+ownership keeps idle/stop honest without changing frozen public result-handoff
+or capacity behavior on either artifact provider. Fourteen package-only Local
+cases include real native-allocator overlap rejection; two common Local/Object
+checks hold actual release callbacks through stop. The replacement native
+request is 75 scopes/636 observations, pending. Full bindings, mandatory fault
+controls and category/profile acceptance remain unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

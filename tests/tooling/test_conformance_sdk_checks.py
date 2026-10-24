@@ -566,6 +566,30 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_local_artifact_session_scope_requires_unchanged_consumers_and_actual_ownership(self):
+        factory = getattr(checks, "local_artifact_session_scenarios", None)
+        self.assertTrue(callable(factory), "Owned Local sessions need exact package-only transport.")
+        prefix = "Hoard.Fixtures.Conformance.Consumer.LocalArtifactSessionTests."
+        identities = {
+            prefix + f'Owned_local_projection_executes_unchanged_common_consumers(consumer: "{consumer}")'
+            for consumer in ("publication", "expectations", "private-staging")}
+        identities.update(prefix + method for method in (
+            "Scoped_observation_cannot_overwrite_a_live_registration_or_remove_its_replacement",
+            "Local_reopen_keeps_identity_authority_content_and_allocation_without_stale_disposal",
+            "Physical_store_stop_cannot_release_a_live_authority_guard_or_erase_retained_observation",
+            "Concurrent_disposers_join_one_attempt_and_the_same_actual_settlement",
+            "Failed_initialization_retains_allocator_ownership_and_joins_actual_shutdown"))
+        identities.update(prefix
+            + "Released_boundary_stays_owned_through_actual_callback_and_reopen_or_disposal(reopen: " + value + ")"
+            for value in ("False", "True"))
+        for method, parameter in (
+            ("Observer_failure_before_or_during_cleanup_remains_in_the_same_actual_settlement", "duringCleanup"),
+            ("Concurrent_direct_stop_and_disposal_retry_reuse_the_pending_allocator_observation", "actualAllocator"),
+        ):
+            identities.update(prefix + method + f"({parameter}: {value})" for value in ("False", "True"))
+        scenario, = factory()
+        self.assertEqual(scenario, ("local-artifact-session", tuple(sorted(identities)), "None", "Passed", 0, "None"))
+
     def test_artifact_authority_ownership_scope_requires_all_live_settlement_cases(self):
         factory = getattr(checks, "artifact_authority_ownership_scenarios", None)
         self.assertTrue(callable(factory), "Owned artifact adapters need actual authority-quiescence transport.")
@@ -574,9 +598,68 @@ class SdkDiagnosticTests(unittest.TestCase):
             prefix + "Shutdown_fence_joins_recognized_retained_and_queued_guards_before_reopen",
             prefix + "Shutdown_fence_joins_actual_noncooperating_reference_query_before_reopen",
             prefix + "Shutdown_fence_observes_canceled_waiter_without_losing_the_current_guard"}
+        identities.update(prefix + "Released_operation_callback_remains_real_owned_work_until_final_settlement"
+                          + f'(provider: "{provider}")' for provider in ("local", "object"))
         scenario, = factory()
-        self.assertEqual(scenario, ("artifact-authority-ownership", tuple(sorted(identities)),
+        self.assertEqual(scenario, ("original-artifact-authority-ownership", tuple(sorted(identities)),
                                     "None", "Passed", 0, "None"))
+
+    def test_owned_artifact_scopes_discover_their_actual_distinct_assemblies(self):
+        candidate = self.directory / "candidate"
+        for scenario, folder, assembly_name in (
+                (checks.artifact_authority_ownership_scenarios()[0], checks.ARTIFACT_TESTS, "Hoard.Artifacts.Tests.dll"),
+                (checks.local_artifact_session_scenarios()[0], checks.ARTIFACT_CONSUMER,
+                 "Hoard.Fixtures.Conformance.Consumer.dll")):
+            output = checks.ARTIFACT_TEST_OUTPUT if folder == checks.ARTIFACT_TESTS else checks.PACKAGE_TEST_OUTPUT
+            assembly = candidate / folder / output / "Release/net10.0" / assembly_name
+            inputs = {
+                "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+                "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+                "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+            }
+            with self.subTest(scope=scenario[0]), patch.object(
+                    checks, "runtime_command", side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+                launch.assert_called_once()
+                self.assertEqual(launch.call_args.args[1], assembly)
+                self.assertEqual(launch.call_args.args[2]["purpose"], "discovery")
+                self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, set(scenario[1]))
+
+    def test_owned_artifact_consumer_builds_real_bindings_before_its_isolated_locked_runtime(self):
+        run = SimpleNamespace(root=self.directory)
+        candidate = self.directory / "candidate"
+        config = self.directory / "NuGet.Config"
+        feed = self.directory / "feed"
+        with patch.object(checks, "prepare_project_lock", return_value=(None, None)) as prepare, \
+                patch.object(checks, "build") as build, \
+                patch.object(checks, "_original_wrapper_runtime") as runtime:
+            checks.build_artifact_assertion_consumer(run, candidate, config, feed)
+        projects = [
+            candidate / f"tests/fixtures/conformance/Bindings/{name}/{name}.csproj"
+            for name in ("Local", "ObjectSemantics")]
+        projects.append(candidate / checks.ARTIFACT_CONSUMER / "Consumer.csproj")
+        self.assertEqual([call.args[0] for call in prepare.call_args_list], projects)
+        self.assertEqual([call.args[1] for call in build.call_args_list], projects)
+        for call, name in zip(build.call_args_list[:2], ("Local", "ObjectSemantics")):
+            self.assertEqual(call.kwargs["feed"], feed)
+            self.assertEqual(call.kwargs["package_id"], "Hoard.Fixtures.Conformance.Bindings." + name)
+        consumer = build.call_args_list[-1]
+        self.assertEqual(consumer.args[3], "artifact-consumer-locked-replay")
+        self.assertEqual(consumer.kwargs["properties"], ("-p:BaseOutputPath=bin/package-diagnostic/",))
+        self.assertNotIn("feed", consumer.kwargs)
+        runtime.assert_called_once_with(candidate, feed, checks.ARTIFACT_CONSUMER,
+                                        checks.PACKAGE_TEST_OUTPUT, checks.ARTIFACT_CONSUMER_PACKAGES)
+
+    def test_incomplete_or_foreign_owned_local_vectors_never_launch(self):
+        name, identities, *outcome = checks.local_artifact_session_scenarios()[0]
+        for invalid in (identities[:-1], identities + ("Foreign.Test",),
+                        (identities[0].replace("LocalArtifactSessionTests", "ForeignTests"), *identities[1:])):
+            with self.subTest(vector=invalid), patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, self.directory / "candidate",
+                                        (name, invalid, *outcome))
+                launch.assert_not_called()
 
     def test_artifact_configured_store_scope_preserves_all_frozen_host_selection_cases(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_configured_store_scenarios", None)),
@@ -1542,6 +1625,10 @@ class SdkDiagnosticTests(unittest.TestCase):
             "Release/net10.0/Hoard.Testing.Conformance.dll")
         artifact_wrapped.parent.mkdir(parents=True)
         artifact_wrapped.write_bytes(b"shared-sdk")
+        artifact_consumer = candidate / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
+        artifact_consumer.parent.mkdir(parents=True)
+        artifact_consumer.write_bytes(b"owned-artifact-session")
         sources = checks.evidence.source_manifest(repository)
         environment = {
             "os": "linux", "osVersion": "test", "architecture": "x86_64",
@@ -1554,9 +1641,10 @@ class SdkDiagnosticTests(unittest.TestCase):
             return checks.make_inputs(run, repository, candidate, sources,
                                       environment, identity, None, group_id=group_id)
         before = capture()
-        self.assertEqual(len(before["packages"]), 13)
+        self.assertEqual(len(before["packages"]), 15)
         self.assertNotIn(str(self.directory).encode(), checks.evidence.canonical_bytes(before))
-        for path in (native, wrapped, artifact_wrapped, runtime / "Added.dll", runtime / "Tests.runtimeconfig.json",
+        for path in (native, wrapped, artifact_wrapped, artifact_consumer,
+                     runtime / "Added.dll", runtime / "Tests.runtimeconfig.json",
                      candidate / "added.packages.lock.json"):
             with self.subTest(path=path.name):
                 original = path.read_bytes() if path.exists() else None

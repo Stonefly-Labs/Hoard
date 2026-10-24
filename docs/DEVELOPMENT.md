@@ -6781,8 +6781,9 @@ host construction, DI selection, configuration evaluation, mapping, module
 cardinality/identity/readiness, disabled-root observations, restart selection,
 stop and missing-guarantee inert-start rejection remain in the hosting fixture.
 No Hosting/Core dependency enters the SDK. All four frozen host cases remain
-unchanged; the next native request is 73 scopes/617 observations, pending,
-not complete binding/session/category or composition-profile acceptance.
+unchanged. Run `40127065375` at `9ce6b25` passed all three jobs,
+185 foundations and 73 scopes/617 observations, not complete binding/session/
+category or composition-profile acceptance.
 
 The owned artifact adapter prerequisite now has an opt-in authority closing
 fence. It synchronously rejects new acquisitions, preserves same-operation
@@ -6806,8 +6807,10 @@ binding-package builds also reproduced both archives; runtime probes exercised
 both actual private authority copies and rejected public type/dependency leakage.
 Tooling passed 294 discovered / 277 passed / seventeen native macOS skips;
 SDK, accepted-wrapper and authority whitespace plus frozen/compiled catalogs
-passed. The next three-row native request is 74 scopes/620 observations,
-pending, not full qualification.
+passed. The three-row native request was 74 scopes/620 observations.
+Run `40128473761` failed before authority discovery because its scope lacked the
+original-artifact routing prefix; the repaired scope now reaches the correct
+original artifact assembly. The failed run is never admitted.
 
 Object-cleanup run `40126135553` at exact head
 `3de87aadf19bc83da2a8dc229335a19630d77ae5` passed all three jobs,
@@ -6818,6 +6821,35 @@ replay. Input:
 `b7b093f225913a2cf45192913ed1deafc54bd0d1e205fb008743a0e37f919bd0`;
 preparation:
 `a9a2e018a0f4f2f2b6cafcc64a998704fc65e03197d1df57fc09575e6c6aac18`.
+
+The partial `LocalArtifactAssertionSessions` adapter now creates the actual
+Local provider under an allocator-owned `store` child with typed scoped
+observers and compatible identity/authority-preserving reopen. It joins real
+provider stop, callback workers and fenced authority on one stable final task;
+stale disposal cannot release a replacement. Disposal retries reuse pending
+allocator observation, and observer failure remains faulted even if it occurred
+before cleanup or while stop was waiting. No full binding/fault-driver support,
+physical root deletion or `Released` observation is claimed.
+
+Architecture review found that removing provider activities before the release
+callback made idle/stop optimistic. Simply delaying that removal passed twelve
+new Local cases but failed eight inherited handoff/cancellation cases. Separate
+final-settlement tracking on Local/Object fixes both: original admission,
+ticket-use, mutation and cancellation seams remain, while stop/idle join real
+callbacks and final cleanup. All 300 artifact cases pass twice, and both
+89-case metadata runs pass on each preparation. Fourteen final Local package-only
+cases also pass, including real native allocator overlap rejection and failure
+while stop awaits a callback. Fifteen independently built archives match exactly
+with ten Consumer dependency image checks; tracked locks remain unchanged.
+The recorded observation double is not native/category-origin proof.
+
+Repository tooling passed 298 discovered / 281 passed / seventeen native macOS
+skips. A first run honestly rejected insufficient real scratch capacity;
+only inspected, completed private package caches were removed before rerunning,
+without changing the 24 GiB gate or deleting evidence/images/source. Formatting,
+frozen inventory, compiled catalogs and patch checks pass. Replacement native
+execution requests 75 scopes/636 observations, pending. T027–T030 and full
+category/profile gates remain open; the stage remains `implement / running`.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

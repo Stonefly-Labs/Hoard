@@ -622,8 +622,9 @@ content, identity/epoch, exact ticket/receipt and protected-read assertions.
 Actual hosting/DI/configuration/mapping, module cardinality/identity/readiness,
 disabled roots, restart/stop and missing-guarantee inert-start rejection remain
 fixture-side; no Hosting/Core dependency enters the SDK. The next four-row
-native request preserves all frozen host cases at 73 scopes/617 observations,
-pending, not complete bindings/category/session or composition-profile proof.
+native request passed at `9ce6b25`, run `40127065375`: all three jobs,
+185 foundations and 73 scopes/617 observations, not complete bindings/category/
+session or composition-profile proof.
 
 Owned-session preparation now includes an explicit authority closing fence that
 joins recognized/retained guards, queued admissions and actual retained reference
@@ -632,7 +633,29 @@ creates a new task rather than borrowing a completed predecessor. Binding-only
 compilation makes the same source-linked authority/reference-decision internal,
 without importing HostAdapters, Hosting or the other provider. These are not
 complete category bindings or substitute mandatory fault controls. Three common
-checks request 74 scopes/620 observations, pending.
+checks requested 74 scopes/620 observations. Run `40128473761` failed before
+authority discovery because its scope lacked the original-artifact routing
+prefix; that transport is corrected and the failed run is not admitted.
+
+`IArtifactAssertionSession` is explicitly a partial projection, separate from
+the complete category session/fault-driver contract. Its typed observation points
+select real fixture boundaries, not expected results. The Local implementation
+constructs actual store/validator/maintenance/lifetime surfaces, keeps one
+identity/authority/resource through compatible reopen, rejects overlapping
+registrations/transitions and protects replacements from stale disposal.
+Actual settlement joins store stop, final callback work and authority ownership;
+allocator retries share that same task and reuse unfinished observations.
+Callback failures remain faulted after physical joins, including failure during
+stop; a successful retry cannot erase them. Only the controller may physically
+delete roots or report `Released`. `AwaitSettlementAsync` joins observed provider
+workers only, not authority closure or controller release.
+
+Local/Object provider callbacks have separate final-settlement tracking so idle
+and stop retain their work without changing frozen public cancellation/handoff
+or admission capacity. Fourteen package-only Local cases include actual native
+allocator overlap enforcement; two interface-only common checks exercise real
+release ownership on both providers. The replacement exact native request is
+75 scopes/636 observations, pending, not complete category/profile proof.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

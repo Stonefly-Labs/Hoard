@@ -46,6 +46,14 @@ METADATA_TESTS = f"{CONTRACTS}/Hoard.Metadata.Tests"
 METADATA_TEST_OUTPUT = "bin/wrapper-diagnostic"
 ARTIFACT_TESTS = f"{CONTRACTS}/Hoard.Artifacts.Tests"
 ARTIFACT_TEST_OUTPUT = "bin/wrapper-diagnostic"
+ARTIFACT_CONSUMER = "tests/fixtures/conformance/Consumer"
+ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.LocalArtifactSessionTests."
+ARTIFACT_CONSUMER_PACKAGES = (
+    "Hoard.Abstractions", "Hoard.Testing.Conformance",
+    "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite",
+    "Hoard.Fixtures.Artifacts.Local", "Hoard.Fixtures.Artifacts.ObjectSemantics",
+    *(f"Hoard.Fixtures.Conformance.Bindings.{name}" for name in ("Memory", "Sqlite", "Local", "ObjectSemantics")),
+)
 LOCAL_PACKAGES = (
     "Hoard.Abstractions", "Hoard.Testing.Conformance", "Hoard.Conformance.TestLogger",
     "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Conformance.Bindings.Memory",
@@ -59,12 +67,15 @@ METADATA_RECOVERY_PACKAGES = tuple(name for name in METADATA_PACKAGES if name !=
 ARTIFACT_PACKAGES = (*METADATA_PACKAGES, "Hoard.Fixtures.Artifacts.Local",
                      "Hoard.Fixtures.Artifacts.ObjectSemantics", "Hoard.Fixtures.Artifacts.HostAdapters")
 ARTIFACT_RECOVERY_PACKAGES = tuple(name for name in ARTIFACT_PACKAGES if name != "Hoard.Testing.Conformance")
-INPUT_PACKAGES = tuple(dict.fromkeys((*LOCAL_PACKAGES, *METADATA_PACKAGES, *ARTIFACT_PACKAGES)))
+INPUT_PACKAGES = tuple(dict.fromkeys((
+    *LOCAL_PACKAGES, *METADATA_PACKAGES, *ARTIFACT_PACKAGES, *ARTIFACT_CONSUMER_PACKAGES)))
 BINDING_TEST_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingTests."
 BINDING_OWNERSHIP_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MemoryBindingOwnershipTests."
 SQLITE_BINDING_PREFIX = "Hoard.Fixtures.Conformance.Consumer.SqliteBindingTests."
 SQLITE_MECHANISM_PREFIX = "Hoard.Fixtures.Conformance.Consumer.SqliteMechanismTests."
-BINDING_TEST_PREFIXES = (BINDING_TEST_PREFIX, BINDING_OWNERSHIP_PREFIX, SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX)
+BINDING_TEST_PREFIXES = (
+    BINDING_TEST_PREFIX, BINDING_OWNERSHIP_PREFIX, SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX,
+    ARTIFACT_CONSUMER_PREFIX)
 PACKAGE_TEST_OUTPUT = "bin/package-diagnostic"
 PACKAGE_TEST_PREFIX = "Hoard.Conformance.Tests.MemoryMechanismTests."
 PACKAGE_TEST_METHOD = (PACKAGE_TEST_PREFIX +
@@ -505,6 +516,26 @@ def metadata_wrapper_runtime(candidate, feed):
 
 def artifact_wrapper_runtime(candidate, feed):
     _original_wrapper_runtime(candidate, feed, ARTIFACT_TESTS, ARTIFACT_TEST_OUTPUT, ARTIFACT_PACKAGES)
+
+
+def build_artifact_assertion_consumer(run, candidate, config, feed):
+    for name in ("Local", "ObjectSemantics"):
+        project = candidate / f"tests/fixtures/conformance/Bindings/{name}/{name}.csproj"
+        lock, record = prepare_project_lock(project, candidate, feed, "candidate")
+        build(run, project, config, "artifact-binding-package", lock=lock, feed=feed,
+              package_id="Hoard.Fixtures.Conformance.Bindings." + name)
+        if record is not None:
+            verify_project_lock(record, candidate, feed)
+            write_new(run.root / f"proofs/artifact-binding-{name}-lock-derivation.json",
+                      evidence.canonical_bytes(record))
+    project = candidate / ARTIFACT_CONSUMER / "Consumer.csproj"
+    lock, record = prepare_project_lock(project, candidate, feed, "candidate")
+    build(run, project, config, "artifact-consumer-locked-replay", lock=lock,
+          properties=("-p:BaseOutputPath=" + PACKAGE_TEST_OUTPUT + "/",))
+    if record is not None:
+        verify_project_lock(record, candidate, feed)
+        write_new(run.root / "proofs/artifact-consumer-lock-derivation.json", evidence.canonical_bytes(record))
+    _original_wrapper_runtime(candidate, feed, ARTIFACT_CONSUMER, PACKAGE_TEST_OUTPUT, ARTIFACT_CONSUMER_PACKAGES)
 
 
 def admit_sqlite_environment(observed, platform, runtime, package, locked):
@@ -1003,13 +1034,37 @@ def artifact_noncooperation_diagnostics(run, inputs, candidate):
     return result
 
 
+def local_artifact_session_scenarios():
+    identities = {
+        ARTIFACT_CONSUMER_PREFIX + f'Owned_local_projection_executes_unchanged_common_consumers(consumer: "{consumer}")'
+        for consumer in ("publication", "expectations", "private-staging")}
+    identities.update(ARTIFACT_CONSUMER_PREFIX + method for method in (
+        "Scoped_observation_cannot_overwrite_a_live_registration_or_remove_its_replacement",
+        "Local_reopen_keeps_identity_authority_content_and_allocation_without_stale_disposal",
+        "Physical_store_stop_cannot_release_a_live_authority_guard_or_erase_retained_observation",
+        "Concurrent_disposers_join_one_attempt_and_the_same_actual_settlement",
+        "Failed_initialization_retains_allocator_ownership_and_joins_actual_shutdown"))
+    identities.update(ARTIFACT_CONSUMER_PREFIX
+        + "Released_boundary_stays_owned_through_actual_callback_and_reopen_or_disposal(reopen: " + value + ")"
+        for value in ("False", "True"))
+    for method, parameter in (
+        ("Observer_failure_before_or_during_cleanup_remains_in_the_same_actual_settlement", "duringCleanup"),
+        ("Concurrent_direct_stop_and_disposal_retry_reuse_the_pending_allocator_observation", "actualAllocator"),
+    ):
+        identities.update(ARTIFACT_CONSUMER_PREFIX + method + f"({parameter}: {value})"
+                          for value in ("False", "True"))
+    return (("local-artifact-session", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def artifact_authority_ownership_scenarios():
     prefix = "Hoard.Artifacts.Tests.ArtifactAuthorityOwnershipTests."
-    identities = tuple(sorted(prefix + name for name in (
+    identities = {prefix + name for name in (
         "Shutdown_fence_joins_recognized_retained_and_queued_guards_before_reopen",
         "Shutdown_fence_joins_actual_noncooperating_reference_query_before_reopen",
-        "Shutdown_fence_observes_canceled_waiter_without_losing_the_current_guard")))
-    return (("artifact-authority-ownership", identities, "None", "Passed", 0, "None"),)
+        "Shutdown_fence_observes_canceled_waiter_without_losing_the_current_guard")}
+    identities.update(prefix + "Released_operation_callback_remains_real_owned_work_until_final_settlement"
+                      + f'(provider: "{provider}")' for provider in ("local", "object"))
+    return (("original-artifact-authority-ownership", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
 def original_artifact_configured_store_scenarios():
@@ -1340,6 +1395,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     locks = [f"{prefix}/{name}" for name in inventory if name.endswith("packages.lock.json")]
     runtime_folders = {f"{TESTS}/bin/Release/net10.0", f"{LOGGER}/Smoke/bin/Release/net10.0",
                        f"{TESTS}/{PACKAGE_TEST_OUTPUT}/Release/net10.0",
+                       f"{ARTIFACT_CONSUMER}/{PACKAGE_TEST_OUTPUT}/Release/net10.0",
                        f"{METADATA_TESTS}/{METADATA_TEST_OUTPUT}/Release/net10.0",
                        f"{ARTIFACT_TESTS}/{ARTIFACT_TEST_OUTPUT}/Release/net10.0"}
     runtime_folders.add(f"{METADATA_RECOVERY}/bin/Release/net10.0")
@@ -1368,7 +1424,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-budget", "original-artifact-authority", "original-artifact-capability",
             "original-artifact-metadata-integration", "original-artifact-metadata-bridge",
             "original-artifact-lifecycle", "original-artifact-failure", "original-artifact-prefix-cleanup",
-            "original-artifact-object-cleanup", "original-artifact-configured-store", "artifact-authority-ownership"],
+            "original-artifact-object-cleanup", "original-artifact-configured-store", "original-artifact-authority-ownership",
+            "local-artifact-session"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1378,6 +1435,10 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
 
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
+    if (name == "local-artifact-session"
+            or any(identity.startswith(ARTIFACT_CONSUMER_PREFIX) for identity in identities)):
+        if scenario not in local_artifact_session_scenarios():
+            raise evidence.ConformanceError("WitnessMissing")
     original_metadata = name.startswith("original-metadata-")
     original_artifacts = name.startswith("original-artifact-")
     original_tests = original_metadata or original_artifacts
@@ -1414,6 +1475,8 @@ def test_attempt(run, inputs, candidate, scenario):
         folder, output, assembly_name = ARTIFACT_TESTS, ARTIFACT_TEST_OUTPUT, "Hoard.Artifacts.Tests.dll"
     elif original_metadata:
         folder, output, assembly_name = METADATA_TESTS, METADATA_TEST_OUTPUT, "Hoard.Metadata.Tests.dll"
+    elif all(identity.startswith(ARTIFACT_CONSUMER_PREFIX) for identity in identities):
+        folder, output, assembly_name = ARTIFACT_CONSUMER, PACKAGE_TEST_OUTPUT, "Hoard.Fixtures.Conformance.Consumer.dll"
     else:
         output = PACKAGE_TEST_OUTPUT if package_tests else "bin"
         folder = TESTS if source_tests else LOGGER + "/Smoke"
@@ -1735,6 +1798,7 @@ def execute(repository, destination):
               "artifact-wrapper-locked-replay", lock=artifact_wrapper_lock, properties=(
                   "-p:ArtifactPackageAcceptance=true", "-p:BaseOutputPath=" + ARTIFACT_TEST_OUTPUT + "/"))
         artifact_wrapper_runtime(candidate, feed)
+        build_artifact_assertion_consumer(run, candidate, config, feed)
         if evidence.source_identity(repository, ci_revision=ci_revision) != identity:
             raise evidence.ConformanceError("InputChanged")
         # This is an independently planned diagnostic declaration, not observed provider behavior.
@@ -1832,6 +1896,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "artifact-authority-ownership"}), flush=True)
         for scenario in artifact_authority_ownership_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "local-artifact-session"}), flush=True)
+        for scenario in local_artifact_session_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

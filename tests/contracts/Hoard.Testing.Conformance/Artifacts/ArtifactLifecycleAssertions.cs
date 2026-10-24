@@ -5,6 +5,34 @@ namespace Hoard.Testing.Conformance.Artifacts;
 
 public static class ArtifactLifecycleAssertions
 {
+    public static async Task ReleasedBoundaryOwnershipAsync(
+        IArtifactStore store, Action<Func<ValueTask>> observeReleased, Func<Task> whenIdle,
+        Func<ValueTask<ArtifactResult<ArtifactShutdown>>> stop, CancellationToken cancellationToken)
+    {
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        observeReleased(() => { entered.TrySetResult(); return new(release.Task); });
+        var reservation = store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken).AsTask();
+        Task? actual = null;
+        Task<ArtifactResult<ArtifactShutdown>>? stopping = null;
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+            actual = whenIdle();
+            Assert.False(actual.IsCompleted);
+            stopping = stop().AsTask();
+            Assert.False(stopping.IsCompleted);
+        }
+        finally
+        {
+            release.TrySetResult();
+            Success(await reservation);
+            if (actual is not null) { await actual.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken); }
+            if (stopping is not null)
+            { Assert.Equal(ArtifactCleanupState.Released, Success(await stopping).State); }
+        }
+    }
+
     public static async Task ComposedShutdownAsync(
         IArtifactStore store, IArtifactCoordinationAuthority authority, ArtifactStoreIdentity identity,
         Func<bool> hasRetainedWork, Func<ValueTask> dispose, CancellationToken cancellationToken)
