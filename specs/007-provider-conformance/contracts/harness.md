@@ -132,9 +132,9 @@ prepares/derives/reverifies seven local archives. Its selected 179 tests pass
 locally (95 Memory/84 SQLite) with separate empty-cache locked build replay.
 All 53 current shared logical assertion methods execute through SQLite; these
 179 unit identities are not the catalog's 179 applicable category results.
-The last verified native selection has 37 Memory/SDK/logger scopes. The expanded
-request selects 50 scopes/254 exact observations; successful Linux execution is
-pending, with SQLite dispatch gated on actual environment/native-runtime inputs. The producer
+Native run `40066075996` at `e6c4256` passed all three jobs, 134 foundation checks
+without failures/errors/skips and 50 scopes/254 exact observations, including
+all 84 SQLite identities. SQLite dispatch requires actual environment/native-runtime inputs. The producer
 observes actual configured PRAGMAs/native version and the loaded module, validates
 the library against the exact pinned NuGet archive, and fingerprints native
 runtime assets before/after execution. A compiled SQLite archive is not execution
@@ -145,6 +145,16 @@ the pinned lock, while the cache's archive SHA-512 and exact native member bytes
 are independently checked. Pre/post native provenance must match. Runtime child
 temporary files are contained beneath private owned caches. The environment-only
 entry point is excluded from the general consumer's default compile items.
+The next diagnostic runs native non-cooperation only in an isolated owned child.
+It observes publication guard counts at the native boundary, caller deadline and
+failed cleanup, uncertain outcome/original ticket, disposed admission, genuine
+pending settlement and the allocator's retained history. A separate parent-written
+recovery receipt binds the exact child PID/start, monotonic interval, diagnostic,
+signal exit and observed group exit. Only that complete matching pair can admit
+the intentionally contained diagnostic; normal exit, missing proof, setup failure
+or an arbitrary timeout cannot pass. The fixed child watchdog is 45 seconds,
+inside the five-minute recovery ceiling; cleanup remains 30 seconds and exact
+owned termination 10 seconds. Native execution of this new diagnostic is pending.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

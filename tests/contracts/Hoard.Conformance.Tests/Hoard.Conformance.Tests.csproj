@@ -37,5 +37,6 @@
     <Compile Include="../../fixtures/conformance/Consumer/SqliteBindingTests.cs" Link="SqliteBindingTests.cs" />
     <Compile Include="../../fixtures/conformance/Consumer/SqliteMechanismTests.cs" Link="SqliteMechanismTests.cs" />
     <Compile Include="../../fixtures/conformance/Consumer/SqliteEnvironmentProbe.cs" Link="SqliteEnvironmentProbe.cs" />
+    <Compile Include="../../fixtures/conformance/Consumer/SqliteNativeOwnershipProbe.cs" Link="SqliteNativeOwnershipProbe.cs" />
   </ItemGroup>
 </Project>

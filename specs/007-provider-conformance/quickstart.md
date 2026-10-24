@@ -9,23 +9,28 @@ typed controls, independent committed reads, atomic logical reopen and genuine
 settlement-ledger integration. Its twenty focused adapter rows pass against
 locally packed packages; they are not complete category or provenance proof.
 Latest verified native run:
-[40061416909](https://github.com/Stonefly-Labs/Hoard/actions/runs/40061416909),
-all three jobs, 131 foundation checks without failures/errors/skips,
-37 scopes/170 observations, the concrete Memory adapter and all 53 prior shared consumers, six historical
+[40066075996](https://github.com/Stonefly-Labs/Hoard/actions/runs/40066075996),
+all three jobs, 134 foundation checks without failures/errors/skips,
+50 scopes/254 exact observations, both metadata adapters and actual SQLite
+3.53.3 loading, six historical
 baselines and eighteen-package/thirteen-lock replay.
 The initial SQLite binding now has explicit current/legacy factories,
 same-database directory handoff, actual backup-authorized upgrades, tracked
 independent work and typed raw corruption/fingerprints. The seven-archive
 package graph passes 179 selected checks locally (95 Memory/84 SQLite), with
-separate empty-cache locked build replay. The expanded Linux diagnostic request
-selects 50 scopes/254 exact observations; its successful execution is pending.
+separate empty-cache locked build replay. The Linux diagnostic run verified
+all 84 selected SQLite identities, with expected diagnostic codes throughout.
 An owned package-only environment producer captures
 actual SQLite PRAGMAs/version and verifies the loaded native library against
-the pinned archive, but its Linux execution is still unverified. Native assets
+the pinned archive. Native assets
 join pre/post input hashing; SQLite never borrows `nativeSqlite: not-used`.
 Signed-package normalized NuGet content hashes and raw archive hashes are
 checked separately against fresh locked-restore receipts. Child temporary files
 stay under owned private caches; entry-point isolation preserves the general consumer.
+The next diagnostic adds a dedicated native non-cooperation child with actual
+guard/cleanup/settlement observations and a separate controller-written PID/start/
+SIGKILL/exit receipt. Its Linux execution is pending. Never select the five-minute
+native stall inside an ordinary test process or treat arbitrary timeout as success.
 All 53 current common logical assertion methods execute through SQLite. These
 179 local checks are not the catalog's 179 applicable category results.
 Existing synchronous fixture helpers remain caller-owned.

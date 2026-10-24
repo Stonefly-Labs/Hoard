@@ -225,6 +225,69 @@ class SdkDiagnosticTests(unittest.TestCase):
         with self.assertRaises(checks.evidence.ConformanceError):
             checks.admit_sqlite_environment(before, platform, runtime, package, locked)
 
+    def test_native_noncooperation_requires_actual_retention_and_controller_confirmed_exit(self):
+        observed = {
+            "schemaVersion": 1, "inputsSha256": "a" * 64, "childPid": 123,
+            "boundaryObservations": 1, "guards": [1, 1, 1],
+            "commitCode": "Uncertain", "commitPhase": "Commit", "commitRetry": "Reconcile",
+            "ticketSha256": "b" * 64, "failureTicketSha256": "b" * 64,
+            "disposeCode": "CleanupIncomplete", "incompleteCleanups": 1,
+            "admissionCode": "Disposed", "settlementCompleted": False, "cleanupState": "Retained",
+            "resourceIds": ["resource-a"],
+            "ledgerStates": ["Allocated", "Active", "Settling", "Retained"],
+        }
+        command = {
+            "schemaVersion": 1, "sequence": 10, "childPid": 123, "childStartSha256": "c" * 64,
+            "startedMs": 1000, "endedMs": 46000, "exitCode": -9,
+            "diagnosticCode": "DeadlineExceeded", "groupState": "Exited", "scope": "recovery",
+        }
+        before = json.loads(json.dumps((observed, command)))
+        checks.admit_sqlite_noncooperation(observed, command, "a" * 64)
+        self.assertEqual(json.loads(json.dumps((observed, command))), before)
+        for field, invalid in (
+                ("schemaVersion", True), ("inputsSha256", "d" * 64), ("childPid", 124),
+                ("boundaryObservations", 0), ("guards", [1, 1, 0]), ("guards", [True, 1, 1]),
+                ("commitCode", "DeadlineExceeded"), ("commitPhase", "Read"), ("commitRetry", "Retry"),
+                ("failureTicketSha256", "e" * 64), ("disposeCode", "None"), ("incompleteCleanups", 0),
+                ("admissionCode", "Unavailable"), ("settlementCompleted", True),
+                ("cleanupState", "Released"), ("resourceIds", []),
+                ("resourceIds", ["../foreign"]), ("ledgerStates", ["Released"]), ("foreign", 1)):
+            changed = {**observed, field: invalid}
+            with self.subTest(producer=field, invalid=invalid), self.assertRaisesRegex(
+                    checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.admit_sqlite_noncooperation(changed, command, "a" * 64)
+        for field, invalid in (
+                ("schemaVersion", True), ("childPid", 124), ("childStartSha256", "0" * 64),
+                ("sequence", 0), ("startedMs", True), ("endedMs", 999), ("exitCode", 0),
+                ("diagnosticCode", "None"), ("groupState", "Retained"), ("scope", "ordinary"),
+                ("foreign", 1)):
+            changed = {**command, field: invalid}
+            with self.subTest(controller=field), self.assertRaisesRegex(
+                    checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.admit_sqlite_noncooperation(observed, changed, "a" * 64)
+
+    def test_native_noncooperation_cannot_turn_an_exit_setup_failure_or_live_child_into_success(self):
+        for outcome, expected in (
+                ("normal-exit", "EvidenceIncomplete"), ("CommandFailed", "CommandFailed"),
+                ("missing-proof", "OutputLimitExceeded"), ("live-child", "CleanupIncomplete")):
+            root = self.directory / outcome
+            (root / "stores").mkdir(parents=True)
+            command = unittest.mock.Mock(return_value=SimpleNamespace(exit_code=0))
+            if outcome != "normal-exit":
+                command.side_effect = checks.evidence.ConformanceError(
+                    "CommandFailed" if outcome == "CommandFailed" else "DeadlineExceeded")
+            run = SimpleNamespace(root=root, command_sequence=4, command=command,
+                                  live_children=lambda: outcome == "live-child")
+            with self.subTest(outcome=outcome), patch.object(
+                    checks, "require_sqlite_environment") as admission, patch.object(
+                    checks.evidence, "package_identity", return_value={"sha256": "f" * 64}):
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, expected):
+                    checks.sqlite_noncooperation(run, {"bound": "input"}, root / "candidate")
+                admission.assert_called_once()
+                self.assertEqual(command.call_args.kwargs["scope"], "recovery")
+                self.assertEqual(command.call_args.kwargs["timeout"], 45)
+                self.assertEqual(command.call_args.args[0][-1], checks.evidence.digest({"bound": "input"}))
+
     def test_preparation_and_seal_verification_precede_candidate_snapshot(self):
         calls = []
         seal = self.directory / "baselines.json"

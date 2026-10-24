@@ -622,6 +622,8 @@ class OwnedRun:
         retained = 0
         raw_total = 0
         failure = None
+        identity = None
+        exited = False
 
         def observe(line):
             nonlocal retained
@@ -714,6 +716,7 @@ class OwnedRun:
             acknowledgement.close()
             child.stdout.close()
             if child.poll() is not None and not self._group_members(child.pid):
+                exited = True
                 self.children.pop(child.pid, None)
                 self.groups.discard(child.pid)
                 handle = self._group_handles.pop(child.pid, None)
@@ -728,6 +731,25 @@ class OwnedRun:
                 else "EvidenceIncomplete", "value": 0,
             }))
         self._retain_diagnostics(destination.name, events)
+        if scope == "recovery":
+            receipt = canonical_bytes({
+                "schemaVersion": 1, "sequence": self.command_sequence,
+                "childPid": child.pid, "childStartSha256": identity or "0" * 64,
+                "startedMs": started * 1000, "endedMs": time.monotonic() * 1000,
+                "exitCode": child.returncode,
+                "diagnosticCode": ("None" if failure is None else
+                                   str(failure) if isinstance(failure, ConformanceError) else "EvidenceIncomplete"),
+                "groupState": "Exited" if exited else "Retained", "scope": scope,
+            })
+            directory = self._directory_descriptor("proofs")
+            try:
+                name = f"recovery-command-{self.command_sequence:04}.json"
+                with os.fdopen(os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
+                                       0o600, dir_fd=directory), "wb") as output:
+                    output.write(receipt)
+                    os.fchmod(output.fileno(), 0o400)
+            finally:
+                os.close(directory)
         if failure is not None:
             raise failure
         return CommandResult(code, tuple(events), (time.monotonic() - started) * 1000)

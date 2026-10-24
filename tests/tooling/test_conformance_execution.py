@@ -291,11 +291,25 @@ print('{"event":"control","code":"None","value":1}')
                 'subprocess.Popen([sys.executable,"-c","import time; time.sleep(60)"]); time.sleep(60)',
                 "import os,time; os.close(1); os.close(2); time.sleep(60)"):
             with self.subTest(code=code), self.assertRaisesRegex(ConformanceError, "DeadlineExceeded"):
-                run.command([sys.executable, "-c", code], timeout=0.2)
+                run.command([sys.executable, "-c", code], scope="recovery", timeout=0.2)
         self.assertFalse(run.live_children())
-        for name in ("command-0001.jsonl", "command-0002.jsonl"):
-            self.assertEqual(json.loads((run.root / "diagnostics" / name).read_bytes())["code"],
+        for sequence in (1, 2):
+            self.assertEqual(json.loads((run.root / "diagnostics" / f"command-{sequence:04}.jsonl").read_bytes())["code"],
                              "DeadlineExceeded")
+            receipt = json.loads((run.root / "proofs" / f"recovery-command-{sequence:04}.json").read_bytes())
+            self.assertEqual(receipt["sequence"], sequence)
+            self.assertGreater(receipt["childPid"], 0)
+            self.assertNotEqual(receipt["childPid"], os.getpid())
+            self.assertRegex(receipt["childStartSha256"], "^[0-9a-f]{64}$")
+            self.assertNotEqual(receipt["childStartSha256"], "0" * 64)
+            self.assertEqual(receipt["exitCode"], -9)
+            self.assertEqual(receipt["diagnosticCode"], "DeadlineExceeded")
+            self.assertEqual(receipt["groupState"], "Exited")
+            self.assertGreaterEqual(receipt["endedMs"] - receipt["startedMs"], 200)
+        self.assertEqual(run.command([sys.executable, "-c", "pass"], scope="recovery", timeout=5).exit_code, 0)
+        normal = json.loads((run.root / "proofs/recovery-command-0003.json").read_bytes())
+        self.assertEqual((normal["exitCode"], normal["diagnosticCode"], normal["groupState"]),
+                         (0, "None", "Exited"))
         run.transition("Settling")
         run.release()
 

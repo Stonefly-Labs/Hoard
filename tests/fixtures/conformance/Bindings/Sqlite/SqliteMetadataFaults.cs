@@ -89,11 +89,11 @@ internal sealed partial class SqliteMetadataFaults(
                 {
                     ConformanceFault.IndependentSnapshot => "read.item",
                     ConformanceFault.CommitAcknowledgement => "M1",
+                    ConformanceFault.NativeNonCooperation => "M1",
                     ConformanceFault.PersistedCorruption => "sqlite.persisted.changed",
                     ConformanceFault.Capacity => "sqlite.storage_capacity",
                     ConformanceFault.SchemaState => "schema.inspect",
-                    ConformanceFault.LeaseBoundary or ConformanceFault.NativeNonCooperation
-                        or ConformanceFault.CleanupFailure => "M0",
+                    ConformanceFault.LeaseBoundary or ConformanceFault.CleanupFailure => "M0",
                     _ => throw new ArgumentException("BindingInvalid")
                 };
                 control.Registration = await RegisterAsync(point, fault == ConformanceFault.NativeNonCooperation

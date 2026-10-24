@@ -1416,6 +1416,63 @@ Successful Linux producer/SQLite-case execution remains pending, and no catalog
 qualification, durable crash proof, wrapper parity or origin/controller pass is
 inferred. Existing 37-scope native receipts remain historical and unchanged.
 
+### Verified native SQLite environment and all selected common consumers
+
+Native run
+[40066075996](https://github.com/Stonefly-Labs/Hoard/actions/runs/40066075996)
+at `e6c4256bcb71fb7726344d714cdba2b83b72b547` passed all three jobs:
+134 foundation checks without failures/errors/skips, 50 scopes/254 exact
+discoveries/executions with expected diagnostic codes, including all 84 SQLite
+identities, six sealed baselines and identical eighteen-package/thirteen-lock
+replay. Actual SQLite 3.53.3 used WAL/FULL/foreign-keys/busy-timeout-zero;
+native temporary placement also passed. Free scratch: 92,109,283,328 bytes.
+Baseline seal:
+`41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`;
+input:
+`f62bb15ae3eb9f61b0d41b8877f357a952b8ec66115cb2f729bcaf86eb19fdb6`;
+preparation:
+`7d07bbef488638178a8d215491ac7601bef81628dc1014d156bb5dcc21569ae4`;
+loaded native library:
+`b0f5c48026fedcf9f05cf31c6fadf9e1e001ca59cd85aa68b8b6814e52c18a07`;
+native package archive:
+`d07d13b4779123cfa56b3348b504d57a2ab6fc10c764fb6e2c9d787987e39201`.
+The normalized pinned NuGet content hash and raw archive SHA-512 were both
+verified independently through their fresh locked-restore receipts. This run
+establishes actual selected Linux SQLite execution, not full frozen-wrapper
+parity, abrupt recovery, origin/controller qualification or a category pass.
+
+### Isolated native non-cooperation diagnostic, pending Linux execution
+
+The next increment requests the real five-minute SQLite native stall through
+the typed binding at its post-commit boundary, exclusively in a dedicated
+parent-owned package-mode child. A one-second caller deadline must yield
+`Uncertain/Commit/Reconcile` with the original ticket while the publication
+guard remains held. Genuine 30-second cleanup must record incomplete cleanup,
+disposed admission, retained allocator history and the still-pending actual
+worker task. The child never deletes resources, reports release or returns a
+passing result; it waits for exact-owned containment.
+
+The parent requires a separate immutable recovery-command receipt binding
+the actual child PID/start identity, monotonic duration, `DeadlineExceeded`,
+SIGKILL and confirmed process-group exit after its 45-second watchdog. Producer
+observations must match the frozen input digest and controller PID/receipt;
+normal exit, setup failure, missing proof, live children or inconsistent
+guard/cleanup/ticket observations reject. Recovery receipts are written beneath
+the pinned proof directory with exclusive no-follow creation after observation.
+This is a closed expected-fault diagnostic, never generic timeout-as-success.
+
+The missing admission API first failed the focused regression. Its positive
+and contradictory producer/controller cases now pass, as do early-exit,
+setup-failure, missing-proof and live-child rejection. Tooling241 passes
+(230 passed, eleven native macOS skips). A fresh private seven-archive locked
+restore and package test passes 179/no skips, with all seven output DLLs
+byte-identical to current archives. The two probe sources are excluded from
+the general consumer; its actual package build and the package-mode producer
+compile with zero warnings/errors. Focused whitespace checks pass.
+Bounded architecture review found no actionable issues; actual Linux behavior
+remains pending. T022/T026 and full category/wrapper/origin gates remain
+unchecked; no existing historical receipts or source locks changed.
+
 ## Partial implementation checkpoint
 
 The driver remains **`implement / running`**. Authorization to start was explicit;

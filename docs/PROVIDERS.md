@@ -57,17 +57,24 @@ adds only the SQLite binding/provider and six pinned SQLite dependencies,
 preserving prior graphs/third-party hashes. A separate empty-cache locked build
 passes. All 179 selected Memory/SQLite package tests pass locally without skips
 (95 Memory, 84 SQLite); this includes actual incomplete cleanup, not Linux
-supervisor/category qualification. The last verified native diagnostics contain
-37 Memory/SDK/logger scopes; the expanded request selects 50 scopes/254 exact
-observations, pending successful Linux execution. An owned package-only environment probe observes
+supervisor/category qualification. Native run
+[40066075996](https://github.com/Stonefly-Labs/Hoard/actions/runs/40066075996)
+passed all three jobs, 134 foundation checks without failures/errors/skips and
+50 scopes/254 exact observations, including all 84 SQLite identities.
+An owned package-only environment probe observes
 actual SQLite PRAGMAs/version and the loaded native module, validates its bytes
 against the pinned NuGet archive, and fingerprints runtime native assets.
-Its successful Linux execution is not yet verified. SQLite test dispatch rejects
+That run verified actual SQLite 3.53.3 loading. SQLite test dispatch rejects
 missing actual environment/native-runtime inputs and never borrows `nativeSqlite: not-used`.
 NuGet's normalized signed-package content hash remains pinned separately from
 the downloaded archive hash; both fresh locked-restore receipts and exact native
 member bytes are verified, with unchanged pre/post provenance. Child temporary
 files are routed into private owned caches, not global temporary storage.
+The next diagnostic requests actual native non-cooperation in a dedicated owned
+child: publication guards remain held after the caller deadline and failed
+cleanup, and the parent admits proof only after its PID/start-bound watchdog
+confirms SIGKILL and group exit. Its Linux execution is pending; this does not
+complete crash/recovery or category qualification.
 All 53 current SDK logical assertion methods now execute through SQLite too;
 the additional 44 parameterized rows cover actual independent reads, clocks,
 publication, corruption and decision/settlement controls. This local 179-test

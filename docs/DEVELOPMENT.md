@@ -5816,12 +5816,33 @@ fresh-cache eleven-archive locked build now passes without warnings/errors.
 Missing owned temporary routing also failed first; child temporary files now
 stay beneath private owned caches, with a Linux-only actual-child regression.
 
-The expanded diagnostic request selects all 84 SQLite identities alongside the
-previous 170 observations: 50 scopes/254 exact discoveries/executions requested,
-not yet a passing Linux result. Exact compiled SQLite discovery matches all
-84 identities. Dispatch refuses missing/unused/mismatched environment or native
-runtime inputs. Tooling239 passes locally (228 passed, eleven native macOS skips).
-No failed native run is reported as qualification or as verified SQLite execution.
+Native run
+[40066075996](https://github.com/Stonefly-Labs/Hoard/actions/runs/40066075996)
+at `e6c4256bcb71fb7726344d714cdba2b83b72b547` passed all three jobs:
+134 foundation checks without failures/errors/skips and 50 scopes/254 exact
+discoveries/executions with expected diagnostics, including all 84 SQLite
+identities. Actual SQLite 3.53.3, WAL/FULL/foreign-keys/busy-timeout-zero and
+native archive/member provenance were observed; native temporary placement and
+identical eighteen-package/thirteen-lock replay also passed. Full receipt hashes
+are in the F-07 plan. This remains a non-qualifying diagnostic run.
+
+The next increment runs real SQLite native non-cooperation only in a dedicated
+controller-owned child. The typed fault stops at the actual post-commit native
+boundary, retaining the publication guard through a one-second caller deadline
+and genuine 30-second incomplete cleanup. The producer records actual guard
+counts, uncertain outcome and ticket hashes, disposed admission, pending worker
+settlement and retained allocator history. A separate parent-written recovery
+receipt records the exact PID/start, monotonic duration, SIGKILL and confirmed
+group exit after the 45-second watchdog; no ordinary timeout is passing evidence.
+The five-minute stall is never selected inside an ordinary test process.
+Missing admission first failed a regression. Tooling241 passes locally
+(230 passed, eleven native macOS skips); current seven-archive empty-cache
+package tests pass 179/no skips, with output DLL bytes matching all seven
+archives. Package-mode probe compilation and general-consumer entry-point
+isolation build without warnings/errors. Bounded architecture review found no
+actionable issues, while explicitly excluding unobserved native behavior.
+Actual Linux execution of this new child remains pending, and T026 stays
+unchecked until every inherited recovery barrier and full provenance gate passes.
 
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)

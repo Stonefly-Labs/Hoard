@@ -1257,11 +1257,15 @@ upgrade authorization and typed raw-state controls. The package-only graph
 passes 179 selected checks across Memory and SQLite, including native storage
 types, cancellation/late cleanup and real 30-second incomplete cleanup.
 These are focused local package checks, not complete category, Linux-supervisor
-or profile qualification. An owned SQLite environment probe now captures actual
+or profile qualification. An owned SQLite environment probe captures actual
 PRAGMAs/native version and verifies the loaded library against locked archive
-bytes; Linux execution of that producer remains unverified.
-The expanded diagnostic request includes 50 scopes/254 exact observations,
-gating all SQLite cases on actual environment and native-runtime admission.
+bytes. Native run [40066075996](https://github.com/Stonefly-Labs/Hoard/actions/runs/40066075996)
+passed all three jobs, 134 foundation checks without skips and 50 scopes/254 exact
+observations, including all 84 SQLite identities and actual SQLite 3.53.3 loading.
+All SQLite cases require actual environment and native-runtime admission.
+The next diagnostic adds an isolated, controller-owned native non-cooperation
+child; its Linux execution is pending. The five-minute native stall never runs
+inside the test process, and retention is not release.
 All 53 current shared logical metadata assertion methods now execute through
 the SQLite binding too. These local checks are not the catalog's 179 applicable
 category results or proof of complete frozen-wrapper parity.

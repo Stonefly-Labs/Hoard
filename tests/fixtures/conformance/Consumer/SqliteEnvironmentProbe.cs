@@ -15,6 +15,8 @@ internal static class SqliteEnvironmentProbe
     {
         try
         {
+            if (args.Length == 6 && args[0] == "sqlite-native-noncooperation" && OperatingSystem.IsLinux())
+            { return await SqliteNativeOwnershipProbe.RunAsync(args); }
             if (args.Length != 5 || args[0] != "sqlite-environment" || !OperatingSystem.IsLinux())
             { throw new InvalidOperationException("PrerequisiteMissing"); }
             var architecture = RuntimeInformation.ProcessArchitecture;
