@@ -1047,6 +1047,37 @@ class SdkDiagnosticTests(unittest.TestCase):
                     checks.test_attempt(SimpleNamespace(root=self.directory), {}, candidate, changed)
                 launch.assert_not_called()
 
+    def test_read_race_scope_requires_original_quarantine_revalidation_and_reconciliation(self):
+        factory = getattr(checks, "original_artifact_read_race_scenarios", None)
+        self.assertTrue(callable(factory), "Read-race extraction needs exact original observer/barrier transport.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactReadVerificationTests."
+        expected = {prefix + "Local_reconciliation_cannot_finalize_after_overlapping_read_quarantines_the_incarnation"}
+        expected.update(prefix + f'Admitted_open_rechecks_quarantine_before_delivering_a_session(provider: "{provider}")'
+                        for provider in ("local", "object"))
+        scenario, = factory()
+        self.assertEqual(scenario, ("original-artifact-read-races", tuple(sorted(expected)), "None", "Passed", 0, "None"))
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.ARTIFACT_TESTS / checks.ARTIFACT_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Artifacts.Tests.dll")
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+        }
+        with patch.object(checks, "runtime_command",
+                          side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+            self.assertEqual(launch.call_args.args[1], assembly)
+            self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, expected)
+        for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+                        (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
+                        ("original-artifact-read-races-foreign", *scenario[1:])):
+            with patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, candidate, changed)
+                launch.assert_not_called()
+
     def test_damaged_read_scope_preserves_frozen_parameters_and_revived_evidence_mutations(self):
         factory = getattr(checks, "original_artifact_damaged_read_scenarios", None)
         self.assertTrue(callable(factory), "Damaged-read extraction needs exact frozen and actual-validator mutation transport.")

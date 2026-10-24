@@ -7015,11 +7015,44 @@ completed preparations/wrappers; sources, feeds, manifests, historical seals,
 intermediates and runtime images remain. After observing 25.188 GiB free, all
 303 tooling checks pass (286 passed/seventeen macOS-native skips). SDK/wrapper
 whitespace, all 77 SDK tooling checks, frozen inventory and catalogs pass.
-Payload run `40137341231` at exact `1367a51` remains pending; the next request is
+Payload run `40137341231` at exact `1367a51` passed all three jobs,
+194 foundations without failures/errors/skips and strict 79-scope/693-observation
+admission, including all 23 payload rows, every actual prerequisite and
+eighteen-package/thirteen-lock replay.
+Input: `ad1b244e0b8c7715661fa905ac001b3c74307c910e5252820319dd7161af2a92`;
+preparation:
+`cfd9c8c52dee1e50978d3ed7660f077b40c0599259c6a49baee971d1a3a5d56a`.
+The damaged-read request is
 195 native foundations and 80 scopes/699 observations, also pending. No full
 category/profile result, new transfer origin or additional completed task is
 claimed. Architecture/ADR diagrams and deployment/custom-host examples remain
 unaffected by this assertion-only extraction.
+
+Two more original bodies now execute provider-free read consumers: Local's
+overlapping read/reconciliation quarantine race and both admitted-open
+revalidation parameters. Mechanical body comparison preserves exact assertions
+and public-operation order after explicit fixture/barrier/interface/token
+forwarding. Named barriers are constructed/disposed in wrapper scope; their
+actual observer installation, hold, restoration, release and every public
+operation remain at the original logical transition. Actual observer mapping,
+publication fault, physical payload changes and native settlement stay
+fixture-side. No simulated durable recovery or provider-selected expectation
+enters the SDK.
+
+Both missing methods first produced CS0117, with each exact symbol confirmed
+in isolated compiler output. Exact three-row transport first failed its named
+missing-factory assertion. Two independent fresh preparations each pass
+308 artifact, 65 Consumer and 89+89 metadata cases without skips; fifteen
+archives reproduce exactly, canonical archive-map SHA-256
+`40c0bb713c9d1499f8143d67da6812a1e3d1939593b634a9aa71fc76a2a339ae`.
+Ten dependency images match archive bytes. All 304 tooling checks pass
+(287 passed/seventeen macOS-native skips), including 78 SDK transport checks;
+prepared SDK/wrapper whitespace, frozen inventory, catalogs and patch checks
+pass. Previously measured transfer packets remain reused unchanged.
+The latest native request is 196 foundations and 81 scopes/702 observations,
+pending. Complete fault drivers, origins and category/integration/profile gates
+remain unfinished. Tasks, reviewer markers, tracked locks, historical seals and
+product/architecture/deployment examples remain unchanged.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

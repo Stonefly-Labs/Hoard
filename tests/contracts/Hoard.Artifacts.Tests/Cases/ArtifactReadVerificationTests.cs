@@ -10,37 +10,18 @@ public sealed class ArtifactReadVerificationTests
     public async Task Local_reconciliation_cannot_finalize_after_overlapping_read_quarantines_the_incarnation()
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync("local");
-        var bytes = "read detection wins before reconciliation settles"u8.ToArray();
-        using var source = new ShortSource(bytes);
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        var staged = Success(await driver.Store.StageAsync(ticket, source, new(), default));
-        driver.LocalControls!.SetObserver("publish.decided", () => ValueTask.FromException(new IOException(ArtifactTestData.Canary)));
-        Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(await driver.Store.CommitAsync(staged, new(), default));
-        driver.LocalControls.RemoveObserver("publish.decided");
-        driver.DamageOnlyPayload(truncate: false);
-        await using var session = Success(await driver.Store.OpenReadAsync(new(staged.Identity.Digest), new(), default));
         await using var reading = new ArtifactTestBarrier("corrupt-read-before-final-digest");
         await using var verifying = new ArtifactTestBarrier("reconciliation-before-final-state");
-        driver.LocalControls.SetObserver("read.copy", () => new(reading.HoldAsync()));
-        driver.LocalControls.SetObserver("reconcile.verified", () => new(verifying.HoldAsync()));
-        using var destination = new MemoryStream();
-        var copying = session.CopyToAsync(destination, new(), default).AsTask();
-        Task<ArtifactResult<ArtifactResolution>>? reconciling = null;
-        try
-        {
-            await reading.Entered;
-            File.WriteAllBytes(Directory.GetFiles(driver.PayloadDirectory).Single(), bytes);
-            reconciling = driver.Store.ReconcileAsync(ticket, new(), default).AsTask();
-            await verifying.Entered;
-            reading.Release();
-            Assert.Equal(ArtifactFailureCode.CorruptContent,
-                Assert.IsType<ArtifactResult<ArtifactReadCompletion>.Failure>(await copying).Code);
-        }
-        finally { reading.Release(); verifying.Release(); }
-        Assert.NotNull(reconciling);
-        Assert.Equal(ArtifactFailureCode.CorruptContent,
-            Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(await reconciling).Code);
-        Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(await driver.Store.ReconcileAsync(ticket, new(), default));
+        await ArtifactReadAssertions.ReconciliationQuarantineRaceAsync(driver.Store,
+            () => driver.LocalControls!.SetObserver("publish.decided",
+                () => ValueTask.FromException(new IOException(ArtifactTestData.Canary))),
+            () => driver.LocalControls!.RemoveObserver("publish.decided"),
+            () => driver.DamageOnlyPayload(truncate: false),
+            () => driver.LocalControls!.SetObserver("read.copy", () => new(reading.HoldAsync())),
+            () => driver.LocalControls!.SetObserver("reconcile.verified", () => new(verifying.HoldAsync())),
+            token => reading.Entered.WaitAsync(token), token => verifying.Entered.WaitAsync(token),
+            reading.Release, verifying.Release,
+            bytes => File.WriteAllBytes(Directory.GetFiles(driver.PayloadDirectory).Single(), bytes), default);
     }
 
     [Theory]
@@ -49,31 +30,22 @@ public sealed class ArtifactReadVerificationTests
     public async Task Admitted_open_rechecks_quarantine_before_delivering_a_session(string provider)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
-        var bytes = "late open cannot bypass quarantine"u8.ToArray();
-        using var source = new ShortSource(bytes);
-        var receipt = await PublishAsync(driver, source, new(1024));
-        var proof = Assert.IsType<ArtifactOption<ArtifactCommitEvidence>.Some>(receipt.Evidence).Value;
         await using var barrier = new ArtifactTestBarrier("open-quarantine-revalidation");
-        SetObserver(driver, "read.opened", "object.direct", () => new(barrier.HoldAsync()));
-        var opening = driver.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default).AsTask();
-        try
-        {
-            await barrier.Entered;
-            if (driver.LocalControls is { } local) { local.RemoveObserver("read.opened"); }
-            else { driver.ObjectControls!.RemoveObserver("object.direct"); }
-            var path = Directory.GetFiles(driver.PayloadDirectory).Single();
-            File.WriteAllBytes(path, bytes[..^1]);
-            await using var guard = Success(await driver.Authority.AcquireAsync(new(Guid.NewGuid(),
-                ArtifactProtectionOperation.Reference, driver.Identity, receipt.Stamp.Identity.Digest,
-                new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp)), new(), default));
-            Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(
-                await driver.Validator.ValidateAsync(proof, guard, new(), default)).Code);
-            File.WriteAllBytes(path, bytes);
-        }
-        finally { barrier.Release(); }
-        var result = await opening;
-        if (result is ArtifactResult<IArtifactReadSession>.Success leaked) { await leaked.Value.DisposeAsync(); }
-        Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(result).Code);
+        string? path = null;
+        await ArtifactReadAssertions.AdmittedOpenRechecksQuarantineAsync(
+            driver.Store, driver.Validator, driver.Authority, driver.Identity,
+            () => SetObserver(driver, "read.opened", "object.direct", () => new(barrier.HoldAsync())),
+            token => barrier.Entered.WaitAsync(token),
+            () =>
+            {
+                if (driver.LocalControls is { } local) { local.RemoveObserver("read.opened"); }
+                else { driver.ObjectControls!.RemoveObserver("object.direct"); }
+            },
+            bytes =>
+            {
+                path ??= Directory.GetFiles(driver.PayloadDirectory).Single();
+                File.WriteAllBytes(path, bytes);
+            }, barrier.Release, default);
     }
 
     [Theory]

@@ -572,7 +572,8 @@ fails explicitly; byte damage changes the first byte, or adds one to an empty
 payload. Foreign stamps, stale sessions/epochs and removed incarnations cannot
 damage the current replacement. Twenty-three cases cover actual copy/quarantine,
 held work, failed observers, conflicting reads and these boundaries.
-Payload run `40137341231` at exact `1367a51` remains pending.
+Payload run `40137341231` at exact `1367a51` passed all three jobs,
+194 foundations without skips and strict 79-scope/693-observation admission.
 The frozen four-parameter damaged-read case also now executes the same
 provider-free consumer on both implementations, preserving exact assertions
 and operation order. Actual file capture/damage/restoration remain in the
@@ -581,6 +582,13 @@ admission. A real validator's actual corrupt-evidence denial, deliberately
 reported as success, fails the unchanged common assertion on both providers;
 fresh genuine validators pass. The next native request is 80 scopes/699
 observations, pending, not complete fault-driver/category/profile admission.
+The original Local read/reconciliation quarantine race and both admitted-open
+revalidation rows also now execute provider-free consumers. Actual publication
+faults, provider-specific observation mapping, physical replacement and named
+hold/release barriers remain fixture-side at their original transition points.
+Common code contains no Local/Object switch, filesystem I/O or substitute
+expected outcome. Exact checks/public-operation order remain unchanged.
+The latest native request is 81 scopes/702 observations, pending.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

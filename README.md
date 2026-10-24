@@ -1622,13 +1622,19 @@ cannot let reopen/final settlement release that work early. Twenty-three
 package-only cases cover real truncation/byte corruption, quarantine, observer
 failure, stale sessions/epochs/incarnations, empty payloads and conflicting open
 handles. Fresh replay passes all 65 Consumer cases and reproduces fifteen
-archives. Payload run `40137341231` at exact `1367a51` remains pending.
+archives. Payload run `40137341231` at exact `1367a51` passed all three jobs,
+194 foundations without skips and strict 79-scope/693-observation admission.
 The original damaged-read case now also uses a provider-free consumer with all
 four frozen parameters and mechanically identical assertions/order. Actual
 capture, damage and restoration stay fixture-side; two genuine-validator
 mutation pairs prove the shared check rejects revived corrupt evidence.
 Fresh replay passes 308 artifact and 65 Consumer cases. The next native request
 is 80 scopes/699 observations, pending.
+The original admitted-open and overlapping read/reconciliation quarantine races
+also now use provider-free consumers with identical checks/public-operation
+order and original fixture-side barriers. Both fresh preparations pass all
+308 artifact and 65 Consumer cases; the latest native request is
+81 scopes/702 observations, pending.
 Full bindings, remaining mandatory fault controls and category/profile
 acceptance remain unfinished.
 

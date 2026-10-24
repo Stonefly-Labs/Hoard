@@ -717,7 +717,9 @@ current full-stamp checks reject old epochs/incarnations. Twenty-three cases
 include actual corrupt copy/later quarantine, held native work, failed observers
 with unchanged content and faulted final settlement, stale sessions, real ABA,
 empty payloads and conflicting reads. Payload run `40137341231` at exact
-`1367a51` remains pending.
+`1367a51` passed all three jobs, 194 foundations without skips and strict
+79-scope/693-observation admission, including all 23 payload rows and actual
+prerequisite/replay chains.
 
 The four frozen damaged-read parameters also now execute one provider-free
 consumer with mechanically identical checks/order. Actual capture, damage and
@@ -728,6 +730,17 @@ and fresh genuine validators pass. Exact transport requires all four frozen
 rows plus both mutation rows, rejecting shortened or foreign vectors before
 launch. The next exact request is 80 scopes/699 observations, pending, not
 complete fault-driver/category admission or full metadata/artifact integration.
+
+The original overlapping read/reconciliation quarantine body and both
+admitted-open revalidation rows also now execute provider-free consumers.
+Actual provider observer mapping, publication failure, native hold/release
+barriers and physical replacement remain fixture-side. Exact assertions and
+public-operation order are mechanically preserved; common checks never choose
+by provider ID or change expected quarantine outcomes. Named barrier objects
+live in wrapper scope while actual observations/releases remain at the original
+transition points. Exact transport requires all three unchanged identities and
+rejects shortened/foreign vectors before launch. The latest native request is
+81 scopes/702 observations, pending, not complete category/profile admission.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

@@ -3693,12 +3693,48 @@ inactive dependency caches preserves source/feeds/manifests/historical seals/
 intermediates/runtime images. With 25.188 GiB observed, all 303 tooling checks
 pass (286 passed/seventeen macOS-native skips); SDK/wrapper whitespace,
 frozen inventory, compiled catalogs and patch checks pass.
-Payload run `40137341231` at exact `1367a51` remains pending. This increment
+Payload run `40137341231` at exact
+`1367a512b8abc3fb5105000ef561fb599642ee29` passed all three jobs,
+194 foundations without failures/errors/skips, independent eighteen-package/
+thirteen-lock replay and strict 79-scope/693-observation admission.
+Input: `ad1b244e0b8c7715661fa905ac001b3c74307c910e5252820319dd7161af2a92`;
+preparation:
+`cfd9c8c52dee1e50978d3ed7660f077b40c0599259c6a49baee971d1a3a5d56a`.
+The damaged-read increment
 requests 195 native foundations and 80 scopes/699 observations, pending.
 Remaining common consumers, complete fault drivers, origins and full category/
 integration/profile gates remain unfinished. Tasks, reviewer markers, tracked
 locks, historical seals, product contracts, architecture/ADR diagrams and
 deployment examples are unchanged.
+
+### Original read/open quarantine races
+
+Two further original bodies now execute provider-free consumers: Local's
+overlapping read/reconciliation quarantine race and both admitted-open
+revalidation rows. Mechanical comparison preserves exact original assertions
+and public-operation order after explicit fixture/barrier/interface/token
+forwarding. Named barriers live in wrapper scope; actual installation, hold,
+physical restoration and release stay at their original logical transitions.
+Publication fault injection, native provider observation mapping and physical
+payload I/O remain fixture-side. No provider switch, filesystem dependency,
+substitute expected result or simulated durability enters the common checks.
+
+Both missing shared methods first produced CS0117, with precise symbols
+confirmed independently. The exact three-row transport first failed its named
+missing-factory assertion. Independent fresh preparations each pass all
+308 artifact, 65 Consumer and 89+89 metadata cases without skips; fifteen
+archives reproduce exactly, canonical archive-map SHA-256
+`40c0bb713c9d1499f8143d67da6812a1e3d1939593b634a9aa71fc76a2a339ae`;
+ten Consumer dependency images match package bytes. Existing measured transfer
+packets remain reused unchanged, not fresh origins.
+All 304 tooling checks pass (287 passed/seventeen macOS-native skips), including
+78 SDK transport checks; prepared SDK/wrapper whitespace, frozen inventory,
+compiled catalogs and patch checks pass.
+
+The next native request is 196 foundations and 81 scopes/702 observations,
+pending. Full drivers, origins and category/integration/profile gates remain
+unfinished. Tasks, reviewer markers, tracked locks, historical seals and
+product/architecture/deployment examples are unchanged.
 
 ## Summary
 

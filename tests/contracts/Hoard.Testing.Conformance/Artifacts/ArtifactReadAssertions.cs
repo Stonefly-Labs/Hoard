@@ -5,6 +5,72 @@ namespace Hoard.Testing.Conformance.Artifacts;
 
 public static class ArtifactReadAssertions
 {
+    public static async Task ReconciliationQuarantineRaceAsync(
+        IArtifactStore store, Action loseAcknowledgment, Action restoreAcknowledgment, Action damage,
+        Action observeCopy, Action observeReconciliation,
+        Func<CancellationToken, Task> waitForCopy, Func<CancellationToken, Task> waitForReconciliation,
+        Action releaseCopy, Action releaseReconciliation, Action<byte[]> restore, CancellationToken cancellationToken)
+    {
+        var bytes = "read detection wins before reconciliation settles"u8.ToArray();
+        using var source = new ShortSource(bytes);
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
+        loseAcknowledgment();
+        Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(await store.CommitAsync(staged, new(), cancellationToken));
+        restoreAcknowledgment();
+        damage();
+        await using var session = Success(await store.OpenReadAsync(new(staged.Identity.Digest), new(), cancellationToken));
+        observeCopy();
+        observeReconciliation();
+        using var destination = new MemoryStream();
+        var copying = session.CopyToAsync(destination, new(), cancellationToken).AsTask();
+        Task<ArtifactResult<ArtifactResolution>>? reconciling = null;
+        try
+        {
+            await waitForCopy(cancellationToken);
+            restore(bytes);
+            reconciling = store.ReconcileAsync(ticket, new(), cancellationToken).AsTask();
+            await waitForReconciliation(cancellationToken);
+            releaseCopy();
+            Assert.Equal(ArtifactFailureCode.CorruptContent,
+                Assert.IsType<ArtifactResult<ArtifactReadCompletion>.Failure>(await copying).Code);
+        }
+        finally { releaseCopy(); releaseReconciliation(); }
+        Assert.NotNull(reconciling);
+        Assert.Equal(ArtifactFailureCode.CorruptContent,
+            Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(await reconciling).Code);
+        Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(await store.ReconcileAsync(ticket, new(), cancellationToken));
+    }
+
+    public static async Task AdmittedOpenRechecksQuarantineAsync(
+        IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
+        ArtifactStoreIdentity identity, Action observeOpening, Func<CancellationToken, Task> waitForOpening,
+        Action removeObserver, Action<byte[]> replacePayload, Action releaseOpening, CancellationToken cancellationToken)
+    {
+        var bytes = "late open cannot bypass quarantine"u8.ToArray();
+        using var source = new ShortSource(bytes);
+        var receipt = await PublishAsync(store, source, new(1024), cancellationToken);
+        var proof = Assert.IsType<ArtifactOption<ArtifactCommitEvidence>.Some>(receipt.Evidence).Value;
+        observeOpening();
+        var opening = store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken).AsTask();
+        try
+        {
+            await waitForOpening(cancellationToken);
+            removeObserver();
+            replacePayload(bytes[..^1]);
+            await using var guard = Success(await authority.AcquireAsync(new(Guid.NewGuid(),
+                ArtifactProtectionOperation.Reference, identity, receipt.Stamp.Identity.Digest,
+                new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp)), new(), cancellationToken));
+            Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(
+                await validator.ValidateAsync(proof, guard, new(), cancellationToken)).Code);
+            replacePayload(bytes);
+        }
+        finally { releaseOpening(); }
+        var result = await opening;
+        if (result is ArtifactResult<IArtifactReadSession>.Success leaked) { await leaked.Value.DisposeAsync(); }
+        Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(result).Code);
+    }
+
     public static async Task DamagedReadAsync(
         IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
         ArtifactStoreIdentity identity, bool truncate, Func<ValueTask<byte[]>> capture,
