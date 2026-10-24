@@ -252,6 +252,20 @@ Publication transport is verified by native
 143 foundation checks, 53 scopes/398 exact observations, actual original
 publication/mutation execution, native containment and eighteen-package/
 thirteen-lock replay. It does not verify these subsequent extractions.
+Native [40105402168](https://github.com/Stonefly-Labs/Hoard/actions/runs/40105402168)
+verifies the subsequent exact evidence/quarantine scope and mutation pair:
+all three jobs, 145 foundation checks, 55 scopes/427 observations, native
+containment and eighteen-package/thirteen-lock replay. It does not verify the
+later owning-controller or recovery changes.
+
+SQLite recovery diagnostics now use an explicit safe-event runner mode and
+parent-owned barrier termination, requesting all ten mutation/upgrade/restore
+barrier/readback rows plus the actual backup/restore walkthrough. Fresh locked
+builds verify actual runner dependencies; local walkthroughs preserve legacy
+output and pass in safe mode. Linux crash execution is pending, and live-held
+probes, exact wrapper/session attribution and full category qualification remain
+open. These diagnostics confer no memory or ObjectSemantics durability.
+
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

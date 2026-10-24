@@ -11,13 +11,41 @@ var mode = args[0];
 var database = Path.GetFullPath(args[1]);
 var control = Path.GetFullPath(args[2]);
 var barrier = args[3];
+var safeEvents = Environment.GetEnvironmentVariable("HOARD_CONFORMANCE_SAFE_EVENTS") switch
+{
+    null => false,
+    "1" => true,
+    _ => throw new ArgumentException("Invalid recovery event mode.")
+};
 var json = new JsonSerializerOptions();
+void Emit(string legacy) => Console.WriteLine(safeEvents
+    ? "{\"event\":\"test\",\"code\":\"None\",\"value\":1}" : legacy);
 string FileAt(string name) => Path.Combine(control, name);
 void Write<T>(string name, T value) => File.WriteAllText(FileAt(name), JsonSerializer.Serialize(value, json));
 T Load<T>(string name) => JsonSerializer.Deserialize<T>(File.ReadAllText(FileAt(name)), json) ?? throw new InvalidOperationException("Missing private recovery input.");
 async ValueTask Hold(string point)
 {
+    var value = safeEvents ? point switch
+    {
+        "M0" => 0,
+        "M1" => 1,
+        "M2" => 2,
+        "U0" => 10,
+        "U1" => 11,
+        "U2" => 12,
+        "U3" => 13,
+        "U4" => 14,
+        "R0" => 20,
+        "R1" => 21,
+        "owner" => 30,
+        _ => throw new ArgumentException("Unknown recovery barrier.")
+    } : 0;
     Write("barrier.json", new { barrier = point, pid = Environment.ProcessId });
+    if (safeEvents)
+    {
+        Console.WriteLine(JsonSerializer.Serialize(new { @event = "barrier", code = "None", value }));
+        await Console.Out.FlushAsync();
+    }
     await Task.Delay(TimeSpan.FromMinutes(5));
     throw new TimeoutException("Parent did not terminate its recovery child.");
 }
@@ -47,7 +75,7 @@ switch (mode)
                 new MetadataMutation.AcquireLease(new("maintenance-2"), Id(12), 300),
                 new MetadataMutation.AddAggregateContribution(Aggregate(2), Delta(7)));
             Write("request.json", batch);
-            Console.WriteLine("{\"seeded\":true}");
+            Emit("{\"seeded\":true}");
             break;
         }
     case "run-mutation":
@@ -91,7 +119,7 @@ switch (mode)
                 if (barrier == "M2") { Require(receipt.CommitId == Load<MetadataId>("acknowledged.json")); }
             }
             var settings = Success(await ((SqliteMetadataStore)fixture.Store).ConfigurationForTestAsync());
-            Console.WriteLine(JsonSerializer.Serialize(new
+            Emit(JsonSerializer.Serialize(new
             {
                 barrier,
                 baselineCompared = true,
@@ -117,7 +145,7 @@ switch (mode)
             Write("old-ticket.json", baselineTicket);
             var point = Success(await ((SqliteMetadataStore)fixture.Store).CaptureRecoveryPointAsync(new(), default));
             Write("recovery-point.json", point);
-            Console.WriteLine("{\"seeded\":true}");
+            Emit("{\"seeded\":true}");
             break;
         }
     case "run-restore":
@@ -142,7 +170,7 @@ switch (mode)
             Require(Digest(await Read(restored)) == Load<string>("baseline-digest.json"));
             Require(await restored.Store.ReconcileAsync(Load<MetadataOperationTicket>("old-ticket.json"), new(), default)
                 is MetadataResult<MetadataResolution>.Failure { Code: MetadataFailureCode.ReconciliationExpired });
-            Console.WriteLine("{\"uninstalledTargetAbsent\":true,\"retryRestoredBaseline\":true,\"historicalTicketRejected\":true}");
+            Emit("{\"uninstalledTargetAbsent\":true,\"retryRestoredBaseline\":true,\"historicalTicketRejected\":true}");
             break;
         }
     case "run-upgrade":
@@ -163,7 +191,7 @@ switch (mode)
             Require(observed.Version == "fixture-sqlite-v1" && observed.LogicalDigest == point.LogicalDigest);
             Require(await fixture.Schema.PrepareAsync(new MetadataSchemaRequest.InspectOnly(), new(TimeSpan.FromMilliseconds(50)), default)
                 is MetadataResult<MetadataSchemaAdmission>.Failure);
-            Console.WriteLine("{\"independentOldLayout\":true,\"admissionRejected\":true}");
+            Emit("{\"independentOldLayout\":true,\"admissionRejected\":true}");
             break;
         }
     case "recover-upgrade":
@@ -190,7 +218,7 @@ switch (mode)
             { PageSize = 1, Continuation = Load<MetadataOption<MetadataContinuation>>("old-cursor.json") }, new(), default)
                 is MetadataResult<MetadataPage>.Failure { Code: MetadataFailureCode.InvalidInput });
             if (barrier == "U4") { Require(admission.Epoch == Load<MetadataId>("acknowledged.json")); }
-            Console.WriteLine(JsonSerializer.Serialize(new { barrier, baselineCompared = true, stateCompared = true, receiptCompared = true }));
+            Emit(JsonSerializer.Serialize(new { barrier, baselineCompared = true, stateCompared = true, receiptCompared = true }));
             break;
         }
     case "hold-owner":
@@ -233,13 +261,13 @@ switch (mode)
             await using var fixture = MetadataFixtureSession.Create("sqlite", new CrashClock(), database);
             Require(await fixture.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(TimeSpan.FromMilliseconds(50)), default)
                 is MetadataResult<MetadataSchemaAdmission>.Failure { Code: MetadataFailureCode.Unavailable });
-            Console.WriteLine("{\"competingOwnerRejected\":true}");
+            Emit("{\"competingOwnerRejected\":true}");
             break;
         }
     case "reopen-owner":
         {
             await using var fixture = await Open();
-            Console.WriteLine("{\"crashReleasedOwner\":true}");
+            Emit("{\"crashReleasedOwner\":true}");
             break;
         }
     case "recovery-walkthrough":
@@ -310,7 +338,7 @@ switch (mode)
                 Require(await current.Schema.PrepareAsync(new MetadataSchemaRequest.Upgrade("fixture-sqlite-v1", "fixture-sqlite-v2", point), new(), default)
                     is MetadataResult<MetadataSchemaAdmission>.Failure { Code: MetadataFailureCode.Conflict });
             }
-            Console.WriteLine("{\"cases\":[\"MP-36\",\"MP-44\",\"MP-45\"],\"positive\":true,\"negative\":true,\"walCaptured\":true,\"isolatedRestoreCompared\":true,\"artifactSetRequired\":true}");
+            Emit("{\"cases\":[\"MP-36\",\"MP-44\",\"MP-45\"],\"positive\":true,\"negative\":true,\"walCaptured\":true,\"isolatedRestoreCompared\":true,\"artifactSetRequired\":true}");
             break;
         }
     default: throw new ArgumentException("Unknown fixed recovery scenario.");

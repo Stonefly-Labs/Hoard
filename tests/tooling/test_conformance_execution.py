@@ -375,15 +375,16 @@ print('{"event":"control","code":"None","value":1}')
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_wrong_repeated_or_unobserved_barriers_cannot_turn_containment_into_success(self):
         run = self.workspace()
-        for payload, expected in (
-                ('{"event":"barrier","code":"None","value":8}\\n', "ProofMismatch"),
-                ('{"event":"barrier","code":"EvidenceIncomplete","value":7}\\n', "ProofMismatch"),
-                ('{"event":"control","code":"AssertionFailed","value":0}\\n'
-                 '{"event":"barrier","code":"None","value":7}\\n', "ProofMismatch"),
-                ('{"event":"barrier","code":"None","value":7}\\n' * 2, "ProofMismatch"),
-                ("", "DeadlineExceeded")):
-            program = f"import os,time; os.write(1,{payload.encode()!r}); time.sleep(60)"
-            with self.subTest(payload=payload), self.assertRaisesRegex(ConformanceError, expected):
+        barrier = {"event": "barrier", "code": "None", "value": 7}
+        for events, expected in (
+                ([barrier | {"value": 8}], "ProofMismatch"),
+                ([barrier | {"code": "EvidenceIncomplete"}], "ProofMismatch"),
+                ([{"event": "control", "code": "AssertionFailed", "value": 0}, barrier], "ProofMismatch"),
+                ([barrier, barrier], "ProofMismatch"),
+                ([], "DeadlineExceeded")):
+            payload = b"".join(execution.canonical_bytes(event) + b"\n" for event in events)
+            program = f"import os,time; os.write(1,{payload!r}); time.sleep(60)"
+            with self.subTest(events=events), self.assertRaisesRegex(ConformanceError, expected):
                 run.command([sys.executable, "-c", program], scope="recovery",
                             stop_at_barrier=7, timeout=0.5)
             self.assertFalse(run.live_children())

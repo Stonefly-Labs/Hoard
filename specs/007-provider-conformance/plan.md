@@ -2148,6 +2148,86 @@ controller prerequisite, not actual SQLite/Local crash-matrix execution or
 T026/T032 completion; runner integration/readback and complete witness
 attribution remain unfinished.
 
+### Safe SQLite recovery runner and controller integration
+
+The prior controller checkpoint's native foundation job at
+[40105833001](https://github.com/Stonefly-Labs/Hoard/actions/runs/40105833001)
+observed 149 tests with two assertions failing in the wrong/repeated-barrier
+regression. Its fixture emitted literal backslash-n bytes, not event-delimiting
+newlines; the controller therefore timed out instead of reaching the intended
+rejection. The test now constructs canonical events with actual newline
+framing. Positive owned-tree exit and normal-exit rejection cases did not fail.
+The corrected full native gate remains pending; no failed run is accepted.
+
+The actual SQLite CrashRunner now accepts only unset legacy mode or explicit
+`HOARD_CONFORMANCE_SAFE_EVENTS=1`; invalid values fail before store opening.
+Legacy output remains byte-for-byte unchanged. In safe mode existing successful
+assertion paths emit a closed completion event, and actual hold boundaries emit
+closed numeric events after the control write and flush before awaiting
+termination. Raw runtime/OS strings and inherited pass labels are not persisted
+as diagnostics.
+
+The SDK diagnostic now builds that runner against its unchanged six-package
+local graph through a privately derived locked restore, byte-verifies every
+actual local dependency image and input-captures the entire runner/native tree
+before/after execution. It requests separate actual seed, observed-barrier kill
+and readback scopes for M0..M2, U0..U4 and R0/R1, plus the original real
+backup/restore walkthrough. Each barrier requires a complete parent receipt
+with exact schema/sequence/target, nonzero PID/start identity, SIGKILL/group exit,
+finite bounded monotonic observation/signal ordering and no failure code.
+Only complete event/receipt chains produce the input-bound hash-only diagnostic;
+arbitrary timeout, normal exit and missing/wrong proof cannot pass.
+
+The missing safe event was observed after a successful actual walkthrough;
+the missing parent-chain admission assertion also failed by name before wiring.
+Fresh independent locked preparation reproduces eleven archives. A separate
+fresh-cache runner build verifies six actual local DLLs. Its first restore
+correctly failed when the private copy omitted the existing fixture-scoped
+central version file; copying that unchanged file fixed the private recipe
+without repository manifest/lock edits. Actual backup/restore walkthroughs now
+pass in both unchanged legacy and safe mode, and invalid mode rejects before
+store creation. Formatting and all 258 tooling tests pass locally (244 passes,
+fourteen native macOS skips). Controller unit doubles verify all 31 requested
+scopes and rejection paths; they are not crash evidence.
+
+Linux execution of the ten actual barrier/termination/readback rows is pending.
+Live-held independent schema/owner probes, exact wrapper/session attribution,
+safe legacy imports and complete T026/category acceptance remain unfinished.
+No memory durability or Local crash proof is inferred, and no task/checklist
+or driver stage advances.
+
+### Verified protected-read/deletion transport
+
+Native [40104718986](https://github.com/Stonefly-Labs/Hoard/actions/runs/40104718986)
+at `c979b6d0be855b9da9addc3513009edd704d6e73` passed all three jobs,
+144 foundation checks without failures/errors/skips, 54 scopes/404 exact
+discoveries/executions including all six original read/deletion parameters,
+actual native containment and eighteen-package/thirteen-lock replay.
+Input: `e4a639d998ad4315b01b32b48559cf5d8c06b29dc4b4a0c22663afa9ea02aed9`;
+preparation: `ad430a4561164b0705d3d8943bf31191fc2a2c0dd8558f76dc2896da49221803`;
+producer: `74147986bef844694caeffc3a0f50de0a6780d267545f4e6a5cb1cdce26ba820`;
+controller: `d0509971f2671113f38351ae64696be8c8a2c3c753c429d8be12e8a85d118470`;
+child start: `a1abb762b5faf9d1f2227dbac4109726c88d139eba1f373a4cbd56e5078d88cd`.
+Free scratch: 92,108,972,032 bytes; six-baseline and SQLite/native/PRAGMA pins
+remain unchanged. This verifies read/deletion transport, not later evidence/
+controller increments or full category acceptance.
+
+### Verified exact evidence/quarantine transport
+
+Native [40105402168](https://github.com/Stonefly-Labs/Hoard/actions/runs/40105402168)
+at `d7ef7cc3cdc20822c79b340a42e12eef0cbbe383` passed all three jobs:
+145 foundation checks without failures/errors/skips, 55 scopes/427 exact
+discoveries/executions including 21 frozen evidence/quarantine parameters and
+both wrong-receipt mutation parameters, native containment and eighteen-package/
+thirteen-lock replay. Six-baseline and SQLite/native/PRAGMA pins are unchanged.
+Input: `715fbfaeb8861b2e327a7e29cbbbe3ff80a79ba3c56b8fafb3d0d908a9b15592`;
+preparation: `69e35939c5061ff02d773464d80165dddff8f0b38e03595055b9332f6888998f`;
+producer: `9ed624fd2d24d8b229b642f1bba488b700d864bf4209b0c4f014e40f2b83cee0`;
+controller: `f8db39c7d6c640dd3f97e8a0778655d51b43ebf0ccc8653ccf1373022cf77c76`;
+child start: `c9386051ef170a11d8bdfc2933e01dad51cda9f7a23063a4324bef46010bb4a9`.
+Free scratch: 91,724,279,808 bytes. It does not verify the subsequent owning
+controller/recovery changes or advance any category/task/stage.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

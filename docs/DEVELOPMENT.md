@@ -6198,6 +6198,14 @@ evidence parameters, the relevant quarantine read parameters and the mutation
 pair: 55 scopes/427 observations are requested, pending. Full category bindings,
 origins, safe imports and seventeen external-proof obligations remain open.
 
+Protected-read/deletion transport is now independently verified by native
+[40104718986](https://github.com/Stonefly-Labs/Hoard/actions/runs/40104718986)
+at `c979b6d0be855b9da9addc3513009edd704d6e73`: all three jobs passed,
+144 foundation checks without failures/errors/skips, 54 scopes/404 exact
+discoveries/executions, actual native containment and eighteen-package/
+thirteen-lock replay. This verifies the six original read/deletion parameters,
+not later evidence/controller changes or category completion.
+
 The owning controller's opt-in `stop_at_barrier` path admits only a bounded
 numeric target in recovery/event scope, with a fifteen-second ceiling. It
 observes the safe event before verifying the actual child identity and issuing
@@ -6211,6 +6219,49 @@ The missing API first failed its admission regression. All 256 tooling tests
 pass locally (242 passes, fourteen native macOS skips); the three new Linux
 process regressions remain pending native execution. This controller primitive
 alone neither drives nor completes the inherited SQLite/Local crash matrices.
+Native run `40105833001` at `0af7c98` exposed two assertions failing in the
+wrong/repeated-barrier test: its child fixture emitted literal backslash-n bytes
+instead of line-delimited events, so the controller correctly reached the
+watchdog rather than the intended barrier rejection. The fixture now serializes
+canonical events with actual newline framing. The native positive tree-exit and
+normal-exit rejection cases did not fail; the corrected full gate remains
+pending, not claimed green.
+
+Exact evidence/quarantine transport also passed at native
+[40105402168](https://github.com/Stonefly-Labs/Hoard/actions/runs/40105402168)
+at `d7ef7cc3cdc20822c79b340a42e12eef0cbbe383`: all three jobs, 145 foundation
+checks without failures/errors/skips, 55 scopes/427 exact observations including
+the 23 original evidence/quarantine/mutation parameters, actual native
+containment and eighteen-package/thirteen-lock replay. It does not verify the
+subsequent owning-controller or recovery integration changes.
+
+SQLite's actual CrashRunner now accepts `HOARD_CONFORMANCE_SAFE_EVENTS=1`.
+It emits a closed completion event only after existing assertions, and a
+closed numeric barrier event after the actual hold boundary/control write,
+flushed before awaiting parent termination. Unset preserves exact legacy
+output; unknown values reject before opening a store. No raw runtime/OS text
+or provider-declared pass fields enter this mode.
+
+The SDK diagnostic now builds that actual runner in locked mode, verifies its
+six local dependency images and captures its complete runtime/native tree in
+immutable pre/post inputs. It drives M0..M2, U0..U4 and R0/R1 with separate
+seed/barrier/readback scopes plus the actual backup/restore walkthrough.
+Normal exit, missing completion, missing/wrong/failed barrier or bad parent
+receipt prevents the final diagnostic projection. The parent independently
+checks exact receipt shape, target, sequence, PID/start hash, SIGKILL/group exit
+and bounded monotonic observation/signal ordering. The record contains only
+closed IDs and input/controller/readback hashes, not imported raw legacy logs.
+
+Fresh independent locked preparation reproduces eleven archives; a separate
+fresh-cache runner build verifies all six actual local DLLs. Actual
+backup/restore walkthroughs pass with unchanged legacy output and the new safe
+event; invalid mode rejects before store creation. All 258 tooling tests pass
+locally (244 passes, fourteen native macOS skips), alongside format/catalog
+checks. Controller unit doubles verify all 31 requested scopes and rejection
+paths; these are not crash evidence. Linux execution of the ten real
+barrier/termination/readback rows is pending. Live-held independent schema/
+owner probes, safe legacy witness imports and full T026/category completion
+remain open; no memory durability or Local crash proof is inferred.
 
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)

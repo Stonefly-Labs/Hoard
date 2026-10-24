@@ -135,6 +135,19 @@ The earlier publication transport is verified at native
 [40103524667](https://github.com/Stonefly-Labs/Hoard/actions/runs/40103524667),
 including all three jobs and 53 scopes/398 exact observations, not these later
 consumers or complete category qualification.
+Protected-read/deletion transport subsequently passed at native
+[40104718986](https://github.com/Stonefly-Labs/Hoard/actions/runs/40104718986),
+including all three jobs, 144 foundation checks and 54 scopes/404 observations.
+The SQLite diagnostic now requests actual mutation/upgrade/restore barriers
+through an explicit safe-event runner mode, parent-owned termination and
+readback. Fresh locked runner builds and actual local backup/restore
+walkthroughs pass, preserving legacy output when the mode is absent.
+Linux crash execution and complete witness/category attribution remain pending.
+The intervening native
+[40105402168](https://github.com/Stonefly-Labs/Hoard/actions/runs/40105402168)
+verifies evidence/quarantine transport and mutation pairs: all three jobs,
+145 foundation checks and 55 scopes/427 observations. It does not verify the
+subsequent controller/recovery changes.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

@@ -1377,7 +1377,10 @@ Exact receipt/protection and permanent quarantine assertions are now shared
 too, retaining Local-only durable reopen checks outside the common SDK.
 Both actual validators reject a wrong-receipt mutation through the unchanged
 consumer; corrected validators pass. Fresh replay passes 252 non-external-proof
-artifact tests. The next native request is 55 scopes/427 observations, pending.
+artifact tests. Native
+[40105402168](https://github.com/Stonefly-Labs/Hoard/actions/runs/40105402168)
+verifies 55 scopes/427 observations, including original evidence/quarantine and
+both wrong-receipt mutation parameters, with all three jobs passing.
 The preceding publication transport is verified on Linux:
 [40103524667](https://github.com/Stonefly-Labs/Hoard/actions/runs/40103524667)
 passed all three jobs, including 53 scopes/398 exact observations and actual
@@ -1385,6 +1388,10 @@ original publication/mutation execution; this is not complete category evidence.
 The owning controller now has a bounded observed-barrier stop path; its Linux
 signal/exit regressions are pending. It does not yet execute the inherited
 SQLite/Local recovery matrices.
+The SQLite runner now has an explicit safe-event mode, and the diagnostic
+controller requests all ten mutation/upgrade/restore barriers, owned termination
+and recovery readback plus the real backup/restore walkthrough. Linux execution
+is pending; legacy output is preserved when the mode is absent.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

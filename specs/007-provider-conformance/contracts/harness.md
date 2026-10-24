@@ -324,6 +324,23 @@ numeric target and monotonic observation/signal-request times to existing exact
 PID/start/exit evidence. Existing command receipts remain unchanged when the
 option is absent. Linux process regressions are pending; this primitive is not
 execution of the inherited recovery matrices or category proof.
+The actual SQLite CrashRunner now has opt-in safe events; unset retains exact
+legacy output and invalid mode rejects before store creation. Completion events
+follow original assertions; numeric hold events are flushed after the actual
+boundary/control write. The SDK diagnostic independently builds/byte-verifies
+all six runner dependencies and input-captures its complete runtime/native tree.
+It requests ten mutation/upgrade/restore seed/barrier/readback rows plus the real
+backup/restore walkthrough. Parent admission requires exact target/sequence,
+PID/start, SIGKILL/group exit and bounded monotonic observe/signal order.
+All final records are closed IDs/hashes bound to the current inputs, never raw
+legacy logs or imported pass labels. Fresh locked local walkthroughs pass;
+Linux crash execution, live-held probes and full legacy/category attribution
+remain pending.
+Native [40105402168](https://github.com/Stonefly-Labs/Hoard/actions/runs/40105402168)
+at `d7ef7cc3cdc20822c79b340a42e12eef0cbbe383` verifies the earlier exact
+evidence/quarantine/mutation transport: all three jobs, 145 foundation checks,
+55 scopes/427 observations, native containment and eighteen-package/thirteen-lock
+replay, not the subsequent controller/recovery integration.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

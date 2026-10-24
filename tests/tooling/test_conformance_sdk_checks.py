@@ -35,6 +35,97 @@ class SdkDiagnosticTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.directory)
 
+    def test_metadata_recovery_barrier_requires_exact_observe_signal_exit_chain(self):
+        self.assertTrue(callable(getattr(checks, "admit_metadata_recovery_barrier", None)),
+                        "Real recovery needs an admitted parent-owned observation/signal/exit chain.")
+        command = {
+            "schemaVersion": 1, "sequence": 3, "childPid": 200,
+            "childStartSha256": "a" * 64, "startedMs": 1000, "endedMs": 1200,
+            "exitCode": -9, "diagnosticCode": "None", "groupState": "Exited", "scope": "recovery",
+            "barrier": {"value": 10, "observedMs": 1050, "signalMs": 1100},
+        }
+        checks.admit_metadata_recovery_barrier(command, 3, 10)
+        changes = (
+            {"sequence": 4}, {"sequence": True}, {"schemaVersion": True},
+            {"childPid": 0}, {"childPid": True}, {"childStartSha256": "0" * 64},
+            {"exitCode": 0}, {"exitCode": True}, {"diagnosticCode": "DeadlineExceeded"},
+            {"groupState": "Retained"}, {"scope": "ordinary"}, {"extra": "ignored"},
+            {"startedMs": float("nan")}, {"endedMs": float("inf")}, {"endedMs": True},
+            {"endedMs": 17001},
+            *({"barrier": command["barrier"] | change} for change in (
+                {"value": 11}, {"value": True}, {"extra": "ignored"},
+                {"observedMs": None}, {"signalMs": None}, {"observedMs": 999},
+                {"signalMs": 1049}, {"signalMs": 1201}, {"signalMs": float("nan")},
+                {"observedMs": False})),
+            {"barrier": None},
+        )
+        for change in changes:
+            with self.subTest(change=change), self.assertRaisesRegex(
+                    checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.admit_metadata_recovery_barrier(command | change, 3, 10)
+
+    def test_metadata_recovery_controller_drives_each_real_runner_mode_and_rejects_missing_proof(self):
+        for mutation in (None, "normal-exit", "missing-event", "wrong-receipt"):
+            root = self.directory / str(mutation)
+            candidate = root / "candidate"
+            assembly = candidate / checks.METADATA_RECOVERY / (
+                "bin/Release/net10.0/Hoard.Fixtures.Metadata.CrashRunner.dll")
+            assembly.parent.mkdir(parents=True)
+            assembly.write_bytes(b"controller-unit-double")
+            (root / "stores").mkdir()
+            (root / "proofs").mkdir()
+            invocations = []
+            run = SimpleNamespace(root=root, command_sequence=0, live_children=lambda: ())
+
+            def command(args, **options):
+                run.command_sequence += 1
+                invocations.append((args, options))
+                value = options["stop_at_barrier"]
+                receipt = {
+                    "schemaVersion": 1, "sequence": run.command_sequence, "childPid": 200,
+                    "childStartSha256": "a" * 64, "startedMs": 1000, "endedMs": 1200,
+                    "exitCode": 0 if value is None or mutation == "normal-exit" else -9,
+                    "diagnosticCode": "None", "groupState": "Exited", "scope": "recovery",
+                }
+                if value is not None:
+                    receipt["barrier"] = {
+                        "value": value + (mutation == "wrong-receipt"),
+                        "observedMs": 1050, "signalMs": 1100,
+                    }
+                (root / f"proofs/recovery-command-{run.command_sequence:04}.json").write_text(json.dumps(receipt))
+                events = () if mutation == "missing-event" else ({
+                    "event": "test" if value is None else "barrier", "code": "None",
+                    "value": 1 if value is None else value,
+                },)
+                return SimpleNamespace(exit_code=receipt["exitCode"], events=events)
+
+            run.command = command
+            inputs = {"runtimeAssemblies": {
+                assembly.relative_to(root).as_posix(): hashlib.sha256(assembly.read_bytes()).hexdigest()}}
+            with self.subTest(mutation=mutation), patch.object(
+                    checks, "require_sqlite_environment"), patch.object(checks, "verify_runtime_packages"):
+                if mutation is not None:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError,
+                                                "EvidenceIncomplete" if mutation == "missing-event" else "ProofMismatch"):
+                        checks.metadata_recovery_diagnostics(run, inputs, candidate)
+                    self.assertFalse((root / "proofs/sqlite-recovery.json").exists())
+                    continue
+                result = checks.metadata_recovery_diagnostics(run, inputs, candidate)
+                self.assertFalse(result["qualification"])
+                self.assertEqual(result["inputsSha256"], checks.evidence.digest(inputs))
+                self.assertEqual([item["barrierId"] for item in result["barriers"]],
+                                 ["M0", "M1", "M2", "U0", "U1", "U2", "U3", "U4", "R0", "R1"])
+                self.assertEqual(len(invocations), 31)
+                self.assertEqual([options["stop_at_barrier"] for _, options in invocations
+                                  if options["stop_at_barrier"] is not None],
+                                 [0, 1, 2, 10, 11, 12, 13, 14, 20, 21])
+                self.assertEqual(invocations[-1][0][2], "recovery-walkthrough")
+                for args, options in invocations:
+                    self.assertEqual(args[:2], ["dotnet", str(assembly)])
+                    self.assertEqual(options["scope"], "recovery")
+                    self.assertEqual(options["env"], {"HOARD_CONFORMANCE_SAFE_EVENTS": "1"})
+                    self.assertEqual(Path(args[3]).parent, Path(args[4]))
+
     def test_artifact_wrapper_scope_preserves_frozen_publication_parameters_and_actual_assembly(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_publication_scenarios", None)),
                         "Artifact publication needs exact source-owned wrapper transport.")

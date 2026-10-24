@@ -38,6 +38,7 @@ MEMORY = "tests/fixtures/metadata/Memory/Memory.csproj"
 MEMORY_BINDING = "tests/fixtures/conformance/Bindings/Memory/Memory.csproj"
 SQLITE = "tests/fixtures/metadata/Sqlite/Sqlite.csproj"
 SQLITE_BINDING = "tests/fixtures/conformance/Bindings/Sqlite/Sqlite.csproj"
+METADATA_RECOVERY = "tests/fixtures/metadata/CrashRunner"
 METADATA_TESTS = f"{CONTRACTS}/Hoard.Metadata.Tests"
 METADATA_TEST_OUTPUT = "bin/wrapper-diagnostic"
 ARTIFACT_TESTS = f"{CONTRACTS}/Hoard.Artifacts.Tests"
@@ -51,6 +52,7 @@ METADATA_PACKAGES = (
     "Hoard.Abstractions", "Hoard.Core", "Hoard.Hosting", "Hoard.Fixtures.Metadata.HostAdapters",
     "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite", "Hoard.Testing.Conformance",
 )
+METADATA_RECOVERY_PACKAGES = tuple(name for name in METADATA_PACKAGES if name != "Hoard.Testing.Conformance")
 ARTIFACT_PACKAGES = (*METADATA_PACKAGES, "Hoard.Fixtures.Artifacts.Local",
                      "Hoard.Fixtures.Artifacts.ObjectSemantics", "Hoard.Fixtures.Artifacts.HostAdapters")
 INPUT_PACKAGES = tuple(dict.fromkeys((*LOCAL_PACKAGES, *METADATA_PACKAGES, *ARTIFACT_PACKAGES)))
@@ -476,17 +478,21 @@ def verify_package_consumer_lock(candidate, feed, alternate, receipt, *, project
         raise evidence.ConformanceError("InputChanged")
 
 
-def _original_wrapper_runtime(candidate, feed, project, output_folder, packages):
-    output = candidate / project / output_folder / "Release/net10.0"
-    logger = "Hoard.Conformance.TestLogger"
-    write_new(output / f"{logger}.dll", read_bounded(
-        candidate / LOGGER / f"bin/Release/net10.0/{logger}.dll", 64 * 1024 * 1024))
-    for package in (*packages, logger):
+def verify_runtime_packages(output, feed, packages):
+    for package in packages:
         identity = evidence.package_identity(feed, package, "0.1.0")
         assembly = f"{package}.dll"
         if evidence.file_sha256(output / assembly) != identity["runtimeAssemblies"].get(
                 f"lib/net10.0/{assembly}"):
             raise evidence.ConformanceError("InputChanged")
+
+
+def _original_wrapper_runtime(candidate, feed, project, output_folder, packages):
+    output = candidate / project / output_folder / "Release/net10.0"
+    logger = "Hoard.Conformance.TestLogger"
+    write_new(output / f"{logger}.dll", read_bounded(
+        candidate / LOGGER / f"bin/Release/net10.0/{logger}.dll", 64 * 1024 * 1024))
+    verify_runtime_packages(output, feed, (*packages, logger))
 
 
 def metadata_wrapper_runtime(candidate, feed):
@@ -685,6 +691,95 @@ def sqlite_noncooperation(run, inputs, candidate):
     }
 
 
+def admit_metadata_recovery_barrier(command, sequence, value):
+    fields = {
+        "schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
+        "exitCode", "diagnosticCode", "groupState", "scope", "barrier",
+    }
+    if (type(sequence) is not int or sequence <= 0 or type(value) is not int or not 0 <= value <= 65535
+            or not isinstance(command, dict) or set(command) != fields
+            or type(command["schemaVersion"]) is not int or command["schemaVersion"] != 1
+            or type(command["sequence"]) is not int or command["sequence"] != sequence
+            or type(command["childPid"]) is not int or command["childPid"] <= 0
+            or not isinstance(command["childStartSha256"], str)
+            or re.fullmatch("[0-9a-f]{64}", command["childStartSha256"]) is None
+            or command["childStartSha256"] == "0" * 64
+            or type(command["exitCode"]) is not int or command["exitCode"] != -9
+            or command["diagnosticCode"] != "None" or command["groupState"] != "Exited"
+            or command["scope"] != "recovery"
+            or not isinstance(command["barrier"], dict)
+            or set(command["barrier"]) != {"value", "observedMs", "signalMs"}
+            or type(command["barrier"]["value"]) is not int or command["barrier"]["value"] != value):
+        raise evidence.ConformanceError("ProofMismatch")
+    barrier = command["barrier"]
+    times = (command["startedMs"], barrier["observedMs"], barrier["signalMs"], command["endedMs"])
+    if (any(type(item) not in (int, float) or not math.isfinite(item) or not 0 <= item <= 2**63 - 1
+            for item in times) or tuple(sorted(times)) != times or times[-1] - times[0] > 15000):
+        raise evidence.ConformanceError("ProofMismatch")
+
+
+def metadata_recovery_diagnostics(run, inputs, candidate):
+    runtime = candidate / METADATA_RECOVERY / "bin/Release/net10.0"
+    assembly = runtime / "Hoard.Fixtures.Metadata.CrashRunner.dll"
+    require_sqlite_environment(inputs, assembly, run.root)
+    verify_runtime_packages(runtime, run.root / "feed/candidate", METADATA_RECOVERY_PACKAGES)
+    assembly_key = assembly.relative_to(run.root).as_posix()
+    if inputs.get("runtimeAssemblies", {}).get(assembly_key) != evidence.file_sha256(assembly):
+        raise evidence.ConformanceError("InputChanged")
+    parent = run.root / "stores/sqlite-recovery"
+    no_symlinks(parent)
+    parent.mkdir(mode=0o700)
+    environment = {"HOARD_CONFORMANCE_SAFE_EVENTS": "1"}
+
+    def execute(mode, directory, barrier, value=None):
+        sequence = run.command_sequence + 1
+        result = run.command(
+            ["dotnet", str(assembly), mode, str(directory / "metadata.db"), str(directory), barrier],
+            cwd=runtime, scope="recovery", env=environment, stop_at_barrier=value,
+            cache_id="sqlite-recovery")
+        if run.live_children():
+            raise evidence.ConformanceError("CleanupIncomplete")
+        if value is None:
+            if result.exit_code or tuple(dict(item) for item in result.events) != (
+                    {"event": "test", "code": "None", "value": 1},):
+                raise evidence.ConformanceError("EvidenceIncomplete")
+        elif result.exit_code != -9 or tuple(dict(item) for item in result.events) != (
+                {"event": "barrier", "code": "None", "value": value},):
+            raise evidence.ConformanceError("ProofMismatch")
+        raw = read_bounded(run.root / f"proofs/recovery-command-{sequence:04}.json", 64 * 1024)
+        command = evidence.load_json(raw)
+        if value is not None:
+            admit_metadata_recovery_barrier(command, sequence, value)
+        return hashlib.sha256(raw).hexdigest(), command
+
+    observations = []
+    for kind, barriers in (
+            ("mutation", (("M0", 0), ("M1", 1), ("M2", 2))),
+            ("upgrade", tuple((f"U{index}", 10 + index) for index in range(5))),
+            ("restore", (("R0", 20), ("R1", 21)))):
+        for barrier, value in barriers:
+            directory = parent / barrier
+            directory.mkdir(mode=0o700)
+            seed_sha, _ = execute("seed-" + kind, directory, barrier)
+            controller_sha, command = execute("run-" + kind, directory, barrier, value)
+            readback_sha, _ = execute("recover-" + kind, directory, barrier)
+            observations.append({
+                "barrierId": barrier, "value": value, "seedSha256": seed_sha,
+                "controllerSha256": controller_sha, "readbackSha256": readback_sha,
+                "childStartSha256": command["childStartSha256"],
+            })
+    walkthrough = parent / "walkthrough"
+    walkthrough.mkdir(mode=0o700)
+    walkthrough_sha, _ = execute("recovery-walkthrough", walkthrough, "none")
+    result = {
+        "qualification": False, "mode": "metadata-recovery", "code": "None",
+        "inputsSha256": evidence.digest(inputs), "barriers": observations,
+        "walkthroughSha256": walkthrough_sha,
+    }
+    write_new(run.root / "proofs/sqlite-recovery.json", evidence.canonical_bytes(result))
+    return result
+
+
 def environment(run, *, phase="admission", candidate=None):
     # The probe is itself an owned child. Captured SDK text is bounded transient
     # input, validated before serialization, never sent to the console.
@@ -746,6 +841,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
                        f"{TESTS}/{PACKAGE_TEST_OUTPUT}/Release/net10.0",
                        f"{METADATA_TESTS}/{METADATA_TEST_OUTPUT}/Release/net10.0",
                        f"{ARTIFACT_TESTS}/{ARTIFACT_TEST_OUTPUT}/Release/net10.0"}
+    runtime_folders.add(f"{METADATA_RECOVERY}/bin/Release/net10.0")
     runtime = [f"{prefix}/{name}" for name in inventory if (
         name.endswith((".dll", ".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))
         and Path(name).parent.as_posix() in runtime_folders) or (
@@ -761,7 +857,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
         lock_paths=locks, runtime_paths=runtime, binding_sources=list(binding_sources),
         observed_environment=observed_environment, budgets=BUDGETS, invocation=[
             "sdk-logger-diagnostic", "original-metadata-memory", "original-metadata-sqlite",
-            "original-artifact-publication", "original-artifact-read-delete", "original-artifact-evidence"],
+            "original-artifact-publication", "original-artifact-read-delete", "original-artifact-evidence",
+            "sqlite-recovery-barriers"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1009,6 +1106,15 @@ def execute(repository, destination):
         if adapter_record is not None:
             verify_project_lock(adapter_record, candidate, feed)
             write_new(run.root / "proofs/metadata-host-lock-derivation.json", evidence.canonical_bytes(adapter_record))
+        recovery_project = candidate / METADATA_RECOVERY / "CrashRunner.csproj"
+        recovery_lock, recovery_record = prepare_project_lock(recovery_project, candidate, feed, "candidate")
+        build(run, recovery_project, config, "metadata-recovery", lock=recovery_lock)
+        if recovery_record is not None:
+            verify_project_lock(recovery_record, candidate, feed)
+            write_new(run.root / "proofs/metadata-recovery-lock-derivation.json",
+                      evidence.canonical_bytes(recovery_record))
+        verify_runtime_packages(candidate / METADATA_RECOVERY / "bin/Release/net10.0",
+                                feed, METADATA_RECOVERY_PACKAGES)
         artifact_records = []
         for name in ("Local", "ObjectSemantics", "HostAdapters"):
             project = candidate / f"tests/fixtures/artifacts/{name}/{name}.csproj"
@@ -1094,6 +1200,8 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "native-noncooperation"}), flush=True)
         native_noncooperation = sqlite_noncooperation(run, inputs, candidate)
+        print(json.dumps({"qualification": False, "phase": "metadata-recovery"}), flush=True)
+        metadata_recovery = metadata_recovery_diagnostics(run, inputs, candidate)
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)
         post_identity = evidence.source_identity(repository, ci_revision=ci_revision)
@@ -1102,6 +1210,8 @@ def execute(repository, destination):
         evidence.verify_snapshot(candidate, sources)
         if lock_record is not None:
             verify_project_lock(lock_record, candidate, feed)
+        if recovery_record is not None:
+            verify_project_lock(recovery_record, candidate, feed)
         if memory_record is not None:
             verify_project_lock(memory_record, candidate, feed)
         if binding_record is not None:
@@ -1124,6 +1234,7 @@ def execute(repository, destination):
                    "baselineSha256": seal_sha, "inputsSha256": evidence.digest(inputs),
                    "lockPreparation": lock_preparation,
                    "nativeNonCooperation": native_noncooperation,
+                   "metadataRecovery": metadata_recovery,
                    "sqliteEnvironment": {
                        "nativeVersion": inputs["environment"]["nativeSqlite"],
                        "pragmas": dict(inputs["environment"]["pragmas"]),
