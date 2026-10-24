@@ -23,7 +23,7 @@
         "type": "Direct",
         "requested": "[0.1.0, 0.1.0]",
         "resolved": "0.1.0",
-        "contentHash": "9kTCbsgeF2gel+tlp0QN2PQlzs5vRV5vjOM3Sn7jfghLqg87OFPR/pFM5RMihnvjgsvXZcvuwdqkPpF2OLKqCg==",
+        "contentHash": "ysovIIYE9/9edIi57+c776WTsGr28Be+0SCiZ8L5QljUId36TyNZOujMbBBP57l74C4jTkRuS+g1VpBNYL9SiQ==",
         "dependencies": {
           "Hoard.Abstractions": "0.1.0",
           "xunit": "2.9.3"

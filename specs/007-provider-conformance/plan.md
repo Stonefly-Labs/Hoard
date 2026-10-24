@@ -1836,6 +1836,63 @@ checkpoint above predates this increment and does not run original wrappers.
 Schema/session extraction and exact runtime/controller-origin integration
 remain unfinished; full feature gates and final review stay open.
 
+Native run [40098981184](https://github.com/Stonefly-Labs/Hoard/actions/runs/40098981184)
+at `11875e52e5c77c7f6953c6f1062afc7373f7713b` passed all three jobs:
+136 foundation checks without failures/errors/skips, 50 scopes/256 exact
+discoveries/executions with expected diagnostics, native containment and
+identical eighteen-package/thirteen-lock replay. Free scratch: 91,719,897,088
+bytes. Input:
+`eb4c53bdb06caff9246aa0a05401ffe164cfdeb3e0a9b16df9b3eb19ac24e1c8`;
+preparation:
+`54d791988b5aa58f0baf168bd727716944f81b091c0e428c0158c7f768d8e1b9`;
+producer:
+`34696faa6cab04fdeeffcd6966d9d7e9283d10b9c118fc632792b9a490ecd055`;
+controller:
+`77c388d5cb3fb061ff0239efce61de847aa5c9f8e867382c152fafcd1e4854de`;
+child start:
+`77bcddc6ba2da5c5906cc1629a4b6d8ae3077b65e05de8dc1bd70e9dd95df2a1`.
+Baseline seal and actual SQLite 3.53.3/native-member/PRAGMA pins are unchanged.
+This gate does not execute original wrapper suites.
+
+### Original schema session ownership
+
+The five original schema wrappers now delegate (53 methods total), preserving
+their exact names, unrelated/partial loop, original legacy factories and real
+recovery authorization/reopen/U1 exclusion. A narrow
+`IMetadataSchemaAssertionSession` exposes only these actual controls; it does
+not pretend to implement a full category binding or unsupported fault hooks.
+Existing full-session signatures project into the same shared assertions.
+Memory observes actual immutable logical state; SQLite preserves inherited
+physical database/WAL byte checks through worker-owned streamed fingerprints.
+Initially observed WAL files remain mandatory, while newly empty WAL creation
+on read-only reopen is ignored. Cancellation before reopen handoff retains
+the original directory owner for cleanup, never a successful partial transfer.
+
+The actual original-control regression first failed its missing-API assertion,
+then proved cancelled reopen/authorization/snapshot preservation, continued
+original-store usability, real future-schema mutation and actual closed-store/
+new-store handoff. A binding regression proves physical writes change the
+fingerprint and rejected future-schema reopen does not. Bounded architecture
+review found cancellation from `FileStream.ReadAsync` could emit a false
+internal-failure diagnostic. A deterministic in-flight regression first failed
+with `metadata.internal_failure`; translating only token-matched stream
+cancellation into the worker's existing budget failure fixes it. That
+regression waits for actual settlement and rejects any diagnostic emission.
+Direct comparison with predecessor wrapper bodies preserves every inherited
+schema assertion, including exact encoded entry preservation and physical
+database/WAL byte checks; complete frozen runtime parity is a separate gate.
+
+All 89 current predecessor tests pass without skips on each provider, and
+183 selected SDK/binding tests pass locally. Fresh independent locked replay
+reproduces eight archives, seven wrapper DLLs and the separate Application
+DLL. All seven actual binding output DLLs match archives; SDK bytes agree
+across feed families. Only the SDK hash changes in the tracked predecessor
+lock, preserving other/historical pins. The expanded native request is 50
+scopes/258 observations (88 SQLite identities), pending Linux execution.
+Exact frozen/runtime/controller-origin integration, actual inherited recovery
+and complete category/profile acceptance remain unfinished. No additional task
+or reviewer-owned checklist is marked complete by this checkpoint.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

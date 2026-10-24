@@ -6036,6 +6036,36 @@ historical pins remain unchanged. Native run `40097647586` predates this change
 and does not execute original wrappers. Schema/session extraction and exact
 origin ingestion remain unfinished.
 
+The five original schema wrappers now also delegate (53 methods total) through
+an explicitly narrow schema assertion session, without fabricated mandatory
+category fault hooks. Existing full-session APIs still forward to the same
+assertions. The original factories, real backup authorization, U1 exclusion and
+same-database reopen remain in use. Cancellation before transfer leaves the
+original directory owner responsible for cleanup. Actual SQLite database/WAL
+hashing runs inside owned independent work with bounded streamed buffers;
+Memory uses its actual logical image. Initially observed WALs remain mandatory;
+only newly empty WAL creation on read-only reopen is ignored.
+
+Bounded architecture review found a real in-flight cancellation diagnostic bug.
+Its deterministic actual-file regression first observed
+`metadata.internal_failure`; translating the stream's cancellation into the
+worker budget failure fixes it without changing generic failure handling.
+The regression awaits genuine settlement and checks no diagnostic was emitted.
+All 89 current original tests pass per provider; 183 selected SDK/binding tests
+pass locally, without skips. Independent fresh locked replay reproduces eight
+archives and all wrapper/Application DLLs; seven actual binding DLLs also match
+archive members and both feeds use identical SDK bytes. Only the SDK hash
+changes in the tracked predecessor lock, preserving other/historical entries.
+Native run `40098981184` at `11875e5` passed all three jobs, 136 foundation
+checks, 50 scopes/256 exact discoveries/executions, native containment and
+eighteen-package/thirteen-lock replay. It predates this schema increment and
+does not execute original wrappers. The new request is 50 scopes/258
+observations (88 SQLite identities), pending Linux execution. Exact frozen
+parity/controller-origin imports and complete feature gates remain open.
+Product architecture, ADRs, diagrams and deployment examples are unaffected:
+this changes test-only assertion/session controls, not production contracts,
+provider composition, infrastructure or deployment.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

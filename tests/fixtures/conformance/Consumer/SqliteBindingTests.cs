@@ -407,6 +407,32 @@ public sealed class SqliteBindingTests
         Assert.Equal(committedOperation, Success(await native.ObserveOperationImageForTestAsync(ticket, default)));
     }
 
+    [Fact]
+    public async Task Physical_schema_fingerprints_detect_writes_and_preserve_rejected_reopen_state()
+    {
+        await using var resources = new RecordingDirectories();
+        await using var session = await new SqliteBinding(new string('a', 64)).CreateSessionAsync(Context(resources), default);
+        Success(await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        var native = Assert.IsType<SqliteMetadataStore>(session.Store);
+        var before = Success(await native.ObservePhysicalStateForTestAsync(default));
+        Assert.Equal(MetadataSchemaState.Compatible, Success(await session.Schema.InspectAsync(new(), default)).State);
+        Success(await session.Schema.PrepareAsync(new MetadataSchemaRequest.InspectOnly(), new(), default));
+        Assert.Equal(before, Success(await native.ObservePhysicalStateForTestAsync(default)));
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+        Assert.Equal(MetadataFailureCode.CancelledBeforeCommit, Assert.IsType<MetadataResult<string>.Failure>(
+            await native.ObservePhysicalStateForTestAsync(cancelled.Token)).Code);
+        Success(await session.Faults.SetFutureSchemaAsync(default));
+        Assert.NotEqual(before, Success(await native.ObservePhysicalStateForTestAsync(default)));
+        await using var reopened = await session.ReopenAsync(default);
+        var reopenedNative = Assert.IsType<SqliteMetadataStore>(reopened.Store);
+        var future = Success(await reopenedNative.ObservePhysicalStateForTestAsync(default));
+        Assert.Equal(MetadataSchemaState.Incompatible, Success(await reopened.Schema.InspectAsync(new(), default)).State);
+        Assert.Equal(MetadataFailureCode.IncompatibleSchema, Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Failure>(
+            await reopened.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default)).Code);
+        Assert.Equal(future, Success(await reopenedNative.ObservePhysicalStateForTestAsync(default)));
+    }
+
     private static ConformanceRunContext Context(RecordingDirectories resources) => new(
         Guid.NewGuid(), "arbitrary-case-not-a-setup-selector", new MetadataConformanceClock(new(1_800_000_000_000)),
         resources, new ConformanceEvidenceBuffer());

@@ -61,6 +61,23 @@ public interface IMetadataConformanceSession : IAsyncDisposable
     ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken cancellationToken);
 }
 
+/// <summary>An owned schema-assertion projection, not admission as a complete category binding.</summary>
+public interface IMetadataSchemaAssertionSession : IAsyncDisposable
+{
+    IMetadataStore Store { get; }
+    IMetadataSchemaAdministration Schema { get; }
+    IMetadataConformanceAuthority Authority { get; }
+    ValueTask<IMetadataSchemaAssertionSession> ReopenAsync(CancellationToken cancellationToken);
+    ValueTask<ConformanceStateFingerprint> ObserveStateAsync(CancellationToken cancellationToken);
+    ValueTask<MetadataResult<MetadataId>> CreateUnrecognizedLayoutAsync(bool partial, CancellationToken cancellationToken);
+    ValueTask<MetadataResult<MetadataId>> SetFutureSchemaAsync(CancellationToken cancellationToken);
+    ValueTask<MetadataResult<MetadataId>> CorruptRecordAsync(MetadataSelector selector, CancellationToken cancellationToken);
+    ValueTask<MetadataRecoveryPoint> AuthorizeUpgradeAsync(CancellationToken cancellationToken);
+    ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
+        MetadataObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken);
+    ValueTask AwaitSettlementAsync(CancellationToken cancellationToken);
+}
+
 public interface IMetadataConformanceAuthority : IMetadataPublicationAuthority
 {
     int Acquisitions { get; }

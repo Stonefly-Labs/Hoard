@@ -89,7 +89,17 @@ The original diagnostics wrapper now shares consumers too (48 methods), while
 retaining its original failure hook/canary. All 88 current predecessor tests
 pass on each provider and 181 SDK/binding tests pass locally. The native run
 predates that diagnostics increment and does not execute original wrappers.
-Schema extraction and exact origin import remain outstanding.
+The five original schema wrappers now also delegate (53 methods total), through
+a narrow schema-only original-fixture adapter, not a fabricated full binding.
+Real recovery authorization, same-database reopen and settlement are retained;
+SQLite preserves physical database/WAL checks through owned streamed hashes.
+In-flight cancellation settles without false internal-failure diagnostics.
+All 89 original tests pass per provider; 183 selected SDK/binding tests pass
+locally with byte-matched independent package replay. Native run `40098981184`
+at `11875e5` verified the preceding 50-scope/256-observation diagnostics
+checkpoint; the new 50-scope/258-observation vector awaits Linux execution.
+That gate does not execute original wrappers. Exact frozen parity and origin
+import remain outstanding.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

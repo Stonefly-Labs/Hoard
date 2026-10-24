@@ -1323,6 +1323,20 @@ and canary. All 88 current predecessor tests pass on each provider and 181
 SDK/binding tests pass locally. The native checkpoint predates this diagnostics
 increment and does not execute the original wrapper suite.
 
+All five original schema wrappers now also delegate (53 methods total), using
+a narrow schema-only projection of their original fixtures, real recovery
+authorizations, same-database reopen and actual settlement. SQLite preserves
+physical database/WAL byte checks through worker-owned streamed fingerprints;
+Memory observes its actual logical image. In-flight stream cancellation now
+settles without a false internal-failure diagnostic. All 89 current predecessor
+tests pass on each provider and 183 selected SDK/binding tests pass locally.
+Fresh independent locked replay reproduces eight archives and exact DLLs.
+Native run [40098981184](https://github.com/Stonefly-Labs/Hoard/actions/runs/40098981184)
+at `11875e5` verified the preceding diagnostics checkpoint (50 scopes/256
+observations); the new 50-scope/258-observation request remains pending.
+Neither native checkpoint executes the original wrapper suite; exact frozen
+parity/controller-origin integration and full feature acceptance remain open.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

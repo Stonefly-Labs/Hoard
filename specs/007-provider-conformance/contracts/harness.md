@@ -239,6 +239,22 @@ on both providers, alongside 181 local SDK/binding tests. The native checkpoint
 predates this increment and does not execute original wrappers. Schema/session
 extraction and exact controller-origin imports remain unfinished.
 
+All five original schema wrappers now also share these consumers (53 delegated
+methods). The additive `IMetadataSchemaAssertionSession` is a narrow assertion
+projection, not complete category-binding admission; existing full-session
+signatures forward to the same core. Original fixtures supply real schema,
+recovery authorization, same-database reopen and settlement. SQLite physical
+database/WAL fingerprints run as genuinely worker-owned independent streamed
+reads, retaining originally observed WALs and ignoring only newly empty WALs.
+Cancellation before handoff retains directory ownership; in-flight physical
+read cancellation maps to budget cancellation, not `InternalFailure`.
+All 89 current original tests pass per provider and 183 selected SDK/binding
+tests pass locally; fresh locked replay reproduces eight archives and exact
+DLLs. Native run `40098981184` at `11875e5` verified the preceding diagnostics
+checkpoint (50 scopes/256 observations), not original wrapper execution.
+The new 50-scope/258-observation request remains pending; frozen parity and
+exact runtime/controller imports remain open.
+
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,

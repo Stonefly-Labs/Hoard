@@ -105,24 +105,46 @@ public sealed partial class MetadataFixtureSession : IAsyncDisposable
         _ => throw new InvalidOperationException("Unknown metadata fixture.")
     };
 
-    public async ValueTask<MetadataFixtureSession> ReopenAsync(string compatibleSchema = "fixture-sqlite-v2")
+    public ValueTask<MetadataFixtureSession> ReopenAsync(string compatibleSchema = "fixture-sqlite-v2") =>
+        ReopenAsync(compatibleSchema, default);
+
+    public async ValueTask<MetadataFixtureSession> ReopenAsync(string compatibleSchema, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         BeginCorruptionClosure();
-        await WhenIdleAsync();
+        await WhenIdleAsync().WaitAsync(cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         var image = Store is MemoryMetadataStore memory ? memory.CaptureLogicalImage() : null;
         await Store.DisposeAsync();
+        cancellationToken.ThrowIfCancellationRequested();
         var reopened = new MetadataFixtureSession(Provider, clock, DatabasePath, 0, compatibleSchema, image)
         { ownedDirectory = ownedDirectory };
         ownedDirectory = null;
         return reopened;
     }
 
-    public async ValueTask<MetadataRecoveryPoint> AuthorizeUpgradeAsync()
+    public ValueTask<MetadataRecoveryPoint> AuthorizeUpgradeAsync() => AuthorizeUpgradeAsync(default);
+
+    public async ValueTask<MetadataRecoveryPoint> AuthorizeUpgradeAsync(CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (Store is MemoryMetadataStore memory) { return memory.AuthorizeLogicalUpgrade(); }
-        var result = await ((SqliteMetadataStore)Store).CaptureRecoveryPointAsync(new(), default);
+        var result = await ((SqliteMetadataStore)Store).CaptureRecoveryPointAsync(new(), cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         return result is MetadataResult<MetadataRecoveryPoint>.Success success ? success.Value
             : throw new InvalidOperationException("Fixture recovery authorization failed.");
+    }
+
+    public async ValueTask<string> ObserveSchemaStateForTestAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        await WhenIdleAsync().WaitAsync(cancellationToken);
+        return Store switch
+        {
+            SqliteMetadataStore sqlite => PayloadValue(await sqlite.ObservePhysicalStateForTestAsync(cancellationToken)),
+            MemoryMetadataStore memory => memory.CaptureLogicalImage().ComputeFingerprint(cancellationToken),
+            _ => throw new InvalidOperationException("Unknown metadata fixture.")
+        };
     }
 
     public ValueTask<MetadataResult<MetadataId>> FillLedgerForTestAsync() => Store switch

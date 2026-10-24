@@ -303,6 +303,7 @@ SCENARIOS = (
         + 'Raw_fingerprint_observes_rejected_layouts_without_admitting_or_repairing_them(layout: "' + layout + '")'
         for layout in ("empty", "unrecognized", "partial", "future")), "None", "Passed", 0, "None"),
     ("sqlite-native-lifetimes", tuple(SQLITE_MECHANISM_PREFIX + method for method in (
+        "Cancelled_physical_stream_settles_without_internal_failure",
         "Raw_fingerprint_rejects_oversized_unindexed_native_rows_before_materialization",
         "Cancelled_writer_acquisition_keeps_late_native_handles_owned_until_they_close",
         "Cancelled_independent_read_does_not_release_the_underlying_work",
@@ -310,8 +311,9 @@ SCENARIOS = (
         "Independent_read_work_is_included_in_idle_and_actual_worker_termination",
         "Independent_writer_lease_is_not_ordinary_work_but_closes_before_lifetime_settlement",
         "Genuine_worker_termination_outlives_public_deadline_and_includes_native_handle_cleanup"))
-     + (SQLITE_BINDING_PREFIX
-        + "Raw_corruption_observations_read_committed_rows_while_the_primary_candidate_is_held",),
+     + tuple(SQLITE_BINDING_PREFIX + method for method in (
+        "Raw_corruption_observations_read_committed_rows_while_the_primary_candidate_is_held",
+        "Physical_schema_fingerprints_detect_writes_and_preserve_rejected_reopen_state")),
      "None", "Passed", 0, "None"),
 )
 ASSERTION = "Hoard.Testing.Conformance.LoggerSmokeAssertion.Check"

@@ -185,6 +185,20 @@ reproduces eight archives and exact DLLs; both feeds have identical SDK bytes.
 Only its hash changes in the tracked predecessor lock; other entries stay
 pinned. The native checkpoint predates this increment and does not execute
 original wrappers. Schema extraction and exact origin integration remain open.
+The five original schema wrappers now delegate as well (53 methods total).
+Their narrow `IMetadataSchemaAssertionSession` projection exposes only actual
+original fixture controls; it is not admission as a complete category binding.
+Recovery authorization and same-database reopen retain original ownership.
+SQLite fingerprints stream actual database/WAL bytes inside owned independent
+work; initially observed WALs remain mandatory, while newly created empty WALs
+do not imply mutation. Memory fingerprints its actual immutable logical image.
+Cancelled physical reads settle without false internal-failure diagnostics.
+All 89 current predecessor tests pass on each provider and 183 selected
+SDK/binding tests pass locally, with independently replayed exact package/DLL
+bytes. Run `40098981184` at `11875e5` verified the previous diagnostics checkpoint,
+50 scopes/256 observations and native containment; it does not run original
+wrappers. The new 50-scope/258-observation request awaits Linux execution.
+Exact frozen parity and controller-origin integration remain unfinished.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

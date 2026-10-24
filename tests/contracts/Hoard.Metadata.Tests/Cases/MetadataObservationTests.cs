@@ -9,6 +9,38 @@ namespace Hoard.Metadata.Tests;
 public sealed class MetadataObservationTests
 {
     [Fact]
+    public async Task Original_schema_controls_preserve_cancelled_handoff_and_observe_real_state()
+    {
+        await using var fixture = await OpenAsync();
+        var registry = Registry();
+        await Commit(fixture, new MetadataMutation.PutRegistry(registry, new ExpectedRevision.Absent()));
+        registry = await Read<MetadataRegistry>(fixture, registry.Selector);
+        var projection = new OriginalMetadataSchemaSession(fixture);
+        Assert.Same(fixture.Store, projection.Store);
+        Assert.Same(fixture.Schema, projection.Schema);
+        var before = await projection.ObserveStateAsync(default);
+        using var cancelled = new CancellationTokenSource();
+        cancelled.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => projection.ReopenAsync(cancelled.Token).AsTask());
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => projection.AuthorizeUpgradeAsync(cancelled.Token).AsTask());
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => projection.ObserveStateAsync(cancelled.Token).AsTask());
+        Assert.Equal(before, await projection.ObserveStateAsync(default));
+        Assert.Equal(registry, await Read<MetadataRegistry>(fixture, registry.Selector));
+        await using (var corruption = await CommonCorruptionAsync(fixture,
+            new MetadataCorruptionRequest.Record(registry.Selector, MetadataRecordCorruption.NullLabel), default))
+        {
+            Assert.NotEqual(corruption.Original, await corruption.ObserveAsync(default));
+        }
+        Assert.Equal(registry, await Read<MetadataRegistry>(fixture, registry.Selector));
+        Success(await projection.SetFutureSchemaAsync(default));
+        Assert.NotEqual(before, await projection.ObserveStateAsync(default));
+        await using var reopened = await projection.ReopenAsync(default);
+        Assert.NotSame(fixture.Store, reopened.Store);
+        Assert.Equal(MetadataFailureCode.Disposed, Failed(await fixture.Store.ReserveOperationAsync(new(), default)));
+        Assert.Equal(MetadataSchemaState.Incompatible, Success(await reopened.Schema.InspectAsync(new(), default)).State);
+    }
+
+    [Fact]
     public async Task Original_diagnostic_fault_can_be_consumed_without_replacing_its_owner()
     {
         await using var fixture = await OpenAsync();

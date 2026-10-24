@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Hoard.Abstractions.Metadata;
 using Hoard.Fixtures.Metadata.Sqlite;
 using Hoard.Testing.Conformance.Metadata;
@@ -6,6 +7,32 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 
 public sealed class SqliteMechanismTests
 {
+    [Fact]
+    public async Task Cancelled_physical_stream_settles_without_internal_failure()
+    {
+        using var cancellation = new CancellationTokenSource();
+        var diagnostics = new ConcurrentQueue<string>();
+        var calls = 0;
+        await using var fixture = new StoreFixture(point =>
+        {
+            if (point == "physical.read")
+            {
+                calls++;
+                cancellation.Cancel();
+            }
+            return ValueTask.CompletedTask;
+        }, diagnostics.Enqueue);
+        Success(await fixture.Store.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        Assert.Equal(MetadataFailureCode.CancelledBeforeCommit,
+            Assert.IsType<MetadataResult<string>.Failure>(
+                await fixture.Store.ObservePhysicalStateForTestAsync(cancellation.Token)).Code);
+        await fixture.Store.WhenIdleAsync();
+        Assert.Equal(1, calls);
+        Assert.Empty(diagnostics);
+        Assert.Equal(MetadataSchemaState.Compatible,
+            Success(await fixture.Store.InspectAsync(new(), default)).State);
+    }
+
     [Fact]
     public async Task Raw_fingerprint_rejects_oversized_unindexed_native_rows_before_materialization()
     {
@@ -401,11 +428,11 @@ public sealed class SqliteMechanismTests
     private sealed class StoreFixture : IAsyncDisposable
     {
         private readonly string directory = Directory.CreateTempSubdirectory("hoard-sqlite-auxiliary-").FullName;
-        public StoreFixture(Func<string, ValueTask> observer)
+        public StoreFixture(Func<string, ValueTask> observer, Action<string>? diagnostic = null)
         {
             Store = new(DatabasePath, new RejectingAuthority(),
                 new MetadataConformanceClock(new(1_800_000_000_000)), observer,
-                _ => throw new InvalidOperationException("UnexpectedDiagnostic"));
+                diagnostic ?? (_ => throw new InvalidOperationException("UnexpectedDiagnostic")));
         }
         public SqliteMetadataStore Store { get; }
         public string DatabasePath => Path.Combine(directory, "metadata.db");
