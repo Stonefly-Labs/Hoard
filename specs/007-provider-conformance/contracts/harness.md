@@ -455,6 +455,22 @@ The preceding race-only vector passed run `40113497329` at `91da8f4`, all three
 jobs and 169 foundations, with 57 scopes/456 exact observations and all actual
 recovery/transfer/retention prerequisites. Neither vector is category acceptance.
 
+Five original history/budget bodies now also execute shared checks, with exact
+assertion tokens/order retained and actual clock, limit/authority setup and
+candidate registration fixture-side. Eight identities are frozen category
+witnesses; eight additional existing fixture identities are explicitly requested
+without altering the frozen inventory. Real-store mutations hide the injected
+candidate failure behind one actual retry, causing the unchanged expected
+failure-type assertion to fail on both providers; actual observation/reservation/
+failure/retry counters corroborate the intended fault. Genuine stores pass.
+All sixteen originals plus the two mutation rows request the next
+60-scope/488-observation native vector, pending. Remaining budget/ownership and
+complete category/session/profile evidence are not supplied by this extraction.
+The reconciliation-only request passed run `40114439905` at `517b911`, all three
+jobs, 170 foundations and 58 scopes/466 observations, with all actual
+recovery/transfer/retention/native prerequisites and eighteen-package/thirteen-
+lock replay admitted independently.
+
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,

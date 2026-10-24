@@ -1441,15 +1441,24 @@ Private staging and all four original reconciliation methods now also delegate
 to shared consumers, retaining their ten frozen parameters and fixture-side
 barrier, clock and lost-acknowledgment controls. A real-store foreign-receipt
 mutation fails the unchanged receipt-equality assertion on both providers;
-genuine stores pass. The next exact native request adds eight reconciliation
-witnesses and two mutation rows (58 scopes/466 observations), pending. This
-remains partial implementation, not complete category or profile qualification.
+genuine stores pass. Run
+[40114439905](https://github.com/Stonefly-Labs/Hoard/actions/runs/40114439905)
+at `517b911` passed all three jobs, 170 foundation checks and 58 scopes/466
+observations, including eight reconciliation witnesses and two mutation rows.
+This remains partial implementation, not complete category/profile qualification.
 All three original direct/listing visibility bodies also now execute shared
 consumers with real fixture-side hold/release controls. A genuine pending Local
 commit paired with a premature acknowledgment fails the unchanged shared
 pending-task assertion; the genuine store passes. The next native request adds
 three frozen visibility witnesses and that mutation (59 scopes/470 observations),
 pending, without expanding qualification claims.
+Five original history/budget methods now also use shared checks, preserving
+eight frozen category witnesses plus eight additional existing fixture cases.
+Actual clocks, authority setup and candidate observers remain fixture-side.
+Real-store hidden-candidate-failure mutations fail the unchanged shared type
+assertion on both providers; genuine stores pass. The next native request adds
+all sixteen original rows plus two mutations (60 scopes/488 observations),
+pending. Remaining budget and ownership cases are not claimed complete.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

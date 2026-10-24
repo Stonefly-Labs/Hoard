@@ -333,8 +333,9 @@ genuine receipt from a different actual publication. The unchanged consumer's
 receipt-equality assertion fails on both providers; reconciliation/publication
 counters prove the intended mutation, and fresh genuine stores pass unchanged.
 The next exact native scope adds eight original reconciliation witnesses plus
-two mutation parameters (58 scopes/466 observations), pending, not category
-or complete session evidence.
+two mutation parameters. It passed at `517b911`, run `40114439905`, all three
+jobs and 170 foundations with 58 scopes/466 observations, not category or
+complete session evidence.
 
 The three original visibility bodies now run provider-free shared checks while
 fixture callbacks retain actual receipt/listing/direct-availability boundaries.
@@ -344,6 +345,18 @@ the unchanged pending-task assertion fails. The test releases the actual hold,
 awaits the genuine commit and verifies its distinct published stamp; a fresh
 genuine provider passes unchanged. The next native request adds these three
 frozen witnesses and the mutation: 59 scopes/470 observations, pending.
+
+Five original history/budget bodies now run shared checks: incarnation/history
+capacity, bounded candidate examination/resumption and ticket-expiry capacity.
+All original assertions/order remain, with actual clock, limits, authority setup
+and candidate registration fixture-side. Eight identities are frozen category
+witnesses; eight additional existing fixture identities are requested explicitly
+without changing the frozen catalog. A real-store adapter hides the actual
+injected candidate failure behind one actual retry, causing the unchanged
+consumer's expected failure-type assertion to fail on both providers. Counters
+corroborate actual candidate observation, 106 reservations, one hidden failure
+and one retry; genuine stores pass unchanged. The next native vector adds these
+sixteen originals and two mutations: 60 scopes/488 observations, pending.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

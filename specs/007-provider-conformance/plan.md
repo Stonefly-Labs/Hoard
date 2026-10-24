@@ -2656,6 +2656,50 @@ SDK/accepted-source formatting, compiled/frozen catalogs, mechanical three-body
 comparison and patch integrity. Product APIs/edges/ADRs/diagrams, deployment
 examples and tracked locks remain unaffected.
 
+Five original history/budget bodies now run provider-free shared consumers:
+reclaimed-incarnation/history capacity, bounded candidate examination, faulted
+candidate resumption and ticket-expiry capacity. Exact assertion tokens/order
+match mechanically after explicit setup/seam/helper/cancellation forwarding.
+Actual clock, limits/reference authority setup and candidate observer
+registration remain fixture-side; no concrete providers or provider-selected
+expected outcomes enter the SDK.
+
+A real-store mutation hides the actual injected history-candidate failure
+behind one actual retry. The unchanged consumer's expected failure-type
+assertion fails on each provider, with actual candidate observation, exactly
+106 reservations, one hidden failure and one retry proving the intended mutation.
+Fresh genuine providers pass the unchanged consumer. Actual missing shared
+consumers first failed package-mode compilation with CS0103. A missing exact
+scope failed its named regression; its first count then revealed eight frozen
+category identities, not sixteen. The other eight identities are additional
+existing fixture cases and are requested explicitly without changing the frozen
+inventory. The new eighteen-row scope contains all sixteen originals plus
+two mutations, requesting 60 scopes/488 observations, pending. Remaining budget/
+ownership cases and full binding/session/category/profile gates stay unfinished.
+
+The preceding reconciliation run
+[40114439905](https://github.com/Stonefly-Labs/Hoard/actions/runs/40114439905)
+passed at exact head `517b91119d0f122837d1d0c32099761a46f03909`: all three jobs,
+170 foundations without failures/errors/skips, 58 scopes/466 exact discoveries/
+executions including all ten new reconciliation rows, actual SQLite/Local
+recovery, four paced transfers, six retained-worker chains, original external
+wrappers, native containment and eighteen-package/thirteen-lock replay. Input:
+`d77ea438c9de9e604ce3432ad462e97943ba04598560e6fcbb37a382e4d8d4b8`;
+preparation:
+`9821ed48736ad565791cfeca5a571f0d93a77221616548dcc830af1d504f43a1`.
+Visibility run `40115175363` binds exact head
+`793ad65639f5671bcdf6493299a50b2d80525b38` and remains pending separate admission.
+Two actual independent fresh-cache locked builds reproduce eleven archives
+with combined archive-map SHA-256
+`9e8e53140f63b3db291645c842b9300a1ead852305528a1c7c8b78ec43986115`;
+ten loaded dependency images match their archives. Each passes 280 artifact
+cases and 89 metadata cases per provider without skips. Earlier measured
+transfer packets are unchanged, not fresh session/category origins.
+All 280 tooling tests pass (263 passes/seventeen native macOS skips), along
+with SDK/accepted-source whitespace, compiled/frozen catalogs, mechanical
+five-body comparison and patch integrity. Product APIs/edges/ADRs/diagrams,
+deployment examples and tracked locks are unaffected by this extraction.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

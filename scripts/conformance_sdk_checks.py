@@ -1003,6 +1003,34 @@ def artifact_noncooperation_diagnostics(run, inputs, candidate):
     return result
 
 
+def original_artifact_history_scenarios():
+    methods = {
+        f"Hoard.Artifacts.Tests.ArtifactBudgetTests.{name}" for name in (
+            "Local_reclaimed_incarnations_remain_budgeted_until_expiry_without_removing_the_recreated_blob",
+            "Reclaimed_identity_history_has_a_finite_budget_and_expiry_restores_new_digest_admission",
+            "History_maintenance_bounds_examined_candidates_even_when_none_can_be_retired",
+            "History_candidate_pages_resume_past_ineligible_entries_and_preserve_a_faulted_candidate",
+            "Expired_ticket_history_restores_write_and_delete_capacity_without_losing_committed_or_removed_identity")}
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.split("(", 1)[0] in methods}
+    identities.add(
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests."
+        "Local_reclaimed_incarnations_remain_budgeted_until_expiry_without_removing_the_recreated_blob")
+    identities.update(
+        "Hoard.Artifacts.Tests.ArtifactBudgetTests."
+        "History_maintenance_bounds_examined_candidates_even_when_none_can_be_retired"
+        f'(provider: "{provider}", kind: "{kind}")'
+        for provider, kind in (
+            ("local", "tickets"), ("object", "tickets"), ("local", "dependencies"), ("object", "dependencies"),
+            ("local", "decisions"), ("object", "decisions"), ("local", "reclamation")))
+    identities.update(
+        "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+        "Shared_history_resume_assertion_rejects_hidden_candidate_failure_and_accepts_original_store"
+        f'(provider: "{provider}")' for provider in ("local", "object"))
+    return (("original-artifact-history", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def original_artifact_visibility_scenarios():
     identities = {
         witness for case in category_cases() if case.profile_id == "artifacts"
@@ -1139,7 +1167,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-publication", "original-artifact-read-delete", "original-artifact-evidence",
             "sqlite-recovery-barriers", "local-recovery-barriers", "paced-artifact-transfers",
             "artifact-noncooperation", "original-artifact-external", "original-artifact-races",
-            "original-artifact-reconciliation", "original-artifact-visibility"],
+            "original-artifact-reconciliation", "original-artifact-visibility", "original-artifact-history"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1161,7 +1189,7 @@ def test_attempt(run, inputs, candidate, scenario):
             *original_artifact_publication_scenarios(), *original_artifact_read_delete_scenarios(),
             *original_artifact_evidence_scenarios(), *original_artifact_external_scenarios(),
             *original_artifact_race_scenarios(), *original_artifact_reconciliation_scenarios(),
-            *original_artifact_visibility_scenarios()):
+            *original_artifact_visibility_scenarios(), *original_artifact_history_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
     sqlite_tests = metadata_provider == "sqlite" or any(
@@ -1551,6 +1579,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "original-artifact-visibility"}), flush=True)
         for scenario in original_artifact_visibility_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "original-artifact-history"}), flush=True)
+        for scenario in original_artifact_history_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

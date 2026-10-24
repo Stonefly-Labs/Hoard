@@ -218,6 +218,14 @@ The genuine provider passes unchanged. The next native vector adds these three
 frozen facts and the mutation (59 scopes/470 observations), pending. The preceding
 race-only request passed run `40113497329` at `91da8f4`: all three jobs, 169
 foundation checks and 57 scopes/456 observations, not full category evidence.
+Five history/budget methods now also run shared consumers with exact original
+checks/order and real fixture-side clock/candidate controls. Eight frozen
+category witnesses and eight additional existing fixture cases are preserved,
+not relabeled as sixteen frozen entries. Two real-store hidden-candidate-failure
+mutations fail the unchanged type assertion; genuine stores pass. The next native
+request is 60 scopes/488 observations, pending. The reconciliation-only request
+passed run `40114439905` at `517b911`, all three jobs, 170 foundations and
+58 scopes/466 observations; complete category/session profiles remain unfinished.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

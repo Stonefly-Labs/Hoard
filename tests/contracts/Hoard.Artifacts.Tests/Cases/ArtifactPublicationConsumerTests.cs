@@ -92,6 +92,61 @@ public sealed class ArtifactPublicationConsumerTests
         }
     }
 
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Shared_history_resume_assertion_rejects_hidden_candidate_failure_and_accepts_original_store(string provider)
+    {
+        var observedCandidates = 0;
+        Task CheckAsync(IArtifactStore store, ArtifactProviderDriver driver) =>
+            ArtifactHistoryAssertions.CandidateResumeAsync(store,
+                observe =>
+                {
+                    void Observed(string kind, string id)
+                    {
+                        if (kind == "tickets") { Interlocked.Increment(ref observedCandidates); }
+                        observe(kind, id);
+                    }
+                    if (driver.LocalControls is { } local) { local.BeforeHistoryCandidate = Observed; }
+                    else { driver.ObjectControls!.BeforeHistoryCandidate = Observed; }
+                }, default);
+
+        await using (var driver = await ArtifactProviderDriver.CreateAsync(provider))
+        {
+            var mutation = new HiddenCandidateFailure(driver.Store);
+            await Assert.ThrowsAsync<Xunit.Sdk.IsTypeException>(() => CheckAsync(mutation, driver));
+            Assert.Equal(106, mutation.ReserveCalls);
+            Assert.Equal(1, mutation.HiddenFailures);
+            Assert.Equal(1, mutation.RetryCalls);
+            Assert.True(observedCandidates > 0);
+        }
+        await using (var driver = await ArtifactProviderDriver.CreateAsync(provider))
+        {
+            await CheckAsync(driver.Store, driver);
+        }
+    }
+
+    private sealed class HiddenCandidateFailure(IArtifactStore store) : ForwardingStore(store)
+    {
+        public int ReserveCalls { get; private set; }
+        public int HiddenFailures { get; private set; }
+        public int RetryCalls { get; private set; }
+
+        public override async ValueTask<ArtifactResult<ArtifactOperationTicket>> ReserveWriteAsync(
+            ArtifactWriteIntent intent, ArtifactCallOptions options, CancellationToken ct)
+        {
+            ReserveCalls++;
+            var result = await Store.ReserveWriteAsync(intent, options, ct);
+            if (result is ArtifactResult<ArtifactOperationTicket>.Failure { Code: ArtifactFailureCode.InternalFailure })
+            {
+                HiddenFailures++;
+                RetryCalls++;
+                return await Store.ReserveWriteAsync(intent, options, ct);
+            }
+            return result;
+        }
+    }
+
     private sealed class PrematureAcknowledgment(IArtifactStore store, ArtifactMutationReceipt foreign) : ForwardingStore(store)
     {
         private Task<ArtifactResult<ArtifactMutationReceipt>>? actualCommit;
@@ -196,7 +251,7 @@ public sealed class ArtifactPublicationConsumerTests
             ArtifactStagedWrite staged, ArtifactTransferOptions options, CancellationToken ct) =>
             Store.CommitAsync(staged, options, ct);
 
-        public ValueTask<ArtifactResult<ArtifactOperationTicket>> ReserveWriteAsync(
+        public virtual ValueTask<ArtifactResult<ArtifactOperationTicket>> ReserveWriteAsync(
             ArtifactWriteIntent intent, ArtifactCallOptions options, CancellationToken ct) =>
             Store.ReserveWriteAsync(intent, options, ct);
         public ValueTask<ArtifactResult<ArtifactOperationTicket>> ReserveDeleteAsync(

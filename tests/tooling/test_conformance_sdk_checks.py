@@ -506,6 +506,42 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-visibility", tuple(sorted(original | {mutation})),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_history_scope_preserves_frozen_parameters_and_hidden_failure_mutations(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_history_scenarios", None)),
+                        "Shared history and budget checks need exact owned wrapper transport.")
+        methods = {
+            "Local_reclaimed_incarnations_remain_budgeted_until_expiry_without_removing_the_recreated_blob",
+            "Reclaimed_identity_history_has_a_finite_budget_and_expiry_restores_new_digest_admission",
+            "History_maintenance_bounds_examined_candidates_even_when_none_can_be_retired",
+            "History_candidate_pages_resume_past_ineligible_entries_and_preserve_a_faulted_candidate",
+            "Expired_ticket_history_restores_write_and_delete_capacity_without_losing_committed_or_removed_identity",
+        }
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.split("(", 1)[0] in {
+                        f"Hoard.Artifacts.Tests.ArtifactBudgetTests.{method}" for method in methods}}
+        self.assertEqual(len(original), 8)
+        additional = {
+            "Hoard.Artifacts.Tests.ArtifactBudgetTests."
+            "Local_reclaimed_incarnations_remain_budgeted_until_expiry_without_removing_the_recreated_blob",
+            *(
+                "Hoard.Artifacts.Tests.ArtifactBudgetTests."
+                "History_maintenance_bounds_examined_candidates_even_when_none_can_be_retired"
+                f'(provider: "{provider}", kind: "{kind}")'
+                for provider, kind in (
+                    ("local", "tickets"), ("object", "tickets"), ("local", "dependencies"), ("object", "dependencies"),
+                    ("local", "decisions"), ("object", "decisions"), ("local", "reclamation"))),
+        }
+        self.assertEqual(len(additional), 8)
+        self.assertTrue(original.isdisjoint(additional))
+        mutations = {
+            "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+            "Shared_history_resume_assertion_rejects_hidden_candidate_failure_and_accepts_original_store"
+            f'(provider: "{provider}")' for provider in ("local", "object")}
+        scenario, = checks.original_artifact_history_scenarios()
+        self.assertEqual(scenario, ("original-artifact-history", tuple(sorted(original | additional | mutations)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_wrapper_scope_preserves_frozen_publication_parameters_and_actual_assembly(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_publication_scenarios", None)),
                         "Artifact publication needs exact source-owned wrapper transport.")

@@ -6522,6 +6522,37 @@ tracked locks remain unchanged; these are not fresh category/session origins.
 Input: `d76fa0b400774c50f771b733de73a71bc9b0c4c6622097c896b06fff5fc7f664`;
 preparation: `ab5517a180e177c516a886857cd9a79809af8c1757bd5b61d64dfe9e1555396b`.
 
+Five original history/budget bodies now use shared consumers while actual clock,
+limit/authority setup and candidate observer registration remain fixture-side.
+Mechanical comparison preserves all original assertion tokens/order after
+explicit seams/helpers/cancellation forwarding. Eight identities are frozen
+category witnesses and eight are additional existing fixture cases, not newly
+frozen entries. An initial scope-count regression caught that distinction;
+the corrected eighteen-row scope preserves all sixteen original cases plus
+two real-store hidden-candidate-failure mutations. The negative hides an actual
+injected failure behind one genuine retry and fails the unchanged failure-type
+assertion; actual candidate/reservation/failure/retry counters corroborate it.
+Fresh genuine providers pass unchanged. The next requested native vector is
+60 scopes/488 observations, pending; remaining budget/ownership and full
+category/session/profile work is not claimed complete.
+
+The preceding reconciliation request passed
+[40114439905](https://github.com/Stonefly-Labs/Hoard/actions/runs/40114439905)
+at `517b911`: all three jobs, 170 foundations without failures/errors/skips,
+58 scopes/466 exact discoveries/executions, all ten new reconciliation rows,
+and all actual recovery/transfer/retention/external/native prerequisites plus
+eighteen-package/thirteen-lock replay. Input:
+`d77ea438c9de9e604ce3432ad462e97943ba04598560e6fcbb37a382e4d8d4b8`;
+preparation:
+`9821ed48736ad565791cfeca5a571f0d93a77221616548dcc830af1d504f43a1`.
+Two fresh-cache locked history builds independently reproduce eleven archives
+and verify ten loaded dependency images. Each passes 280 artifact cases and
+89 metadata cases per provider without skips. SDK/accepted-source formatting,
+compiled/frozen catalogs, mechanical five-body comparison and all 280 tooling
+tests pass (263 passes/seventeen native macOS skips). Earlier measured transfer
+packets and tracked locks are unchanged, not fresh session/category origins.
+Production contracts/edges/ADRs/diagrams and deployment examples are unaffected.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,
