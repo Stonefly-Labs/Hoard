@@ -1603,9 +1603,17 @@ recovery. Old identity/authority remain immutable, and failed or canceled
 replacements remain owned through original-session cleanup. Sixteen Object
 package-only cases cover actual observations, publication, restart, callback
 failure, stale disposal and allocator retry alongside the fifteen Local cases.
-The next native selection adds their exact transport: 77 scopes/659 observations,
-pending. Full bindings, mandatory fault controls and category/profile acceptance
-remain unfinished.
+Their exact native transport passed at `36481c0`, run `40134767571`: all three
+jobs, 192 foundations without skips and strict 77-scope/659-observation admission.
+
+Typed `ArtifactAssertionOptions` now supplies actual limits and live reference
+queries without case-ID setup switches or SDK provider dependencies. Both real
+providers enforce configured limits before/after reopen and consult the current
+query under their real authority. Missing/unavailable queries remain fail-closed;
+timed-out query work stays owned through reopen/final cleanup. Eleven additional
+package-only rows cover this setup; the next native request is
+78 scopes/670 observations, pending. Full bindings, mandatory fault controls and
+category/profile acceptance remain unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

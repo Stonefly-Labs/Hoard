@@ -3569,12 +3569,59 @@ skips; fifteen archives reproduce exactly, canonical archive-map SHA-256
 `727d42f8e1fdb9829e83e10f6a2d615a220f9fab425489b9892205c8cac51f99`.
 Ten Consumer dependency images match their actual archives. Previously measured
 transfer packets remain reused unchanged, not fresh category/session origins.
-The preceding 76-scope request passed at exact `c58978e`,
-run `40133457888`; this increment requests 192 native foundations and
-77 scopes/659 observations. Neither is full category/profile qualification.
+The preceding 76-scope request passed at exact `c58978e`, run `40133457888`.
+Owned-Object run `40134767571` at exact
+`36481c058514a9d5dd22f13e51c5b629c1d8d656` passed all three jobs:
+192 foundations without failures/errors/skips, independent eighteen-package/
+thirteen-lock replay and strict 77-scope/659-observation admission, including
+all sixteen Object rows and every actual prerequisite chain.
+Input: `f54fde15ced6fd40571bb85d43385c3a584bb4fe0dd9423539b8c41abd145526`;
+preparation:
+`9d7247e9ebc725519057d265ea8ac2c51bd3528558dc18b2c2c99981ab2b5ce1`.
+Neither is full category/profile qualification.
 Tracked locks, historical seals, tasks and reviewer-owned checklists remain
 unchanged. Product contracts, architecture/ADR diagrams and custom-host examples
 are unaffected by this test-only ownership extraction.
+
+### Typed artifact limits and live reference setup
+
+Both partial factories now accept explicit SDK `ArtifactAssertionOptions` while
+preserving the original default overload. Options carry immutable actual limits
+and an optional live typed reference source, not case/profile selectors or pass
+flags. Every provider initialization receives those limits; every authority
+generation invokes the source for the protected stamp and translates only its
+availability/count/revision into the unchanged private authority algorithm.
+Missing queries retain fail-closed deletion. `ArtifactReferenceObservation`
+rejects negative or contradictory counts and available results without
+revisions; unavailable zero counts cannot authorize deletion.
+
+The intended missing API produced CS0246 before implementation. Seven initial
+configured rows passed; bounded architecture review found no confirmed defect
+but identified two coverage gaps. Actual 1,025-byte reservations now fail both
+before and after the configured 1,024-byte limit survives reopen. Four more
+Local/Object cases retain genuine reference queries after caller timeout and
+prove reopen/final cleanup cannot finish before actual query settlement.
+The final Consumer passes all 42 cases, including eleven configured rows.
+The first fresh preparation passes all 306 artifact and 89+89 metadata cases.
+Independent fresh replay passes 306 artifact, 42 Consumer and 89+89 metadata
+cases without skips; fifteen archives match exactly, canonical map SHA-256
+`2da3a01d231df7002b306c6208fb31f063fb963a86c7e97c7355592367314075`.
+Ten Consumer runtime images match actual package bytes. Existing measured transfer packets
+remain reused unchanged, not fresh category/session origins.
+
+The exact-scope regression first failed its named missing-transport assertion
+with two related lookup errors, not runtime assertion failures. All 75 SDK
+tooling checks pass. Full tooling passes 301 discovered / 284 passed /
+seventeen macOS-native skips; SDK/binding/Consumer formatting, frozen inventory,
+compiled catalogs and patch checks pass. Real scratch fell below the unchanged
+24 GiB full-artifact gate; 76 explicitly inspected completed-mode dependency
+caches were recovered, preserving sources/feeds/manifests/historical seals/
+runtime images and observing more than 28 GiB free before full tooling.
+This increment requests 193 native foundations and 78 scopes/670 observations,
+pending. Full artifact fault drivers, category/session origins and four-way
+metadata/artifact integration acceptance remain unfinished. Product contracts,
+architecture diagrams, deployment examples, tracked locks, tasks and reviewer
+checklists are unaffected.
 
 ## Summary
 

@@ -353,9 +353,15 @@ restart joins old ownership before creating a fresh empty child/epoch/authority;
 old session identity/authority do not change. Failed/canceled replacements remain
 owned by the original cleanup handle. Fifteen Local and sixteen Object
 package-only cases exercise actual consumers/observations, cancellation,
-callback failure and allocator retry. Their next exact native request is
-77 scopes/659 observations, pending, not complete category bindings or profile
-acceptance.
+callback failure and allocator retry. Their exact native request passed at
+`36481c0`, run `40134767571`: all three jobs, 192 foundations without skips
+and strict 77-scope/659-observation admission.
+Explicit `ArtifactAssertionOptions` now carries actual limits and a live typed
+reference query through both factories/reopen modes. Missing/unavailable queries
+remain fail-closed; actual post-reopen enforcement and retained timed-out query
+work are covered by eleven more package-only rows. Their next native request is
+78 scopes/670 observations, pending, not complete category bindings, metadata
+integration or profile acceptance.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

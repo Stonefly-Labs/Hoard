@@ -9,13 +9,14 @@ namespace Hoard.Fixtures.Conformance.Bindings.Shared;
 internal enum ArtifactAssertionRestart { Compatible, FreshEpoch }
 
 internal sealed record ArtifactAssertionGeneration(
-    ArtifactStoreIdentity Identity, ArtifactCoordinationAuthority Authority, string DirectoryPath);
+    ArtifactStoreIdentity Identity, ArtifactCoordinationAuthority Authority, string DirectoryPath, ArtifactLimits Limits);
 
 internal sealed class ArtifactAssertionOwnership
 {
     private readonly string providerId;
     private readonly Guid instanceId = Guid.NewGuid();
     private readonly ArtifactAssertionRestart restart;
+    private readonly ArtifactAssertionOptions options;
     private readonly Func<ArtifactAssertionOwnership, ArtifactAssertionGeneration, ArtifactAssertionSession> create;
     private readonly List<ArtifactAssertionSession> sessions = [];
     private readonly List<ArtifactAssertionGeneration> generations = [];
@@ -24,13 +25,14 @@ internal sealed class ArtifactAssertionOwnership
     private Task<ConformanceCleanupObservation>? cleanup;
 
     private ArtifactAssertionOwnership(ConformanceRunContext context, ConformanceOwnedDirectory resource,
-        string providerId, ArtifactAssertionRestart restart,
+        string providerId, ArtifactAssertionRestart restart, ArtifactAssertionOptions options,
         Func<ArtifactAssertionOwnership, ArtifactAssertionGeneration, ArtifactAssertionSession> create)
     {
         Context = context;
         Resource = resource;
         this.providerId = providerId;
         this.restart = restart;
+        this.options = options;
         this.create = create;
     }
 
@@ -43,13 +45,14 @@ internal sealed class ArtifactAssertionOwnership
     public ConcurrentQueue<Exception> ObserverFailures { get; } = new();
 
     public static async ValueTask<IArtifactAssertionSession> CreateAsync(
-        ConformanceRunContext context, string providerId, ArtifactAssertionRestart restart,
+        ConformanceRunContext context, string providerId, ArtifactAssertionRestart restart, ArtifactAssertionOptions options,
         Func<ArtifactAssertionOwnership, ArtifactAssertionGeneration, ArtifactAssertionSession> create,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(context);
+        ArgumentNullException.ThrowIfNull(options);
         var resource = await context.Resources.AllocateDirectoryAsync(cancellationToken);
-        var ownership = new ArtifactAssertionOwnership(context, resource, providerId, restart, create);
+        var ownership = new ArtifactAssertionOwnership(context, resource, providerId, restart, options, create);
         var admitted = false;
         try
         {
@@ -68,10 +71,20 @@ internal sealed class ArtifactAssertionOwnership
     private ArtifactAssertionGeneration CreateGeneration(string child)
     {
         var identity = new ArtifactStoreIdentity(providerId, instanceId, Guid.NewGuid());
-        var generation = new ArtifactAssertionGeneration(identity, new(identity, Context.Clock),
-            Path.Combine(Resource.DirectoryPath, child));
+        var generation = new ArtifactAssertionGeneration(identity,
+            new(identity, Context.Clock, options.References is null ? null : QueryReferencesAsync),
+            Path.Combine(Resource.DirectoryPath, child), options.Limits);
         generations.Add(generation);
         return generation;
+    }
+
+    private async ValueTask<ArtifactReferenceDecision> QueryReferencesAsync(
+        ArtifactStamp stamp, CancellationToken cancellationToken)
+    {
+        var query = options.References ?? throw new InvalidOperationException("BindingInvalid");
+        var observation = await query(stamp, cancellationToken)
+            ?? throw new InvalidOperationException("BindingInvalid");
+        return new(observation.Available, observation.LiveReferences, observation.Revision);
     }
 
     private ArtifactAssertionSession CreateSession(ArtifactAssertionGeneration generation)
@@ -250,7 +263,7 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
 
     public async Task InitializeAsync(ArtifactInitializationMode mode, CancellationToken cancellationToken)
     {
-        var result = await Lifetime.InitializeAsync(new(mode, Identity, Authority), new(), cancellationToken);
+        var result = await Lifetime.InitializeAsync(new(mode, Identity, Authority, Generation.Limits), new(), cancellationToken);
         if (result is not ArtifactResult<ArtifactAdmission>.Success)
         {
             cancellationToken.ThrowIfCancellationRequested();

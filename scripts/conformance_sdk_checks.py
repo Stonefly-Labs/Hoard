@@ -49,6 +49,9 @@ ARTIFACT_TEST_OUTPUT = "bin/wrapper-diagnostic"
 ARTIFACT_CONSUMER = "tests/fixtures/conformance/Consumer"
 ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.LocalArtifactSessionTests."
 OBJECT_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ObjectArtifactSessionTests."
+CONFIGURED_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ArtifactConfiguredSessionTests."
+ARTIFACT_CONSUMER_PREFIXES = (
+    ARTIFACT_CONSUMER_PREFIX, OBJECT_ARTIFACT_CONSUMER_PREFIX, CONFIGURED_ARTIFACT_CONSUMER_PREFIX)
 ARTIFACT_CONSUMER_PACKAGES = (
     "Hoard.Abstractions", "Hoard.Testing.Conformance",
     "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite",
@@ -76,7 +79,7 @@ SQLITE_BINDING_PREFIX = "Hoard.Fixtures.Conformance.Consumer.SqliteBindingTests.
 SQLITE_MECHANISM_PREFIX = "Hoard.Fixtures.Conformance.Consumer.SqliteMechanismTests."
 BINDING_TEST_PREFIXES = (
     BINDING_TEST_PREFIX, BINDING_OWNERSHIP_PREFIX, SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX,
-    ARTIFACT_CONSUMER_PREFIX, OBJECT_ARTIFACT_CONSUMER_PREFIX)
+    *ARTIFACT_CONSUMER_PREFIXES)
 PACKAGE_TEST_OUTPUT = "bin/package-diagnostic"
 PACKAGE_TEST_PREFIX = "Hoard.Conformance.Tests.MemoryMechanismTests."
 PACKAGE_TEST_METHOD = (PACKAGE_TEST_PREFIX +
@@ -1101,6 +1104,21 @@ def artifact_observation_scenarios():
     return (("original-artifact-observations", identities, "None", "Passed", 0, "None"),)
 
 
+def configured_artifact_session_scenarios():
+    prefix = CONFIGURED_ARTIFACT_CONSUMER_PREFIX
+    identities = {
+        prefix + method + f'(provider: "{provider}")' for method in (
+            "Actual_configured_limits_survive_compatible_or_logical_reopen",
+            "Current_reference_queries_fence_deletion_on_each_actual_generation",
+            "Unavailable_reference_query_cannot_become_an_optimistic_zero_reference_decision")
+        for provider in ("local", "object")}
+    identities.add(prefix + "Invalid_reference_observations_cannot_admit_negative_counts_or_missing_available_revisions")
+    identities.update(prefix
+        + f'Timed_out_reference_query_stays_owned_through_reopen_or_final_settlement(provider: "{provider}", reopen: {reopen})'
+        for provider in ("local", "object") for reopen in ("False", "True"))
+    return (("configured-artifact-session", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def original_artifact_configured_store_scenarios():
     prefix = "Hoard.Artifacts.Tests.ArtifactCompositionTests."
     identities = {
@@ -1465,7 +1483,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-metadata-integration", "original-artifact-metadata-bridge",
             "original-artifact-lifecycle", "original-artifact-failure", "original-artifact-prefix-cleanup",
             "original-artifact-object-cleanup", "original-artifact-configured-store", "original-artifact-authority-ownership",
-            "local-artifact-session", "object-artifact-session", "original-artifact-observations"],
+            "local-artifact-session", "object-artifact-session", "configured-artifact-session",
+            "original-artifact-observations"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1475,9 +1494,10 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
 
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
-    if (name in ("local-artifact-session", "object-artifact-session")
-            or any(identity.startswith((ARTIFACT_CONSUMER_PREFIX, OBJECT_ARTIFACT_CONSUMER_PREFIX)) for identity in identities)):
-        if scenario not in (*local_artifact_session_scenarios(), *object_artifact_session_scenarios()):
+    if (name in ("local-artifact-session", "object-artifact-session", "configured-artifact-session")
+            or any(identity.startswith(ARTIFACT_CONSUMER_PREFIXES) for identity in identities)):
+        if scenario not in (*local_artifact_session_scenarios(), *object_artifact_session_scenarios(),
+                            *configured_artifact_session_scenarios()):
             raise evidence.ConformanceError("WitnessMissing")
     original_metadata = name.startswith("original-metadata-")
     original_artifacts = name.startswith("original-artifact-")
@@ -1516,7 +1536,7 @@ def test_attempt(run, inputs, candidate, scenario):
         folder, output, assembly_name = ARTIFACT_TESTS, ARTIFACT_TEST_OUTPUT, "Hoard.Artifacts.Tests.dll"
     elif original_metadata:
         folder, output, assembly_name = METADATA_TESTS, METADATA_TEST_OUTPUT, "Hoard.Metadata.Tests.dll"
-    elif all(identity.startswith((ARTIFACT_CONSUMER_PREFIX, OBJECT_ARTIFACT_CONSUMER_PREFIX)) for identity in identities):
+    elif all(identity.startswith(ARTIFACT_CONSUMER_PREFIXES) for identity in identities):
         folder, output, assembly_name = ARTIFACT_CONSUMER, PACKAGE_TEST_OUTPUT, "Hoard.Fixtures.Conformance.Consumer.dll"
     else:
         output = PACKAGE_TEST_OUTPUT if package_tests else "bin"
@@ -1946,6 +1966,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "object-artifact-session"}), flush=True)
         for scenario in object_artifact_session_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "configured-artifact-session"}), flush=True)
+        for scenario in configured_artifact_session_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "artifact-observations"}), flush=True)
         for scenario in artifact_observation_scenarios():

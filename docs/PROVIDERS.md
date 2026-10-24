@@ -541,9 +541,24 @@ hashes consumed managed/runtime images, active-architecture native assets and
 all locks under unchanged bounds, retaining full-tree symlink/type/race checks.
 Replacement run `40133457888` at exact `c58978e` passed all three jobs,
 191 foundations without skips and strict 76-scope/643-observation admission.
-The earlier failed run remains unadmitted. The owned-Object increment requests
-77 scopes/659 observations, pending;
-neither partial projection admits a full artifact binding/category/profile.
+The earlier failed run remains unadmitted. The owned-Object increment passed
+`40134767571` at exact `36481c0`: all three jobs, 192 foundations without skips
+and strict 77-scope/659-observation admission. Neither partial projection admits
+a full artifact binding/category/profile.
+
+Both factories also accept explicit `ArtifactAssertionOptions`: immutable actual
+`ArtifactLimits` and a live typed reference query. Each actual initialization,
+including compatible/fresh reopen, receives those limits; authority generations
+invoke the source for the exact protected stamp rather than caching a prior
+decision. `ArtifactReferenceObservation` contains availability/count/revision,
+not a pass flag, and rejects negative counts, unavailable nonzero counts and
+available results without revisions. Null queries retain default fail-closed
+deletion; unavailable zero-reference observations cannot authorize deletion.
+Four held-query cases prove that caller timeout does not settle real query work
+or let reopen/final cleanup finish early. Eleven configured rows pass alongside
+the existing thirty-one owned rows. This is test-fixture setup, not product
+configuration or complete fault-driver/metadata integration acceptance.
+The next native request is 78 scopes/670 observations, pending.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

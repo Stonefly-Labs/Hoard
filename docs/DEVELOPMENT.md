@@ -6922,12 +6922,46 @@ archives reproduce exactly, canonical archive-map SHA-256
 `727d42f8e1fdb9829e83e10f6a2d615a220f9fab425489b9892205c8cac51f99`;
 ten Consumer runtime images match their archives. Previously measured transfer
 packets remain reused unchanged, not fresh category/session origins.
-Run `40133457888` verifies the preceding 76-scope vector; this increment requests
-192 native foundations and 77 scopes/659 observations, pending.
+Run `40133457888` verifies the preceding 76-scope vector. Owned-Object run
+`40134767571` at exact `36481c058514a9d5dd22f13e51c5b629c1d8d656` passed all
+three jobs, 192 foundations without failures/errors/skips, independent
+eighteen-package/thirteen-lock replay and strict 77-scope/659-observation
+admission, including all sixteen Object rows and every actual prerequisite.
+Input: `f54fde15ced6fd40571bb85d43385c3a584bb4fe0dd9423539b8c41abd145526`;
+preparation:
+`9d7247e9ebc725519057d265ea8ac2c51bd3528558dc18b2c2c99981ab2b5ce1`.
 These are diagnostic projections, not complete bindings, a 192/179/13 category
 result or profile acceptance. T027–T030 and subsequent gates remain open.
 Product architecture/ADR diagrams and custom-host examples are unaffected:
 only test-private source composition and diagnostic consumers change.
+
+Explicit typed artifact assertion setup now forwards actual limits and live
+reference queries through both independent factories and all reopen generations.
+The default overload remains fail-closed. SDK observations carry bounded typed
+reference facts, not provider-selected expected results. Neither the existing
+private authority algorithm nor any production API/package edge changes.
+Seven initial configured cases passed; review identified missing post-reopen
+limit enforcement and non-cooperative callback ownership coverage. The limit
+is now actually rejected after reopen, and four further Local/Object cases
+hold real reference queries after caller timeout through reopen/final cleanup.
+The final package-only Consumer passes all 42 cases, with 306 artifact and
+89+89 metadata cases passing in the first fresh preparation. Independent fresh
+replay passes all 306 artifact, 42 Consumer and 89+89 metadata cases without
+skips; fifteen archives match exactly, canonical map SHA-256
+`2da3a01d231df7002b306c6208fb31f063fb963a86c7e97c7355592367314075`.
+Ten Consumer dependency images match package bytes. The missing typed API first
+produced the intended CS0246
+compiler negative; missing exact transport failed its named regression with
+two related lookup errors. Tooling passes 301 discovered / 284 passed /
+seventeen macOS-native skips; SDK/binding/Consumer formatting, frozen inventory
+and compiled catalogs pass.
+
+Real local free capacity fell below the unchanged 24 GiB full-artifact gate.
+Only 76 explicitly inspected completed-mode dependency caches were removed,
+preserving sources, feeds, manifests, historical seals and actual runtime
+images; measured free scratch then exceeded 28 GiB. No capacity guard, transfer
+size or proof was relaxed. This increment requests 193 native foundations and
+78 scopes/670 observations, pending, not full category/profile acceptance.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

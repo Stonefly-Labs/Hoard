@@ -639,6 +639,23 @@ class SdkDiagnosticTests(unittest.TestCase):
         scenario, = checks.artifact_observation_scenarios()
         self.assertEqual(scenario, ("original-artifact-observations", identities, "None", "Passed", 0, "None"))
 
+    def test_configured_artifact_session_scope_requires_actual_limits_and_reference_queries(self):
+        factory = getattr(checks, "configured_artifact_session_scenarios", None)
+        self.assertTrue(callable(factory), "Configured artifact sessions need exact package-only transport.")
+        prefix = "Hoard.Fixtures.Conformance.Consumer.ArtifactConfiguredSessionTests."
+        identities = {
+            prefix + method + f'(provider: "{provider}")' for method in (
+                "Actual_configured_limits_survive_compatible_or_logical_reopen",
+                "Current_reference_queries_fence_deletion_on_each_actual_generation",
+                "Unavailable_reference_query_cannot_become_an_optimistic_zero_reference_decision")
+            for provider in ("local", "object")}
+        identities.add(prefix + "Invalid_reference_observations_cannot_admit_negative_counts_or_missing_available_revisions")
+        identities.update(prefix
+            + f'Timed_out_reference_query_stays_owned_through_reopen_or_final_settlement(provider: "{provider}", reopen: {reopen})'
+            for provider in ("local", "object") for reopen in ("False", "True"))
+        scenario, = factory()
+        self.assertEqual(scenario, ("configured-artifact-session", tuple(sorted(identities)), "None", "Passed", 0, "None"))
+
     def test_owned_artifact_scopes_discover_their_actual_distinct_assemblies(self):
         candidate = self.directory / "candidate"
         for scenario, folder, assembly_name in (
@@ -646,6 +663,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                 (checks.local_artifact_session_scenarios()[0], checks.ARTIFACT_CONSUMER,
                  "Hoard.Fixtures.Conformance.Consumer.dll"),
                 (checks.object_artifact_session_scenarios()[0], checks.ARTIFACT_CONSUMER,
+                 "Hoard.Fixtures.Conformance.Consumer.dll"),
+                (checks.configured_artifact_session_scenarios()[0], checks.ARTIFACT_CONSUMER,
                  "Hoard.Fixtures.Conformance.Consumer.dll")):
             output = checks.ARTIFACT_TEST_OUTPUT if folder == checks.ARTIFACT_TESTS else checks.PACKAGE_TEST_OUTPUT
             assembly = candidate / folder / output / "Release/net10.0" / assembly_name
@@ -689,7 +708,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                                         checks.PACKAGE_TEST_OUTPUT, checks.ARTIFACT_CONSUMER_PACKAGES)
 
     def test_incomplete_or_foreign_owned_local_vectors_never_launch(self):
-        for scenario in (*checks.local_artifact_session_scenarios(), *checks.object_artifact_session_scenarios()):
+        for scenario in (*checks.local_artifact_session_scenarios(), *checks.object_artifact_session_scenarios(),
+                         *checks.configured_artifact_session_scenarios()):
             name, identities, *outcome = scenario
             for invalid in (identities[:-1], identities + ("Foreign.Test",),
                             ("Foreign.Test", *identities[1:])):

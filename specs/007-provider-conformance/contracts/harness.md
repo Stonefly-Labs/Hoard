@@ -689,8 +689,22 @@ entries and identity races even outside the selected inputs. The next exact
 native run `40133457888` at exact `c58978e` passed all three jobs, 191 foundations
 without skips, independent lock replay and strict 76-scope/643-observation
 admission; the earlier failed run remains unadmitted.
-The owned-Object increment adds exact 77-scope/659-observation transport, pending,
-not category/profile proof.
+The owned-Object increment passed exact `36481c0`, run `40134767571`: all three
+jobs, 192 foundations without skips, independent lock replay and strict
+77-scope/659-observation admission, not category/profile proof.
+
+`ArtifactAssertionOptions` supplies explicit test-fixture limits and a live typed
+reference source, never interprets a case/profile ID, and grants no fault-driver
+or category admission. Both actual providers receive the immutable limits on
+each initialization. Every authority generation consults that source for the
+exact protected stamp; prior observations are not cached across queries/reopen.
+Absent queries retain fail-closed deletion. Typed observations reject negative/
+contradictory counts and available snapshots without revisions; unavailable
+zero-count results cannot authorize deletion. Actual source work remains owned
+after caller timeout, and reopening/final settlement must join it. Eleven
+configured cases cover both providers, pre/post-reopen enforcement, changing
+references, unavailable results and retained queries. The next exact request is
+78 scopes/670 observations, pending, not full metadata/artifact integration.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

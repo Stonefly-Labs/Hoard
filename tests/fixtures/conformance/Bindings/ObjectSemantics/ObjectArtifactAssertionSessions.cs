@@ -9,7 +9,11 @@ public static class ObjectArtifactAssertionSessions
 {
     public static ValueTask<IArtifactAssertionSession> CreateAsync(
         ConformanceRunContext context, CancellationToken cancellationToken) =>
-        ArtifactAssertionOwnership.CreateAsync(context, "fixture.artifact.object", ArtifactAssertionRestart.FreshEpoch,
+        CreateAsync(context, new(), cancellationToken);
+
+    public static ValueTask<IArtifactAssertionSession> CreateAsync(
+        ConformanceRunContext context, ArtifactAssertionOptions options, CancellationToken cancellationToken) =>
+        ArtifactAssertionOwnership.CreateAsync(context, "fixture.artifact.object", ArtifactAssertionRestart.FreshEpoch, options,
             (ownership, generation) => new Session(ownership, generation), cancellationToken);
 
     private sealed class Session : ArtifactAssertionSession
