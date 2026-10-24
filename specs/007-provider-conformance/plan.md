@@ -1184,7 +1184,7 @@ The package-mode test graph deliberately adds the existing Memory binding
 package and links the same Consumer test source; its tracked lock was generated
 with the package manager. Native preparation now builds/derives/reverifies the
 binding archive and captures all five actual package identities/runtime bytes.
-Current diagnostic vector: 37 scopes/170 observations, pending. Source/local
+Current diagnostic vector: 37 scopes/170 observations, verified below. Source/local
 package success is not Linux supervisor, full role-origin or category proof;
 T023 and complete bindings/parity remain unchecked.
 
@@ -1209,6 +1209,47 @@ lock replay. Input digest:
 preparation proof:
 `bd7ecd7d3a3e27b88232c8625ca037fd45d7b2a7df2cb445fc1dfcb6603d6c3d`.
 Free scratch: 92,109,897,728 bytes. Neither run includes the new concrete adapter.
+
+Native binding run
+[40061416909](https://github.com/Stonefly-Labs/Hoard/actions/runs/40061416909)
+at `9be7ad73b34e17b59a5c982b59d9645532f70f72` passed all three jobs:
+131 foundation checks without failures/errors/skips, 37 scopes/170 exact
+discoveries/executions, all concrete Memory adapter rows, six historical
+baselines and byte-identical eighteen-package/thirteen-lock replay. Input:
+`e8a0ea337babef2f29d884e12be691c654b127c7a657e526ee30181108c10b00`;
+preparation proof:
+`f7bae966d851b9b034d9d6c620122dc89ad1fe73de922db625e2c5567647bf5f`.
+Free scratch: 91,724,914,688 bytes. No category qualification follows.
+
+### SQLite genuine lifetime prerequisites
+
+The SQLite fixture exposes its stable actual worker task separately from its
+bounded idle observer. New async independent read/writer controls register
+under that lifetime before work starts. Read work participates in idle; held
+writer leases do not, because writer-budget consumers legitimately observe
+idle while holding the writer. Shutdown closes admission, releases owned
+writer leases, waits for real independent work and then closes primary native
+handles. Caller cancellation does not erase ownership; late acquisitions close
+their actual handles before lifetime completes. Escaped diagnostic or native
+lease-cleanup failures surface through genuine lifetime, not unobserved tasks
+or successful cleanup observations. Existing synchronous fixture controls
+remain caller-owned and are not the new adapter's ownership seam.
+
+Six focused source-probe tests pass without skips: public-deadline retention
+and native-handle cleanup/reopen; independent read idle/lifetime; writer lease
+idle versus lifetime; canceled independent read retention; canceled late writer
+acquisition; and escaped diagnostic failure with faulted lifetime. Missing
+lifetime/read/writer APIs initially failed compilation; the late-acquisition
+test separately failed at its missing actual observation boundary before the
+async seam repair. Focused formatting passes. A bounded custom architecture
+review found no actionable defects in this increment; it reviewed source
+without independently attributing Git diff or rerunning checks.
+
+This is not a concrete SQLite adapter, durable same-directory session handoff,
+typed corruption suite, package/native SQLite environment production or full
+T022 acceptance. No public operation contract, schema, project reference or
+production architecture changes. T019..T086 remain unchecked and implementation
+continues; the reviewer-owned checklist markers remain untouched.
 
 ## Partial implementation checkpoint
 

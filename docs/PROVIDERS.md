@@ -30,8 +30,16 @@ upgrade controls grant no backup, durable restart or process-crash guarantee.
 Private encoding mutation is shared by the adapter and existing focused tests,
 without an SDK reference in Memory or private provider types in the SDK.
 Twenty focused adapter rows pass against locally packed packages, including the
-real 30-second incomplete cleanup and actual allocator retention/retry; native
-execution of the expanded 37-scope/170-observation diagnostic is pending.
+real 30-second incomplete cleanup and actual allocator retention/retry.
+Native run [40061416909](https://github.com/Stonefly-Labs/Hoard/actions/runs/40061416909)
+verified those rows within 37 scopes/170 exact observations, alongside all
+131 foundation checks and unchanged six-baseline/eighteen-package/thirteen-lock replay.
+The SQLite fixture now exposes genuine worker-lifetime settlement and tracked
+async independent read/writer controls. Cancellation of a control caller does
+not release the underlying work; shutdown waits for late native handles.
+Six focused source-only checks pass, including escaped diagnostic failure.
+The existing synchronous fixture helpers retain their caller-owned semantics;
+the unfinished SQLite binding must use the tracked asynchronous controls.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

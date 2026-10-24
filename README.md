@@ -1248,10 +1248,14 @@ Observed metadata factories now expose explicit legacy-session setup without
 case-ID routing, and Memory exposes its genuine pending-work task separately
 from bounded settlement observers. The first concrete Memory adapter now has
 explicit current/legacy factories, typed controls, atomic logical reopen and
-actual-work ownership integration; its 20 focused adapter rows pass locally
-against packed packages. Native verification of the expanded 37-scope/
-170-observation diagnostic and complete adapter/category qualification remain
-unfinished.
+actual-work ownership integration; its 20 focused adapter rows also passed in
+native run [40061416909](https://github.com/Stonefly-Labs/Hoard/actions/runs/40061416909):
+all three jobs, 131 foundation checks and 37 scopes/170 exact observations.
+SQLite now has tracked asynchronous independent reads/writer leases and a
+genuine worker-lifetime observation, with six focused source checks covering
+cancellation, late native-handle cleanup and surfaced diagnostic failure.
+The SQLite adapter, complete category suites and profile qualification remain
+unfinished; source checks do not establish native qualification.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

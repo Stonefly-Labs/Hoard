@@ -101,9 +101,19 @@ adapter rows use a clearly labeled allocator double; a twentieth uses the actual
 SDK allocator, proving retained work, rejected premature allocator disposal,
 stable-task retry, preserved failure history and no physical release claim.
 All 95 selected Memory/adapter tests pass locally against actual packed
-SDK/provider/binding packages; the expanded 37-scope/170-observation native
-diagnostic is pending. These remain extraction diagnostics, not T023 completion,
+SDK/provider/binding packages; native run `40061416909` verified the expanded
+37-scope/170-observation diagnostic and all 131 foundation checks.
+These remain extraction diagnostics, not T023 completion,
 full origin/controller integration or category qualification.
+
+SQLite's fixture-only asynchronous independent read/writer controls now retain
+underlying work through the genuine worker lifetime, including cancellation and
+late acquisition/cleanup. Ordinary idle includes reads, not held writer leases.
+Shutdown closes admission, requests writer release, waits for independent work
+and closes primary native handles. Escaped diagnostic/cleanup failure faults
+that lifetime. Six source-only checks cover these prerequisites; synchronous
+legacy controls remain caller-owned. The SQLite binding and package/native
+attribution are not yet implemented by this increment.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

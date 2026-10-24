@@ -5709,7 +5709,7 @@ cleanup. Ordinary source SDK109, tooling236/ten native skips and focused checks
 pass. The package-mode consumer deliberately adds the existing Memory binding
 reference and generated lock; native preparation captures/derives/reverifies
 five actual package identities. A bounded custom architecture review found no
-actionable defects. Current native vector: 37 scopes/170 observations, pending;
+actionable defects. Current native vector: 37 scopes/170 observations, verified below;
 T023 and complete qualification remain unchecked.
 
 Native continuation run
@@ -5724,6 +5724,31 @@ six baselines and eighteen-package/thirteen-lock replay. Input digest:
 preparation proof:
 `bd7ecd7d3a3e27b88232c8625ca037fd45d7b2a7df2cb445fc1dfcb6603d6c3d`.
 Those runs predate the new concrete adapter; do not relabel their scope.
+
+Run [40061416909](https://github.com/Stonefly-Labs/Hoard/actions/runs/40061416909)
+at `9be7ad73b34e17b59a5c982b59d9645532f70f72` subsequently passed all three
+jobs: 131 foundation checks without failures/errors/skips, 37 scopes/170 exact
+discoveries/executions including the concrete Memory binding, six baselines
+and identical eighteen-package/thirteen-lock replay. Input digest:
+`e8a0ea337babef2f29d884e12be691c654b127c7a657e526ee30181108c10b00`;
+preparation proof:
+`f7bae966d851b9b034d9d6c620122dc89ad1fe73de922db625e2c5567647bf5f`.
+Free scratch: 91,724,914,688 bytes. This remains non-qualifying.
+
+SQLite's prerequisite controls now track independent read work and async writer
+leases through the actual worker lifetime, distinct from bounded idle
+observation. Held writer leases do not block ordinary idle; shutdown releases
+them and waits for their actual cleanup before closing primary native handles.
+Caller cancellation retains late work/acquisition; escaped diagnostic/cleanup
+failures fault genuine lifetime instead of reporting successful settlement.
+Six source-probe checks pass without skips. The canceled-acquisition test first
+failed because no actual acquisition boundary was observable; a tracked async
+acquisition seam now exposes it. Focused formatting passes, and bounded custom
+architecture review found no actionable defects in the lifetime increment.
+These are source-only fixture prerequisites, not a completed SQLite binding,
+package/native SQLite evidence, durable reopen or category qualification.
+Legacy synchronous fixture helpers remain caller-owned. No product contract,
+project reference, schema, public API or architecture diagram changed.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
