@@ -566,6 +566,24 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-ownership", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_authority_scope_preserves_frozen_and_additional_recognized_handle_cases(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_authority_scenarios", None)),
+                        "Shared authority checks need exact owned wrapper transport.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactAuthorityTests."
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.startswith(prefix)}
+        self.assertEqual(len(original), 3)
+        additional = {prefix + name for name in (
+            "Shared_admission_retention_and_independent_disposal_use_one_recognized_handle",
+            "Missing_reference_authority_denies_deletion_not_shared_reads",
+            "Noncooperative_reference_query_retains_exclusion_blocks_admission_and_settles_before_release")}
+        self.assertTrue(original.isdisjoint(additional))
+        mutation = prefix + "Shared_authority_assertion_rejects_repaired_copied_handle_and_accepts_original_authority"
+        scenario, = checks.original_artifact_authority_scenarios()
+        self.assertEqual(scenario, ("original-artifact-authority", tuple(sorted(original | additional | {mutation})),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_budget_scope_preserves_frozen_admission_cleanup_and_authority_cases(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_budget_scenarios", None)),
                         "Shared finite-budget checks need exact owned wrapper transport.")

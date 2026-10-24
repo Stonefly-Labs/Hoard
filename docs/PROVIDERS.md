@@ -384,7 +384,8 @@ mutation waits for the actual rejected commit to settle, then abandons the
 current verified owner. The unchanged pending-state type assertion fails on
 both providers; one stage, one commit and one actual abandonment corroborate it.
 Fresh genuine stores pass unchanged. The next twelve-row native scope requests
-62 scopes/510 observations, pending, not complete binding/category/session proof.
+62 scopes/510 observations. It passed at `631f9c4`, run `40118166329`,
+all three jobs and 174 foundations, not complete binding/category/session proof.
 Four original result-handoff/expiry bodies now also run common checks with all
 twelve frozen parameters. Actual completion/release observers, barriers, clock
 and settlement remain fixture-side. Hiding a genuinely reserved ticket after
@@ -400,6 +401,14 @@ shared authority checks use only Abstractions. A genuine input-limit failure
 mislabeled as capacity fails the unchanged expected-code assertion; genuine
 stores pass. The next eighteen-row native request is 64 scopes/542 observations,
 pending, not complete qualification.
+Six original authority bodies now also use shared interface-only checks,
+preserving three frozen witnesses, three additional existing facts and the
+copied-guard helper. Actual authority creation, clock, waiting/retained counters,
+reference completion and drain remain fixture-side. Repairing an actual copied-
+handle rejection through genuine recognized retention fails the unchanged
+failure-type assertion; genuine authority passes. The next seven-row native
+request is 65 scopes/549 observations, pending. Handoff run `40118782562` was
+canceled while pending, not admitted; later expanded requests retain that scope.
 
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures

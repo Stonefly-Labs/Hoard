@@ -523,6 +523,17 @@ input-limit failure mislabeled as capacity fails the unchanged expected-code
 assertion on both providers; one actual staging call and one observed limit
 failure corroborate it. Genuine stores pass unchanged. The next eighteen-row
 native request is 64 scopes/542 observations, pending, not full qualification.
+Six original authority bodies now also execute interface-only shared checks,
+preserving three frozen category witnesses, three additional existing facts
+and the exact copied-guard helper. Actual authority construction, clock,
+waiting/retained counters, reference completion and drain remain fixture-side.
+A real copied-handle denial repaired into actual recognized retention fails
+the unchanged failure-type assertion. The retained guard is explicitly disposed;
+genuine authority passes unchanged. The next seven-row native scope is
+65 scopes/549 observations, pending. Cancellation passed `40118166329` at
+`631f9c4`, all three jobs, 174 foundations, 62 scopes/510 observations and
+all actual prerequisites/replay. Handoff-only `40118782562` was canceled while
+pending, not admitted; later expanded requests retain its scope.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

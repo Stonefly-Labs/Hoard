@@ -1003,6 +1003,19 @@ def artifact_noncooperation_diagnostics(run, inputs, candidate):
     return result
 
 
+def original_artifact_authority_scenarios():
+    prefix = "Hoard.Artifacts.Tests.ArtifactAuthorityTests."
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.startswith(prefix)}
+    identities.update(prefix + name for name in (
+        "Shared_admission_retention_and_independent_disposal_use_one_recognized_handle",
+        "Missing_reference_authority_denies_deletion_not_shared_reads",
+        "Noncooperative_reference_query_retains_exclusion_blocks_admission_and_settles_before_release",
+        "Shared_authority_assertion_rejects_repaired_copied_handle_and_accepts_original_authority"))
+    return (("original-artifact-authority", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def original_artifact_budget_scenarios():
     methods = {
         "Hoard.Artifacts.Tests.ArtifactBudgetTests."
@@ -1248,7 +1261,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "artifact-noncooperation", "original-artifact-external", "original-artifact-races",
             "original-artifact-reconciliation", "original-artifact-visibility", "original-artifact-history",
             "original-artifact-ownership", "original-artifact-cancellation", "original-artifact-handoff",
-            "original-artifact-budget"],
+            "original-artifact-budget", "original-artifact-authority"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1272,7 +1285,8 @@ def test_attempt(run, inputs, candidate, scenario):
             *original_artifact_race_scenarios(), *original_artifact_reconciliation_scenarios(),
             *original_artifact_visibility_scenarios(), *original_artifact_history_scenarios(),
             *original_artifact_ownership_scenarios(), *original_artifact_cancellation_scenarios(),
-            *original_artifact_handoff_scenarios(), *original_artifact_budget_scenarios()):
+            *original_artifact_handoff_scenarios(), *original_artifact_budget_scenarios(),
+            *original_artifact_authority_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
     sqlite_tests = metadata_provider == "sqlite" or any(
@@ -1677,6 +1691,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "original-artifact-budget"}), flush=True)
         for scenario in original_artifact_budget_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "original-artifact-authority"}), flush=True)
+        for scenario in original_artifact_authority_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

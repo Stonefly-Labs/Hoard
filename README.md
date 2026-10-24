@@ -1477,8 +1477,9 @@ retaining two frozen category witnesses plus eight additional existing cases.
 A real-store mutation waits for actual rejected-work settlement, then abandons
 the current verified owner; the unchanged pending-state assertion fails on
 both providers and genuine stores pass. The next twelve-row native scope
-requests 62 scopes/510 observations, pending. Full feature acceptance remains
-unfinished.
+requests 62 scopes/510 observations. It passed at `631f9c4`, run
+[40118166329](https://github.com/Stonefly-Labs/Hoard/actions/runs/40118166329):
+all three jobs and 174 foundations. Full feature acceptance remains unfinished.
 Four original result-handoff/expiry bodies now also execute shared checks,
 preserving twelve frozen parameters and fixture-side completion/release barriers.
 A real reserved ticket deliberately hidden after cancellation fails the
@@ -1491,6 +1492,13 @@ queue/capacity, authority deadlines and cooperative cancellation. A genuine
 input-limit failure deliberately mislabeled as capacity fails the unchanged
 code assertion; genuine stores pass. The next eighteen-row native request is
 64 scopes/542 observations, pending; complete bindings/profiles remain unfinished.
+Six original authority bodies now also run shared interface-only checks,
+preserving three frozen witnesses, three additional existing facts and the
+copied-guard helper. Repairing an actually rejected copied handle into a real
+recognized retention fails the unchanged failure-type assertion; the genuine
+authority passes. The next seven-row native request is 65 scopes/549 observations,
+pending. Handoff-only run `40118782562` was canceled while pending, not accepted;
+later expanded requests include its scope.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

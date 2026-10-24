@@ -1,37 +1,18 @@
-using Hoard.Abstractions.Metadata;
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
+using Hoard.Testing.Conformance.Artifacts;
 
 namespace Hoard.Artifacts.Tests;
 
 public sealed class ArtifactAuthorityTests
 {
     private readonly ArtifactStoreIdentity store = new("fixture.artifact", Guid.NewGuid(), Guid.NewGuid());
-    private readonly ArtifactDigest digest = new(new string('a', 64));
-    private static readonly ArtifactCallOptions Options = new();
-
-    private ArtifactProtectionRequest Request(ArtifactProtectionOperation operation = ArtifactProtectionOperation.Read)
-        => new(Guid.NewGuid(), operation, store, digest,
-            operation == ArtifactProtectionOperation.Deletion
-                ? new ArtifactOption<ArtifactStamp>.Some(new ArtifactStamp(store, new ArtifactIdentity(digest, 1), Guid.NewGuid()))
-                : new ArtifactOption<ArtifactStamp>.None());
-    private static IArtifactProtectionGuard Guard(ArtifactResult<IArtifactProtectionGuard> result)
-        => Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Success>(result).Value;
 
     [Fact]
     public async Task Shared_admission_retention_and_independent_disposal_use_one_recognized_handle()
     {
         var authority = new ArtifactCoordinationAuthority(store);
-        var request = Request();
-        var original = Guard(await authority.AcquireAsync(request, Options, default));
-        var retained = Guard(await authority.RetainAsync(original, request, Options, default));
-        Assert.Equal(original.Grant, retained.Grant);
-        await original.DisposeAsync();
-        Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Failure>(
-            await authority.RetainAsync(original, request, Options, default));
-        var retainedAgain = Guard(await authority.RetainAsync(retained, request, Options, default));
-        await retainedAgain.DisposeAsync();
-        await retained.DisposeAsync();
+        await new ArtifactAuthorityAssertions(store).SharedAdmissionAsync(authority, default);
     }
 
     [Fact]
@@ -39,18 +20,7 @@ public sealed class ArtifactAuthorityTests
     {
         var authority = new ArtifactCoordinationAuthority(store);
         var foreign = new ArtifactCoordinationAuthority(store);
-        var request = Request();
-        await using var guard = Guard(await authority.AcquireAsync(request, Options, default));
-        await using var copied = new CopiedGuard(guard.Grant);
-        foreach (var result in new[] {
-            await authority.RetainAsync(copied, request, Options, default),
-            await foreign.RetainAsync(guard, request, Options, default),
-            await authority.RetainAsync(guard, Request(), Options, default) })
-        { Assert.Equal(ArtifactFailureCode.Denied, Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Failure>(result).Code); }
-        var foreignRequest = new ArtifactProtectionRequest(Guid.NewGuid(), ArtifactProtectionOperation.Read,
-            new ArtifactStoreIdentity(store.ProviderModuleId, store.InstanceId, Guid.NewGuid()), digest);
-        Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Failure>(
-            await authority.AcquireAsync(foreignRequest, Options, default));
+        await new ArtifactAuthorityAssertions(store).RejectCopiedHandlesAsync(authority, foreign, default);
     }
 
     [Fact]
@@ -58,25 +28,15 @@ public sealed class ArtifactAuthorityTests
     {
         var clock = new ArtifactTestClock();
         var authority = new ArtifactCoordinationAuthority(store, clock);
-        var request = Request();
-        await using var guard = Guard(await authority.AcquireAsync(request, Options, default));
-        clock.Advance(TimeSpan.FromMinutes(1));
-        Assert.True(guard.Grant.AdmissionExpiry <= clock.GetUtcNow());
-        await using var retained = Guard(await authority.RetainAsync(guard, request, Options, default));
-        Assert.Equal(guard.Grant, retained.Grant);
-        Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Failure>(
-            await authority.RetainAsync(guard, Request(), Options, default));
+        await new ArtifactAuthorityAssertions(store).HeldAfterExpiryAsync(
+            authority, clock.Advance, clock.GetUtcNow, default);
     }
 
     [Fact]
     public async Task Missing_reference_authority_denies_deletion_not_shared_reads()
     {
         var authority = new ArtifactCoordinationAuthority(store);
-        await using var read = Guard(await authority.AcquireAsync(Request(), Options, default));
-        var deletion = authority.AcquireAsync(Request(ArtifactProtectionOperation.Deletion),
-            new ArtifactCallOptions(TimeSpan.FromMilliseconds(20)), default);
-        var result = await deletion;
-        Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Failure>(result);
+        await new ArtifactAuthorityAssertions(store).MissingReferencesAsync(authority, default);
     }
 
     [Fact]
@@ -84,20 +44,8 @@ public sealed class ArtifactAuthorityTests
     {
         var authority = new ArtifactCoordinationAuthority(store, references: (_, _) =>
             ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
-        var request = Request();
-        var read = Guard(await authority.AcquireAsync(request, Options, default));
-        var deletion = authority.AcquireAsync(Request(ArtifactProtectionOperation.Deletion), Options, default).AsTask();
-        Assert.Equal(1, authority.WaitingAdmissions);
-        var nextRead = authority.AcquireAsync(Request(), Options, default).AsTask();
-        Assert.Equal(2, authority.WaitingAdmissions);
-        var retention = Guard(await authority.RetainAsync(read, request, Options, default));
-        await read.DisposeAsync();
-        Assert.False(deletion.IsCompleted);
-        await retention.DisposeAsync();
-        var exclusive = Guard(await deletion);
-        Assert.False(nextRead.IsCompleted);
-        await exclusive.DisposeAsync();
-        await using var admitted = Guard(await nextRead);
+        await new ArtifactAuthorityAssertions(store).QueuedExclusiveAsync(
+            authority, () => authority.WaitingAdmissions, default);
     }
 
     [Fact]
@@ -105,23 +53,63 @@ public sealed class ArtifactAuthorityTests
     {
         var pending = new TaskCompletionSource<ArtifactReferenceDecision>(TaskCreationOptions.RunContinuationsAsynchronously);
         var authority = new ArtifactCoordinationAuthority(store, references: (_, _) => new(pending.Task));
-        var result = await authority.AcquireAsync(Request(ArtifactProtectionOperation.Deletion),
-            new ArtifactCallOptions(TimeSpan.FromMilliseconds(20)), default);
-        var failed = Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Failure>(result);
-        Assert.Equal(ArtifactFailureCode.CleanupIncomplete, failed.Code);
-        Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failed.Cleanup);
-        Assert.True(authority.HasRetainedWork);
-        Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Failure>(
-            await authority.AcquireAsync(Request(), Options, default));
-        pending.SetResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid()));
-        Assert.True(await authority.DrainRetainedAsync(TimeSpan.FromSeconds(5)));
-        Assert.False(authority.HasRetainedWork);
-        await using var read = Guard(await authority.AcquireAsync(Request(), Options, default));
+        await new ArtifactAuthorityAssertions(store).RetainedReferenceAsync(authority, () => authority.HasRetainedWork,
+            () => pending.SetResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())),
+            timeout => authority.DrainRetainedAsync(timeout), default);
     }
 
-    private sealed class CopiedGuard(ArtifactProtectionGrant grant) : IArtifactProtectionGuard
+    [Fact]
+    public async Task Shared_authority_assertion_rejects_repaired_copied_handle_and_accepts_original_authority()
     {
-        public ArtifactProtectionGrant Grant => grant;
-        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+        await using (var mutation = new RepairedCopiedHandle(new ArtifactCoordinationAuthority(store)))
+        {
+            await Assert.ThrowsAsync<Xunit.Sdk.IsTypeException>(() =>
+                new ArtifactAuthorityAssertions(store).RejectCopiedHandlesAsync(
+                    mutation, new ArtifactCoordinationAuthority(store), default));
+            Assert.Equal(1, mutation.ActualCopiedDenials);
+            Assert.Equal(1, mutation.RepairedRetentions);
+        }
+        await new ArtifactAuthorityAssertions(store).RejectCopiedHandlesAsync(
+            new ArtifactCoordinationAuthority(store), new ArtifactCoordinationAuthority(store), default);
+    }
+
+    private sealed class RepairedCopiedHandle(IArtifactCoordinationAuthority inner)
+        : IArtifactCoordinationAuthority, IAsyncDisposable
+    {
+        private IArtifactProtectionGuard? current;
+        private readonly List<IArtifactProtectionGuard> retained = [];
+        public int ActualCopiedDenials { get; private set; }
+        public int RepairedRetentions => retained.Count;
+
+        public async ValueTask<ArtifactResult<IArtifactProtectionGuard>> AcquireAsync(
+            ArtifactProtectionRequest request, ArtifactCallOptions options, CancellationToken ct)
+        {
+            var result = await inner.AcquireAsync(request, options, ct);
+            if (result is ArtifactResult<IArtifactProtectionGuard>.Success acquired) { current = acquired.Value; }
+            return result;
+        }
+
+        public async ValueTask<ArtifactResult<IArtifactProtectionGuard>> RetainAsync(
+            IArtifactProtectionGuard protection, ArtifactProtectionRequest expected, ArtifactCallOptions options, CancellationToken ct)
+        {
+            var result = await inner.RetainAsync(protection, expected, options, ct);
+            if (current is { } original && !ReferenceEquals(protection, original) && protection.Grant == original.Grant)
+            {
+                if (result is not ArtifactResult<IArtifactProtectionGuard>.Failure { Code: ArtifactFailureCode.Denied })
+                { throw new InvalidOperationException("Mutation requires actual copied-handle rejection."); }
+                ActualCopiedDenials++;
+                var repaired = await inner.RetainAsync(original, expected, options, ct);
+                if (repaired is not ArtifactResult<IArtifactProtectionGuard>.Success recognized)
+                { throw new InvalidOperationException("Mutation requires actual recognized retention."); }
+                retained.Add(recognized.Value);
+                return repaired;
+            }
+            return result;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            foreach (var guard in retained) { await guard.DisposeAsync(); }
+        }
     }
 }

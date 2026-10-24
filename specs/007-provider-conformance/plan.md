@@ -2817,8 +2817,8 @@ the missing exact native scope failed its named tooling regression.
 The new fourteen-row scope requests twelve frozen witnesses plus two mutations,
 63 scopes/524 observations, pending, not complete category/session/profile proof.
 The preceding cancellation request binds exact head
-`631f9c46a90936361c04aa431e5a6f1f5a19b41b`, run `40118166329`, pending
-separate strict admission. Tooling passed 283 discovered / 266 passed /
+`631f9c46a90936361c04aa431e5a6f1f5a19b41b`, run `40118166329`, now admitted
+below. Tooling passed 283 discovered / 266 passed /
 seventeen native macOS skips. SDK/accepted-wrapper whitespace checks, compiled/
 frozen catalogs and four-body mechanical comparison passed. Complete task,
 reviewer-checklist and stage acceptance remain open.
@@ -2849,8 +2849,9 @@ CS0103; the missing exact native scope failed its named tooling regression.
 The eighteen-row scope requests sixteen frozen witnesses plus two mutations,
 64 scopes/542 observations, pending, not category/session/profile acceptance.
 The preceding handoff request binds exact head
-`ffda43a96151de9c71dfc99dda5b22c374739b24`, run `40118782562`, pending
-separate strict admission.
+`ffda43a96151de9c71dfc99dda5b22c374739b24`, run `40118782562`. It was
+canceled while pending and is not admitted; later expanded requests retain
+the full handoff scope.
 
 Tooling passed 284 discovered / 267 passed / seventeen native macOS skips.
 SDK/accepted-wrapper whitespace checks, compiled/frozen catalogs and six-body
@@ -2865,6 +2866,47 @@ archive-map SHA-256:
 `7b31d0e687344cc81863a4c2fc1e40b977e3fac648c65694337df249246aa439`.
 Previously measured transfer packets remain unchanged, not fresh session/
 category origins; tracked locks and historical consumers/binaries are unchanged.
+
+Six original authority bodies now execute interface-only shared consumers,
+preserving three frozen category witnesses, three additional existing facts,
+all assertion tokens/order and the exact copied-guard helper. Actual authority
+construction, clock, waiting/retained counters, reference completion and drain
+remain fixture-side. A real authority rejects the copied handle before a faulty
+adapter repairs it using actual recognized retention. The unchanged failure-
+type assertion fails; actual denial/repair counters each equal one, repaired
+retention is explicitly disposed, and genuine authority passes unchanged.
+Missing shared type first failed actual compilation with CS0246. An intermediate
+build also exposed the missing Abstractions.Metadata import for `ArtifactDigest`;
+adding its existing namespace fixes that without dependencies/API changes.
+The missing exact seven-row scope failed its named tooling regression before
+wiring. It requests 65 scopes/549 observations, pending, not complete
+category/session/profile qualification.
+
+The cancellation request
+[40118166329](https://github.com/Stonefly-Labs/Hoard/actions/runs/40118166329)
+passed at exact head `631f9c46a90936361c04aa431e5a6f1f5a19b41b`: all three
+jobs, 174 foundations without failures/errors/skips, 62 scopes/510 exact
+discoveries/executions, all twelve cancellation rows and all actual recovery/
+transfer/retention/external/native prerequisite chains plus eighteen-package/
+thirteen-lock replay. Input:
+`3db30cc16c206a72a14d64b3d9f1bfecb3b9f9c772adec7959cb1947b99585c2`;
+preparation:
+`8a3b47f7297e523d12ae142b6da3d7ade1c43bd37552696087d4e1a076cbd420`.
+The budget request binds exact head
+`70dfdf63f59a13ba39d934a7ef09f148bfc58c57`, run `40119412481`, pending
+separate strict admission. It includes the canceled handoff-only request's
+scope, but that does not make the canceled run successful.
+
+`authority-fixed` and independent `authority-replay` each passed 289 artifact
+cases plus 89 metadata cases per provider, without skips. Eleven archives and
+ten actual loaded dependency images reproduce exactly; combined archive-map
+SHA-256:
+`a4ba04603332bd0ebeee15f619893a021c76274e750535399086d024e429beb4`.
+Previously measured transfer packets remain unchanged, not fresh session/
+category origins. Tooling passed 285 discovered / 268 passed / seventeen native
+macOS skips. SDK/accepted-wrapper whitespace, compiled/frozen catalogs, six-body/
+copied-helper mechanical comparison and patch integrity passed. Complete task,
+reviewer-checklist and stage acceptance remain open.
 
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86

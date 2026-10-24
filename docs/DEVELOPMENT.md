@@ -6629,6 +6629,24 @@ failure deliberately mislabeled as capacity fails the unchanged expected-code
 assertion on both providers; genuine stores pass unchanged. The next eighteen-
 row native request is 64 scopes/542 observations, pending, not complete
 category/session/profile proof.
+Six original authority bodies now execute shared interface-only consumers,
+preserving three frozen category witnesses plus three additional existing facts
+and the exact copied-guard helper. Actual construction, clock, waiting/retained
+counters, reference completion and drain stay fixture-side. A real authority
+first rejects a copied handle, then a faulty adapter repairs it using the
+original recognized handle. The unchanged failure-type assertion fails; actual
+repaired retention is explicitly disposed and genuine authority passes unchanged.
+The next seven-row native scope is 65 scopes/549 observations, pending.
+
+Cancellation run `40118166329` at `631f9c4` passed all three jobs,
+174 foundations without failures/errors/skips and 62 scopes/510 exact
+discoveries/executions, all twelve cancellation rows and all actual prerequisite
+chains/native containment plus eighteen-package/thirteen-lock replay. Input:
+`3db30cc16c206a72a14d64b3d9f1bfecb3b9f9c772adec7959cb1947b99585c2`;
+preparation:
+`8a3b47f7297e523d12ae142b6da3d7ade1c43bd37552696087d4e1a076cbd420`.
+Handoff-only run `40118782562` was canceled while pending, not accepted.
+Later expanded requests include its full scope.
 
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)

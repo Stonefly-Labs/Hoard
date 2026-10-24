@@ -256,6 +256,14 @@ stop/limits/authority setup. Mislabeled actual input-limit failures fail the
 unchanged expected-code assertion on both providers; genuine stores pass.
 The next eighteen-row native request is 64 scopes/542 observations, pending;
 complete category/session/profile gates remain open.
+Six original authority bodies now run interface-only shared checks, preserving
+three frozen witnesses, three additional existing facts and the copied-guard
+helper. A real copied-handle rejection repaired via actual recognized retention
+fails the unchanged assertion; genuine authority passes. The next seven-row
+native scope is 65 scopes/549 observations, pending. Cancellation passed
+`40118166329` at `631f9c4`, all three jobs, 174 foundations and 62 scopes/
+510 observations. Handoff-only `40118782562` was canceled while pending, not
+accepted; later requests retain its scope. Full qualification remains unfinished.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/
