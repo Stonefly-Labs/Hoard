@@ -374,8 +374,9 @@ The original four-parameter damaged-read wrapper now uses a provider-free common
 consumer with mechanically identical assertions/order and actual fixture-side
 capture/damage/restoration. Genuine-validator mutation pairs demonstrate that
 revived corrupt evidence fails its unchanged assertion. Fresh replay passes
-308 artifact and 65 Consumer cases. The next native request is
-80 scopes/699 observations, pending, not complete category bindings, metadata
+308 artifact and 65 Consumer cases. Run `40138438076` at exact `4a907c5`
+passed all three jobs, 195 foundations without skips and strict
+80-scope/699-observation admission, not complete category bindings, metadata
 integration or profile acceptance.
 The original Local read/reconciliation quarantine race and both admitted-open
 revalidation rows also now use provider-free consumers with identical checks
@@ -383,6 +384,11 @@ and public-operation order; actual provider observers, physical restoration and
 named barriers remain fixture-side. Independent fresh preparations pass all
 308 artifact and 65 Consumer cases. The latest native request is
 81 scopes/702 observations, pending, not complete category/profile acceptance.
+All six original committed-detection parameters now also use a provider-free
+consumer with identical checks/order and a fixed inherited durability
+expectation from the independent test variant, not advertised capabilities.
+Fresh replay passes 308 artifact and 65 Consumer cases; the newest native
+request is 82 scopes/708 observations, pending, not full qualification.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

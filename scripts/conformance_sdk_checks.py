@@ -392,6 +392,15 @@ def original_artifact_read_delete_scenarios():
     return (("original-artifact-read-delete", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
+def original_artifact_detection_scenarios():
+    method = ("Hoard.Artifacts.Tests.ArtifactReadVerificationTests."
+              "Every_committed_detection_path_quarantines_restored_bytes")
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.startswith(method + "(")}
+    return (("original-artifact-detection", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def original_artifact_read_race_scenarios():
     prefix = "Hoard.Artifacts.Tests.ArtifactReadVerificationTests."
     identities = {prefix + "Local_reconciliation_cannot_finalize_after_overlapping_read_quarantines_the_incarnation"}
@@ -1530,7 +1539,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-lifecycle", "original-artifact-failure", "original-artifact-prefix-cleanup",
             "original-artifact-object-cleanup", "original-artifact-configured-store", "original-artifact-authority-ownership",
             "local-artifact-session", "object-artifact-session", "configured-artifact-session", "payload-artifact-session",
-            "original-artifact-observations", "original-artifact-damaged-read", "original-artifact-read-races"],
+            "original-artifact-observations", "original-artifact-damaged-read", "original-artifact-read-races",
+            "original-artifact-detection"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1557,6 +1567,7 @@ def test_attempt(run, inputs, candidate, scenario):
             *original_artifact_publication_scenarios(), *original_artifact_read_delete_scenarios(),
             *original_artifact_evidence_scenarios(), *original_artifact_damaged_read_scenarios(),
             *original_artifact_read_race_scenarios(),
+            *original_artifact_detection_scenarios(),
             *original_artifact_external_scenarios(),
             *original_artifact_race_scenarios(), *original_artifact_reconciliation_scenarios(),
             *original_artifact_visibility_scenarios(), *original_artifact_history_scenarios(),
@@ -2029,6 +2040,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "original-artifact-read-races"}), flush=True)
         for scenario in original_artifact_read_race_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "original-artifact-detection"}), flush=True)
+        for scenario in original_artifact_detection_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

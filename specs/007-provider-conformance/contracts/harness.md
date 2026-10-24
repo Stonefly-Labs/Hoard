@@ -728,8 +728,9 @@ fault driver. Two real-validator mutations require actual corrupt-evidence
 failure before substituting success. The unchanged common type assertion fails
 and fresh genuine validators pass. Exact transport requires all four frozen
 rows plus both mutation rows, rejecting shortened or foreign vectors before
-launch. The next exact request is 80 scopes/699 observations, pending, not
-complete fault-driver/category admission or full metadata/artifact integration.
+launch. Run `40138438076` at exact `4a907c5` passed all three jobs,
+195 foundations without skips and strict 80-scope/699-observation admission,
+not complete fault-driver/category admission or full metadata/artifact integration.
 
 The original overlapping read/reconciliation quarantine body and both
 admitted-open revalidation rows also now execute provider-free consumers.
@@ -741,6 +742,15 @@ live in wrapper scope while actual observations/releases remain at the original
 transition points. Exact transport requires all three unchanged identities and
 rejects shortened/foreign vectors before launch. The latest native request is
 81 scopes/702 observations, pending, not complete category/profile admission.
+
+All six original committed-detection parameters now share one provider-free
+consumer with mechanically identical assertions/public-operation order.
+Their inherited durability expectation is fixed by the independent original
+test variant, not provider capabilities, a binding callback or a pass flag.
+Physical removal/restoration and publication fault mapping stay fixture-side;
+these legacy callbacks do not establish complete owned fault-driver admission.
+Exact transport rejects missing/foreign parameters or a changed scope name
+before launch. The newest request is 82 scopes/708 observations, pending.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

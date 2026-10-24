@@ -580,8 +580,9 @@ and operation order. Actual file capture/damage/restoration remain in the
 legacy fixture; this does not convert those callbacks into owned full-driver
 admission. A real validator's actual corrupt-evidence denial, deliberately
 reported as success, fails the unchanged common assertion on both providers;
-fresh genuine validators pass. The next native request is 80 scopes/699
-observations, pending, not complete fault-driver/category/profile admission.
+fresh genuine validators pass. Run `40138438076` at exact `4a907c5` passed all
+three jobs, 195 foundations without skips and strict 80-scope/699-observation
+admission, not complete fault-driver/category/profile admission.
 The original Local read/reconciliation quarantine race and both admitted-open
 revalidation rows also now execute provider-free consumers. Actual publication
 faults, provider-specific observation mapping, physical replacement and named
@@ -589,6 +590,13 @@ hold/release barriers remain fixture-side at their original transition points.
 Common code contains no Local/Object switch, filesystem I/O or substitute
 expected outcome. Exact checks/public-operation order remain unchanged.
 The latest native request is 81 scopes/702 observations, pending.
+All six original committed-detection parameters also execute one provider-free
+consumer with mechanically identical checks and public-operation order.
+The independent frozen test variant supplies its inherited durability
+expectation; provider-advertised capabilities or binding-selected outcomes
+cannot weaken the expected receipt/reconciliation checks. Physical removal,
+restoration and publication fault mapping remain fixture-side.
+The newest native request is 82 scopes/708 observations, pending.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

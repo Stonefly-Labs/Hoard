@@ -1628,13 +1628,19 @@ The original damaged-read case now also uses a provider-free consumer with all
 four frozen parameters and mechanically identical assertions/order. Actual
 capture, damage and restoration stay fixture-side; two genuine-validator
 mutation pairs prove the shared check rejects revived corrupt evidence.
-Fresh replay passes 308 artifact and 65 Consumer cases. The next native request
-is 80 scopes/699 observations, pending.
+Fresh replay passes 308 artifact and 65 Consumer cases. Run `40138438076` at
+exact `4a907c5` passed all three jobs, 195 foundations without skips and strict
+80-scope/699-observation admission.
 The original admitted-open and overlapping read/reconciliation quarantine races
 also now use provider-free consumers with identical checks/public-operation
 order and original fixture-side barriers. Both fresh preparations pass all
 308 artifact and 65 Consumer cases; the latest native request is
 81 scopes/702 observations, pending.
+All six original committed-detection variants now also use one provider-free
+consumer with identical checks/order. Their inherited durability expectation
+is fixed by the independent test variant, never provider-advertised capability.
+Fresh replay passes 308 artifact and 65 Consumer cases; the newest native
+request is 82 scopes/708 observations, pending.
 Full bindings, remaining mandatory fault controls and category/profile
 acceptance remain unfinished.
 

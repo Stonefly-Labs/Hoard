@@ -5,6 +5,56 @@ namespace Hoard.Testing.Conformance.Artifacts;
 
 public static class ArtifactReadAssertions
 {
+    public static async Task CommittedDetectionQuarantineAsync(
+        IArtifactStore store, string detection, ArtifactDurability expectedDurability,
+        Action removePayload, Action<byte[]> restoreRemovedPayload, Action observePublicationDecision,
+        Action removePublicationObserver, Action damage, Action<byte[]> restorePayload, CancellationToken cancellationToken)
+    {
+        var bytes = "quarantine at each committed detection boundary"u8.ToArray();
+        using var source = new ShortSource(bytes);
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
+        ArtifactMutationReceipt receipt;
+        if (detection == "open")
+        {
+            receipt = Success(await store.CommitAsync(staged, new(), cancellationToken));
+            removePayload();
+            Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+                await store.OpenReadAsync(new(staged.Identity.Digest), new(), cancellationToken)).Code);
+            restoreRemovedPayload(bytes);
+        }
+        else
+        {
+            observePublicationDecision();
+            Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(await store.CommitAsync(staged, new(), cancellationToken));
+            removePublicationObserver();
+            if (detection == "reconciliation")
+            {
+                damage();
+                Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(
+                    await store.ReconcileAsync(ticket, new(), cancellationToken));
+            }
+            restorePayload(bytes);
+            Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+                await store.OpenReadAsync(new(staged.Identity.Digest), new(), cancellationToken)).Code);
+            if (detection == "reconciliation" || expectedDurability == ArtifactDurability.SimulationOnly)
+            {
+                Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(
+                    await store.ReconcileAsync(ticket, new(), cancellationToken));
+                using var duplicate = new ShortSource(bytes);
+                var retry = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+                var restaged = Success(await store.StageAsync(retry, duplicate, new(), cancellationToken));
+                Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+                    await store.CommitAsync(restaged, new(), cancellationToken)).Code);
+                Success(await store.AbandonAsync(restaged.Owner, new(), cancellationToken));
+                return;
+            }
+            receipt = Assert.IsType<ArtifactResolution.Committed>(
+                Success(await store.ReconcileAsync(ticket, new(), cancellationToken))).Receipt;
+        }
+        await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken);
+    }
+
     public static async Task ReconciliationQuarantineRaceAsync(
         IArtifactStore store, Action loseAcknowledgment, Action restoreAcknowledgment, Action damage,
         Action observeCopy, Action observeReconciliation,

@@ -7022,8 +7022,15 @@ eighteen-package/thirteen-lock replay.
 Input: `ad1b244e0b8c7715661fa905ac001b3c74307c910e5252820319dd7161af2a92`;
 preparation:
 `cfd9c8c52dee1e50978d3ed7660f077b40c0599259c6a49baee971d1a3a5d56a`.
-The damaged-read request is
-195 native foundations and 80 scopes/699 observations, also pending. No full
+Damaged-read run `40138438076` at exact
+`4a907c5ec8b854198019b467c1069a2cdd33c00b` passed all three jobs,
+195 foundations without failures/errors/skips and strict
+80-scope/699-observation admission, including independent eighteen-package/
+thirteen-lock replay and every actual prerequisite chain.
+Input: `517a48389245ba621b1b0f5833d20c5b32cc4e041ccfba43ea2e9b1a5f4ccadf`;
+preparation:
+`beef2e645dafcc90515bbfa292afb3425cec4c95096e7eba63ca91237dd8c335`.
+No full
 category/profile result, new transfer origin or additional completed task is
 claimed. Architecture/ADR diagrams and deployment/custom-host examples remain
 unaffected by this assertion-only extraction.
@@ -7053,6 +7060,31 @@ The latest native request is 196 foundations and 81 scopes/702 observations,
 pending. Complete fault drivers, origins and category/integration/profile gates
 remain unfinished. Tasks, reviewer markers, tracked locks, historical seals and
 product/architecture/deployment examples remain unchanged.
+
+All six original committed-detection parameters now execute
+`ArtifactReadAssertions.CommittedDetectionQuarantineAsync`. Mechanical
+whole-body comparison preserves exact assertions/public-operation order after
+explicit fixture/interface/helper/token forwarding and the fixed inherited
+durability variant. That expectation comes from the independent frozen test
+parameter, never provider capabilities, a binding callback or a pass flag.
+Physical removal/restoration and publication fault mapping stay fixture-side.
+The old SDK first produced the intended missing-method `CS0117`; exact
+six-row transport first failed its named missing-factory assertion.
+Two independent fresh preparations each pass 308 artifact, 65 Consumer and
+89+89 metadata cases without skips. Fifteen archives reproduce exactly,
+canonical archive-map SHA-256
+`2ae90bb74588acae39078dfb97f206b5f640d254d91179c4fa29caa786b2a591`;
+ten Consumer dependency images match package bytes.
+Full tooling initially failed because available scratch fell below the
+unchanged 24 GiB admission gate. Removing only ten identity-verified inactive
+dependency caches restored 24.140 GiB; sources, feeds, manifests, intermediates,
+runtime images and historical seals were preserved. The rerun passes all
+305 checks (288 passed/seventeen macOS-native skips), including 79 SDK checks.
+Prepared SDK/wrapper whitespace, frozen inventory, catalogs and patch checks
+pass. The newest native request is 197 foundations and 82 scopes/708
+observations, pending, not complete fault-driver/category/profile acceptance.
+Tasks, reviewer markers, tracked locks and production/deployment documents
+remain unchanged; measured transfer packets remain reused, not fresh origins.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

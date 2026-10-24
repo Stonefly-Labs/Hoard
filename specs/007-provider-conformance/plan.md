@@ -3700,8 +3700,13 @@ thirteen-lock replay and strict 79-scope/693-observation admission.
 Input: `ad1b244e0b8c7715661fa905ac001b3c74307c910e5252820319dd7161af2a92`;
 preparation:
 `cfd9c8c52dee1e50978d3ed7660f077b40c0599259c6a49baee971d1a3a5d56a`.
-The damaged-read increment
-requests 195 native foundations and 80 scopes/699 observations, pending.
+Damaged-read run `40138438076` at exact
+`4a907c5ec8b854198019b467c1069a2cdd33c00b` passed all three jobs,
+195 foundations without failures/errors/skips, independent eighteen-package/
+thirteen-lock replay and strict 80-scope/699-observation admission.
+Input: `517a48389245ba621b1b0f5833d20c5b32cc4e041ccfba43ea2e9b1a5f4ccadf`;
+preparation:
+`beef2e645dafcc90515bbfa292afb3425cec4c95096e7eba63ca91237dd8c335`.
 Remaining common consumers, complete fault drivers, origins and full category/
 integration/profile gates remain unfinished. Tasks, reviewer markers, tracked
 locks, historical seals, product contracts, architecture/ADR diagrams and
@@ -3735,6 +3740,34 @@ The next native request is 196 foundations and 81 scopes/702 observations,
 pending. Full drivers, origins and category/integration/profile gates remain
 unfinished. Tasks, reviewer markers, tracked locks, historical seals and
 product/architecture/deployment examples are unchanged.
+
+### Original committed-detection quarantine consumer
+
+All six original open/publication/reconciliation parameters now execute one
+provider-free consumer. Mechanical whole-body comparison preserves exact
+assertions/public-operation order after explicit fixture/interface/helper/token
+forwarding and the fixed inherited durability variant. The independent frozen
+test parameter fixes that expectation; provider-advertised capabilities,
+binding callbacks and pass flags cannot select a weaker expected result.
+Physical removal/restoration and publication fault mapping remain fixture-side,
+not newly admitted full owned fault controls.
+The old SDK first fails with the intended missing-method `CS0117`; exact
+six-row transport first fails its named missing-factory assertion.
+
+Two independent fresh preparations each pass 308 artifact, 65 Consumer and
+89+89 metadata cases without skips. Fifteen archives reproduce exactly,
+canonical archive-map SHA-256
+`2ae90bb74588acae39078dfb97f206b5f640d254d91179c4fa29caa786b2a591`;
+ten Consumer dependency images match package bytes. Full tooling initially
+failed below the unchanged 24 GiB scratch gate. Ten identity-verified inactive
+dependency caches were removed, preserving sources, feeds, manifests,
+intermediates, runtime images and historical seals; 24.140 GiB was restored.
+The rerun passes 305 checks (288 passed/seventeen macOS-native skips), including
+79 SDK checks; prepared formatting, frozen inventory, catalogs and patch checks
+pass. The next request is 197 foundations and 82 scopes/708 observations,
+pending. Full drivers, origins and category/integration/profile gates remain
+unfinished. Tasks, reviewer markers, tracked locks, historical seals and
+product/architecture/deployment examples remain unchanged.
 
 ## Summary
 

@@ -58,56 +58,34 @@ public sealed class ArtifactReadVerificationTests
     public async Task Every_committed_detection_path_quarantines_restored_bytes(string provider, string detection)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
-        var bytes = "quarantine at each committed detection boundary"u8.ToArray();
-        using var source = new ShortSource(bytes);
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        var staged = Success(await driver.Store.StageAsync(ticket, source, new(), default));
-        ArtifactMutationReceipt receipt;
-        if (detection == "open")
+        var expectedDurability = provider switch
         {
-            receipt = Success(await driver.Store.CommitAsync(staged, new(), default));
-            var path = Directory.GetFiles(driver.PayloadDirectory).Single();
-            File.Delete(path);
-            Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
-                await driver.Store.OpenReadAsync(new(staged.Identity.Digest), new(), default)).Code);
-            File.WriteAllBytes(path, bytes);
-        }
-        else
-        {
-            SetObserver(driver, "publish.decided", "pointer.selected", () =>
+            "local" => ArtifactDurability.LocalProcessCrash,
+            "object" => ArtifactDurability.SimulationOnly,
+            _ => throw new ArgumentException("Unknown frozen test variant.")
+        };
+        string? removedPath = null;
+        await ArtifactReadAssertions.CommittedDetectionQuarantineAsync(driver.Store, detection, expectedDurability,
+            () =>
+            {
+                removedPath = Directory.GetFiles(driver.PayloadDirectory).Single();
+                File.Delete(removedPath);
+            },
+            bytes => File.WriteAllBytes(
+                removedPath ?? throw new InvalidOperationException("Payload was not removed."), bytes),
+            () => SetObserver(driver, "publish.decided", "pointer.selected", () =>
             {
                 if (detection == "reconciliation") { return ValueTask.FromException(new IOException(ArtifactTestData.Canary)); }
                 driver.DamageOnlyPayload(truncate: true);
                 return ValueTask.CompletedTask;
-            });
-            Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(await driver.Store.CommitAsync(staged, new(), default));
-            if (driver.LocalControls is { } local) { local.RemoveObserver("publish.decided"); }
-            else { driver.ObjectControls!.RemoveObserver("pointer.selected"); }
-            if (detection == "reconciliation")
+            }),
+            () =>
             {
-                driver.DamageOnlyPayload(truncate: false);
-                Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(
-                    await driver.Store.ReconcileAsync(ticket, new(), default));
-            }
-            File.WriteAllBytes(Directory.GetFiles(driver.PayloadDirectory).Single(), bytes);
-            Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
-                await driver.Store.OpenReadAsync(new(staged.Identity.Digest), new(), default)).Code);
-            if (detection == "reconciliation" || provider == "object")
-            {
-                Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(
-                    await driver.Store.ReconcileAsync(ticket, new(), default));
-                using var duplicate = new ShortSource(bytes);
-                var retry = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-                var restaged = Success(await driver.Store.StageAsync(retry, duplicate, new(), default));
-                Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
-                    await driver.Store.CommitAsync(restaged, new(), default)).Code);
-                Success(await driver.Store.AbandonAsync(restaged.Owner, new(), default));
-                return;
-            }
-            receipt = Assert.IsType<ArtifactResolution.Committed>(
-                Success(await driver.Store.ReconcileAsync(ticket, new(), default))).Receipt;
-        }
-        await ArtifactEvidenceTests.AssertQuarantinedAsync(driver, receipt, bytes);
+                if (driver.LocalControls is { } local) { local.RemoveObserver("publish.decided"); }
+                else { driver.ObjectControls!.RemoveObserver("pointer.selected"); }
+            },
+            () => driver.DamageOnlyPayload(truncate: false),
+            bytes => File.WriteAllBytes(Directory.GetFiles(driver.PayloadDirectory).Single(), bytes), default);
     }
 
     [Theory]
