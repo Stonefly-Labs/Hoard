@@ -407,6 +407,12 @@ complete transitive Local reopen helper. Fresh replay passes 311 artifact and
 65 Consumer cases; quarantine callers explicitly choose durable or logical-only
 scope. The newest request is 84 scopes/732 observations, pending, not full
 qualification.
+Six original recovery methods (twelve provider parameters) now execute shared
+cursor/inventory/expiry/generation checks with original assertions and lifetimes.
+Clock control and fixed Local/Object consistency selection remain fixture-side.
+Fresh independent replay passes 311 artifact and 65 Consumer cases.
+The expanded request is 85 scopes/744 observations, pending; remaining recovery
+fault/reopen controls and full category/profile acceptance remain unfinished.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

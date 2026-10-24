@@ -7173,6 +7173,33 @@ observations, pending. Tasks, reviewer markers, tracked locks, historical seals 
 architecture/deployment examples remain unchanged; full bindings, origins and
 category/integration/profile acceptance remain unfinished.
 
+Six original recovery methods now execute provider-free `ArtifactRecoveryAssertions`
+for all twelve Local/Object parameters (eight frozen category witnesses and
+four additional existing cases). Complete-body comparison retains
+32 independent scans over 35 identities, consumed/query-bound/expired cursor
+rejection, changed inventory, ownerless expiry, finalized noncommit, staging
+generation fencing and recovery observation without deletion authority.
+Fixed original variants retain Snapshot versus Incomplete consistency without
+trusting advertised capabilities. Driver/clock/disposal stay fixture-side;
+transitive publication/read helpers and source implementation are unchanged.
+All six forwards first fail with intended missing-class `CS0103`; the exact
+twelve-row scope first fails its missing-factory assertion. Omitted/foreign
+parameters and renamed scopes reject before launch. Actual prepared-assembly
+method-level discovery matches all twelve declared identities. All 309 tooling
+checks pass (292 passed/seventeen macOS-native skips), including 83 SDK checks;
+prepared SDK/wrapper formatting, frozen inventory, catalogs and patch checks
+pass. Fresh preparation/replay passes 311 artifact, 65 Consumer and 89+89
+metadata cases without skips; all fifteen archive digests reproduce exactly,
+canonical full-filename map SHA-256
+`1a547dfbe4ecb1e2bf1f1a10b3c60b5517b7b41a62e5cc40dcc91199eb8ad243`.
+Ten actual Consumer dependency images match package bytes in each preparation;
+transfer packets remain reused unchanged, not new origins. The expanded request is
+201 foundations and 85 scopes/744 observations, pending, not qualification.
+Remaining recovery faults/reopen controls, full bindings, origins and complete
+category/profile acceptance are unfinished. Product/architecture/deployment
+examples, tasks, reviewer markers, tracked locks and historical seals are
+unaffected.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

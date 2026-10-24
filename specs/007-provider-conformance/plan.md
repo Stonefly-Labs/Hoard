@@ -3854,6 +3854,38 @@ Tasks, reviewer markers, tracked locks, historical seals and product/
 architecture/deployment examples remain unchanged. Full bindings, origins and
 category/integration/profile acceptance remain unfinished.
 
+### Shared original recovery-page and generation checks
+
+Six original `ArtifactRecoveryTests` methods now forward all twelve Local/Object
+parameters (eight frozen category witnesses and four additional existing
+cases) to provider-free `ArtifactRecoveryAssertions`: sequential recovery,
+changed inventory, ownerless expiry, finalized noncommit, expiry/restage
+generation fencing and bounded non-authoritative recovery pages. Complete-body
+comparison against the preceding committed wrappers preserves every assertion,
+operation order and borrowed-stream lifetime after explicit public-interface,
+clock, shared-helper and cancellation forwarding. The original fixed variant
+selects Snapshot versus Incomplete enumeration, not advertised capabilities.
+Driver construction, limits, clock and disposal remain in the original wrapper.
+The transitive publication/read helpers already forward to the identical SDK
+implementations; the borrowed source is the SDK implementation's legacy subclass.
+All six wrappers first failed with the intended missing-class `CS0103`, and
+the twelve-row transport first failed its missing-factory assertion. Exact
+transport rejects omitted/foreign parameters and renamed scopes before launch.
+Actual prepared-assembly method-level VSTest discovery matches all twelve
+declared identities. Full tooling passes 309 checks (292 passed/seventeen
+macOS-native skips), including 83 SDK checks; prepared SDK/wrapper formatting,
+frozen inventory, catalogs and patch checks pass.
+Two fresh preparations pass 311 artifact, 65 Consumer and 89+89 metadata cases
+without skips. All fifteen actual archive digests reproduce exactly, canonical
+full-filename map SHA-256
+`1a547dfbe4ecb1e2bf1f1a10b3c60b5517b7b41a62e5cc40dcc91199eb8ad243`;
+ten Consumer dependency images match actual package bytes in each preparation.
+Transfer packets are reused unchanged, not new origins.
+The expanded native request is 201 foundations and 85 scopes/744 observations,
+pending, not full recovery/fault-driver/category/profile qualification.
+Product, architecture and deployment examples are unaffected by this test-only
+extraction; tasks, reviewer markers, locks and historical seals are unchanged.
+
 ## Summary
 
 

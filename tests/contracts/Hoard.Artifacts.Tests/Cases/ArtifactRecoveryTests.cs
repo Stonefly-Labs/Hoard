@@ -1,6 +1,7 @@
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Fixtures.Artifacts.Local;
+using Hoard.Testing.Conformance.Artifacts;
 using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
 
 namespace Hoard.Artifacts.Tests;
@@ -56,53 +57,10 @@ public sealed class ArtifactRecoveryTests
     {
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
-        for (var number = 0; number < 35; number++)
-        {
-            using var source = new ShortSource([(byte)number]);
-            await PublishAsync(driver, source, new(1024));
-        }
-        var query = new ArtifactRecoveryQuery(driver.Identity, ArtifactRecoveryKind.Committed, 1);
-        var pages = new ArtifactRecoveryPage[32];
-        var seen = Enumerable.Range(0, 32).Select(_ => new HashSet<Guid>()).ToArray();
-        for (var scan = 0; scan < pages.Length; scan++)
-        {
-            pages[scan] = Success(await driver.Maintenance.ObserveAsync(query, new(), default));
-            Assert.True(seen[scan].Add(Assert.Single(pages[scan].Observations).OperationId));
-        }
-        Assert.Equal(ArtifactFailureCode.Capacity, Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Failure>(
-            await driver.Maintenance.ObserveAsync(query, new(), default)).Code);
-        var old = Assert.IsType<ArtifactOption<string>.Some>(pages[0].Continuation);
-        Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Failure>(
-            await driver.Maintenance.ObserveAsync(new(driver.Identity, ArtifactRecoveryKind.All, 1, old), new(), default)).Code);
-        Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Failure>(
-            await driver.Maintenance.ObserveAsync(new(driver.Identity, ArtifactRecoveryKind.Committed, 2, old), new(), default)).Code);
-        for (var row = 1; row < 35; row++)
-        {
-            for (var scan = 0; scan < pages.Length; scan++)
-            {
-                pages[scan] = Success(await driver.Maintenance.ObserveAsync(
-                    new(driver.Identity, ArtifactRecoveryKind.Committed, 1, pages[scan].Continuation), new(), default));
-                Assert.True(seen[scan].Add(Assert.Single(pages[scan].Observations).OperationId));
-                Assert.Equal(provider == "local" ? ArtifactEnumerationConsistency.Snapshot : ArtifactEnumerationConsistency.Incomplete,
-                    pages[scan].Consistency);
-            }
-            if (row == 1)
-            {
-                Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Failure>(
-                    await driver.Maintenance.ObserveAsync(new(driver.Identity, ArtifactRecoveryKind.Committed, 1, old), new(), default)).Code);
-            }
-        }
-        for (var scan = 0; scan < pages.Length; scan++)
-        {
-            Assert.Equal(35, seen[scan].Count);
-            Assert.IsType<ArtifactOption<string>.None>(pages[scan].Continuation);
-            pages[scan] = Success(await driver.Maintenance.ObserveAsync(query, new(), default));
-        }
-        clock.Advance(TimeSpan.FromSeconds(30));
-        Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Failure>(
-            await driver.Maintenance.ObserveAsync(new(driver.Identity, ArtifactRecoveryKind.Committed, 1,
-                pages[0].Continuation), new(), default)).Code);
-        Success(await driver.Maintenance.ObserveAsync(query, new(), default));
+        await ArtifactRecoveryAssertions.SequentialRecoveryAsync(
+            driver.Store, driver.Maintenance, driver.Identity, clock.Advance,
+            provider == "local" ? ArtifactEnumerationConsistency.Snapshot : ArtifactEnumerationConsistency.Incomplete,
+            default);
     }
 
     [Theory]
@@ -313,30 +271,8 @@ public sealed class ArtifactRecoveryTests
     public async Task Changed_inventory_rejects_old_continuations_and_fresh_pages_cover_every_current_identity(string provider)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
-        for (var index = 0; index < 3; index++)
-        {
-            using var source = new ShortSource([(byte)index]);
-            await PublishAsync(driver, source, new(1024));
-        }
-        var query = new ArtifactRecoveryQuery(driver.Identity, ArtifactRecoveryKind.Committed, 1);
-        var first = Success(await driver.Maintenance.ObserveAsync(query, new(), default));
-        var old = Assert.IsType<ArtifactOption<string>.Some>(first.Continuation);
-        using (var added = new ShortSource([3])) { await PublishAsync(driver, added, new(1024)); }
-        Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Failure>(
-            await driver.Maintenance.ObserveAsync(new(driver.Identity, ArtifactRecoveryKind.Committed, 1, old),
-                new(), default)).Code);
-        var stamps = new HashSet<ArtifactStamp>();
-        ArtifactOption<string> next = new ArtifactOption<string>.None();
-        do
-        {
-            var page = Success(await driver.Maintenance.ObserveAsync(
-                new(driver.Identity, ArtifactRecoveryKind.Committed, 1, next), new(), default));
-            var row = Assert.Single(page.Observations);
-            Assert.True(stamps.Add(Assert.IsType<ArtifactOption<ArtifactStamp>.Some>(row.Stamp).Value));
-            next = page.Continuation;
-        } while (next is ArtifactOption<string>.Some);
-        Assert.Equal(4, stamps.Count);
-        foreach (var stamp in stamps) { Assert.Single(await ReadAsync(driver, stamp)); }
+        await ArtifactRecoveryAssertions.ChangedInventoryAsync(
+            driver.Store, driver.Maintenance, driver.Identity, default);
     }
 
     [Theory]
@@ -412,15 +348,7 @@ public sealed class ArtifactRecoveryTests
     {
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock, new(artifactBytes: 1, stagingBytes: 1));
-        var expired = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default));
-        Assert.Equal(ArtifactFailureCode.Capacity, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
-            await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default)).Code);
-        clock.Advance(TimeSpan.FromHours(24));
-        Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default));
-        using var source = new ShortSource([1]);
-        Assert.Equal(ArtifactFailureCode.ReconciliationExpired, Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(
-            await driver.Store.StageAsync(expired, source, new(), default)).Code);
-        Assert.Equal(0, source.BytesRead);
+        await ArtifactRecoveryAssertions.OwnerlessExpiryAsync(driver.Store, clock.Advance, default);
     }
 
     [Theory]
@@ -430,18 +358,8 @@ public sealed class ArtifactRecoveryTests
     {
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        using var source = new ShortSource("finalized abandonment"u8.ToArray());
-        var staged = Success(await driver.Store.StageAsync(ticket, source, new(), default));
-        Success(await driver.Store.AbandonAsync(staged.Owner, new(), default));
-        Assert.IsType<ArtifactResolution.NotCommitted>(Success(await driver.Store.ReconcileAsync(ticket, new(), default)));
-        clock.Advance(TimeSpan.FromSeconds(30));
-        Success(await driver.Maintenance.CleanupAsync(new(driver.Identity,
-            [new ArtifactCleanupTarget.AbandonedStaging(staged.Owner)]), new(), default));
-        using var replacement = new ShortSource("must not be read"u8.ToArray());
-        Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(await driver.Store.StageAsync(ticket, replacement, new(), default));
-        Assert.Equal(0, replacement.BytesRead);
-        Assert.IsType<ArtifactResolution.NotCommitted>(Success(await driver.Store.ReconcileAsync(ticket, new(), default)));
+        await ArtifactRecoveryAssertions.FinalizedNoncommitAsync(
+            driver.Store, driver.Maintenance, driver.Identity, clock.Advance, default);
     }
 
     [Theory]
@@ -451,23 +369,8 @@ public sealed class ArtifactRecoveryTests
     {
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        using var first = new ShortSource("old generation"u8.ToArray());
-        var old = Success(await driver.Store.StageAsync(ticket, first, new(), default));
-        clock.Advance(TimeSpan.FromSeconds(30));
-        Assert.Equal(ArtifactFailureCode.Conflict, Assert.IsType<ArtifactResult<ArtifactStagingOwner>.Failure>(
-            await driver.Store.RenewAsync(old.Owner, new(), default)).Code);
-        var cleanup = new ArtifactCleanupRequest(driver.Identity, [new ArtifactCleanupTarget.AbandonedStaging(old.Owner)]);
-        Assert.Equal(1, Success(await driver.Maintenance.CleanupAsync(cleanup, new(), default)).Completed);
-        using var second = new ShortSource("new generation"u8.ToArray());
-        var current = Success(await driver.Store.StageAsync(ticket, second, new(), default));
-        Assert.True(current.Owner.Generation > old.Owner.Generation);
-        Assert.Equal(1, Success(await driver.Maintenance.CleanupAsync(cleanup, new(), default)).Conflicted);
-        Assert.IsType<ArtifactResult<ArtifactStagingOwner>.Failure>(await driver.Store.RenewAsync(old.Owner, new(), default));
-        Assert.IsType<ArtifactResult<ArtifactCleanupReport>.Failure>(await driver.Store.AbandonAsync(old.Owner, new(), default));
-        Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(await driver.Store.CommitAsync(old, new(), default));
-        var receipt = Success(await driver.Store.CommitAsync(current, new(), default));
-        Assert.Equal("new generation"u8.ToArray(), await ReadAsync(driver, receipt.Stamp));
+        await ArtifactRecoveryAssertions.ExpiryGenerationAsync(
+            driver.Store, driver.Maintenance, driver.Identity, clock.Advance, default);
     }
 
     [Theory]
@@ -476,24 +379,7 @@ public sealed class ArtifactRecoveryTests
     public async Task Recovery_pages_are_bounded_query_bound_and_not_deletion_authority(string provider)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
-        for (var number = 0; number < 3; number++)
-        {
-            using var source = new ShortSource([(byte)number]);
-            await PublishAsync(driver, source, new(1024));
-        }
-        var query = new ArtifactRecoveryQuery(driver.Identity, ArtifactRecoveryKind.Committed, 1);
-        var first = Success(await driver.Maintenance.ObserveAsync(query, new(), default));
-        Assert.Single(first.Observations);
-        var continuation = Assert.IsType<ArtifactOption<string>.Some>(first.Continuation);
-        var second = Success(await driver.Maintenance.ObserveAsync(new(driver.Identity,
-            ArtifactRecoveryKind.Committed, 1, continuation), new(), default));
-        Assert.Single(second.Observations);
-        Assert.NotEqual(first.Observations[0].OperationId, second.Observations[0].OperationId);
-        Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Failure>(await driver.Maintenance.ObserveAsync(
-            new(driver.Identity, ArtifactRecoveryKind.All, 1, continuation), new(), default));
-        var stamp = Assert.IsType<ArtifactOption<ArtifactStamp>.Some>(first.Observations[0].Stamp).Value;
-        var unauthorizedCleanup = new ArtifactCleanupRequest(driver.Identity, [new ArtifactCleanupTarget.RemovedIncarnation(stamp)]);
-        Assert.Equal(1, Success(await driver.Maintenance.CleanupAsync(unauthorizedCleanup, new(), default)).Conflicted);
-        Assert.Single(await ReadAsync(driver, stamp));
+        await ArtifactRecoveryAssertions.RecoveryPagesAsync(
+            driver.Store, driver.Maintenance, driver.Identity, default);
     }
 }

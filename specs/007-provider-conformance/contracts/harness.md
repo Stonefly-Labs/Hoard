@@ -788,6 +788,17 @@ or select logical-only scope; no reopen parameter is defaulted. The newest
 request is 84 scopes/732 observations, pending, not full
 fault-driver/category/profile admission.
 
+Six original recovery methods now forward all twelve provider parameters (eight
+frozen category witnesses and four additional existing cases) to
+`ArtifactRecoveryAssertions`. Complete-body parity preserves concurrent
+cursor bounds/retirement/expiry, inventory changes, ownerless expiry,
+finalized noncommit, staging-generation fencing and non-authoritative
+observation. The original wrapper fixes enumeration consistency independently
+of provider capabilities and retains clock/driver ownership. No filesystem
+control or provider switch enters the common checks. Missing/foreign parameters
+and renamed scopes reject before launch. The expanded request is
+85 scopes/744 observations, pending, not full category/profile admission.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and
 every actual prerequisite chain/replay, not full qualification.

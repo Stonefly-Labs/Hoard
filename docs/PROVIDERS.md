@@ -628,6 +628,16 @@ is 84 scopes/732 observations, pending, not full qualification. Every quarantine
 caller must explicitly supply its durable context or select logical-only
 scope; there is no defaulted reopen parameter.
 
+Six original recovery methods now share provider-free assertions across all
+twelve Local/Object parameters (eight frozen category witnesses and four
+additional existing cases): concurrent cursor capacity/retirement and
+expiry, changed inventory, ownerless ticket expiry, finalized noncommit,
+staging-generation fencing and observation without deletion authority.
+The wrapper retains its original fixed consistency expectation, clock and
+driver lifetime; provider-advertised capabilities do not select expectations.
+Fresh preparation/replay passes 311 artifact and 65 Consumer cases.
+The expanded request is 85 scopes/744 observations, pending, not qualification.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and
 actual prerequisites/replay, not full category/profile qualification.
