@@ -389,14 +389,24 @@ All six original committed-detection parameters now also use a provider-free
 consumer with identical checks/order and a fixed inherited durability
 expectation from the independent test variant, not advertised capabilities.
 Fresh replay passes 308 artifact and 65 Consumer cases; the newest native
-request is 82 scopes/708 observations, pending, not full qualification.
+run `40140436330` at exact `e089042` passed all three jobs, 197 foundations
+without skips and strict 82-scope/708-observation diagnostic admission.
 Three earlier helper extractions omitted Local quarantine stop/reopen checks;
 transitive review has restored their complete unchanged helper through a
 typed fixture-side factory. Three real reopened-store mutation pairs and a
 frozen helper/owner guard protect the restored checks. Prior normalized-helper
 comparisons did not prove these durable checks. Fresh replay passes 311
-artifact and 65 Consumer cases; the newest request is 83 scopes/717
-observations, pending, not full qualification.
+artifact and 65 Consumer cases. Run `40141545447` failed closed and is not
+admitted: actual method discovery reproduced fifteen rows against a nine-row
+declaration. All selected provider parameters are now declared and incomplete
+method expansion rejects before launch; logger admission is unchanged.
+All nine remaining evidence-validation parameters also now use provider-free
+consumers with identical assertions/public-operation order and real
+fixture-side access/corruption controls. Permanent quarantine includes the
+complete transitive Local reopen helper. Fresh replay passes 311 artifact and
+65 Consumer cases; quarantine callers explicitly choose durable or logical-only
+scope. The newest request is 84 scopes/732 observations, pending, not full
+qualification.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

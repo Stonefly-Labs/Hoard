@@ -131,7 +131,7 @@ public sealed class ArtifactEvidenceConsumerTests
                 {
                     File.WriteAllBytes(path ?? throw new InvalidOperationException("Payload was not captured."), bytes);
                     return ValueTask.CompletedTask;
-                }, default);
+                }, default, null);
         }
 
         await using (var driver = await ArtifactProviderDriver.CreateAsync(provider))

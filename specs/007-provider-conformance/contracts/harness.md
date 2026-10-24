@@ -751,7 +751,9 @@ test variant, not provider capabilities, a binding callback or a pass flag.
 Physical removal/restoration and publication fault mapping stay fixture-side;
 these legacy callbacks do not establish complete owned fault-driver admission.
 Exact transport rejects missing/foreign parameters or a changed scope name
-before launch. The newest request is 82 scopes/708 observations, pending.
+before launch. Run `40140436330` at exact `e089042` passed all three jobs,
+197 foundations without skips and strict 82-scope/708-observation diagnostic
+admission.
 
 Transitive review found omitted Local quarantine stop/reopen checks in three
 earlier consumers. Their complete original helper now lives in common code;
@@ -765,8 +767,26 @@ or expected result. Three real reopened-store mutation pairs require actual
 corruption denial before substituting its code and fail the unchanged common
 assertion; genuine stores pass. A frozen transitive-helper/owner guard rejects
 omissions. Earlier helper-normalization claims did not prove these durable
-checks. Exact new transport requires six inherited Local parameters plus all
-three mutation rows; the newest request is 83 scopes/717 observations, pending.
+checks. Run `40141545447` failed closed with `UnknownDiagnostic` in this scope
+and is not admitted. Actual method-level discovery reproduced fifteen rows,
+not its nine-row Local-only declaration. Corrected transport requires all
+twelve frozen provider parameters plus three mutation rows; prelaunch
+admission rejects incomplete original-method expansion. The safe logger is
+unchanged and Object's logical rows do not establish durable restart.
+
+The nine remaining original evidence-validation parameters now execute shared
+provider-free consumers. Full bodies retain every assertion, public-operation
+order and source/guard lifetime after explicit interface/control/helper/token
+forwarding, including the complete transitive quarantine helper. Physical
+permission changes, payload removal/restoration and actual native readiness
+observation remain fixture-side legacy boundaries. No callback supplies
+assertions or expected outcomes. Original pre-try Unix rejection remains in
+order; the fixture permission setter also retains a local platform guard.
+Exact new transport rejects missing/foreign parameters or changed scope names
+before launch. Quarantine callers explicitly supply the real durable context
+or select logical-only scope; no reopen parameter is defaulted. The newest
+request is 84 scopes/732 observations, pending, not full
+fault-driver/category/profile admission.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

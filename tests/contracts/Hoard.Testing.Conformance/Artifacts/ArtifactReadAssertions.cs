@@ -9,7 +9,7 @@ public static class ArtifactReadAssertions
         IArtifactStore store, string detection, ArtifactDurability expectedDurability,
         Action removePayload, Action<byte[]> restoreRemovedPayload, Action observePublicationDecision,
         Action removePublicationObserver, Action damage, Action<byte[]> restorePayload, CancellationToken cancellationToken,
-        ArtifactQuarantineReopen? reopen = null)
+        ArtifactQuarantineReopen? reopen)
     {
         var bytes = "quarantine at each committed detection boundary"u8.ToArray();
         using var source = new ShortSource(bytes);
@@ -126,7 +126,7 @@ public static class ArtifactReadAssertions
         IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
         ArtifactStoreIdentity identity, bool truncate, Func<ValueTask<byte[]>> capture,
         Func<bool, ValueTask> damage, Func<byte[], ValueTask> restore, CancellationToken cancellationToken,
-        ArtifactQuarantineReopen? reopen = null)
+        ArtifactQuarantineReopen? reopen)
     {
         using var source = new ShortSource("detect stored corruption"u8.ToArray());
         var receipt = await PublishAsync(store, source, new(1024), cancellationToken);

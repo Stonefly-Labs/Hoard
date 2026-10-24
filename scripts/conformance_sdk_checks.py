@@ -392,6 +392,19 @@ def original_artifact_read_delete_scenarios():
     return (("original-artifact-read-delete", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
+def original_artifact_validation_scenarios():
+    prefix = "Hoard.Artifacts.Tests.ArtifactEvidenceTests."
+    methods = {prefix + name for name in (
+        "Local_failed_quarantine_persistence_retains_ownership_until_stop_retry_and_reopen",
+        "Validation_first_corruption_cannot_be_revived_by_external_restoration",
+        "Validation_access_failure_does_not_quarantine_intact_content",
+    )}
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.split("(")[0] in methods}
+    return (("original-artifact-validation", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def original_artifact_quarantine_reopen_scenarios():
     methods = {
         "Hoard.Artifacts.Tests.ArtifactReadVerificationTests.Every_committed_detection_path_quarantines_restored_bytes",
@@ -401,7 +414,7 @@ def original_artifact_quarantine_reopen_scenarios():
     identities = {
         witness for case in category_cases() if case.profile_id == "artifacts"
         for witness in case.witnesses
-        if witness.split("(")[0] in methods and '(provider: "local"' in witness}
+        if witness.split("(")[0] in methods}
     identities.update(
         "Hoard.Artifacts.Tests.ArtifactEvidenceConsumerTests."
         "Shared_quarantine_consumers_reject_lost_reopen_denial_and_accept_original_store"
@@ -1558,7 +1571,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-object-cleanup", "original-artifact-configured-store", "original-artifact-authority-ownership",
             "local-artifact-session", "object-artifact-session", "configured-artifact-session", "payload-artifact-session",
             "original-artifact-observations", "original-artifact-damaged-read", "original-artifact-read-races",
-            "original-artifact-detection", "original-artifact-quarantine-reopen"],
+            "original-artifact-detection", "original-artifact-quarantine-reopen", "original-artifact-validation"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1587,6 +1600,7 @@ def test_attempt(run, inputs, candidate, scenario):
             *original_artifact_read_race_scenarios(),
             *original_artifact_detection_scenarios(),
             *original_artifact_quarantine_reopen_scenarios(),
+            *original_artifact_validation_scenarios(),
             *original_artifact_external_scenarios(),
             *original_artifact_race_scenarios(), *original_artifact_reconciliation_scenarios(),
             *original_artifact_visibility_scenarios(), *original_artifact_history_scenarios(),
@@ -1611,6 +1625,11 @@ def test_attempt(run, inputs, candidate, scenario):
             and not all(identity.startswith(PACKAGE_TEST_PREFIX) for identity in identities)):
         raise evidence.ConformanceError("WitnessMissing")
     if original_artifacts:
+        selected_methods = {identity.split("(")[0] for identity in identities}
+        if any(witness.split("(")[0] in selected_methods and witness not in identities
+               for case in category_cases() if case.profile_id == "artifacts"
+               for witness in case.witnesses):
+            raise evidence.ConformanceError("WitnessMissing")
         folder, output, assembly_name = ARTIFACT_TESTS, ARTIFACT_TEST_OUTPUT, "Hoard.Artifacts.Tests.dll"
     elif original_metadata:
         folder, output, assembly_name = METADATA_TESTS, METADATA_TEST_OUTPUT, "Hoard.Metadata.Tests.dll"
@@ -2065,6 +2084,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "original-artifact-quarantine-reopen"}), flush=True)
         for scenario in original_artifact_quarantine_reopen_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "original-artifact-validation"}), flush=True)
+        for scenario in original_artifact_validation_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

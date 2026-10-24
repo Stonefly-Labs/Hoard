@@ -179,7 +179,7 @@ public static class ArtifactPublicationAssertions
 
     public static async Task CorruptExistingContentAsync(
         IArtifactStore store, Action damagePayload, Action<byte[]> restorePayload, CancellationToken cancellationToken,
-        ArtifactQuarantineReopen? reopen = null)
+        ArtifactQuarantineReopen? reopen)
     {
         var bytes = "preserve corrupt evidence"u8.ToArray();
         using var original = new ShortSource(bytes);

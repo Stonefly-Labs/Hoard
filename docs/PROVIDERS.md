@@ -597,7 +597,8 @@ The independent frozen test variant supplies its inherited durability
 expectation; provider-advertised capabilities or binding-selected outcomes
 cannot weaken the expected receipt/reconciliation checks. Physical removal,
 restoration and publication fault mapping remain fixture-side.
-The newest native request is 82 scopes/708 observations, pending.
+Run `40140436330` at exact `e089042` passed all three jobs, 197 foundations
+without skips and strict 82-scope/708-observation diagnostic admission.
 Transitive review corrected omitted Local quarantine stop/reopen checks in
 the damaged-read, committed-detection and corrupt-existing consumers. The
 shared helper now retains every original lifecycle operation and assertion;
@@ -608,7 +609,24 @@ Three real reopened-store mutation pairs require actual corrupt-read denial
 before changing its code, fail the unchanged common assertion, and pass with
 genuine stores. A frozen transitive-body/owner guard rejects helper or wrapper
 omissions. Earlier helper-normalization parity claims did not establish these
-durable checks. The newest request is 83 scopes/717 observations, pending.
+durable checks. Run `40141545447` failed closed with `UnknownDiagnostic` in the
+new quarantine scope and is not admitted. Actual method-level discovery
+reproduced fifteen rows against its Local-only nine-row declaration. The scope
+now declares all twelve frozen provider parameters plus three mutation rows;
+prelaunch admission rejects partial method expansion instead of relaxing the
+logger. Object's logical rows do not establish durable restart.
+All nine remaining original evidence-validation parameters now execute
+provider-free common consumers. Complete-body comparison preserves every
+original assertion, public-operation order and source/guard lifetime, including
+retained ownership after denied quarantine persistence, stop retry and real
+durable reopen, validation-first restoration, replacement incarnation and
+original receipt, and intact content after access denial/unavailability.
+Physical permissions/removal/restoration and actual native readiness observation
+remain fixture-side legacy controls, not full owned fault-driver admission.
+Exact new transport requires all nine original identities; the newest request
+is 84 scopes/732 observations, pending, not full qualification. Every quarantine
+caller must explicitly supply its durable context or select logical-only
+scope; there is no defaulted reopen parameter.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

@@ -7088,8 +7088,15 @@ dependency caches restored 24.140 GiB; sources, feeds, manifests, intermediates,
 runtime images and historical seals were preserved. The rerun passes all
 305 checks (288 passed/seventeen macOS-native skips), including 79 SDK checks.
 Prepared SDK/wrapper whitespace, frozen inventory, catalogs and patch checks
-pass. The newest native request is 197 foundations and 82 scopes/708
-observations, pending, not complete fault-driver/category/profile acceptance.
+pass. Committed-detection run `40140436330` at exact
+`e08904228390c68f468739148ca05e39eac3542b` passed all three jobs,
+197 foundations without failures/errors/skips and strict 82-scope/708-observation
+diagnostic admission, including independent eighteen-package/thirteen-lock
+replay and every actual prerequisite chain.
+Input: `1a3c4f2f2d11f54ad715dd4ae58dfcb3ea92282b03ca017a473804377c398d0e`;
+preparation:
+`7bfbecaf99c2da8314713f14117b2cc9d340d0af417bb59d54c9fe29a6d823e7`.
+This does not establish omitted durable checks or full qualification.
 Tasks, reviewer markers, tracked locks and production/deployment documents
 remain unchanged; measured transfer packets remain reused, not fresh origins.
 
@@ -7119,10 +7126,52 @@ SHA-256 `9f08a15f5fd77ecffa4aaad4e5c05d6e333ba282e3ce1b23d5e606a67d593fb3`;
 ten Consumer dependency images match package bytes.
 All 307 tooling checks pass (290 passed/seventeen macOS-native skips), including
 81 SDK checks; prepared formatting, frozen inventory, catalogs and patch checks
-pass. The newest native request is 199 foundations and 83 scopes/717
-observations, pending, not full binding/category/profile admission.
+pass. Run `40141545447` at exact
+`be3b3f2d5ed49f7a0d7a742f9b9b105ec6f7e2df` passed the ownership and fresh-lock
+jobs but failed the SDK diagnostic with `UnknownDiagnostic` in the new
+quarantine scope. It is not admitted. Actual `dotnet vstest --ListTests`
+reproduced fifteen selected rows against its nine-row Local-only declaration:
+method-level filters also discover all six Object parameters. Corrected
+transport declares all twelve frozen provider parameters plus three mutation
+rows. Prelaunch admission now rejects incomplete original-method expansion,
+including a regressed canonical factory; the safe logger is unchanged.
+Object's logical rows gain no durable-restart claim; fresh native confirmation
+remains pending.
 Tasks, reviewer markers, tracked locks, historical seals and production/
 architecture/deployment examples remain unchanged; transfer origins are reused.
+
+The remaining nine original evidence-validation parameters now execute
+`FailedQuarantinePersistenceAsync`, `ValidationFirstCorruptionAsync` and
+`ValidationAccessFailureAsync`. Entire-body comparison preserves exact
+assertions, public-operation order and source/guard lifetimes after explicit
+fixture/interface/helper/token forwarding. The complete transitive quarantine
+helper remains protected, now including both newly extracted caller owners.
+Physical path capture, permission changes, payload removal/restoration and
+actual native readiness observation stay fixture-side; these legacy controls
+do not establish full owned fault-driver admission. The original pre-try Unix
+rejection remains at its transition; the permission setter repeats its local
+platform guard so the analyzer's platform guarantee does not depend on another
+callback.
+All three missing methods first produced their exact intended `CS0117`;
+nine-row transport first failed its named missing-factory assertion.
+Fresh preparation/replay pass 311 artifact, 65 Consumer and 89+89 metadata cases
+without skips. Fifteen archives reproduce exactly, canonical map SHA-256
+`89efb47ca07de4de7e3d6e7d0b72f2dbd00efe580428865729ca24dc66d158c8`;
+ten Consumer dependency images match package bytes.
+All 308 tooling checks pass (291 passed/seventeen macOS-native skips), including
+82 SDK checks; prepared formatting, frozen inventory, catalogs and patch checks
+pass. Reopen parameters are no longer defaulted: every caller must explicitly
+supply its real durable context or select logical-only scope. Final tooling
+initially failed with five failures/nineteen errors below the unchanged
+24 GiB gate. Cleanup removed only 69 exact identity-verified inactive
+dependency caches, preserving every source, feed, manifest, intermediate,
+runtime image and historical seal. Available scratch reached 24.248 GiB and
+full tooling passed; after two additional completed caches were removed,
+29.663 GiB was observed. Shared-host capacity changes are not attributed solely
+to that cleanup. The newest request is 200 foundations and 84 scopes/732
+observations, pending. Tasks, reviewer markers, tracked locks, historical seals and product/
+architecture/deployment examples remain unchanged; full bindings, origins and
+category/integration/profile acceptance remain unfinished.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

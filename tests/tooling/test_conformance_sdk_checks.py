@@ -1055,6 +1055,16 @@ class SdkDiagnosticTests(unittest.TestCase):
         # Preserve the entire d7ef7cc^ helper after explicit interface/factory/token forwarding.
         self.assertEqual(hashlib.sha256("".join(body.split()).encode()).hexdigest(),
                          "9b54ea0c474c6d0aad0fb3616b338244e6e25add2c6c4f28ebf9d9bcd47677e2")
+        for filename, method in (
+            ("ArtifactEvidenceAssertions.cs", "QuarantineIsPermanentAsync"),
+            ("ArtifactReadAssertions.cs", "DamagedReadAsync"),
+            ("ArtifactReadAssertions.cs", "CommittedDetectionQuarantineAsync"),
+            ("ArtifactPublicationAssertions.cs", "CorruptExistingContentAsync"),
+        ):
+            with self.subTest(method=method):
+                text = (sdk.parent / filename).read_text()
+                start = text.index("public static async Task " + method + "(")
+                self.assertNotIn("reopen = null", text[start:text.index("{", start)])
         cases = ROOT / "tests/contracts/Hoard.Artifacts.Tests/Cases"
         for filename, method in (
             ("ArtifactReadVerificationTests.cs", "Every_committed_detection_path_quarantines_restored_bytes"),
@@ -1067,10 +1077,57 @@ class SdkDiagnosticTests(unittest.TestCase):
                 body = text[start:text.index("\n    }", start)]
                 self.assertIn("ArtifactEvidenceTests.QuarantineReopen(driver)", body)
         text = (cases / "ArtifactEvidenceTests.cs").read_text()
-        start = text.index("internal static async Task AssertQuarantinedAsync(")
-        self.assertIn("QuarantineReopen(driver)", text[start:text.index("\n    }", start)])
+        for method in (
+            "Local_failed_quarantine_persistence_retains_ownership_until_stop_retry_and_reopen",
+            "Validation_first_corruption_cannot_be_revived_by_external_restoration",
+        ):
+            with self.subTest(method=method):
+                start = text.index("public async Task " + method + "(")
+                self.assertIn("QuarantineReopen(driver)", text[start:text.index("\n    }", start)])
+        text = sdk.read_text()
+        for method in ("FailedQuarantinePersistenceAsync", "ValidationFirstCorruptionAsync"):
+            with self.subTest(method=method):
+                start = text.index("public static async Task " + method + "(")
+                body = "".join(text[start:text.index("\n    }", start)].split())
+                self.assertIn("awaitQuarantineIsPermanentAsync(store,receipt,bytes,cancellationToken,reopen);", body)
 
-    def test_quarantine_reopen_scope_retains_local_witnesses_and_all_three_lost_denial_mutations(self):
+    def test_validation_scope_requires_every_frozen_persistence_corruption_and_access_variant(self):
+        factory = getattr(checks, "original_artifact_validation_scenarios", None)
+        self.assertTrue(callable(factory), "Validation extraction must retain all original evidence fault variants.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactEvidenceTests."
+        methods = {prefix + name for name in (
+            "Local_failed_quarantine_persistence_retains_ownership_until_stop_retry_and_reopen",
+            "Validation_first_corruption_cannot_be_revived_by_external_restoration",
+            "Validation_access_failure_does_not_quarantine_intact_content",
+        )}
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        expected = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.split("(")[0] in methods}
+        scenario, = factory()
+        self.assertEqual(scenario, ("original-artifact-validation", tuple(sorted(expected)), "None", "Passed", 0, "None"))
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.ARTIFACT_TESTS / checks.ARTIFACT_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Artifacts.Tests.dll")
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+        }
+        with patch.object(checks, "runtime_command",
+                          side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+            self.assertEqual(launch.call_args.args[1], assembly)
+            self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, expected)
+        for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+                        (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
+                        ("original-artifact-validation-foreign", *scenario[1:])):
+            with patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, candidate, changed)
+                launch.assert_not_called()
+
+    def test_quarantine_reopen_scope_retains_every_frozen_variant_and_all_three_lost_denial_mutations(self):
         factory = getattr(checks, "original_artifact_quarantine_reopen_scenarios", None)
         self.assertTrue(callable(factory), "Quarantine extraction must retain transitive Local reopen assertions.")
         methods = {
@@ -1081,7 +1138,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
         expected = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
                     for name in entry["runtimeTests"]
-                    if name.split("(")[0] in methods and '(provider: "local"' in name}
+                    if name.split("(")[0] in methods}
         expected.update(
             "Hoard.Artifacts.Tests.ArtifactEvidenceConsumerTests."
             "Shared_quarantine_consumers_reject_lost_reopen_denial_and_accept_original_store"
@@ -1103,6 +1160,12 @@ class SdkDiagnosticTests(unittest.TestCase):
                 checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
             self.assertEqual(launch.call_args.args[1], assembly)
             self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, expected)
+        local_only = (scenario[0], tuple(name for name in scenario[1] if '(provider: "object"' not in name), *scenario[2:])
+        with patch.object(checks, "original_artifact_quarantine_reopen_scenarios", return_value=(local_only,)):
+            with patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, candidate, local_only)
+                launch.assert_not_called()
         for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
                         (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
                         ("original-artifact-quarantine-reopen-foreign", *scenario[1:])):

@@ -1641,14 +1641,25 @@ All six original committed-detection variants now also use one provider-free
 consumer with identical checks/order. Their inherited durability expectation
 is fixed by the independent test variant, never provider-advertised capability.
 Fresh replay passes 308 artifact and 65 Consumer cases; the newest native
-request is 82 scopes/708 observations, pending.
+run `40140436330` at exact `e089042` passed all three jobs, 197 foundations
+without skips and strict 82-scope/708-observation diagnostic admission.
 Transitive review found that three earlier extractions omitted the original
 Local quarantine stop/reopen check. That complete helper is now shared and
 restored in all three paths, with fixture-only construction and identical
 lifecycle/assertion order. Three actual reopened-store mutation pairs and a
 frozen helper/ownership guard protect it; earlier helper-normalization parity
 claims did not establish this durable check. Fresh replay passes 311 artifact
-and 65 Consumer cases; the newest request is 83 scopes/717 observations, pending.
+and 65 Consumer cases. Run `40141545447` failed closed with `UnknownDiagnostic`
+in the new quarantine scope; it is not admitted. Actual method-level discovery
+selected fifteen rows, not its nine-row Local-only declaration. The declaration
+now includes every selected parameter, with prelaunch closure protection.
+The remaining nine original evidence-validation parameters now also execute
+provider-free consumers, preserving failed-persistence retention, real access
+faults, permanent quarantine, replacement incarnation and original receipt
+checks. Physical controls remain fixture-side. Fresh replay passes 311 artifact
+and 65 Consumer cases. Quarantine callers must now explicitly supply their
+durable context or select logical-only scope. The newest request is
+84 scopes/732 observations, pending.
 Full bindings, remaining mandatory fault controls and category/profile
 acceptance remain unfinished.
 

@@ -3770,8 +3770,14 @@ dependency caches were removed, preserving sources, feeds, manifests,
 intermediates, runtime images and historical seals; 24.140 GiB was restored.
 The rerun passes 305 checks (288 passed/seventeen macOS-native skips), including
 79 SDK checks; prepared formatting, frozen inventory, catalogs and patch checks
-pass. The next request is 197 foundations and 82 scopes/708 observations,
-pending. Full drivers, origins and category/integration/profile gates remain
+pass. Committed-detection run `40140436330` at exact
+`e08904228390c68f468739148ca05e39eac3542b` passed all three jobs,
+197 foundations without failures/errors/skips, independent eighteen-package/
+thirteen-lock replay and strict 82-scope/708-observation diagnostic admission.
+Input: `1a3c4f2f2d11f54ad715dd4ae58dfcb3ea92282b03ca017a473804377c398d0e`;
+preparation:
+`7bfbecaf99c2da8314713f14117b2cc9d340d0af417bb59d54c9fe29a6d823e7`.
+This does not establish omitted durable checks. Full gates remain
 unfinished. Tasks, reviewer markers, tracked locks, historical seals and
 product/architecture/deployment examples remain unchanged.
 
@@ -3803,10 +3809,50 @@ canonical map SHA-256
 ten Consumer dependency images match package bytes. All 307 tooling checks pass
 (290 passed/seventeen macOS-native skips), including 81 SDK checks; prepared
 formatting, frozen inventory, catalogs and patch checks pass. The next request
-is 199 foundations and 83 scopes/717 observations, pending. Full drivers,
+for 199 foundations/83 scopes/717 observations failed closed:
+`40141545447` at exact `be3b3f2d5ed49f7a0d7a742f9b9b105ec6f7e2df` passed the
+ownership and fresh-lock jobs but returned `UnknownDiagnostic` in the new
+quarantine scope. It is not admitted. Actual method-level VSTest discovery
+reproduced fifteen rows against its nine-row Local-only declaration.
+Corrected transport includes every selected frozen provider parameter plus
+all three mutation rows, and prelaunch admission rejects partial method
+expansion even from a regressed canonical factory. Logger admission is not
+relaxed and Object's logical rows establish no durable restart. Full drivers,
 origins and category/integration/profile gates remain unfinished; tasks,
 reviewer markers, tracked locks, historical seals and product/architecture/
 deployment examples remain unchanged.
+
+### Remaining original evidence-validation consumers
+
+All nine remaining persistence/corruption/access parameters now execute
+provider-free consumers with exact whole-body assertion/public-operation
+order and source/guard lifetime parity after explicit fixture/interface/
+helper/token forwarding. The complete transitive quarantine helper and both
+new caller owners remain guarded. Physical path capture, permissions,
+removal/restoration and actual native readiness observation remain legacy
+fixture-side controls, not complete owned fault-driver admission. Original
+pre-try Unix rejection stays in order; the permission setter also keeps a
+local platform guard for analyzer correctness across callback boundaries.
+All three missing methods first fail with their exact intended `CS0117`;
+nine-row transport first fails its named missing-factory assertion.
+
+Fresh preparation/replay pass 311 artifact, 65 Consumer and 89+89 metadata
+cases without skips; fifteen archives reproduce exactly, canonical map SHA-256
+`89efb47ca07de4de7e3d6e7d0b72f2dbd00efe580428865729ca24dc66d158c8`;
+ten Consumer dependency images match package bytes. All 308 tooling checks pass
+(291 passed/seventeen macOS-native skips), including 82 SDK checks; prepared
+formatting, frozen inventory, catalogs and patch checks pass. The newest
+request is 200 foundations and 84 scopes/732 observations, pending. Reopen
+arguments are no longer defaulted: callers explicitly select actual durable
+context or logical-only scope. Final tooling initially failed below the
+unchanged 24 GiB gate; 69 identity-verified inactive dependency caches were
+removed while preserving sources, feeds, manifests, intermediates, runtime
+images and historical seals. Full tooling passed after 24.248 GiB was observed;
+after two further completed caches were removed, 29.663 GiB was observed.
+Shared-host capacity changes are not attributed solely to that cleanup.
+Tasks, reviewer markers, tracked locks, historical seals and product/
+architecture/deployment examples remain unchanged. Full bindings, origins and
+category/integration/profile acceptance remain unfinished.
 
 ## Summary
 

@@ -9,6 +9,103 @@ public sealed record ArtifactQuarantineReopen(
 
 public static class ArtifactEvidenceAssertions
 {
+    public static async Task FailedQuarantinePersistenceAsync(
+        IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
+        ArtifactStoreIdentity identity, IArtifactStoreLifetime lifetime, Func<bool> ready,
+        Action capturePaths, Action damage, Action requirePermissionProof, Action denyPersistence,
+        Action<byte[]> restorePayload, Action restorePermissions, CancellationToken cancellationToken,
+        ArtifactQuarantineReopen? reopen)
+    {
+        var bytes = "quarantine survives denied decision persistence"u8.ToArray();
+        using var source = new ShortSource(bytes);
+        var receipt = await PublishAsync(store, source, new(1024), cancellationToken);
+        var proof = Assert.IsType<ArtifactOption<ArtifactCommitEvidence>.Some>(receipt.Evidence).Value;
+        capturePaths();
+        damage();
+        requirePermissionProof();
+        try
+        {
+            denyPersistence();
+            await using var guard = Success(await authority.AcquireAsync(new(Guid.NewGuid(),
+                ArtifactProtectionOperation.Reference, identity, receipt.Stamp.Identity.Digest,
+                new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp)), new(), cancellationToken));
+            var failed = Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(
+                await validator.ValidateAsync(proof, guard, new(), cancellationToken));
+            Assert.Equal(ArtifactFailureCode.AccessDenied, failed.Code);
+            restorePayload(bytes);
+            Assert.False(ready());
+            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failed.Cleanup);
+            Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+                await store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken));
+            Assert.IsType<ArtifactResult<ArtifactShutdown>.Failure>(
+                await lifetime.StopAsync(new(TimeSpan.FromSeconds(1)), cancellationToken));
+        }
+        finally { restorePermissions(); }
+        Success(await lifetime.StopAsync(new(), cancellationToken));
+        Success(await lifetime.InitializeAsync(new(ArtifactInitializationMode.ReopenCompatible,
+            identity, authority), new(), cancellationToken));
+        await QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen);
+    }
+
+    public static async Task ValidationFirstCorruptionAsync(
+        IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
+        ArtifactStoreIdentity identity, Action damage, Action<byte[]> restore,
+        CancellationToken cancellationToken, ArtifactQuarantineReopen? reopen)
+    {
+        var bytes = "validation must quarantine this incarnation"u8.ToArray();
+        using var source = new ShortSource(bytes);
+        var receipt = await PublishAsync(store, source, new(1024), cancellationToken);
+        var proof = Assert.IsType<ArtifactOption<ArtifactCommitEvidence>.Some>(receipt.Evidence).Value;
+        var request = new ArtifactProtectionRequest(Guid.NewGuid(), ArtifactProtectionOperation.Reference,
+            identity, receipt.Stamp.Identity.Digest, new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp));
+        await using (var protection = Success(await authority.AcquireAsync(request, new(), cancellationToken)))
+        {
+            Assert.Equal(receipt.Stamp, Success(await validator.ValidateAsync(proof, protection, new(), cancellationToken)));
+            damage();
+            Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(
+                await validator.ValidateAsync(proof, protection, new(), cancellationToken)).Code);
+            Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+                await store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken)).Code);
+            restore(bytes);
+            Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(
+                await validator.ValidateAsync(proof, protection, new(), cancellationToken)).Code);
+        }
+        await QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen);
+        var deletion = Success(await store.ReserveDeleteAsync(new(receipt.Stamp), new(), cancellationToken));
+        Success(await store.DeleteAsync(deletion, new(), cancellationToken));
+        using var replacementSource = new ShortSource(bytes);
+        var replacement = await PublishAsync(store, replacementSource, new(1024), cancellationToken);
+        Assert.NotEqual(receipt.Stamp.Incarnation, replacement.Stamp.Incarnation);
+        Assert.Equal(receipt, Assert.IsType<ArtifactResolution.Committed>(
+            Success(await store.ReconcileAsync(receipt.Ticket, new(), cancellationToken))).Receipt);
+        Assert.Equal(bytes, await ReadAsync(store, replacement.Stamp, cancellationToken));
+    }
+
+    public static async Task ValidationAccessFailureAsync(
+        IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
+        ArtifactStoreIdentity identity, bool unavailable, Action prepare, Action deny, Action restore,
+        CancellationToken cancellationToken)
+    {
+        var bytes = "permission failure is not corruption"u8.ToArray();
+        using var source = new ShortSource(bytes);
+        var receipt = await PublishAsync(store, source, new(1024), cancellationToken);
+        var proof = Assert.IsType<ArtifactOption<ArtifactCommitEvidence>.Some>(receipt.Evidence).Value;
+        await using var guard = Success(await authority.AcquireAsync(new(Guid.NewGuid(),
+            ArtifactProtectionOperation.Reference, identity, receipt.Stamp.Identity.Digest,
+            new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp)), new(), cancellationToken));
+        prepare();
+        try
+        {
+            deny();
+            Assert.Equal(unavailable ? ArtifactFailureCode.Unavailable : ArtifactFailureCode.AccessDenied,
+                Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(
+                await validator.ValidateAsync(proof, guard, new(), cancellationToken)).Code);
+        }
+        finally { restore(); }
+        Assert.Equal(receipt.Stamp, Success(await validator.ValidateAsync(proof, guard, new(), cancellationToken)));
+        Assert.Equal(bytes, await ReadAsync(store, receipt.Stamp, cancellationToken));
+    }
+
     public static async Task ExactCurrentReceiptsAsync(
         IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
         ArtifactStoreIdentity identity, CancellationToken cancellationToken)
@@ -39,7 +136,7 @@ public static class ArtifactEvidenceAssertions
 
     public static async Task QuarantineIsPermanentAsync(
         IArtifactStore store, ArtifactMutationReceipt receipt, byte[] bytes, CancellationToken cancellationToken,
-        ArtifactQuarantineReopen? reopen = null)
+        ArtifactQuarantineReopen? reopen)
     {
         Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
             await store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken)).Code);
