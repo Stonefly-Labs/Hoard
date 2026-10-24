@@ -202,6 +202,14 @@ Two fresh-cache locked builds reproduce eleven archives and ten actual
 dependency images; each passes 275 artifact cases and 89 metadata cases on each
 provider without skips. Accepted SDK/package-mode whitespace and all 277 tooling
 tests pass (260 passes/seventeen native macOS skips).
+The next increment extracts private staging and all four reconciliation methods,
+preserving all ten frozen parameters and original check/operation order.
+Actual prefix barriers, clocks, authority setup and lost-acknowledgment
+observers stay fixture-side. Both real stores reject a substituted genuine
+foreign-publication receipt through the unchanged shared equality assertion;
+fresh genuine providers pass. The next exact native scope adds eight original
+reconciliation rows plus two mutation parameters (58 scopes/466 observations),
+pending, not full category/session acceptance.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

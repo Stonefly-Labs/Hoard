@@ -44,6 +44,44 @@ public sealed class ArtifactPublicationConsumerTests
         }
     }
 
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Shared_receipt_retry_assertion_rejects_foreign_receipt_and_accepts_original_store(string provider)
+    {
+        await using (var driver = await ArtifactProviderDriver.CreateAsync(provider))
+        {
+            var mutation = new ForeignReconciledReceipt(driver.Store);
+            await Assert.ThrowsAsync<Xunit.Sdk.EqualException>(() =>
+                ArtifactReconciliationAssertions.AcknowledgedReceiptRetryAsync(mutation, default));
+            Assert.Equal(1, mutation.ReconcileCalls);
+            Assert.Equal(1, mutation.ForeignPublications);
+        }
+        await using (var driver = await ArtifactProviderDriver.CreateAsync(provider))
+        {
+            await ArtifactReconciliationAssertions.AcknowledgedReceiptRetryAsync(driver.Store, default);
+        }
+    }
+
+    private sealed class ForeignReconciledReceipt(IArtifactStore store) : ForwardingStore(store)
+    {
+        public int ReconcileCalls { get; private set; }
+        public int ForeignPublications { get; private set; }
+
+        public override async ValueTask<ArtifactResult<ArtifactResolution>> ReconcileAsync(
+            ArtifactOperationTicket ticket, ArtifactCallOptions options, CancellationToken ct)
+        {
+            ReconcileCalls++;
+            var original = Assert.IsType<ArtifactResolution.Committed>(
+                ArtifactPublicationTests.Success(await Store.ReconcileAsync(ticket, options, ct)));
+            using var source = new ArtifactPublicationAssertions.ShortSource("foreign actual reconciliation receipt"u8.ToArray());
+            var foreign = await ArtifactPublicationAssertions.PublishAsync(Store, source, new(1024), ct);
+            ForeignPublications++;
+            Assert.NotEqual(original.Receipt, foreign);
+            return new ArtifactResult<ArtifactResolution>.Success(new ArtifactResolution.Committed(foreign));
+        }
+    }
+
     private sealed class AcceptedConflictingLength(IArtifactStore store) : ForwardingStore(store)
     {
         private long? stagedLength;
@@ -125,7 +163,7 @@ public sealed class ArtifactPublicationConsumerTests
         public ValueTask<ArtifactResult<ArtifactMutationReceipt>> DeleteAsync(
             ArtifactOperationTicket ticket, ArtifactCallOptions options, CancellationToken ct) =>
             Store.DeleteAsync(ticket, options, ct);
-        public ValueTask<ArtifactResult<ArtifactResolution>> ReconcileAsync(
+        public virtual ValueTask<ArtifactResult<ArtifactResolution>> ReconcileAsync(
             ArtifactOperationTicket ticket, ArtifactCallOptions options, CancellationToken ct) =>
             Store.ReconcileAsync(ticket, options, ct);
         public ValueTask<ArtifactResult<ArtifactCleanupReport>> AbandonAsync(

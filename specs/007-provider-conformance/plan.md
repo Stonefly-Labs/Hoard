@@ -2581,6 +2581,41 @@ frozen catalogs, all 277 tooling tests (260 passes/seventeen native macOS skips)
 and patch integrity pass. Product APIs/edges/ADRs/diagrams and deployment
 examples remain unaffected by this test-only extraction.
 
+Private staging and all four original reconciliation methods now forward to
+provider-free shared consumers. All ten frozen parameters and original
+assertion tokens/order match mechanically after explicit setup/seam/helper/
+cancellation forwarding. Actual prefix barriers, clock advancement/rollback,
+authority setup and post-stage lost-acknowledgment observer registration remain
+fixture-side; provider IDs, concrete types and provider-chosen expectations do
+not enter shared assertions.
+
+A real-store negative first reconciles the original ticket and then publishes
+different bytes through the actual provider. Substituting that genuine foreign
+receipt fails the unchanged consumer's named receipt-equality assertion on both
+providers. Exactly one reconciliation and one foreign publication prove the
+intended mutation; fresh genuine stores pass unchanged. Missing shared
+staging/reconciliation consumers first failed actual package-mode compilation
+with CS0117/CS0103. An intermediate compiler failure exposed a test referencing
+the SDK's internal success helper; using the existing fixture-side helper fixed
+it without widening SDK visibility.
+
+The named missing-scope regression failed before implementation. Its new exact
+scope adds eight frozen reconciliation rows and two mutation parameters after
+the existing race scope. Private staging's two existing identities remain in
+the original publication scope, not duplicated. The requested native vector
+is 58 scopes/466 observations, pending. No full task/checklist/stage advances.
+Two actual independent fresh-cache locked preparations reproduce all eleven
+archives with combined archive-map SHA-256
+`1baf7e7a08abc7e3588c8ada5d2869074f49599c72c1ef43f15d242e44f6f13a`;
+ten loaded artifact dependency images match their archives. Each run passes
+277 artifact cases and 89 metadata cases per provider without skips. These
+functional runs reuse unchanged actual earlier transfer packets, not fresh
+current-run session/category origins. SDK and accepted package-source whitespace,
+compiled/frozen catalogs, all 278 tooling tests (261 passes/seventeen native
+macOS skips), mechanical five-body comparison and patch integrity pass.
+Tracked locks, production contracts/edges/ADRs/diagrams and deployment examples
+are unaffected by this test-only extraction.
+
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86
 tasks originally started unchecked; T002..T005 manifest/solution setup is now

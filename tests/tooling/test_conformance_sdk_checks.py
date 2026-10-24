@@ -476,6 +476,22 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(scenario, ("original-artifact-races", tuple(sorted(original | mutations)),
                                     "None", "Passed", 0, "None"))
 
+    def test_artifact_reconciliation_scope_preserves_frozen_parameters_and_foreign_receipt_mutations(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_reconciliation_scenarios", None)),
+                        "Shared artifact reconciliation needs exact owned wrapper transport.")
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        original = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.startswith(
+                        "Hoard.Artifacts.Tests.ArtifactReconciliationTests.")}
+        self.assertEqual(len(original), 8)
+        mutations = {
+            "Hoard.Artifacts.Tests.ArtifactPublicationConsumerTests."
+            "Shared_receipt_retry_assertion_rejects_foreign_receipt_and_accepts_original_store"
+            f'(provider: "{provider}")' for provider in ("local", "object")}
+        scenario, = checks.original_artifact_reconciliation_scenarios()
+        self.assertEqual(scenario, ("original-artifact-reconciliation", tuple(sorted(original | mutations)),
+                                    "None", "Passed", 0, "None"))
+
     def test_artifact_wrapper_scope_preserves_frozen_publication_parameters_and_actual_assembly(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_publication_scenarios", None)),
                         "Artifact publication needs exact source-owned wrapper transport.")

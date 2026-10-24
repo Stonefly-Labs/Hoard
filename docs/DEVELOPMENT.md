@@ -6475,6 +6475,26 @@ transfer/retention/external-wrapper rows and eighteen-package/thirteen-lock
 replay. Those Linux diagnostics do not substitute for full current-only recipe
 or category/session acceptance.
 
+The next artifact increment extracts private staging and all four original
+reconciliation bodies. All ten frozen parameters and original assertion tokens/
+ordering are preserved by mechanical comparison after explicit setup/seam/
+helper/cancellation forwarding. Real prefix barriers, clock and authority setup,
+and lost-acknowledgment observer registration remain fixture-side. A genuine
+foreign-publication receipt fails the unchanged shared receipt-equality check
+on both providers; counters prove one actual reconciliation and one foreign
+publication, while fresh genuine providers pass. Missing shared methods first
+failed actual compilation; a missing exact reconciliation scope failed its named
+tooling regression. The requested native vector adds eight original rows and
+two mutation parameters: 58 scopes/466 observations, pending. No complete
+category/session/profile claim or task/checklist/stage advance follows.
+Two fresh-cache locked builds reproduce eleven archives and verify ten loaded
+dependency images; each passes 277 artifact cases and 89 metadata cases per
+provider without skips. SDK/accepted-source formatting, compiled/frozen catalogs,
+mechanical five-body comparison and all 278 tooling tests pass (261 passes/
+seventeen native macOS skips). Earlier actual transfer packets remain unchanged,
+not fresh session/category origins. Production APIs/edges/ADRs/diagrams and
+deployment examples remain unaffected.
+
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)
 at `a81c0380f6bed06d8870c6b43263aa480ae5d04b` passed all three jobs,

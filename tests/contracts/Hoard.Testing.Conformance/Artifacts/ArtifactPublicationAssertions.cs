@@ -103,6 +103,26 @@ public static class ArtifactPublicationAssertions
         Assert.Equal(bytes, await ReadAsync(store, original.Stamp, cancellationToken));
     }
 
+    public static async Task PrivateStagingAsync(
+        IArtifactStore store, Func<CancellationToken, Task> waitForPrefix, Action releasePrefix,
+        CancellationToken cancellationToken)
+    {
+        var bytes = "no staged prefix is committed"u8.ToArray();
+        var digest = new ArtifactDigest(Convert.ToHexStringLower(SHA256.HashData(bytes)));
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        using var source = new ShortSource(bytes);
+        var staging = store.StageAsync(ticket, source, new(), cancellationToken).AsTask();
+        await waitForPrefix(cancellationToken);
+        Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+            await store.OpenReadAsync(new(digest), new(), cancellationToken)).Code);
+        releasePrefix();
+        var staged = Success(await staging);
+        Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+            await store.OpenReadAsync(new(digest), new(), cancellationToken)).Code);
+        var receipt = Success(await store.CommitAsync(staged, new(), cancellationToken));
+        Assert.Equal(bytes, await ReadAsync(store, receipt.Stamp, cancellationToken));
+    }
+
     public static async Task ConcurrentEquivalentWritersAsync(
         IArtifactStore store, Action<Func<ValueTask>> observeAdmission, CancellationToken cancellationToken)
     {

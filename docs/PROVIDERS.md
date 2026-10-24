@@ -323,6 +323,18 @@ cases per provider without skips; accepted-source formatting also passes.
 The additional exact native scope is six original rows plus two named mutation
 rows, pending (57 scopes/456 observations), not category completion.
 
+Private staging and all four original reconciliation methods now use shared
+consumers with their ten frozen parameters intact. Actual prefix barriers,
+clock advancement/rollback, authority setup and lost-acknowledgment observers
+remain fixture-side; common consumers retain every original check and ordering.
+A real-store mutation first reconciles the original ticket, then substitutes a
+genuine receipt from a different actual publication. The unchanged consumer's
+receipt-equality assertion fails on both providers; reconciliation/publication
+counters prove the intended mutation, and fresh genuine stores pass unchanged.
+The next exact native scope adds eight original reconciliation witnesses plus
+two mutation parameters (58 scopes/466 observations), pending, not category
+or complete session evidence.
+
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

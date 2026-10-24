@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using Hoard.Abstractions.Metadata;
 using Hoard.Abstractions.Storage;
 using Hoard.Testing.Conformance.Artifacts;
 
@@ -49,22 +47,10 @@ public sealed class ArtifactPublicationTests
     public async Task Staging_is_private_until_complete_verified_commit(string provider)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
-        var bytes = "no staged prefix is committed"u8.ToArray();
-        var digest = new ArtifactDigest(Convert.ToHexStringLower(SHA256.HashData(bytes)));
         await using var barrier = new ArtifactTestBarrier("prefix");
         SetObserver(driver, "stage.prefix", "multipart.part", () => new(barrier.HoldAsync()));
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        using var source = new ShortSource(bytes);
-        var staging = driver.Store.StageAsync(ticket, source, new(), default).AsTask();
-        await barrier.Entered;
-        Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
-            await driver.Store.OpenReadAsync(new(digest), new(), default)).Code);
-        barrier.Release();
-        var staged = Success(await staging);
-        Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
-            await driver.Store.OpenReadAsync(new(digest), new(), default)).Code);
-        var receipt = Success(await driver.Store.CommitAsync(staged, new(), default));
-        Assert.Equal(bytes, await ReadAsync(driver, receipt.Stamp));
+        await ArtifactPublicationAssertions.PrivateStagingAsync(driver.Store,
+            token => barrier.Entered.WaitAsync(token), barrier.Release, default);
     }
 
     [Theory]

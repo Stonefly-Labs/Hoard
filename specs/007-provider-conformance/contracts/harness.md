@@ -429,6 +429,19 @@ loaded artifact dependency images and each pass 275 artifact cases plus 89
 metadata cases per provider without skips. Accepted SDK/package-mode whitespace
 and all 277 tooling tests pass (260 passes/seventeen native macOS skips).
 
+Private staging and the four original reconciliation methods now also execute
+shared assertions, with ten unchanged frozen parameters. Fixture-owned controls
+retain actual prefix entry/release, clock advancement/rollback, authority setup
+and post-stage lost-acknowledgment registration. Common code preserves exact
+original assertion tokens and ordering after explicit setup/seam/helper/token
+forwarding. A real-store mutation reconciles the original ticket and substitutes
+a genuine receipt from a different actual publication; the unchanged equality
+assertion fails on each provider. One reconciliation and one foreign-publication
+counter prove the intended mutation; fresh genuine stores pass unchanged.
+The extra exact native scope has eight frozen reconciliation witnesses and two
+mutation parameters, requesting 58 scopes/466 observations in total, pending.
+These remain diagnostics rather than full binding/session/category attribution.
+
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,
 `MetadataConcurrencyAssertions`, `MetadataLeaseAssertions`,
