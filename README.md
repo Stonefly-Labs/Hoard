@@ -1313,8 +1313,15 @@ overlap and closure races, retain failed restoration for recovery and reject
 stale replacements without rolling back an intervening commit. Independent
 native readers preserve committed-row visibility while a candidate is held.
 All 87 current predecessor tests pass on each provider; 181 selected SDK/binding
-tests pass locally. The expanded Linux request is 50 scopes/256 observations
-(86 SQLite identities); that new vector is not yet verified on Linux.
+tests pass locally. Native run
+[40097647586](https://github.com/Stonefly-Labs/Hoard/actions/runs/40097647586)
+at `84e8a4b` verified 50 scopes/256 observations (86 SQLite identities), native
+containment and identical eighteen-package/thirteen-lock replay.
+The original diagnostics wrapper now also shares consumers (48 delegated
+methods) through an additive overload that retains its original failure hook
+and canary. All 88 current predecessor tests pass on each provider and 181
+SDK/binding tests pass locally. The native checkpoint predates this diagnostics
+increment and does not execute the original wrapper suite.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

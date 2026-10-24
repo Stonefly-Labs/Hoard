@@ -169,9 +169,22 @@ occurred and verifies original bytes before releasing an applied scope.
 All 87 current predecessor tests pass on each provider, and 181 selected
 SDK/binding tests pass locally. Fresh locked replay reproduces eight archives
 and exact DLLs; seven binding output DLLs match their archives and both feed
-families retain the unchanged SDK. The new 50-scope/256-observation Linux request
-(86 SQLite identities) is pending; original diagnostics/schema extraction and
-exact origin integration remain unfinished.
+families retain the unchanged SDK. Native
+[40097647586](https://github.com/Stonefly-Labs/Hoard/actions/runs/40097647586)
+at `84e8a4b` verified 50 scopes/256 observations (86 SQLite identities), actual
+containment and identical eighteen-package/thirteen-lock replay.
+The MP-22 diagnostics wrapper now also shares consumers (48 delegated methods).
+Its original connection-shaped failure hook and canary remain fixture-owned;
+an additive overload shares the counter, rollback, failure-shape and diagnostic/
+debug-display assertions without replacing that hook. The prior signature
+continues to install its own scoped hook and forwards to the same core.
+A new actual-store regression proves the original callback still owns its
+registration after the consumer returns. All 88 current predecessor tests pass
+on each provider, and 181 SDK/binding tests pass locally. Fresh locked replay
+reproduces eight archives and exact DLLs; both feeds have identical SDK bytes.
+Only its hash changes in the tracked predecessor lock; other entries stay
+pinned. The native checkpoint predates this increment and does not execute
+original wrappers. Schema extraction and exact origin integration remain open.
 Complete category suites/adapters, contributor workflow and controller/profile
 ingestion remain unfinished. Focused composition/version fixtures
 do not establish category or host-profile qualification. CP-11 preserves actual

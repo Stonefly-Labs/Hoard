@@ -1,12 +1,34 @@
 using Hoard.Abstractions.Metadata;
 using Hoard.Fixtures.Metadata.Hosting;
 using Hoard.Testing.Conformance.Bindings;
+using Hoard.Testing.Conformance.Metadata;
 using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
 
 public sealed class MetadataObservationTests
 {
+    [Fact]
+    public async Task Original_diagnostic_fault_can_be_consumed_without_replacing_its_owner()
+    {
+        await using var fixture = await OpenAsync();
+        var calls = 0;
+        await using var owner = fixture.Controls.RegisterObserver("mutation.applied", () =>
+        {
+            calls++;
+            throw new InvalidOperationException("Original diagnostic owner " + MetadataTestData.Canary);
+        });
+        await MetadataFailureAssertions.DiagnosticsAsync(
+            fixture.Store, () => CommonCounters(fixture), MetadataTestData.Canary,
+            MetadataTestData.AssertSanitized, default);
+        Assert.Equal(1, calls);
+        Assert.Single(fixture.Controls.Diagnostics);
+        CommonDiagnosticAssertions(fixture);
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            fixture.Controls.ObserveAsync("mutation.applied").AsTask());
+        Assert.Equal(2, calls);
+    }
+
     [Fact]
     public async Task Corruption_capture_does_not_overwrite_an_intervening_committed_image()
     {

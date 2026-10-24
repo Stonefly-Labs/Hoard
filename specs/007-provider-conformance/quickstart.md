@@ -83,9 +83,13 @@ retain failed restoration for explicit recovery; conditional replacement cannot
 undo an intervening commit. Native observations read committed rows independently
 of a held primary candidate. All 87 current predecessor tests pass against each
 provider and 181 SDK/binding tests pass locally with byte-matched packages.
-The expanded Linux request is 50 scopes/256 observations (86 SQLite identities),
-not yet verified. Complete diagnostics/schema extraction and origin import
-remain outstanding.
+Native run `40097647586` at `84e8a4b` verified 50 scopes/256 observations
+(86 SQLite identities), actual containment and identical package replay.
+The original diagnostics wrapper now shares consumers too (48 methods), while
+retaining its original failure hook/canary. All 88 current predecessor tests
+pass on each provider and 181 SDK/binding tests pass locally. The native run
+predates that diagnostics increment and does not execute original wrappers.
+Schema extraction and exact origin import remain outstanding.
 The allocator, runtime logger and focused
 composition/version fixtures are also non-qualifying foundations. Native allocator
 and logger diagnostics have passed, and all 144 expected composition/version/

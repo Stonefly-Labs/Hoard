@@ -226,8 +226,18 @@ raw observations use independent bounded read-only connections, including from
 inside a held primary candidate. Initial captured images are checked under the
 writer before replacement; stale images reject without restoring over a newer
 commit. All 87 current predecessor tests pass on each provider; 181 selected
-SDK/binding tests pass locally. The expanded 50-scope/256-observation Linux
-request (86 SQLite identities) remains unverified.
+SDK/binding tests pass locally. Native run `40097647586` at `84e8a4b` verified
+50 scopes/256 observations (86 SQLite identities), actual native containment
+and identical eighteen-package/thirteen-lock replay.
+The original diagnostics wrapper also shares consumers (48 methods).
+An additive overload uses a caller-installed failure hook and the original
+canary/sanitizer; the existing scoped-hook signature forwards to that same
+assertion core. Original connection-shaped error injection remains intact.
+A real-store ownership regression proves shared assertions neither replace
+nor dispose that caller's registration. All 88 current predecessor tests pass
+on both providers, alongside 181 local SDK/binding tests. The native checkpoint
+predates this increment and does not execute original wrappers. Schema/session
+extraction and exact controller-origin imports remain unfinished.
 
 The initial executable SDK slice exposes fifty-three methods across
 `MetadataBoundsAssertions`, `MetadataPagingAssertions`,

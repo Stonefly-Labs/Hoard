@@ -6013,10 +6013,28 @@ selected SDK/binding tests pass locally. Independent fresh locked replay
 reproduces eight archives, seven wrapper DLLs and the separate Application DLL.
 Seven actual binding output DLLs match their archives; both feed families keep
 the unchanged SDK. Source/historical locks remain unchanged. The expanded Linux
-request is 50 scopes/256 observations, including 86 SQLite identities; its new
-execution remains pending. Product architecture, ADRs, diagrams and deployment
+request is 50 scopes/256 observations, including 86 SQLite identities; native
+run `40097647586` at `84e8a4b` subsequently verified it, with 136 foundation
+checks without failures/errors/skips, genuine native containment and identical
+eighteen-package/thirteen-lock replay. Product architecture, ADRs, diagrams and deployment
 examples are unaffected: these are test-only controls with no production API,
 dependency-edge, composition or infrastructure changes.
+
+The original MP-22 diagnostics method now also delegates (48 methods total).
+Its connection-shaped failure injection and initial outcome assertions remain
+untouched. The additive SDK overload then shares counters, rollback, every
+failure code and all four diagnostic/debug-display checks with the original
+canary and sanitizer. It consumes the caller's existing hook without claiming
+its registration; the old scoped-hook API forwards to this same core.
+The ownership regression first failed the missing-overload assertion, then
+proved on actual stores that the original callback remains registered after
+the consumer returns. All 88 current predecessor tests pass without skips on
+each provider and 181 selected SDK/binding tests pass locally. Fresh locked
+replay reproduces eight archives and exact DLLs; SDK bytes agree across feeds.
+The predecessor source lock changes only its SDK hash; all other entries and
+historical pins remain unchanged. Native run `40097647586` predates this change
+and does not execute original wrappers. Schema/session extraction and exact
+origin ingestion remain unfinished.
 
 Native prerequisite run
 [40062534006](https://github.com/Stonefly-Labs/Hoard/actions/runs/40062534006)

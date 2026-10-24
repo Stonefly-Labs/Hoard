@@ -1797,9 +1797,44 @@ fresh default locked replay reproduces eight archives and all actual DLLs.
 Seven binding output DLLs match archives, and the shared SDK archive remains
 identical in both feed families and to the prior clock increment. Repository
 and historical locks remain unchanged. The expanded Linux request is 50
-scopes/256 observations (86 SQLite identities); it is pending, not qualification.
+scopes/256 observations (86 SQLite identities); native verification follows.
 Original diagnostics/schema extraction, exact runtime/controller-origin
 integration and complete category/recovery gates remain open.
+
+Native run [40097647586](https://github.com/Stonefly-Labs/Hoard/actions/runs/40097647586)
+at `84e8a4bc1445d6ed79fc93365d720cd5f34dce51` passed all three jobs:
+136 foundation checks without failures/errors/skips, exactly 50 scopes/256
+discoveries/executions with expected diagnostics, all 86 SQLite identities
+including held-candidate observations/stale-image rejection, native containment
+and identical eighteen-package/thirteen-lock replay. Free scratch:
+91,724,525,568 bytes. SQLite 3.53.3/native member bytes and PRAGMAs remain pinned.
+Input: `3683becf9bb859ad2db6f555b5f6e7c6cdfaa55fd728447050ce9c9c9c0a6317`;
+preparation: `2f4fac4dfd6d834a6594188d862b96aba8635a9eaf0689bfb1eaeaae96f09387`;
+producer: `08c57d34158d4ea9cafea9d0303e3d8a6cfe50fc54895441b2afde194caa0e2f`;
+controller: `a1dd1bee735ceee5a191cae58373cb849c530b14f31db27484fac5f3d3972a59`;
+child start: `9a404081fa983f90e5cf28e294fe75c7e1a4e809889d2b2dad5ed4b1b66d223a`.
+The six-baseline seal is unchanged. This checkpoint does not execute original
+wrappers or establish category qualification.
+
+### Original diagnostic hook ownership
+
+The MP-22 wrapper now also shares consumers (48 delegated methods). Original
+connection-shaped error injection and its initial failure checks stay intact.
+An additive SDK overload takes a caller-installed real fault hook, original
+canary and sanitizer, sharing counter/rollback, all failure-code and four
+diagnostic/debug-display assertions. The existing API installs its scoped hook
+and forwards to this same core. Neither path gives a provider expected results.
+
+A new actual-store regression first failed the missing-overload assertion;
+after repair it proves the original callback still owns its registration when
+the consumer returns. All 88 current predecessor tests pass without skips on
+each provider, and 181 selected SDK/binding tests pass locally. Independent
+fresh locked replay reproduces eight archives and all actual DLLs; both feed
+families use identical SDK bytes. Only the SDK hash changes in the tracked
+predecessor lock, preserving all other entries and historical pins. The native
+checkpoint above predates this increment and does not run original wrappers.
+Schema/session extraction and exact runtime/controller-origin integration
+remain unfinished; full feature gates and final review stay open.
 
 The driver remains **`implement / running`**. Authorization to start was explicit;
 the 40 custom checklist markers remain reviewer-owned and unchecked. All 86

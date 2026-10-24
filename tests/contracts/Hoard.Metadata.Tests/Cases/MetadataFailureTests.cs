@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Hoard.Abstractions.Metadata;
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Metadata;
@@ -84,23 +83,8 @@ public sealed class MetadataFailureTests
         foreach (var diagnostic in fixture.Controls.Diagnostics.Append(result.ToString()!))
         { MetadataTestData.AssertSanitized(diagnostic); }
         Assert.Contains("metadata.internal_failure", fixture.Controls.Diagnostics);
-        foreach (var code in Enum.GetValues<MetadataFailureCode>())
-        {
-            var failure = new MetadataResult<MetadataPage>.Failure(code, MetadataPhase.Commit,
-                MetadataRetryDisposition.OperatorRecovery, Id(1));
-            Assert.Equal(code, failure.Code);
-            MetadataTestData.AssertSanitized(failure.ToString());
-        }
-        foreach (var value in new MetadataDiagnostic[]
-        {
-            new MetadataArtifactEvidence(MetadataTestData.Canary), new MetadataContinuation(MetadataTestData.Canary),
-            new PublicLabel(MetadataTestData.Canary), new MetadataSecretReference("fixture", "resolver", MetadataTestData.Canary)
-        })
-        {
-            MetadataTestData.AssertSanitized(value.ToString());
-            var display = Attribute.GetCustomAttribute(value.GetType(), typeof(DebuggerDisplayAttribute), inherit: true);
-            Assert.NotNull(display);
-            MetadataTestData.AssertSanitized(((DebuggerDisplayAttribute)display).Value);
-        }
+        await MetadataFailureAssertions.DiagnosticsAsync(fixture.Store, () => CommonCounters(fixture),
+            MetadataTestData.Canary, MetadataTestData.AssertSanitized, default);
+        CommonDiagnosticAssertions(fixture);
     }
 }
