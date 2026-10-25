@@ -623,8 +623,10 @@ durable reopen, validation-first restoration, replacement incarnation and
 original receipt, and intact content after access denial/unavailability.
 Physical permissions/removal/restoration and actual native readiness observation
 remain fixture-side legacy controls, not full owned fault-driver admission.
-Exact new transport requires all nine original identities; the newest request
-is 84 scopes/732 observations, pending, not full qualification. Every quarantine
+Exact new transport requires all nine original identities; the nine-row request
+passed run `40143552793` at `c1d2a6b`: all three jobs, 200 foundations and
+84 scopes/732 observations, including the corrected fifteen-row quarantine
+scope, not full qualification. Every quarantine
 caller must explicitly supply its durable context or select logical-only
 scope; there is no defaulted reopen parameter.
 
@@ -637,6 +639,14 @@ The wrapper retains its original fixed consistency expectation, clock and
 driver lifetime; provider-advertised capabilities do not select expectations.
 Fresh preparation/replay passes 311 artifact and 65 Consumer cases.
 The expanded request is 85 scopes/744 observations, pending, not qualification.
+
+Five additional recovery methods now share admitted-reconciliation/deletion
+history, replacement-generation races and progressing-commit checks on ten
+parameters (six frozen witnesses and four additional existing cases).
+Common checks own the unchanged original managed barrier at its original
+source/barrier lifetime position. Physical fault registration stays fixture-side.
+Fresh independent replay passes 311 artifact and 65 Consumer cases.
+The newest request is 86 scopes/754 observations, pending, not qualification.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

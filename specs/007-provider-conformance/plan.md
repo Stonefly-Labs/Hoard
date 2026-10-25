@@ -3854,6 +3854,20 @@ Tasks, reviewer markers, tracked locks, historical seals and product/
 architecture/deployment examples remain unchanged. Full bindings, origins and
 category/integration/profile acceptance remain unfinished.
 
+### Native confirmation of complete quarantine scope and validation
+
+[40143552793](https://github.com/Stonefly-Labs/Hoard/actions/runs/40143552793)
+at exact head `c1d2a6b4f40d5f2d5110bfe433619948292c90d1` passed all three jobs,
+200 foundations without failures/errors/skips, and all 84 scopes/732 exact
+discoveries/executions, including fifteen quarantine-reopen rows and nine
+validation rows. The strict observer admitted every prerequisite recovery,
+transfer, ownership/native-containment and eighteen-package/thirteen-lock
+fresh-replay chain. The failed earlier `40141545447` remains unadmitted.
+Input: `c7fea35cc7c3e63d863e587a5dc9482fe9d066a86bddb9acb2a37b0be189fa02`.
+Preparation: `19c50dc4dd12c6a62739c36308b20de4b5784040dc5b3497ca2d48820c258770`.
+Free scratch: 91,722,289,152 bytes. This is non-qualifying diagnostic evidence,
+not full binding/category/profile admission.
+
 ### Shared original recovery-page and generation checks
 
 Six original `ArtifactRecoveryTests` methods now forward all twelve Local/Object
@@ -3885,6 +3899,42 @@ The expanded native request is 201 foundations and 85 scopes/744 observations,
 pending, not full recovery/fault-driver/category/profile qualification.
 Product, architecture and deployment examples are unaffected by this test-only
 extraction; tasks, reviewer markers, locks and historical seals are unchanged.
+
+### Shared admitted-history and generation races
+
+Five more original recovery methods now share provider-free
+`SettledReceiptReplacementAsync`, `AdmittedDeleteHistoryAsync`,
+`AdmittedReconciliationHistoryAsync`, `LateCleanupGenerationAsync` and
+`ProgressingCommitAsync`. Ten original parameters comprise six frozen category
+witnesses and four additional existing cases, without modifying the baseline.
+Complete-body comparison preserves all assertions, operation order, managed
+source/barrier nesting and public read/receipt corroboration after explicit
+interface/clock/physical-control/helper/token forwarding.
+
+The SDK owns the original managed `ArtifactConformanceBarrier` body, not a
+replacement with looser timing: entry/hold/settlement budgets remain 10/20/10
+seconds, with a frozen complete-body regression guard. The legacy alias
+inherits that implementation. Initial ordinary compilation correctly exposed
+an SDK reference if the alias stayed in the always-compiled harness; moving
+only the alias into the existing package-only `Cases/` boundary preserves
+ordinary-project references unchanged. Fresh package-only compilation then
+confirmed the intended missing shared-barrier `CS0234`; exact transport first
+failed its missing-factory assertion. Physical registration/removal and lost
+acknowledgment injection remain fixture-side; no provider switch enters SDK
+assertions. Actual prepared-assembly discovery matches all ten independently
+declared identities. All 311 tooling checks pass (294 passed/seventeen
+macOS-native skips), including 85 SDK checks; prepared SDK/wrapper/harness/alias
+formatting, frozen inventory, catalogs and patch checks pass.
+Fresh preparation/replay passes 311 artifact, 65 Consumer and 89+89 metadata
+cases without skips. All fifteen actual archive digests reproduce exactly,
+canonical full-filename map SHA-256
+`6dfb8daba9d51a1febd6266820be21464adc295942db22657507804cba5cd75a`;
+ten actual Consumer dependency images match package bytes in each preparation.
+Transfer packets remain reused unchanged, not new origins.
+The newest request is 203 foundations and 86 scopes/754 observations,
+pending, not full recovery/fault-driver/category/profile admission.
+Tasks, reviewer markers, tracked locks, historical seals and product/
+architecture/deployment examples are unaffected.
 
 ## Summary
 

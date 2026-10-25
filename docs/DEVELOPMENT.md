@@ -7200,6 +7200,46 @@ category/profile acceptance are unfinished. Product/architecture/deployment
 examples, tasks, reviewer markers, tracked locks and historical seals are
 unaffected.
 
+Run `40143552793` at exact head
+`c1d2a6b4f40d5f2d5110bfe433619948292c90d1` passed all three jobs, 200 foundations
+without failures/errors/skips and 84 scopes/732 exact discoveries/executions,
+including the corrected fifteen-row quarantine-reopen scope and all nine
+validation rows. The strict observer admitted actual prerequisite recovery,
+transfers, ownership/native containment and eighteen-package/thirteen-lock
+fresh replay. The prior failed run remains unadmitted. Input:
+`c7fea35cc7c3e63d863e587a5dc9482fe9d066a86bddb9acb2a37b0be189fa02`;
+preparation:
+`19c50dc4dd12c6a62739c36308b20de4b5784040dc5b3497ca2d48820c258770`.
+Free scratch was 91,722,289,152 bytes, not full qualification.
+
+Five additional original recovery methods now use provider-free admitted-history,
+generation-race and progressing-commit assertions over ten parameters (six
+frozen witnesses and four additional existing cases). Full-body comparison
+preserves all original assertions, operation order, source/barrier nesting and
+read/receipt corroboration after explicit interface/control/clock/helper/token
+forwarding. The SDK owns the unchanged original managed barrier, including
+10/20/10-second entry/hold/settlement budgets, with a complete-body guard.
+Physical registration/removal and lost acknowledgments remain fixture-side.
+Ordinary compilation initially caught an SDK reference from putting the
+legacy alias in the always-compiled harness; the alias now lives under
+package-only `Cases/` without changing ordinary project references. Fresh
+package-only compilation then confirmed intended missing shared-barrier
+`CS0234`; exact ten-row transport first failed its missing-factory assertion.
+Actual prepared-assembly discovery matches all ten independently declared
+identities. All 311 tooling checks pass (294 passed/seventeen macOS-native
+skips), including 85 SDK checks; prepared SDK/wrapper/harness/alias formatting,
+frozen inventory, catalogs and patch checks pass.
+Fresh preparation/replay passes 311 artifact, 65 Consumer and 89+89 metadata
+cases without skips. All fifteen actual archive digests reproduce exactly,
+canonical full-filename map SHA-256
+`6dfb8daba9d51a1febd6266820be21464adc295942db22657507804cba5cd75a`;
+ten actual Consumer dependency images match package bytes in each preparation.
+Transfer packets remain reused unchanged, not new origins.
+The newest request is 203 foundations and 86 scopes/754 observations, pending,
+not full recovery/fault-driver/category/profile admission. Tasks, reviewer
+markers, locks, historical seals and product/architecture/deployment examples
+are unaffected.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

@@ -71,38 +71,11 @@ public sealed class ArtifactRecoveryTests
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock,
             references: (_, _) => ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        using var source = new ShortSource("settled receipt survives replacement"u8.ToArray());
-        var staged = Success(await driver.Store.StageAsync(ticket, source, new(), default));
-        SetObserver(driver, "publish.decided", "pointer.selected",
-            () => ValueTask.FromException(new IOException(ArtifactTestData.Canary)));
-        Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
-            await driver.Store.CommitAsync(staged, new(), default)).Code);
-        if (driver.LocalControls is { } local) { local.RemoveObserver("publish.decided"); }
-        else { driver.ObjectControls!.RemoveObserver("pointer.selected"); }
-        await using var barrier = new ArtifactTestBarrier("settled-reconciliation-after-replacement");
-        SetObserver(driver, "reconcile.before-resolution", "object.direct", () => new(barrier.HoldAsync()));
-        var held = driver.Store.ReconcileAsync(ticket, new(), default).AsTask();
-        ArtifactMutationReceipt settled;
-        ArtifactMutationReceipt replacement;
-        try
-        {
-            await barrier.Entered;
-            if (driver.LocalControls is { } controls) { controls.RemoveObserver("reconcile.before-resolution"); }
-            else { driver.ObjectControls!.RemoveObserver("object.direct"); }
-            settled = Assert.IsType<ArtifactResolution.Committed>(
-                Success(await driver.Store.ReconcileAsync(ticket, new(), default))).Receipt;
-            var deletion = Success(await driver.Store.ReserveDeleteAsync(new(settled.Stamp), new(), default));
-            Success(await driver.Store.DeleteAsync(deletion, new(), default));
-            using var next = new ShortSource("settled receipt survives replacement"u8.ToArray());
-            replacement = await PublishAsync(driver, next, new(1024));
-            Assert.NotEqual(settled.Stamp, replacement.Stamp);
-            clock.SetUtc(ticket.Expires.ToUnixTimeMilliseconds());
-            Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        }
-        finally { barrier.Release(); }
-        Assert.Equal(settled, Assert.IsType<ArtifactResolution.Committed>(Success(await held)).Receipt);
-        Assert.Equal("settled receipt survives replacement"u8.ToArray(), await ReadAsync(driver, replacement.Stamp));
+        await ArtifactRecoveryAssertions.SettledReceiptReplacementAsync(
+            driver.Store, clock.SetUtc, () => LoseAcknowledgment(driver),
+            () => RemoveObserver(driver, "publish.decided", "pointer.selected"),
+            hold => SetObserver(driver, "reconcile.before-resolution", "object.direct", hold),
+            () => RemoveObserver(driver, "reconcile.before-resolution", "object.direct"), default);
     }
 
     [Theory]
@@ -114,29 +87,9 @@ public sealed class ArtifactRecoveryTests
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock,
             new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, committedIdentities: 1),
             references: (_, _) => ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
-        using var source = new ShortSource("held deletion history"u8.ToArray());
-        var original = await PublishAsync(driver, source, new(1024));
-        var deletion = Success(await driver.Store.ReserveDeleteAsync(new(original.Stamp), new(), default));
-        await using var barrier = new ArtifactTestBarrier("admitted-delete-retains-reclaimed-history");
-        SetObserver(driver, "delete.removed", "pointer.tombstone", () => new(barrier.HoldAsync()));
-        var held = driver.Store.DeleteAsync(deletion, new(), default).AsTask();
-        try
-        {
-            await barrier.Entered;
-            Success(await driver.Maintenance.CleanupAsync(new(driver.Identity,
-                [new ArtifactCleanupTarget.RemovedIncarnation(original.Stamp)]), new(), default));
-            clock.SetUtc(deletion.Expires.ToUnixTimeMilliseconds());
-            var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-            using var next = new ShortSource("different digest awaiting settled history"u8.ToArray());
-            var staged = Success(await driver.Store.StageAsync(ticket, next, new(), default));
-            Assert.Equal(ArtifactFailureCode.Capacity, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
-                await driver.Store.CommitAsync(staged, new(), default)).Code);
-        }
-        finally { barrier.Release(); }
-        Assert.Equal(ArtifactReclamation.Reclaimed, Success(await held).Reclamation);
-        using var replacement = new ShortSource("different digest awaiting settled history"u8.ToArray());
-        var current = await PublishAsync(driver, replacement, new(1024));
-        Assert.Equal("different digest awaiting settled history"u8.ToArray(), await ReadAsync(driver, current.Stamp));
+        await ArtifactRecoveryAssertions.AdmittedDeleteHistoryAsync(
+            driver.Store, driver.Maintenance, driver.Identity, clock.SetUtc,
+            hold => SetObserver(driver, "delete.removed", "pointer.tombstone", hold), default);
     }
 
     [Theory]
@@ -147,34 +100,11 @@ public sealed class ArtifactRecoveryTests
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock,
             new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024, liveTickets: 1));
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        using var source = new ShortSource("retained reconciliation ownership"u8.ToArray());
-        var staged = Success(await driver.Store.StageAsync(ticket, source, new(), default));
-        ValueTask LostAcknowledgment() => ValueTask.FromException(new IOException(ArtifactTestData.Canary));
-        SetObserver(driver, "publish.decided", "pointer.selected", LostAcknowledgment);
-        Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
-            await driver.Store.CommitAsync(staged, new(), default)).Code);
-        if (driver.LocalControls is { } local) { local.RemoveObserver("publish.decided"); }
-        else { driver.ObjectControls!.RemoveObserver("pointer.selected"); }
-        await using var barrier = new ArtifactTestBarrier("reconciliation-owns-expired-history");
-        SetObserver(driver, "reconcile.before-resolution", "object.direct", () => new(barrier.HoldAsync()));
-        var held = driver.Store.ReconcileAsync(ticket, new(), default).AsTask();
-        ArtifactMutationReceipt settled;
-        try
-        {
-            await barrier.Entered;
-            if (driver.LocalControls is { } controls) { controls.RemoveObserver("reconcile.before-resolution"); }
-            else { driver.ObjectControls!.RemoveObserver("object.direct"); }
-            settled = Assert.IsType<ArtifactResolution.Committed>(
-                Success(await driver.Store.ReconcileAsync(ticket, new(), default))).Receipt;
-            clock.SetUtc(ticket.Expires.ToUnixTimeMilliseconds());
-            Assert.Equal(ArtifactFailureCode.Capacity, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
-                await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default)).Code);
-        }
-        finally { barrier.Release(); }
-        Assert.Equal(settled, Assert.IsType<ArtifactResolution.Committed>(Success(await held)).Receipt);
-        Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        Assert.Equal("retained reconciliation ownership"u8.ToArray(), await ReadAsync(driver, settled.Stamp));
+        await ArtifactRecoveryAssertions.AdmittedReconciliationHistoryAsync(
+            driver.Store, clock.SetUtc, () => LoseAcknowledgment(driver),
+            () => RemoveObserver(driver, "publish.decided", "pointer.selected"),
+            hold => SetObserver(driver, "reconcile.before-resolution", "object.direct", hold),
+            () => RemoveObserver(driver, "reconcile.before-resolution", "object.direct"), default);
     }
 
     [Fact]
@@ -238,31 +168,10 @@ public sealed class ArtifactRecoveryTests
     {
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
-        using var first = new ShortSource("expired generation"u8.ToArray());
-        var old = Success(await driver.Store.StageAsync(ticket, first, new(), default));
-        clock.Advance(TimeSpan.FromSeconds(30));
-        var request = new ArtifactCleanupRequest(driver.Identity, [new ArtifactCleanupTarget.AbandonedStaging(old.Owner)]);
-        await using var barrier = new ArtifactTestBarrier("late-generation-cleanup");
-        SetObserver(driver, "cleanup.candidate", "multipart.cleanup", () => new(barrier.HoldAsync()));
-        var delayed = driver.Maintenance.CleanupAsync(request, new(), default).AsTask();
-        ArtifactStagedWrite replacement;
-        try
-        {
-            await barrier.Entered;
-            if (driver.LocalControls is { } local) { local.RemoveObserver("cleanup.candidate"); }
-            else { driver.ObjectControls!.RemoveObserver("multipart.cleanup"); }
-            Assert.Equal(1, Success(await driver.Maintenance.CleanupAsync(request, new(), default)).Completed);
-            using var second = new ShortSource("replacement generation"u8.ToArray());
-            replacement = Success(await driver.Store.StageAsync(ticket, second, new(), default));
-            Assert.True(replacement.Owner.Generation > old.Owner.Generation);
-        }
-        finally { barrier.Release(); }
-        var result = Success(await delayed);
-        Assert.Equal(1, result.Conflicted);
-        Assert.Equal(0, result.ReclaimedBytes);
-        var receipt = Success(await driver.Store.CommitAsync(replacement, new(), default));
-        Assert.Equal("replacement generation"u8.ToArray(), await ReadAsync(driver, receipt.Stamp));
+        await ArtifactRecoveryAssertions.LateCleanupGenerationAsync(
+            driver.Store, driver.Maintenance, driver.Identity, clock.Advance,
+            hold => SetObserver(driver, "cleanup.candidate", "multipart.cleanup", hold),
+            () => RemoveObserver(driver, "cleanup.candidate", "multipart.cleanup"), default);
     }
 
     [Theory]
@@ -282,25 +191,9 @@ public sealed class ArtifactRecoveryTests
     {
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
-        var bytes = new byte[1048576];
-        using var first = new MemoryStream(bytes, writable: false);
-        await PublishAsync(driver, first, new(2097152));
-        using var duplicate = new MemoryStream(bytes, writable: false);
-        var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(2097152)), new(), default));
-        var staged = Success(await driver.Store.StageAsync(ticket, duplicate, new(), default));
-        var progress = 0;
-        ValueTask Advance()
-        {
-            clock.Advance(TimeSpan.FromSeconds(11));
-            Interlocked.Increment(ref progress);
-            return ValueTask.CompletedTask;
-        }
-        if (driver.LocalControls is { } local) { local.SetObserver("publish.progress", Advance); }
-        else { driver.ObjectControls!.SetObserver("object.commit-progress", Advance); }
-        var receipt = Success(await driver.Store.CommitAsync(staged, new(), default));
-        Assert.True(progress >= 4);
-        Assert.Equal(ArtifactMutationOutcome.AlreadyPresentVerified, receipt.Outcome);
-        Assert.Equal(receipt, Success(await driver.Store.CommitAsync(staged, new(), default)));
+        await ArtifactRecoveryAssertions.ProgressingCommitAsync(
+            driver.Store, clock.Advance,
+            observe => SetObserver(driver, "publish.progress", "object.commit-progress", observe), default);
     }
 
     [Fact]
@@ -381,5 +274,15 @@ public sealed class ArtifactRecoveryTests
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactRecoveryAssertions.RecoveryPagesAsync(
             driver.Store, driver.Maintenance, driver.Identity, default);
+    }
+
+    private static void LoseAcknowledgment(ArtifactProviderDriver driver) =>
+        SetObserver(driver, "publish.decided", "pointer.selected",
+            () => ValueTask.FromException(new IOException(ArtifactTestData.Canary)));
+
+    private static void RemoveObserver(ArtifactProviderDriver driver, string localPoint, string objectPoint)
+    {
+        if (driver.LocalControls is { } local) { local.RemoveObserver(localPoint); }
+        else { driver.ObjectControls!.RemoveObserver(objectPoint); }
     }
 }

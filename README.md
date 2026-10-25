@@ -1658,13 +1658,19 @@ provider-free consumers, preserving failed-persistence retention, real access
 faults, permanent quarantine, replacement incarnation and original receipt
 checks. Physical controls remain fixture-side. Fresh replay passes 311 artifact
 and 65 Consumer cases. Quarantine callers must now explicitly supply their
-durable context or select logical-only scope. The newest request is
-84 scopes/732 observations, pending. Six original recovery methods (twelve
+durable context or select logical-only scope. Native run `40143552793` passed
+all three jobs, 200 foundations and 84 scopes/732 observations at `c1d2a6b`,
+including the corrected fifteen-row quarantine scope. Six original recovery methods (twelve
 Local/Object parameters) now share provider-free cursor, inventory and
 generation-fencing assertions. Fixed original variants retain their distinct
 enumeration consistency; clock control and driver lifetime stay fixture-side.
 Fresh independent replay passes 311 artifact and 65 Consumer cases.
 The expanded request is 85 scopes/744 observations, pending.
+Five further recovery methods now share admitted-history/generation-race and
+progress checks across ten parameters. The unchanged managed barrier body and
+its source/barrier lifetime order live in the SDK; physical fault registration
+stays fixture-side. Fresh independent replay passes 311 artifact and 65 Consumer
+cases. The newest request is 86 scopes/754 observations, pending.
 Full bindings, remaining mandatory fault controls and category/profile
 acceptance remain unfinished.
 

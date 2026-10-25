@@ -1091,6 +1091,58 @@ class SdkDiagnosticTests(unittest.TestCase):
                 body = "".join(text[start:text.index("\n    }", start)].split())
                 self.assertIn("awaitQuarantineIsPermanentAsync(store,receipt,bytes,cancellationToken,reopen);", body)
 
+    def test_recovery_barrier_retains_complete_original_entry_hold_release_and_settlement_body(self):
+        path = ROOT / "tests/contracts/Hoard.Testing.Conformance/Artifacts/ArtifactConformanceBarrier.cs"
+        self.assertTrue(path.is_file(), "Common race checks must own the original managed barrier.")
+        text = path.read_text()
+        body = text[text.index("{"):text.rindex("}") + 1]
+        self.assertEqual(hashlib.sha256("".join(body.split()).encode()).hexdigest(),
+                         "88372cf64d9e1c68b791e66c87393b107397e5b29c383dd1b3b2c3659659242a")
+        original = (ROOT / "tests/contracts/Hoard.Artifacts.Tests/Cases/ArtifactTestBarrier.cs").read_text()
+        self.assertIn("Hoard.Testing.Conformance.Artifacts.ArtifactConformanceBarrier(name);", original)
+
+    def test_recovery_races_scope_requires_every_original_provider_and_admitted_history_witness(self):
+        factory = getattr(checks, "original_artifact_recovery_race_scenarios", None)
+        self.assertTrue(callable(factory), "Recovery races must retain both providers and admitted history.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactRecoveryTests."
+        methods = {prefix + name for name in (
+            "Expired_reclaimed_history_remains_owned_until_the_admitted_delete_physically_settles",
+            "Late_cleanup_rechecks_the_exact_generation_after_replacement",
+            "Progressing_commit_renews_owner_across_the_original_ttl",
+        )}
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        expected = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.split("(")[0] in methods}
+        expected.update(
+            prefix + name + f'(provider: "{provider}")'
+            for name in (
+                "Admitted_reconciliation_preserves_the_settled_receipt_after_delete_and_recreate",
+                "Expired_history_is_not_retired_beneath_an_admitted_reconciliation",
+            ) for provider in ("local", "object"))
+        scenario, = factory()
+        self.assertEqual(scenario, ("original-artifact-recovery-races", tuple(sorted(expected)), "None", "Passed", 0, "None"))
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.ARTIFACT_TESTS / checks.ARTIFACT_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Artifacts.Tests.dll")
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+        }
+        with patch.object(checks, "runtime_command",
+                          side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+            self.assertEqual(launch.call_args.args[1], assembly)
+            self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, expected)
+        for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+                        (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
+                        ("original-artifact-recovery-races-foreign", *scenario[1:])):
+            with patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, candidate, changed)
+                launch.assert_not_called()
+
     def test_recovery_pages_scope_requires_both_original_providers_and_every_cursor_and_generation_witness(self):
         factory = getattr(checks, "original_artifact_recovery_pages_scenarios", None)
         self.assertTrue(callable(factory), "Recovery extraction must retain both original providers.")

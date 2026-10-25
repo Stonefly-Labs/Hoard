@@ -5,6 +5,158 @@ namespace Hoard.Testing.Conformance.Artifacts;
 
 public static class ArtifactRecoveryAssertions
 {
+    public static async Task SettledReceiptReplacementAsync(
+        IArtifactStore store, Action<long> setUtc, Action loseAcknowledgment, Action restoreAcknowledgment,
+        Action<Func<ValueTask>> observeReconciliation, Action removeReconciliation,
+        CancellationToken cancellationToken)
+    {
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        using var source = new ShortSource("settled receipt survives replacement"u8.ToArray());
+        var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
+        loseAcknowledgment();
+        Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+            await store.CommitAsync(staged, new(), cancellationToken)).Code);
+        restoreAcknowledgment();
+        await using var barrier = new ArtifactConformanceBarrier("settled-reconciliation-after-replacement");
+        observeReconciliation(() => new(barrier.HoldAsync()));
+        var held = store.ReconcileAsync(ticket, new(), cancellationToken).AsTask();
+        ArtifactMutationReceipt settled;
+        ArtifactMutationReceipt replacement;
+        try
+        {
+            await barrier.Entered;
+            removeReconciliation();
+            settled = Assert.IsType<ArtifactResolution.Committed>(
+                Success(await store.ReconcileAsync(ticket, new(), cancellationToken))).Receipt;
+            var deletion = Success(await store.ReserveDeleteAsync(new(settled.Stamp), new(), cancellationToken));
+            Success(await store.DeleteAsync(deletion, new(), cancellationToken));
+            using var next = new ShortSource("settled receipt survives replacement"u8.ToArray());
+            replacement = await PublishAsync(store, next, new(1024), cancellationToken);
+            Assert.NotEqual(settled.Stamp, replacement.Stamp);
+            setUtc(ticket.Expires.ToUnixTimeMilliseconds());
+            Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        }
+        finally { barrier.Release(); }
+        Assert.Equal(settled, Assert.IsType<ArtifactResolution.Committed>(Success(await held)).Receipt);
+        Assert.Equal("settled receipt survives replacement"u8.ToArray(), await ReadAsync(store, replacement.Stamp, cancellationToken));
+    }
+
+    public static async Task AdmittedDeleteHistoryAsync(
+        IArtifactStore store, IArtifactMaintenance maintenance, ArtifactStoreIdentity identity,
+        Action<long> setUtc, Action<Func<ValueTask>> observeDelete, CancellationToken cancellationToken)
+    {
+        using var source = new ShortSource("held deletion history"u8.ToArray());
+        var original = await PublishAsync(store, source, new(1024), cancellationToken);
+        var deletion = Success(await store.ReserveDeleteAsync(new(original.Stamp), new(), cancellationToken));
+        await using var barrier = new ArtifactConformanceBarrier("admitted-delete-retains-reclaimed-history");
+        observeDelete(() => new(barrier.HoldAsync()));
+        var held = store.DeleteAsync(deletion, new(), cancellationToken).AsTask();
+        try
+        {
+            await barrier.Entered;
+            Success(await maintenance.CleanupAsync(new(identity,
+                [new ArtifactCleanupTarget.RemovedIncarnation(original.Stamp)]), new(), cancellationToken));
+            setUtc(deletion.Expires.ToUnixTimeMilliseconds());
+            var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+            using var next = new ShortSource("different digest awaiting settled history"u8.ToArray());
+            var staged = Success(await store.StageAsync(ticket, next, new(), cancellationToken));
+            Assert.Equal(ArtifactFailureCode.Capacity, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+                await store.CommitAsync(staged, new(), cancellationToken)).Code);
+        }
+        finally { barrier.Release(); }
+        Assert.Equal(ArtifactReclamation.Reclaimed, Success(await held).Reclamation);
+        using var replacement = new ShortSource("different digest awaiting settled history"u8.ToArray());
+        var current = await PublishAsync(store, replacement, new(1024), cancellationToken);
+        Assert.Equal("different digest awaiting settled history"u8.ToArray(), await ReadAsync(store, current.Stamp, cancellationToken));
+    }
+
+    public static async Task AdmittedReconciliationHistoryAsync(
+        IArtifactStore store, Action<long> setUtc, Action loseAcknowledgment, Action restoreAcknowledgment,
+        Action<Func<ValueTask>> observeReconciliation, Action removeReconciliation,
+        CancellationToken cancellationToken)
+    {
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        using var source = new ShortSource("retained reconciliation ownership"u8.ToArray());
+        var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
+        loseAcknowledgment();
+        Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+            await store.CommitAsync(staged, new(), cancellationToken)).Code);
+        restoreAcknowledgment();
+        await using var barrier = new ArtifactConformanceBarrier("reconciliation-owns-expired-history");
+        observeReconciliation(() => new(barrier.HoldAsync()));
+        var held = store.ReconcileAsync(ticket, new(), cancellationToken).AsTask();
+        ArtifactMutationReceipt settled;
+        try
+        {
+            await barrier.Entered;
+            removeReconciliation();
+            settled = Assert.IsType<ArtifactResolution.Committed>(
+                Success(await store.ReconcileAsync(ticket, new(), cancellationToken))).Receipt;
+            setUtc(ticket.Expires.ToUnixTimeMilliseconds());
+            Assert.Equal(ArtifactFailureCode.Capacity, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
+                await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken)).Code);
+        }
+        finally { barrier.Release(); }
+        Assert.Equal(settled, Assert.IsType<ArtifactResolution.Committed>(Success(await held)).Receipt);
+        Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        Assert.Equal("retained reconciliation ownership"u8.ToArray(), await ReadAsync(store, settled.Stamp, cancellationToken));
+    }
+
+    public static async Task LateCleanupGenerationAsync(
+        IArtifactStore store, IArtifactMaintenance maintenance, ArtifactStoreIdentity identity,
+        Action<TimeSpan> advanceClock, Action<Func<ValueTask>> observeCleanup, Action removeCleanup,
+        CancellationToken cancellationToken)
+    {
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        using var first = new ShortSource("expired generation"u8.ToArray());
+        var old = Success(await store.StageAsync(ticket, first, new(), cancellationToken));
+        advanceClock(TimeSpan.FromSeconds(30));
+        var request = new ArtifactCleanupRequest(identity, [new ArtifactCleanupTarget.AbandonedStaging(old.Owner)]);
+        await using var barrier = new ArtifactConformanceBarrier("late-generation-cleanup");
+        observeCleanup(() => new(barrier.HoldAsync()));
+        var delayed = maintenance.CleanupAsync(request, new(), cancellationToken).AsTask();
+        ArtifactStagedWrite replacement;
+        try
+        {
+            await barrier.Entered;
+            removeCleanup();
+            Assert.Equal(1, Success(await maintenance.CleanupAsync(request, new(), cancellationToken)).Completed);
+            using var second = new ShortSource("replacement generation"u8.ToArray());
+            replacement = Success(await store.StageAsync(ticket, second, new(), cancellationToken));
+            Assert.True(replacement.Owner.Generation > old.Owner.Generation);
+        }
+        finally { barrier.Release(); }
+        var result = Success(await delayed);
+        Assert.Equal(1, result.Conflicted);
+        Assert.Equal(0, result.ReclaimedBytes);
+        var receipt = Success(await store.CommitAsync(replacement, new(), cancellationToken));
+        Assert.Equal("replacement generation"u8.ToArray(), await ReadAsync(store, receipt.Stamp, cancellationToken));
+    }
+
+    public static async Task ProgressingCommitAsync(
+        IArtifactStore store, Action<TimeSpan> advanceClock, Action<Func<ValueTask>> observeProgress,
+        CancellationToken cancellationToken)
+    {
+        var bytes = new byte[1048576];
+        using var first = new MemoryStream(bytes, writable: false);
+        await PublishAsync(store, first, new(2097152), cancellationToken);
+        using var duplicate = new MemoryStream(bytes, writable: false);
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(2097152)), new(), cancellationToken));
+        var staged = Success(await store.StageAsync(ticket, duplicate, new(), cancellationToken));
+        var progress = 0;
+        ValueTask Advance()
+        {
+            advanceClock(TimeSpan.FromSeconds(11));
+            Interlocked.Increment(ref progress);
+            return ValueTask.CompletedTask;
+        }
+        observeProgress(Advance);
+        var receipt = Success(await store.CommitAsync(staged, new(), cancellationToken));
+        Assert.True(progress >= 4);
+        Assert.Equal(ArtifactMutationOutcome.AlreadyPresentVerified, receipt.Outcome);
+        Assert.Equal(receipt, Success(await store.CommitAsync(staged, new(), cancellationToken)));
+    }
+
     public static async Task SequentialRecoveryAsync(
         IArtifactStore store, IArtifactMaintenance maintenance, ArtifactStoreIdentity identity,
         Action<TimeSpan> advanceClock, ArtifactEnumerationConsistency expectedConsistency,

@@ -785,8 +785,9 @@ order; the fixture permission setter also retains a local platform guard.
 Exact new transport rejects missing/foreign parameters or changed scope names
 before launch. Quarantine callers explicitly supply the real durable context
 or select logical-only scope; no reopen parameter is defaulted. The newest
-request is 84 scopes/732 observations, pending, not full
-fault-driver/category/profile admission.
+request passed run `40143552793` at `c1d2a6b`: all three jobs, 200 foundations
+and 84 scopes/732 observations, including the corrected fifteen-row quarantine
+scope, not full fault-driver/category/profile admission.
 
 Six original recovery methods now forward all twelve provider parameters (eight
 frozen category witnesses and four additional existing cases) to
@@ -798,6 +799,16 @@ of provider capabilities and retains clock/driver ownership. No filesystem
 control or provider switch enters the common checks. Missing/foreign parameters
 and renamed scopes reject before launch. The expanded request is
 85 scopes/744 observations, pending, not full category/profile admission.
+
+Five further recovery methods share ten parameters (six frozen witnesses and
+four additional existing cases) through provider-free admitted-history,
+generation-race and progressing-commit consumers. The SDK owns the original
+managed barrier with identical body, 10/20/10-second budgets and source/barrier
+nesting, while physical fault registration/removal remains fixture-side.
+The legacy barrier alias lives under package-only `Cases/`, so ordinary
+contract compilation gains no SDK reference. Complete-body/helper parity and
+exact prelaunch parameter admission remain required. The newest request is
+86 scopes/754 observations, pending, not qualification.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and
