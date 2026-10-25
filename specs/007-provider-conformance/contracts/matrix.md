@@ -26,6 +26,11 @@ Metadata publication/authority and artifact deletion integration exercise all
 four concrete pairings: `sqlite/local`, `sqlite/object`, `memory/local`,
 `memory/object`. A named underlying runtime witness may serve multiple mapped
 obligations only if every required parameter combination is observed.
+QC-12's catalog names eight actual consumers per pairing: reference admission,
+failed transaction, live references, lost acknowledgment, incarnation fencing,
+held reader, foreign authority and shutdown. All 32 exact parameter rows are
+mandatory alongside the seven QC controls. Diagnostic execution or catalog
+presence alone does not establish qualification-origin integration admission.
 
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service

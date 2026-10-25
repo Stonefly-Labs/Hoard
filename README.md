@@ -2205,7 +2205,7 @@ source anchors, not a shortened underlying inventory. Report admission
 recomputes the complete receipt and its hash; missing/changed receipts,
 shortened cases and foreign anchors reject. Original receipt bytes survive
 retries, and file/byte budget failures commit no partial passing basis.
-All 426 tooling checks pass with 19 native skips. QC-03/04/05/12 and full
+All 427 tooling checks pass with 19 native skips. QC-03/04/05/12 and full
 profile/evaluator acceptance remain incomplete. The preceding f1ba Linux replay
 passes 311 foundations but fails the qualification-origin artifact controller
 with `WitnessMissing`; it is not admitted. The controller now uses validated
@@ -2226,6 +2226,14 @@ after input recapture, original history-hash checks, exact frozen case/exclusion
 validation and rehashing every retained proof file. Runtime proof links use the
 actual owned logger directories without rewriting bytes. Reports remain
 `Incomplete`; their hashes do not claim full profile/evaluator acceptance.
+
+QC-12 now names all 32 actual authority-integration rows in the independent
+Python and embedded SDK catalogs: eight consumers for each of the four
+metadata/artifact pairings. SDK diagnostics use that same exact selection and
+reject a missing pairing, consumer or parameter row before launch. Cross-binding
+quality witnesses do not enter ordinary provider execution scopes. QC-12 remains
+`Incomplete` pending fresh qualification-origin source admission; earlier
+diagnostic success is not promoted.
 
 Exact `5f81b926ca7add6845cb19cccba200b668eb0831`,
 [run40232608162](https://github.com/Stonefly-Labs/Hoard/actions/runs/40232608162),

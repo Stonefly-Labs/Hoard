@@ -59,6 +59,16 @@ expected invocation/assembly and test discovery inventory. A TRX total or
 copied case name/flag is not enough. Missing mandatory tests cannot become a
 smaller expected inventory.
 
+QC-12 explicitly requires all 32 fully parameterized
+`AuthorityIntegrationTests.Actual_compositions_preserve_shared_authority`
+witnesses in the independent and embedded SDK catalogs, in addition to its
+seven controls. The SDK diagnostic scenario uses that exact selection and
+rejects missing pairings, consumers or individual rows before execution.
+These cross-binding quality witnesses are not ordinary single-provider runtime
+scopes. Catalog inclusion and earlier diagnostic runs do not provide fresh
+qualification-origin integration sources; QC-12 remains incomplete until that
+source admission is implemented and executed.
+
 The implemented category batch history derives each binding's entire frozen
 runtime union from the independent catalog and requires both category package
 options. The primary execution context for a shared runtime witness is its

@@ -35,7 +35,7 @@ from conformance_case_catalog import (
     ORIGINAL_ARTIFACT_REOPENS, ORIGINAL_ARTIFACT_SHARED_OWNER_WITNESSES, ORIGINAL_ARTIFACT_WITNESSES,
     METADATA_INVENTORY_SOURCE_WITNESSES, METADATA_RECOVERY_SOURCE_WITNESS, ORIGINAL_METADATA_FACADE_WITNESSES,
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
-    catalog_admission_witnesses, category_cases, category_execution_partitions,
+    authority_integration_witnesses, catalog_admission_witnesses, category_cases, category_execution_partitions,
     category_runtime_cases, category_runtime_packages, expected_cases,
     original_witness_parents, original_witness_policy,
 )
@@ -1451,13 +1451,7 @@ def category_mutation_scenarios():
 
 
 def actual_authority_integration_scenarios():
-    method = AUTHORITY_INTEGRATION_PREFIX + "Actual_compositions_preserve_shared_authority"
-    identities = {
-        f'{method}(provider: "{provider}", metadataProvider: "{metadata}", consumer: "{consumer}")'
-        for provider in ("local", "object") for metadata in ("memory", "sqlite") for consumer in (
-            "reference-admission", "failed-transaction", "live-references", "lost-acknowledgment",
-            "incarnation", "reader", "foreign-authority", "shutdown")}
-    return (("actual-authority-integration", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+    return (("actual-authority-integration", authority_integration_witnesses(), "None", "Passed", 0, "None"),)
 
 
 def full_metadata_binding_scenarios():

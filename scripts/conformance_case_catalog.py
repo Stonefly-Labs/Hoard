@@ -374,7 +374,7 @@ def category_runtime_cases(profile, binding_id, *, mode="diagnostic"):
     cases = tuple(case for case in expected_cases(profile) if case.binding_id == binding_id)
     if not cases:
         raise ConformanceError("BindingInvalid")
-    applicable = tuple(case for case in cases if case.exclusion is None)
+    applicable = tuple(case for case in cases if case.exclusion is None and case.binding_id != "none")
     selected = {
         identity: min(case.case_id for case in applicable if identity in case.witnesses)
         for identity in {identity for case in applicable for identity in case.witnesses}}
@@ -821,6 +821,15 @@ def catalog_admission_witnesses():
     ))
 
 
+def authority_integration_witnesses():
+    method = "Hoard.Conformance.Tests.AuthorityIntegrationTests.Actual_compositions_preserve_shared_authority"
+    return tuple(sorted(
+        f'{method}(provider: "{provider}", metadataProvider: "{metadata}", consumer: "{consumer}")'
+        for provider in ("local", "object") for metadata in ("memory", "sqlite") for consumer in (
+            "reference-admission", "failed-transaction", "live-references", "lost-acknowledgment",
+            "incarnation", "reader", "foreign-authority", "shutdown")))
+
+
 def category_cases():
     inventory = load_json(INVENTORY.read_bytes())
     if inventory.get("catalogRevision") != CATALOG_REVISION:
@@ -890,6 +899,8 @@ def expected_cases(profile):
     }
     for number in obligations[profile]:
         witnesses = catalog_admission_witnesses() if number == 1 else ()
+        if number == 12:
+            witnesses = authority_integration_witnesses()
         cases.append(ExpectedCase(profile, "none", "none", f"QC-{number:02}", witnesses,
                                   obligation_controls(number)))
     if len(cases) > MAX_RESULTS or len({case.key for case in cases}) != len(cases):

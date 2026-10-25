@@ -9604,7 +9604,25 @@ retain only the same bounded static source locations, never raw traceback text.
 This wires real report admission into the next Linux replay; it does not finish
 the profile evaluator or remaining QCs.
 
-Current validation: all 426 tooling checks pass with 19 explicit native skips;
+QC-12's independent catalog and embedded SDK resource now require the exact
+32 `AuthorityIntegrationTests` parameter rows: all four pairings times eight
+consumers. Diagnostic orchestration uses the same immutable selection. Focused
+catalog/scenario assertions first reproduce the missing witness set; source-row
+parity, missing-pairing, missing-consumer and single-row/foreign-row negatives
+then pass. Cross-binding quality rows remain outside ordinary provider scopes.
+No existing diagnostic execution becomes qualification evidence: fresh
+qualification-origin integration source admission remains unbuilt and QC-12
+stays `Incomplete`.
+
+Exact `3166f667bf70a0756f7b2a8c42ec35034d6fc35b`,
+[run40237666479](https://github.com/Stonefly-Labs/Hoard/actions/runs/40237666479),
+passes 315 native foundations and locked replay but fails SDK diagnostics.
+Its bounded safe locations independently attribute `WitnessMissing` to
+`scripts/conformance_evidence.py:1619`, the ordinary source-only admission guard
+already addressed by controller routing repair `13aecdf`. The failed snapshot
+is not admitted; this attribution does not establish native repair success.
+
+Current validation: all 427 tooling checks pass with 19 explicit native skips;
 all 133 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
 and whitespace checks pass. The preceding byte-capture checkpoint compiled
 the original artifact package-acceptance project with freshly rebuilt SDK,

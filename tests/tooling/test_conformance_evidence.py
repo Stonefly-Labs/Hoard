@@ -20,6 +20,30 @@ import conformance_evidence as evidence
 
 
 class ConformanceAdmissionTests(unittest.TestCase):
+    def test_authority_quality_catalog_requires_all_actual_composition_parameters(self):
+        import conformance_case_catalog as catalog
+        method = "Hoard.Conformance.Tests.AuthorityIntegrationTests.Actual_compositions_preserve_shared_authority"
+        expected = {
+            f'{method}(provider: "{provider}", metadataProvider: "{metadata}", consumer: "{consumer}")'
+            for provider in ("local", "object") for metadata in ("memory", "sqlite") for consumer in (
+                "reference-admission", "failed-transaction", "live-references", "lost-acknowledgment",
+                "incarnation", "reader", "foreign-authority", "shutdown")}
+        case, = (case for case in catalog.expected_cases("artifacts") if case.case_id == "QC-12")
+        self.assertEqual(set(case.witnesses), expected)
+        self.assertEqual(len(case.witnesses), 32)
+        source = (ROOT / "tests/contracts/Hoard.Conformance.Tests/AuthorityIntegrationTests.cs").read_text()
+        rows = source.split("public static IEnumerable<object[]> Rows()")[1].split("[Theory]")[0]
+        dimensions = {
+            name: tuple(re.findall(r'"([^"]+)"', values))
+            for name, values in re.findall(r"foreach \(var (\w+) in new\[\] \{([^}]+)\}", rows)}
+        actual = tuple(
+            f'{method}(provider: "{provider}", metadataProvider: "{metadata}", consumer: "{consumer}")'
+            for provider in dimensions["provider"] for metadata in dimensions["metadata"]
+            for consumer in dimensions["consumer"])
+        self.assertEqual(set(actual), expected)
+        self.assertEqual(len(actual), len(expected))
+        self.assertEqual(catalog.category_runtime_cases("artifacts", "none", mode="qualification"), {})
+
     def test_category_qualification_selects_source_facts_only_for_actual_provider_bindings(self):
         import conformance_case_catalog as catalog
         for profile in ("metadata", "artifacts"):

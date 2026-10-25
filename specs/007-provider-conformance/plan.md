@@ -6734,6 +6734,23 @@ explicitly Incomplete/non-qualifying, with no release/cleanup or full-evaluator
 claim. Their state/hash appears in final safe diagnostics; terminal failures
 carry only bounded static source locations. Actual Linux execution is pending.
 
+QC-12 now carries the complete 32-row authority integration runtime inventory
+in both independent and embedded SDK catalogs. SDK diagnostics share that
+selection instead of defining a separate matrix. Source-row equality and
+missing-pairing/consumer/individual-row negatives guard all four pairings and
+eight consumers. Cross-binding quality witnesses remain separate from ordinary
+provider runtime scopes; no new scope or source admission is invented. Two
+intended catalog/scenario assertion reds precede repair. All 427 tooling checks
+pass with 19 native skips, and all 133 source SDK tests pass. QC-12 remains
+Incomplete pending fresh qualification-origin integration source corroboration;
+T033, other unchecked tasks and reviewer-owned checklist markers do not advance.
+
+The exact prior `3166f66`/run40237666479 replay passes 315 native foundations and
+locked replay but fails SDK diagnostics. Independently projected bounded source
+locations identify `conformance_evidence.py:1619`, the unchanged ordinary
+source-only admission guard addressed by `13aecdf`'s routing repair. This failed
+snapshot is not admitted and does not prove native success of the repair.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

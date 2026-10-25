@@ -3632,6 +3632,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         scenario, = factory()
         self.assertEqual(scenario, ("actual-authority-integration", tuple(sorted(expected)),
                                     "None", "Passed", 0, "None"))
+        case, = (case for case in checks.expected_cases("artifacts") if case.case_id == "QC-12")
+        self.assertEqual(scenario[1], case.witnesses)
         candidate = self.directory / "candidate"
         assembly = candidate / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / (
             "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
@@ -3649,7 +3651,15 @@ class SdkDiagnosticTests(unittest.TestCase):
                 admission.assert_called_once_with(inputs, assembly, self.directory)
                 self.assertEqual(launch.call_args.args[1], assembly)
                 self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, expected)
-        for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+        shortened = tuple(
+            (scenario[0], tuple(identity for identity in scenario[1] if parameter not in identity), *scenario[2:])
+            for parameter in (
+                *(f'provider: "{provider}", metadataProvider: "{metadata}"'
+                  for provider in ("local", "object") for metadata in ("memory", "sqlite")),
+                *(f'consumer: "{consumer}"' for consumer in (
+                    "reference-admission", "failed-transaction", "live-references", "lost-acknowledgment",
+                    "incarnation", "reader", "foreign-authority", "shutdown"))))
+        for changed in (*shortened, (scenario[0], scenario[1][:-1], *scenario[2:]),
                         (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
                         ("actual-authority-integration-foreign", *scenario[1:])):
             with patch.object(checks, "runtime_command") as launch:
