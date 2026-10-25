@@ -7648,7 +7648,9 @@ all 28 metadata rows and verifies 30 genuine origins, 28 creates/two reopens and
 180 actual role/image/archive correspondences. Tooling passes 322 checks
 (305 passed/seventeen macOS-native skips), including 96 SDK checks; Consumer
 formatting and patch checks pass. The next native request is 214 foundations
-and 95 scopes/838 observations, not yet admitted. These standalone metadata
+and 95 scopes/838 observations; it passed as run `40156840261` at
+`2beff5414c948814599a0f7f20426028579adb33`, all three jobs,
+214 foundations without failures/errors/skips and every prerequisite. These standalone metadata
 checks are not shared artifact-authority integration or complete category/profile
 qualification. Remaining imports/integrations and final T081 stay open;
 production/deployment examples and architecture diagrams are unaffected.
@@ -7677,6 +7679,34 @@ The admitted compatible-reopen run binds input
 `6269c9ddadd831a7cdef59dfd7e8d2194bd767e316e7e8fb7d2272fc04886890`,
 preparation `d6b7c46e8a76016e6290406375013dfbd2b2668ae1eddc859fba1a15d6a1f83d`
 and 91,721,584,640 free scratch bytes. It predates these fifty further common rows.
+
+Eight further observed schema rows now invoke unchanged upgrade,
+invalid-upgrade, upgrade-exclusion and future/corrupt-schema consumers. A
+transparent caller-side recorder forwards real operations/disposal, records actual
+observed factory sessions and their genuine reopens, and disposes an unreturned
+child on capture failure. It never appears as an origin factory/component.
+Strict parent admission requires exact two/three/four-origin counts and matching
+descriptors; focused admission checks reject missing/extra/foreign descriptor origins.
+Common assertion bodies, enclosing disposal scopes and provider mechanisms stay
+unchanged.
+
+Fresh preparation/replay pass 311 artifact, 169 Consumer and 89+89 metadata
+cases without failures/skips. All fifteen archives preserve the same map.
+Actual bounded fresh-cache observation verifies 66 exact rows, 82 origins,
+68 creates/14 reopens and 492 role/image/archive correspondences; the independent
+artifact replay still verifies 24 rows/26 origins/208 correspondences.
+Tooling passes 323 checks (306 passed/seventeen macOS-native skips), including
+97 SDK checks; Consumer formatting, frozen catalog/inventory and patch checks pass.
+The next native request is 215 foundations and 95 scopes/876 observations,
+not yet admitted. Memory upgrades/reopen remain logical. Full category/profile
+imports, complete recovery-profile admission, integrations and final T081 remain separate
+unfinished work; historical seals, locks, tasks and reviewer markers are unchanged.
+Product/deployment examples and diagrams are unaffected.
+
+The admitted entity/atomicity/lease run binds input
+`b964bc83022faac1ac7891361f8b89dddb97f97a03d760553f9b26ec8adfd432`,
+preparation `5927c9a5161d6646c61102a0cb3f0442efa1da4c1009f66bba533aa4d6b00999`
+and 91,721,551,872 free scratch bytes; it predates reference/schema increments.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

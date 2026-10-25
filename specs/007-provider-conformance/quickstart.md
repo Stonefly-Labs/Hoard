@@ -511,7 +511,8 @@ final-graph, independent-candidate, faulted-atomic-candidate, grouped-read and
 lease overflow/fence/decision-expiry consumers through both observed factories.
 All 28 metadata rows produce 30 actual origins/180 role/image/archive matches.
 Fresh preparation/replay pass 311 artifact, 131 Consumer and 89+89 metadata cases.
-The next native request is 95 scopes/838 observations, not yet admitted;
+Its native request passed as run `40156840261` at `2beff54`: all three jobs,
+214 foundations and 95 scopes/838 exact discoveries/executions with every prerequisite;
 standalone metadata checks do not establish shared artifact-authority integration
 or complete category/profile qualification.
 Thirty further observed rows import unchanged identity/isolation, references/
@@ -521,6 +522,14 @@ archive matches. Fresh preparation/replay pass 311 artifact, 161 Consumer and
 89+89 metadata cases; the next native request is 95 scopes/868 observations,
 not yet admitted. These are not artifact-incarnation/shared-authority or complete
 category/profile proofs.
+Eight more schema rows execute unchanged upgrade, invalid-upgrade,
+upgrade-exclusion and future/corrupt-schema consumers. Actual legacy/current
+factory sessions and every real reopen are captured with preserved cleanup
+ownership. All 66 rows emit 82 origins/492 role/image/archive matches; fresh
+preparation/replay pass 311 artifact, 169 Consumer and 89+89 metadata cases.
+The next native request is 215 foundations and 95 scopes/876 observations,
+not yet admitted. Logical Memory upgrades are not durable recovery or full
+category/profile qualification.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

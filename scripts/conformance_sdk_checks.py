@@ -1286,20 +1286,39 @@ def full_artifact_binding_scenarios():
 
 
 def full_metadata_binding_scenarios():
+    return (("full-metadata-binding", tuple(sorted(full_metadata_binding_origin_counts())),
+             "None", "Passed", 0, "None"),)
+
+
+def full_metadata_binding_origin_counts():
     method = (FULL_METADATA_CONSUMER_PREFIX
               + "Observed_factories_execute_unchanged_common_consumers_with_actual_origins")
-    identities = [
-        f'{method}(provider: "{provider}", consumer: "{consumer}")'
+    identities = {
+        f'{method}(provider: "{provider}", consumer: "{consumer}")': 1
         for provider in ("memory", "sqlite") for consumer in (
             "capacity", "writer", "publication", "entities", "graph", "independent",
             "atomic", "grouped", "lease-generation", "lease-fences",
             "lease-renew", "lease-release", "lease-guard",
             "text", "registry", "authorization", "references", "reference-aba", "telemetry",
             "create-race", "revision-race", "reconcile-writer", "reconcile-io",
-            "reconcile-ack", "contributions", "receipts", "layout-empty", "layout-partial")]
+            "reconcile-ack", "contributions", "receipts", "layout-empty", "layout-partial")}
     reopen = FULL_METADATA_CONSUMER_PREFIX + "Observed_reopen_preserves_public_state_and_fences_stale_controls"
-    identities.extend(f'{reopen}(provider: "{provider}")' for provider in ("memory", "sqlite"))
-    return (("full-metadata-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+    identities.update({f'{reopen}(provider: "{provider}")': 2 for provider in ("memory", "sqlite")})
+    schema = FULL_METADATA_CONSUMER_PREFIX + "Observed_schema_consumers_preserve_actual_reopen_lineage"
+    identities.update({
+        f'{schema}(provider: "{provider}", consumer: "{consumer}")': count
+        for provider in ("memory", "sqlite") for consumer, count in (
+            ("upgrade", 3), ("upgrade-invalid", 2), ("upgrade-exclusive", 2), ("future-corrupt", 4))})
+    return identities
+
+
+def validate_full_binding_origins(ingested, inputs, counts):
+    bindings = {binding["bindingId"]: binding["descriptorSha256"] for binding in inputs["bindings"]}
+    for witness in ingested["witnesses"]:
+        origins = ingested["sessionOrigins"][witness["executionId"]]
+        if (len(origins) != counts.get(witness["testIdentity"])
+                or any(origin["descriptorSha256"] != bindings.get(witness["bindingId"]) for origin in origins)):
+            raise evidence.ConformanceError("WitnessMissing")
 
 
 def _binding_origin_inputs(candidate, root, category, providers, store_roles):
@@ -1985,16 +2004,10 @@ def test_attempt(run, inputs, candidate, scenario):
             or any(len(origins) != 1 for origins in ingested["sessionOrigins"].values())):
         raise evidence.ConformanceError("WitnessMissing")
     if name in ("full-artifact-binding", "full-metadata-binding"):
-        bindings = {binding["bindingId"]: binding["descriptorSha256"] for binding in inputs["bindings"]}
-        reopen = (FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
-                  if name == "full-artifact-binding" else
-                  FULL_METADATA_CONSUMER_PREFIX + "Observed_reopen_preserves_public_state_and_fences_stale_controls")
-        for witness in ingested["witnesses"]:
-            origins = ingested["sessionOrigins"][witness["executionId"]]
-            count = 2 if witness["testIdentity"].split("(")[0] == reopen else 1
-            if (len(origins) != count
-                    or any(origin["descriptorSha256"] != bindings.get(witness["bindingId"]) for origin in origins)):
-                raise evidence.ConformanceError("WitnessMissing")
+        reopen = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
+        counts = (full_metadata_binding_origin_counts() if name == "full-metadata-binding" else
+                  {identity: 2 if identity.split("(")[0] == reopen else 1 for identity in identities})
+        validate_full_binding_origins(ingested, inputs, counts)
     return {"code": expected_code, "tests": len(identities),
             "discoverySha256": evidence.file_sha256(discovery_output / "completion.json"),
             "completionSha256": evidence.file_sha256(output / "completion.json")}

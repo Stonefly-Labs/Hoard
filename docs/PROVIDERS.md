@@ -805,7 +805,8 @@ grouped-read and lease overflow/fence/decision-expiry consumers. Both independen
 factories execute the same consumers with real fault controls and the injected
 clock. All 28 rows produce 30 actual origins/180 role/image/archive matches.
 Fresh preparation/replay pass 311 artifact, 131 Consumer and 89+89 metadata cases;
-the next native request is 95 scopes/838 observations, not yet admitted. These
+its native request passed as run `40156840261` at `2beff54`: all three jobs,
+214 foundations and 95 scopes/838 exact discoveries/executions with every prerequisite. These
 standalone metadata authority checks are not shared artifact-authority integration,
 durable Memory recovery or complete category/profile qualification.
 
@@ -819,6 +820,17 @@ preparation/replay pass 311 artifact, 161 Consumer and 89+89 metadata cases;
 the next native request is 95 scopes/868 observations, not yet admitted.
 Metadata zero-reference revision ABA is not artifact-incarnation fencing or
 shared-authority integration; full category/profile qualification remains open.
+
+Eight observed schema rows now invoke unchanged upgrade, invalid-upgrade,
+upgrade-exclusion and future/corrupt-schema consumers through actual legacy/
+current factories. The transparent recorder captures underlying observed
+sessions, not itself as a factory/component, and disposes an unreturned child on
+capture failure. Parent admission requires each exact two/three/four-origin
+lineage and rejects missing, extra or foreign descriptor origins. All 66 rows
+emit 82 actual origins/492 role/image/archive matches; fresh preparation/replay
+pass 311 artifact, 169 Consumer and 89+89 metadata cases. The next native request
+is 215 foundations and 95 scopes/876 observations, not yet admitted. Memory
+upgrades are logical; native backup/recovery and complete profiles remain separate.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

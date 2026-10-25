@@ -1022,7 +1022,8 @@ admission requires the complete 28-row scope, with one origin per ordinary row
 and two per exact compatible-reopen row: 30 genuine origins and 180 actual
 role/image/archive correspondences. Fresh preparation/replay pass 311 artifact,
 131 Consumer and 89+89 metadata cases; the next native request is 214 foundations
-and 95 scopes/838 observations, not yet admitted. Standalone metadata authority
+and 95 scopes/838 observations; it passed as run `40156840261` at `2beff54`,
+all three jobs and every prerequisite. Standalone metadata authority
 checks do not establish artifact/metadata shared authority; complete category/
 profile qualification and final T081 remain open.
 
@@ -1038,6 +1039,24 @@ replay pass 311 artifact, 161 Consumer and 89+89 metadata cases; the next native
 request is 214 foundations and 95 scopes/868 observations, not yet admitted.
 These metadata revision checks do not qualify artifact-incarnation fencing,
 the real cross-store authority bridge or complete category/profile acceptance.
+
+Eight further observed schema rows invoke unchanged upgrade, invalid-upgrade,
+upgrade-exclusion and future/corrupt-schema consumers. A transparent caller-side
+session recorder forwards actual operations/disposal, captures each underlying
+observed factory session and real child before handoff, and disposes an
+unreturned child on capture failure. It never substitutes itself as an origin
+factory/component. The common assertion bodies and their disposal scopes remain
+unchanged. Strict parent admission requires each exact lineage count: three for
+upgrade, two for invalid/exclusive upgrade and four for future/corrupt schema.
+Focused admission checks reject missing/extra/foreign descriptor origins.
+
+The complete 66-row scope emits 82 genuine origins, 68 creates/14 reopens and
+492 actual role/image/archive correspondences. Fresh preparation/replay pass
+311 artifact, 169 Consumer and 89+89 metadata cases; artifact observation remains
+24 rows/26 origins/208 correspondences after the shared count-validator extraction.
+The next native request is 215 foundations and 95 scopes/876 observations,
+not yet admitted. Memory upgrades/reopen remain logical; native backup/recovery,
+complete category/profile imports and final T081 remain separate unfinished work.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

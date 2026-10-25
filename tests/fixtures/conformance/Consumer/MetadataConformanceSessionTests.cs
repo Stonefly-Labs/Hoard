@@ -12,6 +12,46 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("memory", "upgrade")]
+    [InlineData("memory", "upgrade-invalid")]
+    [InlineData("memory", "upgrade-exclusive")]
+    [InlineData("memory", "future-corrupt")]
+    [InlineData("sqlite", "upgrade")]
+    [InlineData("sqlite", "upgrade-invalid")]
+    [InlineData("sqlite", "upgrade-exclusive")]
+    [InlineData("sqlite", "future-corrupt")]
+    public async Task Observed_schema_consumers_preserve_actual_reopen_lineage(string provider, string consumer)
+    {
+        await using var resources = new SqliteBindingTests.RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-metadata-binding",
+            new MetadataConformanceClock(new(1_800_000_000_000)), resources, new ConformanceEvidenceBuffer());
+        var origins = new List<ConformanceSessionOrigin>();
+        var observed = consumer == "future-corrupt"
+            ? await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default)
+            : await ConformanceObservedMetadataSession.OpenLegacyAsync(Binding(provider), context, default);
+        await using var original = new OriginSession(observed, origins);
+        origins.Add(observed.CaptureOrigin());
+        if (consumer == "future-corrupt")
+        {
+            await using var corrupt = new OriginSession(
+                await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default), origins);
+            origins.Add(corrupt.CaptureOrigin());
+            await MetadataSchemaAssertions.FutureAndCorruptAsync(original, corrupt, default);
+        }
+        else
+        {
+            await (consumer switch
+            {
+                "upgrade" => MetadataSchemaAssertions.UpgradeAsync(original, default),
+                "upgrade-invalid" => MetadataSchemaAssertions.InvalidUpgradeAsync(original, default),
+                "upgrade-exclusive" => MetadataSchemaAssertions.UpgradeExclusionAsync(original, default),
+                _ => throw new ArgumentException("BindingInvalid")
+            });
+        }
+        foreach (var origin in origins) { ConformanceSessionOriginOutput.Write(output, origin); }
+    }
+
+    [Theory]
     [InlineData("memory")]
     [InlineData("sqlite")]
     public async Task Observed_reopen_preserves_public_state_and_fences_stale_controls(string provider)
@@ -159,6 +199,34 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
             _ => throw new ArgumentException("BindingInvalid")
         });
         ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+    }
+
+    private sealed class OriginSession(
+        ConformanceObservedMetadataSession session, List<ConformanceSessionOrigin> origins) : IMetadataConformanceSession
+    {
+        public IMetadataStore Store => session.Store;
+        public IMetadataSchemaAdministration Schema => session.Schema;
+        public IMetadataConformanceAuthority Authority => session.Authority;
+        public IMetadataConformanceFaultDriver Faults => session.Faults;
+        public ConformanceSessionOrigin CaptureOrigin() => session.CaptureOrigin();
+        public ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken cancellationToken) =>
+            session.ObserveCleanupAsync(cancellationToken);
+        public ValueTask DisposeAsync() => session.DisposeAsync();
+
+        public async ValueTask<IMetadataConformanceSession> ReopenAsync(CancellationToken cancellationToken)
+        {
+            var reopened = await session.ReopenAsync(cancellationToken);
+            var handedOff = false;
+            try
+            {
+                var observed = Assert.IsType<ConformanceObservedMetadataSession>(reopened);
+                var current = new OriginSession(observed, origins);
+                origins.Add(observed.CaptureOrigin());
+                handedOff = true;
+                return current;
+            }
+            finally { if (!handedOff) { await reopened.DisposeAsync(); } }
+        }
     }
 
     private static Guid RunId()

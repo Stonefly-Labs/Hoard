@@ -1773,7 +1773,8 @@ final-graph, independent-candidate, faulted-atomic-candidate, grouped-read and
 lease overflow/fence/decision-expiry consumers through both observed factories.
 The scope is 28 rows/30 origins/180 actual role/image/archive matches. Fresh
 preparation/replay pass 311 artifact, 131 Consumer and 89+89 metadata cases;
-the next native request is 95 scopes/838 observations, not yet admitted.
+its native request passed as run `40156840261` at `2beff54`: all three jobs,
+214 foundations and 95 scopes/838 exact discoveries/executions with every prerequisite.
 This remains diagnostic work, not complete category/profile qualification.
 
 Thirty further observed rows now import unchanged canonical identity, registry/
@@ -1783,6 +1784,15 @@ reconciliation and malformed-schema consumers. All 58 metadata rows produce
 replay pass 311 artifact, 161 Consumer and 89+89 metadata cases; the next native
 request is 95 scopes/868 observations, not yet admitted. Metadata reference ABA
 is not artifact-incarnation/shared-authority qualification.
+
+Eight further observed schema rows execute unchanged upgrade, invalid-upgrade,
+upgrade-exclusion and future/corrupt-schema consumers. A transparent recorder
+captures the actual factory sessions and every genuine reopen, preserving common
+assertions and cleanup ownership. All 66 metadata rows produce 82 origins/
+492 actual role/image/archive matches. Fresh preparation/replay pass 311 artifact,
+169 Consumer and 89+89 metadata cases; the next native request is
+215 foundations and 95 scopes/876 observations, not yet admitted.
+Memory upgrades/reopens remain logical, not durable recovery or full qualification.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

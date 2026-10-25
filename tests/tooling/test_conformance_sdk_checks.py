@@ -1141,6 +1141,11 @@ class SdkDiagnosticTests(unittest.TestCase):
         reopen = ("Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
                   "Observed_reopen_preserves_public_state_and_fences_stale_controls")
         expected.update(f'{reopen}(provider: "{provider}")' for provider in ("memory", "sqlite"))
+        schema = ("Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
+                  "Observed_schema_consumers_preserve_actual_reopen_lineage")
+        expected.update(f'{schema}(provider: "{provider}", consumer: "{consumer}")'
+                        for provider in ("memory", "sqlite") for consumer in (
+                            "upgrade", "upgrade-invalid", "upgrade-exclusive", "future-corrupt"))
         scenario, = checks.full_metadata_binding_scenarios()
         self.assertEqual(scenario, ("full-metadata-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"
@@ -1193,6 +1198,23 @@ class SdkDiagnosticTests(unittest.TestCase):
                 with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
                     checks.test_attempt(run, {}, candidate, changed)
                 launch.assert_not_called()
+
+    def test_full_schema_origin_admission_rejects_missing_extra_and_foreign_lineages(self):
+        witness = (
+            "Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
+            'Observed_schema_consumers_preserve_actual_reopen_lineage(provider: "memory", consumer: "future-corrupt")')
+        inputs = {"bindings": [{"bindingId": "fixture.metadata.memory", "descriptorSha256": "a" * 64}]}
+        observed = {"testIdentity": witness, "executionId": "actual-case", "bindingId": "fixture.metadata.memory"}
+        counts = checks.full_metadata_binding_origin_counts()
+        for size, descriptor, accepted in ((4, "a" * 64, True), (3, "a" * 64, False),
+                                           (5, "a" * 64, False), (4, "b" * 64, False)):
+            ingested = {"witnesses": [observed], "sessionOrigins": {
+                "actual-case": [{"descriptorSha256": descriptor} for _ in range(size)]}}
+            if accepted:
+                checks.validate_full_binding_origins(ingested, inputs, counts)
+            else:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.validate_full_binding_origins(ingested, inputs, counts)
 
     def test_full_artifact_binding_scope_requires_all_real_controls_and_observed_reopen(self):
         factory = getattr(checks, "full_artifact_binding_scenarios", None)
