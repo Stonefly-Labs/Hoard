@@ -334,6 +334,13 @@ commands. Rewired current recipe/control/producer hashes cannot replace original
 native records. This closes diagnostic transfer-graph substitution only; fresh
 qualification-origin joint bounds and complete artifact controller admission
 remain required.
+Original crash/state/readback and retained-child validation is shared with the
+independent source layer without assertion changes. Private
+`qualification-artifact-transfers` input/recipe/store/cache/proof paths require
+artifact qualification inputs; diagnostic/category paths and foreign
+mode/profile labels reject before execution. Complete original native graph
+checks also apply there. Local modeled graphs are not fresh native
+qualification execution or complete controller authority.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

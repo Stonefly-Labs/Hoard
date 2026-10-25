@@ -9,6 +9,7 @@ import re
 import sys
 import time
 from types import MappingProxyType
+import uuid
 from xml.sax.saxutils import escape
 
 import conformance_evidence as evidence
@@ -94,7 +95,7 @@ def metadata_inventory_observations(root, inputs, manifest, observed, context):
 
 def _artifact_source_paths(root, attempt_id, namespace):
     evidence._uuid(attempt_id)
-    if namespace not in ("artifact-transfers", "category-artifact-transfers"):
+    if namespace not in ("artifact-transfers", "category-artifact-transfers", "qualification-artifact-transfers"):
         raise evidence.ConformanceError("WitnessMissing")
     no_symlinks(root)
     if not root.is_absolute() or root.resolve() != root or not root.is_dir():
@@ -112,6 +113,7 @@ def _artifact_source_paths(root, attempt_id, namespace):
 
 def artifact_source_context(run, inputs, manifest, *, namespace):
     selected = _artifact_source_paths(run.root, manifest["attemptId"], namespace)
+    admit_artifact_transfer_namespace(inputs, namespace)
     if (run.run_id != inputs["runId"] or manifest["runId"] != inputs["runId"]
             or manifest["invocationGroupId"] != inputs["invocationGroupId"]
             or manifest["inputSha256"] != evidence.digest(inputs)
@@ -131,6 +133,7 @@ def artifact_source_context(run, inputs, manifest, *, namespace):
 
 def artifact_source_observations(root, inputs, manifest, observed, *, namespace):
     paths = _artifact_source_paths(root, manifest["attemptId"], namespace)
+    admit_artifact_transfer_namespace(inputs, namespace)
     selected = {identity: {path: hashlib.sha256(read_bounded(Path(path), 16384)).hexdigest()
                            for path in files} for identity, files in paths.items()}
     return _consumption_observations(
@@ -347,9 +350,10 @@ def admit_transfer_measurement(command, sequence, size):
 
 
 def admit_artifact_transfer_namespace(inputs, namespace):
-    if (namespace not in ("artifact-transfers", "category-artifact-transfers")
-            or namespace == "category-artifact-transfers" and (
-                inputs.get("profileId") != "artifacts" or inputs.get("mode") != "diagnostic")):
+    if (namespace not in ("artifact-transfers", "category-artifact-transfers", "qualification-artifact-transfers")
+            or namespace != "artifact-transfers" and (
+                inputs.get("profileId") != "artifacts" or inputs.get("mode") != (
+                    "qualification" if namespace == "qualification-artifact-transfers" else "diagnostic"))):
         raise evidence.ConformanceError("ProofMismatch")
 
 
@@ -431,6 +435,96 @@ def native_artifact_transfer_source(run, inputs, provider, size, *, namespace):
             input_path: input_raw, recipe_path: recipe_raw, control_path: control_raw,
             producer_path: producer_raw, proof_path: proof_raw,
             f"proofs/execution-command-{sequence:04}.json": native_raw})})
+
+
+def admit_artifact_noncooperation(observed, provider, scenario, phase, pid, run_id):
+    fields = {
+        "eventName", "phase", "pid", "runId", "provider", "scenario", "durableCrashProof",
+        "cleanup", "callerCode", "admissionCode", "shutdownCode", "enteredWorkers",
+        "workerPending", "borrowedStreamsIntact", "rootStillOwned", "readinessBlocked", "protectionRetained",
+    }
+    if (provider not in ("local", "object") or scenario not in ("source", "destination", "native")
+            or phase not in ("contained", "inspected") or not isinstance(observed, dict) or set(observed) != fields
+            or observed["eventName"] != "noncooperative" or observed["phase"] != phase
+            or type(observed["pid"]) is not int or observed["pid"] != pid
+            or observed["runId"] != run_id or observed["provider"] != provider or observed["scenario"] != scenario
+            or observed["durableCrashProof"] is not False or observed["cleanup"] != "RetainedLiveOwnership"
+            or observed["callerCode"] not in (
+                ("DeadlineExceeded", "Uncertain") if scenario == "native" else ("CancelledBeforeCommit",))
+            or observed["admissionCode"] != "CleanupIncomplete" or observed["shutdownCode"] != "CleanupIncomplete"
+            or type(observed["enteredWorkers"]) is not int or observed["enteredWorkers"] != 1
+            or any(observed[key] is not True for key in (
+                "workerPending", "borrowedStreamsIntact", "rootStillOwned", "readinessBlocked"))
+            or observed["protectionRetained"] is not (scenario != "source")):
+        raise evidence.ConformanceError("ProofMismatch")
+
+
+def _admit_original_artifact_uuid(value):
+    if not isinstance(value, str) or len(value) != 36:
+        raise evidence.ConformanceError("ProofMismatch")
+    try:
+        identity = uuid.UUID(value)
+    except ValueError:
+        raise evidence.ConformanceError("ProofMismatch") from None
+    if identity.int == 0 or str(identity) != value:
+        raise evidence.ConformanceError("ProofMismatch")
+
+
+def _admit_original_artifact_child(proof, fields):
+    if (not isinstance(proof, dict) or set(proof) != fields or proof["qualification"] is not False
+            or any(type(proof[key]) is not int or not 0 < proof[key] <= 2147483647 for key in ("parentPid", "killedPid"))
+            or proof["parentPid"] == proof["killedPid"]
+            or type(proof["killedExitCode"]) is not int or proof["killedExitCode"] != 137):
+        raise evidence.ConformanceError("ProofMismatch")
+    _admit_original_artifact_uuid(proof["runId"])
+
+
+def admit_original_artifact_crash(proof, state_data, barrier):
+    import artifact_evidence as artifacts
+    _admit_original_artifact_child(proof, {
+        "provider", "qualification", "runId", "barrier", "signal", "parentPid", "killedPid",
+        "killedExitCode", "recoveredPid", "reopenedExitCode", "barrierProof", "recovery"})
+    handshake, recovered = proof["barrierProof"], proof["recovery"]
+    if (barrier not in ("B0", "B1", "B2", "B3", "D0", "D1")
+            or proof["provider"] != "local" or proof["barrier"] != barrier
+            or type(proof["signal"]) is not int or proof["signal"] != 9
+            or type(proof["recoveredPid"]) is not int or not 0 < proof["recoveredPid"] <= 2147483647
+            or proof["recoveredPid"] in (proof["parentPid"], proof["killedPid"])
+            or type(proof["reopenedExitCode"]) is not int or proof["reopenedExitCode"] != 0
+            or not isinstance(state_data, bytes) or not 0 < len(state_data) <= 16384
+            or not isinstance(handshake, dict) or set(handshake) != {
+                "eventName", "pid", "runId", "barrier", "stateSha256", "acknowledged"}
+            or handshake["eventName"] != "barrier" or type(handshake["pid"]) is not int
+            or handshake["pid"] != proof["killedPid"] or handshake["runId"] != proof["runId"]
+            or handshake["barrier"] != barrier or handshake["acknowledged"] is not (barrier == "B3")
+            or handshake["stateSha256"] != hashlib.sha256(state_data).hexdigest()
+            or not isinstance(recovered, dict) or set(recovered) != {
+                "eventName", "provider", "qualification", "pid", "runId", "barrier",
+                "controlReadback", "controlReceipt", "exactReceipt", "contentReadback", "ownerFenced",
+                "reconstructed", "reclamation", "noDuplicateEffect", "contentSha256", "contentLength",
+                "controlSha256", "controlLength", "outcome", "receiptId"}
+            or type(recovered["pid"]) is not int):
+        raise evidence.ConformanceError("ProofMismatch")
+    _admit_original_artifact_uuid(recovered["receiptId"])
+    state = evidence.load_json(state_data)
+    if barrier == "B3" and (not isinstance(state, dict) or state.get("AcknowledgedReceipt") != recovered["receiptId"]):
+        raise evidence.ConformanceError("ProofMismatch")
+    try:
+        artifacts.validate_recovery_readback(
+            recovered, state, barrier, proof["runId"], proof["recoveredPid"])
+    except RuntimeError:
+        raise evidence.ConformanceError("ProofMismatch") from None
+
+
+def admit_original_artifact_retention(proof, provider, scenario):
+    _admit_original_artifact_child(proof, {
+        "qualification", "durableCrashProof", "provider", "scenario", "runId",
+        "parentPid", "killedPid", "killedExitCode", "observations"})
+    if (proof["durableCrashProof"] is not False or proof["provider"] != provider or proof["scenario"] != scenario
+            or not isinstance(proof["observations"], list) or len(proof["observations"]) != 2):
+        raise evidence.ConformanceError("ProofMismatch")
+    for phase, observation in zip(("contained", "inspected"), proof["observations"]):
+        admit_artifact_noncooperation(observation, provider, scenario, phase, proof["killedPid"], proof["runId"])
 
 
 def admit_recovery_barrier(command, sequence, value, *, inspection=None):

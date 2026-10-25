@@ -6581,6 +6581,27 @@ admitted. Pending `055abe1`/run40229217713 is superseded before execution and
 grants no evidence. Current producer replay is still active; no failed snapshot
 or job success alone advances the stage.
 
+The three existing original crash/state/readback, retained-child and
+noncooperation suites first fail named assertions for missing shared source
+APIs. Their pure predicates plus UUID/child-exit helpers then move into the
+independent source layer; SDK orchestration reuses the same function objects.
+Five function ASTs remain unchanged, excluding only a lazy artifact-evidence
+import. Complete existing adversarial vectors pass afterwards.
+
+Private `qualification-artifact-transfers` admission is added after explicit
+unsupported-namespace reds. Only artifact qualification inputs can select its
+distinct stores/cache/proofs/input documents; diagnostic/category paths remain
+restricted to their existing origins. Measured production, controller selection,
+independent recipes and source contexts share the same gate. All three
+namespace variants retain original input/controller/producer/recipe/composite
+substitution coverage and unchanged complete measurement/producer negatives.
+Foreign profile/mode and diagnostic/category substitutions reject before
+execution. All 412 tooling checks pass with 19 native skips; frozen inventory,
+SDK catalog and whitespace checks pass. This is modeled isolation/validation,
+not actual fresh qualification-origin transfers or opened controller/profile
+qualification. Joint execution bounds and complete crash/retention source
+authority remain unbuilt; no tasks/checklists advance.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

@@ -9434,9 +9434,21 @@ source-consumption ingestion and its parent recheck require all four graphs.
 Missing or changed graphs propagate; no capture/index receipt is admitted as a
 fallback. Shared runtime assembly hashing is reused by metadata and artifacts;
 the generic source layer never imports SDK build orchestration.
+Original crash/state/readback, retained-child and UUID/exit validators now live
+in that same source layer and are reused by SDK orchestration. Five function
+ASTs match exactly, excluding only the lazy artifact-evidence import. Missing
+shared APIs fail the three existing adversarial suites before extraction; their
+full vectors pass afterwards.
+The private `qualification-artifact-transfers` namespace now requires artifact
+qualification inputs and uses distinct stores/cache/proofs/input documents.
+Controller selection, measured production, source recipes and source contexts
+share this gate. Diagnostic/category receipts or foreign modes/profiles cannot
+substitute; all three namespace variants retain the same measurement and
+original-input/output substitution negatives. These are local unit models,
+not actual qualification-origin transfers or an opened qualifying backend.
 All seven artifact QCs and artifact qualification remain closed: fresh
-qualification-origin namespaces/joint bounds and complete crash/retention
-source corroboration still need implementation.
+qualification execution/joint bounds and complete crash/retention source
+corroboration still need implementation.
 
 Exact source-index `a9e75c848c3572a035a7317a6a20b8e89540cd0f`,
 [run40228504830](https://github.com/Stonefly-Labs/Hoard/actions/runs/40228504830),

@@ -1104,6 +1104,21 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             context = sources.artifact_source_context(run, inputs, manifest, namespace="category-artifact-transfers")
             self.assertEqual(set(context["cases"]), set(ORIGINAL_ARTIFACT_PROOF_SOURCES))
             self.assertEqual(16, len(context["cases"]))
+            qualified_inputs = {**inputs, "mode": "qualification"}
+            qualified_manifest = {
+                **manifest, "attemptId": str(uuid.uuid4()), "inputSha256": evidence.digest(qualified_inputs)}
+            qualified_context = sources.artifact_source_context(
+                run, qualified_inputs, qualified_manifest, namespace="qualification-artifact-transfers")
+            for identity, (kind, _, _) in ORIGINAL_ARTIFACT_PROOF_SOURCES.items():
+                if kind == "transfer":
+                    self.assertNotEqual(qualified_context["cases"][identity], context["cases"][identity])
+                    self.assertIn("/proofs/qualification-artifact-transfers/", qualified_context["cases"][identity][0])
+            for captured, selected, namespace in (
+                    (inputs, manifest, "qualification-artifact-transfers"),
+                    (qualified_inputs, qualified_manifest, "category-artifact-transfers"),
+                    ({**qualified_inputs, "profileId": "metadata"}, qualified_manifest, "qualification-artifact-transfers")):
+                with self.assertRaises(evidence.ConformanceError):
+                    sources.artifact_source_context(run, captured, selected, namespace=namespace)
             capture = Path(context["outputDirectory"])
             capture.mkdir(parents=True)
             packet_paths, originals = {}, {}

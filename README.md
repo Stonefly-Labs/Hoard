@@ -2166,8 +2166,12 @@ runner/input/recipe/controller/producer/composite and executor-held command,
 including after later commands. Ingestion and source-parent admission recheck
 all four transfer graphs; rewired current hashes cannot replace original native
 input/output/control maps. All 412 tooling checks pass with 19 native skips.
-Fresh qualification namespaces, complete crash/retention corroboration and full
-artifact qualification remain closed.
+Private qualification-origin transfer paths now require artifact qualification
+inputs; diagnostic/category paths and receipts cannot be relabeled into them.
+Crash/retained-child validators are shared with independent source admission
+without changing their assertions. Fresh qualification execution/joint bounds,
+complete crash/retention corroboration and full artifact qualification remain
+closed.
 
 Exact source-index run40228504830 at `a9e75c8` fails one native foundation
 assertion comparing an empty `frozenset` to an empty tuple; its SDK and lock jobs

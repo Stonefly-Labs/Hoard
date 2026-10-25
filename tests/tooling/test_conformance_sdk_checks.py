@@ -1310,8 +1310,10 @@ class SdkDiagnosticTests(unittest.TestCase):
             "recovery": recovered}, state
 
     def test_original_crash_packets_require_actual_state_exit_and_fresh_readback_correspondence(self):
-        self.assertTrue(callable(getattr(checks, "admit_original_artifact_crash", None)),
+        import conformance_sources as sources
+        self.assertTrue(callable(getattr(sources, "admit_original_artifact_crash", None)),
                         "Original process wrappers need independently admitted producer/state packets, not only green VSTest.")
+        self.assertIs(checks.admit_original_artifact_crash, sources.admit_original_artifact_crash)
         for barrier in ("B0", "B1", "B2", "B3", "D0", "D1"):
             original, state = self.original_crash_fixture(barrier)
             checks.admit_original_artifact_crash(original, state, barrier)
@@ -1357,8 +1359,10 @@ class SdkDiagnosticTests(unittest.TestCase):
             } for phase in ("contained", "inspected")]}
 
     def test_original_retained_child_packets_require_both_live_phases_and_actual_signal_exit(self):
-        self.assertTrue(callable(getattr(checks, "admit_original_artifact_retention", None)),
+        import conformance_sources as sources
+        self.assertTrue(callable(getattr(sources, "admit_original_artifact_retention", None)),
                         "Original retained-child packets must not borrow unrelated controller diagnostics.")
+        self.assertIs(checks.admit_original_artifact_retention, sources.admit_original_artifact_retention)
         for provider in ("local", "object"):
             for scenario in ("source", "destination", "native"):
                 original = self.original_retention_fixture(provider, scenario)
@@ -1580,12 +1584,14 @@ class SdkDiagnosticTests(unittest.TestCase):
 
     def test_measured_transfer_binds_actual_producer_pid_hash_runtime_and_unchanged_memory_receipt(self):
         for namespace, mutation in (
-                (namespace, mutation) for namespace in ("artifact-transfers", "category-artifact-transfers")
+                (namespace, mutation) for namespace in (
+                    "artifact-transfers", "category-artifact-transfers", "qualification-artifact-transfers")
                 for mutation in (None, "pid", "hash", "runtime", "pacing", "extra", "memory", "event")):
             root = self.directory / (namespace + "-" + str(mutation))
             (root / "stores" / namespace).mkdir(parents=True)
             (root / "proofs" / namespace).mkdir(parents=True)
-            inputs = {"environment": ENVIRONMENT, "profileId": "artifacts", "mode": "diagnostic"}
+            inputs = {"environment": ENVIRONMENT, "profileId": "artifacts",
+                      "mode": "qualification" if namespace == "qualification-artifact-transfers" else "diagnostic"}
             run = SimpleNamespace(root=root, run_id=str(uuid.uuid4()), command_sequence=0, live_children=lambda: ())
             expected_hash = "a" * 64
             captured = []
@@ -1688,6 +1694,24 @@ class SdkDiagnosticTests(unittest.TestCase):
                 with self.assertRaises(checks.evidence.ConformanceError):
                     checks.artifact_transfer_diagnostics(run, captured, candidate, namespace=namespace)
             self.assertEqual(execute.call_count, 4)
+        qualified_inputs = {**category_inputs, "mode": "qualification"}
+        with patch.object(checks, "verify_runtime_packages"), patch.object(
+                checks, "measured_artifact_transfer", return_value={"proofSha256": "f" * 64}) as execute:
+            qualified = checks.artifact_transfer_diagnostics(
+                run, qualified_inputs, candidate, namespace="qualification-artifact-transfers")
+            self.assertEqual(qualified["inputsSha256"], checks.evidence.digest(qualified_inputs))
+            self.assertFalse(qualified["qualification"])
+            self.assertTrue(all(call.kwargs["namespace"] == "qualification-artifact-transfers"
+                                for call in execute.call_args_list))
+            self.assertEqual(
+                [call.args[3:5] for call in execute.call_args_list],
+                [("local", 268435456), ("local", 4294967296), ("object", 268435456), ("object", 4294967296)])
+            self.assertTrue((root / "proofs/qualification-artifact-transfers.json").exists())
+            for captured in (inputs, category_inputs, {**qualified_inputs, "profileId": "metadata"}):
+                with self.assertRaises(checks.evidence.ConformanceError):
+                    checks.artifact_transfer_diagnostics(
+                        run, captured, candidate, namespace="qualification-artifact-transfers")
+            self.assertEqual(execute.call_count, 4)
         with patch.object(checks, "verify_runtime_packages"), patch.object(checks, "measured_artifact_transfer") as execute:
             with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
                 checks.artifact_transfer_diagnostics(
@@ -1723,10 +1747,13 @@ class SdkDiagnosticTests(unittest.TestCase):
     def test_native_transfer_measurement_pins_original_inputs_controller_and_command_result(self):
         import conformance_sources as sources
         self.assertTrue(callable(getattr(sources, "native_artifact_transfer_source", None)))
-        for changed in (None, "result", "controller", "producer", "assembly", "run", "provider", "size"):
-            root = self.directory / str(changed)
-            (root / "stores/category-artifact-transfers").mkdir(parents=True)
-            (root / "proofs/category-artifact-transfers").mkdir(parents=True)
+        for namespace, changed in (
+                (namespace, changed) for namespace in (
+                    "artifact-transfers", "category-artifact-transfers", "qualification-artifact-transfers")
+                for changed in (None, "result", "controller", "producer", "assembly", "run", "provider", "size")):
+            root = self.directory / namespace / str(changed)
+            (root / "stores" / namespace).mkdir(parents=True)
+            (root / "proofs" / namespace).mkdir(parents=True)
             assembly_path = ("candidate/tests/fixtures/artifacts/TransferRunner/"
                              "bin/Release/net10.0/Hoard.Fixtures.Artifacts.TransferRunner.dll")
             assembly = root / assembly_path
@@ -1739,7 +1766,8 @@ class SdkDiagnosticTests(unittest.TestCase):
             run.live_children = lambda: ()
             inputs = {
                 "runId": run.run_id, "invocationGroupId": str(uuid.uuid4()),
-                "environment": ENVIRONMENT, "profileId": "artifacts", "mode": "diagnostic",
+                "environment": ENVIRONMENT, "profileId": "artifacts",
+                "mode": "qualification" if namespace == "qualification-artifact-transfers" else "diagnostic",
                 "runtimeAssemblies": {assembly_path: checks.evidence.file_sha256(assembly)}}
             if changed == "assembly":
                 inputs["runtimeAssemblies"][assembly_path] = "c" * 64
@@ -1750,9 +1778,9 @@ class SdkDiagnosticTests(unittest.TestCase):
 
             def command(arguments, **options):
                 self.assertTrue(options.get("record_execution"))
-                input_path = "proofs/category-artifact-transfers/transfer-local-268435456-native-inputs.json"
+                input_path = f"proofs/{namespace}/transfer-local-268435456-native-inputs.json"
                 self.assertEqual(options["execution_inputs"], (assembly_path, input_path))
-                producer_path = "proofs/category-artifact-transfers/transfer-local-268435456/producer.json"
+                producer_path = f"proofs/{namespace}/transfer-local-268435456/producer.json"
                 self.assertEqual(options.get("execution_outputs"), (producer_path,))
                 self.assertEqual(arguments[-1], str(root / producer_path))
                 self.assertEqual((root / input_path).read_bytes(), checks.evidence.canonical_bytes(inputs))
@@ -1802,8 +1830,8 @@ class SdkDiagnosticTests(unittest.TestCase):
 
             run.command = command
             run.read_execution_record = lambda sequence: held[sequence]
-            with self.subTest(changed=changed):
-                receipt = root / "proofs/category-artifact-transfers/transfer-local-268435456/native-execution.json"
+            with self.subTest(namespace=namespace, changed=changed):
+                receipt = root / f"proofs/{namespace}/transfer-local-268435456/native-execution.json"
                 if changed:
                     with self.assertRaisesRegex(
                             checks.evidence.ConformanceError,
@@ -1811,11 +1839,11 @@ class SdkDiagnosticTests(unittest.TestCase):
                         checks.measured_artifact_transfer(
                             run, inputs, assembly, "../foreign" if changed == "provider" else "local",
                             True if changed == "size" else 268435456, expected_hash,
-                            namespace="category-artifact-transfers")
+                            namespace=namespace)
                     self.assertFalse(receipt.exists())
                 else:
                     checks.measured_artifact_transfer(
-                        run, inputs, assembly, "local", 268435456, expected_hash, namespace="category-artifact-transfers")
+                        run, inputs, assembly, "local", 268435456, expected_hash, namespace=namespace)
                     observed = checks.evidence.load_json(receipt.read_bytes())
                     self.assertEqual(observed["executionSha256"], hashlib.sha256(held[1]).hexdigest())
                     self.assertEqual(observed["inputsSha256"], checks.evidence.digest(inputs))
@@ -1826,7 +1854,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     control_path.chmod(0o400)
                     run.command_sequence += 1
                     admitted = sources.native_artifact_transfer_source(
-                        run, inputs, "local", 268435456, namespace="category-artifact-transfers")
+                        run, inputs, "local", 268435456, namespace=namespace)
                     self.assertEqual(admitted["sequence"], 1)
                     self.assertEqual(admitted["producerSha256"], observed["producerSha256"])
                     original = receipt.read_bytes()
@@ -1835,7 +1863,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                             target = {
                                 "recipe": receipt, "control": control_path,
                                 "producer": receipt.parent / "producer.json",
-                                "inputs": root / "proofs/category-artifact-transfers/transfer-local-268435456-native-inputs.json",
+                                "inputs": root / f"proofs/{namespace}/transfer-local-268435456-native-inputs.json",
                                 "combined": receipt.parent / "proof.json"}[defect]
                             before = target.read_bytes()
                             target.chmod(0o600)
@@ -1862,7 +1890,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                                 receipt.chmod(0o400)
                             with self.assertRaises(checks.evidence.ConformanceError):
                                 sources.native_artifact_transfer_source(
-                                    run, inputs, "local", 268435456, namespace="category-artifact-transfers")
+                                    run, inputs, "local", 268435456, namespace=namespace)
                             target.chmod(0o600)
                             target.write_bytes(before)
                             target.chmod(0o400)
@@ -1873,8 +1901,10 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertEqual(receipt.read_bytes(), original)
 
     def test_noncooperative_observations_require_real_retention_and_matching_live_child(self):
-        self.assertTrue(callable(getattr(checks, "admit_artifact_noncooperation", None)),
+        import conformance_sources as sources
+        self.assertTrue(callable(getattr(sources, "admit_artifact_noncooperation", None)),
                         "Retained-work observations must be checked before their numeric barriers qualify.")
+        self.assertIs(checks.admit_artifact_noncooperation, sources.admit_artifact_noncooperation)
         run_id = str(uuid.uuid4())
         observation = {
             "eventName": "noncooperative", "phase": "contained", "pid": 200, "runId": run_id,

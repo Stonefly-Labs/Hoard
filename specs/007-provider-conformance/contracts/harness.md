@@ -295,6 +295,13 @@ Qualification-origin joint bounds and complete crash/retention admission remain
 unbuilt. Source-index run40228504830 fails its empty-frozenset-versus-tuple test
 assertion despite SDK/lock success; the test now asserts no live children.
 That overall failed snapshot is not admitted.
+Original crash/state/readback and retained-child predicates now share the
+independent source layer, preserving their exact validation bodies. Private
+qualification-origin transfer paths require artifact qualification inputs;
+diagnostic/category namespaces and foreign modes/profiles cannot substitute.
+Selection, measured production, source recipes and contexts use that same gate.
+This implements isolation/admission, not actual qualification transfers or
+complete controller source authority.
 The prior byte-capture checkpoint cf4/run40227343651 independently passes
 three Linux jobs, 300 native foundations without skips, 13-lock/18-package
 replay and 129 scopes/1,821 witnesses. It admits original byte capture, not the

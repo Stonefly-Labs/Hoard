@@ -520,8 +520,11 @@ explicit native sequence, immutable inputs, complete producer/measurement/
 composite bytes and original input/output/control hashes, including after later
 commands. Initial consumption and source parents require all four transfer
 graphs. Rewired current hashes do not replace original executor provenance.
-Fresh qualification-origin/joint-bound and crash/retention authority remain
-separate unbuilt gates; public schemas and status rules are unchanged.
+Private qualification-origin transfer paths require artifact qualification
+inputs and cannot borrow diagnostic/category receipts. Original crash/state/
+readback and retained-child validators share the source layer unchanged.
+Fresh qualification execution/joint-bound and complete crash/retention authority
+remain separate unbuilt gates; public schemas and status rules are unchanged.
 
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits
