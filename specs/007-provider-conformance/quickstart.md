@@ -457,7 +457,8 @@ handoff retention, readiness/admission fencing, failed stop with retained
 ownership and successful actual cleanup/final settlement only after scope repair.
 It targets the existing cleanup index, not physical prefix/object permission
 faults. Fresh replay passes 311 artifact, 77 Consumer and 89+89 metadata cases;
-the next native request is 92 scopes/784 observations, pending, not qualification.
+native run `40149692533` at `1acdeb0` passed all three jobs, 209 foundations
+and 92 scopes/784 exact discoveries/executions, not qualification.
 Owned synchronous holds now retain actual workers, authority protection and
 failed-stop ownership at Local's existing record-write and Object's existing
 delete callbacks. Reserve deletion before arming and configure genuine available
@@ -465,8 +466,16 @@ reference authority; missing authority correctly prevents entry. Explicit
 release must precede actual settlement. This is controlled synchronous fixture
 blocking, not a stalled filesystem syscall or a substitute for original
 cross-process containment. Fresh replay passes 311 artifact, 79 Consumer and
-89+89 metadata cases; the next native request is 93 scopes/786 observations,
-pending, not complete mandatory fault-driver/category/profile qualification.
+89+89 metadata cases. Native run `40150871211` at `f68812e` passed all three
+jobs, 210 foundations and 93 scopes/786 exact discoveries/executions.
+Full Local/Object factories now expose all ten real mandatory controls, exact
+payload targets, borrowed source/sink streams and actual origin-preserving reopen.
+Twenty-four new package-only parameters include concurrent release/rearming:
+the architecture review's cross-control deadlock first failed both providers,
+then passed after release joins moved outside the registry lock. Fresh replay
+passes 311 artifact, 103 Consumer and 89+89 metadata cases. The next native request
+is 94 scopes/810 observations, pending. Remaining category parity, parent-origin
+ingestion, integrations and complete profile qualification are still unfinished.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

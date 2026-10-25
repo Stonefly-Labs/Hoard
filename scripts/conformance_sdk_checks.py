@@ -51,9 +51,10 @@ ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.LocalArtifactSes
 OBJECT_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ObjectArtifactSessionTests."
 CONFIGURED_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ArtifactConfiguredSessionTests."
 PAYLOAD_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ArtifactPayloadSessionTests."
+FULL_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ArtifactConformanceSessionTests."
 ARTIFACT_CONSUMER_PREFIXES = (
     ARTIFACT_CONSUMER_PREFIX, OBJECT_ARTIFACT_CONSUMER_PREFIX, CONFIGURED_ARTIFACT_CONSUMER_PREFIX,
-    PAYLOAD_ARTIFACT_CONSUMER_PREFIX)
+    PAYLOAD_ARTIFACT_CONSUMER_PREFIX, FULL_ARTIFACT_CONSUMER_PREFIX)
 ARTIFACT_CONSUMER_PACKAGES = (
     "Hoard.Abstractions", "Hoard.Testing.Conformance",
     "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite",
@@ -1266,6 +1267,23 @@ def configured_artifact_session_scenarios():
     return (("configured-artifact-session", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
+def full_artifact_binding_scenarios():
+    prefix = FULL_ARTIFACT_CONSUMER_PREFIX
+    identities = {
+        prefix + "Full_binding_controls_reach_actual_work_and_preserve_borrowed_ownership"
+        + f'(provider: "{provider}", fault: {fault})'
+        for provider in ("local", "object") for fault in (
+            "PublicationBoundary", "DirectVisibility", "PayloadDamage", "Capacity",
+            "NativeNonCooperation", "CleanupFailure", "GenerationBoundary", "ReceiptBoundary",
+            "SourceNonCooperation", "SinkNonCooperation")}
+    identities.update(prefix + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
+                      + f'(provider: "{provider}", retainsPublication: {retained})'
+                      for provider, retained in (("local", "True"), ("object", "False")))
+    identities.update(prefix + "Releasing_native_work_does_not_block_an_independent_release_or_rearming"
+                      + f'(provider: "{provider}")' for provider in ("local", "object"))
+    return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def artifact_synchronous_storage_scenarios():
     method = (PAYLOAD_ARTIFACT_CONSUMER_PREFIX
               + "Synchronous_storage_hold_retains_actual_worker_and_protection_until_release")
@@ -1694,7 +1712,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-recovery-pages", "original-artifact-recovery-races",
             "original-artifact-recovery-reopen", "original-artifact-admission",
             "original-artifact-deletion-settlement", "artifact-direct-verification", "artifact-capacity-injection",
-            "artifact-unclaimed-cleanup", "artifact-synchronous-storage"],
+            "artifact-unclaimed-cleanup", "artifact-synchronous-storage", "full-artifact-binding"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1706,12 +1724,13 @@ def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
     if (name in ("local-artifact-session", "object-artifact-session", "configured-artifact-session",
                  "payload-artifact-session", "artifact-direct-verification", "artifact-capacity-injection",
-                 "artifact-unclaimed-cleanup", "artifact-synchronous-storage")
+                 "artifact-unclaimed-cleanup", "artifact-synchronous-storage", "full-artifact-binding")
             or any(identity.startswith(ARTIFACT_CONSUMER_PREFIXES) for identity in identities)):
         if scenario not in (*local_artifact_session_scenarios(), *object_artifact_session_scenarios(),
                             *configured_artifact_session_scenarios(), *payload_artifact_session_scenarios(),
                             *artifact_direct_verification_scenarios(), *artifact_capacity_injection_scenarios(),
-                            *artifact_unclaimed_cleanup_scenarios(), *artifact_synchronous_storage_scenarios()):
+                            *artifact_unclaimed_cleanup_scenarios(), *artifact_synchronous_storage_scenarios(),
+                            *full_artifact_binding_scenarios()):
             raise evidence.ConformanceError("WitnessMissing")
     original_metadata = name.startswith("original-metadata-")
     original_artifacts = name.startswith("original-artifact-")
@@ -1798,6 +1817,12 @@ def test_attempt(run, inputs, candidate, scenario):
     }
     discovery_manifest = {**manifest, "purpose": "discovery", "attemptId": str(uuid.uuid4())}
     runtime_options = {"metadata_provider": metadata_provider} if original_metadata else {}
+    if name == "full-artifact-binding":
+        packages = {item["packageId"]: item["sha256"] for item in inputs["packages"]}
+        required = ("Hoard.Fixtures.Artifacts.Local", "Hoard.Fixtures.Artifacts.ObjectSemantics")
+        if any(package not in packages for package in required):
+            raise evidence.ConformanceError("PrerequisiteMissing")
+        runtime_options["artifact_packages"] = {package: packages[package] for package in required}
     if name == "original-artifact-external":
         runner = candidate / ARTIFACT_RECOVERY / "bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll"
         if inputs["runtimeAssemblies"].get(runner.relative_to(run.root).as_posix()) != evidence.file_sha256(runner):
@@ -1854,13 +1879,35 @@ def test_attempt(run, inputs, candidate, scenario):
             "completionSha256": evidence.file_sha256(output / "completion.json")}
 
 
-def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact_runner=None):
+def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact_runner=None, artifact_packages=None):
     attempt_id = manifest["attemptId"]
     identities = tuple(entry["testIdentity"] for entry in manifest["expected"])
     if manifest["purpose"] not in ("discovery", "execution"):
         raise evidence.ConformanceError()
     discovery = manifest["purpose"] == "discovery"
     origin_environment = ""
+    if artifact_packages is not None:
+        required = {
+            "Hoard.Fixtures.Artifacts.Local": "HOARD_ARTIFACT_LOCAL_PACKAGE_SHA256",
+            "Hoard.Fixtures.Artifacts.ObjectSemantics": "HOARD_ARTIFACT_OBJECT_PACKAGE_SHA256",
+        }
+        if (metadata_provider is not None or artifact_runner is not None
+                or assembly.name != "Hoard.Fixtures.Conformance.Consumer.dll"
+                or set(identities) != set(full_artifact_binding_scenarios()[0][1])
+                or not isinstance(artifact_packages, dict) or set(artifact_packages) != set(required)):
+            raise evidence.ConformanceError("WitnessMissing")
+        variables = {}
+        for package, variable in required.items():
+            sha256 = artifact_packages[package]
+            if not isinstance(sha256, str) or re.fullmatch("[0-9a-f]{64}", sha256) is None:
+                raise evidence.ConformanceError("InputChanged")
+            archive = run.root / "feed/candidate" / (package + ".0.1.0.nupkg")
+            no_symlinks(archive)
+            if not archive.is_file() or evidence.file_sha256(archive) != sha256:
+                raise evidence.ConformanceError("InputChanged")
+            variables[variable] = sha256
+        origin_environment = ("<EnvironmentVariables>" + "".join(
+            f"<{key}>{value}</{key}>" for key, value in variables.items()) + "</EnvironmentVariables>")
     if metadata_provider is not None:
         if metadata_provider not in ("memory", "sqlite") or assembly.name != "Hoard.Metadata.Tests.dll":
             raise evidence.ConformanceError("WitnessMissing")
@@ -2246,6 +2293,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "artifact-synchronous-storage"}), flush=True)
         for scenario in artifact_synchronous_storage_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "full-artifact-binding"}), flush=True)
+        for scenario in full_artifact_binding_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

@@ -8,6 +8,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Shared/ArtifactAssertionSessions.cs" Link="ArtifactAssertionSessions.cs" />
+    <Compile Include="../Shared/ArtifactConformanceSessions.cs" Link="ArtifactConformanceSessions.cs" />
     <Compile Include="../../../artifacts/HostAdapters/ArtifactCoordinationAuthority.cs" Link="ArtifactCoordinationAuthority.cs" />
     <PackageReference Include="Hoard.Testing.Conformance" />
     <PackageReference Include="Hoard.Fixtures.Artifacts.ObjectSemantics" />

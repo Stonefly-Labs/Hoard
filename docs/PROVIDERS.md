@@ -719,7 +719,8 @@ failed stop with retained ownership and a second actual failed reclaim. Removing
 the scope permits the real stop cleanup retry and successful final settlement,
 without clearing observer errors or replacing settlement promises. Four new rows
 pass on both providers; fresh replay covers 311 artifact and 77 Consumer cases.
-The next native request is 92 scopes/784 observations, pending, not qualification.
+Native run `40149692533` at `1acdeb0` passed all three jobs, 209 foundations
+and 92 scopes/784 exact discoveries/executions, not qualification.
 
 `HoldSynchronousStorageAsync` controls Local's existing `BeforeRecordWrite` or
 Object's existing `BeforeObjectDelete`. Reserve the delete ticket before arming,
@@ -734,7 +735,31 @@ fenced admission/readiness, genuine authority exclusion, failed stop while held
 and actual successful stop after release. This is a synchronous fixture-boundary
 hold, not a stalled filesystem syscall or a replacement for original owned-child
 containment. Fresh replay covers 311 artifact and 79 Consumer cases;
-the next native request is 93 scopes/786 observations, pending, not qualification.
+native run `40150871211` at `f68812e` passed all three jobs, 210 foundations
+and 93 scopes/786 exact discoveries/executions, not qualification.
+
+`LocalBinding` and `ObjectSemanticsBinding` now implement the full typed artifact
+factory/session boundary over their actual independent stores, validators,
+maintenance/lifetimes and authority. All ten mandatory controls are executable:
+publication-selected/direct-verification/receipt/verified-generation gates,
+exact-stamp physical damage, scoped capacity/indexed cleanup failures, synchronous
+fixture holds and genuine borrowed source/sink streams. The generation check
+performs actual expired-owner maintenance cleanup before re-staging and proves
+old descriptors/cleanup cannot affect the replacement. Damage explicitly targets
+the first of two artifacts, rejects a foreign incarnation and preserves the other.
+Source/sink release only unblocks actual I/O; it never substitutes a provider result.
+Caller-owned stream disposal follows actual provider settlement.
+
+Releases share an in-progress task but do not hold the registry semaphore while
+joining workers. A two-provider regression first reproduced the architecture
+review's cross-control release deadlock, then passed with independent release and
+rearming. Native settlement is observed before stable scope disposal, so a join
+timeout does not permanently cache a failed disposal task. Actual full-session
+origin capture/reopen preserves Local identity/publication and gives the simulation
+a fresh empty epoch. Twenty-four new package-only parameters pass; fresh replay
+covers 311 artifact, 103 Consumer and 89+89 metadata cases. The next native request
+is 94 scopes/810 observations, pending. Parent-origin ingestion, remaining category
+parity/integration and complete profiles remain unfinished; this is not qualification.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

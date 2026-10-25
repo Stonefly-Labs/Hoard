@@ -459,9 +459,16 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
     private sealed class Registration(
         ArtifactAssertionSession session, ArtifactObservationPoint point, string boundary) : IArtifactFaultRegistration
     {
+        private readonly TaskCompletionSource entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
         private long observationCount;
         public long ObservationCount => Interlocked.Read(ref observationCount);
-        public void Observe() => Interlocked.Increment(ref observationCount);
+        public ValueTask WaitForEntryAsync(CancellationToken cancellationToken) =>
+            new(entered.Task.WaitAsync(session.ownership.Context.ControlBudget, cancellationToken));
+        public void Observe()
+        {
+            Interlocked.Increment(ref observationCount);
+            entered.TrySetResult();
+        }
         public string Boundary { get; } = boundary;
         public ValueTask DisposeAsync()
         {

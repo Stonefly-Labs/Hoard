@@ -902,7 +902,8 @@ settlement. Barrier release, public-task/worker joins and retry use non-cancelab
 cleanup paths; the original borrowed source survives until actual settlement.
 This does not substitute for physical prefix/object permission-failure cases,
 change provider cleanup mechanisms, or declare complete mandatory fault support.
-The next request is 92 scopes/784 observations, pending.
+Native run `40149692533` at `1acdeb0` passed all three jobs, 209 foundations
+and 92 scopes/784 exact discoveries/executions, not qualification.
 
 The owned synchronous storage hold maps Local's real `BeforeRecordWrite` and
 Object's real `BeforeObjectDelete` callbacks. The common consumer publishes and
@@ -921,8 +922,43 @@ task-stable, disarms only itself and joins actual workers; stale disposal must
 not remove a replacement. Ownership removes remaining controls only after actual
 stop/worker settlement. Existing borrowed-source, authority-settlement and root
 authorization ordering is preserved. Original cross-process native containment
-remains mandatory and separate. The next request is 93 scopes/786 observations,
-pending, not complete fault-driver/profile admission.
+remains mandatory and separate. Native run `40150871211` at `f68812e` passed
+all three jobs, 210 foundations and 93 scopes/786 exact discoveries/executions.
+
+The full Local/Object factories now retain these genuine owned sessions and
+return their actual store/validator/maintenance/lifetime/authority references.
+The full fault driver requires `DamagePayloadAsync(stamp, truncate, token)`:
+no targetless mutation or last-artifact lookup remains. `BorrowedSource` and
+`BorrowedDestination` are actual caller-owned streams supplied after their fault
+is armed. Their real reads/writes count entry and ignore cancellation until
+explicit release; public return, retained cleanup and final worker settlement
+remain actual provider behavior. The factory disposes its borrowed streams only
+after genuine session close/reopen settlement.
+
+Publication, direct visibility and receipt controls hold their actual named
+boundaries. Generation holds verified staging after the common consumer actually
+cleans expired ownership and starts a replacement; public stale-owner rejection,
+increasing generation, conflicted old cleanup and readback corroborate the control.
+Payload damage counts its actual non-holding physical boundary. Capacity and
+cleanup reuse the exact privately scoped injected failures; generic entry waits
+observe those actual registrations without disarming them on wait cancellation.
+Native control still means the documented synchronous fixture boundary, not a
+stalled syscall or durable proof.
+
+The registry serializes release-task publication, not actual worker joins;
+concurrent release callers share that task, rearm waits for success, and failed
+settlement observation can be retried before stable scope disposal. The
+architecture review's two-provider deadlock regression first failed, then passed
+with independent release/rearming. Twenty-four exact new parameters cover all ten
+controls, actual origin capture/reopen and concurrency. Fresh replay passes
+311 artifact, 103 Consumer and 89+89 metadata cases. The next native request is
+94 scopes/810 observations, pending. Complete parent-origin/profile ingestion,
+category parity/integration, qualification and final T081 remain open.
+The diagnostic parent passes only the two admitted provider archive hashes to
+these fixture factories and rechecks the exact candidate archive bytes before
+writing their fixed runsettings variables. Runtime caches stay independent:
+factories never assume the build cache is available, read an arbitrary archive
+path, or manufacture a package identity.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

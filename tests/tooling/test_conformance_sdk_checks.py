@@ -1091,6 +1091,64 @@ class SdkDiagnosticTests(unittest.TestCase):
                 body = "".join(text[start:text.index("\n    }", start)].split())
                 self.assertIn("awaitQuarantineIsPermanentAsync(store,receipt,bytes,cancellationToken,reopen);", body)
 
+    def test_full_artifact_binding_scope_requires_all_real_controls_and_observed_reopen(self):
+        factory = getattr(checks, "full_artifact_binding_scenarios", None)
+        self.assertTrue(callable(factory), "Full bindings require actual controls, not declarations alone.")
+        prefix = "Hoard.Fixtures.Conformance.Consumer.ArtifactConformanceSessionTests."
+        expected = {
+            prefix + "Full_binding_controls_reach_actual_work_and_preserve_borrowed_ownership"
+            + f'(provider: "{provider}", fault: {fault})'
+            for provider in ("local", "object") for fault in (
+                "PublicationBoundary", "DirectVisibility", "PayloadDamage", "Capacity",
+                "NativeNonCooperation", "CleanupFailure", "GenerationBoundary", "ReceiptBoundary",
+                "SourceNonCooperation", "SinkNonCooperation")}
+        expected.update(prefix + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
+                        + f'(provider: "{provider}", retainsPublication: {retained})'
+                        for provider, retained in (("local", "True"), ("object", "False")))
+        expected.update(prefix + "Releasing_native_work_does_not_block_an_independent_release_or_rearming"
+                        + f'(provider: "{provider}")' for provider in ("local", "object"))
+        scenario, = factory()
+        self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [
+                {"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64},
+                {"packageId": "Hoard.Fixtures.Artifacts.Local", "sha256": "c" * 64},
+                {"packageId": "Hoard.Fixtures.Artifacts.ObjectSemantics", "sha256": "d" * 64}],
+        }
+        with patch.object(checks, "runtime_command",
+                          side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+            self.assertEqual(launch.call_args.args[1], assembly)
+            self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, expected)
+            packages = launch.call_args.kwargs["artifact_packages"]
+            self.assertEqual(packages, {
+                "Hoard.Fixtures.Artifacts.Local": "c" * 64,
+                "Hoard.Fixtures.Artifacts.ObjectSemantics": "d" * 64})
+            manifest = launch.call_args.args[2]
+        with patch.object(checks, "runtime_command") as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "PrerequisiteMissing"):
+                checks.test_attempt(SimpleNamespace(root=self.directory),
+                                    {**inputs, "packages": inputs["packages"][:1]}, candidate, scenario)
+            launch.assert_not_called()
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+            checks.runtime_command(SimpleNamespace(root=self.directory), assembly, manifest,
+                                   artifact_packages={**packages, "foreign": "e" * 64})
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+            checks.runtime_command(SimpleNamespace(root=self.directory), assembly, manifest, artifact_packages=packages)
+        for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+                        (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
+                        ("full-artifact-binding-foreign", *scenario[1:])):
+            with patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, candidate, changed)
+                launch.assert_not_called()
+
     def test_synchronous_storage_scope_requires_actual_owned_worker_and_authority_protection(self):
         factory = getattr(checks, "artifact_synchronous_storage_scenarios", None)
         self.assertTrue(callable(factory), "Synchronous native-boundary work must remain genuinely owned.")

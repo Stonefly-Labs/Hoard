@@ -7440,7 +7440,13 @@ ten runtime images match their package bytes per preparation. Tooling passes
 317 checks (300 passed/seventeen macOS-native skips), including 91 SDK checks.
 SDK/both adapter/Consumer formatting, frozen inventory, catalogs and patch checks
 pass. Transfer packets remain reused unchanged, not fresh origins. The next
-native request is 209 foundations and 92 scopes/784 observations, pending.
+native run `40149692533` at exact head
+`1acdeb0b777e31929e7f70bccdfe89a2dc598bbd` passed all three jobs,
+209 foundations without failures/errors/skips and 92 scopes/784 exact
+discoveries/executions, including every actual prerequisite. Input:
+`b4b5a27b071937cd524f6d1c2a97fab1049b991a6d049db0801849a8a90dd6cf`;
+preparation:
+`a11e22af6fefffdb261a13df75e1d305e9ec565005cc331c2e42b521d8b42e4b`.
 Full mandatory fault drivers/origins/category/profile qualification and final
 T081 remain open; tasks, reviewer markers, tracked locks, historical seals and
 product/architecture/deployment examples are unaffected.
@@ -7474,10 +7480,61 @@ checks; SDK/both adapter/Consumer formatting, frozen inventory, catalogs and
 patch checks pass. Transfer packets remain reused unchanged, not fresh origins.
 Bounded custom architecture review found no actionable ownership/concurrency/
 boundary bug; this is a control review, not final T081. The next native request
-is 210 foundations and 93 scopes/786 observations, pending. Full mandatory
+passed as run `40150871211` at exact head
+`f68812e9e2d9f48ced1be13d16554b67c118129c`: all three jobs,
+210 foundations without failures/errors/skips and 93 scopes/786 exact
+discoveries/executions, including every actual prerequisite. Input:
+`8d841ae64a58df3ad5b548c9c1c1cfa4d0147e08500a3a068c057db2eed9ee13`;
+preparation:
+`965ec29517b5fc9fa3a3ea2cf140f12b65ac57d91751d576e2b856eecfc777eb`.
+Full mandatory
 fault-driver/origin/category/profile qualification, tasks and reviewer markers
 remain open. Tracked locks, historical seals and product/architecture/deployment
 examples remain unaffected.
+
+Full Local/Object factories now wrap their actual owned projections without
+substituting store results or component identities. Their full driver connects
+all ten mandatory controls: publication/direct/receipt/verified-generation gates,
+exact-stamp physical damage, scoped capacity/indexed cleanup faults, real
+synchronous fixture holds, and actual borrowed source/sink streams. Stream
+entry and cancellation-insensitive work are real; only explicit release permits
+actual provider settlement, after which the factory may dispose its caller-owned
+streams. Damage rejects a foreign incarnation and targets the first of two
+artifacts without altering the second. Expired-owner cleanup is an actual
+maintenance precondition before replacement staging; no provider guard was relaxed.
+Observed full-session reopen preserves Local publication/identity and restarts
+Object simulation empty with a fresh epoch; stale controls reject.
+
+The new consumers/factories first failed actual missing-member/type compilation.
+The first execution exposed the missing expiry-cleanup precondition on both
+providers. Bounded custom architecture review then found a release-lock deadlock:
+native disposal joined all workers while preventing release of a held publication.
+A new two-provider regression reproduced both failures. Release callers now share
+an in-progress task published under the registry semaphore but join outside it.
+Native settlement observation precedes stable scope disposal; failed observation
+can retry without caching a failed disposal promise. Both regressions pass and
+subsequent rearming succeeds. This is a prerequisite review, not final T081.
+
+Actual prepared discovery matches all 24 new parameters, including ten controls
+per provider, two observed reopens and two concurrent releases. Fresh preparation/
+independent replay pass 311 artifact, 103 Consumer and 89+89 metadata cases without
+skips; fifteen actual archives reproduce full-filename map SHA-256
+`2068add411613f471e6bfefd14cabb609fba189354c9edeec4f2320269dd07bf`;
+ten runtime dependency images match archive bytes per preparation. Tooling passes
+319 checks (302 passed/seventeen macOS-native skips), including 93 SDK checks;
+20 typed binding/origin unit cases pass after restoring missing test dependencies.
+SDK/both adapter/Consumer formatting, frozen inventory/catalogs and patch checks
+pass. Transfer packets remain reused unchanged, not fresh origins. The next native
+request is 211 foundations and 94 scopes/810 observations, pending. Remaining
+category parity, parent-origin ingestion, integrations, complete profiles and final
+T081 remain unfinished. Tasks/reviewer markers, historical seals and tracked locks
+are unchanged; production architecture, deployment examples and diagrams are
+unaffected because this increment adds test-only factories/controls.
+The runtime uses a separate cache from candidate construction. The full-binding
+scope therefore supplies only the two admitted provider archive hashes through
+fixed private runsettings variables, after rechecking actual archive bytes.
+Factories do not read an assumed build cache or substitute assembly hashes for
+package hashes; malformed, missing, foreign and absent-archive inputs reject.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

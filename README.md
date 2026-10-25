@@ -1719,7 +1719,8 @@ reservation/read handoffs, fences admission/readiness, and reports retained
 ownership through a failed stop. Removing the scope permits the real cleanup
 retry and actual successful final settlement. Four new package-only rows pass;
 fresh replay covers 311 artifact, 77 Consumer and 89+89 metadata cases.
-The next native request is 92 scopes/784 observations, pending. This does not
+Native run `40149692533` at `1acdeb0` passed all three jobs, 209 foundations
+and 92 scopes/784 exact discoveries/executions. This does not
 replace physical permission-failure checks or complete mandatory fault drivers.
 Owned synchronous holds now use Local's actual record-write and Object's actual
 delete callbacks, with deletion reserved before arming and explicit reference
@@ -1728,9 +1729,18 @@ failed-stop ownership until explicit release, then require actual settlement.
 These are controlled synchronous fixture boundaries, not stalled filesystem
 syscalls or replacements for the original cross-process containment proof.
 Fresh replay covers 311 artifact, 79 Consumer and 89+89 metadata cases;
-the next native request is 93 scopes/786 observations, pending.
-Full bindings, remaining mandatory fault controls and category/profile
-acceptance remain unfinished.
+native run `40150871211` at `f68812e` passed all three jobs, 210 foundations
+and 93 scopes/786 exact discoveries/executions, including every prerequisite.
+Full Local/Object binding factories now preserve actual provider components and
+connect all ten mandatory controls to genuine work. Exact-stamp damage cannot
+select a hidden last payload; borrowed source/sink streams remain caller-owned
+through actual worker settlement. Twenty-four package-only rows cover the controls,
+actual origin capture/reopen, stale fencing and independent concurrent release.
+The architecture review's release-lock deadlock was reproduced on both providers
+and fixed without changing provider mechanisms or stable settlement promises.
+Fresh replay covers 311 artifact, 103 Consumer and 89+89 metadata cases.
+The next native request is 94 scopes/810 observations, pending; full category/
+profile qualification and remaining implementation tasks are still unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

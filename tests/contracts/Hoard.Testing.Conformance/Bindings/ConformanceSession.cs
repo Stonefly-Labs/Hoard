@@ -197,11 +197,11 @@ public interface IArtifactAssertionSession : IAsyncDisposable
 public interface IArtifactFaultRegistration : IAsyncDisposable
 {
     long ObservationCount { get; }
+    ValueTask WaitForEntryAsync(CancellationToken cancellationToken);
 }
 
 public interface IArtifactSynchronousHold : IArtifactFaultRegistration
 {
-    ValueTask WaitForEntryAsync(CancellationToken cancellationToken);
     void Release();
 }
 
@@ -220,6 +220,16 @@ public interface IArtifactConformanceSession : IAsyncDisposable
 
 public interface IArtifactConformanceFaultDriver : IConformanceFaultDriver
 {
-    ValueTask DamagePayloadAsync(bool truncate, CancellationToken cancellationToken);
+    IArtifactBorrowedStream BorrowedSource { get; }
+    IArtifactBorrowedStream BorrowedDestination { get; }
+    ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
+        ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken);
+    ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken);
     ValueTask AwaitSettlementAsync(CancellationToken cancellationToken);
+}
+
+public interface IArtifactBorrowedStream
+{
+    Stream Stream { get; }
+    bool WasDisposed { get; }
 }

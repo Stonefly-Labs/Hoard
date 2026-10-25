@@ -4168,7 +4168,14 @@ archives reproduce canonical full-filename map SHA-256
 `0f1c8ce1efd3893ba836768053303d17c09ec5fc1fcd7e42cf9be0689dccdcdc`;
 ten actual dependency images match their package bytes per preparation.
 Transfer packets remain reused unchanged, not new origins. The next native
-request is 209 foundations and 92 scopes/784 observations, pending.
+request passed as run `40149692533` at exact head
+`1acdeb0b777e31929e7f70bccdfe89a2dc598bbd`: all three jobs,
+209 foundations without failures/errors/skips, 92 scopes/784 exact discoveries/
+executions and every actual prerequisite. Input:
+`b4b5a27b071937cd524f6d1c2a97fab1049b991a6d049db0801849a8a90dd6cf`;
+preparation:
+`a11e22af6fefffdb261a13df75e1d305e9ec565005cc331c2e42b521d8b42e4b`;
+free scratch 91,721,879,552 bytes.
 Full fault-driver/origin/category/profile qualification and final T081 remain
 open; tasks, reviewer markers, tracked locks, historical seals and product/
 architecture/deployment examples remain unaffected.
@@ -4207,10 +4214,69 @@ packets remain reused unchanged, not fresh origins.
 Bounded custom architecture review found no actionable ownership/concurrency/
 boundary bug; it is a control prerequisite review, not final T081 or complete
 category admission. Original cross-process native containment remains mandatory
-and separate. The next native request is 210 foundations and 93 scopes/
-786 observations, pending. Full mandatory fault-driver/origin/category/profile
+and separate. Native run `40150871211` at exact head
+`f68812e9e2d9f48ced1be13d16554b67c118129c` passed all three jobs,
+210 foundations without failures/errors/skips, 93 scopes/786 exact discoveries/
+executions and every actual prerequisite. Input:
+`8d841ae64a58df3ad5b548c9c1c1cfa4d0147e08500a3a068c057db2eed9ee13`;
+preparation:
+`965ec29517b5fc9fa3a3ea2cf140f12b65ac57d91751d576e2b856eecfc777eb`;
+free scratch 91,716,579,328 bytes. Full mandatory fault-driver/origin/category/profile
 qualification, tasks and reviewer markers remain open. Tracked locks, historical
 seals and product/architecture/deployment examples remain unaffected.
+
+### Full artifact factories and executable mandatory controls
+
+`LocalBinding` and `ObjectSemanticsBinding` now implement the full typed
+artifact binding/session boundary over their actual independent owned stores,
+validator/maintenance/lifetime and shared authority. No store proxy or component
+identity substitution is introduced. All ten declared controls execute real work:
+publication-selected/direct-verification/receipt/verified-generation gates,
+exact-stamp physical payload damage, scoped capacity/indexed cleanup injection,
+synchronous fixture holds and borrowed non-cooperative source/sink streams.
+Generation's common consumer performs real expired-owner maintenance cleanup
+before re-staging; the first run failed both providers without that required
+precondition, and no guard was weakened. Old owner/cleanup rejection, increasing
+generation and readback corroborate actual replacement.
+
+The full damage API now requires an exact stamp. Its common consumer targets the
+first of two artifacts, rejects a foreign incarnation without entry/damage, proves
+the second remains intact and observes corruption/quarantine through public I/O.
+Borrowed stream reads/writes are actual pending I/O ignoring operation cancellation
+until explicit release; actual provider public return/retained cleanup and worker
+settlement are not manufactured. Streams are disposed by their caller-side factory
+only after actual close/reopen settlement. Generic entry waits observe genuine
+registrations and cancellation does not remove the armed fault. Reopen captures
+actual components/parent lineage, preserves Local identity/publication, gives the
+simulation an empty fresh epoch and rejects stale controls.
+
+The absent consumers/factories first failed actual compilation. Bounded custom
+architecture review found a real cross-control deadlock: native release joined
+all workers under the shared registry semaphore and prevented release of a held
+publication. Both new concurrent-release regressions first failed. In-progress
+release tasks are now published under that semaphore but awaited outside it,
+preserving independent release and preventing premature rearm. Native settlement
+is observed before stable scope disposal, allowing failed observation to retry
+without permanently caching a failed scope-disposal task. Both regressions and
+subsequent native rearming pass. This review is not final T081.
+
+Actual prepared discovery equals all 24 independent expected identities. Fresh
+preparation/replay pass 311 artifact, 103 Consumer and 89+89 metadata cases without
+skips. Fifteen actual archives reproduce full-filename map SHA-256
+`2068add411613f471e6bfefd14cabb609fba189354c9edeec4f2320269dd07bf`;
+ten runtime dependency DLLs match archive bytes per preparation. Tooling passes
+319 checks (302 passed/seventeen macOS-native skips), including 93 SDK checks;
+20 typed binding/origin unit cases pass after restoring missing dependencies.
+SDK/both adapter/Consumer formatting, frozen inventory/catalogs and patch checks
+pass. Transfer packets are reused unchanged, not new origins. The next native
+request is 211 foundations and 94 scopes/810 observations, pending. Parent-origin/
+profile ingestion, remaining category parity/integrations, full qualification and
+final T081 remain open. Tasks/reviewer markers, tracked locks, historical seals and
+production architecture/deployment examples/diagrams remain unchanged.
+Runtime caches remain independent. The parent rechecks both admitted provider
+archives before passing only their hashes through fixed private runsettings
+variables; fixture construction no longer assumes candidate cache availability.
+Missing/foreign/malformed or absent-archive inputs fail before launch.
 
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations
