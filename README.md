@@ -1764,7 +1764,9 @@ public readback, preserved epoch/authority and stale-control fencing. The eight
 metadata rows produce ten actual origins, including both real child lineages;
 Memory uses its closed logical image, not durable restart. Fresh replay covers
 311 artifact, 111 Consumer and 89+89 metadata cases. The expanded native request
-is 95 scopes/818 observations, pending; complete category/profile imports remain open.
+passed as run `40155922560` at `4548183`: all three jobs, 214 foundations
+and 95 scopes/818 exact discoveries/executions with every prerequisite.
+Complete category/profile imports remain open.
 
 Twenty further actual metadata rows now import unchanged entity/relationship,
 final-graph, independent-candidate, faulted-atomic-candidate, grouped-read and
@@ -1773,6 +1775,14 @@ The scope is 28 rows/30 origins/180 actual role/image/archive matches. Fresh
 preparation/replay pass 311 artifact, 131 Consumer and 89+89 metadata cases;
 the next native request is 95 scopes/838 observations, not yet admitted.
 This remains diagnostic work, not complete category/profile qualification.
+
+Thirty further observed rows now import unchanged canonical identity, registry/
+authorization isolation, reference replacement/ABA/rollback, create/revision races,
+reconciliation and malformed-schema consumers. All 58 metadata rows produce
+60 genuine origins/360 actual role/image/archive matches. Fresh preparation/
+replay pass 311 artifact, 161 Consumer and 89+89 metadata cases; the next native
+request is 95 scopes/868 observations, not yet admitted. Metadata reference ABA
+is not artifact-incarnation/shared-authority qualification.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

@@ -795,8 +795,9 @@ closed logical image, not durable restart. Both real reopen lineages are emitted
 and strict ingestion requires two origins for each exact reopen witness. The
 eight metadata rows yield ten actual origins/60 image/archive correspondences;
 fresh replay passes 311 artifact, 111 Consumer and 89+89 metadata cases.
-The next native request is 95 scopes/818 observations, pending; complete
-category/profile imports and qualification remain unfinished.
+The expanded native request passed as run `40155922560` at `4548183`:
+all three jobs, 214 foundations and 95 scopes/818 exact discoveries/executions
+with every prerequisite. Complete category/profile qualification remains unfinished.
 
 The observed metadata scope now also imports twenty actual rows using unchanged
 entity/relationship, final-graph, independent-candidate, faulted-atomic-candidate,
@@ -807,6 +808,17 @@ Fresh preparation/replay pass 311 artifact, 131 Consumer and 89+89 metadata case
 the next native request is 95 scopes/838 observations, not yet admitted. These
 standalone metadata authority checks are not shared artifact-authority integration,
 durable Memory recovery or complete category/profile qualification.
+
+Thirty more observed rows now import unchanged canonical identity, registry/
+authorization partitioning, reference replacement/ABA/rollback, create/revision
+races, reconciliation contention/I/O/acknowledgment/contributions/corrupt receipts
+and both malformed-schema layouts. Layout checks start genuinely unprepared;
+no common assertion or independent provider mechanism changes. All 58 metadata
+rows emit 60 genuine origins/360 actual role/image/archive matches. Fresh
+preparation/replay pass 311 artifact, 161 Consumer and 89+89 metadata cases;
+the next native request is 95 scopes/868 observations, not yet admitted.
+Metadata zero-reference revision ABA is not artifact-incarnation fencing or
+shared-authority integration; full category/profile qualification remains open.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

@@ -1008,8 +1008,9 @@ and parent ingestion requires two matching origins for that exact witness.
 The eight metadata rows yield ten origins, eight creates/two reopens and 60 actual
 role/image/archive correspondences with an independent runtime cache. Fresh replay
 passes 311 artifact, 111 Consumer and 89+89 metadata cases. The next native
-request is 214 foundations and 95 scopes/818 observations, pending; complete
-category/profile imports, qualification and final T081 remain open.
+request passed as run `40155922560` at `4548183`: all three jobs,
+214 foundations and 95 scopes/818 exact discoveries/executions with every
+prerequisite. Complete category/profile qualification and final T081 remain open.
 
 The same observed factories now execute twenty further actual metadata rows:
 unchanged entity/relationship and final-graph consumers, independent candidate
@@ -1024,6 +1025,19 @@ role/image/archive correspondences. Fresh preparation/replay pass 311 artifact,
 and 95 scopes/838 observations, not yet admitted. Standalone metadata authority
 checks do not establish artifact/metadata shared authority; complete category/
 profile qualification and final T081 remain open.
+
+Thirty further observed rows import unchanged canonical text, registry/
+authorization partitioning, reference replacement/metadata revision ABA/
+telemetry rollback, create/revision races and reconciliation contention,
+I/O uncertainty, acknowledgment loss, contributions and corrupt receipts.
+Both malformed-schema layouts run without pre-admitting schema, preserving the
+original empty/partial layout expectations. Neither common assertion bodies nor
+provider mechanisms change. Strict admission now requires all 58 metadata rows,
+60 actual origins and 360 actual role/image/archive matches. Fresh preparation/
+replay pass 311 artifact, 161 Consumer and 89+89 metadata cases; the next native
+request is 214 foundations and 95 scopes/868 observations, not yet admitted.
+These metadata revision checks do not qualify artifact-incarnation fencing,
+the real cross-store authority bridge or complete category/profile acceptance.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

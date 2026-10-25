@@ -49,6 +49,21 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     [InlineData("memory", "lease-renew")]
     [InlineData("memory", "lease-release")]
     [InlineData("memory", "lease-guard")]
+    [InlineData("memory", "text")]
+    [InlineData("memory", "registry")]
+    [InlineData("memory", "authorization")]
+    [InlineData("memory", "references")]
+    [InlineData("memory", "reference-aba")]
+    [InlineData("memory", "telemetry")]
+    [InlineData("memory", "create-race")]
+    [InlineData("memory", "revision-race")]
+    [InlineData("memory", "reconcile-writer")]
+    [InlineData("memory", "reconcile-io")]
+    [InlineData("memory", "reconcile-ack")]
+    [InlineData("memory", "contributions")]
+    [InlineData("memory", "receipts")]
+    [InlineData("memory", "layout-empty")]
+    [InlineData("memory", "layout-partial")]
     [InlineData("sqlite", "capacity")]
     [InlineData("sqlite", "writer")]
     [InlineData("sqlite", "publication")]
@@ -62,6 +77,21 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     [InlineData("sqlite", "lease-renew")]
     [InlineData("sqlite", "lease-release")]
     [InlineData("sqlite", "lease-guard")]
+    [InlineData("sqlite", "text")]
+    [InlineData("sqlite", "registry")]
+    [InlineData("sqlite", "authorization")]
+    [InlineData("sqlite", "references")]
+    [InlineData("sqlite", "reference-aba")]
+    [InlineData("sqlite", "telemetry")]
+    [InlineData("sqlite", "create-race")]
+    [InlineData("sqlite", "revision-race")]
+    [InlineData("sqlite", "reconcile-writer")]
+    [InlineData("sqlite", "reconcile-io")]
+    [InlineData("sqlite", "reconcile-ack")]
+    [InlineData("sqlite", "contributions")]
+    [InlineData("sqlite", "receipts")]
+    [InlineData("sqlite", "layout-empty")]
+    [InlineData("sqlite", "layout-partial")]
     public async Task Observed_factories_execute_unchanged_common_consumers_with_actual_origins(
         string provider, string consumer)
     {
@@ -70,8 +100,11 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
         var context = new ConformanceRunContext(RunId(), "full-metadata-binding",
             clock, resources, new ConformanceEvidenceBuffer());
         await using var session = await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default);
-        Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Success>(
-            await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        if (consumer is not ("layout-empty" or "layout-partial"))
+        {
+            Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Success>(
+                await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        }
         await (consumer switch
         {
             "capacity" => MetadataFailureAssertions.StorageCapacityAsync(session.Store,
@@ -99,6 +132,30 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
                 session.Store, clock, session.Faults.ObserveBoundaryAsync, MetadataLeaseExpiryAction.Release, default),
             "lease-guard" => MetadataLeaseAssertions.ExpiryAtDecisionAsync(
                 session.Store, clock, session.Faults.ObserveBoundaryAsync, MetadataLeaseExpiryAction.Guard, default),
+            "text" => MetadataIdentityAssertions.CanonicalTextAndForbiddenValuesAsync(session.Store, default),
+            "registry" => MetadataIdentityAssertions.RegistryIsolationAsync(session.Store, session.Authority, default),
+            "authorization" => MetadataIdentityAssertions.AuthorizationPartitionIsolationAsync(
+                session.Store, session.Authority, default),
+            "references" => MetadataReferenceAssertions.EntryReplacementAndRemovalAsync(
+                session.Store, session.Authority, default),
+            "reference-aba" => MetadataReferenceAssertions.ZeroReferenceAbaFencingAsync(
+                session.Store, session.Authority, default),
+            "telemetry" => MetadataReferenceAssertions.InvalidTelemetryRollsBackEntryAndReferencesAsync(
+                session.Store, session.Authority, default),
+            "create-race" => MetadataConcurrencyAssertions.CompetingCreatesAsync(session.Store, default),
+            "revision-race" => MetadataConcurrencyAssertions.RevisionRacesAsync(session.Store, default),
+            "reconcile-writer" => MetadataReconciliationAssertions.WriterContentionAsync(
+                session.Store, session.Faults.HoldWriterAsync, session.Faults.AwaitSettlementAsync, default),
+            "reconcile-io" => MetadataReconciliationAssertions.IoFailureAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, default),
+            "reconcile-ack" => MetadataReconciliationAssertions.LostAcknowledgmentAndAbandonmentAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, default),
+            "contributions" => MetadataReconciliationAssertions.DistinctContributionsAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, default),
+            "receipts" => MetadataReconciliationAssertions.CorruptReceiptsAsync(
+                session.Store, session.Faults.CorruptAsync, default),
+            "layout-empty" => MetadataSchemaAssertions.UnrecognizedLayoutAsync(session, false, default),
+            "layout-partial" => MetadataSchemaAssertions.UnrecognizedLayoutAsync(session, true, default),
             _ => throw new ArgumentException("BindingInvalid")
         });
         ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());

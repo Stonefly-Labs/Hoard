@@ -7614,7 +7614,10 @@ Fifteen archives reproduce full-filename map SHA-256
 ten dependency images match package bytes per preparation. Tooling passes
 322 checks (305 passed/seventeen macOS-native skips), including 96 SDK checks;
 SDK/Consumer formatting, frozen safeguards and patch checks pass. The expanded
-native request is 214 foundations and 95 scopes/818 observations, pending.
+native request passed as run `40155922560` at
+`4548183b5e6907be94f3fe52393a729c16299d2d`: all three jobs,
+214 foundations without failures/errors/skips and 95 scopes/818 exact discoveries/
+executions with every prerequisite.
 All 20 typed binding/origin SDK contract tests also pass.
 Complete category/profile origin imports, remaining parity/integrations and
 final T081 are still open; tasks/reviewer markers, historical seals and tracked
@@ -7649,6 +7652,31 @@ and 95 scopes/838 observations, not yet admitted. These standalone metadata
 checks are not shared artifact-authority integration or complete category/profile
 qualification. Remaining imports/integrations and final T081 stay open;
 production/deployment examples and architecture diagrams are unaffected.
+
+Thirty further observed metadata rows now import unchanged canonical text,
+registry/authorization isolation, reference replacement/metadata revision ABA/
+telemetry rollback, create/revision races, reconciliation contention/I/O/
+acknowledgment/contribution/corrupt-receipt consumers and both malformed-schema
+layouts. Layout assertions start genuinely unprepared. The exact-scope regression
+first rejected the missing rows. No common assertion, provider mechanism, frozen
+wrapper, lock, historical seal, task or reviewer marker changes.
+
+Fresh preparation/replay pass 311 artifact, 161 Consumer and 89+89 metadata
+cases without failures/skips, preserving the same fifteen-archive map.
+Independent fresh-cache actual-output observation verifies all 58 rows,
+60 actual origins, 58 creates/two reopens and 360 actual role/image/archive
+correspondences. Tooling passes 322 checks (305 passed/seventeen macOS-native
+skips), including 96 SDK checks; Consumer formatting, frozen catalog/inventory
+and patch checks pass. The next native request is 214 foundations and
+95 scopes/868 observations, not yet admitted. Standalone metadata reference
+revision ABA is not artifact-incarnation or shared-authority qualification;
+remaining category/profile imports, integrations and final T081 remain open.
+Product/deployment examples and architecture diagrams are unaffected.
+
+The admitted compatible-reopen run binds input
+`6269c9ddadd831a7cdef59dfd7e8d2194bd767e316e7e8fb7d2272fc04886890`,
+preparation `d6b7c46e8a76016e6290406375013dfbd2b2668ae1eddc859fba1a15d6a1f83d`
+and 91,721,584,640 free scratch bytes. It predates these fifty further common rows.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

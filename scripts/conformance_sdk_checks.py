@@ -1293,7 +1293,10 @@ def full_metadata_binding_scenarios():
         for provider in ("memory", "sqlite") for consumer in (
             "capacity", "writer", "publication", "entities", "graph", "independent",
             "atomic", "grouped", "lease-generation", "lease-fences",
-            "lease-renew", "lease-release", "lease-guard")]
+            "lease-renew", "lease-release", "lease-guard",
+            "text", "registry", "authorization", "references", "reference-aba", "telemetry",
+            "create-race", "revision-race", "reconcile-writer", "reconcile-io",
+            "reconcile-ack", "contributions", "receipts", "layout-empty", "layout-partial")]
     reopen = FULL_METADATA_CONSUMER_PREFIX + "Observed_reopen_preserves_public_state_and_fences_stale_controls"
     identities.extend(f'{reopen}(provider: "{provider}")' for provider in ("memory", "sqlite"))
     return (("full-metadata-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
