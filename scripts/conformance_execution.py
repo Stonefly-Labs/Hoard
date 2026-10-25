@@ -312,6 +312,7 @@ class CommandResult:
     exit_code: int
     events: tuple
     duration_ms: float
+    execution_record_sha256: str | None = None
 
 
 class OwnedRun:
@@ -571,8 +572,25 @@ class OwnedRun:
     @single_writer
     def command(self, args, *, cwd=None, timeout=None, kind="events", env=None,
                 scope="ordinary", cache_id="default", deadline=None, discovery_tests=frozenset(),
-                stop_at_barrier=None, measure_transfer_bytes=None, inspect_at_barrier=None):
+                stop_at_barrier=None, measure_transfer_bytes=None, inspect_at_barrier=None, record_execution=False):
         started = time.monotonic()
+        if type(record_execution) is not bool or record_execution and scope == "cleanup":
+            raise ConformanceError("OwnershipInvalid")
+        argv_sha = cwd_sha = None
+        if record_execution:
+            if (not isinstance(args, (tuple, list)) or not args
+                    or any(not isinstance(arg, str) or "\x00" in arg for arg in args)):
+                raise ConformanceError("OwnershipInvalid")
+            args = tuple(args)
+            if len(args) > 1024 or any(len(arg) > 64 * 1024 for arg in args):
+                raise ConformanceError("OutputLimitExceeded")
+            try:
+                if sum(len(arg.encode("utf-8")) for arg in args) > 64 * 1024:
+                    raise ConformanceError("OutputLimitExceeded")
+                argv_sha = hashlib.sha256(canonical_bytes(args)).hexdigest()
+                cwd_sha = hashlib.sha256(str(Path(cwd or os.getcwd()).absolute()).encode("utf-8")).hexdigest()
+            except UnicodeError:
+                raise ConformanceError("OwnershipInvalid") from None
         if inspect_at_barrier is not None and (
                 type(inspect_at_barrier) is not int or not 0 <= inspect_at_barrier <= 65535
                 or stop_at_barrier is None or inspect_at_barrier == stop_at_barrier):
@@ -634,6 +652,7 @@ class OwnedRun:
             raise ConformanceError("OwnershipInvalid")
         if self.retained_bytes + SAFE_EVENT_BYTES > PROFILE_DIAGNOSTIC_BYTES:
             raise ConformanceError("OutputLimitExceeded")
+        args = tuple(args)
         if self.state == "Allocated":
             self.transition("Active", deadline=deadline)
         if time.monotonic() >= deadline:
@@ -852,8 +871,10 @@ class OwnedRun:
                 else "EvidenceIncomplete", "value": 0,
             }))
         self._retain_diagnostics(destination.name, events)
-        if scope == "recovery" or measure_transfer_bytes is not None:
-            receipt = canonical_bytes({
+        receipts = []
+        execution_sha = None
+        if scope == "recovery" or measure_transfer_bytes is not None or record_execution:
+            observed = {
                 "schemaVersion": 1, "sequence": self.command_sequence,
                 "childPid": child.pid, "childStartSha256": identity or "0" * 64,
                 "startedMs": started * 1000, "endedMs": time.monotonic() * 1000,
@@ -861,12 +882,21 @@ class OwnedRun:
                 "diagnosticCode": ("None" if failure is None else
                                    str(failure) if isinstance(failure, ConformanceError) else "EvidenceIncomplete"),
                 "groupState": "Exited" if exited else "Retained", "scope": scope,
-                **({"barrier": barrier} if stop_at_barrier is not None else {}),
-                **({"transfer": transfer} if measure_transfer_bytes is not None else {}),
-            })
+            }
+            if scope == "recovery" or measure_transfer_bytes is not None:
+                receipts.append((f"{scope}-command-{self.command_sequence:04}.json", canonical_bytes({
+                    **observed, **({"barrier": barrier} if stop_at_barrier is not None else {}),
+                    **({"transfer": transfer} if measure_transfer_bytes is not None else {}),
+                })))
+            if record_execution:
+                receipt = canonical_bytes({
+                    **observed, "runId": self.run_id, "rootId": self.root_id,
+                    "argvSha256": argv_sha, "cwdSha256": cwd_sha})
+                execution_sha = hashlib.sha256(receipt).hexdigest()
+                receipts.append((f"execution-command-{self.command_sequence:04}.json", receipt))
+        for name, receipt in receipts:
             directory = self._directory_descriptor("proofs")
             try:
-                name = f"{scope}-command-{self.command_sequence:04}.json"
                 with os.fdopen(os.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
                                        0o600, dir_fd=directory), "wb") as output:
                     output.write(receipt)
@@ -875,7 +905,7 @@ class OwnedRun:
                 os.close(directory)
         if failure is not None:
             raise failure
-        return CommandResult(code, tuple(events), (time.monotonic() - started) * 1000)
+        return CommandResult(code, tuple(events), (time.monotonic() - started) * 1000, execution_sha)
 
     def _retain_diagnostics(self, name, events):
         data = b"".join(canonical_bytes(event) + b"\n" for event in events)

@@ -194,14 +194,26 @@ class ConformanceExecutionTests(unittest.TestCase):
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_bounded_safe_events_are_retained_without_raw_canary(self):
         run = self.workspace()
-        result = run.command([sys.executable, "-c",
-                              'print(\'{"event":"control","code":"None","value":3}\')'])
+        arguments = [sys.executable, "-c", 'print(\'{"event":"control","code":"None","value":3}\')']
+        result = run.command(arguments, record_execution=True)
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(result.events[0]["value"], 3)
+        path = run.root / "proofs/execution-command-0001.json"
+        receipt = json.loads(path.read_bytes())
+        self.assertEqual(result.execution_record_sha256, execution.hashlib.sha256(path.read_bytes()).hexdigest())
+        self.assertEqual(receipt["argvSha256"], execution.hashlib.sha256(execution.canonical_bytes(arguments)).hexdigest())
+        self.assertEqual(receipt["runId"], run.run_id)
+        self.assertEqual(receipt["exitCode"], 0)
+        self.assertEqual(receipt["groupState"], "Exited")
+        self.assertNotEqual(receipt["childStartSha256"], "0" * 64)
+        self.assertGreater(receipt["childPid"], 1)
+        self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o400)
         with self.assertRaisesRegex(ConformanceError, "UnknownDiagnostic"):
             run.command([sys.executable, "-c",
                          'print(\'{"event":"control","code":"None","value":4}\'); '
-                         'print("synthetic-secret-canary/private/path")'])
+                         'print("synthetic-secret-canary/private/path")'], record_execution=True)
+        failure = json.loads((run.root / "proofs/execution-command-0002.json").read_bytes())
+        self.assertEqual(failure["diagnosticCode"], "UnknownDiagnostic")
         self.assertEqual([json.loads(line) for line in
                           (run.root / "diagnostics/command-0002.jsonl").read_bytes().splitlines()], [
                               {"event": "control", "code": "None", "value": 4},
@@ -211,7 +223,30 @@ class ConformanceExecutionTests(unittest.TestCase):
             if path.is_file():
                 self.assertNotIn(b"synthetic-secret-canary", path.read_bytes())
                 self.assertNotIn(b"/private/path", path.read_bytes())
+        for path in (run.root / "proofs").glob("execution-command-*.json"):
+            self.assertNotIn(b"synthetic-secret-canary", path.read_bytes())
+            self.assertNotIn(b"/private/path", path.read_bytes())
         self.assertFalse(any(path.suffix in (".trx", ".log") for path in run.root.rglob("*")))
+        run.transition("Settling")
+        run.release()
+
+    def test_execution_receipt_requests_are_boolean_and_reject_before_launch(self):
+        run = self.workspace()
+        with mock.patch.object(execution.subprocess, "Popen") as launch:
+            for value in (None, 0, 1, "true", {}):
+                with self.subTest(value=value), self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                    run.command([sys.executable, "-c", "raise AssertionError()"], record_execution=value)
+            for arguments in ([sys.executable, "a" * 65537], [sys.executable, "\u00e9" * 40000],
+                              ["argument"] * 1025):
+                with self.subTest(size=len(arguments)), self.assertRaisesRegex(ConformanceError, "OutputLimitExceeded"):
+                    run.command(arguments, record_execution=True)
+            with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                run.command([sys.executable], scope="cleanup", record_execution=True)
+            with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                run.command([sys.executable, "\ud800"], record_execution=True)
+            launch.assert_not_called()
+        self.assertEqual(run.command_sequence, 0)
+        self.assertFalse(tuple((run.root / "proofs").glob("execution-command-*.json")))
         run.transition("Settling")
         run.release()
 

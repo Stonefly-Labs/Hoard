@@ -1918,6 +1918,11 @@ category inspection scopes (twelve source executions), with independently
 recaptured package/lock/runtime/file fingerprints and binding-specific parent
 receipts. Unexecuted category scopes remain explicitly incomplete; this is not
 native containment, whole-profile execution or source/controller qualification.
+Category launches now also request an opt-in owned-executor record: bounded
+argument/working-directory hashes join the actual PID/start identity, command
+sequence, timing, exit and whole-group settlement. Raw arguments and paths are
+not persisted. Native record assertions await Linux execution; this plumbing
+does not open the source/controller qualification gate.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

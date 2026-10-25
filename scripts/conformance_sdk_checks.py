@@ -2922,7 +2922,8 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
         "summary": MappingProxyType({
             "qualification": False, "code": "None", "tests": len(tests),
             "discoverySha256": discovery_sha,
-            "completionSha256": hashlib.sha256(transport["completion_data"]).hexdigest(), **sources})})
+            "completionSha256": hashlib.sha256(transport["completion_data"]).hexdigest(),
+            "executionRecordSha256": getattr(result, "execution_record_sha256", None), **sources})})
 
 
 def _category_scope_tests(category_scope):
@@ -3137,6 +3138,7 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
         ["dotnet", "vstest", str(assembly), *(["--ListTests"] if discovery else []),
          f"--Settings:{settings}", f"--TestCaseFilter:{filter_text}"],
         cwd=assembly.parent, timeout=180, kind="discovery" if discovery else "tests", cache_id="runtime",
+        **({"record_execution": True} if category_scope is not None else {}),
         **({"discovery_tests": frozenset(identities)} if discovery else {}))
     ended = time.monotonic() * 1000
     output = run.root / f'{"discovery" if discovery else "runtime"}-{attempt_id}'

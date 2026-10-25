@@ -5839,6 +5839,29 @@ guards, joint history or category dispatcher sources. T019/T020, qualifying
 profiles and the source/controller gate remain unfinished. No task/checklist,
 product/reference/lock bytes or deployment examples/diagrams change.
 
+### Owned invocation records for independent source admission
+
+Category discovery/execution request an opt-in native command receipt rather
+than inferring invocation ownership from source-produced packets. The owned
+executor freezes the actual argument vector and persists only argument/cwd
+hashes, run/root/sequence, observed PID/start identity, monotonic timing,
+exit/diagnostic code and actual whole-group settlement. Receipts are
+create-new/read-only; raw arguments, paths and canaries are not persisted.
+Existing ordinary defaults and recovery/transfer receipt schemas are unchanged.
+This is prerequisite plumbing, not independent source/controller qualification.
+
+Admission rejects non-boolean requests, cleanup, invalid Unicode, more than
+1,024 arguments and more than 64 KiB encoded argument bytes before a native
+launch or ownership probe. The regression first fails at the missing API.
+An overbroad mock then intercepts the pre-existing ownership subprocess; early
+input rejection fixes that failure. All 375 tooling checks pass (358 passed/
+seventeen explicit native macOS skips); inventory/catalog and patch checks pass.
+The existing Linux-only safe-output regression now checks both successful and
+failed receipts, actual start identity, exact argument hash, read-only mode and
+no raw canary persistence. These expanded native assertions are not yet run
+locally; Linux validation is required. No qualifying gate or task/checklist
+marker changes, and no product/reference/lock/deployment surface is affected.
+
 ## Summary
 
 

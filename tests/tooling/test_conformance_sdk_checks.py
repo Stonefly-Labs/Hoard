@@ -50,7 +50,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             for identity, family in checks.ORIGINAL_INSPECTION_WITNESSES.items()
             if identity not in checks.ORIGINAL_INSPECTION_LITERAL_WITNESSES}
         launches = []
-        run = SimpleNamespace(root=self.directory, command=lambda arguments, **kwargs: launches.append(arguments))
+        run = SimpleNamespace(root=self.directory, command=lambda arguments, **kwargs: launches.append((arguments, kwargs)))
         for profile in ("metadata", "artifacts"):
             for scope_id, pairs in category_execution_partitions(profile).items():
                 inspection = scope_id.startswith("inspection-")
@@ -103,6 +103,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                             **{**options, "category_scope": (profile, "foreign")})
                     self.assertEqual(len(launches), count)
         self.assertEqual(len(launches), 18)
+        self.assertTrue(all(options["record_execution"] is True for _, options in launches))
 
     def test_category_inspection_receipts_join_only_the_exact_catalog_binding_scope(self):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases

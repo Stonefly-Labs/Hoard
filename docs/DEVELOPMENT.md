@@ -8687,6 +8687,29 @@ guards, joint history or category dispatcher changes. Qualifying profiles,
 independent source/controller qualification and T019/T020 remain incomplete.
 Product/reference/lock bytes and deployment examples/diagrams are unaffected.
 
+Category discovery/execution now request an opt-in owned-command record to
+support the remaining independent source-proof admission. The executor freezes
+and hashes the actual argument vector and working directory, binding observed
+PID/start identity, run/root/sequence, monotonic timing, exit, diagnostics and
+whole-group settlement in a create-new, read-only private receipt. Raw argument
+or directory values never enter the record. Ordinary commands that do not opt
+in remain unchanged; existing recovery/transfer receipt schemas are preserved.
+Requests must be boolean, cannot record cleanup, and reject over 1,024 arguments,
+64 KiB encoded argument bytes or invalid Unicode before native child launch.
+Incomplete/non-native diagnostics carry no native record hash and never gain
+qualification by this optional field.
+
+The new admission regression first fails at the absent argument, then passes.
+An initially overbroad subprocess mock intercepted the existing ownership
+probe, exposing the need to reject malformed/oversized record requests before
+that probe; moving admission earlier corrects it. All 375 tooling checks pass
+(358 passed/seventeen explicit macOS-native skips), with inventory/catalog and
+patch checks passing. The existing Linux-only safe-output test now asserts
+successful/failed records, exact argument hash, PID/start, private read-only
+receipt and absence of raw canaries; those native assertions await Linux.
+No native success or source/controller qualification is inferred from local
+skips. Task/checklist markers, packages/locks and deployment diagrams stay fixed.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full
