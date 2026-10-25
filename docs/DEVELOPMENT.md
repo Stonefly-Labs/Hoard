@@ -7892,6 +7892,40 @@ free scratch 91,721,281,536 bytes. It predates mutations/slot input wiring.
 The next request is 219 foundations and 100 scopes/982 observations, not yet
 admitted or complete category/controller qualification.
 
+Category batch ingestion now selects each binding's full frozen witness union,
+not a caller-supplied reduced inventory. Independent catalog/package checks
+require both category options. The parent fixes a shared witness's execution
+context to its lexicographically first mapped case, then reuses its actual UUID
+and proof hash for every owned obligation without rewriting proof bytes.
+Append-only retries retain failed attempts; execution/session identities and
+component consistency extend across batches. Results require every profile key,
+including six metadata/seven artifact QC rows. Unobserved controller controls
+stay incomplete, and exclusions have no invented attempts or runtime evidence.
+This is an import/state-model increment: actual profile runners, lower-level
+adapter wiring, controller evidence and independent evaluation remain unbuilt.
+The initial three regressions expose the absent importer; four focused cases
+now pass. Full tooling passes
+331 checks (314 passed/seventeen macOS-native skips) after reclaiming inspected
+completed private dependency caches to restore transient headroom above the
+unchanged 24 GiB guard.
+
+Native repaired-launch run `40161613939` at `abfa812` failed with
+`EvidenceIncomplete` in category mutations; it is not admitted. Actual local
+safe-logger reproduction isolates its cause: genuine `Assert.IsType()` failures
+at the intended SDK frames were classified `Unknown`. The closed prefix
+allowlist now includes that assertion, without relaxing exact frame matching,
+bounds, unknown-output handling or canary sanitization. Its intended regression
+first fails only the new type-assertion row; all 46 logger tests then pass.
+Actual unchanged Consumer/SDK images plus independent empty-cache replay each
+observe all eight discoveries/executions: four named assertion failures and
+four corrected passes through the real launch settings/logger. These are
+bounded local logger diagnostics, not full category input/profile evidence.
+Superseded run `40162771846 @c1f79b2` is confirmed canceled and not admitted.
+The replacement requires 223 foundations and 100 scopes/982 observations,
+including every native prerequisite; no replacement receipt is claimed yet.
+README and affected model/contracts/guides are updated; production/deployment
+examples and diagrams are unaffected. Tasks/reviewer markers remain unchanged.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

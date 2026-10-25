@@ -361,7 +361,7 @@ public sealed class RuntimeResultRecorder : IDisposable
             || result.ErrorStackTrace is not { Length: > 0 and <= 65_536 })
         { return "Unknown"; }
         var assertion = new[] { "Assert.True() Failure", "Assert.False() Failure", "Assert.Equal() Failure",
-            "Assert.NotEqual() Failure", "Assert.Null() Failure", "Assert.NotNull() Failure",
+            "Assert.NotEqual() Failure", "Assert.IsType() Failure", "Assert.Null() Failure", "Assert.NotNull() Failure",
             "Assert.Contains() Failure", "Assert.DoesNotContain() Failure", "Assert.Throws() Failure",
             "Assert.Fail() Failure" }.Any(prefix => result.ErrorMessage.StartsWith(prefix, StringComparison.Ordinal));
         var frame = "at " + entry.AssertionSymbol + "(";

@@ -213,13 +213,16 @@ public sealed class RuntimeLoggerTests
         Assert.Equal(lines, File.ReadAllLines(Path.Combine(owned.Output, "witnesses.jsonl")));
     }
 
-    [Fact]
-    public void Assertion_proof_requires_both_frozen_symbol_and_xunit_prefix_and_never_retains_raw_text()
+    [Theory]
+    [InlineData("Assert.True() Failure")]
+    [InlineData("Assert.IsType() Failure")]
+    public void Assertion_proof_requires_both_frozen_symbol_and_xunit_prefix_and_never_retains_raw_text(
+        string assertionPrefix)
     {
         using var owned = new OwnedInput(2);
         using var recorder = owned.Open();
         var assertion = owned.Result(0, TestOutcome.Failed);
-        assertion.ErrorMessage = "Assert.True() Failure\ncanary-secret-provider-text";
+        assertion.ErrorMessage = assertionPrefix + "\ncanary-secret-provider-text";
         assertion.ErrorStackTrace = "   at Hoard.Testing.Conformance.FrozenAssertion.Check()\n/private/canary-path";
         recorder.Observe(assertion);
         var unknown = owned.Result(1, TestOutcome.Failed);

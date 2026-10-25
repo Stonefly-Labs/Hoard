@@ -80,6 +80,13 @@ authorize arbitrary text, paths, missing parameters or normalization.
 
 ## Validation and Bounds
 
+Category batch history imports the full frozen witness union per binding.
+Shared witnesses use the lexicographically first mapped case as their owned
+runtime context and retain the same execution UUID/hash across mapped results.
+No input-selected reduced inventory, rewritten proof, lost failed retry or
+excluded execution is admitted. Both binding options and all QC/control keys
+remain required; missing controller observations remain incomplete.
+
 ### Binding input snapshot
 
 The test SDK's `ConformanceBindingSnapshot.Capture` produces an immutable

@@ -912,6 +912,17 @@ Authority native run `40160483040` at `eeaa6bf` passed all three jobs,
 prerequisite. It predates mutations and slot input wiring; the next request is
 219 foundations and 100 scopes/982 observations, not yet admitted.
 
+Full-binding batch ingestion now rejects reduced frozen witness inventories
+and preserves shared execution/proof identities, append-only attempts and all
+QC/controller obligations. Missing controls cannot become passing category
+results; actual profile runners/evaluation remain unfinished.
+Run `40161613939 @abfa812` exposed a real `Assert.IsType()` logger-prefix gap.
+Its bounded repair retains exact SDK-frame attribution and reproduces four
+named failures/four corrected passes through the actual logger in independent
+local observations. That failed run and canceled `40162771846 @c1f79b2` are not
+admitted receipts; the replacement requires 223 foundations and 100 scopes/982
+observations with every prerequisite.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and
 actual prerequisites/replay, not full category/profile qualification.

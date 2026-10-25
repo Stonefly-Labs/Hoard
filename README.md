@@ -1853,6 +1853,15 @@ This is input wiring, not an executable qualification profile. Authority run
 and 96 scopes/974 exact observations with every prerequisite; it predates
 mutations and category-slot input wiring.
 
+Category batch ingestion now requires each binding's complete frozen runtime
+inventory, preserves shared execution/proof identities and all 192 inherited
+keys, and keeps missing controller/QC proofs incomplete. It is not yet wired
+to executable profiles. Native run `40161613939` exposed an `Assert.IsType()`
+logger classification gap; the bounded allowlist repair preserves exact SDK
+frame checks. Actual logger observation and independent replay now reproduce
+four named mutation failures and four corrected passes. That failed run and
+superseded canceled run `40162771846` are not admitted native receipts.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

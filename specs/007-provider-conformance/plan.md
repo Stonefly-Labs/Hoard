@@ -4688,6 +4688,54 @@ free scratch 91,721,281,536 bytes. It predates mutation/slot input increments.
 The next request is 219 foundations and 100 scopes/982 observations, not yet
 admitted or complete category/controller qualification.
 
+### Full category batch input/import model and actual logger repair
+
+`CategoryRuntimeHistory` independently selects both required package/binding
+options and each binding's complete frozen runtime union. A witness's primary
+execution context is the lexicographically first catalog case mapping it;
+the same actual execution UUID/hash can then satisfy other explicitly mapped
+keys without rewriting proof bytes. Append-only attempts retain failed imports
+before retries. Exact identity, current-run input/owner/assembly/package
+provenance, qualification origins, monotonic bounds and cross-batch execution/
+session/component consistency remain mandatory.
+
+Across the two category profiles, result vectors retain all 192 inherited keys
+plus the original six metadata/seven artifact QC obligations. No vector is returned while
+a binding/control scope is unobserved. Controller-only obligations require an
+explicit owned attempt and remain incomplete when interrupted/unimplemented;
+exclusions have no attempted execution. Synthetic transport regressions cover
+both full inventories, shared UUIDs/hashes, exclusions, missing QC controls,
+reduced manifest rejection, retained failure/retry and absent qualification
+origins. They do not constitute genuine category execution. Actual runner,
+legacy adapter integration, controller proof ingestion, evaluation and T035/
+T081 remain unfinished; execution/verify/aggregate guards are unchanged.
+
+Native run `40161613939 @abfa812` failed `EvidenceIncomplete` at category
+mutations. Actual local launch/settings/logger reproduction establishes that
+both faulty pairs reached the intended SDK assertions but `Assert.IsType()`
+was absent from the bounded xUnit prefix allowlist. The repair adds only that
+prefix, retaining exact named SDK frame checks and sanitization. The new
+regression first fails its type-assertion row, then all 46 logger tests pass.
+Actual logger observation and independent fresh-cache replay each reproduce
+eight exact discoveries/executions, four named failures and four corrected
+passes with unchanged Consumer/SDK images. Logger DLL SHA-256:
+`39cee1a181c1386707b962f93261a6a9cbbae1460ee51fd17140663178e7e4be`;
+Consumer `5dfa9f2a710c3dfbd4262a9bec74d6158778497c88cd51a72cddd0d9cf50168b`;
+SDK `40d9858083c1777943515b193f30f36bd23349d08d70d73ef070ea76172aac85`.
+These are bounded local logger diagnostics, not complete profile inputs or
+native admission. Superseded slot run `40162771846 @c1f79b2` is confirmed
+canceled; neither run contributes an admitted receipt.
+
+Full tooling passes 331 checks (314 passed/seventeen macOS-native skips).
+Capacity-only failures were resolved by reclaiming 28 inspected completed
+private dependency caches, preserving sources/archives/images/receipts and the
+unchanged 24 GiB guard. C# logger/tests formatting, frozen inventory/catalog
+and patch checks pass. The replacement request is 223 native foundations and
+100 scopes/982 observations with every prerequisite, not yet admitted.
+README and affected guides/model/contracts are updated; product/deployment
+examples and diagrams, historical seals, task/reviewer markers and locks are
+unchanged. Implementation remains running.
+
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations
 without failures/errors/skips, 87 scopes/757 exact discoveries/executions and

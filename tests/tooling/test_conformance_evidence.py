@@ -1125,6 +1125,150 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             del options[key]
         return history.finish(**options)
 
+    def category_history(self, *, profile="metadata", mode="diagnostic", max_attempts=1):
+        self.inputs.update(mode=mode, profileId=profile, invocation=["profile", profile])
+        self.inputs["budgets"]["profileSeconds"] = 5400 if profile == "metadata" else 10800
+        original = self.inputs["bindings"][0]
+        bindings = (("sqlite", "Sqlite"), ("memory", "Memory")) if profile == "metadata" else (
+            ("local", "Local"), ("object", "ObjectSemantics"))
+        family = "Metadata" if profile == "metadata" else "Artifacts"
+        packages = [{**original["package"], "packageId": "Hoard.Fixtures." + family + "." + provider}
+                    for _, provider in bindings]
+        self.inputs["packages"].extend(packages)
+        self.inputs["bindings"] = [
+            {**original, "bindingId": binding, "package": package, "category": profile,
+             "descriptorSha256": hashlib.sha256(binding.encode()).hexdigest()}
+            for (binding, _), package in zip(bindings, packages)]
+        return evidence.CategoryRuntimeHistory(self.inputs, max_attempts=max_attempts)
+
+    def category_transport(self, binding, *, sequence=1, started=9):
+        import conformance_case_catalog as catalog
+        cases = [case for case in catalog.expected_cases(self.inputs["profileId"])
+                 if case.binding_id == binding and case.exclusion is None]
+        assignments = {identity: min(case.case_id for case in cases if identity in case.witnesses)
+                       for identity in {identity for case in cases for identity in case.witnesses}}
+        manifest = {**self.manifest, "attemptId": self.attempt, "attemptSequence": sequence,
+                    "inputSha256": evidence.digest(self.inputs), "expected": [
+                        {**self.manifest["expected"][0], "testIdentity": identity,
+                         "fullyQualifiedName": identity.split("(")[0], "bindingId": binding,
+                         "caseId": case_id}
+                        for identity, case_id in sorted(assignments.items())]}
+        proofs, witnesses = {}, []
+        for entry in manifest["expected"]:
+            execution = str(uuid.uuid4())
+            proof = {**self.proof, "executionId": execution, "attemptId": self.attempt,
+                     "attemptSequence": sequence, "inputSha256": evidence.digest(self.inputs),
+                     "manifestSha256": evidence.digest(manifest), "testIdentity": entry["testIdentity"],
+                     "bindingId": binding, "caseId": entry["caseId"], "durationMs": 0.5}
+            proofs[f"proof-{execution}.json"] = evidence.canonical_bytes(proof)
+            witnesses.append({**self.witness, "executionId": execution, "testIdentity": entry["testIdentity"],
+                              "bindingId": binding, "inputSha256": evidence.digest(self.inputs),
+                              "startedMs": started + 0.25, "endedMs": started + 0.75,
+                              "proofSha256": evidence.digest(proof)})
+        lines = b"".join(evidence.canonical_bytes(witness) + b"\n" for witness in witnesses)
+        completion = {**self.completion, "attemptId": self.attempt, "attemptSequence": sequence,
+                      "inputSha256": evidence.digest(self.inputs), "manifestSha256": evidence.digest(manifest),
+                      "expectedCount": len(witnesses), "observedCount": len(witnesses),
+                      "recordsSha256": hashlib.sha256(lines).hexdigest()}
+        return {
+            "manifest_data": evidence.canonical_bytes(manifest), "owner_data": evidence.canonical_bytes(self.owner),
+            "witnesses_data": lines, "proofs": proofs, "completion_data": evidence.canonical_bytes(completion),
+            "manifest_sha256": evidence.digest(manifest), "owner_sha256": evidence.digest(self.owner)}
+
+    def test_category_import_expands_all_frozen_keys_without_inventing_controls_or_excluded_executions(self):
+        import conformance_case_catalog as catalog
+        history = self.category_history()
+        for binding in ("sqlite", "memory"):
+            self.attempt = str(uuid.uuid4())
+            with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+                self.assertEqual(history.begin(binding, self.attempt), 1)
+            with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+                history.finish(binding, **self.category_transport(binding))
+            if binding == "sqlite":
+                with self.assertRaisesRegex(evidence.ConformanceError, "EvidenceIncomplete"):
+                    history.results()
+        with self.assertRaisesRegex(evidence.ConformanceError, "EvidenceIncomplete"):
+            history.results()
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin("none", str(uuid.uuid4()))
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            history.interrupt("none", "EvidenceIncomplete")
+        results = history.results()
+        cases = catalog.expected_cases("metadata")
+        self.assertEqual({(result["profileId"], result["bindingId"], result["matrixId"], result["caseId"])
+                          for result in results}, {case.key for case in cases})
+        self.assertEqual(sum(result["bindingId"] != "none" for result in results), 96)
+        self.assertEqual(sum(result["status"] == "NotApplicable" for result in results), 9)
+        for case, result in zip(cases, results):
+            self.assertEqual(result["status"], "NotApplicable" if case.exclusion else
+                             "Incomplete" if case.controls else "Passed")
+            if case.exclusion:
+                self.assertEqual(result["attempts"], ())
+                self.assertEqual(result["proofSha256"], ())
+            else:
+                actual = {witness["testIdentity"] for witness in history.witnesses
+                          if witness["executionId"] in result["attempts"][0]["witnessIds"]}
+                self.assertEqual(actual, set(case.witnesses))
+        uses = [execution for result in results for attempt in result["attempts"]
+                for execution in attempt["witnessIds"]]
+        self.assertGreater(len(uses), len(set(uses)))
+        self.assertEqual(len(history.proofs), len(history.witnesses))
+
+    def test_category_import_rejects_reduced_manifests_and_retains_failure_before_an_exact_retry(self):
+        history = self.category_history(max_attempts=2)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin("sqlite", self.attempt)
+        transport = self.category_transport("sqlite")
+        manifest = evidence.load_json(transport["manifest_data"])
+        manifest["expected"].pop()
+        transport.update(manifest_data=evidence.canonical_bytes(manifest),
+                         manifest_sha256=evidence.digest(manifest))
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.010), self.assertRaisesRegex(
+                evidence.ConformanceError, "ProofMismatch"):
+            history.finish("sqlite", **transport)
+        self.attempt = str(uuid.uuid4())
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.011):
+            self.assertEqual(history.begin("sqlite", self.attempt), 2)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            results = history.finish("sqlite", **self.category_transport("sqlite", sequence=2, started=11))
+        self.assertEqual(len(results), 48)
+        self.assertTrue(all(len(result["attempts"]) == 2 for result in results))
+        self.assertTrue(all(result["attempts"][0]["diagnosticCode"] == "ProofMismatch" for result in results))
+        self.assertTrue(any(result["status"] == "Passed" for result in results))
+        self.assertTrue(all(not result["attempts"][0]["witnessIds"] for result in results))
+
+    def test_category_import_never_promotes_diagnostic_packets_without_actual_qualification_origins(self):
+        history = self.category_history(mode="qualification")
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin("sqlite", self.attempt)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012), self.assertRaisesRegex(
+                evidence.ConformanceError, "WitnessMissing"):
+            history.finish("sqlite", **self.category_transport("sqlite"))
+        self.assertEqual(history.witnesses, ())
+        self.assertEqual(dict(history.proofs), {})
+
+    def test_category_import_requires_both_artifact_options_and_keeps_all_seven_qc_controls_incomplete(self):
+        import conformance_case_catalog as catalog
+        history = self.category_history(profile="artifacts")
+        for binding in ("local", "object"):
+            self.attempt = str(uuid.uuid4())
+            with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+                history.begin(binding, self.attempt)
+            with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+                history.finish(binding, **self.category_transport(binding))
+        with self.assertRaisesRegex(evidence.ConformanceError, "EvidenceIncomplete"):
+            history.results()
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin("none", str(uuid.uuid4()))
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            history.interrupt("none", "EvidenceIncomplete")
+        results = history.results()
+        self.assertEqual(len(results), len(catalog.expected_cases("artifacts")))
+        self.assertEqual(sum(result["bindingId"] != "none" for result in results), 96)
+        self.assertEqual(sum(result["status"] == "NotApplicable" for result in results), 4)
+        self.assertEqual(sum(result["status"] == "Incomplete" for result in results), 7)
+        self.assertTrue(all(result["status"] == "Passed" for result in results if result["bindingId"] == "local"))
+
     def test_case_execution_preserves_failed_attempt_and_proofs_after_a_passing_retry(self):
         history = self.history(max_attempts=2)
         self.assertEqual(history.state, "Expected")

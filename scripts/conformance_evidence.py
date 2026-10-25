@@ -1592,6 +1592,45 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
     })
 
 
+def _catalog_case_result(inputs, case, status, attempts):
+    proofs = {proof for attempt in attempts for proof in attempt["proofSha256"]}
+    if len(proofs) > MAX_WITNESSES:
+        raise ConformanceError("OutputLimitExceeded")
+    return admit_entity("CaseResult", {
+        "runId": inputs["runId"], "profileId": case.profile_id,
+        "bindingId": case.binding_id, "matrixId": case.matrix_id,
+        "caseId": case.case_id, "status": status, "attempts": attempts,
+        "applicable": case.exclusion is None,
+        "exclusionRule": {None: "none", "non-durable fixture": "non-durable-fixture",
+                          "simulation: no durable restart": "simulation-no-durable-restart"}[case.exclusion],
+        "proofSha256": sorted(proofs),
+    })
+
+
+def _origin_input_assignments(origin_inputs):
+    if origin_inputs is None:
+        return None
+    if not isinstance(origin_inputs, Mapping) or len(origin_inputs) > 128:
+        raise ConformanceError("EvidenceIncomplete")
+    frozen = {}
+    for origin_binding, assignments in origin_inputs.items():
+        stable_id(origin_binding)
+        if not isinstance(assignments, Mapping) or len(assignments) > 8:
+            raise ConformanceError("EvidenceIncomplete")
+        captured = {}
+        for role, assignment in assignments.items():
+            stable_id(role)
+            if not isinstance(assignment, tuple) or len(assignment) != 2:
+                raise ConformanceError("EvidenceIncomplete")
+            path, package = assignment
+            relative_path(path)
+            if package is not None:
+                stable_id(package)
+            captured[role] = assignment
+        frozen[origin_binding] = MappingProxyType(captured)
+    return MappingProxyType(frozen)
+
+
 class RuntimeCaseHistory:
     """Append-only runtime-bearing case state selected from the independent catalog."""
 
@@ -1601,27 +1640,7 @@ class RuntimeCaseHistory:
         self._session_origins = MappingProxyType({})
         self._used_sessions = frozenset()
         self._instances = {}
-        self._origin_inputs = None
-        if origin_inputs is not None:
-            if not isinstance(origin_inputs, Mapping) or len(origin_inputs) > 128:
-                raise ConformanceError("EvidenceIncomplete")
-            frozen = {}
-            for origin_binding, assignments in origin_inputs.items():
-                stable_id(origin_binding)
-                if not isinstance(assignments, Mapping) or len(assignments) > 8:
-                    raise ConformanceError("EvidenceIncomplete")
-                captured = {}
-                for role, assignment in assignments.items():
-                    stable_id(role)
-                    if not isinstance(assignment, tuple) or len(assignment) != 2:
-                        raise ConformanceError("EvidenceIncomplete")
-                    path, package = assignment
-                    relative_path(path)
-                    if package is not None:
-                        stable_id(package)
-                    captured[role] = assignment
-                frozen[origin_binding] = MappingProxyType(captured)
-            self._origin_inputs = MappingProxyType(frozen)
+        self._origin_inputs = _origin_input_assignments(origin_inputs)
         key = (self._inputs["profileId"], stable_id(binding_id), stable_id(matrix_id), stable_id(case_id))
         matches = tuple(case for case in expected_cases(key[0]) if case.key == key)
         if len(matches) != 1:
@@ -1672,18 +1691,7 @@ class RuntimeCaseHistory:
         return len(self._attempts) + 1
 
     def _make_result(self, status, attempts):
-        proofs = {proof for attempt in attempts for proof in attempt["proofSha256"]}
-        if len(proofs) > MAX_WITNESSES:
-            raise ConformanceError("OutputLimitExceeded")
-        return admit_entity("CaseResult", {
-            "runId": self._inputs["runId"], "profileId": self._case.profile_id,
-            "bindingId": self._case.binding_id, "matrixId": self._case.matrix_id,
-            "caseId": self._case.case_id, "status": status, "attempts": attempts,
-            "applicable": self._case.exclusion is None,
-            "exclusionRule": {None: "none", "non-durable fixture": "non-durable-fixture",
-                              "simulation: no durable restart": "simulation-no-durable-restart"}[self._case.exclusion],
-            "proofSha256": sorted(proofs),
-        })
+        return _catalog_case_result(self._inputs, self._case, status, attempts)
 
     def _append(self, code, ended, witnesses=(), proofs=MappingProxyType({})):
         status = "Passed" if code == "None" else failure_status(code)
@@ -1754,3 +1762,152 @@ class RuntimeCaseHistory:
         if self._state in ("Expected", "Running") or self._result is None:
             raise ConformanceError("EvidenceIncomplete")
         return self._result
+
+
+class CategoryRuntimeHistory:
+    """Import complete frozen binding batches without inventing controller proofs."""
+
+    def __init__(self, inputs, *, max_attempts=1, origin_inputs=None):
+        from conformance_case_catalog import CATEGORY_BINDING_SLOTS, expected_cases
+        self._inputs = admit_entity("RunInputs", inputs)
+        profile = self._inputs["profileId"]
+        if profile not in ("metadata", "artifacts"):
+            raise ConformanceError("UnsupportedProfile")
+        if type(max_attempts) is not int or not 1 <= max_attempts <= 3:
+            raise ConformanceError()
+        self._cases = expected_cases(profile)
+        self._bindings = {case.binding_id for case in self._cases}
+        selected = {binding["bindingId"]: binding for binding in self._inputs["bindings"]
+                    if binding["category"] == profile}
+        packages = {slot[1]: slot[3] for slot in CATEGORY_BINDING_SLOTS if slot[0] == profile}
+        if (set(selected) != self._bindings - {"none"} or any(
+                binding["package"]["packageId"].casefold() != packages[binding_id].casefold()
+                for binding_id, binding in selected.items())):
+            raise ConformanceError("BindingInvalid")
+        self._origin_inputs = _origin_input_assignments(origin_inputs)
+        self._max_attempts = max_attempts
+        self._active = {}
+        self._sequences = {binding: 0 for binding in self._bindings}
+        self._used_attempts = frozenset()
+        self._used_executions = frozenset()
+        self._used_sessions = frozenset()
+        self._instances = {}
+        self._witnesses = ()
+        self._proofs = MappingProxyType({})
+        self._session_origins = MappingProxyType({})
+        self._results = {case.key: _catalog_case_result(self._inputs, case, "NotApplicable", ())
+                         for case in self._cases if case.exclusion is not None}
+
+    @property
+    def witnesses(self):
+        return self._witnesses
+
+    @property
+    def proofs(self):
+        return self._proofs
+
+    @property
+    def session_origins(self):
+        return self._session_origins
+
+    def begin(self, binding_id, attempt_id):
+        binding_id, attempt_id = stable_id(binding_id), _uuid(attempt_id)
+        if (binding_id not in self._bindings or binding_id in self._active
+                or self._sequences[binding_id] >= self._max_attempts or attempt_id in self._used_attempts):
+            raise ConformanceError("EvidenceIncomplete")
+        started = _number(time.monotonic() * 1000)
+        prior = [attempt["endedMs"] for case in self._cases if case.binding_id == binding_id
+                 for attempt in self._results.get(case.key, {}).get("attempts", ())]
+        if prior and started < max(prior):
+            raise ConformanceError("EvidenceIncomplete")
+        self._active[binding_id] = attempt_id, started
+        self._used_attempts = self._used_attempts | {attempt_id}
+        return self._sequences[binding_id] + 1
+
+    def _append(self, binding_id, code, ended, witnesses=(), proofs=MappingProxyType({})):
+        results = {}
+        for case in self._cases:
+            if case.binding_id != binding_id or case.exclusion is not None:
+                continue
+            selected = tuple(witness for witness in witnesses if witness["testIdentity"] in case.witnesses)
+            case_code = code
+            if code in ("None", "AssertionFailed"):
+                if any(witness["status"] == "Failed" for witness in selected):
+                    case_code = "AssertionFailed"
+                elif (case.controls or {witness["testIdentity"] for witness in selected} != set(case.witnesses)
+                      or any(witness["status"] != "Passed" for witness in selected)):
+                    case_code = "EvidenceIncomplete"
+                else:
+                    case_code = "None"
+            status = "Passed" if case_code == "None" else failure_status(case_code)
+            attempt = admit_entity("Attempt", {
+                "sequence": self._sequences[binding_id] + 1,
+                "startedMs": self._active[binding_id][1], "endedMs": ended,
+                "status": status, "diagnosticCode": case_code,
+                "witnessIds": tuple(witness["executionId"] for witness in selected),
+                "proofSha256": sorted({witness["proofSha256"] for witness in selected}),
+            })
+            previous = self._results.get(case.key, {}).get("attempts", ())
+            results[case.key] = _catalog_case_result(self._inputs, case, status, (*previous, attempt))
+        self._results.update(results)
+        self._sequences[binding_id] += 1
+        self._witnesses = (*self._witnesses, *witnesses)
+        self._proofs = MappingProxyType({**self._proofs, **proofs})
+        self._used_executions = self._used_executions | {witness["executionId"] for witness in witnesses}
+        del self._active[binding_id]
+        return tuple(self._results[case.key] for case in self._cases if case.binding_id == binding_id)
+
+    def finish(self, binding_id, *, manifest_data, owner_data, witnesses_data, proofs, completion_data,
+               manifest_sha256, owner_sha256):
+        binding_id = stable_id(binding_id)
+        if binding_id not in self._active:
+            raise ConformanceError("OwnershipInvalid")
+        ended = _number(time.monotonic() * 1000)
+        cases = tuple(case for case in self._cases if case.binding_id == binding_id and case.exclusion is None)
+        identities = {identity: min(case.case_id for case in cases if identity in case.witnesses)
+                      for identity in {identity for case in cases for identity in case.witnesses}}
+        try:
+            observed = ingest_runtime_attempt(
+                inputs=self._inputs, manifest_data=manifest_data, owner_data=owner_data,
+                witnesses_data=witnesses_data, proofs=proofs, completion_data=completion_data,
+                expected_tests={identity: (binding_id, "none") for identity in identities},
+                manifest_sha256=manifest_sha256, owner_sha256=owner_sha256,
+                started_ms=self._active[binding_id][1], ended_ms=ended, origin_inputs=self._origin_inputs)
+            if (observed["attemptId"] != self._active[binding_id][0]
+                    or observed["completion"]["attemptSequence"] != self._sequences[binding_id] + 1
+                    or any(entry["caseId"] != identities[entry["testIdentity"]]
+                           for entry in load_json(manifest_data)["expected"])
+                    or any(witness["executionId"] in self._used_executions for witness in observed["witnesses"])):
+                raise ConformanceError("ProofMismatch")
+            sessions = frozenset(origin["sessionId"] for origins in observed["sessionOrigins"].values()
+                                 for origin in origins)
+            if sessions & self._used_sessions:
+                raise ConformanceError("ProofMismatch")
+            instances = dict(self._instances)
+            for origins in observed["sessionOrigins"].values():
+                for origin in origins:
+                    for captured in origin["components"].values():
+                        _observe_component_instance(instances, captured)
+            results = self._append(binding_id, observed["diagnosticCode"], ended,
+                                   observed["witnesses"], observed["proofs"])
+            self._session_origins = MappingProxyType({**self._session_origins, **observed["sessionOrigins"]})
+            self._used_sessions = self._used_sessions | sessions
+            self._instances = instances
+            return results
+        except ConformanceError as error:
+            if binding_id in self._active:
+                self._append(binding_id, str(error), ended)
+            raise
+
+    def interrupt(self, binding_id, code):
+        binding_id = stable_id(binding_id)
+        if binding_id not in self._active:
+            raise ConformanceError("OwnershipInvalid")
+        if code not in DIAGNOSTIC_CODES or code == "None":
+            raise ConformanceError()
+        return self._append(binding_id, code, _number(time.monotonic() * 1000))
+
+    def results(self):
+        if self._active or set(self._results) != {case.key for case in self._cases}:
+            raise ConformanceError("EvidenceIncomplete")
+        return tuple(self._results[case.key] for case in self._cases)

@@ -59,6 +59,16 @@ expected invocation/assembly and test discovery inventory. A TRX total or
 copied case name/flag is not enough. Missing mandatory tests cannot become a
 smaller expected inventory.
 
+The implemented category batch history derives each binding's entire frozen
+runtime union from the independent catalog and requires both category package
+options. The primary execution context for a shared runtime witness is its
+lexicographically first mapped case. Projection retains the original execution
+UUID/proof hash across all explicitly mapped obligations; no transport or proof
+is relabeled. Results cannot omit either binding or any QC/control key.
+Append-only failures survive retries, excluded cases have no invented
+executions, and unobserved controller controls stay incomplete. This state
+model does not yet wire actual profile runners or independent evaluation.
+
 The implemented private transport distinguishes `purpose: discovery` from
 `purpose: execution` and hashes each complete JSONL stream in its completion
 record. Discovery observes exact selected methods and every expected parameter

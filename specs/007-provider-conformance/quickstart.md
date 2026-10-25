@@ -586,6 +586,14 @@ Authority run `40160483040` at `eeaa6bf` passed all three jobs,
 216 foundations without skips and 96 scopes/974 observations with every
 prerequisite. It predates mutations/slot input wiring; the next request is
 219 foundations and 100 scopes/982 observations, not yet admitted.
+Category batch import now requires complete frozen binding inventories and all
+QC/control keys; unknown controls stay incomplete and no profile runner is
+enabled. Tooling passes 331 checks (314 passed/seventeen macOS-native skips).
+The real logger's missing `Assert.IsType()` prefix is repaired with exact
+SDK-frame attribution unchanged; actual observation/replay reproduce four
+named failures/four corrected passes. Failed run `40161613939` and superseded
+canceled `40162771846` are not admitted. The replacement requires 223 native
+foundations and 100 scopes/982 observations with every prerequisite.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,
