@@ -284,13 +284,13 @@ and four contracts) and 818 image correspondences with SDK archive
 The configured-host witness adds two independent roots whose actual owners
 are the composed modules, not additional fixture sessions; both admitted and
 rejected-schema lifetimes retain original construction/assertion/disposal.
-Artifact policy now includes 110 exact parameters across publication, deletion,
+Artifact policy now includes 163 exact witnesses across publication, deletion,
 reconciliation, read revalidation/destination failure, publication races, storage
 failures, all frozen budgets and selected recovery cases. Exact source-owned
 boolean argument names/values are preserved; provider selection rejects missing
 assignments rather than defaulting multi-parameter Local rows to Object.
 Their original drivers retain cleanup ownership.
-Seven actual Local fresh-store reopen edges require exact per-node role-image
+Nine actual Local fresh-store reopen edges require exact per-node role-image
 maps. Parent admission selects each immutable node by index; flat maps cannot
 substitute for these different original/reopened owner images. Legacy common
 role maps remain supported for the already classified metadata forests.
@@ -298,10 +298,14 @@ Both histories freeze every node before execution, and manifests include all
 node images. Source records actual factory objects without taking cleanup
 ownership. Same-object in-place reinitialization remains that original object;
 the early-return reconciliation row and Object rows have no invented child.
-Current local observation/replay pass 240 executions, 271 records
-(267 original owners/four contracts) and 1,573 image correspondences with the
+Rejected store roots use actual provider-owned owner images; the decorated
+authority uses the exact source-owned decorator image. Source-fixed facts and
+non-provider parameters have explicit independently checked binding assignments,
+without guessed Object fallback or invented provider parameters.
+Current local observation/replay pass 293 executions, 326 records
+(322 original owners/four contracts) and 1,958 image correspondences with the
 same SDK archive. Native admission requires 232 foundations and
-105 scopes/1,223 observations, pending; public/private wire schemas are unchanged.
+105 scopes/1,276 observations, pending; public/private wire schemas are unchanged.
 
 ### Shared bounds
 

@@ -8254,6 +8254,39 @@ Both documents independently recompute; free scratch is 91,721,052,160 bytes.
 This admits earlier forests/hosts/fifty artifact parameters, not later budget/
 quarantine sources or qualifying profiles.
 
+Fifty-three further artifact witnesses now observe actual rejected provider
+roots, the exact admitted decorator, lifecycle/validation/cleanup owners and
+fixed-binding facts. Rejected factories retain their real stores and foreign
+authorities; explicit controls belong to those actual stores. Driver observation
+records the authority really passed to initialization, not an unused underlying
+authority. Facts preserve their source parameter lists, with independently
+checked frozen binding ownership and no Object fallback. Prefix-stop and
+failed-quarantine sources add two genuine Local fresh-store children, totaling
+nine; assertion and cleanup ownership remain unchanged.
+
+After intended routing failures and updated non-owning observer forwarding,
+actual minimal-input first/replay each pass 293 exact executions, 326 records
+(322 original owners/four contracts) and 1,958 image correspondences. The SDK
+archive is unchanged. Full tooling passes 340 checks (323 passed/seventeen
+macOS-native skips), as do changed-source whitespace, frozen inventory, SDK
+catalog and patch checks. Native admission requires 232 foundations and
+105 scopes/1,276 observations, pending; qualifying backends and remaining
+controller/lifetime attribution are unfinished.
+
+Budget run
+[40171398685](https://github.com/Stonefly-Labs/Hoard/actions/runs/40171398685)
+at exact `cd5e7598f74e3aaee9263736eeb0ee8556f2b84b` passes all three jobs,
+231 foundations without failures/errors/skips, 105 scopes/1,207 exact
+discoveries/executions and every prerequisite. Typed input:
+`d4f6225797f06597ceb589a017a92b90e2950d182250cdc24ab3378f553f0767`;
+original input:
+`14439256a8c25f61cdc1dd985647887b033a23e1ccb782aee876a79c6bff1312`;
+preparation:
+`330756cdf89bc5f4079c7c2886de85435129a19f49c584ecf08f5bb47c446f3a`.
+Both documents independently recompute; free scratch is 91,716,349,952 bytes.
+This admits those budget/recovery sources, not later quarantine/rejection/
+lifecycle sources or qualifying profiles.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

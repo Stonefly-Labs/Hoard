@@ -12,6 +12,8 @@ public sealed class ArtifactEvidenceTests(ITestOutputHelper output)
     public async Task Local_failed_quarantine_persistence_retains_ownership_until_stop_retry_and_reopen()
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync("local");
+        var observations = new ArtifactProviderDriver.OriginalObservationSequence(
+            output, nameof(ArtifactEvidenceTests), providerParameter: false);
         string? path = null;
         string? decisions = null;
         await ArtifactEvidenceAssertions.FailedQuarantinePersistenceAsync(
@@ -28,7 +30,8 @@ public sealed class ArtifactEvidenceTests(ITestOutputHelper output)
             bytes => File.WriteAllBytes(path ?? throw new InvalidOperationException("Payload was not captured."), bytes),
             () => SetUnixPermissions(decisions ?? throw new InvalidOperationException("Decision path was not captured."),
                 UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute),
-            default, QuarantineReopen(driver));
+            default, QuarantineReopen(driver, observations));
+        observations.Observe(driver);
     }
 
     [Theory]
@@ -86,6 +89,7 @@ public sealed class ArtifactEvidenceTests(ITestOutputHelper output)
                     UnixFileMode.UserRead | UnixFileMode.UserWrite);
                 }
             }, default);
+        driver.ObserveOriginal(output, nameof(ArtifactEvidenceTests), parameter: $"unavailable: {unavailable}");
     }
 
     private static void RequireUnixPermissionProof()
@@ -122,5 +126,6 @@ public sealed class ArtifactEvidenceTests(ITestOutputHelper output)
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactEvidenceAssertions.ExactCurrentReceiptsAsync(
             driver.Store, driver.Validator, driver.Authority, driver.Identity, default);
+        driver.ObserveOriginal(output, nameof(ArtifactEvidenceTests));
     }
 }

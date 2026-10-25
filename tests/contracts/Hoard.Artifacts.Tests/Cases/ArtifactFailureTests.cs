@@ -23,6 +23,7 @@ public sealed class ArtifactFailureTests(ITestOutputHelper output)
                 return ValueTask.CompletedTask;
             }), () => driver.ObjectControls!.RemoveObserver("object.direct"),
             () => RestoreObjectCleanup(objects), default);
+        driver.ObserveOriginal(output, nameof(ArtifactFailureTests), providerParameter: false);
     }
 
     [Theory]
@@ -52,6 +53,8 @@ public sealed class ArtifactFailureTests(ITestOutputHelper output)
                 RestoreObjectCleanup(objects);
                 driver.ObjectControls!.RemoveObserver(boundary);
             }, default);
+        driver.ObserveOriginal(output, nameof(ArtifactFailureTests),
+            parameter: $"boundary: \"{boundary}\", cancel: {cancel}", providerParameter: false);
     }
 
     [Theory]
@@ -66,6 +69,7 @@ public sealed class ArtifactFailureTests(ITestOutputHelper output)
             if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix staging proof required."); }
             File.SetUnixFileMode(driver.StagingDirectory, UnixFileMode.UserRead | UnixFileMode.UserExecute);
         }, () => RestorePrefixCleanup(driver), default);
+        driver.ObserveOriginal(output, nameof(ArtifactFailureTests));
     }
 
     [Theory]
@@ -78,6 +82,7 @@ public sealed class ArtifactFailureTests(ITestOutputHelper output)
             new(artifactBytes: 1024, stagingBytes: 1024));
         await CleanupAssertions(driver).FailedPrefixAsync(
             () => DenyPrefixCleanup(driver), () => RestorePrefixCleanup(driver), default);
+        driver.ObserveOriginal(output, nameof(ArtifactFailureTests));
     }
 
     [Theory]
@@ -87,6 +92,7 @@ public sealed class ArtifactFailureTests(ITestOutputHelper output)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider,
             limits: new(artifactBytes: 1024, stagingBytes: 1024));
+        var observations = new ArtifactProviderDriver.OriginalObservationSequence(output, nameof(ArtifactFailureTests));
         var ticket = Success(await driver.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default));
         using var source = new ShortSource("prefix retained through stop"u8.ToArray());
         DenyPrefixCleanup(driver);
@@ -94,7 +100,8 @@ public sealed class ArtifactFailureTests(ITestOutputHelper output)
             ticket, source, driver.StopAsync, () => RestorePrefixCleanup(driver), default);
         if (provider == "local")
         {
-            var reopened = new LocalArtifactStore(Path.GetDirectoryName(driver.StagingDirectory)!);
+            var controls = new LocalFaultControls();
+            var reopened = new LocalArtifactStore(Path.GetDirectoryName(driver.StagingDirectory)!, controls: controls);
             Success(await reopened.InitializeAsync(new(ArtifactInitializationMode.ReopenCompatible, driver.Identity,
                 driver.Authority, new(artifactBytes: 1024, stagingBytes: 1024)), new(), default));
             try
@@ -102,7 +109,9 @@ public sealed class ArtifactFailureTests(ITestOutputHelper output)
                 await ArtifactCleanupAssertions.ReopenedAfterPrefixStopAsync(reopened, () => reopened.Ready, ticket, default);
             }
             finally { Success(await reopened.StopAsync(new(), default)); }
+            observations.RecordReopened(reopened, controls);
         }
+        observations.Observe(driver);
     }
 
     private static void RestoreObjectCleanup(string objects)

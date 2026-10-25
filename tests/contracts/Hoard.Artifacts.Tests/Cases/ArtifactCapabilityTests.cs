@@ -3,10 +3,11 @@ using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Fixtures.Artifacts.Local;
 using Hoard.Fixtures.Artifacts.ObjectSemantics;
 using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactCapabilityTests
+public sealed class ArtifactCapabilityTests(ITestOutputHelper output)
 {
     [Theory]
     [InlineData("local", "version")]
@@ -37,12 +38,16 @@ public sealed class ArtifactCapabilityTests
             conditionalPublication: gap != "publication", conditionalDeletion: gap != "deletion",
             stagingRecovery: gap != "recovery", ownerFencing: gap != "fencing",
             readerProtection: gap != "readers", boundedStreaming: gap != "streaming");
+        var local = provider == "local" ? new LocalFaultControls { CapabilitiesForAdmission = Inject } : null;
+        var objects = provider == "object" ? new ObjectFaultControls { CapabilitiesForAdmission = Inject } : null;
         IArtifactStoreLifetime lifetime = provider == "local"
-            ? new LocalArtifactStore(root.Path, controls: new() { CapabilitiesForAdmission = Inject })
-            : new ObjectArtifactStore(root.Path, controls: new() { CapabilitiesForAdmission = Inject });
+            ? new LocalArtifactStore(root.Path, controls: local)
+            : new ObjectArtifactStore(root.Path, controls: objects);
         await ArtifactCapabilityAssertions.MissingGuaranteeAsync(lifetime,
             new(ArtifactInitializationMode.CreateEmpty, identity, authority), gap,
             () => Directory.Exists(root.Path), () => Ready(lifetime), default);
+        ArtifactProviderDriver.ObserveOriginalStore(output, nameof(ArtifactCapabilityTests), provider,
+            lifetime, authority, local is { } controls ? controls : (object)objects!, parameter: $"gap: \"{gap}\"");
     }
 
     [Theory]

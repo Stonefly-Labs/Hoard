@@ -112,7 +112,21 @@ ORIGINAL_METADATA_WITNESSES = tuple(sorted((
               "MP28_Lease_owners_generations_and_revisions_are_fenced",
               "MP30_Clock_rollback_does_not_undo_expiry_and_new_generation_is_retained")),
       ) for method in methods))))
+ORIGINAL_ARTIFACT_FIXED_BINDINGS = MappingProxyType({
+    **{f"Hoard.Artifacts.Tests.{fixture}.{method}": provider
+       for fixture, method, provider in (
+           ("ArtifactEvidenceTests", "Local_failed_quarantine_persistence_retains_ownership_until_stop_retry_and_reopen", "local"),
+           ("ArtifactFailureTests", "Reused_object_receipt_survives_failed_unselected_assembly_cleanup", "object"),
+           ("ArtifactReadVerificationTests", "Local_reconciliation_cannot_finalize_after_overlapping_read_quarantines_the_incarnation", "local"),
+           ("ArtifactRecoveryTests", "Stop_retains_unselected_object_ownership_and_retries_only_its_private_payload", "object"),
+           ("ArtifactVisibilityTests", "Local_publication_is_directly_visible_before_acknowledgment", "local"),
+           ("ArtifactVisibilityTests", "Delayed_object_listing_does_not_block_direct_publication_or_establish_absence", "object"),
+           ("ArtifactVisibilityTests", "Object_commit_waits_for_direct_availability_while_listing_is_independently_observable", "object"))},
+    **{f'Hoard.Artifacts.Tests.ArtifactFailureTests.Unselected_object_cleanup_retains_exact_ownership_and_blocks_retry_until_reclaimed(boundary: "{boundary}", cancel: {cancel})': "object"
+       for boundary in ("object.commit-progress", "pointer.compare") for cancel in ("False", "True")},
+})
 ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted((
+    *ORIGINAL_ARTIFACT_FIXED_BINDINGS,
     *(f'Hoard.Artifacts.Tests.{fixture}.{method}(provider: "{provider}")'
     for fixture, methods in (
         ("ArtifactPublicationTests", (
@@ -141,7 +155,21 @@ ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted((
             "Corrupt_existing_bytes_are_not_overwritten_or_reused")),
         ("ArtifactFailureTests", (
             "Storage_failures_remain_distinct_and_sanitized_and_do_not_publish_partial_content",
-            "Unexpected_fault_after_visibility_requires_exact_ticket_reconciliation")),
+            "Unexpected_fault_after_visibility_requires_exact_ticket_reconciliation",
+            "Committed_receipts_remain_reconcilable_while_exact_residual_staging_is_reclaimed",
+            "Failed_prefix_reclamation_retains_ownership_until_exact_bounded_cleanup",
+            "Stop_retains_failed_prefix_ownership_until_reclamation_can_settle")),
+        ("ArtifactEvidenceTests", (
+            "Only_exact_current_receipts_with_opaque_same_operation_protection_validate",)),
+        ("ArtifactAdmissionTests", (
+            "Before_admission_and_with_mismatched_authority_no_source_or_directory_is_touched",
+            "Symlinked_root_or_ancestor_is_rejected_without_touching_outside_sentinel")),
+        ("ArtifactNonCooperationTests", (
+            "Idle_read_expiry_fences_copy_without_touching_the_destination",
+            "Concurrent_close_waits_for_the_same_physical_guard_release_and_fences_new_copy",
+            "Deadline_and_stop_return_while_a_native_io_boundary_holds_provider_state",
+            "Noncooperative_source_retains_bounded_ownership_and_blocks_admission_until_real_settlement",
+            "Noncooperative_destination_cannot_release_live_read_protection_via_close_or_dispose")),
         ("ArtifactBudgetTests", (
             "Reclaimed_identity_history_has_a_finite_budget_and_expiry_restores_new_digest_admission",
             "History_candidate_pages_resume_past_ineligible_entries_and_preserve_a_faulted_candidate",
@@ -179,13 +207,25 @@ ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted((
           ("ArtifactReadVerificationTests", "Every_committed_detection_path_quarantines_restored_bytes",
            "detection", ('"open"', '"publication"', '"reconciliation"')),
           ("ArtifactEvidenceTests", "Validation_first_corruption_cannot_be_revived_by_external_restoration",
-           "missing", ("False", "True")))
+           "missing", ("False", "True")),
+          ("ArtifactEvidenceTests", "Validation_access_failure_does_not_quarantine_intact_content",
+           "unavailable", ("False", "True")),
+          ("ArtifactCapabilityTests", "Missing_mandatory_guarantees_versions_or_authority_reject_before_io",
+           "gap", tuple(f'"{gap}"' for gap in (
+               "authority", "deletion", "fencing", "publication", "readers", "recovery", "streaming", "version"))))
       for provider in ("local", "object") for value in values),
 )))
+ORIGINAL_ARTIFACT_BINDINGS = MappingProxyType({
+    **{identity: provider for identity in ORIGINAL_ARTIFACT_WITNESSES
+       for provider in ("local", "object") if f'(provider: "{provider}"' in identity},
+    **ORIGINAL_ARTIFACT_FIXED_BINDINGS,
+})
 ORIGINAL_ARTIFACT_REOPENS = MappingProxyType({
     identity: (None, 0) for identity in ORIGINAL_ARTIFACT_WITNESSES
-    if '(provider: "local"' in identity and 'detection: "reconciliation"' not in identity
+    if ORIGINAL_ARTIFACT_BINDINGS[identity] == "local" and 'detection: "reconciliation"' not in identity
     and any(method in identity for method in (
+        ".Local_failed_quarantine_persistence_retains_ownership_until_stop_retry_and_reopen",
+        ".Stop_retains_failed_prefix_ownership_until_reclamation_can_settle(",
         ".Corrupt_existing_bytes_are_not_overwritten_or_reused(",
         ".Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence(",
         ".Every_committed_detection_path_quarantines_restored_bytes(",

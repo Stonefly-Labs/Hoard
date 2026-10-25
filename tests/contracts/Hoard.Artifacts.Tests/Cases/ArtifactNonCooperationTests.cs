@@ -1,10 +1,11 @@
 using Hoard.Abstractions.Storage;
 using Hoard.Testing.Conformance.Artifacts;
 using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactNonCooperationTests
+public sealed class ArtifactNonCooperationTests(ITestOutputHelper output)
 {
     [Theory]
     [InlineData("local")]
@@ -14,6 +15,7 @@ public sealed class ArtifactNonCooperationTests
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
         await ArtifactOwnershipAssertions.IdleReadExpiryAsync(driver.Store, clock.Advance, default);
+        driver.ObserveOriginal(output, nameof(ArtifactNonCooperationTests));
     }
 
     [Theory]
@@ -49,6 +51,7 @@ public sealed class ArtifactNonCooperationTests
             decorate: inner => authority = new(inner));
         await ArtifactLifecycleAssertions.ConcurrentCloseAsync(driver.Store, () => authority!.DelayRelease = true,
             () => authority!.Entered.Task, () => authority!.Released.TrySetResult(), default);
+        driver.ObserveOriginal(output, nameof(ArtifactNonCooperationTests));
     }
 
     [Theory]
@@ -88,6 +91,7 @@ public sealed class ArtifactNonCooperationTests
             if (driver.LocalControls is { } localControls) { localControls.BeforeRecordWrite = null; }
             if (driver.ObjectControls is { } objects) { objects.BeforeObjectDelete = null; }
         }
+        driver.ObserveOriginal(output, nameof(ArtifactNonCooperationTests));
     }
 
     [Theory]
@@ -97,6 +101,7 @@ public sealed class ArtifactNonCooperationTests
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactOwnershipAssertions.NoncooperativeSourceAsync(driver.Store, default);
+        driver.ObserveOriginal(output, nameof(ArtifactNonCooperationTests));
     }
 
     [Theory]
@@ -106,6 +111,7 @@ public sealed class ArtifactNonCooperationTests
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactOwnershipAssertions.NoncooperativeDestinationAsync(driver.Store, default);
+        driver.ObserveOriginal(output, nameof(ArtifactNonCooperationTests));
     }
 
     private sealed class SlowReleaseAuthority(IArtifactCoordinationAuthority inner) : IArtifactCoordinationAuthority

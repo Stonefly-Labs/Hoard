@@ -5218,6 +5218,57 @@ Both input documents independently recompute; free scratch is 91,721,052,160
 bytes. It admits earlier creation/reopen forests, configured hosts and fifty
 artifact parameters, not later budget/quarantine sources or qualifying profiles.
 
+### Actual rejected roots, admitted decorators and fixed-binding facts
+
+Fifty-three further original artifact witnesses now observe the exact source
+objects: sixteen rejected capability rows, four rejected pre-admission/symlink
+rows, lifecycle/non-cooperation and validation/access/cleanup rows, and exact
+fixed-binding facts. Direct roots are the actual provider store and its actual
+explicit controls, not a driver facade. The driver records the exact authority
+passed to initialization, preserving the real decorated authority rather than
+observing its underlying unused authority. The independent probe verifies the
+actual `SlowReleaseAuthority` type hash.
+
+Frozen binding policy includes facts without a provider parameter and the exact
+boundary/cancel parameters. No fictitious provider parameter, guessed Object
+fallback, new owner or cleanup transfer is introduced. Source-created rejected
+stores/foreign authorities are captured in the existing factory calls. The
+existing source's prefix-stop reopen and failed-quarantine fresh store add two
+genuine Local children, bringing the total to nine; same-object reinitialization
+remains the same original object.
+
+Dispatch regressions first fail 240 versus 276, 276 versus 289 and 289 versus
+293, then reject facts under the old provider-text-only selector. Corrected
+selection independently agrees with frozen binding ownership. Transitive
+quarantine-helper body/hash remains unchanged; its source observer-forwarding
+expectation is updated. Actual minimal-input observation and independent
+empty-cache locked replay each pass 293 exact discoveries/executions, 326
+records (322 original owners/four contracts) and 1,958 role/image correspondences.
+SDK remains
+`032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`.
+Full tooling passes 340 checks (323 passed/seventeen macOS-native skips);
+changed-source whitespace, frozen inventory, SDK catalog and patch checks pass.
+Backward native vectors remain unchanged; current admission requires 232
+foundations and 105 scopes/1,276 observations, pending. These diagnostics do not
+qualify categories/profiles, complete extraction or close T019/T020/T081.
+README and affected guides/model/contracts are updated; public contracts,
+provider implementations, common assertion bodies, locks, task/reviewer markers,
+production/deployment examples and diagrams remain unchanged.
+
+Budget run
+[40171398685](https://github.com/Stonefly-Labs/Hoard/actions/runs/40171398685)
+at exact `cd5e7598f74e3aaee9263736eeb0ee8556f2b84b` passes all three jobs,
+231 foundations without failures/errors/skips, 105 scopes/1,207 exact
+discoveries/executions (224 originals) and every prerequisite. Typed input:
+`d4f6225797f06597ceb589a017a92b90e2950d182250cdc24ab3378f553f0767`;
+original input:
+`14439256a8c25f61cdc1dd985647887b033a23e1ccb782aee876a79c6bff1312`;
+preparation:
+`330756cdf89bc5f4079c7c2886de85435129a19f49c584ecf08f5bb47c446f3a`.
+Both documents independently recompute; free scratch is 91,716,349,952 bytes.
+It admits budget/recovery sources, not later quarantine/rejection/lifecycle code
+or qualifying profiles.
+
 ## Summary
 
 

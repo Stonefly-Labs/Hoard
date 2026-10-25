@@ -23,6 +23,7 @@ public sealed class ArtifactReadVerificationTests(ITestOutputHelper output)
             token => reading.Entered.WaitAsync(token), token => verifying.Entered.WaitAsync(token),
             reading.Release, verifying.Release,
             bytes => File.WriteAllBytes(Directory.GetFiles(driver.PayloadDirectory).Single(), bytes), default);
+        driver.ObserveOriginal(output, nameof(ArtifactReadVerificationTests), providerParameter: false);
     }
 
     [Theory]

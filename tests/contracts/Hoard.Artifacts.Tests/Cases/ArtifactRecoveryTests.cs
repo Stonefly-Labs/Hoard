@@ -30,6 +30,7 @@ public sealed class ArtifactRecoveryTests(ITestOutputHelper output)
                 File.SetUnixFileMode(objects, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
                 driver.ObjectControls!.RemoveObserver("pointer.compare");
             }, default);
+        driver.ObserveOriginal(output, nameof(ArtifactRecoveryTests), providerParameter: false);
     }
 
     [Theory]

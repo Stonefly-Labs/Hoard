@@ -1,8 +1,9 @@
 using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactVisibilityTests
+public sealed class ArtifactVisibilityTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task Local_publication_is_directly_visible_before_acknowledgment()
@@ -12,6 +13,7 @@ public sealed class ArtifactVisibilityTests
         await ArtifactVisibilityAssertions.VisibleBeforeAcknowledgmentAsync(driver.Store,
             () => driver.LocalControls!.SetObserver("publish.receipted", () => new(boundary.HoldAsync())),
             token => boundary.Entered.WaitAsync(token), boundary.Release, default);
+        driver.ObserveOriginal(output, nameof(ArtifactVisibilityTests), providerParameter: false);
     }
 
     [Fact]
@@ -22,6 +24,7 @@ public sealed class ArtifactVisibilityTests
         await ArtifactVisibilityAssertions.IndependentListingAsync(driver.Store, driver.Maintenance, driver.Identity,
             () => driver.ObjectControls!.SetObserver("object.list", () => new(listing.HoldAsync())),
             token => listing.Entered.WaitAsync(token), listing.Release, default);
+        driver.ObserveOriginal(output, nameof(ArtifactVisibilityTests), providerParameter: false);
     }
 
     [Fact]
@@ -37,5 +40,6 @@ public sealed class ArtifactVisibilityTests
                 driver.ObjectControls!.RemoveObserver("object.direct");
                 direct.Release();
             }, default);
+        driver.ObserveOriginal(output, nameof(ArtifactVisibilityTests), providerParameter: false);
     }
 }

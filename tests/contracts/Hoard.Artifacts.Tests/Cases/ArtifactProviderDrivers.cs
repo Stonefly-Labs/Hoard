@@ -12,6 +12,7 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
 {
     private readonly ArtifactTestRoot root;
     private readonly IArtifactStoreLifetime lifetime;
+    private IArtifactCoordinationAuthority coordination;
     private ArtifactProviderDriver(string providerId, ArtifactTestRoot root, IArtifactStoreLifetime lifetime,
         ArtifactStoreIdentity identity, ArtifactCoordinationAuthority authority,
         LocalFaultControls? local, ObjectFaultControls? objects)
@@ -21,6 +22,7 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
         this.lifetime = lifetime;
         Identity = identity;
         Authority = authority;
+        coordination = authority;
         Store = (IArtifactStore)lifetime;
         Validator = (IArtifactEvidenceValidator)lifetime;
         Maintenance = (IArtifactMaintenance)lifetime;
@@ -36,18 +38,30 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
     public LocalFaultControls? LocalControls { get; }
     public ObjectFaultControls? ObjectControls { get; }
     public ConformanceOriginalObservation? ObserveOriginal(ITestOutputHelper output, string testClass, [CallerMemberName] string method = "",
-        string? parameter = null) =>
+        string? parameter = null, bool providerParameter = true) =>
         ConformanceOriginalObservationOutput.WriteIfRequested(output,
-            OriginalIdentity(testClass, method, ProviderId, parameter),
+            OriginalIdentity(testClass, method, ProviderId, parameter, providerParameter),
             ProviderId, "original-instance", null, null, ("owner", this), ("store", Store),
-            ("validator", Validator), ("maintenance", Maintenance), ("lifetime", lifetime), ("authority", Authority),
+            ("validator", Validator), ("maintenance", Maintenance), ("lifetime", lifetime), ("authority", coordination),
             ("controls", LocalControls is { } local ? local : (object)ObjectControls!));
 
-    private static string OriginalIdentity(string testClass, string method, string provider, string? parameter) =>
-        $"Hoard.Artifacts.Tests.{testClass}.{method}(provider: \"{provider}\"{(parameter is null ? "" : ", " + parameter)})";
+    private static string OriginalIdentity(string testClass, string method, string provider, string? parameter, bool providerParameter)
+    {
+        var parameters = providerParameter ? $"provider: \"{provider}\"{(parameter is null ? "" : ", " + parameter)}" : parameter;
+        return $"Hoard.Artifacts.Tests.{testClass}.{method}{(parameters is null ? "" : "(" + parameters + ")")}";
+    }
+
+    internal static void ObserveOriginalStore(ITestOutputHelper output, string testClass, string provider,
+        IArtifactStoreLifetime lifetime, IArtifactCoordinationAuthority authority, object controls,
+        [CallerMemberName] string method = "", string? parameter = null) =>
+        ConformanceOriginalObservationOutput.WriteIfRequested(output,
+            OriginalIdentity(testClass, method, provider, parameter, providerParameter: true),
+            provider, "original-instance", ("owner", lifetime), ("store", lifetime), ("validator", lifetime),
+            ("maintenance", lifetime), ("lifetime", lifetime), ("authority", authority), ("controls", controls));
 
     internal sealed class OriginalObservationSequence(
-        ITestOutputHelper output, string testClass, [CallerMemberName] string method = "", string? parameter = null)
+        ITestOutputHelper output, string testClass, [CallerMemberName] string method = "", string? parameter = null,
+        bool providerParameter = true)
     {
         private readonly List<(LocalArtifactStore Store, LocalFaultControls Controls)> reopened = [];
 
@@ -55,12 +69,12 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
 
         public void Observe(ArtifactProviderDriver driver)
         {
-            var parent = driver.ObserveOriginal(output, testClass, method, parameter);
+            var parent = driver.ObserveOriginal(output, testClass, method, parameter, providerParameter);
             var previous = parent;
             foreach (var (store, controls) in reopened)
             {
                 previous = ConformanceOriginalObservationOutput.WriteIfRequested(output,
-                    OriginalIdentity(testClass, method, driver.ProviderId, parameter),
+                    OriginalIdentity(testClass, method, driver.ProviderId, parameter, providerParameter),
                     driver.ProviderId, "original-instance", parent, previous,
                     ("owner", store), ("store", store), ("validator", store), ("maintenance", store),
                     ("lifetime", store), ("authority", driver.Authority), ("controls", controls));
@@ -110,8 +124,9 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
         var driver = new ArtifactProviderDriver(providerId, root, lifetime, identity, authority, local, objects);
         try
         {
+            driver.coordination = decorate?.Invoke(authority) ?? authority;
             var admission = await lifetime.InitializeAsync(
-                new(ArtifactInitializationMode.CreateEmpty, identity, decorate?.Invoke(authority) ?? authority, limits), new(), default);
+                new(ArtifactInitializationMode.CreateEmpty, identity, driver.coordination, limits), new(), default);
             Assert.True(admission is ArtifactResult<ArtifactAdmission>.Success,
                 admission is ArtifactResult<ArtifactAdmission>.Failure failure
                     ? $"Artifact initialization failed ({failure.Code}, {local?.InitializationFailure})." : "Unexpected artifact admission result.");

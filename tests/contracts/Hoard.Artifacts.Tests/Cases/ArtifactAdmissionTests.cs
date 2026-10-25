@@ -5,10 +5,11 @@ using Hoard.Fixtures.Artifacts.ObjectSemantics;
 using Hoard.Testing.Conformance.Artifacts;
 using System.Diagnostics;
 using System.Text.Json;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactAdmissionTests
+public sealed class ArtifactAdmissionTests(ITestOutputHelper output)
 {
     private static readonly ArtifactMaintenanceOptions Options = new();
     private static readonly ArtifactCleanupOptions Cleanup = new();
@@ -52,8 +53,18 @@ public sealed class ArtifactAdmissionTests
         using var root = new ArtifactTestRoot();
         var identity = new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
         var foreign = new ArtifactStoreIdentity(identity.ProviderModuleId, Guid.NewGuid(), Guid.NewGuid());
-        await ArtifactAdmissionAssertions.BeforeAdmissionAsync(identity, () => Create(provider, root.Path),
-            () => new ArtifactCoordinationAuthority(foreign), () => Directory.Exists(root.Path), Options, Cleanup, default);
+        var local = provider == "local" ? new LocalFaultControls() : null;
+        var objects = provider == "object" ? new ObjectFaultControls() : null;
+        IArtifactStoreLifetime? lifetime = null;
+        ArtifactCoordinationAuthority? authority = null;
+        await ArtifactAdmissionAssertions.BeforeAdmissionAsync(identity,
+            () => lifetime = Create(provider, root.Path, local, objects),
+            () => authority = new ArtifactCoordinationAuthority(foreign),
+            () => Directory.Exists(root.Path), Options, Cleanup, default);
+        ArtifactProviderDriver.ObserveOriginalStore(output, nameof(ArtifactAdmissionTests), provider,
+            lifetime ?? throw new InvalidOperationException("Original store factory did not run."),
+            authority ?? throw new InvalidOperationException("Original authority factory did not run."),
+            local is { } controls ? controls : (object)objects!);
     }
 
     [Theory]
@@ -157,15 +168,22 @@ public sealed class ArtifactAdmissionTests
         {
             var identity = new ArtifactStoreIdentity($"fixture.artifact.{provider}", Guid.NewGuid(), Guid.NewGuid());
             var authority = new ArtifactCoordinationAuthority(identity);
+            var local = provider == "local" ? new LocalFaultControls() : null;
+            var objects = provider == "object" ? new ObjectFaultControls() : null;
+            IArtifactStoreLifetime? lifetime = null;
             await ArtifactAdmissionAssertions.RejectedSymlinkAsync(identity, authority,
-                () => Create(provider, System.IO.Path.Combine(link, "child")), () => File.ReadAllText(sentinel),
+                () => lifetime = Create(provider, System.IO.Path.Combine(link, "child"), local, objects), () => File.ReadAllText(sentinel),
                 () => Directory.Exists(System.IO.Path.Combine(root.Path, "child")), Options, Cleanup, default);
+            ArtifactProviderDriver.ObserveOriginalStore(output, nameof(ArtifactAdmissionTests), provider,
+                lifetime ?? throw new InvalidOperationException("Original store factory did not run."),
+                authority, local is { } controls ? controls : (object)objects!);
         }
         finally { Directory.Delete(link); }
     }
 
-    private static IArtifactStoreLifetime Create(string provider, string root)
-        => provider == "local" ? new LocalArtifactStore(root) : new ObjectArtifactStore(root);
+    private static IArtifactStoreLifetime Create(string provider, string root,
+        LocalFaultControls? local = null, ObjectFaultControls? objects = null)
+        => provider == "local" ? new LocalArtifactStore(root, controls: local) : new ObjectArtifactStore(root, controls: objects);
 }
 
 internal sealed class ArtifactTestRoot : IDisposable
