@@ -5536,6 +5536,51 @@ Both documents independently recompute; free scratch is 91,720,790,016 bytes.
 This admits actual owner-only sources, not later controller-packet,
 partitioned-category or non-session-gate sources or qualifying profiles.
 
+### Exact bytes consumed by original boundary inspectors
+
+The six frozen metadata/artifact architecture facts now optionally start
+private input capture and explicitly complete only after their unchanged
+assertions. Actual JSON/source, project/nuspec XML and Cecil PE reads consume
+the same selected immutable bytes that are hashed. Prelaunch file/hash
+selection is copied; unknown, missing, changed or oversized inputs reject.
+Completion independently rereads every selected file, and disposal after a
+failure never publishes a successful packet. Packets contain only bounded
+run/attempt/test/current-input identity and opaque-ID/content-hash pairs, with
+`qualification:false`, not source paths, bodies, provider components or
+invented sessions. No requested context preserves predecessor I/O; malformed
+requested context fails closed. Limits are 2,048 files, 64 MiB/file, 256 MiB
+cached snapshots, <=64 KiB reads, checked five-second per-file deadlines,
+1 MiB private context and 512 KiB packet. Reverification holds at most one
+additional bounded file buffer. The outer owned executor remains responsible
+for containment and hard blocking-I/O deadlines.
+
+Focused regressions first fail at missing `InspectionInput` (with one dependent
+compiler overload diagnostic). The source helper and actual read-site hooks
+repair those regressions. Independent preparation/context selection,
+parent/runtime packet admission and full category integration remain unwired;
+the closed non-session qualification gate is unchanged. No task marker is
+advanced and no full architecture/profile acceptance is claimed.
+Sixteen focused .NET checks pass without skips, including twelve capture cases
+and four unchanged standalone boundary facts. All 351 tooling checks pass
+(334 passed/seventeen explicit macOS-native skips); changed-file whitespace,
+frozen inventory, SDK catalog and patch checks pass.
+
+Controller-packet native
+[40176564122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40176564122)
+at exact `165efbf3344257be22f8fdef449d02dd4a267709` is also now admitted:
+all three jobs successful, 236 foundations without failures/errors/skips,
+107 scopes/1,317 exact discoveries/executions and every prerequisite. Typed
+input `62d1ec6338d88c075b1c798dff2fcdfbd4c8cc64f83f444fe8ecad50341203cb`;
+original input
+`64c5131682da321cdd38e3b18057759f8c1bbfe51ca69244a6f591dd0b77b723`;
+fresh sixteen-source receipt
+`455659d31f331da913a568f332a05a7342cbeace75dd016327cd03e11a1fa752`;
+preparation
+`eb82088ea5c71fec52059e0de45863375db2e9ccf5529dfabe65bc383dda4d5b`.
+Both input documents independently recompute; free scratch is 91,720,732,672
+bytes. This admits that diagnostic snapshot only, not later partition/gate/
+inspection sources or qualifying profiles.
+
 ## Summary
 
 

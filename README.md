@@ -1871,6 +1871,11 @@ valid provider session cannot qualify them; missing independent inspection/
 controller admission rejects, including with a `none` binding. Diagnostic
 packets remain non-qualifying and ordinary typed consumers keep their existing
 requirements.
+The actual boundary inspectors now support optional bounded exact-read capture
+of selected JSON, project/nuspec XML, feature sources and PE bytes. Hash-only
+packets are written only after assertions complete and selected inputs reverify.
+Independent parent/runtime admission remains unwired; these packets cannot
+qualify a category or invent a provider session.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

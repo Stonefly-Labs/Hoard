@@ -11,7 +11,7 @@ internal static class DependencyGraphInspector
         {
             var id = project.GetProperty("id").GetString()!;
             var path = project.GetProperty("project").GetString()!;
-            var xml = XDocument.Load(path);
+            var xml = InspectionInput.LoadXml(path);
             var references = project.GetProperty("references").EnumerateArray().ToArray();
             foreach (var framework in xml.Descendants().Where(e => e.Name.LocalName == "FrameworkReference"))
             {
@@ -38,7 +38,7 @@ internal static class DependencyGraphInspector
                 Edge(evidence, id, target, "declared", path);
             }
             var assetsPath = project.GetProperty("assets").GetString()!;
-            using var assets = JsonDocument.Parse(File.ReadAllText(assetsPath));
+            using var assets = JsonDocument.Parse(InspectionInput.ReadAllText(assetsPath));
             var identities = assets.RootElement.GetProperty("libraries").EnumerateObject().ToDictionary(
                 library => library.Name.Split('/')[0],
                 library => library.Value.GetProperty("type").GetString() == "project"
@@ -70,7 +70,7 @@ internal static class DependencyGraphInspector
                 {
                     var folder = assets.RootElement.GetProperty("packageFolders").EnumerateObject().Single().Name;
                     var packagePath = Path.Combine(folder, details.GetProperty("path").GetString()!);
-                    var nuspec = XDocument.Load(Directory.GetFiles(packagePath, "*.nuspec").Single());
+                    var nuspec = InspectionInput.LoadXml(Directory.GetFiles(packagePath, "*.nuspec").Single());
                     var metadata = nuspec.Root!.Elements().Single(e => e.Name.LocalName == "metadata");
                     if (metadata.Elements().Single(e => e.Name.LocalName == "id").Value != source
                         || metadata.Elements().Single(e => e.Name.LocalName == "version").Value != library.Name.Split('/')[1])

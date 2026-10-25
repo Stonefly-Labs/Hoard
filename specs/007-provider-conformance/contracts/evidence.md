@@ -99,6 +99,27 @@ Known original observation requirements likewise cannot be skipped through
 that context. Diagnostic producer receipts and structural model fixtures never
 qualify those source witnesses.
 
+The original six architecture facts now have an optional private
+`HOARD_INSPECTION_CONTEXT` source-capture hook, without an SDK dependency.
+Its closed schema-1 context selects exact run/attempt/current-input identity,
+existing output directory and at most six case maps of canonical absolute
+file paths to expected content hashes. The context is private configuration,
+not a public report. Absent context preserves predecessor I/O; malformed
+requested capture rejects rather than disabling capture.
+The actual inspector read sites consume the same cached immutable bytes that
+are hashed: JSON/source text, project/nuspec XML and Cecil PE images. Selection
+is copied, exact and bounded to 2,048 files, 64 MiB/file and 256 MiB cached
+snapshots; individual reads use <=64 KiB chunks and a five-second checked
+deadline within the outer owned-child budget. Completion rechecks every
+selected file. Unselected/missing/changed/oversized reads and failed or
+abandoned captures produce no successful packet. A <=512 KiB hash-only
+schema-1 packet contains run/attempt/test/input identity and opaque path IDs
+mapped to actual content hashes, never paths or file bodies, and is explicitly
+non-qualifying. Literal-only facts may have an empty preselected file map;
+their executing assembly still requires independent runtime attribution.
+This hook is not parent/runtime admission, containment or provider/component
+observation, and does not open the fail-closed qualification gate.
+
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private
 revision-2 execution proof adds a distinct `originalObservations` collection;

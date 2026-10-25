@@ -8468,6 +8468,41 @@ Both documents independently recompute; free scratch is 91,720,790,016 bytes.
 This admits genuine owner-only sources, not later controller-packet,
 partitioned-category or non-session-gate sources or qualifying profiles.
 
+Controller-packet run
+[40176564122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40176564122)
+at exact `165efbf3344257be22f8fdef449d02dd4a267709` is now admitted: all three
+jobs successful, 236 foundations without failures/errors/skips, 107 scopes/
+1,317 exact discoveries/executions and every prerequisite. Fresh sixteen-source
+receipt:
+`455659d31f331da913a568f332a05a7342cbeace75dd016327cd03e11a1fa752`;
+typed input:
+`62d1ec6338d88c075b1c798dff2fcdfbd4c8cc64f83f444fe8ecad50341203cb`;
+original input:
+`64c5131682da321cdd38e3b18057759f8c1bbfe51ca69244a6f591dd0b77b723`;
+preparation:
+`eb82088ea5c71fec52059e0de45863375db2e9ccf5529dfabe65bc383dda4d5b`.
+Both input documents independently recompute; free scratch is 91,720,732,672
+bytes. This admits that diagnostic snapshot only, not later partition/gate
+changes, new inspection capture or qualifying profiles.
+
+The six original architecture facts now optionally capture the exact selected
+JSON/source, project/nuspec XML and PE bytes actually consumed by inspectors.
+The source context is copied and closed; cached immutable bytes are checked
+against preselected hashes and reverified before a bounded hash-only packet
+can be written after unchanged assertions. Unknown/missing/changed/oversized
+inputs, abandoned scopes and repeated completion reject without a new
+successful packet. Raw paths/bodies do not enter packets. With no context the
+predecessor read behavior is unchanged. This test-only source hook adds no SDK
+reference or provider/session observation; independent preparation, parent
+runtime/packet admission and category integration remain unwired and
+qualification still rejects inspection witnesses.
+Sixteen focused .NET checks pass without skips (twelve capture cases and four
+unchanged standalone boundary facts). All 351 tooling checks pass (334 passed/
+seventeen explicit native macOS skips), with changed-file whitespace, frozen
+inventory, SDK catalog and patch checks passing. Production/provider APIs,
+package/SDK references and lockfiles, reviewer/task markers and deployment
+examples/diagrams are unaffected.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full
