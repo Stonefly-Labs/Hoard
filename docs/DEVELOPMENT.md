@@ -7832,6 +7832,18 @@ qualification and final T081 remain open. README and affected guides/contracts
 are updated; product/deployment examples and diagrams are unaffected by these
 isolated test-only decorators and opt-in callers.
 
+An additional launch-boundary regression exposes the old full-family-only
+runtime guard: all four intended mutation scopes initially reject with
+`WitnessMissing`. The launcher now admits only exact full-family or same-family
+paired inventories, still rejecting reduced, duplicate and cross-family rows.
+The regression reaches a controlled command boundary and checks the generated
+safe logger settings, exact method filter and independently hashed package
+files, not merely the earlier mocked `test_attempt` handoff. Tooling again
+passes 326 checks (309 passed/seventeen macOS-native skips); this is not a
+native mutation receipt. Cancellation of obsolete pending run `40161267008`
+was requested; its initial head is not admitted. The next exact-head request
+retains 218 foundations and 100 scopes/982 observations.
+
 Cursor native run `40159593512` at exact head
 `5c7522fcff37fdb48e12e5ba7a1e9377b75414ac` passed all three jobs,
 215 foundations without failures/errors/skips, 95 scopes/942 exact discoveries/

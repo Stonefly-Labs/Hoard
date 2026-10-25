@@ -1288,6 +1288,14 @@ class SdkDiagnosticTests(unittest.TestCase):
             "Hoard.Fixtures.Artifacts.Local": "e" * 64,
             "Hoard.Fixtures.Artifacts.ObjectSemantics": "f" * 64,
         }
+        feed = self.directory / "feed/candidate"
+        feed.mkdir(parents=True)
+        for package in packages:
+            archive = feed / (package + ".0.1.0.nupkg")
+            archive.write_bytes(package.encode())
+            packages[package] = checks.evidence.file_sha256(archive)
+        (self.directory / "stores").mkdir()
+        (self.directory / "runtime-owner.json").write_bytes(b"{}")
         inputs = {
             "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
             "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
@@ -1318,6 +1326,33 @@ class SdkDiagnosticTests(unittest.TestCase):
                         admission.assert_called_once_with(inputs, assembly, self.directory)
                     else:
                         admission.assert_not_called()
+                options = {"metadata_packages" if metadata else "artifact_packages": required}
+                with patch.object(run, "command", create=True,
+                                  side_effect=checks.evidence.ConformanceError("DeadlineExceeded")) as launch:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "DeadlineExceeded"):
+                        checks.runtime_command(run, assembly, manifest, **options)
+                    arguments = launch.call_args.args[0]
+                    self.assertEqual(arguments[:3], ["dotnet", "vstest", str(assembly)])
+                    self.assertIn("--ListTests", arguments)
+                    self.assertIn("--TestCaseFilter:FullyQualifiedName=" + scenario[1][0].split("(")[0], arguments)
+                    settings = ET.fromstring((
+                        self.directory / "stores" / f"settings-{manifest['attemptId']}.runsettings").read_bytes())
+                    variables = settings.find("./RunConfiguration/EnvironmentVariables")
+                    self.assertEqual({item.tag: item.text for item in variables}, {
+                        "HOARD_ORIGIN_RUN_ID": inputs["runId"],
+                        **{("HOARD_METADATA_" if metadata else "HOARD_ARTIFACT_")
+                           + ("OBJECT" if package.endswith(".ObjectSemantics") else package.rsplit(".", 1)[1].upper())
+                           + "_PACKAGE_SHA256": digest for package, digest in required.items()},
+                    })
+                foreign = {package: digest for package, digest in packages.items() if package not in required}
+                for changed_manifest, changed_options in (
+                        ({**manifest, "expected": manifest["expected"][:-1]}, options),
+                        ({**manifest, "expected": [manifest["expected"][0]] * 2}, options),
+                        (manifest, {"artifact_packages" if metadata else "metadata_packages": foreign})):
+                    with patch.object(run, "command", create=True) as launch:
+                        with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                            checks.runtime_command(run, assembly, changed_manifest, **changed_options)
+                        launch.assert_not_called()
                 changed = {**inputs, "packages": [
                     item for item in inputs["packages"] if item["packageId"] != next(iter(required))]}
                 with patch.object(checks, "runtime_command") as launch:

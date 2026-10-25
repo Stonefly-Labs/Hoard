@@ -567,6 +567,12 @@ fourteen actual Hoard image/archive matches and unchanged common assertion/SDK/
 catalog bytes. Default-build discovery confirms intentional failures are absent.
 The next native request is 218 foundations and 100 scopes/982 observations,
 not yet admitted or complete T034/category/controller qualification.
+The runtime launcher also checks exact same-family mutation inventories before
+writing settings or launching a child; reduced, duplicate and cross-family
+selections reject. A separate launch-boundary regression verifies generated
+safe settings, method filters and actual package-file hashes after repairing
+the old full-family-only guard. No earlier mutation-head native result is
+admitted.
 Cursor run `40159593512` at `5c7522f` passed all three jobs,
 215 foundations without skips and 95 scopes/942 exact observations with every
 prerequisite; it predates authority integrations and category mutations.

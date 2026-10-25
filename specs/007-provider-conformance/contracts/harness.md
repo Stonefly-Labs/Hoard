@@ -1130,6 +1130,15 @@ native request is 218 foundations and 100 scopes/982 observations, not yet
 admitted or completed T034/category/controller qualification. Historical
 seals/locks, task and reviewer markers remain unchanged.
 
+The runtime launcher's independent package-family guard permits only an exact
+full-family or same-family paired inventory, not an arbitrary prefix/subset.
+Its additional regression initially rejects all four valid paired scopes with
+`WitnessMissing`; after repair, generated safe logger settings and method
+filters contain the actual family package hashes. Reduced, duplicate and
+cross-family rows reject before launch. A controlled command-boundary stop in
+this regression is not a native execution receipt. All 326 tooling checks pass;
+earlier mutation-head results are not admitted and T034 remains unfinished.
+
 Cursor native run `40159593512` at `5c7522f` passed all three jobs,
 215 foundations without failures/errors/skips and 95 scopes/942 exact
 discoveries/executions, including every prerequisite. It predates authority/

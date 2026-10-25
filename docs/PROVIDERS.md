@@ -887,6 +887,13 @@ Intentional failures are excluded from ordinary builds. The next native request
 is 218 foundations and 100 scopes/982 observations, not yet admitted or complete
 T034/category qualification. No provider operation or SDK dependency changed.
 
+The runtime package-family guard now also admits each exact paired inventory.
+A launch-boundary regression first rejects all four valid scopes, then verifies
+the actual generated filter/settings and independently hashed package files
+after repair. Reduced, duplicate or cross-family selections still reject before
+launch. Earlier mutation-head results are not admitted; provider operations,
+common assertions and qualification requirements remain unchanged.
+
 Cursor native run `40159593512` at `5c7522f` passed all three jobs,
 215 foundations without skips and 95 scopes/942 exact observations with every
 prerequisite. It does not verify authority integrations or category mutations.

@@ -4625,6 +4625,18 @@ profiles and final T081 remain open. Tasks, reviewer markers and historical
 seals/locks are unchanged; product/deployment examples and diagrams are
 unaffected by these isolated test-only decorators and opt-in callers.
 
+A subsequent launch-boundary regression finds the remaining full-family-only
+runtime guard, with `WitnessMissing` for all four otherwise valid paired scopes.
+The repair admits only exact full-family or same-family paired inventories;
+reduced, duplicate and cross-family rows reject before launch. The regression
+checks actual generated safe logger settings, method filters and hashes of
+independently created package files before a controlled command-boundary stop,
+not a native execution or the earlier mocked `test_attempt` handoff.
+All 326 tooling checks pass (309 passed/seventeen macOS-native skips). The
+obsolete pending mutation run `40161267008` was requested to cancel and is not
+admitted. The replacement exact-head request retains 218 foundations and
+100 scopes/982 observations; T034/category/controller qualification remains open.
+
 Cursor native run `40159593512` binds exact head
 `5c7522fcff37fdb48e12e5ba7a1e9377b75414ac`: all three jobs,
 215 foundations without failures/errors/skips, 95 scopes/942 exact discoveries/

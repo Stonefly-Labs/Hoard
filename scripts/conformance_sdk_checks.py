@@ -2090,10 +2090,16 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             "Hoard.Fixtures.Metadata.Sqlite": "HOARD_METADATA_SQLITE_PACKAGE_SHA256",
         }
         packages = artifact_packages if artifact_packages is not None else metadata_packages
-        scenarios = full_artifact_binding_scenarios() if artifact_packages is not None else full_metadata_binding_scenarios()
+        family = "artifacts" if artifact_packages is not None else "metadata"
+        scenarios = (
+            *(full_artifact_binding_scenarios() if artifact_packages is not None
+              else full_metadata_binding_scenarios()),
+            *(scenario for scenario in category_mutation_scenarios()
+              if scenario[0].startswith(f"category-mutation-{family}-")),
+        )
         if (metadata_provider is not None or artifact_runner is not None
                 or assembly.name != "Hoard.Fixtures.Conformance.Consumer.dll"
-                or set(identities) != set(scenarios[0][1])
+                or not any(tuple(sorted(identities)) == scenario[1] for scenario in scenarios)
                 or not isinstance(packages, dict) or set(packages) != set(required)):
             raise evidence.ConformanceError("WitnessMissing")
         variables = {}

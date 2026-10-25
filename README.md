@@ -1834,6 +1834,11 @@ failures are absent from ordinary Consumer builds. The next native request is
 218 foundations and 100 scopes/982 observations, not yet admitted; T034 and
 complete category/profile qualification remain open.
 
+The runtime launcher now separately admits the exact paired scopes for their
+own package family; reduced, duplicate and cross-family selections reject
+before launch. This repairs a launch guard missed by the earlier selection
+mocks; no native mutation result is admitted from the earlier head.
+
 Cursor native run `40159593512` at `5c7522f` passed all three jobs,
 215 foundations without skips and 95 scopes/942 exact observations with every
 prerequisite. It predates authority integrations and category mutations.
