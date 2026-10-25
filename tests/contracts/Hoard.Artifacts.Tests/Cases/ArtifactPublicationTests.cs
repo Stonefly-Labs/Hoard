@@ -1,6 +1,5 @@
 using Hoard.Abstractions.Storage;
 using Hoard.Testing.Conformance.Artifacts;
-using Hoard.Testing.Conformance.Evidence;
 using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
@@ -14,12 +13,7 @@ public sealed class ArtifactPublicationTests(ITestOutputHelper output)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactPublicationAssertions.EmptyContentAndAbsenceAsync(driver.Store, default);
-        ConformanceOriginalObservationOutput.WriteIfRequested(output,
-            $"Hoard.Artifacts.Tests.ArtifactPublicationTests.Empty_content_and_true_absence_are_distinct(provider: \"{provider}\")",
-            provider, "original-instance", ("owner", driver), ("store", driver.Store),
-            ("validator", driver.Validator), ("maintenance", driver.Maintenance),
-            ("lifetime", (IArtifactStoreLifetime)driver.Store), ("authority", driver.Authority),
-            ("controls", driver.LocalControls is { } local ? local : (object)driver.ObjectControls!));
+        driver.ObserveOriginal(output, nameof(ArtifactPublicationTests));
     }
 
     [Theory]
@@ -29,6 +23,7 @@ public sealed class ArtifactPublicationTests(ITestOutputHelper output)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactPublicationAssertions.UnknownLengthAndRealEofAsync(driver.Store, default);
+        driver.ObserveOriginal(output, nameof(ArtifactPublicationTests));
     }
 
     [Theory]
@@ -38,6 +33,7 @@ public sealed class ArtifactPublicationTests(ITestOutputHelper output)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactPublicationAssertions.EveryExpectationAndEofAsync(driver.Store, default);
+        driver.ObserveOriginal(output, nameof(ArtifactPublicationTests));
     }
 
     [Theory]
@@ -47,6 +43,7 @@ public sealed class ArtifactPublicationTests(ITestOutputHelper output)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactPublicationAssertions.UnsupportedChecksumAndRangeAsync(driver.Store, default);
+        driver.ObserveOriginal(output, nameof(ArtifactPublicationTests));
     }
 
     [Theory]
@@ -59,6 +56,7 @@ public sealed class ArtifactPublicationTests(ITestOutputHelper output)
         SetObserver(driver, "stage.prefix", "multipart.part", () => new(barrier.HoldAsync()));
         await ArtifactPublicationAssertions.PrivateStagingAsync(driver.Store,
             token => barrier.Entered.WaitAsync(token), barrier.Release, default);
+        driver.ObserveOriginal(output, nameof(ArtifactPublicationTests));
     }
 
     [Theory]
@@ -68,6 +66,7 @@ public sealed class ArtifactPublicationTests(ITestOutputHelper output)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactPublicationAssertions.VerifiedDuplicatesAsync(driver.Store, default);
+        driver.ObserveOriginal(output, nameof(ArtifactPublicationTests));
     }
 
     internal static T Success<T>(ArtifactResult<T> result) where T : notnull

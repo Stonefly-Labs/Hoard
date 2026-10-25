@@ -1211,6 +1211,14 @@ helper. Actual observation and independent fresh-cache replay pass 26
 executions/118 image correspondences using minimal inputs. This changes the
 native requirement to 105 scopes/1,008 observations while retaining all
 prerequisites; that expanded path requires its own exact-head receipt.
+The subsequent artifact publication expansion covers all twelve frozen
+parameters through the actual original driver's non-owning observer, preserving
+assertions, private lifetime, barriers and existing disposal. Local observation
+and independent locked replay pass 36 executions/188 image correspondences
+using minimal inputs. Its native requirement is 105 scopes/1,018 observations,
+still pending. Earlier `40166560899 @8aaa36d` passed all three jobs,
+227 native foundations and 100 scopes/982 observations with every prerequisite;
+it is admitted diagnostic evidence, not execution of the later full-input scopes.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

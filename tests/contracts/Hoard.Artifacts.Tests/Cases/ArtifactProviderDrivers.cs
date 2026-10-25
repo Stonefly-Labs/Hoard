@@ -1,7 +1,10 @@
+using System.Runtime.CompilerServices;
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Fixtures.Artifacts.Local;
 using Hoard.Fixtures.Artifacts.ObjectSemantics;
+using Hoard.Testing.Conformance.Evidence;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
@@ -32,6 +35,13 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
     public IArtifactMaintenance Maintenance { get; }
     public LocalFaultControls? LocalControls { get; }
     public ObjectFaultControls? ObjectControls { get; }
+    public void ObserveOriginal(ITestOutputHelper output, string testClass, [CallerMemberName] string method = "") =>
+        ConformanceOriginalObservationOutput.WriteIfRequested(output,
+            $"Hoard.Artifacts.Tests.{testClass}.{method}(provider: \"{ProviderId}\")",
+            ProviderId, "original-instance", ("owner", this), ("store", Store),
+            ("validator", Validator), ("maintenance", Maintenance), ("lifetime", lifetime), ("authority", Authority),
+            ("controls", LocalControls is { } local ? local : (object)ObjectControls!));
+
     public string PayloadDirectory => System.IO.Path.Combine(root.Path, ProviderId == "local" ? "data" : "objects");
     public string StagingDirectory => System.IO.Path.Combine(root.Path, ProviderId == "local" ? "staging" : "multipart");
     public bool Ready => lifetime switch

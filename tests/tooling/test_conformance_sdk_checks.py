@@ -1014,7 +1014,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         run = SimpleNamespace(root=self.directory)
         scenarios = checks.original_observation_scenarios()
         self.assertEqual(len(scenarios), 5)
-        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 26)
+        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 36)
         frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_bytes())
         expected_metadata = {name for entry in frozen["entries"] if entry["profileId"] == "metadata"
                              for name in entry["runtimeTests"] if name.startswith((
@@ -1025,6 +1025,10 @@ class SdkDiagnosticTests(unittest.TestCase):
                                  "Hoard.Metadata.Tests.MetadataRoundTripTests.MP01_"))}
         self.assertEqual(set(scenarios[0][1]), expected_metadata)
         self.assertEqual(set(scenarios[1][1]), expected_metadata)
+        expected_artifacts = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                              for name in entry["runtimeTests"]
+                              if name.startswith("Hoard.Artifacts.Tests.ArtifactPublicationTests.")}
+        self.assertEqual(set(scenarios[2][1]), expected_artifacts)
         for scenario in scenarios:
             metadata = "-metadata-" in scenario[0]
             provider = scenario[0].rsplit("-", 1)[1] if metadata or "-contract-" in scenario[0] else None

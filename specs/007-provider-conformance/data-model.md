@@ -241,6 +241,14 @@ are not silently admitted. Expanded local observation/replay pass 26 executions
 and 118 image correspondences with the unchanged SDK archive. The corresponding
 native scope vector is 105 scopes/1,008 observations, still requiring its
 own exact-head receipt and every existing prerequisite.
+The artifact policy subsequently includes all twelve frozen publication
+parameters. Their source-owned driver helper observes the actual owner, private
+lifetime, store/validator/maintenance, authority and controls; no companion
+session or cleanup transfer is introduced. Shared AS-13 witness ownership still
+comes from the immutable primary-case helper, not duplicated proof bytes.
+Local observation and independent locked replay pass 36 executions/188 image
+correspondences with minimal inputs. Native admission now requires
+105 scopes/1,018 observations and all prerequisites; it remains unadmitted.
 
 ### Shared bounds
 

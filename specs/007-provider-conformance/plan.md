@@ -4896,6 +4896,49 @@ preparation:
 `6fc731b1195af2c5a1ee8f575aba556933327c7e915813c5bf178a801fe99b37`;
 free scratch 91,717,259,264 bytes. This is diagnostic evidence, not qualification.
 
+### Original artifact publication owners
+
+All twelve frozen original publication parameters (AS-01..06 and shared AS-13)
+now capture their actual driver and its existing store, validator, maintenance,
+private lifetime, authority and fault controls. One non-owning driver helper
+uses source-owned caller names and the genuine provider parameter. It creates
+no session, changes no assertion/barrier/clock and transfers no cleanup.
+Shared witnesses keep the catalog's existing primary-case ownership; no proof
+is relabeled or duplicated.
+
+The routing regression first fails at 26 rather than 36 executions, then passes.
+Actual local observation and independent fresh-cache locked replay each pass
+36 exact discoveries/executions, 32 original owners, four session-free contract
+contexts and 188 role/image correspondences, with unchanged SDK archive
+`a94e225acd4ef19a8d1b363f5c7eedf498bae9364fbc2838f917f17c595485e3`.
+These probes use minimal diagnostic inputs. The expanded full-input native
+vector requires 105 scopes/1,018 observations and every prerequisite, not
+category/profile qualification; its receipt remains pending.
+
+`python3 -m unittest discover -s tests/tooling -v` passes 337 checks
+(320 passed/seventeen macOS-native skips).
+`python3 tests/fixtures/conformance/baselines/freeze_inventory.py --check`,
+`python3 scripts/conformance_case_catalog.py --check-sdk` and changed
+driver/publication-file whitespace verification pass. The broader folder
+formatter found pre-existing whitespace at `ArtifactEvidenceTests.cs:79..80`;
+that unrelated file remains unchanged. README and affected guides/model/
+contracts are updated; production/deployment examples and diagrams are
+unaffected. Task/reviewer markers, historical seals, locks and the running
+checkpoint remain unchanged. Full original/direct/reopen/controller coverage,
+qualifying category/profile runners and later stories remain unfinished.
+
+Earlier run
+[40166560899](https://github.com/Stonefly-Labs/Hoard/actions/runs/40166560899)
+binds exact head `8aaa36d745ad4dfe52776b818b668be244c96bc6`: all three jobs,
+227 native foundations without failures/errors/skips, 100 scopes/982 exact
+discoveries/executions and every recovery/transfer/containment/replay
+prerequisite pass. Input:
+`759b9ef9d73c65723b5aff95515b6650831430f4433396f5c435ad8133b7e8ef`;
+preparation:
+`81450552403c843f0c8307063bdc17357ad2e96d3642a639ff1cfc5dc2b4dddf`.
+This admitted diagnostic receipt predates full-input original scopes and does
+not qualify these later changes.
+
 ## Summary
 
 

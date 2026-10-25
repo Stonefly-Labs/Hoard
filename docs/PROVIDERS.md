@@ -953,6 +953,14 @@ its original owner, never replaced by a companion SDK session. Local observation
 and independent locked replay pass 26 executions/118 image correspondences.
 Native admission must now cover 105 scopes/1,008 observations; wider originals,
 direct/reopen/controller paths and qualifying profiles remain unfinished.
+The publication expansion adds all twelve frozen original artifact publication
+parameters, observing the existing driver's actual private lifetime and
+interfaces without extra construction or ownership transfer. Minimal-input
+local observation and independent locked replay pass 36 executions/188 image
+correspondences. Its native requirement is 105 scopes/1,018 observations,
+still pending. Earlier `40166560899 @8aaa36d` passed all three jobs,
+227 native foundations and 100 scopes/982 observations with every prerequisite;
+that admitted diagnostic receipt predates full-input original execution.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

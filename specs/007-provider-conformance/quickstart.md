@@ -616,6 +616,13 @@ the actual authority facade used by common assertions. Observation/replay now
 pass 26 executions/118 image correspondences, still with minimal local inputs.
 The expanded native request requires 105 scopes/1,008 observations and every
 existing prerequisite; no expanded native receipt is claimed.
+All twelve frozen artifact publication parameters subsequently use one
+non-owning original-driver observer. Actual local observation and independent
+locked replay pass 36 executions/188 image correspondences with minimal inputs.
+Their native request requires 105 scopes/1,018 observations and remains pending.
+Earlier `40166560899 @8aaa36d` passed all three jobs, 227 native foundations
+and 100 scopes/982 observations with all prerequisites; that admitted diagnostic
+receipt does not execute the later full-input original scopes.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

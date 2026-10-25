@@ -37,6 +37,16 @@ ORIGINAL_METADATA_WITNESSES = tuple(sorted(
             "MP27_Protection_survives_caller_timeout_through_owned_settlement",
             "MP31_Invalid_telemetry_rolls_back_its_declared_entry_and_reference_group")),
     ) for method in methods))
+ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted(
+    f'Hoard.Artifacts.Tests.ArtifactPublicationTests.{method}(provider: "{provider}")'
+    for method in (
+        "Empty_content_and_true_absence_are_distinct",
+        "Empty_unknown_length_and_positive_short_reads_require_real_eof",
+        "Every_expectation_is_checked_and_declared_length_does_not_replace_eof",
+        "Unsupported_checksum_and_range_reject_before_storage_or_stream_io",
+        "Staging_is_private_until_complete_verified_commit",
+        "Submitted_duplicates_are_fully_verified_and_keep_one_immutable_incarnation")
+    for provider in ("local", "object")))
 
 
 def original_witness_policy(identity):
@@ -49,9 +59,7 @@ def original_witness_policy(identity):
         return "metadata", "original-instance", _ORIGINAL_METADATA_ROLES
     if identity in contracts:
         return "artifacts", "loaded-contract", ("contract",)
-    if identity in tuple('Hoard.Artifacts.Tests.ArtifactPublicationTests.'
-                         f'Empty_content_and_true_absence_are_distinct(provider: "{provider}")'
-                         for provider in ("local", "object")):
+    if identity in ORIGINAL_ARTIFACT_WITNESSES:
         return "artifacts", "original-instance", _ORIGINAL_ARTIFACT_ROLES
     return None
 

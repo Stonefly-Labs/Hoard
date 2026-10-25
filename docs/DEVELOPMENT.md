@@ -7996,6 +7996,34 @@ new native requirement is 105 scopes/1,008 observations, not an admitted receipt
 README and affected model/contracts/guides are updated; production/deployment
 examples and diagrams are unaffected. Tasks/reviewer markers remain unchanged.
 
+All twelve frozen artifact publication parameters now observe their genuine
+original owner/interfaces through one driver helper, including the actual
+private lifetime. Assertions, barriers, clocks, construction and disposal stay
+unchanged; AS-13 retains shared primary-case ownership. The expanded regression
+first fails at 26 rather than 36 executions. Actual observation and independent
+empty-cache locked replay each pass 36 exact executions, 32 original owners,
+four session-free contexts and 188 image correspondences, reproducing SDK
+`a94e225acd4ef19a8d1b363f5c7eedf498bae9364fbc2838f917f17c595485e3`.
+Local probes still use minimal inputs. Native admission now requires
+105 scopes/1,018 observations with every prerequisite, not qualification.
+`python3 -m unittest discover -s tests/tooling -v` passes 337 checks
+(320 passed/seventeen macOS-native skips); frozen inventory and SDK catalog
+checks pass. Changed driver/publication-file whitespace verification passes.
+The broader folder check found pre-existing whitespace at
+`ArtifactEvidenceTests.cs:79..80`; that unrelated file is unchanged.
+
+Original-provenance run
+[40166560899](https://github.com/Stonefly-Labs/Hoard/actions/runs/40166560899)
+binds exact head `8aaa36d745ad4dfe52776b818b668be244c96bc6`: all three jobs,
+227 native foundations without failures/errors/skips and 100 scopes/982 exact
+discoveries/executions, with all recovery/transfer/containment/replay
+prerequisites. Input:
+`759b9ef9d73c65723b5aff95515b6650831430f4433396f5c435ad8133b7e8ef`;
+preparation:
+`81450552403c843f0c8307063bdc17357ad2e96d3642a639ff1cfc5dc2b4dddf`.
+This admitted diagnostic predates full-input original scopes; it does not
+qualify the later changes or complete categories/profiles.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

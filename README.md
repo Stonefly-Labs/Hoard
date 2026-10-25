@@ -1886,6 +1886,15 @@ Original metadata observation now also covers MP-02/03/13/23..27/31, preserving
 the exact authority facade used by each common assertion. Actual observation
 and independent locked replay pass 26 executions/118 image correspondences;
 the corresponding native request is 105 scopes/1,008 observations, not a receipt.
+All twelve frozen artifact publication parameters (AS-01..06 and the shared
+AS-13 witness) now observe their actual original driver and interfaces through
+one non-owning helper. Local observation and independent locked replay pass
+36 executions/188 image correspondences using minimal diagnostic inputs.
+The expanded native request requires 105 scopes/1,018 observations; it is not
+yet admitted. Earlier run
+[40166560899](https://github.com/Stonefly-Labs/Hoard/actions/runs/40166560899)
+at `8aaa36d` passed 227 native foundations and 100 scopes/982 observations
+with every prerequisite, but predates the full-input original scopes.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

@@ -115,6 +115,14 @@ anything. Local actual observation and independent locked replay pass 26
 executions/118 image correspondences with the unchanged SDK archive; they
 remain minimal-input diagnostics. Native admission must include the expanded
 105-scope/1,008-observation vector, not reuse the earlier eight-execution request.
+All twelve frozen artifact publication parameters now share one original-driver
+observer after unchanged assertions. It captures the genuine private lifetime
+and interfaces without extra sessions, disposal or provider-selected outcomes.
+AS-13 retains shared-witness primary-case ownership rather than relabeled or
+duplicated proof bytes. Minimal-input observation and independent locked replay
+pass 36 executions/188 image correspondences. The expanded full-input native
+vector is 105 scopes/1,018 observations and remains pending; the earlier
+admitted `40166560899 @8aaa36d` diagnostic predates these full-input scopes.
 
 The implemented private transport distinguishes `purpose: discovery` from
 `purpose: execution` and hashes each complete JSONL stream in its completion
