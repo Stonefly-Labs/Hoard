@@ -8964,11 +8964,30 @@ through the actual category dispatcher. These are simulated tooling fixtures,
 not native receipts. This increment does not qualify source origins or import
 the remaining controller/QC obligations. Shared assertions, providers,
 packages/locks, inventories, task/checklist markers and deployment examples/
-diagrams remain unchanged. Exact-head Linux execution is still required.
+diagrams remain unchanged. Exact-head Linux evidence is recorded below.
 All 381 tooling checks pass (seventeen explicit native macOS skips), as do
 frozen inventory/catalog and patch checks. A rerun temporarily hit the unchanged
 24 GiB workspace-capacity gate; removing only this increment's four disposable
 restore caches restored capacity and the full suite passed without a bypass.
+
+Exact `78c591989bd6305171677a48fbdbe1d566a2eff2`, run
+[40202060742](https://github.com/Stonefly-Labs/Hoard/actions/runs/40202060742),
+now independently admits these source links: all three Linux jobs and 273
+foundations pass without failures/errors/skips, along with 13-lock/18-package
+fresh replay, all 121 scopes/1,684 witnesses and fresh category controls.
+Metadata's four source parents have canonical digest
+`5827833f284e247b197dee07bfb3a194633364bb2b43fd95a13c103ca8ee9354`;
+artifact's three have
+`7da9ef71f4f337e33e821d05b2a035bbc6e0b8b7c03a3c234e21ddf7ae22a6f9`.
+Metadata input/result:
+`ab90f8659476d9c56a7cee107dd1023f9501e294c238f91b7367e0853b606fab`/
+`84e778a6f47708fa643f58b0ee58c95310de86e3c92b00d64e30eee185d699fe`.
+Artifact input/result:
+`a3bf730e03b4cf94693333b82028b4d52bd0f9100265e4b6caa38ac29f78b056`/
+`3be3d48a2eb738271d35ac9565e3539fa3a4cd53fcea70e39af70cbd5908e4f3`.
+Both histories remain explicitly non-qualifying with unchanged 22 metadata/
+seven artifact incomplete obligations. This establishes source-to-execution
+linkage, not qualification-origin admission or control-to-case import.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

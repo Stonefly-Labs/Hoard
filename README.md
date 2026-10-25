@@ -1993,6 +1993,11 @@ native parents fail explicitly; non-native fixtures remain labeled as such.
 Safe summaries expose only parent counts/digests. These links remain
 non-qualifying: they do not import missing controls or open source admission.
 Their later implementation is not covered by the `0107db5` receipt.
+Exact `78c5919`, run
+[40202060742](https://github.com/Stonefly-Labs/Hoard/actions/runs/40202060742),
+now independently admits all four metadata/three artifact source parents, all
+121 scopes/1,684 witnesses and the fresh category controls. All three Linux jobs
+and 273 foundations without skips pass; category qualification remains closed.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

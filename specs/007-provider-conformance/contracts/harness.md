@@ -135,7 +135,12 @@ required. Native records cannot be omitted or replaced by non-native fixtures.
 Create-new read-only source parents remain explicitly non-qualifying; safe
 summaries retain only their count and canonical scope-to-parent digest.
 This is source linkage, not admission of missing control obligations or a
-qualification-origin bypass. Native execution of these links is pending.
+qualification-origin bypass.
+That execution is now independently admitted at exact `78c5919`, run
+40202060742: all three Linux jobs, 273 foundations without skips and all
+121 scopes/1,684 witnesses pass, including four metadata/three artifact source
+parents and fresh category controls. This is still diagnostic linkage, not
+qualification-origin admission or completion of remaining control obligations.
 The earlier command-parent path passes exact `ac561f2`, run 40188204924: all three jobs,
 269 foundations without failures/errors/skips and 115 scopes/1,457 executions.
 This admits invocation ownership for that snapshot, not source qualification.

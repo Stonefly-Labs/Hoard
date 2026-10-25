@@ -6101,11 +6101,23 @@ canonical digest (four metadata and three artifact parents when complete).
 Missing-API red and source/command substitution, mutable inputs, unsettled work
 and dispatcher-failure propagation checks cover every source family. This
 links already validated diagnostic evidence; it does not open qualification
-or import remaining controls. Native execution is pending. Existing
+or import remaining controls. Native evidence is recorded below. Existing
 providers/shared assertions/packages/locks/inventories and markers are unchanged.
 All 381 tooling checks (seventeen native macOS skips), frozen inventory/catalog
 and patch checks pass. A temporary local capacity failure was resolved by
 deleting only task-generated restore caches, not weakening the 24 GiB guard.
+
+Exact `78c591989bd6305171677a48fbdbe1d566a2eff2`, run 40202060742,
+now independently admits all four metadata/three artifact source parents:
+all three Linux jobs, 273 foundations without skips, 13-lock/18-package fresh
+replay, all 121 scopes/1,684 witnesses and fresh category controls pass.
+Source-parent canonical digests are
+`5827833f284e247b197dee07bfb3a194633364bb2b43fd95a13c103ca8ee9354`
+(metadata) and
+`7da9ef71f4f337e33e821d05b2a035bbc6e0b8b7c03a3c234e21ddf7ae22a6f9`
+(artifacts). The 22 metadata/seven artifact incomplete obligations remain;
+qualification-origin admission and actual control imports are still unfinished.
+No task/checklist markers advance from this diagnostic receipt.
 
 
 Extract reusable, test-only category suites from the existing package-acceptance
