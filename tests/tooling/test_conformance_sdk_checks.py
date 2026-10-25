@@ -1017,7 +1017,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         run = SimpleNamespace(root=self.directory)
         scenarios = checks.original_observation_scenarios()
         self.assertEqual(len(scenarios), 5)
-        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 311)
+        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 323)
         frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_bytes())
         expected_metadata = {name for entry in frozen["entries"] if entry["profileId"] == "metadata"
                              for name in entry["runtimeTests"] if name.startswith((
@@ -1063,6 +1063,12 @@ class SdkDiagnosticTests(unittest.TestCase):
                                       or '(provider: "' in name
                                       or ".Stop_retains_unselected_object_" in name)}
         self.assertEqual(set(scenarios[2][1]), expected_artifacts)
+        expected_contracts = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                              for name in entry["runtimeTests"] if name.startswith((
+                                  "Hoard.Artifacts.Tests.ArtifactValueTests.",
+                                  "Hoard.Artifacts.Tests.ArtifactContractTests."))}
+        self.assertEqual(set(scenarios[3][1]), expected_contracts)
+        self.assertEqual(set(scenarios[4][1]), expected_contracts)
         for scenario in scenarios:
             metadata = "-metadata-" in scenario[0]
             provider = scenario[0].rsplit("-", 1)[1] if metadata or "-contract-" in scenario[0] else None
@@ -1087,7 +1093,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                         binding = provider if provider is not None else matches.pop()
                         self.assertEqual(entry["bindingId"], binding)
                         cases = [case.case_id for case in checks.category_cases()
-                                 if case.binding_id == binding and entry["testIdentity"] in case.witnesses]
+                                 if case.binding_id == binding and case.exclusion is None
+                                 and entry["testIdentity"] in case.witnesses]
                         self.assertEqual(entry["caseId"], min(cases))
                         nodes = checks.evidence.original_node_assignments(
                             entry["testIdentity"], assignments[binding][entry["testIdentity"]])

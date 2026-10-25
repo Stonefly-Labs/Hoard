@@ -26,7 +26,8 @@ import conformance_baselines as baselines
 import artifact_evidence as artifacts
 import conformance_evidence as evidence
 from conformance_case_catalog import (
-    CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_BINDINGS, ORIGINAL_ARTIFACT_REOPENS, ORIGINAL_ARTIFACT_WITNESSES,
+    CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_BINDINGS, ORIGINAL_ARTIFACT_CONTRACT_WITNESSES,
+    ORIGINAL_ARTIFACT_REOPENS, ORIGINAL_ARTIFACT_WITNESSES,
     ORIGINAL_METADATA_FACADE_WITNESSES,
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
     catalog_admission_witnesses, category_cases, category_runtime_cases,
@@ -1878,9 +1879,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
 
 
 def original_observation_scenarios():
-    contracts = tuple("Hoard.Artifacts.Tests.ArtifactValueTests." + method for method in (
-        "Expectations_and_checksums_copy_input_and_reject_each_bound",
-        "Public_diagnostic_formatting_is_redacted_and_contract_members_are_get_only"))
+    contracts = ORIGINAL_ARTIFACT_CONTRACT_WITNESSES
     return (
         *((f"observed-original-metadata-{provider}", ORIGINAL_METADATA_WITNESSES, "None", "Passed", 0, "None")
           for provider in ("memory", "sqlite")),

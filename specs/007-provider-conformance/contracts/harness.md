@@ -1263,9 +1263,13 @@ Actual composed sessions/modules own real interfaces and exact constructor
 controls. Successful configured-host parameters retain two independent roots,
 not invented reopens; SQLite-bearing integration rows require actual environment
 admission. Only exact Local reopen identities receive heterogeneous child images.
-Local observation/replay pass 311 executions, 346 records and
-2,098 image correspondences. Native admission requires 232 foundations and
-105 scopes/1,294 observations, pending. Controller and remaining artifact
+Eight value/qualification contracts per binding carry actual loaded Abstractions
+type proofs through package-only partial observers. Ordinary predecessor tests
+retain no SDK dependency, and primary-case selection excludes non-applicable
+durability rows.
+Local observation/replay pass 323 executions, 358 records and
+2,110 image correspondences. Native admission requires 232 foundations and
+105 scopes/1,306 observations, pending. Controller and remaining artifact
 lifetime attribution and qualifying backends remain unfinished.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,

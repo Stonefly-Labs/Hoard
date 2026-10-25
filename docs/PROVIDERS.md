@@ -1010,10 +1010,13 @@ object. Each successful configured-host parameter has two independent real
 module/session roots, not an invented parent edge; SQLite-bearing integration
 rows require actual SQLite environment admission.
 No additional stores, factories or cleanup owners are created.
-Local observation/replay pass 311 executions, 346 records
-(342 original owners/four contracts) and 2,098 image correspondences with the
+Eight actual value/qualification contracts per binding carry loaded-contract
+proofs, not fabricated provider sessions. The partial observer is package-only:
+ordinary predecessor contract tests still have no SDK dependency.
+Local observation/replay pass 323 executions, 358 records
+(342 original owners/sixteen contracts) and 2,110 image correspondences with the
 unchanged forest SDK archive. Native admission requires 232 foundations and
-105 scopes/1,294 observations, pending. Controllers, remaining artifact lifetimes
+105 scopes/1,306 observations, pending. Controllers, remaining artifact lifetimes
 and complete qualifying profiles are still unfinished.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,

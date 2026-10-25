@@ -8316,6 +8316,37 @@ capacity guard. README and related model/contracts/guides are updated; common
 assertions, production APIs/providers, SDK signatures, locks, task/reviewer
 markers and production/deployment examples/diagrams are unaffected.
 
+Six more frozen qualification/marker contract tests use package-only partial
+observers for actual loaded Abstractions types. Each binding now selects eight
+value/contract witnesses, not invented provider sessions. Default contract/value
+execution passes eighteen tests without skips or a new SDK dependency.
+Routing's applicable AS-47 selection exposes an old test expectation that
+incorrectly included excluded Object AS-41; independent expectations now exclude
+non-applicable rows too. These contract passes do not claim excluded durability.
+Actual fresh first/replay each pass 323 exact executions, 358 records (342 owners/
+sixteen loaded contracts) and 2,110 image correspondences with the unchanged SDK.
+Full tooling passes 340 checks (323 passed/seventeen macOS-native skips);
+scoped formatting, frozen inventory, SDK catalog and patch checks pass.
+Current native target is 232 foundations and 105 scopes/1,306 observations,
+pending; remaining controller/authority/rejected-host/child attribution and
+qualifying backends remain unfinished.
+
+Quarantine run
+[40172357792](https://github.com/Stonefly-Labs/Hoard/actions/runs/40172357792)
+at exact `789382edfef5875328d32649843eec209864d7e0` passes all three jobs,
+232 foundations without failures/errors/skips, 105 scopes/1,223 exact executions
+and every prerequisite. Typed input:
+`d39266356a4dc3920400a65ec168a5ef264f1359fef97472f3ff85060ebcdd8f`;
+original input:
+`79ce10b819d0a1e7c65b8e88a32c93cc8c209b4f9ac3dae68898ac2235ee6b2b`;
+preparation:
+`fa92a4780e39ae90126bb61e4cff033d02819726dceeee67ebb3569d3745762f`.
+Both documents independently recompute; free scratch is 91,720,994,816 bytes.
+It does not admit later lifecycle/composition/qualification-contract sources or
+qualifying profiles. Production/deployment examples/diagrams, public APIs,
+provider implementations, common assertions, SDK binary/signatures, locks and
+task/reviewer markers remain unaffected.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

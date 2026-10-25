@@ -306,10 +306,13 @@ Actual metadata-composed sessions and configured-module owners use their real
 HostAdapters images, actual interfaces and actual source-created controls.
 Configured-host parameters each have two independent roots with shared reference
 history; only exact Local reopen identities select heterogeneous child images.
-Current local observation/replay pass 311 executions, 346 records
-(342 original owners/four contracts) and 2,098 image correspondences with the
+Eight actual value/qualification contracts per binding observe the loaded
+Abstractions contract type. Primary-case selection excludes non-applicable
+durability rows, without turning contract validation into a durability pass.
+Current local observation/replay pass 323 executions, 358 records
+(342 original owners/sixteen contracts) and 2,110 image correspondences with the
 same SDK archive. Native admission requires 232 foundations and
-105 scopes/1,294 observations, pending; public/private wire schemas are unchanged.
+105 scopes/1,306 observations, pending; public/private wire schemas are unchanged.
 
 ### Shared bounds
 

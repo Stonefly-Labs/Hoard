@@ -655,10 +655,12 @@ use exact per-node images without a fabricated Object/early-return child.
 Rejected roots/decorated authorities are the actual source-created/passed objects.
 Successful configured owners retain independent module/session roots, with exact
 constructor controls and no extra SDK dependency.
-Actual local observation/replay pass 311 executions,
-346 records and 2,098 image
+Eight value/qualification contracts per binding carry real loaded-type proof,
+without new predecessor SDK dependencies or excluded durability claims.
+Actual local observation/replay pass 323 executions,
+358 records and 2,110 image
 correspondences with the same SDK archive. Native admission requires
-232 foundations and 105 scopes/1,294 observations, pending. Controller and
+232 foundations and 105 scopes/1,306 observations, pending. Controller and
 remaining artifact lifetime attribution and executable profiles remain unfinished.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.

@@ -5310,6 +5310,48 @@ README and affected guides/model/contracts are updated. Production APIs/provider
 implementations, common assertion bodies, SDK signatures, locks, task/reviewer
 markers and production/deployment examples/diagrams are unaffected.
 
+### Actual loaded qualification contracts without fabricated sessions
+
+Six further frozen qualification/marker contract tests now observe the actual
+loaded Abstractions types through package-only partial observers, following the
+existing value-test mechanism. Both bindings select the same eight frozen
+value/contract witnesses; no provider instance is fabricated. Ordinary
+predecessor tests keep no SDK dependency, unchanged assertions and the same
+default behavior. Source-only observation calls disappear without the partial
+implementation.
+
+Dispatch first fails 311 versus 323. Broader routing correctly selects
+applicable AS-47 rather than excluded Object AS-41 for shared qualification
+contracts, exposing an old test expectation that included exclusions; the
+independent expected minimum now excludes those rows too. Actual fresh first/
+replay each pass 323 exact discoveries/executions, 358 records (342 original
+owners/sixteen loaded contracts) and 2,110 image correspondences, with exact
+actual contract-type hashes. SDK remains
+`032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`.
+Default contract/value execution passes eighteen tests without skips or an SDK
+dependency. Full tooling passes 340 checks (323 passed/seventeen macOS-native
+skips); scoped source formatting, frozen inventory, SDK catalog, backward native
+vectors and patch checks pass. Current native target is 232 foundations and
+105 scopes/1,306 observations, pending. Controller/authority/rejected-host/
+owned-child attribution and qualifying backends remain unfinished.
+README and affected guides/model/contracts are updated. Common assertions,
+production APIs/providers, SDK binary/signatures, locks, task/reviewer markers
+and production/deployment examples/diagrams are unaffected.
+
+Quarantine run
+[40172357792](https://github.com/Stonefly-Labs/Hoard/actions/runs/40172357792)
+at exact `789382edfef5875328d32649843eec209864d7e0` passes all three jobs,
+232 foundations without failures/errors/skips, 105 scopes/1,223 exact
+discoveries/executions (240 originals) and every prerequisite. Typed input:
+`d39266356a4dc3920400a65ec168a5ef264f1359fef97472f3ff85060ebcdd8f`;
+original input:
+`79ce10b819d0a1e7c65b8e88a32c93cc8c209b4f9ac3dae68898ac2235ee6b2b`;
+preparation:
+`fa92a4780e39ae90126bb61e4cff033d02819726dceeee67ebb3569d3745762f`.
+Both documents independently recompute; free scratch is 91,720,994,816 bytes.
+This admits quarantine/per-node sources, not later lifecycle/composition/
+qualification-contract sources or qualifying profiles.
+
 ## Summary
 
 

@@ -168,9 +168,12 @@ binding assignments; no absent provider token defaults to Object.
 Metadata-composed owners and successful configured modules use actual
 HostAdapters images/interfaces/controls. Two independent module roots preserve
 reference history without invented parent edges or borrowed Local child images.
-Local observation/replay pass 311 executions, 346 records and 2,098 image
+Eight value/qualification contracts per binding retain actual loaded contract
+PE/type proof; they cannot impersonate provider sessions or excluded durability.
+Primary frozen-case selection considers applicable rows only.
+Local observation/replay pass 323 executions, 358 records and 2,110 image
 correspondences. Native admission requires 232 foundations and
-105 scopes/1,294 observations, pending; controllers, remaining artifact lifetimes
+105 scopes/1,306 observations, pending; controllers, remaining artifact lifetimes
 and complete qualification are not inferred.
 
 The implemented private transport distinguishes `purpose: discovery` from

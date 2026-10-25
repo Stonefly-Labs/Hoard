@@ -112,6 +112,18 @@ ORIGINAL_METADATA_WITNESSES = tuple(sorted((
               "MP28_Lease_owners_generations_and_revisions_are_fenced",
               "MP30_Clock_rollback_does_not_undo_expiry_and_new_generation_is_retained")),
       ) for method in methods))))
+ORIGINAL_ARTIFACT_CONTRACT_WITNESSES = tuple(sorted((
+    *("Hoard.Artifacts.Tests.ArtifactValueTests." + method for method in (
+        "Expectations_and_checksums_copy_input_and_reject_each_bound",
+        "Public_diagnostic_formatting_is_redacted_and_contract_members_are_get_only")),
+    *("Hoard.Artifacts.Tests.ArtifactContractTests." + method for method in (
+        "Marker_and_historical_digest_remain_separate_from_operational_contracts",
+        "Qualification_exclusions_cannot_exchange_simulated_and_durable_failure_models",
+        "Flat_case_names_and_unattributed_hashes_cannot_claim_qualification",
+        "Qualification_case_results_reject_missing_or_unbounded_attribution",
+        "Qualification_records_keep_case_proofs_and_environment_attributable_and_immutable",
+        "Qualification_environment_is_bounded_unambiguous_and_redacted")),
+)))
 ORIGINAL_ARTIFACT_FIXED_BINDINGS = MappingProxyType({
     **{f"Hoard.Artifacts.Tests.{fixture}.{method}": provider
        for fixture, method, provider in (
@@ -249,10 +261,8 @@ ORIGINAL_ARTIFACT_FORESTS = MappingProxyType({
 
 def original_witness_policy(identity):
     """Closed incremental attribution; unclassified witnesses retain strict typed-origin admission."""
-    contracts = tuple("Hoard.Artifacts.Tests.ArtifactValueTests." + method for method in (
-        "Identity_bounds_preserve_empty_and_reject_overflow_negative_or_null",
-        "Expectations_and_checksums_copy_input_and_reject_each_bound",
-        "Public_diagnostic_formatting_is_redacted_and_contract_members_are_get_only"))
+    contracts = (*ORIGINAL_ARTIFACT_CONTRACT_WITNESSES,
+                 "Hoard.Artifacts.Tests.ArtifactValueTests.Identity_bounds_preserve_empty_and_reject_overflow_negative_or_null")
     if identity in ORIGINAL_METADATA_WITNESSES:
         return "metadata", "original-instance", _ORIGINAL_METADATA_ROLES
     if identity in contracts:
