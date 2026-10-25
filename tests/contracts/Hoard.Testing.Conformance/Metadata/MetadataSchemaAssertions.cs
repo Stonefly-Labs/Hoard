@@ -6,6 +6,37 @@ namespace Hoard.Testing.Conformance.Metadata;
 
 public static class MetadataSchemaAssertions
 {
+    public static async Task<IMetadataConformanceSession> CompatibleReopenAsync(
+        IMetadataConformanceSession original, CancellationToken cancellationToken)
+    {
+        var admission = Success(await original.Schema.PrepareAsync(
+            new MetadataSchemaRequest.CreateIfEmpty(), new(), cancellationToken));
+        var (registry, package) = await Seed(original.Store, cancellationToken);
+        var query = new MetadataReadGroup([registry.Selector, package.Selector]);
+        var before = Success(await original.Store.ReadAsync(query, new(), cancellationToken));
+        Assert.All(before.Items, item => Assert.IsType<MetadataReadItem.Found>(item));
+        var current = await original.ReopenAsync(cancellationToken);
+        var handedOff = false;
+        try
+        {
+            Assert.NotSame(original.Store, current.Store);
+            Assert.NotSame(original.Faults, current.Faults);
+            Assert.Same(original.Authority, current.Authority);
+            Assert.Equal(MetadataSchemaState.Compatible,
+                Success(await current.Schema.InspectAsync(new(), cancellationToken)).State);
+            Assert.Equal(admission.Epoch, Success(await current.Schema.PrepareAsync(
+                new MetadataSchemaRequest.InspectOnly(), new(), cancellationToken)).Epoch);
+            await original.DisposeAsync();
+            var after = Success(await current.Store.ReadAsync(query, new(), cancellationToken));
+            Assert.True(MetadataEncoding.Encode(before).AsSpan().SequenceEqual(MetadataEncoding.Encode(after).AsSpan()));
+            await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                original.Faults.ArmAsync(ConformanceFault.Capacity, cancellationToken).AsTask());
+            handedOff = true;
+            return current;
+        }
+        finally { if (!handedOff) { await current.DisposeAsync(); } }
+    }
+
     public static Task UnrecognizedLayoutAsync(
         IMetadataConformanceSession session, bool partial, CancellationToken cancellationToken)
         => UnrecognizedLayoutAsync(new SchemaSession(session), partial, cancellationToken);

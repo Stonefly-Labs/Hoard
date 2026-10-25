@@ -974,7 +974,9 @@ order is retained rather than sorting descriptor arrays.
 Fresh local observation corroborates all 208 role/image/archive matches, exact
 24-row discovery and both reopen lineages with a separate empty runtime cache.
 Raw VSTest output remains in bounded memory only, never retained as proof.
-Origin-enabled native admission is pending. This upgrades the existing diagnostic
+Origin-enabled run `40154183825` at `d1fd43d` passed all three jobs,
+212 foundations and 94 scopes/810 exact discoveries/executions with every
+prerequisite. This upgrades the existing diagnostic
 scope, not complete category/profile qualification or other pending origin imports.
 
 The metadata diagnostic adds six exact rows executing unchanged capacity,
@@ -990,9 +992,24 @@ runtime caches remain independent. Exactly one matching origin per row is requir
 Local bounded observation confirms six actual metadata origins/36 role/image/
 archive matches, not native acceptance or metadata reopen attribution. Fresh replay
 passes 311 artifact, 109 Consumer and 89+89 metadata cases. The expanded native
-request is 214 foundations and 95 scopes/816 observations, pending.
+request passed as run `40155045988` at `9034153`: all three jobs,
+214 foundations and 95 scopes/816 exact discoveries/executions with every prerequisite.
 Other origin/profile imports, complete category/integration qualification and
 final T081 remain unfinished; locks, historical seals and reviewer markers are unchanged.
+
+The metadata scope now additionally requires both exact compatible-reopen rows.
+Their provider-free consumer corroborates grouped public registry/package bytes,
+preserved epoch/authority, genuinely fresh store/fault instances and stale-control
+fencing after stale disposal. Failed assertions dispose an unreturned child;
+successful handoff preserves caller ownership. Memory's actual closed logical
+image is not durable restart. Each reopen row emits its actual parent then child,
+and parent ingestion requires two matching origins for that exact witness.
+
+The eight metadata rows yield ten origins, eight creates/two reopens and 60 actual
+role/image/archive correspondences with an independent runtime cache. Fresh replay
+passes 311 artifact, 111 Consumer and 89+89 metadata cases. The next native
+request is 214 foundations and 95 scopes/818 observations, pending; complete
+category/profile imports, qualification and final T081 remain open.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

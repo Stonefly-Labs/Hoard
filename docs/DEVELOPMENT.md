@@ -7557,8 +7557,11 @@ observation, not native parent acceptance. The fifteen-package map remains
 `2068add411613f471e6bfefd14cabb609fba189354c9edeec4f2320269dd07bf`.
 Tooling passes 320 checks (303 passed/seventeen macOS-native skips), including
 94 SDK checks; Consumer formatting and frozen safeguards pass. The origin-enabled
-native successor requests 212 foundations and the unchanged 94 scopes/810
-observations. Other origin/profile imports, category parity/integrations and final
+native successor passed as run `40154183825` at exact head
+`d1fd43d9abcbe1bdeb9e393d28d7aad345f9c054`: all three jobs, 212 foundations
+without failures/errors/skips and 94 scopes/810 exact discoveries/executions with
+every prerequisite, including actual artifact origin admission.
+Other origin/profile imports, category parity/integrations and final
 T081 remain unfinished. Tasks/reviewer markers, historical seals and tracked locks
 are unchanged. Product/deployment examples and architecture diagrams are unaffected:
 this increment only wires test provenance into the existing diagnostic boundary.
@@ -7579,7 +7582,9 @@ archive matches with a separate empty runtime cache; the 24 artifact rows still
 produce 26 origins/208 matches. The fifteen-package map is unchanged. Tooling
 passes 322 checks (305 passed/seventeen macOS-native skips), including 96 SDK checks;
 Consumer formatting, frozen safeguards and patch checks pass. The new native request
-is 214 foundations and 95 scopes/816 observations, pending, not category qualification.
+passed as run `40155045988` at `90341537c34772face78946f2bc294dd1ee6f8b0`:
+all three jobs, 214 foundations without failures/errors/skips and
+95 scopes/816 exact discoveries/executions with every prerequisite, not category qualification.
 Other origin imports, metadata reopen attribution, complete profiles/integrations
 and final T081 remain open; tasks/reviewer markers, locks and historical seals are
 unchanged. Production/deployment examples and diagrams are unaffected.
@@ -7589,6 +7594,40 @@ The admitted earlier full-control receipt binds input
 preparation `13c78f0aea8139bc54e5052cc6a49b035bc03d15fa3ea18205104750ac9ce11c`
 and 91,716,939,776 free scratch bytes. It predates both origin increments and
 must not be cited as their native acceptance.
+
+Actual compatible metadata reopen now has a provider-free shared consumer.
+It seeds and publicly reads a grouped registry/package snapshot, reopens the
+actual session, requires fresh store/fault instances and the same authority/epoch,
+disposes the stale session, corroborates exact public readback and rejects stale
+fault arming. A failed assertion disposes the unreturned child; successful
+handoff leaves final disposal with the caller. Memory reuses a closed logical
+image, not crash persistence. Two new observed factory rows emit actual parent/
+child origins; the parent now requires two origins for these exact witnesses.
+
+The missing reopen inventory first failed its intended regression. An incidental
+immutable-array/span compilation error was corrected before runtime validation.
+Fresh preparation/replay pass 311 artifact, 111 Consumer and 89+89 metadata cases.
+Eight exact metadata rows emit ten origins, eight creates/two reopens and
+60 actual role/image/archive correspondences with independent runtime caches.
+Fifteen archives reproduce full-filename map SHA-256
+`f351b872a7a4c111fe1b1321c7a7955e2b82c5763be59c00eab3ecd69b28789c`;
+ten dependency images match package bytes per preparation. Tooling passes
+322 checks (305 passed/seventeen macOS-native skips), including 96 SDK checks;
+SDK/Consumer formatting, frozen safeguards and patch checks pass. The expanded
+native request is 214 foundations and 95 scopes/818 observations, pending.
+All 20 typed binding/origin SDK contract tests also pass.
+Complete category/profile origin imports, remaining parity/integrations and
+final T081 are still open; tasks/reviewer markers, historical seals and tracked
+locks are unchanged. Production/deployment examples and diagrams are unaffected.
+
+The admitted artifact-origin receipt binds input
+`df4c59c2f1ea075c8b14de7db16bdecdfd6c540698f739210fbd22abc276279b`,
+preparation `45e3cc6040d45061ca26d51bae4bba0adf9fc8139fc1a9f942662b5584288640`
+and 91,721,523,200 free scratch bytes; it predates metadata-origin execution.
+The admitted metadata-origin receipt binds input
+`fc41f51c1091f64152f3d4c64b4ba0bf209c996f8fd4591e4b9649687ae8dac1`,
+preparation `5b4f9f3b1438fa5910ba8c8770c66b6e216f366e677e2fe68ba0ed99570ded51`
+and 91,716,923,392 free scratch bytes; it predates the reopen increment.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

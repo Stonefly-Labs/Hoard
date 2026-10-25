@@ -1288,10 +1288,12 @@ def full_artifact_binding_scenarios():
 def full_metadata_binding_scenarios():
     method = (FULL_METADATA_CONSUMER_PREFIX
               + "Observed_factories_execute_unchanged_common_consumers_with_actual_origins")
-    identities = tuple(sorted(
+    identities = [
         f'{method}(provider: "{provider}", consumer: "{consumer}")'
-        for provider in ("memory", "sqlite") for consumer in ("capacity", "writer", "publication")))
-    return (("full-metadata-binding", identities, "None", "Passed", 0, "None"),)
+        for provider in ("memory", "sqlite") for consumer in ("capacity", "writer", "publication")]
+    reopen = FULL_METADATA_CONSUMER_PREFIX + "Observed_reopen_preserves_public_state_and_fences_stale_controls"
+    identities.extend(f'{reopen}(provider: "{provider}")' for provider in ("memory", "sqlite"))
+    return (("full-metadata-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
 def _binding_origin_inputs(candidate, root, category, providers, store_roles):
@@ -1978,7 +1980,9 @@ def test_attempt(run, inputs, candidate, scenario):
         raise evidence.ConformanceError("WitnessMissing")
     if name in ("full-artifact-binding", "full-metadata-binding"):
         bindings = {binding["bindingId"]: binding["descriptorSha256"] for binding in inputs["bindings"]}
-        reopen = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
+        reopen = (FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
+                  if name == "full-artifact-binding" else
+                  FULL_METADATA_CONSUMER_PREFIX + "Observed_reopen_preserves_public_state_and_fences_stale_controls")
         for witness in ingested["witnesses"]:
             origins = ingested["sessionOrigins"][witness["executionId"]]
             count = 2 if witness["testIdentity"].split("(")[0] == reopen else 1

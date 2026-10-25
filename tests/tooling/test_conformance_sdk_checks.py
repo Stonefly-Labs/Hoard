@@ -1132,6 +1132,9 @@ class SdkDiagnosticTests(unittest.TestCase):
                   "Observed_factories_execute_unchanged_common_consumers_with_actual_origins")
         expected = {f'{method}(provider: "{provider}", consumer: "{consumer}")'
                     for provider in ("memory", "sqlite") for consumer in ("capacity", "writer", "publication")}
+        reopen = ("Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
+                  "Observed_reopen_preserves_public_state_and_fences_stale_controls")
+        expected.update(f'{reopen}(provider: "{provider}")' for provider in ("memory", "sqlite"))
         scenario, = checks.full_metadata_binding_scenarios()
         self.assertEqual(scenario, ("full-metadata-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"

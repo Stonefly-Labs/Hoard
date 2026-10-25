@@ -770,7 +770,9 @@ admits those four images into the safe logger manifest and requires the exact
 per-row origin count and binding descriptor. Missing runtime images reject before
 launch. Local fresh-cache observation corroborates all 208 role/image/archive
 matches and actual reopen lineage without persisting raw output. Origin-enabled
-native acceptance is pending; this does not complete other category/profile imports
+native run `40154183825` at `d1fd43d` passed all three jobs, 212 foundations
+and 94 scopes/810 exact discoveries/executions with every prerequisite.
+This does not complete other category/profile imports
 or upgrade the simulation to durable recovery.
 
 Six metadata-origin rows now use the actual independent Memory/SQLite factories
@@ -780,9 +782,21 @@ and archives; the safe logger admits those four images and the parent retains
 SQLite environment admission and exact binding/count checks. Local fresh-cache
 observation confirms 36 image/archive correspondences; fresh replay covers
 311 artifact, 109 Consumer and 89+89 metadata cases. The expanded native request
-is 95 scopes/816 observations, pending. Metadata reopen attribution and other
+passed as run `40155045988` at `9034153`: all three jobs, 214 foundations
+and 95 scopes/816 exact discoveries/executions with every prerequisite.
+Metadata reopen attribution and other
 category/profile imports remain unfinished; no durable memory or category
 qualification is claimed.
+
+Two further metadata rows now execute provider-free compatible-reopen assertions:
+actual grouped public readback, fresh store/fault instances, preserved epoch/
+authority and stale-control rejection after stale disposal. Memory uses its actual
+closed logical image, not durable restart. Both real reopen lineages are emitted
+and strict ingestion requires two origins for each exact reopen witness. The
+eight metadata rows yield ten actual origins/60 image/archive correspondences;
+fresh replay passes 311 artifact, 111 Consumer and 89+89 metadata cases.
+The next native request is 95 scopes/818 observations, pending; complete
+category/profile imports and qualification remain unfinished.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

@@ -12,6 +12,30 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("memory")]
+    [InlineData("sqlite")]
+    public async Task Observed_reopen_preserves_public_state_and_fences_stale_controls(string provider)
+    {
+        await using var resources = new SqliteBindingTests.RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-metadata-binding",
+            new MetadataConformanceClock(new(1_800_000_000_000)), resources, new ConformanceEvidenceBuffer());
+        var original = await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default);
+        IMetadataConformanceSession current = original;
+        try
+        {
+            var origin = original.CaptureOrigin();
+            current = await MetadataSchemaAssertions.CompatibleReopenAsync(original, default);
+            var reopened = Assert.IsType<ConformanceObservedMetadataSession>(current).CaptureOrigin();
+            Assert.Equal(origin.SessionId, reopened.ParentSessionId);
+            Assert.NotEqual(origin.Components["store"].InstanceId, reopened.Components["store"].InstanceId);
+            ConformanceSessionOriginOutput.Write(output, origin);
+            ConformanceSessionOriginOutput.Write(output, reopened);
+        }
+        finally { await current.DisposeAsync(); }
+        Assert.All(resources.Settlements.Values, task => Assert.True(task.IsCompletedSuccessfully));
+    }
+
+    [Theory]
     [InlineData("memory", "capacity")]
     [InlineData("memory", "writer")]
     [InlineData("memory", "publication")]

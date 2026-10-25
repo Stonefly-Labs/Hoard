@@ -484,7 +484,9 @@ The logger admits all four actual binding/provider images; absent images fail
 before launch. Bounded local observation matches exact discovery, two real reopen
 lineages and 208 role/image/archive correspondences with a separate runtime cache.
 The controller supplies the required run ID through private runsettings.
-Origin-enabled native verification remains pending; other category/profile
+Origin-enabled run `40154183825` at `d1fd43d` passed all three jobs,
+212 foundations and 94 scopes/810 exact discoveries/executions with every
+prerequisite. Other category/profile
 imports and qualification are still incomplete.
 Six additional metadata rows now run unchanged capacity, writer-budget and
 publication-protection consumers through observed independent Memory/SQLite
@@ -492,8 +494,17 @@ factories. Local fresh-cache observation matches six actual origins and all
 36 role/image/archive correspondences. Their parent ingestion admits the four
 actual component images, exact binding/counts and actual SQLite environment.
 Fresh replay passes 311 artifact, 109 Consumer and 89+89 metadata cases; the
-expanded native request is 95 scopes/816 observations, pending. Metadata reopen
+expanded native request passed as run `40155045988` at `9034153`: all three
+jobs, 214 foundations and 95 scopes/816 exact discoveries/executions with
+every prerequisite. Metadata reopen
 attribution and other complete category/profile imports remain unfinished.
+Two more metadata rows now prove actual compatible reopen with grouped public
+readback, preserved epoch/authority, fresh store/fault instances and stale-control
+rejection. Memory uses a closed logical image, not durable restart. Both actual
+parent/child lineages are emitted, yielding ten origins/60 image/archive matches
+across eight metadata rows. Fresh replay passes 311 artifact, 111 Consumer and
+89+89 metadata cases. The next native request is 95 scopes/818 observations,
+pending; complete category/profile imports and qualification remain open.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

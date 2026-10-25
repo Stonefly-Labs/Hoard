@@ -1747,15 +1747,24 @@ The full-binding diagnostic now emits 26 actual component origins across those
 to its independently selected runtime DLL and package; the logger manifest also
 admits the four real binding/provider images. Fresh local observation matches all
 208 role/image/archive correspondences with an independent runtime cache.
-Native verification of this origin-enabled increment remains pending; these
-diagnostics do not establish complete category/profile qualification.
+Origin-enabled run `40154183825` at `d1fd43d` passed all three jobs,
+212 foundations and 94 scopes/810 exact discoveries/executions with every
+prerequisite. These diagnostics do not establish complete category/profile qualification.
 Six additional metadata rows now execute unchanged capacity, writer-budget and
 publication-protection consumers through observed Memory/SQLite factories.
 Their six actual origins match all 36 role/image/archive correspondences; parent
 ingestion uses independent binding declarations, actual component images and
 archive-bound runsettings, retaining SQLite environment admission. Fresh replay
 covers 311 artifact, 109 Consumer and 89+89 metadata cases. The expanded native
-request is 95 scopes/816 observations, pending; other origin/profile imports remain open.
+request passed as run `40155045988` at `9034153`: all three jobs,
+214 foundations and 95 scopes/816 exact discoveries/executions with every
+prerequisite. Other origin/profile imports remain open.
+Two further metadata rows now corroborate actual compatible reopen with grouped
+public readback, preserved epoch/authority and stale-control fencing. The eight
+metadata rows produce ten actual origins, including both real child lineages;
+Memory uses its closed logical image, not durable restart. Fresh replay covers
+311 artifact, 111 Consumer and 89+89 metadata cases. The expanded native request
+is 95 scopes/818 observations, pending; complete category/profile imports remain open.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
