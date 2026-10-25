@@ -4022,6 +4022,34 @@ packets remain reused unchanged, not new origins. The next request is
 bindings/origins/category/profile acceptance. Tasks, reviewer markers, locks,
 historical seals and product/architecture/deployment examples remain unaffected.
 
+### Remaining deletion settlement and reference checks
+
+Both remaining original deletion methods now forward all four frozen provider
+parameters to `ArtifactDeletionAssertions.PendingReclamationAsync` and
+`LiveReferencesAsync`. Complete-body comparison preserves original assertions,
+operation order, borrowed-source lifetime and publication/read helpers after
+explicit interface/control/token forwarding. Common checks retain uncertain
+deletion, hidden content, actual pending/reclaimed cleanup count/bytes, unchanged
+receipt identity/stamp/outcome, idempotent retry, both live/unavailable reference
+denials, intact readback and eventual authorized removal.
+Actual lost-ack registration and reference count/availability remain fixture-side.
+No callback supplies an asserted outcome or expected result.
+
+Missing consumers first fail intended `CS0117`; the exact four-row scope first
+fails its missing-factory assertion. Actual prepared-assembly discovery matches
+all four frozen parameters. Full tooling passes 314 checks (297 passed/seventeen
+macOS-native skips), including 88 SDK checks; prepared SDK/wrapper formatting,
+frozen inventory, catalogs and patch checks pass. Fresh preparation/replay
+passes 311 artifact, 65 Consumer and 89+89 metadata cases without skips;
+all fifteen actual archives reproduce exactly, canonical full-filename map
+SHA-256 `7f8df462bdb0b2fdf8c93cdd438edbf099eed2443154cf7cfc24564061227bdb`.
+Ten actual dependency images match package bytes per preparation; transfer
+packets remain reused unchanged, not new origins. Original deletion-body
+extraction is complete, not T027/T030 or full bindings/origins/category/profile
+acceptance. The next request is 206 foundations and 89 scopes/772 observations,
+pending. Tasks, reviewer markers, locks, historical seals and product/
+architecture/deployment examples are unaffected.
+
 ## Summary
 
 

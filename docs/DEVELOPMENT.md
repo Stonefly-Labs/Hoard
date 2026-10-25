@@ -7313,6 +7313,27 @@ packets are reused unchanged, not new origins. The next request is
 bindings/origins/category/profile acceptance. Tasks, reviewer markers, locks,
 historical seals and product/architecture/deployment examples are unaffected.
 
+Both remaining original deletion methods now forward all four frozen provider
+parameters to `PendingReclamationAsync` and `LiveReferencesAsync`. Complete-body
+comparison preserves every assertion/order and borrowed-source/public helper
+lifetime: uncertain deletion, actual pending/reclaimed cleanup, exact receipt
+continuity and idempotent retry, both reference denials, intact readback and
+eventual authorized removal. Actual fault registration and reference controls
+remain fixture-side. Missing methods first fail intended `CS0117`; the exact
+four-row scope first fails its missing-factory assertion. Full tooling passes
+314 checks (297 passed/seventeen macOS-native skips), including 88 SDK checks.
+Prepared-assembly discovery matches all four frozen parameters; formatting,
+frozen inventory, catalogs and patch checks pass. Fresh preparation/replay
+passes 311 artifact, 65 Consumer and 89+89 metadata cases without skips;
+fifteen actual archives reproduce exactly, canonical full-filename map SHA-256
+`7f8df462bdb0b2fdf8c93cdd438edbf099eed2443154cf7cfc24564061227bdb`.
+Ten actual dependency images match package bytes per preparation; transfer
+packets remain reused unchanged, not new origins. All original deletion bodies
+are now shared, not T027/T030 or full bindings/origins/category/profile
+acceptance. The next request is 206 foundations and 89 scopes/772 observations,
+pending. Tasks, reviewer markers, locks, historical seals and product/
+architecture/deployment examples are unaffected.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

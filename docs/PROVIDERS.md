@@ -671,6 +671,14 @@ concurrency/cross-process tests and complete child ownership helper are unchange
 Fresh independent replay passes 311 artifact and 65 Consumer cases; the next
 native request is 88 scopes/768 observations, pending, not qualification.
 
+Both remaining original deletion bodies now share all four frozen parameters:
+lost delete acknowledgment retains pending physical reclamation through exact
+cleanup/receipt settlement, and live or unavailable reference authority denies
+removal without harming public bytes. Common checks own every expected
+code/receipt/size; actual observer registration and reference controls remain
+fixture-side. Fresh independent replay passes 311 artifact and 65 Consumer cases;
+the next native request is 89 scopes/772 observations, pending, not qualification.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and
 actual prerequisites/replay, not full category/profile qualification.

@@ -392,6 +392,18 @@ def original_artifact_read_delete_scenarios():
     return (("original-artifact-read-delete", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
+def original_artifact_deletion_settlement_scenarios():
+    prefix = "Hoard.Artifacts.Tests.ArtifactDeletionTests."
+    methods = {prefix + name for name in (
+        "Lost_delete_acknowledgment_preserves_pending_reclamation_until_actual_cleanup",
+        "Live_reference_or_unavailable_reference_authority_denies_removal",
+    )}
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.split("(")[0] in methods}
+    return (("original-artifact-deletion-settlement", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def original_artifact_admission_scenarios():
     prefix = "Hoard.Artifacts.Tests.ArtifactAdmissionTests."
     methods = {prefix + name for name in (
@@ -1645,7 +1657,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-observations", "original-artifact-damaged-read", "original-artifact-read-races",
             "original-artifact-detection", "original-artifact-quarantine-reopen", "original-artifact-validation",
             "original-artifact-recovery-pages", "original-artifact-recovery-races",
-            "original-artifact-recovery-reopen", "original-artifact-admission"],
+            "original-artifact-recovery-reopen", "original-artifact-admission",
+            "original-artifact-deletion-settlement"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1679,6 +1692,7 @@ def test_attempt(run, inputs, candidate, scenario):
             *original_artifact_recovery_race_scenarios(),
             *original_artifact_recovery_reopen_scenarios(),
             *original_artifact_admission_scenarios(),
+            *original_artifact_deletion_settlement_scenarios(),
             *original_artifact_external_scenarios(),
             *original_artifact_race_scenarios(), *original_artifact_reconciliation_scenarios(),
             *original_artifact_visibility_scenarios(), *original_artifact_history_scenarios(),
@@ -2177,6 +2191,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "original-artifact-admission"}), flush=True)
         for scenario in original_artifact_admission_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "original-artifact-deletion-settlement"}), flush=True)
+        for scenario in original_artifact_deletion_settlement_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

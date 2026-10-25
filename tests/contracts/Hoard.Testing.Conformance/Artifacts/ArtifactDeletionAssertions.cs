@@ -5,6 +5,52 @@ namespace Hoard.Testing.Conformance.Artifacts;
 
 public static class ArtifactDeletionAssertions
 {
+    public static async Task PendingReclamationAsync(
+        IArtifactStore store, IArtifactMaintenance maintenance, ArtifactStoreIdentity identity,
+        Action<Func<ValueTask>> observeLostAcknowledgement, CancellationToken cancellationToken)
+    {
+        using var source = new ShortSource("pending physical reclamation"u8.ToArray());
+        var committed = await PublishAsync(store, source, new(1024), cancellationToken);
+        var ticket = Success(await store.ReserveDeleteAsync(new(committed.Stamp), new(), cancellationToken));
+        ValueTask LostAck() => ValueTask.FromException(new IOException(ArtifactFailureAssertions.Canary));
+        observeLostAcknowledgement(LostAck);
+        Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+            await store.DeleteAsync(ticket, new(), cancellationToken)).Code);
+        var pending = Assert.IsType<ArtifactResolution.Removed>(
+            Success(await store.ReconcileAsync(ticket, new(), cancellationToken))).Receipt;
+        Assert.Equal(ArtifactReclamation.Pending, pending.Reclamation);
+        Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+            await store.OpenReadAsync(new(committed.Stamp.Identity.Digest), new(), cancellationToken)).Code);
+        var cleaned = Success(await maintenance.CleanupAsync(new(identity,
+            [new ArtifactCleanupTarget.RemovedIncarnation(committed.Stamp)]), new(), cancellationToken));
+        Assert.Equal(1, cleaned.Completed);
+        Assert.Equal(committed.Stamp.Identity.Length, cleaned.ReclaimedBytes);
+        var settled = Assert.IsType<ArtifactResolution.Removed>(
+            Success(await store.ReconcileAsync(ticket, new(), cancellationToken))).Receipt;
+        Assert.Equal(pending.ReceiptId, settled.ReceiptId);
+        Assert.Equal(pending.Stamp, settled.Stamp);
+        Assert.Equal(pending.Outcome, settled.Outcome);
+        Assert.Equal(ArtifactReclamation.Reclaimed, settled.Reclamation);
+        Assert.Equal(settled, Success(await store.DeleteAsync(ticket, new(), cancellationToken)));
+    }
+
+    public static async Task LiveReferencesAsync(IArtifactStore store,
+        Action<long> setLiveReferences, Action<bool> setReferenceAvailability, CancellationToken cancellationToken)
+    {
+        using var source = new ShortSource("protected reference"u8.ToArray());
+        var receipt = await PublishAsync(store, source, new(1024), cancellationToken);
+        var ticket = Success(await store.ReserveDeleteAsync(new(receipt.Stamp), new(), cancellationToken));
+        Assert.Equal(ArtifactFailureCode.Denied, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+            await store.DeleteAsync(ticket, new(), cancellationToken)).Code);
+        setLiveReferences(0);
+        setReferenceAvailability(false);
+        Assert.Equal(ArtifactFailureCode.Denied, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+            await store.DeleteAsync(ticket, new(), cancellationToken)).Code);
+        Assert.Equal("protected reference"u8.ToArray(), await ReadAsync(store, receipt.Stamp, cancellationToken));
+        setReferenceAvailability(true);
+        Assert.Equal(ArtifactMutationOutcome.Removed, Success(await store.DeleteAsync(ticket, new(), cancellationToken)).Outcome);
+    }
+
     public static async Task ExactReceiptsAndRecreationAsync(
         IArtifactStore store, IArtifactMaintenance maintenance, ArtifactStoreIdentity identity,
         CancellationToken cancellationToken)

@@ -1091,6 +1091,42 @@ class SdkDiagnosticTests(unittest.TestCase):
                 body = "".join(text[start:text.index("\n    }", start)].split())
                 self.assertIn("awaitQuarantineIsPermanentAsync(store,receipt,bytes,cancellationToken,reopen);", body)
 
+    def test_deletion_settlement_scope_requires_both_original_providers_and_all_four_parameters(self):
+        factory = getattr(checks, "original_artifact_deletion_settlement_scenarios", None)
+        self.assertTrue(callable(factory), "Deletion extraction must retain both original physical and reference cases.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactDeletionTests."
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        methods = {prefix + name for name in (
+            "Lost_delete_acknowledgment_preserves_pending_reclamation_until_actual_cleanup",
+            "Live_reference_or_unavailable_reference_authority_denies_removal",
+        )}
+        expected = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name.split("(")[0] in methods}
+        self.assertEqual(len(expected), 4)
+        scenario, = factory()
+        self.assertEqual(scenario, ("original-artifact-deletion-settlement", tuple(sorted(expected)), "None", "Passed", 0, "None"))
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.ARTIFACT_TESTS / checks.ARTIFACT_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Artifacts.Tests.dll")
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+        }
+        with patch.object(checks, "runtime_command",
+                          side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+            self.assertEqual(launch.call_args.args[1], assembly)
+            self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, expected)
+        for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+                        (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
+                        ("original-artifact-deletion-settlement-foreign", *scenario[1:])):
+            with patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, candidate, changed)
+                launch.assert_not_called()
+
     def test_admission_scope_requires_original_logical_and_physical_variants_without_native_fact_substitution(self):
         factory = getattr(checks, "original_artifact_admission_scenarios", None)
         self.assertTrue(callable(factory), "Admission extraction must retain every original logical variant.")

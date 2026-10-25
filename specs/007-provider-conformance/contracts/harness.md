@@ -839,6 +839,17 @@ unchanged. Method-level discovery must match all eleven declared identities;
 missing/foreign parameters and renamed scopes reject before launch. The next
 request is 88 scopes/768 observations, pending, not full qualification.
 
+The two remaining deletion methods now forward all four frozen parameters to
+shared pending-reclamation and live-reference consumers. Original assertions,
+borrowed-source lifetime and publication/read helpers remain unchanged after
+explicit interface/control/token forwarding. Common consumers retain uncertain
+delete, hidden content, actual cleanup count/bytes, unchanged receipt identity/
+stamp/outcome, reclaimed state and idempotent retry, plus both reference denials,
+intact public readback and eventual removal. Lost-ack fault registration and
+actual reference count/availability remain fixture-side; no callback supplies
+an expected result. Exact method-level discovery must contain all four rows.
+The next request is 89 scopes/772 observations, pending, not full qualification.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and
 every actual prerequisite chain/replay, not full qualification.

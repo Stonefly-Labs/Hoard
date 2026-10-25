@@ -429,6 +429,11 @@ real initialization/cleanup ownership, manifest/sentinel observations and fixed
 Local/Object reopen scope. Physical and native child controls remain fixture-side.
 Fresh independent replay passes 311 artifact and 65 Consumer cases; the next
 native request is 88 scopes/768 observations, pending, not full qualification.
+The remaining two deletion bodies now share four frozen parameters, retaining
+actual pending/reclaimed receipt continuity and live/unavailable reference
+denial with physical fault/reference controls fixture-side. Fresh independent
+replay passes 311 artifact and 65 Consumer cases; the next native request is
+89 scopes/772 observations, pending, not full qualification.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,
