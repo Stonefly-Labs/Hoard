@@ -600,7 +600,11 @@ canceled `40162771846` are not admitted. Replacement run `40164176338` at exact
 100 scopes/982 exact discoveries/executions with every prerequisite and all
 mutation scopes. This admits diagnostics, not full category qualification or
 the later `90fd088` follow-up; the wrapper proof-contract decision remains
-unresolved.
+separate from that receipt. That decision now uses explicit, independently
+catalogued original-instance or session-free loaded-contract observations while
+retaining strict typed origins elsewhere. The first actual original-wrapper
+observation/replay pass six executions/26 image correspondences using minimal
+local logger inputs. They do not implement complete category qualification.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

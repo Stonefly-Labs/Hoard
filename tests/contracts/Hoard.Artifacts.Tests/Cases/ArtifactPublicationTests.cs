@@ -1,9 +1,11 @@
 using Hoard.Abstractions.Storage;
 using Hoard.Testing.Conformance.Artifacts;
+using Hoard.Testing.Conformance.Evidence;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactPublicationTests
+public sealed class ArtifactPublicationTests(ITestOutputHelper output)
 {
     [Theory]
     [InlineData("local")]
@@ -12,6 +14,12 @@ public sealed class ArtifactPublicationTests
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactPublicationAssertions.EmptyContentAndAbsenceAsync(driver.Store, default);
+        ConformanceOriginalObservationOutput.WriteIfRequested(output,
+            $"Hoard.Artifacts.Tests.ArtifactPublicationTests.Empty_content_and_true_absence_are_distinct(provider: \"{provider}\")",
+            provider, "original-instance", ("owner", driver), ("store", driver.Store),
+            ("validator", driver.Validator), ("maintenance", driver.Maintenance),
+            ("lifetime", (IArtifactStoreLifetime)driver.Store), ("authority", driver.Authority),
+            ("controls", driver.LocalControls is { } local ? local : (object)driver.ObjectControls!));
     }
 
     [Theory]

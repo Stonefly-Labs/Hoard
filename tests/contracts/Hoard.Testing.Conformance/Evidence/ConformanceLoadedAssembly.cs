@@ -35,14 +35,23 @@ public sealed class ConformanceLoadedAssembly
         TContract instance, long started, int remainingBytes) where TContract : class
     {
         ArgumentNullException.ThrowIfNull(instance);
+        return CaptureType(instance.GetType(), started, remainingBytes);
+    }
+
+    public static ConformanceLoadedAssembly CaptureContract(Type contract)
+        => CaptureType(contract, Stopwatch.GetTimestamp(), 64 * 1024 * 1024);
+
+    internal static ConformanceLoadedAssembly CaptureType(Type type, long started, int remainingBytes)
+    {
+        ArgumentNullException.ThrowIfNull(type);
         CheckBudget(started);
         try
         {
-            var type = instance.GetType();
             var assembly = type.Assembly;
             if (assembly.IsDynamic || string.IsNullOrEmpty(assembly.Location)
                 || type.FullName is not { Length: > 0 and <= 4096 }
-                || type.Module != assembly.ManifestModule)
+                || type.Module != assembly.ManifestModule
+                || !ReferenceEquals(assembly.GetType(type.FullName, throwOnError: false, ignoreCase: false), type))
             { throw new InvalidOperationException("ProofMismatch"); }
             var path = assembly.Location;
             CheckLinks(path);

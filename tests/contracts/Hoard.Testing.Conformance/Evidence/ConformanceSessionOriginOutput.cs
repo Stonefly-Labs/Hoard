@@ -33,6 +33,20 @@ public static class ConformanceSessionOriginOutput
             processArchitecture = origin.ProcessArchitecture,
             components
         });
+        return ConformanceEvidencePacket.Render(Prefix, origin.SessionId, bytes);
+    }
+
+    public static void Write(ITestOutputHelper output, ConformanceSessionOrigin origin)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        foreach (var packet in Render(origin)) { output.WriteLine(packet); }
+    }
+}
+
+internal static class ConformanceEvidencePacket
+{
+    internal static ImmutableArray<string> Render(string prefix, Guid id, byte[] bytes)
+    {
         if (bytes.Length > 64 * 1024) { throw new InvalidOperationException("OutputLimitExceeded"); }
         var digest = Convert.ToHexStringLower(SHA256.HashData(bytes));
         var encoded = Convert.ToBase64String(bytes);
@@ -42,14 +56,9 @@ public static class ConformanceSessionOriginOutput
         {
             var chunk = encoded.Substring(index * 512, Math.Min(512, encoded.Length - index * 512));
             result.Add(string.Create(CultureInfo.InvariantCulture,
-                $"{Prefix}:{origin.SessionId:D}:{index}:{count}:{digest}:{chunk}"));
+                $"{prefix}:{id:D}:{index}:{count}:{digest}:{chunk}"));
         }
         return result.MoveToImmutable();
     }
 
-    public static void Write(ITestOutputHelper output, ConformanceSessionOrigin origin)
-    {
-        ArgumentNullException.ThrowIfNull(output);
-        foreach (var packet in Render(origin)) { output.WriteLine(packet); }
-    }
 }

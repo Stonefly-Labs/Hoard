@@ -170,8 +170,9 @@ UUID, sequential index/count and SHA-256; exact run/case and actual source-resul
 context bind the projection to its owner/input/group/attempt/execution envelope.
 Manifest expectations now require an independent `caseId`. Parent admission checks
 the selected declaration, runtime/architecture and role-specific runtime/package
-assignments, including explicitly unpackaged test roles. Passing provider-bound
-qualification witnesses require attributable origins; failed/skipped observations
+assignments, including explicitly unpackaged test roles. Passing typed-binding
+qualification witnesses require full session origins; the original-wrapper
+classification below selects its distinct required attribution. Failed/skipped observations
 do not invent them. Reopen parents and factory identities must match previously
 observed lineage. Instance identity maps span origins/results within an attempt
 and all attempts of a case, rejecting changed module/type/assembly for one UUID.
@@ -179,11 +180,55 @@ Case history retains immutable origins and rejects session replay even when the
 attempt and execution UUIDs are fresh. These checks remain foundation APIs, not
 complete profile evaluation or hostile-provider attestation.
 
+### Original-wrapper attribution
+
+The maintainer's instruction to make implementation decisions and continue
+resolves the earlier provenance pause. Exact frozen runtime identity now selects
+the required proof kind independently: an original operational wrapper observes
+its real existing owner and consumer-facing interfaces; a session-free value
+test observes its relevant loaded contract. Neither creates a replacement SDK
+session. Actual typed SDK binding consumers retain complete typed-session origins.
+Unclassified witnesses retain the existing typed-origin requirement; there is
+no permissive default or provider-selected classification.
+
+The first closed policy covers MP-01's original roundtrip, AS-01's two original
+provider parameters, and the original artifact identity-bound value test. The
+non-owning `ConformanceOriginalObservation` captures exact run/case/test/binding,
+fresh observation UUID, nullable parent observation, kind, operation, actual
+runtime/architecture and immutable components. Metadata roles are owner/store/
+schema/authority/controls; artifact roles are owner/store/validator/maintenance/
+lifetime/authority/controls; session-free observations have only contract.
+An owner is the original returned fixture/driver, not an invented factory or SDK
+session. Contract capture reads the actual loaded `Type`/module bytes and makes
+no provider-session claim. Reference-equality IDs preserve actual aliases and
+reopen lineage without invoking component equality, hashing or rendering.
+Capture neither disposes an interface nor authorizes root deletion.
+
+The separate `hoard-original-v1` channel uses the same bounded, digest-checked
+packet framing as typed origins. Its projection contains only closed metadata
+and hash/UUID component identities, never private names, paths or tokens.
+Execution proof revision 2 explicitly adds `originalObservations`; revision 1
+remains unchanged and rejects unknown fields. Public entities remain revision 1.
+The parent independently checks witness kind, exact context, role inventory,
+runtime/package correspondence, selected provider package, lineage and replay.
+A typed session cannot replace required original-instance/contract evidence.
+Both case and category histories retain immutable observations and reject
+observation replay across fresh attempts/execution UUIDs.
+
+Original instrumentation is opt-in through a bounded context keyed by exact
+runtime identity; absent context preserves predecessor diagnostic behavior.
+Missing observations still prevent qualifying admission. The first actual
+observation and independent fresh-cache locked replay cover six executions and
+26 actual image correspondences, but use minimal local logger inputs. They are
+bounded diagnostics, not full qualifying RunInputs or complete wrapper/profile
+coverage. Broader creation/reopen/child/controller instrumentation remains work.
+
 ### Shared bounds
 
 - Stable IDs: ASCII `[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}`. Digests:
   lowercase SHA-256 hex; NuGet SHA-512 additionally retained where used.
-- JSON schema revision `1`, catalog revision `f07-v1`; unknown schema/status/
+- Public JSON schema revision `1`, catalog revision `f07-v1`; the explicitly
+  extended private execution proof uses revision `2` as described above. Unknown schema/status/
   fields, duplicate object keys, non-finite numbers and path traversal reject.
 - At most 10,000 expanded results/profile, 128 witnesses/case, three attempts/
   case (default one), 1,024 bytes/safe diagnostic and 16 MiB/public report.

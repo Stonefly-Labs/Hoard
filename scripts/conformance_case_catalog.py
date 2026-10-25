@@ -19,6 +19,26 @@ CATEGORY_BINDING_SLOTS = (
     ("artifacts", "object", "fixture.artifact.object", "Hoard.Fixtures.Artifacts.ObjectSemantics"),
 )
 
+_ORIGINAL_METADATA_ROLES = ("owner", "store", "schema", "authority", "controls")
+_ORIGINAL_ARTIFACT_ROLES = ("owner", "store", "validator", "maintenance", "lifetime", "authority", "controls")
+
+
+def original_witness_policy(identity):
+    """Closed incremental attribution; unclassified witnesses retain strict typed-origin admission."""
+    metadata = ("Hoard.Metadata.Tests.MetadataRoundTripTests."
+                "MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes")
+    contract = ("Hoard.Artifacts.Tests.ArtifactValueTests."
+                "Identity_bounds_preserve_empty_and_reject_overflow_negative_or_null")
+    if identity == metadata:
+        return "metadata", "original-instance", _ORIGINAL_METADATA_ROLES
+    if identity == contract:
+        return "artifacts", "loaded-contract", ("contract",)
+    if identity in tuple('Hoard.Artifacts.Tests.ArtifactPublicationTests.'
+                         f'Empty_content_and_true_absence_are_distinct(provider: "{provider}")'
+                         for provider in ("local", "object")):
+        return "artifacts", "original-instance", _ORIGINAL_ARTIFACT_ROLES
+    return None
+
 
 @dataclass(frozen=True)
 class ExpectedCase:

@@ -3,8 +3,9 @@ using Hoard.Abstractions.Storage;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactValueTests
+public sealed partial class ArtifactValueTests
 {
+    partial void ObserveIdentityContract();
     private static readonly ArtifactDigest Digest = new(new string('a', 64));
     private static ArtifactStoreIdentity Store() => new("fixture.artifact", Guid.NewGuid(), Guid.NewGuid());
     private static ArtifactOperationTicket Ticket() => new(Store(), Guid.NewGuid(), ArtifactOperationKind.Write,
@@ -21,6 +22,7 @@ public sealed class ArtifactValueTests
         Assert.Throws<ArgumentException>(() => new ArtifactIdentity(Digest, 4, 3));
         Assert.Throws<ArgumentException>(() => new ArtifactIdentity(Digest, 0, 0));
         Assert.Throws<ArgumentNullException>(() => new ArtifactIdentity(null!, 0));
+        ObserveIdentityContract();
     }
 
     [Fact]

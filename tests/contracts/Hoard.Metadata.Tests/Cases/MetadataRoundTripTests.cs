@@ -1,15 +1,22 @@
 using Hoard.Testing.Conformance.Metadata;
+using Hoard.Testing.Conformance.Evidence;
+using Xunit.Abstractions;
 using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
 
-public sealed class MetadataRoundTripTests
+public sealed class MetadataRoundTripTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes()
     {
         await using var fixture = await OpenAsync();
-        await MetadataEntityAssertions.RoundTripAndInvalidRelationshipsAsync(fixture.Store, CommonAuthority(fixture), default);
+        var authority = CommonAuthority(fixture);
+        await MetadataEntityAssertions.RoundTripAndInvalidRelationshipsAsync(fixture.Store, authority, default);
+        ConformanceOriginalObservationOutput.WriteIfRequested(output,
+            "Hoard.Metadata.Tests.MetadataRoundTripTests.MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes",
+            fixture.Provider, "original-instance", ("owner", fixture), ("store", fixture.Store),
+            ("schema", fixture.Schema), ("authority", authority), ("controls", fixture.Controls));
     }
 
     [Fact]

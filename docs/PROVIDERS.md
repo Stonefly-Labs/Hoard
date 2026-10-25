@@ -929,7 +929,15 @@ three jobs, 223 foundations without failures/errors/skips and 100 scopes/982
 exact discoveries/executions with every prerequisite, including all mutation
 scopes. It is admitted diagnostic evidence, not full category qualification or
 evidence for later `90fd088`; the wrapper evidence-contract decision remains
-unresolved.
+separate from that receipt. The maintainer's autonomous-continuation instruction
+now resolves it through independently catalogued original-instance,
+loaded-contract and unchanged typed-session proof requirements.
+The first original MP-01/AS-01/value-test instrumentation captures actual existing
+owners and interfaces without replacing factory/resource ownership. Actual
+observation and independent fresh-cache locked replay each pass six executions
+and 26 image correspondences. These minimal-input local logger diagnostics do
+not qualify full categories; wider original/reopen/controller coverage remains
+unfinished.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

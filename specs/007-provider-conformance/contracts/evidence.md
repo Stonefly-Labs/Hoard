@@ -73,6 +73,31 @@ import. A synthetic qualification-origin batch followed by a structurally valid
 cross-binding execution-ID replay confirms rejection without changing accepted
 witnesses/proofs; it is not actual provider qualification or wrapper provenance.
 
+Original-wrapper proof requirements are now explicitly selected by frozen
+runtime identity, not solely the binding dimension. The initial closed policy
+requires non-owning actual-owner/interface observations for original MP-01 and
+AS-01 wrappers, and relevant loaded-contract attribution for the session-free
+artifact identity-bound test. Typed SDK consumers and unclassified witnesses
+retain complete typed-session requirements. No extra SDK session can substitute
+for an original observation. This test-evidence clarification changes no
+production provider contract or mandatory outcome.
+
+`hoard-original-v1` packets use bounded sequential chunks and a complete digest,
+with exact run/case/test/binding and hash-only component roles. A private
+revision-2 execution proof adds a distinct `originalObservations` collection;
+revision-1 proof fields and public report/entity schemas remain unchanged.
+Parent admission checks independently selected roles/packages, current runtime,
+actual owner context, reopen lineage and observation/instance consistency.
+Histories reject observation replay even with fresh attempt/execution UUIDs.
+An observation neither transfers cleanup ownership nor proves SDK factory
+execution; loaded-contract attribution makes no provider-session claim.
+
+Actual local logger observation and independent fresh-cache locked replay each
+pass six exact executions with 26 actual image correspondences. They deliberately
+use minimal diagnostic logger inputs and do not qualify category profiles.
+Complete original-wrapper/direct-construction/reopen/controller instrumentation
+and full current-run input/evaluator integration remain unfinished.
+
 The implemented private transport distinguishes `purpose: discovery` from
 `purpose: execution` and hashes each complete JSONL stream in its completion
 record. Discovery observes exact selected methods and every expected parameter

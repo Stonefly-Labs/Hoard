@@ -1099,6 +1099,110 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
     def ingest(self, **overrides):
         return evidence.ingest_runtime_attempt(**self.transport(**overrides))
 
+    def original_transport(self, *, contract=False, case_id="runtime"):
+        self.identity = ("Hoard.Artifacts.Tests.ArtifactValueTests."
+                         "Identity_bounds_preserve_empty_and_reject_overflow_negative_or_null" if contract else
+                         "Hoard.Metadata.Tests.MetadataRoundTripTests."
+                         "MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes")
+        entry = self.manifest["expected"][0]
+        entry.update(testIdentity=self.identity, fullyQualifiedName=self.identity, caseId=case_id)
+        self.inputs["mode"] = "qualification"
+        self.inputs["runtimeAssemblies"]["provider/Hoard.Fixture.dll"] = "d" * 64
+        binding = "local" if contract else "sqlite"
+        self.inputs["bindings"][0].update(bindingId=binding, category="artifacts" if contract else "metadata")
+        entry["bindingId"] = binding
+        self.manifest["inputSha256"] = evidence.digest(self.inputs)
+        roles = ("contract",) if contract else ("owner", "store", "schema", "authority", "controls")
+        observation = {
+            "schemaVersion": 1, "runId": self.inputs["runId"], "caseId": case_id,
+            "testIdentity": self.identity, "bindingId": binding, "observationId": str(uuid.uuid4()),
+            "parentObservationId": None, "kind": "loaded-contract" if contract else "original-instance",
+            "operation": "contract" if contract else "create",
+            "runtimeVersion": self.inputs["environment"]["runtime"], "processArchitecture": "x64",
+            "components": {role: {"instanceId": str(uuid.uuid4()), "assemblySha256": ("e" if role == "owner" else "d") * 64,
+                                  "moduleVersionId": str(uuid.uuid4()), "typeSha256": "d" * 64} for role in roles},
+        }
+        self.proof.update(schemaVersion=2, testIdentity=self.identity, bindingId=binding, caseId=case_id,
+                          inputSha256=evidence.digest(self.inputs),
+                          manifestSha256=evidence.digest(self.manifest), originalObservations=[observation])
+        self.witness.update(testIdentity=self.identity, bindingId=binding, inputSha256=evidence.digest(self.inputs),
+                            proofSha256=evidence.digest(self.proof))
+        self.completion.update(inputSha256=evidence.digest(self.inputs), manifestSha256=evidence.digest(self.manifest))
+        assignments = {role: ("consumer/Hoard.Tests.dll", None) if role == "owner"
+                       else ("provider/Hoard.Fixture.dll", "Hoard.Fixture") for role in roles}
+        return observation, {binding: assignments}
+
+    def test_original_observation_qualification_uses_independent_witness_kind_and_role_assignments(self):
+        for contract in (False, True):
+            with self.subTest(contract=contract):
+                self.setUp()
+                observation, assignments = self.original_transport(contract=contract)
+                result = self.ingest(original_inputs=assignments,
+                                     expected_tests={self.identity: (self.witness["bindingId"], "none")})
+                self.assertEqual(result["originalObservations"][self.execution][0], observation)
+                self.assertFalse(result["sessionOrigins"][self.execution])
+
+    def test_original_observation_rejects_foreign_kind_context_roles_or_package(self):
+        for mutation in ("kind", "identity", "binding", "run", "roles", "package", "missing", "typed-only",
+                         "replay", "parent"):
+            with self.subTest(mutation=mutation):
+                self.setUp()
+                observation, assignments = self.original_transport()
+                origin_inputs = None
+                if mutation == "kind":
+                    observation["kind"] = "loaded-contract"
+                elif mutation == "identity":
+                    observation["testIdentity"] += "Foreign"
+                elif mutation == "binding":
+                    observation["bindingId"] = "memory"
+                elif mutation == "run":
+                    observation["runId"] = str(uuid.uuid4())
+                elif mutation == "roles":
+                    del observation["components"]["owner"]
+                elif mutation == "package":
+                    assignments["sqlite"]["store"] = ("consumer/Hoard.Tests.dll", "Foreign.Package")
+                elif mutation == "missing":
+                    self.proof["originalObservations"] = []
+                elif mutation == "replay":
+                    self.proof["originalObservations"].append(copy.deepcopy(observation))
+                elif mutation == "parent":
+                    observation.update(parentObservationId=str(uuid.uuid4()), operation="reopen")
+                else:
+                    origin, selected = self.runtime_origin("runtime")
+                    origin_inputs = {"sqlite": selected}
+                    self.proof["sessionOrigins"] = [origin]
+                    self.proof["originalObservations"] = []
+                self.witness["proofSha256"] = evidence.digest(self.proof)
+                with self.assertRaises(evidence.ConformanceError):
+                    self.ingest(original_inputs=assignments, origin_inputs=origin_inputs)
+
+    def test_original_observation_history_retains_evidence_and_rejects_replay_in_a_fresh_execution(self):
+        self.inputs.update(profileId="metadata", invocation=["profile", "metadata"])
+        self.inputs["budgets"]["profileSeconds"] = 5400
+        original, assignments = self.original_transport(case_id="MP-01")
+        history = evidence.RuntimeCaseHistory(
+            self.inputs, binding_id="sqlite", matrix_id="none", case_id="MP-01",
+            max_attempts=2, original_inputs=assignments)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin(self.attempt)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            self.assertEqual(self.finish_history(history)["status"], "Passed")
+        retained = dict(history.proofs)
+        self.assertEqual(history.original_observations[self.execution][0], original)
+        self.attempt, self.execution = str(uuid.uuid4()), str(uuid.uuid4())
+        self.manifest.update(attemptId=self.attempt, attemptSequence=2)
+        self.proof.update(executionId=self.execution, attemptId=self.attempt, attemptSequence=2,
+                          manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(executionId=self.execution, proofSha256=evidence.digest(self.proof), startedMs=20, endedMs=21)
+        self.completion.update(attemptId=self.attempt, attemptSequence=2, manifestSha256=evidence.digest(self.manifest))
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.019):
+            history.begin(self.attempt)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.022), self.assertRaisesRegex(
+                evidence.ConformanceError, "ProofMismatch"):
+            self.finish_history(history)
+        self.assertEqual(dict(history.proofs), retained)
+        self.assertEqual(len(history.witnesses), 1)
+
     def history(self, *, max_attempts=1, origin_inputs=None):
         import conformance_case_catalog as catalog
         case = next(case for case in catalog.expected_cases("composition") if case.case_id == "CP-01")
@@ -1139,7 +1243,18 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             {**original, "bindingId": binding, "package": package, "category": profile,
              "descriptorSha256": hashlib.sha256(binding.encode()).hexdigest()}
             for (binding, _), package in zip(bindings, packages)]
-        return evidence.CategoryRuntimeHistory(self.inputs, max_attempts=max_attempts, origin_inputs=origin_inputs)
+        original_inputs = None if origin_inputs is None else {
+            binding: {role: assignments[source] for role, source in
+                      (("owner", "session"), ("store", "store"), ("schema", "schema"),
+                       ("authority", "authority"), ("controls", "faults"))}
+            for binding, assignments in origin_inputs.items()}
+        if original_inputs is not None:
+            selected_packages = {item["bindingId"]: item["package"]["packageId"] for item in self.inputs["bindings"]}
+            for binding, assignments in original_inputs.items():
+                for role in ("store", "schema"):
+                    assignments[role] = (assignments[role][0], selected_packages[binding])
+        return evidence.CategoryRuntimeHistory(
+            self.inputs, max_attempts=max_attempts, origin_inputs=origin_inputs, original_inputs=original_inputs)
 
     def category_transport(self, binding, *, sequence=1, started=9, origin=None):
         import conformance_case_catalog as catalog
@@ -1168,6 +1283,18 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 for component in captured["components"].values():
                     component["instanceId"] = str(uuid.uuid4())
                 proof["sessionOrigins"] = [captured]
+                policy = catalog.original_witness_policy(entry["testIdentity"])
+                if policy is not None:
+                    aliases = {"owner": "session", "controls": "faults"}
+                    proof["schemaVersion"] = 2
+                    proof["originalObservations"] = [{
+                        "schemaVersion": 1, "runId": self.inputs["runId"], "caseId": entry["caseId"],
+                        "testIdentity": entry["testIdentity"], "bindingId": binding,
+                        "observationId": str(uuid.uuid4()), "parentObservationId": None,
+                        "kind": policy[1], "operation": "create",
+                        "runtimeVersion": captured["runtimeVersion"], "processArchitecture": "x64",
+                        "components": {role: copy.deepcopy(captured["components"][aliases.get(role, role)])
+                                       for role in policy[2]}}]
             proofs[f"proof-{execution}.json"] = evidence.canonical_bytes(proof)
             witnesses.append({**self.witness, "executionId": execution, "testIdentity": entry["testIdentity"],
                               "bindingId": binding, "inputSha256": evidence.digest(self.inputs),

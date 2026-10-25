@@ -25,7 +25,7 @@ from xml.sax.saxutils import escape
 import conformance_baselines as baselines
 import artifact_evidence as artifacts
 import conformance_evidence as evidence
-from conformance_case_catalog import catalog_admission_witnesses, category_cases
+from conformance_case_catalog import catalog_admission_witnesses, category_cases, original_witness_policy
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_lock_preparation import prepare_project_lock, rebind_local_archives, verify_project_lock
 from foundation_evidence import canonicalize_acceptance_archive
@@ -2072,7 +2072,7 @@ def test_attempt(run, inputs, candidate, scenario):
 
 
 def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact_runner=None,
-                    artifact_packages=None, metadata_packages=None):
+                    artifact_packages=None, metadata_packages=None, original_observations=False):
     attempt_id = manifest["attemptId"]
     identities = tuple(entry["testIdentity"] for entry in manifest["expected"])
     if manifest["purpose"] not in ("discovery", "execution"):
@@ -2155,6 +2155,26 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             f'<HOARD_ORIGIN_RUN_ID>{escape(manifest["runId"])}</HOARD_ORIGIN_RUN_ID>'
             f'<HOARD_ORIGIN_PACKAGE_SHA256>{escape(package["sha256"])}</HOARD_ORIGIN_PACKAGE_SHA256>'
             "</EnvironmentVariables>")
+    if original_observations:
+        policies = tuple(original_witness_policy(identity) for identity in identities)
+        if (not identities or len(set(identities)) != len(identities) or any(policy is None for policy in policies)
+                or metadata_packages is not None or artifact_packages is not None
+                or any(assembly.name != ("Hoard.Metadata.Tests.dll" if policy[0] == "metadata"
+                                        else "Hoard.Artifacts.Tests.dll") for policy in policies)):
+            raise evidence.ConformanceError("WitnessMissing")
+        if any(entry["bindingId"] not in (("sqlite", "memory") if policy[0] == "metadata" else ("local", "object"))
+               for entry, policy in zip(manifest["expected"], policies)):
+            raise evidence.ConformanceError("BindingInvalid")
+        context = evidence.canonical_bytes({
+            "schemaVersion": 1, "runId": manifest["runId"],
+            "cases": {entry["testIdentity"]: {"caseId": entry["caseId"], "bindingId": entry["bindingId"]}
+                      for entry in manifest["expected"]}})
+        if len(context) > 64 * 1024:
+            raise evidence.ConformanceError("OutputLimitExceeded")
+        variable = "<HOARD_ORIGINAL_CONTEXT>" + base64.b64encode(context).decode() + "</HOARD_ORIGINAL_CONTEXT>"
+        origin_environment = (origin_environment.removesuffix("</EnvironmentVariables>") + variable
+                              + "</EnvironmentVariables>" if origin_environment
+                              else "<EnvironmentVariables>" + variable + "</EnvironmentVariables>")
     manifest_data = evidence.canonical_bytes(manifest)
     owner_data = read_bounded(run.root / "runtime-owner.json", 64 * 1024)
     manifest_sha = hashlib.sha256(manifest_data).hexdigest()

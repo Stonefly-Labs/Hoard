@@ -8,10 +8,11 @@ namespace Hoard.Conformance.TestLogger;
 
 internal static class RuntimeOriginOutput
 {
-    private sealed record Pending(int Count, string Digest, List<string> Parts);
+    private sealed record Pending(string Prefix, int Count, string Digest, List<string> Parts);
     internal readonly record struct ComponentIdentity(string Assembly, Guid Module, string Type);
 
-    internal static (JsonElement[] Origins, bool Unknown, Dictionary<Guid, ComponentIdentity> Instances) Read(
+    internal static (JsonElement[] Origins, JsonElement[] OriginalObservations, bool Unknown,
+        Dictionary<Guid, ComponentIdentity> Instances) Read(
         TestResult result, RuntimeInput input, RuntimeExpectedTest expected, HashSet<Guid> priorSessions,
         IReadOnlyDictionary<Guid, ComponentIdentity> priorInstances)
     {
@@ -30,7 +31,8 @@ internal static class RuntimeOriginOutput
                 if (span.IsEmpty) { continue; }
                 RuntimeSafety.Require(span.Length <= 1024, "OutputLimitExceeded");
                 var line = span.ToString();
-                if (!line.StartsWith(ConformanceSessionOriginOutput.Prefix + ":", StringComparison.Ordinal))
+                if (!line.StartsWith(ConformanceSessionOriginOutput.Prefix + ":", StringComparison.Ordinal)
+                    && !line.StartsWith(ConformanceOriginalObservationOutput.Prefix + ":", StringComparison.Ordinal))
                 { unknown = true; continue; }
                 var fields = line.Split(':');
                 RuntimeSafety.Require(fields.Length == 6, "ProofMismatch");
@@ -46,15 +48,17 @@ internal static class RuntimeOriginOutput
                 if (!pending.TryGetValue(id, out var packet))
                 {
                     RuntimeSafety.Require(pending.Count < 128, "OutputLimitExceeded");
-                    packet = new(count, fields[4], []);
+                    packet = new(fields[0], count, fields[4], []);
                     pending.Add(id, packet);
                 }
-                RuntimeSafety.Require(packet.Count == count && packet.Digest == fields[4], "ProofMismatch");
+                RuntimeSafety.Require(packet.Prefix == fields[0] && packet.Count == count
+                    && packet.Digest == fields[4], "ProofMismatch");
                 RuntimeSafety.Require(index == packet.Parts.Count, "EvidenceIncomplete");
                 packet.Parts.Add(fields[5]);
             }
         }
         var origins = new List<JsonElement>();
+        var originals = new List<JsonElement>();
         var instances = new Dictionary<Guid, ComponentIdentity>();
         foreach (var (id, packet) in pending)
         {
@@ -68,17 +72,30 @@ internal static class RuntimeOriginOutput
                 && RuntimeSafety.Hash(bytes) == packet.Digest, "ProofMismatch");
             using var document = JsonDocument.Parse(bytes, new JsonDocumentOptions { MaxDepth = 8 });
             var origin = document.RootElement;
-            Keys(origin, "schemaVersion", "runId", "caseId", "sessionId", "parentSessionId",
-                "factoryOperation", "descriptorSha256", "runtimeVersion", "processArchitecture", "components");
+            var original = packet.Prefix == ConformanceOriginalObservationOutput.Prefix;
+            if (original)
+            {
+                Keys(origin, "schemaVersion", "runId", "caseId", "testIdentity", "bindingId", "observationId",
+                    "parentObservationId", "kind", "operation", "runtimeVersion", "processArchitecture", "components");
+                RuntimeSafety.Require(origin.GetProperty("testIdentity").GetString() == expected.TestIdentity
+                    && origin.GetProperty("bindingId").GetString() == expected.BindingId, "ProofMismatch");
+            }
+            else
+            {
+                Keys(origin, "schemaVersion", "runId", "caseId", "sessionId", "parentSessionId",
+                    "factoryOperation", "descriptorSha256", "runtimeVersion", "processArchitecture", "components");
+            }
             RuntimeSafety.Require(origin.GetProperty("schemaVersion").GetInt32() == 1
                 && Uuid(origin.GetProperty("runId").GetString()!) == input.RunId
-                && Uuid(origin.GetProperty("sessionId").GetString()!) == id
+                && Uuid(origin.GetProperty(original ? "observationId" : "sessionId").GetString()!) == id
                 && origin.GetProperty("caseId").GetString() == expected.CaseId, "ProofMismatch");
-            var parentElement = origin.GetProperty("parentSessionId");
+            var parentElement = origin.GetProperty(original ? "parentObservationId" : "parentSessionId");
             Guid? parent = parentElement.ValueKind == JsonValueKind.Null ? null : Uuid(parentElement.GetString()!);
-            RuntimeSafety.Require(parent != id && origin.GetProperty("factoryOperation").GetString()
-                == (parent.HasValue ? "reopen" : "create"), "ProofMismatch");
-            RuntimeSafety.Digest(origin.GetProperty("descriptorSha256").GetString()!);
+            var contract = original && origin.GetProperty("kind").GetString() == "loaded-contract";
+            RuntimeSafety.Require(parent != id && (!contract || parent is null)
+                && origin.GetProperty(original ? "operation" : "factoryOperation").GetString()
+                    == (contract ? "contract" : parent.HasValue ? "reopen" : "create"), "ProofMismatch");
+            if (!original) { RuntimeSafety.Digest(origin.GetProperty("descriptorSha256").GetString()!); }
             var runtime = origin.GetProperty("runtimeVersion").GetString();
             RuntimeSafety.Require(runtime is { Length: <= 32 } && Version.TryParse(runtime, out var version)
                 && version.ToString() == runtime && version.Build >= 0, "ProofMismatch");
@@ -88,7 +105,18 @@ internal static class RuntimeOriginOutput
                 ? components.EnumerateObject().Select(property => property.Name).ToHashSet(StringComparer.Ordinal) : [];
             string[] metadata = ["factory", "session", "store", "schema", "authority", "faults"];
             string[] artifacts = ["factory", "session", "store", "validator", "maintenance", "lifetime", "authority", "faults"];
-            RuntimeSafety.Require(roles.SetEquals(metadata) || roles.SetEquals(artifacts), "ProofMismatch");
+            if (original)
+            {
+                string[] required = contract ? ["contract"] : expected.BindingId switch
+                {
+                    "sqlite" or "memory" => ["owner", "store", "schema", "authority", "controls"],
+                    "local" or "object" => ["owner", "store", "validator", "maintenance", "lifetime", "authority", "controls"],
+                    _ => throw RuntimeSafety.Error("ProofMismatch")
+                };
+                RuntimeSafety.Require((contract || origin.GetProperty("kind").GetString() == "original-instance")
+                    && roles.SetEquals(required), "ProofMismatch");
+            }
+            else { RuntimeSafety.Require(roles.SetEquals(metadata) || roles.SetEquals(artifacts), "ProofMismatch"); }
             Keys(components, roles.ToArray());
             foreach (var role in components.EnumerateObject())
             {
@@ -106,9 +134,10 @@ internal static class RuntimeOriginOutput
                 RuntimeSafety.Require(!priorInstances.TryGetValue(instance, out var previous) || previous == identity, "ProofMismatch");
                 instances[instance] = identity;
             }
-            origins.Add(origin.Clone());
+            if (original) { originals.Add(origin.Clone()); }
+            else { origins.Add(origin.Clone()); }
         }
-        return (origins.ToArray(), unknown, instances);
+        return (origins.ToArray(), originals.ToArray(), unknown, instances);
     }
 
     private static void Keys(JsonElement value, params string[] expected)

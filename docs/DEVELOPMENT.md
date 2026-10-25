@@ -7935,8 +7935,32 @@ preparation:
 `69a1b07eb8ac465a00fc829cb2d5bfdf7b13929f6500e371245f4e5ab2352af1`;
 free scratch 91,719,884,800 bytes. It is admitted diagnostic evidence, not full
 category qualification or verification of the later `90fd088` follow-up.
-The original-wrapper proof-contract decision remains unresolved; the existing
-universal typed-session-origin rule is unchanged.
+The subsequent autonomous-continuation instruction resolves the original-wrapper
+proof-contract decision. A closed frozen-identity policy now selects actual
+original-owner/interface observations or relevant loaded contracts for the first
+MP-01/AS-01/value witnesses; full typed SDK origins remain mandatory elsewhere.
+The original owner retains disposal/root cleanup and original clocks/assertion
+order. A separate bounded `hoard-original-v1` channel feeds only the explicit
+`originalObservations` field of private execution-proof revision 2; v1 remains
+unchanged and public entities/reports stay v1. Histories preserve these immutable
+observations and reject replay under fresh executions/attempts.
+
+Actual first observation and independent fresh-cache locked wrapper replay each
+pass six exact discoveries/executions, four original owners, two session-free
+contract contexts and 26 actual role/image correspondences. SDK archive:
+`a94e225acd4ef19a8d1b363f5c7eedf498bae9364fbc2838f917f17c595485e3`.
+Both use minimal local logger inputs, not full qualifying RunInputs; no native,
+complete wrapper or category qualification follows. Complete creation/reopen,
+child/controller instrumentation and actual profile/evaluator wiring remain
+unfinished.
+Tooling passes 335 checks (318 passed/seventeen macOS-native skips); all
+68 logger/typed-binding contract tests pass without skips. The new original
+history replay regression rejects under a fresh execution/attempt while retaining
+previously admitted proof bytes. Capacity-only failures were resolved by deleting
+thirteen inspected completed private caches, preserving all retained images,
+archives, source and receipts and the unchanged 24 GiB guard. Scoped custom
+architecture review found no confirmed blocker for the first increment, not
+complete qualification readiness.
 README and affected model/contracts/guides are updated; production/deployment
 examples and diagrams are unaffected. Tasks/reviewer markers remain unchanged.
 

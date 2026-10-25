@@ -1480,9 +1480,73 @@ def ingest_runtime_discovery(*, inputs, manifest_data, owner_data, discoveries_d
     })
 
 
+def _ingest_original_observations(inputs, observations, *, original_inputs, entry, prior_observations, prior_instances):
+    from conformance_case_catalog import CATEGORY_BINDING_SLOTS, original_witness_policy
+    if not observations:
+        return ()
+    policy = original_witness_policy(entry["testIdentity"])
+    if policy is None:
+        raise ConformanceError("WitnessMissing")
+    category, kind, roles = policy
+    binding_id = entry["bindingId"]
+    binding = next((item for item in inputs["bindings"] if item["bindingId"] == binding_id), None)
+    if (binding is None or binding["category"] != category
+            or binding_id not in {slot[1] for slot in CATEGORY_BINDING_SLOTS if slot[0] == category}):
+        raise ConformanceError("BindingInvalid")
+    assignments = original_inputs.get(binding_id) if isinstance(original_inputs, Mapping) else None
+    if not isinstance(assignments, Mapping) or not set(roles) <= set(assignments):
+        raise ConformanceError("EvidenceIncomplete")
+    component = _record({
+        "instanceId": _uuid, "assemblySha256": sha256, "moduleVersionId": _uuid, "typeSha256": sha256,
+    })
+    observed = []
+    for raw in observations:
+        observation = _record({
+            "schemaVersion": _constant(1), "runId": _uuid, "caseId": stable_id,
+            "testIdentity": _runtime_identity, "bindingId": stable_id, "observationId": _uuid,
+            "parentObservationId": lambda value: None if value is None else _uuid(value),
+            "kind": _one_of("original-instance", "loaded-contract"),
+            "operation": _one_of("create", "reopen", "contract"),
+            "runtimeVersion": stable_id, "processArchitecture": _one_of("x64", "arm64"),
+            "components": _record({role: component for role in roles}),
+        })(raw)
+        parent_id = observation["parentObservationId"]
+        architecture = {"x64": ("x86_64", "x64"), "arm64": ("aarch64", "arm64")}
+        if (observation["runId"] != inputs["runId"] or observation["caseId"] != entry["caseId"]
+                or observation["testIdentity"] != entry["testIdentity"] or observation["bindingId"] != binding_id
+                or observation["kind"] != kind
+                or observation["runtimeVersion"] != inputs["environment"]["runtime"]
+                or inputs["environment"]["architecture"] not in architecture[observation["processArchitecture"]]
+                or observation["observationId"] in prior_observations or observation["observationId"] == parent_id
+                or observation["operation"] != ("contract" if kind == "loaded-contract"
+                                                else "reopen" if parent_id is not None else "create")):
+            raise ConformanceError("ProofMismatch")
+        if kind == "loaded-contract" and parent_id is not None:
+            raise ConformanceError("ProofMismatch")
+        if parent_id is not None:
+            parent = prior_observations.get(parent_id)
+            if (parent is None or any(parent[key] != observation[key] for key in
+                                     ("runId", "caseId", "testIdentity", "bindingId", "kind"))
+                    or parent["components"]["owner"]["instanceId"] == observation["components"]["owner"]["instanceId"]):
+                raise ConformanceError("ProofMismatch")
+        for role, captured in observation["components"].items():
+            assignment = assignments[role]
+            if not isinstance(assignment, tuple) or len(assignment) != 2:
+                raise ConformanceError("EvidenceIncomplete")
+            if (kind == "original-instance" and role in ("store", "schema", "validator", "maintenance", "lifetime")
+                    and (assignment[1] is None
+                         or assignment[1].casefold() != binding["package"]["packageId"].casefold())):
+                raise ConformanceError("ProofMismatch")
+            _runtime_bytes_correspondence(inputs, captured["assemblySha256"], *assignment)
+            _observe_component_instance(prior_instances, captured)
+        prior_observations[observation["observationId"]] = observation
+        observed.append(observation)
+    return tuple(observed)
+
+
 def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, proofs,
                            completion_data, expected_tests, manifest_sha256, owner_sha256,
-                           started_ms, ended_ms, origin_inputs=None):
+                           started_ms, ended_ms, origin_inputs=None, original_inputs=None):
     """Validate actual safe-logger records; a valid failed attempt remains failed."""
     inputs, manifest, expected, assemblies, packages, expected_tests = _runtime_manifest(
         inputs, manifest_data, owner_data, expected_tests, manifest_sha256, owner_sha256, "execution")
@@ -1520,7 +1584,9 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
     }
     proof_hashes = {}
     session_origins = {}
+    original_observations = {}
     prior_sessions = {}
+    prior_observations = {}
     prior_instances = {}
     unknown_failure = False
     for witness in witnesses:
@@ -1529,7 +1595,15 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
             raise ConformanceError("WitnessMissing")
         path = f'proof-{witness["executionId"]}.json'
         proof_data = proofs[path]
-        proof = _runtime_json(proof_data, proof_fields, limit=64 * 1024)
+        if not 0 < len(proof_data) <= 64 * 1024:
+            raise ConformanceError("OutputLimitExceeded")
+        raw = load_json(proof_data)
+        version = raw.get("schemaVersion") if isinstance(raw, Mapping) else None
+        fields = proof_fields
+        if version == 2:
+            fields = {**proof_fields, "schemaVersion": _constant(2),
+                      "originalObservations": _list(lambda value: value, 128, minimum=0)}
+        proof = _record(fields)(raw)
         proof_hashes[path] = hashlib.sha256(proof_data).hexdigest()
         if (proof_hashes[path] != witness["proofSha256"]
                 or any(proof[key] != witness[key] for key in (
@@ -1552,13 +1626,23 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
         origins = _ingest_runtime_origins(
             inputs, proof["sessionOrigins"], origin_inputs=origin_inputs,
             case_id=entry["caseId"], prior_sessions=prior_sessions, prior_instances=prior_instances)
+        originals = _ingest_original_observations(
+            inputs, proof.get("originalObservations", ()), original_inputs=original_inputs, entry=entry,
+            prior_observations=prior_observations, prior_instances=prior_instances)
+        if set(prior_sessions) & set(prior_observations):
+            raise ConformanceError("ProofMismatch")
         selected_binding = next((binding for binding in inputs["bindings"]
                                  if binding["bindingId"] == witness["bindingId"]), None)
-        if (inputs["mode"] == "qualification" and witness["status"] == "Passed" and selected_binding is not None
-                and selected_binding["category"] in _SESSION_ROLES
-                and not any(origin["descriptorSha256"] == selected_binding["descriptorSha256"] for origin in origins)):
-            raise ConformanceError("WitnessMissing")
+        if inputs["mode"] == "qualification" and witness["status"] == "Passed" and selected_binding is not None:
+            from conformance_case_catalog import original_witness_policy
+            if original_witness_policy(witness["testIdentity"]) is not None:
+                if not originals:
+                    raise ConformanceError("WitnessMissing")
+            elif (selected_binding["category"] in _SESSION_ROLES
+                  and not any(origin["descriptorSha256"] == selected_binding["descriptorSha256"] for origin in origins)):
+                raise ConformanceError("WitnessMissing")
         session_origins[witness["executionId"]] = origins
+        original_observations[witness["executionId"]] = originals
         if ((witness["status"] == "Passed" and (proof["failureKind"] != "None" or proof["assertionSymbol"] is not None))
                 or (witness["status"] == "Incomplete"
                     and (proof["failureKind"] != "SkippedOrUnknown" or proof["assertionSymbol"] is not None))
@@ -1588,6 +1672,7 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
         "witnesses": witnesses, "proofs": MappingProxyType(proof_hashes), "completion": completion,
         "attemptId": manifest["attemptId"], "diagnosticCode": code,
         "sessionOrigins": MappingProxyType(session_origins),
+        "originalObservations": MappingProxyType(original_observations),
         "caseIds": tuple(sorted({entry["caseId"] for entry in expected.values()})),
     })
 
@@ -1630,17 +1715,33 @@ def _origin_input_assignments(origin_inputs):
         frozen[origin_binding] = MappingProxyType(captured)
     return MappingProxyType(frozen)
 
+def _runtime_provenance_state(observed, used, prior_instances):
+    observations = [*(
+        (origin["sessionId"], origin) for origins in observed["sessionOrigins"].values() for origin in origins), *(
+        (origin["observationId"], origin) for origins in observed["originalObservations"].values() for origin in origins)]
+    ids = frozenset(identity for identity, _ in observations)
+    if len(ids) != len(observations) or ids & used:
+        raise ConformanceError("ProofMismatch")
+    instances = dict(prior_instances)
+    for _, origin in observations:
+        for captured in origin["components"].values():
+            _observe_component_instance(instances, captured)
+    return ids, instances
+
 
 class RuntimeCaseHistory:
     """Append-only runtime-bearing case state selected from the independent catalog."""
 
-    def __init__(self, inputs, *, binding_id, matrix_id, case_id, max_attempts=1, origin_inputs=None):
+    def __init__(self, inputs, *, binding_id, matrix_id, case_id, max_attempts=1, origin_inputs=None,
+                 original_inputs=None):
         from conformance_case_catalog import expected_cases
         self._inputs = admit_entity("RunInputs", inputs)
         self._session_origins = MappingProxyType({})
+        self._original_observations = MappingProxyType({})
         self._used_sessions = frozenset()
         self._instances = {}
         self._origin_inputs = _origin_input_assignments(origin_inputs)
+        self._original_inputs = _origin_input_assignments(original_inputs)
         key = (self._inputs["profileId"], stable_id(binding_id), stable_id(matrix_id), stable_id(case_id))
         matches = tuple(case for case in expected_cases(key[0]) if case.key == key)
         if len(matches) != 1:
@@ -1676,6 +1777,10 @@ class RuntimeCaseHistory:
     @property
     def session_origins(self):
         return self._session_origins
+
+    @property
+    def original_observations(self):
+        return self._original_observations
 
     def begin(self, attempt_id):
         attempt_id = _uuid(attempt_id)
@@ -1722,26 +1827,21 @@ class RuntimeCaseHistory:
                 manifest_sha256=manifest_sha256, owner_sha256=owner_sha256,
                 expected_tests={identity: (self._case.binding_id, self._case.matrix_id)
                                 for identity in self._case.witnesses},
-                started_ms=self._active[1], ended_ms=ended, origin_inputs=self._origin_inputs)
+                started_ms=self._active[1], ended_ms=ended, origin_inputs=self._origin_inputs,
+                original_inputs=self._original_inputs)
             if (observed["attemptId"] != self._active[0]
                     or observed["completion"]["attemptSequence"] != len(self._attempts) + 1
                     or observed["caseIds"] != (self._case.case_id,)
                     or any(witness["executionId"] in self._used_executions for witness in observed["witnesses"])):
                 raise ConformanceError("ProofMismatch")
-            sessions = frozenset(origin["sessionId"] for origins in observed["sessionOrigins"].values()
-                                 for origin in origins)
-            if sessions & self._used_sessions:
-                raise ConformanceError("ProofMismatch")
-            instances = dict(self._instances)
-            for origins in observed["sessionOrigins"].values():
-                for origin in origins:
-                    for captured in origin["components"].values():
-                        _observe_component_instance(instances, captured)
+            sessions, instances = _runtime_provenance_state(observed, self._used_sessions, self._instances)
             code = observed["diagnosticCode"]
             if code == "None" and self._case.controls:
                 code = "EvidenceIncomplete"
             self._append(code, ended, observed["witnesses"], observed["proofs"])
             self._session_origins = MappingProxyType({**self._session_origins, **observed["sessionOrigins"]})
+            self._original_observations = MappingProxyType({
+                **self._original_observations, **observed["originalObservations"]})
             self._used_sessions = self._used_sessions | sessions
             self._instances = instances
         except ConformanceError as error:
@@ -1767,7 +1867,7 @@ class RuntimeCaseHistory:
 class CategoryRuntimeHistory:
     """Import complete frozen binding batches without inventing controller proofs."""
 
-    def __init__(self, inputs, *, max_attempts=1, origin_inputs=None):
+    def __init__(self, inputs, *, max_attempts=1, origin_inputs=None, original_inputs=None):
         from conformance_case_catalog import CATEGORY_BINDING_SLOTS, expected_cases
         self._inputs = admit_entity("RunInputs", inputs)
         profile = self._inputs["profileId"]
@@ -1785,6 +1885,7 @@ class CategoryRuntimeHistory:
                 for binding_id, binding in selected.items())):
             raise ConformanceError("BindingInvalid")
         self._origin_inputs = _origin_input_assignments(origin_inputs)
+        self._original_inputs = _origin_input_assignments(original_inputs)
         self._max_attempts = max_attempts
         self._active = {}
         self._sequences = {binding: 0 for binding in self._bindings}
@@ -1795,6 +1896,7 @@ class CategoryRuntimeHistory:
         self._witnesses = ()
         self._proofs = MappingProxyType({})
         self._session_origins = MappingProxyType({})
+        self._original_observations = MappingProxyType({})
         self._results = {case.key: _catalog_case_result(self._inputs, case, "NotApplicable", ())
                          for case in self._cases if case.exclusion is not None}
 
@@ -1809,6 +1911,10 @@ class CategoryRuntimeHistory:
     @property
     def session_origins(self):
         return self._session_origins
+
+    @property
+    def original_observations(self):
+        return self._original_observations
 
     def expected_runtime_tests(self, binding_id):
         """Select primary owned cases before building the runtime manifest."""
@@ -1880,25 +1986,20 @@ class CategoryRuntimeHistory:
                 witnesses_data=witnesses_data, proofs=proofs, completion_data=completion_data,
                 expected_tests={identity: (binding_id, "none") for identity in identities},
                 manifest_sha256=manifest_sha256, owner_sha256=owner_sha256,
-                started_ms=self._active[binding_id][1], ended_ms=ended, origin_inputs=self._origin_inputs)
+                started_ms=self._active[binding_id][1], ended_ms=ended, origin_inputs=self._origin_inputs,
+                original_inputs=self._original_inputs)
             if (observed["attemptId"] != self._active[binding_id][0]
                     or observed["completion"]["attemptSequence"] != self._sequences[binding_id] + 1
                     or any(entry["caseId"] != identities[entry["testIdentity"]]
                            for entry in load_json(manifest_data)["expected"])
                     or any(witness["executionId"] in self._used_executions for witness in observed["witnesses"])):
                 raise ConformanceError("ProofMismatch")
-            sessions = frozenset(origin["sessionId"] for origins in observed["sessionOrigins"].values()
-                                 for origin in origins)
-            if sessions & self._used_sessions:
-                raise ConformanceError("ProofMismatch")
-            instances = dict(self._instances)
-            for origins in observed["sessionOrigins"].values():
-                for origin in origins:
-                    for captured in origin["components"].values():
-                        _observe_component_instance(instances, captured)
+            sessions, instances = _runtime_provenance_state(observed, self._used_sessions, self._instances)
             results = self._append(binding_id, observed["diagnosticCode"], ended,
                                    observed["witnesses"], observed["proofs"])
             self._session_origins = MappingProxyType({**self._session_origins, **observed["sessionOrigins"]})
+            self._original_observations = MappingProxyType({
+                **self._original_observations, **observed["originalObservations"]})
             self._used_sessions = self._used_sessions | sessions
             self._instances = instances
             return results

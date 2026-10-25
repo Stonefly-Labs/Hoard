@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using Hoard.Testing.Conformance.Catalog;
 using Hoard.Testing.Conformance.Diagnostics;
 using Hoard.Testing.Conformance.Evidence;
@@ -215,7 +216,7 @@ public sealed class RuntimeResultRecorder : IDisposable
                 var kind = FailureKind(result, entry);
                 if (result.Outcome == TestOutcome.Failed) { CorrelateFailureMessages(result); }
                 RuntimeSafety.Require(diagnostic == ConformanceDiagnosticCode.None, diagnostic.ToString());
-                var (sessionOrigins, unknownOutput, instances) =
+                var (sessionOrigins, originalObservations, unknownOutput, instances) =
                     RuntimeOriginOutput.Read(result, input, entry, seenSessions, seenInstances);
                 if (unknownOutput || (result.Outcome == TestOutcome.Passed
                     && (!string.IsNullOrEmpty(result.ErrorMessage) || !string.IsNullOrEmpty(result.ErrorStackTrace))))
@@ -250,6 +251,13 @@ public sealed class RuntimeResultRecorder : IDisposable
                     status = status.ToString(),
                     sessionOrigins
                 }, RuntimeSafety.Json);
+                if (originalObservations.Length > 0)
+                {
+                    var extended = JsonNode.Parse(proof)!.AsObject();
+                    extended["schemaVersion"] = 2;
+                    extended["originalObservations"] = JsonSerializer.SerializeToNode(originalObservations);
+                    proof = JsonSerializer.SerializeToUtf8Bytes(extended, RuntimeSafety.Json);
+                }
                 RuntimeSafety.Require(proof.Length <= 64 * 1024, "OutputLimitExceeded");
                 var expectedCase = new ConformanceExpectedCase("harness", entry.BindingId, entry.MatrixId,
                     "runtime", ImmutableArray.Create(entry.TestIdentity), [], null);
@@ -262,6 +270,8 @@ public sealed class RuntimeResultRecorder : IDisposable
                 WriteRecord(line);
                 foreach (var origin in sessionOrigins)
                 { seenSessions.Add(origin.GetProperty("sessionId").GetGuid()); }
+                foreach (var original in originalObservations)
+                { seenSessions.Add(original.GetProperty("observationId").GetGuid()); }
                 foreach (var (id, componentIdentity) in instances) { seenInstances.TryAdd(id, componentIdentity); }
                 if (status == ConformanceWitnessStatus.Incomplete) { incomplete = true; }
                 else if (status == ConformanceWitnessStatus.Failed)

@@ -4747,12 +4747,62 @@ preparation:
 `69a1b07eb8ac465a00fc829cb2d5bfdf7b13929f6500e371245f4e5ab2352af1`;
 free scratch 91,719,884,800 bytes. This is admitted diagnostic evidence, not
 full category qualification or verification of later `90fd088`.
-The original-wrapper proof-contract decision remains unresolved; no admission
-rule or proof schema changed. The data model/evidence contract, product and
-deployment examples/diagrams are unaffected by recording this receipt.
+That receipt alone changes no admission rule or schema. The later first-slice
+original-wrapper implementation below is a separate test-evidence clarification.
 README and affected guides/model/contracts are updated; product/deployment
 examples and diagrams, historical seals, task/reviewer markers and locks are
 unchanged. Implementation remains running.
+
+### Non-owning original-wrapper provenance
+
+The maintainer explicitly instructed autonomous decisions and continued
+implementation rather than another approval pause. Following the bounded custom
+architecture review, original wrappers now have a distinct, versioned observation
+path. The independent frozen-identity policy initially covers MP-01's original
+roundtrip, both AS-01 parameters and the session-free identity-bound test. Actual
+SDK consumers and all unclassified witnesses retain strict typed session origins;
+there is no provider-selected kind, artificial companion session or permissive
+fallback.
+
+`ConformanceOriginalObservation` captures actual original owners/interfaces with
+reference-equality component IDs, source/runtime/image attribution and optional
+reopen lineage, but never disposes or reclaims a root. A loaded-contract
+observation captures the actual relevant `Type`/module, not a fictional provider
+session. The separate `hoard-original-v1` packet channel feeds a distinct
+`originalObservations` collection only in private execution-proof revision 2;
+revision-1 proofs and public revision-1 entities remain unchanged. Parent
+admission independently checks kind, exact context/roles, selected store package,
+runtime/image correspondence, lineage and cross-attempt replay. Unknown or
+missing required provenance cannot pass.
+
+The first wrapper slice pins the actual metadata authority facade used by the
+common assertion and observes the existing artifact driver/lifetime/controls.
+A package-only partial value-test observer leaves predecessor default builds
+without SDK dependencies or invented sessions. Original factories, clocks,
+common assertions, runtime identities and cleanup remain unchanged.
+The initial model/logger tests first fail on missing APIs/admission. The new
+producer and typed logger/binding contracts pass 68 tests without skips.
+
+Actual observation and independent fresh-cache locked wrapper replay each
+observe six exact discoveries/executions: both metadata providers, both artifact
+providers and two session-free contexts, with 26 actual role/image
+correspondences. The reproduced SDK archive is
+`a94e225acd4ef19a8d1b363f5c7eedf498bae9364fbc2838f917f17c595485e3`.
+These use minimal local logger inputs and are bounded diagnostics, not qualifying
+RunInputs, complete original coverage, native admission or complete profiles.
+Remaining direct-construction/reopen, child/controller and evaluator wiring
+continues. README and affected guides/model/contracts describe the distinction;
+production/deployment examples/diagrams are unaffected. Reviewer markers,
+historical seals, public product contracts and locks remain unchanged.
+Full tooling passes 335 checks (318 passed/seventeen macOS-native skips),
+including all three new original-observation admission/replay regressions.
+Capacity-only failures were resolved by reclaiming thirteen inspected completed
+private caches while preserving sources/archives/images/receipts and the unchanged
+24 GiB guard. The synthetic complete-category origin fixture now independently
+assigns each selected provider package to its original store/schema roles rather
+than borrowing a generic fixture package. Bounded custom architecture review
+found no confirmed blocker for this first slice; complete qualifying inputs and
+coverage remain explicitly outstanding.
 
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations

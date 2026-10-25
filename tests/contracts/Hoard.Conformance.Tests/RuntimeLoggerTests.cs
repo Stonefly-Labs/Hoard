@@ -11,6 +11,52 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class RuntimeLoggerTests
 {
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Original_observations_are_non_owning_and_distinct_from_typed_session_origins(bool contract)
+    {
+        using var owned = new OwnedInput();
+        var probe = new OriginalProbe();
+        var components = contract
+            ? new (string, object)[] { ("contract", typeof(OriginalProbe)) }
+            : [("owner", probe), ("store", probe), ("schema", probe), ("authority", probe), ("controls", probe)];
+        var observation = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", owned.Input.Expected[0].TestIdentity, "memory",
+            contract ? "loaded-contract" : "original-instance", components);
+        Assert.False(probe.Disposed);
+        if (!contract)
+        {
+            Assert.Single(observation.Components.Values.Select(value => value.InstanceId).Distinct());
+        }
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory,
+            string.Join('\n', ConformanceOriginalObservationOutput.Render(observation))));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        Assert.Equal(2, proof.RootElement.GetProperty("schemaVersion").GetInt32());
+        Assert.Empty(proof.RootElement.GetProperty("sessionOrigins").EnumerateArray());
+        var captured = Assert.Single(proof.RootElement.GetProperty("originalObservations").EnumerateArray());
+        Assert.Equal(observation.ObservationId, captured.GetProperty("observationId").GetGuid());
+        Assert.Equal(observation.TestIdentity, captured.GetProperty("testIdentity").GetString());
+        Assert.False(probe.Disposed);
+        AssertSafe(owned.Output);
+    }
+
+    private sealed class OriginalProbe : IDisposable
+    {
+        internal bool Disposed { get; private set; }
+        public void Dispose() => Disposed = true;
+        public override bool Equals(object? obj) => throw new InvalidOperationException("canary-equality");
+        public override int GetHashCode() => throw new InvalidOperationException("canary-hash");
+        public override string ToString() => throw new InvalidOperationException("canary-rendering");
+    }
+
     [Fact]
     public async Task Origin_output_is_bound_to_the_actual_result_proof_without_private_component_labels()
     {

@@ -1185,8 +1185,16 @@ confirmed canceled `40162771846 @c1f79b2` are not admitted. Replacement run
 `40164176338` at exact `2ecda7f` passed all three jobs, 223 foundations without
 failures/errors/skips and 100 scopes/982 exact discoveries/executions with all
 prerequisites and mutation scopes. It admits the repaired diagnostic run, not
-full category qualification or later `90fd088`. The unresolved original-wrapper
-proof-contract decision does not relax existing admission.
+full category qualification or later `90fd088`. The original-wrapper
+proof-contract decision is now resolved through a separate bounded original
+observation channel and private execution-proof revision 2. Independent exact
+witness policy selects actual original-owner/interface or session-free contract
+attribution; typed SDK consumers and unclassified witnesses retain strict typed
+origins. No owner is replaced and no extra SDK session supplies the proof.
+Original MP-01/AS-01/value-test local observations and independent locked replay
+pass six executions/26 image correspondences using minimal diagnostic inputs,
+not full category RunInputs. All original, child/reopen and controller paths
+must still be wired before complete profiles can qualify.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and
