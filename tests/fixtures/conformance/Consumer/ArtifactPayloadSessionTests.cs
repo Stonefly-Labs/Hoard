@@ -11,6 +11,47 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactPayloadSessionTests
 {
     [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Scoped_capacity_failure_is_real_recoverable_and_does_not_poison_actual_settlement(string provider)
+    {
+        await using var resources = new RecordingDirectories();
+        var session = await CreateAsync(provider, resources, new(
+            limits: new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024, transferSlots: 1, waitingCalls: 0)));
+        try { await ArtifactFailureAssertions.ScopedCapacityAsync(session, default); }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Ordinary_capacity_shaped_observer_error_still_faults_actual_settlement(string provider)
+    {
+        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
+        var session = await CreateAsync(provider, resources);
+        var failure = new IOException("ordinary-observer-capacity-error", 28);
+        try
+        {
+            await using var observation = await session.ObserveBoundaryAsync(ArtifactObservationPoint.StagePrefix,
+                () => ValueTask.FromException(failure), default);
+            var ticket = Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Success>(
+                await session.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default)).Value;
+            using var source = new ArtifactPublicationAssertions.ShortSource("ordinary observer failure"u8.ToArray());
+            Assert.Equal(ArtifactFailureCode.Capacity, Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(
+                await session.Store.StageAsync(ticket, source, new(), default)).Code);
+            await session.AwaitSettlementAsync(default);
+            Assert.False(session.Ready);
+        }
+        finally { await Assert.ThrowsAsync<InvalidOperationException>(() => session.DisposeAsync().AsTask()); }
+        var actual = Assert.Single(resources.Settlements).Value;
+        Assert.True(actual.IsFaulted);
+        Assert.Contains(failure, actual.Exception!.InnerExceptions);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local", false)]
     [InlineData("local", true)]
     [InlineData("object", false)]

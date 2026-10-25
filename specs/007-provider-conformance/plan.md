@@ -4047,8 +4047,14 @@ SHA-256 `7f8df462bdb0b2fdf8c93cdd438edbf099eed2443154cf7cfc24564061227bdb`.
 Ten actual dependency images match package bytes per preparation; transfer
 packets remain reused unchanged, not new origins. Original deletion-body
 extraction is complete, not T027/T030 or full bindings/origins/category/profile
-acceptance. The next request is 206 foundations and 89 scopes/772 observations,
-pending. Tasks, reviewer markers, locks, historical seals and product/
+acceptance. Native run `40147381011` binds exact head
+`992b4a5c43efe4057879ede6bc232903225e1f94`: all three jobs, 206 foundations
+without failures/errors/skips and 89 scopes/772 exact discoveries/executions,
+including all eleven admission identities and every actual prerequisite chain.
+Input: `474ce5c8a63f3d2bd169d503a92713d0e911e04a1235a76fc7932eb2c5912926`;
+preparation: `49b91dc028b3c3d510ce346751a803cd4c48da53e0659849c61c3cfc609bd135`;
+free scratch 91,721,879,552 bytes. This remains diagnostic evidence.
+Tasks, reviewer markers, locks, historical seals and product/
 architecture/deployment examples are unaffected.
 
 ### Distinct direct-verification control and adapter architecture constraints
@@ -4087,6 +4093,42 @@ settlement. Complete fault-driver/origin/category/profile admission and final
 T081 remain open; the preliminary review is not a final architecture pass.
 Tasks, reviewer markers, locks, historical seals and product/architecture/
 deployment examples are unaffected.
+
+### Scoped capacity injection without observer-failure suppression
+
+The owned partial artifact projection now exposes a counted scoped capacity
+injection at each provider's genuine post-write staging-prefix boundary.
+Registration constructs its own fixed ENOSPC-shaped `IOException`; only that
+exact instance avoids ordinary observer-failure recording while propagating to
+the actual provider classifier/cleanup. Other exceptions, including the same
+HRESULT, retain permanent fail-closed settlement. No queue reset, replacement
+settlement task, store proxy, physical disk-exhaustion claim or full mandatory
+fault-driver declaration is introduced.
+
+Four package-only parameters run against both actual providers. Common checks
+require repeated classified failure, source progress/borrowed ownership, exact
+not-committed reconciliation, a fresh scope surviving stale disposal and actual
+publication/readback after repair. A one-ticket staging limit makes capacity
+restoration necessary for each following reservation. Ordinary same-code observer
+errors must remain the exact exception in the genuinely faulted final task;
+the injected counterparts require genuine successful final settlement.
+
+The missing common method first fails actual `CS0117`; the missing exact
+four-row runtime scope first fails its factory regression. Actual prepared
+discovery matches all four identities. Tooling passes 316 checks (299 passed/
+seventeen macOS-native skips), including 90 SDK checks. The native foundation
+selector observes 208 checks locally with zero failures/errors but seventeen
+native skips, so correctly returns `Incomplete`/`EvidenceIncomplete`, not native
+acceptance. Fresh preparations pass 311 artifact, 73 Consumer and 89+89 metadata
+cases without skips. Fifteen actual archives reproduce the full-filename map
+SHA-256 `2a871fdf07934fae09154e259a523d244fa937b2199c05b2dd900c1641ae6992`;
+ten dependency images match their archive bytes per preparation. Transfer packets
+remain reused unchanged, not fresh origins. The next native request is
+208 foundations and 91 scopes/780 observations, pending.
+
+T027..T030, complete mandatory fault drivers/origins, category/profile acceptance
+and final T081 remain open. Tasks, reviewer markers, tracked locks, historical
+seals and product/architecture/deployment examples remain unaffected.
 
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations

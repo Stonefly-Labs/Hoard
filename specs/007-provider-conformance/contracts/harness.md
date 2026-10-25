@@ -850,7 +850,9 @@ stamp/outcome, reclaimed state and idempotent retry, plus both reference denials
 intact public readback and eventual removal. Lost-ack fault registration and
 actual reference count/availability remain fixture-side; no callback supplies
 an expected result. Exact method-level discovery must contain all four rows.
-The next request is 89 scopes/772 observations, pending, not full qualification.
+Native run `40147381011` at `992b4a5` passed all three jobs, 206 foundations
+and 89 scopes/772 exact discoveries/executions, including all eleven admission
+identities and every actual prerequisite. This is not full qualification.
 
 `DirectVerification` is a distinct typed observation, not an alias for selection
 or receipt persistence. Local's optional `publish.direct` runs before original
@@ -864,6 +866,25 @@ It does not assert independent readability at a held selection/verification gate
 Preliminary architecture review identified the selection-only substitution gap;
 full fault-driver/origin/category/profile admission and final T081 remain open.
 The next request is 90 scopes/776 observations, pending, not full qualification.
+
+Scoped capacity injection is a separate typed path from ordinary observation:
+the owned projection creates the exact ENOSPC-shaped exception internally and
+throws it after Local's actual `stage.prefix` or Object's actual `multipart.part`
+write. Every arrival is counted. Only that exact exception is excluded from the
+observer-failure queue; it still propagates to the provider's real public failure
+classification and cleanup. No queue is cleared and the stable settlement task
+is never replaced. Duplicate registration/admission fences and identity-checked
+scope disposal remain unchanged. Ordinary same-HRESULT exceptions still poison
+final settlement, as do the existing failed-damage observers.
+
+Four exact package-only rows cover both providers: common checks require
+repeated Capacity failures, source progress without source disposal, exact
+not-committed reconciliation, fresh-scope replacement surviving stale disposal,
+restored full single-ticket capacity, and actual publication/readback; the
+unexpected-observer counterparts require the exact original exception in the
+faulted final task and no optimistic Released observation. This is an injected
+storage failure, not measured disk exhaustion or a complete mandatory fault
+driver. The next request is 91 scopes/780 observations, pending.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

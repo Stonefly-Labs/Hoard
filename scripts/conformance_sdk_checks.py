@@ -1266,6 +1266,16 @@ def configured_artifact_session_scenarios():
     return (("configured-artifact-session", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
+def artifact_capacity_injection_scenarios():
+    identities = {
+        PAYLOAD_ARTIFACT_CONSUMER_PREFIX + name + f'(provider: "{provider}")'
+        for name in (
+            "Scoped_capacity_failure_is_real_recoverable_and_does_not_poison_actual_settlement",
+            "Ordinary_capacity_shaped_observer_error_still_faults_actual_settlement")
+        for provider in ("local", "object")}
+    return (("artifact-capacity-injection", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def artifact_direct_verification_scenarios():
     method = (PAYLOAD_ARTIFACT_CONSUMER_PREFIX
               + "Direct_verification_observation_holds_new_and_duplicate_publication_before_acknowledgement")
@@ -1667,7 +1677,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-detection", "original-artifact-quarantine-reopen", "original-artifact-validation",
             "original-artifact-recovery-pages", "original-artifact-recovery-races",
             "original-artifact-recovery-reopen", "original-artifact-admission",
-            "original-artifact-deletion-settlement", "artifact-direct-verification"],
+            "original-artifact-deletion-settlement", "artifact-direct-verification", "artifact-capacity-injection"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1678,11 +1688,11 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
     if (name in ("local-artifact-session", "object-artifact-session", "configured-artifact-session",
-                 "payload-artifact-session", "artifact-direct-verification")
+                 "payload-artifact-session", "artifact-direct-verification", "artifact-capacity-injection")
             or any(identity.startswith(ARTIFACT_CONSUMER_PREFIXES) for identity in identities)):
         if scenario not in (*local_artifact_session_scenarios(), *object_artifact_session_scenarios(),
                             *configured_artifact_session_scenarios(), *payload_artifact_session_scenarios(),
-                            *artifact_direct_verification_scenarios()):
+                            *artifact_direct_verification_scenarios(), *artifact_capacity_injection_scenarios()):
             raise evidence.ConformanceError("WitnessMissing")
     original_metadata = name.startswith("original-metadata-")
     original_artifacts = name.startswith("original-artifact-")
@@ -2208,6 +2218,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "artifact-direct-verification"}), flush=True)
         for scenario in artifact_direct_verification_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "artifact-capacity-injection"}), flush=True)
+        for scenario in artifact_capacity_injection_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

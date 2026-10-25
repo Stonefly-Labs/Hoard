@@ -1693,13 +1693,23 @@ The two remaining deletion methods now also forward all four original parameters
 to common checks, preserving uncertain removal, actual reclamation, exact receipt
 continuity and live/unavailable reference denial. Fault registration and actual
 reference controls stay fixture-side. Fresh independent replay passes 311 artifact
-and 65 Consumer cases; the next native request is 89 scopes/772 observations,
-pending, not full qualification.
+and 65 Consumer cases. Native run `40147381011` at `992b4a5` passed all three
+jobs, 206 foundations and 89 scopes/772 exact discoveries/executions, including
+the previously canceled admission scope and all prerequisite proofs.
 Typed direct-verification observations now cover both new and verified-duplicate
 publications on both actual providers, without treating selection as verification
 or holding a selected pointer as proof of independent readability.
 Fresh independent replay passes 311 artifact and 69 Consumer cases; the next
 native request is 90 scopes/776 observations, pending, not full qualification.
+Scoped capacity injection now throws an actual ENOSPC-shaped exception after
+each provider's genuine prefix write. Only that registration's exact injected
+exception avoids observer-failure poisoning; ordinary same-code exceptions still
+fault final settlement. Four package-only rows prove repeated failure, full
+single-ticket capacity restoration, exact reconciliation, stale-scope disposal,
+successful publication/readback and genuine successful or faulted settlement.
+Fresh package preparations pass 311 artifact, 73 Consumer and 89+89 metadata
+cases; the next native request is 91 scopes/780 observations, pending.
+This injects storage failure, not actual disk exhaustion.
 Full bindings, remaining mandatory fault controls and category/profile
 acceptance remain unfinished.
 

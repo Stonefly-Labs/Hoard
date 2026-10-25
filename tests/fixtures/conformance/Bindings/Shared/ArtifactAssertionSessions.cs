@@ -334,7 +334,19 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
     protected abstract void RemoveObserver(string boundary);
 
     public ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
-        ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken)
+        ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<IAsyncDisposable>(RegisterBoundary(point, observer, cancellationToken));
+
+    public ValueTask<IArtifactFaultRegistration> InjectCapacityFailureAsync(CancellationToken cancellationToken)
+    {
+        var failure = new IOException("InjectedCapacityFailure", 28);
+        return ValueTask.FromResult<IArtifactFaultRegistration>(RegisterBoundary(
+            ArtifactObservationPoint.StagePrefix, () => ValueTask.FromException(failure), cancellationToken, failure));
+    }
+
+    private Registration RegisterBoundary(
+        ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken,
+        Exception? expectedFailure = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(observer);
@@ -347,15 +359,16 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
             var registration = new Registration(this, point, boundary);
             SetObserver(boundary, async () =>
             {
+                registration.Observe();
                 try { await observer(); }
-                catch (Exception error)
+                catch (Exception error) when (!ReferenceEquals(error, expectedFailure))
                 {
                     ownership.ObserverFailures.Enqueue(error);
                     throw;
                 }
             });
             observations.Add(point, registration);
-            return ValueTask.FromResult<IAsyncDisposable>(registration);
+            return registration;
         }
     }
 
@@ -369,8 +382,11 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
     }
 
     private sealed class Registration(
-        ArtifactAssertionSession session, ArtifactObservationPoint point, string boundary) : IAsyncDisposable
+        ArtifactAssertionSession session, ArtifactObservationPoint point, string boundary) : IArtifactFaultRegistration
     {
+        private long observationCount;
+        public long ObservationCount => Interlocked.Read(ref observationCount);
+        public void Observe() => Interlocked.Increment(ref observationCount);
         public string Boundary { get; } = boundary;
         public ValueTask DisposeAsync()
         {

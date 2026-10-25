@@ -1,4 +1,5 @@
 using Hoard.Abstractions.Storage;
+using Hoard.Testing.Conformance.Bindings;
 using static Hoard.Testing.Conformance.Artifacts.ArtifactPublicationAssertions;
 
 namespace Hoard.Testing.Conformance.Artifacts;
@@ -7,6 +8,49 @@ public static class ArtifactFailureAssertions
 {
     internal const string Canary = "synthetic-artifact-secret-canary";
     private const string OpaqueCanary = "synthetic-artifact-private-proof";
+
+    public static async Task ScopedCapacityAsync(
+        IArtifactAssertionSession session, CancellationToken cancellationToken)
+    {
+        var bytes = "publication after injected storage capacity failure"u8.ToArray();
+        async Task FailStagingAsync()
+        {
+            var ticket = Success(await session.Store.ReserveWriteAsync(
+                new(new ArtifactExpectations(1024)), new(), cancellationToken));
+            using var source = new ShortSource(bytes);
+            var failed = Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(
+                await session.Store.StageAsync(ticket, source, new(), cancellationToken));
+            Assert.Equal(ArtifactFailureCode.Capacity, failed.Code);
+            AssertSanitized(failed.ToString());
+            await session.AwaitSettlementAsync(cancellationToken);
+            Assert.True(source.BytesRead > 0);
+            Assert.False(source.WasDisposed);
+            Assert.IsType<ArtifactResolution.NotCommitted>(Success(
+                await session.Store.ReconcileAsync(ticket, new(), cancellationToken)));
+        }
+
+        var injection = await session.InjectCapacityFailureAsync(cancellationToken);
+        try
+        {
+            await FailStagingAsync();
+            await FailStagingAsync();
+            Assert.Equal(2, injection.ObservationCount);
+        }
+        finally { await injection.DisposeAsync(); }
+        await using (var replacement = await session.InjectCapacityFailureAsync(cancellationToken))
+        {
+            await injection.DisposeAsync();
+            await FailStagingAsync();
+            Assert.Equal(1, replacement.ObservationCount);
+            Assert.Equal(2, injection.ObservationCount);
+        }
+        using var valid = new ShortSource(bytes);
+        var committed = await PublishAsync(session.Store, valid, new(1024), cancellationToken);
+        Assert.Equal(bytes, await ReadAsync(session.Store, committed.Stamp, cancellationToken));
+        Assert.False(valid.WasDisposed);
+        await session.AwaitSettlementAsync(cancellationToken);
+        Assert.True(session.Ready);
+    }
 
     public static async Task StorageFailuresAsync(IArtifactStore store, CancellationToken cancellationToken)
     {

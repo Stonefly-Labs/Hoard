@@ -434,13 +434,22 @@ expanded request retains all eleven admission identities.
 The remaining two deletion bodies now share four frozen parameters, retaining
 actual pending/reclaimed receipt continuity and live/unavailable reference
 denial with physical fault/reference controls fixture-side. Fresh independent
-replay passes 311 artifact and 65 Consumer cases; the next native request is
-89 scopes/772 observations, pending, not full qualification.
+replay passes 311 artifact and 65 Consumer cases. Native run `40147381011`
+at `992b4a5` passed all three jobs, 206 foundations and 89 scopes/772 exact
+discoveries/executions with every actual prerequisite, not full qualification.
 Distinct direct-verification observations now hold new and duplicate publication
 on both actual providers, without substituting selection or claiming independent
 readability while held. Fresh independent replay passes 311 artifact and
 69 Consumer cases; the next native request is 90 scopes/776 observations,
 pending, not complete fault-driver/category/profile qualification.
+Scoped capacity injection now targets the genuine post-write prefix boundary,
+not an arbitrary observer exception or actual disk exhaustion. Four new rows
+prove repeated classified failure, full single-ticket capacity restoration,
+exact reconciliation, safe replacement/disposal, borrowed-source ownership and
+real repair/readback, while ordinary capacity-shaped observer errors still
+fault the stable final settlement task. Fresh preparations pass 311 artifact,
+73 Consumer and 89+89 metadata cases; the next native request is
+91 scopes/780 observations, pending, not full fault-driver qualification.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

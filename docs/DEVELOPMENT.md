@@ -7331,8 +7331,14 @@ fifteen actual archives reproduce exactly, canonical full-filename map SHA-256
 Ten actual dependency images match package bytes per preparation; transfer
 packets remain reused unchanged, not new origins. All original deletion bodies
 are now shared, not T027/T030 or full bindings/origins/category/profile
-acceptance. The next request is 206 foundations and 89 scopes/772 observations,
-pending. Tasks, reviewer markers, locks, historical seals and product/
+acceptance. Native run `40147381011` binds exact head
+`992b4a5c43efe4057879ede6bc232903225e1f94`: all three jobs, 206 foundations
+without failures/errors/skips and 89 scopes/772 exact discoveries/executions,
+including all eleven admission identities and every actual prerequisite chain.
+Input: `474ce5c8a63f3d2bd169d503a92713d0e911e04a1235a76fc7932eb2c5912926`;
+preparation: `49b91dc028b3c3d510ce346751a803cd4c48da53e0659849c61c3cfc609bd135`;
+free scratch 91,721,879,552 bytes. This is diagnostic, not full acceptance.
+Tasks, reviewer markers, locks, historical seals and product/
 architecture/deployment examples are unaffected.
 
 Recovery-reopen native run `40146117625` binds exact head
@@ -7369,6 +7375,37 @@ remain reused unchanged, not new origins. The next native request is
 fault drivers, origins, category/profile admission and final T081 remain open.
 Tasks, reviewer markers, locks, historical seals and product/architecture/
 deployment examples remain unaffected.
+
+Scoped capacity injection now uses each provider's genuine post-write staging
+prefix. The projection constructs its own ENOSPC-shaped exception; only that
+registration's exact instance bypasses observer-failure recording, while public
+provider classification/cleanup remain real. Ordinary exceptions with the same
+HRESULT still fault the original stable final settlement task. No failures are
+cleared and no store result is substituted. This is injected storage failure,
+not actual disk exhaustion or complete mandatory fault-driver admission.
+
+Four package-only rows prove repeated failure, full single-ticket staging
+capacity restoration, exact reconciliation, borrowed-source ownership, a fresh
+scope surviving stale disposal and real publication/readback after repair.
+They also distinguish genuine successful final settlement from ordinary
+observer-error poisoning with the exact original exception. The absent common
+method first fails intended `CS0117`; the exact scope first fails its factory
+regression. Actual prepared discovery matches all four identities.
+
+Fresh preparations pass 311 artifact, 73 Consumer and 89+89 metadata cases;
+both Consumer builds additionally pass the tightened single-ticket limit.
+Fifteen actual archive bytes reproduce the canonical full-filename map SHA-256
+`2a871fdf07934fae09154e259a523d244fa937b2199c05b2dd900c1641ae6992`;
+ten runtime dependency images match archive bytes per preparation. Tooling
+passes 316 checks (299 passed/seventeen macOS-native skips), including 90 SDK
+checks; formatting, frozen inventory, catalogs and patch checks pass. The native
+foundation selector locally observes 208 checks with zero failures/errors but
+seventeen native skips, correctly returning `Incomplete`/`EvidenceIncomplete`;
+Linux native acceptance remains pending. The next request is 208 foundations
+and 91 scopes/780 observations, pending. Transfer packets remain reused unchanged,
+not fresh origins. T027..T030, full fault drivers/origins/category/profile
+qualification and final T081 remain open; tasks, reviewer markers, tracked locks,
+historical seals and product/architecture/deployment examples are unaffected.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

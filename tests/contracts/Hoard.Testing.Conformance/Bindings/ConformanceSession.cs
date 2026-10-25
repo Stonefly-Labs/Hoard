@@ -181,11 +181,18 @@ public interface IArtifactAssertionSession : IAsyncDisposable
     ValueTask<IArtifactAssertionSession> ReopenAsync(CancellationToken cancellationToken);
     ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
         ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken);
+    /// <summary>Injects an ENOSPC-shaped storage exception after a real staging prefix write, not actual disk exhaustion.</summary>
+    ValueTask<IArtifactFaultRegistration> InjectCapacityFailureAsync(CancellationToken cancellationToken);
     /// <summary>Damages the exact current payload through owned fixture work; it does not change receipt or quarantine state.</summary>
     ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken);
     /// <summary>Joins current provider workers; this does not close authority admission or release owned roots.</summary>
     ValueTask AwaitSettlementAsync(CancellationToken cancellationToken);
     ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken cancellationToken);
+}
+
+public interface IArtifactFaultRegistration : IAsyncDisposable
+{
+    long ObservationCount { get; }
 }
 
 public interface IArtifactConformanceSession : IAsyncDisposable

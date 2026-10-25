@@ -679,7 +679,8 @@ cleanup/receipt settlement, and live or unavailable reference authority denies
 removal without harming public bytes. Common checks own every expected
 code/receipt/size; actual observer registration and reference controls remain
 fixture-side. Fresh independent replay passes 311 artifact and 65 Consumer cases;
-the next native request is 89 scopes/772 observations, pending, not qualification.
+native run `40147381011` at `992b4a5` passed all three jobs, 206 foundations
+and 89 scopes/772 exact discoveries/executions with all actual prerequisites.
 
 The owned projections now expose a distinct `DirectVerification` observation:
 Local's optional `publish.direct` precedes its original direct validation on
@@ -691,6 +692,20 @@ bytes after genuine settlement. No provider mechanism is shared or replaced,
 and this does not yet admit full fault drivers/bindings. Fresh independent replay
 passes 311 artifact and 69 Consumer cases; the next native request is
 90 scopes/776 observations, pending, not qualification.
+
+`InjectCapacityFailureAsync` returns an owned, counted scope that throws a fixed
+ENOSPC-shaped `IOException` at Local's actual `stage.prefix` or Object's actual
+`multipart.part`, after the real prefix write. It is injected storage failure,
+not physical disk exhaustion. Only the exact internally created exception for
+that registration bypasses observer-failure recording; unexpected observer
+exceptions, including another ENOSPC-shaped exception, still poison the same
+final settlement task. Scope disposal cannot remove a newer registration.
+Common checks exercise repeated failures, exact not-committed reconciliation,
+borrowed sources, replacement scopes and actual publication/readback after
+repair. Package-only tests constrain staging capacity to one full ticket and
+observe genuine successful versus faulted final settlement on both providers.
+Fresh preparations pass 311 artifact and 73 Consumer cases; the next native
+request is 91 scopes/780 observations, pending, not full fault-driver admission.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and
