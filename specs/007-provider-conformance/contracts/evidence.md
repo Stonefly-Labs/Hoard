@@ -151,6 +151,14 @@ correspondences. Native admission requires 231 foundations and
 passed all three jobs, 230 foundations and 105 scopes/1,082 observations with
 every prerequisite; it admits earlier witness-specific diagnostics, not these
 later forest sources or complete categories/profiles. Wire schemas are unchanged.
+The configured metadata host now contributes two actual module-owned roots,
+including rejected schema admission, while 38 additional artifact parameters
+observe their existing driver/interfaces after unchanged assertions. Coverage
+is 63 operational metadata identities per provider and 50 artifact parameters.
+Local observation/replay pass 180 executions, 204 records and 1,104 image
+correspondences. Native admission requires 231 foundations and
+105 scopes/1,163 observations, pending; controllers, remaining artifact lifetimes
+and complete qualification are not inferred.
 
 The implemented private transport distinguishes `purpose: discovery` from
 `purpose: execution` and hashes each complete JSONL stream in its completion

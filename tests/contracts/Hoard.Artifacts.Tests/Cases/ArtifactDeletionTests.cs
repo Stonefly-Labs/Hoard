@@ -1,11 +1,12 @@
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactDeletionTests
+public sealed class ArtifactDeletionTests(ITestOutputHelper output)
 {
     [Theory]
     [InlineData("local")]
@@ -16,6 +17,7 @@ public sealed class ArtifactDeletionTests
             ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
         await ArtifactDeletionAssertions.PendingReclamationAsync(driver.Store, driver.Maintenance, driver.Identity,
             observer => SetObserver(driver, "delete.removed", "pointer.tombstone", observer), default);
+        driver.ObserveOriginal(output, nameof(ArtifactDeletionTests));
     }
 
     [Theory]
@@ -27,6 +29,7 @@ public sealed class ArtifactDeletionTests
             ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
         await ArtifactDeletionAssertions.ExactReceiptsAndRecreationAsync(
             driver.Store, driver.Maintenance, driver.Identity, default);
+        driver.ObserveOriginal(output, nameof(ArtifactDeletionTests));
     }
 
     [Theory]
@@ -40,6 +43,7 @@ public sealed class ArtifactDeletionTests
             ValueTask.FromResult(new ArtifactReferenceDecision(available, count, Guid.NewGuid())));
         await ArtifactDeletionAssertions.LiveReferencesAsync(driver.Store,
             value => count = value, value => available = value, default);
+        driver.ObserveOriginal(output, nameof(ArtifactDeletionTests));
     }
 
     [Theory]
@@ -50,5 +54,6 @@ public sealed class ArtifactDeletionTests
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, references: (_, _) =>
             ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
         await ArtifactDeletionAssertions.HeldReaderExcludesDeletionAsync(driver.Store, default);
+        driver.ObserveOriginal(output, nameof(ArtifactDeletionTests));
     }
 }

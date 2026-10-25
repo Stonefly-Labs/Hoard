@@ -191,7 +191,7 @@ session. Actual typed SDK binding consumers retain complete typed-session origin
 Unclassified witnesses retain the existing typed-origin requirement; there is
 no permissive default or provider-selected classification.
 
-The closed incremental policy covers 62 operational metadata identities per
+The closed incremental policy covers 63 operational metadata identities per
 provider, twelve original artifact publication parameters, both frozen artifact value witnesses (expectations/checksums
 and redacted diagnostics/get-only members), and the auxiliary identity-bound value test. The
 non-owning `ConformanceOriginalObservation` captures exact run/case/test/binding,
@@ -281,8 +281,16 @@ rethrowing. No observer otherwise takes cleanup ownership.
 Local observation/replay pass 140 executions, 162 records (158 original owners
 and four contracts) and 818 image correspondences with SDK archive
 `032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`.
-Native admission requires 231 foundations and 105 scopes/1,123 observations,
-pending; public/private wire schemas remain unchanged.
+The configured-host witness adds two independent roots whose actual owners
+are the composed modules, not additional fixture sessions; both admitted and
+rejected-schema lifetimes retain original construction/assertion/disposal.
+Artifact policy now includes 50 exact parameters across publication, deletion,
+reconciliation, read revalidation/destination failure, publication races, storage
+failures and selected budgets. Their original drivers retain cleanup ownership.
+Current local observation/replay pass 180 executions, 204 records
+(200 original owners/four contracts) and 1,104 image correspondences with the
+same SDK archive. Native admission requires 231 foundations and
+105 scopes/1,163 observations, pending; public/private wire schemas are unchanged.
 
 ### Shared bounds
 

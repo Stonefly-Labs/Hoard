@@ -1,9 +1,10 @@
 using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactPublicationRaceTests
+public sealed class ArtifactPublicationRaceTests(ITestOutputHelper output)
 {
     [Theory]
     [InlineData("local")]
@@ -13,6 +14,7 @@ public sealed class ArtifactPublicationRaceTests
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactPublicationAssertions.ConcurrentEquivalentWritersAsync(driver.Store,
             observer => SetObserver(driver, "publish.admitted", "object.publication-admitted", observer), default);
+        driver.ObserveOriginal(output, nameof(ArtifactPublicationRaceTests));
     }
 
     [Theory]
@@ -22,6 +24,7 @@ public sealed class ArtifactPublicationRaceTests
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactPublicationAssertions.ConflictingStagedLengthAsync(driver.Store, default);
+        driver.ObserveOriginal(output, nameof(ArtifactPublicationRaceTests));
     }
 
     [Theory]

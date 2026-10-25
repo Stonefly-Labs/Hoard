@@ -1,10 +1,11 @@
 using Hoard.Abstractions.Storage;
 using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactReadVerificationTests
+public sealed class ArtifactReadVerificationTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task Local_reconciliation_cannot_finalize_after_overlapping_read_quarantines_the_incarnation()
@@ -46,6 +47,7 @@ public sealed class ArtifactReadVerificationTests
                 path ??= Directory.GetFiles(driver.PayloadDirectory).Single();
                 File.WriteAllBytes(path, bytes);
             }, barrier.Release, default);
+        driver.ObserveOriginal(output, nameof(ArtifactReadVerificationTests));
     }
 
     [Theory]
@@ -120,5 +122,6 @@ public sealed class ArtifactReadVerificationTests
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactReadAssertions.DestinationFailureAsync(driver.Store, ArtifactTestData.Canary, default);
+        driver.ObserveOriginal(output, nameof(ArtifactReadVerificationTests));
     }
 }

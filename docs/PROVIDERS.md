@@ -988,6 +988,16 @@ Native admission now requires 231 foundations and 105 scopes/1,123 observations,
 pending. Earlier `40168790991 @3f1409a` passed all three jobs, 230 foundations
 and 105 scopes/1,082 observations with every prerequisite; it does not admit
 the later forest increment or complete profiles.
+The following increment observes both genuinely configured metadata module
+owners, including rejected schema admission, and 38 more artifact parameters
+through their existing driver. Metadata now covers 63 operational identities
+per provider; artifacts cover 50 publication/deletion/reconciliation/read/race/
+failure/budget parameters. No additional stores, factories or cleanup owners
+are created. Local observation/replay pass 180 executions, 204 records
+(200 original owners/four contracts) and 1,104 image correspondences with the
+unchanged forest SDK archive. Native admission requires 231 foundations and
+105 scopes/1,163 observations, pending. Controllers, remaining artifact lifetimes
+and complete qualifying profiles are still unfinished.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

@@ -5077,6 +5077,38 @@ Both input documents independently recompute; free scratch is 91,721,125,888
 bytes. This admits that earlier diagnostic, not the later forest sources or
 qualifying profiles.
 
+### Actual configured host owners and further artifact parameters
+
+The original configured-host witness observes two genuine composed module
+owners and their existing session interfaces, including rejected schema
+admission. Both roots preserve original construction/assertions/disposal; no
+additional factory/session or synthetic module is created. Local probes also
+check the actual owner type hash against `MetadataFixtureModule`.
+Thirty-eight further artifact parameters observe the existing driver/interfaces
+after unchanged common assertions across deletion, reconciliation, read
+revalidation/destination failure, publication races, storage failures and
+selected budget checks. More complicated parameter/reopen/controller shapes
+are deliberately not admitted through a single-root shortcut.
+
+The host's missing forest policy first fails `WitnessMissing`; host/artifact
+routing first fails exact execution counts. Coverage becomes 63 operational
+metadata identities per provider and 50 artifact parameters. Actual minimal-input
+observation plus independent empty-cache locked replay each pass 180 exact
+discoveries/executions, 204 records (200 original owners/four contracts) and
+1,104 role/image correspondences, reproducing unchanged SDK archive
+`032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`.
+No category/profile qualification is inferred.
+
+`python3 -m unittest discover -s tests/tooling -q` passes 339 checks
+(322 passed/seventeen explicit macOS-native skips).
+Changed metadata/artifact source whitespace, frozen inventory, SDK catalog and
+patch checks pass. The next native vector requires 231 foundations and
+105 scopes/1,163 observations, pending. Controller and remaining artifact
+lifetime attribution, qualifying backends and later tasks remain unfinished.
+README and affected guides/model/contracts are updated; product/deployment
+examples and diagrams, public product contracts, historical seals, locks and
+reviewer/task markers are unaffected.
+
 ## Summary
 
 

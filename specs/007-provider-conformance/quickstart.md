@@ -647,6 +647,13 @@ pending. Earlier `40168790991 @3f1409a` passed all three jobs, 230 foundations
 and 105 scopes/1,082 observations with every prerequisite, not these later
 forest sources or qualifying profiles. Broader artifact/host/controller
 attribution and executable qualifying profiles remain unfinished.
+The following increment observes both actual configured metadata module roots
+and 38 more original artifact parameters. Coverage becomes 63 operational
+metadata identities per provider and 50 artifact parameters; actual local
+observation/replay pass 180 executions, 204 records and 1,104 image
+correspondences with the same SDK archive. Native admission requires
+231 foundations and 105 scopes/1,163 observations, pending. Controller and
+remaining artifact lifetime attribution and executable profiles remain unfinished.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

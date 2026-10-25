@@ -8148,6 +8148,30 @@ Host/controller attribution, broader artifacts and qualifying backends remain
 unfinished. README and affected guides/model/contracts reflect this distinction;
 product/deployment examples and diagrams are unaffected.
 
+The configured-host witness now observes both actual composed module owners
+and their existing session interfaces after unchanged assertions, including
+rejected schema admission. Its two independent roots use the existing
+reference-continuity sequence; no new fixture, module or disposal is introduced.
+Thirty-eight more original artifact parameters observe their genuine drivers
+across deletion, reconciliation, read revalidation/destination failure,
+publication races, storage failures and selected budget checks.
+
+Coverage is 63 operational metadata identities per provider and 50 artifact
+parameters. The missing host policy first fails `WitnessMissing`; missing
+host/artifact routing first fails exact execution counts. Actual local
+observation and independent empty-cache locked replay each pass 180
+discoveries/executions, 204 records (200 original owners/four contracts) and
+1,104 role/image correspondences. Host owner hashes match the actual
+`MetadataFixtureModule` type. The SDK archive is unchanged from the forest
+increment. These remain minimal-input diagnostics, not qualifying RunInputs.
+Full tooling passes 339 checks (322 passed/seventeen explicit macOS-native
+skips); changed metadata/artifact source whitespace, frozen inventory and SDK
+catalog checks pass. Native admission requires 231 foundations and
+105 scopes/1,163 observations, pending. Controllers, remaining artifact
+lifetimes and qualifying backends remain unfinished. README and related
+guides/model/contracts are updated; product/deployment examples and diagrams
+are unaffected.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

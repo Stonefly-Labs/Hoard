@@ -1,11 +1,12 @@
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactReconciliationTests
+public sealed class ArtifactReconciliationTests(ITestOutputHelper output)
 {
     [Theory]
     [InlineData("local")]
@@ -16,6 +17,7 @@ public sealed class ArtifactReconciliationTests
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock,
             references: (_, _) => ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
         await ArtifactReconciliationAssertions.FinalizedMutationExpiryAsync(driver.Store, clock.Advance, default);
+        driver.ObserveOriginal(output, nameof(ArtifactReconciliationTests));
     }
 
     [Theory]
@@ -25,6 +27,7 @@ public sealed class ArtifactReconciliationTests
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactReconciliationAssertions.AcknowledgedReceiptRetryAsync(driver.Store, default);
+        driver.ObserveOriginal(output, nameof(ArtifactReconciliationTests));
     }
 
     [Theory]
@@ -36,6 +39,7 @@ public sealed class ArtifactReconciliationTests
         await ArtifactReconciliationAssertions.LostAcknowledgmentAsync(driver.Store,
             () => SetObserver(driver, "publish.decided", "pointer.selected",
                 () => ValueTask.FromException(new IOException(ArtifactTestData.Canary))), default);
+        driver.ObserveOriginal(output, nameof(ArtifactReconciliationTests));
     }
 
     [Theory]
@@ -47,5 +51,6 @@ public sealed class ArtifactReconciliationTests
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
         await ArtifactReconciliationAssertions.ExpiredHistoryRollbackAsync(
             driver.Store, driver.Identity, clock.Advance, clock.SetUtc, default);
+        driver.ObserveOriginal(output, nameof(ArtifactReconciliationTests));
     }
 }

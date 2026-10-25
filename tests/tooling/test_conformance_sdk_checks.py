@@ -1015,7 +1015,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         run = SimpleNamespace(root=self.directory)
         scenarios = checks.original_observation_scenarios()
         self.assertEqual(len(scenarios), 5)
-        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 140)
+        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 180)
         frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_bytes())
         expected_metadata = {name for entry in frozen["entries"] if entry["profileId"] == "metadata"
                              for name in entry["runtimeTests"] if name.startswith((
@@ -1026,6 +1026,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                                  "Hoard.Metadata.Tests.MetadataAtomicityTests.",
                                  "Hoard.Metadata.Tests.MetadataDeadlineTests.",
                                  "Hoard.Metadata.Tests.MetadataAdmissionTests.",
+                                 "Hoard.Metadata.Tests.MetadataHostIntegrationTests.",
                                  "Hoard.Metadata.Tests.MetadataSchemaTests.",
                                  "Hoard.Metadata.Tests.MetadataReconciliationTests.",
                                  "Hoard.Metadata.Tests.MetadataFailureTests.MP20_",
@@ -1041,7 +1042,19 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(set(scenarios[1][1]), expected_metadata)
         expected_artifacts = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
                               for name in entry["runtimeTests"]
-                              if name.startswith("Hoard.Artifacts.Tests.ArtifactPublicationTests.")}
+                              if name.startswith(tuple("Hoard.Artifacts.Tests." + prefix for prefix in (
+                                  "ArtifactPublicationTests.", "ArtifactDeletionTests.", "ArtifactReconciliationTests.",
+                                  "ArtifactReadVerificationTests.Admitted_open_",
+                                  "ArtifactReadVerificationTests.Destination_failure_",
+                                  "ArtifactPublicationRaceTests.Equivalent_concurrent_",
+                                  "ArtifactPublicationRaceTests.Conflicting_staged_",
+                                  "ArtifactFailureTests.Storage_failures_",
+                                  "ArtifactFailureTests.Unexpected_fault_",
+                                  "ArtifactBudgetTests.Reclaimed_identity_",
+                                  "ArtifactBudgetTests.History_candidate_pages_",
+                                  "ArtifactBudgetTests.Producer_and_consumer_",
+                                  "ArtifactBudgetTests.Cancellation_of_an_admitted_",
+                                  "ArtifactBudgetTests.Cancellation_after_resource_")))}
         self.assertEqual(set(scenarios[2][1]), expected_artifacts)
         for scenario in scenarios:
             metadata = "-metadata-" in scenario[0]

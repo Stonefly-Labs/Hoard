@@ -1,11 +1,12 @@
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.Local;
 using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactFailureTests
+public sealed class ArtifactFailureTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task Reused_object_receipt_survives_failed_unselected_assembly_cleanup()
@@ -141,6 +142,7 @@ public sealed class ArtifactFailureTests
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactFailureAssertions.StorageFailuresAsync(driver.Store, default);
+        driver.ObserveOriginal(output, nameof(ArtifactFailureTests));
     }
 
     [Theory]
@@ -155,5 +157,6 @@ public sealed class ArtifactFailureTests
             if (driver.LocalControls is { } local) { local.SetObserver("publish.decided", Fault); }
             else { driver.ObjectControls!.SetObserver("pointer.selected", Fault); }
         }, default);
+        driver.ObserveOriginal(output, nameof(ArtifactFailureTests));
     }
 }

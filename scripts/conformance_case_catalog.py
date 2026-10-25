@@ -23,6 +23,8 @@ CATEGORY_BINDING_SLOTS = (
 _ORIGINAL_METADATA_ROLES = ("owner", "store", "schema", "authority", "controls")
 _ORIGINAL_ARTIFACT_ROLES = ("owner", "store", "validator", "maintenance", "lifetime", "authority", "controls")
 ORIGINAL_METADATA_FORESTS = MappingProxyType({
+    "Hoard.Metadata.Tests.MetadataHostIntegrationTests."
+    "MP46_Configured_selection_uses_existing_lifecycle_and_has_no_routes_or_fallback": (None, None),
     "Hoard.Metadata.Tests.MetadataLeaseTests."
     "MP29_Expiry_is_rechecked_at_the_final_decision_for_renew_release_and_guards": (None, None, None),
     "Hoard.Metadata.Tests.MetadataPagingTests."
@@ -111,14 +113,41 @@ ORIGINAL_METADATA_WITNESSES = tuple(sorted((
               "MP30_Clock_rollback_does_not_undo_expiry_and_new_generation_is_retained")),
       ) for method in methods))))
 ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted(
-    f'Hoard.Artifacts.Tests.ArtifactPublicationTests.{method}(provider: "{provider}")'
-    for method in (
+    f'Hoard.Artifacts.Tests.{fixture}.{method}(provider: "{provider}")'
+    for fixture, methods in (
+        ("ArtifactPublicationTests", (
         "Empty_content_and_true_absence_are_distinct",
         "Empty_unknown_length_and_positive_short_reads_require_real_eof",
         "Every_expectation_is_checked_and_declared_length_does_not_replace_eof",
         "Unsupported_checksum_and_range_reject_before_storage_or_stream_io",
         "Staging_is_private_until_complete_verified_commit",
-        "Submitted_duplicates_are_fully_verified_and_keep_one_immutable_incarnation")
+        "Submitted_duplicates_are_fully_verified_and_keep_one_immutable_incarnation")),
+        ("ArtifactDeletionTests", (
+            "Lost_delete_acknowledgment_preserves_pending_reclamation_until_actual_cleanup",
+            "Exact_delete_receipts_and_recreation_never_remove_the_new_incarnation",
+            "Live_reference_or_unavailable_reference_authority_denies_removal",
+            "A_held_reader_finishes_before_exclusive_deletion_and_later_opens_cannot_enter")),
+        ("ArtifactReconciliationTests", (
+            "Finalized_mutation_retries_preserve_expiry_and_foreign_ticket_failures",
+            "Acknowledged_commit_reconciles_and_retries_one_identical_receipt_without_new_source",
+            "Lost_acknowledgment_never_becomes_rollback_or_another_publication",
+            "Expired_history_cannot_be_revived_by_clock_rollback_or_foreign_epoch")),
+        ("ArtifactReadVerificationTests", (
+            "Admitted_open_rechecks_quarantine_before_delivering_a_session",
+            "Destination_failure_and_second_copy_never_return_verified_completion_or_dispose_borrowed_streams")),
+        ("ArtifactPublicationRaceTests", (
+            "Equivalent_concurrent_writers_keep_one_stamp_and_distinct_receipts",
+            "Conflicting_staged_length_cannot_replace_valid_content_or_its_stamp")),
+        ("ArtifactFailureTests", (
+            "Storage_failures_remain_distinct_and_sanitized_and_do_not_publish_partial_content",
+            "Unexpected_fault_after_visibility_requires_exact_ticket_reconciliation")),
+        ("ArtifactBudgetTests", (
+            "Reclaimed_identity_history_has_a_finite_budget_and_expiry_restores_new_digest_admission",
+            "History_candidate_pages_resume_past_ineligible_entries_and_preserve_a_faulted_candidate",
+            "Producer_and_consumer_inactivity_deadlines_release_cooperative_work_without_closing_borrowed_streams",
+            "Cancellation_of_an_admitted_commit_cannot_fence_an_externally_renewed_owner",
+            "Cancellation_after_resource_release_cannot_retain_an_already_settled_operation")),
+    ) for method in methods
     for provider in ("local", "object")))
 
 

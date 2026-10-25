@@ -11,11 +11,12 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Xunit.Abstractions;
 using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
 
-public sealed class MetadataHostIntegrationTests
+public sealed class MetadataHostIntegrationTests(ITestOutputHelper output)
 {
     public sealed class ArtifactMarker : IArtifactProvider;
     public sealed class UnusedMarker : IMetadataProvider;
@@ -32,6 +33,7 @@ public sealed class MetadataHostIntegrationTests
     [Fact]
     public async Task MP46_Configured_selection_uses_existing_lifecycle_and_has_no_routes_or_fallback()
     {
+        var observations = new OriginalObservationSequence(output, nameof(MetadataHostIntegrationTests));
         foreach (var createEmpty in new[] { true, false })
         {
             var web = WebApplication.CreateBuilder(new WebApplicationOptions { Args = [] });
@@ -130,6 +132,7 @@ public sealed class MetadataHostIntegrationTests
                 Assert.IsType<Hoard.Abstractions.Metadata.MetadataResult<Hoard.Abstractions.Metadata.MetadataOperationTicket>.Failure>(
                     await module.Session.Store.ReserveOperationAsync(new(), default));
             }
+            observations.Observe(module.Session, module);
             Assert.False(File.Exists(disabledPath));
         }
     }

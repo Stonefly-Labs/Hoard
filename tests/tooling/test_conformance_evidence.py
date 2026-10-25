@@ -1234,6 +1234,9 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
     def test_original_observation_forests_require_exact_current_execution_lineage_and_distinct_owners(self):
         prefix = "Hoard.Metadata.Tests."
         shapes = (
+            (prefix + "MetadataHostIntegrationTests."
+             "MP46_Configured_selection_uses_existing_lifecycle_and_has_no_routes_or_fallback",
+             (None, None)),
             (prefix + "MetadataSchemaTests.MP32_Old_schema_requires_explicit_authorized_upgrade_and_preserves_records",
              (None, 0, 1)),
             (prefix + "MetadataSchemaTests.MP33_Future_schema_and_recognized_corruption_are_never_created_over",

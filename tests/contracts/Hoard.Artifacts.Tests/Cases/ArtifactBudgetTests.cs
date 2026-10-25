@@ -1,11 +1,12 @@
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactBudgetTests
+public sealed class ArtifactBudgetTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task Local_reclaimed_incarnations_remain_budgeted_until_expiry_without_removing_the_recreated_blob()
@@ -28,6 +29,7 @@ public sealed class ArtifactBudgetTests
             references: (_, _) => ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
         await ArtifactHistoryAssertions.ReclaimedIdentityExpiryAsync(
             driver.Store, driver.Maintenance, driver.Identity, clock.SetUtc, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests));
     }
 
     [Theory]
@@ -63,6 +65,7 @@ public sealed class ArtifactBudgetTests
                 if (driver.LocalControls is { } local) { local.BeforeHistoryCandidate = observe; }
                 else { driver.ObjectControls!.BeforeHistoryCandidate = observe; }
             }, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests));
     }
 
     [Theory]
@@ -89,6 +92,7 @@ public sealed class ArtifactBudgetTests
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactOwnershipAssertions.CooperativeInactivityAsync(driver.Store, driver.WhenIdleAsync, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests));
     }
 
     [Theory]
@@ -108,6 +112,7 @@ public sealed class ArtifactBudgetTests
                 else { driver.ObjectControls!.RemoveObserver("pointer.compare"); }
                 barrier.Release();
             }, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests));
     }
 
     [Theory]
@@ -152,6 +157,7 @@ public sealed class ArtifactBudgetTests
                 driver.LocalControls?.RemoveObserver("operation.released");
                 driver.ObjectControls?.RemoveObserver("object.operation-released");
             }, released.Release, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests));
     }
 
     [Theory]
