@@ -1,9 +1,10 @@
 using Hoard.Testing.Conformance.Metadata;
+using Xunit.Abstractions;
 using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
 
-public sealed class MetadataReconciliationTests
+public sealed class MetadataReconciliationTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task MP15_Corrupt_persisted_receipts_fail_reconciliation_and_replay_without_duplicate_effects()
@@ -12,6 +13,7 @@ public sealed class MetadataReconciliationTests
         await MetadataReconciliationAssertions.CorruptReceiptsAsync(fixture.Store,
             (request, token) => CommonCorruptionAsync(fixture, request, token), default);
         CommonDiagnosticAssertions(fixture);
+        ObserveOriginal(output, fixture, nameof(MetadataReconciliationTests));
     }
 
     [Fact]
@@ -19,6 +21,7 @@ public sealed class MetadataReconciliationTests
     {
         await using var fixture = await OpenAsync();
         await MetadataReconciliationAssertions.IoFailureAsync(fixture.Store, CommonObservations(fixture), default);
+        ObserveOriginal(output, fixture, nameof(MetadataReconciliationTests));
     }
 
     [Fact]
@@ -27,13 +30,16 @@ public sealed class MetadataReconciliationTests
         await using var fixture = await OpenAsync();
         await MetadataReconciliationAssertions.WriterContentionAsync(fixture.Store,
             token => CommonWriterAsync(fixture, token), token => CommonSettlementAsync(fixture, token), default);
+        ObserveOriginal(output, fixture, nameof(MetadataReconciliationTests));
     }
 
     [Fact]
     public async Task MP14_Replay_returns_original_receipt_and_changed_payload_conflicts()
     {
         await using var fixture = await OpenAsync();
-        await MetadataPublicationAssertions.ReplayWithoutReacquisitionAsync(fixture.Store, CommonAuthority(fixture), default);
+        var authority = CommonAuthority(fixture);
+        await MetadataPublicationAssertions.ReplayWithoutReacquisitionAsync(fixture.Store, authority, default);
+        ObserveOriginal(output, fixture, authority, nameof(MetadataReconciliationTests));
     }
 
     [Fact]
@@ -42,6 +48,7 @@ public sealed class MetadataReconciliationTests
         await using var fixture = await OpenAsync();
         await MetadataReconciliationAssertions.LostAcknowledgmentAndAbandonmentAsync(
             fixture.Store, CommonObservations(fixture), default);
+        ObserveOriginal(output, fixture, nameof(MetadataReconciliationTests));
     }
 
     [Fact]
@@ -49,6 +56,7 @@ public sealed class MetadataReconciliationTests
     {
         await using var fixture = await OpenAsync();
         await MetadataReconciliationAssertions.DistinctContributionsAsync(fixture.Store, CommonObservations(fixture), default);
+        ObserveOriginal(output, fixture, nameof(MetadataReconciliationTests));
     }
 
     [Fact]
@@ -57,5 +65,6 @@ public sealed class MetadataReconciliationTests
         var clock = new MetadataTestClock();
         await using var fixture = await OpenAsync(clock);
         await MetadataTimeAssertions.TicketExpiryAndRollbackAsync(fixture.Store, instant => clock.Set(instant.UnixMilliseconds), default);
+        ObserveOriginal(output, fixture, nameof(MetadataReconciliationTests));
     }
 }

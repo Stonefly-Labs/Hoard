@@ -1002,7 +1002,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                         "Actual original observations must join captured native inputs, not minimal diagnostic labels.")
         candidate = self.directory / "candidate"
         assignments = checks.original_observation_inputs(candidate, self.directory)
-        runtime = {path: "a" * 64 for roles in assignments.values() for path, _ in roles.values()}
+        runtime = {path: "a" * 64 for witnesses in assignments.values()
+                   for roles in witnesses.values() for path, _ in roles.values()}
         inputs = {
             "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
             "runtimeAssemblies": runtime,
@@ -1014,15 +1015,24 @@ class SdkDiagnosticTests(unittest.TestCase):
         run = SimpleNamespace(root=self.directory)
         scenarios = checks.original_observation_scenarios()
         self.assertEqual(len(scenarios), 5)
-        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 36)
+        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 100)
         frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_bytes())
         expected_metadata = {name for entry in frozen["entries"] if entry["profileId"] == "metadata"
                              for name in entry["runtimeTests"] if name.startswith((
                                  "Hoard.Metadata.Tests.MetadataPublicationTests.",
                                  "Hoard.Metadata.Tests.MetadataRelationshipTests.",
-                                 "Hoard.Metadata.Tests.MetadataIdentityTests.MP02_",
-                                 "Hoard.Metadata.Tests.MetadataIdentityTests.MP03_",
-                                 "Hoard.Metadata.Tests.MetadataRoundTripTests.MP01_"))}
+                                 "Hoard.Metadata.Tests.MetadataIdentityTests.",
+                                 "Hoard.Metadata.Tests.MetadataRoundTripTests.",
+                                 "Hoard.Metadata.Tests.MetadataAtomicityTests.",
+                                 "Hoard.Metadata.Tests.MetadataDeadlineTests.",
+                                 "Hoard.Metadata.Tests.MetadataReconciliationTests.",
+                                 "Hoard.Metadata.Tests.MetadataFailureTests.MP20_",
+                                 "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Absence",
+                                 "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Stored",
+                                 "Hoard.Metadata.Tests.MetadataFailureTests.MP22_",
+                                 "Hoard.Metadata.Tests.MetadataPagingTests.MP07_",
+                                 "Hoard.Metadata.Tests.MetadataLeaseTests.MP28_",
+                                 "Hoard.Metadata.Tests.MetadataLeaseTests.MP30_"))}
         self.assertEqual(set(scenarios[0][1]), expected_metadata)
         self.assertEqual(set(scenarios[1][1]), expected_metadata)
         expected_artifacts = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
@@ -1051,8 +1061,23 @@ class SdkDiagnosticTests(unittest.TestCase):
                         cases = [case.case_id for case in checks.category_cases()
                                  if case.binding_id == binding and entry["testIdentity"] in case.witnesses]
                         self.assertEqual(entry["caseId"], min(cases))
-                        self.assertIn(assignments[binding]["contract" if "-contract-" in scenario[0] else "store"][0],
+                        self.assertIn(assignments[binding][entry["testIdentity"]][
+                            "contract" if "-contract-" in scenario[0] else "store"][0],
                                       {item["path"] for item in manifest["assemblies"]})
+                        roles = assignments[binding][entry["testIdentity"]]
+                        self.assertEqual(set(roles), set(checks.original_witness_policy(entry["testIdentity"])[2]))
+                        self.assertTrue({path for path, _ in roles.values()} <= {
+                            item["path"] for item in manifest["assemblies"]})
+                        if metadata:
+                            facade = any(part in entry["testIdentity"] for part in (
+                                "MetadataPublicationTests.", "MetadataRelationshipTests.",
+                                "MetadataIdentityTests.MP02_", "MetadataIdentityTests.MP03_",
+                                "MetadataRoundTripTests.MP01_", "MetadataReconciliationTests.MP14_",
+                                "MetadataPagingTests.MP07_All_seven_", "MetadataPagingTests.MP07_Oversized_"))
+                            authority = roles["authority"]
+                            self.assertEqual(authority[1], None if facade else "Hoard.Fixtures.Metadata.HostAdapters")
+                            self.assertTrue(authority[0].endswith(
+                                "/Hoard.Metadata.Tests.dll" if facade else "/Hoard.Fixtures.Metadata.HostAdapters.dll"))
                     self.assertEqual(assembly.name, "Hoard.Metadata.Tests.dll" if metadata else "Hoard.Artifacts.Tests.dll")
                     if provider == "sqlite":
                         admission.assert_called_once_with(inputs, assembly, self.directory)

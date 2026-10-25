@@ -961,6 +961,14 @@ correspondences. Its native requirement is 105 scopes/1,018 observations,
 still pending. Earlier `40166560899 @8aaa36d` passed all three jobs,
 227 native foundations and 100 scopes/982 observations with every prerequisite;
 that admitted diagnostic receipt predates full-input original execution.
+The following increment selects immutable role images per exact witness,
+not one universal authority image per binding. Forty-two single-owner metadata
+identities per provider now capture genuine original references: the existing
+fixture authority where no facade was passed, or the exact already-used facade.
+No unused authority is created merely for evidence. Local observation/replay
+pass 100 executions/508 image correspondences with minimal inputs; the new
+native vector is 230 foundations and 105 scopes/1,082 observations, pending.
+Multi-owner, parameterized and reopen witnesses remain explicitly unclassified.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

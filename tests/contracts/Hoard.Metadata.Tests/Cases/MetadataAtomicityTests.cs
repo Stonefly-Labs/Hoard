@@ -1,9 +1,10 @@
 using Hoard.Testing.Conformance.Metadata;
+using Xunit.Abstractions;
 using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
 
-public sealed class MetadataAtomicityTests
+public sealed class MetadataAtomicityTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task MP09_Independent_engine_reads_cannot_see_an_uncommitted_candidate()
@@ -11,6 +12,7 @@ public sealed class MetadataAtomicityTests
         await using var fixture = await OpenAsync();
         await MetadataAtomicityAssertions.IndependentCandidateAsync(
             fixture.Store, CommonObservations(fixture), fixture.ObserveIndependentSnapshotAsync, default);
+        ObserveOriginal(output, fixture, nameof(MetadataAtomicityTests));
     }
 
     [Fact]
@@ -23,6 +25,7 @@ public sealed class MetadataAtomicityTests
             MetadataTestData.AssertSanitized(diagnostic);
             Assert.DoesNotContain(MetadataReconciliationAssertions.CorruptionCanary, diagnostic);
         }
+        ObserveOriginal(output, fixture, nameof(MetadataAtomicityTests));
     }
 
     [Fact]
@@ -30,6 +33,7 @@ public sealed class MetadataAtomicityTests
     {
         await using var fixture = await OpenAsync();
         await MetadataAtomicityAssertions.GroupedReadsAsync(fixture.Store, CommonObservations(fixture), default);
+        ObserveOriginal(output, fixture, nameof(MetadataAtomicityTests));
     }
 
     [Fact]
@@ -37,6 +41,7 @@ public sealed class MetadataAtomicityTests
     {
         await using var fixture = await OpenAsync();
         await MetadataConcurrencyAssertions.CompetingCreatesAsync(fixture.Store, default);
+        ObserveOriginal(output, fixture, nameof(MetadataAtomicityTests));
     }
 
     [Fact]
@@ -44,5 +49,6 @@ public sealed class MetadataAtomicityTests
     {
         await using var fixture = await OpenAsync();
         await MetadataConcurrencyAssertions.RevisionRacesAsync(fixture.Store, default);
+        ObserveOriginal(output, fixture, nameof(MetadataAtomicityTests));
     }
 }

@@ -1,10 +1,11 @@
 using Hoard.Abstractions.Metadata;
 using Hoard.Testing.Conformance.Metadata;
+using Xunit.Abstractions;
 using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
 
-public sealed class MetadataLeaseTests
+public sealed class MetadataLeaseTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task Shared_clock_control_can_target_the_original_fixture_clock()
@@ -31,6 +32,7 @@ public sealed class MetadataLeaseTests
             cancellationToken.ThrowIfCancellationRequested();
             return fixture.SetLeaseGenerationForTestAsync(resource, generation);
         }, default);
+        ObserveOriginal(output, fixture, nameof(MetadataLeaseTests));
     }
 
     [Fact]
@@ -38,6 +40,7 @@ public sealed class MetadataLeaseTests
     {
         await using var fixture = await OpenAsync();
         await MetadataLeaseAssertions.OwnerGenerationAndRevisionFencesAsync(fixture.Store, default);
+        ObserveOriginal(output, fixture, nameof(MetadataLeaseTests));
     }
 
     [Fact]
@@ -58,5 +61,6 @@ public sealed class MetadataLeaseTests
         var clock = new MetadataTestClock();
         await using var fixture = await OpenAsync(clock);
         await MetadataTimeAssertions.LeaseRollbackAsync(fixture.Store, instant => clock.Set(instant.UnixMilliseconds), default);
+        ObserveOriginal(output, fixture, nameof(MetadataLeaseTests));
     }
 }

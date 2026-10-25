@@ -1,11 +1,12 @@
 using Hoard.Abstractions.Metadata;
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Metadata;
+using Xunit.Abstractions;
 using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
 
-public sealed class MetadataFailureTests
+public sealed class MetadataFailureTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task MP20_Injected_storage_capacity_rolls_back_and_allows_same_ticket_retry()
@@ -17,6 +18,7 @@ public sealed class MetadataFailureTests
             fixture.InjectStorageCapacityForTest();
             return ValueTask.CompletedTask;
         }, default);
+        ObserveOriginal(output, fixture, nameof(MetadataFailureTests));
     }
 
     [Fact]
@@ -28,6 +30,7 @@ public sealed class MetadataFailureTests
             cancellationToken.ThrowIfCancellationRequested();
             return fixture.FillLedgerForTestAsync();
         }, default);
+        ObserveOriginal(output, fixture, nameof(MetadataFailureTests));
     }
 
     [Fact]
@@ -36,6 +39,7 @@ public sealed class MetadataFailureTests
         await using var fixture = await OpenAsync();
         await MetadataCorruptionAssertions.AbsenceAndCorruptGroupsAsync(fixture.Store,
             (selector, token) => CommonCorruptRecordAsync(fixture, selector, token), default);
+        ObserveOriginal(output, fixture, nameof(MetadataFailureTests));
     }
 
     [Fact]
@@ -46,6 +50,7 @@ public sealed class MetadataFailureTests
             (request, token) => CommonCorruptionAsync(fixture, request, token),
             (selector, token) => CommonCorruptRecordAsync(fixture, selector, token), default);
         CommonDiagnosticAssertions(fixture);
+        ObserveOriginal(output, fixture, nameof(MetadataFailureTests));
     }
 
     [Theory]
@@ -86,5 +91,6 @@ public sealed class MetadataFailureTests
         await MetadataFailureAssertions.DiagnosticsAsync(fixture.Store, () => CommonCounters(fixture),
             MetadataTestData.Canary, MetadataTestData.AssertSanitized, default);
         CommonDiagnosticAssertions(fixture);
+        ObserveOriginal(output, fixture, nameof(MetadataFailureTests));
     }
 }

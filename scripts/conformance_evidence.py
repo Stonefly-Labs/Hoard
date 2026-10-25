@@ -1493,8 +1493,9 @@ def _ingest_original_observations(inputs, observations, *, original_inputs, entr
     if (binding is None or binding["category"] != category
             or binding_id not in {slot[1] for slot in CATEGORY_BINDING_SLOTS if slot[0] == category}):
         raise ConformanceError("BindingInvalid")
-    assignments = original_inputs.get(binding_id) if isinstance(original_inputs, Mapping) else None
-    if not isinstance(assignments, Mapping) or not set(roles) <= set(assignments):
+    witnesses = original_inputs.get(binding_id) if isinstance(original_inputs, Mapping) else None
+    assignments = witnesses.get(entry["testIdentity"]) if isinstance(witnesses, Mapping) else None
+    if not isinstance(assignments, Mapping) or set(roles) != set(assignments):
         raise ConformanceError("EvidenceIncomplete")
     component = _record({
         "instanceId": _uuid, "assemblySha256": sha256, "moduleVersionId": _uuid, "typeSha256": sha256,
@@ -1715,6 +1716,27 @@ def _origin_input_assignments(origin_inputs):
         frozen[origin_binding] = MappingProxyType(captured)
     return MappingProxyType(frozen)
 
+
+def _original_input_assignments(original_inputs):
+    if original_inputs is None:
+        return None
+    if not isinstance(original_inputs, Mapping) or len(original_inputs) > 128:
+        raise ConformanceError("EvidenceIncomplete")
+    frozen = {}
+    count = 0
+    for binding, witnesses in original_inputs.items():
+        stable_id(binding)
+        if not isinstance(witnesses, Mapping):
+            raise ConformanceError("EvidenceIncomplete")
+        count += len(witnesses)
+        if count > MAX_RESULTS:
+            raise ConformanceError("EvidenceIncomplete")
+        frozen[binding] = MappingProxyType({
+            _runtime_identity(identity): _origin_input_assignments({binding: roles})[binding]
+            for identity, roles in witnesses.items()})
+    return MappingProxyType(frozen)
+
+
 def _runtime_provenance_state(observed, used, prior_instances):
     observations = [*(
         (origin["sessionId"], origin) for origins in observed["sessionOrigins"].values() for origin in origins), *(
@@ -1741,7 +1763,7 @@ class RuntimeCaseHistory:
         self._used_sessions = frozenset()
         self._instances = {}
         self._origin_inputs = _origin_input_assignments(origin_inputs)
-        self._original_inputs = _origin_input_assignments(original_inputs)
+        self._original_inputs = _original_input_assignments(original_inputs)
         key = (self._inputs["profileId"], stable_id(binding_id), stable_id(matrix_id), stable_id(case_id))
         matches = tuple(case for case in expected_cases(key[0]) if case.key == key)
         if len(matches) != 1:
@@ -1885,7 +1907,7 @@ class CategoryRuntimeHistory:
                 for binding_id, binding in selected.items())):
             raise ConformanceError("BindingInvalid")
         self._origin_inputs = _origin_input_assignments(origin_inputs)
-        self._original_inputs = _origin_input_assignments(original_inputs)
+        self._original_inputs = _original_input_assignments(original_inputs)
         self._max_attempts = max_attempts
         self._active = {}
         self._sequences = {binding: 0 for binding in self._bindings}

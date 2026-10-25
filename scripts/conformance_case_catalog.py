@@ -22,7 +22,7 @@ CATEGORY_BINDING_SLOTS = (
 
 _ORIGINAL_METADATA_ROLES = ("owner", "store", "schema", "authority", "controls")
 _ORIGINAL_ARTIFACT_ROLES = ("owner", "store", "validator", "maintenance", "lifetime", "authority", "controls")
-ORIGINAL_METADATA_WITNESSES = tuple(sorted(
+ORIGINAL_METADATA_FACADE_WITNESSES = tuple(sorted(
     "Hoard.Metadata.Tests." + fixture + "." + method
     for fixture, methods in (
         ("MetadataRoundTripTests", ("MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes",)),
@@ -36,7 +36,52 @@ ORIGINAL_METADATA_WITNESSES = tuple(sorted(
             "MP26_Blob_commit_then_metadata_failure_is_an_orphan_not_a_blob_rollback",
             "MP27_Protection_survives_caller_timeout_through_owned_settlement",
             "MP31_Invalid_telemetry_rolls_back_its_declared_entry_and_reference_group")),
+        ("MetadataReconciliationTests", ("MP14_Replay_returns_original_receipt_and_changed_payload_conflicts",)),
+        ("MetadataPagingTests", (
+            "MP07_All_seven_query_kinds_keep_scope_and_tuple_order",
+            "MP07_Oversized_requests_and_results_fail_whole_instead_of_truncating")),
     ) for method in methods))
+ORIGINAL_METADATA_WITNESSES = tuple(sorted((
+    *ORIGINAL_METADATA_FACADE_WITNESSES,
+    *("Hoard.Metadata.Tests." + fixture + "." + method
+      for fixture, methods in (
+          ("MetadataRoundTripTests", (
+              "MP05_Exact_bounds_and_overflow_reject_the_entire_candidate",
+              "MP06_Scopes_and_intervals_cannot_cross_registry_boundaries")),
+          ("MetadataIdentityTests", (
+              "MP04_Canonical_text_is_not_normalized_and_forbidden_credentials_are_rejected",)),
+          ("MetadataAtomicityTests", (
+              "MP09_Independent_engine_reads_cannot_see_an_uncommitted_candidate",
+              "MP09_Each_faulted_candidate_is_invisible_and_success_is_complete",
+              "MP10_Grouped_reads_keep_one_root_while_independent_reads_can_straddle",
+              "MP11_Competing_creates_have_one_winner",
+              "MP12_Revision_races_and_delete_recreate_are_fenced")),
+          ("MetadataDeadlineTests", (
+              "MP19_Actual_writer_contention_consumes_the_original_budget_without_committing",
+              "MP37_Incomplete_cleanup_reports_failure_and_keeps_activity_owned",
+              "MP18_Cancellation_before_decision_is_definite_and_after_attempt_is_uncertain",
+              "MP19_Queue_capacity_and_held_work_deadlines_have_finite_owned_results",
+              "MP37_Disposal_owns_active_work_and_does_not_release_it_early",
+              "MP18_Known_exception_types_after_commit_attempt_are_still_uncertain")),
+          ("MetadataReconciliationTests", (
+              "MP15_Corrupt_persisted_receipts_fail_reconciliation_and_replay_without_duplicate_effects",
+              "MP15_Reconciliation_io_failure_preserves_the_unresolved_original_ticket",
+              "MP15_Reconciliation_without_exclusion_is_uncertain_not_a_noncommit_result",
+              "MP15_Lost_acknowledgment_reconciles_and_abandonment_fences_execution",
+              "MP16_Distinct_contributions_sum_and_uncertain_retries_do_not_duplicate",
+              "MP17_Exact_ticket_expiry_and_clock_rollback_cannot_revive_a_ticket")),
+          ("MetadataFailureTests", (
+              "MP20_Injected_storage_capacity_rolls_back_and_allows_same_ticket_retry",
+              "MP20_Live_ledger_capacity_is_classified_without_evicting_a_receipt",
+              "MP21_Absence_succeeds_but_corruption_fails_the_complete_group",
+              "MP21_Stored_page_corruption_fails_whole_and_preserves_data",
+              "MP22_Diagnostics_and_all_failure_shapes_are_sanitized")),
+          ("MetadataPagingTests", ("MP07_Bounded_datasets_traverse_once_without_truncation",)),
+          ("MetadataLeaseTests", (
+              "MP28_Generation_overflow_rejects_the_whole_group_and_preserves_tombstone",
+              "MP28_Lease_owners_generations_and_revisions_are_fenced",
+              "MP30_Clock_rollback_does_not_undo_expiry_and_new_generation_is_retained")),
+      ) for method in methods))))
 ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted(
     f'Hoard.Artifacts.Tests.ArtifactPublicationTests.{method}(provider: "{provider}")'
     for method in (

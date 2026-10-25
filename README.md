@@ -1895,6 +1895,14 @@ yet admitted. Earlier run
 [40166560899](https://github.com/Stonefly-Labs/Hoard/actions/runs/40166560899)
 at `8aaa36d` passed 227 native foundations and 100 scopes/982 observations
 with every prerequisite, but predates the full-input original scopes.
+Original image assignments are now independently selected and frozen per exact
+witness, rather than sharing one authority shape across a binding. Expanded
+single-owner metadata coverage observes either the actual fixture authority
+or the exact facade already used by assertions, never a new companion.
+Local observation/replay pass 100 executions/508 image correspondences using
+minimal inputs; the new native requirement is 230 foundations and
+105 scopes/1,082 observations, still pending. Multi-owner/reopen/controller
+coverage and complete qualifying profiles remain unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

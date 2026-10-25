@@ -20,6 +20,7 @@ public sealed class MetadataRoundTripTests(ITestOutputHelper output)
     {
         await using var fixture = await OpenAsync();
         await MetadataBoundsAssertions.ExactBoundsAsync(fixture.Store, default);
+        ObserveOriginal(output, fixture, nameof(MetadataRoundTripTests));
     }
 
     [Fact]
@@ -27,5 +28,6 @@ public sealed class MetadataRoundTripTests(ITestOutputHelper output)
     {
         await using var fixture = await OpenAsync();
         await MetadataBoundsAssertions.ScopesAndIntervalsAsync(fixture.Store, default);
+        ObserveOriginal(output, fixture, nameof(MetadataRoundTripTests));
     }
 }

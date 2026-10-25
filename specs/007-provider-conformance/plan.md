@@ -4939,6 +4939,46 @@ preparation:
 This admitted diagnostic receipt predates full-input original scopes and does
 not qualify these later changes.
 
+### Witness-specific original authority images
+
+The flat per-binding image map could not truthfully describe original wrappers
+that use the fixture authority directly versus those that pass a test facade
+to common assertions. Original assignments are now nested by binding, exact
+runtime identity and role, bounded and deeply frozen by both history classes.
+Ingestion selects only that exact identity and exact role inventory; no flat,
+foreign-witness or cross-binding fallback is accepted. Typed-origin assignments
+and all public/private proof schemas are unchanged.
+
+Forty-two single-owner metadata identities per provider now observe the real
+fixture/store/schema/controls and genuine authority shape. Assertions that
+already passed a facade pin and observe that same facade; all others observe
+the fixture's existing authority. No unused facade, factory/session, clock/root
+or cleanup transfer is introduced. Parameterized, multi-owner and reopen
+witnesses remain outside this one-root policy.
+
+The focused assignment immutability regression first fails with
+`EvidenceIncomplete` in the old flat parser. Expanded independent frozen
+routing first fails at 36 rather than 100 executions. Actual minimal-input
+observation and independent empty-cache locked replay each pass 100 exact
+discoveries/executions: 84 metadata owners, twelve artifact owners, four
+session-free contexts and 508 actual role/image correspondences. Both reproduce
+SDK archive `a94e225acd4ef19a8d1b363f5c7eedf498bae9364fbc2838f917f17c595485e3`.
+They are diagnostics, not qualifying input/evaluator/profile evidence.
+
+`python3 -m unittest discover -s tests/tooling -v` passes 338 checks
+(321 passed/seventeen macOS-native skips).
+`dotnet format whitespace --folder tests/contracts/Hoard.Metadata.Tests/Cases --verify-no-changes --verbosity quiet`,
+`python3 tests/fixtures/conformance/baselines/freeze_inventory.py --check` and
+`python3 scripts/conformance_case_catalog.py --check-sdk` pass.
+Bounded custom architecture review finds no confirmed blocker, with native
+full-input admission still pending. The expanded native requirement is
+230 foundations and 105 scopes/1,082 observations, retaining every prior
+prerequisite; it does not complete final T081 or any qualifying profile.
+README and affected guides/model/contracts are updated; production/deployment
+examples and diagrams are unaffected. Tasks/reviewer markers, locks, historical
+seals and the running checkpoint remain unchanged. Complete original/reopen/
+controller attribution and later implementation tasks remain unfinished.
+
 ## Summary
 
 

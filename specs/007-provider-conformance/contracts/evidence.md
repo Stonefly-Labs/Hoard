@@ -123,6 +123,15 @@ duplicated proof bytes. Minimal-input observation and independent locked replay
 pass 36 executions/188 image correspondences. The expanded full-input native
 vector is 105 scopes/1,018 observations and remains pending; the earlier
 admitted `40166560899 @8aaa36d` diagnostic predates these full-input scopes.
+Independent original image assignments now select exact witness-specific roles
+inside each binding and freeze them before execution. Admission accepts no flat
+or foreign-witness fallback and requires the exact role inventory. Metadata
+wrappers capture the fixture's actual authority unless their unchanged assertion
+already used a facade, in which case that same facade is pinned and observed.
+Expanded single-owner observation/replay pass 100 executions/508 image
+correspondences with minimal inputs. Native admission requires 230 foundations
+and 105 scopes/1,082 observations; it remains pending. Multi-owner/reopen and
+controller/category/profile coverage are not implied.
 
 The implemented private transport distinguishes `purpose: discovery` from
 `purpose: execution` and hashes each complete JSONL stream in its completion

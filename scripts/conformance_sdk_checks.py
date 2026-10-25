@@ -26,7 +26,7 @@ import conformance_baselines as baselines
 import artifact_evidence as artifacts
 import conformance_evidence as evidence
 from conformance_case_catalog import (
-    CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_WITNESSES, ORIGINAL_METADATA_WITNESSES,
+    CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_WITNESSES, ORIGINAL_METADATA_FACADE_WITNESSES, ORIGINAL_METADATA_WITNESSES,
     catalog_admission_witnesses, category_cases, category_runtime_cases,
     original_witness_policy,
 )
@@ -1898,10 +1898,17 @@ def original_observation_inputs(candidate, root):
                  if metadata else
                  {"owner": None, "store": package, "validator": package, "maintenance": package,
                   "lifetime": package, "authority": host, "controls": package, "contract": "Hoard.Abstractions"})
+        identities = {identity for case in category_cases() if case.profile_id == category
+                      for identity in case.witnesses if original_witness_policy(identity) is not None}
         try:
-            result[provider] = {
-                role: ((runtime / ((package_id or assembly) + ".dll")).relative_to(root).as_posix(), package_id)
-                for role, package_id in roles.items()}
+            result[provider] = {}
+            for identity in identities:
+                selected = dict(roles)
+                if metadata and identity not in ORIGINAL_METADATA_FACADE_WITNESSES:
+                    selected["authority"] = host
+                result[provider][identity] = {
+                    role: ((runtime / ((package_id or assembly) + ".dll")).relative_to(root).as_posix(), package_id)
+                    for role, package_id in selected.items() if role in original_witness_policy(identity)[2]}
         except ValueError as error:
             raise evidence.ConformanceError("InputChanged") from error
     return result
@@ -2058,7 +2065,9 @@ def test_attempt(run, inputs, candidate, scenario):
     }
     if original_observations or name in ("full-artifact-binding", "full-metadata-binding"):
         if original_observations:
-            component_assignments = {binding: original_inputs[binding] for binding, _ in expected.values()}
+            component_assignments = {
+                (binding, identity): original_inputs[binding][identity]
+                for identity, (binding, _) in expected.items()}
         else:
             origin_inputs = (artifact_origin_inputs(candidate, run.root) if name == "full-artifact-binding"
                              else metadata_origin_inputs(candidate, run.root))

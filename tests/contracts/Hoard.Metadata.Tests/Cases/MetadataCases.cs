@@ -16,6 +16,14 @@ internal static class MetadataCases
 
     public static void ObserveOriginal(ITestOutputHelper output, MetadataFixtureSession fixture,
         IMetadataConformanceAuthority authority, string fixtureType, [CallerMemberName] string method = "") =>
+        WriteOriginal(output, fixture, authority, fixtureType, method);
+
+    public static void ObserveOriginal(ITestOutputHelper output, MetadataFixtureSession fixture,
+        string fixtureType, [CallerMemberName] string method = "") =>
+        WriteOriginal(output, fixture, fixture.Authority, fixtureType, method);
+
+    private static void WriteOriginal(ITestOutputHelper output, MetadataFixtureSession fixture,
+        object authority, string fixtureType, string method) =>
         ConformanceOriginalObservationOutput.WriteIfRequested(output,
             "Hoard.Metadata.Tests." + fixtureType + "." + method,
             fixture.Provider, "original-instance", ("owner", fixture), ("store", fixture.Store),

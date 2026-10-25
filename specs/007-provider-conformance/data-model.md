@@ -249,6 +249,15 @@ comes from the immutable primary-case helper, not duplicated proof bytes.
 Local observation and independent locked replay pass 36 executions/188 image
 correspondences with minimal inputs. Native admission now requires
 105 scopes/1,018 observations and all prerequisites; it remains unadmitted.
+Private original-image assignments are now nested by binding and exact runtime
+identity, then role. Both histories deeply freeze this bounded structure before
+execution. Ingestion requires the selected identity and exact role inventory;
+flat, foreign-witness or cross-binding assignments cannot serve as fallback.
+This permits truthful original authority shapes without inventing an unused
+facade. Forty-two single-owner metadata identities per provider are observed.
+Minimal-input observation/replay pass 100 executions/508 image correspondences;
+the expanded native path requires 230 foundations and 105 scopes/1,082
+observations, still pending. Public entity/proof schemas remain unchanged.
 
 ### Shared bounds
 

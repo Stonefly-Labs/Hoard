@@ -623,6 +623,14 @@ Their native request requires 105 scopes/1,018 observations and remains pending.
 Earlier `40166560899 @8aaa36d` passed all three jobs, 227 native foundations
 and 100 scopes/982 observations with all prerequisites; that admitted diagnostic
 receipt does not execute the later full-input original scopes.
+The next increment freezes original role images per exact witness within each
+binding, distinguishing genuine fixture authorities from already-used facades.
+Forty-two single-owner metadata identities per provider now observe actual
+references without companion construction. Local minimal-input observation and
+independent locked replay pass 100 executions/508 image correspondences.
+Native admission requires 230 foundations and 105 scopes/1,082 observations,
+still pending; broader multi-owner/reopen/controller and qualifying profiles
+remain unfinished.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

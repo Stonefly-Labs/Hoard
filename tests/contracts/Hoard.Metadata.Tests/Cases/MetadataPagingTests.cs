@@ -2,11 +2,12 @@ using System.Text.Json.Nodes;
 using Hoard.Abstractions.Metadata;
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Metadata;
+using Xunit.Abstractions;
 using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
 
-public sealed class MetadataPagingTests
+public sealed class MetadataPagingTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task Typed_continuation_bridge_covers_all_actual_cursor_fields()
@@ -46,14 +47,18 @@ public sealed class MetadataPagingTests
     public async Task MP07_All_seven_query_kinds_keep_scope_and_tuple_order()
     {
         await using var fixture = await OpenAsync();
-        await MetadataPagingAssertions.AllQueryKindsAsync(fixture.Store, CommonAuthority(fixture), default);
+        var authority = CommonAuthority(fixture);
+        await MetadataPagingAssertions.AllQueryKindsAsync(fixture.Store, authority, default);
+        ObserveOriginal(output, fixture, authority, nameof(MetadataPagingTests));
     }
 
     [Fact]
     public async Task MP07_Oversized_requests_and_results_fail_whole_instead_of_truncating()
     {
         await using var fixture = await OpenAsync();
-        await MetadataPagingAssertions.OversizedRequestsAndResultsAsync(fixture.Store, CommonAuthority(fixture), default);
+        var authority = CommonAuthority(fixture);
+        await MetadataPagingAssertions.OversizedRequestsAndResultsAsync(fixture.Store, authority, default);
+        ObserveOriginal(output, fixture, authority, nameof(MetadataPagingTests));
     }
 
     [Fact]
@@ -61,6 +66,7 @@ public sealed class MetadataPagingTests
     {
         await using var fixture = await OpenAsync();
         await MetadataPagingAssertions.BoundedDatasetsAsync(fixture.Store, default);
+        ObserveOriginal(output, fixture, nameof(MetadataPagingTests));
     }
 
     [Fact]

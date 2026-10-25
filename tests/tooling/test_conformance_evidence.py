@@ -1130,7 +1130,29 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.completion.update(inputSha256=evidence.digest(self.inputs), manifestSha256=evidence.digest(self.manifest))
         assignments = {role: ("consumer/Hoard.Tests.dll", None) if role == "owner"
                        else ("provider/Hoard.Fixture.dll", "Hoard.Fixture") for role in roles}
-        return observation, {binding: assignments}
+        return observation, {binding: {self.identity: assignments}}
+
+    def test_original_observation_assignments_are_witness_specific_and_frozen_before_execution(self):
+        self.inputs.update(profileId="metadata", invocation=["profile", "metadata"])
+        self.inputs["budgets"]["profileSeconds"] = 5400
+        original, assignments = self.original_transport(case_id="MP-01")
+        history = evidence.RuntimeCaseHistory(
+            self.inputs, binding_id="sqlite", matrix_id="none", case_id="MP-01",
+            original_inputs=assignments)
+        roles = assignments["sqlite"][self.identity]
+        original_roles = dict(roles)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin(self.attempt)
+        roles["store"] = ("consumer/Hoard.Tests.dll", "Foreign.Package")
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            self.assertEqual(self.finish_history(history)["status"], "Passed")
+        self.assertEqual(history.original_observations[self.execution][0], original)
+        for selected in (
+                {"sqlite": original_roles},
+                {"sqlite": {self.identity + "Foreign": original_roles}},
+                {"memory": {self.identity: original_roles}}):
+            with self.subTest(selected=tuple(selected)), self.assertRaises(evidence.ConformanceError):
+                self.ingest(original_inputs=selected)
 
     def test_original_observation_qualification_uses_independent_witness_kind_and_role_assignments(self):
         for contract in (False, True):
@@ -1143,7 +1165,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 self.assertFalse(result["sessionOrigins"][self.execution])
 
     def test_original_observation_rejects_foreign_kind_context_roles_or_package(self):
-        for mutation in ("kind", "identity", "binding", "run", "roles", "package", "missing", "typed-only",
+        for mutation in ("kind", "identity", "binding", "run", "roles", "package", "assignment-role", "missing", "typed-only",
                          "replay", "parent"):
             with self.subTest(mutation=mutation):
                 self.setUp()
@@ -1160,7 +1182,9 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 elif mutation == "roles":
                     del observation["components"]["owner"]
                 elif mutation == "package":
-                    assignments["sqlite"]["store"] = ("consumer/Hoard.Tests.dll", "Foreign.Package")
+                    assignments["sqlite"][self.identity]["store"] = ("consumer/Hoard.Tests.dll", "Foreign.Package")
+                elif mutation == "assignment-role":
+                    assignments["sqlite"][self.identity]["unused"] = assignments["sqlite"][self.identity]["store"]
                 elif mutation == "missing":
                     self.proof["originalObservations"] = []
                 elif mutation == "replay":
@@ -1249,10 +1273,15 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                        ("authority", "authority"), ("controls", "faults"))}
             for binding, assignments in origin_inputs.items()}
         if original_inputs is not None:
+            import conformance_case_catalog as catalog
             selected_packages = {item["bindingId"]: item["package"]["packageId"] for item in self.inputs["bindings"]}
             for binding, assignments in original_inputs.items():
                 for role in ("store", "schema"):
                     assignments[role] = (assignments[role][0], selected_packages[binding])
+            original_inputs = {
+                binding: {identity: dict(assignments) for identity in catalog.category_runtime_cases(profile, binding)
+                          if catalog.original_witness_policy(identity) is not None}
+                for binding, assignments in original_inputs.items()}
         return evidence.CategoryRuntimeHistory(
             self.inputs, max_attempts=max_attempts, origin_inputs=origin_inputs, original_inputs=original_inputs)
 

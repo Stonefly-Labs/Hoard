@@ -8024,6 +8024,28 @@ preparation:
 This admitted diagnostic predates full-input original scopes; it does not
 qualify the later changes or complete categories/profiles.
 
+Original role images are now selected per exact witness inside each binding
+and deeply frozen before execution in both histories. Flat, foreign-witness,
+cross-binding and extra-role assignments cannot stand in for the selected
+original. Forty-two single-owner metadata identities per provider now observe
+the actual original authority or the same facade used by unchanged assertions;
+no unused companion facade is manufactured. Parameterized, multi-owner and
+reopen cases retain their strict existing admission.
+
+The new immutability regression first fails on the old flat-map parser.
+Expanded routing first fails at 36 instead of 100 executions, then passes.
+Actual minimal-input observation and independent empty-cache locked replay
+each pass 100 discoveries/executions, 96 original owners, four session-free
+contexts and 508 role/image correspondences, with the unchanged SDK archive.
+`python3 -m unittest discover -s tests/tooling -v` passes 338 checks
+(321 passed/seventeen macOS-native skips); metadata source whitespace, frozen
+inventory and SDK catalog checks pass. Bounded custom architecture review
+finds no confirmed blocker; this is not final T081 or native admission.
+The new native requirement is 230 foundations and 105 scopes/1,082 observations,
+still pending. README and affected guides/model/contracts are updated;
+production/deployment examples and diagrams are unaffected. No task/reviewer,
+historical-seal, lock, public schema or running-stage marker changes.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

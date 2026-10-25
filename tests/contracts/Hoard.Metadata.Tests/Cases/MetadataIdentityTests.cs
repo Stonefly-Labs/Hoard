@@ -29,5 +29,6 @@ public sealed class MetadataIdentityTests(ITestOutputHelper output)
     {
         await using var fixture = await OpenAsync();
         await MetadataIdentityAssertions.CanonicalTextAndForbiddenValuesAsync(fixture.Store, default);
+        ObserveOriginal(output, fixture, nameof(MetadataIdentityTests));
     }
 }
