@@ -1921,7 +1921,7 @@ native containment, whole-profile execution or source/controller qualification.
 Category launches now also request an opt-in owned-executor record: bounded
 argument/working-directory hashes join the actual PID/start identity, command
 sequence, timing, exit and whole-group settlement. Raw arguments and paths are
-not persisted. Native record assertions await Linux execution; this plumbing
+not persisted. Native record assertions passed at `216413a`; this plumbing
 does not open the source/controller qualification gate.
 Category parents now independently join each available native record to the
 exact command, settings, manifest, inputs and settled owned root. Changed,
@@ -1930,10 +1930,16 @@ produce no native receipt. These invocation receipts do not attest assertions
 or open qualification, and their complete native execution remains pending.
 The native diagnostic path now captures/recomputes a separate metadata input
 document, predeclares all six category scopes, and submits their 134 untouched
-transports together to joint history admission. Its private 96-case snapshot
+transports together to joint history admission. Its private 102-entry snapshot
+contains all 96 inherited category cases and six qualification obligations and
 retains failures and explicitly leaves unverified parent controls incomplete.
-This orchestration is wired and locally unit-checked; its complete Linux
-execution has not yet been admitted and is not a qualifying metadata profile.
+Its complete Linux execution is admitted at `216413a`, run
+[40187523765](https://github.com/Stonefly-Labs/Hoard/actions/runs/40187523765):
+all three jobs and 268 native foundations without skips, plus all six metadata
+scopes/134 exact witnesses. The 102 entries retain 71 passes, 22 incomplete
+obligations (six QC plus sixteen inherited parent controls) and nine exclusions.
+This is not a qualifying metadata profile or admission of the later independent
+command-parent implementation.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

@@ -102,10 +102,14 @@ scopes leave the histories explicitly incomplete, with no native containment or
 complete profile execution claim.
 The native diagnostic path now additionally predeclares and executes all six
 metadata scopes under separately captured/recomputed metadata inputs, then
-atomically imports all unchanged transports into a private 96-case diagnostic
-history. Missing parent controls remain incomplete; execution/admission errors
-persist incomplete attempts and propagate. The complete Linux batch is wired
-but not yet admitted, and remains non-qualifying.
+atomically imports all unchanged transports into a private 102-entry diagnostic
+history: 96 inherited cases plus six qualification obligations. Missing parent
+controls remain incomplete; execution/admission errors
+persist incomplete attempts and propagate. Complete Linux execution is admitted
+at exact `216413a`, run 40187523765: six scopes/134 witnesses, 71 Passed,
+22 Incomplete (six QC and sixteen inherited parent controls), 9 NotApplicable,
+0 Failed. Native foundations pass 268 checks without skips. This admits that
+diagnostic snapshot, not profile qualification or the later command parents.
 
 The Memory binding package now supplies current/legacy factories, the same
 controlled clock/authority across logical reopen, all required typed controls

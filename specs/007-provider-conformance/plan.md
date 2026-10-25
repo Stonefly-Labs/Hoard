@@ -5872,7 +5872,8 @@ profile label of an existing harness input or completed proof.
 All six metadata scopes/134 binding-identity occurrences are predeclared and
 executed through the actual category dispatcher. Only the complete collection
 of unchanged source transports reaches joint history admission. A private
-96-case snapshot retains terminal state counts, scope summaries and result
+102-entry snapshot (96 inherited cases plus six qualification obligations)
+retains terminal state counts, scope summaries and result
 hashes, while unobserved parent controls remain incomplete. A child failure
 interrupts both binding histories before any joint import; an admission failure
 retains the model's incomplete attempts. Both errors persist the diagnostic
@@ -5886,8 +5887,9 @@ regression also verifies separately captured/recomputed metadata input identity.
 All 124 SDK checks and all 376 tooling checks pass (359 passed/seventeen
 macOS-native skips), with frozen inventory/catalog and patch checks passing.
 The final admission-error fixture additionally passes its focused rerun.
-Complete native execution is pending: six additional scopes/134 exact
-discoveries/executions and 96 diagnostic cases are requested, not admitted.
+Complete native execution of the six additional scopes/134 exact
+discoveries/executions and 102 diagnostic entries is now admitted at `216413a`
+as recorded below.
 Independent source/controller qualification, missing parent controls, full
 artifact/category backends and T019/T020 remain unfinished; no task/checklist,
 product/reference/lock or deployment claims change.
@@ -5915,6 +5917,34 @@ public metadata summary repair at `216413a` also reproduced the actual
 mappingproxy JSON TypeError before passing all124 SDK checks.
 Tasks/checklists, product/providers, packages/locks and deployment diagrams are
 unaffected. Qualification and the remaining category controls stay incomplete.
+
+### Admitted complete metadata diagnostic execution
+
+Run [40187523765](https://github.com/Stonefly-Labs/Hoard/actions/runs/40187523765)
+at exact `216413ae43fdc2feb923a1c8fd0d334a3eee5f03` passes all three jobs,
+268 native foundations without failures/errors/skips, 109 original scopes/
+1,323 discoveries/executions and six additional metadata scopes/134 witnesses.
+The total is 115 scopes/1,457 executions. Thirteen prepared locks/eighteen
+packages and fresh locked replay pass, with 91,718,258,688 free scratch bytes.
+Metadata inputs:
+`2dc2334ddc805d5c42bc20d6d7d46ac1b6fda4bff27e63e82925962082366073`;
+results:
+`d2101a72a53af1c01382597cd7272ce2b650d3e04681a84abed2c74f4def7669`.
+Typed inputs:
+`c5d7ae47ad7926c6465fbd76ebe01f1b5f3ec454b0f4ea575a4260664e4139a3`;
+original inputs:
+`e479d383785b1b18e9eb2e35dd07a17d96d8c1cbf43634c4cd1972fdb26e60b6`.
+
+The 102 diagnostic entries comprise 96 inherited cases and six QC obligations:
+71 Passed, 22 Incomplete, 9 NotApplicable and 0 Failed. The first private observer
+incorrectly expected only 96 entries and rejected the successful native summary.
+Independent frozen-catalog expansion verifies the six extra obligations;
+corrected projection admits the unchanged result with every prior prerequisite.
+The unit fixture now derives its expected count from that full catalog.
+Sixteen inherited parent controls plus six qualification obligations remain
+incomplete. This proves the actual complete diagnostic batch and native
+executor-record assertions at `216413a`, not profile qualification or the later
+independent parent implementation. No task/checklist marker advances.
 
 ## Summary
 

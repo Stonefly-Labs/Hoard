@@ -8715,7 +8715,8 @@ path. It independently captures the metadata profile and its two frozen binding
 declarations before any execution, writes a dedicated input document and
 predeclares all six scope UUID/maps. The dispatcher executes all 134 catalog
 witness occurrences and passes the original transport objects to joint
-admission only after every scope finishes. A create-new private 96-case history
+admission only after every scope finishes. A create-new private 102-entry history
+includes all 96 inherited cases and six qualification obligations and
 records scope/result hashes and terminal state counts; execution or admission
 failure preserves incomplete histories and propagates the original failure.
 Missing parent controls are not treated as passes. The whole diagnostic retains
@@ -8730,9 +8731,10 @@ inputs. All 124 SDK checks and all 376 tooling checks pass (359 passed/seventeen
 explicit native macOS skips); frozen inventory/catalog and patch checks pass.
 The added admission-error fixture passes its focused rerun.
 The requested native addition is six scopes/134 exact executions and a
-96-case diagnostic history; parent controls, independent non-session
+102-entry diagnostic history; parent controls, independent non-session
 qualification, full artifact/category CLI acceptance and T019/T020 remain
-unfinished. That complete Linux metadata batch is not yet admitted.
+unfinished. That complete Linux metadata batch is now admitted at `216413a`
+as recorded below.
 
 Category command parents now independently read each available owned-executor
 record before discovery/execution output admission. They require exact
@@ -8754,6 +8756,25 @@ patch checks pass. Native parent execution is pending, not admitted. The earlier
 metadata summary serialization boundary additionally reproduced its mappingproxy
 TypeError before repair; all124 SDK checks passed at `216413a`. No task/checklist,
 provider/package/reference/lock or deployment surface changes in this increment.
+
+Exact metadata native run
+[40187523765](https://github.com/Stonefly-Labs/Hoard/actions/runs/40187523765)
+at `216413ae43fdc2feb923a1c8fd0d334a3eee5f03` passed all three jobs and
+268 foundations without failures/errors/skips. Strict independent projection
+admits the existing 109 scopes/1,323 discoveries/executions and separate six
+metadata scopes/134 witnesses: 115 scopes/1,457 executions in total.
+Metadata input `2dc2334ddc805d5c42bc20d6d7d46ac1b6fda4bff27e63e82925962082366073`
+and result `d2101a72a53af1c01382597cd7272ce2b650d3e04681a84abed2c74f4def7669`
+retain 71 Passed, 22 Incomplete, 9 NotApplicable and 0 Failed. The private history
+correctly includes 96 inherited cases plus six QC obligations. The first private
+observer incorrectly expected 96 entries and rejected the successful run; frozen
+`expected_cases("metadata")` independently explains all 102 entries, and corrected
+projection passes without changing production results or weakening controls.
+The orchestration fixture now derives its expected count from that full catalog.
+All prior native prerequisites and thirteen-lock/eighteen-package fresh replay
+pass; free scratch 91,718,258,688 bytes. This admits actual metadata diagnostic
+execution and native executor records at `216413a`, not source qualification,
+the 22 outstanding obligations or later independent command-parent admission.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

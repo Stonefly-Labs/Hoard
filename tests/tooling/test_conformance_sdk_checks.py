@@ -117,8 +117,9 @@ class SdkDiagnosticTests(unittest.TestCase):
                 checks.category_command_proof(run, SimpleNamespace(exit_code=0), **options)
 
     def test_metadata_category_batch_keeps_predeclared_transports_and_failure_history(self):
-        from conformance_case_catalog import category_execution_partitions, category_runtime_cases
+        from conformance_case_catalog import category_execution_partitions, category_runtime_cases, expected_cases
         partitions = category_execution_partitions("metadata")
+        case_count = len(expected_cases("metadata"))
         plans = {scope_id: {
             "attemptId": str(uuid.uuid4()),
             "tests": {identity: (binding, category_runtime_cases("metadata", binding)[identity])
@@ -132,7 +133,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             transports = {scope: object() for scope in plans}
             history = unittest.mock.Mock()
             history.joint_partitions.return_value = plans
-            history.results.return_value = [{"status": "Incomplete"} for _ in range(96)]
+            history.results.return_value = [{"status": "Incomplete"} for _ in range(case_count)]
             if failure == "admission":
                 history.finish_joint.side_effect = checks.evidence.ConformanceError("ProofMismatch")
             captured = []
@@ -169,7 +170,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertEqual(set(received), set(plans))
                     self.assertTrue(all(received[key] is value for key, value in transports.items()))
                     self.assertEqual(summary["tests"], 134)
-                    self.assertEqual(summary["caseCount"], 96)
+                    self.assertEqual(summary["caseCount"], case_count)
                     self.assertFalse(summary["qualification"])
                     self.assertEqual(
                         json.loads(json.dumps({"metadataCategory": summary}))["metadataCategory"], summary)
@@ -178,7 +179,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 record = json.loads((root / "proofs/category-metadata-diagnostic-history.json").read_bytes())
                 self.assertFalse(record["qualification"])
                 self.assertEqual(record["code"], "ProofMismatch" if failure else "EvidenceIncomplete")
-                self.assertEqual(len(record["results"]), 96)
+                self.assertEqual(len(record["results"]), case_count)
 
     def test_category_runtime_scopes_preserve_exact_catalog_binding_and_case_assignments(self):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases
