@@ -137,7 +137,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         self._assert_category_batch("artifacts", 227)
 
     def test_qualification_stall_and_recovery_are_fresh_inside_joint_attempt_before_scopes(self):
-        for failed in (None, "stall", "recovery"):
+        for failed in (None, "stall", "recovery", "ownership"):
             root = self.directory / str(failed)
             (root / "proofs").mkdir(parents=True)
             run = SimpleNamespace(root=root)
@@ -156,7 +156,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertIs(actual_run, run)
                     self.assertIs(actual_inputs, inputs)
                     self.assertEqual(actual_candidate, candidate)
-                    self.assertEqual(options, {"namespace": namespace})
+                    self.assertEqual(options, {} if namespace is None else {"namespace": namespace})
                     calls.append(name)
                     if failed == name:
                         raise checks.evidence.ConformanceError("ProofMismatch")
@@ -173,17 +173,19 @@ class SdkDiagnosticTests(unittest.TestCase):
                         "stall", "qualification-sqlite-native-noncooperation")), patch.object(
                     checks, "metadata_recovery_diagnostics", side_effect=controls(
                         "recovery", "qualification-sqlite-recovery")), patch.object(
+                    checks, "metadata_ownership_diagnostics", side_effect=controls("ownership", None)), patch.object(
                     checks, "category_attempt", side_effect=scope), patch.object(
                     checks, "_category_record", return_value={"qualification": False}), contextlib.redirect_stdout(io.StringIO()):
                 options = {"inspection_cases": {}, "inspection_configurations": {}, "native_sources": sources}
                 if failed is None:
                     self.assertFalse(checks.category_diagnostics(run, inputs, candidate, **options)["qualification"])
-                    self.assertEqual(calls, ["begin", "stall", "recovery", "scope", "finish"])
+                    self.assertEqual(calls, ["begin", "stall", "recovery", "ownership", "scope", "finish"])
                     history.interrupt_joint.assert_not_called()
                 else:
                     with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
                         checks.category_diagnostics(run, inputs, candidate, **options)
-                    self.assertEqual(calls, ["begin", "stall"] + (["recovery"] if failed == "recovery" else []))
+                    self.assertEqual(calls, ["begin", *["stall", "recovery", "ownership"][
+                        :["stall", "recovery", "ownership"].index(failed) + 1]])
                     history.interrupt_joint.assert_called_once_with("ProofMismatch")
                     history.finish_joint.assert_not_called()
 
@@ -1907,6 +1909,65 @@ class SdkDiagnosticTests(unittest.TestCase):
                         checks.evidence.ConformanceError, "ProofMismatch"):
                     checks.recovery_command(
                         run, self.directory / "runner.dll", ["recover-mutation"], cache_id="recovery")
+
+    def test_native_ownership_producer_seals_probe_then_reopens_same_database(self):
+        from conformance_execution import CommandResult
+
+        root = self.directory
+        candidate = root / "candidate"
+        assembly = candidate / checks.METADATA_RECOVERY / "bin/Release/net10.0/Hoard.Fixtures.Metadata.CrashRunner.dll"
+        assembly.parent.mkdir(parents=True)
+        assembly.write_bytes(b"explicit-modeled-owner-controller-not-native")
+        (root / "stores").mkdir()
+        (root / "proofs").mkdir()
+        namespace = "qualification-sqlite-ownership"
+        probe_path = f"proofs/{namespace}-probe.json"
+        inputs = {"profileId": "metadata", "mode": "qualification", "invocationGroupId": str(uuid.uuid4()),
+                  "runtimeAssemblies": {assembly.relative_to(root).as_posix(): checks.evidence.file_sha256(assembly)}}
+        records, calls = {}, []
+        run = SimpleNamespace(root=root, run_id=str(uuid.uuid4()), command_sequence=0, live_children=lambda: ())
+
+        def command(arguments, **options):
+            run.command_sequence += 1
+            sequence = run.command_sequence
+            calls.append((arguments, options))
+            holding = arguments[2] == "hold-owner-probe"
+            control = {
+                "schemaVersion": 1, "sequence": sequence, "childPid": 200,
+                "childStartSha256": "a" * 64, "startedMs": sequence * 1000, "endedMs": sequence * 1000 + 200,
+                "exitCode": -9 if holding else 0, "diagnosticCode": "None", "groupState": "Exited", "scope": "recovery",
+                **({"barrier": {"value": 30, "observedMs": 1050, "signalMs": 1100}} if holding else {})}
+            (root / f"proofs/recovery-command-{sequence:04}.json").write_bytes(checks.evidence.canonical_bytes(control))
+            records[sequence] = b"explicit-native-record-model-" + str(sequence).encode()
+            if holding:
+                (root / probe_path).write_bytes(b"explicit-probe-model")
+            return CommandResult(control["exitCode"], ({
+                "event": "barrier" if holding else "test", "code": "None", "value": 30 if holding else 1},),
+                200, hashlib.sha256(records[sequence]).hexdigest())
+
+        run.command = command
+        run.read_execution_record = lambda sequence: records[sequence]
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "OwnershipInvalid"):
+            checks.recovery_command(run, assembly, ["hold-owner-probe"], cache_id=namespace,
+                                    execution_outputs=(probe_path,))
+        self.assertEqual(calls, [])
+        with patch.object(checks, "OwnedRun", type(run)), patch.object(
+                checks, "require_sqlite_environment"), patch.object(checks, "verify_runtime_packages"), patch.object(
+                checks, "native_control_record", side_effect=lambda _, sequence, *args, **kwargs: records[sequence]) as native, patch.object(
+                checks, "native_metadata_ownership_control") as admission:
+            result = checks.metadata_ownership_diagnostics(run, inputs, candidate)
+        graph = checks.evidence.load_json((root / f"proofs/{namespace}-native-executions.json").read_bytes())
+        self.assertEqual(result, checks.evidence.digest(graph))
+        self.assertEqual([row["mode"] for row in graph["commands"]], ["hold-owner-probe", "reopen-owner"])
+        self.assertEqual(calls[0][0][3:5], calls[1][0][3:5])
+        self.assertEqual(calls[0][0][-1], str(root / probe_path))
+        self.assertEqual(calls[0][1]["execution_outputs"], (probe_path,))
+        self.assertNotIn("execution_outputs", calls[1][1])
+        self.assertEqual(native.call_args_list[0].kwargs["output_files"],
+                         {probe_path: checks.evidence.file_sha256(root / probe_path)})
+        admission.assert_called_once()
+        self.assertEqual((root / f"proofs/{namespace}-native-inputs.json").read_bytes(),
+                         checks.evidence.canonical_bytes(inputs))
 
     def test_metadata_recovery_controller_drives_each_real_runner_mode_and_rejects_missing_proof(self):
         for namespace, mutation in (

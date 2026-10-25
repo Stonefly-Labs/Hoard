@@ -9210,6 +9210,40 @@ so a self-consistent replacement producer/graph now rejects. The extended
 watchdog exercises actual timeout output capture on Linux; its local skip is
 explicit, while the filesystem sealing/substitution regressions run portably.
 
+The MP-43 ownership increment runs `hold-owner-probe` and `reopen-owner` in a
+fresh qualification-only namespace, after joint begin and before runtime
+scopes. The first fixture owns SQLite, starts a distinct actual process, bounds
+and checks its rejection output, retains the closed PID/start-hash probe packet,
+and only then exposes owner barrier 30. The supervisor kills the owner and
+observes settled containment before sealing that packet; the second command
+successfully reopens the exact database. Existing legacy modes are unchanged.
+Independent seven-file graph admission reconstructs both native commands,
+immutable assembly/current inputs, distinct probe/owner identities, original
+output bytes and joint timing. Rehashed probe substitution and absent readback
+reject. MP-43 uses only its original frozen runtime witnesses, never the
+unrelated recovery fact UUID. The summary requires `ownershipSourcesSha256`
+from imported proofs; any ownership-control failure interrupts joint admission.
+
+All 393 tooling checks pass with 17 explicit native skips. Fresh standard
+`metadata_evidence.prepare_packages(..., False)` completes its locked build
+replay with eight packages, and fixture whitespace verification passes. A real
+separate-process rejection, exact owner kill and reopen also pass on macOS,
+explicitly without Linux confinement or qualification. The modeled metadata
+target is 81/12/9/0 across unchanged seven scopes/135 witnesses/five parents;
+exact Linux confirmation and the rest of the implementation stage are pending.
+
+Earlier exact `2ac4ed66505c1035aab0c490510eeee44d475e32`,
+[run40215065690](https://github.com/Stonefly-Labs/Hoard/actions/runs/40215065690),
+now independently passes all three Linux jobs: 280 native foundations without
+failures/errors/skips, 13-lock/18-package fresh replay and 128 scopes/1,819
+actual witnesses. The seventh qualification-input metadata scope executes,
+retaining 135 witnesses/five source parents and 79/14/9/0 states. Inputs
+`d2e42b6fa37b81b9f16b7217aaebdb23f2eead7f4083f9c2247ee7165b5edb9d`,
+results `5c9e045a2c63b0f73a96b79a66d656d44ec7eca34cdca9cb58dc15b76c645fa4`,
+recovery graph `ba56997c57233678128e087ac25a3ff70a0a73e0cdc8bf04b35fa3f98dc3ef08`.
+This admits runtime recovery-source dispatch and post-timeout input checks,
+not subsequent MP-37/output sealing, MP-43 or complete profile qualification.
+
 The earlier source-ownership correction at exact `602fa44820c68d55222971ffdd93e9c7105f3cdb`,
 [run40213503846](https://github.com/Stonefly-Labs/Hoard/actions/runs/40213503846),
 now independently passes all three Linux jobs: 279 foundations without

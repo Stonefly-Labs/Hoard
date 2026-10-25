@@ -1589,6 +1589,93 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     sources.native_metadata_noncooperation_control(
                         run, self.inputs, started_ms=9, ended_ms=45011)
 
+    def test_native_owner_probe_requires_distinct_process_original_output_and_crash_reopen(self):
+        import conformance_sources as sources
+        from types import SimpleNamespace
+
+        self.category_history(mode="qualification")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+
+            def write(path, raw):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(raw)
+                path.chmod(0o400)
+
+            assembly = "candidate/tests/fixtures/metadata/CrashRunner/bin/Release/net10.0/Hoard.Fixtures.Metadata.CrashRunner.dll"
+            write(root / assembly, b"explicit-ownership-controller-model-not-native-execution")
+            self.inputs["runtimeAssemblies"] = {assembly: evidence.file_sha256(root / assembly)}
+            namespace = "qualification-sqlite-ownership"
+            inputs_path = f"proofs/{namespace}-native-inputs.json"
+            probe_path = f"proofs/{namespace}-probe.json"
+            write(root / inputs_path, evidence.canonical_bytes(self.inputs))
+            probe = {"schemaVersion": 1, "ownerPid": 200, "probePid": 300,
+                     "probeStartSha256": "c" * 64, "competingOwnerRejected": True}
+            write(root / probe_path, evidence.canonical_bytes(probe))
+            run = SimpleNamespace(root=root, run_id=self.inputs["runId"], root_id=str(uuid.uuid4()),
+                                  live_children=lambda: ())
+            records, commands = {}, []
+            for offset, mode in enumerate(("hold-owner-probe", "reopen-owner")):
+                sequence = offset + 7
+                control = {
+                    "schemaVersion": 1, "sequence": sequence, "childPid": 200 + offset,
+                    "childStartSha256": "b" * 64, "startedMs": 10 + 3 * offset, "endedMs": 12 + 3 * offset,
+                    "exitCode": -9 if offset == 0 else 0, "diagnosticCode": "None",
+                    "groupState": "Exited", "scope": "recovery",
+                    **({"barrier": {"value": 30, "observedMs": 10.5, "signalMs": 11}} if offset == 0 else {})}
+                directory = root / "stores" / namespace
+                arguments = ["dotnet", str(root / assembly), mode, str(directory / "metadata.db"), str(directory),
+                             str(root / probe_path) if offset == 0 else "owner"]
+                native = {
+                    **{key: value for key, value in control.items() if key != "barrier"},
+                    "runId": run.run_id, "rootId": run.root_id,
+                    "argvSha256": evidence.digest(arguments),
+                    "cwdSha256": hashlib.sha256(str((root / assembly).parent).encode()).hexdigest(),
+                    "controlRecordSha256": evidence.digest(control),
+                    "inputFiles": {assembly: self.inputs["runtimeAssemblies"][assembly], inputs_path: evidence.digest(self.inputs)},
+                    **({"outputFiles": {probe_path: evidence.digest(probe)}} if offset == 0 else {})}
+                records[sequence] = evidence.canonical_bytes(native)
+                write(root / f"proofs/recovery-command-{sequence:04}.json", evidence.canonical_bytes(control))
+                write(root / f"proofs/execution-command-{sequence:04}.json", records[sequence])
+                commands.append({"mode": mode, "sequence": sequence,
+                                 "controllerSha256": evidence.digest(control),
+                                 "executionSha256": hashlib.sha256(records[sequence]).hexdigest()})
+            run.read_execution_record = lambda sequence: records[sequence]
+            graph = {
+                "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+                "invocationGroupId": self.inputs["invocationGroupId"], "inputsSha256": evidence.digest(self.inputs),
+                "assemblyPath": assembly, "inputsPath": inputs_path, "commands": commands,
+                "probeSha256": evidence.digest(probe)}
+            graph_path = root / f"proofs/{namespace}-native-executions.json"
+            write(graph_path, evidence.canonical_bytes(graph))
+            with mock.patch.object(sources, "OwnedRun", type(run)):
+                admitted = sources.native_metadata_ownership_control(run, self.inputs, started_ms=9, ended_ms=16)
+                self.assertEqual(set(admitted["controls"]), {"second-process-owner-and-crash-released-lock"})
+                self.assertEqual(len(admitted["sourceProofs"]), 7)
+                history = evidence.CategoryRuntimeHistory(self.inputs)
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+                    history.begin("sqlite", self.attempt)
+                case = next(case for case in history._cases if case.binding_id == "sqlite" and case.case_id == "MP-43")
+                witnesses = tuple({
+                    "bindingId": "sqlite", "testIdentity": identity, "executionId": str(uuid.uuid4()),
+                    "status": "Passed", "proofSha256": "e" * 64} for identity in case.witnesses)
+                result = history._case_results(
+                    "sqlite", "None", 16, witnesses, control_proofs=admitted["controls"])[case.key]
+                self.assertEqual(result["status"], "Passed")
+                self.assertEqual(set(result["attempts"][0]["witnessIds"]),
+                                 {witness["executionId"] for witness in witnesses})
+                for changed in (probe | {"probePid": 200}, probe | {"probeStartSha256": "e" * 64}):
+                    write(root / probe_path, evidence.canonical_bytes(changed))
+                    write(graph_path, evidence.canonical_bytes(graph | {"probeSha256": evidence.digest(changed)}))
+                    with self.subTest(probe=changed), self.assertRaises(evidence.ConformanceError):
+                        sources.native_metadata_ownership_control(run, self.inputs, started_ms=9, ended_ms=16)
+                write(root / probe_path, evidence.canonical_bytes(probe))
+                write(graph_path, evidence.canonical_bytes(graph | {"commands": commands[:1]}))
+                with self.assertRaises(evidence.ConformanceError):
+                    sources.native_metadata_ownership_control(run, self.inputs, started_ms=9, ended_ms=16)
+
     def category_history(self, *, profile="metadata", mode="diagnostic", max_attempts=1, origin_inputs=None):
         self.inputs.update(mode=mode, profileId=profile, invocation=["profile", profile])
         self.inputs["budgets"]["profileSeconds"] = 5400 if profile == "metadata" else 10800

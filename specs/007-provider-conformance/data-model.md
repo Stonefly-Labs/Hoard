@@ -444,6 +444,14 @@ containment, under the shared bounded post-check deadline. The graph's producer
 hash must match that original map; self-consistent replacement files reject.
 The normal record shape and public report entities are unchanged.
 
+MP-43 additionally references a seven-file owned-process graph: immutable current
+inputs, graph, executor-sealed distinct-process probe and two original native/
+controller pairs. Exact owner barrier 30, actual kill/settlement, subsequent
+same-database reopening and joint-attempt bounds must agree. Probe replacement
+cannot substitute consistently rehashed caller files for original output bytes.
+Its original runtime witnesses remain mandatory; no new execution UUID,
+public entity field or source-parent scope is introduced.
+
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits
 `Released`; expiration/cancellation/observation timeout does not. Retained

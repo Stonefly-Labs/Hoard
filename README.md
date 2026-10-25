@@ -2040,8 +2040,13 @@ dispatches it as the seventh qualification-input metadata scope, independently
 joins its consumed-file packet to the original native command and recovery
 graph, and attributes only the logger's actual execution UUID to eligible cases.
 Bare controller graphs, unrelated sessions and unparented witnesses cannot pass.
-Exact native confirmation of this wiring is pending; modeled passes are not
-actual qualification receipts.
+Exact `2ac4ed6`,
+[run40215065690](https://github.com/Stonefly-Labs/Hoard/actions/runs/40215065690),
+now passes all three Linux jobs: 280 foundations without skips, fresh
+13-lock/18-package replay and 128 scopes/1,819 witnesses. Qualification-input
+metadata has seven scopes/135 witnesses/five parents and 79 Passed/14
+Incomplete/9 NotApplicable. This confirms actual recovery-witness dispatch
+and post-timeout input checks, not later MP-37/output or MP-43 admission.
 
 The native-stall control now also records its original owned execution and
 immutable assembly/current-input snapshots. A settled expected timeout receives
@@ -2051,8 +2056,18 @@ stall runs inside the joint attempt and its independently corroborated graph
 joins MP-37's two original runtime witnesses, never the unrelated recovery
 fact's UUID. The executor itself seals and hashes the producer's actual output
 after settled containment; consistently rehashed replacement packets reject.
-The modeled metadata target is now 80 Passed/13 Incomplete/9
+That increment's modeled metadata target is 80 Passed/13 Incomplete/9
 NotApplicable; native confirmation of this import remains pending.
+
+MP-43 now also runs a fresh competing process while the real SQLite owner is
+held, then kills that owner at its observed barrier and successfully reopens
+the same database. Independent admission joins the seven-file ownership graph,
+actual distinct probe/owner PIDs, original executor-sealed probe bytes and both
+owned command records to the joint attempt. Its existing frozen runtime
+witnesses remain mandatory. The new modeled target is 81 Passed/12 Incomplete/9
+NotApplicable, with unchanged seven scopes/135 witnesses/five source parents.
+Fresh locked package preparation and a real two-process macOS diagnostic pass;
+neither supplies Linux containment or a qualifying profile receipt.
 The corrected producer's native foundation run then exposed a second,
 test-only defect at the same assertion: the Linux-only barrier test lacked its
 `hashlib` import. That import is now explicit; the failed checkpoint is not admitted.

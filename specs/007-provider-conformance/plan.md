@@ -6306,6 +6306,37 @@ preserve outside sentinels. Normal commands and other receipt field sets are
 unchanged. Actual Linux timeout output capture remains pending, not modeled
 into native success.
 
+The MP-43 increment adds fresh real second-process ownership rejection before
+owner barrier 30, exact supervisor kill/settlement and successful reopening of
+the same SQLite database. Bounded fixture stdout/stderr stays in memory; the
+retained closed probe records distinct actual PIDs and the probe's start hash.
+Independent authority consumes seven files and reconstructs the two ordered
+commands, exact current inputs/assembly/argv/cwd, original output map and
+joint-attempt bounds. Rehashed probe replacement and absent readback reject.
+The fresh ownership control runs after joint begin, before runtime scopes;
+failure interrupts instead of admitting a partial attempt. MP-43's existing
+frozen actual runtime witnesses remain required and unchanged. The final
+summary takes `ownershipSourcesSha256` only from imported proofs.
+
+The new modeled metadata target is 81/12/9/0 across unchanged seven scopes/
+135 witnesses/five parents. All 393 tooling checks pass with 17 native skips,
+fixture whitespace verification passes and fresh standard locked metadata
+package preparation completes with eight packages. Actual separate-process
+rejection, owner kill and reopen also pass in an explicitly non-qualifying
+macOS diagnostic, not Linux confinement or a full-profile receipt. Exact native
+confirmation and the remaining tasks are pending.
+
+Earlier exact `2ac4ed66505c1035aab0c490510eeee44d475e32`,
+[run40215065690](https://github.com/Stonefly-Labs/Hoard/actions/runs/40215065690),
+now independently passes three Linux jobs, 280 foundations without skips,
+13-lock/18-package replay and 128 scopes/1,819 actual witnesses. Qualification-
+input metadata executes seven scopes/135 witnesses/five parents with 79/14/9/0;
+input/result hashes are
+`d2e42b6fa37b81b9f16b7217aaebdb23f2eead7f4083f9c2247ee7165b5edb9d` /
+`5c9e045a2c63b0f73a96b79a66d656d44ec7eca34cdca9cb58dc15b76c645fa4`.
+This admits recovery runtime UUID attribution and post-timeout input checks
+only, not later MP-37/output/MP-43 admission or complete qualification.
+
 Earlier exact `602fa44820c68d55222971ffdd93e9c7105f3cdb`,
 [run40213503846](https://github.com/Stonefly-Labs/Hoard/actions/runs/40213503846),
 now independently passes all three jobs: 279 native foundations without skips,

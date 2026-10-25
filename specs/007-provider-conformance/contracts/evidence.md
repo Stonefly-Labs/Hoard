@@ -222,6 +222,18 @@ native record. Caller-authored or consistently rehashed replacement packets do
 not establish provenance. Ordinary command/source record shapes stay unchanged
 when no retained outputs were explicitly requested.
 
+The MP-43 ownership graph separately retains seven exact input/graph/probe/
+controller/native files. Original native output hashes bind the closed probe
+packet to the observed owner command, with a distinct actual child PID/start
+hash and successful competing-owner rejection before barrier 30. Only settled
+owner termination followed by successful reopening of the same database,
+inside joint-attempt bounds, supplies the control proof. Both commands require
+the current immutable assembly/input map and exact argv/cwd. Consistently
+rehashed probe replacements or missing/reordered readback commands reject.
+The case still requires its frozen actual runtime witnesses, with no unrelated
+source UUID. `ownershipSourcesSha256` comes only from imported proof bytes.
+No public entity schema changes or native success are inferred from models.
+
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private
 revision-2 execution proof adds a distinct `originalObservations` collection;

@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text.Json;
@@ -50,6 +51,18 @@ async ValueTask Hold(string point)
     throw new TimeoutException("Parent did not terminate its recovery child.");
 }
 string Digest(MetadataReadSnapshot snapshot) => Convert.ToHexStringLower(SHA256.HashData(MetadataEncoding.Encode(snapshot).AsSpan()));
+async Task<byte[]> OwnerOutput(Stream stream, CancellationToken cancellation)
+{
+    using var output = new MemoryStream();
+    var buffer = new byte[1024];
+    while (true)
+    {
+        var count = await stream.ReadAsync(buffer, cancellation);
+        if (count == 0) { return output.ToArray(); }
+        if (output.Length + count > 4096) { throw new InvalidOperationException("OutputLimitExceeded"); }
+        output.Write(buffer, 0, count);
+    }
+}
 async Task<MetadataFixtureSession> Open(string compatible = "fixture-sqlite-v2", bool create = false)
 {
     var result = MetadataFixtureSession.Create("sqlite", new CrashClock(), database, compatibleSchema: compatible);
@@ -227,6 +240,63 @@ switch (mode)
             await Hold("owner");
             break;
         }
+    case "hold-owner-probe":
+        {
+            await using var fixture = await Open(create: true);
+            using var child = new Process
+            {
+                StartInfo = new ProcessStartInfo("dotnet")
+                {
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false
+                }
+            };
+            foreach (var argument in new[] {
+                typeof(CrashClock).Assembly.Location, "try-owner-probe", database, control, "owner" })
+            { child.StartInfo.ArgumentList.Add(argument); }
+            Require(child.Start());
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+            var stdout = OwnerOutput(child.StandardOutput.BaseStream, cancellation.Token);
+            var stderr = OwnerOutput(child.StandardError.BaseStream, cancellation.Token);
+            try
+            {
+                await Task.WhenAll(stdout, stderr, child.WaitForExitAsync(cancellation.Token));
+                Require(child.ExitCode == 0 && stderr.Result.Length == 0);
+                using var observed = JsonDocument.Parse(stdout.Result);
+                var probe = observed.RootElement;
+                Require(probe.EnumerateObject().Select(item => item.Name).Order().SequenceEqual(
+                    new[] { "schemaVersion", "childPid", "childStartSha256", "competingOwnerRejected" }.Order()));
+                Require(probe.GetProperty("schemaVersion").GetInt32() == 1);
+                Require(probe.GetProperty("childPid").GetInt32() == child.Id && child.Id != Environment.ProcessId);
+                Require(probe.GetProperty("competingOwnerRejected").GetBoolean());
+                var started = probe.GetProperty("childStartSha256").GetString()
+                    ?? throw new InvalidOperationException("ProofMismatch");
+                Require(started.Length == 64 && started.All(value => value is >= '0' and <= '9' or >= 'a' and <= 'f'));
+                Require(started != new string('0', 64));
+                using (var output = new FileStream(Path.GetFullPath(barrier), FileMode.CreateNew, FileAccess.Write))
+                {
+                    JsonSerializer.Serialize(output, new
+                    {
+                        schemaVersion = 1,
+                        ownerPid = Environment.ProcessId,
+                        probePid = child.Id,
+                        probeStartSha256 = started,
+                        competingOwnerRejected = true
+                    });
+                }
+            }
+            finally
+            {
+                if (!child.HasExited)
+                {
+                    child.Kill(entireProcessTree: true);
+                    await child.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(5));
+                }
+            }
+            await Hold("owner");
+            break;
+        }
     case "stuck-native":
         {
             var fixture = await Open(create: true);
@@ -257,11 +327,24 @@ switch (mode)
             throw new TimeoutException("Parent did not terminate its native-call child.");
         }
     case "try-owner":
+    case "try-owner-probe":
         {
             await using var fixture = MetadataFixtureSession.Create("sqlite", new CrashClock(), database);
             Require(await fixture.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(TimeSpan.FromMilliseconds(50)), default)
                 is MetadataResult<MetadataSchemaAdmission>.Failure { Code: MetadataFailureCode.Unavailable });
-            Emit("{\"competingOwnerRejected\":true}");
+            if (mode == "try-owner-probe")
+            {
+                using var current = Process.GetCurrentProcess();
+                Console.WriteLine(JsonSerializer.Serialize(new
+                {
+                    schemaVersion = 1,
+                    childPid = Environment.ProcessId,
+                    childStartSha256 = Convert.ToHexStringLower(SHA256.HashData(
+                        BitConverter.GetBytes(current.StartTime.ToUniversalTime().Ticks))),
+                    competingOwnerRejected = true
+                }));
+            }
+            else { Emit("{\"competingOwnerRejected\":true}"); }
             break;
         }
     case "reopen-owner":

@@ -42,7 +42,7 @@ from conformance_sources import (
     METADATA_RECOVERY_SCENARIOS, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
     admit_sqlite_noncooperation,
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
-    native_control_record, read_bounded, runtime_arguments, runtime_settings,
+    native_control_record, native_metadata_ownership_control, read_bounded, runtime_arguments, runtime_settings,
     source_witnesses as _source_witnesses,
 )
 from conformance_lock_preparation import prepare_project_lock, rebind_local_archives, verify_project_lock
@@ -988,15 +988,18 @@ def artifact_transfer_diagnostics(run, inputs, candidate, *, namespace="artifact
     return result
 
 
-def recovery_command(run, assembly, arguments, *, cache_id, value=None, execution_inputs=()):
+def recovery_command(run, assembly, arguments, *, cache_id, value=None, execution_inputs=(), execution_outputs=()):
     sequence = run.command_sequence + 1
     native = type(run) is OwnedRun
+    if execution_outputs and not native:
+        raise evidence.ConformanceError("OwnershipInvalid")
     input_files = {path: evidence.file_sha256(run.root / path) for path in execution_inputs} if native else {}
     arguments = ["dotnet", str(assembly), *arguments]
     result = run.command(
         arguments, cwd=assembly.parent, scope="recovery",
         env={"HOARD_CONFORMANCE_SAFE_EVENTS": "1"}, stop_at_barrier=value, cache_id=cache_id,
-        **({"record_execution": True, "execution_inputs": execution_inputs} if native else {}))
+        **({"record_execution": True, "execution_inputs": execution_inputs} if native else {}),
+        **({"execution_outputs": execution_outputs} if execution_outputs else {}))
     if run.live_children():
         raise evidence.ConformanceError("CleanupIncomplete")
     if value is None:
@@ -1015,7 +1018,8 @@ def recovery_command(run, assembly, arguments, *, cache_id, value=None, executio
             command, sequence, scope="recovery", detail=None, exit_code=0, max_duration=300000)
     if native:
         recorded = native_control_record(
-            run, sequence, raw, arguments=arguments, cwd=assembly.parent, input_files=input_files)
+            run, sequence, raw, arguments=arguments, cwd=assembly.parent, input_files=input_files,
+            output_files={path: evidence.file_sha256(run.root / path) for path in execution_outputs})
         if hashlib.sha256(recorded).hexdigest() != result.execution_record_sha256:
             raise evidence.ConformanceError("ProofMismatch")
     return hashlib.sha256(raw).hexdigest(), command
@@ -1083,6 +1087,46 @@ def metadata_recovery_diagnostics(run, inputs, candidate, *, namespace="sqlite-r
             "assemblyPath": assembly_key, "inputsPath": inputs_path, "commands": commands,
             "sourceReceiptSha256": evidence.digest(result)}))
     return result
+
+
+def metadata_ownership_diagnostics(run, inputs, candidate):
+    if type(run) is not OwnedRun or inputs.get("profileId") != "metadata" or inputs.get("mode") != "qualification":
+        raise evidence.ConformanceError("UnsupportedProfile")
+    namespace = "qualification-sqlite-ownership"
+    runtime = candidate / METADATA_RECOVERY / "bin/Release/net10.0"
+    assembly = runtime / "Hoard.Fixtures.Metadata.CrashRunner.dll"
+    require_sqlite_environment(inputs, assembly, run.root)
+    verify_runtime_packages(runtime, run.root / "feed/candidate", METADATA_RECOVERY_PACKAGES)
+    assembly_path = assembly.relative_to(run.root).as_posix()
+    if inputs.get("runtimeAssemblies", {}).get(assembly_path) != evidence.file_sha256(assembly):
+        raise evidence.ConformanceError("InputChanged")
+    directory = run.root / "stores" / namespace
+    no_symlinks(directory)
+    directory.mkdir(mode=0o700)
+    inputs_path = f"proofs/{namespace}-native-inputs.json"
+    write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
+    probe_path = f"proofs/{namespace}-probe.json"
+    commands = []
+    for mode in ("hold-owner-probe", "reopen-owner"):
+        _, command = recovery_command(
+            run, assembly, [mode, str(directory / "metadata.db"), str(directory),
+                            str(run.root / probe_path) if mode == "hold-owner-probe" else "owner"],
+            cache_id=namespace, value=30 if mode == "hold-owner-probe" else None,
+            execution_inputs=(assembly_path, inputs_path),
+            execution_outputs=(probe_path,) if mode == "hold-owner-probe" else ())
+        commands.append({
+            "mode": mode, "sequence": command["sequence"],
+            "controllerSha256": hashlib.sha256(read_bounded(
+                run.root / f'proofs/recovery-command-{command["sequence"]:04}.json', 64 * 1024)).hexdigest(),
+            "executionSha256": hashlib.sha256(run.read_execution_record(command["sequence"])).hexdigest()})
+    graph = {
+        "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+        "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
+        "assemblyPath": assembly_path, "inputsPath": inputs_path, "commands": commands,
+        "probeSha256": evidence.file_sha256(run.root / probe_path)}
+    write_new(run.root / f"proofs/{namespace}-native-executions.json", evidence.canonical_bytes(graph))
+    native_metadata_ownership_control(run, inputs, started_ms=0, ended_ms=time.monotonic() * 1000)
+    return evidence.digest(graph)
 
 
 def artifact_recovery_diagnostics(run, inputs, candidate):
@@ -2784,7 +2828,8 @@ def _category_record(run, inputs, history, scopes, code=None):
     recovery_source = {}
     if code is None and inputs["mode"] == "qualification" and inputs["profileId"] == "metadata":
         for name, namespace in (("recoverySourcesSha256", "qualification-sqlite-recovery"),
-                                ("nativeSourcesSha256", "qualification-sqlite-native-noncooperation")):
+                                ("nativeSourcesSha256", "qualification-sqlite-native-noncooperation"),
+                                ("ownershipSourcesSha256", "qualification-sqlite-ownership")):
             path = f"proofs/{namespace}-native-executions.json"
             if path not in history.proofs:
                 raise evidence.ConformanceError("ProofMismatch")
@@ -2828,6 +2873,7 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
         try:
             sqlite_noncooperation(run, inputs, candidate, namespace="qualification-sqlite-native-noncooperation")
             metadata_recovery_diagnostics(run, inputs, candidate, namespace="qualification-sqlite-recovery")
+            metadata_ownership_diagnostics(run, inputs, candidate)
         except evidence.ConformanceError as error:
             print(json.dumps({
                 "qualification": False, "phase": "category-control-failure",

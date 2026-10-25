@@ -204,6 +204,21 @@ hashes: predeclared absent retained outputs are sealed only after actual settled
 ownership, within the combined input/output bound and post-check deadline.
 Regular ownership, identity, no links and read-only retention are enforced;
 rehashing replacement producer/graph files cannot replace that original map.
+Qualification-input metadata also runs a fresh real competing-process ownership
+probe, then owner barrier 30, exact kill/settlement and reopen of the same
+database before runtime scopes. The bounded fixture retains distinct actual
+owner/probe PIDs and probe-start hash only after checking real owner rejection.
+The seven-file graph independently binds both commands, current assembly/input
+snapshots, original executor-sealed probe bytes and joint-attempt bounds.
+Missing/reordered reopen, changed probe bytes or foreign identities reject.
+MP-43's frozen runtime witnesses remain mandatory; no recovery-source UUID is
+borrowed. `ownershipSourcesSha256` must reference imported proof bytes.
+The real macOS diagnostic is non-qualifying; Linux confirmation is pending.
+Earlier exact `2ac4ed6`, run 40215065690, independently passes all three Linux
+jobs, 280 foundations without skips and 128 scopes/1,819 witnesses. Its seventh
+qualification-input metadata scope and post-timeout input checks pass, retaining
+79/14/9/0 across seven scopes/135 witnesses/five parents. This does not admit
+the subsequent MP-37/output or MP-43 increments or a complete profile.
 The earlier source-linking execution, before executor-held byte anchoring, is
 independently admitted at exact `78c5919`, run
 40202060742: all three Linux jobs, 273 foundations without skips and all
