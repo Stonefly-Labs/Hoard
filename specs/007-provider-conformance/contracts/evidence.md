@@ -154,7 +154,7 @@ later forest sources or complete categories/profiles. Wire schemas are unchanged
 The configured metadata host now contributes two actual module-owned roots,
 including rejected schema admission, while 38 additional artifact parameters
 observe their existing driver/interfaces after unchanged assertions. Coverage
-is 63 operational metadata identities per provider and 181 artifact witnesses,
+is 63 operational metadata identities per provider and 183 artifact witnesses,
 including actual metadata compositions and configured owners. Source boolean names/values
 remain unchanged; multi-parameter provider assignment has no Object fallback.
 Nine actual Local fresh-store children require exact immutable per-node image
@@ -171,9 +171,16 @@ reference history without invented parent edges or borrowed Local child images.
 Eight value/qualification contracts per binding retain actual loaded contract
 PE/type proof; they cannot impersonate provider sessions or excluded durability.
 Primary frozen-case selection considers applicable rows only.
-Local observation/replay pass 323 executions, 358 records and 2,110 image
-correspondences. Native admission requires 232 foundations and
-105 scopes/1,306 observations, pending; controllers, remaining artifact lifetimes
+The private revision-2 channel also admits closed `original-owner` observations
+for four provider-neutral authority/bridge facts per explicit artifact binding
+and both rejected-module parameters. Only the actual owner role is permitted;
+parents, invented sessions/interfaces/controls and substitution for a required
+original-instance reject. The copied-handle fact observes both independent
+authorities with shared reference history and distinct owner IDs. Rejected
+modules never expose a session; observation transfers no cleanup ownership.
+Local observation/replay pass 333 executions, 370 records and 2,122 image
+correspondences. Native admission requires 233 foundations and
+107 scopes/1,317 observations, pending; controllers, remaining artifact lifetimes
 and complete qualification are not inferred.
 
 The implemented private transport distinguishes `purpose: discovery` from

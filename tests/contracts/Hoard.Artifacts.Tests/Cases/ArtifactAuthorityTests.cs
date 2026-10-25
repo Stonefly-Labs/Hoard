@@ -1,10 +1,11 @@
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactAuthorityTests
+public sealed class ArtifactAuthorityTests(ITestOutputHelper output)
 {
     private readonly ArtifactStoreIdentity store = new("fixture.artifact", Guid.NewGuid(), Guid.NewGuid());
 
@@ -21,6 +22,8 @@ public sealed class ArtifactAuthorityTests
         var authority = new ArtifactCoordinationAuthority(store);
         var foreign = new ArtifactCoordinationAuthority(store);
         await new ArtifactAuthorityAssertions(store).RejectCopiedHandlesAsync(authority, foreign, default);
+        var observed = ArtifactProviderDriver.ObserveOriginalOwner(output, nameof(ArtifactAuthorityTests), authority);
+        ArtifactProviderDriver.ObserveOriginalOwner(output, nameof(ArtifactAuthorityTests), foreign, observed);
     }
 
     [Fact]
@@ -30,6 +33,7 @@ public sealed class ArtifactAuthorityTests
         var authority = new ArtifactCoordinationAuthority(store, clock);
         await new ArtifactAuthorityAssertions(store).HeldAfterExpiryAsync(
             authority, clock.Advance, clock.GetUtcNow, default);
+        ArtifactProviderDriver.ObserveOriginalOwner(output, nameof(ArtifactAuthorityTests), authority);
     }
 
     [Fact]
@@ -46,6 +50,7 @@ public sealed class ArtifactAuthorityTests
             ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
         await new ArtifactAuthorityAssertions(store).QueuedExclusiveAsync(
             authority, () => authority.WaitingAdmissions, default);
+        ArtifactProviderDriver.ObserveOriginalOwner(output, nameof(ArtifactAuthorityTests), authority);
     }
 
     [Fact]

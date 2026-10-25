@@ -121,6 +121,7 @@ public sealed class ArtifactCompositionTests(ITestOutputHelper output)
         Assert.Throws<InvalidOperationException>(() => module.Session);
         Assert.False(Directory.Exists(selected.Path));
         Assert.False(Directory.Exists(disabled.Path));
+        ArtifactProviderDriver.ObserveOriginalOwner(output, nameof(ArtifactCompositionTests), module, provider: provider);
     }
 
     private static string Defaults(string provider, string root, string disabled) => JsonSerializer.Serialize(new

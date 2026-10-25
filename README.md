@@ -1926,15 +1926,17 @@ remain unfinished.
 The next original-owner increment observes both actual configured host modules
 and 38 further artifact deletion/reconciliation/read/race/failure/budget
 parameters. Coverage is now 63 operational metadata identities per provider and
-181 artifact witnesses, including actual metadata compositions/configured owners.
+183 artifact witnesses, including actual metadata compositions/configured owners.
 Eight actual value/qualification contracts per binding carry loaded-type proofs.
 Nine genuine Local fresh-store reopens now have exact per-node image maps;
 early-return reconciliation and Object rows have no invented children.
 Rejected stores and decorated authorities are the actual objects used by source.
 Configured owners retain two independent real module roots, not invented reopens.
-Actual local observation/replay pass 323 executions, 358 records and
-2,110 image correspondences with the same SDK archive.
-Native admission requires 232 foundations and 105 scopes/1,306 observations,
+Explicit owner-only proof now observes genuine authorities, the metadata bridge
+and rejected modules without inventing unavailable sessions or interfaces.
+Actual local observation/replay pass 333 executions, 370 records and
+2,122 image correspondences with the extended private-evidence SDK.
+Native admission requires 233 foundations and 107 scopes/1,317 observations,
 pending. Controller attribution, remaining artifact lifetimes and complete
 qualifying profiles remain unfinished.
 Earlier parameterized run

@@ -284,7 +284,7 @@ and four contracts) and 818 image correspondences with SDK archive
 The configured-host witness adds two independent roots whose actual owners
 are the composed modules, not additional fixture sessions; both admitted and
 rejected-schema lifetimes retain original construction/assertion/disposal.
-Artifact policy now includes 181 exact witnesses across publication, deletion,
+Artifact operational policy now includes 183 exact witnesses across publication, deletion,
 reconciliation, read revalidation/destination failure, publication races, storage
 failures, all frozen budgets and selected recovery cases. Exact source-owned
 boolean argument names/values are preserved; provider selection rejects missing
@@ -309,10 +309,19 @@ history; only exact Local reopen identities select heterogeneous child images.
 Eight actual value/qualification contracts per binding observe the loaded
 Abstractions contract type. Primary-case selection excludes non-applicable
 durability rows, without turning contract validation into a durability pass.
-Current local observation/replay pass 323 executions, 358 records
-(342 original owners/sixteen contracts) and 2,110 image correspondences with the
-same SDK archive. Native admission requires 232 foundations and
-105 scopes/1,306 observations, pending; public/private wire schemas are unchanged.
+Four provider-neutral authority/bridge facts additionally run in each explicit
+artifact binding context. These and the two rejected-module parameters require
+closed `original-owner` observations with exactly the actual owner role and no
+parent edges. They cannot replace full original-instance roles or claim a
+provider session. The copied-handle fact retains two independent actual roots
+and shared reference history; owner reuse rejects. No unavailable session,
+interface, control, provider parameter or cleanup ownership is invented.
+Current local observation/replay pass 333 executions, 370 records
+(354 original owners/sixteen contracts) and 2,122 image correspondences with SDK
+archive `7651009db9b2ae1f857deb2973198d74edbf051e37514dbc4f013ddafe13dd26`.
+Native admission requires 233 foundations and 107 scopes/1,317 observations,
+pending. Private revision-2 evidence adds this closed kind; public schemas,
+existing kind policies and typed-session origins are unchanged.
 
 ### Shared bounds
 

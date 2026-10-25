@@ -92,7 +92,8 @@ internal static class RuntimeOriginOutput
             var parentElement = origin.GetProperty(original ? "parentObservationId" : "parentSessionId");
             Guid? parent = parentElement.ValueKind == JsonValueKind.Null ? null : Uuid(parentElement.GetString()!);
             var contract = original && origin.GetProperty("kind").GetString() == "loaded-contract";
-            RuntimeSafety.Require(parent != id && (!contract || parent is null)
+            var ownerOnly = original && origin.GetProperty("kind").GetString() == "original-owner";
+            RuntimeSafety.Require(parent != id && (!(contract || ownerOnly) || parent is null)
                 && origin.GetProperty(original ? "operation" : "factoryOperation").GetString()
                     == (contract ? "contract" : parent.HasValue ? "reopen" : "create"), "ProofMismatch");
             if (!original) { RuntimeSafety.Digest(origin.GetProperty("descriptorSha256").GetString()!); }
@@ -107,13 +108,13 @@ internal static class RuntimeOriginOutput
             string[] artifacts = ["factory", "session", "store", "validator", "maintenance", "lifetime", "authority", "faults"];
             if (original)
             {
-                string[] required = contract ? ["contract"] : expected.BindingId switch
+                string[] required = contract ? ["contract"] : ownerOnly ? ["owner"] : expected.BindingId switch
                 {
                     "sqlite" or "memory" => ["owner", "store", "schema", "authority", "controls"],
                     "local" or "object" => ["owner", "store", "validator", "maintenance", "lifetime", "authority", "controls"],
                     _ => throw RuntimeSafety.Error("ProofMismatch")
                 };
-                RuntimeSafety.Require((contract || origin.GetProperty("kind").GetString() == "original-instance")
+                RuntimeSafety.Require((contract || ownerOnly || origin.GetProperty("kind").GetString() == "original-instance")
                     && roles.SetEquals(required), "ProofMismatch");
             }
             else { RuntimeSafety.Require(roles.SetEquals(metadata) || roles.SetEquals(artifacts), "ProofMismatch"); }

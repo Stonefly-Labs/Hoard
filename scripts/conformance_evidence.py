@@ -1506,7 +1506,7 @@ def _ingest_original_observations(inputs, observations, *, original_inputs, entr
             "schemaVersion": _constant(1), "runId": _uuid, "caseId": stable_id,
             "testIdentity": _runtime_identity, "bindingId": stable_id, "observationId": _uuid,
             "parentObservationId": lambda value: None if value is None else _uuid(value),
-            "kind": _one_of("original-instance", "loaded-contract"),
+            "kind": _one_of("original-instance", "loaded-contract", "original-owner"),
             "operation": _one_of("create", "reopen", "contract"),
             "runtimeVersion": stable_id, "processArchitecture": _one_of("x64", "arm64"),
             "components": _record({role: component for role in roles}),
@@ -1525,11 +1525,11 @@ def _ingest_original_observations(inputs, observations, *, original_inputs, entr
                 or observation["operation"] != ("contract" if kind == "loaded-contract"
                                                 else "reopen" if parent_id is not None else "create")):
             raise ConformanceError("ProofMismatch")
-        if kind == "loaded-contract" and parent_id is not None:
+        if kind in ("loaded-contract", "original-owner") and parent_id is not None:
             raise ConformanceError("ProofMismatch")
-        if kind == "original-instance" and any(
+        if kind in ("original-instance", "original-owner") and any(
                 observation["components"][role]["instanceId"] == prior["components"][role]["instanceId"]
-                for prior in observed for role in ("owner", "store")):
+                for prior in observed for role in (("owner", "store") if kind == "original-instance" else ("owner",))):
             raise ConformanceError("ProofMismatch")
         if parent_id is not None:
             parent = prior_observations.get(parent_id)

@@ -1323,6 +1323,69 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             with self.subTest(nodes=len(selected)), self.assertRaises(evidence.ConformanceError):
                 self.ingest(original_inputs={"sqlite": {self.identity: selected}})
 
+    def test_original_observation_owner_only_admission_cannot_replace_real_session_roles(self):
+        observation, _ = self.original_transport(contract=True)
+        self.identity = ("Hoard.Artifacts.Tests.ArtifactCompositionTests."
+                         'Configured_selection_is_inert_until_start_and_missing_guarantees_block_readiness(provider: "local")')
+        self.manifest["expected"][0].update(testIdentity=self.identity, fullyQualifiedName=self.identity.split("(")[0])
+        owner = {**observation["components"]["contract"], "assemblySha256": "e" * 64}
+        observation.update(testIdentity=self.identity, kind="original-owner", operation="create", components={"owner": owner})
+        self.proof.update(testIdentity=self.identity, originalObservations=[observation],
+                          manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(testIdentity=self.identity, proofSha256=evidence.digest(self.proof))
+        self.completion["manifestSha256"] = evidence.digest(self.manifest)
+        assignments = {"local": {self.identity: {"owner": ("consumer/Hoard.Tests.dll", None)}}}
+        self.assertEqual(self.ingest(original_inputs=assignments, expected_tests={self.identity: ("local", "none")})[
+            "originalObservations"][self.execution][0], observation)
+        original = copy.deepcopy(observation)
+        for mutation in ("kind", "extra-role", "parent", "operation", "provider-session"):
+            with self.subTest(mutation=mutation):
+                observation = copy.deepcopy(original)
+                if mutation == "kind":
+                    observation["kind"] = "original-instance"
+                elif mutation == "extra-role":
+                    observation["components"]["store"] = copy.deepcopy(owner)
+                elif mutation == "parent":
+                    observation["parentObservationId"] = str(uuid.uuid4())
+                    observation["operation"] = "reopen"
+                elif mutation == "operation":
+                    observation["operation"] = "contract"
+                else:
+                    observation["testIdentity"] = (
+                        'Hoard.Artifacts.Tests.ArtifactPublicationTests.Empty_content_and_true_absence_are_distinct(provider: "local")')
+                    self.manifest["expected"][0].update(testIdentity=observation["testIdentity"],
+                                                       fullyQualifiedName=observation["testIdentity"].split("(")[0])
+                    self.proof.update(testIdentity=observation["testIdentity"],
+                                      manifestSha256=evidence.digest(self.manifest))
+                    self.witness["testIdentity"] = observation["testIdentity"]
+                    self.completion["manifestSha256"] = evidence.digest(self.manifest)
+                    assignments = {"local": {observation["testIdentity"]: assignments["local"][self.identity]}}
+                    self.identity = observation["testIdentity"]
+                self.proof["originalObservations"] = [observation]
+                self.witness["proofSha256"] = evidence.digest(self.proof)
+                with self.assertRaises(evidence.ConformanceError):
+                    self.ingest(original_inputs=assignments, expected_tests={self.identity: ("local", "none")})
+        self.setUp()
+        observation, _ = self.original_transport(contract=True)
+        self.identity = ("Hoard.Artifacts.Tests.ArtifactAuthorityTests."
+                         "Copied_foreign_changed_scope_and_disposed_handles_never_authorize_retention")
+        self.manifest["expected"][0].update(testIdentity=self.identity, fullyQualifiedName=self.identity)
+        observation.update(testIdentity=self.identity, kind="original-owner", operation="create", components={"owner": owner})
+        second = copy.deepcopy(observation)
+        second["observationId"] = str(uuid.uuid4())
+        second["components"]["owner"]["instanceId"] = str(uuid.uuid4())
+        self.proof.update(testIdentity=self.identity, originalObservations=[observation, second],
+                          manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(testIdentity=self.identity, proofSha256=evidence.digest(self.proof))
+        self.completion["manifestSha256"] = evidence.digest(self.manifest)
+        assignments = {"local": {self.identity: {"owner": ("consumer/Hoard.Tests.dll", None)}}}
+        result = self.ingest(original_inputs=assignments, expected_tests={self.identity: ("local", "none")})
+        self.assertEqual(tuple(result["originalObservations"][self.execution]), (observation, second))
+        second["components"]["owner"]["instanceId"] = observation["components"]["owner"]["instanceId"]
+        self.witness["proofSha256"] = evidence.digest(self.proof)
+        with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+            self.ingest(original_inputs=assignments, expected_tests={self.identity: ("local", "none")})
+
     def history(self, *, max_attempts=1, origin_inputs=None):
         import conformance_case_catalog as catalog
         case = next(case for case in catalog.expected_cases("composition") if case.case_id == "CP-01")

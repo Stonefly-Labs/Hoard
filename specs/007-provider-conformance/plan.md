@@ -5352,6 +5352,57 @@ Both documents independently recompute; free scratch is 91,720,994,816 bytes.
 This admits quarantine/per-node sources, not later lifecycle/composition/
 qualification-contract sources or qualifying profiles.
 
+### Genuine owner-only authority, bridge and rejected-module observations
+
+The private revision-2 proof now distinguishes `original-owner` from
+`original-instance` and `loaded-contract`. Its exact role set is `owner` and
+parent edges reject. Closed independent policy selects only four frozen
+provider-neutral authority/bridge facts per explicit Local/Object context and
+the two rejected configured-module parameters. Existing full-session roles,
+contract semantics and typed origins remain strict. No unavailable session,
+provider interface/control, provider argument or cleanup ownership is invented.
+Source observers run after unchanged assertions against the actual authority,
+bridge or module. The copied-handle fact captures both real independent
+authorities with shared reference history, not an invented reopen.
+
+Red tests first reject the unsupported kind in SDK capture and missing parent
+policy with `WitnessMissing`; exact dispatch fails five versus seven scopes.
+Repairs wire SDK capture, bounded safe logger, parent admission, frozen source/
+image/topology assignments, manifest/context dispatch and genuine source
+emission. Negatives retain full-role substitution rejection, parent/operation/
+extra-role rejection and reused-owner rejection. Actual fresh first/replay
+each pass 333 exact discoveries/executions, 370 records (354 genuine owners/
+sixteen loaded contracts), 2,122 PE/archive correspondences and actual
+authority/bridge/module type hashes. SDK archive:
+`7651009db9b2ae1f857deb2973198d74edbf051e37514dbc4f013ddafe13dd26`.
+These remain minimal-input, non-qualifying diagnostics.
+
+All fifty logger regressions pass without skips. Full tooling passes 341 checks
+(324 passed/seventeen explicit macOS-native skips). Changed C# formatting,
+frozen source inventory, SDK catalog and patch checks pass. The independently
+computed native request is 233 foundations and 107 scopes/1,317 executions,
+pending. A bounded custom architecture review finds no confirmed violation or
+unresolved design question; it is current-file inspection without execution,
+diff reconstruction or independent diagnostic verification, not final T081.
+README and affected guides/model/contracts are updated. Product APIs/providers,
+common assertions, package references/locks, task/reviewer markers and production/
+deployment examples/diagrams are unaffected; this changes private test evidence.
+
+Earlier lifecycle run
+[40173345291](https://github.com/Stonefly-Labs/Hoard/actions/runs/40173345291)
+at exact `88aa8a1dcd05d62538fc263bf1a665ceb2dbef64` now passes all three jobs,
+232 foundations without failures/errors/skips, 105 scopes/1,276 exact executions
+(293 originals) and every prerequisite. Typed input:
+`33c661c2e2d86a71c5d1b200c7562c6e68cb62ba2c269763e900e84c65c0ddec`;
+original input:
+`5cf83d15ec21a163a92eca0e28e64343f192c22ac9647985763d8b016b6b8705`;
+preparation:
+`979c95c8713ef3794a6c7a3392c36db1b85fc086f81115d04fc8195dd7d3da3c`.
+Both input documents independently recompute; free scratch is 91,716,321,280
+bytes. It admits lifecycle/rejection sources, not later composed/contract/
+owner-only sources or qualifying profiles. Controller and remaining owned-child
+attribution, category acceptance and executable qualifying backends remain open.
+
 ## Summary
 
 

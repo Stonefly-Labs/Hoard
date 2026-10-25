@@ -1013,10 +1013,16 @@ No additional stores, factories or cleanup owners are created.
 Eight actual value/qualification contracts per binding carry loaded-contract
 proofs, not fabricated provider sessions. The partial observer is package-only:
 ordinary predecessor contract tests still have no SDK dependency.
-Local observation/replay pass 323 executions, 358 records
-(342 original owners/sixteen contracts) and 2,110 image correspondences with the
-unchanged forest SDK archive. Native admission requires 232 foundations and
-105 scopes/1,306 observations, pending. Controllers, remaining artifact lifetimes
+Four provider-neutral authority/bridge facts and both rejected-module parameters
+now require closed `original-owner` proof: only the genuine existing owner,
+never a fabricated session, provider interface or control. Pure facts run in
+explicit Local/Object contexts without invented provider arguments. The copied
+handle fact observes both independent authorities; rejected modules never expose
+a session. Owner-only evidence cannot replace any full session-role policy.
+Local observation/replay pass 333 executions, 370 records
+(354 original owners/sixteen contracts) and 2,122 image correspondences with the
+extended private-evidence SDK archive. Native admission requires 233 foundations and
+107 scopes/1,317 observations, pending. Controllers, remaining artifact lifetimes
 and complete qualifying profiles are still unfinished.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,

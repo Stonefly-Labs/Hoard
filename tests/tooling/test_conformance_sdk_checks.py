@@ -1016,8 +1016,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         (self.directory / "runtime-owner.json").write_bytes(b"{}")
         run = SimpleNamespace(root=self.directory)
         scenarios = checks.original_observation_scenarios()
-        self.assertEqual(len(scenarios), 5)
-        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 323)
+        self.assertEqual(len(scenarios), 7)
+        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 333)
         frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_bytes())
         expected_metadata = {name for entry in frozen["entries"] if entry["profileId"] == "metadata"
                              for name in entry["runtimeTests"] if name.startswith((
@@ -1053,7 +1053,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                                   "ArtifactCapabilityTests.",
                                   "ArtifactAdmissionTests.",
                                   "ArtifactMetadataIntegrationTests.",
-                                  "ArtifactCompositionTests.Configured_singleton_",
+                                  "ArtifactCompositionTests.",
                                   "ArtifactNonCooperationTests.",
                                   "ArtifactFailureTests.",
                                   "ArtifactBudgetTests.",
@@ -1069,9 +1069,16 @@ class SdkDiagnosticTests(unittest.TestCase):
                                   "Hoard.Artifacts.Tests.ArtifactContractTests."))}
         self.assertEqual(set(scenarios[3][1]), expected_contracts)
         self.assertEqual(set(scenarios[4][1]), expected_contracts)
+        expected_shared = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                           for name in entry["runtimeTests"] if name.startswith((
+                               "Hoard.Artifacts.Tests.ArtifactAuthorityTests.",
+                               "Hoard.Artifacts.Tests.ArtifactMetadataAuthorityTests."))}
+        self.assertEqual(set(scenarios[5][1]), expected_shared)
+        self.assertEqual(set(scenarios[6][1]), expected_shared)
         for scenario in scenarios:
             metadata = "-metadata-" in scenario[0]
-            provider = scenario[0].rsplit("-", 1)[1] if metadata or "-contract-" in scenario[0] else None
+            provider = scenario[0].rsplit("-", 1)[1] if metadata or any(
+                marker in scenario[0] for marker in ("-contract-", "-shared-")) else None
             with self.subTest(scope=scenario[0]), patch.object(checks, "require_sqlite_environment") as admission:
                 with patch.object(checks, "runtime_command",
                                   side_effect=checks.evidence.ConformanceError("DeadlineExceeded")) as launch:
@@ -1098,8 +1105,9 @@ class SdkDiagnosticTests(unittest.TestCase):
                         self.assertEqual(entry["caseId"], min(cases))
                         nodes = checks.evidence.original_node_assignments(
                             entry["testIdentity"], assignments[binding][entry["testIdentity"]])
+                        kind = checks.original_witness_policy(entry["testIdentity"])[1]
                         self.assertIn(nodes[0][
-                            "contract" if "-contract-" in scenario[0] else "store"][0],
+                            "contract" if kind == "loaded-contract" else "owner" if kind == "original-owner" else "store"][0],
                                       {item["path"] for item in manifest["assemblies"]})
                         roles = nodes[0]
                         self.assertEqual(set(roles), set(checks.original_witness_policy(entry["testIdentity"])[2]))
@@ -1125,10 +1133,15 @@ class SdkDiagnosticTests(unittest.TestCase):
                         if any(f".{fixture}." in entry["testIdentity"] for fixture in (
                                 "ArtifactMetadataIntegrationTests", "ArtifactCompositionTests")):
                             self.assertEqual(roles["owner"][1], "Hoard.Fixtures.Artifacts.HostAdapters")
-                            self.assertEqual(roles["controls"][1], "Hoard.Fixtures.Artifacts." + (
-                                "Local" if binding == "local" else "ObjectSemantics"))
+                            if kind == "original-instance":
+                                self.assertEqual(roles["controls"][1], "Hoard.Fixtures.Artifacts." + (
+                                    "Local" if binding == "local" else "ObjectSemantics"))
                             if ".ArtifactCompositionTests." in entry["testIdentity"]:
-                                self.assertEqual(checks.original_witness_parents(entry["testIdentity"]), (None, None))
+                                self.assertEqual(checks.original_witness_parents(entry["testIdentity"]),
+                                                 (None,) if kind == "original-owner" else (None, None))
+                        if kind == "original-owner":
+                            self.assertEqual(set(roles), {"owner"})
+                            self.assertEqual(roles["owner"][1], "Hoard.Fixtures.Artifacts.HostAdapters")
                         if metadata:
                             facade = any(part in entry["testIdentity"] for part in (
                                 "MetadataPublicationTests.", "MetadataRelationshipTests.",

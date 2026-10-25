@@ -124,6 +124,16 @@ ORIGINAL_ARTIFACT_CONTRACT_WITNESSES = tuple(sorted((
         "Qualification_records_keep_case_proofs_and_environment_attributable_and_immutable",
         "Qualification_environment_is_bounded_unambiguous_and_redacted")),
 )))
+ORIGINAL_ARTIFACT_SHARED_OWNER_WITNESSES = tuple(sorted((
+    *("Hoard.Artifacts.Tests.ArtifactAuthorityTests." + method for method in (
+        "Copied_foreign_changed_scope_and_disposed_handles_never_authorize_retention",
+        "Held_same_operation_can_settle_after_expiry_without_reentrant_admission",
+        "Queued_exclusive_admission_closes_new_shared_admission_and_retention_never_reenters")),
+    "Hoard.Artifacts.Tests.ArtifactMetadataAuthorityTests.Mismatched_authority_composition_cannot_substitute_field_equivalent_protection",
+)))
+ORIGINAL_ARTIFACT_MODULE_OWNER_WITNESSES = tuple(
+    'Hoard.Artifacts.Tests.ArtifactCompositionTests.Configured_selection_is_inert_until_start_and_missing_guarantees_block_readiness'
+    f'(provider: "{provider}")' for provider in ("local", "object"))
 ORIGINAL_ARTIFACT_FIXED_BINDINGS = MappingProxyType({
     **{f"Hoard.Artifacts.Tests.{fixture}.{method}": provider
        for fixture, method, provider in (
@@ -139,6 +149,7 @@ ORIGINAL_ARTIFACT_FIXED_BINDINGS = MappingProxyType({
 })
 ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted((
     *ORIGINAL_ARTIFACT_FIXED_BINDINGS,
+    *ORIGINAL_ARTIFACT_MODULE_OWNER_WITNESSES,
     *(f'Hoard.Artifacts.Tests.{fixture}.{method}(provider: "{provider}")'
     for fixture, methods in (
         ("ArtifactPublicationTests", (
@@ -255,7 +266,8 @@ ORIGINAL_ARTIFACT_REOPENS = MappingProxyType({
 ORIGINAL_ARTIFACT_FORESTS = MappingProxyType({
     **ORIGINAL_ARTIFACT_REOPENS,
     **{identity: (None, None) for identity in ORIGINAL_ARTIFACT_WITNESSES
-       if ".ArtifactCompositionTests." in identity},
+       if ".Configured_singleton_selection_" in identity},
+    "Hoard.Artifacts.Tests.ArtifactAuthorityTests.Copied_foreign_changed_scope_and_disposed_handles_never_authorize_retention": (None, None),
 })
 
 
@@ -267,6 +279,8 @@ def original_witness_policy(identity):
         return "metadata", "original-instance", _ORIGINAL_METADATA_ROLES
     if identity in contracts:
         return "artifacts", "loaded-contract", ("contract",)
+    if identity in (*ORIGINAL_ARTIFACT_SHARED_OWNER_WITNESSES, *ORIGINAL_ARTIFACT_MODULE_OWNER_WITNESSES):
+        return "artifacts", "original-owner", ("owner",)
     if identity in ORIGINAL_ARTIFACT_WITNESSES:
         return "artifacts", "original-instance", _ORIGINAL_ARTIFACT_ROLES
     return None

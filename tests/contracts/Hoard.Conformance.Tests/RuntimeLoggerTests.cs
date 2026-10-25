@@ -105,6 +105,51 @@ public sealed class RuntimeLoggerTests
     }
 
     [Fact]
+    public void Original_owner_observations_do_not_fabricate_missing_sessions_or_interfaces()
+    {
+        using var owned = new OwnedInput();
+        var firstOwner = new OriginalProbe();
+        var secondOwner = new OriginalProbe();
+        var first = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", owned.Input.Expected[0].TestIdentity, "memory",
+            "original-owner", [("owner", firstOwner)]);
+        var second = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", first.TestIdentity, "memory",
+            "original-owner", [("owner", secondOwner)], parent: null, previous: first);
+        Assert.Null(second.ParentObservationId);
+        Assert.Equal("create", second.Operation);
+        Assert.Equal(["owner"], first.Components.Keys);
+        Assert.NotEqual(first.Components["owner"].InstanceId, second.Components["owner"].InstanceId);
+        Assert.Throws<ArgumentException>(() => ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", first.TestIdentity, "memory",
+            "original-instance", [("owner", firstOwner)]));
+        Assert.Throws<ArgumentException>(() => ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", first.TestIdentity, "memory",
+            "original-owner", [("owner", firstOwner), ("store", firstOwner)]));
+        Assert.Throws<ArgumentException>(() => ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", first.TestIdentity, "memory",
+            "original-owner", [("owner", secondOwner)], parent: first));
+        Assert.Throws<ArgumentException>(() => ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", first.TestIdentity, "memory",
+            "original-owner", [("owner", firstOwner)], parent: null, previous: second));
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, string.Join('\n',
+            new[] { first, second }.SelectMany(observation => ConformanceOriginalObservationOutput.Render(observation)))));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        Assert.Empty(proof.RootElement.GetProperty("sessionOrigins").EnumerateArray());
+        Assert.Equal(2, proof.RootElement.GetProperty("originalObservations").GetArrayLength());
+        Assert.False(firstOwner.Disposed);
+        Assert.False(secondOwner.Disposed);
+        AssertSafe(owned.Output);
+    }
+
+    [Fact]
     public async Task Origin_output_is_bound_to_the_actual_result_proof_without_private_component_labels()
     {
         using var owned = new OwnedInput();

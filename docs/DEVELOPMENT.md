@@ -8347,6 +8347,46 @@ qualifying profiles. Production/deployment examples/diagrams, public APIs,
 provider implementations, common assertions, SDK binary/signatures, locks and
 task/reviewer markers remain unaffected.
 
+The private revision-2 proof now admits a separate closed `original-owner` kind:
+exactly the genuine existing owner, independent roots only. Four provider-neutral
+authority/bridge facts run in explicit Local/Object binding contexts, while two
+rejected configured-module parameters observe their actual module without ever
+reading or inventing its unavailable session. The copied-handle fact retains
+both real authorities and shared reference history. Existing original-instance
+roles, loaded-contract policy and typed origins remain strict; no control,
+provider parameter or cleanup ownership is fabricated.
+
+The SDK test first fails at unsupported-kind capture, parent admission first
+fails `WitnessMissing`, and dispatch first fails five versus seven scopes.
+Actual fresh first/replay each pass 333 exact executions, 370 records (354
+genuine owners/sixteen contracts), 2,122 PE/archive correspondences and actual
+authority/bridge/module type hashes. SDK archive:
+`7651009db9b2ae1f857deb2973198d74edbf051e37514dbc4f013ddafe13dd26`.
+All fifty logger regressions and 341 tooling checks pass (324 tooling passes/
+seventeen explicit macOS-native skips), alongside changed-source formatting,
+frozen inventory, SDK catalog and patch checks. Bounded custom architecture
+review finds no confirmed finding, with current-file/no-execution/no-independent-
+diagnostic-verification limitations; final T081 remains open.
+The independent native target is 233 foundations and 107 scopes/1,317
+executions, pending. These local probes remain minimal-input non-qualifying
+diagnostics, not category/profile acceptance.
+
+Lifecycle run
+[40173345291](https://github.com/Stonefly-Labs/Hoard/actions/runs/40173345291)
+at exact `88aa8a1dcd05d62538fc263bf1a665ceb2dbef64` passes all three jobs,
+232 foundations without failures/errors/skips, 105 scopes/1,276 exact executions
+and every prerequisite. Typed input:
+`33c661c2e2d86a71c5d1b200c7562c6e68cb62ba2c269763e900e84c65c0ddec`;
+original input:
+`5cf83d15ec21a163a92eca0e28e64343f192c22ac9647985763d8b016b6b8705`;
+preparation:
+`979c95c8713ef3794a6c7a3392c36db1b85fc086f81115d04fc8195dd7d3da3c`.
+Both documents independently recompute; free scratch is 91,716,321,280 bytes.
+It does not admit later composed/contract/owner-only sources or complete
+profiles. README and affected guides/model/contracts are updated; product
+APIs/providers, common assertions, package references/locks, task/reviewer
+markers and production/deployment examples/diagrams are unaffected.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

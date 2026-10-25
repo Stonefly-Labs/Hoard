@@ -27,7 +27,7 @@ import artifact_evidence as artifacts
 import conformance_evidence as evidence
 from conformance_case_catalog import (
     CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_BINDINGS, ORIGINAL_ARTIFACT_CONTRACT_WITNESSES,
-    ORIGINAL_ARTIFACT_REOPENS, ORIGINAL_ARTIFACT_WITNESSES,
+    ORIGINAL_ARTIFACT_REOPENS, ORIGINAL_ARTIFACT_SHARED_OWNER_WITNESSES, ORIGINAL_ARTIFACT_WITNESSES,
     ORIGINAL_METADATA_FACADE_WITNESSES,
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
     catalog_admission_witnesses, category_cases, category_runtime_cases,
@@ -155,6 +155,8 @@ SCENARIOS = (
         "Origin_output_is_bound_to_the_actual_result_proof_without_private_component_labels",
         "Hoard.Conformance.Tests.RuntimeLoggerTests."
         "Original_forests_preserve_actual_aliases_without_inventing_reopen_edges",
+        "Hoard.Conformance.Tests.RuntimeLoggerTests."
+        "Original_owner_observations_do_not_fabricate_missing_sessions_or_interfaces",
         *(("Hoard.Conformance.Tests.RuntimeLoggerTests."
            "Invalid_origin_output_retains_prior_execution_without_accepting_replay_or_foreign_case"
            + f'(mutation: "{mutation}", code: {code})') for mutation, code in (
@@ -1886,6 +1888,8 @@ def original_observation_scenarios():
         ("observed-original-artifact-instances", ORIGINAL_ARTIFACT_WITNESSES, "None", "Passed", 0, "None"),
         *((f"observed-original-contract-{provider}", contracts, "None", "Passed", 0, "None")
           for provider in ("local", "object")),
+        *((f"observed-original-shared-{provider}", ORIGINAL_ARTIFACT_SHARED_OWNER_WITNESSES, "None", "Passed", 0, "None")
+          for provider in ("local", "object")),
     )
 
 
@@ -1917,6 +1921,8 @@ def original_observation_inputs(candidate, root):
                     selected["owner"] = package
                 if not metadata and ".Concurrent_close_waits_" in identity:
                     selected["authority"] = None
+                if original_witness_policy(identity)[1] == "original-owner":
+                    selected["owner"] = host
                 if not metadata and any(f".{fixture}." in identity for fixture in (
                         "ArtifactMetadataIntegrationTests", "ArtifactCompositionTests")):
                     selected["owner"] = host
@@ -1973,7 +1979,8 @@ def test_attempt(run, inputs, candidate, scenario):
                             *category_mutation_scenarios()):
             raise evidence.ConformanceError("WitnessMissing")
     original_metadata = name.startswith(("original-metadata-", "observed-original-metadata-"))
-    original_artifacts = name.startswith(("original-artifact-", "observed-original-artifact-", "observed-original-contract-"))
+    original_artifacts = name.startswith((
+        "original-artifact-", "observed-original-artifact-", "observed-original-contract-", "observed-original-shared-"))
     original_tests = original_metadata or original_artifacts
     metadata_provider = None
     if original_metadata:
@@ -2045,7 +2052,8 @@ def test_attempt(run, inputs, candidate, scenario):
     original_cases = {}
     expected = {identity: ("origin-probe" if name == "origin-output" else "none", "none") for identity in identities}
     if original_observations:
-        provider = name.rsplit("-", 1)[1] if original_metadata or "-contract-" in name else None
+        provider = name.rsplit("-", 1)[1] if original_metadata or any(
+            marker in name for marker in ("-contract-", "-shared-")) else None
         expected = {}
         for identity in identities:
             binding = provider if provider is not None else ORIGINAL_ARTIFACT_BINDINGS.get(identity)

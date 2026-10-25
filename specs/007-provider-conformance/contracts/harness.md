@@ -1267,9 +1267,14 @@ Eight value/qualification contracts per binding carry actual loaded Abstractions
 type proofs through package-only partial observers. Ordinary predecessor tests
 retain no SDK dependency, and primary-case selection excludes non-applicable
 durability rows.
-Local observation/replay pass 323 executions, 358 records and
-2,110 image correspondences. Native admission requires 232 foundations and
-105 scopes/1,306 observations, pending. Controller and remaining artifact
+Two further native scopes select the four provider-neutral authority/bridge
+facts in explicit Local/Object contexts. These and the two rejected-module
+parameters carry owner-only observations, never invented sessions/interfaces or
+parent edges. The copied-handle fact observes two independent genuine authorities
+with non-owning reference history. Existing full-session policies remain strict.
+Local observation/replay pass 333 executions, 370 records and
+2,122 image correspondences. Native admission requires 233 foundations and
+107 scopes/1,317 observations, pending. Controller and remaining artifact
 lifetime attribution and qualifying backends remain unfinished.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,

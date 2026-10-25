@@ -2,10 +2,11 @@ using Hoard.Abstractions.Metadata;
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactMetadataAuthorityTests
+public sealed class ArtifactMetadataAuthorityTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task Bridge_binds_exact_evidence_and_keeps_recognized_shared_protection_until_metadata_settlement()
@@ -46,6 +47,7 @@ public sealed class ArtifactMetadataAuthorityTests
         var bridge = new ArtifactMetadataPublicationAuthority(store, new CurrentValidator(actual, proof), other);
         await new ArtifactMetadataBridgeAssertions(store, proof, bridge, bridge.Encode)
             .RejectMismatchedAuthorityAsync(default);
+        ArtifactProviderDriver.ObserveOriginalOwner(output, nameof(ArtifactMetadataAuthorityTests), bridge);
     }
 
     private sealed class CurrentValidator(IArtifactCoordinationAuthority authority, ArtifactCommitEvidence current)
