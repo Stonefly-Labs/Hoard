@@ -6174,6 +6174,35 @@ implementation. All 384 local tooling checks pass with 17 explicit macOS-native
 skips. The Linux-only actual barrier regression additionally checks its original
 native control digest; this later increment awaits its own native execution.
 
+Qualification-input metadata batching now starts before a separate fresh
+31-command recovery execution. A create-new sidecar retains explicit mode,
+barrier and actual native/controller sequences/hashes. The concrete source
+context independently reopens the complete ordered M/U/R seed/kill/readback
+chain and walkthrough, exact current immutable assembly/input bytes, native
+argv/cwd, owned exit/barrier observations and attempt timing. Shared pure
+command/barrier validators preserve existing semantics without an upward
+generic-parser dependency. Safe raw graphs enter the atomic proof budget and
+case-attempt references; `recoverySourcesSha256` comes from the imported graph.
+
+The control-only cases still have no actual RuntimeWitness UUID. Their proof
+references are retained as incomplete evidence; no UUID is minted from a label/
+hash and Passed Attempt validation is not weakened. Expected category states
+remain 71/22/9/0 and 92/7/4/0, qualification false. A missing graph-reader API
+fails before implementation. Complete simulated graphs pass; missing steps,
+foreign sequences/inputs/timing and rewired native input maps reject. All 386
+local tooling checks pass with 17 explicit macOS-native skips.
+
+Exact `d0b6bd3`, run 40207993043, has a failed foundation job: 275 checks,
+one OwnershipInvalid in release-publication retry, zero skips. SDK evidence is
+not yet observed; this run is not admitted. Both observers transiently failed
+TLS; the completed-job API stream then recovered only safe failure identities.
+The foundational runner now projects at most four allowlisted relative source/
+line locations without traceback text, private paths, exception messages or
+locals. A missing-location regression fails first and its canary projection
+passes afterwards. No speculative ownership repair is claimed; exact native
+graph/location execution, actual controller-witness attribution and all full
+profile gates remain unfinished.
+
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately
 packable `Hoard.Testing.Conformance` library supplies the common consumers,

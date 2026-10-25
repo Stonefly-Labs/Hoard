@@ -2017,6 +2017,13 @@ to the executor's original native record, rather than matching only PID/start
 and exit. Actual metadata seed/kill/readback commands capture their assembly and
 current input document before/after execution. This prepares independent control
 corroboration; it does not admit those controls or promote incomplete cases.
+
+The qualification-input metadata path now reruns all 31 recovery commands in a
+separate namespace and independently retains their complete native graph in
+case evidence. Control-only cases still remain incomplete: no runtime execution
+UUID is fabricated from a controller label or receipt hash. Actual Linux
+confirmation is pending. The earlier `d0b6bd3` foundation job reported one
+`OwnershipInvalid` in release-publication retry; that run is not admitted.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

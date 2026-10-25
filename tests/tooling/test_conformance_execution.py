@@ -28,6 +28,25 @@ class ConformanceExecutionTests(unittest.TestCase):
     def workspace(self):
         return execution.OwnedRun.allocate(self.parent / "run", ROOT)
 
+    def test_foundation_failure_locations_exclude_raw_paths_exception_text_and_locals(self):
+        import conformance_unit_checks as checks
+
+        class FailingCase(unittest.TestCase):
+            def runTest(self):
+                secret = "synthetic-secret-canary/private/path"
+                raise ConformanceError(secret)
+
+        result = checks.SafeResult()
+        FailingCase().run(result)
+        failures = checks.failed_tests(result)
+        encoded = json.dumps(failures)
+        self.assertNotIn("synthetic-secret-canary", encoded)
+        self.assertNotIn(str(ROOT), encoded)
+        self.assertEqual(failures[0]["code"], "EvidenceSchemaInvalid")
+        self.assertEqual(failures[0]["locations"][-1]["source"], "tests/tooling/test_conformance_execution.py")
+        self.assertIs(type(failures[0]["locations"][-1]["line"]), int)
+        self.assertLessEqual(len(failures[0]["locations"]), 4)
+
     def test_rejects_existing_foreign_symlink_and_nonprivate_roots(self):
         sentinel = self.parent / "sentinel"
         sentinel.mkdir()

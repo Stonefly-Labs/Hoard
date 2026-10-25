@@ -4,6 +4,8 @@ from collections.abc import Mapping
 import hashlib
 import math
 from pathlib import Path
+import re
+import time
 from types import MappingProxyType
 from xml.sax.saxutils import escape
 
@@ -13,6 +15,13 @@ from conformance_case_catalog import (
     category_execution_partitions, category_runtime_cases,
 )
 from conformance_execution import OwnedRun, no_symlinks
+
+
+METADATA_RECOVERY_SCENARIOS = (
+    ("mutation", (("M0", 0), ("M1", 1), ("M2", 2))),
+    ("upgrade", tuple((f"U{index}", 10 + index) for index in range(5))),
+    ("restore", (("R0", 20), ("R1", 21))),
+)
 
 
 def read_bounded(path, limit):
@@ -131,6 +140,152 @@ def native_control_record(run, sequence, control_raw, *, arguments, cwd, input_f
     return raw
 
 
+def admit_owned_command(command, sequence, *, scope, detail, exit_code, max_duration):
+    fields = {
+        "schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
+        "exitCode", "diagnosticCode", "groupState", "scope",
+    }
+    if detail is not None:
+        fields.add(detail)
+    if (type(sequence) is not int or sequence <= 0
+            or not isinstance(command, dict) or set(command) != fields
+            or type(command["schemaVersion"]) is not int or command["schemaVersion"] != 1
+            or type(command["sequence"]) is not int or command["sequence"] != sequence
+            or type(command["childPid"]) is not int or command["childPid"] <= 0
+            or not isinstance(command["childStartSha256"], str)
+            or re.fullmatch("[0-9a-f]{64}", command["childStartSha256"]) is None
+            or command["childStartSha256"] == "0" * 64
+            or type(command["exitCode"]) is not int or command["exitCode"] != exit_code
+            or command["diagnosticCode"] != "None" or command["groupState"] != "Exited"
+            or command["scope"] != scope):
+        raise evidence.ConformanceError("ProofMismatch")
+    times = (command["startedMs"], command["endedMs"])
+    if (any(type(item) not in (int, float) or not 0 <= item <= 2**63 - 1 or not math.isfinite(item)
+            for item in times) or times[0] > times[1] or times[1] - times[0] > max_duration):
+        raise evidence.ConformanceError("ProofMismatch")
+
+
+def admit_recovery_barrier(command, sequence, value, *, inspection=None):
+    admit_owned_command(command, sequence, scope="recovery", detail="barrier", exit_code=-9, max_duration=15000)
+    fields = {"value", "observedMs", "signalMs"} | ({"inspection"} if inspection is not None else set())
+    if (type(value) is not int or not 0 <= value <= 65535 or not isinstance(command["barrier"], dict)
+            or set(command["barrier"]) != fields
+            or type(command["barrier"]["value"]) is not int or command["barrier"]["value"] != value):
+        raise evidence.ConformanceError("ProofMismatch")
+    barrier = command["barrier"]
+    times = (command["startedMs"], barrier["observedMs"], barrier["signalMs"], command["endedMs"])
+    if inspection is not None:
+        observed = barrier["inspection"]
+        if (type(inspection) is not int or not 0 <= inspection <= 65535 or inspection == value
+                or not isinstance(observed, dict) or set(observed) != {"value", "observedMs", "requestMs"}
+                or type(observed["value"]) is not int or observed["value"] != inspection):
+            raise evidence.ConformanceError("ProofMismatch")
+        times = (times[0], observed["observedMs"], observed["requestMs"], *times[1:])
+    if (any(type(item) not in (int, float) or not 0 <= item <= 2**63 - 1 or not math.isfinite(item)
+            for item in times) or tuple(sorted(times)) != times or times[-1] - times[0] > 15000):
+        raise evidence.ConformanceError("ProofMismatch")
+
+
+def native_metadata_recovery_controls(run, inputs, *, started_ms, ended_ms):
+    if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    started_ms, ended_ms = evidence._number(started_ms), evidence._number(ended_ms)
+    if (inputs["profileId"] != "metadata" or inputs["mode"] != "qualification"
+            or inputs["runId"] != run.run_id or ended_ms < started_ms):
+        raise evidence.ConformanceError("InputChanged")
+    namespace = "qualification-sqlite-recovery"
+    suffix = "/tests/fixtures/metadata/CrashRunner/bin/Release/net10.0/Hoard.Fixtures.Metadata.CrashRunner.dll"
+    assemblies = [path for path in inputs["runtimeAssemblies"] if path.endswith(suffix)]
+    if len(assemblies) != 1:
+        raise evidence.ConformanceError("InputChanged")
+    assembly_path = assemblies[0]
+    assembly = run.root / assembly_path
+    no_symlinks(assembly)
+    if assembly.stat().st_mode & 0o777 != 0o400:
+        raise evidence.ConformanceError("InputChanged")
+    with evidence._input_root(run.root) as (_, descriptor):
+        hashed, _ = evidence._source_file(
+            descriptor, assembly_path, remaining=evidence.MAX_PROOF_BYTES, deadline=time.monotonic() + 5)
+    if hashed != inputs["runtimeAssemblies"][assembly_path]:
+        raise evidence.ConformanceError("InputChanged")
+    inputs_path = f"proofs/{namespace}-native-inputs.json"
+    input_raw = _readonly(run.root / inputs_path, 16 * 1024 * 1024)
+    if input_raw != evidence.canonical_bytes(inputs):
+        raise evidence.ConformanceError("InputChanged")
+    input_files = {assembly_path: inputs["runtimeAssemblies"][assembly_path], inputs_path: evidence.digest(inputs)}
+    graph_path = f"proofs/{namespace}-native-executions.json"
+    graph_raw = _readonly(run.root / graph_path, 256 * 1024)
+    graph = evidence.load_json(graph_raw)
+    if (not isinstance(graph, dict) or not isinstance(graph.get("commands"), list)
+            or len(graph["commands"]) != 31):
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    source_path = f"proofs/{namespace}.json"
+    source_raw = _readonly(run.root / source_path, 64 * 1024)
+    expected_graph = {
+        "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+        "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
+        "assemblyPath": assembly_path, "inputsPath": inputs_path, "commands": graph["commands"],
+        "sourceReceiptSha256": hashlib.sha256(source_raw).hexdigest()}
+    if graph_raw != evidence.canonical_bytes(expected_graph):
+        raise evidence.ConformanceError("ProofMismatch")
+    proof_data = {graph_path: graph_raw, source_path: source_raw, inputs_path: input_raw}
+    steps = [(kind, barrier, value) for kind, rows in METADATA_RECOVERY_SCENARIOS for barrier, value in rows]
+    expected = [(mode + "-" + kind, barrier, value if mode == "run" else None)
+                for kind, barrier, value in steps for mode in ("seed", "run", "recover")]
+    expected.append(("recovery-walkthrough", "none", None))
+    commands, links, previous_sequence, previous_end = {}, {}, 0, started_ms
+    for row, (mode, barrier, value) in zip(graph["commands"], expected, strict=True):
+        if (not isinstance(row, dict) or set(row) != {
+                "mode", "barrierId", "sequence", "controllerSha256", "executionSha256"}
+                or row["mode"] != mode or row["barrierId"] != barrier
+                or type(row["sequence"]) is not int or row["sequence"] <= previous_sequence):
+            raise evidence.ConformanceError("ProofMismatch")
+        sequence = row["sequence"]
+        control_path = f"proofs/recovery-command-{sequence:04}.json"
+        control_raw = _readonly(run.root / control_path, 64 * 1024)
+        command = evidence.load_json(control_raw)
+        if value is None:
+            admit_owned_command(command, sequence, scope="recovery", detail=None, exit_code=0, max_duration=300000)
+        else:
+            admit_recovery_barrier(command, sequence, value)
+        if not previous_end <= command["startedMs"] <= command["endedMs"] <= ended_ms:
+            raise evidence.ConformanceError("ProofMismatch")
+        directory = run.root / "stores" / namespace / ("walkthrough" if barrier == "none" else barrier)
+        arguments = ["dotnet", str(assembly), mode, str(directory / "metadata.db"), str(directory), barrier]
+        native_raw = native_control_record(
+            run, sequence, control_raw, arguments=arguments, cwd=assembly.parent, input_files=input_files)
+        native_path = f"proofs/execution-command-{sequence:04}.json"
+        if (_readonly(run.root / native_path, 64 * 1024) != native_raw
+                or hashlib.sha256(control_raw).hexdigest() != row["controllerSha256"]
+                or hashlib.sha256(native_raw).hexdigest() != row["executionSha256"]):
+            raise evidence.ConformanceError("ProofMismatch")
+        proof_data[control_path], proof_data[native_path] = control_raw, native_raw
+        commands[mode, barrier] = row["controllerSha256"], command
+        links[mode, barrier] = row["controllerSha256"], row["executionSha256"]
+        previous_sequence, previous_end = sequence, command["endedMs"]
+    observations = [{
+        "barrierId": barrier, "value": value, "seedSha256": commands["seed-" + kind, barrier][0],
+        "controllerSha256": commands["run-" + kind, barrier][0],
+        "readbackSha256": commands["recover-" + kind, barrier][0],
+        "childStartSha256": commands["run-" + kind, barrier][1]["childStartSha256"]}
+        for kind, barrier, value in steps]
+    source = {
+        "qualification": False, "mode": "metadata-recovery", "code": "None",
+        "inputsSha256": evidence.digest(inputs), "barriers": observations,
+        "walkthroughSha256": commands["recovery-walkthrough", "none"][0]}
+    if source_raw != evidence.canonical_bytes(source):
+        raise evidence.ConformanceError("ProofMismatch")
+    shared = (hashlib.sha256(graph_raw).hexdigest(), hashlib.sha256(source_raw).hexdigest(), evidence.digest(inputs))
+    controls = {
+        "parent-kill:" + barrier: (*shared, *(hashed for mode in ("seed", "run", "recover")
+                                           for hashed in links[mode + "-" + kind, barrier]))
+        for kind, barrier, _ in steps}
+    controls["verified-recovery-walkthrough"] = (*shared, *links["recovery-walkthrough", "none"])
+    return MappingProxyType({
+        "controls": MappingProxyType(controls), "sourceProofs": MappingProxyType(proof_data)})
+
+
 class NativeCategorySources:
     def __init__(self, run, *, inspection_inputs, inspection_configurations):
         if type(run) is not OwnedRun:
@@ -161,6 +316,9 @@ class NativeCategorySources:
                                   inspected["observation"], category_scope=category_scope,
                                   manifest_data=transport["manifest_data"], owner_data=transport["owner_data"])
         return MappingProxyType({**inspected["observation"], **graph})
+
+    def metadata_controls(self, inputs, *, started_ms, ended_ms):
+        return native_metadata_recovery_controls(self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
 
     def _corroborate(self, inputs, manifest, observed, *, category_scope, manifest_data, owner_data):
         run = self._run

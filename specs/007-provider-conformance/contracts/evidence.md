@@ -184,6 +184,15 @@ include source-parent hashes. This implementation has local tooling coverage,
 but exact-head Linux execution is pending. Controller admission, remaining
 controls and complete profile CLI are not implemented by this path.
 
+Metadata recovery additionally retains and independently corroborates all
+31 fresh qualification-input seed/kill/readback/walkthrough commands, including
+their actual native/controller sequences, consumed inputs, barriers, settled
+exits and nested attempt timing. Safe source/native bytes enter atomic history
+proof budgets and case references. This does not manufacture RuntimeWitness
+execution UUIDs for control-only cases: those attempts remain incomplete even
+when their controller graph is valid. Passed Attempt validation, immutable
+frozen inventories and default source rejection are unchanged.
+
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private
 revision-2 execution proof adds a distinct `originalObservations` collection;

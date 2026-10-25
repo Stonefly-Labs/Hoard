@@ -167,6 +167,16 @@ PID/start/exit. Metadata seed/kill/readback/walkthrough commands declare both
 their actual assembly and immutable current-input document for pre/post capture.
 This is provenance preparation only: no controller qualification, passing
 metadata control import or complete profile backend is inferred.
+
+Qualification-input metadata attempts now independently corroborate a separate
+31-command M/U/R seed/kill/readback/walkthrough graph inside their monotonic
+boundaries. Native/controller sequences, exact consumed input hashes, argv/cwd,
+owned exits and barriers must agree; complete safe graphs remain under `proofs/`
+and enter atomic case proof references. The source summary exposes only the
+independently imported `recoverySourcesSha256`. Control-only cases without an
+actual RuntimeWitness UUID still remain incomplete; labels/hashes cannot supply
+one. Existing diagnostic namespaces/output schemas and the Passed Attempt
+requirement are unchanged. Exact native execution of this increment is pending.
 The earlier source-linking execution, before executor-held byte anchoring, is
 independently admitted at exact `78c5919`, run
 40202060742: all three Linux jobs, 273 foundations without skips and all

@@ -39,7 +39,8 @@ from conformance_case_catalog import (
 )
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_sources import (
-    NativeCategorySources, inspection_observations, native_control_record, read_bounded, runtime_arguments, runtime_settings,
+    METADATA_RECOVERY_SCENARIOS, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
+    inspection_observations, native_control_record, read_bounded, runtime_arguments, runtime_settings,
     source_witnesses as _source_witnesses,
 )
 from conformance_lock_preparation import prepare_project_lock, rebind_local_archives, verify_project_lock
@@ -865,9 +866,9 @@ def require_sqlite_environment(inputs, assembly, root):
 
 
 def _admit_metadata_control_namespace(inputs, namespace, default):
-    if (namespace not in (default, "category-" + default)
-            or (namespace != default
-                and (inputs.get("profileId") != "metadata" or inputs.get("mode") != "diagnostic"))):
+    modes = {"category-" + default: "diagnostic", "qualification-" + default: "qualification"}
+    if (namespace != default and (namespace not in modes or inputs.get("profileId") != "metadata"
+                                  or inputs.get("mode") != modes[namespace])):
         raise evidence.ConformanceError("UnsupportedProfile")
     return namespace
 
@@ -911,52 +912,6 @@ def sqlite_noncooperation(run, inputs, candidate, *, namespace="sqlite-native-no
         "controllerSha256": hashlib.sha256(command_raw).hexdigest(),
         "childStartSha256": command["childStartSha256"],
     }
-
-
-def admit_owned_command(command, sequence, *, scope, detail, exit_code, max_duration):
-    fields = {
-        "schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
-        "exitCode", "diagnosticCode", "groupState", "scope",
-    }
-    if detail is not None:
-        fields.add(detail)
-    if (type(sequence) is not int or sequence <= 0
-            or not isinstance(command, dict) or set(command) != fields
-            or type(command["schemaVersion"]) is not int or command["schemaVersion"] != 1
-            or type(command["sequence"]) is not int or command["sequence"] != sequence
-            or type(command["childPid"]) is not int or command["childPid"] <= 0
-            or not isinstance(command["childStartSha256"], str)
-            or re.fullmatch("[0-9a-f]{64}", command["childStartSha256"]) is None
-            or command["childStartSha256"] == "0" * 64
-            or type(command["exitCode"]) is not int or command["exitCode"] != exit_code
-            or command["diagnosticCode"] != "None" or command["groupState"] != "Exited"
-            or command["scope"] != scope):
-        raise evidence.ConformanceError("ProofMismatch")
-    times = (command["startedMs"], command["endedMs"])
-    if (any(type(item) not in (int, float) or not 0 <= item <= 2**63 - 1 or not math.isfinite(item)
-            for item in times) or times[0] > times[1] or times[1] - times[0] > max_duration):
-        raise evidence.ConformanceError("ProofMismatch")
-
-
-def admit_recovery_barrier(command, sequence, value, *, inspection=None):
-    admit_owned_command(command, sequence, scope="recovery", detail="barrier", exit_code=-9, max_duration=15000)
-    fields = {"value", "observedMs", "signalMs"} | ({"inspection"} if inspection is not None else set())
-    if (type(value) is not int or not 0 <= value <= 65535 or not isinstance(command["barrier"], dict)
-            or set(command["barrier"]) != fields
-            or type(command["barrier"]["value"]) is not int or command["barrier"]["value"] != value):
-        raise evidence.ConformanceError("ProofMismatch")
-    barrier = command["barrier"]
-    times = (command["startedMs"], barrier["observedMs"], barrier["signalMs"], command["endedMs"])
-    if inspection is not None:
-        observed = barrier["inspection"]
-        if (type(inspection) is not int or not 0 <= inspection <= 65535 or inspection == value
-                or not isinstance(observed, dict) or set(observed) != {"value", "observedMs", "requestMs"}
-                or type(observed["value"]) is not int or observed["value"] != inspection):
-            raise evidence.ConformanceError("ProofMismatch")
-        times = (times[0], observed["observedMs"], observed["requestMs"], *times[1:])
-    if (any(type(item) not in (int, float) or not 0 <= item <= 2**63 - 1 or not math.isfinite(item)
-            for item in times) or tuple(sorted(times)) != times or times[-1] - times[0] > 15000):
-        raise evidence.ConformanceError("ProofMismatch")
 
 
 def admit_transfer_measurement(command, sequence, size):
@@ -1106,22 +1061,28 @@ def metadata_recovery_diagnostics(run, inputs, candidate, *, namespace="sqlite-r
     no_symlinks(parent)
     parent.mkdir(mode=0o700)
     execution_inputs = ()
-    if type(run) is OwnedRun:
+    native = type(run) is OwnedRun
+    if native:
         inputs_path = f"proofs/{namespace}-native-inputs.json"
         write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
         execution_inputs = (assembly_key, inputs_path)
+    commands = []
 
     def execute(mode, directory, barrier, value=None):
-        return recovery_command(
+        observed = recovery_command(
             run, assembly, [mode, str(directory / "metadata.db"), str(directory), barrier],
             cache_id=namespace, value=value,
             **({"execution_inputs": execution_inputs} if execution_inputs else {}))
+        if native:
+            command_sha, command = observed
+            commands.append({
+                "mode": mode, "barrierId": barrier, "sequence": command["sequence"],
+                "controllerSha256": command_sha,
+                "executionSha256": hashlib.sha256(run.read_execution_record(command["sequence"])).hexdigest()})
+        return observed
 
     observations = []
-    for kind, barriers in (
-            ("mutation", (("M0", 0), ("M1", 1), ("M2", 2))),
-            ("upgrade", tuple((f"U{index}", 10 + index) for index in range(5))),
-            ("restore", (("R0", 20), ("R1", 21)))):
+    for kind, barriers in METADATA_RECOVERY_SCENARIOS:
         for barrier, value in barriers:
             directory = parent / barrier
             directory.mkdir(mode=0o700)
@@ -1142,6 +1103,12 @@ def metadata_recovery_diagnostics(run, inputs, candidate, *, namespace="sqlite-r
         "walkthroughSha256": walkthrough_sha,
     }
     write_new(run.root / f"proofs/{namespace}.json", evidence.canonical_bytes(result))
+    if native:
+        write_new(run.root / f"proofs/{namespace}-native-executions.json", evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+            "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
+            "assemblyPath": assembly_key, "inputsPath": inputs_path, "commands": commands,
+            "sourceReceiptSha256": evidence.digest(result)}))
     return result
 
 
@@ -2829,6 +2796,12 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
 
 
 def _category_record(run, inputs, history, scopes, code=None):
+    recovery_source = {}
+    if code is None and inputs["mode"] == "qualification" and inputs["profileId"] == "metadata":
+        path = "proofs/qualification-sqlite-recovery-native-executions.json"
+        if path not in history.proofs:
+            raise evidence.ConformanceError("ProofMismatch")
+        recovery_source["recoverySourcesSha256"] = history.proofs[path]
     results = history.results()
     states = {state: sum(result["status"] == state for result in results)
               for state in ("Passed", "Failed", "Incomplete", "NotApplicable")}
@@ -2841,7 +2814,7 @@ def _category_record(run, inputs, history, scopes, code=None):
         "inputsSha256": evidence.digest(inputs), "scopeCount": len(scopes),
         "tests": sum(scope["tests"] for scope in scopes.values()),
         "sourceParentCount": len(source_parents), "sourceParentsSha256": evidence.digest(source_parents),
-        "caseCount": len(results), "caseStates": states, "resultsSha256": evidence.digest(results)}
+        "caseCount": len(results), "caseStates": states, "resultsSha256": evidence.digest(results), **recovery_source}
     history_mode = "qualification" if inputs["mode"] == "qualification" else "diagnostic"
     write_new(run.root / f'proofs/category-{inputs["profileId"]}-{history_mode}-history.json', evidence.canonical_bytes({
         "schemaVersion": 1, **summary, "scopes": scopes, "results": results}))
@@ -2863,6 +2836,17 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
     write_new(run.root / f"proofs/category-{profile}{suffix}-plan.json", evidence.canonical_bytes({
         "schemaVersion": 1, "qualification": False, "inputsSha256": evidence.digest(inputs), "scopes": plan}))
     transports, scopes = {}, {}
+    if qualification and profile == "metadata":
+        print(json.dumps({"qualification": False, "phase": "metadata-qualification-recovery"}), flush=True)
+        try:
+            metadata_recovery_diagnostics(run, inputs, candidate, namespace="qualification-sqlite-recovery")
+        except evidence.ConformanceError as error:
+            print(json.dumps({
+                "qualification": False, "phase": "category-control-failure",
+                "profileId": profile, "code": str(error)}), flush=True)
+            history.interrupt_joint(str(error))
+            _category_record(run, inputs, history, scopes, str(error))
+            raise
     try:
         for scope_id, scope in plan.items():
             options = ({"inspection_cases": inspection_cases, "inspection_configurations": inspection_configurations}

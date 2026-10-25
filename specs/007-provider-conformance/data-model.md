@@ -101,9 +101,11 @@ These model fixtures do not establish actual wrapper provenance.
 Known inspection/controller witnesses have a separate immutable source policy,
 not a typed provider-session requirement. Unrelated valid sessions cannot make
 them qualify, and selecting `none` cannot bypass their evidence. Independent
-inspection/controller admission remains unimplemented and rejects; diagnostic
-producer receipts confer no qualification. The positive-origin batch/replay
-fixture is explicitly diagnostic.
+source admission remains closed in the default transport API. A concrete native
+inspection context now independently corroborates complete scopes and actual
+consumed-input/source/native graphs; controller runtime-witness admission remains
+unfinished. Diagnostic producer receipts confer no qualification. The
+positive-origin batch/replay fixture is explicitly diagnostic.
 
 Joint category batches additionally freeze the whole profile's
 `(bindingId, testIdentity)` union before launch. Each scope maps unique runtime
@@ -408,6 +410,12 @@ likewise fabricate no witness. A later passing attempt cannot erase the
 report-level failure taint. Outstanding separate catalog controls prevent a
 runtime-only passing case; control-only cases and complete controller wiring
 remain separate unfinished work.
+Metadata's qualification-input path now independently corroborates a separate
+complete 31-command recovery graph inside the attempt boundaries and retains
+its safe native/source proof bytes and case references. This does not supply
+actual RuntimeWitness execution UUIDs to the eight control-only recovery cases.
+They remain incomplete; neither controller labels nor receipt hashes become
+execution IDs, and Passed Attempt validation is not weakened.
 
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits

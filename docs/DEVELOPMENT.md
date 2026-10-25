@@ -9051,6 +9051,36 @@ now also checks the executor-held controller-byte digest. Native execution of
 this later increment is pending. These records are prerequisites, not admitted
 metadata obligations or controller qualification.
 
+Metadata qualification-input execution now begins its joint attempt before
+31 fresh recovery commands in `qualification-sqlite-recovery`. A create-new
+sidecar retains each actual mode/barrier/sequence and native/controller digest.
+Independent source admission requires the complete ordered seed/kill/readback
+chain for M0..M2, U0..U4, R0/R1 and the walkthrough, exact current input/assembly
+snapshots, native argv/cwd, owned settled exit, barrier observations and nested
+attempt timing. Pure command/barrier validators are shared without importing
+SDK build orchestration into generic evidence. Safe native/source graphs and
+their input document are atomically retained in history and linked from cases;
+`recoverySourcesSha256` is taken from the independently imported proof set.
+
+The actual-witness requirement remains unchanged. The eight control-only
+recovery cases have no runtime UUID yet, so even corroborated controller graphs
+retain `Incomplete`, not invented successful witnesses or weakened Attempt
+validation. Metadata remains 71/22/9/0, artifacts 92/7/4/0, qualification false.
+The missing graph API fails first; missing steps, foreign sequences/current
+inputs/timing and consistently rewired wrong native input maps reject. All 386
+local tooling checks pass with 17 explicit macOS-native skips.
+
+Exact `d0b6bd3` run 40207993043 has a failed foundation job: 275 checks, one
+`OwnershipInvalid` in release-publication retry, no skips; SDK execution is
+still pending observation. The failure is not diagnosed or admitted. Both
+bounded observers transiently failed TLS; a completed-job API stream recovered
+only safe failure identities, without persisting raw logs. The foundational
+runner now additionally retains at most four allowlisted repository-relative
+source/line locations, never raw traceback text, private paths, locals or
+exception messages. Its missing-location regression fails before implementation;
+the canary projection passes afterwards. Native confirmation of the later graph/
+location changes is pending. No ownership guard, control or task marker is relaxed.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

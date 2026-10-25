@@ -1990,6 +1990,130 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.assertEqual(dict(history.session_origins), {})
         self.assertEqual(dict(history.original_observations), {})
 
+    def test_native_metadata_recovery_requires_every_actual_input_bound_seed_kill_and_readback(self):
+        import conformance_sources as sources
+        from types import SimpleNamespace
+
+        history = self.category_history(mode="qualification")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+
+            def write(path, raw):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(raw)
+                path.chmod(0o400)
+
+            assembly = "candidate/tests/fixtures/metadata/CrashRunner/bin/Release/net10.0/Hoard.Fixtures.Metadata.CrashRunner.dll"
+            write(root / assembly, b"explicit-controller-model-not-native-execution")
+            self.inputs["runtimeAssemblies"] = {assembly: evidence.file_sha256(root / assembly)}
+            namespace = "qualification-sqlite-recovery"
+            inputs_path = f"proofs/{namespace}-native-inputs.json"
+            write(root / inputs_path, evidence.canonical_bytes(self.inputs))
+            input_files = {assembly: self.inputs["runtimeAssemblies"][assembly], inputs_path: evidence.digest(self.inputs)}
+            run = SimpleNamespace(root=root, run_id=self.inputs["runId"], root_id=str(uuid.uuid4()),
+                                  live_children=lambda: ())
+            retained, commands, observations, proof_hashes = {}, [], [], {}
+            steps = [(kind, barrier, value) for kind, rows in (
+                ("mutation", (("M0", 0), ("M1", 1), ("M2", 2))),
+                ("upgrade", tuple((f"U{index}", 10 + index) for index in range(5))),
+                ("restore", (("R0", 20), ("R1", 21)))) for barrier, value in rows]
+            executions = [(mode + "-" + kind, barrier, value if mode == "run" else None)
+                          for kind, barrier, value in steps for mode in ("seed", "run", "recover")]
+            executions.append(("recovery-walkthrough", "none", None))
+            for sequence, (mode, barrier, value) in enumerate(executions, 1):
+                directory = root / "stores" / namespace / ("walkthrough" if barrier == "none" else barrier)
+                args = ["dotnet", str(root / assembly), mode, str(directory / "metadata.db"), str(directory), barrier]
+                control = {
+                    "schemaVersion": 1, "sequence": sequence, "childPid": 200 + sequence,
+                    "childStartSha256": hashlib.sha256(str(sequence).encode()).hexdigest(),
+                    "startedMs": sequence * 3 + 10, "endedMs": sequence * 3 + 12,
+                    "exitCode": 0 if value is None else -9, "diagnosticCode": "None",
+                    "groupState": "Exited", "scope": "recovery",
+                    **({"barrier": {"value": value, "observedMs": sequence * 3 + 10.5,
+                                   "signalMs": sequence * 3 + 11}} if value is not None else {})}
+                raw = evidence.canonical_bytes(control)
+                control_sha = hashlib.sha256(raw).hexdigest()
+                native = {
+                    **{key: val for key, val in control.items() if key != "barrier"},
+                    "runId": run.run_id, "rootId": run.root_id, "inputFiles": input_files,
+                    "argvSha256": evidence.digest(args),
+                    "cwdSha256": hashlib.sha256(str((root / assembly).parent).encode()).hexdigest(),
+                    "controlRecordSha256": control_sha}
+                retained[sequence] = evidence.canonical_bytes(native)
+                write(root / f"proofs/recovery-command-{sequence:04}.json", raw)
+                write(root / f"proofs/execution-command-{sequence:04}.json", retained[sequence])
+                commands.append({"mode": mode, "barrierId": barrier, "sequence": sequence,
+                                 "controllerSha256": control_sha,
+                                 "executionSha256": hashlib.sha256(retained[sequence]).hexdigest()})
+                proof_hashes[mode, barrier] = control_sha, control
+            for kind, barrier, value in steps:
+                observations.append({
+                    "barrierId": barrier, "value": value, "seedSha256": proof_hashes["seed-" + kind, barrier][0],
+                    "controllerSha256": proof_hashes["run-" + kind, barrier][0],
+                    "readbackSha256": proof_hashes["recover-" + kind, barrier][0],
+                    "childStartSha256": proof_hashes["run-" + kind, barrier][1]["childStartSha256"]})
+            producer = {
+                "qualification": False, "mode": "metadata-recovery", "code": "None",
+                "inputsSha256": evidence.digest(self.inputs), "barriers": observations,
+                "walkthroughSha256": proof_hashes["recovery-walkthrough", "none"][0]}
+            write(root / f"proofs/{namespace}.json", evidence.canonical_bytes(producer))
+            graph = {
+                "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+                "invocationGroupId": self.inputs["invocationGroupId"], "inputsSha256": evidence.digest(self.inputs),
+                "assemblyPath": assembly, "inputsPath": inputs_path, "commands": commands,
+                "sourceReceiptSha256": evidence.digest(producer)}
+            graph_path = root / f"proofs/{namespace}-native-executions.json"
+            write(graph_path, evidence.canonical_bytes(graph))
+
+            def read(sequence):
+                if sequence not in retained:
+                    raise evidence.ConformanceError("OwnershipInvalid")
+                return retained[sequence]
+
+            run.read_execution_record = read
+            with mock.patch.object(sources, "OwnedRun", type(run)):
+                admitted = sources.native_metadata_recovery_controls(
+                    run, self.inputs, started_ms=9, ended_ms=110)
+                self.assertEqual(set(admitted["controls"]),
+                                 {"parent-kill:" + barrier for _, barrier, _ in steps} | {"verified-recovery-walkthrough"})
+                self.assertTrue(admitted["sourceProofs"])
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+                    history.begin("sqlite", self.attempt)
+                case = next(case for case in history._cases if case.binding_id == "sqlite" and case.case_id == "MP-38")
+                witnesses = tuple({
+                    "bindingId": "sqlite", "testIdentity": identity, "executionId": str(uuid.uuid4()),
+                    "status": "Passed", "proofSha256": "e" * 64} for identity in case.witnesses)
+                before = history._case_results("sqlite", "None", 110, witnesses)[case.key]
+                after = history._case_results(
+                    "sqlite", "None", 110, witnesses, control_proofs=admitted["controls"])[case.key]
+                self.assertEqual(before["status"], "Incomplete")
+                self.assertEqual(after["status"], "Incomplete")
+                self.assertEqual(after["attempts"][0]["witnessIds"], ())
+                self.assertTrue(set(admitted["controls"]["parent-kill:M0"]) <= set(after["attempts"][0]["proofSha256"]))
+                missing = dict(admitted["controls"])
+                del missing["parent-kill:M0"]
+                self.assertEqual(history._case_results(
+                    "sqlite", "None", 110, witnesses, control_proofs=missing)[case.key]["status"], "Incomplete")
+                for change in (
+                        {"commands": commands[:-1]},
+                        {"commands": [commands[0] | {"sequence": 99}, *commands[1:]]},
+                        {"inputsSha256": "a" * 64}):
+                    write(graph_path, evidence.canonical_bytes(graph | change))
+                    with self.subTest(change=list(change)), self.assertRaises(evidence.ConformanceError):
+                        sources.native_metadata_recovery_controls(run, self.inputs, started_ms=9, ended_ms=110)
+                write(graph_path, evidence.canonical_bytes(graph))
+                for start, end in ((14, 110), (9, 100)):
+                    with self.subTest(start=start, end=end), self.assertRaises(evidence.ConformanceError):
+                        sources.native_metadata_recovery_controls(run, self.inputs, started_ms=start, ended_ms=end)
+                altered = evidence.load_json(retained[2])
+                retained[2] = evidence.canonical_bytes(altered | {"inputFiles": {assembly: input_files[assembly]}})
+                commands[1]["executionSha256"] = hashlib.sha256(retained[2]).hexdigest()
+                write(graph_path, evidence.canonical_bytes(graph))
+                with self.assertRaises(evidence.ConformanceError):
+                    sources.native_metadata_recovery_controls(run, self.inputs, started_ms=9, ended_ms=110)
+
     def test_native_inspection_admission_rechecks_the_complete_source_and_command_graph(self):
         import conformance_case_catalog as catalog
         import conformance_sources as sources

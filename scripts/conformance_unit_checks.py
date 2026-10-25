@@ -10,8 +10,24 @@ import unittest
 
 
 class SafeResult(unittest.TestResult):
+    def __init__(self):
+        super().__init__()
+        root = Path(__file__).resolve().parents[1]
+        self.source_roles = {
+            str(path): path.relative_to(root).as_posix()
+            for folder, pattern in (("scripts", "conformance_*.py"), ("tests/tooling", "test_conformance_*.py"))
+            for path in (root / folder).glob(pattern)}
+        self.locations = {}
+
     def _exc_info_to_string(self, error, test):
         from conformance_evidence import ConformanceError
+        trace, locations, count = error[2], [], 0
+        while trace is not None and count < 1024:
+            source = self.source_roles.get(trace.tb_frame.f_code.co_filename)
+            if source is not None and type(trace.tb_lineno) is int and 0 < trace.tb_lineno <= 2**31 - 1:
+                locations = [*locations[-3:], {"source": source, "line": trace.tb_lineno}]
+            trace, count = trace.tb_next, count + 1
+        self.locations[id(test)] = locations
         return str(error[1]) if isinstance(error[1], ConformanceError) else "AssertionFailed"
 
 
@@ -21,7 +37,7 @@ def failed_tests(result):
         identity = getattr(test, "test_case", test).id()
         if len(identity) > 512 or not re.fullmatch(r"[a-zA-Z0-9_.]+", identity):
             identity = "UnknownDiagnostic"
-        failures.append({"test": identity, "code": code})
+        failures.append({"test": identity, "code": code, "locations": result.locations.get(id(test), [])})
     return failures
 
 
