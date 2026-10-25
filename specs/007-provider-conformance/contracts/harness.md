@@ -89,8 +89,10 @@ actual settled group. Read-only bytes and unchanged prelaunch settings are
 required. Create-new hash-only parents bind the record, settings and manifest
 to current input/group/attempt/purpose. Native executors cannot omit the record;
 explicit non-native diagnostic adapters emit no native receipt. These parents
-prove invocation ownership, not assertion success or qualification. Complete
-native parent execution remains pending.
+prove invocation ownership, not assertion success or qualification.
+That parent path passes exact `ac561f2`, run 40188204924: all three jobs,
+269 foundations without failures/errors/skips and 115 scopes/1,457 executions.
+This admits invocation ownership for that snapshot, not source qualification.
 
 Category prepared-inspection contexts contain the selected one metadata/two
 artifact facts while the complete three-fact configuration fingerprint remains
@@ -110,6 +112,16 @@ at exact `216413a`, run 40187523765: six scopes/134 witnesses, 71 Passed,
 22 Incomplete (six QC and sixteen inherited parent controls), 9 NotApplicable,
 0 Failed. Native foundations pass 268 checks without skips. This admits that
 diagnostic snapshot, not profile qualification or the later command parents.
+
+The same engine additionally wires all six artifact scopes/227 witnesses under
+separately captured/recomputed artifact inputs. It re-executes four actual paced
+256 MiB/4 GiB transfer children in `category-artifact-transfers` stores/cache/
+proofs before the category controller runs. Controller settings and source
+admission require those current measurements; an earlier harness receipt cannot
+satisfy this namespace. Default standalone paths remain unchanged. The private
+artifact history includes all 103 expected entries (96 inherited plus seven QC)
+and uses the same atomic admission, unchanged transports and retained failure
+behavior. This native artifact addition remains pending and non-qualifying.
 
 The Memory binding package now supplies current/legacy factories, the same
 controlled clock/authority across logical reopen, all required typed controls

@@ -117,18 +117,24 @@ class SdkDiagnosticTests(unittest.TestCase):
                 checks.category_command_proof(run, SimpleNamespace(exit_code=0), **options)
 
     def test_metadata_category_batch_keeps_predeclared_transports_and_failure_history(self):
+        self._assert_category_batch("metadata", 134)
+
+    def test_artifact_category_batch_keeps_predeclared_transports_and_failure_history(self):
+        self._assert_category_batch("artifacts", 227)
+
+    def _assert_category_batch(self, profile, witness_count):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases, expected_cases
-        partitions = category_execution_partitions("metadata")
-        case_count = len(expected_cases("metadata"))
+        partitions = category_execution_partitions(profile)
+        case_count = len(expected_cases(profile))
         plans = {scope_id: {
             "attemptId": str(uuid.uuid4()),
-            "tests": {identity: (binding, category_runtime_cases("metadata", binding)[identity])
+            "tests": {identity: (binding, category_runtime_cases(profile, binding)[identity])
                       for binding, identity in rows}} for scope_id, rows in partitions.items()}
         for failure in (None, "execution", "admission"):
             root = self.directory / str(failure)
             (root / "proofs").mkdir(parents=True)
             inputs = {
-                "profileId": "metadata", "mode": "diagnostic",
+                "profileId": profile, "mode": "diagnostic",
                 "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4())}
             transports = {scope: object() for scope in plans}
             history = unittest.mock.Mock()
@@ -140,7 +146,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             def execute(run, captured_inputs, candidate, scope_id, plan, **options):
                 self.assertIs(captured_inputs, inputs)
                 self.assertIs(plan, plans[scope_id])
-                self.assertEqual(options["run_inputs_path"], "proofs/category-metadata-run-inputs.json")
+                self.assertEqual(options["run_inputs_path"], f"proofs/category-{profile}-run-inputs.json")
                 if "prepared" in scope_id:
                     self.assertEqual(options["inspection_cases"], {"selected": "inputs"})
                 captured.append(scope_id)
@@ -156,7 +162,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 options = {"inspection_cases": {"selected": "inputs"}, "inspection_configurations": {}}
                 if failure is not None:
                     with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
-                        checks.metadata_category_diagnostics(*arguments, **options)
+                        checks.category_diagnostics(*arguments, **options)
                     if failure == "execution":
                         history.interrupt_joint.assert_called_once_with("ProofMismatch")
                         history.finish_joint.assert_not_called()
@@ -164,19 +170,19 @@ class SdkDiagnosticTests(unittest.TestCase):
                         history.interrupt_joint.assert_not_called()
                         history.finish_joint.assert_called_once()
                 else:
-                    summary = checks.metadata_category_diagnostics(*arguments, **options)
+                    summary = checks.category_diagnostics(*arguments, **options)
                     history.finish_joint.assert_called_once()
                     received = history.finish_joint.call_args.kwargs["transports"]
                     self.assertEqual(set(received), set(plans))
                     self.assertTrue(all(received[key] is value for key, value in transports.items()))
-                    self.assertEqual(summary["tests"], 134)
+                    self.assertEqual(summary["tests"], witness_count)
                     self.assertEqual(summary["caseCount"], case_count)
                     self.assertFalse(summary["qualification"])
                     self.assertEqual(
-                        json.loads(json.dumps({"metadataCategory": summary}))["metadataCategory"], summary)
+                        json.loads(json.dumps({"category": summary}))["category"], summary)
                     history.interrupt_joint.assert_not_called()
                 self.assertEqual(history.begin_joint.call_args.kwargs["partitions"], partitions)
-                record = json.loads((root / "proofs/category-metadata-diagnostic-history.json").read_bytes())
+                record = json.loads((root / f"proofs/category-{profile}-diagnostic-history.json").read_bytes())
                 self.assertFalse(record["qualification"])
                 self.assertEqual(record["code"], "ProofMismatch" if failure else "EvidenceIncomplete")
                 self.assertEqual(len(record["results"]), case_count)
@@ -188,6 +194,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         runner = self.directory / "Hoard.Fixtures.Artifacts.CrashRunner.dll"
         runner.write_bytes(b"runner")
         (self.directory / "proofs/artifact-transfers").mkdir(parents=True)
+        (self.directory / "proofs/category-artifact-transfers").mkdir()
         configurations = {family: self.directory / (family + ".json") for family in ("metadata", "artifacts")}
         for path in configurations.values():
             path.write_bytes(b"{}")
@@ -240,6 +247,12 @@ class SdkDiagnosticTests(unittest.TestCase):
                     "inputSha256": "a" * 64, "expected": expected}
                 with self.subTest(profile=profile, scope=scope_id):
                     checks.runtime_command(run, assembly, manifest, **options)
+                    if scope_id == "controller":
+                        settings = ET.fromstring((self.directory / "stores" / (
+                            "settings-" + manifest["attemptId"] + ".runsettings")).read_bytes())
+                        self.assertEqual(
+                            settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_ARTIFACT_TRANSFER_PROOFS"),
+                            str(self.directory / "proofs/category-artifact-transfers"))
                     if inspection:
                         context = self.directory / "stores" / ("inspection-context-" + manifest["attemptId"] + ".json")
                         observed = json.loads(context.read_bytes())["cases"]
@@ -1248,6 +1261,14 @@ class SdkDiagnosticTests(unittest.TestCase):
                         SimpleNamespace(root=self.directory), category_inputs, category_manifest,
                         {**category_observed, "witnesses": changed}, **options)
                 self.assertFalse(category_receipt.exists())
+            with self.assertRaises(checks.evidence.ConformanceError):
+                checks.original_artifact_external_proofs(
+                    SimpleNamespace(root=self.directory), category_inputs, category_manifest, category_observed, **options)
+            shutil.copytree(self.directory / "proofs/artifact-transfers",
+                            self.directory / "proofs/category-artifact-transfers")
+            (self.directory / "proofs/category-artifact-transfers.json").write_bytes(
+                checks.evidence.canonical_bytes({
+                    **transfer_receipt, "inputsSha256": checks.evidence.digest(category_inputs)}))
             result = checks.original_artifact_external_proofs(
                 SimpleNamespace(root=self.directory), category_inputs, category_manifest, category_observed, **options)
             self.assertEqual(result["sourceExecutions"], 16)
@@ -1282,10 +1303,13 @@ class SdkDiagnosticTests(unittest.TestCase):
                 checks.admit_transfer_measurement(command | change, 3, 268435456)
 
     def test_measured_transfer_binds_actual_producer_pid_hash_runtime_and_unchanged_memory_receipt(self):
-        for mutation in (None, "pid", "hash", "runtime", "pacing", "extra", "memory", "event"):
-            root = self.directory / str(mutation)
-            (root / "stores/artifact-transfers").mkdir(parents=True)
-            (root / "proofs/artifact-transfers").mkdir(parents=True)
+        for namespace, mutation in (
+                (namespace, mutation) for namespace in ("artifact-transfers", "category-artifact-transfers")
+                for mutation in (None, "pid", "hash", "runtime", "pacing", "extra", "memory", "event")):
+            root = self.directory / (namespace + "-" + str(mutation))
+            (root / "stores" / namespace).mkdir(parents=True)
+            (root / "proofs" / namespace).mkdir(parents=True)
+            inputs = {"environment": ENVIRONMENT, "profileId": "artifacts", "mode": "diagnostic"}
             run = SimpleNamespace(root=root, run_id=str(uuid.uuid4()), command_sequence=0, live_children=lambda: ())
             expected_hash = "a" * 64
             captured = []
@@ -1326,20 +1350,22 @@ class SdkDiagnosticTests(unittest.TestCase):
                 return SimpleNamespace(exit_code=0, events=events if mutation != "event" else events[:1])
 
             run.command = command
-            with self.subTest(mutation=mutation):
+            with self.subTest(namespace=namespace, mutation=mutation):
                 if mutation is not None:
                     with self.assertRaisesRegex(checks.evidence.ConformanceError,
                                                 "EvidenceIncomplete" if mutation == "event" else "ProofMismatch"):
                         checks.measured_artifact_transfer(
-                            run, {"environment": ENVIRONMENT}, root / "runner.dll", "local", 268435456, expected_hash)
-                    self.assertFalse((root / "proofs/artifact-transfers/transfer-local-268435456/proof.json").exists())
+                            run, inputs, root / "runner.dll", "local", 268435456, expected_hash, namespace=namespace)
+                    self.assertFalse((root / f"proofs/{namespace}/transfer-local-268435456/proof.json").exists())
                     continue
                 result = checks.measured_artifact_transfer(
-                    run, {"environment": ENVIRONMENT}, root / "runner.dll", "local", 268435456, expected_hash)
+                    run, inputs, root / "runner.dll", "local", 268435456, expected_hash, namespace=namespace)
                 self.assertEqual(result["childStartSha256"], "b" * 64)
                 self.assertEqual(captured[0][1]["measure_transfer_bytes"], 268435456)
                 self.assertEqual(captured[0][1]["env"], {"HOARD_CONFORMANCE_SAFE_EVENTS": "1"})
-                proof = json.loads((root / "proofs/artifact-transfers/transfer-local-268435456/proof.json").read_bytes())
+                self.assertEqual(captured[0][1]["cache_id"], namespace)
+                self.assertEqual(Path(captured[0][0][3]).parent, root / "stores" / namespace)
+                proof = json.loads((root / f"proofs/{namespace}/transfer-local-268435456/proof.json").read_bytes())
                 self.assertEqual(proof["osPeakRssBytes"], 2097152)
                 self.assertEqual(proof["osPeakMethod"], "proc-status")
                 self.assertEqual(proof["runId"], run.run_id)
@@ -1368,6 +1394,24 @@ class SdkDiagnosticTests(unittest.TestCase):
                               ("object", 268435456), ("object", 4294967296)])
             images.assert_called_once_with(assembly.parent, root / "feed/candidate",
                                            checks.ARTIFACT_RECOVERY_PACKAGES)
+        category_inputs = {**inputs, "profileId": "artifacts", "mode": "diagnostic"}
+        with patch.object(checks, "verify_runtime_packages"), patch.object(
+                checks, "measured_artifact_transfer", return_value={"proofSha256": "b" * 64}) as execute:
+            category = checks.artifact_transfer_diagnostics(
+                run, category_inputs, candidate, namespace="category-artifact-transfers")
+            self.assertEqual(category["inputsSha256"], checks.evidence.digest(category_inputs))
+            self.assertNotEqual(category["inputsSha256"], result["inputsSha256"])
+            self.assertEqual(execute.call_count, 4)
+            self.assertTrue(all(call.kwargs["namespace"] == "category-artifact-transfers"
+                                for call in execute.call_args_list))
+            self.assertTrue((root / "proofs/artifact-transfers.json").exists())
+            self.assertTrue((root / "proofs/category-artifact-transfers.json").exists())
+            for namespace, captured in (("../foreign", category_inputs),
+                                        ("category-artifact-transfers", inputs),
+                                        ("category-artifact-transfers", {**category_inputs, "mode": "qualification"})):
+                with self.assertRaises(checks.evidence.ConformanceError):
+                    checks.artifact_transfer_diagnostics(run, captured, candidate, namespace=namespace)
+            self.assertEqual(execute.call_count, 4)
         with patch.object(checks, "verify_runtime_packages"), patch.object(checks, "measured_artifact_transfer") as execute:
             with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
                 checks.artifact_transfer_diagnostics(
@@ -4077,12 +4121,13 @@ class SdkDiagnosticTests(unittest.TestCase):
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
             checks.evidence.proof_manifest(candidate)
         before = capture()
-        metadata_inputs = capture(profile_id="metadata")
-        self.assertEqual(metadata_inputs["profileId"], "metadata")
-        self.assertEqual(metadata_inputs["mode"], "diagnostic")
-        self.assertNotEqual(checks.evidence.digest(metadata_inputs), checks.evidence.digest(before))
-        checks.evidence.verify_input_recomputation(
-            metadata_inputs, capture(metadata_inputs["invocationGroupId"], profile_id="metadata"))
+        for profile in ("metadata", "artifacts"):
+            category_inputs = capture(profile_id=profile)
+            self.assertEqual(category_inputs["profileId"], profile)
+            self.assertEqual(category_inputs["mode"], "diagnostic")
+            self.assertNotEqual(checks.evidence.digest(category_inputs), checks.evidence.digest(before))
+            checks.evidence.verify_input_recomputation(
+                category_inputs, capture(category_inputs["invocationGroupId"], profile_id=profile))
         selected_large = runtime / "Oversized.dll"
         with selected_large.open("wb") as output:
             output.truncate(checks.evidence.MAX_PROOF_BYTES + 1)

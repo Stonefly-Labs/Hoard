@@ -8776,6 +8776,40 @@ pass; free scratch 91,718,258,688 bytes. This admits actual metadata diagnostic
 execution and native executor records at `216413a`, not source qualification,
 the 22 outstanding obligations or later independent command-parent admission.
 
+Independent command-parent run
+[40188204924](https://github.com/Stonefly-Labs/Hoard/actions/runs/40188204924)
+at exact `ac561f200fc1f12b580ccdfe37cc79391f909fd0` is now admitted: all three
+jobs, 269 foundations without failures/errors/skips and 115 scopes/1,457
+executions, including actual native category command-parent joins. Metadata
+inputs `d80314d11ee346b738659b10613614b08dbeacc1e58929c707c67af8275ed8d5`;
+results `8a8348a2a1912ae8f0244d59e35b32a51ee02136724c9a62642dd1293dd0e8a9`.
+The unchanged 102-entry state remains 71 Passed/22 Incomplete/9 NotApplicable/
+0 Failed. This admits that source snapshot, not later artifact batch wiring.
+
+Both categories now share complete predeclared batch execution and retained
+failure handling. The native path independently captures artifact inputs and
+its two declarations before any runtime execution, re-executes all four actual
+paced transfer children under `category-artifact-transfers`, then runs all six
+artifact scopes/227 witness occurrences. Stores, cache, producer/measurement
+proofs and parent summary use that separate namespace; runtime controller
+settings and exact source-packet admission select the same fresh measurements.
+Legacy harness paths/defaults remain unchanged. Artifact and metadata inputs
+are independently recaptured at completion. Artifact history retains all 103
+entries: 96 inherited cases plus seven QC obligations, never a reduced inventory.
+These additional six scopes/227 witnesses and four transfer children are
+requested native execution, not an admitted or qualifying profile.
+
+The artifact orchestration test first fails at the missing shared API, then
+passes unchanged transport identity and execution/admission failure checks for
+both profiles. Measurement tests cover both namespaces, exact stores/cache and
+unchanged RSS/PID/hash/runtime/pacing constraints. Wrong profile/mode/traversal
+namespaces and borrowing old harness receipts reject. Real input capture now
+checks independent artifact recapture too. All 378 tooling checks pass
+(361 passed/seventeen explicit native macOS skips), including 126 SDK checks;
+frozen inventory/catalog and patch checks pass. Existing production providers,
+package/reference/lock bytes, checklists/tasks and deployment diagrams are
+unchanged; source/controller qualification and remaining controls stay closed.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

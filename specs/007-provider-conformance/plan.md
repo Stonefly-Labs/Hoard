@@ -5946,6 +5946,40 @@ incomplete. This proves the actual complete diagnostic batch and native
 executor-record assertions at `216413a`, not profile qualification or the later
 independent parent implementation. No task/checklist marker advances.
 
+### Native command-parent admission and complete artifact batch wiring
+
+Exact `ac561f200fc1f12b580ccdfe37cc79391f909fd0`, run
+[40188204924](https://github.com/Stonefly-Labs/Hoard/actions/runs/40188204924),
+passes all three jobs, 269 foundations without failures/errors/skips and
+115 scopes/1,457 executions, including actual independent command-parent joins.
+Metadata inputs:
+`d80314d11ee346b738659b10613614b08dbeacc1e58929c707c67af8275ed8d5`;
+results:
+`8a8348a2a1912ae8f0244d59e35b32a51ee02136724c9a62642dd1293dd0e8a9`.
+Its 102 entries retain 71 Passed/22 Incomplete/9 NotApplicable/0 Failed.
+Native ownership is admitted for that source snapshot only.
+
+One shared diagnostic batch engine now executes both complete catalog plans.
+Artifact inputs and its two binding declarations are independently captured
+before runtime work, persisted separately and independently recomputed at
+completion. Four actual paced 256 MiB/4 GiB Local/Object transfers re-execute in
+separate `category-artifact-transfers` stores/cache/proofs. The category runtime
+settings and source-packet parent use that same namespace; old harness inputs,
+receipts and defaults are not relabeled or reused. All six artifact scopes/227
+witness occurrences submit unchanged transport objects atomically. Private
+artifact history retains all 103 expected entries (96 inherited plus seven QC).
+
+The missing shared API first fails the new artifact regression. Both profile
+fixtures now preserve predeclared maps/transport identity and terminal
+execution/admission failures. Both measurement namespaces retain all exact
+PID/RSS/runtime/hash/pacing checks; controller settings and wrong-profile/mode/
+traversal/old-receipt negatives pass. Independent real artifact input recapture
+also passes. All 378 tooling checks pass (361 passed/seventeen native macOS
+skips), including 126 SDK checks; inventory/catalog and patch checks pass.
+Complete native artifact execution remains pending. Qualification, controls,
+tasks/checklists, production/reference/lock bytes and deployment diagrams are
+unchanged; no complete category acceptance is inferred.
+
 ## Summary
 
 

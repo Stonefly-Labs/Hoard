@@ -1927,7 +1927,9 @@ Category parents now independently join each available native record to the
 exact command, settings, manifest, inputs and settled owned root. Changed,
 foreign, writable or incomplete records reject; non-native diagnostic adapters
 produce no native receipt. These invocation receipts do not attest assertions
-or open qualification, and their complete native execution remains pending.
+or open qualification. Their native execution passed at `ac561f2`, run
+[40188204924](https://github.com/Stonefly-Labs/Hoard/actions/runs/40188204924):
+all three jobs and 269 foundations without failures/errors/skips.
 The native diagnostic path now captures/recomputes a separate metadata input
 document, predeclares all six category scopes, and submits their 134 untouched
 transports together to joint history admission. Its private 102-entry snapshot
@@ -1940,6 +1942,13 @@ scopes/134 exact witnesses. The 102 entries retain 71 passes, 22 incomplete
 obligations (six QC plus sixteen inherited parent controls) and nine exclusions.
 This is not a qualifying metadata profile or admission of the later independent
 command-parent implementation.
+The same batch engine now also wires all six artifact scopes/227 witnesses
+under independently captured/recomputed artifact inputs. Its four paced
+256 MiB/4 GiB parent transfers re-execute in a separate store/cache/proof
+namespace; neither controller settings nor packet admission borrow the earlier
+harness measurements. Both profiles retain every inherited/QC entry and
+incomplete control. This artifact addition is locally unit-checked, not yet
+admitted native execution or qualifying category/profile acceptance.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce
