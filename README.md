@@ -1998,6 +1998,11 @@ Exact `78c5919`, run
 now independently admits all four metadata/three artifact source parents, all
 121 scopes/1,684 witnesses and the fresh category controls. All three Linux jobs
 and 273 foundations without skips pass; category qualification remains closed.
+Native command/source parents now also require the executor's retained original
+receipt bytes, not merely a read-only file and matching caller-supplied hash.
+Explicit command sequences survive later commands without relying on the latest
+counter. Local tooling passes; this later increment awaits exact-head Linux
+execution and does not open qualification-origin admission.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

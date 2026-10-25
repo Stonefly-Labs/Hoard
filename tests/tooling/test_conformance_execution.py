@@ -201,6 +201,22 @@ class ConformanceExecutionTests(unittest.TestCase):
         path = run.root / "proofs/execution-command-0001.json"
         receipt = json.loads(path.read_bytes())
         self.assertEqual(result.execution_record_sha256, execution.hashlib.sha256(path.read_bytes()).hexdigest())
+        self.assertEqual(run.read_execution_record(1), path.read_bytes())
+        original = path.read_bytes()
+        path.chmod(0o600)
+        path.write_bytes(execution.canonical_bytes({**receipt, "argvSha256": "0" * 64}))
+        path.chmod(0o400)
+        with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+            run.read_execution_record(1)
+        path.chmod(0o600)
+        path.write_bytes(original)
+        path.chmod(0o400)
+        unowned = run.root / "proofs/execution-command-0002.json"
+        unowned.write_bytes(execution.canonical_bytes({**receipt, "sequence": 2}))
+        unowned.chmod(0o400)
+        with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+            run.read_execution_record(2)
+        unowned.unlink()
         self.assertEqual(receipt["argvSha256"], execution.hashlib.sha256(execution.canonical_bytes(arguments)).hexdigest())
         self.assertEqual(receipt["runId"], run.run_id)
         self.assertEqual(receipt["exitCode"], 0)
@@ -214,6 +230,8 @@ class ConformanceExecutionTests(unittest.TestCase):
                          'print("synthetic-secret-canary/private/path")'], record_execution=True)
         failure = json.loads((run.root / "proofs/execution-command-0002.json").read_bytes())
         self.assertEqual(failure["diagnosticCode"], "UnknownDiagnostic")
+        self.assertEqual(run.read_execution_record(1), original)
+        self.assertEqual(json.loads(run.read_execution_record(2)), failure)
         self.assertEqual([json.loads(line) for line in
                           (run.root / "diagnostics/command-0002.jsonl").read_bytes().splitlines()], [
                               {"event": "control", "code": "None", "value": 4},
@@ -232,7 +250,12 @@ class ConformanceExecutionTests(unittest.TestCase):
 
     def test_execution_receipt_requests_are_boolean_and_reject_before_launch(self):
         run = self.workspace()
+        with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+            run.read_execution_record(1)
         with mock.patch.object(execution.subprocess, "Popen") as launch:
+            with mock.patch.object(execution, "MAX_PROOF_FILES", 0):
+                with self.assertRaisesRegex(ConformanceError, "OutputLimitExceeded"):
+                    run.command([sys.executable], record_execution=True)
             for value in (None, 0, 1, "true", {}):
                 with self.subTest(value=value), self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
                     run.command([sys.executable, "-c", "raise AssertionError()"], record_execution=value)

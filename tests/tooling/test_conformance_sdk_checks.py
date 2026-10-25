@@ -410,7 +410,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                     execution = SimpleNamespace(exit_code=0, execution_record_sha256=checks.evidence.file_sha256(record_path))
                     command_parent = self.directory / f'proofs/category-command-{manifest["attemptId"]}-execution.json'
                     source_options["result"] = execution
-                    with patch.object(checks, "OwnedRun", SimpleNamespace):
+                    with patch.object(checks, "OwnedRun", SimpleNamespace), patch.object(
+                            run, "read_execution_record", return_value=record_path.read_bytes(), create=True) as native_record:
                         checks.category_command_proof(
                              run, execution, arguments=arguments, cwd=self.directory, manifest=manifest,
                              settings_data=settings, started_ms=1, ended_ms=4)
@@ -419,6 +420,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                         for change in (
                                  {"runId": str(uuid.uuid4())}, {"rootId": str(uuid.uuid4())},
                                  {"attemptId": str(uuid.uuid4())}, {"invocationGroupId": str(uuid.uuid4())},
+                                 {"commandSequence": 2},
                                  {"inputsSha256": "0" * 64}, {"manifestSha256": "0" * 64},
                                  {"executionRecordSha256": "0" * 64}, {"settingsSha256": "0" * 64},
                                  {"nativeContainment": False}, {"purpose": "discovery"}, {"extra": True}):
@@ -444,10 +446,17 @@ class SdkDiagnosticTests(unittest.TestCase):
                         with self.assertRaises(checks.evidence.ConformanceError):
                              checks.category_source_parent(run, inputs, manifest, ingested, result, **source_options)
                         record_path.chmod(0o400)
+                        with patch.object(run, "read_execution_record",
+                                          side_effect=checks.evidence.ConformanceError("OwnershipInvalid")):
+                             with self.assertRaisesRegex(checks.evidence.ConformanceError, "OwnershipInvalid"):
+                                  checks.category_source_parent(run, inputs, manifest, ingested, result, **source_options)
+                        self.assertFalse(parent.exists())
                         checks.category_source_parent(run, inputs, manifest, ingested, result, **source_options)
+                        native_record.assert_called_with(1)
                     linked = json.loads(parent.read_bytes())
                     self.assertTrue(linked["nativeContainment"])
                     self.assertFalse(linked["qualification"])
+                    self.assertEqual(linked["commandSequence"], 1)
                     self.assertEqual(linked["executionParentSha256"], hashlib.sha256(command_raw).hexdigest())
                     self.assertNotIn(b"synthetic-source-command-canary", parent.read_bytes())
                     record_path.unlink()

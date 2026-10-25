@@ -3098,6 +3098,7 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
     native = isinstance(run, OwnedRun)
     record_sha = getattr(result, "execution_record_sha256", None)
     execution_parent_sha = None
+    sequence = None
     if record_sha is None:
         if native:
             raise evidence.ConformanceError("OwnershipInvalid")
@@ -3114,12 +3115,14 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
             "runId": evidence._constant(run.run_id), "rootId": evidence._constant(run.root_id),
             "invocationGroupId": evidence._constant(inputs["invocationGroupId"]),
             "attemptId": evidence._constant(manifest["attemptId"]), "purpose": evidence._constant("execution"),
+            "commandSequence": evidence._constant(sequence),
             "inputsSha256": evidence._constant(evidence.digest(inputs)),
             "executionRecordSha256": evidence._constant(record_sha),
             "manifestSha256": evidence._constant(evidence.digest(manifest)), "settingsSha256": evidence.sha256,
         }, limit=64 * 1024)
         record_path = run.root / f"proofs/execution-command-{sequence:04}.json"
-        record_raw = read_bounded(record_path, 64 * 1024)
+        record_raw = (run.read_execution_record(sequence) if native
+                      else read_bounded(record_path, 64 * 1024))
         settings_raw = read_bounded(run.root / f'stores/settings-{manifest["attemptId"]}.runsettings', 256 * 1024)
         if (path.stat().st_mode & 0o777 != 0o400 or record_path.stat().st_mode & 0o777 != 0o400
                 or run.run_id != inputs["runId"] or run.live_children()
@@ -3132,6 +3135,7 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
         "profileId": profile, "scopeId": scope_id, "runId": inputs["runId"],
         "invocationGroupId": inputs["invocationGroupId"], "attemptId": manifest["attemptId"],
         "inputsSha256": evidence.digest(inputs), "manifestSha256": evidence.digest(manifest),
+        "commandSequence": sequence,
         "executionParentSha256": execution_parent_sha, "sourceReceiptSha256": hashlib.sha256(raw).hexdigest(),
         "observations": sorted(linked, key=lambda row: row["testIdentity"]),
     }
@@ -3149,7 +3153,8 @@ def category_command_proof(run, result, *, arguments, cwd, manifest, settings_da
     if type(sequence) is not int or not 0 < sequence <= 2**63 - 1:
         raise evidence.ConformanceError("OwnershipInvalid")
     path = run.root / f"proofs/execution-command-{sequence:04}.json"
-    raw = read_bounded(path, 64 * 1024)
+    raw = (run.read_execution_record(sequence) if isinstance(run, OwnedRun)
+           else read_bounded(path, 64 * 1024))
     record = evidence.load_json(raw)
     fields = {
         "schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
@@ -3184,6 +3189,7 @@ def category_command_proof(run, result, *, arguments, cwd, manifest, settings_da
         "runId": run.run_id, "rootId": run.root_id,
         "invocationGroupId": evidence._uuid(manifest["invocationGroupId"]),
         "attemptId": attempt, "purpose": manifest["purpose"],
+        "commandSequence": sequence,
         "inputsSha256": evidence.sha256(manifest["inputSha256"]),
         "executionRecordSha256": record_sha, "manifestSha256": evidence.digest(manifest),
         "settingsSha256": hashlib.sha256(settings_data).hexdigest()}

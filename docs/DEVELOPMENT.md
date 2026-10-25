@@ -8989,6 +8989,18 @@ Both histories remain explicitly non-qualifying with unchanged 22 metadata/
 seven artifact incomplete obligations. This establishes source-to-execution
 linkage, not qualification-origin admission or control-to-case import.
 
+Native `OwnedRun` now retains original safe execution-receipt bytes for commands
+it actually recorded, bounded by the existing 50,000-proof limit. Its pinned
+reader rejects unknown sequences, changed bytes, writable/nonregular files and
+inactive/foreign ownership; a syntactically valid file alone is not authority.
+Both category command and source parents use this reader, and retain an explicit
+command sequence for later source corroboration. The missing-reader regression
+failed before implementation; all 381 tooling checks pass afterwards with 17
+explicit macOS-native skips. Linux-only regressions additionally exercise
+same-length immutable substitution, an unowned valid receipt and rereading an
+earlier command after a later failed command; those await exact-head execution.
+This is native execution anchoring, not source qualification or control import.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

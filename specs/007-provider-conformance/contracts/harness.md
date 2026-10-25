@@ -136,7 +136,16 @@ Create-new read-only source parents remain explicitly non-qualifying; safe
 summaries retain only their count and canonical scope-to-parent digest.
 This is source linkage, not admission of missing control obligations or a
 qualification-origin bypass.
-That execution is now independently admitted at exact `78c5919`, run
+Native parents additionally require an executor-anchored receipt: the original
+safe bytes retained only when that `OwnedRun` actually records a command.
+Pinned reads reject unknown sequences, changed/writable/nonregular receipt files
+and inactive/foreign ownership. Retention is bounded by the 50,000-proof cap.
+Execution/source parents retain explicit command sequences so later admission
+need not reinterpret the latest counter as an earlier scope's invocation.
+These stricter native checks await their own exact-head Linux receipt and do
+not themselves admit source qualification.
+The earlier source-linking execution, before executor-held byte anchoring, is
+independently admitted at exact `78c5919`, run
 40202060742: all three Linux jobs, 273 foundations without skips and all
 121 scopes/1,684 witnesses pass, including four metadata/three artifact source
 parents and fresh category controls. This is still diagnostic linkage, not

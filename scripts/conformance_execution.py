@@ -21,7 +21,7 @@ from types import MappingProxyType
 import uuid
 
 from conformance_evidence import (
-    ConformanceError, DIAGNOSTIC_CODES, MAX_RESULTS, _runtime_identity,
+    ConformanceError, DIAGNOSTIC_CODES, MAX_PROOF_FILES, MAX_RESULTS, _runtime_identity,
     admit_entity, canonical_bytes, load_json,
 )
 
@@ -389,6 +389,7 @@ class OwnedRun:
         self.directory_identities = {}
         self.retained_bytes = 0
         self.command_sequence = 0
+        self._execution_records = {}
         self.cleanup_attempts = []
         self._writer = threading.RLock()
         self.started = time.monotonic()
@@ -401,6 +402,29 @@ class OwnedRun:
                 "directories": self.directory_identities,
                 "cleanupAttempts": self.cleanup_attempts,
                 "children": {str(pid): identity for pid, identity in self.children.items()}}
+
+    @single_writer
+    def read_execution_record(self, sequence):
+        self._check_ledger()
+        if (self.state != "Active" or type(sequence) is not int
+                or sequence not in self._execution_records):
+            raise ConformanceError("OwnershipInvalid")
+        expected = self._execution_records[sequence]
+        directory = self._directory_descriptor("proofs")
+        try:
+            descriptor = os.open(f"execution-command-{sequence:04}.json", os.O_RDONLY | os.O_NOFOLLOW,
+                                 dir_fd=directory)
+            with os.fdopen(descriptor, "rb") as source:
+                info = os.fstat(source.fileno())
+                if (not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode) != 0o400
+                        or info.st_uid != os.getuid() or info.st_size != len(expected)
+                        or source.read(len(expected) + 1) != expected):
+                    raise ConformanceError("OwnershipInvalid")
+        except OSError:
+            raise ConformanceError("OwnershipInvalid") from None
+        finally:
+            os.close(directory)
+        return expected
 
     def _root_descriptor(self):
         no_symlinks(self.root)
@@ -578,6 +602,8 @@ class OwnedRun:
             raise ConformanceError("OwnershipInvalid")
         argv_sha = cwd_sha = None
         if record_execution:
+            if len(self._execution_records) >= MAX_PROOF_FILES:
+                raise ConformanceError("OutputLimitExceeded")
             if (not isinstance(args, (tuple, list)) or not args
                     or any(not isinstance(arg, str) or "\x00" in arg for arg in args)):
                 raise ConformanceError("OwnershipInvalid")
@@ -889,11 +915,11 @@ class OwnedRun:
                     **({"transfer": transfer} if measure_transfer_bytes is not None else {}),
                 })))
             if record_execution:
-                receipt = canonical_bytes({
+                execution_receipt = canonical_bytes({
                     **observed, "runId": self.run_id, "rootId": self.root_id,
                     "argvSha256": argv_sha, "cwdSha256": cwd_sha})
-                execution_sha = hashlib.sha256(receipt).hexdigest()
-                receipts.append((f"execution-command-{self.command_sequence:04}.json", receipt))
+                execution_sha = hashlib.sha256(execution_receipt).hexdigest()
+                receipts.append((f"execution-command-{self.command_sequence:04}.json", execution_receipt))
         for name, receipt in receipts:
             directory = self._directory_descriptor("proofs")
             try:
@@ -903,6 +929,8 @@ class OwnedRun:
                     os.fchmod(output.fileno(), 0o400)
             finally:
                 os.close(directory)
+        if record_execution:
+            self._execution_records[self.command_sequence] = execution_receipt
         if failure is not None:
             raise failure
         return CommandResult(code, tuple(events), (time.monotonic() - started) * 1000, execution_sha)

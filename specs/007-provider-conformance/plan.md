@@ -6119,6 +6119,16 @@ Source-parent canonical digests are
 qualification-origin admission and actual control imports are still unfinished.
 No task/checklist markers advance from this diagnostic receipt.
 
+Native command/source-parent admission now independently rereads executor-held
+original receipt bytes through pinned owned descriptors. Unknown sequences,
+immutable-looking substitutions and writable/foreign records reject; receipt
+retention is bounded by the existing 50,000-proof cap. Explicit command sequences
+are retained in both parents for eventual joint source admission after later
+commands, rather than assuming the latest command is every source's parent.
+The missing API fails in red; 381 tooling checks pass after repair with 17
+explicit macOS-native skips. Linux-only actual-command substitution/unowned
+receipt/earlier-command regressions are pending native execution. This increment
+does not yet admit qualification origins, import controls or advance task markers.
 
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately
