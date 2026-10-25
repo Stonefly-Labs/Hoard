@@ -1313,6 +1313,18 @@ def full_metadata_binding_origin_counts():
         f'{schema}(provider: "{provider}", consumer: "{consumer}")': count
         for provider in ("memory", "sqlite") for consumer, count in (
             ("upgrade", 3), ("upgrade-invalid", 2), ("upgrade-exclusive", 2), ("future-corrupt", 4))})
+    cursor = FULL_METADATA_CONSUMER_PREFIX + "Observed_continuation_corruption_preserves_actual_pages"
+    identities.update({
+        f'{cursor}(provider: "{provider}", corruption: {corruption})': 1
+        for provider in ("memory", "sqlite") for corruption in (
+            "Null", "Omitted", "WrongType", "Empty", "OddHex", "InvalidHex")})
+    dimensions = FULL_METADATA_CONSUMER_PREFIX + "Observed_query_corruption_preserves_actual_dimensions"
+    identities.update({
+        f'{dimensions}(provider: "{provider}", corruption: {corruption})': 1
+        for provider in ("memory", "sqlite") for corruption in (
+            "CacheAuthorization", "AggregateAuthorization", "AggregateStart", "AggregateEnd", "LeaseResource")})
+    epoch = FULL_METADATA_CONSUMER_PREFIX + "Observed_continuations_reject_foreign_actual_store_epochs"
+    identities.update({f'{epoch}(provider: "{provider}")': 2 for provider in ("memory", "sqlite")})
     return identities
 
 

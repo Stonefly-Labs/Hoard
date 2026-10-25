@@ -1077,6 +1077,18 @@ cases. The next native request is 215 foundations and 95 scopes/918 observations
 not yet admitted. Common assertion/disposal scopes and provider mechanisms are
 unchanged; complete category/profile imports and final T081 remain unfinished.
 
+Twenty-four further actual rows exercise all six continuation-corruption shapes
+over all six components, the five supported query-dimension corruptions and
+foreign-store epochs. Epoch consumers prepare two independent actual stores
+and require two create origins. Strict parent admission now requires all
+132 rows/150 origins (136 creates/14 reopens), with 900 actual role/image/archive
+correspondences. Fresh preparation/replay pass 311 artifact, 235 Consumer and
+89+89 metadata cases. The next native request is 215 foundations and
+95 scopes/942 observations, not yet admitted. Schema run `40158238921` at
+`9399c3c` passed all three jobs, 215 foundations without failures/errors/skips,
+95 scopes/876 exact observations and every prerequisite. It does not verify
+the later controls/cursor increments or establish complete qualification.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and
 every actual prerequisite chain/replay, not full qualification.

@@ -7736,6 +7736,34 @@ The admitted reference/reconciliation run binds input
 preparation `d5ee7e5f0d0c4e43c46b95cb7861df4d08f1ccd55f82d6da2ec13bbdd29a2fe3`
 and 91,721,572,352 free scratch bytes; it predates schema/control increments.
 
+Twenty-four further actual rows exercise six continuation-corruption shapes,
+each over all six components, five supported query-dimension corruptions and
+foreign-store epochs through unchanged common consumers. Epoch cases prepare
+two independent actual stores and emit both actual create origins. The absent
+inventory first fails its regression; strict parent admission requires every
+new identity and its exact one/two-origin count.
+
+Fresh preparation/replay pass 311 artifact, 235 Consumer and 89+89 metadata
+cases without failures/skips; the same fifteen-archive map reproduces. Actual
+bounded fresh-cache observation verifies 132 rows, 150 genuine origins,
+136 creates/14 reopens and 900 role/image/archive correspondences. Tooling
+passes 323 checks (306 passed/seventeen macOS-native skips), including 97 SDK
+checks; Consumer formatting, frozen inventory/catalog and patch checks pass.
+The next native request is 215 foundations and 95 scopes/942 observations,
+not yet admitted. Assertions, provider mechanisms, historical seals, locks,
+tasks and reviewer markers remain unchanged. Complete category/profile
+qualification, integrations and final T081 remain open; product/deployment
+examples and diagrams are unaffected.
+
+Schema run `40158238921` at exact head
+`9399c3ca10bb59a474462a892ae326655ce819db` passed all three jobs,
+215 foundations without failures/errors/skips, 95 scopes/876 exact
+discoveries/executions and every prerequisite. Input:
+`70cde04a349134675712f565458f275d9bd6cdce105ccf0c6ad9fd49de433cbd`;
+preparation:
+`a2f2fb64e77dc059b89e55d8e7bd5cd8e6df6a0743b3eb06fbb1fa5c4fe82167`;
+free scratch 91,721,506,816 bytes. It predates controls/cursor imports.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

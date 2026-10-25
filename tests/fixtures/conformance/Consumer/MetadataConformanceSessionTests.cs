@@ -12,6 +12,82 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("memory", MetadataContinuationCorruption.Null)]
+    [InlineData("memory", MetadataContinuationCorruption.Omitted)]
+    [InlineData("memory", MetadataContinuationCorruption.WrongType)]
+    [InlineData("memory", MetadataContinuationCorruption.Empty)]
+    [InlineData("memory", MetadataContinuationCorruption.OddHex)]
+    [InlineData("memory", MetadataContinuationCorruption.InvalidHex)]
+    [InlineData("sqlite", MetadataContinuationCorruption.Null)]
+    [InlineData("sqlite", MetadataContinuationCorruption.Omitted)]
+    [InlineData("sqlite", MetadataContinuationCorruption.WrongType)]
+    [InlineData("sqlite", MetadataContinuationCorruption.Empty)]
+    [InlineData("sqlite", MetadataContinuationCorruption.OddHex)]
+    [InlineData("sqlite", MetadataContinuationCorruption.InvalidHex)]
+    public async Task Observed_continuation_corruption_preserves_actual_pages(
+        string provider, MetadataContinuationCorruption corruption)
+    {
+        await using var resources = new SqliteBindingTests.RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-metadata-binding",
+            new MetadataConformanceClock(new(1_800_000_000_000)), resources, new ConformanceEvidenceBuffer());
+        await using var session = await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default);
+        Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Success>(
+            await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        var origin = session.CaptureOrigin();
+        await MetadataPagingAssertions.MalformedContinuationFieldsAsync(
+            session.Store, session.Faults.CorruptContinuationAsync, corruption, default);
+        ConformanceSessionOriginOutput.Write(output, origin);
+    }
+
+    [Theory]
+    [InlineData("memory", MetadataRecordCorruption.CacheAuthorization)]
+    [InlineData("memory", MetadataRecordCorruption.AggregateAuthorization)]
+    [InlineData("memory", MetadataRecordCorruption.AggregateStart)]
+    [InlineData("memory", MetadataRecordCorruption.AggregateEnd)]
+    [InlineData("memory", MetadataRecordCorruption.LeaseResource)]
+    [InlineData("sqlite", MetadataRecordCorruption.CacheAuthorization)]
+    [InlineData("sqlite", MetadataRecordCorruption.AggregateAuthorization)]
+    [InlineData("sqlite", MetadataRecordCorruption.AggregateStart)]
+    [InlineData("sqlite", MetadataRecordCorruption.AggregateEnd)]
+    [InlineData("sqlite", MetadataRecordCorruption.LeaseResource)]
+    public async Task Observed_query_corruption_preserves_actual_dimensions(
+        string provider, MetadataRecordCorruption corruption)
+    {
+        await using var resources = new SqliteBindingTests.RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-metadata-binding",
+            new MetadataConformanceClock(new(1_800_000_000_000)), resources, new ConformanceEvidenceBuffer());
+        await using var session = await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default);
+        Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Success>(
+            await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        var origin = session.CaptureOrigin();
+        await MetadataCorruptionAssertions.QueryDimensionsAsync(
+            session.Store, session.Authority, session.Faults.CorruptAsync, corruption, default);
+        ConformanceSessionOriginOutput.Write(output, origin);
+    }
+
+    [Theory]
+    [InlineData("memory")]
+    [InlineData("sqlite")]
+    public async Task Observed_continuations_reject_foreign_actual_store_epochs(string provider)
+    {
+        await using var resources = new SqliteBindingTests.RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-metadata-binding",
+            new MetadataConformanceClock(new(1_800_000_000_000)), resources, new ConformanceEvidenceBuffer());
+        await using var original = await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default);
+        await using var foreign = await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default);
+        foreach (var session in new[] { original, foreign })
+        {
+            Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Success>(
+                await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        }
+        var origin = original.CaptureOrigin();
+        var foreignOrigin = foreign.CaptureOrigin();
+        await MetadataPagingAssertions.ContinuationScopeAndEpochAsync(original.Store, foreign.Store, default);
+        ConformanceSessionOriginOutput.Write(output, origin);
+        ConformanceSessionOriginOutput.Write(output, foreignOrigin);
+    }
+
+    [Theory]
     [InlineData("memory", "upgrade")]
     [InlineData("memory", "upgrade-invalid")]
     [InlineData("memory", "upgrade-exclusive")]

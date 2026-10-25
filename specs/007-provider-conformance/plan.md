@@ -4517,6 +4517,36 @@ tasks and reviewer markers remain unchanged. Complete category/profile imports,
 integrations and final T081 remain open; production/deployment examples and
 architecture diagrams are unaffected by these test-only imports.
 
+### Actual metadata continuation, query-dimension and foreign-epoch consumers
+
+Twenty-four further observed rows execute unchanged common consumers for all
+six continuation-corruption shapes (each over six continuation components),
+the five supported query-dimension corruptions and foreign-store epochs.
+Each epoch consumer prepares two independent actual stores; strict admission
+requires both actual create origins, not a synthetic foreign-token claim.
+
+The absent identities first fail the inventory regression. Fresh exclusive
+preparation/replay pass 311 artifact, 235 Consumer and 89+89 metadata cases
+without failures/skips, preserving the same fifteen-archive map. Actual bounded
+fresh-cache observation verifies 132 exact rows, 150 origins, 136 creates/
+14 reopens and 900 role/image/archive correspondences. Tooling passes 323 checks
+(306 passed/seventeen macOS-native skips), including 97 SDK checks; Consumer
+formatting, frozen inventory/catalog and patch checks pass. The next native
+request is 215 foundations and 95 scopes/942 observations, not yet admitted.
+
+Schema native run `40158238921` at
+`9399c3ca10bb59a474462a892ae326655ce819db` passed all three jobs,
+215 foundations without failures/errors/skips, 95 scopes/876 exact
+discoveries/executions and every prerequisite. Input:
+`70cde04a349134675712f565458f275d9bd6cdce105ccf0c6ad9fd49de433cbd`;
+preparation:
+`a2f2fb64e77dc059b89e55d8e7bd5cd8e6df6a0743b3eb06fbb1fa5c4fe82167`;
+free scratch 91,721,506,816 bytes. It predates controls/cursor increments.
+Common assertions/disposal scopes, provider mechanisms, historical seals,
+locks, tasks and reviewer markers remain unchanged. Complete category/profile
+qualification, integrations and final T081 remain open; production/deployment
+examples and diagrams are unaffected by these test-only imports.
+
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations
 without failures/errors/skips, 87 scopes/757 exact discoveries/executions and

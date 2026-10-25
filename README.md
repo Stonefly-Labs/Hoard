@@ -1804,6 +1804,15 @@ Fresh preparation/replay pass 311 artifact, 211 Consumer and 89+89 metadata case
 the next native request is 215 foundations and 95 scopes/918 observations,
 not yet admitted or complete category/profile qualification.
 
+Twenty-four further actual rows cover all six continuation-corruption shapes,
+the five supported query-dimension corruptions and independent foreign-store
+epochs. All 132 metadata rows emit 150 genuine origins/900 role/image/archive
+matches; fresh preparation/replay pass 311 artifact, 235 Consumer and 89+89
+metadata cases. The next native request is 215 foundations and 95 scopes/942
+observations, not yet admitted. Schema run `40158238921` at `9399c3c` passed all
+three jobs, 215 foundations without skips and 95 scopes/876 observations with
+every prerequisite; it does not verify subsequent controls/cursor increments.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

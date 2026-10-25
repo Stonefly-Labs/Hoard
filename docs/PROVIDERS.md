@@ -845,6 +845,17 @@ and genuine settlement; no timeout is promoted to Released. All 108 rows emit
 215 foundations and 95 scopes/918 observations, not yet admitted or full
 category/profile qualification.
 
+Twenty-four further actual rows exercise six continuation-corruption shapes
+(each across all six components), five supported query-dimension corruptions
+and independent foreign-store epochs. Both stores in each epoch case are
+genuinely prepared; strict admission requires both actual create origins.
+All 132 rows emit 150 origins/900 role/image/archive matches. Fresh preparation/
+replay pass 311 artifact, 235 Consumer and 89+89 metadata cases; the next native
+request is 215 foundations and 95 scopes/942 observations, not yet admitted.
+Schema run `40158238921` at `9399c3c` passed all three jobs, 215 foundations
+without skips and 95 scopes/876 observations with every prerequisite. It
+predates controls/cursor imports and is not complete category qualification.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and
 actual prerequisites/replay, not full category/profile qualification.

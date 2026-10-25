@@ -1150,6 +1150,19 @@ class SdkDiagnosticTests(unittest.TestCase):
         expected.update(f'{schema}(provider: "{provider}", consumer: "{consumer}")'
                         for provider in ("memory", "sqlite") for consumer in (
                             "upgrade", "upgrade-invalid", "upgrade-exclusive", "future-corrupt"))
+        cursor = ("Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
+                  "Observed_continuation_corruption_preserves_actual_pages")
+        expected.update(f'{cursor}(provider: "{provider}", corruption: {corruption})'
+                        for provider in ("memory", "sqlite") for corruption in (
+                            "Null", "Omitted", "WrongType", "Empty", "OddHex", "InvalidHex"))
+        dimensions = ("Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
+                      "Observed_query_corruption_preserves_actual_dimensions")
+        expected.update(f'{dimensions}(provider: "{provider}", corruption: {corruption})'
+                        for provider in ("memory", "sqlite") for corruption in (
+                            "CacheAuthorization", "AggregateAuthorization", "AggregateStart", "AggregateEnd", "LeaseResource"))
+        epoch = ("Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
+                 "Observed_continuations_reject_foreign_actual_store_epochs")
+        expected.update(f'{epoch}(provider: "{provider}")' for provider in ("memory", "sqlite"))
         scenario, = checks.full_metadata_binding_scenarios()
         self.assertEqual(scenario, ("full-metadata-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"
