@@ -4706,7 +4706,12 @@ explicit owned attempt and remain incomplete when interrupted/unimplemented;
 exclusions have no attempted execution. Synthetic transport regressions cover
 both full inventories, shared UUIDs/hashes, exclusions, missing QC controls,
 reduced manifest rejection, retained failure/retry and absent qualification
-origins. They do not constitute genuine category execution. Actual runner,
+origins. A fifth regression supplies structurally valid synthetic qualification
+origins, then rejects cross-binding execution-ID replay without changing
+previously accepted witnesses/proofs. The immutable primary-case selection is
+exposed before manifest construction and reused during import. These model
+fixtures do not establish actual original-wrapper provenance or genuine category
+execution. Actual runner,
 legacy adapter integration, controller proof ingestion, evaluation and T035/
 T081 remain unfinished; execution/verify/aggregate guards are unchanged.
 
@@ -4726,10 +4731,12 @@ These are bounded local logger diagnostics, not complete profile inputs or
 native admission. Superseded slot run `40162771846 @c1f79b2` is confirmed
 canceled; neither run contributes an admitted receipt.
 
-Full tooling passes 331 checks (314 passed/seventeen macOS-native skips).
+Full tooling passes 332 checks (315 passed/seventeen macOS-native skips).
 Capacity-only failures were resolved by reclaiming 28 inspected completed
 private dependency caches, preserving sources/archives/images/receipts and the
-unchanged 24 GiB guard. C# logger/tests formatting, frozen inventory/catalog
+unchanged 24 GiB guard; the follow-up reclaimed another twelve completed
+red-probe dependency caches after the same capacity-only failure recurred.
+C# logger/tests formatting, frozen inventory/catalog
 and patch checks pass. The replacement request is 223 native foundations and
 100 scopes/982 observations with every prerequisite, not yet admitted.
 README and affected guides/model/contracts are updated; product/deployment

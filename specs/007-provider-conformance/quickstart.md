@@ -588,7 +588,10 @@ prerequisite. It predates mutations/slot input wiring; the next request is
 219 foundations and 100 scopes/982 observations, not yet admitted.
 Category batch import now requires complete frozen binding inventories and all
 QC/control keys; unknown controls stay incomplete and no profile runner is
-enabled. Tooling passes 331 checks (314 passed/seventeen macOS-native skips).
+enabled. The immutable primary-case selection is available before manifest
+construction; synthetic positive-origin/cross-binding replay coverage preserves
+accepted evidence after rejection, not actual original-wrapper provenance.
+Tooling passes 332 checks (315 passed/seventeen macOS-native skips).
 The real logger's missing `Assert.IsType()` prefix is repaired with exact
 SDK-frame attribution unchanged; actual observation/replay reproduce four
 named failures/four corrected passes. Failed run `40161613939` and superseded

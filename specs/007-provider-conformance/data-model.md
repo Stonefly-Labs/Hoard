@@ -83,9 +83,14 @@ authorize arbitrary text, paths, missing parameters or normalization.
 Category batch history imports the full frozen witness union per binding.
 Shared witnesses use the lexicographically first mapped case as their owned
 runtime context and retain the same execution UUID/hash across mapped results.
+The immutable identity-to-primary-case map is exposed before manifest creation
+and reused during import; callers do not supply a separate selection algorithm.
 No input-selected reduced inventory, rewritten proof, lost failed retry or
 excluded execution is admitted. Both binding options and all QC/control keys
 remain required; missing controller observations remain incomplete.
+Synthetic positive-origin coverage verifies that a cross-binding execution-ID
+replay rejects without mutating previously accepted witnesses or proof bytes.
+These model fixtures do not establish actual wrapper provenance.
 
 ### Binding input snapshot
 

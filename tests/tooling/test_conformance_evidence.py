@@ -1125,7 +1125,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             del options[key]
         return history.finish(**options)
 
-    def category_history(self, *, profile="metadata", mode="diagnostic", max_attempts=1):
+    def category_history(self, *, profile="metadata", mode="diagnostic", max_attempts=1, origin_inputs=None):
         self.inputs.update(mode=mode, profileId=profile, invocation=["profile", profile])
         self.inputs["budgets"]["profileSeconds"] = 5400 if profile == "metadata" else 10800
         original = self.inputs["bindings"][0]
@@ -1139,9 +1139,9 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             {**original, "bindingId": binding, "package": package, "category": profile,
              "descriptorSha256": hashlib.sha256(binding.encode()).hexdigest()}
             for (binding, _), package in zip(bindings, packages)]
-        return evidence.CategoryRuntimeHistory(self.inputs, max_attempts=max_attempts)
+        return evidence.CategoryRuntimeHistory(self.inputs, max_attempts=max_attempts, origin_inputs=origin_inputs)
 
-    def category_transport(self, binding, *, sequence=1, started=9):
+    def category_transport(self, binding, *, sequence=1, started=9, origin=None):
         import conformance_case_catalog as catalog
         cases = [case for case in catalog.expected_cases(self.inputs["profileId"])
                  if case.binding_id == binding and case.exclusion is None]
@@ -1160,6 +1160,14 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                      "attemptSequence": sequence, "inputSha256": evidence.digest(self.inputs),
                      "manifestSha256": evidence.digest(manifest), "testIdentity": entry["testIdentity"],
                      "bindingId": binding, "caseId": entry["caseId"], "durationMs": 0.5}
+            if origin is not None:
+                captured = copy.deepcopy(origin)
+                captured.update(caseId=entry["caseId"], sessionId=str(uuid.uuid4()),
+                                descriptorSha256=next(item["descriptorSha256"] for item in self.inputs["bindings"]
+                                                      if item["bindingId"] == binding))
+                for component in captured["components"].values():
+                    component["instanceId"] = str(uuid.uuid4())
+                proof["sessionOrigins"] = [captured]
             proofs[f"proof-{execution}.json"] = evidence.canonical_bytes(proof)
             witnesses.append({**self.witness, "executionId": execution, "testIdentity": entry["testIdentity"],
                               "bindingId": binding, "inputSha256": evidence.digest(self.inputs),
@@ -1268,6 +1276,40 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.assertEqual(sum(result["status"] == "NotApplicable" for result in results), 4)
         self.assertEqual(sum(result["status"] == "Incomplete" for result in results), 7)
         self.assertTrue(all(result["status"] == "Passed" for result in results if result["bindingId"] == "local"))
+
+    def test_category_import_checks_qualified_origins_and_rejects_reused_execution_ids_across_bindings(self):
+        origin, assignments = self.runtime_origin("runtime")
+        history = self.category_history(
+            mode="qualification", origin_inputs={"sqlite": assignments, "memory": assignments})
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin("sqlite", self.attempt)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            results = history.finish("sqlite", **self.category_transport("sqlite", origin=origin))
+        self.assertTrue(any(result["status"] == "Passed" for result in results))
+        executions = {witness["executionId"] for witness in history.witnesses}
+        self.assertEqual(set(history.session_origins), executions)
+        self.assertTrue(all(len(origins) == 1 for origins in history.session_origins.values()))
+        previous_proofs = dict(history.proofs)
+        self.attempt = str(uuid.uuid4())
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin("memory", self.attempt)
+        transport = self.category_transport("memory", origin=origin)
+        witnesses = [evidence.load_json(line) for line in transport["witnesses_data"].splitlines()]
+        first = witnesses[0]
+        proof = evidence.load_json(transport["proofs"].pop(f'proof-{first["executionId"]}.json'))
+        duplicate = next(iter(executions))
+        proof["executionId"] = first["executionId"] = duplicate
+        transport["proofs"][f"proof-{duplicate}.json"] = evidence.canonical_bytes(proof)
+        first["proofSha256"] = evidence.digest(proof)
+        transport["witnesses_data"] = b"".join(evidence.canonical_bytes(witness) + b"\n" for witness in witnesses)
+        completion = evidence.load_json(transport["completion_data"])
+        completion["recordsSha256"] = hashlib.sha256(transport["witnesses_data"]).hexdigest()
+        transport["completion_data"] = evidence.canonical_bytes(completion)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012), self.assertRaisesRegex(
+                evidence.ConformanceError, "ProofMismatch"):
+            history.finish("memory", **transport)
+        self.assertEqual({witness["executionId"] for witness in history.witnesses}, executions)
+        self.assertEqual(dict(history.proofs), previous_proofs)
 
     def test_case_execution_preserves_failed_attempt_and_proofs_after_a_passing_retry(self):
         history = self.history(max_attempts=2)

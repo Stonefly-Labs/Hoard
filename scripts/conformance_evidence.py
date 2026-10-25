@@ -1810,6 +1810,16 @@ class CategoryRuntimeHistory:
     def session_origins(self):
         return self._session_origins
 
+    def expected_runtime_tests(self, binding_id):
+        """Select primary owned cases before building the runtime manifest."""
+        binding_id = stable_id(binding_id)
+        if binding_id not in self._bindings:
+            raise ConformanceError("BindingInvalid")
+        cases = tuple(case for case in self._cases if case.binding_id == binding_id and case.exclusion is None)
+        return MappingProxyType({
+            identity: min(case.case_id for case in cases if identity in case.witnesses)
+            for identity in {identity for case in cases for identity in case.witnesses}})
+
     def begin(self, binding_id, attempt_id):
         binding_id, attempt_id = stable_id(binding_id), _uuid(attempt_id)
         if (binding_id not in self._bindings or binding_id in self._active
@@ -1863,9 +1873,7 @@ class CategoryRuntimeHistory:
         if binding_id not in self._active:
             raise ConformanceError("OwnershipInvalid")
         ended = _number(time.monotonic() * 1000)
-        cases = tuple(case for case in self._cases if case.binding_id == binding_id and case.exclusion is None)
-        identities = {identity: min(case.case_id for case in cases if identity in case.witnesses)
-                      for identity in {identity for case in cases for identity in case.witnesses}}
+        identities = self.expected_runtime_tests(binding_id)
         try:
             observed = ingest_runtime_attempt(
                 inputs=self._inputs, manifest_data=manifest_data, owner_data=owner_data,

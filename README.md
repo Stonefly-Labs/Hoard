@@ -1856,7 +1856,11 @@ mutations and category-slot input wiring.
 Category batch ingestion now requires each binding's complete frozen runtime
 inventory, preserves shared execution/proof identities and all 192 inherited
 keys, and keeps missing controller/QC proofs incomplete. It is not yet wired
-to executable profiles. Native run `40161613939` exposed an `Assert.IsType()`
+to executable profiles. The same immutable primary-case selection is available
+before manifest construction. A synthetic positive-origin regression also
+rejects cross-binding execution-ID replay without changing accepted evidence;
+it does not establish real wrapper provenance.
+Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce
 four named mutation failures and four corrected passes. That failed run and

@@ -68,6 +68,10 @@ is relabeled. Results cannot omit either binding or any QC/control key.
 Append-only failures survive retries, excluded cases have no invented
 executions, and unobserved controller controls stay incomplete. This state
 model does not yet wire actual profile runners or independent evaluation.
+Manifest builders can obtain the same immutable primary-case map used by
+import. A synthetic qualification-origin batch followed by a structurally valid
+cross-binding execution-ID replay confirms rejection without changing accepted
+witnesses/proofs; it is not actual provider qualification or wrapper provenance.
 
 The implemented private transport distinguishes `purpose: discovery` from
 `purpose: execution` and hashes each complete JSONL stream in its completion

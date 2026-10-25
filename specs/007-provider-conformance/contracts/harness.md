@@ -1168,15 +1168,19 @@ catalog-owned obligations without rewriting proofs. Failed attempts persist
 through retries and identities/components remain consistent across batches.
 All original QC rows remain required; missing controller controls stay
 incomplete, exclusions invent no execution, and actual profile/evaluator
-dispatch remains guarded. Four synthetic transport regressions exercise this
-model, not full category execution.
+dispatch remains guarded. Five synthetic transport regressions exercise this
+model, including a positive qualification-origin fixture and cross-binding
+execution-ID replay rejected without changing accepted witnesses/proofs.
+The immutable primary-case map is shared by prelaunch manifest selection and
+import. These fixtures do not establish actual original-wrapper provenance or
+full category execution.
 
 Run `40161613939 @abfa812` failed mutation diagnostics because the real logger
 did not recognize bounded `Assert.IsType()` failures. The repair adds only that
 prefix, retaining exact SDK-frame checks and safe projection. All 46 logger
 tests pass; actual local observation/replay each reproduce four named failures
 and four corrected passes using unchanged Consumer/SDK images. Tooling passes
-331 checks (314 passed/seventeen macOS-native skips). That failed run and
+332 checks (315 passed/seventeen macOS-native skips). That failed run and
 confirmed canceled `40162771846 @c1f79b2` are not admitted; the replacement
 requires 223 foundations and 100 scopes/982 observations with all prerequisites.
 

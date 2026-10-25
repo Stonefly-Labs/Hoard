@@ -7903,9 +7903,13 @@ including six metadata/seven artifact QC rows. Unobserved controller controls
 stay incomplete, and exclusions have no invented attempts or runtime evidence.
 This is an import/state-model increment: actual profile runners, lower-level
 adapter wiring, controller evidence and independent evaluation remain unbuilt.
-The initial three regressions expose the absent importer; four focused cases
-now pass. Full tooling passes
-331 checks (314 passed/seventeen macOS-native skips) after reclaiming inspected
+The initial three regressions expose the absent importer; five focused cases
+now pass. The fifth supplies structurally valid synthetic qualification origins
+and rejects a cross-binding execution-ID replay without changing accepted
+witnesses/proofs. It is not actual original-wrapper provenance. An immutable
+identity-to-primary-case map is available before manifest construction and
+reused during import. Full tooling passes
+332 checks (315 passed/seventeen macOS-native skips) after reclaiming inspected
 completed private dependency caches to restore transient headroom above the
 unchanged 24 GiB guard.
 

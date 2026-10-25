@@ -916,6 +916,10 @@ Full-binding batch ingestion now rejects reduced frozen witness inventories
 and preserves shared execution/proof identities, append-only attempts and all
 QC/controller obligations. Missing controls cannot become passing category
 results; actual profile runners/evaluation remain unfinished.
+Prelaunch manifest selection and import share the immutable primary-case map.
+Synthetic positive-origin coverage rejects cross-binding execution-ID replay
+without mutating accepted evidence; actual original-wrapper provenance remains
+unfinished.
 Run `40161613939 @abfa812` exposed a real `Assert.IsType()` logger-prefix gap.
 Its bounded repair retains exact SDK-frame attribution and reproduces four
 named failures/four corrected passes through the actual logger in independent
