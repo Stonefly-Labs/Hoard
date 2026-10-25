@@ -874,6 +874,23 @@ Bounded architecture review found no confirmed blocker. Controls native run
 and 95 scopes/918 observations; the next request is 216 foundations and
 96 scopes/974 observations, not yet admitted.
 
+Isolated opt-in mutations now wrap the actual metadata and artifact stores.
+Stale metadata replay fails unchanged
+`MetadataTimeAssertions.TicketExpiryAndRollbackAsync`; actual premature artifact
+publication fails unchanged `ArtifactPublicationAssertions.PrivateStagingAsync`.
+Each faulty/corrected pair uses the same caller and common assertions across
+both independent providers. Unexpected successful read sessions are disposed
+before actual artifact-session shutdown. Fresh preparation/replay each produce
+four named assertion failures and four corrected passes, with fourteen actual
+Hoard image/archive matches and unchanged SDK/catalog/assertion bytes.
+Intentional failures are excluded from ordinary builds. The next native request
+is 218 foundations and 100 scopes/982 observations, not yet admitted or complete
+T034/category qualification. No provider operation or SDK dependency changed.
+
+Cursor native run `40159593512` at `5c7522f` passed all three jobs,
+215 foundations without skips and 95 scopes/942 exact observations with every
+prerequisite. It does not verify authority integrations or category mutations.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and
 actual prerequisites/replay, not full category/profile qualification.

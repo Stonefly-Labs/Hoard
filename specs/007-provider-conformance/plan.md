@@ -4591,6 +4591,50 @@ not yet admitted. T033/category qualification, subsequent profiles and final
 T081 remain unfinished. Tasks/reviewer markers and historical seals are
 unchanged; production/deployment examples and diagrams are unaffected.
 
+### Isolated category-mutation diagnostic checkpoint
+
+The package-only Consumer conditionally source-links `CategoryMutationTests.cs`
+and the two isolated decorators with `ConformanceCategoryMutations=true`.
+Ordinary Consumer builds omit all intentional failures, and the ordinary SDK
+contract project excludes the source-linked file. No package graph or lock
+changes are required. Faulty metadata replays an actual prior successful commit
+after expiry; faulty artifacts genuinely commit staged bytes before returning.
+Both providers in each family execute identical private caller helpers and
+unchanged common assertions. Corrected pairs disable only the deliberate fault.
+Mutation counters distinguish setup failure; the artifact decorator owns and
+disposes unexpected successful read sessions before session shutdown.
+
+The absent exact-scope regression first fails. Fresh locked preparation and
+independent fresh-cache replay each observe eight exact rows: four named common
+assertion failures and four corrected passes. All pairs execute the same
+Consumer image per preparation, fourteen actual Hoard images match archives,
+and SDK/catalog/common assertion bytes are unchanged. Mutation/caller source
+hash: `e5a9cefa84d91a0c84c656cc7f3ede8108f2a01a2cb2aa1ddf010ae9487d0058`;
+unchanged SDK archive:
+`ff017330f594505a0ea3ccbcf42f994062e79c3f002f370e7df392f357140a3e`.
+The default-build discovery explicitly excludes mutations before opt-in rebuild.
+Exact scope, named assertion manifest, provider-package hash and SQLite
+environment admission regressions pass. Tooling passes 326 checks (309 passed/
+seventeen macOS-native skips), including 100 SDK checks; opt-in Consumer
+formatting, frozen inventory/catalog and patch checks pass. Local capacity
+failures are resolved by reclaiming completed private dependency caches,
+preserving sources/archives/runtime images/receipts and the unchanged 24 GiB
+guard. The next native request is 218 foundations and 100 scopes/982 observations,
+not yet admitted. T034/full category/controller qualification, subsequent
+profiles and final T081 remain open. Tasks, reviewer markers and historical
+seals/locks are unchanged; product/deployment examples and diagrams are
+unaffected by these isolated test-only decorators and opt-in callers.
+
+Cursor native run `40159593512` binds exact head
+`5c7522fcff37fdb48e12e5ba7a1e9377b75414ac`: all three jobs,
+215 foundations without failures/errors/skips, 95 scopes/942 exact discoveries/
+executions and every prerequisite pass. Input:
+`b25a73b12c913e9dc52bb37f99e7f5715cfb95e8ac8f581d07c4907f18c669c5`;
+preparation:
+`8166e2e6cef3c6b3430721ba11d6f23ccea4d8ada689463e1d9721d4a88d6c1d`;
+free scratch 91,721,383,936 bytes. It predates authority/mutation increments
+and remains diagnostic, not category qualification.
+
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations
 without failures/errors/skips, 87 scopes/757 exact discoveries/executions and

@@ -54,9 +54,11 @@ PAYLOAD_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.Artifact
 FULL_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ArtifactConformanceSessionTests."
 FULL_METADATA_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
 AUTHORITY_INTEGRATION_PREFIX = "Hoard.Conformance.Tests.AuthorityIntegrationTests."
+CATEGORY_MUTATION_PREFIX = "Hoard.Conformance.Tests.CategoryMutationTests."
 ARTIFACT_CONSUMER_PREFIXES = (
     ARTIFACT_CONSUMER_PREFIX, OBJECT_ARTIFACT_CONSUMER_PREFIX, CONFIGURED_ARTIFACT_CONSUMER_PREFIX,
-    PAYLOAD_ARTIFACT_CONSUMER_PREFIX, FULL_ARTIFACT_CONSUMER_PREFIX, AUTHORITY_INTEGRATION_PREFIX)
+    PAYLOAD_ARTIFACT_CONSUMER_PREFIX, FULL_ARTIFACT_CONSUMER_PREFIX, AUTHORITY_INTEGRATION_PREFIX,
+    CATEGORY_MUTATION_PREFIX)
 ARTIFACT_CONSUMER_PACKAGES = (
     "Hoard.Abstractions", "Hoard.Testing.Conformance",
     "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite",
@@ -686,7 +688,7 @@ def build_artifact_assertion_consumer(run, candidate, config, feed):
     project = candidate / ARTIFACT_CONSUMER / "Consumer.csproj"
     lock, record = prepare_project_lock(project, candidate, feed, "candidate")
     build(run, project, config, "artifact-consumer-locked-replay", lock=lock,
-          properties=("-p:BaseOutputPath=" + PACKAGE_TEST_OUTPUT + "/",))
+          properties=("-p:BaseOutputPath=" + PACKAGE_TEST_OUTPUT + "/", "-p:ConformanceCategoryMutations=true"))
     if record is not None:
         verify_project_lock(record, candidate, feed)
         write_new(run.root / "proofs/artifact-consumer-lock-derivation.json", evidence.canonical_bytes(record))
@@ -1287,6 +1289,25 @@ def full_artifact_binding_scenarios():
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
+def category_mutation_scenarios():
+    result = []
+    for category, providers, faulty_method, corrected_method in (
+            ("metadata", ("memory", "sqlite"),
+             "Stale_metadata_replay_is_rejected", "Corrected_metadata_replay_passes"),
+            ("artifacts", ("local", "object"),
+             "Premature_artifact_publication_is_rejected", "Corrected_artifact_staging_passes")):
+        for corrected in (False, True):
+            name = f"category-mutation-{category}-{'corrected' if corrected else 'faulty'}"
+            selected = corrected_method if corrected else faulty_method
+            identities = tuple(sorted(
+                CATEGORY_MUTATION_PREFIX + selected + f'(provider: "{provider}")'
+                for provider in providers))
+            result.append((name, identities, "None" if corrected else "AssertionFailed",
+                           "Passed" if corrected else "Failed", 0 if corrected else 1,
+                           "None" if corrected else "Assertion"))
+    return tuple(result)
+
+
 def actual_authority_integration_scenarios():
     method = AUTHORITY_INTEGRATION_PREFIX + "Actual_compositions_preserve_shared_authority"
     identities = {
@@ -1839,7 +1860,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-recovery-reopen", "original-artifact-admission",
             "original-artifact-deletion-settlement", "artifact-direct-verification", "artifact-capacity-injection",
             "artifact-unclaimed-cleanup", "artifact-synchronous-storage", "full-artifact-binding", "full-metadata-binding",
-            "actual-authority-integration"],
+            "actual-authority-integration", *(scenario[0] for scenario in category_mutation_scenarios())],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1856,13 +1877,14 @@ def test_attempt(run, inputs, candidate, scenario):
     if (name in ("local-artifact-session", "object-artifact-session", "configured-artifact-session",
                  "payload-artifact-session", "artifact-direct-verification", "artifact-capacity-injection",
                  "artifact-unclaimed-cleanup", "artifact-synchronous-storage", "full-artifact-binding",
-                 "actual-authority-integration")
+                 "actual-authority-integration") or name.startswith("category-mutation-")
             or any(identity.startswith(ARTIFACT_CONSUMER_PREFIXES) for identity in identities)):
         if scenario not in (*local_artifact_session_scenarios(), *object_artifact_session_scenarios(),
                             *configured_artifact_session_scenarios(), *payload_artifact_session_scenarios(),
                             *artifact_direct_verification_scenarios(), *artifact_capacity_injection_scenarios(),
                             *artifact_unclaimed_cleanup_scenarios(), *artifact_synchronous_storage_scenarios(),
-                            *full_artifact_binding_scenarios(), *actual_authority_integration_scenarios()):
+                            *full_artifact_binding_scenarios(), *actual_authority_integration_scenarios(),
+                            *category_mutation_scenarios()):
             raise evidence.ConformanceError("WitnessMissing")
     original_metadata = name.startswith("original-metadata-")
     original_artifacts = name.startswith("original-artifact-")
@@ -1897,8 +1919,10 @@ def test_attempt(run, inputs, candidate, scenario):
             *artifact_observation_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
-    sqlite_tests = name in ("full-metadata-binding", "actual-authority-integration") or metadata_provider == "sqlite" or any(
-        identity.startswith((SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX)) for identity in identities)
+    sqlite_tests = (
+        name in ("full-metadata-binding", "actual-authority-integration")
+        or name.startswith("category-mutation-metadata-") or metadata_provider == "sqlite"
+        or any(identity.startswith((SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX)) for identity in identities))
     source_tests = original_tests or all(
         identity.startswith("Hoard.Conformance.Tests.") for identity in identities) or binding_tests
     smoke_tests = all(identity.startswith(SMOKE) for identity in identities)
@@ -1956,7 +1980,11 @@ def test_attempt(run, inputs, candidate, scenario):
             "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
             "assemblyId": "test-assembly", "packageId": package_id,
             "bindingId": binding, "matrixId": matrix,
-            "assertionSymbol": ASSERTION if name == "assertion" else None,
+            "assertionSymbol": (
+                "Hoard.Testing.Conformance.Metadata.MetadataTimeAssertions.TicketExpiryAndRollbackAsync"
+                if name == "category-mutation-metadata-faulty" else
+                "Hoard.Testing.Conformance.Artifacts.ArtifactPublicationAssertions.PrivateStagingAsync"
+                if name == "category-mutation-artifacts-faulty" else ASSERTION if name == "assertion" else None),
             "caseId": name if original_tests or name in ("full-artifact-binding", "full-metadata-binding") else "runtime",
         } for identity, (binding, matrix) in expected.items()],
     }
@@ -1971,13 +1999,13 @@ def test_attempt(run, inputs, candidate, scenario):
             manifest["assemblies"].append({"id": f"binding-component-{index}", "path": path, "sha256": sha256})
     discovery_manifest = {**manifest, "purpose": "discovery", "attemptId": str(uuid.uuid4())}
     runtime_options = {"metadata_provider": metadata_provider} if original_metadata else {}
-    if name == "full-artifact-binding":
+    if name == "full-artifact-binding" or name.startswith("category-mutation-artifacts-"):
         packages = {item["packageId"]: item["sha256"] for item in inputs["packages"]}
         required = ("Hoard.Fixtures.Artifacts.Local", "Hoard.Fixtures.Artifacts.ObjectSemantics")
         if any(package not in packages for package in required):
             raise evidence.ConformanceError("PrerequisiteMissing")
         runtime_options["artifact_packages"] = {package: packages[package] for package in required}
-    if name == "full-metadata-binding":
+    if name == "full-metadata-binding" or name.startswith("category-mutation-metadata-"):
         packages = {item["packageId"]: item["sha256"] for item in inputs["packages"]}
         required = ("Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite")
         if any(package not in packages for package in required):
@@ -2479,6 +2507,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "actual-authority-integration"}), flush=True)
         for scenario in actual_authority_integration_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "category-mutations"}), flush=True)
+        for scenario in category_mutation_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

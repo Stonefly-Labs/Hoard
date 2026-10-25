@@ -7,6 +7,10 @@
   <ItemGroup>
     <Compile Remove="SqliteEnvironmentProbe.cs;SqliteNativeOwnershipProbe.cs" />
     <Compile Include="../../../contracts/Hoard.Conformance.Tests/AuthorityIntegrationTests.cs" Link="AuthorityIntegrationTests.cs" />
+    <Compile Include="../../../contracts/Hoard.Conformance.Tests/CategoryMutationTests.cs" Link="CategoryMutationTests.cs"
+             Condition="'$(ConformanceCategoryMutations)' == 'true'" />
+    <Compile Include="../Bindings/Mutations/*.cs" Link="Mutations/%(Filename)%(Extension)"
+             Condition="'$(ConformanceCategoryMutations)' == 'true'" />
     <PackageReference Include="Hoard.Testing.Conformance" />
     <PackageReference Include="Hoard.Fixtures.Artifacts.HostAdapters" />
     <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Sqlite" />

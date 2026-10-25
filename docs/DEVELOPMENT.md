@@ -7808,6 +7808,39 @@ open; tasks, reviewer markers and historical seals are unchanged. README and
 affected guides/contracts are updated; product/deployment examples and diagrams
 are unaffected by this test-only package edge and additional close helper.
 
+Category-mutation tests are source-linked into the package-only Consumer only
+with `ConformanceCategoryMutations=true`; ordinary Consumer and SDK contract
+builds exclude these intentional failures. The metadata decorator replays a
+genuine successful commit after ticket expiry, and the artifact decorator
+actually publishes staged bytes before returning them. Both faulty/corrected
+pairs call the same private helpers and unchanged common SDK assertion bodies.
+Unexpected successful reads in the faulty artifact case remain owned and are
+disposed before the actual session, so leaked guards cannot mask the failure.
+
+Fresh preparation and an independent fresh-cache locked replay each observe
+exactly eight rows: four named SDK assertion failures and four corrected passes,
+with fourteen actual Hoard images matching the unchanged archives. All rows
+execute from one Consumer assembly per preparation; SDK/catalog/assertion bytes
+are unchanged. Exact scope, provider-package hash, SQLite admission and named
+assertion manifest regressions pass. Tooling passes 326 checks (309 passed/
+seventeen macOS-native skips), including 100 SDK checks; opt-in Consumer
+formatting, frozen inventory/catalog and patch checks pass. Scratch-capacity
+failures are resolved by reclaiming completed private dependency caches, not
+lowering the unchanged 24 GiB guard. The next native request is 218 foundations
+and 100 scopes/982 observations, not yet admitted. T034/full category/controller
+qualification and final T081 remain open. README and affected guides/contracts
+are updated; product/deployment examples and diagrams are unaffected by these
+isolated test-only decorators and opt-in callers.
+
+Cursor native run `40159593512` at exact head
+`5c7522fcff37fdb48e12e5ba7a1e9377b75414ac` passed all three jobs,
+215 foundations without failures/errors/skips, 95 scopes/942 exact discoveries/
+executions and every prerequisite. Input:
+`b25a73b12c913e9dc52bb37f99e7f5715cfb95e8ac8f581d07c4907f18c669c5`;
+preparation:
+`8166e2e6cef3c6b3430721ba11d6f23ccea4d8ada689463e1d9721d4a88d6c1d`;
+free scratch 91,721,383,936 bytes. It predates authority/mutation increments.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

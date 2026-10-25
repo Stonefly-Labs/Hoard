@@ -1108,6 +1108,33 @@ Controls native run `40158951602` at `3fb2705` passed all three jobs,
 every prerequisite. The next request is 216 foundations and 96 scopes/974
 observations, not yet admitted or complete T033/category qualification.
 
+Four additional exact diagnostic scopes select faulty/corrected metadata and
+artifact consumers, two provider rows each. Their public methods are separate
+because runtime selection is by fully qualified method, not a single theory
+parameter. Reduced/foreign scopes reject before launch; metadata scopes require
+actual SQLite environment admission, and every scope receives its actual family
+package hashes. Faulty scopes require the exact named common SDK assertion,
+`AssertionFailed`, failed witnesses and process exit one; corrected scopes
+require passing witnesses, no failure and process exit zero. Setup, mutation
+counter or cleanup failures cannot substitute for the named assertion.
+
+Only `ConformanceCategoryMutations=true` source-links these tests/decorators
+into the package-only Consumer. Default discovery excludes them. Both pairs use
+unchanged caller/common assertion bodies, SDK/catalog bytes and actual provider
+packages; unexpected successful artifact reads remain explicitly owned until
+disposed before the actual session. Fresh preparation/replay each reproduce
+all eight outcomes and fourteen actual Hoard image/archive matches. Tooling
+passes 326 checks (309 passed/seventeen macOS-native skips), including 100 SDK
+checks; opt-in formatting and frozen inventory/catalog checks pass. The next
+native request is 218 foundations and 100 scopes/982 observations, not yet
+admitted or completed T034/category/controller qualification. Historical
+seals/locks, task and reviewer markers remain unchanged.
+
+Cursor native run `40159593512` at `5c7522f` passed all three jobs,
+215 foundations without failures/errors/skips and 95 scopes/942 exact
+discoveries/executions, including every prerequisite. It predates authority/
+mutation increments and does not establish complete category qualification.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and
 every actual prerequisite chain/replay, not full qualification.

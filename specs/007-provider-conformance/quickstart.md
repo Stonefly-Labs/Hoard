@@ -556,6 +556,20 @@ Controls run `40158951602` at `3fb2705` passed all three jobs,
 215 foundations without skips and 95 scopes/918 observations. The next native
 request is 216 foundations and 96 scopes/974 observations, not yet admitted;
 complete category/profile qualification and T033 remain unfinished.
+Category mutations are also source-linked only into the package-only Consumer,
+and only with `ConformanceCategoryMutations=true`. They deliberately fail and
+must not be enabled for an ordinary all-passing Consumer run. The diagnostic
+controller selects separate faulty/corrected methods, each containing both
+providers in its family, and requires the actual named SDK assertion failure or
+corrected pass, never incidental setup/build/cleanup failure. Fresh preparation/
+replay each reproduce four named failures and four corrected passes with
+fourteen actual Hoard image/archive matches and unchanged common assertion/SDK/
+catalog bytes. Default-build discovery confirms intentional failures are absent.
+The next native request is 218 foundations and 100 scopes/982 observations,
+not yet admitted or complete T034/category/controller qualification.
+Cursor run `40159593512` at `5c7522f` passed all three jobs,
+215 foundations without skips and 95 scopes/942 exact observations with every
+prerequisite; it predates authority integrations and category mutations.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

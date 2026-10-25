@@ -729,7 +729,8 @@ class SdkDiagnosticTests(unittest.TestCase):
             self.assertEqual(call.kwargs["package_id"], "Hoard.Fixtures.Conformance.Bindings." + name)
         consumer = build.call_args_list[-1]
         self.assertEqual(consumer.args[3], "artifact-consumer-locked-replay")
-        self.assertEqual(consumer.kwargs["properties"], ("-p:BaseOutputPath=bin/package-diagnostic/",))
+        self.assertEqual(consumer.kwargs["properties"], (
+            "-p:BaseOutputPath=bin/package-diagnostic/", "-p:ConformanceCategoryMutations=true"))
         self.assertNotIn("feed", consumer.kwargs)
         runtime.assert_called_once_with(candidate, feed, checks.ARTIFACT_CONSUMER,
                                         checks.PACKAGE_TEST_OUTPUT, checks.ARTIFACT_CONSUMER_PACKAGES)
@@ -1252,6 +1253,77 @@ class SdkDiagnosticTests(unittest.TestCase):
                 with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
                     checks.test_attempt(SimpleNamespace(root=self.directory), {}, self.directory, changed)
                 launch.assert_not_called()
+
+    def test_category_mutations_require_faulty_and_corrected_provider_pairs(self):
+        factory = getattr(checks, "category_mutation_scenarios", None)
+        self.assertTrue(callable(factory), "Category mutations require named assertion failures and corrected passes.")
+        actual = factory()
+        self.assertEqual(len(actual), 4)
+        for category, providers in (("metadata", ("memory", "sqlite")), ("artifacts", ("local", "object"))):
+            for corrected in (False, True):
+                name = f"category-mutation-{category}-{'corrected' if corrected else 'faulty'}"
+                scenario = next(row for row in actual if row[0] == name)
+                selected = (("Corrected_metadata_replay_passes" if corrected else "Stale_metadata_replay_is_rejected")
+                            if category == "metadata" else
+                            ("Corrected_artifact_staging_passes" if corrected else "Premature_artifact_publication_is_rejected"))
+                method = "Hoard.Conformance.Tests.CategoryMutationTests." + selected
+                expected = tuple(sorted(
+                    f'{method}(provider: "{provider}")' for provider in providers))
+                self.assertEqual(scenario, (name, expected, "None" if corrected else "AssertionFailed",
+                                           "Passed" if corrected else "Failed", 0 if corrected else 1,
+                                           "None" if corrected else "Assertion"))
+                changed = (name, expected[:-1], *scenario[2:])
+                with patch.object(checks, "runtime_command") as launch:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                        checks.test_attempt(SimpleNamespace(root=self.directory), {}, self.directory, changed)
+                    launch.assert_not_called()
+
+    def test_category_mutation_runtime_owns_named_assertions_and_actual_package_hashes(self):
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
+        packages = {
+            "Hoard.Fixtures.Metadata.Memory": "c" * 64,
+            "Hoard.Fixtures.Metadata.Sqlite": "d" * 64,
+            "Hoard.Fixtures.Artifacts.Local": "e" * 64,
+            "Hoard.Fixtures.Artifacts.ObjectSemantics": "f" * 64,
+        }
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64},
+                         *({"packageId": package, "sha256": digest} for package, digest in packages.items())],
+        }
+        run = SimpleNamespace(root=self.directory)
+        for scenario in checks.category_mutation_scenarios():
+            metadata = "-metadata-" in scenario[0]
+            family = "Metadata" if metadata else "Artifacts"
+            required = {package: digest for package, digest in packages.items() if f".{family}." in package}
+            symbol = ("Hoard.Testing.Conformance.Metadata.MetadataTimeAssertions.TicketExpiryAndRollbackAsync"
+                      if metadata else
+                      "Hoard.Testing.Conformance.Artifacts.ArtifactPublicationAssertions.PrivateStagingAsync")
+            with self.subTest(scope=scenario[0]), patch.object(checks, "require_sqlite_environment") as admission:
+                with patch.object(checks, "runtime_command",
+                                  side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                        checks.test_attempt(run, inputs, candidate, scenario)
+                    self.assertEqual(launch.call_args.args[1], assembly)
+                    manifest = launch.call_args.args[2]
+                    self.assertEqual({item["testIdentity"] for item in manifest["expected"]}, set(scenario[1]))
+                    self.assertEqual({item["assertionSymbol"] for item in manifest["expected"]},
+                                     {symbol if scenario[5] == "Assertion" else None})
+                    self.assertEqual(launch.call_args.kwargs,
+                                     {"metadata_packages" if metadata else "artifact_packages": required})
+                    if metadata:
+                        admission.assert_called_once_with(inputs, assembly, self.directory)
+                    else:
+                        admission.assert_not_called()
+                changed = {**inputs, "packages": [
+                    item for item in inputs["packages"] if item["packageId"] != next(iter(required))]}
+                with patch.object(checks, "runtime_command") as launch:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "PrerequisiteMissing"):
+                        checks.test_attempt(run, changed, candidate, scenario)
+                    launch.assert_not_called()
 
     def test_full_schema_origin_admission_rejects_missing_extra_and_foreign_lineages(self):
         witness = (

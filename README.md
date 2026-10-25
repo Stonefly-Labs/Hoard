@@ -1825,6 +1825,19 @@ at `3fb2705` passed all three jobs, 215 foundations without skips and
 95 scopes/918 observations; the new native request is 216 foundations and
 96 scopes/974 observations, not yet admitted.
 
+The opt-in category-mutation Consumer now exercises stale metadata replay and
+premature artifact publication against both independent providers per family.
+Four faulty rows fail the named unchanged SDK assertions; four corrected rows
+pass the same callers and assertions. Fresh preparation/replay reproduce all
+eight outcomes and fourteen actual Hoard image/archive matches. Intentional
+failures are absent from ordinary Consumer builds. The next native request is
+218 foundations and 100 scopes/982 observations, not yet admitted; T034 and
+complete category/profile qualification remain open.
+
+Cursor native run `40159593512` at `5c7522f` passed all three jobs,
+215 foundations without skips and 95 scopes/942 exact observations with every
+prerequisite. It predates authority integrations and category mutations.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 
