@@ -1947,8 +1947,12 @@ under independently captured/recomputed artifact inputs. Its four paced
 256 MiB/4 GiB parent transfers re-execute in a separate store/cache/proof
 namespace; neither controller settings nor packet admission borrow the earlier
 harness measurements. Both profiles retain every inherited/QC entry and
-incomplete control. This artifact addition is locally unit-checked, not yet
-admitted native execution or qualifying category/profile acceptance.
+incomplete control. Exact `b72829c`, run
+[40190769309](https://github.com/Stonefly-Labs/Hoard/actions/runs/40190769309),
+now admits both complete diagnostic batches: all three jobs, 270 foundations
+without skips and 121 scopes/1,684 exact witnesses in total. Artifact history
+retains 92 Passed/7 Incomplete/4 NotApplicable/0 Failed. This is not qualifying
+category/profile acceptance or admission of later metadata-control changes.
 Runtime transport now also supports an explicitly non-qualifying immutable
 inspection envelope for parent corroboration. It shares every structural,
 hash, provenance, timing and completion check with normal admission; normal

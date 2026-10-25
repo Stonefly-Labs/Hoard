@@ -106,6 +106,11 @@ prove invocation ownership, not assertion success or qualification.
 That parent path passes exact `ac561f2`, run 40188204924: all three jobs,
 269 foundations without failures/errors/skips and 115 scopes/1,457 executions.
 This admits invocation ownership for that snapshot, not source qualification.
+Complete artifact/metadata diagnostic execution additionally passes exact
+`b72829c`, run 40190769309: three jobs, 270 foundations without skips,
+121 scopes/1,684 exact witnesses and independently fresh artifact transfer
+command/start identities. Both complete histories retain their incomplete
+obligations and `qualification: false`; later control changes are not covered.
 
 Category prepared-inspection contexts contain the selected one metadata/two
 artifact facts while the complete three-fact configuration fingerprint remains

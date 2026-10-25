@@ -8796,8 +8796,18 @@ settings and exact source-packet admission select the same fresh measurements.
 Legacy harness paths/defaults remain unchanged. Artifact and metadata inputs
 are independently recaptured at completion. Artifact history retains all 103
 entries: 96 inherited cases plus seven QC obligations, never a reduced inventory.
-These additional six scopes/227 witnesses and four transfer children are
-requested native execution, not an admitted or qualifying profile.
+Exact `b72829c15da565262f1bc6b5e9fa607b460b4656`, run
+[40190769309](https://github.com/Stonefly-Labs/Hoard/actions/runs/40190769309),
+now independently admits this execution: all three jobs, 270 foundations
+without failures/errors/skips and 121 scopes/1,684 exact witnesses (109/1,323
+prior plus metadata 6/134 and artifact 6/227). All four new transfer command/
+start identities differ from earlier measurements. Artifact input:
+`fa1e862fab5da10010366ddf1d4385d562aab5680ede5d4a5757bd9443f42c4f`;
+result: `1fd7285494f0febb4d09ec9f74e9801022ea62f77c10fb63cf6c6e6da39bd001`.
+Artifact history retains 92 Passed/7 Incomplete/4 NotApplicable/0 Failed;
+metadata retains 71/22/9/0. Qualification remains false, all prior native
+prerequisites and 13-lock/18-package fresh replay pass. This does not admit
+later parser or metadata-control changes.
 
 The artifact orchestration test first fails at the missing shared API, then
 passes unchanged transport identity and execution/admission failure checks for

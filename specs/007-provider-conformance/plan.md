@@ -5976,7 +5976,19 @@ PID/RSS/runtime/hash/pacing checks; controller settings and wrong-profile/mode/
 traversal/old-receipt negatives pass. Independent real artifact input recapture
 also passes. All 378 tooling checks pass (361 passed/seventeen native macOS
 skips), including 126 SDK checks; inventory/catalog and patch checks pass.
-Complete native artifact execution remains pending. Qualification, controls,
+Complete native artifact execution is now independently admitted at exact
+`b72829c15da565262f1bc6b5e9fa607b460b4656`, run
+[40190769309](https://github.com/Stonefly-Labs/Hoard/actions/runs/40190769309):
+all three jobs, 270 foundations without failures/errors/skips and 121 scopes/
+1,684 exact witnesses, including metadata 6/134 and artifact 6/227 plus the
+prior 109/1,323. All four new transfer command/start identities are independent
+of earlier measurements. Artifact input
+`fa1e862fab5da10010366ddf1d4385d562aab5680ede5d4a5757bd9443f42c4f`;
+result `1fd7285494f0febb4d09ec9f74e9801022ea62f77c10fb63cf6c6e6da39bd001`.
+Artifact history retains 92 Passed/7 Incomplete/4 NotApplicable/0 Failed;
+metadata retains 71/22/9/0. All prior prerequisites and 13-lock/18-package replay
+pass. Later parser/metadata-control changes are not admitted by this snapshot.
+Qualification, controls,
 tasks/checklists, production/reference/lock bytes and deployment diagrams are
 unchanged; no complete category acceptance is inferred.
 
