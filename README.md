@@ -2140,6 +2140,23 @@ outputs and malformed output maps reject. Current local checks pass 410 tooling
 tests with 19 explicit native skips and 133 source SDK tests; actual Linux
 execution of this output-sealing increment remains pending.
 
+The preceding byte-capture checkpoint `cf4a70f278d9e5542cc344e9cd4aa77d78273b40`,
+[run40227343651](https://github.com/Stonefly-Labs/Hoard/actions/runs/40227343651),
+now independently passes all three Linux jobs: 300 foundations without skips,
+13-lock/18-package replay and 129 aggregate scopes/1,821 witnesses. Metadata
+remains 90/3/9/0 and artifacts 92/7/4/0. This admits original native byte capture,
+not the later complete-set output seal, measurement-record changes or full
+artifact qualification.
+
+The paced transfer controller now also snapshots its actual runner and current
+inputs for each native measurement, retaining its original command sequence and
+executor-authenticated controller digest. Changed controller bytes, substituted
+command-result digests and foreign input/assembly identities reject; the shared
+measurement validator retains all size, pacing-protocol, peak-memory and settled
+exit requirements. All 411 local tooling tests pass with 19 native skips.
+This prepares original measurement authority, not original producer-output
+sealing, full transfer/control admission or artifact qualification.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 foundations without failures/

@@ -1694,6 +1694,96 @@ class SdkDiagnosticTests(unittest.TestCase):
                     run, {"runtimeAssemblies": {assembly.relative_to(root).as_posix(): "0" * 64}}, candidate)
             execute.assert_not_called()
 
+    def test_native_transfer_measurement_pins_original_inputs_controller_and_command_result(self):
+        for changed in (None, "result", "controller", "assembly", "run", "provider", "size"):
+            root = self.directory / str(changed)
+            (root / "stores/category-artifact-transfers").mkdir(parents=True)
+            (root / "proofs/category-artifact-transfers").mkdir(parents=True)
+            assembly = root / "candidate/transfer.dll"
+            assembly.parent.mkdir()
+            assembly.write_bytes(b"modeled-transfer-assembly")
+            assembly.chmod(0o400)
+            run = object.__new__(checks.OwnedRun)
+            run.root, run.run_id, run.root_id = root, str(uuid.uuid4()), uuid.uuid4().hex
+            run.command_sequence = 0
+            run.live_children = lambda: ()
+            inputs = {
+                "runId": run.run_id, "invocationGroupId": str(uuid.uuid4()),
+                "environment": ENVIRONMENT, "profileId": "artifacts", "mode": "diagnostic",
+                "runtimeAssemblies": {"candidate/transfer.dll": checks.evidence.file_sha256(assembly)}}
+            if changed == "assembly":
+                inputs["runtimeAssemblies"]["candidate/transfer.dll"] = "c" * 64
+            elif changed == "run":
+                inputs["runId"] = str(uuid.uuid4())
+            expected_hash = "a" * 64
+            held = {}
+
+            def command(arguments, **options):
+                self.assertTrue(options.get("record_execution"))
+                input_path = "proofs/category-artifact-transfers/transfer-local-268435456-native-inputs.json"
+                self.assertEqual(options["execution_inputs"], ("candidate/transfer.dll", input_path))
+                self.assertNotIn("execution_outputs", options)
+                self.assertEqual((root / input_path).read_bytes(), checks.evidence.canonical_bytes(inputs))
+                self.assertEqual((root / input_path).stat().st_mode & 0o777, 0o400)
+                run.command_sequence += 1
+                control = {
+                    "schemaVersion": 1, "sequence": 1, "childPid": 200, "childStartSha256": "b" * 64,
+                    "startedMs": 1000, "endedMs": 1200, "exitCode": 0, "diagnosticCode": "None",
+                    "groupState": "Exited", "scope": "transfer", "transfer": {
+                        "bytes": 268435456, "phase": "complete", "baselineRssBytes": 1048576,
+                        "osPeakRssBytes": 2097152, "sampledPeakRssBytes": 2097152, "samples": 2,
+                        "osPeakMethod": "proc-status", "baselineMs": 1050, "completedMs": 1150}}
+                raw = checks.evidence.canonical_bytes(control)
+                (root / "proofs/transfer-command-0001.json").write_bytes(raw)
+                producer = {
+                    "eventName": "complete", "provider": "local", "runId": run.run_id, "pid": 200,
+                    "size": 268435456, "written": 268435456, "read": 268435456,
+                    "expectedSha256": expected_hash, "sourceSha256": expected_hash, "sinkSha256": expected_hash,
+                    "runtime": ".NET 10.0.7", "sourcePaced": True, "sinkPaced": True, "nonSeekable": True,
+                    "generated": True, "independentExpectedHash": True, "warmupComplete": True,
+                    "bufferBytes": 262144, "providerBufferLimit": 2097152, "slots": 1}
+                (Path(arguments[3]) / "transfer-proof.json").write_bytes(checks.evidence.canonical_bytes(producer))
+                held[1] = checks.evidence.canonical_bytes({
+                    **{key: value for key, value in control.items() if key != "transfer"},
+                    "runId": run.run_id, "rootId": run.root_id,
+                    "argvSha256": checks.evidence.digest(arguments),
+                    "cwdSha256": hashlib.sha256(str(assembly.parent).encode()).hexdigest(),
+                    "controlRecordSha256": hashlib.sha256(raw).hexdigest(),
+                    "inputFiles": {"candidate/transfer.dll": checks.evidence.file_sha256(assembly),
+                                   input_path: checks.evidence.digest(inputs)}})
+                if changed == "controller":
+                    control["transfer"]["osPeakRssBytes"] += 1024
+                    (root / "proofs/transfer-command-0001.json").write_bytes(checks.evidence.canonical_bytes(control))
+                return SimpleNamespace(
+                    exit_code=0, events=(
+                        {"event": "control", "code": "None", "value": 0},
+                        {"event": "test", "code": "None", "value": 268435456},
+                        {"event": "control", "code": "None", "value": 1}),
+                    execution_record_sha256="c" * 64 if changed == "result" else hashlib.sha256(held[1]).hexdigest())
+
+            run.command = command
+            run.read_execution_record = lambda sequence: held[sequence]
+            with self.subTest(changed=changed):
+                receipt = root / "proofs/category-artifact-transfers/transfer-local-268435456/native-execution.json"
+                if changed:
+                    with self.assertRaisesRegex(
+                            checks.evidence.ConformanceError,
+                            "InputChanged" if changed in ("assembly", "run") else "ProofMismatch"):
+                        checks.measured_artifact_transfer(
+                            run, inputs, assembly, "../foreign" if changed == "provider" else "local",
+                            True if changed == "size" else 268435456, expected_hash,
+                            namespace="category-artifact-transfers")
+                    self.assertFalse(receipt.exists())
+                else:
+                    checks.measured_artifact_transfer(
+                        run, inputs, assembly, "local", 268435456, expected_hash, namespace="category-artifact-transfers")
+                    observed = checks.evidence.load_json(receipt.read_bytes())
+                    self.assertEqual(observed["executionSha256"], hashlib.sha256(held[1]).hexdigest())
+                    self.assertEqual(observed["inputsSha256"], checks.evidence.digest(inputs))
+                    self.assertEqual(observed["sequence"], 1)
+                    self.assertEqual(observed["rootId"], run.root_id)
+                    self.assertEqual(receipt.stat().st_mode & 0o777, 0o400)
+
     def test_noncooperative_observations_require_real_retention_and_matching_live_child(self):
         self.assertTrue(callable(getattr(checks, "admit_artifact_noncooperation", None)),
                         "Retained-work observations must be checked before their numeric barriers qualify.")

@@ -505,6 +505,13 @@ Twelve inputs plus one output preserve the combined sixteen-file bound.
 This adds no public entity or qualification authority. Legacy/discovery paths
 remain unchanged and independent artifact source admission stays closed.
 
+Private per-transfer native receipts retain original command sequences,
+run/root/group/input identities and controller/execution hashes. Actual runner
+and current-input documents are original immutable execution inputs. A native
+receipt requires the original executor-held controller hash and returned
+command digest to agree; it is not a producer-output seal or a new public
+entity/qualification gate.
+
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits
 `Released`; expiration/cancellation/observation timeout does not. Retained

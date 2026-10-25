@@ -272,6 +272,19 @@ neither capture nor index output. Native replay of this increment is pending.
 These packets/index do not replace original transfer/control authority; independent
 artifact controller qualification remains closed and its 92/7/4/0 diagnostic
 state is unchanged.
+Native paced transfer children additionally capture their actual immutable
+assembly and current input document. Original controller bytes must match the
+executor-held control digest and returned command digest, with exact argv/cwd,
+run/root/input-map and settled-exit equality. Per-transfer read-only native
+receipts retain original sequences and hashes; they do not seal original
+producer bytes or open independent complete artifact source admission.
+The shared pure measurement validator retains all existing exact qualified
+sizes, kernel peak, protocol timing and settlement constraints.
+The prior byte-capture checkpoint cf4/run40227343651 independently passes
+three Linux jobs, 300 native foundations without skips, 13-lock/18-package
+replay and 129 scopes/1,821 witnesses. It admits original byte capture, not the
+later output seal or measurement records. Metadata/artifact states remain
+90/3/9/0 and 92/7/4/0; full qualification remains closed.
 Exactb1/run40220115471 independently passes all three Linux jobs, 291 native
 foundations without skips, 13-lock/18-package replay and 128 scopes/1,819
 witnesses. Qualification metadata has seven scopes/135 witnesses/five parents

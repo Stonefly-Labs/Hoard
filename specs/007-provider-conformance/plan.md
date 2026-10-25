@@ -6475,6 +6475,48 @@ task-marker advancement, stage completion or full profile qualification is
 claimed. Provider/operations/deployment guides and diagrams are unaffected:
 this changes only private conformance diagnostic provenance.
 
+The next increment pins actual native paced transfer measurements to original
+executor records. Each native invocation snapshots its actual assembly and
+create-new current-input document, checks exact run/assembly identity before
+launch, and retains original sequence plus executor-authenticated control hash.
+Exact argv/cwd/input map, original controller digest and returned command digest
+must agree. Read-only per-transfer native receipts carry only relative recipe
+paths and safe hashes/identities; they are not producer-output seals.
+Provider/size selectors reject before path construction. Non-native adapters
+keep their original diagnostic behavior and emit no native receipt.
+
+The focused native-input regression first fails because the original transfer
+producer does not request execution recording. Its repaired modeled success
+passes; changed result/control/assembly/run and invalid provider/size negatives
+reject before a native receipt. The unchanged pure measurement validator moves
+to the independent source module, keeping every original memory/timing/size/
+settlement check and existing negative vector. The actual Linux handshake
+regression additionally checks original input/controller hashes and returned
+execution digest. It remains a small protocol child, never actual large-transfer
+qualification. All 411 local tooling checks pass with 19 explicit native skips;
+frozen inventory/catalog and whitespace checks pass. No C# source, project,
+lock or product dependency changes. Fresh native execution, original transfer
+producer-output seals and complete independent artifact control admission
+remain pending. No task markers or flow stage advance.
+
+The preceding exact byte-capture checkpoint
+`cf4a70f278d9e5542cc344e9cd4aa77d78273b40`,
+[run40227343651](https://github.com/Stonefly-Labs/Hoard/actions/runs/40227343651),
+is independently admitted: all three jobs, 300 native foundations with zero
+failures/errors/skips, 13-lock/18-package fresh replay and 129 aggregate scopes/
+1,821 witnesses. Artifact diagnostic inputs/results/three-parent digest are
+`337cabdce73202d4264349233a71bf7fd8b262792b9fcfc63f17b7abaaba63fb` /
+`9f9eb9ef391d4f57c727ced04d9e235ec89fe4df70e49fa1ea79e2dd25251e58` /
+`ab689a81d9e0131fff30bb4997568568273a89282eb2d368b88e524d1f67c351`.
+Artifact states remain 92/7/4/0. Qualification-input metadata remains 90/3/9/0
+with eight scopes/137 witnesses/six parents; inputs/results/parents are
+`8ebf690eafddce0036de0e678943b12e3b504b4c599ade06e8b4c6e9f62d9559` /
+`22fb257f87af3056b9e76095b45c6c6983dad577933edc4d411cc1a8ac9337f4` /
+`c3c60244b95b6c245642814b3a12cfa4eb5af42f8c8f4a4b6d349000d1023256`.
+Its six independent metadata source digests remain distinct. This admits the
+original actual-byte capture, not later complete-set output seals, original
+measurement records, any new task completion or profile qualification.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

@@ -40,7 +40,8 @@ from conformance_case_catalog import (
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_sources import (
     METADATA_RECOVERY_SCENARIOS, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
-    admit_sqlite_noncooperation, artifact_source_context, artifact_source_observations, artifact_source_output_seal,
+    admit_sqlite_noncooperation, admit_transfer_measurement,
+    artifact_source_context, artifact_source_observations, artifact_source_output_seal,
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
     metadata_inventory_arguments, metadata_inventory_context, metadata_inventory_observations,
     metadata_inventory_source_inputs, native_metadata_inventory_controls,
@@ -893,35 +894,29 @@ def sqlite_noncooperation(run, inputs, candidate, *, namespace="sqlite-native-no
     }
 
 
-def admit_transfer_measurement(command, sequence, size):
-    admit_owned_command(command, sequence, scope="transfer", detail="transfer", exit_code=0, max_duration=2400000)
-    measured = command["transfer"]
-    fields = {"bytes", "phase", "baselineRssBytes", "osPeakRssBytes", "sampledPeakRssBytes",
-              "samples", "osPeakMethod", "baselineMs", "completedMs"}
-    if (type(size) is not int or size not in (268435456, 4294967296)
-            or not isinstance(measured, dict) or set(measured) != fields
-            or any(type(measured[key]) is not int or not 0 < measured[key] <= 2**63 - 1
-                   for key in ("bytes", "baselineRssBytes", "osPeakRssBytes", "sampledPeakRssBytes", "samples"))
-            or measured["bytes"] != size or measured["phase"] != "complete"
-            or measured["osPeakMethod"] != "proc-status" or measured["samples"] < 2
-            or not measured["baselineRssBytes"] <= measured["sampledPeakRssBytes"] <= measured["osPeakRssBytes"]
-            or measured["osPeakRssBytes"] - measured["baselineRssBytes"] > 67108864):
-        raise evidence.ConformanceError("ProofMismatch")
-    times = (command["startedMs"], measured["baselineMs"], measured["completedMs"], command["endedMs"])
-    if (any(type(item) not in (int, float) or not 0 <= item <= 2**63 - 1 or not math.isfinite(item)
-            for item in times) or tuple(sorted(times)) != times):
-        raise evidence.ConformanceError("ProofMismatch")
-
-
 def measured_artifact_transfer(run, inputs, assembly, provider, size, expected_hash, *, namespace="artifact-transfers"):
     _admit_transfer_namespace(inputs, namespace)
+    if provider not in ("local", "object") or type(size) is not int or size not in (268435456, 4294967296):
+        raise evidence.ConformanceError("ProofMismatch")
     store = run.root / f"stores/{namespace}/transfer-{provider}-{size}"
     store.mkdir(mode=0o700)
+    native = type(run) is OwnedRun
+    execution_inputs = ()
+    if native:
+        assembly_path = assembly.relative_to(run.root).as_posix()
+        if (inputs.get("runId") != run.run_id
+                or inputs.get("runtimeAssemblies", {}).get(assembly_path) != evidence.file_sha256(assembly)):
+            raise evidence.ConformanceError("InputChanged")
+        inputs_path = f"proofs/{namespace}/transfer-{provider}-{size}-native-inputs.json"
+        write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
+        execution_inputs = (assembly_path, inputs_path)
+    arguments = ["dotnet", str(assembly), provider, str(store), str(size), expected_hash, run.run_id]
     sequence = run.command_sequence + 1
     result = run.command(
-        ["dotnet", str(assembly), provider, str(store), str(size), expected_hash, run.run_id],
+        arguments,
         cwd=assembly.parent, scope="transfer", measure_transfer_bytes=size, cache_id=namespace,
-        env={"HOARD_CONFORMANCE_SAFE_EVENTS": "1"})
+        env={"HOARD_CONFORMANCE_SAFE_EVENTS": "1"},
+        **({"record_execution": True, "execution_inputs": execution_inputs} if native else {}))
     if run.live_children():
         raise evidence.ConformanceError("CleanupIncomplete")
     if result.exit_code or tuple(dict(item) for item in result.events) != (
@@ -932,6 +927,14 @@ def measured_artifact_transfer(run, inputs, assembly, provider, size, expected_h
     raw = read_bounded(run.root / f"proofs/transfer-command-{sequence:04}.json", 64 * 1024)
     command = evidence.load_json(raw)
     admit_transfer_measurement(command, sequence, size)
+    native_raw = None
+    if native:
+        native_raw = native_control_record(
+            run, sequence, raw, arguments=arguments, cwd=assembly.parent,
+            input_files={assembly_path: inputs["runtimeAssemblies"][assembly_path],
+                         inputs_path: evidence.digest(inputs)})
+        if hashlib.sha256(native_raw).hexdigest() != result.execution_record_sha256:
+            raise evidence.ConformanceError("ProofMismatch")
     producer_path = store / "transfer-proof.json"
     producer_raw = read_bounded(producer_path, 8192)
     producer = evidence.load_json(producer_raw)
@@ -957,6 +960,13 @@ def measured_artifact_transfer(run, inputs, assembly, provider, size, expected_h
     proof_path = directory / "proof.json"
     write_new(proof_path, evidence.canonical_bytes(proof))
     producer_path.chmod(0o400)
+    if native:
+        write_new(directory / "native-execution.json", evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "runId": run.run_id, "rootId": run.root_id,
+            "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
+            "provider": provider, "size": size, "assemblyPath": assembly_path, "inputsPath": inputs_path,
+            "sequence": sequence, "controllerSha256": hashlib.sha256(raw).hexdigest(),
+            "executionSha256": hashlib.sha256(native_raw).hexdigest()}))
     return {
         "provider": provider, "size": size, "controllerSha256": hashlib.sha256(raw).hexdigest(),
         "producerSha256": hashlib.sha256(producer_raw).hexdigest(),

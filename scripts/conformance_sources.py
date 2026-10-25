@@ -326,6 +326,26 @@ def admit_owned_command(command, sequence, *, scope, detail, exit_code, max_dura
         raise evidence.ConformanceError("ProofMismatch")
 
 
+def admit_transfer_measurement(command, sequence, size):
+    admit_owned_command(command, sequence, scope="transfer", detail="transfer", exit_code=0, max_duration=2400000)
+    measured = command["transfer"]
+    fields = {"bytes", "phase", "baselineRssBytes", "osPeakRssBytes", "sampledPeakRssBytes",
+              "samples", "osPeakMethod", "baselineMs", "completedMs"}
+    if (type(size) is not int or size not in (268435456, 4294967296)
+            or not isinstance(measured, dict) or set(measured) != fields
+            or any(type(measured[key]) is not int or not 0 < measured[key] <= 2**63 - 1
+                   for key in ("bytes", "baselineRssBytes", "osPeakRssBytes", "sampledPeakRssBytes", "samples"))
+            or measured["bytes"] != size or measured["phase"] != "complete"
+            or measured["osPeakMethod"] != "proc-status" or measured["samples"] < 2
+            or not measured["baselineRssBytes"] <= measured["sampledPeakRssBytes"] <= measured["osPeakRssBytes"]
+            or measured["osPeakRssBytes"] - measured["baselineRssBytes"] > 67108864):
+        raise evidence.ConformanceError("ProofMismatch")
+    times = (command["startedMs"], measured["baselineMs"], measured["completedMs"], command["endedMs"])
+    if (any(type(item) not in (int, float) or not 0 <= item <= 2**63 - 1 or not math.isfinite(item)
+            for item in times) or tuple(sorted(times)) != times):
+        raise evidence.ConformanceError("ProofMismatch")
+
+
 def admit_recovery_barrier(command, sequence, value, *, inspection=None):
     admit_owned_command(command, sequence, scope="recovery", detail="barrier", exit_code=-9, max_duration=15000)
     fields = {"value", "observedMs", "signalMs"} | ({"inspection"} if inspection is not None else set())

@@ -757,9 +757,27 @@ print(json.dumps({"event":"test","code":"None","value":268435456}),flush=True)
 assert sys.stdin.readline()=="settle\\n"
 print(json.dumps({"event":"control","code":"None","value":1}),flush=True)
 """
-        result = run.command([sys.executable, "-c", program], scope="transfer", measure_transfer_bytes=268435456)
+        script = run.root / "stores/measurement.py"
+        script.write_text(program)
+        script.chmod(0o400)
+        inputs = run.root / "proofs/measurement-inputs.json"
+        inputs.write_bytes(b'{"qualification":false}')
+        inputs.chmod(0o400)
+        arguments = [sys.executable, "-I", "-S", str(script)]
+        result = run.command(
+            arguments, scope="transfer", measure_transfer_bytes=268435456, record_execution=True,
+            execution_inputs=("stores/measurement.py", "proofs/measurement-inputs.json"))
         self.assertEqual(result.exit_code, 0)
-        receipt = json.loads((run.root / "proofs/transfer-command-0001.json").read_bytes())
+        control = (run.root / "proofs/transfer-command-0001.json").read_bytes()
+        receipt = json.loads(control)
+        original = run.read_execution_record(1)
+        record = json.loads(original)
+        self.assertEqual(result.execution_record_sha256, hashlib.sha256(original).hexdigest())
+        self.assertEqual(record["controlRecordSha256"], hashlib.sha256(control).hexdigest())
+        self.assertEqual(record["argvSha256"], hashlib.sha256(execution.canonical_bytes(arguments)).hexdigest())
+        self.assertEqual(record["inputFiles"], {
+            "stores/measurement.py": hashlib.sha256(script.read_bytes()).hexdigest(),
+            "proofs/measurement-inputs.json": hashlib.sha256(inputs.read_bytes()).hexdigest()})
         self.assertEqual((receipt["exitCode"], receipt["diagnosticCode"], receipt["groupState"]), (0, "None", "Exited"))
         measured = receipt["transfer"]
         self.assertEqual(measured["bytes"], 268435456)

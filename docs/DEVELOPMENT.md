@@ -9386,7 +9386,41 @@ commands retain the same ownership, count, path and settlement safeguards.
 This is implemented diagnostic output authority, not complete artifact source
 qualification or fresh Linux acceptance.
 
-Current validation: all 410 tooling checks pass with 19 explicit native skips;
+Each actual native paced transfer now declares its immutable runner assembly
+and a create-new current-input document as original execution inputs. The
+controller checks the exact original executor-held record against argv/cwd,
+run/root, input map and the original controller bytes; the returned command
+digest must equal that record. A read-only per-transfer `native-execution.json`
+retains sequence, run/root/group/input and controller/execution digests without
+private paths or raw output. Foreign runs/assemblies, substituted command-result
+digests and post-record controller rewrites reject before a native receipt is
+written. Provider/size selectors are validated before path construction.
+Legacy non-native diagnostic adapters retain their existing behavior and no
+native receipt. The unchanged pure measurement validator now lives in the
+shared source module, not the SDK orchestration layer. The Linux process
+protocol regression additionally checks actual original input/controller
+hashes; its small handshake child is not a real 256 MiB/4 GiB transfer.
+This is not producer-output sealing or independent complete transfer authority.
+All seven artifact QCs and artifact qualification remain closed.
+
+Exact `cf4a70f278d9e5542cc344e9cd4aa77d78273b40`,
+[run40227343651](https://github.com/Stonefly-Labs/Hoard/actions/runs/40227343651),
+now independently passes all three jobs, 300 native foundations without
+failures/errors/skips, 13-lock/18-package replay and 129 aggregate scopes/1,821
+witnesses. Artifact diagnostic inputs
+`337cabdce73202d4264349233a71bf7fd8b262792b9fcfc63f17b7abaaba63fb`,
+results `9f9eb9ef391d4f57c727ced04d9e235ec89fe4df70e49fa1ea79e2dd25251e58`,
+three-source-parent digest
+`ab689a81d9e0131fff30bb4997568568273a89282eb2d368b88e524d1f67c351`;
+states remain 92 Passed/7 Incomplete/4 NotApplicable/0 Failed. Qualification-input
+metadata remains 90/3/9/0, eight scopes/137 witnesses/six source parents, with
+inputs `8ebf690eafddce0036de0e678943b12e3b504b4c599ade06e8b4c6e9f62d9559`,
+results `22fb257f87af3056b9e76095b45c6c6983dad577933edc4d411cc1a8ac9337f4`.
+This admits original byte capture only, not the later output-seal or native
+measurement-record increments. Their exact native replays remain pending;
+neither profile qualifies.
+
+Current validation: all 411 tooling checks pass with 19 explicit native skips;
 all 133 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
 and whitespace checks pass. The preceding byte-capture checkpoint compiled
 the original artifact package-acceptance project with freshly rebuilt SDK,
