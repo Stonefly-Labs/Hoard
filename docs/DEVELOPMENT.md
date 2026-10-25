@@ -9112,6 +9112,16 @@ source/case integration remain pending; eight control-only cases stay incomplete
 No provider reference, public SDK API, package dependency, inventory, report
 entity or diagram changes. Existing examples do not invoke this private fact.
 
+The corrected producer at exact `b6b97c4`, run 40211472681, still failed its
+279-check native foundation job at the barrier digest assertion, line 479.
+Inspection of that exact source identifies the earlier expression failure:
+`hashlib` was never imported in the Linux-only test module. The test now imports
+it explicitly; the producer already imports it and its actual result-digest
+contract remains repaired. Native execution of the import correction is pending.
+The old line location alone did not prove which expression failed; the SDK's
+separately projected AttributeError remains the evidence for the result-field
+defect. No separate release-retry ownership repair or native success is claimed.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

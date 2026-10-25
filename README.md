@@ -2037,6 +2037,10 @@ native proof files before publishing a create-new hash-only consumption packet.
 Its five modeled cases and all 119 SDK source tests pass. The fact is not yet
 dispatched or joined to case attempts; no actual controller execution UUID or
 passing case is claimed. Unrelated valid sessions cannot qualify this source.
+The corrected producer's native foundation run then exposed a second,
+test-only defect at the same assertion: the Linux-only barrier test lacked its
+`hashlib` import. That import is now explicit; native confirmation remains
+pending and the failed checkpoint is not admitted.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

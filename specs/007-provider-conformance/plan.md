@@ -6228,6 +6228,15 @@ or independently joined to source parents/case RuntimeWitness UUIDs. Package-mod
 compilation/native execution and full attribution are still pending; no case,
 task marker, public API, dependency, inventory or qualification gate changes.
 
+Exact corrected-producer run 40211472681 at `b6b97c4` still reports one native
+foundation error at barrier-test line 479. That module lacked `hashlib`, so
+evaluation fails before the result attribute is read. Its explicit import now
+fixes this separate test-only defect. The SDK's independently observed
+AttributeError, not the shared line number, establishes the earlier producer
+field mismatch. Native import-correction execution remains pending; neither
+failed overall run is admitted and the old release-retry ownership error is
+still a separate undiagnosed failure.
+
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately
 packable `Hoard.Testing.Conformance` library supplies the common consumers,

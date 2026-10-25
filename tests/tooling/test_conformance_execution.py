@@ -1,4 +1,5 @@
 import errno
+import hashlib
 import json
 import os
 from pathlib import Path
