@@ -4081,8 +4081,14 @@ inventory, catalogs and patch checks pass. Fresh preparation/replay passes
 archives reproduce exactly, canonical full-filename map SHA-256
 `298788d00993d47090cc2c433bd176311704767e623e3bdc788fba7943b57474`.
 Ten dependency images match package bytes per preparation; transfer packets
-remain reused unchanged, not new origins. The next request is
-207 foundations and 90 scopes/776 observations, pending.
+remain reused unchanged, not new origins. Native run `40148199370` binds exact
+head `6d1f73bf1f58cc46f68c1102a22a6289be07f717`: all three jobs,
+207 foundations without failures/errors/skips and 90 scopes/776 exact
+discoveries/executions, including all four direct-verification rows and every
+actual prerequisite proof. Input:
+`422b243a0f9e2f7eb89e140c2b9f4246b357bb9b279e4ba7e8d4b0c118e75bef`;
+preparation: `444b482499b205b3759d11413638d0ba03d9df45595e378a5cf29a5f482badba`;
+free scratch 91,721,908,224 bytes. This remains diagnostic, not full qualification.
 
 The remaining full-adapter design must keep intentional typed fault injection
 separate from observer failures that poison final settlement, target payload
@@ -4129,6 +4135,37 @@ remain reused unchanged, not fresh origins. The next native request is
 T027..T030, complete mandatory fault drivers/origins, category/profile acceptance
 and final T081 remain open. Tasks, reviewer markers, tracked locks, historical
 seals and product/architecture/deployment examples remain unaffected.
+
+### Scoped actual unclaimed-result cleanup failure and retry ownership
+
+The partial artifact projection now injects a counted, exact-instance
+`IOException` at each independent provider's existing undelivered-result reclaim
+seam. The provider indexes actual cleanup before that seam and removes its index
+only after successful cleanup. This is not a surrogate for physical prefix or
+unselected-object permission failures; those original checks remain unchanged.
+
+Four common parameters hold real reservation/read-open completion, cancel
+delivery, release and join the actual worker, and require one genuine failed
+reclaim, fenced readiness/admission, failed stop with retained live ownership and
+a second genuine failed reclaim. After scope removal, the real stop retry must
+reclaim actual work, settle workers and produce genuine successful final
+settlement. The original borrowed source outlives that work. No provider
+implementation, failure queue, settlement promise or root authorization changes.
+
+The absent consumer first fails intended `CS0117`; the exact four-row runtime
+scope first fails its factory regression. Actual prepared-assembly discovery
+matches all four identities. Tooling passes 317 checks (300 passed/seventeen
+macOS-native skips), including 91 SDK checks. SDK/both adapter/Consumer formatting,
+frozen inventory, catalogs and patch checks pass. Fresh preparation/replay passes
+311 artifact, 77 Consumer and 89+89 metadata cases without skips. Fifteen actual
+archives reproduce canonical full-filename map SHA-256
+`0f1c8ce1efd3893ba836768053303d17c09ec5fc1fcd7e42cf9be0689dccdcdc`;
+ten actual dependency images match their package bytes per preparation.
+Transfer packets remain reused unchanged, not new origins. The next native
+request is 209 foundations and 92 scopes/784 observations, pending.
+Full fault-driver/origin/category/profile qualification and final T081 remain
+open; tasks, reviewer markers, tracked locks, historical seals and product/
+architecture/deployment examples remain unaffected.
 
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations

@@ -440,8 +440,9 @@ discoveries/executions with every actual prerequisite, not full qualification.
 Distinct direct-verification observations now hold new and duplicate publication
 on both actual providers, without substituting selection or claiming independent
 readability while held. Fresh independent replay passes 311 artifact and
-69 Consumer cases; the next native request is 90 scopes/776 observations,
-pending, not complete fault-driver/category/profile qualification.
+69 Consumer cases. Native run `40148199370` at `6d1f73b` passed all three jobs,
+207 foundations and 90 scopes/776 exact discoveries/executions with every actual
+prerequisite, not complete fault-driver/category/profile qualification.
 Scoped capacity injection now targets the genuine post-write prefix boundary,
 not an arbitrary observer exception or actual disk exhaustion. Four new rows
 prove repeated classified failure, full single-ticket capacity restoration,
@@ -450,6 +451,12 @@ real repair/readback, while ordinary capacity-shaped observer errors still
 fault the stable final settlement task. Fresh preparations pass 311 artifact,
 73 Consumer and 89+89 metadata cases; the next native request is
 91 scopes/780 observations, pending, not full fault-driver qualification.
+Scoped unclaimed-result cleanup injection now proves real reservation/read
+handoff retention, readiness/admission fencing, failed stop with retained
+ownership and successful actual cleanup/final settlement only after scope repair.
+It targets the existing cleanup index, not physical prefix/object permission
+faults. Fresh replay passes 311 artifact, 77 Consumer and 89+89 metadata cases;
+the next native request is 92 scopes/784 observations, pending, not qualification.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

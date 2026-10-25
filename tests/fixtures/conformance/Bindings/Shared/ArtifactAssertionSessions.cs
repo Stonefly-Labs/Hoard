@@ -344,6 +344,13 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
             ArtifactObservationPoint.StagePrefix, () => ValueTask.FromException(failure), cancellationToken, failure));
     }
 
+    public ValueTask<IArtifactFaultRegistration> InjectUnclaimedCleanupFailureAsync(CancellationToken cancellationToken)
+    {
+        var failure = new IOException("InjectedUnclaimedCleanupFailure");
+        return ValueTask.FromResult<IArtifactFaultRegistration>(RegisterBoundary(
+            ArtifactObservationPoint.OperationReclaim, () => ValueTask.FromException(failure), cancellationToken, failure));
+    }
+
     private Registration RegisterBoundary(
         ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken,
         Exception? expectedFailure = null)

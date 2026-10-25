@@ -9,6 +9,67 @@ public static class ArtifactFailureAssertions
     internal const string Canary = "synthetic-artifact-secret-canary";
     private const string OpaqueCanary = "synthetic-artifact-private-proof";
 
+    public static async Task ScopedUnclaimedCleanupAsync(
+        IArtifactAssertionSession session, bool readSession, CancellationToken cancellationToken)
+    {
+        using var source = new ShortSource("actual unclaimed cleanup ownership"u8.ToArray());
+        var published = readSession ? await PublishAsync(session.Store, source, new(1024), cancellationToken) : null;
+        using var cancellation = new CancellationTokenSource();
+        await using var barrier = new ArtifactConformanceBarrier("unclaimed-cleanup");
+        var injection = await session.InjectUnclaimedCleanupFailureAsync(cancellationToken);
+        async Task CancelHandoffAsync<T>(ValueTask<ArtifactResult<T>> operation) where T : notnull
+        {
+            var pending = operation.AsTask();
+            try
+            {
+                await barrier.Entered.WaitAsync(cancellationToken);
+                cancellation.Cancel();
+                Assert.IsType<ArtifactResult<T>.Failure>(await pending.WaitAsync(TimeSpan.FromSeconds(10)));
+            }
+            finally
+            {
+                cancellation.Cancel();
+                barrier.Release();
+                await pending.WaitAsync(TimeSpan.FromSeconds(10));
+                await session.AwaitSettlementAsync(CancellationToken.None);
+            }
+        }
+        try
+        {
+            await using var observation = await session.ObserveBoundaryAsync(
+                ArtifactObservationPoint.OperationCompleted, () => new(barrier.HoldAsync()), cancellationToken);
+            if (published is null)
+            {
+                await CancelHandoffAsync(session.Store.ReserveWriteAsync(
+                    new(new ArtifactExpectations(1024)), new(), cancellation.Token));
+            }
+            else
+            {
+                await CancelHandoffAsync(session.Store.OpenReadAsync(
+                    new(published.Stamp.Identity.Digest), new(), cancellation.Token));
+            }
+            Assert.Equal(1, injection.ObservationCount);
+            Assert.False(session.Ready);
+            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
+                await session.Store.ReserveWriteAsync(
+                    new(new ArtifactExpectations(1024)), new(), cancellationToken)).Code);
+            var stopped = Assert.IsType<ArtifactResult<ArtifactShutdown>.Failure>(
+                await session.Lifetime.StopAsync(new(TimeSpan.FromSeconds(2)), cancellationToken));
+            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, stopped.Code);
+            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, stopped.Cleanup);
+            Assert.Equal(2, injection.ObservationCount);
+        }
+        finally
+        {
+            barrier.Release();
+            await injection.DisposeAsync();
+            Assert.Equal(ArtifactCleanupState.Released, Success(
+                await session.Lifetime.StopAsync(new(TimeSpan.FromSeconds(2)), CancellationToken.None)).State);
+            await session.AwaitSettlementAsync(CancellationToken.None);
+        }
+        Assert.False(source.WasDisposed);
+    }
+
     public static async Task ScopedCapacityAsync(
         IArtifactAssertionSession session, CancellationToken cancellationToken)
     {

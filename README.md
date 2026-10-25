@@ -1699,8 +1699,10 @@ the previously canceled admission scope and all prerequisite proofs.
 Typed direct-verification observations now cover both new and verified-duplicate
 publications on both actual providers, without treating selection as verification
 or holding a selected pointer as proof of independent readability.
-Fresh independent replay passes 311 artifact and 69 Consumer cases; the next
-native request is 90 scopes/776 observations, pending, not full qualification.
+Fresh independent replay passes 311 artifact and 69 Consumer cases. Native run
+`40148199370` at `6d1f73b` passed all three jobs, 207 foundations and
+90 scopes/776 exact discoveries/executions with every actual prerequisite.
+This is diagnostic evidence, not full qualification.
 Scoped capacity injection now throws an actual ENOSPC-shaped exception after
 each provider's genuine prefix write. Only that registration's exact injected
 exception avoids observer-failure poisoning; ordinary same-code exceptions still
@@ -1710,6 +1712,13 @@ successful publication/readback and genuine successful or faulted settlement.
 Fresh package preparations pass 311 artifact, 73 Consumer and 89+89 metadata
 cases; the next native request is 91 scopes/780 observations, pending.
 This injects storage failure, not actual disk exhaustion.
+Scoped unclaimed-result cleanup injection now retains genuinely indexed
+reservation/read handoffs, fences admission/readiness, and reports retained
+ownership through a failed stop. Removing the scope permits the real cleanup
+retry and actual successful final settlement. Four new package-only rows pass;
+fresh replay covers 311 artifact, 77 Consumer and 89+89 metadata cases.
+The next native request is 92 scopes/784 observations, pending. This does not
+replace physical permission-failure checks or complete mandatory fault drivers.
 Full bindings, remaining mandatory fault controls and category/profile
 acceptance remain unfinished.
 

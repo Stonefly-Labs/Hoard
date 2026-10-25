@@ -7370,8 +7370,15 @@ catalogs and patch checks pass. Fresh preparation/replay passes 311 artifact,
 reproduce exactly, canonical full-filename map SHA-256
 `298788d00993d47090cc2c433bd176311704767e623e3bdc788fba7943b57474`.
 Ten dependency images match package bytes per preparation; transfer packets
-remain reused unchanged, not new origins. The next native request is
-207 foundations and 90 scopes/776 observations, pending. Complete mandatory
+remain reused unchanged, not new origins. Native run `40148199370` binds exact
+head `6d1f73bf1f58cc46f68c1102a22a6289be07f717`: all three jobs,
+207 foundations without failures/errors/skips and 90 scopes/776 exact
+discoveries/executions with all four direct-verification rows and every actual
+prerequisite proof. Input:
+`422b243a0f9e2f7eb89e140c2b9f4246b357bb9b279e4ba7e8d4b0c118e75bef`;
+preparation: `444b482499b205b3759d11413638d0ba03d9df45595e378a5cf29a5f482badba`;
+free scratch 91,721,908,224 bytes. This is diagnostic, not qualification.
+Complete mandatory
 fault drivers, origins, category/profile admission and final T081 remain open.
 Tasks, reviewer markers, locks, historical seals and product/architecture/
 deployment examples remain unaffected.
@@ -7406,6 +7413,31 @@ and 91 scopes/780 observations, pending. Transfer packets remain reused unchange
 not fresh origins. T027..T030, full fault drivers/origins/category/profile
 qualification and final T081 remain open; tasks, reviewer markers, tracked locks,
 historical seals and product/architecture/deployment examples are unaffected.
+
+Scoped unclaimed-result cleanup injection now targets each independent provider's
+existing indexed reclaim seam. The actual result is indexed before injection and
+removed only after genuine cleanup. Four common parameters hold real reservation/
+read-open completion, cancel delivery, release and join actual workers, and require
+one failed reclaim, fenced readiness/admission, failed stop with retained live
+ownership and a second failed reclaim. Only scope removal permits the real stop
+retry and genuine successful final settlement. The original borrowed source
+outlives that cleanup; no failure queue or stable promise is reset. This seam does
+not replace the original physical prefix/object permission-failure checks.
+
+The absent common method first fails intended `CS0117`; the exact runtime scope
+first fails its factory regression. Actual prepared discovery matches all four
+parameters. Fresh preparation/replay passes 311 artifact, 77 Consumer and 89+89
+metadata cases without skips; fifteen actual archives reproduce canonical
+full-filename map SHA-256
+`0f1c8ce1efd3893ba836768053303d17c09ec5fc1fcd7e42cf9be0689dccdcdc`;
+ten runtime images match their package bytes per preparation. Tooling passes
+317 checks (300 passed/seventeen macOS-native skips), including 91 SDK checks.
+SDK/both adapter/Consumer formatting, frozen inventory, catalogs and patch checks
+pass. Transfer packets remain reused unchanged, not fresh origins. The next
+native request is 209 foundations and 92 scopes/784 observations, pending.
+Full mandatory fault drivers/origins/category/profile qualification and final
+T081 remain open; tasks, reviewer markers, tracked locks, historical seals and
+product/architecture/deployment examples are unaffected.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

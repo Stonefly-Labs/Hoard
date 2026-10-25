@@ -1091,6 +1091,38 @@ class SdkDiagnosticTests(unittest.TestCase):
                 body = "".join(text[start:text.index("\n    }", start)].split())
                 self.assertIn("awaitQuarantineIsPermanentAsync(store,receipt,bytes,cancellationToken,reopen);", body)
 
+    def test_unclaimed_cleanup_scope_requires_real_reservation_and_read_handoff_ownership_until_repair(self):
+        factory = getattr(checks, "artifact_unclaimed_cleanup_scenarios", None)
+        self.assertTrue(callable(factory), "Unclaimed cleanup must retain actual provider work until repair.")
+        method = ("Hoard.Fixtures.Conformance.Consumer.ArtifactPayloadSessionTests."
+                  "Scoped_unclaimed_cleanup_failure_retains_actual_work_until_repaired_settlement")
+        expected = {
+            method + f'(provider: "{provider}", readSession: {read_session})'
+            for provider in ("local", "object") for read_session in ("False", "True")}
+        scenario, = factory()
+        self.assertEqual(scenario, ("artifact-unclaimed-cleanup", tuple(sorted(expected)), "None", "Passed", 0, "None"))
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+        }
+        with patch.object(checks, "runtime_command",
+                          side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+            self.assertEqual(launch.call_args.args[1], assembly)
+            self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, expected)
+        for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+                        (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
+                        ("artifact-unclaimed-cleanup-foreign", *scenario[1:])):
+            with patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, candidate, changed)
+                launch.assert_not_called()
+
     def test_capacity_injection_scope_requires_real_failure_repair_and_unsuppressed_ordinary_observer_errors(self):
         factory = getattr(checks, "artifact_capacity_injection_scenarios", None)
         self.assertTrue(callable(factory), "Expected capacity injection must not hide unexpected observer errors.")

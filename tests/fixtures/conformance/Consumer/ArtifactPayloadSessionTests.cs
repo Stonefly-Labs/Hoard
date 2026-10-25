@@ -11,6 +11,22 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactPayloadSessionTests
 {
     [Theory]
+    [InlineData("local", false)]
+    [InlineData("local", true)]
+    [InlineData("object", false)]
+    [InlineData("object", true)]
+    public async Task Scoped_unclaimed_cleanup_failure_retains_actual_work_until_repaired_settlement(
+        string provider, bool readSession)
+    {
+        await using var resources = new RecordingDirectories();
+        var session = await CreateAsync(provider, resources);
+        try { await ArtifactFailureAssertions.ScopedUnclaimedCleanupAsync(session, readSession, default); }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local")]
     [InlineData("object")]
     public async Task Scoped_capacity_failure_is_real_recoverable_and_does_not_poison_actual_settlement(string provider)

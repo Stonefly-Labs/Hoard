@@ -865,7 +865,9 @@ same-incarnation duplicate reuse, borrowed-source ownership and public bytes.
 It does not assert independent readability at a held selection/verification gate.
 Preliminary architecture review identified the selection-only substitution gap;
 full fault-driver/origin/category/profile admission and final T081 remain open.
-The next request is 90 scopes/776 observations, pending, not full qualification.
+Native run `40148199370` at `6d1f73b` passed all three jobs, 207 foundations
+and 90 scopes/776 exact discoveries/executions with every actual prerequisite,
+not full qualification.
 
 Scoped capacity injection is a separate typed path from ordinary observation:
 the owned projection creates the exact ENOSPC-shaped exception internally and
@@ -885,6 +887,20 @@ unexpected-observer counterparts require the exact original exception in the
 faulted final task and no optimistic Released observation. This is an injected
 storage failure, not measured disk exhaustion or a complete mandatory fault
 driver. The next request is 91 scopes/780 observations, pending.
+
+`InjectUnclaimedCleanupFailureAsync` uses the existing Local/Object indexed
+undelivered-result reclaim seam. The actual result is indexed before the
+injected exception and removed only after genuine successful cleanup. Four
+exact parameters cover both providers' reservation and read-open handoffs:
+the common consumer holds actual completion, cancels delivery, releases/joins
+the worker, requires one failed reclaim and fenced readiness/admission, then
+requires a failed stop with retained live ownership and a second failed reclaim.
+Only scope removal allows the actual cleanup retry and successful stop/final
+settlement. Barrier release, public-task/worker joins and retry use non-cancelable
+cleanup paths; the original borrowed source survives until actual settlement.
+This does not substitute for physical prefix/object permission-failure cases,
+change provider cleanup mechanisms, or declare complete mandatory fault support.
+The next request is 92 scopes/784 observations, pending.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and
