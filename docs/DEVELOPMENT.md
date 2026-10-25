@@ -8891,7 +8891,40 @@ context added for category failures. A main-path regression reproduces that
 loss; the CLI now preserves the same <=1KiB closed/hash-only context without
 changing exit/status/admission policy. All 381 tooling checks, frozen inventory/
 catalog and patch checks pass. The intermittent failure's cause and native
-verification of this final projection remain unresolved.
+verification of this final projection were pending at that checkpoint.
+
+Exact `4e6f03b`, run
+[40197707264](https://github.com/Stonefly-Labs/Hoard/actions/runs/40197707264),
+passes 273 foundations without skips and lock replay, then records 182 Passed/
+1 Failed original-wrapper witnesses. The sole identity hash
+`7c11f2a8b0d0e729b01671bcb71168424cfcd0549a3dc00f0c950260c23fdad1`
+resolves against the frozen catalog to ObjectSemantics'
+`Deadline_and_stop_return_while_a_native_io_boundary_holds_provider_state`.
+The bounded projection works; this failed run is not admitted.
+
+That fixture previously started its 100 ms wall deadline before the worker
+reached the native fault seam. A 200 ms `pointer.compare` observer reproduces
+the entry-assertion failure deterministically with the real ObjectSemantics
+provider (Local passes). The regression remains in the existing frozen test
+identity. Only this fixture now injects a one-shot controlled clock and advances
+its 100 ms deadline once the synchronous native boundary is entered. The
+shared consumer's entry, bounded failure, retained ownership and 20 ms stop
+assertions are unchanged. The native hold remains live until `finally` releases
+it; actual settlement is awaited before its events are disposed. Production
+providers, shared SDK assertions, package references/locks and inventories
+are unchanged. This is a deliberate fixture-scheduling correction, not a claim
+that the old setup is token-identical.
+
+Fresh locked package preparation followed by
+`dotnet test <private-current>/tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj -c Release --no-build --no-restore -p:ArtifactPackageAcceptance=true --filter FullyQualifiedName~ArtifactNonCooperationTests`
+passes all twelve cases on macOS. This is local diagnostic evidence, not native
+Linux containment. All 381 tooling checks (seventeen explicit native macOS
+skips), frozen inventory/catalog checks,
+`dotnet format whitespace --folder tests/contracts/Hoard.Artifacts.Tests/Cases --include ArtifactNonCooperationTests.cs --verify-no-changes --verbosity quiet`
+and `git diff --check` pass. Exact-head Linux confirmation remains pending;
+the reproduction establishes a real setup race but does not prove the precise
+assertion behind every earlier intermittent run. No task/checklist marker or
+qualification gate changes. Deployment diagrams/examples are unaffected.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

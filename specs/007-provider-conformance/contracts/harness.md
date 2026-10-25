@@ -105,6 +105,16 @@ Fresh metadata-input controls and both complete batches are independently
 admitted at exact `564c67f`, run 40193163127 (three jobs/272 foundations without
 skips). They remain non-qualifying until control import is implemented.
 
+The original native-boundary deadline fixture uses a private controlled clock
+to expire its 100 ms deadline only after the synchronous fault seam is entered;
+a 200 ms pre-entry ObjectSemantics observer covers delayed worker execution.
+Its common entry/deadline/retained-ownership/20 ms stop assertions remain
+unchanged, and actual settlement precedes blocking-event disposal. This
+corrects fixture scheduling, not provider behavior or qualification policy.
+The twelve related cases pass locally; Linux confirmation of this change is
+pending. Failed run 40197707264 at `4e6f03b` identifies this ObjectSemantics
+witness but is not admitted evidence.
+
 For category discovery and execution, an available native command record is
 independently joined to the exact run/root/sequence, argv/cwd hashes, PID/start,
 matching exit, successful supervisor diagnostics, nested monotonic timing and

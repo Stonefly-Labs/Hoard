@@ -1974,6 +1974,15 @@ now independently admits both complete batches and the fresh metadata-input
 stall plus ten recovery barriers/walkthrough. All obligations remain diagnostic.
 A later run failed earlier in original-wrapper execution; the CLI now preserves
 the same bounded unexpected-result context outside category batches too.
+Run [40197707264](https://github.com/Stonefly-Labs/Hoard/actions/runs/40197707264)
+at `4e6f03b` identifies the ObjectSemantics native-boundary deadline test:
+182 original-wrapper witnesses passed and one failed. A delayed-entry local
+regression reproduces expiry before the intended native stall. That fixture
+now advances a test-only deadline clock after physical boundary entry, retaining
+the unchanged common deadline/ownership/stop assertions and waiting for actual
+settlement before disposing its blocking event. All twelve artifact
+noncooperation cases pass locally; exact-head Linux confirmation is pending.
+This does not admit the failed run or advance qualification obligations.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

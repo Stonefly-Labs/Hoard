@@ -6056,7 +6056,26 @@ execution, not the metadata category. Its top-level error path still discarded
 bounded runtime context; a red regression reproduces that loss and the CLI now
 preserves the same <=1KiB closed/hash-only fields. All 381 tooling checks and
 inventory/catalog/patch checks pass. The intermittent cause and native
-verification of the final projection remain unresolved.
+verification of the final projection were unresolved at that checkpoint.
+
+Exact `4e6f03b`, run 40197707264, validates that projection: 273 foundations
+without skips and lock replay pass, then 182 original-wrapper witnesses pass
+and ObjectSemantics' native-boundary deadline witness fails. Its frozen
+identity hash is
+`7c11f2a8b0d0e729b01671bcb71168424cfcd0549a3dc00f0c950260c23fdad1`.
+A 200 ms pre-entry `pointer.compare` delay deterministically reproduces expiry
+before the native seam with the original wall-clock fixture. The existing
+test now uses a fixture-private one-shot controlled clock and advances its
+100 ms deadline after synchronous native entry. Common SDK assertions,
+including retained live ownership and bounded 20 ms stop, are unchanged;
+real settlement precedes blocking-event disposal. This intentional scheduling
+correction changes fixture setup, not frozen identities or shared assertions.
+Fresh locked package preparation and all twelve artifact noncooperation cases
+pass locally on macOS; all 381 tooling checks, frozen inventory/catalog,
+focused C# whitespace and patch checks pass. Exact-head Linux confirmation
+is pending. The failed run remains unadmitted, and the precise earlier native
+assertion cannot be inferred from the hash alone. No task/checklist markers
+or qualification obligations advance.
 
 
 Extract reusable, test-only category suites from the existing package-acceptance
