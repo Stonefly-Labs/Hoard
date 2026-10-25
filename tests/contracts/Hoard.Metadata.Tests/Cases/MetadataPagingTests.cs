@@ -75,6 +75,9 @@ public sealed class MetadataPagingTests(ITestOutputHelper output)
         await using var fixture = await OpenAsync();
         await using var foreign = await OpenAsync();
         await MetadataPagingAssertions.ContinuationScopeAndEpochAsync(fixture.Store, foreign.Store, default);
+        var observations = new OriginalObservationSequence(output, nameof(MetadataPagingTests));
+        observations.Observe(fixture);
+        observations.Observe(foreign);
     }
 
     [Theory]

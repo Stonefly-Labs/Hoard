@@ -191,7 +191,7 @@ session. Actual typed SDK binding consumers retain complete typed-session origin
 Unclassified witnesses retain the existing typed-origin requirement; there is
 no permissive default or provider-selected classification.
 
-The closed incremental policy covers 55 single-owner metadata identities per
+The closed incremental policy covers 62 operational metadata identities per
 provider, twelve original artifact publication parameters, both frozen artifact value witnesses (expectations/checksums
 and redacted diagnostics/get-only members), and the auxiliary identity-bound value test. The
 non-owning `ConformanceOriginalObservation` captures exact run/case/test/binding,
@@ -199,7 +199,7 @@ fresh observation UUID, nullable parent observation, kind, operation, actual
 runtime/architecture and immutable components. Metadata roles are owner/store/
 schema/authority/controls; artifact roles are owner/store/validator/maintenance/
 lifetime/authority/controls; session-free observations have only contract.
-An owner is the original returned fixture/driver, not an invented factory or SDK
+An owner is the original returned fixture/driver or actual schema adapter, not an invented factory or SDK
 session. Contract capture reads the actual loaded `Type`/module bytes and makes
 no provider-session claim. Reference-equality IDs preserve actual aliases and
 reopen lineage without invoking component equality, hashing or rendering.
@@ -265,6 +265,24 @@ Earlier full-input run `40167209164 @0005638` independently reproduced distinct
 original and typed input digests across 105 scopes/990 observations and every
 prerequisite. This admits only its earlier eight-original diagnostic, not these
 expanded sources or qualifying profiles.
+The following forest increment adds independently fixed multi-owner/reopen
+topologies: three independent MP-29 roots; two MP-08 roots; two unrecognized
+layout roots; a three-node MP-32 upgrade chain; two future/corrupt roots with one
+child each; and one root/child for MP-34 and MP-35. Ingestion requires exact
+counts/current-execution edges and distinct actual owner/store IDs, rejecting
+missing/extra roots, foreign or wrong parents, and reused owners/stores.
+All other classified witnesses retain their one-root/contract requirement.
+The original producer's new overload separates previous identity continuity
+from actual parentage, preserving existing signatures and genuine aliases
+without fabricated reopen edges. Schema nodes observe the actual adapter owner
+and underlying fixture authority; assertion/facade behavior is unchanged.
+Observation failure during reopen disposes the newly transferred fixture before
+rethrowing. No observer otherwise takes cleanup ownership.
+Local observation/replay pass 140 executions, 162 records (158 original owners
+and four contracts) and 818 image correspondences with SDK archive
+`032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`.
+Native admission requires 231 foundations and 105 scopes/1,123 observations,
+pending; public/private wire schemas remain unchanged.
 
 ### Shared bounds
 

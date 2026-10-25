@@ -1231,6 +1231,60 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.assertEqual(dict(history.proofs), retained)
         self.assertEqual(len(history.witnesses), 1)
 
+    def test_original_observation_forests_require_exact_current_execution_lineage_and_distinct_owners(self):
+        prefix = "Hoard.Metadata.Tests."
+        shapes = (
+            (prefix + "MetadataSchemaTests.MP32_Old_schema_requires_explicit_authorized_upgrade_and_preserves_records",
+             (None, 0, 1)),
+            (prefix + "MetadataSchemaTests.MP33_Future_schema_and_recognized_corruption_are_never_created_over",
+             (None, None, 0, 1)),
+            (prefix + "MetadataLeaseTests.MP29_Expiry_is_rechecked_at_the_final_decision_for_renew_release_and_guards",
+             (None, None, None)),
+            (prefix + "MetadataPagingTests.MP08_Continuation_is_bound_to_scope_size_and_epoch_and_is_not_a_snapshot",
+             (None, None)),
+        )
+        for identity, parents in shapes:
+            for mutation in ("valid", "missing", "extra", "parent", "wrong-parent", "owner", "store"):
+                with self.subTest(identity=identity, mutation=mutation):
+                    self.setUp()
+                    original, assignments = self.original_transport(case_id="MP-32")
+                    roles = assignments["sqlite"].pop(self.identity)
+                    self.identity = identity
+                    assignments["sqlite"][identity] = roles
+                    self.manifest["expected"][0].update(testIdentity=identity, fullyQualifiedName=identity)
+                    observations = []
+                    for parent in parents:
+                        observed = copy.deepcopy(original)
+                        observed.update(testIdentity=identity, observationId=str(uuid.uuid4()),
+                                        parentObservationId=None if parent is None else observations[parent]["observationId"],
+                                        operation="create" if parent is None else "reopen")
+                        for component in observed["components"].values():
+                            component["instanceId"] = str(uuid.uuid4())
+                        observations.append(observed)
+                    if mutation == "missing":
+                        observations.pop()
+                    elif mutation == "extra":
+                        extra = copy.deepcopy(observations[0])
+                        extra["observationId"] = str(uuid.uuid4())
+                        observations.append(extra)
+                    elif mutation == "parent":
+                        observations[-1].update(parentObservationId=str(uuid.uuid4()), operation="reopen")
+                    elif mutation == "wrong-parent":
+                        wrong = 1 if parents[-1] == 0 else 0
+                        observations[-1].update(parentObservationId=observations[wrong]["observationId"], operation="reopen")
+                    elif mutation in ("owner", "store"):
+                        observations[-1]["components"][mutation] = copy.deepcopy(observations[0]["components"][mutation])
+                    self.proof.update(testIdentity=identity, originalObservations=observations,
+                                      manifestSha256=evidence.digest(self.manifest))
+                    self.witness.update(testIdentity=identity, proofSha256=evidence.digest(self.proof))
+                    self.completion["manifestSha256"] = evidence.digest(self.manifest)
+                    if mutation == "valid":
+                        result = self.ingest(original_inputs=assignments)
+                        self.assertEqual(tuple(result["originalObservations"][self.execution]), tuple(observations))
+                    else:
+                        with self.assertRaises(evidence.ConformanceError):
+                            self.ingest(original_inputs=assignments)
+
     def history(self, *, max_attempts=1, origin_inputs=None):
         import conformance_case_catalog as catalog
         case = next(case for case in catalog.expected_cases("composition") if case.case_id == "CP-01")
@@ -1320,14 +1374,21 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 if policy is not None:
                     aliases = {"owner": "session", "controls": "faults"}
                     proof["schemaVersion"] = 2
-                    proof["originalObservations"] = [{
-                        "schemaVersion": 1, "runId": self.inputs["runId"], "caseId": entry["caseId"],
-                        "testIdentity": entry["testIdentity"], "bindingId": binding,
-                        "observationId": str(uuid.uuid4()), "parentObservationId": None,
-                        "kind": policy[1], "operation": "create",
-                        "runtimeVersion": captured["runtimeVersion"], "processArchitecture": "x64",
-                        "components": {role: copy.deepcopy(captured["components"][aliases.get(role, role)])
-                                       for role in policy[2]}}]
+                    observations = []
+                    for parent in catalog.original_witness_parents(entry["testIdentity"]):
+                        components = {role: copy.deepcopy(captured["components"][aliases.get(role, role)])
+                                      for role in policy[2]}
+                        for component in components.values():
+                            component["instanceId"] = str(uuid.uuid4())
+                        observations.append({
+                            "schemaVersion": 1, "runId": self.inputs["runId"], "caseId": entry["caseId"],
+                            "testIdentity": entry["testIdentity"], "bindingId": binding,
+                            "observationId": str(uuid.uuid4()),
+                            "parentObservationId": None if parent is None else observations[parent]["observationId"],
+                            "kind": policy[1], "operation": "create" if parent is None else "reopen",
+                            "runtimeVersion": captured["runtimeVersion"], "processArchitecture": "x64",
+                            "components": components})
+                    proof["originalObservations"] = observations
             proofs[f"proof-{execution}.json"] = evidence.canonical_bytes(proof)
             witnesses.append({**self.witness, "executionId": execution, "testIdentity": entry["testIdentity"],
                               "bindingId": binding, "inputSha256": evidence.digest(self.inputs),

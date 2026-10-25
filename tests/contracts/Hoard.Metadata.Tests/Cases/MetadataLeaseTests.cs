@@ -46,12 +46,14 @@ public sealed class MetadataLeaseTests(ITestOutputHelper output)
     [Fact]
     public async Task MP29_Expiry_is_rechecked_at_the_final_decision_for_renew_release_and_guards()
     {
+        var observations = new OriginalObservationSequence(output, nameof(MetadataLeaseTests));
         foreach (var action in new[] { MetadataLeaseExpiryAction.Renew, MetadataLeaseExpiryAction.Release, MetadataLeaseExpiryAction.Guard })
         {
             var clock = new MetadataTestClock();
             await using var fixture = await OpenAsync(clock);
             await MetadataLeaseAssertions.ExpiryAtDecisionAsync(
                 fixture.Store, instant => clock.Set(instant.UnixMilliseconds), CommonObservations(fixture), action, default);
+            observations.Observe(fixture);
         }
     }
 

@@ -138,6 +138,19 @@ jobs, 229 foundations and 105 scopes/990 observations with distinct original/
 typed input digests and every prerequisite. Its earlier eight-original
 diagnostic does not admit these expanded sources. Multi-owner/reopen and
 controller/category/profile coverage are not implied.
+Original forest policy now explicitly selects seven additional metadata
+lifetime shapes, including independent roots and real schema-reopen chains.
+Each execution must match its exact node count and current-execution parent
+indices; no root/store owner is reused or borrowed from another execution.
+One source sequence preserves actual reference aliases across disjoint roots
+without inventing parent edges. Schema roles use the actual adapter owner and
+underlying fixture authority, not a newly created evidence facade.
+Local observation/replay pass 140 executions, 162 records and 818 actual image
+correspondences. Native admission requires 231 foundations and
+105 scopes/1,123 observations, pending. Earlier `40168790991 @3f1409a`
+passed all three jobs, 230 foundations and 105 scopes/1,082 observations with
+every prerequisite; it admits earlier witness-specific diagnostics, not these
+later forest sources or complete categories/profiles. Wire schemas are unchanged.
 
 The implemented private transport distinguishes `purpose: discovery` from
 `purpose: execution` and hashes each complete JSONL stream in its completion

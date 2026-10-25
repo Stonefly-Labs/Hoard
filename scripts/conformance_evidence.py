@@ -1481,11 +1481,12 @@ def ingest_runtime_discovery(*, inputs, manifest_data, owner_data, discoveries_d
 
 
 def _ingest_original_observations(inputs, observations, *, original_inputs, entry, prior_observations, prior_instances):
-    from conformance_case_catalog import CATEGORY_BINDING_SLOTS, original_witness_policy
+    from conformance_case_catalog import CATEGORY_BINDING_SLOTS, original_witness_parents, original_witness_policy
     if not observations:
         return ()
     policy = original_witness_policy(entry["testIdentity"])
-    if policy is None or len(observations) != 1:
+    parents = original_witness_parents(entry["testIdentity"])
+    if policy is None or parents is None or len(observations) != len(parents):
         raise ConformanceError("WitnessMissing")
     category, kind, roles = policy
     binding_id = entry["bindingId"]
@@ -1512,6 +1513,9 @@ def _ingest_original_observations(inputs, observations, *, original_inputs, entr
             "components": _record({role: component for role in roles}),
         })(raw)
         parent_id = observation["parentObservationId"]
+        parent_index = parents[len(observed)]
+        if parent_id != (None if parent_index is None else observed[parent_index]["observationId"]):
+            raise ConformanceError("ProofMismatch")
         architecture = {"x64": ("x86_64", "x64"), "arm64": ("aarch64", "arm64")}
         if (observation["runId"] != inputs["runId"] or observation["caseId"] != entry["caseId"]
                 or observation["testIdentity"] != entry["testIdentity"] or observation["bindingId"] != binding_id
@@ -1523,6 +1527,10 @@ def _ingest_original_observations(inputs, observations, *, original_inputs, entr
                                                 else "reopen" if parent_id is not None else "create")):
             raise ConformanceError("ProofMismatch")
         if kind == "loaded-contract" and parent_id is not None:
+            raise ConformanceError("ProofMismatch")
+        if kind == "original-instance" and any(
+                observation["components"][role]["instanceId"] == prior["components"][role]["instanceId"]
+                for prior in observed for role in ("owner", "store")):
             raise ConformanceError("ProofMismatch")
         if parent_id is not None:
             parent = prior_observations.get(parent_id)

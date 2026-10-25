@@ -36,7 +36,12 @@ public sealed class ConformanceOriginalObservation
 
     public static ConformanceOriginalObservation Capture(Guid runId, string caseId, string testIdentity,
         string bindingId, string kind, IReadOnlyCollection<(string Role, object Component)> components,
-        ConformanceOriginalObservation? parent = null)
+        ConformanceOriginalObservation? parent = null) =>
+        Capture(runId, caseId, testIdentity, bindingId, kind, components, parent, parent);
+
+    public static ConformanceOriginalObservation Capture(Guid runId, string caseId, string testIdentity,
+        string bindingId, string kind, IReadOnlyCollection<(string Role, object Component)> components,
+        ConformanceOriginalObservation? parent, ConformanceOriginalObservation? previous)
     {
         if (runId == Guid.Empty || testIdentity is not { Length: > 0 and <= 1024 }
             || testIdentity.Any(c => c < ' ' || c > '~'))
@@ -55,17 +60,24 @@ public sealed class ConformanceOriginalObservation
         };
         if (components.Count != roles.Length
             || !components.Select(component => component.Role).ToHashSet(StringComparer.Ordinal).SetEquals(roles)
-            || (parent is not null && (parent.RunId != runId || parent.CaseId != caseId
-                || parent.TestIdentity != testIdentity || parent.BindingId != bindingId || parent.Kind != kind)))
+            || new[] { parent, previous }.Any(prior => prior is not null
+                && (prior.RunId != runId || prior.CaseId != caseId || prior.TestIdentity != testIdentity
+                    || prior.BindingId != bindingId || prior.Kind != kind)))
         { throw new ArgumentException("ProofMismatch"); }
         var observed = ImmutableSortedDictionary.CreateBuilder<string, ConformanceObservedComponent>(StringComparer.Ordinal);
-        var instances = parent is null ? new Dictionary<object, Guid>(ReferenceEqualityComparer.Instance)
-            : new Dictionary<object, Guid>(parent.instances, ReferenceEqualityComparer.Instance);
+        var priorInstances = previous?.instances ?? parent?.instances;
+        if (parent is not null && priorInstances is not null
+            && parent.instances.Any(pair => !priorInstances.TryGetValue(pair.Key, out var id) || id != pair.Value))
+        { throw new ArgumentException("ProofMismatch"); }
+        var instances = priorInstances is null ? new Dictionary<object, Guid>(ReferenceEqualityComparer.Instance)
+            : new Dictionary<object, Guid>(priorInstances, ReferenceEqualityComparer.Instance);
         var started = Stopwatch.GetTimestamp();
         var remaining = 256 * 1024 * 1024;
         foreach (var (role, component) in components)
         {
             ArgumentNullException.ThrowIfNull(component);
+            if (role == "owner" && priorInstances?.ContainsKey(component) == true)
+            { throw new ArgumentException("ProofMismatch"); }
             var assembly = kind == "loaded-contract"
                 ? ConformanceLoadedAssembly.CaptureType(component as Type
                     ?? throw new ArgumentException("ProofMismatch"), started, remaining)

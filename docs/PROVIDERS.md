@@ -975,6 +975,19 @@ Earlier full-input `40167209164 @0005638` passed all three jobs,
 229 foundations and 105 scopes/990 observations with distinct original/typed
 input digests and every prerequisite. It admits the earlier eight-original
 diagnostic only, not these expanded sources or qualifying profiles.
+Genuine multi-owner and schema-reopen observation subsequently covers
+62 operational metadata identities per provider. Independent source policy
+selects each exact forest, not arbitrary extra roots. A sequence preserves
+reference-equality aliases across independent roots while parent edges represent
+only actual reopens. Schema observations capture the actual adapter owner and
+its real underlying fixture authority; no unused facade is manufactured.
+Local observation/replay pass 140 executions, 162 records and 818 image
+correspondences with reproduced SDK archive
+`032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`.
+Native admission now requires 231 foundations and 105 scopes/1,123 observations,
+pending. Earlier `40168790991 @3f1409a` passed all three jobs, 230 foundations
+and 105 scopes/1,082 observations with every prerequisite; it does not admit
+the later forest increment or complete profiles.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

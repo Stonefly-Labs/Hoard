@@ -11,6 +11,23 @@ namespace Hoard.Metadata.Tests;
 
 internal static class MetadataCases
 {
+    internal sealed class OriginalObservationSequence(
+        ITestOutputHelper output, string fixtureType, [CallerMemberName] string method = "")
+    {
+        private ConformanceOriginalObservation? previous;
+
+        public ConformanceOriginalObservation? Observe(MetadataFixtureSession fixture, object? owner = null,
+            ConformanceOriginalObservation? parent = null)
+        {
+            var observation = ConformanceOriginalObservationOutput.WriteIfRequested(output,
+                "Hoard.Metadata.Tests." + fixtureType + "." + method, fixture.Provider, "original-instance",
+                parent, previous, ("owner", owner ?? fixture), ("store", fixture.Store), ("schema", fixture.Schema),
+                ("authority", fixture.Authority), ("controls", fixture.Controls));
+            previous = observation;
+            return observation;
+        }
+    }
+
     public static IMetadataConformanceAuthority CommonAuthority(MetadataFixtureSession fixture) =>
         new PublicationAuthority(fixture.Authority);
 

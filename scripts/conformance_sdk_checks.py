@@ -26,9 +26,10 @@ import conformance_baselines as baselines
 import artifact_evidence as artifacts
 import conformance_evidence as evidence
 from conformance_case_catalog import (
-    CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_WITNESSES, ORIGINAL_METADATA_FACADE_WITNESSES, ORIGINAL_METADATA_WITNESSES,
+    CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_WITNESSES, ORIGINAL_METADATA_FACADE_WITNESSES,
+    ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
     catalog_admission_witnesses, category_cases, category_runtime_cases,
-    original_witness_policy,
+    original_witness_parents, original_witness_policy,
 )
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_lock_preparation import prepare_project_lock, rebind_local_archives, verify_project_lock
@@ -150,6 +151,8 @@ SCENARIOS = (
     ("origin-ingestion", (
         "Hoard.Conformance.Tests.RuntimeLoggerTests."
         "Origin_output_is_bound_to_the_actual_result_proof_without_private_component_labels",
+        "Hoard.Conformance.Tests.RuntimeLoggerTests."
+        "Original_forests_preserve_actual_aliases_without_inventing_reopen_edges",
         *(("Hoard.Conformance.Tests.RuntimeLoggerTests."
            "Invalid_origin_output_retains_prior_execution_without_accepting_replay_or_foreign_case"
            + f'(mutation: "{mutation}", code: {code})') for mutation, code in (
@@ -1906,6 +1909,8 @@ def original_observation_inputs(candidate, root):
                 selected = dict(roles)
                 if metadata and identity not in ORIGINAL_METADATA_FACADE_WITNESSES:
                     selected["authority"] = host
+                if identity in ORIGINAL_METADATA_SCHEMA_WITNESSES:
+                    selected["owner"] = None
                 result[provider][identity] = {
                     role: ((runtime / ((package_id or assembly) + ".dll")).relative_to(root).as_posix(), package_id)
                     for role, package_id in selected.items() if role in original_witness_policy(identity)[2]}
@@ -1918,11 +1923,18 @@ def validate_original_observations(ingested):
     for witness in ingested["witnesses"]:
         execution = witness["executionId"]
         policy = original_witness_policy(witness["testIdentity"])
+        parents = original_witness_parents(witness["testIdentity"])
         observations = ingested["originalObservations"].get(execution, ())
-        if (policy is None or len(observations) != 1 or ingested["sessionOrigins"].get(execution)
-                or observations[0]["kind"] != policy[1] or observations[0]["parentObservationId"] is not None
-                or observations[0]["operation"] != ("contract" if policy[1] == "loaded-contract" else "create")):
+        if (policy is None or parents is None or len(observations) != len(parents)
+                or ingested["sessionOrigins"].get(execution)):
             raise evidence.ConformanceError("WitnessMissing")
+        for index, observation in enumerate(observations):
+            parent = parents[index]
+            if (observation["kind"] != policy[1]
+                    or observation["parentObservationId"] != (None if parent is None else observations[parent]["observationId"])
+                    or observation["operation"] != ("contract" if policy[1] == "loaded-contract"
+                                                    else "create" if parent is None else "reopen")):
+                raise evidence.ConformanceError("WitnessMissing")
 
 
 def test_attempt(run, inputs, candidate, scenario):

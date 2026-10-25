@@ -636,6 +636,17 @@ admission witnesses. Native admission requires 230 foundations and
 every prerequisite. Its earlier eight-original diagnostic does not admit these
 expanded sources; broader multi-owner/reopen/controller and qualifying profiles
 remain unfinished.
+Seven additional independently selected multi-owner/schema-reopen forests now
+bring operational metadata coverage to 62 identities per provider. Genuine
+aliases remain continuous across independent roots; only real reopens receive
+parent edges. Local observation/replay pass 140 executions, 162 records and
+818 image correspondences with SDK archive
+`032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`.
+Native admission requires 231 foundations and 105 scopes/1,123 observations,
+pending. Earlier `40168790991 @3f1409a` passed all three jobs, 230 foundations
+and 105 scopes/1,082 observations with every prerequisite, not these later
+forest sources or qualifying profiles. Broader artifact/host/controller
+attribution and executable qualifying profiles remain unfinished.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

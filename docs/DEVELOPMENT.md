@@ -8111,6 +8111,43 @@ preparation proof:
 Free scratch: 92,109,668,352 bytes. It predates the concrete SQLite binding
 and seven-archive graph; no SQLite execution is attributed to it.
 
+Seven further operational metadata witnesses now observe independently selected
+creation/reopen forests, bringing coverage to 62 identities per provider.
+Exact node counts/current-execution parent indices and distinct owner/store
+identities are mandatory. Non-owning source sequences preserve actual aliases
+across independent roots without inventing reopen edges. Schema observations
+capture the actual adapter owner and underlying fixture authority; unchanged
+assertions keep their existing facade behavior. Failed observation after real
+reopen disposes the newly transferred fixture before rethrowing.
+
+Actual minimal-input observation and independent empty-cache locked replay each
+pass 140 discoveries/executions, 162 records (158 original owners/four contracts)
+and 818 image correspondences. SDK archive reproduces as
+`032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`.
+Tooling passes 339 checks (322 passed/seventeen explicit macOS-native skips);
+SDK logger/binding tests pass 69 without skips. SDK/test-project formatting,
+metadata-folder whitespace, frozen inventory and SDK catalog checks pass.
+Bounded custom architecture review finds no confirmed blocker with explicit
+read-only/diff-reproduction limits, not final T081. Native admission requires
+231 foundations and 105 scopes/1,123 observations, pending.
+
+Earlier witness-specific run
+[40168790991](https://github.com/Stonefly-Labs/Hoard/actions/runs/40168790991)
+at exact `3f1409a6705b43c8d1ba347396f03db6ab3497d2` passed all three jobs,
+230 foundations without failures/errors/skips, 105 scopes/1,082 exact
+discoveries/executions and every recovery/transfer/containment/replay prerequisite.
+Typed input:
+`55cfb28e9b89f2979276bb699f842cafada908ae341f4d2c64b6c96aff070312`;
+separate original input:
+`04433046300ac1cdc4ee0c7366c9c17f7e8aa3b154112af9e213c40d940624a4`;
+preparation:
+`81f24eea2c58cb12588e2c50f3cc9bc5ece9ce5fd3316473c93769c1ca00a72a`.
+Both inputs independently recompute; free scratch is 91,721,125,888 bytes.
+This admits the earlier diagnostic, not later forest sources or complete profiles.
+Host/controller attribution, broader artifacts and qualifying backends remain
+unfinished. README and affected guides/model/contracts reflect this distinction;
+product/deployment examples and diagrams are unaffected.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

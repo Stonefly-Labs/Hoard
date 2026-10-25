@@ -1231,6 +1231,18 @@ Earlier full-input run `40167209164 @0005638` passed all three jobs,
 input digests and every prerequisite; its earlier eight-original diagnostic
 does not admit these expanded sources. Existing one-root admission remains
 strict; multi-owner/reopen scopes are not silently promoted into this policy.
+The following increment deliberately adds seven independently selected
+multi-owner/reopen forests. Exact node counts, current-execution parentage and
+distinct owner/store identities replace the one-root requirement only for those
+exact witnesses. Source observation sequences preserve genuine aliases across
+independent roots without fabricated reopen edges; schema nodes observe actual
+adapters and their underlying fixture authorities. Failed observer capture
+after reopen cleans up the newly transferred fixture before propagating failure.
+Local observation/replay pass 140 executions, 162 records and 818 image
+correspondences. Native admission requires 231 foundations and 105 scopes/1,123
+observations, pending. Earlier `40168790991 @3f1409a` passed all three jobs,
+230 foundations and 105 scopes/1,082 observations with every prerequisite,
+not the later forest increment or complete profiles.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

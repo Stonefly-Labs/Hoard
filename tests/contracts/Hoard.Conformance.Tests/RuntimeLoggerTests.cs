@@ -58,6 +58,53 @@ public sealed class RuntimeLoggerTests
     }
 
     [Fact]
+    public void Original_forests_preserve_actual_aliases_without_inventing_reopen_edges()
+    {
+        using var owned = new OwnedInput();
+        var authority = new OriginalProbe();
+        var owners = Enumerable.Range(0, 3).Select(_ => new OriginalProbe()).ToArray();
+        (string, object)[] Components(int index) =>
+            [("owner", owners[index]), ("store", owners[index]), ("schema", owners[index]),
+             ("authority", authority), ("controls", owners[index])];
+        var first = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", owned.Input.Expected[0].TestIdentity, "memory",
+            "original-instance", Components(0));
+        var second = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", first.TestIdentity, "memory",
+            "original-instance", Components(1), parent: null, previous: first);
+        var reopened = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", first.TestIdentity, "memory",
+            "original-instance", Components(2), parent: first, previous: second);
+        Assert.Null(second.ParentObservationId);
+        Assert.Equal("create", second.Operation);
+        Assert.Equal(first.ObservationId, reopened.ParentObservationId);
+        Assert.Equal("reopen", reopened.Operation);
+        Assert.Equal(3, new[] { first, second, reopened }
+            .Select(observation => observation.Components["owner"].InstanceId).Distinct().Count());
+        Assert.All(new[] { first, second, reopened }, observation =>
+            Assert.Equal(first.Components["authority"].InstanceId, observation.Components["authority"].InstanceId));
+        Assert.Throws<ArgumentException>(() => ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "foreign", first.TestIdentity, "memory",
+            "original-instance", Components(2), parent: null, previous: first));
+        Assert.Throws<ArgumentException>(() => ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", first.TestIdentity, "memory",
+            "original-instance", Components(0), parent: null, previous: second));
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, string.Join('\n',
+            new[] { first, second, reopened }.SelectMany(observation => ConformanceOriginalObservationOutput.Render(observation)))));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        Assert.Equal(3, proof.RootElement.GetProperty("originalObservations").GetArrayLength());
+        Assert.All(owners.Append(authority), probe => Assert.False(probe.Disposed));
+        AssertSafe(owned.Output);
+    }
+
+    [Fact]
     public async Task Origin_output_is_bound_to_the_actual_result_proof_without_private_component_labels()
     {
         using var owned = new OwnedInput();

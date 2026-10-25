@@ -11,10 +11,16 @@ public static class ConformanceOriginalObservationOutput
     public const string ContextVariable = "HOARD_ORIGINAL_CONTEXT";
 
     public static void WriteIfRequested(ITestOutputHelper output, string testIdentity, string? bindingId,
-        string kind, params (string Role, object Component)[] components)
+        string kind, params (string Role, object Component)[] components) =>
+        WriteIfRequested(output, testIdentity, bindingId, kind, null, null, components);
+
+    public static ConformanceOriginalObservation? WriteIfRequested(
+        ITestOutputHelper output, string testIdentity, string? bindingId, string kind,
+        ConformanceOriginalObservation? parent, ConformanceOriginalObservation? previous,
+        params (string Role, object Component)[] components)
     {
         var encoded = Environment.GetEnvironmentVariable(ContextVariable);
-        if (encoded is null) { return; }
+        if (encoded is null) { return null; }
         try
         {
             if (encoded.Length is 0 or > 128 * 1024) { throw new InvalidOperationException("OutputLimitExceeded"); }
@@ -43,8 +49,10 @@ public static class ConformanceOriginalObservationOutput
             { throw new InvalidOperationException("ProofMismatch"); }
             var selected = context.GetProperty("bindingId").GetString()!;
             if (bindingId is not null && bindingId != selected) { throw new InvalidOperationException("ProofMismatch"); }
-            Write(output, ConformanceOriginalObservation.Capture(
-                runId, context.GetProperty("caseId").GetString()!, testIdentity, selected, kind, components));
+            var observation = ConformanceOriginalObservation.Capture(
+                runId, context.GetProperty("caseId").GetString()!, testIdentity, selected, kind, components, parent, previous);
+            Write(output, observation);
+            return observation;
         }
         catch (Exception error) when (error is FormatException or JsonException or KeyNotFoundException)
         { throw new InvalidOperationException("ProofMismatch"); }

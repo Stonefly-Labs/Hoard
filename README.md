@@ -1910,6 +1910,19 @@ with distinct recomputed original/typed input digests and every prerequisite.
 That admits the earlier eight-original-execution diagnostic, not these later
 expanded sources or qualifying profiles. Multi-owner/reopen/controller
 coverage and complete qualifying profiles remain unfinished.
+The following increment adds genuine multi-owner and schema-reopen forests:
+62 operational metadata identities per provider now produce their independently
+selected creation/reopen topology, preserving actual aliases without invented
+edges. Local observation/replay pass 140 executions, 162 observation records
+and 818 image correspondences. The changed SDK archive reproduces as
+`032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`.
+The expanded native request requires 231 foundations and 105 scopes/1,123
+observations, pending. Earlier witness-specific run
+[40168790991](https://github.com/Stonefly-Labs/Hoard/actions/runs/40168790991)
+at `3f1409a` passed all three jobs, 230 foundations and 105 scopes/1,082
+observations with every prerequisite, not these later forest sources.
+Host/controller attribution, broader artifact coverage and qualifying profiles
+remain unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

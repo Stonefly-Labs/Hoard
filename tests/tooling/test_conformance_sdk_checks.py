@@ -1015,7 +1015,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         run = SimpleNamespace(root=self.directory)
         scenarios = checks.original_observation_scenarios()
         self.assertEqual(len(scenarios), 5)
-        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 126)
+        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 140)
         frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_bytes())
         expected_metadata = {name for entry in frozen["entries"] if entry["profileId"] == "metadata"
                              for name in entry["runtimeTests"] if name.startswith((
@@ -1026,13 +1026,16 @@ class SdkDiagnosticTests(unittest.TestCase):
                                  "Hoard.Metadata.Tests.MetadataAtomicityTests.",
                                  "Hoard.Metadata.Tests.MetadataDeadlineTests.",
                                  "Hoard.Metadata.Tests.MetadataAdmissionTests.",
+                                 "Hoard.Metadata.Tests.MetadataSchemaTests.",
                                  "Hoard.Metadata.Tests.MetadataReconciliationTests.",
                                  "Hoard.Metadata.Tests.MetadataFailureTests.MP20_",
                                  "Hoard.Metadata.Tests.MetadataFailureTests.MP21_",
                                  "Hoard.Metadata.Tests.MetadataFailureTests.MP22_",
                                  "Hoard.Metadata.Tests.MetadataPagingTests.MP07_",
                                  "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_",
+                                 "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Continuation_",
                                  "Hoard.Metadata.Tests.MetadataLeaseTests.MP28_",
+                                 "Hoard.Metadata.Tests.MetadataLeaseTests.MP29_",
                                  "Hoard.Metadata.Tests.MetadataLeaseTests.MP30_"))}
         self.assertEqual(set(scenarios[0][1]), expected_metadata)
         self.assertEqual(set(scenarios[1][1]), expected_metadata)
@@ -1080,6 +1083,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                             self.assertEqual(authority[1], None if facade else "Hoard.Fixtures.Metadata.HostAdapters")
                             self.assertTrue(authority[0].endswith(
                                 "/Hoard.Metadata.Tests.dll" if facade else "/Hoard.Fixtures.Metadata.HostAdapters.dll"))
+                            self.assertEqual(roles["owner"][1], None if ".MetadataSchemaTests." in entry["testIdentity"]
+                                             else "Hoard.Fixtures.Metadata.HostAdapters")
                     self.assertEqual(assembly.name, "Hoard.Metadata.Tests.dll" if metadata else "Hoard.Artifacts.Tests.dll")
                     if provider == "sqlite":
                         admission.assert_called_once_with(inputs, assembly, self.directory)

@@ -1,17 +1,20 @@
 using Hoard.Fixtures.Metadata.Hosting;
 using Hoard.Testing.Conformance.Metadata;
+using Xunit.Abstractions;
+using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
 
-public sealed class MetadataSchemaTests
+public sealed class MetadataSchemaTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task MP33_Unrelated_and_partial_layouts_are_not_empty_or_permission_to_create()
     {
+        var observations = new OriginalObservationSequence(output, nameof(MetadataSchemaTests));
         foreach (var partial in new[] { false, true })
         {
             await using var fixture = MetadataFixtureSession.CreateFromEnvironment(new MetadataTestClock());
-            await MetadataSchemaAssertions.UnrecognizedLayoutAsync(new OriginalMetadataSchemaSession(fixture), partial, default);
+            await MetadataSchemaAssertions.UnrecognizedLayoutAsync(new OriginalMetadataSchemaSession(fixture, observations), partial, default);
         }
     }
 
@@ -21,7 +24,8 @@ public sealed class MetadataSchemaTests
         var clock = new MetadataTestClock();
         await using var initial = MetadataFixtureSession.Create(
             Environment.GetEnvironmentVariable("HOARD_METADATA_PROVIDER")!, clock, compatibleSchema: "fixture-sqlite-v1");
-        await MetadataSchemaAssertions.UpgradeAsync(new OriginalMetadataSchemaSession(initial), default);
+        var observations = new OriginalObservationSequence(output, nameof(MetadataSchemaTests));
+        await MetadataSchemaAssertions.UpgradeAsync(new OriginalMetadataSchemaSession(initial, observations), default);
     }
 
     [Fact]
@@ -29,8 +33,9 @@ public sealed class MetadataSchemaTests
     {
         await using var original = MetadataFixtureSession.CreateFromEnvironment(new MetadataTestClock());
         await using var corrupt = MetadataFixtureSession.CreateFromEnvironment(new MetadataTestClock());
+        var observations = new OriginalObservationSequence(output, nameof(MetadataSchemaTests));
         await MetadataSchemaAssertions.FutureAndCorruptAsync(
-            new OriginalMetadataSchemaSession(original), new OriginalMetadataSchemaSession(corrupt), default);
+            new OriginalMetadataSchemaSession(original, observations), new OriginalMetadataSchemaSession(corrupt, observations), default);
     }
 
     [Fact]
@@ -39,7 +44,8 @@ public sealed class MetadataSchemaTests
         var clock = new MetadataTestClock();
         await using var original = MetadataFixtureSession.Create(
             Environment.GetEnvironmentVariable("HOARD_METADATA_PROVIDER")!, clock, compatibleSchema: "fixture-sqlite-v1");
-        await MetadataSchemaAssertions.InvalidUpgradeAsync(new OriginalMetadataSchemaSession(original), default);
+        var observations = new OriginalObservationSequence(output, nameof(MetadataSchemaTests));
+        await MetadataSchemaAssertions.InvalidUpgradeAsync(new OriginalMetadataSchemaSession(original, observations), default);
     }
 
     [Fact]
@@ -48,6 +54,7 @@ public sealed class MetadataSchemaTests
         var clock = new MetadataTestClock();
         await using var original = MetadataFixtureSession.Create(
             Environment.GetEnvironmentVariable("HOARD_METADATA_PROVIDER")!, clock, compatibleSchema: "fixture-sqlite-v1");
-        await MetadataSchemaAssertions.UpgradeExclusionAsync(new OriginalMetadataSchemaSession(original), default);
+        var observations = new OriginalObservationSequence(output, nameof(MetadataSchemaTests));
+        await MetadataSchemaAssertions.UpgradeExclusionAsync(new OriginalMetadataSchemaSession(original, observations), default);
     }
 }

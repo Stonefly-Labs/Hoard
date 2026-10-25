@@ -22,6 +22,24 @@ CATEGORY_BINDING_SLOTS = (
 
 _ORIGINAL_METADATA_ROLES = ("owner", "store", "schema", "authority", "controls")
 _ORIGINAL_ARTIFACT_ROLES = ("owner", "store", "validator", "maintenance", "lifetime", "authority", "controls")
+ORIGINAL_METADATA_FORESTS = MappingProxyType({
+    "Hoard.Metadata.Tests.MetadataLeaseTests."
+    "MP29_Expiry_is_rechecked_at_the_final_decision_for_renew_release_and_guards": (None, None, None),
+    "Hoard.Metadata.Tests.MetadataPagingTests."
+    "MP08_Continuation_is_bound_to_scope_size_and_epoch_and_is_not_a_snapshot": (None, None),
+    "Hoard.Metadata.Tests.MetadataSchemaTests."
+    "MP33_Unrelated_and_partial_layouts_are_not_empty_or_permission_to_create": (None, None),
+    "Hoard.Metadata.Tests.MetadataSchemaTests."
+    "MP32_Old_schema_requires_explicit_authorized_upgrade_and_preserves_records": (None, 0, 1),
+    "Hoard.Metadata.Tests.MetadataSchemaTests."
+    "MP33_Future_schema_and_recognized_corruption_are_never_created_over": (None, None, 0, 1),
+    "Hoard.Metadata.Tests.MetadataSchemaTests."
+    "MP34_Unsupported_and_foreign_upgrade_authorizations_leave_old_state_unchanged": (None, 0),
+    "Hoard.Metadata.Tests.MetadataSchemaTests."
+    "MP35_Upgrade_exclusion_prevents_partial_admission_and_has_one_winner": (None, 0),
+})
+ORIGINAL_METADATA_SCHEMA_WITNESSES = tuple(
+    identity for identity in ORIGINAL_METADATA_FORESTS if ".MetadataSchemaTests." in identity)
 ORIGINAL_METADATA_FACADE_WITNESSES = tuple(sorted(
     "Hoard.Metadata.Tests." + fixture + "." + method
     for fixture, methods in (
@@ -46,6 +64,7 @@ ORIGINAL_METADATA_FACADE_WITNESSES = tuple(sorted(
         for shape in ("cache-auth", "aggregate-auth", "aggregate-start", "aggregate-end", "lease-resource"))
 ORIGINAL_METADATA_WITNESSES = tuple(sorted((
     *ORIGINAL_METADATA_FACADE_WITNESSES,
+    *ORIGINAL_METADATA_FORESTS,
     *("Hoard.Metadata.Tests.MetadataPagingTests."
       f'MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: "{shape}")'
       for shape in ("null", "omitted", "wrong-type", "empty", "odd-hex", "invalid-hex")),
@@ -116,6 +135,13 @@ def original_witness_policy(identity):
     if identity in ORIGINAL_ARTIFACT_WITNESSES:
         return "artifacts", "original-instance", _ORIGINAL_ARTIFACT_ROLES
     return None
+
+
+def original_witness_parents(identity):
+    """The independently selected creation/reopen forest for one exact execution."""
+    if original_witness_policy(identity) is None:
+        return None
+    return ORIGINAL_METADATA_FORESTS.get(identity, (None,))
 
 
 def category_runtime_cases(profile, binding_id):

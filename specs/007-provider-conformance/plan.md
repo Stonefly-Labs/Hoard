@@ -5027,6 +5027,56 @@ preparation:
 Both input documents independently recompute. This admits only that earlier
 diagnostic increment, not later expanded sources or qualifying profiles.
 
+### Genuine original creation/reopen forests
+
+Seven further metadata identities now observe their actual independent roots
+and schema-reopen chains, bringing operational coverage to 62 identities per
+provider. The closed catalog fixes every node count and parent index; parent
+ingestion rejects extra/missing roots, foreign/current-execution parent mismatch
+and reused owner/store IDs. SDK continuation separates previous reference-equality
+identity state from actual parentage, retaining existing binary signatures.
+Source sequences are non-owning. Schema observations capture the actual adapter
+owner and genuine underlying fixture authority without manufacturing an unused
+facade; existing assertion-facing authority behavior is unchanged. Failed
+observation after real reopen disposes the newly transferred fixture before
+propagating failure.
+
+The positive forest admission regression first fails `WitnessMissing`; the SDK
+regression first fails for the missing `previous` overload. Actual minimal-input
+observation and independent empty-cache locked replay each pass 140 exact
+discoveries/executions, 162 records (158 original owners/four contracts) and
+818 role/image correspondences. SDK archive reproduces as
+`032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`.
+These probes are not qualifying RunInputs.
+
+`python3 -m unittest discover -s tests/tooling -v` passes 339 checks
+(322 passed/seventeen explicit macOS-native skips).
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --no-restore -c Release --filter 'FullyQualifiedName~RuntimeLoggerTests|FullyQualifiedName~BindingContractTests' -p:UseSharedCompilation=false -nodeReuse:false -v quiet`
+passes 69 without skips. SDK/test-project format, metadata-folder whitespace,
+frozen inventory and SDK catalog checks pass. A bounded custom architecture
+review finds no confirmed blocker, with read-only/diff-reproduction limits;
+it is not final T081. Native admission now requires 231 foundations and
+105 scopes/1,123 observations, pending. Host/controller attribution, broader
+artifact coverage and qualifying backends remain unfinished. README and affected
+guides/model/contracts are updated; product/deployment examples and diagrams,
+public product contracts, historical seals, locks and reviewer/task markers
+are unaffected.
+
+Earlier witness-specific run
+[40168790991](https://github.com/Stonefly-Labs/Hoard/actions/runs/40168790991)
+binds exact head `3f1409a6705b43c8d1ba347396f03db6ab3497d2`: all three jobs,
+230 foundations without failures/errors/skips, 105 scopes/1,082 exact
+discoveries/executions (100 originals) and every recovery/transfer/containment/
+replay prerequisite pass. Typed input:
+`55cfb28e9b89f2979276bb699f842cafada908ae341f4d2c64b6c96aff070312`;
+separate original input:
+`04433046300ac1cdc4ee0c7366c9c17f7e8aa3b154112af9e213c40d940624a4`;
+preparation:
+`81f24eea2c58cb12588e2c50f3cc9bc5ece9ce5fd3316473c93769c1ca00a72a`.
+Both input documents independently recompute; free scratch is 91,721,125,888
+bytes. This admits that earlier diagnostic, not the later forest sources or
+qualifying profiles.
+
 ## Summary
 
 
