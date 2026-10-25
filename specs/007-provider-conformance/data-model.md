@@ -105,6 +105,25 @@ inspection/controller admission remains unimplemented and rejects; diagnostic
 producer receipts confer no qualification. The positive-origin batch/replay
 fixture is explicitly diagnostic.
 
+Joint category batches additionally freeze the whole profile's
+`(bindingId, testIdentity)` union before launch. Each scope maps unique runtime
+identities to its independently selected binding and primary case, with a fresh
+child attempt UUID. An identity shared by both bindings must execute in
+separate scopes; provider-parameterized rows may share one genuine mixed-binding
+scope. Reduced/overlapping/foreign/ambiguous scopes reject before state changes.
+Joint and binding-local lifecycle calls cannot interleave. Every scope and its
+cross-scope provenance/budgets validate before either binding accepts a proof.
+Case attribution filters both runtime identity and binding, never merely the
+shared method name. Failed/incomplete joint attempts persist for both bindings
+through fresh retries, while valid assertion failures affect only actual mapped
+binding/cases. This preserves original runtime/completion/proof bytes rather
+than synthesizing per-binding transports after execution. Synthetic diagnostic
+coverage of this model does not qualify a category or replace missing
+inspection/controller evidence.
+The independent catalog partition factory preserves every method's complete
+parameter family while selecting six scopes/profile and the exact 134 metadata/
+227 artifact binding/identity pairs; it changes no frozen final key.
+
 ### Binding input snapshot
 
 The test SDK's `ConformanceBindingSnapshot.Capture` produces an immutable

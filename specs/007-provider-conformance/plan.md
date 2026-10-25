@@ -5745,6 +5745,36 @@ category/profile execution. T019/T020 and custom review markers remain
 unchecked; production/SDK/package/lock bytes and deployment examples/diagrams
 are unaffected.
 
+### Profile-wide joint category execution history
+
+Actual artifact method discovery includes both provider parameter rows, while
+the previous history API admitted binding-local batches. A joint lifecycle now
+freezes the complete profile binding/identity union and independent primary-case
+assignments before execution, permitting genuine mixed-provider scopes without
+rewriting runtime evidence afterward. Neutral identities repeated across
+bindings require separate scopes; ambiguous duplicate identities within one
+scope, shortened/foreign/overlapping plans and lifecycle interleaving reject.
+Joint batches use the same exact transport/provenance/replay/proof-budget checks
+as binding-local batches and commit neither binding until every scope validates.
+
+Case attribution now explicitly selects both binding and runtime identity.
+One binding's assertion failure affects only its mapped cases; the same-named
+successful witness in the other binding is not overwritten. Missing or stale
+later scopes accept no earlier proofs and append both bindings' failed/
+incomplete attempts. Fresh UUID/sequence retries retain both earlier attempts.
+An independent catalog factory selects six scopes per profile, preserving the
+whole method parameter families for 134 metadata and 227 artifact binding/
+identity pairs. Repeated neutral contexts remain separate without changing
+any catalog expected key or source-owned runtime identity.
+Four regressions first fail at missing joint/partition APIs and pass after
+implementation; a fifth checks binding-specific assertion failure attribution.
+All 91 evidence checks and all 371 tooling checks pass (354 passed/seventeen
+native macOS skips), with unchanged inventory/catalog and patch checks passing.
+These are synthetic diagnostic fixtures, not actual joint category execution
+or independent source/controller qualification. Actual profile/evaluator
+backends and T019/T020 remain incomplete; no markers, product/reference/lock
+bytes or deployment examples/diagrams change.
+
 ## Summary
 
 

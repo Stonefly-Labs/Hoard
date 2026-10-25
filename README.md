@@ -1899,6 +1899,11 @@ Extraction transport guards also exercise every applicable frozen parameter
 family, including families with one selected row, against complete, missing
 and changed/foreign discovery controls for both options. These remain transport
 guards, not proof that the common provider assertions or profiles completed.
+Category history also supports an independently frozen joint binding/scope map
+so mixed-provider parameter families need not be split or rewritten after
+execution. Whole-profile import is atomic and attributes shared identities to
+their actual binding. This is a synthetic history-model capability; its actual
+profile runner and source/controller qualification remain unfinished.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

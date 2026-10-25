@@ -20,6 +20,30 @@ import conformance_evidence as evidence
 
 
 class ConformanceAdmissionTests(unittest.TestCase):
+    def test_category_execution_partitions_preserve_complete_method_families_and_both_binding_inventories(self):
+        import conformance_case_catalog as catalog
+        for profile, bindings in (("metadata", ("sqlite", "memory")), ("artifacts", ("local", "object"))):
+            with self.subTest(profile=profile):
+                expected = {(binding, identity) for binding in bindings
+                            for identity in catalog.category_runtime_cases(profile, binding)}
+                scopes = catalog.category_execution_partitions(profile)
+                actual = [row for rows in scopes.values() for row in rows]
+                self.assertEqual(set(actual), expected)
+                self.assertEqual(len(actual), len(expected))
+                for rows in scopes.values():
+                    identities = {identity for _, identity in rows}
+                    self.assertEqual(len(identities), len(rows))
+                    for method in {identity.split("(")[0] for identity in identities}:
+                        self.assertEqual({identity for identity in identities if identity.split("(")[0] == method},
+                                         {identity for _, identity in expected if identity.split("(")[0] == method})
+                if profile == "artifacts":
+                    self.assertTrue(any({binding for binding, _ in rows} == set(bindings)
+                                        for rows in scopes.values()))
+                with self.assertRaises(TypeError):
+                    scopes["foreign"] = ()
+        with self.assertRaisesRegex(evidence.ConformanceError, "UnsupportedProfile"):
+            catalog.category_execution_partitions("composition")
+
     def test_catalog_copies_witnesses_and_rejects_nonmatching_sdk_bounds(self):
         import conformance_case_catalog as catalog
         names = ["Tests.Check"]
@@ -1464,7 +1488,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             self.inputs, max_attempts=max_attempts, origin_inputs=origin_inputs, original_inputs=original_inputs)
 
     def category_transport(self, binding, *, sequence=1, started=9, origin=None, identities=None,
-                           failed_identity=None):
+                           failed_identity=None, selections=None):
         import conformance_case_catalog as catalog
         cases = [case for case in catalog.expected_cases(self.inputs["profileId"])
                  if case.binding_id == binding and case.exclusion is None]
@@ -1472,14 +1496,17 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                        for identity in {identity for case in cases for identity in case.witnesses}}
         if identities is not None:
             assignments = {identity: assignments[identity] for identity in identities}
+        selected = ({identity: (binding, case_id) for identity, case_id in assignments.items()}
+                    if selections is None else selections)
         manifest = {**self.manifest, "attemptId": self.attempt, "attemptSequence": sequence,
                     "inputSha256": evidence.digest(self.inputs), "expected": [
                         {**self.manifest["expected"][0], "testIdentity": identity,
-                         "fullyQualifiedName": identity.split("(")[0], "bindingId": binding,
+                         "fullyQualifiedName": identity.split("(")[0], "bindingId": selected_binding,
                          "caseId": case_id}
-                        for identity, case_id in sorted(assignments.items())]}
+                        for identity, (selected_binding, case_id) in sorted(selected.items())]}
         proofs, witnesses = {}, []
         for entry in manifest["expected"]:
+            binding = entry["bindingId"]
             execution = str(uuid.uuid4())
             proof = {**self.proof, "executionId": execution, "attemptId": self.attempt,
                      "attemptSequence": sequence, "inputSha256": evidence.digest(self.inputs),
@@ -1524,11 +1551,136 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                       "inputSha256": evidence.digest(self.inputs), "manifestSha256": evidence.digest(manifest),
                       "expectedCount": len(witnesses), "observedCount": len(witnesses),
                       "recordsSha256": hashlib.sha256(lines).hexdigest(),
-                      "diagnosticCode": "AssertionFailed" if failed_identity in assignments else "None"}
+                      "diagnosticCode": "AssertionFailed" if failed_identity in selected else "None"}
         return {
             "manifest_data": evidence.canonical_bytes(manifest), "owner_data": evidence.canonical_bytes(self.owner),
             "witnesses_data": lines, "proofs": proofs, "completion_data": evidence.canonical_bytes(completion),
             "manifest_sha256": evidence.digest(manifest), "owner_sha256": evidence.digest(self.owner)}
+
+    def joint_category_partitions(self, history):
+        partitions, selected = {"mixed": [], "repeated": []}, set()
+        for binding in ("local", "object"):
+            for identity in history.expected_runtime_tests(binding):
+                partitions["repeated" if identity in selected else "mixed"].append((binding, identity))
+                selected.add(identity)
+        return partitions
+
+    def test_joint_category_import_freezes_both_bindings_and_retains_unmodified_mixed_scope_proofs(self):
+        import conformance_case_catalog as catalog
+        history = self.category_history(profile="artifacts")
+        partitions = {scope: list(rows) for scope, rows in catalog.category_execution_partitions("artifacts").items()}
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            self.assertEqual(history.begin_joint(self.attempt, partitions=partitions), 1)
+        plan = history.joint_partitions()
+        self.assertEqual({binding for binding, _ in plan["original"]["tests"].values()}, {"local", "object"})
+        expected = {(binding, identity) for binding in ("local", "object")
+                    for identity in history.expected_runtime_tests(binding)}
+        self.assertEqual({(binding, identity) for scope in plan.values()
+                          for identity, (binding, _) in scope["tests"].items()}, expected)
+        partitions["original"].clear()
+        with self.assertRaises(TypeError):
+            plan["original"]["tests"]["foreign"] = ("local", "AS-01")
+        transports, actual = {}, {}
+        for scope_id, scope in plan.items():
+            self.attempt = scope["attemptId"]
+            transports[scope_id] = self.category_transport(None, selections=scope["tests"])
+            actual.update({name: hashlib.sha256(raw).hexdigest() for name, raw in transports[scope_id]["proofs"].items()})
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            results = history.finish_joint(transports=transports)
+        self.assertEqual(dict(history.proofs), actual)
+        self.assertEqual({(row["bindingId"], row["testIdentity"]) for row in history.witnesses}, expected)
+        owned = {row["executionId"]: row["bindingId"] for row in history.witnesses}
+        self.assertEqual({(row["profileId"], row["bindingId"], row["matrixId"], row["caseId"]) for row in results},
+                         {case.key for case in catalog.expected_cases("artifacts")})
+        for row in results:
+            for attempt in row["attempts"]:
+                self.assertTrue(all(owned[identity] == row["bindingId"] for identity in attempt["witnessIds"]))
+        with self.assertRaisesRegex(evidence.ConformanceError, "OwnershipInvalid"):
+            history.joint_partitions()
+
+    def test_joint_category_import_rejects_incomplete_overlapping_or_ambiguous_plans_before_start(self):
+        original = copy.deepcopy(self.inputs)
+        for mutation in ("missing", "overlap", "ambiguous", "foreign", "empty"):
+            with self.subTest(mutation=mutation):
+                self.inputs = copy.deepcopy(original)
+                history = self.category_history(profile="artifacts")
+                partitions = self.joint_category_partitions(history)
+                if mutation == "missing":
+                    partitions["mixed"].pop()
+                elif mutation == "overlap":
+                    partitions["repeated"].append(partitions["mixed"][0])
+                elif mutation == "ambiguous":
+                    binding, identity = partitions["repeated"].pop()
+                    partitions["mixed"].append((binding, identity))
+                elif mutation == "foreign":
+                    partitions["mixed"][0] = ("local", "Foreign.Unselected.Fact")
+                else:
+                    partitions["empty"] = []
+                with self.assertRaises(evidence.ConformanceError):
+                    history.begin_joint(self.attempt, partitions=partitions)
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+                    history.begin_joint(self.attempt, partitions=self.joint_category_partitions(history))
+                with self.assertRaisesRegex(evidence.ConformanceError, "OwnershipInvalid"):
+                    history.interrupt("local", "EvidenceIncomplete")
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+                    history.interrupt_joint("EvidenceIncomplete")
+                self.assertEqual(history.witnesses, ())
+
+    def test_joint_category_import_is_atomic_and_a_fresh_retry_preserves_both_bindings_failed_attempts(self):
+        original = copy.deepcopy(self.inputs)
+        for mutation, code in (("missing", "EvidenceIncomplete"), ("attempt", "ProofMismatch")):
+            with self.subTest(mutation=mutation):
+                self.inputs = copy.deepcopy(original)
+                history = self.category_history(profile="artifacts", max_attempts=2)
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+                    history.begin_joint(self.attempt, partitions=self.joint_category_partitions(history))
+                plan, transports = history.joint_partitions(), {}
+                for scope_id, scope in plan.items():
+                    self.attempt = plan["mixed"]["attemptId"] if mutation == "attempt" else scope["attemptId"]
+                    transports[scope_id] = self.category_transport(None, selections=scope["tests"])
+                if mutation == "missing":
+                    del transports["repeated"]
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.012), self.assertRaisesRegex(
+                        evidence.ConformanceError, code):
+                    history.finish_joint(transports=transports)
+                self.assertEqual(history.witnesses, ())
+                self.assertEqual(dict(history.proofs), {})
+                self.assertEqual(dict(history.session_origins), {})
+                self.assertEqual(dict(history.original_observations), {})
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.020):
+                    self.assertEqual(history.begin_joint(
+                        str(uuid.uuid4()), partitions=self.joint_category_partitions(history)), 2)
+                transports = {}
+                for scope_id, scope in history.joint_partitions().items():
+                    self.attempt = scope["attemptId"]
+                    transports[scope_id] = self.category_transport(
+                        None, selections=scope["tests"], sequence=2, started=20)
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.023):
+                    results = history.finish_joint(transports=transports)
+                self.assertTrue(any(row["status"] == "Passed" for row in results))
+                self.assertTrue(all(len(row["attempts"]) == 2 for row in results if row["applicable"]))
+
+    def test_joint_category_failure_is_attributed_only_to_the_actual_binding_and_mapped_cases(self):
+        import conformance_case_catalog as catalog
+        history = self.category_history(profile="artifacts")
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin_joint(self.attempt, partitions=self.joint_category_partitions(history))
+        plan, transports = history.joint_partitions(), {}
+        identity = next(iter(plan["repeated"]["tests"]))
+        binding, _ = plan["repeated"]["tests"][identity]
+        for scope_id, scope in plan.items():
+            self.attempt = scope["attemptId"]
+            transports[scope_id] = self.category_transport(
+                None, selections=scope["tests"], failed_identity=identity if scope_id == "repeated" else None)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            results = history.finish_joint(transports=transports)
+        self.assertEqual({(row["profileId"], row["bindingId"], row["matrixId"], row["caseId"])
+                          for row in results if row["status"] == "Failed"},
+                         {case.key for case in catalog.expected_cases("artifacts")
+                          if case.binding_id == binding and case.exclusion is None and identity in case.witnesses})
+        actual = [row for row in history.witnesses if row["testIdentity"] == identity]
+        self.assertEqual({row["bindingId"]: row["status"] for row in actual},
+                         {binding: "Failed", "local" if binding == "object" else "object": "Passed"})
 
     def test_category_partitioned_import_freezes_the_complete_inventory_and_preserves_actual_scope_proofs(self):
         import conformance_case_catalog as catalog

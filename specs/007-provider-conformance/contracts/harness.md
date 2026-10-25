@@ -1183,6 +1183,26 @@ The immutable primary-case map is shared by prelaunch manifest selection and
 import. These fixtures do not establish actual original-wrapper provenance or
 full category execution.
 
+The joint category lifecycle can instead predeclare the complete profile-wide
+binding/identity union. This supports genuine mixed-provider parameter families
+in one runtime scope without filtering foreign rows or rewriting source
+manifests, completion records or proofs into per-binding batches afterward.
+Its copied scope maps select exact bindings/primary cases and independent child
+attempt UUIDs. A repeated neutral identity in another binding requires another
+scope; a duplicate identity inside one scope is ambiguous and rejects.
+Both options commit atomically after every scope passes the same exact runtime,
+provenance/replay and aggregate-budget admission used by binding-local imports.
+Partial/foreign plans and mixing lifecycle APIs reject. Joint interruption or
+invalid transport appends attempts for both options without accepting earlier
+valid scopes; a fresh retry cannot erase either failure. Actual assertion
+failures retain their proofs and affect only the matching binding/cases.
+Four synthetic regressions exercise joint selection/immutability, ambiguous
+plans, missing/stale later scopes and retries, and cross-binding failure
+attribution. A fifth checks the independently selected six scopes/profile
+against exact frozen binding inventories and complete method families:
+134 metadata/227 artifact binding/identity pairs. Actual joint profile execution and source/controller qualification
+remain unwired; these fixtures are not behavioral acceptance.
+
 Run `40161613939 @abfa812` failed mutation diagnostics because the real logger
 did not recognize bounded `Assert.IsType()` failures. The repair adds only that
 prefix, retaining exact SDK-frame checks and safe projection. All 46 logger

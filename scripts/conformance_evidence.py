@@ -1959,6 +1959,7 @@ class CategoryRuntimeHistory:
         self._max_attempts = max_attempts
         self._active = {}
         self._partitions = {}
+        self._joint_plan = None
         self._sequences = {binding: 0 for binding in self._bindings}
         self._used_attempts = frozenset()
         self._used_executions = frozenset()
@@ -1997,12 +1998,14 @@ class CategoryRuntimeHistory:
 
     def runtime_partitions(self, binding_id):
         binding_id = stable_id(binding_id)
-        if binding_id not in self._active:
+        if binding_id not in self._active or self._joint_plan is not None:
             raise ConformanceError("OwnershipInvalid")
         return self._partitions[binding_id]
 
     def begin(self, binding_id, attempt_id, *, partitions=None):
         binding_id, attempt_id = stable_id(binding_id), _uuid(attempt_id)
+        if self._joint_plan is not None:
+            raise ConformanceError("OwnershipInvalid")
         if (binding_id not in self._bindings or binding_id in self._active
                 or self._sequences[binding_id] >= self._max_attempts or attempt_id in self._used_attempts):
             raise ConformanceError("EvidenceIncomplete")
@@ -2041,12 +2044,60 @@ class CategoryRuntimeHistory:
         self._used_attempts = self._used_attempts | attempts | {attempt_id}
         return self._sequences[binding_id] + 1
 
-    def _append(self, binding_id, code, ended, witnesses=(), proofs=MappingProxyType({})):
+    def begin_joint(self, attempt_id, *, partitions):
+        attempt_id = _uuid(attempt_id)
+        if (self._active or self._joint_plan is not None or attempt_id in self._used_attempts
+                or len(set(self._sequences.values())) != 1
+                or any(sequence >= self._max_attempts for sequence in self._sequences.values())):
+            raise ConformanceError("EvidenceIncomplete")
+        if not isinstance(partitions, Mapping) or not 0 < len(partitions) <= 128:
+            raise ConformanceError("EvidenceIncomplete")
+        expected = {(binding, identity): case_id for binding in self._bindings
+                    for identity, case_id in self.expected_runtime_tests(binding).items()}
+        selected, plan = set(), {}
+        for scope_id, rows in partitions.items():
+            scope_id = stable_id(scope_id)
+            if not isinstance(rows, (tuple, list)) or not 0 < len(rows) <= MAX_RESULTS:
+                raise ConformanceError("EvidenceIncomplete")
+            tests = {}
+            for row in rows:
+                if not isinstance(row, (tuple, list)) or len(row) != 2:
+                    raise ConformanceError()
+                binding, identity = stable_id(row[0]), _runtime_identity(row[1])
+                pair = binding, identity
+                if pair not in expected or pair in selected or identity in tests:
+                    raise ConformanceError("WitnessMissing")
+                tests[identity] = binding, expected[pair]
+                selected.add(pair)
+            plan[scope_id] = MappingProxyType({
+                "attemptId": str(uuid.uuid4()), "tests": MappingProxyType(tests)})
+        if selected != expected.keys():
+            raise ConformanceError("WitnessMissing")
+        attempts = {scope["attemptId"] for scope in plan.values()}
+        if len(attempts) != len(plan) or attempts & self._used_attempts or attempt_id in attempts:
+            raise ConformanceError("ProofMismatch")
+        started = _number(time.monotonic() * 1000)
+        prior = [attempt["endedMs"] for result in self._results.values() for attempt in result["attempts"]]
+        if prior and started < max(prior):
+            raise ConformanceError("EvidenceIncomplete")
+        self._joint_plan = MappingProxyType(plan)
+        self._active = {binding: (attempt_id, started) for binding in self._bindings}
+        self._partitions = {binding: MappingProxyType({}) for binding in self._bindings}
+        self._used_attempts = self._used_attempts | attempts | {attempt_id}
+        return next(iter(self._sequences.values())) + 1
+
+    def joint_partitions(self):
+        if self._joint_plan is None:
+            raise ConformanceError("OwnershipInvalid")
+        return self._joint_plan
+
+    def _case_results(self, binding_id, code, ended, witnesses):
         results = {}
         for case in self._cases:
             if case.binding_id != binding_id or case.exclusion is not None:
                 continue
-            selected = tuple(witness for witness in witnesses if witness["testIdentity"] in case.witnesses)
+            selected = tuple(witness for witness in witnesses
+                             if witness["bindingId"] == binding_id and witness["testIdentity"] in case.witnesses)
             case_code = code
             if code in ("None", "AssertionFailed"):
                 if any(witness["status"] == "Failed" for witness in selected):
@@ -2066,14 +2117,21 @@ class CategoryRuntimeHistory:
             })
             previous = self._results.get(case.key, {}).get("attempts", ())
             results[case.key] = _catalog_case_result(self._inputs, case, status, (*previous, attempt))
+        return results
+
+    def _commit(self, bindings, results, witnesses, proofs):
         self._results.update(results)
-        self._sequences[binding_id] += 1
+        for binding_id in bindings:
+            self._sequences[binding_id] += 1
+            del self._active[binding_id]
+            del self._partitions[binding_id]
         self._witnesses = (*self._witnesses, *witnesses)
         self._proofs = MappingProxyType({**self._proofs, **proofs})
         self._used_executions = self._used_executions | {witness["executionId"] for witness in witnesses}
-        del self._active[binding_id]
-        del self._partitions[binding_id]
-        return tuple(self._results[case.key] for case in self._cases if case.binding_id == binding_id)
+        return tuple(self._results[case.key] for case in self._cases if case.binding_id in bindings)
+
+    def _append(self, binding_id, code, ended, witnesses=(), proofs=MappingProxyType({})):
+        return self._commit((binding_id,), self._case_results(binding_id, code, ended, witnesses), witnesses, proofs)
 
     def finish(self, binding_id, *, manifest_data, owner_data, witnesses_data, proofs, completion_data,
                manifest_sha256, owner_sha256):
@@ -2085,46 +2143,15 @@ class CategoryRuntimeHistory:
 
     def finish_parts(self, binding_id, *, transports):
         binding_id = stable_id(binding_id)
-        if binding_id not in self._active:
+        if binding_id not in self._active or self._joint_plan is not None:
             raise ConformanceError("OwnershipInvalid")
         ended = _number(time.monotonic() * 1000)
         try:
-            plan = self._partitions[binding_id]
-            if not isinstance(transports, Mapping) or set(transports) != set(plan):
-                raise ConformanceError("EvidenceIncomplete")
-            fields = {"manifest_data", "owner_data", "witnesses_data", "proofs", "completion_data",
-                      "manifest_sha256", "owner_sha256"}
-            witnesses, proofs, origins, originals, codes = (), {}, {}, {}, []
-            used_executions, used_sessions, instances = self._used_executions, self._used_sessions, self._instances
-            proof_bytes = 0
-            for scope_id, scope in sorted(plan.items()):
-                transport = transports[scope_id]
-                if not isinstance(transport, Mapping) or set(transport) != fields:
-                    raise ConformanceError()
-                observed = ingest_runtime_attempt(
-                    inputs=self._inputs, **transport,
-                    expected_tests={identity: (binding_id, "none") for identity in scope["tests"]},
-                    started_ms=self._active[binding_id][1], ended_ms=ended, origin_inputs=self._origin_inputs,
-                    original_inputs=self._original_inputs)
-                if (observed["attemptId"] != scope["attemptId"]
-                        or observed["completion"]["attemptSequence"] != self._sequences[binding_id] + 1
-                        or any(entry["caseId"] != scope["tests"][entry["testIdentity"]]
-                               for entry in load_json(transport["manifest_data"])["expected"])
-                        or any(witness["executionId"] in used_executions for witness in observed["witnesses"])):
-                    raise ConformanceError("ProofMismatch")
-                sessions, instances = _runtime_provenance_state(observed, used_sessions, instances)
-                used_sessions = used_sessions | sessions
-                used_executions = used_executions | {row["executionId"] for row in observed["witnesses"]}
-                witnesses = (*witnesses, *observed["witnesses"])
-                proofs.update(observed["proofs"])
-                proof_bytes += sum(len(data) for data in transport["proofs"].values())
-                if len(proofs) > MAX_PROOF_FILES or proof_bytes > MAX_PROOF_BYTES:
-                    raise ConformanceError("OutputLimitExceeded")
-                origins.update(observed["sessionOrigins"])
-                originals.update(observed["originalObservations"])
-                codes.append(observed["diagnosticCode"])
-            code = next((code for code in codes if code not in ("None", "AssertionFailed")),
-                        "AssertionFailed" if "AssertionFailed" in codes else "None")
+            plan = {scope_id: {**scope, "tests": {
+                identity: (binding_id, case_id) for identity, case_id in scope["tests"].items()}}
+                for scope_id, scope in self._partitions[binding_id].items()}
+            code, witnesses, proofs, origins, originals, used_sessions, instances = self._ingest_parts(
+                plan, transports, self._active[binding_id][1], ended, self._sequences[binding_id] + 1)
             results = self._append(binding_id, code, ended, witnesses, proofs)
             self._session_origins = MappingProxyType({**self._session_origins, **origins})
             self._original_observations = MappingProxyType({
@@ -2137,9 +2164,79 @@ class CategoryRuntimeHistory:
                 self._append(binding_id, str(error), ended)
             raise
 
+    def _ingest_parts(self, plan, transports, started, ended, sequence):
+        if not isinstance(transports, Mapping) or set(transports) != set(plan):
+            raise ConformanceError("EvidenceIncomplete")
+        fields = {"manifest_data", "owner_data", "witnesses_data", "proofs", "completion_data",
+                  "manifest_sha256", "owner_sha256"}
+        witnesses, proofs, origins, originals, codes = (), {}, {}, {}, []
+        used_executions, used_sessions, instances = self._used_executions, self._used_sessions, self._instances
+        proof_bytes = 0
+        for scope_id, scope in sorted(plan.items()):
+            transport = transports[scope_id]
+            if not isinstance(transport, Mapping) or set(transport) != fields:
+                raise ConformanceError()
+            observed = ingest_runtime_attempt(
+                inputs=self._inputs, **transport,
+                expected_tests={identity: (binding, "none") for identity, (binding, _) in scope["tests"].items()},
+                started_ms=started, ended_ms=ended, origin_inputs=self._origin_inputs,
+                original_inputs=self._original_inputs)
+            if (observed["attemptId"] != scope["attemptId"]
+                    or observed["completion"]["attemptSequence"] != sequence
+                    or any((entry["bindingId"], entry["caseId"]) != scope["tests"][entry["testIdentity"]]
+                           for entry in load_json(transport["manifest_data"])["expected"])
+                    or any(witness["executionId"] in used_executions for witness in observed["witnesses"])):
+                raise ConformanceError("ProofMismatch")
+            sessions, instances = _runtime_provenance_state(observed, used_sessions, instances)
+            used_sessions = used_sessions | sessions
+            used_executions = used_executions | {row["executionId"] for row in observed["witnesses"]}
+            witnesses = (*witnesses, *observed["witnesses"])
+            proofs.update(observed["proofs"])
+            proof_bytes += sum(len(data) for data in transport["proofs"].values())
+            if len(proofs) > MAX_PROOF_FILES or proof_bytes > MAX_PROOF_BYTES:
+                raise ConformanceError("OutputLimitExceeded")
+            origins.update(observed["sessionOrigins"])
+            originals.update(observed["originalObservations"])
+            codes.append(observed["diagnosticCode"])
+        code = next((code for code in codes if code not in ("None", "AssertionFailed")),
+                    "AssertionFailed" if "AssertionFailed" in codes else "None")
+        return code, witnesses, proofs, origins, originals, used_sessions, instances
+
+    def finish_joint(self, *, transports):
+        plan = self.joint_partitions()
+        ended = _number(time.monotonic() * 1000)
+        try:
+            binding = next(iter(self._bindings))
+            code, witnesses, proofs, origins, originals, used_sessions, instances = self._ingest_parts(
+                plan, transports, self._active[binding][1], ended, self._sequences[binding] + 1)
+            results = {key: value for binding in self._bindings
+                       for key, value in self._case_results(binding, code, ended, witnesses).items()}
+            committed = self._commit(self._bindings, results, witnesses, proofs)
+            self._session_origins = MappingProxyType({**self._session_origins, **origins})
+            self._original_observations = MappingProxyType({**self._original_observations, **originals})
+            self._used_sessions, self._instances = used_sessions, instances
+            self._joint_plan = None
+            return committed
+        except ConformanceError as error:
+            self._end_joint(str(error), ended)
+            raise
+
+    def interrupt_joint(self, code):
+        return self._end_joint(code, _number(time.monotonic() * 1000))
+
+    def _end_joint(self, code, ended):
+        self.joint_partitions()
+        if code not in DIAGNOSTIC_CODES or code == "None":
+            raise ConformanceError()
+        results = {key: value for binding in self._bindings
+                   for key, value in self._case_results(binding, code, ended, ()).items()}
+        committed = self._commit(self._bindings, results, (), {})
+        self._joint_plan = None
+        return committed
+
     def interrupt(self, binding_id, code):
         binding_id = stable_id(binding_id)
-        if binding_id not in self._active:
+        if binding_id not in self._active or self._joint_plan is not None:
             raise ConformanceError("OwnershipInvalid")
         if code not in DIAGNOSTIC_CODES or code == "None":
             raise ConformanceError()

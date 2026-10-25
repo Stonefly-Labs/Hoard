@@ -1,5 +1,6 @@
 """F-07 expectations expanded independently of any binding or result."""
 
+from collections import Counter
 from dataclasses import dataclass
 import json
 from pathlib import Path
@@ -343,6 +344,29 @@ def category_runtime_cases(profile, binding_id):
     return MappingProxyType({
         identity: min(case.case_id for case in applicable if identity in case.witnesses)
         for identity in {identity for case in applicable for identity in case.witnesses}})
+
+
+def category_execution_partitions(profile):
+    """Keep complete method families together without merging repeated binding contexts."""
+    if profile not in ("metadata", "artifacts"):
+        raise ConformanceError("UnsupportedProfile")
+    rows = tuple(sorted((binding, identity) for category, binding, _, _ in CATEGORY_BINDING_SLOTS
+                        if category == profile for identity in category_runtime_cases(profile, binding)))
+    repeated = {identity for identity, count in Counter(identity for _, identity in rows).items() if count > 1}
+    scopes = {}
+    for binding, identity in rows:
+        policy = original_witness_policy(identity)
+        if policy is not None and policy[0] == profile:
+            scope = "original-" + binding if identity in repeated else "original"
+        elif ORIGINAL_INSPECTION_WITNESSES.get(identity) == profile:
+            scope = ("inspection-literals-" if identity in ORIGINAL_INSPECTION_LITERAL_WITNESSES
+                     else "inspection-prepared-") + binding
+        elif profile == "artifacts" and identity in ORIGINAL_ARTIFACT_PROOF_SOURCES:
+            scope = "controller"
+        else:
+            raise ConformanceError("WitnessMissing")
+        scopes.setdefault(scope, []).append((binding, identity))
+    return MappingProxyType({scope: tuple(selected) for scope, selected in sorted(scopes.items())})
 
 
 @dataclass(frozen=True)

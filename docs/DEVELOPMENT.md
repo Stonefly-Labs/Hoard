@@ -8621,6 +8621,27 @@ whitespace, frozen inventory, SDK catalog and patch checks passing.
 This expands discovery/ownership transport guards only, not actual extraction
 or category acceptance. T019/T020 and qualifying profiles remain unchecked.
 
+Category history now also accepts a predeclared joint profile scope map.
+This addresses real artifact methods whose discovery includes both providers'
+parameter rows: imports must not split/rewrite actual source transports after
+execution. The complete binding/identity union and primary cases are copied
+before launch, each scope owns a fresh attempt UUID, and repeated neutral
+identities require different scopes. Both binding histories commit only after
+all scopes, replay/origin state and aggregate budgets validate. Case matching
+uses binding plus identity, so one provider's failed execution cannot fail the
+other provider's same-named successful fact. Failed/incomplete joint attempts
+survive fresh retries; binding-local and joint lifecycle APIs cannot interleave.
+The catalog independently selects six complete scopes/profile, preserving
+both providers' real method parameter families: 134 metadata and 227 artifact
+binding/identity pairs, with no duplicate identity inside one scope.
+Four regressions first fail at missing joint/partition APIs; a fifth checks
+binding-specific assertion failure attribution. All 91 strict evidence
+checks and all 371 tooling checks now pass (354 passed/seventeen explicit native
+macOS skips), with frozen inventory, SDK catalog and patch checks passing.
+This is synthetic diagnostic model evidence, not execution of joint profiles
+or admission of independent inspection/controller qualification. No task,
+review, product/reference/lock or deployment/diagram claims change.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full
