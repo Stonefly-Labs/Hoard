@@ -1676,6 +1676,68 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 with self.assertRaises(evidence.ConformanceError):
                     sources.native_metadata_ownership_control(run, self.inputs, started_ms=9, ended_ms=16)
 
+    def test_unchanged_metadata_consumer_requires_both_explicit_original_native_compositions(self):
+        import conformance_sources as sources
+        from types import SimpleNamespace
+
+        self.category_history(mode="qualification")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+
+            def write(path, value):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(value)
+                path.chmod(0o400)
+
+            assembly = "candidate/tests/fixtures/metadata/Consumer/bin/Release/net10.0/Hoard.Fixtures.Metadata.Consumer.dll"
+            write(root / assembly, b"explicit-unchanged-consumer-model-not-native-execution")
+            self.inputs["runtimeAssemblies"] = {assembly: evidence.file_sha256(root / assembly)}
+            namespace = "qualification-metadata-package-consumer"
+            inputs_path = f"proofs/{namespace}-native-inputs.json"
+            write(root / inputs_path, evidence.canonical_bytes(self.inputs))
+            records, commands = {}, []
+            run = SimpleNamespace(root=root, run_id=self.inputs["runId"], root_id=str(uuid.uuid4()), live_children=lambda: ())
+            for sequence, binding in enumerate(("sqlite", "memory"), 1):
+                control = {
+                    "schemaVersion": 1, "sequence": sequence, "childPid": 200 + sequence,
+                    "childStartSha256": "b" * 64, "startedMs": sequence * 1000, "endedMs": sequence * 1000 + 100,
+                    "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited", "scope": "recovery"}
+                arguments = ["dotnet", str(root / assembly), binding,
+                             str(root / "stores" / namespace / binding / "metadata.db")]
+                native = {
+                    **control, "runId": run.run_id, "rootId": run.root_id,
+                    "argvSha256": evidence.digest(arguments),
+                    "cwdSha256": hashlib.sha256(str((root / assembly).parent).encode()).hexdigest(),
+                    "controlRecordSha256": evidence.digest(control),
+                    "inputFiles": {assembly: self.inputs["runtimeAssemblies"][assembly], inputs_path: evidence.digest(self.inputs)}}
+                records[sequence] = evidence.canonical_bytes(native)
+                write(root / f"proofs/recovery-command-{sequence:04}.json", evidence.canonical_bytes(control))
+                write(root / f"proofs/execution-command-{sequence:04}.json", records[sequence])
+                commands.append({"bindingId": binding, "sequence": sequence, "controllerSha256": evidence.digest(control),
+                                 "executionSha256": hashlib.sha256(records[sequence]).hexdigest()})
+            run.read_execution_record = lambda sequence: records[sequence]
+            graph = {
+                "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+                "invocationGroupId": self.inputs["invocationGroupId"], "inputsSha256": evidence.digest(self.inputs),
+                "assemblyPath": assembly, "inputsPath": inputs_path, "commands": commands}
+            path = root / f"proofs/{namespace}-native-executions.json"
+            write(path, evidence.canonical_bytes(graph))
+            with mock.patch.object(sources, "OwnedRun", type(run)):
+                admitted = sources.native_metadata_package_consumer_control(run, self.inputs, started_ms=999, ended_ms=2101)
+                self.assertEqual(set(admitted["controls"]), {"unchanged-package-consumer"})
+                self.assertEqual(len(admitted["sourceProofs"]), 6)
+                for rows in (commands[:1], commands[::-1], [commands[0], commands[1] | {"bindingId": "sqlite"}]):
+                    write(path, evidence.canonical_bytes(graph | {"commands": rows}))
+                    with self.subTest(commands=rows), self.assertRaises(evidence.ConformanceError):
+                        sources.native_metadata_package_consumer_control(run, self.inputs, started_ms=999, ended_ms=2101)
+                write(path, evidence.canonical_bytes(graph))
+                for bounds in ((1001, 2101), (999, 2099)):
+                    with self.subTest(bounds=bounds), self.assertRaises(evidence.ConformanceError):
+                        sources.native_metadata_package_consumer_control(
+                            run, self.inputs, started_ms=bounds[0], ended_ms=bounds[1])
+
     def category_history(self, *, profile="metadata", mode="diagnostic", max_attempts=1, origin_inputs=None):
         self.inputs.update(mode=mode, profileId=profile, invocation=["profile", profile])
         self.inputs["budgets"]["profileSeconds"] = 5400 if profile == "metadata" else 10800

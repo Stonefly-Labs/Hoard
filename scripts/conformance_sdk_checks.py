@@ -42,7 +42,8 @@ from conformance_sources import (
     METADATA_RECOVERY_SCENARIOS, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
     admit_sqlite_noncooperation,
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
-    native_control_record, native_metadata_ownership_control, read_bounded, runtime_arguments, runtime_settings,
+    native_control_record, native_metadata_ownership_control, native_metadata_package_consumer_control,
+    read_bounded, runtime_arguments, runtime_settings,
     source_witnesses as _source_witnesses,
 )
 from conformance_lock_preparation import prepare_project_lock, rebind_local_archives, verify_project_lock
@@ -58,6 +59,7 @@ MEMORY_BINDING = "tests/fixtures/conformance/Bindings/Memory/Memory.csproj"
 SQLITE = "tests/fixtures/metadata/Sqlite/Sqlite.csproj"
 SQLITE_BINDING = "tests/fixtures/conformance/Bindings/Sqlite/Sqlite.csproj"
 METADATA_RECOVERY = "tests/fixtures/metadata/CrashRunner"
+METADATA_PACKAGE_CONSUMER = "tests/fixtures/metadata/Consumer"
 ARTIFACT_RECOVERY = "tests/fixtures/artifacts/CrashRunner"
 ARTIFACT_TRANSFER = "tests/fixtures/artifacts/TransferRunner"
 METADATA_TESTS = f"{CONTRACTS}/Hoard.Metadata.Tests"
@@ -1126,6 +1128,41 @@ def metadata_ownership_diagnostics(run, inputs, candidate):
         "probeSha256": evidence.file_sha256(run.root / probe_path)}
     write_new(run.root / f"proofs/{namespace}-native-executions.json", evidence.canonical_bytes(graph))
     native_metadata_ownership_control(run, inputs, started_ms=0, ended_ms=time.monotonic() * 1000)
+    return evidence.digest(graph)
+
+
+def metadata_package_consumer_diagnostics(run, inputs, candidate):
+    if type(run) is not OwnedRun or inputs.get("profileId") != "metadata" or inputs.get("mode") != "qualification":
+        raise evidence.ConformanceError("UnsupportedProfile")
+    namespace = "qualification-metadata-package-consumer"
+    runtime = candidate / METADATA_PACKAGE_CONSUMER / "bin/Release/net10.0"
+    assembly = runtime / "Hoard.Fixtures.Metadata.Consumer.dll"
+    require_sqlite_environment(inputs, assembly, run.root)
+    verify_runtime_packages(runtime, run.root / "feed/candidate", METADATA_RECOVERY_PACKAGES)
+    assembly_path = assembly.relative_to(run.root).as_posix()
+    if inputs.get("runtimeAssemblies", {}).get(assembly_path) != evidence.file_sha256(assembly):
+        raise evidence.ConformanceError("InputChanged")
+    parent = run.root / "stores" / namespace
+    no_symlinks(parent)
+    parent.mkdir(mode=0o700)
+    inputs_path = f"proofs/{namespace}-native-inputs.json"
+    write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
+    commands = []
+    for binding in ("sqlite", "memory"):
+        directory = parent / binding
+        directory.mkdir(mode=0o700)
+        controller_sha, command = recovery_command(
+            run, assembly, [binding, str(directory / "metadata.db")], cache_id=namespace,
+            execution_inputs=(assembly_path, inputs_path))
+        commands.append({
+            "bindingId": binding, "sequence": command["sequence"], "controllerSha256": controller_sha,
+            "executionSha256": hashlib.sha256(run.read_execution_record(command["sequence"])).hexdigest()})
+    graph = {
+        "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+        "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
+        "assemblyPath": assembly_path, "inputsPath": inputs_path, "commands": commands}
+    write_new(run.root / f"proofs/{namespace}-native-executions.json", evidence.canonical_bytes(graph))
+    native_metadata_package_consumer_control(run, inputs, started_ms=0, ended_ms=time.monotonic() * 1000)
     return evidence.digest(graph)
 
 
@@ -2408,6 +2445,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
                        f"{ARTIFACT_TESTS}/{ARTIFACT_TEST_OUTPUT}/Release/net10.0"}
     runtime_folders.add(f"{ARCHITECTURE_TESTS}/bin/Release/net10.0")
     runtime_folders.add(f"{METADATA_RECOVERY}/bin/Release/net10.0")
+    runtime_folders.add(f"{METADATA_PACKAGE_CONSUMER}/bin/Release/net10.0")
     runtime_folders.add(f"{ARTIFACT_RECOVERY}/bin/Release/net10.0")
     runtime_folders.add(f"{ARTIFACT_TRANSFER}/bin/Release/net10.0")
     native_rid = {"x86_64": "linux-x64", "aarch64": "linux-arm64"}.get(observed_environment.get("architecture"))
@@ -2829,7 +2867,8 @@ def _category_record(run, inputs, history, scopes, code=None):
     if code is None and inputs["mode"] == "qualification" and inputs["profileId"] == "metadata":
         for name, namespace in (("recoverySourcesSha256", "qualification-sqlite-recovery"),
                                 ("nativeSourcesSha256", "qualification-sqlite-native-noncooperation"),
-                                ("ownershipSourcesSha256", "qualification-sqlite-ownership")):
+                                ("ownershipSourcesSha256", "qualification-sqlite-ownership"),
+                                ("consumerSourcesSha256", "qualification-metadata-package-consumer")):
             path = f"proofs/{namespace}-native-executions.json"
             if path not in history.proofs:
                 raise evidence.ConformanceError("ProofMismatch")
@@ -2874,6 +2913,7 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
             sqlite_noncooperation(run, inputs, candidate, namespace="qualification-sqlite-native-noncooperation")
             metadata_recovery_diagnostics(run, inputs, candidate, namespace="qualification-sqlite-recovery")
             metadata_ownership_diagnostics(run, inputs, candidate)
+            metadata_package_consumer_diagnostics(run, inputs, candidate)
         except evidence.ConformanceError as error:
             print(json.dumps({
                 "qualification": False, "phase": "category-control-failure",
@@ -3535,6 +3575,15 @@ def execute(repository, destination):
             write_new(run.root / "proofs/metadata-recovery-lock-derivation.json",
                       evidence.canonical_bytes(recovery_record))
         verify_runtime_packages(candidate / METADATA_RECOVERY / "bin/Release/net10.0",
+                                feed, METADATA_RECOVERY_PACKAGES)
+        consumer_project = candidate / METADATA_PACKAGE_CONSUMER / "Consumer.csproj"
+        consumer_lock, consumer_record = prepare_project_lock(consumer_project, candidate, feed, "candidate")
+        build(run, consumer_project, config, "metadata-package-consumer", lock=consumer_lock)
+        if consumer_record is not None:
+            verify_project_lock(consumer_record, candidate, feed)
+            write_new(run.root / "proofs/metadata-consumer-lock-derivation.json",
+                      evidence.canonical_bytes(consumer_record))
+        verify_runtime_packages(candidate / METADATA_PACKAGE_CONSUMER / "bin/Release/net10.0",
                                 feed, METADATA_RECOVERY_PACKAGES)
         artifact_records = []
         for name in ("Local", "ObjectSemantics", "HostAdapters"):

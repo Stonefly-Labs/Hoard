@@ -452,6 +452,13 @@ cannot substitute consistently rehashed caller files for original output bytes.
 Its original runtime witnesses remain mandatory; no new execution UUID,
 public entity field or source-parent scope is introduced.
 
+MP-46 references a six-file graph with current inputs and both original
+native/controller pairs. One immutable package-only consumer executes explicit
+SQLite and memory compositions in separate owned stores; exact argv/cwd/input
+maps and ordered joint bounds must agree. Missing/relabelled compositions
+remain incomplete. Existing runtime witnesses remain mandatory; no new UUID,
+public entity field or source-parent scope is introduced.
+
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits
 `Released`; expiration/cancellation/observation timeout does not. Retained

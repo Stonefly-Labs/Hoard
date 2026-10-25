@@ -214,6 +214,14 @@ Missing/reordered reopen, changed probe bytes or foreign identities reject.
 MP-43's frozen runtime witnesses remain mandatory; no recovery-source UUID is
 borrowed. `ownershipSourcesSha256` must reference imported proof bytes.
 The real macOS diagnostic is non-qualifying; Linux confirmation is pending.
+MP-46 additionally runs the same immutable package-only consumer binary across
+both explicit bindings and distinct owned stores before runtime scopes. Its
+common assertion body is unchanged; opt-in safe events use exact argv while
+legacy invocation/output remains intact. The six-file graph independently
+joins both native/controller pairs, immutable assembly/current-input maps,
+argv/cwd and ordered joint bounds. Missing/reordered/relabelled compositions
+reject; existing runtime witnesses and imported `consumerSourcesSha256` remain
+required. Local actual explicit/legacy execution is non-qualifying.
 Earlier exact `2ac4ed6`, run 40215065690, independently passes all three Linux
 jobs, 280 foundations without skips and 128 scopes/1,819 witnesses. Its seventh
 qualification-input metadata scope and post-timeout input checks pass, retaining

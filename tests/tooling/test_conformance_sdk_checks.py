@@ -137,7 +137,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         self._assert_category_batch("artifacts", 227)
 
     def test_qualification_stall_and_recovery_are_fresh_inside_joint_attempt_before_scopes(self):
-        for failed in (None, "stall", "recovery", "ownership"):
+        for failed in (None, "stall", "recovery", "ownership", "consumer"):
             root = self.directory / str(failed)
             (root / "proofs").mkdir(parents=True)
             run = SimpleNamespace(root=root)
@@ -174,18 +174,19 @@ class SdkDiagnosticTests(unittest.TestCase):
                     checks, "metadata_recovery_diagnostics", side_effect=controls(
                         "recovery", "qualification-sqlite-recovery")), patch.object(
                     checks, "metadata_ownership_diagnostics", side_effect=controls("ownership", None)), patch.object(
+                    checks, "metadata_package_consumer_diagnostics", side_effect=controls("consumer", None)), patch.object(
                     checks, "category_attempt", side_effect=scope), patch.object(
                     checks, "_category_record", return_value={"qualification": False}), contextlib.redirect_stdout(io.StringIO()):
                 options = {"inspection_cases": {}, "inspection_configurations": {}, "native_sources": sources}
                 if failed is None:
                     self.assertFalse(checks.category_diagnostics(run, inputs, candidate, **options)["qualification"])
-                    self.assertEqual(calls, ["begin", "stall", "recovery", "ownership", "scope", "finish"])
+                    self.assertEqual(calls, ["begin", "stall", "recovery", "ownership", "consumer", "scope", "finish"])
                     history.interrupt_joint.assert_not_called()
                 else:
                     with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
                         checks.category_diagnostics(run, inputs, candidate, **options)
-                    self.assertEqual(calls, ["begin", *["stall", "recovery", "ownership"][
-                        :["stall", "recovery", "ownership"].index(failed) + 1]])
+                    expected = ["begin", "stall", "recovery", "ownership", "consumer"]
+                    self.assertEqual(calls, expected[:expected.index(failed) + 1])
                     history.interrupt_joint.assert_called_once_with("ProofMismatch")
                     history.finish_joint.assert_not_called()
 
@@ -1965,6 +1966,45 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertNotIn("execution_outputs", calls[1][1])
         self.assertEqual(native.call_args_list[0].kwargs["output_files"],
                          {probe_path: checks.evidence.file_sha256(root / probe_path)})
+        admission.assert_called_once()
+        self.assertEqual((root / f"proofs/{namespace}-native-inputs.json").read_bytes(),
+                         checks.evidence.canonical_bytes(inputs))
+
+    def test_native_package_consumer_runs_same_assembly_with_explicit_binding_and_owned_store(self):
+        root = self.directory
+        candidate = root / "candidate"
+        assembly = candidate / checks.METADATA_PACKAGE_CONSUMER / "bin/Release/net10.0/Hoard.Fixtures.Metadata.Consumer.dll"
+        assembly.parent.mkdir(parents=True)
+        assembly.write_bytes(b"explicit-common-consumer-model-not-native")
+        (root / "stores").mkdir()
+        (root / "proofs").mkdir()
+        namespace = "qualification-metadata-package-consumer"
+        inputs = {"profileId": "metadata", "mode": "qualification", "invocationGroupId": str(uuid.uuid4()),
+                  "runtimeAssemblies": {assembly.relative_to(root).as_posix(): checks.evidence.file_sha256(assembly)}}
+        run = SimpleNamespace(root=root, run_id=str(uuid.uuid4()), command_sequence=0,
+                              read_execution_record=lambda sequence: b"explicit-native-model-" + str(sequence).encode())
+        calls = []
+
+        def execute(owner, selected, arguments, **options):
+            self.assertIs(owner, run)
+            self.assertEqual(selected, assembly)
+            run.command_sequence += 1
+            calls.append((arguments, options))
+            return "a" * 64, {"sequence": run.command_sequence}
+
+        with patch.object(checks, "OwnedRun", type(run)), patch.object(
+                checks, "require_sqlite_environment"), patch.object(checks, "verify_runtime_packages"), patch.object(
+                checks, "recovery_command", side_effect=execute), patch.object(
+                checks, "native_metadata_package_consumer_control") as admission:
+            result = checks.metadata_package_consumer_diagnostics(run, inputs, candidate)
+        graph = checks.evidence.load_json((root / f"proofs/{namespace}-native-executions.json").read_bytes())
+        self.assertEqual(result, checks.evidence.digest(graph))
+        self.assertEqual([row["bindingId"] for row in graph["commands"]], ["sqlite", "memory"])
+        for (arguments, options), binding in zip(calls, ("sqlite", "memory"), strict=True):
+            self.assertEqual(arguments, [binding, str(root / "stores" / namespace / binding / "metadata.db")])
+            self.assertEqual(options["execution_inputs"],
+                             (assembly.relative_to(root).as_posix(), f"proofs/{namespace}-native-inputs.json"))
+            self.assertEqual(options["cache_id"], namespace)
         admission.assert_called_once()
         self.assertEqual((root / f"proofs/{namespace}-native-inputs.json").read_bytes(),
                          checks.evidence.canonical_bytes(inputs))

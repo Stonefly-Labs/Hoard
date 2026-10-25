@@ -9232,6 +9232,26 @@ explicitly without Linux confinement or qualification. The modeled metadata
 target is 81/12/9/0 across unchanged seven scopes/135 witnesses/five parents;
 exact Linux confirmation and the rest of the implementation stage are pending.
 
+MP-46 next builds the existing package-only metadata consumer in the native
+SDK path and snapshots its runtime with current inputs. The common
+`MetadataConsumer.cs` assertion body remains unchanged. An opt-in safe-event
+mode accepts only explicit `sqlite|memory` and an absolute owned database path;
+legacy environment selection/output is unchanged. One immutable binary runs
+both compositions in distinct fresh stores after joint begin and before
+runtime scopes. Independent six-file authority requires both exact native/
+controller records, argv/cwd/current-input maps, the same consumer assembly
+and nested ordered timing. A missing/reordered/relabelled composition rejects;
+the final summary requires imported `consumerSourcesSha256`. MP-46's original
+runtime witnesses remain mandatory. Missing authority fails before repair.
+
+All 395 tooling checks pass with 17 native skips. Fresh standard locked metadata
+package preparation completes with eight packages, runtime package byte checks
+pass, and the identical consumer runs both explicit and legacy modes on both
+providers on macOS. Consumer assembly/common assertion hashes stay unchanged
+across all four executions. These are non-qualifying diagnostics, not Linux
+containment. The modeled target is 83/10/9/0; seven scopes/135 witnesses/five
+parents are unchanged, and exact Linux/full-stage confirmation remains pending.
+
 Earlier exact `2ac4ed66505c1035aab0c490510eeee44d475e32`,
 [run40215065690](https://github.com/Stonefly-Labs/Hoard/actions/runs/40215065690),
 now independently passes all three Linux jobs: 280 native foundations without

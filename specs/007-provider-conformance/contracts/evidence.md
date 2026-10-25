@@ -234,6 +234,16 @@ The case still requires its frozen actual runtime witnesses, with no unrelated
 source UUID. `ownershipSourcesSha256` comes only from imported proof bytes.
 No public entity schema changes or native success are inferred from models.
 
+MP-46 retains a separate six-file graph/input/two-command-pair proof. The same
+immutable package-only consumer must execute both independently selected
+bindings through explicit argv and isolated owned stores inside the joint
+attempt. Its common assertion body remains unchanged; legacy invocation stays
+supported. Original native records bind exact assembly/current inputs,
+argv/cwd, successful settled commands and ordered timing. Missing, reordered
+or relabelled compositions cannot supply `unchanged-package-consumer`.
+Original runtime witnesses remain required, and `consumerSourcesSha256` is
+taken only from imported bytes. No public entity schema changes.
+
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private
 revision-2 execution proof adds a distinct `originalObservations` collection;

@@ -517,6 +517,64 @@ def native_metadata_ownership_control(run, inputs, *, started_ms, ended_ms):
         "sourceProofs": MappingProxyType(proof_data)})
 
 
+def native_metadata_package_consumer_control(run, inputs, *, started_ms, ended_ms):
+    if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    started_ms, ended_ms = evidence._number(started_ms), evidence._number(ended_ms)
+    if (inputs["profileId"] != "metadata" or inputs["mode"] != "qualification"
+            or inputs["runId"] != run.run_id or ended_ms < started_ms):
+        raise evidence.ConformanceError("InputChanged")
+    assembly_path, assembly = _metadata_control_assembly(
+        run, inputs, "/tests/fixtures/metadata/Consumer/bin/Release/net10.0/Hoard.Fixtures.Metadata.Consumer.dll")
+    namespace = "qualification-metadata-package-consumer"
+    inputs_path = f"proofs/{namespace}-native-inputs.json"
+    input_raw = _readonly(run.root / inputs_path, 16 * 1024 * 1024)
+    if input_raw != evidence.canonical_bytes(inputs):
+        raise evidence.ConformanceError("InputChanged")
+    graph_path = f"proofs/{namespace}-native-executions.json"
+    graph_raw = _readonly(run.root / graph_path, 64 * 1024)
+    graph = evidence.load_json(graph_raw)
+    if not isinstance(graph, dict) or not isinstance(graph.get("commands"), list) or len(graph["commands"]) != 2:
+        raise evidence.ConformanceError("ProofMismatch")
+    expected = {
+        "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+        "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
+        "assemblyPath": assembly_path, "inputsPath": inputs_path, "commands": graph["commands"]}
+    if graph_raw != evidence.canonical_bytes(expected):
+        raise evidence.ConformanceError("ProofMismatch")
+    proof_data = {graph_path: graph_raw, inputs_path: input_raw}
+    previous_sequence, previous_end = 0, started_ms
+    for row, binding in zip(graph["commands"], ("sqlite", "memory"), strict=True):
+        if (not isinstance(row, dict) or set(row) != {
+                "bindingId", "sequence", "controllerSha256", "executionSha256"}
+                or row["bindingId"] != binding or type(row["sequence"]) is not int
+                or row["sequence"] <= previous_sequence):
+            raise evidence.ConformanceError("ProofMismatch")
+        sequence = row["sequence"]
+        control_path = f"proofs/recovery-command-{sequence:04}.json"
+        native_path = f"proofs/execution-command-{sequence:04}.json"
+        control_raw = _readonly(run.root / control_path, 64 * 1024)
+        command = evidence.load_json(control_raw)
+        admit_owned_command(command, sequence, scope="recovery", detail=None, exit_code=0, max_duration=300000)
+        if not previous_end <= command["startedMs"] <= command["endedMs"] <= ended_ms:
+            raise evidence.ConformanceError("ProofMismatch")
+        arguments = ["dotnet", str(assembly), binding, str(run.root / "stores" / namespace / binding / "metadata.db")]
+        native_raw = native_control_record(
+            run, sequence, control_raw, arguments=arguments, cwd=assembly.parent,
+            input_files={assembly_path: inputs["runtimeAssemblies"][assembly_path], inputs_path: evidence.digest(inputs)})
+        if (_readonly(run.root / native_path, 64 * 1024) != native_raw
+                or row["controllerSha256"] != hashlib.sha256(control_raw).hexdigest()
+                or row["executionSha256"] != hashlib.sha256(native_raw).hexdigest()):
+            raise evidence.ConformanceError("ProofMismatch")
+        proof_data[control_path], proof_data[native_path] = control_raw, native_raw
+        previous_sequence, previous_end = sequence, command["endedMs"]
+    return MappingProxyType({
+        "controls": MappingProxyType({
+            "unchanged-package-consumer": tuple(hashlib.sha256(raw).hexdigest() for raw in proof_data.values())}),
+        "sourceProofs": MappingProxyType(proof_data)})
+
+
 class NativeCategorySources:
     def __init__(self, run, *, inspection_inputs, inspection_configurations):
         if type(run) is not OwnedRun:
@@ -549,20 +607,16 @@ class NativeCategorySources:
         return MappingProxyType({**inspected["observation"], **graph})
 
     def metadata_controls(self, inputs, *, started_ms, ended_ms):
-        recovered = native_metadata_recovery_controls(
-            self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
-        native = native_metadata_noncooperation_control(
-            self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
-        owned = native_metadata_ownership_control(
-            self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
-        if (set(recovered["controls"]) & set(native["controls"])
-                or set(recovered["sourceProofs"]) & set(native["sourceProofs"])
-                or (set(recovered["controls"]) | set(native["controls"])) & set(owned["controls"])
-                or (set(recovered["sourceProofs"]) | set(native["sourceProofs"])) & set(owned["sourceProofs"])):
-            raise evidence.ConformanceError("ProofMismatch")
+        collected = {"controls": {}, "sourceProofs": {}}
+        for authority in (native_metadata_recovery_controls, native_metadata_noncooperation_control,
+                          native_metadata_ownership_control, native_metadata_package_consumer_control):
+            observed = authority(self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
+            for key, target in collected.items():
+                if set(target) & set(observed[key]):
+                    raise evidence.ConformanceError("ProofMismatch")
+                target.update(observed[key])
         return MappingProxyType({
-            key: MappingProxyType({**recovered[key], **native[key], **owned[key]})
-            for key in ("controls", "sourceProofs")})
+            key: MappingProxyType(value) for key, value in collected.items()})
 
     def _corroborate(self, inputs, manifest, observed, *, category_scope, manifest_data, owner_data):
         run = self._run

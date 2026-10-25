@@ -6326,6 +6326,23 @@ rejection, owner kill and reopen also pass in an explicitly non-qualifying
 macOS diagnostic, not Linux confinement or a full-profile receipt. Exact native
 confirmation and the remaining tasks are pending.
 
+MP-46 next builds/captures the existing package-only consumer runtime and runs
+one immutable binary across both explicit bindings and distinct owned stores
+inside the joint attempt. Its common assertion body is unchanged. Opt-in safe
+events accept explicit provider/database argv; legacy selection/output remains
+unchanged. Independent six-file admission requires both original native/
+controller pairs, exact argv/cwd/current inputs, the same assembly and ordered
+joint timing. Missing/reordered/relabelled compositions reject. Original
+runtime witnesses remain required and `consumerSourcesSha256` comes from
+imported proofs. The missing authority fails before implementation.
+
+All 395 tooling checks pass with 17 native skips. Fresh eight-package locked
+metadata preparation, exact runtime package checks and consumer whitespace
+verification pass. Actual explicit and legacy invocations succeed on both
+providers with unchanged consumer/common assertion hashes, without a Linux
+containment claim. The modeled target is 83/10/9/0 across unchanged seven
+scopes/135 witnesses/five parents; exact native and full-stage gates are pending.
+
 Earlier exact `2ac4ed66505c1035aab0c490510eeee44d475e32`,
 [run40215065690](https://github.com/Stonefly-Labs/Hoard/actions/runs/40215065690),
 now independently passes three Linux jobs, 280 foundations without skips,

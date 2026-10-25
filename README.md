@@ -2068,6 +2068,16 @@ witnesses remain mandatory. The new modeled target is 81 Passed/12 Incomplete/9
 NotApplicable, with unchanged seven scopes/135 witnesses/five source parents.
 Fresh locked package preparation and a real two-process macOS diagnostic pass;
 neither supplies Linux containment or a qualifying profile receipt.
+
+MP-46 now builds and runs the same package-only consumer binary against both
+explicit bindings in separate owned stores. Its common assertion body is
+unchanged; opt-in safe events use provider/database argv instead of ambient
+selection, while legacy invocation/output remains unchanged. Independent
+six-file graph admission requires both original native executions and the same
+immutable assembly/current inputs inside the joint attempt. Missing, reordered
+or relabeled compositions reject. Both explicit and legacy modes pass on both
+providers locally; the modeled target is 83/10/9/0, with native confirmation and
+full-profile qualification still pending.
 The corrected producer's native foundation run then exposed a second,
 test-only defect at the same assertion: the Linux-only barrier test lacked its
 `hashlib` import. That import is now explicit; the failed checkpoint is not admitted.
