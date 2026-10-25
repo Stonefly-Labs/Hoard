@@ -4129,8 +4129,14 @@ acceptance. Fresh preparations pass 311 artifact, 73 Consumer and 89+89 metadata
 cases without skips. Fifteen actual archives reproduce the full-filename map
 SHA-256 `2a871fdf07934fae09154e259a523d244fa937b2199c05b2dd900c1641ae6992`;
 ten dependency images match their archive bytes per preparation. Transfer packets
-remain reused unchanged, not fresh origins. The next native request is
-208 foundations and 91 scopes/780 observations, pending.
+remain reused unchanged, not fresh origins. Native run `40148998281` binds exact
+head `53b14333b5f9d2f175627c89801cac218f72c14c`: all three jobs,
+208 foundations without failures/errors/skips and 91 scopes/780 exact
+discoveries/executions, including all four capacity/ordinary-observer rows and
+every actual prerequisite proof. Input:
+`82b2c9e0ee5a59a944cee386943a3123d8dabeaa9b142a6e6182fb9caa42a2ba`;
+preparation: `0fe7ad5982183dc9e6753d78fe562040d0428438d8bbef21cf7739d6fe96c2f6`;
+free scratch 91,721,900,032 bytes. This remains diagnostic, not full qualification.
 
 T027..T030, complete mandatory fault drivers/origins, category/profile acceptance
 and final T081 remain open. Tasks, reviewer markers, tracked locks, historical
@@ -4166,6 +4172,45 @@ request is 209 foundations and 92 scopes/784 observations, pending.
 Full fault-driver/origin/category/profile qualification and final T081 remain
 open; tasks, reviewer markers, tracked locks, historical seals and product/
 architecture/deployment examples remain unaffected.
+
+### Genuine synchronous storage holds and retained authority
+
+The partial artifact projection now maps an owned synchronous hold to Local's
+existing record-write callback and Object's existing physical-delete callback,
+without changing either provider mechanism. Deletion is reserved before arming.
+The first actual package run correctly failed both new rows because the default
+partial session has no reference-query authority and denies deletion before
+native entry. Explicit available-zero reference authority fixes setup without
+weakening that guard; an early public return before entry now fails immediately.
+This is controlled synchronous fixture blocking, not a stalled filesystem syscall.
+
+Both common parameters require deadline/uncertain caller return with retained
+ownership, actual pending workers, admission/readiness fencing, real authority
+exclusion and failed retained stop while held. Explicit release precedes actual
+worker settlement and successful stop; the borrowed source outlives the work.
+Scope disposal is identity-checked, task-stable, and joins genuine workers after
+disarming. Stale disposal cannot remove a replacement. Ownership removes remaining
+controls only after stop/worker settlement. The fifteen-second watchdog records
+unexpected expiry against final settlement rather than fabricating cleanup.
+
+The absent shared consumer first fails intended `CS0117`; the exact two-row scope
+first fails its factory regression. Actual prepared-assembly discovery matches
+both identities. Tooling passes 318 checks (301 passed/seventeen macOS-native
+skips), including 92 SDK checks. SDK/both adapter/Consumer formatting, frozen
+inventory, catalogs and patch checks pass. Fresh preparation/replay passes
+311 artifact, 79 Consumer and 89+89 metadata cases without skips; fifteen actual
+archives reproduce canonical full-filename map SHA-256
+`bed443dfceb7b1526fe8340f1fa0771856e2416233f4e6372c191085cee6bdcf`.
+Ten runtime dependency images match package bytes per preparation; transfer
+packets remain reused unchanged, not fresh origins.
+
+Bounded custom architecture review found no actionable ownership/concurrency/
+boundary bug; it is a control prerequisite review, not final T081 or complete
+category admission. Original cross-process native containment remains mandatory
+and separate. The next native request is 210 foundations and 93 scopes/
+786 observations, pending. Full mandatory fault-driver/origin/category/profile
+qualification, tasks and reviewer markers remain open. Tracked locks, historical
+seals and product/architecture/deployment examples remain unaffected.
 
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations

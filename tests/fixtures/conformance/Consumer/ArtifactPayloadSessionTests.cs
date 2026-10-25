@@ -11,6 +11,20 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactPayloadSessionTests
 {
     [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Synchronous_storage_hold_retains_actual_worker_and_protection_until_release(string provider)
+    {
+        await using var resources = new RecordingDirectories();
+        var session = await CreateAsync(provider, resources, new(references: (_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
+        try { await ArtifactOwnershipAssertions.SynchronousStorageHoldAsync(session, default); }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local", false)]
     [InlineData("local", true)]
     [InlineData("object", false)]

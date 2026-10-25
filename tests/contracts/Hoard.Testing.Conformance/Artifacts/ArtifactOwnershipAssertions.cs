@@ -1,10 +1,70 @@
 using Hoard.Abstractions.Storage;
+using Hoard.Testing.Conformance.Bindings;
 using static Hoard.Testing.Conformance.Artifacts.ArtifactPublicationAssertions;
 
 namespace Hoard.Testing.Conformance.Artifacts;
 
 public static class ArtifactOwnershipAssertions
 {
+    public static async Task SynchronousStorageHoldAsync(
+        IArtifactAssertionSession session, CancellationToken cancellationToken)
+    {
+        using var source = new ShortSource("actual synchronous storage ownership"u8.ToArray());
+        var receipt = await PublishAsync(session.Store, source, new(1024), cancellationToken);
+        var ticket = Success(await session.Store.ReserveDeleteAsync(new(receipt.Stamp), new(), cancellationToken));
+        var previous = await session.HoldSynchronousStorageAsync(cancellationToken);
+        await previous.DisposeAsync();
+        await using var hold = await session.HoldSynchronousStorageAsync(cancellationToken);
+        await previous.DisposeAsync();
+        var deleting = session.Store.DeleteAsync(
+            ticket, new(TimeSpan.FromMilliseconds(100)), cancellationToken).AsTask();
+        Task? workers = null;
+        try
+        {
+            var entered = hold.WaitForEntryAsync(cancellationToken).AsTask();
+            Assert.Same(entered, await Task.WhenAny(entered, deleting));
+            await entered;
+            var failed = Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+                await deleting.WaitAsync(TimeSpan.FromSeconds(2)));
+            Assert.True(failed.Code is ArtifactFailureCode.DeadlineExceeded or ArtifactFailureCode.Uncertain);
+            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failed.Cleanup);
+            workers = session.AwaitSettlementAsync(CancellationToken.None).AsTask();
+            Assert.False(workers.IsCompleted);
+            Assert.Equal(1, hold.ObservationCount);
+            var rejected = Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
+                await session.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), cancellationToken));
+            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, rejected.Code);
+            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, rejected.Cleanup);
+            var protection = await session.Authority.AcquireAsync(new(Guid.NewGuid(),
+                ArtifactProtectionOperation.Read, session.Identity, receipt.Stamp.Identity.Digest,
+                new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp)),
+                new(TimeSpan.FromMilliseconds(50)), cancellationToken);
+            if (protection is ArtifactResult<IArtifactProtectionGuard>.Success unexpected)
+            { await unexpected.Value.DisposeAsync(); }
+            Assert.Equal(ArtifactFailureCode.DeadlineExceeded,
+                Assert.IsType<ArtifactResult<IArtifactProtectionGuard>.Failure>(protection).Code);
+            var stopped = Assert.IsType<ArtifactResult<ArtifactShutdown>.Failure>(
+                await session.Lifetime.StopAsync(new(TimeSpan.FromMilliseconds(50)), cancellationToken)
+                    .AsTask().WaitAsync(TimeSpan.FromSeconds(2)));
+            Assert.Equal(ArtifactFailureCode.CleanupIncomplete, stopped.Code);
+            Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, stopped.Cleanup);
+            Assert.False(workers.IsCompleted);
+            Assert.False(session.Ready);
+            Assert.Equal(1, hold.ObservationCount);
+            Assert.False(source.WasDisposed);
+        }
+        finally
+        {
+            hold.Release();
+            await deleting.WaitAsync(TimeSpan.FromSeconds(10));
+            if (workers is not null) { await workers; }
+            await session.AwaitSettlementAsync(CancellationToken.None);
+        }
+        Assert.Equal(ArtifactCleanupState.Released, Success(
+            await session.Lifetime.StopAsync(new(TimeSpan.FromSeconds(2)), CancellationToken.None)).State);
+        Assert.False(source.WasDisposed);
+    }
+
     public static async Task CooperativeInactivityAsync(
         IArtifactStore store, Func<Task> whenIdle, CancellationToken cancellationToken)
     {

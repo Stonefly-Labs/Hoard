@@ -36,6 +36,7 @@ public static class LocalArtifactAssertionSessions
             store.DamagePayloadForQualificationAsync(stamp, truncate, cancellationToken);
         protected override void SetObserver(string boundary, Func<ValueTask> observer) => controls.SetObserver(boundary, observer);
         protected override void RemoveObserver(string boundary) => controls.RemoveObserver(boundary);
+        protected override void SetSynchronousStorageHold(Action? hold) => controls.BeforeRecordWrite = hold;
 
         protected override string Boundary(ArtifactObservationPoint point) => point switch
         {

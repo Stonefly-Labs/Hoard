@@ -185,6 +185,8 @@ public interface IArtifactAssertionSession : IAsyncDisposable
     ValueTask<IArtifactFaultRegistration> InjectCapacityFailureAsync(CancellationToken cancellationToken);
     /// <summary>Fails the actual indexed cleanup of a result that was not delivered to its caller.</summary>
     ValueTask<IArtifactFaultRegistration> InjectUnclaimedCleanupFailureAsync(CancellationToken cancellationToken);
+    /// <summary>Holds a real synchronous fixture boundary; reserve the deletion ticket before arming. Not a stalled filesystem syscall.</summary>
+    ValueTask<IArtifactSynchronousHold> HoldSynchronousStorageAsync(CancellationToken cancellationToken);
     /// <summary>Damages the exact current payload through owned fixture work; it does not change receipt or quarantine state.</summary>
     ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken);
     /// <summary>Joins current provider workers; this does not close authority admission or release owned roots.</summary>
@@ -195,6 +197,12 @@ public interface IArtifactAssertionSession : IAsyncDisposable
 public interface IArtifactFaultRegistration : IAsyncDisposable
 {
     long ObservationCount { get; }
+}
+
+public interface IArtifactSynchronousHold : IArtifactFaultRegistration
+{
+    ValueTask WaitForEntryAsync(CancellationToken cancellationToken);
+    void Release();
 }
 
 public interface IArtifactConformanceSession : IAsyncDisposable

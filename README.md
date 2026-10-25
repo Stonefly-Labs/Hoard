@@ -1710,7 +1710,9 @@ fault final settlement. Four package-only rows prove repeated failure, full
 single-ticket capacity restoration, exact reconciliation, stale-scope disposal,
 successful publication/readback and genuine successful or faulted settlement.
 Fresh package preparations pass 311 artifact, 73 Consumer and 89+89 metadata
-cases; the next native request is 91 scopes/780 observations, pending.
+cases. Native run `40148998281` at `53b1433` passed all three jobs,
+208 foundations and 91 scopes/780 exact discoveries/executions with every
+actual prerequisite.
 This injects storage failure, not actual disk exhaustion.
 Scoped unclaimed-result cleanup injection now retains genuinely indexed
 reservation/read handoffs, fences admission/readiness, and reports retained
@@ -1719,6 +1721,14 @@ retry and actual successful final settlement. Four new package-only rows pass;
 fresh replay covers 311 artifact, 77 Consumer and 89+89 metadata cases.
 The next native request is 92 scopes/784 observations, pending. This does not
 replace physical permission-failure checks or complete mandatory fault drivers.
+Owned synchronous holds now use Local's actual record-write and Object's actual
+delete callbacks, with deletion reserved before arming and explicit reference
+authority. Two package-only rows retain real workers, authority protection and
+failed-stop ownership until explicit release, then require actual settlement.
+These are controlled synchronous fixture boundaries, not stalled filesystem
+syscalls or replacements for the original cross-process containment proof.
+Fresh replay covers 311 artifact, 79 Consumer and 89+89 metadata cases;
+the next native request is 93 scopes/786 observations, pending.
 Full bindings, remaining mandatory fault controls and category/profile
 acceptance remain unfinished.
 

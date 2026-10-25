@@ -886,7 +886,9 @@ restored full single-ticket capacity, and actual publication/readback; the
 unexpected-observer counterparts require the exact original exception in the
 faulted final task and no optimistic Released observation. This is an injected
 storage failure, not measured disk exhaustion or a complete mandatory fault
-driver. The next request is 91 scopes/780 observations, pending.
+driver. Native run `40148998281` at `53b1433` passed all three jobs,
+208 foundations and 91 scopes/780 exact discoveries/executions with every actual
+prerequisite, not complete qualification.
 
 `InjectUnclaimedCleanupFailureAsync` uses the existing Local/Object indexed
 undelivered-result reclaim seam. The actual result is indexed before the
@@ -901,6 +903,26 @@ cleanup paths; the original borrowed source survives until actual settlement.
 This does not substitute for physical prefix/object permission-failure cases,
 change provider cleanup mechanisms, or declare complete mandatory fault support.
 The next request is 92 scopes/784 observations, pending.
+
+The owned synchronous storage hold maps Local's real `BeforeRecordWrite` and
+Object's real `BeforeObjectDelete` callbacks. The common consumer publishes and
+reserves the deletion ticket before arming; configured available-zero reference
+authority permits actual deletion admission. A missing query correctly denies
+deletion and cannot count as boundary entry. An early public return before entry
+fails immediately. The synchronous hold ignores operation cancellation, counts
+arrivals and has a fifteen-second watchdog whose expiry poisons final settlement.
+It is not a stalled filesystem syscall.
+
+Both parameters require deadline/uncertain caller failure with retained live
+ownership, actual pending workers, fenced admission/readiness, real authority
+exclusion and failed retained stop while held. Explicit release precedes genuine
+worker settlement and successful stop. Scope disposal is identity-checked and
+task-stable, disarms only itself and joins actual workers; stale disposal must
+not remove a replacement. Ownership removes remaining controls only after actual
+stop/worker settlement. Existing borrowed-source, authority-settlement and root
+authorization ordering is preserved. Original cross-process native containment
+remains mandatory and separate. The next request is 93 scopes/786 observations,
+pending, not complete fault-driver/profile admission.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

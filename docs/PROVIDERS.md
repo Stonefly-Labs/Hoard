@@ -705,8 +705,10 @@ Common checks exercise repeated failures, exact not-committed reconciliation,
 borrowed sources, replacement scopes and actual publication/readback after
 repair. Package-only tests constrain staging capacity to one full ticket and
 observe genuine successful versus faulted final settlement on both providers.
-Fresh preparations pass 311 artifact and 73 Consumer cases; the next native
-request is 91 scopes/780 observations, pending, not full fault-driver admission.
+Fresh preparations pass 311 artifact and 73 Consumer cases. Native run
+`40148998281` at `53b1433` passed all three jobs, 208 foundations and
+91 scopes/780 exact discoveries/executions with every actual prerequisite.
+This is diagnostic evidence, not full fault-driver admission.
 
 `InjectUnclaimedCleanupFailureAsync` targets the existing actual indexed
 undelivered-result reclaim seam, not prefix/object permission failures. A real
@@ -718,6 +720,21 @@ the scope permits the real stop cleanup retry and successful final settlement,
 without clearing observer errors or replacing settlement promises. Four new rows
 pass on both providers; fresh replay covers 311 artifact and 77 Consumer cases.
 The next native request is 92 scopes/784 observations, pending, not qualification.
+
+`HoldSynchronousStorageAsync` controls Local's existing `BeforeRecordWrite` or
+Object's existing `BeforeObjectDelete`. Reserve the delete ticket before arming,
+and explicitly configure available reference authority; the default partial
+projection correctly denies deletion without it. A counted synchronous hold
+ignores operation cancellation, has a fifteen-second fail-closed watchdog and
+requires explicit release. Disposal disarms only its own registration and joins
+actual workers; stale disposal cannot remove a replacement. Ownership teardown
+removes remaining controls only after provider stop and worker settlement.
+Common checks require real deadline/uncertain caller return with retained work,
+fenced admission/readiness, genuine authority exclusion, failed stop while held
+and actual successful stop after release. This is a synchronous fixture-boundary
+hold, not a stalled filesystem syscall or a replacement for original owned-child
+containment. Fresh replay covers 311 artifact and 79 Consumer cases;
+the next native request is 93 scopes/786 observations, pending, not qualification.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

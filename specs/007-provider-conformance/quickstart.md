@@ -449,14 +449,24 @@ prove repeated classified failure, full single-ticket capacity restoration,
 exact reconciliation, safe replacement/disposal, borrowed-source ownership and
 real repair/readback, while ordinary capacity-shaped observer errors still
 fault the stable final settlement task. Fresh preparations pass 311 artifact,
-73 Consumer and 89+89 metadata cases; the next native request is
-91 scopes/780 observations, pending, not full fault-driver qualification.
+73 Consumer and 89+89 metadata cases. Native run `40148998281` at `53b1433`
+passed all three jobs, 208 foundations and 91 scopes/780 exact discoveries/
+executions with every actual prerequisite, not full fault-driver qualification.
 Scoped unclaimed-result cleanup injection now proves real reservation/read
 handoff retention, readiness/admission fencing, failed stop with retained
 ownership and successful actual cleanup/final settlement only after scope repair.
 It targets the existing cleanup index, not physical prefix/object permission
 faults. Fresh replay passes 311 artifact, 77 Consumer and 89+89 metadata cases;
 the next native request is 92 scopes/784 observations, pending, not qualification.
+Owned synchronous holds now retain actual workers, authority protection and
+failed-stop ownership at Local's existing record-write and Object's existing
+delete callbacks. Reserve deletion before arming and configure genuine available
+reference authority; missing authority correctly prevents entry. Explicit
+release must precede actual settlement. This is controlled synchronous fixture
+blocking, not a stalled filesystem syscall or a substitute for original
+cross-process containment. Fresh replay passes 311 artifact, 79 Consumer and
+89+89 metadata cases; the next native request is 93 scopes/786 observations,
+pending, not complete mandatory fault-driver/category/profile qualification.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

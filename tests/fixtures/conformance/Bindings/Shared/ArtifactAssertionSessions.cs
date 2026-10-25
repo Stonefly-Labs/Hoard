@@ -230,6 +230,7 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
 {
     private readonly ArtifactAssertionOwnership ownership;
     private readonly Dictionary<ArtifactObservationPoint, Registration> observations = [];
+    private SynchronousHold? synchronousHold;
     private readonly object stopGate = new();
     private Task<ArtifactResult<ArtifactShutdown>>? stopping;
 
@@ -332,6 +333,22 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
     protected abstract string Boundary(ArtifactObservationPoint point);
     protected abstract void SetObserver(string boundary, Func<ValueTask> observer);
     protected abstract void RemoveObserver(string boundary);
+    protected abstract void SetSynchronousStorageHold(Action? hold);
+
+    public ValueTask<IArtifactSynchronousHold> HoldSynchronousStorageAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false } || synchronousHold is not null)
+            { throw new InvalidOperationException("BindingInvalid"); }
+            var registration = new SynchronousHold(this);
+            SetSynchronousStorageHold(registration.Block);
+            synchronousHold = registration;
+            return ValueTask.FromResult<IArtifactSynchronousHold>(registration);
+        }
+    }
 
     public ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
         ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken) =>
@@ -385,6 +402,57 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
         {
             foreach (var registration in observations.Values) { RemoveObserver(registration.Boundary); }
             observations.Clear();
+            if (synchronousHold is not null)
+            {
+                SetSynchronousStorageHold(null);
+                synchronousHold.Release();
+                synchronousHold = null;
+            }
+        }
+    }
+
+    private sealed class SynchronousHold(ArtifactAssertionSession session) : IArtifactSynchronousHold
+    {
+        private readonly TaskCompletionSource entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource released = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private long observationCount;
+        private Task? disposal;
+        public long ObservationCount => Interlocked.Read(ref observationCount);
+        public ValueTask WaitForEntryAsync(CancellationToken cancellationToken) =>
+            new(entered.Task.WaitAsync(session.ownership.Context.ControlBudget, cancellationToken));
+        public void Release() => released.TrySetResult();
+
+        public void Block()
+        {
+            Interlocked.Increment(ref observationCount);
+            entered.TrySetResult();
+            if (!released.Task.Wait(TimeSpan.FromSeconds(15)))
+            {
+                var error = new InvalidOperationException("CleanupIncomplete");
+                session.ownership.ObserverFailures.Enqueue(error);
+                throw error;
+            }
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            lock (session.ownership.Gate)
+            {
+                if (disposal is not null) { return new(disposal); }
+                if (ReferenceEquals(session.synchronousHold, this))
+                {
+                    session.SetSynchronousStorageHold(null);
+                    session.synchronousHold = null;
+                    Release();
+                    disposal = session.ObserveWorkerSettlement().WaitAsync(session.ownership.Context.ControlBudget);
+                }
+                else
+                {
+                    Release();
+                    disposal = Task.CompletedTask;
+                }
+                return new(disposal);
+            }
         }
     }
 
