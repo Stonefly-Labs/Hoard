@@ -2,10 +2,11 @@ using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Fixtures.Artifacts.Local;
 using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactEvidenceTests
+public sealed class ArtifactEvidenceTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task Local_failed_quarantine_persistence_retains_ownership_until_stop_retry_and_reopen()
@@ -39,6 +40,8 @@ public sealed class ArtifactEvidenceTests
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider,
             references: (_, _) => ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
+        var observations = new ArtifactProviderDriver.OriginalObservationSequence(
+            output, nameof(ArtifactEvidenceTests), parameter: $"missing: {missing}");
         string? path = null;
         await ArtifactEvidenceAssertions.ValidationFirstCorruptionAsync(
             driver.Store, driver.Validator, driver.Authority, driver.Identity,
@@ -49,7 +52,8 @@ public sealed class ArtifactEvidenceTests
                 else { driver.DamageOnlyPayload(truncate: true); }
             },
             bytes => File.WriteAllBytes(path ?? throw new InvalidOperationException("Payload was not captured."), bytes),
-            default, QuarantineReopen(driver));
+            default, QuarantineReopen(driver, observations));
+        observations.Observe(driver);
     }
 
     [Theory]
@@ -76,8 +80,11 @@ public sealed class ArtifactEvidenceTests
             () =>
             {
                 if (unavailable) { Directory.Move(driver.PayloadDirectory + "-offline", driver.PayloadDirectory); }
-                else { SetUnixPermissions(path ?? throw new InvalidOperationException("Payload was not captured."),
-                    UnixFileMode.UserRead | UnixFileMode.UserWrite); }
+                else
+                {
+                    SetUnixPermissions(path ?? throw new InvalidOperationException("Payload was not captured."),
+                    UnixFileMode.UserRead | UnixFileMode.UserWrite);
+                }
             }, default);
     }
 
@@ -92,12 +99,15 @@ public sealed class ArtifactEvidenceTests
         File.SetUnixFileMode(path, mode);
     }
 
-    internal static ArtifactQuarantineReopen? QuarantineReopen(ArtifactProviderDriver driver) =>
+    internal static ArtifactQuarantineReopen? QuarantineReopen(ArtifactProviderDriver driver,
+        ArtifactProviderDriver.OriginalObservationSequence? observations = null) =>
         driver.ProviderId switch
         {
             "local" => new((IArtifactStoreLifetime)driver.Store, driver.Identity, driver.Authority, () =>
             {
-                var reopened = new LocalArtifactStore(Path.GetDirectoryName(driver.PayloadDirectory)!);
+                var controls = observations is null ? null : new LocalFaultControls();
+                var reopened = new LocalArtifactStore(Path.GetDirectoryName(driver.PayloadDirectory)!, controls: controls);
+                if (observations is not null && controls is not null) { observations.RecordReopened(reopened, controls); }
                 return (reopened, reopened);
             }),
             "object" => null,

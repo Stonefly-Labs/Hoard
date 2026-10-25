@@ -35,13 +35,38 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
     public IArtifactMaintenance Maintenance { get; }
     public LocalFaultControls? LocalControls { get; }
     public ObjectFaultControls? ObjectControls { get; }
-    public void ObserveOriginal(ITestOutputHelper output, string testClass, [CallerMemberName] string method = "",
+    public ConformanceOriginalObservation? ObserveOriginal(ITestOutputHelper output, string testClass, [CallerMemberName] string method = "",
         string? parameter = null) =>
         ConformanceOriginalObservationOutput.WriteIfRequested(output,
-            $"Hoard.Artifacts.Tests.{testClass}.{method}(provider: \"{ProviderId}\"{(parameter is null ? "" : ", " + parameter)})",
-            ProviderId, "original-instance", ("owner", this), ("store", Store),
+            OriginalIdentity(testClass, method, ProviderId, parameter),
+            ProviderId, "original-instance", null, null, ("owner", this), ("store", Store),
             ("validator", Validator), ("maintenance", Maintenance), ("lifetime", lifetime), ("authority", Authority),
             ("controls", LocalControls is { } local ? local : (object)ObjectControls!));
+
+    private static string OriginalIdentity(string testClass, string method, string provider, string? parameter) =>
+        $"Hoard.Artifacts.Tests.{testClass}.{method}(provider: \"{provider}\"{(parameter is null ? "" : ", " + parameter)})";
+
+    internal sealed class OriginalObservationSequence(
+        ITestOutputHelper output, string testClass, [CallerMemberName] string method = "", string? parameter = null)
+    {
+        private readonly List<(LocalArtifactStore Store, LocalFaultControls Controls)> reopened = [];
+
+        public void RecordReopened(LocalArtifactStore store, LocalFaultControls controls) => reopened.Add((store, controls));
+
+        public void Observe(ArtifactProviderDriver driver)
+        {
+            var parent = driver.ObserveOriginal(output, testClass, method, parameter);
+            var previous = parent;
+            foreach (var (store, controls) in reopened)
+            {
+                previous = ConformanceOriginalObservationOutput.WriteIfRequested(output,
+                    OriginalIdentity(testClass, method, driver.ProviderId, parameter),
+                    driver.ProviderId, "original-instance", parent, previous,
+                    ("owner", store), ("store", store), ("validator", store), ("maintenance", store),
+                    ("lifetime", store), ("authority", driver.Authority), ("controls", controls));
+            }
+        }
+    }
 
     public string PayloadDirectory => System.IO.Path.Combine(root.Path, ProviderId == "local" ? "data" : "objects");
     public string StagingDirectory => System.IO.Path.Combine(root.Path, ProviderId == "local" ? "staging" : "multipart");

@@ -1496,8 +1496,7 @@ def _ingest_original_observations(inputs, observations, *, original_inputs, entr
         raise ConformanceError("BindingInvalid")
     witnesses = original_inputs.get(binding_id) if isinstance(original_inputs, Mapping) else None
     assignments = witnesses.get(entry["testIdentity"]) if isinstance(witnesses, Mapping) else None
-    if not isinstance(assignments, Mapping) or set(roles) != set(assignments):
-        raise ConformanceError("EvidenceIncomplete")
+    assignments = original_node_assignments(entry["testIdentity"], assignments)
     component = _record({
         "instanceId": _uuid, "assemblySha256": sha256, "moduleVersionId": _uuid, "typeSha256": sha256,
     })
@@ -1539,7 +1538,7 @@ def _ingest_original_observations(inputs, observations, *, original_inputs, entr
                     or parent["components"]["owner"]["instanceId"] == observation["components"]["owner"]["instanceId"]):
                 raise ConformanceError("ProofMismatch")
         for role, captured in observation["components"].items():
-            assignment = assignments[role]
+            assignment = assignments[len(observed)][role]
             if not isinstance(assignment, tuple) or len(assignment) != 2:
                 raise ConformanceError("EvidenceIncomplete")
             if (kind == "original-instance" and role in ("store", "schema", "validator", "maintenance", "lifetime")
@@ -1725,6 +1724,21 @@ def _origin_input_assignments(origin_inputs):
     return MappingProxyType(frozen)
 
 
+def original_node_assignments(identity, assignments):
+    """Freeze exact component images for each independently selected forest node."""
+    from conformance_case_catalog import ORIGINAL_ARTIFACT_REOPENS, original_witness_parents, original_witness_policy
+    parents = original_witness_parents(identity)
+    if parents is None or identity in ORIGINAL_ARTIFACT_REOPENS and isinstance(assignments, Mapping):
+        raise ConformanceError("EvidenceIncomplete")
+    nodes = (assignments,) * len(parents) if isinstance(assignments, Mapping) else assignments
+    if not isinstance(nodes, (tuple, list)) or len(nodes) != len(parents):
+        raise ConformanceError("EvidenceIncomplete")
+    roles = original_witness_policy(identity)[2]
+    if any(not isinstance(node, Mapping) or set(node) != set(roles) for node in nodes):
+        raise ConformanceError("EvidenceIncomplete")
+    return tuple(_origin_input_assignments({"original": node})["original"] for node in nodes)
+
+
 def _original_input_assignments(original_inputs):
     if original_inputs is None:
         return None
@@ -1740,7 +1754,7 @@ def _original_input_assignments(original_inputs):
         if count > MAX_RESULTS:
             raise ConformanceError("EvidenceIncomplete")
         frozen[binding] = MappingProxyType({
-            _runtime_identity(identity): _origin_input_assignments({binding: roles})[binding]
+            _runtime_identity(identity): original_node_assignments(identity, roles)
             for identity, roles in witnesses.items()})
     return MappingProxyType(frozen)
 

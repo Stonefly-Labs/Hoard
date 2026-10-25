@@ -1003,7 +1003,9 @@ class SdkDiagnosticTests(unittest.TestCase):
         candidate = self.directory / "candidate"
         assignments = checks.original_observation_inputs(candidate, self.directory)
         runtime = {path: "a" * 64 for witnesses in assignments.values()
-                   for roles in witnesses.values() for path, _ in roles.values()}
+                   for identity, selected in witnesses.items()
+                   for roles in checks.evidence.original_node_assignments(identity, selected)
+                   for path, _ in roles.values()}
         inputs = {
             "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
             "runtimeAssemblies": runtime,
@@ -1015,7 +1017,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         run = SimpleNamespace(root=self.directory)
         scenarios = checks.original_observation_scenarios()
         self.assertEqual(len(scenarios), 5)
-        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 224)
+        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 240)
         frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_bytes())
         expected_metadata = {name for entry in frozen["entries"] if entry["profileId"] == "metadata"
                              for name in entry["runtimeTests"] if name.startswith((
@@ -1044,15 +1046,16 @@ class SdkDiagnosticTests(unittest.TestCase):
                               for name in entry["runtimeTests"]
                               if name.startswith(tuple("Hoard.Artifacts.Tests." + prefix for prefix in (
                                   "ArtifactPublicationTests.", "ArtifactDeletionTests.", "ArtifactReconciliationTests.",
-                                  "ArtifactReadVerificationTests.Admitted_open_",
-                                  "ArtifactReadVerificationTests.Destination_failure_",
-                                  "ArtifactPublicationRaceTests.Equivalent_concurrent_",
-                                  "ArtifactPublicationRaceTests.Conflicting_staged_",
+                                  "ArtifactReadVerificationTests.",
+                                  "ArtifactPublicationRaceTests.",
+                                  "ArtifactEvidenceTests.Validation_first_",
                                   "ArtifactFailureTests.Storage_failures_",
                                   "ArtifactFailureTests.Unexpected_fault_",
                                   "ArtifactBudgetTests.",
                                   "ArtifactRecoveryTests."))) and (
-                                      ".ArtifactRecoveryTests." not in name or '(provider: "' in name)}
+                                      not any(part in name for part in (
+                                          ".ArtifactRecoveryTests.", ".ArtifactReadVerificationTests."))
+                                      or '(provider: "' in name)}
         self.assertEqual(set(scenarios[2][1]), expected_artifacts)
         for scenario in scenarios:
             metadata = "-metadata-" in scenario[0]
@@ -1080,13 +1083,23 @@ class SdkDiagnosticTests(unittest.TestCase):
                         cases = [case.case_id for case in checks.category_cases()
                                  if case.binding_id == binding and entry["testIdentity"] in case.witnesses]
                         self.assertEqual(entry["caseId"], min(cases))
-                        self.assertIn(assignments[binding][entry["testIdentity"]][
+                        nodes = checks.evidence.original_node_assignments(
+                            entry["testIdentity"], assignments[binding][entry["testIdentity"]])
+                        self.assertIn(nodes[0][
                             "contract" if "-contract-" in scenario[0] else "store"][0],
                                       {item["path"] for item in manifest["assemblies"]})
-                        roles = assignments[binding][entry["testIdentity"]]
+                        roles = nodes[0]
                         self.assertEqual(set(roles), set(checks.original_witness_policy(entry["testIdentity"])[2]))
                         self.assertTrue({path for path, _ in roles.values()} <= {
                             item["path"] for item in manifest["assemblies"]})
+                        for node in nodes:
+                            self.assertTrue({path for path, _ in node.values()} <= {
+                                item["path"] for item in manifest["assemblies"]})
+                        if not metadata and len(nodes) > 1:
+                            self.assertIsNone(nodes[0]["owner"][1])
+                            self.assertEqual(nodes[1]["owner"][1], "Hoard.Fixtures.Artifacts.Local")
+                            with self.assertRaisesRegex(checks.evidence.ConformanceError, "EvidenceIncomplete"):
+                                checks.evidence.original_node_assignments(entry["testIdentity"], nodes[0])
                         if metadata:
                             facade = any(part in entry["testIdentity"] for part in (
                                 "MetadataPublicationTests.", "MetadataRelationshipTests.",
@@ -1224,7 +1237,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 text = (cases / filename).read_text()
                 start = text.index("public async Task " + method + "(")
                 body = text[start:text.index("\n    }", start)]
-                self.assertIn("ArtifactEvidenceTests.QuarantineReopen(driver)", body)
+                self.assertIn("ArtifactEvidenceTests.QuarantineReopen(driver, observations)", body)
         text = (cases / "ArtifactEvidenceTests.cs").read_text()
         for method in (
             "Local_failed_quarantine_persistence_retains_ownership_until_stop_retry_and_reopen",
@@ -1232,7 +1245,9 @@ class SdkDiagnosticTests(unittest.TestCase):
         ):
             with self.subTest(method=method):
                 start = text.index("public async Task " + method + "(")
-                self.assertIn("QuarantineReopen(driver)", text[start:text.index("\n    }", start)])
+                self.assertIn("QuarantineReopen(driver" + (
+                    ", observations)" if method.startswith("Validation_") else ")"),
+                    text[start:text.index("\n    }", start)])
         text = sdk.read_text()
         for method in ("FailedQuarantinePersistenceAsync", "ValidationFirstCorruptionAsync"):
             with self.subTest(method=method):

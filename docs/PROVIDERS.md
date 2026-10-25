@@ -991,13 +991,19 @@ the later forest increment or complete profiles.
 The following increment observes both genuinely configured metadata module
 owners, including rejected schema admission, and 38 more artifact parameters
 through their existing driver. Metadata now covers 63 operational identities
-per provider; artifacts cover 94 publication/deletion/reconciliation/read/race/
-failure/budget/recovery parameters, including all frozen budget booleans.
+per provider; artifacts cover 110 publication/deletion/reconciliation/read/race/
+failure/budget/recovery parameters, including all frozen budget booleans and
+sixteen additional quarantine parameters. Seven actual Local fresh stores have
+exact per-node images: original driver owner in the test assembly, reopened
+owner/interfaces/controls in Local, and unchanged shared authority. Explicitly
+passed empty controls are the real fresh store's controls, not companions.
+In-place reinitialization preserves the same original object; reconciliation's
+early return and Object cases have no fabricated fresh-store child.
 No additional stores, factories or cleanup owners are created.
-Local observation/replay pass 224 executions, 248 records
-(244 original owners/four contracts) and 1,412 image correspondences with the
-unchanged forest SDK archive. Native admission requires 231 foundations and
-105 scopes/1,207 observations, pending. Controllers, remaining artifact lifetimes
+Local observation/replay pass 240 executions, 271 records
+(267 original owners/four contracts) and 1,573 image correspondences with the
+unchanged forest SDK archive. Native admission requires 232 foundations and
+105 scopes/1,223 observations, pending. Controllers, remaining artifact lifetimes
 and complete qualifying profiles are still unfinished.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,

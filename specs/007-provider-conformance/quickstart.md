@@ -649,11 +649,13 @@ forest sources or qualifying profiles. Broader artifact/host/controller
 attribution and executable qualifying profiles remain unfinished.
 The following increment observes both actual configured metadata module roots
 and 38 more original artifact parameters. Coverage becomes 63 operational
-metadata identities per provider and 94 artifact parameters after 44 further
-budget/recovery rows; actual local observation/replay pass 224 executions,
-248 records and 1,412 image
+metadata identities per provider and 110 artifact parameters after budget/
+recovery and sixteen quarantine rows. Seven actual Local fresh-store children
+use exact per-node images without a fabricated Object/early-return child.
+Actual local observation/replay pass 240 executions,
+271 records and 1,573 image
 correspondences with the same SDK archive. Native admission requires
-231 foundations and 105 scopes/1,207 observations, pending. Controller and
+232 foundations and 105 scopes/1,223 observations, pending. Controller and
 remaining artifact lifetime attribution and executable profiles remain unfinished.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.

@@ -1247,12 +1247,18 @@ Both actual configured metadata module owners now form a two-root host forest;
 their genuine module type/image is checked in local observation/replay.
 Thirty-eight additional artifact parameters observe their original driver and
 interfaces without changing assertions, factories, barriers or cleanup ownership.
-Coverage is 63 operational metadata identities per provider and 94 artifact
-parameters after 44 further exact budget/recovery rows. Original bool argument
+Coverage is 63 operational metadata identities per provider and 110 artifact
+parameters after budget/recovery and sixteen quarantine rows. Original bool argument
 names/values remain intact, and Local multi-parameter rows cannot fall back to
-Object. Local observation/replay pass 224 executions, 248 records and
-1,412 image correspondences. Native admission requires 231 foundations and
-105 scopes/1,207 observations, pending. Controller and remaining artifact
+Object. Seven genuine Local fresh-store children have exact per-node images:
+original driver owner versus actual reopened store owner/interfaces/controls.
+Observers record factory-returned instances without owning cleanup. Same-object
+reinitialization is not a new owner, and early-return reconciliation/Object rows
+have no invented child. Both histories freeze all selected nodes before execution;
+flat maps cannot replace these different owner images.
+Local observation/replay pass 240 executions, 271 records and
+1,573 image correspondences. Native admission requires 232 foundations and
+105 scopes/1,223 observations, pending. Controller and remaining artifact
 lifetime attribution and qualifying backends remain unfinished.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,

@@ -33,9 +33,11 @@ public sealed class ArtifactPublicationRaceTests(ITestOutputHelper output)
     public async Task Corrupt_existing_bytes_are_not_overwritten_or_reused(string provider)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
+        var observations = new ArtifactProviderDriver.OriginalObservationSequence(output, nameof(ArtifactPublicationRaceTests));
         await ArtifactPublicationAssertions.CorruptExistingContentAsync(driver.Store,
             () => driver.DamageOnlyPayload(truncate: false),
             bytes => File.WriteAllBytes(Directory.GetFiles(driver.PayloadDirectory).Single(), bytes),
-            default, ArtifactEvidenceTests.QuarantineReopen(driver));
+            default, ArtifactEvidenceTests.QuarantineReopen(driver, observations));
+        observations.Observe(driver);
     }
 }

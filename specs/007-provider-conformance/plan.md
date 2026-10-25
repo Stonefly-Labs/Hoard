@@ -5155,6 +5155,69 @@ Both input documents independently recompute; free scratch is 91,721,109,504
 bytes. This admits that earlier diagnostic, not the later forest/host/artifact
 sources or qualifying profiles.
 
+### Genuine Local quarantine children and exact per-node images
+
+Sixteen additional original artifact parameters now observe their actual
+quarantine/publication/read/validation owners. Seven Local rows genuinely
+construct a fresh store through the existing reopen factory. Non-owning source
+records retain those actual objects and their actual explicitly passed empty
+controls, then emit them after unchanged assertions and existing cleanup.
+Original driver ownership remains in the test assembly; reopened owner/
+interfaces/controls belong to Local, with the genuine unchanged authority.
+No facade, companion controls, additional store or cleanup ownership is created.
+The same original store's in-place reinitialization remains that same object,
+not a fabricated fresh owner.
+
+Per-node image assignment is exact and deeply frozen before execution in both
+histories. Legacy metadata common role maps remain accepted; these different
+artifact owner images require a complete ordered node sequence, not a flat
+fallback. Manifests enumerate every node image, and source role maps now include
+only identities owned by that frozen binding. The new image regression first
+fails `EvidenceIncomplete`; it now rejects swapped/wrong/missing node assignments
+while retaining a snapshot despite later source-map mutation. Routing first
+fails at 224 versus 240 executions.
+
+The first actual probe correctly exposes a topology mismatch for Local
+`detection: "reconciliation"`: its unchanged common consumer returns early and
+never calls the fresh-store factory. Independent policy now requires one root
+there, not an invented eighth child. Object also stays root-only. Existing
+transitive helper body/hash checks remain unchanged, with only observer
+forwarding expectations updated. Actual minimal-input observation and independent
+empty-cache locked replay each pass 240 exact discoveries/executions, 271 records
+(267 original owners/four contracts) and 1,573 role/image correspondences.
+SDK archive remains
+`032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`.
+
+`python3 -m unittest discover -s tests/tooling -q` passes 340 checks
+(323 passed/seventeen explicit macOS-native skips). Changed artifact source
+whitespace, frozen inventory, SDK catalog and patch checks pass. Formatting the
+now-touched evidence wrapper also repairs its pre-existing two-line whitespace;
+no assertion behavior changes. Native admission requires 232 foundations and
+105 scopes/1,223 observations, pending. Controllers, remaining artifact
+lifetimes and qualifying backends remain unfinished. README and related guides/
+model/contracts are updated; public product contracts, historical seals, locks,
+task/reviewer markers and production/deployment examples/diagrams are unaffected.
+
+The bounded custom architecture review found no confirmed blocker in genuine
+reopen ownership, exact node/image admission or unchanged cleanup. It inspected
+current files without independently reconstructing the Git delta or executing
+validation; it does not verify reported hashes/passes or complete final T081.
+
+Earlier owner run
+[40170918399](https://github.com/Stonefly-Labs/Hoard/actions/runs/40170918399)
+binds exact `4ed4c23aca500827a26d692e011794a2ad84f202`: all three jobs,
+231 foundations without failures/errors/skips, 105 scopes/1,163 exact
+discoveries/executions and every recovery/transfer/containment/replay prerequisite
+pass. Typed input:
+`69d28d12e977e66c52c7c4f805171b825c7d3c6fabf2074d710535052f7f7cfa`;
+separate original input:
+`96335b1825f3c29f7ab9f489622e1197d437315cda3882d69deea43e9e696b78`;
+preparation:
+`794df389df462f2a03e34e539928ef4214d02eba2c9f925ec5de6864d99cadec`.
+Both input documents independently recompute; free scratch is 91,721,052,160
+bytes. It admits earlier creation/reopen forests, configured hosts and fifty
+artifact parameters, not later budget/quarantine sources or qualifying profiles.
+
 ## Summary
 
 

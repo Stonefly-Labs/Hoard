@@ -1926,10 +1926,12 @@ remain unfinished.
 The next original-owner increment observes both actual configured host modules
 and 38 further artifact deletion/reconciliation/read/race/failure/budget
 parameters. Coverage is now 63 operational metadata identities per provider and
-94 artifact parameters after 44 further budget/recovery parameters.
-Actual local observation/replay pass 224 executions, 248 records and
-1,412 image correspondences with the same SDK archive.
-Native admission requires 231 foundations and 105 scopes/1,207 observations,
+110 artifact parameters after budget/recovery and quarantine increments.
+Seven genuine Local fresh-store reopens now have exact per-node image maps;
+early-return reconciliation and Object rows have no invented children.
+Actual local observation/replay pass 240 executions, 271 records and
+1,573 image correspondences with the same SDK archive.
+Native admission requires 232 foundations and 105 scopes/1,223 observations,
 pending. Controller attribution, remaining artifact lifetimes and complete
 qualifying profiles remain unfinished.
 Earlier parameterized run

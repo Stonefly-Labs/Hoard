@@ -60,6 +60,8 @@ public sealed class ArtifactReadVerificationTests(ITestOutputHelper output)
     public async Task Every_committed_detection_path_quarantines_restored_bytes(string provider, string detection)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
+        var observations = new ArtifactProviderDriver.OriginalObservationSequence(
+            output, nameof(ArtifactReadVerificationTests), parameter: $"detection: \"{detection}\"");
         var expectedDurability = provider switch
         {
             "local" => ArtifactDurability.LocalProcessCrash,
@@ -88,7 +90,8 @@ public sealed class ArtifactReadVerificationTests(ITestOutputHelper output)
             },
             () => driver.DamageOnlyPayload(truncate: false),
             bytes => File.WriteAllBytes(Directory.GetFiles(driver.PayloadDirectory).Single(), bytes),
-            default, ArtifactEvidenceTests.QuarantineReopen(driver));
+            default, ArtifactEvidenceTests.QuarantineReopen(driver, observations));
+        observations.Observe(driver);
     }
 
     [Theory]
@@ -99,6 +102,8 @@ public sealed class ArtifactReadVerificationTests(ITestOutputHelper output)
     public async Task Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence(string provider, bool truncate)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
+        var observations = new ArtifactProviderDriver.OriginalObservationSequence(
+            output, nameof(ArtifactReadVerificationTests), parameter: $"truncate: {truncate}");
         string? path = null;
         await ArtifactReadAssertions.DamagedReadAsync(
             driver.Store, driver.Validator, driver.Authority, driver.Identity, truncate,
@@ -112,7 +117,8 @@ public sealed class ArtifactReadVerificationTests(ITestOutputHelper output)
             {
                 File.WriteAllBytes(path ?? throw new InvalidOperationException("Payload was not captured."), bytes);
                 return ValueTask.CompletedTask;
-            }, default, ArtifactEvidenceTests.QuarantineReopen(driver));
+            }, default, ArtifactEvidenceTests.QuarantineReopen(driver, observations));
+        observations.Observe(driver);
     }
 
     [Theory]

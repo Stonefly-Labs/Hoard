@@ -8207,6 +8207,53 @@ Both input documents independently recompute; free scratch is 91,721,109,504
 bytes. This admits that earlier diagnostic, not later forest/host/artifact
 sources or qualifying profiles.
 
+Sixteen further original artifact parameters now observe seven genuinely
+factory-created Local fresh stores. Their actual owner/interfaces/controls
+have exact per-node images instead of borrowing the original driver's test
+assembly. The empty controls passed to each fresh constructor are that real
+store's controls, not a companion. Source observation records are non-owning
+and emitted after unchanged assertions/cleanup; same-object in-place
+reinitialization remains that same original object.
+
+Both histories freeze all node maps before execution, and manifests enumerate
+each selected image. Legacy common metadata maps remain supported, while these
+artifact owner changes require an exact node sequence. Swapped/wrong/missing
+maps reject. Actual probing exposed reconciliation's early-return path: it
+never creates a child, so policy does not invent one. Object remains root-only.
+Transitive common-helper body/hash checks remain unchanged; forwarding checks
+now include the observation sequence.
+
+Actual minimal-input observation and independent empty-cache locked replay
+each pass 240 executions, 271 records (267 original owners/four contracts)
+and 1,573 role/image correspondences, reproducing the unchanged forest SDK.
+Full tooling passes 340 checks (323 passed/seventeen explicit macOS-native
+skips); changed artifact source whitespace, frozen inventory and SDK catalog
+checks pass. Formatting the newly touched evidence wrapper repairs its existing
+two-line whitespace without assertion changes. Native admission requires
+232 foundations and 105 scopes/1,223 observations, pending. Controllers,
+remaining artifact lifetimes and qualifying backends remain unfinished.
+README and related guides/model/contracts are updated; product/deployment
+examples and diagrams, public contracts, seals, locks and reviewer/task markers
+are unchanged.
+
+Bounded custom architecture review found no confirmed blocker in this increment,
+with current-file/no-diff-reconstruction and no-validation limitations; final
+T081 remains open.
+
+Earlier owner run
+[40170918399](https://github.com/Stonefly-Labs/Hoard/actions/runs/40170918399)
+at exact `4ed4c23aca500827a26d692e011794a2ad84f202` passed all three jobs,
+231 foundations without failures/errors/skips, 105 scopes/1,163 exact
+discoveries/executions and every prerequisite. Typed input:
+`69d28d12e977e66c52c7c4f805171b825c7d3c6fabf2074d710535052f7f7cfa`;
+separate original input:
+`96335b1825f3c29f7ab9f489622e1197d437315cda3882d69deea43e9e696b78`;
+preparation:
+`794df389df462f2a03e34e539928ef4214d02eba2c9f925ec5de6864d99cadec`.
+Both documents independently recompute; free scratch is 91,721,052,160 bytes.
+This admits earlier forests/hosts/fifty artifact parameters, not later budget/
+quarantine sources or qualifying profiles.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

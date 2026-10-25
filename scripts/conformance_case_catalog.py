@@ -137,7 +137,8 @@ ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted((
             "Destination_failure_and_second_copy_never_return_verified_completion_or_dispose_borrowed_streams")),
         ("ArtifactPublicationRaceTests", (
             "Equivalent_concurrent_writers_keep_one_stamp_and_distinct_receipts",
-            "Conflicting_staged_length_cannot_replace_valid_content_or_its_stamp")),
+            "Conflicting_staged_length_cannot_replace_valid_content_or_its_stamp",
+            "Corrupt_existing_bytes_are_not_overwritten_or_reused")),
         ("ArtifactFailureTests", (
             "Storage_failures_remain_distinct_and_sanitized_and_do_not_publish_partial_content",
             "Unexpected_fault_after_visibility_requires_exact_ticket_reconciliation")),
@@ -171,7 +172,25 @@ ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted((
           ("Failed_unclaimed_result_cleanup_blocks_admission_and_stop_until_exact_retry", "readSession"),
           ("Cancelled_commit_before_decision_fences_the_ticket_and_cannot_publish_on_retry", "alreadyCancelled"))
       for provider in ("local", "object") for value in ("False", "True")),
+    *(f'Hoard.Artifacts.Tests.{fixture}.{method}(provider: "{provider}", {parameter}: {value})'
+      for fixture, method, parameter, values in (
+          ("ArtifactReadVerificationTests",
+           "Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence", "truncate", ("False", "True")),
+          ("ArtifactReadVerificationTests", "Every_committed_detection_path_quarantines_restored_bytes",
+           "detection", ('"open"', '"publication"', '"reconciliation"')),
+          ("ArtifactEvidenceTests", "Validation_first_corruption_cannot_be_revived_by_external_restoration",
+           "missing", ("False", "True")))
+      for provider in ("local", "object") for value in values),
 )))
+ORIGINAL_ARTIFACT_REOPENS = MappingProxyType({
+    identity: (None, 0) for identity in ORIGINAL_ARTIFACT_WITNESSES
+    if '(provider: "local"' in identity and 'detection: "reconciliation"' not in identity
+    and any(method in identity for method in (
+        ".Corrupt_existing_bytes_are_not_overwritten_or_reused(",
+        ".Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence(",
+        ".Every_committed_detection_path_quarantines_restored_bytes(",
+        ".Validation_first_corruption_cannot_be_revived_by_external_restoration("))
+})
 
 
 def original_witness_policy(identity):
@@ -193,7 +212,7 @@ def original_witness_parents(identity):
     """The independently selected creation/reopen forest for one exact execution."""
     if original_witness_policy(identity) is None:
         return None
-    return ORIGINAL_METADATA_FORESTS.get(identity, (None,))
+    return ORIGINAL_METADATA_FORESTS.get(identity, ORIGINAL_ARTIFACT_REOPENS.get(identity, (None,)))
 
 
 def category_runtime_cases(profile, binding_id):

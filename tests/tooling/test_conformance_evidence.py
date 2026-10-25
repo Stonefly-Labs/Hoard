@@ -1288,6 +1288,41 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         with self.assertRaises(evidence.ConformanceError):
                             self.ingest(original_inputs=assignments)
 
+    def test_original_observation_node_images_are_exact_and_deeply_frozen(self):
+        self.inputs.update(profileId="metadata", invocation=["profile", "metadata"])
+        self.inputs["budgets"]["profileSeconds"] = 5400
+        original, assignments = self.original_transport(case_id="MP-32")
+        roles = assignments["sqlite"].pop(self.identity)
+        self.identity = ("Hoard.Metadata.Tests.MetadataSchemaTests."
+                         "MP32_Old_schema_requires_explicit_authorized_upgrade_and_preserves_records")
+        self.manifest["expected"][0].update(testIdentity=self.identity, fullyQualifiedName=self.identity)
+        nodes, images = [], []
+        for index in range(3):
+            node = copy.deepcopy(original)
+            node.update(testIdentity=self.identity, observationId=str(uuid.uuid4()),
+                        parentObservationId=None if not index else nodes[-1]["observationId"],
+                        operation="create" if not index else "reopen")
+            selected = dict(roles)
+            for component in node["components"].values():
+                component["instanceId"] = str(uuid.uuid4())
+            if index:
+                node["components"]["owner"]["assemblySha256"] = "d" * 64
+                selected["owner"] = ("provider/Hoard.Fixture.dll", "Hoard.Fixture")
+            nodes.append(node)
+            images.append(selected)
+        unmodified = copy.deepcopy(images)
+        self.proof.update(testIdentity=self.identity, originalObservations=nodes,
+                          manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(testIdentity=self.identity, proofSha256=evidence.digest(self.proof))
+        self.completion["manifestSha256"] = evidence.digest(self.manifest)
+        frozen = evidence.original_node_assignments(self.identity, images)
+        images[1]["owner"] = roles["owner"]
+        result = self.ingest(original_inputs={"sqlite": {self.identity: frozen}})
+        self.assertEqual(tuple(result["originalObservations"][self.execution]), tuple(nodes))
+        for selected in (images, [unmodified[0]], [unmodified[1], unmodified[0], unmodified[2]]):
+            with self.subTest(nodes=len(selected)), self.assertRaises(evidence.ConformanceError):
+                self.ingest(original_inputs={"sqlite": {self.identity: selected}})
+
     def history(self, *, max_attempts=1, origin_inputs=None):
         import conformance_case_catalog as catalog
         case = next(case for case in catalog.expected_cases("composition") if case.case_id == "CP-01")

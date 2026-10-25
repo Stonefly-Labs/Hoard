@@ -1901,7 +1901,8 @@ def original_observation_inputs(candidate, root):
                  if metadata else
                  {"owner": None, "store": package, "validator": package, "maintenance": package,
                   "lifetime": package, "authority": host, "controls": package, "contract": "Hoard.Abstractions"})
-        identities = {identity for case in category_cases() if case.profile_id == category
+        identities = {identity for case in category_cases()
+                      if case.profile_id == category and case.binding_id == provider
                       for identity in case.witnesses if original_witness_policy(identity) is not None}
         try:
             result[provider] = {}
@@ -1914,6 +1915,11 @@ def original_observation_inputs(candidate, root):
                 result[provider][identity] = {
                     role: ((runtime / ((package_id or assembly) + ".dll")).relative_to(root).as_posix(), package_id)
                     for role, package_id in selected.items() if role in original_witness_policy(identity)[2]}
+                if not metadata and len(original_witness_parents(identity)) > 1:
+                    reopened = dict(result[provider][identity])
+                    for role in ("owner", "controls"):
+                        reopened[role] = ((runtime / (package + ".dll")).relative_to(root).as_posix(), package)
+                    result[provider][identity] = (result[provider][identity], reopened)
         except ValueError as error:
             raise evidence.ConformanceError("InputChanged") from error
     return result
@@ -2080,14 +2086,14 @@ def test_attempt(run, inputs, candidate, scenario):
     }
     if original_observations or name in ("full-artifact-binding", "full-metadata-binding"):
         if original_observations:
-            component_assignments = {
-                (binding, identity): original_inputs[binding][identity]
-                for identity, (binding, _) in expected.items()}
+            component_assignments = (
+                node for identity, (binding, _) in expected.items()
+                for node in evidence.original_node_assignments(identity, original_inputs[binding][identity]))
         else:
             origin_inputs = (artifact_origin_inputs(candidate, run.root) if name == "full-artifact-binding"
                              else metadata_origin_inputs(candidate, run.root))
-            component_assignments = origin_inputs
-        component_paths = {path for roles in component_assignments.values() for path, _ in roles.values()}
+            component_assignments = origin_inputs.values()
+        component_paths = {path for roles in component_assignments for path, _ in roles.values()}
         component_paths.discard(assembly_path)
         for index, path in enumerate(sorted(component_paths)):
             sha256 = inputs["runtimeAssemblies"].get(path)
