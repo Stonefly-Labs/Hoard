@@ -8734,6 +8734,27 @@ The requested native addition is six scopes/134 exact executions and a
 qualification, full artifact/category CLI acceptance and T019/T020 remain
 unfinished. That complete Linux metadata batch is not yet admitted.
 
+Category command parents now independently read each available owned-executor
+record before discovery/execution output admission. They require exact
+run/root/sequence, argument/cwd hashes, nonzero PID/start identity, read-only
+record bytes, successful supervisor diagnostics, matching exit, bounded nested
+monotonic times and actual whole-group settlement. Settings are independently
+re-read against the prelaunch bytes. A create-new hash-only parent joins the
+record to its manifest, input/group/attempt/purpose and settings; no raw command,
+settings or private paths are retained there. Native executors cannot omit the
+record; explicit non-native diagnostic adapters produce no native receipt.
+Invocation ownership alone is not assertion success or qualification.
+
+The parent regression first failed at the missing API, then exercised changed,
+foreign, missing, writable, unsettled and replayed records plus changed settings.
+The existing exact-scope regression now also joins all eighteen simulated
+discovery/execution invocations and labels them non-native. All 377 tooling
+checks pass (360 passed/seventeen native macOS skips); inventory/catalog and
+patch checks pass. Native parent execution is pending, not admitted. The earlier
+metadata summary serialization boundary additionally reproduced its mappingproxy
+TypeError before repair; all124 SDK checks passed at `216413a`. No task/checklist,
+provider/package/reference/lock or deployment surface changes in this increment.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

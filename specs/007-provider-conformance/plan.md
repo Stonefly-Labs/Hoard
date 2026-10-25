@@ -5892,6 +5892,30 @@ Independent source/controller qualification, missing parent controls, full
 artifact/category backends and T019/T020 remain unfinished; no task/checklist,
 product/reference/lock or deployment claims change.
 
+### Independently joined owned-command parent receipts
+
+Category discovery and execution now independently admit the native executor's
+actual record, not just a hash returned by the command result. Exact
+run/root/sequence, immutable record bytes, argv/cwd hashes, PID/start, successful
+supervisor diagnostics, matching exit, nested monotonic times and whole-group
+settlement are required. Settings are re-read against their prelaunch bytes.
+Create-new parents retain only hashes and closed identifiers joining the actual
+record to its manifest, settings, current inputs/group and attempt/purpose.
+Missing records reject for the native executor; explicit non-native diagnostic
+adapters produce no native receipt. Invocation receipts do not establish
+assertion success or source/controller qualification.
+
+The new regression first fails at the missing API, then checks changed/foreign/
+missing/writable/unsettled records, settings changes and no-overwrite replay.
+The exact-scope regression now joins all eighteen simulated discovery/execution
+records, explicitly without native containment. All 377 tooling checks pass
+(360 passed/seventeen macOS-native skips), with frozen inventory/catalog and
+patch checks passing. Native parent execution remains pending. The preceding
+public metadata summary repair at `216413a` also reproduced the actual
+mappingproxy JSON TypeError before passing all124 SDK checks.
+Tasks/checklists, product/providers, packages/locks and deployment diagrams are
+unaffected. Qualification and the remaining category controls stay incomplete.
+
 ## Summary
 
 

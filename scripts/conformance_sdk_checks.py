@@ -2995,6 +2995,59 @@ def _category_manifest_tests(category_scope, manifest):
     return tests
 
 
+def category_command_proof(run, result, *, arguments, cwd, manifest, settings_data, started_ms, ended_ms):
+    record_sha = getattr(result, "execution_record_sha256", None)
+    if record_sha is None:
+        if isinstance(run, OwnedRun):
+            raise evidence.ConformanceError("OwnershipInvalid")
+        return None
+    sequence = getattr(run, "command_sequence", None)
+    if type(sequence) is not int or not 0 < sequence <= 2**63 - 1:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    path = run.root / f"proofs/execution-command-{sequence:04}.json"
+    raw = read_bounded(path, 64 * 1024)
+    record = evidence.load_json(raw)
+    fields = {
+        "schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
+        "exitCode", "diagnosticCode", "groupState", "scope", "runId", "rootId", "argvSha256", "cwdSha256"}
+    if (hashlib.sha256(raw).hexdigest() != record_sha or path.stat().st_mode & 0o777 != 0o400
+            or not isinstance(record, dict) or set(record) != fields
+            or type(record["schemaVersion"]) is not int or record["schemaVersion"] != 1
+            or type(record["sequence"]) is not int or record["sequence"] != sequence
+            or type(record["childPid"]) is not int or not 1 < record["childPid"] <= 2**31 - 1
+            or not isinstance(record["childStartSha256"], str)
+            or re.fullmatch("[0-9a-f]{64}", record["childStartSha256"]) is None
+            or record["childStartSha256"] == "0" * 64
+            or type(record["exitCode"]) is not int or type(result.exit_code) is not int
+            or record["exitCode"] != result.exit_code
+            or record["diagnosticCode"] != "None" or record["groupState"] != "Exited"
+            or record["scope"] != "ordinary" or record["runId"] != run.run_id
+            or manifest["runId"] != run.run_id or record["rootId"] != run.root_id
+            or record["argvSha256"] != evidence.digest(arguments)
+            or record["cwdSha256"] != hashlib.sha256(str(Path(cwd).absolute()).encode("utf-8")).hexdigest()):
+        raise evidence.ConformanceError("ProofMismatch")
+    times = (started_ms, record["startedMs"], record["endedMs"], ended_ms)
+    if (any(type(value) not in (int, float) or not 0 <= value <= 2**63 - 1 or not math.isfinite(value)
+            for value in times) or tuple(sorted(times)) != times or run.live_children()):
+        raise evidence.ConformanceError("ProofMismatch")
+    attempt = evidence._uuid(manifest["attemptId"])
+    if manifest["purpose"] not in ("discovery", "execution"):
+        raise evidence.ConformanceError("ProofMismatch")
+    if read_bounded(run.root / f"stores/settings-{attempt}.runsettings", 256 * 1024) != settings_data:
+        raise evidence.ConformanceError("InputChanged")
+    receipt = {
+        "schemaVersion": 1, "qualification": False, "nativeContainment": isinstance(run, OwnedRun),
+        "runId": run.run_id, "rootId": run.root_id,
+        "invocationGroupId": evidence._uuid(manifest["invocationGroupId"]),
+        "attemptId": attempt, "purpose": manifest["purpose"],
+        "inputsSha256": evidence.sha256(manifest["inputSha256"]),
+        "executionRecordSha256": record_sha, "manifestSha256": evidence.digest(manifest),
+        "settingsSha256": hashlib.sha256(settings_data).hexdigest()}
+    write_new(run.root / f'proofs/category-command-{attempt}-{manifest["purpose"]}.json',
+              evidence.canonical_bytes(receipt))
+    return evidence.digest(receipt)
+
+
 def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact_runner=None,
                     artifact_packages=None, metadata_packages=None, original_observations=False, inspection_literals=False,
                     inspection_cases=None, inspection_configurations=None, category_scope=None):
@@ -3168,7 +3221,7 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
     owner_sha = hashlib.sha256(owner_data).hexdigest()
     write_new(run.root / f"runtime-input-{attempt_id}.json", manifest_data)
     settings = run.root / "stores" / f"settings-{attempt_id}.runsettings"
-    write_new(settings, (
+    settings_data = (
         '<RunSettings><RunConfiguration>'
         f'<TestAdaptersPaths>{escape(str(assembly.parent))}</TestAdaptersPaths>'
         '<MaxCpuCount>1</MaxCpuCount><TestSessionTimeout>120000</TestSessionTimeout>'
@@ -3178,17 +3231,23 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
         '<Logger friendlyName="HoardSafe" enabled="True"><Configuration>'
         f'<Root>{escape(str(run.root))}</Root><AttemptId>{attempt_id}</AttemptId>'
         f'<ManifestSha256>{manifest_sha}</ManifestSha256><OwnerSha256>{owner_sha}</OwnerSha256>'
-        '</Configuration></Logger></Loggers></LoggerRunSettings></RunSettings>').encode())
+        '</Configuration></Logger></Loggers></LoggerRunSettings></RunSettings>').encode()
+    write_new(settings, settings_data)
     filter_text = "|".join("FullyQualifiedName=" + name
                            for name in dict.fromkeys(identity.split("(")[0] for identity in identities))
     started = time.monotonic() * 1000
+    arguments = ["dotnet", "vstest", str(assembly), *(["--ListTests"] if discovery else []),
+                 f"--Settings:{settings}", f"--TestCaseFilter:{filter_text}"]
     result = run.command(
-        ["dotnet", "vstest", str(assembly), *(["--ListTests"] if discovery else []),
-         f"--Settings:{settings}", f"--TestCaseFilter:{filter_text}"],
+        arguments,
         cwd=assembly.parent, timeout=180, kind="discovery" if discovery else "tests", cache_id="runtime",
         **({"record_execution": True} if category_scope is not None else {}),
         **({"discovery_tests": frozenset(identities)} if discovery else {}))
     ended = time.monotonic() * 1000
+    if category_scope is not None:
+        category_command_proof(
+            run, result, arguments=arguments, cwd=assembly.parent, manifest=manifest,
+            settings_data=settings_data, started_ms=started, ended_ms=ended)
     output = run.root / f'{"discovery" if discovery else "runtime"}-{attempt_id}'
     no_symlinks(output)
     return result, output, {

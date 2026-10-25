@@ -82,6 +82,16 @@ owner/witness/completion/proof bytes are returned unchanged; prior harness
 evidence cannot be relabeled into a category. Discovery and runtime admission
 share the existing bounded transport path.
 
+For category discovery and execution, an available native command record is
+independently joined to the exact run/root/sequence, argv/cwd hashes, PID/start,
+matching exit, successful supervisor diagnostics, nested monotonic timing and
+actual settled group. Read-only bytes and unchanged prelaunch settings are
+required. Create-new hash-only parents bind the record, settings and manifest
+to current input/group/attempt/purpose. Native executors cannot omit the record;
+explicit non-native diagnostic adapters emit no native receipt. These parents
+prove invocation ownership, not assertion success or qualification. Complete
+native parent execution remains pending.
+
 Category prepared-inspection contexts contain the selected one metadata/two
 artifact facts while the complete three-fact configuration fingerprint remains
 bound. The standalone prepared scope still requires all three facts. Category

@@ -35,6 +35,87 @@ class SdkDiagnosticTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.directory)
 
+    def test_category_command_parent_joins_exact_owned_invocation_without_raw_arguments(self):
+        (self.directory / "proofs").mkdir()
+        run = SimpleNamespace(
+            root=self.directory, run_id=str(uuid.uuid4()), root_id=str(uuid.uuid4()),
+            command_sequence=7, live_children=lambda: ())
+        manifest = {
+            "runId": run.run_id, "invocationGroupId": str(uuid.uuid4()),
+            "attemptId": str(uuid.uuid4()), "purpose": "execution", "inputSha256": "a" * 64}
+        arguments = ["dotnet", "vstest", "synthetic-private-path-canary"]
+        settings = b"<RunSettings/>"
+        (self.directory / "stores").mkdir()
+        (self.directory / f'stores/settings-{manifest["attemptId"]}.runsettings').write_bytes(settings)
+        record = {
+            "schemaVersion": 1, "sequence": 7, "childPid": 123,
+            "childStartSha256": "b" * 64, "startedMs": 2, "endedMs": 3,
+            "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited", "scope": "ordinary",
+            "runId": run.run_id, "rootId": run.root_id,
+            "argvSha256": checks.evidence.digest(arguments),
+            "cwdSha256": hashlib.sha256(str(self.directory.absolute()).encode()).hexdigest()}
+        path = self.directory / "proofs/execution-command-0007.json"
+        parent = self.directory / f'proofs/category-command-{manifest["attemptId"]}-execution.json'
+        changes = (
+            {"schemaVersion": True}, {"sequence": True}, {"sequence": 8},
+            {"childPid": True}, {"childPid": 0}, {"childStartSha256": "0" * 64},
+            {"childStartSha256": "not-a-hash"}, {"startedMs": True}, {"startedMs": 0},
+            {"startedMs": 4}, {"endedMs": 1}, {"endedMs": 5},
+            {"exitCode": True}, {"exitCode": 1}, {"diagnosticCode": "AssertionFailed"},
+            {"groupState": "Retained"}, {"scope": "recovery"},
+            {"runId": str(uuid.uuid4())}, {"rootId": str(uuid.uuid4())},
+            {"argvSha256": "c" * 64}, {"cwdSha256": "c" * 64}, {"extra": "forbidden"})
+        def persist(value):
+            if path.exists():
+                path.chmod(0o600)
+            raw = checks.evidence.canonical_bytes(value)
+            path.write_bytes(raw)
+            path.chmod(0o400)
+            return SimpleNamespace(exit_code=0, execution_record_sha256=hashlib.sha256(raw).hexdigest())
+        options = {
+            "arguments": arguments, "cwd": self.directory, "manifest": manifest,
+            "settings_data": settings, "started_ms": 1, "ended_ms": 4}
+        for changed in (*({**record, **change} for change in changes),
+                        {key: value for key, value in record.items() if key != "rootId"}):
+            with self.subTest(changed=changed):
+                result = persist(changed)
+                with self.assertRaises(checks.evidence.ConformanceError):
+                    checks.category_command_proof(run, result, **options)
+                self.assertFalse(parent.exists())
+        result = persist(record)
+        for invalid_result in (SimpleNamespace(exit_code=0, execution_record_sha256="c" * 64),
+                               SimpleNamespace(exit_code=0, execution_record_sha256=True),
+                               SimpleNamespace(exit_code=False, execution_record_sha256=result.execution_record_sha256)):
+            with self.assertRaises(checks.evidence.ConformanceError):
+                checks.category_command_proof(run, invalid_result, **options)
+        path.chmod(0o600)
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.category_command_proof(run, result, **options)
+        path.chmod(0o400)
+        settings_path = self.directory / f'stores/settings-{manifest["attemptId"]}.runsettings'
+        settings_path.write_bytes(b"<Changed/>")
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.category_command_proof(run, result, **options)
+        settings_path.write_bytes(settings)
+        with patch.object(run, "live_children", return_value=(123,)):
+            with self.assertRaises(checks.evidence.ConformanceError):
+                checks.category_command_proof(run, result, **options)
+        checks.category_command_proof(run, result, **options)
+        admitted = json.loads(parent.read_bytes())
+        self.assertFalse(admitted["qualification"])
+        self.assertFalse(admitted["nativeContainment"])
+        self.assertEqual(admitted["executionRecordSha256"], result.execution_record_sha256)
+        self.assertEqual(admitted["manifestSha256"], checks.evidence.digest(manifest))
+        self.assertEqual(admitted["settingsSha256"], hashlib.sha256(settings).hexdigest())
+        self.assertNotIn(b"synthetic-private-path-canary", parent.read_bytes())
+        with self.assertRaises(FileExistsError):
+            checks.category_command_proof(run, result, **options)
+        self.assertIsNone(checks.category_command_proof(
+            run, SimpleNamespace(exit_code=0), **options))
+        with patch.object(checks, "OwnedRun", SimpleNamespace):
+            with self.assertRaises(checks.evidence.ConformanceError):
+                checks.category_command_proof(run, SimpleNamespace(exit_code=0), **options)
+
     def test_metadata_category_batch_keeps_predeclared_transports_and_failure_history(self):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases
         partitions = category_execution_partitions("metadata")
@@ -114,7 +195,23 @@ class SdkDiagnosticTests(unittest.TestCase):
             for identity, family in checks.ORIGINAL_INSPECTION_WITNESSES.items()
             if identity not in checks.ORIGINAL_INSPECTION_LITERAL_WITNESSES}
         launches = []
-        run = SimpleNamespace(root=self.directory, command=lambda arguments, **kwargs: launches.append((arguments, kwargs)))
+        run = SimpleNamespace(
+            root=self.directory, run_id=str(uuid.uuid4()), root_id=str(uuid.uuid4()),
+            command_sequence=0, live_children=lambda: ())
+        def launch(arguments, **kwargs):
+            launches.append((arguments, kwargs))
+            run.command_sequence += 1
+            instant = checks.time.monotonic() * 1000
+            path = self.directory / f"proofs/execution-command-{run.command_sequence:04}.json"
+            record = {
+                "schemaVersion": 1, "sequence": run.command_sequence, "childPid": 123,
+                "childStartSha256": "b" * 64, "startedMs": instant, "endedMs": instant,
+                "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited", "scope": "ordinary",
+                "runId": run.run_id, "rootId": run.root_id, "argvSha256": checks.evidence.digest(arguments),
+                "cwdSha256": hashlib.sha256(str(kwargs["cwd"].absolute()).encode()).hexdigest()}
+            checks.write_new(path, checks.evidence.canonical_bytes(record))
+            return SimpleNamespace(exit_code=0, execution_record_sha256=checks.evidence.file_sha256(path))
+        run.command = launch
         for profile in ("metadata", "artifacts"):
             for scope_id, pairs in category_execution_partitions(profile).items():
                 inspection = scope_id.startswith("inspection-")
@@ -137,7 +234,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                     "bindingId": binding, "caseId": category_runtime_cases(profile, binding)[identity],
                 } for binding, identity in pairs]
                 manifest = {
-                    "runId": str(uuid.uuid4()), "attemptId": str(uuid.uuid4()), "purpose": "execution",
+                    "runId": run.run_id, "invocationGroupId": str(uuid.uuid4()),
+                    "attemptId": str(uuid.uuid4()), "purpose": "execution",
                     "inputSha256": "a" * 64, "expected": expected}
                 with self.subTest(profile=profile, scope=scope_id):
                     checks.runtime_command(run, assembly, manifest, **options)
@@ -168,6 +266,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertEqual(len(launches), count)
         self.assertEqual(len(launches), 18)
         self.assertTrue(all(options["record_execution"] is True for _, options in launches))
+        self.assertEqual(len(tuple((self.directory / "proofs").glob("category-command-*.json"))), 18)
 
     def test_category_inspection_receipts_join_only_the_exact_catalog_binding_scope(self):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases

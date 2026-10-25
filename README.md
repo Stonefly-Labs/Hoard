@@ -1923,6 +1923,11 @@ argument/working-directory hashes join the actual PID/start identity, command
 sequence, timing, exit and whole-group settlement. Raw arguments and paths are
 not persisted. Native record assertions await Linux execution; this plumbing
 does not open the source/controller qualification gate.
+Category parents now independently join each available native record to the
+exact command, settings, manifest, inputs and settled owned root. Changed,
+foreign, writable or incomplete records reject; non-native diagnostic adapters
+produce no native receipt. These invocation receipts do not attest assertions
+or open qualification, and their complete native execution remains pending.
 The native diagnostic path now captures/recomputes a separate metadata input
 document, predeclares all six category scopes, and submits their 134 untouched
 transports together to joint history admission. Its private 96-case snapshot
