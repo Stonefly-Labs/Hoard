@@ -1091,6 +1091,42 @@ class SdkDiagnosticTests(unittest.TestCase):
                 body = "".join(text[start:text.index("\n    }", start)].split())
                 self.assertIn("awaitQuarantineIsPermanentAsync(store,receipt,bytes,cancellationToken,reopen);", body)
 
+    def test_recovery_reopen_scope_requires_original_object_stop_and_both_existing_local_reopens(self):
+        factory = getattr(checks, "original_artifact_recovery_reopen_scenarios", None)
+        self.assertTrue(callable(factory), "Remaining recovery must retain actual object stop and Local reopen.")
+        prefix = "Hoard.Artifacts.Tests.ArtifactRecoveryTests."
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_text())
+        expected = {name for entry in frozen["entries"] if entry["profileId"] == "artifacts"
+                    for name in entry["runtimeTests"] if name == prefix +
+                    "Stop_retains_unselected_object_ownership_and_retries_only_its_private_payload"}
+        expected.update(prefix + name for name in (
+            "Local_reopen_preserves_committed_decisions_after_expired_ticket_retirement_and_clock_rollback",
+            "Reopen_finishes_staging_release_after_a_durable_commit_receipt",
+        ))
+        scenario, = factory()
+        self.assertEqual(scenario, ("original-artifact-recovery-reopen", tuple(sorted(expected)), "None", "Passed", 0, "None"))
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.ARTIFACT_TESTS / checks.ARTIFACT_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Artifacts.Tests.dll")
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+        }
+        with patch.object(checks, "runtime_command",
+                          side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+            self.assertEqual(launch.call_args.args[1], assembly)
+            self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, expected)
+        for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+                        (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
+                        ("original-artifact-recovery-reopen-foreign", *scenario[1:])):
+            with patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, candidate, changed)
+                launch.assert_not_called()
+
     def test_recovery_barrier_retains_complete_original_entry_hold_release_and_settlement_body(self):
         path = ROOT / "tests/contracts/Hoard.Testing.Conformance/Artifacts/ArtifactConformanceBarrier.cs"
         self.assertTrue(path.is_file(), "Common race checks must own the original managed barrier.")

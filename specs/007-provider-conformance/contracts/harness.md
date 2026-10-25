@@ -798,7 +798,8 @@ observation. The original wrapper fixes enumeration consistency independently
 of provider capabilities and retains clock/driver ownership. No filesystem
 control or provider switch enters the common checks. Missing/foreign parameters
 and renamed scopes reject before launch. The expanded request is
-85 scopes/744 observations, pending, not full category/profile admission.
+85 scopes/744 observations passed `40144435943` at `ffec99a` with all three
+jobs and 201 foundations, not full category/profile admission.
 
 Five further recovery methods share ten parameters (six frozen witnesses and
 four additional existing cases) through provider-free admitted-history,
@@ -809,6 +810,17 @@ The legacy barrier alias lives under package-only `Cases/`, so ordinary
 contract compilation gains no SDK reference. Complete-body/helper parity and
 exact prelaunch parameter admission remain required. The newest request is
 86 scopes/754 observations, pending, not qualification.
+
+The three remaining original recovery bodies now use interface-only common
+consumers: retained Object stop, committed-decision rollback/reopen and
+durable-receipt staging release/reopen. One frozen witness and two additional
+existing Local facts retain exact original checks, 105 retired incarnations,
+real reopened-store readback and source/current/fresh-store lifetimes.
+Physical permissions/snapshots, fresh construction, record-write registration
+and root-cleanup authorization remain fixture-side, with no assertion or expected
+outcome supplied by callbacks. The common consumer determines the real stop
+result before the fixture setter/getter reflects root-cleanup permission.
+The newest request is 87 scopes/757 observations, pending, not qualification.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

@@ -3900,6 +3900,18 @@ pending, not full recovery/fault-driver/category/profile qualification.
 Product, architecture and deployment examples are unaffected by this test-only
 extraction; tasks, reviewer markers, locks and historical seals are unchanged.
 
+### Native confirmation of shared recovery pages and generations
+
+[40144435943](https://github.com/Stonefly-Labs/Hoard/actions/runs/40144435943)
+at exact head `ffec99af90689b61938b5e66cc8e0df64d291c44` passed all three jobs,
+201 foundations without failures/errors/skips and 85 scopes/744 exact
+discoveries/executions, including all twelve new recovery rows. Every actual
+prerequisite recovery/transfer/ownership/native-containment and eighteen-package/
+thirteen-lock replay chain passed strict admission. Input:
+`1661a1db69757112fac7ed84cb1609420164d098ea6eb85a1c52ea41b5879985`.
+Preparation: `984c234bb9ef59234094386ea64dd64fdb56dfbc41b6f237c933fa20a2de0c04`.
+Free scratch: 91,717,603,328 bytes, not full category/profile qualification.
+
 ### Shared admitted-history and generation races
 
 Five more original recovery methods now share provider-free
@@ -3935,6 +3947,41 @@ The newest request is 203 foundations and 86 scopes/754 observations,
 pending, not full recovery/fault-driver/category/profile admission.
 Tasks, reviewer markers, tracked locks, historical seals and product/
 architecture/deployment examples are unaffected.
+
+### Remaining object stop and actual Local reopen checks
+
+All three remaining original recovery bodies now forward provider-free
+`RetainedObjectStopAsync`, `CommittedDecisionRollbackAsync` and
+`DurableReceiptReleaseAsync`. One frozen object-stop witness and two additional
+existing Local facts preserve independent implementations, 105 retired
+incarnations, rollback readback, durable receipt reconciliation, stop/retry,
+exact owner/cleanup and every source/current/fresh-store lifetime.
+Complete-body comparison against the preceding commit passes after explicit
+public-interface, clock, physical-control, real factory and token forwarding.
+The source in the release/reopen case remains borrowed through both
+lifetimes; it is not returned after being disposed by a smaller consumer.
+
+Permissions, directory snapshots, record-write registration, real fresh Local
+construction and root-cleanup authorization remain fixture-side. The common
+consumer determines the actual stop result, then the fixture setter and getter
+reflect cleanup permission; callbacks contain no assertions or expected outcomes.
+Object gains no durable-reopen claim. All three missing consumers first fail
+with exact intended `CS0117`; exact three-row transport first fails its
+missing-factory assertion. Full tooling passes 312 checks (295 passed/seventeen
+macOS-native skips), including 86 SDK checks; prepared SDK/wrapper formatting,
+frozen inventory, catalogs and patch checks pass. Actual prepared-assembly
+discovery matches the exact three independently declared facts.
+Fresh preparation/replay passes 311 artifact, 65 Consumer and 89+89 metadata
+cases without skips; all fifteen actual archives reproduce exactly, canonical
+full-filename map SHA-256
+`61e01e8345fa09ef873567e1e3451af5aef9f83a1f814566318d782116f6e935`.
+Ten actual Consumer dependency images match package bytes in each preparation;
+transfer packets remain reused unchanged, not new origins.
+The newest request is 204 foundations and 87 scopes/757
+observations, pending. Original recovery-body extraction is complete, not T027,
+full bindings, origins or category/profile acceptance. Tasks, reviewer markers,
+tracked locks, historical seals and product/architecture/deployment examples
+are unaffected.
 
 ## Summary
 

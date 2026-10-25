@@ -7240,6 +7240,44 @@ not full recovery/fault-driver/category/profile admission. Tasks, reviewer
 markers, locks, historical seals and product/architecture/deployment examples
 are unaffected.
 
+Run `40144435943` at exact head
+`ffec99af90689b61938b5e66cc8e0df64d291c44` passed all three jobs, 201 foundations
+without failures/errors/skips and 85 scopes/744 exact discoveries/executions,
+including all twelve new recovery rows and every actual prerequisite recovery/
+transfer/ownership/native-containment/eighteen-package/thirteen-lock replay
+chain. Input:
+`1661a1db69757112fac7ed84cb1609420164d098ea6eb85a1c52ea41b5879985`;
+preparation:
+`984c234bb9ef59234094386ea64dd64fdb56dfbc41b6f237c933fa20a2de0c04`.
+Free scratch was 91,717,603,328 bytes, not full qualification.
+
+The three remaining original recovery bodies now share retained Object stop,
+committed-decision rollback/reopen and durable-receipt staging release/reopen
+consumers. One frozen witness and two additional existing Local facts retain
+every original assertion, 105 retired incarnations, public read/receipt
+corroboration, operation order and source/current/fresh-store lifetime after
+explicit interface/control/clock/factory/token forwarding. Permissions,
+directory snapshots, record-write registration, real Local construction and
+root-cleanup authorization stay fixture-side; common checks determine actual
+stop outcomes before fixture setter/getter cleanup observation.
+Object gains no durable-reopen claim. All three absent methods first fail with
+their intended `CS0117`; exact three-row transport first fails its missing
+factory assertion. Full tooling passes 312 checks (295 passed/seventeen
+macOS-native skips), including 86 SDK checks; prepared SDK/wrapper formatting,
+frozen inventory, catalogs and patch checks pass. Actual prepared-assembly
+discovery matches all three independently declared facts.
+Fresh preparation/replay passes 311 artifact, 65 Consumer and 89+89 metadata
+cases without skips; all fifteen actual archives reproduce exactly, canonical
+full-filename map SHA-256
+`61e01e8345fa09ef873567e1e3451af5aef9f83a1f814566318d782116f6e935`.
+Ten actual Consumer dependency images match package bytes in each preparation;
+transfer packets remain reused unchanged, not new origins.
+The newest request is 204 foundations and 87 scopes/757
+observations, pending. Original recovery-body extraction is complete, not T027
+or full bindings/origins/category/profile acceptance. Tasks, reviewer markers,
+locks, historical seals and product/architecture/deployment examples remain
+unaffected.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

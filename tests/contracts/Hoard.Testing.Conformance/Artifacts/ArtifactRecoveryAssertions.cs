@@ -5,6 +5,123 @@ namespace Hoard.Testing.Conformance.Artifacts;
 
 public static class ArtifactRecoveryAssertions
 {
+    public static async Task RetainedObjectStopAsync(
+        IArtifactStore store, Func<ArtifactCleanupOptions, ValueTask<ArtifactResult<ArtifactShutdown>>> stop,
+        Func<string[]> objectFiles, Func<string[]> stagingFiles, Action observeReadOnlyObjects,
+        Action restoreObjects, CancellationToken cancellationToken)
+    {
+        using var control = new ShortSource("selected control through stop"u8.ToArray());
+        await PublishAsync(store, control, new(1024), cancellationToken);
+        var selected = Assert.Single(objectFiles());
+        var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        using var source = new ShortSource("unselected assembly through stop"u8.ToArray());
+        var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
+        observeReadOnlyObjects();
+        try
+        {
+            Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(await store.CommitAsync(staged, new(), cancellationToken));
+            for (var attempt = 0; attempt < 2; attempt++)
+            {
+                var stopped = Assert.IsType<ArtifactResult<ArtifactShutdown>.Failure>(
+                    await stop(new(TimeSpan.FromSeconds(1))));
+                Assert.Equal(ArtifactFailureCode.CleanupIncomplete, stopped.Code);
+                Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, stopped.Cleanup);
+                Assert.Equal(2, objectFiles().Length);
+                Assert.False(source.WasDisposed);
+            }
+        }
+        finally { restoreObjects(); }
+        Assert.Equal(ArtifactCleanupState.Released, Success(await stop(new())).State);
+        Assert.Equal(selected, Assert.Single(objectFiles()));
+        Assert.Empty(stagingFiles());
+    }
+
+    public static async Task CommittedDecisionRollbackAsync(
+        IArtifactStore original, IArtifactStoreLifetime originalLifetime, ArtifactStoreIdentity identity,
+        IArtifactCoordinationAuthority authority, ArtifactLimits limits, Action<long> setUtc,
+        Action<TimeSpan> advanceClock, Func<(IArtifactStore Store, IArtifactStoreLifetime Lifetime)> createReopened,
+        Action<bool> setCleanupAllowed, Func<bool> cleanupAllowed, CancellationToken cancellationToken)
+    {
+        Success(await originalLifetime.InitializeAsync(new(ArtifactInitializationMode.CreateEmpty, identity, authority, limits), new(), cancellationToken));
+        ArtifactOperationTicket ticket;
+        ArtifactMutationReceipt receipt;
+        try
+        {
+            for (var index = 0; index < 105; index++)
+            {
+                var historical = Success(await original.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+                using var input = new ShortSource("repeated retired incarnation"u8.ToArray());
+                var prepared = Success(await original.StageAsync(historical, input, new(), cancellationToken));
+                var incarnation = Success(await original.CommitAsync(prepared, new(), cancellationToken));
+                setUtc(historical.Expires.ToUnixTimeMilliseconds());
+                var deletion = Success(await original.ReserveDeleteAsync(new(incarnation.Stamp), new(), cancellationToken));
+                Success(await original.DeleteAsync(deletion, new(), cancellationToken));
+                setUtc(deletion.Expires.ToUnixTimeMilliseconds());
+            }
+            ticket = Success(await original.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+            using var source = new ShortSource("persisted beyond ticket retention"u8.ToArray());
+            var staged = Success(await original.StageAsync(ticket, source, new(), cancellationToken));
+            receipt = Success(await original.CommitAsync(staged, new(), cancellationToken));
+            advanceClock(TimeSpan.FromHours(24));
+            Success(await original.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        }
+        finally { Success(await originalLifetime.StopAsync(new(), cancellationToken)); }
+        setUtc(ticket.Issued.ToUnixTimeMilliseconds());
+        var (reopened, reopenedLifetime) = createReopened();
+        try
+        {
+            Success(await reopenedLifetime.InitializeAsync(new(ArtifactInitializationMode.ReopenCompatible, identity, authority, limits), new(), cancellationToken));
+            Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(await reopened.ReconcileAsync(ticket, new(), cancellationToken));
+            await using var read = Success(await reopened.OpenReadAsync(new(receipt.Stamp.Identity.Digest,
+                expectedStamp: new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp)), new(), cancellationToken));
+            using var destination = new MemoryStream();
+            Success(await read.CopyToAsync(destination, new(), cancellationToken));
+            Assert.Equal("persisted beyond ticket retention"u8.ToArray(), destination.ToArray());
+        }
+        finally
+        {
+            var stopped = await reopenedLifetime.StopAsync(new(), cancellationToken);
+            setCleanupAllowed(stopped is ArtifactResult<ArtifactShutdown>.Success);
+            Assert.True(cleanupAllowed());
+        }
+    }
+
+    public static async Task DurableReceiptReleaseAsync(
+        IArtifactStore original, IArtifactStoreLifetime originalLifetime, ArtifactStoreIdentity identity,
+        IArtifactCoordinationAuthority authority, ArtifactLimits limits,
+        Action<Action> observeRecordWrite, Action removeRecordWrite,
+        Func<(IArtifactStore Store, IArtifactStoreLifetime Lifetime)> createReopened,
+        CancellationToken cancellationToken)
+    {
+        Success(await originalLifetime.InitializeAsync(new(ArtifactInitializationMode.CreateEmpty, identity, authority, limits), new(), cancellationToken));
+        var ticket = Success(await original.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        using var source = new ShortSource("durable receipt before reservation release"u8.ToArray());
+        var staged = Success(await original.StageAsync(ticket, source, new(), cancellationToken));
+        var writes = 0;
+        observeRecordWrite(() =>
+        {
+            if (Interlocked.Increment(ref writes) == 3) { throw new IOException("Interrupted reservation release."); }
+        });
+        try
+        {
+            Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+                await original.CommitAsync(staged, new(), cancellationToken)).Code);
+        }
+        finally
+        {
+            removeRecordWrite();
+            Success(await originalLifetime.StopAsync(new(), cancellationToken));
+        }
+        var (reopened, reopenedLifetime) = createReopened();
+        try
+        {
+            Success(await reopenedLifetime.InitializeAsync(new(ArtifactInitializationMode.ReopenCompatible, identity, authority, limits), new(), cancellationToken));
+            Assert.IsType<ArtifactResolution.Committed>(Success(await reopened.ReconcileAsync(ticket, new(), cancellationToken)));
+            Success(await reopened.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        }
+        finally { Success(await reopenedLifetime.StopAsync(new(), cancellationToken)); }
+    }
+
     public static async Task SettledReceiptReplacementAsync(
         IArtifactStore store, Action<long> setUtc, Action loseAcknowledgment, Action restoreAcknowledgment,
         Action<Func<ValueTask>> observeReconciliation, Action removeReconciliation,

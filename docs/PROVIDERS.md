@@ -638,7 +638,8 @@ staging-generation fencing and observation without deletion authority.
 The wrapper retains its original fixed consistency expectation, clock and
 driver lifetime; provider-advertised capabilities do not select expectations.
 Fresh preparation/replay passes 311 artifact and 65 Consumer cases.
-The expanded request is 85 scopes/744 observations, pending, not qualification.
+Run `40144435943` at `ffec99a` passed all three jobs, 201 foundations and
+85 scopes/744 observations, not qualification.
 
 Five additional recovery methods now share admitted-reconciliation/deletion
 history, replacement-generation races and progressing-commit checks on ten
@@ -647,6 +648,16 @@ Common checks own the unchanged original managed barrier at its original
 source/barrier lifetime position. Physical fault registration stays fixture-side.
 Fresh independent replay passes 311 artifact and 65 Consumer cases.
 The newest request is 86 scopes/754 observations, pending, not qualification.
+
+All remaining original recovery bodies now forward shared checks: retained
+object stop, committed-decision rollback/reopen and durable-receipt staging
+release/reopen. One frozen witness and two additional existing Local facts retain
+actual independent implementations, 105 retired incarnations, public readback,
+original stop/retry and source lifetimes. Physical permissions, fresh Local
+construction, record-write registration and cleanup authorization stay
+fixture-side; Object gains no durable-reopen claim.
+Fresh independent replay passes 311 artifact and 65 Consumer cases.
+The newest request is 87 scopes/757 observations, pending, not qualification.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

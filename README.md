@@ -1665,12 +1665,20 @@ Local/Object parameters) now share provider-free cursor, inventory and
 generation-fencing assertions. Fixed original variants retain their distinct
 enumeration consistency; clock control and driver lifetime stay fixture-side.
 Fresh independent replay passes 311 artifact and 65 Consumer cases.
-The expanded request is 85 scopes/744 observations, pending.
+Native run `40144435943` at `ffec99a` passed all three jobs, 201 foundations
+and 85 scopes/744 observations.
 Five further recovery methods now share admitted-history/generation-race and
 progress checks across ten parameters. The unchanged managed barrier body and
 its source/barrier lifetime order live in the SDK; physical fault registration
 stays fixture-side. Fresh independent replay passes 311 artifact and 65 Consumer
 cases. The newest request is 86 scopes/754 observations, pending.
+The remaining object-stop and two real Local-reopen bodies now also use common
+checks, preserving retry, exact ownership, 105 retired incarnations, rollback
+readback and the borrowed source spanning stop/reopen. Physical permissions,
+fresh construction and root-cleanup authorization stay fixture-side.
+Fresh independent replay passes 311 artifact and 65 Consumer cases.
+The newest expanded request is 87 scopes/757 observations, pending; full
+bindings/category/profile acceptance remains unfinished.
 Full bindings, remaining mandatory fault controls and category/profile
 acceptance remain unfinished.
 
