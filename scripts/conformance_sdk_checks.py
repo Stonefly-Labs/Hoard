@@ -392,6 +392,26 @@ def original_artifact_read_delete_scenarios():
     return (("original-artifact-read-delete", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
+def original_artifact_admission_scenarios():
+    prefix = "Hoard.Artifacts.Tests.ArtifactAdmissionTests."
+    methods = {prefix + name for name in (
+        "Before_admission_and_with_mismatched_authority_no_source_or_directory_is_touched",
+        "Symlinked_root_or_ancestor_is_rejected_without_touching_outside_sentinel",
+    )}
+    identities = {
+        witness for case in category_cases() if case.profile_id == "artifacts"
+        for witness in case.witnesses if witness.split("(")[0] in methods}
+    identities.update(
+        prefix + name + f'(provider: "{provider}")'
+        for name in (
+            "Noncooperative_initialization_returns_with_owned_work_and_stop_does_not_release_it",
+            "Create_is_explicit_exclusive_and_disabled_construction_touches_no_directory",
+            "Reopen_refuses_missing_foreign_incompatible_or_corrupt_roots_without_reset",
+        ) for provider in ("local", "object"))
+    identities.add(prefix + "Local_reopen_preserves_identity_while_object_replacement_cannot_claim_durable_reopen")
+    return (("original-artifact-admission", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def original_artifact_recovery_reopen_scenarios():
     prefix = "Hoard.Artifacts.Tests.ArtifactRecoveryTests."
     identities = {
@@ -1625,7 +1645,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-observations", "original-artifact-damaged-read", "original-artifact-read-races",
             "original-artifact-detection", "original-artifact-quarantine-reopen", "original-artifact-validation",
             "original-artifact-recovery-pages", "original-artifact-recovery-races",
-            "original-artifact-recovery-reopen"],
+            "original-artifact-recovery-reopen", "original-artifact-admission"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1658,6 +1678,7 @@ def test_attempt(run, inputs, candidate, scenario):
             *original_artifact_recovery_pages_scenarios(),
             *original_artifact_recovery_race_scenarios(),
             *original_artifact_recovery_reopen_scenarios(),
+            *original_artifact_admission_scenarios(),
             *original_artifact_external_scenarios(),
             *original_artifact_race_scenarios(), *original_artifact_reconciliation_scenarios(),
             *original_artifact_visibility_scenarios(), *original_artifact_history_scenarios(),
@@ -2153,6 +2174,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "original-artifact-recovery-reopen"}), flush=True)
         for scenario in original_artifact_recovery_reopen_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "original-artifact-admission"}), flush=True)
+        for scenario in original_artifact_admission_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

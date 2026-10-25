@@ -1671,7 +1671,8 @@ Five further recovery methods now share admitted-history/generation-race and
 progress checks across ten parameters. The unchanged managed barrier body and
 its source/barrier lifetime order live in the SDK; physical fault registration
 stays fixture-side. Fresh independent replay passes 311 artifact and 65 Consumer
-cases. The newest request is 86 scopes/754 observations, pending.
+cases. Native run `40145322908` at `9d19bd1` passed all three jobs,
+203 foundations and 86 scopes/754 observations.
 The remaining object-stop and two real Local-reopen bodies now also use common
 checks, preserving retry, exact ownership, 105 retired incarnations, rollback
 readback and the borrowed source spanning stop/reopen. Physical permissions,
@@ -1679,6 +1680,13 @@ fresh construction and root-cleanup authorization stay fixture-side.
 Fresh independent replay passes 311 artifact and 65 Consumer cases.
 The newest expanded request is 87 scopes/757 observations, pending; full
 bindings/category/profile acceptance remains unfinished.
+Six original admission methods now share interface-only checks across eleven
+identities, retaining actual initialization holds, exclusive create, corrupt
+manifest non-reset, fixed Local/Object reopen scope and symlink sentinel checks.
+Physical construction, manifest/sentinel I/O and root cleanup stay fixture-side;
+native concurrency and cross-process ownership helpers remain unchanged.
+Fresh independent replay passes 311 artifact and 65 Consumer cases.
+The next expanded native request is 88 scopes/768 observations, pending.
 Full bindings, remaining mandatory fault controls and category/profile
 acceptance remain unfinished.
 

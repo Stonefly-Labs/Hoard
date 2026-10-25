@@ -647,7 +647,8 @@ parameters (six frozen witnesses and four additional existing cases).
 Common checks own the unchanged original managed barrier at its original
 source/barrier lifetime position. Physical fault registration stays fixture-side.
 Fresh independent replay passes 311 artifact and 65 Consumer cases.
-The newest request is 86 scopes/754 observations, pending, not qualification.
+Run `40145322908` at `9d19bd1` passed all three jobs, 203 foundations and
+86 scopes/754 observations, not qualification.
 
 All remaining original recovery bodies now forward shared checks: retained
 object stop, committed-decision rollback/reopen and durable-receipt staging
@@ -658,6 +659,17 @@ construction, record-write registration and cleanup authorization stay
 fixture-side; Object gains no durable-reopen claim.
 Fresh independent replay passes 311 artifact and 65 Consumer cases.
 The newest request is 87 scopes/757 observations, pending, not qualification.
+
+Six original admission methods now forward eleven identities (four frozen
+witnesses and seven additional existing cases) to provider-free checks.
+Common consumers retain original deadlines, live initialization ownership,
+exclusive create, missing/foreign/corrupt-root non-reset, fixed original
+Local/Object reopen expectations and symlink sentinel/child checks.
+Actual construction, fault registration, manifest/sentinel I/O, symlink
+try/finally and root-cleanup permission stay fixture-side. The two native
+concurrency/cross-process tests and complete child ownership helper are unchanged.
+Fresh independent replay passes 311 artifact and 65 Consumer cases; the next
+native request is 88 scopes/768 observations, pending, not qualification.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

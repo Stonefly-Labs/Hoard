@@ -808,8 +808,9 @@ managed barrier with identical body, 10/20/10-second budgets and source/barrier
 nesting, while physical fault registration/removal remains fixture-side.
 The legacy barrier alias lives under package-only `Cases/`, so ordinary
 contract compilation gains no SDK reference. Complete-body/helper parity and
-exact prelaunch parameter admission remain required. The newest request is
-86 scopes/754 observations, pending, not qualification.
+exact prelaunch parameter admission remain required. Run `40145322908` at
+`9d19bd1` passed all three jobs, 203 foundations and 86 scopes/754 observations,
+not qualification.
 
 The three remaining original recovery bodies now use interface-only common
 consumers: retained Object stop, committed-decision rollback/reopen and
@@ -821,6 +822,22 @@ and root-cleanup authorization remain fixture-side, with no assertion or expecte
 outcome supplied by callbacks. The common consumer determines the real stop
 result before the fixture setter/getter reflects root-cleanup permission.
 The newest request is 87 scopes/757 observations, pending, not qualification.
+
+Six logical admission methods now forward eleven exact identities (four frozen
+witnesses and seven additional existing cases) to interface-only consumers.
+The common noncooperative check owns its original TCS hold/release, deadlines,
+retained-ownership and stop assertions; actual observer registration still
+precedes concrete construction. Common checks own admission failures, capability
+baseline, corrupt manifest bytes/non-reset, fixed original Local-versus-Object
+reopen expectations and outside-sentinel/child assertions. Factories and
+callbacks supply only actual construction, authority and raw observations/I/O;
+no expected result or asserted outcome is returned by a callback.
+Original symlink try/finally, root lifetime and actual cleanup permission remain
+fixture-owned. Native concurrent-admission and cross-process root ownership
+tests, including bounded output/PID/exit/retained-root helper obligations, are
+unchanged. Method-level discovery must match all eleven declared identities;
+missing/foreign parameters and renamed scopes reject before launch. The next
+request is 88 scopes/768 observations, pending, not full qualification.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

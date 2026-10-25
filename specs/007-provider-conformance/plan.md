@@ -3943,8 +3943,8 @@ canonical full-filename map SHA-256
 `6dfb8daba9d51a1febd6266820be21464adc295942db22657507804cba5cd75a`;
 ten actual Consumer dependency images match package bytes in each preparation.
 Transfer packets remain reused unchanged, not new origins.
-The newest request is 203 foundations and 86 scopes/754 observations,
-pending, not full recovery/fault-driver/category/profile admission.
+Run `40145322908` at `9d19bd1` passed all three jobs, 203 foundations and
+86 scopes/754 observations, not full recovery/fault-driver/category/profile admission.
 Tasks, reviewer markers, tracked locks, historical seals and product/
 architecture/deployment examples are unaffected.
 
@@ -3982,6 +3982,45 @@ observations, pending. Original recovery-body extraction is complete, not T027,
 full bindings, origins or category/profile acceptance. Tasks, reviewer markers,
 tracked locks, historical seals and product/architecture/deployment examples
 are unaffected.
+
+### Original admission checks and native managed-barrier receipt
+
+Native run `40145322908` binds exact
+`9d19bd1119a821e85e81019b9d393d5bd19e2f7d`: all three jobs, 203 foundations
+without failures/errors/skips, 86 scopes/754 exact discoveries/executions and
+every prerequisite recovery/transfer/ownership/native-containment and
+eighteen-package/thirteen-lock replay chain pass. Input:
+`109cc8ddc69a9b07d0032104e9f2ca7201a64492f1213816a20a6f93fd5e3a7d`;
+preparation:
+`d49f56e11cebbe844a9eff4a076db30dc5da3c7b8438d632144a04db1ca789bc`;
+free scratch 91,716,227,072 bytes. This is diagnostic evidence, not qualification.
+
+Six original admission methods now forward all eleven identities (four frozen
+witnesses and seven additional existing cases) to provider-free
+`ArtifactAdmissionAssertions`. Complete-body comparison preserves every original
+assertion/order, initialization TCS hold/release, 100/20-millisecond deadlines,
+two-second waits, exclusive create, missing/foreign/corrupt-root non-reset,
+fixed original Local/Object reopen expectations and outside-sentinel/child
+checks. Physical construction, preconstruction observer registration, authority,
+manifest/sentinel I/O, symlink try/finally and root cleanup authorization remain
+fixture-side. Native concurrency and cross-process ownership tests, complete
+bounded child-output/PID/exit/retained-root helper and actual root disposal are
+unchanged. Factories/callbacks supply no asserted outcome or expected result.
+
+The absent class first fails intended `CS0103`; exact eleven-row transport
+first fails its missing-factory assertion. Actual prepared-assembly discovery
+matches all eleven declared identities. Full tooling passes 313 checks
+(296 passed/seventeen macOS-native skips), including 87 SDK checks; prepared
+SDK/wrapper formatting, frozen inventory, catalogs and patch checks pass.
+Fresh preparation/replay passes 311 artifact, 65 Consumer and 89+89 metadata
+cases without skips; all fifteen actual archive hashes reproduce exactly,
+canonical full-filename map SHA-256
+`e9b04122b8c1012d0b7e8af1650eec2bd9f419a1568d1bdf3f99912192182213`.
+Ten actual dependency images match package bytes per preparation; transfer
+packets remain reused unchanged, not new origins. The next request is
+205 foundations and 88 scopes/768 observations, pending, not complete
+bindings/origins/category/profile acceptance. Tasks, reviewer markers, locks,
+historical seals and product/architecture/deployment examples remain unaffected.
 
 ## Summary
 

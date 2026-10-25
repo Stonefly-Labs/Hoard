@@ -7235,8 +7235,9 @@ canonical full-filename map SHA-256
 `6dfb8daba9d51a1febd6266820be21464adc295942db22657507804cba5cd75a`;
 ten actual Consumer dependency images match package bytes in each preparation.
 Transfer packets remain reused unchanged, not new origins.
-The newest request is 203 foundations and 86 scopes/754 observations, pending,
-not full recovery/fault-driver/category/profile admission. Tasks, reviewer
+Run `40145322908` at `9d19bd1` passed all three jobs, 203 foundations and
+86 scopes/754 observations, not full recovery/fault-driver/category/profile
+admission. Tasks, reviewer
 markers, locks, historical seals and product/architecture/deployment examples
 are unaffected.
 
@@ -7277,6 +7278,40 @@ observations, pending. Original recovery-body extraction is complete, not T027
 or full bindings/origins/category/profile acceptance. Tasks, reviewer markers,
 locks, historical seals and product/architecture/deployment examples remain
 unaffected.
+
+The exact managed-barrier run head is
+`9d19bd1119a821e85e81019b9d393d5bd19e2f7d`; all 203 foundation checks pass
+without failures/errors/skips, with 86 scopes/754 exact discoveries/executions
+and every prerequisite recovery/transfer/ownership/native-containment and
+eighteen-package/thirteen-lock replay chain admitted. Input:
+`109cc8ddc69a9b07d0032104e9f2ca7201a64492f1213816a20a6f93fd5e3a7d`;
+preparation:
+`d49f56e11cebbe844a9eff4a076db30dc5da3c7b8438d632144a04db1ca789bc`.
+Free scratch was 91,716,227,072 bytes, not full qualification.
+
+Six original admission methods now forward eleven exact identities (four frozen
+witnesses and seven additional existing cases) to `ArtifactAdmissionAssertions`.
+Complete-body comparison preserves every original assertion/order, managed
+initialization hold/release, 100/20-millisecond deadlines and two-second waits,
+actual exclusive admission, missing/foreign/corrupt-root non-reset, fixed
+Local/Object reopen expectations, sentinel checks and outer symlink/root
+lifetimes. Actual construction, preconstruction fault registration, authority,
+manifest/sentinel I/O and cleanup authorization stay fixture-side.
+Native concurrency and cross-process admission tests, complete child proof and
+root cleanup helpers remain unchanged. The absent consumer class first causes
+intended `CS0103`; the exact eleven-row scope first fails its missing-factory
+assertion. Full tooling passes 313 checks (296 passed/seventeen macOS-native
+skips), including 87 SDK checks. Actual prepared-assembly discovery matches
+all eleven independently declared identities; formatting, frozen inventory,
+catalogs and patch checks pass. Fresh preparation/replay passes 311 artifact,
+65 Consumer and 89+89 metadata cases without skips; fifteen actual archives
+reproduce exactly, canonical full-filename map SHA-256
+`e9b04122b8c1012d0b7e8af1650eec2bd9f419a1568d1bdf3f99912192182213`.
+Ten actual dependency images match package bytes per preparation; transfer
+packets are reused unchanged, not new origins. The next request is
+205 foundations and 88 scopes/768 observations, pending, not complete
+bindings/origins/category/profile acceptance. Tasks, reviewer markers, locks,
+historical seals and product/architecture/deployment examples are unaffected.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

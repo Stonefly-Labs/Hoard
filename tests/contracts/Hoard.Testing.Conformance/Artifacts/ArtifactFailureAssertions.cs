@@ -5,7 +5,7 @@ namespace Hoard.Testing.Conformance.Artifacts;
 
 public static class ArtifactFailureAssertions
 {
-    private const string Canary = "synthetic-artifact-secret-canary";
+    internal const string Canary = "synthetic-artifact-secret-canary";
     private const string OpaqueCanary = "synthetic-artifact-private-proof";
 
     public static async Task StorageFailuresAsync(IArtifactStore store, CancellationToken cancellationToken)
