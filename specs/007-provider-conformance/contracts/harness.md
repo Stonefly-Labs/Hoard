@@ -142,8 +142,23 @@ Pinned reads reject unknown sequences, changed/writable/nonregular receipt files
 and inactive/foreign ownership. Retention is bounded by the 50,000-proof cap.
 Execution/source parents retain explicit command sequences so later admission
 need not reinterpret the latest counter as an earlier scope's invocation.
-These stricter native checks await their own exact-head Linux receipt and do
-not themselves admit source qualification.
+These stricter native checks pass exact `d06f256`, run 40204781861: all three
+Linux jobs, 273 foundations without skips and 121 scopes/1,684 witnesses.
+They do not themselves admit source qualification.
+
+Independent inspection-source admission additionally requires executor-held
+pre/post input snapshots, not just argv/cwd hashes or current files. Category
+commands name the actual read-only manifest, owner, RunInputs, assembly, settings,
+inspection context and relevant prepared configurations. Pinned captures enforce
+16-file/256-MiB/five-second bounds and reject identity/timestamp changes even when
+bytes are restored; original native receipt retention has a 256-MiB byte cap.
+The exact complete frozen scope and source/command/native graph must independently
+match those consumed inputs. Safe source graphs and packet copies survive store
+cleanup, and case attempts retain source-parent proof hashes. A separate fresh
+qualification-input metadata replay is wired; default transport admission and
+controller-origin qualification remain closed. This later increment has local
+tooling coverage but awaits exact-head native execution. Overall histories remain
+non-qualifying with their incomplete obligations; full profile CLI is unfinished.
 The earlier source-linking execution, before executor-held byte anchoring, is
 independently admitted at exact `78c5919`, run
 40202060742: all three Linux jobs, 273 foundations without skips and all

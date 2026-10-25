@@ -1967,9 +1967,14 @@ class RuntimeCaseHistory:
 class CategoryRuntimeHistory:
     """Import complete frozen binding batches without inventing controller proofs."""
 
-    def __init__(self, inputs, *, max_attempts=1, origin_inputs=None, original_inputs=None):
+    def __init__(self, inputs, *, max_attempts=1, origin_inputs=None, original_inputs=None, native_sources=None):
         from conformance_case_catalog import CATEGORY_BINDING_SLOTS, expected_cases
         self._inputs = admit_entity("RunInputs", inputs)
+        if native_sources is not None:
+            from conformance_sources import NativeCategorySources
+            if type(native_sources) is not NativeCategorySources or self._inputs["mode"] != "qualification":
+                raise ConformanceError("OwnershipInvalid")
+        self._native_sources = native_sources
         profile = self._inputs["profileId"]
         if profile not in ("metadata", "artifacts"):
             raise ConformanceError("UnsupportedProfile")
@@ -2121,7 +2126,7 @@ class CategoryRuntimeHistory:
             raise ConformanceError("OwnershipInvalid")
         return self._joint_plan
 
-    def _case_results(self, binding_id, code, ended, witnesses):
+    def _case_results(self, binding_id, code, ended, witnesses, source_parents=None):
         results = {}
         for case in self._cases:
             if case.binding_id != binding_id or case.exclusion is not None:
@@ -2138,12 +2143,16 @@ class CategoryRuntimeHistory:
                 else:
                     case_code = "None"
             status = "Passed" if case_code == "None" else failure_status(case_code)
+            proof_hashes = {witness["proofSha256"] for witness in selected}
+            if source_parents is not None:
+                proof_hashes.update(source_parents[witness["executionId"]] for witness in selected
+                                    if witness["executionId"] in source_parents)
             attempt = admit_entity("Attempt", {
                 "sequence": self._sequences[binding_id] + 1,
                 "startedMs": self._active[binding_id][1], "endedMs": ended,
                 "status": status, "diagnosticCode": case_code,
                 "witnessIds": tuple(witness["executionId"] for witness in selected),
-                "proofSha256": sorted({witness["proofSha256"] for witness in selected}),
+                "proofSha256": sorted(proof_hashes),
             })
             previous = self._results.get(case.key, {}).get("attempts", ())
             results[case.key] = _catalog_case_result(self._inputs, case, status, (*previous, attempt))
@@ -2160,8 +2169,9 @@ class CategoryRuntimeHistory:
         self._used_executions = self._used_executions | {witness["executionId"] for witness in witnesses}
         return tuple(self._results[case.key] for case in self._cases if case.binding_id in bindings)
 
-    def _append(self, binding_id, code, ended, witnesses=(), proofs=MappingProxyType({})):
-        return self._commit((binding_id,), self._case_results(binding_id, code, ended, witnesses), witnesses, proofs)
+    def _append(self, binding_id, code, ended, witnesses=(), proofs=MappingProxyType({}), source_parents=None):
+        return self._commit(
+            (binding_id,), self._case_results(binding_id, code, ended, witnesses, source_parents), witnesses, proofs)
 
     def finish(self, binding_id, *, manifest_data, owner_data, witnesses_data, proofs, completion_data,
                manifest_sha256, owner_sha256):
@@ -2180,9 +2190,9 @@ class CategoryRuntimeHistory:
             plan = {scope_id: {**scope, "tests": {
                 identity: (binding_id, case_id) for identity, case_id in scope["tests"].items()}}
                 for scope_id, scope in self._partitions[binding_id].items()}
-            code, witnesses, proofs, origins, originals, used_sessions, instances = self._ingest_parts(
+            code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents = self._ingest_parts(
                 plan, transports, self._active[binding_id][1], ended, self._sequences[binding_id] + 1)
-            results = self._append(binding_id, code, ended, witnesses, proofs)
+            results = self._append(binding_id, code, ended, witnesses, proofs, source_parents)
             self._session_origins = MappingProxyType({**self._session_origins, **origins})
             self._original_observations = MappingProxyType({
                 **self._original_observations, **originals})
@@ -2199,18 +2209,23 @@ class CategoryRuntimeHistory:
             raise ConformanceError("EvidenceIncomplete")
         fields = {"manifest_data", "owner_data", "witnesses_data", "proofs", "completion_data",
                   "manifest_sha256", "owner_sha256"}
-        witnesses, proofs, origins, originals, codes = (), {}, {}, {}, []
+        witnesses, proofs, origins, originals, codes, source_parents = (), {}, {}, {}, [], {}
         used_executions, used_sessions, instances = self._used_executions, self._used_sessions, self._instances
         proof_bytes = 0
         for scope_id, scope in sorted(plan.items()):
             transport = transports[scope_id]
             if not isinstance(transport, Mapping) or set(transport) != fields:
                 raise ConformanceError()
-            observed = ingest_runtime_attempt(
+            admit_attempt = ingest_runtime_attempt
+            source_options = {}
+            if self._native_sources is not None and scope_id.startswith("inspection-"):
+                admit_attempt = self._native_sources.ingest_attempt
+                source_options["category_scope"] = self._inputs["profileId"], scope_id
+            observed = admit_attempt(
                 inputs=self._inputs, **transport,
                 expected_tests={identity: (binding, "none") for identity, (binding, _) in scope["tests"].items()},
                 started_ms=started, ended_ms=ended, origin_inputs=self._origin_inputs,
-                original_inputs=self._original_inputs)
+                original_inputs=self._original_inputs, **source_options)
             if (observed["attemptId"] != scope["attemptId"]
                     or observed["completion"]["attemptSequence"] != sequence
                     or any((entry["bindingId"], entry["caseId"]) != scope["tests"][entry["testIdentity"]]
@@ -2223,6 +2238,10 @@ class CategoryRuntimeHistory:
             witnesses = (*witnesses, *observed["witnesses"])
             proofs.update(observed["proofs"])
             proof_bytes += sum(len(data) for data in transport["proofs"].values())
+            if source_options:
+                source_parents.update(observed["sourceParents"])
+                proofs.update({path: hashlib.sha256(raw).hexdigest() for path, raw in observed["sourceProofs"].items()})
+                proof_bytes += sum(len(raw) for raw in observed["sourceProofs"].values())
             if len(proofs) > MAX_PROOF_FILES or proof_bytes > MAX_PROOF_BYTES:
                 raise ConformanceError("OutputLimitExceeded")
             origins.update(observed["sessionOrigins"])
@@ -2230,17 +2249,17 @@ class CategoryRuntimeHistory:
             codes.append(observed["diagnosticCode"])
         code = next((code for code in codes if code not in ("None", "AssertionFailed")),
                     "AssertionFailed" if "AssertionFailed" in codes else "None")
-        return code, witnesses, proofs, origins, originals, used_sessions, instances
+        return code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents
 
     def finish_joint(self, *, transports):
         plan = self.joint_partitions()
         ended = _number(time.monotonic() * 1000)
         try:
             binding = next(iter(self._bindings))
-            code, witnesses, proofs, origins, originals, used_sessions, instances = self._ingest_parts(
+            code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents = self._ingest_parts(
                 plan, transports, self._active[binding][1], ended, self._sequences[binding] + 1)
             results = {key: value for binding in self._bindings
-                       for key, value in self._case_results(binding, code, ended, witnesses).items()}
+                       for key, value in self._case_results(binding, code, ended, witnesses, source_parents).items()}
             committed = self._commit(self._bindings, results, witnesses, proofs)
             self._session_origins = MappingProxyType({**self._session_origins, **origins})
             self._original_observations = MappingProxyType({**self._original_observations, **originals})

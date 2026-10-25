@@ -1998,11 +1998,19 @@ Exact `78c5919`, run
 now independently admits all four metadata/three artifact source parents, all
 121 scopes/1,684 witnesses and the fresh category controls. All three Linux jobs
 and 273 foundations without skips pass; category qualification remains closed.
-Native command/source parents now also require the executor's retained original
+Checkpoint `d06f256` additionally requires the executor's retained original
 receipt bytes, not merely a read-only file and matching caller-supplied hash.
 Explicit command sequences survive later commands without relying on the latest
-counter. Local tooling passes; this later increment awaits exact-head Linux
-execution and does not open qualification-origin admission.
+counter. Exact [40204781861](https://github.com/Stonefly-Labs/Hoard/actions/runs/40204781861)
+independently passes all three Linux jobs, 273 foundations without skips and the
+121-scope/1,684-witness chain. That snapshot does not open source qualification.
+
+A later inspection-origin path now independently corroborates complete native
+source graphs against freshly captured qualification inputs and executor-held
+pre/post input snapshots. It preserves source parents in case evidence and
+retains sanitized source packets outside disposable stores. A separate complete
+metadata admission execution is wired, but its exact-head Linux run is pending.
+Controller qualification, control imports and complete profile CLI remain closed.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

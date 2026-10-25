@@ -6126,9 +6126,39 @@ retention is bounded by the existing 50,000-proof cap. Explicit command sequence
 are retained in both parents for eventual joint source admission after later
 commands, rather than assuming the latest command is every source's parent.
 The missing API fails in red; 381 tooling checks pass after repair with 17
-explicit macOS-native skips. Linux-only actual-command substitution/unowned
-receipt/earlier-command regressions are pending native execution. This increment
-does not yet admit qualification origins, import controls or advance task markers.
+explicit macOS-native skips. Exact `d06f2561d8817ac94f493ec22ca6c41fa271eb0d`,
+run 40204781861, now independently passes all three Linux jobs, 273 foundations
+without skips, 13-lock/18-package replay and all 121 scopes/1,684 witnesses,
+including the actual-command substitution/unowned/earlier-command regressions.
+Metadata input/result:
+`2fe945beec658c8c986bde77204952518a126335cf15481d2e8dab4b35dce14f`/
+`dbf1bad5419a4b7ce33f5f36bd50a527d25dd1acf66ba7c796d9f3ce3d122e89`.
+Artifact input/result:
+`a9e59a67e97a66bd335e4e5ff84aad65c3e81371ec89f33db0281b017c25a606`/
+`13f1a9d21a37f906bb4c69c33f9cfe7e7a3e253a3aa8a16b892147dddd80b176`.
+Incomplete states and qualification false are unchanged. This receipt predates
+the inspection-origin implementation below.
+
+Independent inspection-source admission now lives in `conformance_sources.py`,
+shared with diagnostic producers but separate from build orchestration.
+The normal transport API remains closed to inspection/controller substitution.
+A concrete native context instead rechecks the exact frozen scope, complete
+source graph, actual executor-held command/input bytes, owner/context/settings,
+timing and settlement. Native records now bind read-only input snapshots taken
+before launch and after settlement, including identity/timestamp changes even
+when content is restored. Captures are bounded to 16 files/256 MiB/five seconds;
+retained native records are bounded to 50,000/256 MiB.
+
+Fresh qualification-mode metadata inputs and all six scopes/134 witnesses are
+wired through atomic joint admission; prior diagnostic records cannot be
+relabeled. Source parents enter case-attempt proof sets, and complete safe
+graphs/source packets survive store cleanup in `proofs/`. Missing context/input
+capture APIs fail in red; source/schema substitutions, fully rewired settings,
+unrelated native commands and wrong captured input hashes reject afterwards.
+All 383 local tooling checks pass with 17 explicit macOS-native skips; exact-head
+Linux execution of this later increment is pending. Actual controller-source
+qualification, remaining controls and full profile CLI are still unfinished.
+No additional task or reviewer-owned checklist markers advance.
 
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately

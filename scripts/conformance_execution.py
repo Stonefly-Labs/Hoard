@@ -21,8 +21,8 @@ from types import MappingProxyType
 import uuid
 
 from conformance_evidence import (
-    ConformanceError, DIAGNOSTIC_CODES, MAX_PROOF_FILES, MAX_RESULTS, _runtime_identity,
-    admit_entity, canonical_bytes, load_json,
+    ConformanceError, DIAGNOSTIC_CODES, MAX_PROOF_BYTES, MAX_PROOF_FILES, MAX_RESULTS,
+    _input_parent, _runtime_identity, _source_file, admit_entity, canonical_bytes, load_json, relative_path,
 )
 
 
@@ -390,6 +390,7 @@ class OwnedRun:
         self.retained_bytes = 0
         self.command_sequence = 0
         self._execution_records = {}
+        self._execution_record_bytes = 0
         self.cleanup_attempts = []
         self._writer = threading.RLock()
         self.started = time.monotonic()
@@ -425,6 +426,37 @@ class OwnedRun:
         finally:
             os.close(directory)
         return expected
+
+    def _capture_execution_inputs(self, paths, deadline):
+        def identity(value):
+            return (value.st_dev, value.st_ino, value.st_mode, value.st_size,
+                    value.st_mtime_ns, value.st_ctime_ns)
+
+        descriptor = self._root_descriptor()
+        captured, total = {}, 0
+        deadline = min(deadline, time.monotonic() + 5)
+        try:
+            for path in sorted(paths):
+                with _input_parent(descriptor, path) as (parent, name):
+                    info = os.stat(name, dir_fd=parent, follow_symlinks=False)
+                if (not stat.S_ISREG(info.st_mode) or stat.S_IMODE(info.st_mode) != 0o400
+                        or info.st_uid != os.getuid()):
+                    raise ConformanceError("InputChanged")
+                hashed, size = _source_file(
+                    descriptor, path, remaining=MAX_PROOF_BYTES - total, deadline=deadline)
+                with _input_parent(descriptor, path) as (parent, name):
+                    current = os.stat(name, dir_fd=parent, follow_symlinks=False)
+                if identity(info) != identity(current):
+                    raise ConformanceError("InputChanged")
+                captured[path] = hashed, identity(info)
+                total += size
+        except OSError:
+            raise ConformanceError("InputChanged") from None
+        finally:
+            os.close(descriptor)
+        if len(canonical_bytes({path: value[0] for path, value in captured.items()})) > READ_BYTES // 2:
+            raise ConformanceError("OutputLimitExceeded")
+        return captured
 
     def _root_descriptor(self):
         no_symlinks(self.root)
@@ -596,13 +628,20 @@ class OwnedRun:
     @single_writer
     def command(self, args, *, cwd=None, timeout=None, kind="events", env=None,
                 scope="ordinary", cache_id="default", deadline=None, discovery_tests=frozenset(),
-                stop_at_barrier=None, measure_transfer_bytes=None, inspect_at_barrier=None, record_execution=False):
+                stop_at_barrier=None, measure_transfer_bytes=None, inspect_at_barrier=None, record_execution=False,
+                execution_inputs=()):
         started = time.monotonic()
         if type(record_execution) is not bool or record_execution and scope == "cleanup":
             raise ConformanceError("OwnershipInvalid")
+        if (not isinstance(execution_inputs, (tuple, list)) or len(execution_inputs) > 16
+                or execution_inputs and not record_execution):
+            raise ConformanceError("OwnershipInvalid")
+        execution_inputs = tuple(relative_path(path) for path in execution_inputs)
+        if len(set(execution_inputs)) != len(execution_inputs):
+            raise ConformanceError("OwnershipInvalid")
         argv_sha = cwd_sha = None
         if record_execution:
-            if len(self._execution_records) >= MAX_PROOF_FILES:
+            if len(self._execution_records) >= MAX_PROOF_FILES or self._execution_record_bytes >= MAX_PROOF_BYTES:
                 raise ConformanceError("OutputLimitExceeded")
             if (not isinstance(args, (tuple, list)) or not args
                     or any(not isinstance(arg, str) or "\x00" in arg for arg in args)):
@@ -685,6 +724,7 @@ class OwnedRun:
             raise ConformanceError("DeadlineExceeded")
         if scope != "cleanup" and not native_execution_supported():
             raise ConformanceError("PrerequisiteMissing")
+        input_snapshot = self._capture_execution_inputs(execution_inputs, deadline) if execution_inputs else {}
         environment = command_environment(self.root, cache, env)
         acknowledgement, writer = socket.socketpair()
         launch = (list(args) if scope == "cleanup" else
@@ -883,6 +923,12 @@ class OwnedRun:
                 if handle is not None:
                     os.close(handle)
                 self._persist()
+        if failure is None and execution_inputs:
+            try:
+                if self._capture_execution_inputs(execution_inputs, deadline) != input_snapshot:
+                    failure = ConformanceError("InputChanged")
+            except ConformanceError as error:
+                failure = error
         if failure is None and time.monotonic() >= transfer_deadline:
             failure = ConformanceError("DeadlineExceeded")
         if failure is None and measure_transfer_bytes is not None and (
@@ -917,8 +963,13 @@ class OwnedRun:
             if record_execution:
                 execution_receipt = canonical_bytes({
                     **observed, "runId": self.run_id, "rootId": self.root_id,
-                    "argvSha256": argv_sha, "cwdSha256": cwd_sha})
+                    "argvSha256": argv_sha, "cwdSha256": cwd_sha,
+                    **({"inputFiles": {path: value[0] for path, value in input_snapshot.items()}}
+                       if execution_inputs else {})})
                 execution_sha = hashlib.sha256(execution_receipt).hexdigest()
+                if (len(execution_receipt) > READ_BYTES
+                        or self._execution_record_bytes + len(execution_receipt) > MAX_PROOF_BYTES):
+                    raise ConformanceError("OutputLimitExceeded")
                 receipts.append((f"execution-command-{self.command_sequence:04}.json", execution_receipt))
         for name, receipt in receipts:
             directory = self._directory_descriptor("proofs")
@@ -931,6 +982,7 @@ class OwnedRun:
                 os.close(directory)
         if record_execution:
             self._execution_records[self.command_sequence] = execution_receipt
+            self._execution_record_bytes += len(execution_receipt)
         if failure is not None:
             raise failure
         return CommandResult(code, tuple(events), (time.monotonic() - started) * 1000, execution_sha)

@@ -262,7 +262,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 manifest = {
                     "runId": run.run_id, "invocationGroupId": str(uuid.uuid4()),
                     "attemptId": str(uuid.uuid4()), "purpose": "execution",
-                    "inputSha256": "a" * 64, "expected": expected}
+                    "inputSha256": "a" * 64, "runInputsPath": "proofs/category-inputs.json", "expected": expected}
                 with self.subTest(profile=profile, scope=scope_id):
                     checks.runtime_command(run, assembly, manifest, **options)
                     if scope_id == "controller":
@@ -4336,10 +4336,10 @@ class SdkDiagnosticTests(unittest.TestCase):
             "pragmas": {"journalMode": "none", "synchronous": 0, "foreignKeys": 0, "busyTimeout": 0},
         }
         identity = checks.evidence.source_identity(repository)
-        def capture(group_id=None, inspection_inputs=None, profile_id="harness"):
+        def capture(group_id=None, inspection_inputs=None, profile_id="harness", mode="diagnostic"):
             return checks.make_inputs(run, repository, candidate, sources,
                                       environment, identity, None, group_id=group_id, inspection_inputs=inspection_inputs,
-                                      profile_id=profile_id)
+                                      profile_id=profile_id, mode=mode)
         unconsumed = runtime / "unused-native-build.a"
         with unconsumed.open("wb") as output:
             output.truncate(checks.evidence.MAX_PROOF_BYTES + 1)
@@ -4353,6 +4353,12 @@ class SdkDiagnosticTests(unittest.TestCase):
             self.assertNotEqual(checks.evidence.digest(category_inputs), checks.evidence.digest(before))
             checks.evidence.verify_input_recomputation(
                 category_inputs, capture(category_inputs["invocationGroupId"], profile_id=profile))
+        qualification_inputs = capture(before["invocationGroupId"], profile_id="metadata", mode="qualification")
+        self.assertEqual(qualification_inputs["mode"], "qualification")
+        self.assertNotEqual(checks.evidence.digest(qualification_inputs), checks.evidence.digest(before))
+        checks.evidence.verify_input_recomputation(
+            qualification_inputs,
+            capture(before["invocationGroupId"], profile_id="metadata", mode="qualification"))
         selected_large = runtime / "Oversized.dll"
         with selected_large.open("wb") as output:
             output.truncate(checks.evidence.MAX_PROOF_BYTES + 1)
@@ -4410,7 +4416,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         scenario = checks.SCENARIOS[1]
         identities = scenario[1]
         assembly_path = f"stores/candidate/{checks.LOGGER}/Smoke/bin/Release/net10.0/Smoke.dll"
-        inputs = {"runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+        inputs = {"runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()), "mode": "diagnostic",
                   "runtimeAssemblies": {assembly_path: "a" * 64},
                   "packages": [{"packageId": "Hoard.Conformance.TestLogger", "sha256": "b" * 64}]}
         result = SimpleNamespace(exit_code=0, events=(

@@ -8998,8 +8998,42 @@ command sequence for later source corroboration. The missing-reader regression
 failed before implementation; all 381 tooling checks pass afterwards with 17
 explicit macOS-native skips. Linux-only regressions additionally exercise
 same-length immutable substitution, an unowned valid receipt and rereading an
-earlier command after a later failed command; those await exact-head execution.
-This is native execution anchoring, not source qualification or control import.
+earlier command after a later failed command. Exact `d06f2561d8817ac94f493ec22ca6c41fa271eb0d`,
+[40204781861](https://github.com/Stonefly-Labs/Hoard/actions/runs/40204781861),
+independently passes all three Linux jobs, 273 foundations without skips,
+13-lock/18-package replay and all 121 scopes/1,684 witnesses. Four metadata/
+three artifact parents pass. States remain 71/22/9/0 and 92/7/4/0 with
+qualification false; this snapshot predates inspection-origin admission.
+
+`conformance_sources.py` now owns shared inspection validation and independent
+native corroboration, without importing the SDK build/diagnostic controller into
+the generic evidence parser. The default transport API still rejects inspection/
+controller witnesses even with unrelated valid sessions. Only the concrete
+native source context can corroborate an exact complete inspection scope:
+actual command ownership, current input/owner/manifest/context/settings bytes,
+frozen binding/primary-case identities, consumed-file packets, monotonic timing
+and settled children must agree. No opaque admission token or pass boolean is used.
+
+Recorded category commands now snapshot at most 16 owner-held read-only input
+files through pinned descriptors, before launch and after settlement. Each
+capture has a five-second/256-MiB bound; changed identities or timestamps reject
+even if bytes are restored. Executor-held records bind those actual hashes.
+Retention is bounded by 50,000 records/256 MiB. Rewiring all current proof hashes
+cannot relabel an earlier diagnostic input snapshot as qualification.
+
+The SDK path separately captures and recomputes qualification-mode metadata
+inputs, executes its complete six scopes/134 witnesses, and independently
+corroborates source origins during atomic joint admission after later commands.
+Case attempts reference source-parent hashes; their complete safe graph and
+source packets are retained in `proofs/`, not only disposable stores. Histories
+remain non-qualifying while required controls are incomplete. This later path
+passes all 383 local tooling checks with 17 explicit macOS-native skips; actual
+Linux execution is pending. The first full rerun exposed a missing explicit mode
+in a legacy simulated fixture; the fixture now declares diagnostic mode rather
+than adding a production fallback. The real 24-GiB gate also rejected local
+capacity; removing eight inspected obsolete task-generated restore caches,
+without deleting feeds/images/receipts or weakening the guard, restored admission.
+Controller-source qualification, control imports and the full CLI are unfinished.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

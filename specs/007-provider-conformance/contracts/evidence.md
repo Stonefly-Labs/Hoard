@@ -93,8 +93,13 @@ production provider contract or mandatory outcome.
 The separate closed non-session policy identifies all six frozen inspection
 witnesses and sixteen crash/retention/transfer producer identities. Valid
 ordinary provider sessions cannot substitute for their independent source
-proofs. Their qualification admission remains unimplemented and fails closed,
+proofs. The default transport API fails closed for these witnesses,
 including when the execution selects `none` rather than a provider binding.
+Inspection qualification now has a separate concrete native-source context that
+independently corroborates frozen complete scopes against actual executor-held
+command/input snapshots, source packets and the complete source-parent graph.
+Caller flags, unrelated sessions and current files alone cannot grant admission.
+Controller-source qualification remains unimplemented and closed.
 Known original observation requirements likewise cannot be skipped through
 that context. Diagnostic producer receipts and structural model fixtures never
 qualify those source witnesses.
@@ -167,7 +172,17 @@ extend the existing package inventory. It verifies the family-specific sealed
 images before execution and independently selects/hashes files again for both
 input documents' completion recomputation. This path does not establish full
 historical compatibility, native containment on unsupported hosts, or qualifying
-category admission; the non-session qualification gate remains closed.
+complete category qualification. The default non-session gate remains closed.
+The separate native inspection path requires fresh qualification-mode RunInputs
+captured before execution and independently recomputed afterwards. It checks
+actual owner/manifest/context/settings bytes and exact native argv/cwd, requires
+pre/post immutable input snapshots and settled children, and nests witness timing
+inside that command. Rewriting all current files and parent hashes cannot turn
+an old diagnostic command into qualification. Sanitized packets and complete
+source/native parents are retained under `proofs/`; case-attempt proof lists
+include source-parent hashes. This implementation has local tooling coverage,
+but exact-head Linux execution is pending. Controller admission, remaining
+controls and complete profile CLI are not implemented by this path.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

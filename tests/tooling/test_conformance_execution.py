@@ -194,8 +194,14 @@ class ConformanceExecutionTests(unittest.TestCase):
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_bounded_safe_events_are_retained_without_raw_canary(self):
         run = self.workspace()
-        arguments = [sys.executable, "-c", 'print(\'{"event":"control","code":"None","value":3}\')']
-        result = run.command(arguments, record_execution=True)
+        input_file = run.root / "stores/command-input.json"
+        input_file.write_bytes(b"one")
+        input_file.chmod(0o400)
+        arguments = [sys.executable, "-c",
+                     'from pathlib import Path; assert Path("stores/command-input.json").read_bytes() == b"one"; '
+                     'print(\'{"event":"control","code":"None","value":3}\')']
+        result = run.command(arguments, cwd=run.root, record_execution=True,
+                             execution_inputs=("stores/command-input.json",))
         self.assertEqual(result.exit_code, 0)
         self.assertEqual(result.events[0]["value"], 3)
         path = run.root / "proofs/execution-command-0001.json"
@@ -221,6 +227,7 @@ class ConformanceExecutionTests(unittest.TestCase):
         self.assertEqual(receipt["runId"], run.run_id)
         self.assertEqual(receipt["exitCode"], 0)
         self.assertEqual(receipt["groupState"], "Exited")
+        self.assertEqual(receipt["inputFiles"], {"stores/command-input.json": execution.hashlib.sha256(b"one").hexdigest()})
         self.assertNotEqual(receipt["childStartSha256"], "0" * 64)
         self.assertGreater(receipt["childPid"], 1)
         self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o400)
@@ -232,6 +239,14 @@ class ConformanceExecutionTests(unittest.TestCase):
         self.assertEqual(failure["diagnosticCode"], "UnknownDiagnostic")
         self.assertEqual(run.read_execution_record(1), original)
         self.assertEqual(json.loads(run.read_execution_record(2)), failure)
+        with self.assertRaisesRegex(ConformanceError, "InputChanged"):
+            run.command([
+                sys.executable, "-c",
+                'from pathlib import Path; p = Path("stores/command-input.json"); p.chmod(0o600); '
+                'p.write_bytes(b"two"); p.write_bytes(b"one"); p.chmod(0o400); '
+                'print(\'{"event":"control","code":"None","value":1}\')',
+            ], cwd=run.root, record_execution=True, execution_inputs=("stores/command-input.json",))
+        self.assertEqual(json.loads(run.read_execution_record(3))["diagnosticCode"], "InputChanged")
         self.assertEqual([json.loads(line) for line in
                           (run.root / "diagnostics/command-0002.jsonl").read_bytes().splitlines()], [
                               {"event": "control", "code": "None", "value": 4},
@@ -253,7 +268,15 @@ class ConformanceExecutionTests(unittest.TestCase):
         with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
             run.read_execution_record(1)
         with mock.patch.object(execution.subprocess, "Popen") as launch:
+            for paths in (None, {}, ["../outside"], ["same", "same"], ["input"] * 17):
+                with self.subTest(paths=paths), self.assertRaises(ConformanceError):
+                    run.command([sys.executable], record_execution=True, execution_inputs=paths)
+            with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                run.command([sys.executable], execution_inputs=["input"])
             with mock.patch.object(execution, "MAX_PROOF_FILES", 0):
+                with self.assertRaisesRegex(ConformanceError, "OutputLimitExceeded"):
+                    run.command([sys.executable], record_execution=True)
+            with mock.patch.object(execution, "MAX_PROOF_BYTES", 0):
                 with self.assertRaisesRegex(ConformanceError, "OutputLimitExceeded"):
                     run.command([sys.executable], record_execution=True)
             for value in (None, 0, 1, "true", {}):
@@ -270,6 +293,27 @@ class ConformanceExecutionTests(unittest.TestCase):
             launch.assert_not_called()
         self.assertEqual(run.command_sequence, 0)
         self.assertFalse(tuple((run.root / "proofs").glob("execution-command-*.json")))
+        run.transition("Settling")
+        run.release()
+
+    def test_execution_input_snapshots_detect_rewrites_even_when_bytes_are_restored(self):
+        run = self.workspace()
+        path = run.root / "stores/command-input.json"
+        path.write_bytes(b"one")
+        path.chmod(0o400)
+        original = run._capture_execution_inputs(("stores/command-input.json",), time.monotonic() + 5)
+        self.assertEqual(original["stores/command-input.json"][0], execution.hashlib.sha256(b"one").hexdigest())
+        self.assertEqual(
+            run._capture_execution_inputs(("stores/command-input.json",), time.monotonic() + 5), original)
+        path.chmod(0o600)
+        with self.assertRaisesRegex(ConformanceError, "InputChanged"):
+            run._capture_execution_inputs(("stores/command-input.json",), time.monotonic() + 5)
+        path.write_bytes(b"two")
+        path.write_bytes(b"one")
+        path.chmod(0o400)
+        changed = run._capture_execution_inputs(("stores/command-input.json",), time.monotonic() + 5)
+        self.assertEqual(changed["stores/command-input.json"][0], original["stores/command-input.json"][0])
+        self.assertNotEqual(changed, original)
         run.transition("Settling")
         run.release()
 
