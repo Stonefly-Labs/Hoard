@@ -1899,6 +1899,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
     def test_known_inspection_and_controller_witnesses_cannot_qualify_with_unrelated_valid_sessions(self):
         import conformance_case_catalog as catalog
+        self.assertTrue(callable(getattr(evidence, "inspect_runtime_attempt", None)))
         baseline = copy.deepcopy((self.inputs, self.manifest, self.proof, self.witness, self.completion))
         fixtures = (".MetadataBoundaryTests.", ".ArtifactBoundaryTests.", ".ArtifactCrashTests.",
                     ".ArtifactNonCooperativeChildTests.", ".ArtifactTransferProofTests.")
@@ -1934,8 +1935,45 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         if mode == "diagnostic":
                             self.assertEqual(self.ingest(**options)["diagnosticCode"], "None")
                         else:
+                            inspected = evidence.inspect_runtime_attempt(**self.transport(**options))
+                            self.assertFalse(inspected["qualification"])
+                            self.assertEqual(inspected["inputs"]["mode"], "qualification")
+                            self.assertEqual(
+                                inspected["observation"]["witnesses"][0]["testIdentity"], identity)
                             with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
                                 self.ingest(**options)
+
+    def test_runtime_inspection_freezes_unqualified_transport_without_skipping_validation(self):
+        self.inputs["mode"] = "qualification"
+        input_sha = evidence.digest(self.inputs)
+        self.manifest["inputSha256"] = input_sha
+        manifest_sha = evidence.digest(self.manifest)
+        self.proof.update(inputSha256=input_sha, manifestSha256=manifest_sha)
+        self.witness.update(inputSha256=input_sha, proofSha256=evidence.digest(self.proof))
+        self.completion.update(inputSha256=input_sha, manifestSha256=manifest_sha)
+        transport = self.transport()
+        inspected = evidence.inspect_runtime_attempt(**transport)
+        self.assertFalse(inspected["qualification"])
+        self.assertEqual(inspected["inputsSha256"], input_sha)
+        self.assertEqual(inspected["observation"]["diagnosticCode"], "None")
+        with self.assertRaises(TypeError):
+            inspected["qualification"] = True
+        with self.assertRaises(TypeError):
+            inspected["inputs"]["mode"] = "diagnostic"
+        with self.assertRaises(TypeError):
+            inspected["observation"]["proofs"]["foreign"] = "a" * 64
+        with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+            evidence.ingest_runtime_attempt(**transport)
+        for changed in (
+            {"proofs": {f"proof-{self.execution}.json": b"{}"}},
+            {"witnesses_data": transport["witnesses_data"][:-1]},
+            {"completion_data": evidence.canonical_bytes({
+                **evidence.load_json(transport["completion_data"]), "complete": False})},
+        ):
+            with self.subTest(changed=changed), self.assertRaises(evidence.ConformanceError):
+                evidence.inspect_runtime_attempt(**{**transport, **changed})
+        self.inputs["mode"] = "diagnostic"
+        self.assertEqual(inspected["inputs"]["mode"], "qualification")
 
     def test_category_import_requires_inspection_evidence_even_when_all_provider_origins_are_valid(self):
         origin, assignments = self.runtime_origin("runtime")

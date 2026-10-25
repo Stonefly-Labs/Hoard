@@ -5980,6 +5980,27 @@ Complete native artifact execution remains pending. Qualification, controls,
 tasks/checklists, production/reference/lock bytes and deployment diagrams are
 unchanged; no complete category acceptance is inferred.
 
+### Non-qualifying staged runtime inspection
+
+The shared runtime parser now exposes an immutable inspection envelope for
+parent corroboration before origin qualification. Every existing structure,
+hash, source/package provenance, timing, failure and completion check still
+runs. The envelope always has `qualification: false` and contains the admitted
+input snapshot/digest plus validated observations. Normal admission applies the
+unchanged original/session/non-session qualification policy afterward against
+the immutable captured inputs. No provider-selectable bypass flag is added;
+unadmitted source/controller witnesses still reject.
+
+The missing inspection API first fails the new regression. Its repair checks
+immutable output, caller-mutation isolation and changed/truncated/contradictory
+transports; existing known-source/unrelated-session substitutions explicitly
+remain non-qualifying on inspection and rejected on normal admission.
+All 92 evidence checks and all 379 tooling checks pass (362 passed/seventeen
+native macOS skips), with inventory/catalog and patch checks passing. This
+staging boundary is not independent source/controller corroboration or a
+qualifying backend. No task/checklist or production/package/lock/reference/
+deployment surface changes.
+
 ## Summary
 
 

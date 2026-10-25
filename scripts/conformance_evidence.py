@@ -1580,6 +1580,48 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
                            completion_data, expected_tests, manifest_sha256, owner_sha256,
                            started_ms, ended_ms, origin_inputs=None, original_inputs=None):
     """Validate actual safe-logger records; a valid failed attempt remains failed."""
+    inspected = inspect_runtime_attempt(
+        inputs=inputs, manifest_data=manifest_data, owner_data=owner_data, witnesses_data=witnesses_data,
+        proofs=proofs, completion_data=completion_data, expected_tests=expected_tests,
+        manifest_sha256=manifest_sha256, owner_sha256=owner_sha256, started_ms=started_ms, ended_ms=ended_ms,
+        origin_inputs=origin_inputs, original_inputs=original_inputs)
+    inputs, observed = inspected["inputs"], inspected["observation"]
+    if inputs["mode"] == "qualification":
+        from conformance_case_catalog import original_non_session_policy, original_witness_policy
+        for witness in observed["witnesses"]:
+            if witness["status"] != "Passed":
+                continue
+            originals = observed["originalObservations"][witness["executionId"]]
+            origins = observed["sessionOrigins"][witness["executionId"]]
+            selected_binding = next((binding for binding in inputs["bindings"]
+                                     if binding["bindingId"] == witness["bindingId"]), None)
+            if original_witness_policy(witness["testIdentity"]) is not None:
+                if not originals:
+                    raise ConformanceError("WitnessMissing")
+            elif original_non_session_policy(witness["testIdentity"]) is not None:
+                raise ConformanceError("WitnessMissing")
+            elif (selected_binding is not None and selected_binding["category"] in _SESSION_ROLES
+                  and not any(origin["descriptorSha256"] == selected_binding["descriptorSha256"] for origin in origins)):
+                raise ConformanceError("WitnessMissing")
+    return observed
+
+
+def inspect_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, proofs,
+                            completion_data, expected_tests, manifest_sha256, owner_sha256,
+                            started_ms, ended_ms, origin_inputs=None, original_inputs=None):
+    """Inspect validated transport for parent corroboration without qualifying it."""
+    captured, observed = _read_runtime_attempt(
+        inputs=inputs, manifest_data=manifest_data, owner_data=owner_data, witnesses_data=witnesses_data,
+        proofs=proofs, completion_data=completion_data, expected_tests=expected_tests,
+        manifest_sha256=manifest_sha256, owner_sha256=owner_sha256, started_ms=started_ms, ended_ms=ended_ms,
+        origin_inputs=origin_inputs, original_inputs=original_inputs)
+    return MappingProxyType({
+        "qualification": False, "inputs": captured, "inputsSha256": digest(captured), "observation": observed})
+
+
+def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, proofs,
+                          completion_data, expected_tests, manifest_sha256, owner_sha256,
+                          started_ms, ended_ms, origin_inputs=None, original_inputs=None):
     inputs, manifest, expected, assemblies, packages, expected_tests = _runtime_manifest(
         inputs, manifest_data, owner_data, expected_tests, manifest_sha256, owner_sha256, "execution")
     input_sha = digest(inputs)
@@ -1663,18 +1705,6 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
             prior_observations=prior_observations, prior_instances=prior_instances)
         if set(prior_sessions) & set(prior_observations):
             raise ConformanceError("ProofMismatch")
-        selected_binding = next((binding for binding in inputs["bindings"]
-                                 if binding["bindingId"] == witness["bindingId"]), None)
-        if inputs["mode"] == "qualification" and witness["status"] == "Passed":
-            from conformance_case_catalog import original_non_session_policy, original_witness_policy
-            if original_witness_policy(witness["testIdentity"]) is not None:
-                if not originals:
-                    raise ConformanceError("WitnessMissing")
-            elif original_non_session_policy(witness["testIdentity"]) is not None:
-                raise ConformanceError("WitnessMissing")
-            elif (selected_binding is not None and selected_binding["category"] in _SESSION_ROLES
-                  and not any(origin["descriptorSha256"] == selected_binding["descriptorSha256"] for origin in origins)):
-                raise ConformanceError("WitnessMissing")
         session_origins[witness["executionId"]] = origins
         original_observations[witness["executionId"]] = originals
         if ((witness["status"] == "Passed" and (proof["failureKind"] != "None" or proof["assertionSymbol"] is not None))
@@ -1702,7 +1732,7 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
             or (code == "AssertionFailed" and (not inventory_complete or not failed or unknown_failure
                 or any(item["status"] == "Incomplete" for item in witnesses)))):
         raise ConformanceError("EvidenceIncomplete")
-    return MappingProxyType({
+    return inputs, MappingProxyType({
         "witnesses": witnesses, "proofs": MappingProxyType(proof_hashes), "completion": completion,
         "attemptId": manifest["attemptId"], "diagnosticCode": code,
         "sessionOrigins": MappingProxyType(session_origins),

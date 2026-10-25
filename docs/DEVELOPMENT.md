@@ -8810,6 +8810,27 @@ frozen inventory/catalog and patch checks pass. Existing production providers,
 package/reference/lock bytes, checklists/tasks and deployment diagrams are
 unchanged; source/controller qualification and remaining controls stay closed.
 
+Runtime transport parsing and qualification-origin admission now have a shared
+staged boundary. `inspect_runtime_attempt` returns an immutable envelope with
+`qualification: false`, the admitted input snapshot/digest and structurally
+validated observations. Parent corroboration can inspect those observations
+without first claiming qualified origins. Normal `ingest_runtime_attempt`
+uses that same parser, then applies the unchanged original/session/non-session
+qualification rules against the captured immutable inputs, not caller mutations.
+No bypass flag is added and unadmitted inspection/controller witnesses still
+reject qualification.
+
+The new test first fails at the missing inspection API, then verifies immutable
+non-qualifying output, retained input identity and rejection of changed proofs,
+truncated witness streams and contradictory completion. Existing unrelated
+session/source substitution cases now also prove that inspection is explicitly
+non-qualifying while normal admission still rejects. All 92 evidence tests and
+all 379 tooling checks pass (362 passed/seventeen explicit native macOS skips),
+with frozen inventory/catalog and patch checks passing. This is a prerequisite
+for independent source corroboration, not its implementation or a qualifying
+profile. Tasks/checklists, package/provider/reference/lock bytes and deployment
+diagrams are unaffected.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

@@ -81,6 +81,12 @@ UUID and an already-written matching category input document. Raw runtime/
 owner/witness/completion/proof bytes are returned unchanged; prior harness
 evidence cannot be relabeled into a category. Discovery and runtime admission
 share the existing bounded transport path.
+Its inspection entry point additionally exposes structurally validated
+observations under an immutable, explicitly `qualification: false` envelope
+with captured inputs/digest. Normal admission shares that parser and still
+requires its original qualification-origin policy. Inspection validates all
+hash/provenance/timing/completion constraints, but never supplies missing
+source/controller corroboration or a qualifying pass.
 
 For category discovery and execution, an available native command record is
 independently joined to the exact run/root/sequence, argv/cwd hashes, PID/start,

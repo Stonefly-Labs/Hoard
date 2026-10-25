@@ -1949,6 +1949,12 @@ namespace; neither controller settings nor packet admission borrow the earlier
 harness measurements. Both profiles retain every inherited/QC entry and
 incomplete control. This artifact addition is locally unit-checked, not yet
 admitted native execution or qualifying category/profile acceptance.
+Runtime transport now also supports an explicitly non-qualifying immutable
+inspection envelope for parent corroboration. It shares every structural,
+hash, provenance, timing and completion check with normal admission; normal
+qualification still requires its original origins and rejects unadmitted
+inspection/controller witnesses. This staging prerequisite does not open a
+qualification backend or turn a runtime pass into a qualifying case.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce
