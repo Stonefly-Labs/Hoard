@@ -7,14 +7,16 @@ using Hoard.Hosting;
 using Hoard.Hosting.Configuration;
 using Hoard.Hosting.Lifecycle;
 using Hoard.Testing.Conformance.Artifacts;
+using Hoard.Testing.Conformance.Evidence;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactCompositionTests
+public sealed class ArtifactCompositionTests(ITestOutputHelper output)
 {
     public sealed class DisabledArtifact : IArtifactProvider;
 
@@ -28,6 +30,7 @@ public sealed class ArtifactCompositionTests
         using var disabled = new ArtifactTestRoot();
         ArtifactMutationReceipt? committed = null;
         ArtifactFixtureModule? previousModule = null;
+        ConformanceOriginalObservation? previousObservation = null;
         for (var pass = 0; pass < 2; pass++)
         {
             var root = pass == 0 || provider == "local" ? first.Path : replacement.Path;
@@ -78,6 +81,8 @@ public sealed class ArtifactCompositionTests
             await app.StopAsync();
             Assert.False((await module.CheckReadinessAsync(default)).Ready);
             Assert.False(module.Session.Ready);
+            previousObservation = ArtifactProviderDriver.ObserveOriginalSession(output,
+                nameof(ArtifactCompositionTests), provider, module.Session, module, previousObservation);
             previousModule = module;
         }
     }

@@ -1,9 +1,10 @@
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactMetadataIntegrationTests
+public sealed class ArtifactMetadataIntegrationTests(ITestOutputHelper output)
 {
     [Theory]
     [InlineData("local", "sqlite")]
@@ -15,6 +16,8 @@ public sealed class ArtifactMetadataIntegrationTests
         using var root = PrivateRoot();
         await using var session = await ArtifactMetadataFixtureSession.CreateForQualificationAsync(provider, metadataProvider, root.Path);
         await Assertions(session).ReferenceDuringDeletionAsync(() => session.Artifacts.Authority.WaitingAdmissions, default);
+        ArtifactProviderDriver.ObserveOriginalSession(output, nameof(ArtifactMetadataIntegrationTests), provider,
+            session.Artifacts, session, parameter: $"metadataProvider: \"{metadataProvider}\"");
     }
 
     [Theory]
@@ -28,6 +31,8 @@ public sealed class ArtifactMetadataIntegrationTests
         using var root = PrivateRoot();
         await using var session = await ArtifactMetadataFixtureSession.CreateForQualificationAsync(provider, metadataProvider, root.Path);
         await Assertions(session).FailedTransactionAsync(default);
+        ArtifactProviderDriver.ObserveOriginalSession(output, nameof(ArtifactMetadataIntegrationTests), provider,
+            session.Artifacts, session, parameter: $"metadataProvider: \"{metadataProvider}\"");
     }
 
     [Theory]
@@ -41,6 +46,8 @@ public sealed class ArtifactMetadataIntegrationTests
         using var root = PrivateRoot();
         await using var session = await ArtifactMetadataFixtureSession.CreateForQualificationAsync(provider, metadataProvider, root.Path);
         await Assertions(session).ActualReferencesAsync(default);
+        ArtifactProviderDriver.ObserveOriginalSession(output, nameof(ArtifactMetadataIntegrationTests), provider,
+            session.Artifacts, session, parameter: $"metadataProvider: \"{metadataProvider}\"");
     }
 
     [Theory]
@@ -59,6 +66,8 @@ public sealed class ArtifactMetadataIntegrationTests
             () => session.Controls.SetObserver("M1", () => { entered.TrySetResult(); return new(release.Task); }),
             () => entered.Task, () => release.TrySetResult(),
             session.Artifacts.WhenIdleForQualificationAsync, session.WhenMetadataIdleAsync, default);
+        ArtifactProviderDriver.ObserveOriginalSession(output, nameof(ArtifactMetadataIntegrationTests), provider,
+            session.Artifacts, session, parameter: $"metadataProvider: \"{metadataProvider}\"");
     }
 
     private static ArtifactMetadataIntegrationAssertions Assertions(ArtifactMetadataFixtureSession session) =>

@@ -164,6 +164,8 @@ ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted((
         ("ArtifactAdmissionTests", (
             "Before_admission_and_with_mismatched_authority_no_source_or_directory_is_touched",
             "Symlinked_root_or_ancestor_is_rejected_without_touching_outside_sentinel")),
+        ("ArtifactCompositionTests", (
+            "Configured_singleton_selection_recovers_and_restarts_explicitly",)),
         ("ArtifactNonCooperationTests", (
             "Idle_read_expiry_fences_copy_without_touching_the_destination",
             "Concurrent_close_waits_for_the_same_physical_guard_release_and_fences_new_copy",
@@ -214,6 +216,13 @@ ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted((
            "gap", tuple(f'"{gap}"' for gap in (
                "authority", "deletion", "fencing", "publication", "readers", "recovery", "streaming", "version"))))
       for provider in ("local", "object") for value in values),
+    *(f'Hoard.Artifacts.Tests.ArtifactMetadataIntegrationTests.{method}(provider: "{provider}", metadataProvider: "{metadata}")'
+      for method in (
+          "New_reference_cannot_cross_an_admitted_zero_reference_deletion",
+          "Failed_metadata_transaction_leaves_identifiable_committed_bytes_not_a_fabricated_entry",
+          "Actual_metadata_references_deny_removal_until_the_reference_transaction_commits",
+          "Lost_metadata_acknowledgment_keeps_real_reference_protection_until_physical_settlement")
+      for provider in ("local", "object") for metadata in ("memory", "sqlite")),
 )))
 ORIGINAL_ARTIFACT_BINDINGS = MappingProxyType({
     **{identity: provider for identity in ORIGINAL_ARTIFACT_WITNESSES
@@ -230,6 +239,11 @@ ORIGINAL_ARTIFACT_REOPENS = MappingProxyType({
         ".Damaged_read_has_no_completion_and_invalidates_later_health_and_evidence(",
         ".Every_committed_detection_path_quarantines_restored_bytes(",
         ".Validation_first_corruption_cannot_be_revived_by_external_restoration("))
+})
+ORIGINAL_ARTIFACT_FORESTS = MappingProxyType({
+    **ORIGINAL_ARTIFACT_REOPENS,
+    **{identity: (None, None) for identity in ORIGINAL_ARTIFACT_WITNESSES
+       if ".ArtifactCompositionTests." in identity},
 })
 
 
@@ -252,7 +266,7 @@ def original_witness_parents(identity):
     """The independently selected creation/reopen forest for one exact execution."""
     if original_witness_policy(identity) is None:
         return None
-    return ORIGINAL_METADATA_FORESTS.get(identity, ORIGINAL_ARTIFACT_REOPENS.get(identity, (None,)))
+    return ORIGINAL_METADATA_FORESTS.get(identity, ORIGINAL_ARTIFACT_FORESTS.get(identity, (None,)))
 
 
 def category_runtime_cases(profile, binding_id):

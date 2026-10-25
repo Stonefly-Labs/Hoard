@@ -154,8 +154,8 @@ later forest sources or complete categories/profiles. Wire schemas are unchanged
 The configured metadata host now contributes two actual module-owned roots,
 including rejected schema admission, while 38 additional artifact parameters
 observe their existing driver/interfaces after unchanged assertions. Coverage
-is 63 operational metadata identities per provider and 163 artifact witnesses
-after rejection/lifecycle and fixed-binding facts. Source boolean names/values
+is 63 operational metadata identities per provider and 181 artifact witnesses,
+including actual metadata compositions and configured owners. Source boolean names/values
 remain unchanged; multi-parameter provider assignment has no Object fallback.
 Nine actual Local fresh-store children require exact immutable per-node image
 maps, not a flat original-owner image or cross-node fallback. Legacy metadata
@@ -165,9 +165,12 @@ rows cannot borrow a Local child. Observers never take cleanup ownership.
 Rejected source-created store owners and actual admitted decorator authorities
 retain their exact images. Fixed facts keep source parameters and independent
 binding assignments; no absent provider token defaults to Object.
-Local observation/replay pass 293 executions, 326 records and 1,958 image
+Metadata-composed owners and successful configured modules use actual
+HostAdapters images/interfaces/controls. Two independent module roots preserve
+reference history without invented parent edges or borrowed Local child images.
+Local observation/replay pass 311 executions, 346 records and 2,098 image
 correspondences. Native admission requires 232 foundations and
-105 scopes/1,276 observations, pending; controllers, remaining artifact lifetimes
+105 scopes/1,294 observations, pending; controllers, remaining artifact lifetimes
 and complete qualification are not inferred.
 
 The implemented private transport distinguishes `purpose: discovery` from

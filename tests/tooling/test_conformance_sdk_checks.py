@@ -1017,7 +1017,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         run = SimpleNamespace(root=self.directory)
         scenarios = checks.original_observation_scenarios()
         self.assertEqual(len(scenarios), 5)
-        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 293)
+        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 311)
         frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_bytes())
         expected_metadata = {name for entry in frozen["entries"] if entry["profileId"] == "metadata"
                              for name in entry["runtimeTests"] if name.startswith((
@@ -1052,6 +1052,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                                   "ArtifactVisibilityTests.",
                                   "ArtifactCapabilityTests.",
                                   "ArtifactAdmissionTests.",
+                                  "ArtifactMetadataIntegrationTests.",
+                                  "ArtifactCompositionTests.Configured_singleton_",
                                   "ArtifactNonCooperationTests.",
                                   "ArtifactFailureTests.",
                                   "ArtifactBudgetTests.",
@@ -1099,7 +1101,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                         for node in nodes:
                             self.assertTrue({path for path, _ in node.values()} <= {
                                 item["path"] for item in manifest["assemblies"]})
-                        if not metadata and len(nodes) > 1:
+                        if not metadata and any(parent is not None for parent in checks.original_witness_parents(
+                                entry["testIdentity"])):
                             self.assertIsNone(nodes[0]["owner"][1])
                             self.assertEqual(nodes[1]["owner"][1], "Hoard.Fixtures.Artifacts.Local")
                             with self.assertRaisesRegex(checks.evidence.ConformanceError, "EvidenceIncomplete"):
@@ -1112,6 +1115,13 @@ class SdkDiagnosticTests(unittest.TestCase):
                         if ".Concurrent_close_waits_" in entry["testIdentity"]:
                             self.assertIsNone(roles["authority"][1])
                             self.assertTrue(roles["authority"][0].endswith("/Hoard.Artifacts.Tests.dll"))
+                        if any(f".{fixture}." in entry["testIdentity"] for fixture in (
+                                "ArtifactMetadataIntegrationTests", "ArtifactCompositionTests")):
+                            self.assertEqual(roles["owner"][1], "Hoard.Fixtures.Artifacts.HostAdapters")
+                            self.assertEqual(roles["controls"][1], "Hoard.Fixtures.Artifacts." + (
+                                "Local" if binding == "local" else "ObjectSemantics"))
+                            if ".ArtifactCompositionTests." in entry["testIdentity"]:
+                                self.assertEqual(checks.original_witness_parents(entry["testIdentity"]), (None, None))
                         if metadata:
                             facade = any(part in entry["testIdentity"] for part in (
                                 "MetadataPublicationTests.", "MetadataRelationshipTests.",
@@ -1126,7 +1136,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                             self.assertEqual(roles["owner"][1], None if ".MetadataSchemaTests." in entry["testIdentity"]
                                              else "Hoard.Fixtures.Metadata.HostAdapters")
                     self.assertEqual(assembly.name, "Hoard.Metadata.Tests.dll" if metadata else "Hoard.Artifacts.Tests.dll")
-                    if provider == "sqlite":
+                    if provider == "sqlite" or any('metadataProvider: "sqlite"' in name for name in scenario[1]):
                         admission.assert_called_once_with(inputs, assembly, self.directory)
                 with patch.object(run, "command", create=True,
                                   side_effect=checks.evidence.ConformanceError("DeadlineExceeded")) as launch:

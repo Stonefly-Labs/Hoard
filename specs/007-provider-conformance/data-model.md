@@ -284,7 +284,7 @@ and four contracts) and 818 image correspondences with SDK archive
 The configured-host witness adds two independent roots whose actual owners
 are the composed modules, not additional fixture sessions; both admitted and
 rejected-schema lifetimes retain original construction/assertion/disposal.
-Artifact policy now includes 163 exact witnesses across publication, deletion,
+Artifact policy now includes 181 exact witnesses across publication, deletion,
 reconciliation, read revalidation/destination failure, publication races, storage
 failures, all frozen budgets and selected recovery cases. Exact source-owned
 boolean argument names/values are preserved; provider selection rejects missing
@@ -302,10 +302,14 @@ Rejected store roots use actual provider-owned owner images; the decorated
 authority uses the exact source-owned decorator image. Source-fixed facts and
 non-provider parameters have explicit independently checked binding assignments,
 without guessed Object fallback or invented provider parameters.
-Current local observation/replay pass 293 executions, 326 records
-(322 original owners/four contracts) and 1,958 image correspondences with the
+Actual metadata-composed sessions and configured-module owners use their real
+HostAdapters images, actual interfaces and actual source-created controls.
+Configured-host parameters each have two independent roots with shared reference
+history; only exact Local reopen identities select heterogeneous child images.
+Current local observation/replay pass 311 executions, 346 records
+(342 original owners/four contracts) and 2,098 image correspondences with the
 same SDK archive. Native admission requires 232 foundations and
-105 scopes/1,276 observations, pending; public/private wire schemas are unchanged.
+105 scopes/1,294 observations, pending; public/private wire schemas are unchanged.
 
 ### Shared bounds
 

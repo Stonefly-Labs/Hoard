@@ -59,6 +59,15 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
             provider, "original-instance", ("owner", lifetime), ("store", lifetime), ("validator", lifetime),
             ("maintenance", lifetime), ("lifetime", lifetime), ("authority", authority), ("controls", controls));
 
+    internal static ConformanceOriginalObservation? ObserveOriginalSession(
+        ITestOutputHelper output, string testClass, string provider, ArtifactFixtureSession session, object owner,
+        ConformanceOriginalObservation? previous = null, [CallerMemberName] string method = "", string? parameter = null) =>
+        ConformanceOriginalObservationOutput.WriteIfRequested(output,
+            OriginalIdentity(testClass, method, provider, parameter, providerParameter: true),
+            provider, "original-instance", null, previous, ("owner", owner), ("store", session.Store),
+            ("validator", session.Validator), ("maintenance", session.Maintenance),
+            ("lifetime", (IArtifactStoreLifetime)session.Store), ("authority", session.Authority), ("controls", session.Controls));
+
     internal sealed class OriginalObservationSequence(
         ITestOutputHelper output, string testClass, [CallerMemberName] string method = "", string? parameter = null,
         bool providerParameter = true)

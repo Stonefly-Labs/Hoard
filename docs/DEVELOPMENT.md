@@ -8287,6 +8287,35 @@ Both documents independently recompute; free scratch is 91,716,349,952 bytes.
 This admits those budget/recovery sources, not later quarantine/rejection/
 lifecycle sources or qualifying profiles.
 
+Eighteen further original executions observe actual artifact/metadata session
+and configured-module owners. The test-only fixture's read-only controls retain
+the exact constructor objects, with no second instance, cleanup owner or SDK
+dependency. Successful configured-host parameters retain two independent real
+module/session roots after unchanged stop/readiness assertions; shared reference
+history does not invent a reopen edge. Heterogeneous child images apply only to
+the nine exact Local reopen identities. SQLite-bearing rows require actual
+SQLite environment admission.
+
+After the intended 293-versus-311 dispatch failure, the private probe corrects
+stale root dependency assets through real isolated local-feed locked fixture
+package preparation, and fixes a probe-only image-loop shadow. Fresh first/
+replay each pass 311 exact executions, 346 records (342 original owners/four
+contracts) and 2,098 image correspondences, including real owner-type hashes.
+The SDK archive is unchanged; both runs reproduce fixture archive
+`c123bb3df647329059657e39b540effc5dab6c640e41e5d5b9ee01e78a28c633`.
+Full tooling passes 340 checks (323 passed/seventeen macOS-native skips);
+changed-source formatting, frozen inventory, SDK catalog and patch checks pass.
+Bounded custom architecture review finds no confirmed blocker, with explicit
+current-file/no-diff-reconstruction and no-validation limits; final T081 and
+qualification remain open. Current native target is 232 foundations and
+105 scopes/1,294 observations, pending.
+
+Six inspected completed private dependency caches were reclaimed without
+discarding source, feed, runtime, proofs or receipts, or lowering the 24 GiB
+capacity guard. README and related model/contracts/guides are updated; common
+assertions, production APIs/providers, SDK signatures, locks, task/reviewer
+markers and production/deployment examples/diagrams are unaffected.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

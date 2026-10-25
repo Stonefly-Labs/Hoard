@@ -5269,6 +5269,47 @@ Both documents independently recompute; free scratch is 91,716,349,952 bytes.
 It admits budget/recovery sources, not later quarantine/rejection/lifecycle code
 or qualifying profiles.
 
+### Actual metadata-composed sessions and configured artifact modules
+
+Eighteen further original executions observe sixteen actual artifact/metadata
+compositions and both successful configured-host parameters. Owners are the
+actual `ArtifactMetadataFixtureSession` or `ArtifactFixtureModule`, with their
+existing artifact interfaces. A read-only test-fixture `Controls` property
+retains the exact controls passed to the existing store constructor; no second
+controls object, session, cleanup owner or HostAdapters SDK dependency is added.
+Each configured-host parameter records two independent genuine module/session
+roots after unchanged stop/readiness assertions. Shared reference history
+preserves aliases without an invented parent/reopen edge. Exact heterogeneous
+Local reopen image selection no longer accidentally applies to every multi-node
+artifact forest. SQLite-bearing integration rows require actual environment
+admission.
+
+Dispatch first fails 293 versus 311, then passes independent frozen selection.
+The private probe first exposes stale root dependency assets (`CS1061` on
+existing metadata settlement methods), fixed by actual isolated local-feed
+locked fixture-package preparation, not a source workaround. Its next failure
+is a probe-local image-loop variable shadow, corrected without production or
+assertion changes. Actual fresh first/replay each pass 311 exact discoveries/
+executions, 346 records (342 original owners/four contracts) and 2,098 image
+correspondences, including exact real owner-type hashes. SDK archive remains
+`032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`;
+both runs reproduce actual fixture archive
+`c123bb3df647329059657e39b540effc5dab6c640e41e5d5b9ee01e78a28c633`.
+These minimal-input diagnostics do not qualify profiles.
+
+Full tooling passes 340 checks (323 passed/seventeen macOS-native skips), and
+changed source formatting, frozen inventory, SDK catalog, backward native
+vectors and patch hygiene pass. Bounded custom architecture review finds no
+confirmed ownership/boundary/alias/control/cleanup/admission blocker; it inspects
+current source without reconstructing the Git delta or running validation and
+does not independently admit diagnostic results or complete T081. Native
+admission now requires 232 foundations and 105 scopes/1,294 observations, pending.
+Six inspected completed diagnostic dependency caches were reclaimed, retaining
+all source/feed/runtime/proof/receipt data and the unchanged 24 GiB guard.
+README and affected guides/model/contracts are updated. Production APIs/provider
+implementations, common assertion bodies, SDK signatures, locks, task/reviewer
+markers and production/deployment examples/diagrams are unaffected.
+
 ## Summary
 
 

@@ -26,7 +26,8 @@ import conformance_baselines as baselines
 import artifact_evidence as artifacts
 import conformance_evidence as evidence
 from conformance_case_catalog import (
-    CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_BINDINGS, ORIGINAL_ARTIFACT_WITNESSES, ORIGINAL_METADATA_FACADE_WITNESSES,
+    CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_BINDINGS, ORIGINAL_ARTIFACT_REOPENS, ORIGINAL_ARTIFACT_WITNESSES,
+    ORIGINAL_METADATA_FACADE_WITNESSES,
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
     catalog_admission_witnesses, category_cases, category_runtime_cases,
     original_witness_parents, original_witness_policy,
@@ -1917,10 +1918,13 @@ def original_observation_inputs(candidate, root):
                     selected["owner"] = package
                 if not metadata and ".Concurrent_close_waits_" in identity:
                     selected["authority"] = None
+                if not metadata and any(f".{fixture}." in identity for fixture in (
+                        "ArtifactMetadataIntegrationTests", "ArtifactCompositionTests")):
+                    selected["owner"] = host
                 result[provider][identity] = {
                     role: ((runtime / ((package_id or assembly) + ".dll")).relative_to(root).as_posix(), package_id)
                     for role, package_id in selected.items() if role in original_witness_policy(identity)[2]}
-                if not metadata and len(original_witness_parents(identity)) > 1:
+                if identity in ORIGINAL_ARTIFACT_REOPENS:
                     reopened = dict(result[provider][identity])
                     for role in ("owner", "controls"):
                         reopened[role] = ((runtime / (package + ".dll")).relative_to(root).as_posix(), package)
@@ -2005,6 +2009,7 @@ def test_attempt(run, inputs, candidate, scenario):
     sqlite_tests = (
         name in ("full-metadata-binding", "actual-authority-integration")
         or name.startswith("category-mutation-metadata-") or metadata_provider == "sqlite"
+        or any('metadataProvider: "sqlite"' in identity for identity in identities)
         or any(identity.startswith((SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX)) for identity in identities))
     source_tests = original_tests or all(
         identity.startswith("Hoard.Conformance.Tests.") for identity in identities) or binding_tests

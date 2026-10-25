@@ -991,7 +991,7 @@ the later forest increment or complete profiles.
 The following increment observes both genuinely configured metadata module
 owners, including rejected schema admission, and 38 more artifact parameters
 through their existing driver. Metadata now covers 63 operational identities
-per provider; artifacts cover 163 publication/deletion/reconciliation/read/race/
+per provider; artifacts cover 181 publication/deletion/reconciliation/read/race/
 failure/budget/recovery/quarantine/rejection/lifecycle witnesses, including exact
 fixed-binding facts and all frozen budget booleans. Nine actual Local fresh stores have
 exact per-node images: original driver owner in the test assembly, reopened
@@ -1003,11 +1003,17 @@ Rejected admission/capability roots observe the actual source-created provider
 stores and controls, not a driver facade. Decorated admission observes the exact
 authority passed into the store, not its unused underlying authority. Fixed
 facts retain their real parameter lists and independently frozen bindings.
+Actual metadata-composed sessions and configured modules now own their real
+artifact interfaces. Read-only test-fixture controls retain the exact objects
+passed to store construction, without an SDK dependency or a second controls
+object. Each successful configured-host parameter has two independent real
+module/session roots, not an invented parent edge; SQLite-bearing integration
+rows require actual SQLite environment admission.
 No additional stores, factories or cleanup owners are created.
-Local observation/replay pass 293 executions, 326 records
-(322 original owners/four contracts) and 1,958 image correspondences with the
+Local observation/replay pass 311 executions, 346 records
+(342 original owners/four contracts) and 2,098 image correspondences with the
 unchanged forest SDK archive. Native admission requires 232 foundations and
-105 scopes/1,276 observations, pending. Controllers, remaining artifact lifetimes
+105 scopes/1,294 observations, pending. Controllers, remaining artifact lifetimes
 and complete qualifying profiles are still unfinished.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
