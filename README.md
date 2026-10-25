@@ -2078,6 +2078,22 @@ immutable assembly/current inputs inside the joint attempt. Missing, reordered
 or relabeled compositions reject. Both explicit and legacy modes pass on both
 providers locally; the modeled target is 83/10/9/0, with native confirmation and
 full-profile qualification still pending.
+
+MP-47 additionally stages the already sealed pre-F-05 marker and its original
+runtime metadata with current Abstractions/Core/Hosting copies, without
+rebuilding or changing retained files. Exact legacy output has a closed
+projector, not raw-log retention. Its four-file graph independently binds
+baseline/current image hashes, complete runtime input snapshots and original
+owned execution. The unchanged marker runs against current platform assemblies
+locally; the modeled target is 85/8/9/0. Linux confirmation remains pending.
+
+Earlier exact `f038df0`,
+[run40216546349](https://github.com/Stonefly-Labs/Hoard/actions/runs/40216546349),
+now independently passes all three Linux jobs: 283 foundations without skips,
+13-lock/18-package replay and 128 scopes/1,819 witnesses. Qualification-input
+metadata remains seven scopes/135 witnesses/five parents with 80/13/9/0.
+This confirms MP-37 native-stall/output anchoring, not later ownership,
+consumer, frozen-binary or full-profile qualification.
 The corrected producer's native foundation run then exposed a second,
 test-only defect at the same assertion: the Linux-only barrier test lacked its
 `hashlib` import. That import is now explicit; the failed checkpoint is not admitted.

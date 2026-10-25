@@ -575,6 +575,80 @@ def native_metadata_package_consumer_control(run, inputs, *, started_ms, ended_m
         "sourceProofs": MappingProxyType(proof_data)})
 
 
+def native_metadata_binary_control(run, inputs, *, started_ms, ended_ms):
+    from conformance_baselines import BASELINES
+
+    if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    started_ms, ended_ms = evidence._number(started_ms), evidence._number(ended_ms)
+    if (inputs["profileId"] != "metadata" or inputs["mode"] != "qualification"
+            or inputs["runId"] != run.run_id or ended_ms < started_ms):
+        raise evidence.ConformanceError("InputChanged")
+    suffix = "tests/fixtures/metadata/RetainedMarker/bin/compatibility/net10.0/RetainedMarker.dll"
+    assembly_path, assembly = _metadata_control_assembly(run, inputs, "/" + suffix)
+    prefix = assembly_path.removesuffix("RetainedMarker.dll")
+    candidate_prefix = assembly_path.removesuffix(suffix)
+    baselines = [row for row in inputs["baselines"] if row["apiScope"] == "metadata-marker"]
+    revision = next(row[1] for row in BASELINES if row[0] == "metadata-marker")
+    if (len(baselines) != 1 or baselines[0]["revision"] != revision
+            or evidence.digest(baselines[0]["dependencySha256"]) != baselines[0]["binarySha256"]):
+        raise evidence.ConformanceError("InputChanged")
+    baseline = baselines[0]
+    old = "retained/bin/Release/net10.0/"
+    images = {prefix + path.removeprefix(old): hashed
+              for path, hashed in baseline["dependencySha256"].items() if path.startswith(old)}
+    platform = ("Hoard.Abstractions.dll", "Hoard.Core.dll", "Hoard.Hosting.dll")
+    required = ("RetainedMarker.dll", "RetainedMarker.deps.json", "RetainedMarker.runtimeconfig.json", *platform)
+    if not {prefix + name for name in required} <= images.keys() or len(images) > 15:
+        raise evidence.ConformanceError("ProofMismatch")
+    for name in platform:
+        current = candidate_prefix + "tests/fixtures/metadata/Consumer/bin/Release/net10.0/" + name
+        hashed = inputs["runtimeAssemblies"].get(current)
+        if hashed is None or hashlib.sha256(_readonly(run.root / current, 16 * 1024 * 1024)).hexdigest() != hashed:
+            raise evidence.ConformanceError("InputChanged")
+        images[prefix + name] = hashed
+    if {path: hashed for path, hashed in inputs["runtimeAssemblies"].items() if path.startswith(prefix)} != images:
+        raise evidence.ConformanceError("InputChanged")
+    for path, hashed in images.items():
+        if hashlib.sha256(_readonly(run.root / path, 16 * 1024 * 1024)).hexdigest() != hashed:
+            raise evidence.ConformanceError("InputChanged")
+    namespace = "qualification-metadata-frozen-binary"
+    inputs_path = f"proofs/{namespace}-native-inputs.json"
+    input_raw = _readonly(run.root / inputs_path, 16 * 1024 * 1024)
+    if input_raw != evidence.canonical_bytes(inputs):
+        raise evidence.ConformanceError("InputChanged")
+    graph_path = f"proofs/{namespace}-native-executions.json"
+    graph_raw = _readonly(run.root / graph_path, 64 * 1024)
+    graph = evidence.load_json(graph_raw)
+    if not isinstance(graph, dict) or type(graph.get("sequence")) is not int or graph["sequence"] <= 0:
+        raise evidence.ConformanceError("ProofMismatch")
+    sequence = graph["sequence"]
+    control_path = f"proofs/recovery-command-{sequence:04}.json"
+    native_path = f"proofs/execution-command-{sequence:04}.json"
+    control_raw = _readonly(run.root / control_path, 64 * 1024)
+    command = evidence.load_json(control_raw)
+    admit_owned_command(command, sequence, scope="recovery", detail=None, exit_code=0, max_duration=300000)
+    if not started_ms <= command["startedMs"] <= command["endedMs"] <= ended_ms:
+        raise evidence.ConformanceError("ProofMismatch")
+    native_raw = native_control_record(
+        run, sequence, control_raw, arguments=["dotnet", str(assembly)], cwd=assembly.parent,
+        input_files={**images, inputs_path: evidence.digest(inputs)})
+    expected = {
+        "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+        "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
+        "assemblyPath": assembly_path, "inputsPath": inputs_path, "sequence": sequence,
+        "baselineSha256": evidence.digest(baseline), "controllerSha256": hashlib.sha256(control_raw).hexdigest(),
+        "executionSha256": hashlib.sha256(native_raw).hexdigest()}
+    if graph_raw != evidence.canonical_bytes(expected) or _readonly(run.root / native_path, 64 * 1024) != native_raw:
+        raise evidence.ConformanceError("ProofMismatch")
+    proof_data = {graph_path: graph_raw, inputs_path: input_raw, control_path: control_raw, native_path: native_raw}
+    return MappingProxyType({
+        "controls": MappingProxyType({
+            "frozen-pre-F05-binary": tuple(hashlib.sha256(raw).hexdigest() for raw in proof_data.values())}),
+        "sourceProofs": MappingProxyType(proof_data)})
+
+
 class NativeCategorySources:
     def __init__(self, run, *, inspection_inputs, inspection_configurations):
         if type(run) is not OwnedRun:
@@ -609,7 +683,8 @@ class NativeCategorySources:
     def metadata_controls(self, inputs, *, started_ms, ended_ms):
         collected = {"controls": {}, "sourceProofs": {}}
         for authority in (native_metadata_recovery_controls, native_metadata_noncooperation_control,
-                          native_metadata_ownership_control, native_metadata_package_consumer_control):
+                          native_metadata_ownership_control, native_metadata_package_consumer_control,
+                          native_metadata_binary_control):
             observed = authority(self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
             for key, target in collected.items():
                 if set(target) & set(observed[key]):

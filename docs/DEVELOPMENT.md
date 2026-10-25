@@ -9257,6 +9257,41 @@ The SDK path now reuses it rather than allocating its create-new derived lock
 twice, and verifies runtime package bytes immediately after that existing
 build. All 134 focused SDK tooling checks pass; no lock overwrite is permitted.
 
+MP-47 now stages only copies of the already sealed pre-F-05 marker/runtime,
+replacing Abstractions/Core/Hosting with current package-consumer images.
+Retained binaries and recipes are never rebuilt or modified during candidate
+execution. The staged runtime joins immutable input capture before execution.
+A narrow recorded-recovery output mode recognizes only the exact original
+`metadata-marker-compatible` line, projecting a closed safe event without
+persisting raw output or changing the frozen binary. Other lines reject.
+Independent four-file authority checks the exact baseline revision/descriptor,
+original marker/runtime metadata, current platform image hashes, full native
+input map, argv/cwd and joint-attempt bounds. The frozen runtime witnesses stay
+mandatory; `binarySourcesSha256` comes only from imported proofs.
+
+All 399 tooling checks pass with 18 native skips. Missing projector/authority
+APIs fail before repair; marker/current-image substitutions reject. Staging
+preserves original bytes and replaces only the three platform images. A real
+unchanged marker built against revision
+`10ce78851b97b02bd83a8ef7da7ffdc2381d6519` also executes successfully against
+current platform assemblies on macOS, with all retained files unchanged.
+This is explicitly non-qualifying, not a Linux containment or temporal-baseline
+receipt. The modeled metadata target is 85/8/9/0 across unchanged seven scopes/
+135 witnesses/five parents; native/full-stage gates remain pending.
+
+Earlier exact `f038df04ee1d989b3cd81fe7d9247c0fb041016c`,
+[run40216546349](https://github.com/Stonefly-Labs/Hoard/actions/runs/40216546349),
+now independently passes all three Linux jobs: 283 foundations without
+failures/errors/skips, 13-lock/18-package replay and 128 scopes/1,819 witnesses.
+Qualification-input metadata has seven scopes/135 witnesses/five parents and
+80/13/9/0; input
+`b32cf27c4305cdacdda667f5724b3f307b1bb2999df6a1339dbb7ba014e189eb`,
+result `d9256476167ed952f9c3ce8774ac3b5cbf1a36417f11f68e5c9e01abea131211`,
+native graph `81f7f254e4a9dc40ce902ee179e8b86cc1e16f921daa43053fab1085f0db6810`.
+This admits MP-37 native-stall/output anchoring only, not later ownership,
+consumer, frozen-binary or full-profile qualification. The pending
+`1bcac02`/`b0715dc` runs were automatically superseded and provide no evidence.
+
 Earlier exact `2ac4ed66505c1035aab0c490510eeee44d475e32`,
 [run40215065690](https://github.com/Stonefly-Labs/Hoard/actions/runs/40215065690),
 now independently passes all three Linux jobs: 280 native foundations without

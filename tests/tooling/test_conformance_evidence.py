@@ -1738,6 +1738,80 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         sources.native_metadata_package_consumer_control(
                             run, self.inputs, started_ms=bounds[0], ended_ms=bounds[1])
 
+    def test_frozen_metadata_binary_requires_original_marker_current_platform_and_owned_execution(self):
+        import conformance_sources as sources
+        from types import SimpleNamespace
+
+        self.category_history(mode="qualification")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            runtime = "candidate/tests/fixtures/metadata/RetainedMarker/bin/compatibility/net10.0/"
+            current = "candidate/tests/fixtures/metadata/Consumer/bin/Release/net10.0/"
+            old = "retained/bin/Release/net10.0/"
+            files = {"RetainedMarker.dll": b"explicit-frozen-model-not-native",
+                     "RetainedMarker.deps.json": b"{}", "RetainedMarker.runtimeconfig.json": b"{}"}
+            binaries = {old + name: hashlib.sha256(raw).hexdigest() for name, raw in files.items()}
+            for name in ("Hoard.Abstractions.dll", "Hoard.Core.dll", "Hoard.Hosting.dll"):
+                binaries[old + name] = hashlib.sha256(b"old-" + name.encode()).hexdigest()
+                files[name] = b"current-" + name.encode()
+            self.inputs["baselines"] = [{
+                "revision": "10ce78851b97b02bd83a8ef7da7ffdc2381d6519", "sourceSha256": "a" * 64,
+                "lockSha256": "b" * 64, "recipeSha256": "c" * 64,
+                "binarySha256": evidence.digest(binaries), "dependencySha256": binaries, "apiScope": "metadata-marker"}]
+            self.inputs["runtimeAssemblies"] = {}
+            for name, raw in files.items():
+                for path in (runtime + name, *((current + name,) if name.startswith("Hoard.") else ())):
+                    target = root / path
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes(raw)
+                    target.chmod(0o400)
+                    self.inputs["runtimeAssemblies"][path] = hashlib.sha256(raw).hexdigest()
+            namespace = "qualification-metadata-frozen-binary"
+            inputs_path = f"proofs/{namespace}-native-inputs.json"
+            assembly = runtime + "RetainedMarker.dll"
+            control = {"schemaVersion": 1, "sequence": 1, "childPid": 200, "childStartSha256": "d" * 64,
+                       "startedMs": 1000, "endedMs": 1100, "exitCode": 0, "diagnosticCode": "None",
+                       "groupState": "Exited", "scope": "recovery"}
+            native = {
+                **control, "runId": self.inputs["runId"], "rootId": str(uuid.uuid4()),
+                "argvSha256": evidence.digest(["dotnet", str(root / assembly)]),
+                "cwdSha256": hashlib.sha256(str((root / assembly).parent).encode()).hexdigest(),
+                "controlRecordSha256": evidence.digest(control),
+                "inputFiles": {**{runtime + name: self.inputs["runtimeAssemblies"][runtime + name] for name in files},
+                               inputs_path: evidence.digest(self.inputs)}}
+            raw = evidence.canonical_bytes(native)
+            run = SimpleNamespace(root=root, run_id=self.inputs["runId"], root_id=native["rootId"],
+                                  live_children=lambda: (), read_execution_record=lambda _: raw)
+            graph = {
+                "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+                "invocationGroupId": self.inputs["invocationGroupId"], "inputsSha256": evidence.digest(self.inputs),
+                "assemblyPath": assembly, "inputsPath": inputs_path, "sequence": 1,
+                "baselineSha256": evidence.digest(self.inputs["baselines"][0]),
+                "controllerSha256": evidence.digest(control), "executionSha256": hashlib.sha256(raw).hexdigest()}
+            for path, value in (
+                    (inputs_path, evidence.canonical_bytes(self.inputs)),
+                    (f"proofs/{namespace}-native-executions.json", evidence.canonical_bytes(graph)),
+                    ("proofs/recovery-command-0001.json", evidence.canonical_bytes(control)),
+                    ("proofs/execution-command-0001.json", raw)):
+                target = root / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(value)
+                target.chmod(0o400)
+            with mock.patch.object(sources, "OwnedRun", type(run)):
+                admitted = sources.native_metadata_binary_control(run, self.inputs, started_ms=999, ended_ms=1101)
+                self.assertEqual(set(admitted["controls"]), {"frozen-pre-F05-binary"})
+                self.assertEqual(len(admitted["sourceProofs"]), 4)
+                for name in ("RetainedMarker.dll", "Hoard.Hosting.dll"):
+                    target = root / (runtime + name)
+                    target.chmod(0o600)
+                    target.write_bytes(b"substituted-image")
+                    target.chmod(0o400)
+                    with self.subTest(image=name), self.assertRaises(evidence.ConformanceError):
+                        sources.native_metadata_binary_control(run, self.inputs, started_ms=999, ended_ms=1101)
+                    target.chmod(0o600)
+                    target.write_bytes(files[name])
+                    target.chmod(0o400)
+
     def category_history(self, *, profile="metadata", mode="diagnostic", max_attempts=1, origin_inputs=None):
         self.inputs.update(mode=mode, profileId=profile, invocation=["profile", profile])
         self.inputs["budgets"]["profileSeconds"] = 5400 if profile == "metadata" else 10800

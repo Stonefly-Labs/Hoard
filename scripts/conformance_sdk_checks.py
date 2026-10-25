@@ -42,7 +42,8 @@ from conformance_sources import (
     METADATA_RECOVERY_SCENARIOS, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
     admit_sqlite_noncooperation,
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
-    native_control_record, native_metadata_ownership_control, native_metadata_package_consumer_control,
+    native_control_record, native_metadata_binary_control, native_metadata_ownership_control,
+    native_metadata_package_consumer_control,
     read_bounded, runtime_arguments, runtime_settings,
     source_witnesses as _source_witnesses,
 )
@@ -60,6 +61,7 @@ SQLITE = "tests/fixtures/metadata/Sqlite/Sqlite.csproj"
 SQLITE_BINDING = "tests/fixtures/conformance/Bindings/Sqlite/Sqlite.csproj"
 METADATA_RECOVERY = "tests/fixtures/metadata/CrashRunner"
 METADATA_PACKAGE_CONSUMER = "tests/fixtures/metadata/Consumer"
+METADATA_BINARY_RUNTIME = "tests/fixtures/metadata/RetainedMarker/bin/compatibility/net10.0"
 ARTIFACT_RECOVERY = "tests/fixtures/artifacts/CrashRunner"
 ARTIFACT_TRANSFER = "tests/fixtures/artifacts/TransferRunner"
 METADATA_TESTS = f"{CONTRACTS}/Hoard.Metadata.Tests"
@@ -990,10 +992,12 @@ def artifact_transfer_diagnostics(run, inputs, candidate, *, namespace="artifact
     return result
 
 
-def recovery_command(run, assembly, arguments, *, cache_id, value=None, execution_inputs=(), execution_outputs=()):
+def recovery_command(run, assembly, arguments, *, cache_id, value=None, execution_inputs=(), execution_outputs=(), kind="events"):
     sequence = run.command_sequence + 1
     native = type(run) is OwnedRun
     if execution_outputs and not native:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    if kind not in ("events", "metadata-marker") or kind != "events" and not native:
         raise evidence.ConformanceError("OwnershipInvalid")
     input_files = {path: evidence.file_sha256(run.root / path) for path in execution_inputs} if native else {}
     arguments = ["dotnet", str(assembly), *arguments]
@@ -1001,7 +1005,8 @@ def recovery_command(run, assembly, arguments, *, cache_id, value=None, executio
         arguments, cwd=assembly.parent, scope="recovery",
         env={"HOARD_CONFORMANCE_SAFE_EVENTS": "1"}, stop_at_barrier=value, cache_id=cache_id,
         **({"record_execution": True, "execution_inputs": execution_inputs} if native else {}),
-        **({"execution_outputs": execution_outputs} if execution_outputs else {}))
+        **({"execution_outputs": execution_outputs} if execution_outputs else {}),
+        **({"kind": kind} if kind != "events" else {}))
     if run.live_children():
         raise evidence.ConformanceError("CleanupIncomplete")
     if value is None:
@@ -1163,6 +1168,35 @@ def metadata_package_consumer_diagnostics(run, inputs, candidate):
         "assemblyPath": assembly_path, "inputsPath": inputs_path, "commands": commands}
     write_new(run.root / f"proofs/{namespace}-native-executions.json", evidence.canonical_bytes(graph))
     native_metadata_package_consumer_control(run, inputs, started_ms=0, ended_ms=time.monotonic() * 1000)
+    return evidence.digest(graph)
+
+
+def metadata_binary_diagnostics(run, inputs, candidate):
+    if type(run) is not OwnedRun or inputs.get("profileId") != "metadata" or inputs.get("mode") != "qualification":
+        raise evidence.ConformanceError("UnsupportedProfile")
+    namespace = "qualification-metadata-frozen-binary"
+    assembly = candidate / METADATA_BINARY_RUNTIME / "RetainedMarker.dll"
+    assembly_path = assembly.relative_to(run.root).as_posix()
+    if inputs.get("runtimeAssemblies", {}).get(assembly_path) != evidence.file_sha256(assembly):
+        raise evidence.ConformanceError("InputChanged")
+    baselines = [row for row in inputs["baselines"] if row["apiScope"] == "metadata-marker"]
+    if len(baselines) != 1:
+        raise evidence.ConformanceError("InputChanged")
+    inputs_path = f"proofs/{namespace}-native-inputs.json"
+    write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
+    prefix = assembly.parent.relative_to(run.root).as_posix() + "/"
+    images = tuple(sorted(path for path in inputs["runtimeAssemblies"] if path.startswith(prefix)))
+    controller_sha, command = recovery_command(
+        run, assembly, [], cache_id=namespace, kind="metadata-marker",
+        execution_inputs=(*images, inputs_path))
+    graph = {
+        "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+        "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
+        "assemblyPath": assembly_path, "inputsPath": inputs_path, "sequence": command["sequence"],
+        "baselineSha256": evidence.digest(baselines[0]), "controllerSha256": controller_sha,
+        "executionSha256": hashlib.sha256(run.read_execution_record(command["sequence"])).hexdigest()}
+    write_new(run.root / f"proofs/{namespace}-native-executions.json", evidence.canonical_bytes(graph))
+    native_metadata_binary_control(run, inputs, started_ms=0, ended_ms=time.monotonic() * 1000)
     return evidence.digest(graph)
 
 
@@ -2213,6 +2247,32 @@ def build_inspection_projects(run, candidate, config, feed):
     return tuple(receipts)
 
 
+def stage_metadata_binary_runtime(run, candidate, seal_sha):
+    sealed = baselines.verify_prepared_baselines(run.root, seal_sha)
+    baseline = next(row for row in sealed["entries"] if row["id"] == "metadata-marker")
+    prefix = "retained/bin/Release/net10.0/"
+    images = {path.removeprefix(prefix): hashed
+              for path, hashed in baseline["binaries"].items() if path.startswith(prefix)}
+    platform = ("Hoard.Abstractions.dll", "Hoard.Core.dll", "Hoard.Hosting.dll")
+    required = {"RetainedMarker.dll", "RetainedMarker.deps.json", "RetainedMarker.runtimeconfig.json", *platform}
+    if not required <= images.keys() or len(images) > 15:
+        raise evidence.ConformanceError("ProofMismatch")
+    destination = candidate / METADATA_BINARY_RUNTIME
+    no_symlinks(destination)
+    destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    destination.mkdir(mode=0o700)
+    for path, hashed in images.items():
+        source = (candidate / METADATA_PACKAGE_CONSUMER / "bin/Release/net10.0" / path
+                  if path in platform else run.root / "stores/metadata-marker" / prefix / path)
+        raw = read_bounded(source, 16 * 1024 * 1024)
+        if path not in platform and hashlib.sha256(raw).hexdigest() != hashed:
+            raise evidence.ConformanceError("InputChanged")
+        target = destination / path
+        target.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+        write_new(target, raw)
+    return destination
+
+
 def prepare_inspection_configurations(run, candidate, seal_sha):
     sealed = baselines.verify_prepared_baselines(run.root, seal_sha)
     relative = "src/Hoard.Abstractions/bin/Release/net10.0/Hoard.Abstractions.dll"
@@ -2446,6 +2506,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     runtime_folders.add(f"{ARCHITECTURE_TESTS}/bin/Release/net10.0")
     runtime_folders.add(f"{METADATA_RECOVERY}/bin/Release/net10.0")
     runtime_folders.add(f"{METADATA_PACKAGE_CONSUMER}/bin/Release/net10.0")
+    runtime_folders.add(METADATA_BINARY_RUNTIME)
     runtime_folders.add(f"{ARTIFACT_RECOVERY}/bin/Release/net10.0")
     runtime_folders.add(f"{ARTIFACT_TRANSFER}/bin/Release/net10.0")
     native_rid = {"x86_64": "linux-x64", "aarch64": "linux-arm64"}.get(observed_environment.get("architecture"))
@@ -2868,7 +2929,8 @@ def _category_record(run, inputs, history, scopes, code=None):
         for name, namespace in (("recoverySourcesSha256", "qualification-sqlite-recovery"),
                                 ("nativeSourcesSha256", "qualification-sqlite-native-noncooperation"),
                                 ("ownershipSourcesSha256", "qualification-sqlite-ownership"),
-                                ("consumerSourcesSha256", "qualification-metadata-package-consumer")):
+                                ("consumerSourcesSha256", "qualification-metadata-package-consumer"),
+                                ("binarySourcesSha256", "qualification-metadata-frozen-binary")):
             path = f"proofs/{namespace}-native-executions.json"
             if path not in history.proofs:
                 raise evidence.ConformanceError("ProofMismatch")
@@ -2914,6 +2976,7 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
             metadata_recovery_diagnostics(run, inputs, candidate, namespace="qualification-sqlite-recovery")
             metadata_ownership_diagnostics(run, inputs, candidate)
             metadata_package_consumer_diagnostics(run, inputs, candidate)
+            metadata_binary_diagnostics(run, inputs, candidate)
         except evidence.ConformanceError as error:
             print(json.dumps({
                 "qualification": False, "phase": "category-control-failure",
@@ -3653,6 +3716,7 @@ def execute(repository, destination):
         inspection_records = build_inspection_projects(run, candidate, config, feed)
         verify_runtime_packages(candidate / METADATA_PACKAGE_CONSUMER / "bin/Release/net10.0",
                                 feed, METADATA_RECOVERY_PACKAGES)
+        stage_metadata_binary_runtime(run, candidate, seal_sha)
         inspection_configurations = prepare_inspection_configurations(run, candidate, seal_sha)
         inspection_inputs = collect_inspection_inputs(run, inspection_configurations)
         if evidence.source_identity(repository, ci_revision=ci_revision) != identity:

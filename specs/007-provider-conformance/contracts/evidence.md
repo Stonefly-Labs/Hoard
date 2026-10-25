@@ -244,6 +244,17 @@ or relabelled compositions cannot supply `unchanged-package-consumer`.
 Original runtime witnesses remain required, and `consumerSourcesSha256` is
 taken only from imported bytes. No public entity schema changes.
 
+MP-47 retains a four-file graph/input/controller/native proof. The already
+sealed pre-F-05 marker and original runtime metadata must match the exact
+metadata-marker baseline descriptor; staged Abstractions/Core/Hosting images
+must match current captured package-consumer images. Complete staged runtime
+bytes are immutable pre/post native inputs. Exact argv/cwd, successful settled
+command and joint bounds are required. A closed exact-line projector preserves
+the original binary without raw output persistence. Missing/substituted images
+or original execution records reject. Existing runtime witnesses remain required;
+`binarySourcesSha256` references only imported proof bytes. Public schemas stay
+unchanged and macOS execution supplies no Linux/temporal-baseline receipt.
+
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private
 revision-2 execution proof adds a distinct `originalObservations` collection;

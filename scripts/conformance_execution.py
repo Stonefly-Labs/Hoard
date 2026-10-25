@@ -252,6 +252,15 @@ def project_event(line):
     return MappingProxyType(value)
 
 
+def project_metadata_marker_line(line):
+    if len(line) > SAFE_EVENT_BYTES:
+        raise ConformanceError("OutputLimitExceeded")
+    if line not in (b"metadata-marker-compatible", b"metadata-marker-compatible\n",
+                    b"metadata-marker-compatible\r", b"metadata-marker-compatible\r\n"):
+        raise ConformanceError("UnknownDiagnostic")
+    return MappingProxyType({"event": "test", "code": "None", "value": 1})
+
+
 def project_build_line(line):
     try:
         text = line.decode("utf-8", errors="strict").strip()
@@ -667,6 +676,8 @@ class OwnedRun:
         execution_inputs = tuple(relative_path(path) for path in execution_inputs)
         if len(set(execution_inputs)) != len(execution_inputs):
             raise ConformanceError("OwnershipInvalid")
+        if kind == "metadata-marker" and (not record_execution or scope != "recovery" or not execution_inputs):
+            raise ConformanceError("OwnershipInvalid")
         if (not isinstance(execution_outputs, (tuple, list)) or len(execution_inputs) + len(execution_outputs) > 16
                 or execution_outputs and (not record_execution or scope != "recovery")):
             raise ConformanceError("OwnershipInvalid")
@@ -749,7 +760,7 @@ class OwnedRun:
                 or self.live_children(deadline=deadline)
                 or not isinstance(args, (list, tuple)) or not args
                 or any(not isinstance(arg, str) or "\x00" in arg for arg in args)
-                or kind not in ("events", "build", "tests", "discovery")):
+                or kind not in ("events", "build", "tests", "discovery", "metadata-marker")):
             raise ConformanceError("OwnershipInvalid")
         if self.retained_bytes + SAFE_EVENT_BYTES > PROFILE_DIAGNOSTIC_BYTES:
             raise ConformanceError("OutputLimitExceeded")
@@ -827,7 +838,7 @@ class OwnedRun:
             try:
                 event = (project_discovery_line(line, discovery_tests) if kind == "discovery"
                          else {"build": project_build_line, "tests": project_test_line,
-                               "events": project_event}[kind](line))
+                               "events": project_event, "metadata-marker": project_metadata_marker_line}[kind](line))
             except ConformanceError as error:
                 if str(error) == "OutputLimitExceeded":
                     raise

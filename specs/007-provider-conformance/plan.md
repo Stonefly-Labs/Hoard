@@ -6348,6 +6348,33 @@ allocation: existing prepared inspection already builds that project. Its
 runtime is verified immediately afterwards and reused unchanged; create-new
 lock safety is not weakened. All 134 focused SDK tooling checks pass.
 
+MP-47 now stages copies of the already sealed pre-F-05 marker and original
+runtime metadata with current Abstractions/Core/Hosting images. Historical
+bytes/recipes are never rebuilt or changed during candidate execution.
+Captured inputs include the complete staged runtime. A narrow recorded-recovery
+projector accepts only the original marker's exact line without raw retention
+or changing frozen bytes. Four-file authority independently checks exact
+baseline/current image hashes, original native input/argv/cwd/record and joint
+bounds. Existing actual runtime witnesses remain mandatory; the summary requires
+imported `binarySourcesSha256`. Missing projector/authority APIs fail first and
+substituted marker/platform images reject.
+
+All 399 tooling checks pass with 18 native skips. Actual unchanged old marker
+execution against current platform assemblies succeeds on macOS while all
+retained files remain unchanged; this is non-qualifying and does not supply
+Linux confinement or baseline-before-candidate temporal evidence. The modeled
+target is 85/8/9/0 with seven scopes/135 witnesses/five parents unchanged.
+
+Earlier exact `f038df04ee1d989b3cd81fe7d9247c0fb041016c`,
+[run40216546349](https://github.com/Stonefly-Labs/Hoard/actions/runs/40216546349),
+now independently passes all three jobs: 283 native foundations without skips,
+13-lock/18-package replay and 128 scopes/1,819 witnesses. Qualification metadata
+has seven scopes/135 witnesses/five parents and 80/13/9/0; input/result
+`b32cf27c4305cdacdda667f5724b3f307b1bb2999df6a1339dbb7ba014e189eb` /
+`d9256476167ed952f9c3ce8774ac3b5cbf1a36417f11f68e5c9e01abea131211`.
+This admits MP-37/output anchoring only, not subsequent ownership/consumer/
+binary increments. Superseded pending runs provide no native evidence.
+
 Earlier exact `2ac4ed66505c1035aab0c490510eeee44d475e32`,
 [run40215065690](https://github.com/Stonefly-Labs/Hoard/actions/runs/40215065690),
 now independently passes three Linux jobs, 280 foundations without skips,

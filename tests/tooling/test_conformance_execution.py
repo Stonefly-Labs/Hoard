@@ -29,6 +29,36 @@ class ConformanceExecutionTests(unittest.TestCase):
     def workspace(self):
         return execution.OwnedRun.allocate(self.parent / "run", ROOT)
 
+    def test_frozen_metadata_marker_output_projects_only_its_exact_original_line(self):
+        for ending in (b"", b"\n", b"\r", b"\r\n"):
+            self.assertEqual(dict(execution.project_metadata_marker_line(b"metadata-marker-compatible" + ending)),
+                             {"event": "test", "code": "None", "value": 1})
+        for line in (b"", b" metadata-marker-compatible\n", b"metadata-marker-compatible secret-canary\n",
+                     b'{"event":"test","code":"None","value":1}\n', b"artifact-marker-compatible\n"):
+            with self.subTest(line=line), self.assertRaises(ConformanceError):
+                execution.project_metadata_marker_line(line)
+        run = self.workspace()
+        for options in ({}, {"record_execution": True}, {"record_execution": True, "execution_inputs": ("proofs/input",)}):
+            with self.subTest(options=options), self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                run.command([sys.executable], kind="metadata-marker", **options)
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Actual owned-process confinement requires Linux.")
+    def test_native_frozen_marker_output_has_an_original_owned_execution_record(self):
+        run = self.workspace()
+        script = run.root / "stores/marker.py"
+        script.write_text("print('metadata-marker-compatible')\n")
+        script.chmod(0o400)
+        observed = run.command(
+            [sys.executable, "-I", "-S", str(script)], kind="metadata-marker", scope="recovery",
+            record_execution=True, execution_inputs=("stores/marker.py",))
+        self.assertEqual(observed.exit_code, 0)
+        self.assertEqual(tuple(dict(row) for row in observed.events),
+                         ({"event": "test", "code": "None", "value": 1},))
+        original = run.read_execution_record(1)
+        self.assertEqual(hashlib.sha256(original).hexdigest(), observed.execution_record_sha256)
+        self.assertEqual(json.loads(original)["inputFiles"],
+                         {"stores/marker.py": hashlib.sha256(script.read_bytes()).hexdigest()})
+
     def test_foundation_failure_locations_exclude_raw_paths_exception_text_and_locals(self):
         import conformance_unit_checks as checks
 

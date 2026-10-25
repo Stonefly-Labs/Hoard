@@ -222,6 +222,19 @@ joins both native/controller pairs, immutable assembly/current-input maps,
 argv/cwd and ordered joint bounds. Missing/reordered/relabelled compositions
 reject; existing runtime witnesses and imported `consumerSourcesSha256` remain
 required. Local actual explicit/legacy execution is non-qualifying.
+MP-47 additionally executes a staged copy of the sealed pre-F-05 marker with
+current Abstractions/Core/Hosting images. Original marker/runtime metadata
+and all other retained files stay unchanged. Complete staged images enter
+current inputs before execution. The recorded-recovery projector accepts only
+the exact original marker line, with no raw retention or frozen-binary edit.
+Four-file authority checks original baseline/current platform hashes, complete
+native input map, argv/cwd, actual settled success and joint bounds.
+`binarySourcesSha256` must come from imported proofs; original runtime witnesses
+remain mandatory. Actual macOS execution is non-qualifying and native-pending.
+Earlier exact `f038df0`, run 40216546349, independently passes three Linux jobs,
+283 foundations without skips, 13-lock/18-package replay and 128 scopes/1,819
+witnesses, including seven-scope metadata at 80/13/9/0. This admits MP-37/output
+anchoring, not later ownership/consumer/binary changes or full qualification.
 Earlier exact `2ac4ed6`, run 40215065690, independently passes all three Linux
 jobs, 280 foundations without skips and 128 scopes/1,819 witnesses. Its seventh
 qualification-input metadata scope and post-timeout input checks pass, retaining

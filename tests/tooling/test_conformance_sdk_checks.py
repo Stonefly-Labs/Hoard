@@ -137,7 +137,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         self._assert_category_batch("artifacts", 227)
 
     def test_qualification_stall_and_recovery_are_fresh_inside_joint_attempt_before_scopes(self):
-        for failed in (None, "stall", "recovery", "ownership", "consumer"):
+        for failed in (None, "stall", "recovery", "ownership", "consumer", "binary"):
             root = self.directory / str(failed)
             (root / "proofs").mkdir(parents=True)
             run = SimpleNamespace(root=root)
@@ -175,17 +175,18 @@ class SdkDiagnosticTests(unittest.TestCase):
                         "recovery", "qualification-sqlite-recovery")), patch.object(
                     checks, "metadata_ownership_diagnostics", side_effect=controls("ownership", None)), patch.object(
                     checks, "metadata_package_consumer_diagnostics", side_effect=controls("consumer", None)), patch.object(
+                    checks, "metadata_binary_diagnostics", side_effect=controls("binary", None)), patch.object(
                     checks, "category_attempt", side_effect=scope), patch.object(
                     checks, "_category_record", return_value={"qualification": False}), contextlib.redirect_stdout(io.StringIO()):
                 options = {"inspection_cases": {}, "inspection_configurations": {}, "native_sources": sources}
                 if failed is None:
                     self.assertFalse(checks.category_diagnostics(run, inputs, candidate, **options)["qualification"])
-                    self.assertEqual(calls, ["begin", "stall", "recovery", "ownership", "consumer", "scope", "finish"])
+                    self.assertEqual(calls, ["begin", "stall", "recovery", "ownership", "consumer", "binary", "scope", "finish"])
                     history.interrupt_joint.assert_not_called()
                 else:
                     with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
                         checks.category_diagnostics(run, inputs, candidate, **options)
-                    expected = ["begin", "stall", "recovery", "ownership", "consumer"]
+                    expected = ["begin", "stall", "recovery", "ownership", "consumer", "binary"]
                     self.assertEqual(calls, expected[:expected.index(failed) + 1])
                     history.interrupt_joint.assert_called_once_with("ProofMismatch")
                     history.finish_joint.assert_not_called()
@@ -881,6 +882,31 @@ class SdkDiagnosticTests(unittest.TestCase):
             with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
                 checks.test_attempt(run, {**inputs, "configurationSha256": "d" * 64}, candidate, scenario, **options)
         launch.assert_not_called()
+
+    def test_frozen_metadata_runtime_keeps_marker_and_replaces_only_current_platform_images(self):
+        candidate = self.directory / "candidate"
+        prefix = "retained/bin/Release/net10.0/"
+        images = {
+            "RetainedMarker.dll": b"explicit-old-marker-model",
+            "RetainedMarker.deps.json": b"{}", "RetainedMarker.runtimeconfig.json": b"{}",
+            **{name: b"old-" + name.encode() for name in (
+                "Hoard.Abstractions.dll", "Hoard.Core.dll", "Hoard.Hosting.dll")}}
+        for name, raw in images.items():
+            target = self.directory / "stores/metadata-marker" / prefix / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(raw)
+            if name.startswith("Hoard."):
+                current = candidate / checks.METADATA_PACKAGE_CONSUMER / "bin/Release/net10.0" / name
+                current.parent.mkdir(parents=True, exist_ok=True)
+                current.write_bytes(b"current-" + name.encode())
+        sealed = {"entries": [{"id": "metadata-marker", "binaries": {
+            prefix + name: hashlib.sha256(raw).hexdigest() for name, raw in images.items()}}]}
+        with patch.object(checks.baselines, "verify_prepared_baselines", return_value=sealed):
+            runtime = checks.stage_metadata_binary_runtime(SimpleNamespace(root=self.directory), candidate, "a" * 64)
+        for name, raw in images.items():
+            self.assertEqual((runtime / name).read_bytes(), b"current-" + name.encode() if name.startswith("Hoard.") else raw)
+            self.assertEqual((runtime / name).stat().st_mode & 0o777, 0o400)
+            self.assertEqual((self.directory / "stores/metadata-marker" / prefix / name).read_bytes(), raw)
 
     def test_prepared_inspection_configuration_uses_the_sealed_family_image_and_rejects_changed_bytes(self):
         candidate = self.directory / "current"

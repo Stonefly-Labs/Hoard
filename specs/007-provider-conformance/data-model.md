@@ -459,6 +459,14 @@ maps and ordered joint bounds must agree. Missing/relabelled compositions
 remain incomplete. Existing runtime witnesses remain mandatory; no new UUID,
 public entity field or source-parent scope is introduced.
 
+MP-47 references a four-file graph/input/controller/native proof plus the
+captured metadata-marker baseline descriptor. The original sealed marker and
+runtime metadata remain unchanged; staged Abstractions/Core/Hosting images
+match current captured package-consumer hashes. Complete staged bytes are
+native input snapshots. Original execution, argv/cwd, settled success and joint
+bounds must agree. The exact-line projector retains only a closed safe event;
+existing actual runtime witnesses and public entities remain unchanged.
+
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits
 `Released`; expiration/cancellation/observation timeout does not. Retained
