@@ -5775,6 +5775,70 @@ or independent source/controller qualification. Actual profile/evaluator
 backends and T019/T020 remain incomplete; no markers, product/reference/lock
 bytes or deployment examples/diagrams change.
 
+### Exact category scope transport and actual inspection execution
+
+The real runtime adapter now accepts a catalog-selected category scope only
+when its complete identity, binding and primary-case map matches independently.
+Reduced/foreign/duplicate maps or incompatible runtime options reject before
+launch. Whole original method families, repeated neutral binding contexts,
+sixteen controller witnesses and category-specific inspection facts retain
+their genuine transport scopes.
+
+`category_attempt` uses the history's predeclared attempt UUID and an existing
+category input document whose exact bytes match the captured input hash.
+It does not relabel old harness inputs or rewrite completed source proofs.
+Existing diagnostics and category execution now share the same bounded
+discovery/runtime transport admission; exact raw manifests, owners, witnesses,
+completions and proofs are returned unchanged. Prepared category contexts
+contain only the independently selected one metadata/two artifact facts, while
+the complete three-fact inspected-input configuration still binds prelaunch
+and parent admission. The old standalone prepared scope remains all-three.
+Category source parents check exact binding/primary-case correspondences and
+current runtime/source packets; qualification gates remain closed.
+
+Actual local execution through the new dispatcher passes all six category
+inspection scopes/twelve source executions. Fresh metadata input:
+`5a8cbc65fa21c1db927cb6c5ce6c57e53606d1afe4e9803abbc1dafa6eb8e23e`;
+artifact input:
+`79f4a979180850696a26be62a513828c06e38fd36b9ff6e4bf776b8f49016be9`.
+The replay independently captures/rechecks packages, locks, runtime images,
+SDK/catalog/capability/source hashes and inspected bytes. A preceding private
+capture retained the old binding capability digest and is superseded rather
+than admitted. The corrected six-scope result is retained separately.
+Unexecuted original/controller scopes explicitly leave both histories
+incomplete. This is local diagnostic evidence without native containment,
+complete profile execution, whole-profile atomic import or qualification.
+
+Three added regressions first fail at missing runtime scope, category parent
+receipt and dispatcher APIs. They cover all twelve catalog scope mappings,
+incompatible/reduced bindings/cases, prepared discovery without capture, exact
+source joins, untouched input paths/hashes and predeclared attempt IDs.
+The existing controller receipt regression now also checks the exact catalog
+scope and foreign/missing bindings. All 123 SDK checks and all 374 tooling checks
+pass (357 passed/seventeen explicit macOS-native skips); frozen inventory,
+SDK catalog and patch checks pass.
+
+Native run
+[40183443219](https://github.com/Stonefly-Labs/Hoard/actions/runs/40183443219)
+at exact `d59c1d9b25d24963ffc5566973fc56430cd0d8ed` is independently admitted:
+all three jobs, 258 foundations without failures/errors/skips, 109 scopes and
+1,323 exact discoveries/executions. Thirteen prepared locks/eighteen packages
+and the independent locked replay pass. Scratch: 91,719,708,672 bytes.
+Typed input:
+`1606d6a58132fb9885944f63d225e21f11f6b8106f87d5bffa1f973c0b1d8ff8`;
+original input:
+`4f5d9a968b15483548f51c1080bd1940851131f92230f8844491a37b2e440227`;
+sixteen-source receipt:
+`f18c669925e15cee429d136f76c390431c383a3f2c671943d133598f71712ad3`;
+literal three-source receipt:
+`74932aa9326da1ad5032fad785bf1e9e443b99d011facea8b61beb1d975a6a76`;
+prepared three-source receipt:
+`e398c7a3418daf891ebafd48ab49ab9a831d560ab399995ea0558c081f65afc9`.
+This admits that prepared-inspection source snapshot only, not later parameter
+guards, joint history or category dispatcher sources. T019/T020, qualifying
+profiles and the source/controller gate remain unfinished. No task/checklist,
+product/reference/lock bytes or deployment examples/diagrams change.
+
 ## Summary
 
 

@@ -8642,6 +8642,51 @@ This is synthetic diagnostic model evidence, not execution of joint profiles
 or admission of independent inspection/controller qualification. No task,
 review, product/reference/lock or deployment/diagram claims change.
 
+The next increment connects actual runtime transport to the catalog-owned
+scope map. `category_attempt` requires an already-written matching category
+input document, exact predeclared attempt/binding/primary-case assignments and
+the complete independently selected scope. Discovery and execution share the
+same strict transport path as existing diagnostics; returned raw manifest,
+owner, completion, witness and proof bytes are preserved for history admission.
+Prepared category scopes select the one metadata or two artifact facts and
+their source context, but still verify the complete three-fact configuration
+fingerprint. Standalone prepared execution still requires all three facts.
+Inspection/controller parent joins additionally require the exact catalog
+binding and case scope; they remain diagnostic, not qualification authority.
+
+Actual local execution uses freshly captured metadata/artifact input documents
+and all six inspection scopes, totaling twelve actual source executions.
+Package, lock, runtime-image and inspected-file fingerprints reverify afterward.
+Both histories explicitly interrupt as incomplete because their other scopes
+have not executed; no old runtime/input documents are relabeled. The first
+private diagnostic capture omitted the recomputed binding capability digest;
+it is superseded, not admitted as the fresh-input replay. The corrected replay
+recaptures all fingerprints before execution and independently reverifies them.
+Three new regressions first fail at missing runtime-scope, category-source
+receipt and category-dispatch APIs. All 123 SDK checks and all 374 tooling checks
+pass (357 passed/seventeen explicit native macOS skips), with inventory/catalog
+and patch checks passing.
+
+Native [40183443219](https://github.com/Stonefly-Labs/Hoard/actions/runs/40183443219)
+at exact `d59c1d9b25d24963ffc5566973fc56430cd0d8ed` independently passes all
+three jobs, 258 foundations without failures/errors/skips and 109 scopes/1,323
+exact discoveries/executions. Preparation verifies thirteen locks, eighteen
+packages and its fresh locked replay; scratch is 91,719,708,672 bytes.
+The typed input is
+`1606d6a58132fb9885944f63d225e21f11f6b8106f87d5bffa1f973c0b1d8ff8`;
+original input:
+`4f5d9a968b15483548f51c1080bd1940851131f92230f8844491a37b2e440227`;
+sixteen-source receipt:
+`f18c669925e15cee429d136f76c390431c383a3f2c671943d133598f71712ad3`;
+literal receipt:
+`74932aa9326da1ad5032fad785bf1e9e443b99d011facea8b61beb1d975a6a76`;
+prepared receipt:
+`e398c7a3418daf891ebafd48ab49ab9a831d560ab399995ea0558c081f65afc9`.
+This admits the prepared-inspection native snapshot, not subsequent parameter
+guards, joint history or category dispatcher changes. Qualifying profiles,
+independent source/controller qualification and T019/T020 remain incomplete.
+Product/reference/lock bytes and deployment examples/diagrams are unaffected.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

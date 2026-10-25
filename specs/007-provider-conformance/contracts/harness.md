@@ -74,6 +74,23 @@ integration remains planned.
 
 ## Extraction and Unchanged Consumer Rules
 
+Actual category transport is restricted to independently selected whole scopes
+from the catalog: exact binding, identity and primary-case assignments must
+match before launch. The category dispatcher requires the predeclared attempt
+UUID and an already-written matching category input document. Raw runtime/
+owner/witness/completion/proof bytes are returned unchanged; prior harness
+evidence cannot be relabeled into a category. Discovery and runtime admission
+share the existing bounded transport path.
+
+Category prepared-inspection contexts contain the selected one metadata/two
+artifact facts while the complete three-fact configuration fingerprint remains
+bound. The standalone prepared scope still requires all three facts. Category
+inspection/controller parent joins require the exact catalog scope and binding;
+they are diagnostic and do not open qualification. Actual local execution
+covers all six category inspection scopes/twelve source executions; remaining
+scopes leave the histories explicitly incomplete, with no native containment or
+complete profile execution claim.
+
 The Memory binding package now supplies current/legacy factories, the same
 controlled clock/authority across logical reopen, all required typed controls
 and genuine settlement-ledger integration. Reopen atomically closes old

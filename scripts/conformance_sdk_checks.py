@@ -8,6 +8,7 @@ independent fresh cache then replays that unchanged graph in locked mode.
 
 import argparse
 import base64
+from collections.abc import Mapping
 import hashlib
 import io
 import json
@@ -33,7 +34,7 @@ from conformance_case_catalog import (
     ORIGINAL_ARTIFACT_REOPENS, ORIGINAL_ARTIFACT_SHARED_OWNER_WITNESSES, ORIGINAL_ARTIFACT_WITNESSES,
     ORIGINAL_METADATA_FACADE_WITNESSES,
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
-    catalog_admission_witnesses, category_cases, category_runtime_cases,
+    catalog_admission_witnesses, category_cases, category_execution_partitions, category_runtime_cases,
     original_witness_parents, original_witness_policy,
 )
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
@@ -1902,10 +1903,27 @@ def verify_inspection_inputs(run, inputs, selected):
         raise evidence.ConformanceError("InputChanged")
 
 
-def _original_inspection_proofs(run, inputs, manifest, ingested, selected, mode):
+def category_inspection_proofs(run, inputs, manifest, ingested, *, category_scope, selected):
+    tests = _category_manifest_tests(category_scope, manifest)
+    profile, scope_id = category_scope
+    if inputs["profileId"] != profile or not scope_id.startswith("inspection-"):
+        raise evidence.ConformanceError("WitnessMissing")
+    if scope_id.startswith("inspection-prepared-"):
+        verify_inspection_inputs(run, inputs, selected)
+        files = {identity: selected[identity] for identity in tests}
+    else:
+        files = {identity: {} for identity in tests}
+    return _original_inspection_proofs(
+        run, inputs, manifest, ingested, files, f"category-{profile}-{scope_id}",
+        bindings={identity: binding for identity, (binding, _) in tests.items()})
+
+
+def _original_inspection_proofs(run, inputs, manifest, ingested, selected, mode, *, bindings=None):
     identities = tuple(selected)
     witnesses = _source_witnesses(inputs, manifest, ingested, identities)
-    if inputs["mode"] != "diagnostic" or any(row["bindingId"] != "none" for row in witnesses.values()):
+    bindings = {identity: "none" for identity in identities} if bindings is None else bindings
+    if inputs["mode"] != "diagnostic" or any(
+            row["bindingId"] != bindings[identity] for identity, row in witnesses.items()):
         raise evidence.ConformanceError("ProofMismatch")
     capture = run.root / "stores" / ("original-inspection-" + manifest["attemptId"])
     no_symlinks(capture)
@@ -1946,9 +1964,19 @@ def _original_inspection_proofs(run, inputs, manifest, ingested, selected, mode)
     return {"sourceExecutions": len(observations), "inspectionProofsSha256": evidence.digest(receipt)}
 
 
-def original_artifact_external_proofs(run, inputs, manifest, ingested):
-    identities = original_artifact_external_scenarios()[0][1]
+def original_artifact_external_proofs(run, inputs, manifest, ingested, *, category_scope=None):
+    if category_scope is None:
+        identities = original_artifact_external_scenarios()[0][1]
+    else:
+        tests = _category_manifest_tests(category_scope, manifest)
+        if (tuple(category_scope) != ("artifacts", "controller") or inputs["profileId"] != "artifacts"
+                or inputs["mode"] != "diagnostic"):
+            raise evidence.ConformanceError("WitnessMissing")
+        identities = tuple(tests)
     witnesses = _source_witnesses(inputs, manifest, ingested, identities)
+    if category_scope is not None and any(
+            row["bindingId"] != tests[identity][0] for identity, row in witnesses.items()):
+        raise evidence.ConformanceError("ProofMismatch")
     capture = run.root / "stores" / ("original-artifact-" + manifest["attemptId"])
     no_symlinks(capture)
     if not capture.is_dir():
@@ -2522,6 +2550,55 @@ def validate_original_observations(ingested):
                 raise evidence.ConformanceError("WitnessMissing")
 
 
+def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtime_options, *,
+                               origin_inputs=None, original_inputs=None):
+    identities = tuple(expected)
+    discovery_manifest = {**manifest, "purpose": "discovery", "attemptId": str(uuid.uuid4())}
+    discovery_result, discovery_output, discovery_transport = runtime_command(
+        run, assembly, discovery_manifest, **runtime_options)
+    files = set()
+    for path in discovery_output.iterdir():
+        files.add(path.name)
+        if len(files) > 2:
+            raise evidence.ConformanceError("EvidenceIncomplete")
+    if files != {"completion.json", "discovered.jsonl"}:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    discovery_completion = read_bounded(discovery_output / "completion.json", 64 * 1024)
+    discovery = evidence.ingest_runtime_discovery(
+        inputs=inputs, expected_tests=expected,
+        discoveries_data=read_bounded(discovery_output / "discovered.jsonl", 1024 * 1024),
+        completion_data=discovery_completion, **discovery_transport)
+    if (discovery_result.exit_code or discovery["diagnosticCode"] != "None"
+            or tuple(dict(event) for event in discovery_result.events) != (
+                {"event": "control", "code": "None", "value": len(identities)},)
+            or {record["testIdentity"] for record in discovery["discoveries"]} != set(identities)):
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    result, output, transport = runtime_command(run, assembly, manifest, **runtime_options)
+    files = set()
+    for path in output.iterdir():
+        files.add(path.name)
+        if len(files) > len(identities) + 2:
+            raise evidence.ConformanceError("OutputLimitExceeded")
+    if not {"completion.json", "witnesses.jsonl"} <= files or len(files) > len(identities) + 2:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    proof_data = {filename: read_bounded(output / filename, 64 * 1024)
+                  for filename in files if filename.startswith("proof-") and filename.endswith(".json")}
+    if files != {"completion.json", "witnesses.jsonl", *proof_data}:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    data = {
+        **{key: transport[key] for key in ("manifest_data", "owner_data", "manifest_sha256", "owner_sha256")},
+        "witnesses_data": read_bounded(output / "witnesses.jsonl", 1024 * 1024),
+        "proofs": MappingProxyType(proof_data),
+        "completion_data": read_bounded(output / "completion.json", 64 * 1024),
+    }
+    ingested = evidence.ingest_runtime_attempt(
+        inputs=inputs, expected_tests=expected, **data,
+        started_ms=transport["started_ms"], ended_ms=transport["ended_ms"],
+        **({"origin_inputs": origin_inputs} if origin_inputs is not None else {}),
+        **({"original_inputs": original_inputs} if original_inputs is not None else {}))
+    return result, ingested, MappingProxyType(data), hashlib.sha256(discovery_completion).hexdigest()
+
+
 def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, inspection_configurations=None):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
     original_observations = name.startswith("observed-original-")
@@ -2697,7 +2774,6 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
             if sha256 is None:
                 raise evidence.ConformanceError("InputChanged")
             manifest["assemblies"].append({"id": f"binding-component-{index}", "path": path, "sha256": sha256})
-    discovery_manifest = {**manifest, "purpose": "discovery", "attemptId": str(uuid.uuid4())}
     runtime_options = {"metadata_provider": metadata_provider} if original_metadata else {}
     if inspection_literals:
         runtime_options["inspection_literals"] = True
@@ -2722,48 +2798,14 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
         if inputs["runtimeAssemblies"].get(runner.relative_to(run.root).as_posix()) != evidence.file_sha256(runner):
             raise evidence.ConformanceError("InputChanged")
         runtime_options["artifact_runner"] = runner
-    discovery_result, discovery_output, discovery_transport = runtime_command(
-        run, assembly, discovery_manifest, **runtime_options)
-    files = set()
-    for path in discovery_output.iterdir():
-        files.add(path.name)
-        if len(files) > 2:
-            raise evidence.ConformanceError("EvidenceIncomplete")
-    if files != {"completion.json", "discovered.jsonl"}:
-        raise evidence.ConformanceError("EvidenceIncomplete")
-    discovery = evidence.ingest_runtime_discovery(
-        inputs=inputs, expected_tests=expected,
-        discoveries_data=read_bounded(discovery_output / "discovered.jsonl", 1024 * 1024),
-        completion_data=read_bounded(discovery_output / "completion.json", 64 * 1024),
-        **discovery_transport)
-    if (discovery_result.exit_code or discovery["diagnosticCode"] != "None"
-            or tuple(dict(event) for event in discovery_result.events) != (
-                {"event": "control", "code": "None", "value": len(identities)},)
-            or {record["testIdentity"] for record in discovery["discoveries"]} != set(identities)):
-        raise evidence.ConformanceError("EvidenceIncomplete")
-    result, output, transport = runtime_command(run, assembly, manifest, **runtime_options)
-    files = set()
-    for path in output.iterdir():
-        files.add(path.name)
-        if len(files) > len(identities) + 2:
-            raise evidence.ConformanceError("OutputLimitExceeded")
-    if not {"completion.json", "witnesses.jsonl"} <= files or len(files) > len(identities) + 2:
-        raise evidence.ConformanceError("EvidenceIncomplete")
-    proof_data = {filename: read_bounded(output / filename, 64 * 1024)
-                  for filename in files if filename.startswith("proof-") and filename.endswith(".json")}
-    if files != {"completion.json", "witnesses.jsonl", *proof_data}:
-        raise evidence.ConformanceError("EvidenceIncomplete")
     if name == "origin-output":
         origin_inputs = {"origin-probe": {role: (assembly_path, None) for role in (
             "factory", "session", "store", "schema", "authority", "faults")}}
-    ingested = evidence.ingest_runtime_attempt(
-        inputs=inputs, expected_tests=expected,
-        witnesses_data=read_bounded(output / "witnesses.jsonl", 1024 * 1024), proofs=proof_data,
-        completion_data=read_bounded(output / "completion.json", 64 * 1024),
-        **({"origin_inputs": origin_inputs} if origin_inputs is not None else {}),
-        **({"original_inputs": original_inputs} if original_inputs is not None else {}), **transport)
+    result, ingested, transport, discovery_sha = _execute_runtime_transport(
+        run, inputs, assembly, manifest, expected, runtime_options,
+        origin_inputs=origin_inputs, original_inputs=original_inputs)
     validate_observation(ingested, result, identities, expected_code, expected_status, expected_exit,
-                         proof_data, failure_kind)
+                         transport["proofs"], failure_kind)
     if name == "origin-output" and (
             len(ingested["sessionOrigins"]) != 1
             or any(len(origins) != 1 for origins in ingested["sessionOrigins"].values())):
@@ -2776,8 +2818,8 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
     if original_observations:
         validate_original_observations(ingested)
     return {"code": expected_code, "tests": len(identities),
-            "discoverySha256": evidence.file_sha256(discovery_output / "completion.json"),
-            "completionSha256": evidence.file_sha256(output / "completion.json"),
+            "discoverySha256": discovery_sha,
+            "completionSha256": hashlib.sha256(transport["completion_data"]).hexdigest(),
             **(original_artifact_external_proofs(run, inputs, manifest, ingested)
                if name == "original-artifact-external" else {}),
             **(original_inspection_literal_proofs(run, inputs, manifest, ingested) if inspection_literals else {}),
@@ -2785,13 +2827,145 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
                if inspection_prepared else {})}
 
 
+def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path, attempt_sequence=1,
+                     inspection_cases=None, inspection_configurations=None):
+    profile = inputs["profileId"]
+    category_scope = profile, scope_id
+    tests = _category_scope_tests(category_scope)
+    if (inputs["mode"] != "diagnostic" or not isinstance(plan, Mapping)
+            or set(plan) != {"attemptId", "tests"} or plan["tests"] != tests
+            or type(attempt_sequence) is not int or not 1 <= attempt_sequence <= 3):
+        raise evidence.ConformanceError("WitnessMissing")
+    attempt_id = evidence._uuid(plan["attemptId"])
+    run_inputs_path = evidence.relative_path(run_inputs_path)
+    if hashlib.sha256(read_bounded(run.root / run_inputs_path, 16 * 1024 * 1024)).hexdigest() != evidence.digest(inputs):
+        raise evidence.ConformanceError("InputChanged")
+    if not {binding for binding, _ in tests.values()} <= {binding["bindingId"] for binding in inputs["bindings"]}:
+        raise evidence.ConformanceError("BindingInvalid")
+    inspection = scope_id.startswith("inspection-")
+    prepared = scope_id.startswith("inspection-prepared-")
+    original = scope_id.startswith("original")
+    options = {"category_scope": category_scope}
+    if prepared:
+        verify_inspection_inputs(run, inputs, inspection_cases)
+        if (not isinstance(inspection_configurations, Mapping)
+                or set(inspection_configurations) != {"metadata", "artifacts"}):
+            raise evidence.ConformanceError("WitnessMissing")
+        options.update(inspection_cases=inspection_cases, inspection_configurations=inspection_configurations)
+    elif inspection_cases is not None or inspection_configurations is not None:
+        raise evidence.ConformanceError("WitnessMissing")
+    if inspection:
+        folder, output, assembly_name = ARCHITECTURE_TESTS, "bin", "Hoard.Architecture.Tests.dll"
+        if not prepared:
+            options["inspection_literals"] = True
+    elif profile == "metadata":
+        folder, output, assembly_name = METADATA_TESTS, METADATA_TEST_OUTPUT, "Hoard.Metadata.Tests.dll"
+        options["metadata_provider"] = next(iter(tests.values()))[0]
+    else:
+        folder, output, assembly_name = ARTIFACT_TESTS, ARTIFACT_TEST_OUTPUT, "Hoard.Artifacts.Tests.dll"
+    assembly = candidate / folder / output / "Release/net10.0" / assembly_name
+    if profile == "metadata" and original and options["metadata_provider"] == "sqlite":
+        require_sqlite_environment(inputs, assembly, run.root)
+    assembly_path = assembly.relative_to(run.root).as_posix()
+    if assembly_path not in inputs["runtimeAssemblies"]:
+        raise evidence.ConformanceError("InputChanged")
+    package_id = "Hoard.Testing.Conformance"
+    package = next((item for item in inputs["packages"] if item["packageId"] == package_id), None)
+    if package is None:
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    manifest = {
+        "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "attemptId": attempt_id, "attemptSequence": attempt_sequence, "purpose": "execution",
+        "inputSha256": evidence.digest(inputs), "runInputsPath": run_inputs_path,
+        "assemblies": [{"id": "test-assembly", "path": assembly_path,
+                        "sha256": inputs["runtimeAssemblies"][assembly_path]}],
+        "packages": [{"id": package_id, "path": f"feed/candidate/{package_id}.0.1.0.nupkg",
+                      "sha256": package["sha256"]}],
+        "expected": [{
+            "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+            "assemblyId": "test-assembly", "packageId": package_id, "bindingId": binding,
+            "matrixId": "none", "assertionSymbol": None, "caseId": case_id,
+        } for identity, (binding, case_id) in tests.items()],
+    }
+    originals = None
+    if original:
+        options["original_observations"] = True
+        originals = original_observation_inputs(candidate, run.root)
+        paths = {path for identity, (binding, _) in tests.items()
+                 for node in evidence.original_node_assignments(identity, originals[binding][identity])
+                 for path, _ in node.values()}
+        for index, path in enumerate(sorted(paths - {assembly_path})):
+            hashed = inputs["runtimeAssemblies"].get(path)
+            if hashed is None:
+                raise evidence.ConformanceError("InputChanged")
+            manifest["assemblies"].append({"id": f"binding-component-{index}", "path": path, "sha256": hashed})
+    if scope_id == "controller":
+        runner = candidate / ARTIFACT_RECOVERY / "bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll"
+        if inputs["runtimeAssemblies"].get(runner.relative_to(run.root).as_posix()) != evidence.file_sha256(runner):
+            raise evidence.ConformanceError("InputChanged")
+        options["artifact_runner"] = runner
+    expected = {identity: (binding, "none") for identity, (binding, _) in tests.items()}
+    result, ingested, transport, discovery_sha = _execute_runtime_transport(
+        run, inputs, assembly, manifest, expected, options, original_inputs=originals)
+    validate_observation(ingested, result, tuple(tests), "None", "Passed", 0, transport["proofs"], "None")
+    if original:
+        validate_original_observations(ingested)
+    sources = {}
+    if inspection:
+        sources = category_inspection_proofs(
+            run, inputs, manifest, ingested, category_scope=category_scope, selected=inspection_cases)
+    elif scope_id == "controller":
+        sources = original_artifact_external_proofs(
+            run, inputs, manifest, ingested, category_scope=category_scope)
+    return MappingProxyType({
+        "transport": transport, "observation": ingested,
+        "summary": MappingProxyType({
+            "qualification": False, "code": "None", "tests": len(tests),
+            "discoverySha256": discovery_sha,
+            "completionSha256": hashlib.sha256(transport["completion_data"]).hexdigest(), **sources})})
+
+
+def _category_scope_tests(category_scope):
+    if not isinstance(category_scope, (tuple, list)) or len(category_scope) != 2:
+        raise evidence.ConformanceError("WitnessMissing")
+    profile, scope_id = category_scope
+    partitions = category_execution_partitions(profile)
+    if not isinstance(scope_id, str) or scope_id not in partitions:
+        raise evidence.ConformanceError("WitnessMissing")
+    return {identity: (binding, category_runtime_cases(profile, binding)[identity])
+            for binding, identity in partitions[scope_id]}
+
+
+def _category_manifest_tests(category_scope, manifest):
+    tests = _category_scope_tests(category_scope)
+    expected = manifest["expected"]
+    if (len(expected) != len(tests) or {entry["testIdentity"] for entry in expected} != tests.keys()
+            or any((entry["bindingId"], entry["caseId"]) != tests[entry["testIdentity"]]
+                   or entry["fullyQualifiedName"] != entry["testIdentity"].split("(")[0] for entry in expected)):
+        raise evidence.ConformanceError("WitnessMissing")
+    return tests
+
+
 def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact_runner=None,
                     artifact_packages=None, metadata_packages=None, original_observations=False, inspection_literals=False,
-                    inspection_cases=None, inspection_configurations=None):
+                    inspection_cases=None, inspection_configurations=None, category_scope=None):
     attempt_id = manifest["attemptId"]
     identities = tuple(entry["testIdentity"] for entry in manifest["expected"])
     if manifest["purpose"] not in ("discovery", "execution"):
         raise evidence.ConformanceError()
+    scope_tests = None
+    if category_scope is not None:
+        scope_tests = _category_manifest_tests(category_scope, manifest)
+        profile, scope_id = category_scope
+        if (artifact_packages is not None or metadata_packages is not None
+                or inspection_literals != scope_id.startswith("inspection-literals-")
+                or (inspection_cases is not None) != scope_id.startswith("inspection-prepared-")
+                or (inspection_configurations is not None) != scope_id.startswith("inspection-prepared-")
+                or original_observations != scope_id.startswith("original")
+                or (artifact_runner is not None) != (scope_id == "controller")
+                or metadata_provider != (next(iter(scope_tests.values()))[0]
+                                         if profile == "metadata" and original_observations else None)):
+            raise evidence.ConformanceError("WitnessMissing")
     discovery = manifest["purpose"] == "discovery"
     origin_environment = ""
     if inspection_literals or inspection_cases is not None or inspection_configurations is not None:
@@ -2799,11 +2973,12 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
         if inspection_literals:
             if inspection_cases is not None or inspection_configurations is not None:
                 raise evidence.ConformanceError("WitnessMissing")
-            expected = ORIGINAL_INSPECTION_LITERAL_WITNESSES
+            expected = tuple(sorted(scope_tests)) if scope_tests is not None else ORIGINAL_INSPECTION_LITERAL_WITNESSES
             selected = {identity: {} for identity in identities}
         else:
-            expected = original_inspection_prepared_scenarios()[0][1]
-            if (not isinstance(inspection_cases, (dict, MappingProxyType)) or set(inspection_cases) != set(expected)
+            prepared = original_inspection_prepared_scenarios()[0][1]
+            expected = tuple(sorted(scope_tests)) if scope_tests is not None else prepared
+            if (not isinstance(inspection_cases, (dict, MappingProxyType)) or set(inspection_cases) != set(prepared)
                     or not isinstance(inspection_configurations, (dict, MappingProxyType))
                     or set(inspection_configurations) != {"metadata", "artifacts"}):
                 raise evidence.ConformanceError("WitnessMissing")
@@ -2816,11 +2991,12 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
                 if not path.is_relative_to(run.root):
                     raise evidence.ConformanceError("OwnershipInvalid")
                 hashed = hashlib.sha256(read_bounded(path, 1024 * 1024)).hexdigest()
-                for identity in expected:
+                for identity in prepared:
                     if (".MetadataBoundaryTests." in identity) == (category == "metadata"):
                         if selected[identity].get(str(path)) != hashed:
                             raise evidence.ConformanceError("InputChanged")
                 variables[variable] = str(path)
+            selected = {identity: selected[identity] for identity in expected}
         if (tuple(sorted(identities)) != expected
                 or assembly.name != "Hoard.Architecture.Tests.dll" or metadata_provider is not None
                 or artifact_runner is not None or artifact_packages is not None or metadata_packages is not None
@@ -2885,7 +3061,7 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             f"<HOARD_METADATA_PROVIDER>{metadata_provider}</HOARD_METADATA_PROVIDER>"
             "</EnvironmentVariables>")
     if artifact_runner is not None:
-        allowed = set(original_artifact_external_scenarios()[0][1])
+        allowed = set(scope_tests) if scope_tests is not None else set(original_artifact_external_scenarios()[0][1])
         if (metadata_provider is not None or assembly.name != "Hoard.Artifacts.Tests.dll"
                 or set(identities) != allowed):
             raise evidence.ConformanceError("WitnessMissing")

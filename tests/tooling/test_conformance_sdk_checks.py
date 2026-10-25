@@ -35,6 +35,221 @@ class SdkDiagnosticTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.directory)
 
+    def test_category_runtime_scopes_preserve_exact_catalog_binding_and_case_assignments(self):
+        from conformance_case_catalog import category_execution_partitions, category_runtime_cases
+        (self.directory / "stores").mkdir()
+        (self.directory / "runtime-owner.json").write_bytes(b"{}")
+        runner = self.directory / "Hoard.Fixtures.Artifacts.CrashRunner.dll"
+        runner.write_bytes(b"runner")
+        (self.directory / "proofs/artifact-transfers").mkdir(parents=True)
+        configurations = {family: self.directory / (family + ".json") for family in ("metadata", "artifacts")}
+        for path in configurations.values():
+            path.write_bytes(b"{}")
+        selected = {
+            identity: {str(configurations[family]): checks.evidence.file_sha256(configurations[family])}
+            for identity, family in checks.ORIGINAL_INSPECTION_WITNESSES.items()
+            if identity not in checks.ORIGINAL_INSPECTION_LITERAL_WITNESSES}
+        launches = []
+        run = SimpleNamespace(root=self.directory, command=lambda arguments, **kwargs: launches.append(arguments))
+        for profile in ("metadata", "artifacts"):
+            for scope_id, pairs in category_execution_partitions(profile).items():
+                inspection = scope_id.startswith("inspection-")
+                assembly = self.directory / ("Hoard.Architecture.Tests.dll" if inspection else
+                                              "Hoard.Metadata.Tests.dll" if profile == "metadata" else
+                                              "Hoard.Artifacts.Tests.dll")
+                options = {"category_scope": (profile, scope_id)}
+                if scope_id.startswith("inspection-literals-"):
+                    options["inspection_literals"] = True
+                elif scope_id.startswith("inspection-prepared-"):
+                    options.update(inspection_cases=selected, inspection_configurations=configurations)
+                elif scope_id == "controller":
+                    options["artifact_runner"] = runner
+                else:
+                    options["original_observations"] = True
+                    if profile == "metadata":
+                        options["metadata_provider"] = pairs[0][0]
+                expected = [{
+                    "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+                    "bindingId": binding, "caseId": category_runtime_cases(profile, binding)[identity],
+                } for binding, identity in pairs]
+                manifest = {
+                    "runId": str(uuid.uuid4()), "attemptId": str(uuid.uuid4()), "purpose": "execution",
+                    "inputSha256": "a" * 64, "expected": expected}
+                with self.subTest(profile=profile, scope=scope_id):
+                    checks.runtime_command(run, assembly, manifest, **options)
+                    if inspection:
+                        context = self.directory / "stores" / ("inspection-context-" + manifest["attemptId"] + ".json")
+                        observed = json.loads(context.read_bytes())["cases"]
+                        self.assertEqual(set(observed), {identity for _, identity in pairs})
+                        self.assertEqual(observed, {identity: selected[identity] if "prepared" in scope_id else {}
+                                                    for _, identity in pairs})
+                        discovery = {**manifest, "attemptId": str(uuid.uuid4()), "purpose": "discovery"}
+                        checks.runtime_command(run, assembly, discovery, **options)
+                        self.assertFalse((self.directory / "stores" / (
+                            "inspection-context-" + discovery["attemptId"] + ".json")).exists())
+                    count = len(launches)
+                    for changed in (
+                        expected[:-1],
+                        [{**expected[0], "bindingId": "foreign"}, *expected[1:]],
+                        [{**expected[0], "caseId": "foreign"}, *expected[1:]],
+                        [*expected, expected[0]],
+                    ):
+                        with self.assertRaises(checks.evidence.ConformanceError):
+                            checks.runtime_command(
+                                run, assembly, {**manifest, "attemptId": str(uuid.uuid4()), "expected": changed}, **options)
+                    with self.assertRaises(checks.evidence.ConformanceError):
+                        checks.runtime_command(
+                            run, assembly, {**manifest, "attemptId": str(uuid.uuid4())},
+                            **{**options, "category_scope": (profile, "foreign")})
+                    self.assertEqual(len(launches), count)
+        self.assertEqual(len(launches), 18)
+
+    def test_category_inspection_receipts_join_only_the_exact_catalog_binding_scope(self):
+        from conformance_case_catalog import category_execution_partitions, category_runtime_cases
+        for name in ("stores", "proofs", "feed/candidate"):
+            (self.directory / name).mkdir(parents=True, exist_ok=True)
+        (self.directory / "stores/candidate.NuGet.Config").write_bytes(
+            checks.evidence.synthetic_nuget_configuration(self.directory / "feed/candidate"))
+        selected = {identity: {str(self.directory / "input.xml"): "a" * 64}
+                    for identity in checks.original_inspection_prepared_scenarios()[0][1]}
+        for profile in ("metadata", "artifacts"):
+            for scope_id, pairs in category_execution_partitions(profile).items():
+                if not scope_id.startswith("inspection-"):
+                    continue
+                inputs = {
+                    "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+                    "mode": "diagnostic", "profileId": profile,
+                    "configurationSha256": checks.evidence.configuration_fingerprint(
+                        checks.evidence.verify_synthetic_source_mapping(
+                            self.directory, "stores/candidate.NuGet.Config", "feed/candidate"),
+                        inspection_inputs=selected)}
+                manifest = {
+                    "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+                    "inputSha256": checks.evidence.digest(inputs), "attemptId": str(uuid.uuid4()),
+                    "expected": [{
+                        "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+                        "bindingId": binding, "caseId": category_runtime_cases(profile, binding)[identity],
+                    } for binding, identity in pairs]}
+                witnesses = [{
+                    "testIdentity": identity, "executionId": str(uuid.uuid4()), "proofSha256": str(index + 1) * 64,
+                    "status": "Passed", "bindingId": binding} for index, (binding, identity) in enumerate(pairs)]
+                ingested = {
+                    "diagnosticCode": "None", "attemptId": manifest["attemptId"], "witnesses": witnesses,
+                    "proofs": {f'proof-{row["executionId"]}.json': row["proofSha256"] for row in witnesses}}
+                capture = self.directory / "stores" / ("original-inspection-" + manifest["attemptId"])
+                capture.mkdir()
+                for _, identity in pairs:
+                    files = selected[identity] if "prepared" in scope_id else {}
+                    (capture / ("inspection-" + hashlib.sha256(identity.encode()).hexdigest() + ".json")).write_bytes(
+                        checks.evidence.canonical_bytes({
+                            "schemaVersion": 1, "qualification": False, "runId": inputs["runId"],
+                            "attemptId": manifest["attemptId"], "inputsSha256": checks.evidence.digest(inputs),
+                            "testIdentity": identity,
+                            "files": {hashlib.sha256(path.encode()).hexdigest(): hashed for path, hashed in files.items()}}))
+                options = {"category_scope": (profile, scope_id), "selected": selected}
+                run = SimpleNamespace(root=self.directory)
+                receipt = self.directory / f'proofs/category-{profile}-{scope_id}-{manifest["attemptId"]}.json'
+                with self.subTest(profile=profile, scope=scope_id):
+                    changed = {**ingested, "witnesses": [
+                        {**witnesses[0], "bindingId": "foreign"}, *witnesses[1:]]}
+                    with self.assertRaises(checks.evidence.ConformanceError):
+                        checks.category_inspection_proofs(run, inputs, manifest, changed, **options)
+                    self.assertFalse(receipt.exists())
+                    with self.assertRaises(checks.evidence.ConformanceError):
+                        checks.category_inspection_proofs(
+                            run, {**inputs, "profileId": "harness"}, manifest, ingested, **options)
+                    self.assertFalse(receipt.exists())
+                    if "prepared" in scope_id:
+                        with self.assertRaises(checks.evidence.ConformanceError):
+                            checks.category_inspection_proofs(
+                                run, {**inputs, "configurationSha256": "f" * 64}, manifest, ingested, **options)
+                        self.assertFalse(receipt.exists())
+                    result = checks.category_inspection_proofs(run, inputs, manifest, ingested, **options)
+                    self.assertEqual(result["sourceExecutions"], len(pairs))
+                    self.assertEqual(result["inspectionProofsSha256"], checks.evidence.file_sha256(receipt))
+                    self.assertFalse(json.loads(receipt.read_bytes())["qualification"])
+                    receipt.unlink()
+                    changed_manifest = {**manifest, "expected": [
+                        {**manifest["expected"][0], "caseId": "foreign"}, *manifest["expected"][1:]]}
+                    with self.assertRaises(checks.evidence.ConformanceError):
+                        checks.category_inspection_proofs(run, inputs, changed_manifest, ingested, **options)
+                    self.assertFalse(receipt.exists())
+
+    def test_category_attempt_uses_the_predeclared_scope_without_relabelling_runtime_inputs(self):
+        from conformance_case_catalog import category_execution_partitions, category_runtime_cases
+        candidate = self.directory / "current"
+        runner = candidate / checks.ARTIFACT_RECOVERY / "bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll"
+        runner.parent.mkdir(parents=True)
+        runner.write_bytes(b"runner")
+        for name in ("stores", "proofs", "feed/candidate"):
+            (self.directory / name).mkdir(parents=True, exist_ok=True)
+        (self.directory / "stores/candidate.NuGet.Config").write_bytes(
+            checks.evidence.synthetic_nuget_configuration(self.directory / "feed/candidate"))
+        selected = {identity: {str(self.directory / "input.xml"): "a" * 64}
+                    for identity in checks.original_inspection_prepared_scenarios()[0][1]}
+        configurations = {category: self.directory / (category + ".json") for category in ("metadata", "artifacts")}
+        originals = checks.original_observation_inputs(candidate, self.directory)
+        assemblies = {runner.relative_to(self.directory).as_posix(): checks.evidence.file_sha256(runner)}
+        for binding in originals.values():
+            for identity, assignments in binding.items():
+                for node in checks.evidence.original_node_assignments(identity, assignments):
+                    assemblies.update({path: "b" * 64 for path, _ in node.values()})
+        for profile in ("metadata", "artifacts"):
+            for scope_id, pairs in category_execution_partitions(profile).items():
+                inspection = scope_id.startswith("inspection-")
+                folder, output, name = (
+                    (checks.ARCHITECTURE_TESTS, "bin", "Hoard.Architecture.Tests.dll") if inspection else
+                    (checks.METADATA_TESTS, checks.METADATA_TEST_OUTPUT, "Hoard.Metadata.Tests.dll") if profile == "metadata"
+                    else (checks.ARTIFACT_TESTS, checks.ARTIFACT_TEST_OUTPUT, "Hoard.Artifacts.Tests.dll"))
+                assembly = candidate / folder / output / "Release/net10.0" / name
+                assemblies[assembly.relative_to(self.directory).as_posix()] = "b" * 64
+                inputs = {
+                    "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+                    "profileId": profile, "mode": "diagnostic",
+                    "runtimeAssemblies": assemblies,
+                    "bindings": [{"bindingId": binding} for binding in ("sqlite", "memory", "local", "object")],
+                    "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "c" * 64}],
+                    "configurationSha256": checks.evidence.configuration_fingerprint(
+                        checks.evidence.verify_synthetic_source_mapping(
+                            self.directory, "stores/candidate.NuGet.Config", "feed/candidate"),
+                        inspection_inputs=selected)}
+                path = "proofs/category-inputs.json"
+                (self.directory / path).write_bytes(checks.evidence.canonical_bytes(inputs))
+                plan = {
+                    "attemptId": str(uuid.uuid4()),
+                    "tests": {identity: (binding, category_runtime_cases(profile, binding)[identity])
+                              for binding, identity in pairs}}
+                options = {"run_inputs_path": path}
+                if "prepared" in scope_id:
+                    options.update(inspection_cases=selected, inspection_configurations=configurations)
+                with self.subTest(profile=profile, scope=scope_id), patch.object(
+                        checks, "_execute_runtime_transport",
+                        side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch, patch.object(
+                            checks, "require_sqlite_environment"):
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                        checks.category_attempt(run=SimpleNamespace(root=self.directory), inputs=inputs,
+                                                candidate=candidate, scope_id=scope_id, plan=plan, **options)
+                    launch.assert_called_once()
+                    self.assertEqual(launch.call_args.args[2], assembly)
+                    manifest = launch.call_args.args[3]
+                    self.assertEqual(manifest["attemptId"], plan["attemptId"])
+                    self.assertEqual(manifest["inputSha256"], checks.evidence.digest(inputs))
+                    self.assertEqual(manifest["runInputsPath"], path)
+                    self.assertEqual({item["testIdentity"]: (item["bindingId"], item["caseId"])
+                                      for item in manifest["expected"]}, plan["tests"])
+                    self.assertEqual(launch.call_args.args[5]["category_scope"], (profile, scope_id))
+                    launch.reset_mock()
+                    changed = {**plan, "tests": {**plan["tests"], "Foreign.Check": ("foreign", "MP-01")}}
+                    with self.assertRaises(checks.evidence.ConformanceError):
+                        checks.category_attempt(run=SimpleNamespace(root=self.directory), inputs=inputs,
+                                                candidate=candidate, scope_id=scope_id, plan=changed, **options)
+                    launch.assert_not_called()
+                    (self.directory / path).write_bytes(b"{}")
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                        checks.category_attempt(run=SimpleNamespace(root=self.directory), inputs=inputs,
+                                                candidate=candidate, scope_id=scope_id, plan=plan, **options)
+                    launch.assert_not_called()
+
     def test_original_literal_inspections_select_the_actual_architecture_assembly_before_launch(self):
         factory = getattr(checks, "original_inspection_literal_scenarios", None)
         self.assertTrue(callable(factory), "Literal inspection witnesses need their own real architecture execution scope.")
@@ -842,6 +1057,36 @@ class SdkDiagnosticTests(unittest.TestCase):
                     with self.assertRaises(checks.evidence.ConformanceError):
                         checks.original_artifact_external_proofs(
                             SimpleNamespace(root=self.directory), inputs, manifest, observed | {"witnesses": changed})
+            from conformance_case_catalog import category_execution_partitions, category_runtime_cases
+            pairs = category_execution_partitions("artifacts")["controller"]
+            category_inputs = {**inputs, "profileId": "artifacts", "mode": "diagnostic"}
+            category_attempt = str(uuid.uuid4())
+            shutil.copytree(capture, capture.parent / ("original-artifact-" + category_attempt))
+            transfer_receipt_path.write_bytes(checks.evidence.canonical_bytes({
+                **transfer_receipt, "inputsSha256": checks.evidence.digest(category_inputs)}))
+            category_manifest = {
+                **manifest, "attemptId": category_attempt, "inputSha256": checks.evidence.digest(category_inputs),
+                "expected": [{"testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+                              "bindingId": binding, "caseId": category_runtime_cases("artifacts", binding)[identity]}
+                             for binding, identity in pairs]}
+            by_identity = {row["testIdentity"]: row for row in witnesses}
+            category_witnesses = [{**by_identity[identity], "bindingId": binding} for binding, identity in pairs]
+            category_observed = {**observed, "attemptId": category_attempt, "witnesses": category_witnesses}
+            options = {"category_scope": ("artifacts", "controller")}
+            category_receipt = self.directory / f"proofs/original-artifact-external-{category_attempt}.json"
+            for changed in (
+                [{**category_witnesses[0], "bindingId": "foreign"}, *category_witnesses[1:]],
+                category_witnesses[:-1],
+            ):
+                with self.assertRaises(checks.evidence.ConformanceError):
+                    checks.original_artifact_external_proofs(
+                        SimpleNamespace(root=self.directory), category_inputs, category_manifest,
+                        {**category_observed, "witnesses": changed}, **options)
+                self.assertFalse(category_receipt.exists())
+            result = checks.original_artifact_external_proofs(
+                SimpleNamespace(root=self.directory), category_inputs, category_manifest, category_observed, **options)
+            self.assertEqual(result["sourceExecutions"], 16)
+            self.assertEqual(result["externalProofsSha256"], checks.evidence.file_sha256(category_receipt))
 
     def test_transfer_measurement_admits_only_exact_parent_memory_and_settlement_proof(self):
         self.assertTrue(callable(getattr(checks, "admit_transfer_measurement", None)),

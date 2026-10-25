@@ -1893,8 +1893,12 @@ Actual local execution and a fresh locked build replay pass all three facts;
 the replay uses the production dispatcher/parent and matches 367 metadata,
 336 artifact consumer-body and 376 full artifact input files. These are
 non-qualifying local observations, not native containment or complete historical
-compatibility/profile acceptance. Exact-head native admission and qualifying
-category integration remain unfinished.
+compatibility/profile acceptance. Native run
+[40183443219](https://github.com/Stonefly-Labs/Hoard/actions/runs/40183443219)
+at exact `d59c1d9` subsequently passes all three jobs, 258 foundation checks
+without skips and 109 scopes/1,323 exact discoveries/executions, including
+separate literal/prepared three-source receipts. This admits that diagnostic
+snapshot, not subsequent changes or qualifying categories.
 Extraction transport guards also exercise every applicable frozen parameter
 family, including families with one selected row, against complete, missing
 and changed/foreign discovery controls for both options. These remain transport
@@ -1904,6 +1908,16 @@ so mixed-provider parameter families need not be split or rewritten after
 execution. Whole-profile import is atomic and attributes shared identities to
 their actual binding. This is a synthetic history-model capability; its actual
 profile runner and source/controller qualification remain unfinished.
+The real transport now also accepts only those exact catalog scopes and frozen
+binding/primary-case assignments. A category dispatcher uses the predeclared
+attempt UUID and already-written category input document without relabeling
+earlier proofs. Prepared scopes execute only their catalog-selected facts while
+binding the complete inspected-input fingerprint; existing standalone scopes
+still require all three prepared facts. Actual local execution passes all six
+category inspection scopes (twelve source executions), with independently
+recaptured package/lock/runtime/file fingerprints and binding-specific parent
+receipts. Unexecuted category scopes remain explicitly incomplete; this is not
+native containment, whole-profile execution or source/controller qualification.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce
