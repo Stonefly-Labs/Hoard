@@ -246,9 +246,24 @@ the same joint attempt. Original UUIDs/proof hashes remain unchanged; report
 admission recomputes exact unions and frozen exclusions. Only these fixed QC
 keys allow cross-binding links, not arbitrary `none` dimensions. Missing
 controls remain incomplete, failed attempts survive and exceeding 128 proofs
-on retry rejects without truncation. The modeled target is 90/3/9/0 across
-unchanged eight scopes/137 witnesses/seven parents, not a native or qualifying
-receipt; QC-02/04/05 remain incomplete.
+on retry rejects without truncation. Exact ee1/run40224149195 now confirms
+90/3/9/0 across eight scopes/137 witnesses/six parents; both inventory facts
+share one joint native parent. All three Linux jobs, 298 foundations without
+skips and 129 aggregate scopes/1,821 witnesses pass. This admits inventory and
+QC-06/07/08, not a qualifying complete profile; QC-02/04/05 remain incomplete.
+
+Artifact native diagnostic controllers additionally request exact source
+read-site capture for six crash, six retained-work and four transfer facts.
+Closed <=1 MiB contexts, <=16 KiB source files and a five-second hook budget
+bound capture. Exact owned paths/bytes and no symlink ancestors are required;
+create-new hash-only packets cannot overwrite earlier evidence. Parent
+diagnostics reselect current source bytes and require all sixteen original
+runtime UUID/proof joins and immutable retained packets/consumption receipt.
+Twelve native input snapshots include context, actual runner and current
+transfer evidence. Discovery and legacy invocations request no capture.
+These packets do not replace original native output/control seals; independent
+artifact controller qualification remains closed and its 92/7/4/0 diagnostic
+state is unchanged.
 Exactb1/run40220115471 independently passes all three Linux jobs, 291 native
 foundations without skips, 13-lock/18-package replay and 128 scopes/1,819
 witnesses. Qualification metadata has seven scopes/135 witnesses/five parents

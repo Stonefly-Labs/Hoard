@@ -17,7 +17,8 @@ public sealed class ArtifactTransferProofTests
             ?? throw new InvalidOperationException("Current artifact run attribution is required.");
         var path = Path.Combine(root, $"transfer-{provider}-{size}", "proof.json");
         Assert.InRange(new FileInfo(path).Length, 1, 16384);
-        var proof = Assert.IsType<JsonObject>(JsonNode.Parse(File.ReadAllText(path)));
+        var sourceBytes = File.ReadAllBytes(path);
+        var proof = Assert.IsType<JsonObject>(JsonNode.Parse(sourceBytes));
         Verify(proof);
         foreach (var (field, value) in new (string, JsonNode?)[]
         {
@@ -38,6 +39,9 @@ public sealed class ArtifactTransferProofTests
             changed[field] = value;
             Assert.ThrowsAny<Xunit.Sdk.XunitException>(() => Verify(changed));
         }
+        ArtifactSourceCapture.PublishIfRequested(FormattableString.Invariant(
+            $"{typeof(ArtifactTransferProofTests).FullName}.{nameof(Measured_transfer_binds_actual_bytes_pacing_hashes_and_os_peak)}(provider: \"{provider}\", size: {size})"),
+            (path, sourceBytes));
 
         void Verify(JsonObject value)
         {

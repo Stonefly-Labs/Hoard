@@ -4049,6 +4049,61 @@ class SdkDiagnosticTests(unittest.TestCase):
                         with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
                             admit(candidate, self.directory)
 
+    def test_native_artifact_capture_context_is_bound_to_category_inputs_but_not_legacy_or_discovery(self):
+        from test_conformance_evidence import ConformanceAdmissionTests
+        inputs = {**ConformanceAdmissionTests().inputs(), "profileId": "artifacts", "mode": "diagnostic"}
+        (self.directory / "stores").mkdir()
+        (self.directory / "proofs/category-artifact-transfers").mkdir(parents=True)
+        (self.directory / "proofs/artifact-transfers").mkdir()
+        (self.directory / "runtime-owner.json").write_bytes(b"{}")
+        (self.directory / "proofs/category-inputs.json").write_bytes(checks.evidence.canonical_bytes(inputs))
+        runner = self.directory / "Hoard.Fixtures.Artifacts.CrashRunner.dll"
+        runner.write_bytes(b"runner-unit-double")
+        assembly = self.directory / "Hoard.Artifacts.Tests.dll"
+        tests = checks._category_scope_tests(("artifacts", "controller"))
+        manifest = {
+            "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+            "attemptId": str(uuid.uuid4()), "purpose": "execution", "inputSha256": checks.evidence.digest(inputs),
+            "runInputsPath": "proofs/category-inputs.json", "expected": [{
+                "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+                "bindingId": binding, "caseId": case} for identity, (binding, case) in tests.items()]}
+        run = object.__new__(checks.OwnedRun)
+        run.root, run.run_id, run.root_id = self.directory, inputs["runId"], uuid.uuid4().hex
+        launches = []
+        run.command = lambda arguments, **options: launches.append(options) or SimpleNamespace(exit_code=0)
+        for kind in ("category", "discovery", "legacy"):
+            selected = {**manifest, "attemptId": str(uuid.uuid4()),
+                        "purpose": "discovery" if kind == "discovery" else "execution"}
+            if kind == "legacy":
+                selected["expected"] = [{
+                    "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+                    "bindingId": "none", "caseId": "original-artifact-external"}
+                    for identity in checks.original_artifact_external_scenarios()[0][1]]
+            with self.subTest(kind=kind), patch.object(checks, "category_command_proof"):
+                checks.runtime_command(run, assembly, selected, artifact_runner=runner, **(
+                    {} if kind == "legacy" else {"category_scope": ("artifacts", "controller")}))
+                settings = ET.fromstring((self.directory / f'stores/settings-{selected["attemptId"]}.runsettings').read_bytes())
+                context_path = settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_ARTIFACT_SOURCE_CONTEXT")
+                if kind == "category":
+                    context = checks.evidence.load_json(Path(context_path).read_bytes())
+                    self.assertEqual(context["rootId"], run.root_id)
+                    self.assertEqual(context["inputsSha256"], checks.evidence.digest(inputs))
+                    self.assertEqual(set(context["cases"]), set(tests))
+                    self.assertEqual(context["outputDirectory"], str(
+                        self.directory / f'stores/artifact-source-capture-{selected["attemptId"]}'))
+                    expected = {
+                        f'runtime-input-{selected["attemptId"]}.json', "runtime-owner.json",
+                        "proofs/category-inputs.json", f'stores/settings-{selected["attemptId"]}.runsettings',
+                        "Hoard.Artifacts.Tests.dll", f'stores/artifact-source-context-{selected["attemptId"]}.json',
+                        runner.name, "proofs/category-artifact-transfers.json",
+                        *(f"proofs/category-artifact-transfers/transfer-{provider}-{size}/proof.json"
+                          for provider in ("local", "object") for size in (268435456, 4294967296))}
+                    self.assertEqual(set(launches[-1]["execution_inputs"]), expected)
+                    self.assertTrue(launches[-1]["record_execution"])
+                else:
+                    self.assertIsNone(context_path)
+                    self.assertFalse((self.directory / f'stores/artifact-source-context-{selected["attemptId"]}.json').exists())
+
     def test_external_artifact_settings_bind_the_actual_runner_current_run_and_parent_transfer_proofs(self):
         (self.directory / "stores").mkdir()
         (self.directory / "proofs/artifact-transfers").mkdir(parents=True)

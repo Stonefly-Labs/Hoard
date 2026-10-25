@@ -44,8 +44,7 @@ public sealed class ArtifactNonCooperativeChildTests
             var capture = System.IO.Path.GetFullPath(Environment.GetEnvironmentVariable("HOARD_ARTIFACT_CRASH_PROOFS")
                 ?? throw new InvalidOperationException("Artifact child proof directory is required."));
             Directory.CreateDirectory(capture);
-            File.WriteAllText(System.IO.Path.Combine(capture, $"noncooperative-{provider}-{scenario}.json"),
-                JsonSerializer.Serialize(new
+            var sourceBytes = JsonSerializer.SerializeToUtf8Bytes(new
                 {
                     qualification = false,
                     durableCrashProof = false,
@@ -56,7 +55,12 @@ public sealed class ArtifactNonCooperativeChildTests
                     killedPid = child.Id,
                     killedExitCode = child.ExitCode,
                     observations = proofs
-                }));
+                });
+            var sourcePath = System.IO.Path.Combine(capture, $"noncooperative-{provider}-{scenario}.json");
+            File.WriteAllBytes(sourcePath, sourceBytes);
+            ArtifactSourceCapture.PublishIfRequested(
+                $"{typeof(ArtifactNonCooperativeChildTests).FullName}.{nameof(Owned_child_retains_noncooperative_work_until_parent_termination)}(provider: \"{provider}\", scenario: \"{scenario}\")",
+                (sourcePath, sourceBytes));
         }
         finally
         {

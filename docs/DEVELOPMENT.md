@@ -9314,8 +9314,9 @@ mode never promotes a QC. Missing controls stay incomplete; assertion failures
 remain failed, and histories preserve failed attempts. A retry exceeding the
 existing 128-proof collection bound fails explicitly as `OutputLimitExceeded`;
 neither earlier failures nor evidence are truncated. The new modeled target is
-90/3/9/0, with the same eight scopes/137 witnesses/seven parents. QC-02/04/05,
-native admission and full profile/stage completion remain pending.
+90/3/9/0 across eight scopes/137 witnesses. The initial modeled seven-parent
+expectation is superseded by the actual six-parent native receipt below.
+QC-02/04/05 and full profile/stage completion remain pending.
 
 `python3 -m unittest discover -s tests/tooling -q` passes 406 checks with 18
 explicit native skips. New state/report tests first fail on missing QC
@@ -9325,6 +9326,60 @@ witnesses, missing cases, changed timing and unauthorized exclusions. Their
 native-import seam is explicitly modeled, not actual native execution.
 Frozen inventory/SDK catalog checks and `git diff --check` pass; no C# source,
 package references or locks change in this increment.
+
+The exact corrective quality checkpoint `ee1e7358a71d39294d911f369c49e4db40dc5ea9`,
+[run40224149195](https://github.com/Stonefly-Labs/Hoard/actions/runs/40224149195),
+independently passes all three Linux jobs, 298 native foundations with zero
+failures/errors/skips, 13-lock/18-package fresh replay and 129 aggregate scopes/
+1,821 exact witnesses. Qualification-input metadata has eight scopes, 137
+witnesses and six source parents at 90 Passed/3 Incomplete/9 NotApplicable/
+0 Failed. Both inventory facts execute in one joint scope with distinct actual
+UUIDs and one shared parent; the initial observer's seven-parent expectation
+was a model error, not a failed CI job. Correcting that exact expectation leaves
+all other strict admission checks intact. Inputs
+`50523a4bf570d1bd8f685f45838051b98f30897138b3b29e7a7e3af1ec5e78c0`,
+results `87ba280b1bec3891f2b1a55abde3af23c446967e82e61a9d10afa7da9551c57b`,
+parents `70e497c26b681d714341741dae271572cbaff5c190e28d9e10c826a01fdaa9be`.
+All six independent recovery/native/ownership/consumer/binary/inventory graph
+digests are distinct. This admits MP-48 and QC-06/07/08, not a complete profile.
+Earlier exact `a19d2a99ff2fb07f0c8e399fac8eb31188e1fff2`,
+[run40222425942](https://github.com/Stonefly-Labs/Hoard/actions/runs/40222425942),
+passes 294 foundations and lock replay but fails the SDK's qualification joint
+plan with `KeyError` for the QC-only `none` binding. Safe traceback attribution
+confirms the catalog selector already repaired in `ee1`; no inventory admission
+comes from that failed run. The separate older MP-19 cause remains unknown.
+
+Artifact source read-site capture is now requested only by the actual native
+artifact diagnostic controller, never legacy harness or discovery execution.
+Its fixed context selects all sixteen original crash/retention/transfer facts
+and their one-to-three exact source files. Original assertions remain unchanged.
+The optional test-only `HOARD_ARTIFACT_SOURCE_CONTEXT` hook validates a closed
+<=1 MiB context, exact owned absolute paths and identities, no symlink ancestors,
+<=16 KiB actual source files and a five-second hook budget. It checks the bytes
+actually asserted/serialized against the corresponding file and emits one
+create-new hash-only packet per fact. Missing/malformed requested context fails,
+while absent context preserves legacy behavior. Parent diagnostics reselect
+current bytes, require exactly sixteen matching packets, bind original runtime
+UUIDs/proofs, retain immutable hash-only copies and recheck their consumption
+receipt. Twelve immutable native inputs include the original context, actual
+crash runner, current transfer summary and four transfer proofs. The source
+authority still rejects artifact controller qualification: sealed native
+outputs, original transfer controls and independent full source admission remain
+unbuilt. Diagnostic 92/7/4/0 is unchanged; no borrowed old run qualifies it.
+
+Current validation: all 408 tooling checks pass with 18 explicit native skips;
+all 131 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
+and whitespace checks pass. The original artifact package-acceptance project
+compiles with freshly rebuilt SDK, metadata/artifact providers and adapters
+against a private prepared lock; no tracked locks change. Initial compile
+attempts correctly reject stale retained fixture archives; rebuilding the
+matching graph resolves them, without changing APIs. Removing only this task's
+temporary duplicate restore caches restores the existing 24 GiB scratch gate;
+the gate is not reduced or mocked. New source-capture tests first fail on the
+absent API before implementation. These local checks do not execute fresh large
+transfers, establish native artifact admission or finish the implementation stage.
+Provider/contributor/deployment guides, examples and diagrams are unaffected:
+there is no new supported command, provider API, package dependency or deployment.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

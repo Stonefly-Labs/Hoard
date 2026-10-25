@@ -24,6 +24,7 @@ public sealed class ArtifactCrashTests
             ?? throw new InvalidOperationException("Artifact crash proof directory is required."));
         Directory.CreateDirectory(capture);
         string? barrierProof = null;
+        byte[] capturedState = [];
         var killedExit = 0;
         var killedPid = 0;
         using (var child = Start("crash"))
@@ -43,11 +44,14 @@ public sealed class ArtifactCrashTests
                 Assert.Equal(barrier, observed.GetProperty("barrier").GetString());
                 Assert.Equal(run, observed.GetProperty("runId").GetString());
                 Assert.InRange(new FileInfo(state).Length, 1, 16384);
-                Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(state))),
+                capturedState = File.ReadAllBytes(state);
+                Assert.Equal(Convert.ToHexStringLower(SHA256.HashData(capturedState)),
                     observed.GetProperty("stateSha256").GetString());
                 Assert.Equal(barrier == "B3", observed.GetProperty("acknowledged").GetBoolean());
                 barrierProof = line;
-                File.Copy(state, System.IO.Path.Combine(capture, barrier + "-state.json"), overwrite: false);
+                using (var snapshot = new FileStream(System.IO.Path.Combine(capture, barrier + "-state.json"),
+                    FileMode.CreateNew, FileAccess.Write))
+                { snapshot.Write(capturedState); }
                 killedPid = child.Id;
                 child.Kill();
                 await child.WaitForExitAsync().WaitAsync(TimeSpan.FromSeconds(10));
@@ -83,7 +87,7 @@ public sealed class ArtifactCrashTests
             foreach (var check in new[] { "controlReadback", "controlReceipt", "exactReceipt", "contentReadback" })
             { Assert.True(proof.GetProperty(check).GetBoolean()); }
             if (barrier is "B0" or "B1" or "D0" or "D1") { Assert.True(proof.GetProperty("ownerFenced").GetBoolean()); }
-            File.WriteAllText(System.IO.Path.Combine(capture, barrier + ".json"), JsonSerializer.Serialize(new
+            var sourceBytes = JsonSerializer.SerializeToUtf8Bytes(new
             {
                 provider = "local",
                 qualification = false,
@@ -97,7 +101,13 @@ public sealed class ArtifactCrashTests
                 reopenedExitCode = reopened.ExitCode,
                 barrierProof = JsonSerializer.Deserialize<JsonElement>(barrierProof!),
                 recovery = proof.Clone()
-            }));
+            });
+            var sourcePath = System.IO.Path.Combine(capture, barrier + ".json");
+            File.WriteAllBytes(sourcePath, sourceBytes);
+            ArtifactSourceCapture.PublishIfRequested(
+                $"{typeof(ArtifactCrashTests).FullName}.{nameof(Real_parent_kill_and_fresh_process_reopen_preserve_exact_receipts_and_control_bytes)}(barrier: \"{barrier}\")",
+                (sourcePath, sourceBytes), (System.IO.Path.Combine(capture, barrier + "-state.json"), capturedState),
+                (System.IO.Path.Combine(capture, barrier + "-recovery-errors.txt"), []));
         }
         finally
         {

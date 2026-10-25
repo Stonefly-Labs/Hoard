@@ -6390,8 +6390,9 @@ dimensions; no generic `none`-binding bypass is introduced. Diagnostic mode does
 not promote them, missing controls remain incomplete, assertion failures remain
 failed and retries retain failure history. A retry exceeding the unchanged
 128-proof collection limit rejects `OutputLimitExceeded`, never truncates.
-The new modeled target is 90/3/9/0 with unchanged eight scopes/137 witnesses/
-seven parents. QC-02/04/05 and native/full-profile confirmation remain pending.
+The new modeled target is 90/3/9/0 across eight scopes/137 witnesses.
+QC-02/04/05 and full-profile confirmation remain pending. The actual native
+six-parent receipt below supersedes the initial modeled seven-parent count.
 
 The new state/report regressions first fail on missing QC composition after
 exposing the real `none` lookup defect. They cover same-attempt union/proof
@@ -6401,6 +6402,51 @@ and unsupported QC keys. The import seam is explicitly modeled; it is not
 native execution or independent final qualification. All 406 tooling checks
 pass with 18 explicit native skips, frozen inventory/SDK catalog checks and
 `git diff --check` pass. No C# sources, package references or locks change.
+
+Exact `ee1e7358a71d39294d911f369c49e4db40dc5ea9`,
+[run40224149195](https://github.com/Stonefly-Labs/Hoard/actions/runs/40224149195),
+now independently passes all three Linux jobs: 298 native foundations without
+failures/errors/skips, 13-lock/18-package fresh replay and 129 aggregate scopes/
+1,821 witnesses. Qualification-input metadata has eight scopes/137 witnesses/
+six parents at 90/3/9/0. The two inventory source facts have distinct actual
+UUIDs under one shared joint native parent, not two parents as initially modeled.
+The strict observer is corrected to six; no other admission condition is relaxed.
+Inputs `50523a4bf570d1bd8f685f45838051b98f30897138b3b29e7a7e3af1ec5e78c0`;
+results `87ba280b1bec3891f2b1a55abde3af23c446967e82e61a9d10afa7da9551c57b`;
+parents `70e497c26b681d714341741dae271572cbaff5c190e28d9e10c826a01fdaa9be`.
+Independent source graphs:
+- recovery: `710778aa181148e123eeed9b67226db4b6ed8cb121c655196705b31781ec864a`;
+- native: `b413c17cc098c0db0d4c851b16e08ead545a8322a93efbbbc045eadc3212c8b8`;
+- ownership: `101082613c0b1164416ebeec365fbd29e6769404db3509834b66ac05d6f481f4`;
+- consumer: `9e2a173d6b4d2aeac5a73634b0fd8fed73df9f1700cbc882eb811f5e70c146c6`;
+- binary: `4edb9870be8bd83d08cea9c062f1a34ad7e8e3709331b14fc0f3d69c1ceab776`;
+- inventory: `7eb07a5b19d948662cfd1ec467b70208287735f1fb85b40fd56aa1ff9664bce1`.
+This admits MP-48 and QC-06/07/08, not QC-02/04/05 or full qualification.
+Exact `a19d2a99ff2fb07f0c8e399fac8eb31188e1fff2`/run40222425942 failed
+the SDK joint plan with the safely traced catalog `none`-binding `KeyError`
+already fixed in `ee1`, despite 294 foundations and lock replay succeeding.
+That failed run grants no inventory admission; it is not the older MP-19 failure.
+
+The next artifact increment adds actual byte capture at the original sixteen
+crash/retained-work/transfer assertion sites. Only the native diagnostic category
+controller requests its fixed context; discovery and legacy paths remain
+unchanged. The helper bounds contexts/source bytes/time, rejects foreign and
+symlinked paths, checks exact selected bytes and creates hash-only packets
+without overwrite. Parent diagnostics require exact packets/current bytes and
+join the original actual runtime UUIDs/proofs, retaining immutable copies and a
+checked consumption receipt. Twelve original native input snapshots include
+context, runner and current transfer evidence. This is diagnostic provenance
+preparation, not original executor-sealed output/control authority. Artifact
+qualification stays closed and all seven artifact QCs remain incomplete.
+All 408 tooling checks pass with 18 native skips, all 131 source SDK checks
+pass, scoped formatting/frozen inventory/SDK catalog/whitespace checks pass.
+The complete original artifact package-acceptance project compiles against
+freshly rebuilt SDK/provider/adapter fixtures and a private prepared lock.
+Stale retained fixture compile failures are resolved by rebuilding dependencies,
+not weakening source assertions. Task-created duplicate caches are removed to
+preserve the unchanged 24 GiB gate. Actual native artifact capture, fresh
+transfers and independent native source/control admission remain pending.
+T019/T020 and all later task markers remain unchecked; no stage is finished.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

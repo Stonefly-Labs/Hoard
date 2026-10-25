@@ -283,6 +283,20 @@ The unchanged 128-proof collection bound still applies across retries; overflow
 is explicit `OutputLimitExceeded`, never truncated evidence. QC-02/04/05,
 independent final evaluation and full profile qualification remain unfinished.
 
+Artifact diagnostic source capture is a separate hash-only provenance channel.
+Only the actual native category controller requests its bounded sixteen-fact
+context. The original six crash, six retained-work and four transfer facts
+capture the exact bytes they assert or serialize; crash state/error files are
+included, not inferred from a producer label. Context/source path containment,
+no symlinks, exact selected files, finite reads/time and create-new packets are
+required. Parent diagnostics join all and only those packets to current source
+hashes and original actual runtime UUIDs/proofs, retaining read-only packets
+and a checked consumption receipt. Native inputs additionally snapshot context,
+actual runner, transfer summary and four current transfer proofs. No paths or
+source bodies enter the retained packets. Legacy harness and discovery do not
+request this channel. These packets are not original executor-sealed outputs,
+and independent native artifact control/source qualification stays closed.
+
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private
 revision-2 execution proof adds a distinct `originalObservations` collection;

@@ -14,6 +14,7 @@ from xml.sax.saxutils import escape
 import conformance_evidence as evidence
 from conformance_case_catalog import (
     METADATA_INVENTORY_SOURCE_WITNESSES, METADATA_RECOVERY_SOURCE_WITNESS,
+    ORIGINAL_ARTIFACT_PROOF_SOURCES,
     ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES,
     category_execution_partitions, category_runtime_cases,
 )
@@ -89,6 +90,54 @@ def metadata_inventory_observations(root, inputs, manifest, observed, context):
         {identity: binding for binding, identity in METADATA_INVENTORY_SOURCE_WITNESSES.items()},
         capture_prefix="metadata-inventory-source-", packet_prefix="metadata-inventory-",
         retained_prefix="source-metadata-inventory-")
+
+
+def _artifact_source_paths(root, attempt_id, namespace):
+    evidence._uuid(attempt_id)
+    if namespace not in ("artifact-transfers", "category-artifact-transfers"):
+        raise evidence.ConformanceError("WitnessMissing")
+    no_symlinks(root)
+    if not root.is_absolute() or root.resolve() != root or not root.is_dir():
+        raise evidence.ConformanceError("OwnershipInvalid")
+    capture = root / "stores" / ("original-artifact-" + attempt_id)
+    selected = {}
+    for identity, (kind, provider, parameter) in ORIGINAL_ARTIFACT_PROOF_SOURCES.items():
+        paths = ((capture / (parameter + ".json"), capture / (parameter + "-state.json"),
+                  capture / (parameter + "-recovery-errors.txt")) if kind == "crash" else
+                 (capture / f"noncooperative-{provider}-{parameter}.json",) if kind == "retention" else
+                 (root / f"proofs/{namespace}/transfer-{provider}-{parameter}/proof.json",))
+        selected[identity] = tuple(str(path) for path in paths)
+    return selected
+
+
+def artifact_source_context(run, inputs, manifest, *, namespace):
+    selected = _artifact_source_paths(run.root, manifest["attemptId"], namespace)
+    if (run.run_id != inputs["runId"] or manifest["runId"] != inputs["runId"]
+            or manifest["invocationGroupId"] != inputs["invocationGroupId"]
+            or manifest["inputSha256"] != evidence.digest(inputs)
+            or len(manifest["expected"]) != len(selected)
+            or {row["testIdentity"] for row in manifest["expected"]} != selected.keys()
+            or any(row["bindingId"] != ORIGINAL_ARTIFACT_PROOF_SOURCES[row["testIdentity"]][1]
+                   for row in manifest["expected"])):
+        raise evidence.ConformanceError("ProofMismatch")
+    return {
+        "schemaVersion": 1, "runId": evidence._uuid(run.run_id),
+        "invocationGroupId": evidence._uuid(inputs["invocationGroupId"]),
+        "attemptId": manifest["attemptId"], "rootId": evidence.stable_id(run.root_id),
+        "inputsSha256": evidence.digest(inputs), "rootPath": str(run.root),
+        "outputDirectory": str(run.root / "stores" / ("artifact-source-capture-" + manifest["attemptId"])),
+        "cases": selected}
+
+
+def artifact_source_observations(root, inputs, manifest, observed, *, namespace):
+    paths = _artifact_source_paths(root, manifest["attemptId"], namespace)
+    selected = {identity: {path: hashlib.sha256(read_bounded(Path(path), 16384)).hexdigest()
+                           for path in files} for identity, files in paths.items()}
+    return _consumption_observations(
+        root, inputs, manifest, observed, selected,
+        {identity: value[1] for identity, value in ORIGINAL_ARTIFACT_PROOF_SOURCES.items()},
+        capture_prefix="artifact-source-capture-", packet_prefix="artifact-source-",
+        retained_prefix="source-artifact-")
 
 
 def _consumption_observations(root, inputs, manifest, observed, selected, bindings, *,

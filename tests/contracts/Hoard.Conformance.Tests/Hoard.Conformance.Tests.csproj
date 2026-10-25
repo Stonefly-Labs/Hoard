@@ -5,6 +5,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="AuthorityIntegrationTests.cs;CategoryMutationTests.cs" />
+    <Compile Include="../Hoard.Artifacts.Tests/ArtifactSourceCapture.cs" Link="ArtifactSourceCapture.cs" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
     <Using Include="Xunit" />

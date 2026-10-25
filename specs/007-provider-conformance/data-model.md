@@ -475,7 +475,7 @@ import/setup error, and the same private adapter returns to original bytes.
 Independent authority checks actual inventory, original argv/cwd/records and
 ordered joint bounds. A separate inventory-controller scope has two binding-
 specific source facts, each consuming the complete graph with its own actual
-execution UUID and source parent. Recovery's UUID is not reusable for MP-48.
+execution UUID under one shared joint source parent. Recovery's UUID is not reusable for MP-48.
 Public entities and frozen inherited case keys are unchanged.
 
 QC-06/07/08 use their existing `none`-binding CaseResults as fixed composite
@@ -489,6 +489,16 @@ remain exact execution-free NotApplicable results. Missing controls stay
 incomplete, failed histories remain visible and exceeding 128 proof hashes
 across retries rejects without truncation. Diagnostic mode cannot promote a
 composite QC. No new public entity, field or runtime identity is introduced.
+
+The artifact diagnostic controller has a separate private source-capture
+context covering exactly sixteen original facts and their actual source files.
+Hash-only packets associate opaque path IDs with bytes actually consumed or
+serialized at those original assertion sites. Exact original runtime UUID/proof
+links, fresh input/run/attempt identities and a checked immutable consumption
+receipt are retained. Native input snapshots include context, runner and
+current transfer evidence; packets are not original native output seals.
+This adds no public entity or qualification authority. Legacy/discovery paths
+remain unchanged and independent artifact source admission stays closed.
 
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits

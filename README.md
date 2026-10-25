@@ -2108,9 +2108,28 @@ foreign witnesses, wrong timing and changed memory durability exclusions reject
 or remain incomplete. This narrowly permits only these three independently
 fixed cross-binding QC relationships. Failed attempts survive; exceeding the
 unchanged 128-proof limit on retry explicitly rejects rather than truncating.
-The modeled target becomes 90/3/9/0 with unchanged eight scopes/137 witnesses/
-seven parents. QC-02/04/05, native confirmation and full qualification remain
-incomplete.
+The initial modeled target is 90/3/9/0 across eight scopes/137 witnesses.
+Exact `ee1e7358a71d39294d911f369c49e4db40dc5ea9`,
+[run40224149195](https://github.com/Stonefly-Labs/Hoard/actions/runs/40224149195),
+now independently passes all three Linux jobs, 298 foundations without skips,
+13-lock/18-package replay and 129 aggregate scopes/1,821 witnesses. Actual
+qualification-input metadata reaches 90/3/9/0 with eight scopes/137 witnesses/
+**six** source parents: the two inventory facts share one joint native parent,
+correcting the earlier modeled seven-parent expectation. QC-02/04/05 and full
+qualification remain incomplete. Failed `a19d2a9`/run40222425942 was the
+QC-only `none`-binding lookup already repaired in this admitted checkpoint,
+not the unrelated older MP-19 failure.
+
+The artifact diagnostic controller now requests bounded actual-byte capture
+from its original six crash, six retained-work and four transfer facts. Hash-only
+packets join exact original runtime UUIDs and source bytes; immutable native
+inputs include the context, actual runner and current transfer proofs. Legacy
+and discovery paths do not request capture. All 408 tooling checks pass with
+18 native skips, 131 source SDK checks pass, and the original artifact package
+acceptance project compiles against freshly rebuilt SDK/provider/adapter
+fixtures. These are not fresh native artifact receipts: executor-sealed output
+and independent control/source admission still need implementation, so artifact
+qualification remains closed and its diagnostic states remain 92/7/4/0.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

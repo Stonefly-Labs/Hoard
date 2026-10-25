@@ -40,7 +40,7 @@ from conformance_case_catalog import (
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_sources import (
     METADATA_RECOVERY_SCENARIOS, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
-    admit_sqlite_noncooperation,
+    admit_sqlite_noncooperation, artifact_source_context, artifact_source_observations,
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
     metadata_inventory_arguments, metadata_inventory_context, metadata_inventory_observations,
     metadata_inventory_source_inputs, native_metadata_inventory_controls,
@@ -2071,6 +2071,14 @@ def _original_inspection_proofs(run, inputs, manifest, ingested, selected, mode,
     return {"sourceExecutions": len(observations), "inspectionProofsSha256": evidence.digest(receipt)}
 
 
+def _artifact_source_consumption(run, inputs, manifest, ingested, namespace):
+    captured, packets = artifact_source_observations(run.root, inputs, manifest, ingested, namespace=namespace)
+    return evidence.canonical_bytes({
+        "schemaVersion": 1, "qualification": False, "runId": inputs["runId"],
+        "invocationGroupId": inputs["invocationGroupId"], "attemptId": manifest["attemptId"],
+        "inputsSha256": evidence.digest(inputs), "observations": captured}), packets
+
+
 def original_artifact_external_proofs(run, inputs, manifest, ingested, *, category_scope=None):
     if category_scope is None:
         identities = original_artifact_external_scenarios()[0][1]
@@ -2161,6 +2169,13 @@ def original_artifact_external_proofs(run, inputs, manifest, ingested, *, catego
         "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
         "attemptId": manifest["attemptId"], "inputsSha256": evidence.digest(inputs),
         "transferParentSha256": hashlib.sha256(transfer_raw).hexdigest(), "observations": observations}
+    if isinstance(run, OwnedRun) and category_scope == ("artifacts", "controller"):
+        consumption_raw, packets = _artifact_source_consumption(run, inputs, manifest, ingested, transfer_namespace)
+        for path, data in packets.items():
+            write_new(run.root / path, data)
+        write_new(run.root / f'proofs/artifact-source-capture-{manifest["attemptId"]}.json',
+                  consumption_raw)
+        receipt["consumptionSha256"] = hashlib.sha256(consumption_raw).hexdigest()
     write_new(run.root / f'proofs/original-artifact-external-{manifest["attemptId"]}.json',
               evidence.canonical_bytes(receipt))
     return {"sourceExecutions": len(observations), "externalProofsSha256": evidence.digest(receipt)}
@@ -3240,11 +3255,25 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
         "invocationGroupId": evidence._constant(inputs["invocationGroupId"]),
         "attemptId": evidence._constant(manifest["attemptId"]),
         "inputsSha256": evidence._constant(evidence.digest(inputs)),
-        **({"transferParentSha256": evidence.sha256} if scope_id == "controller" else {}),
+        **({"transferParentSha256": evidence.sha256,
+            **({"consumptionSha256": evidence.sha256} if isinstance(run, OwnedRun) else {})}
+           if scope_id == "controller" else {}),
         "observations": evidence._list(evidence._record({
             "testIdentity": evidence._runtime_identity, "executionId": evidence._uuid,
             "runtimeProofSha256": evidence.sha256, **observation_fields}), 128),
     }, limit=512 * 1024)
+    if scope_id == "controller" and isinstance(run, OwnedRun):
+        consumption_raw, packets = _artifact_source_consumption(
+            run, inputs, manifest, ingested, "category-artifact-transfers")
+        consumption_path = run.root / f'proofs/artifact-source-capture-{manifest["attemptId"]}.json'
+        if (consumption_path.stat().st_mode & 0o777 != 0o400
+                or read_bounded(consumption_path, 512 * 1024) != consumption_raw
+                or hashlib.sha256(consumption_raw).hexdigest() != receipt["consumptionSha256"]):
+            raise evidence.ConformanceError("ProofMismatch")
+        for path, data in packets.items():
+            if (run.root.joinpath(path).stat().st_mode & 0o777 != 0o400
+                    or read_bounded(run.root / path, 512 * 1024) != data):
+                raise evidence.ConformanceError("ProofMismatch")
     observations = receipt["observations"]
     if (len(observations) != len(tests)
             or {row["testIdentity"] for row in observations} != set(tests)):
@@ -3530,6 +3559,19 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             "HOARD_ARTIFACT_TRANSFER_PROOFS": str(transfer_proofs),
             "HOARD_ARTIFACT_RUN_ID": manifest["runId"],
         }
+        if not discovery and isinstance(run, OwnedRun) and category_scope == ("artifacts", "controller"):
+            inputs = evidence.admit_entity("RunInputs", evidence.load_json(
+                read_bounded(run.root / manifest["runInputsPath"], 16 * 1024 * 1024)))
+            context_data = evidence.canonical_bytes(artifact_source_context(
+                run, inputs, manifest, namespace=transfer_proofs.name))
+            if len(context_data) > 1024 * 1024:
+                raise evidence.ConformanceError("OutputLimitExceeded")
+            source_capture = run.root / "stores" / ("artifact-source-capture-" + attempt_id)
+            no_symlinks(source_capture)
+            source_capture.mkdir(mode=0o700)
+            context = run.root / "stores" / f"artifact-source-context-{attempt_id}.json"
+            write_new(context, context_data)
+            variables["HOARD_ARTIFACT_SOURCE_CONTEXT"] = str(context)
         origin_environment = ("<EnvironmentVariables>" + "".join(
             f"<{key}>{escape(value)}</{key}>" for key, value in variables.items()) + "</EnvironmentVariables>")
     if any(entry["fullyQualifiedName"] == SMOKE + "OriginOutput" for entry in manifest["expected"]):
@@ -3590,6 +3632,12 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
                 f"stores/{prefix}-context-{attempt_id}.json",
                 f"proofs/{namespace}-native-executions.json",
                 f"proofs/{namespace}-native-inputs.json"))
+        if not discovery and artifact_runner is not None and isinstance(run, OwnedRun):
+            execution_inputs.extend((
+                f"stores/artifact-source-context-{attempt_id}.json", artifact_runner.relative_to(run.root).as_posix(),
+                "proofs/category-artifact-transfers.json",
+                *(f"proofs/category-artifact-transfers/transfer-{provider}-{size}/proof.json"
+                  for provider in ("local", "object") for size in (268435456, 4294967296))))
     result = run.command(
         arguments,
         cwd=assembly.parent, timeout=180, kind="discovery" if discovery else "tests", cache_id="runtime",

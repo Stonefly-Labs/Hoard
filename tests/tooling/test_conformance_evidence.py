@@ -1079,6 +1079,102 @@ class ConformanceInputTests(unittest.TestCase):
 
 
 class ConformanceRuntimeIngestionTests(unittest.TestCase):
+    def test_artifact_source_capture_requires_exact_current_bytes_and_original_runtime_witnesses(self):
+        import conformance_sources as sources
+        from conformance_case_catalog import ORIGINAL_ARTIFACT_PROOF_SOURCES
+        from types import SimpleNamespace
+        self.assertTrue(callable(getattr(sources, "artifact_source_context", None)))
+        self.assertTrue(callable(getattr(sources, "artifact_source_observations", None)))
+        inputs = {**self.inputs, "profileId": "artifacts"}
+        manifest = {**self.manifest, "inputSha256": evidence.digest(inputs), "expected": [
+            {"testIdentity": identity, "bindingId": provider}
+            for identity, (_, provider, _) in ORIGINAL_ARTIFACT_PROOF_SOURCES.items()]}
+        witnesses = [{
+            "testIdentity": row["testIdentity"], "bindingId": row["bindingId"],
+            "executionId": str(uuid.uuid4()), "status": "Passed",
+            "proofSha256": hashlib.sha256(row["testIdentity"].encode()).hexdigest()}
+            for row in manifest["expected"]]
+        observed = {
+            "attemptId": manifest["attemptId"], "diagnosticCode": "None", "witnesses": witnesses,
+            "proofs": {f'proof-{row["executionId"]}.json': row["proofSha256"] for row in witnesses}}
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            run = SimpleNamespace(root=root, run_id=inputs["runId"], root_id=uuid.uuid4().hex)
+            context = sources.artifact_source_context(run, inputs, manifest, namespace="category-artifact-transfers")
+            self.assertEqual(set(context["cases"]), set(ORIGINAL_ARTIFACT_PROOF_SOURCES))
+            self.assertEqual(16, len(context["cases"]))
+            capture = Path(context["outputDirectory"])
+            capture.mkdir(parents=True)
+            packet_paths, originals = {}, {}
+            for identity, paths in context["cases"].items():
+                files = {}
+                for index, value in enumerate(paths):
+                    path = Path(value)
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    raw = b"" if index == 2 else ("synthetic-source-" + identity).encode()
+                    path.write_bytes(raw)
+                    files[hashlib.sha256(value.encode()).hexdigest()] = hashlib.sha256(raw).hexdigest()
+                packet = {
+                    "schemaVersion": 1, "qualification": False, "runId": inputs["runId"],
+                    "attemptId": manifest["attemptId"], "inputsSha256": evidence.digest(inputs),
+                    "testIdentity": identity, "files": files}
+                packet_paths[identity] = capture / ("artifact-source-" + hashlib.sha256(identity.encode()).hexdigest() + ".json")
+                originals[identity] = evidence.canonical_bytes(packet)
+                packet_paths[identity].write_bytes(originals[identity])
+            observations, retained = sources.artifact_source_observations(
+                root, inputs, manifest, observed, namespace="category-artifact-transfers")
+            self.assertEqual(16, len(observations))
+            self.assertEqual(16, len(retained))
+            for row in observations:
+                witness = next(w for w in witnesses if w["testIdentity"] == row["testIdentity"])
+                self.assertEqual(witness["executionId"], row["executionId"])
+                self.assertEqual(witness["proofSha256"], row["runtimeProofSha256"])
+                self.assertEqual(hashlib.sha256(originals[row["testIdentity"]]).hexdigest(), row["sourceProofSha256"])
+            self.assertNotIn(str(root), b"".join(retained.values()).decode())
+            self.assertNotIn("synthetic-source-", b"".join(retained.values()).decode())
+            identity = next(iter(packet_paths))
+            for mutation in ("missing", "foreign-run", "foreign-inputs", "extra-field", "changed-bytes",
+                             "missing-witness", "failed-witness", "wrong-binding", "extra-packet"):
+                with self.subTest(mutation=mutation):
+                    packet = evidence.load_json(originals[identity])
+                    changed = copy.deepcopy(observed)
+                    source = Path(context["cases"][identity][0])
+                    previous = source.read_bytes()
+                    extra = capture / "extra.json"
+                    if mutation == "missing":
+                        packet_paths[identity].unlink()
+                    elif mutation == "foreign-run":
+                        packet["runId"] = str(uuid.uuid4())
+                    elif mutation == "foreign-inputs":
+                        packet["inputsSha256"] = "f" * 64
+                    elif mutation == "extra-field":
+                        packet["unexpected"] = True
+                    elif mutation == "changed-bytes":
+                        source.write_bytes(b"changed")
+                    elif mutation == "missing-witness":
+                        changed["witnesses"].pop()
+                    elif mutation == "failed-witness":
+                        changed["witnesses"][0]["status"] = "Failed"
+                    elif mutation == "wrong-binding":
+                        changed["witnesses"][0]["bindingId"] = "foreign"
+                    else:
+                        extra.write_bytes(b"{}")
+                    if mutation != "missing":
+                        packet_paths[identity].write_bytes(evidence.canonical_bytes(packet))
+                    with self.assertRaises(evidence.ConformanceError):
+                        sources.artifact_source_observations(
+                            root, inputs, manifest, changed, namespace="category-artifact-transfers")
+                    packet_paths[identity].write_bytes(originals[identity])
+                    source.write_bytes(previous)
+                    if extra.exists():
+                        extra.unlink()
+            with self.assertRaises(evidence.ConformanceError):
+                sources.artifact_source_context(run, inputs, manifest, namespace="foreign-transfers")
+            with self.assertRaises(evidence.ConformanceError):
+                sources.artifact_source_context(
+                    run, inputs, {**manifest, "expected": manifest["expected"][:-1]},
+                    namespace="category-artifact-transfers")
+
     def setUp(self):
         self.inputs = ConformanceAdmissionTests().inputs()
         self.inputs["mode"] = "diagnostic"
