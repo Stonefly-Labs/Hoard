@@ -51,6 +51,10 @@ ORIGINAL_ARTIFACT_PROOF_SOURCES = MappingProxyType({
        for provider in ("local", "object") for size in (268435456, 4294967296)},
 })
 
+METADATA_RECOVERY_SOURCE_WITNESS = (
+    "Hoard.Conformance.Tests.MetadataRecoveryRuntimeTests."
+    "Complete_current_input_native_recovery_graph_preserves_all_barriers_and_readbacks")
+
 _ORIGINAL_METADATA_ROLES = ("owner", "store", "schema", "authority", "controls")
 _ORIGINAL_ARTIFACT_ROLES = ("owner", "store", "validator", "maintenance", "lifetime", "authority", "controls")
 ORIGINAL_METADATA_FORESTS = MappingProxyType({
@@ -319,6 +323,8 @@ def original_witness_policy(identity):
 
 def original_non_session_policy(identity):
     """A provider session cannot stand in for an inspection or controller proof."""
+    if identity == METADATA_RECOVERY_SOURCE_WITNESS:
+        return "metadata", "recovery"
     category = ORIGINAL_INSPECTION_WITNESSES.get(identity)
     if category is not None:
         return category, "inspection"

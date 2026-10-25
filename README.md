@@ -2030,6 +2030,13 @@ Later native foundations pinpointed a recovery-result field mismatch. Recovery
 now checks the actual `CommandResult.execution_record_sha256`, with a portable
 regression using that real result type. Exact corrected Linux execution remains
 pending; no controller-only case or full-profile gate is promoted.
+
+A package-only metadata recovery source fact and its bounded source decoder now
+exist. The decoder checks all 65 current-input, graph, summary, controller and
+native proof files before publishing a create-new hash-only consumption packet.
+Its five modeled cases and all 119 SDK source tests pass. The fact is not yet
+dispatched or joined to case attempts; no actual controller execution UUID or
+passing case is claimed. Unrelated valid sessions cannot qualify this source.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

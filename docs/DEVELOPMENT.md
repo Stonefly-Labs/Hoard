@@ -9095,6 +9095,23 @@ native skips. Corrected native execution is pending; these failed runs are not
 admitted, and the earlier release-retry ownership failure is not explained by
 this distinct defect. Evidence and harness contracts are unchanged.
 
+The next controller-witness prerequisite is test-only
+`MetadataRecoverySource` plus a package-only `MetadataRecoveryRuntimeTests`
+fact. A closed current-run/group/attempt/root/input context declares exactly 65
+files. Bounded reads hash the bytes actually consumed; all 31 ordered commands,
+native/controller digests, immutable input references, settled exits, M/U/R
+barrier timing and summary readbacks must agree before a create-new hash-only
+packet is written. The positive model and four semantically inconsistent but
+self-consistently rehashed graphs pass/reject as intended; the full SDK source
+suite passes all 119 checks. These are modeled source checks, not native receipts.
+The new package fact requires `HOARD_METADATA_RECOVERY_CONTEXT` and fails
+explicitly if absent. It is not yet selected by category dispatch or independently
+joined to case witnesses. Default admission rejects substituting an unrelated
+valid SDK session for it. Package-mode compilation/native execution and complete
+source/case integration remain pending; eight control-only cases stay incomplete.
+No provider reference, public SDK API, package dependency, inventory, report
+entity or diagram changes. Existing examples do not invoke this private fact.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

@@ -193,6 +193,13 @@ execution UUIDs for control-only cases: those attempts remain incomplete even
 when their controller graph is valid. Passed Attempt validation, immutable
 frozen inventories and default source rejection are unchanged.
 
+A package-only metadata source fact additionally prepares a hash-only consumed
+file packet after checking all 65 declared proof files and the complete recovery
+graph. It contains no fabricated execution UUID. Its bounded decoder has modeled
+unit coverage, but dispatch, actual native execution and independent
+packet-to-RuntimeWitness/case attribution remain pending. A correct unrelated
+session cannot substitute for this known independent source.
+
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private
 revision-2 execution proof adds a distinct `originalObservations` collection;

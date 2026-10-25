@@ -6217,6 +6217,17 @@ is pending; no failed run is admitted and the separate earlier release-retry
 OwnershipInvalid remains undiagnosed. The field correction changes no evidence
 or harness contract, and no case/task/stage gate is relaxed.
 
+A test-only bounded source decoder and package-only metadata recovery fact now
+prepare actual runtime witness instrumentation. The decoder requires a closed
+current run/group/attempt/root/input context and all 65 declared proof files;
+it hashes consumed bytes and checks the complete 31-command graph and summary
+before create-new packet publication. Five focused modeled cases and all 119
+SDK source tests pass. Its default source policy rejects unrelated valid SDK
+sessions, with a red/green transport regression. The fact is not yet dispatched
+or independently joined to source parents/case RuntimeWitness UUIDs. Package-mode
+compilation/native execution and full attribution are still pending; no case,
+task marker, public API, dependency, inventory or qualification gate changes.
+
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately
 packable `Hoard.Testing.Conformance` library supplies the common consumers,

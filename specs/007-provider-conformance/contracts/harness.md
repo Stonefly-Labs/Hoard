@@ -177,6 +177,12 @@ independently imported `recoverySourcesSha256`. Control-only cases without an
 actual RuntimeWitness UUID still remain incomplete; labels/hashes cannot supply
 one. Existing diagnostic namespaces/output schemas and the Passed Attempt
 requirement are unchanged. Exact native execution of this increment is pending.
+A package-only metadata recovery source fact now has a bounded decoder for all
+65 input/graph/summary/controller/native files. It emits only consumed-file
+hashes after complete graph assertions; a packet is not a RuntimeWitness.
+Category dispatch, independent native source joining and case attribution are
+not yet wired. Missing context fails explicitly and unrelated valid sessions
+remain rejected; no controller qualification is inferred from modeled tests.
 The earlier source-linking execution, before executor-held byte anchoring, is
 independently admitted at exact `78c5919`, run
 40202060742: all three Linux jobs, 273 foundations without skips and all

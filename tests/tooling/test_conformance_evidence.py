@@ -1904,9 +1904,13 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.assertTrue(callable(getattr(evidence, "inspect_runtime_attempt", None)))
         baseline = copy.deepcopy((self.inputs, self.manifest, self.proof, self.witness, self.completion))
         fixtures = (".MetadataBoundaryTests.", ".ArtifactBoundaryTests.", ".ArtifactCrashTests.",
-                    ".ArtifactNonCooperativeChildTests.", ".ArtifactTransferProofTests.")
+                    ".ArtifactNonCooperativeChildTests.", ".ArtifactTransferProofTests.",
+                    ".MetadataRecoveryRuntimeTests.")
         for profile, binding in (("metadata", "sqlite"), ("artifacts", "local"), ("artifacts", "object")):
-            for identity in catalog.category_runtime_cases(profile, binding):
+            identities = tuple(catalog.category_runtime_cases(profile, binding))
+            if (profile, binding) == ("metadata", "sqlite"):
+                identities += (catalog.METADATA_RECOVERY_SOURCE_WITNESS,)
+            for identity in identities:
                 if not any(fixture in identity for fixture in fixtures):
                     continue
                 with self.subTest(binding=binding, identity=identity):

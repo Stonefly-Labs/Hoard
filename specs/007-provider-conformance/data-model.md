@@ -416,6 +416,10 @@ its safe native/source proof bytes and case references. This does not supply
 actual RuntimeWitness execution UUIDs to the eight control-only recovery cases.
 They remain incomplete; neither controller labels nor receipt hashes become
 execution IDs, and Passed Attempt validation is not weakened.
+A package-only source fact and bounded 65-file graph decoder now prepare the
+missing instrumentation, but modeled source packets are not RuntimeWitness
+entities. Dispatch, actual logger execution and independent attribution remain
+unwired, so the incomplete case states and entity validation are unchanged.
 
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits
