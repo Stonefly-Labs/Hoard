@@ -1284,6 +1284,39 @@ def full_artifact_binding_scenarios():
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
+def artifact_origin_inputs(candidate, root):
+    runtime = candidate / ARTIFACT_CONSUMER / PACKAGE_TEST_OUTPUT / "Release/net10.0"
+    result = {}
+    for provider, adapter in (("local", "Local"), ("object", "ObjectSemantics")):
+        binding = "Hoard.Fixtures.Conformance.Bindings." + adapter
+        store = "Hoard.Fixtures.Artifacts." + adapter
+        try:
+            result["fixture.artifact." + provider] = {
+                role: ((runtime / (package + ".dll")).relative_to(root).as_posix(), package)
+                for role, package in (
+                    ("factory", binding), ("session", binding), ("faults", binding), ("authority", binding),
+                    ("store", store), ("validator", store), ("maintenance", store), ("lifetime", store))}
+        except ValueError as error:
+            raise evidence.ConformanceError("InputChanged") from error
+    return result
+
+
+def artifact_binding_declarations(feed):
+    faults = [
+        "PublicationBoundary", "DirectVisibility", "PayloadDamage", "Capacity", "NativeNonCooperation",
+        "CleanupFailure", "GenerationBoundary", "ReceiptBoundary", "SourceNonCooperation", "SinkNonCooperation"]
+    result = []
+    for provider, adapter, capability in (
+            ("local", "Local", "durable-local-process-crash"), ("object", "ObjectSemantics", "non-durable-simulation")):
+        package = "Hoard.Fixtures.Artifacts." + adapter
+        result.append({
+            "schemaVersion": 1, "bindingId": "fixture.artifact." + provider, "category": "artifacts",
+            "packageId": package, "packageVersion": "0.1.0",
+            "packageSha256": evidence.package_identity(feed, package, "0.1.0")["sha256"],
+            "capabilities": ["artifacts", capability], "faults": list(faults)})
+    return tuple(result)
+
+
 def artifact_synchronous_storage_scenarios():
     method = (PAYLOAD_ARTIFACT_CONSUMER_PREFIX
               + "Synchronous_storage_hold_retains_actual_worker_and_protection_until_release")
@@ -1797,7 +1830,14 @@ def test_attempt(run, inputs, candidate, scenario):
     package_id = "Hoard.Testing.Conformance" if source_tests or name == "origin-output" else "Hoard.Conformance.TestLogger"
     package = next(package for package in inputs["packages"] if package["packageId"] == package_id)
     attempt_id = str(uuid.uuid4())
+    origin_inputs = None
     expected = {identity: ("origin-probe" if name == "origin-output" else "none", "none") for identity in identities}
+    if name == "full-artifact-binding":
+        expected = {
+            identity: ("fixture.artifact." + provider, "none")
+            for provider in ("local", "object") for identity in identities if f'(provider: "{provider}"' in identity}
+        if set(expected) != set(identities):
+            raise evidence.ConformanceError("WitnessMissing")
     manifest = {
         "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
         "attemptId": attempt_id, "attemptSequence": 1, "purpose": "execution",
@@ -1812,9 +1852,17 @@ def test_attempt(run, inputs, candidate, scenario):
             "assemblyId": "test-assembly", "packageId": package_id,
             "bindingId": binding, "matrixId": matrix,
             "assertionSymbol": ASSERTION if name == "assertion" else None,
-            "caseId": name if original_tests else "runtime",
+            "caseId": name if original_tests or name == "full-artifact-binding" else "runtime",
         } for identity, (binding, matrix) in expected.items()],
     }
+    if name == "full-artifact-binding":
+        origin_inputs = artifact_origin_inputs(candidate, run.root)
+        component_paths = {path for roles in origin_inputs.values() for path, _ in roles.values()}
+        for index, path in enumerate(sorted(component_paths)):
+            sha256 = inputs["runtimeAssemblies"].get(path)
+            if sha256 is None:
+                raise evidence.ConformanceError("InputChanged")
+            manifest["assemblies"].append({"id": f"artifact-component-{index}", "path": path, "sha256": sha256})
     discovery_manifest = {**manifest, "purpose": "discovery", "attemptId": str(uuid.uuid4())}
     runtime_options = {"metadata_provider": metadata_provider} if original_metadata else {}
     if name == "full-artifact-binding":
@@ -1859,7 +1907,6 @@ def test_attempt(run, inputs, candidate, scenario):
                   for filename in files if filename.startswith("proof-") and filename.endswith(".json")}
     if files != {"completion.json", "witnesses.jsonl", *proof_data}:
         raise evidence.ConformanceError("EvidenceIncomplete")
-    origin_inputs = None
     if name == "origin-output":
         origin_inputs = {"origin-probe": {role: (assembly_path, None) for role in (
             "factory", "session", "store", "schema", "authority", "faults")}}
@@ -1874,6 +1921,15 @@ def test_attempt(run, inputs, candidate, scenario):
             len(ingested["sessionOrigins"]) != 1
             or any(len(origins) != 1 for origins in ingested["sessionOrigins"].values())):
         raise evidence.ConformanceError("WitnessMissing")
+    if name == "full-artifact-binding":
+        bindings = {binding["bindingId"]: binding["descriptorSha256"] for binding in inputs["bindings"]}
+        reopen = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
+        for witness in ingested["witnesses"]:
+            origins = ingested["sessionOrigins"][witness["executionId"]]
+            count = 2 if witness["testIdentity"].split("(")[0] == reopen else 1
+            if (len(origins) != count
+                    or any(origin["descriptorSha256"] != bindings.get(witness["bindingId"]) for origin in origins)):
+                raise evidence.ConformanceError("WitnessMissing")
     return {"code": expected_code, "tests": len(identities),
             "discoverySha256": evidence.file_sha256(discovery_output / "completion.json"),
             "completionSha256": evidence.file_sha256(output / "completion.json")}
@@ -1906,6 +1962,7 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             if not archive.is_file() or evidence.file_sha256(archive) != sha256:
                 raise evidence.ConformanceError("InputChanged")
             variables[variable] = sha256
+        variables["HOARD_ORIGIN_RUN_ID"] = manifest["runId"]
         origin_environment = ("<EnvironmentVariables>" + "".join(
             f"<{key}>{value}</{key}>" for key, value in variables.items()) + "</EnvironmentVariables>")
     if metadata_provider is not None:
@@ -2148,6 +2205,10 @@ def execute(repository, destination):
         write_new(run.root / "stores/origin-probe.json",
                   json.dumps(declaration, separators=(",", ":"), ensure_ascii=True).encode("ascii"))
         binding_sources = [{"path": "stores/origin-probe.json", "adapterId": "sdk-origin-probe"}]
+        for declaration in artifact_binding_declarations(feed):
+            path = "stores/" + declaration["bindingId"] + ".json"
+            write_new(run.root / path, json.dumps(declaration, separators=(",", ":"), ensure_ascii=True).encode("ascii"))
+            binding_sources.append({"path": path, "adapterId": declaration["bindingId"]})
         print(json.dumps({"qualification": False, "phase": "sqlite-environment-admission"}), flush=True)
         admitted_environment = environment(run, candidate=candidate)
         print(json.dumps({"qualification": False, "phase": "runtime-input-capture"}), flush=True)

@@ -7536,6 +7536,31 @@ fixed private runsettings variables, after rechecking actual archive bytes.
 Factories do not read an assumed build cache or substitute assembly hashes for
 package hashes; malformed, missing, foreign and absent-archive inputs reject.
 
+The full-binding diagnostic now transports actual origins, not just captures
+them inside the Consumer. All 24 rows use observed sessions and the controller's
+required `HOARD_ORIGIN_RUN_ID`; ordinary rows emit one origin and both reopen
+rows emit parent then child, yielding 26 origins. Independently constructed
+archive-bound declarations preserve the SDK's exact serialized descriptor bytes.
+Parent ingestion pins all eight roles to actual binding/provider runtime images
+and their own packages, requires the exact per-row origin count and matching
+binding, and retains existing runtime/identity/reopen-lineage checks. The logger
+manifest explicitly includes all four component images alongside the Consumer;
+missing admitted images reject before launch.
+
+Fresh preparation/replay pass 311 artifact, 103 Consumer and 89+89 metadata cases.
+Bounded in-memory observation of actual VSTest output proves exact 24-row discovery,
+24 creates/two reopens and 208 actual role/image/archive matches using a separate
+empty runtime cache; no raw output/TRX is retained. This is local non-qualifying
+observation, not native parent acceptance. The fifteen-package map remains
+`2068add411613f471e6bfefd14cabb609fba189354c9edeec4f2320269dd07bf`.
+Tooling passes 320 checks (303 passed/seventeen macOS-native skips), including
+94 SDK checks; Consumer formatting and frozen safeguards pass. The origin-enabled
+native successor requests 212 foundations and the unchanged 94 scopes/810
+observations. Other origin/profile imports, category parity/integrations and final
+T081 remain unfinished. Tasks/reviewer markers, historical seals and tracked locks
+are unchanged. Product/deployment examples and architecture diagrams are unaffected:
+this increment only wires test provenance into the existing diagnostic boundary.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

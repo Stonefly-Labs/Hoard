@@ -960,6 +960,22 @@ writing their fixed runsettings variables. Runtime caches stay independent:
 factories never assume the build cache is available, read an arbitrary archive
 path, or manufacture a package identity.
 
+The full-binding scope additionally requires the actual controller run ID and
+`full-artifact-binding` case identity. Its 24 expected rows emit 26 actual session
+origins: one per ordinary row and the original plus actual child for each reopen.
+Parent ingestion binds all eight roles independently to the selected adapter/
+provider runtime images and package archives, matching admitted descriptor bytes
+and preserving strict component identity/runtime/reopen-lineage checks. The safe
+logger manifest includes the four real component images alongside the Consumer;
+missing admitted images reject before launch. Exact capability/fault serialization
+order is retained rather than sorting descriptor arrays.
+
+Fresh local observation corroborates all 208 role/image/archive matches, exact
+24-row discovery and both reopen lineages with a separate empty runtime cache.
+Raw VSTest output remains in bounded memory only, never retained as proof.
+Origin-enabled native admission is pending. This upgrades the existing diagnostic
+scope, not complete category/profile qualification or other pending origin imports.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and
 every actual prerequisite chain/replay, not full qualification.

@@ -1741,6 +1741,13 @@ and fixed without changing provider mechanisms or stable settlement promises.
 Fresh replay covers 311 artifact, 103 Consumer and 89+89 metadata cases.
 The next native request is 94 scopes/810 observations, pending; full category/
 profile qualification and remaining implementation tasks are still unfinished.
+The full-binding diagnostic now emits 26 actual component origins across those
+24 rows, including two genuine reopen lineages. Parent ingestion pins every role
+to its independently selected runtime DLL and package; the logger manifest also
+admits the four real binding/provider images. Fresh local observation matches all
+208 role/image/archive correspondences with an independent runtime cache.
+Native verification of this origin-enabled increment remains pending; these
+diagnostics do not establish complete category/profile qualification.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

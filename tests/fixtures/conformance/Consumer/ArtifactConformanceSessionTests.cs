@@ -4,11 +4,13 @@ using Hoard.Fixtures.Conformance.Bindings.ObjectSemantics;
 using Hoard.Testing.Conformance.Artifacts;
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Diagnostics;
+using Hoard.Testing.Conformance.Evidence;
+using Xunit.Abstractions;
 using RecordingDirectories = Hoard.Fixtures.Conformance.Consumer.LocalArtifactSessionTests.RecordingDirectories;
 
 namespace Hoard.Fixtures.Conformance.Consumer;
 
-public sealed class ArtifactConformanceSessionTests
+public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
     [InlineData("local")]
@@ -16,10 +18,11 @@ public sealed class ArtifactConformanceSessionTests
     public async Task Releasing_native_work_does_not_block_an_independent_release_or_rearming(string provider)
     {
         await using var resources = new RecordingDirectories();
-        var context = new ConformanceRunContext(Guid.NewGuid(), "artifact-concurrent-release", TimeProvider.System,
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
-        await using var session = await Binding(provider).CreateSessionAsync(context, default);
+        await using var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
         await ArtifactBindingAssertions.ConcurrentReleaseAsync(session, default);
+        ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
     }
 
     [Theory]
@@ -48,13 +51,14 @@ public sealed class ArtifactConformanceSessionTests
     {
         await using var resources = new RecordingDirectories();
         var clock = new ControlledClock();
-        var context = new ConformanceRunContext(Guid.NewGuid(), "artifact-full-controls", clock,
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", clock,
             resources, new ConformanceEvidenceBuffer());
         var binding = Binding(provider);
-        var session = await binding.CreateSessionAsync(context, default);
+        var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         try
         {
             await ArtifactBindingAssertions.ControlsAsync(session, fault, clock.Advance, default);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
         finally { await session.DisposeAsync(); }
         Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
@@ -68,7 +72,7 @@ public sealed class ArtifactConformanceSessionTests
         string provider, bool retainsPublication)
     {
         await using var resources = new RecordingDirectories();
-        var context = new ConformanceRunContext(Guid.NewGuid(), "artifact-full-reopen", TimeProvider.System,
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
         var binding = Binding(provider);
         var original = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
@@ -95,9 +99,19 @@ public sealed class ArtifactConformanceSessionTests
             else { Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(result); }
             await original.DisposeAsync();
             await ArtifactCompositionAssertions.ConfiguredPublicationAsync(current.Store, default);
+            ConformanceSessionOriginOutput.Write(output, origin);
+            ConformanceSessionOriginOutput.Write(output, reopened);
         }
         finally { await current.DisposeAsync(); }
         Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+    }
+
+    private static Guid RunId()
+    {
+        if (!Guid.TryParseExact(Environment.GetEnvironmentVariable("HOARD_ORIGIN_RUN_ID"), "D", out var runId)
+            || runId == Guid.Empty)
+        { throw new InvalidOperationException("PrerequisiteMissing"); }
+        return runId;
     }
 
     private static IArtifactConformanceBinding Binding(string provider)

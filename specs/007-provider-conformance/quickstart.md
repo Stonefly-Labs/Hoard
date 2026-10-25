@@ -476,6 +476,14 @@ then passed after release joins moved outside the registry lock. Fresh replay
 passes 311 artifact, 103 Consumer and 89+89 metadata cases. The next native request
 is 94 scopes/810 observations, pending. Remaining category parity, parent-origin
 ingestion, integrations and complete profile qualification are still unfinished.
+The full-binding diagnostic now emits 26 actual origins for those 24 rows and
+pins all eight roles to independently selected runtime DLL/package bytes.
+The logger admits all four actual binding/provider images; absent images fail
+before launch. Bounded local observation matches exact discovery, two real reopen
+lineages and 208 role/image/archive correspondences with a separate runtime cache.
+The controller supplies the required run ID through private runsettings.
+Origin-enabled native verification remains pending; other category/profile
+imports and qualification are still incomplete.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

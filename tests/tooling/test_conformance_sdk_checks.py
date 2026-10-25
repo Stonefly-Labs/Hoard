@@ -1091,6 +1091,24 @@ class SdkDiagnosticTests(unittest.TestCase):
                 body = "".join(text[start:text.index("\n    }", start)].split())
                 self.assertIn("awaitQuarantineIsPermanentAsync(store,receipt,bytes,cancellationToken,reopen);", body)
 
+    def test_full_artifact_origins_pin_every_actual_role_to_its_independent_archive(self):
+        factory = getattr(checks, "artifact_origin_inputs", None)
+        self.assertTrue(callable(factory), "Full artifact origins must bind actual component roles, not labels.")
+        candidate = self.directory / "candidate"
+        runtime = candidate / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / "Release/net10.0"
+        expected = {}
+        for provider, adapter in (("local", "Local"), ("object", "ObjectSemantics")):
+            binding = "Hoard.Fixtures.Conformance.Bindings." + adapter
+            store = "Hoard.Fixtures.Artifacts." + adapter
+            expected["fixture.artifact." + provider] = {
+                role: ((runtime / (package + ".dll")).relative_to(self.directory).as_posix(), package)
+                for role, package in (
+                    ("factory", binding), ("session", binding), ("faults", binding), ("authority", binding),
+                    ("store", store), ("validator", store), ("maintenance", store), ("lifetime", store))}
+        self.assertEqual(factory(candidate, self.directory), expected)
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+            factory(candidate, candidate / "foreign")
+
     def test_full_artifact_binding_scope_requires_all_real_controls_and_observed_reopen(self):
         factory = getattr(checks, "full_artifact_binding_scenarios", None)
         self.assertTrue(callable(factory), "Full bindings require actual controls, not declarations alone.")
@@ -1120,6 +1138,10 @@ class SdkDiagnosticTests(unittest.TestCase):
                 {"packageId": "Hoard.Fixtures.Artifacts.Local", "sha256": "c" * 64},
                 {"packageId": "Hoard.Fixtures.Artifacts.ObjectSemantics", "sha256": "d" * 64}],
         }
+        components = checks.artifact_origin_inputs(candidate, self.directory)
+        for roles in components.values():
+            for path, _ in roles.values():
+                inputs["runtimeAssemblies"][path] = "e" * 64
         with patch.object(checks, "runtime_command",
                           side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
             with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
@@ -1131,10 +1153,21 @@ class SdkDiagnosticTests(unittest.TestCase):
                 "Hoard.Fixtures.Artifacts.Local": "c" * 64,
                 "Hoard.Fixtures.Artifacts.ObjectSemantics": "d" * 64})
             manifest = launch.call_args.args[2]
+            self.assertEqual(len(manifest["assemblies"]), 5)
+            self.assertEqual({item["path"] for item in manifest["assemblies"]}, set(inputs["runtimeAssemblies"]))
+            self.assertEqual({item["caseId"] for item in manifest["expected"]}, {"full-artifact-binding"})
+            self.assertEqual({item["bindingId"] for item in manifest["expected"]},
+                             {"fixture.artifact.local", "fixture.artifact.object"})
         with patch.object(checks, "runtime_command") as launch:
             with self.assertRaisesRegex(checks.evidence.ConformanceError, "PrerequisiteMissing"):
                 checks.test_attempt(SimpleNamespace(root=self.directory),
                                     {**inputs, "packages": inputs["packages"][:1]}, candidate, scenario)
+            launch.assert_not_called()
+        with patch.object(checks, "runtime_command") as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                checks.test_attempt(SimpleNamespace(root=self.directory),
+                                    {**inputs, "runtimeAssemblies": {
+                                        assembly.relative_to(self.directory).as_posix(): "a" * 64}}, candidate, scenario)
             launch.assert_not_called()
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
             checks.runtime_command(SimpleNamespace(root=self.directory), assembly, manifest,

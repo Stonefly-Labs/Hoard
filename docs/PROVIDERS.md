@@ -761,6 +761,16 @@ covers 311 artifact, 103 Consumer and 89+89 metadata cases. The next native requ
 is 94 scopes/810 observations, pending. Parent-origin ingestion, remaining category
 parity/integration and complete profiles remain unfinished; this is not qualification.
 
+Those 24 full-binding rows now emit 26 actual component origins, including the
+two original/reopened pairs. The diagnostic parent independently binds all eight
+roles to the respective adapter/provider runtime DLLs and package archive bytes,
+admits those four images into the safe logger manifest and requires the exact
+per-row origin count and binding descriptor. Missing runtime images reject before
+launch. Local fresh-cache observation corroborates all 208 role/image/archive
+matches and actual reopen lineage without persisting raw output. Origin-enabled
+native acceptance is pending; this does not complete other category/profile imports
+or upgrade the simulation to durable recovery.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and
 actual prerequisites/replay, not full category/profile qualification.

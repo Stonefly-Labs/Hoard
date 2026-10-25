@@ -4278,6 +4278,35 @@ archives before passing only their hashes through fixed private runsettings
 variables; fixture construction no longer assumes candidate cache availability.
 Missing/foreign/malformed or absent-archive inputs fail before launch.
 
+### Full artifact diagnostic origin transport and admission
+
+All 24 full-binding Consumer rows now emit actual observed-session packets using
+the controller's required run ID and the fixed `full-artifact-binding` case ID.
+There are 24 creates and two genuine reopens; reopened packets follow their actual
+parents. Independently constructed package declarations match the SDK's exact
+serialized bytes, including capability/fault order. Parent ingestion pins each
+of eight roles to its actual adapter/provider runtime image and respective package,
+requires one origin per ordinary row/two per reopen and matches the independently
+selected binding descriptor. Existing runtime, component identity and reopen
+lineage checks are unchanged. The safe logger manifest must admit all four
+binding/provider images as well as the Consumer; missing input images fail before
+launch rather than weakening the logger's actual-image checks.
+
+Fresh preparation/replay pass 311 artifact, 103 Consumer and 89+89 metadata cases;
+the fifteen-package map remains
+`2068add411613f471e6bfefd14cabb609fba189354c9edeec4f2320269dd07bf`.
+Ten runtime dependencies match archive bytes in each preparation. Bounded actual
+VSTest output observation, kept only in memory, matches all 24 discovered identities,
+26 origins and 208 actual role/image/archive correspondences with an independent
+empty runtime cache. This is not native parent acceptance. Tooling passes 320
+checks (303 passed/seventeen macOS-native skips), including 94 SDK checks.
+Consumer formatting, frozen inventory/catalogs and patch checks pass. The
+origin-enabled native successor requests 212 foundations and unchanged
+94 scopes/810 observations. Other origin/profile imports, category parity/
+integrations, complete qualification and final T081 remain unfinished.
+Tasks/reviewer markers, tracked locks and historical seals remain untouched;
+test-only provenance changes do not alter product/deployment examples or diagrams.
+
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations
 without failures/errors/skips, 87 scopes/757 exact discoveries/executions and
