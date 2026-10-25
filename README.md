@@ -1955,6 +1955,11 @@ hash, provenance, timing and completion check with normal admission; normal
 qualification still requires its original origins and rejects unadmitted
 inspection/controller witnesses. This staging prerequisite does not open a
 qualification backend or turn a runtime pass into a qualifying case.
+Metadata category execution now also reruns the real SQLite native-stall
+control and all ten recovery barriers plus walkthrough under its own captured
+inputs, with fresh category stores/cache/proofs. Legacy harness receipts are
+not relabeled. Seed/readback command records are independently checked too;
+these controls remain non-qualifying until category admission is implemented.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

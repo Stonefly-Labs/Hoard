@@ -871,14 +871,23 @@ def require_sqlite_environment(inputs, assembly, root):
         raise evidence.ConformanceError("EvidenceIncomplete")
 
 
-def sqlite_noncooperation(run, inputs, candidate):
+def _admit_metadata_control_namespace(inputs, namespace, default):
+    if (namespace not in (default, "category-" + default)
+            or (namespace != default
+                and (inputs.get("profileId") != "metadata" or inputs.get("mode") != "diagnostic"))):
+        raise evidence.ConformanceError("UnsupportedProfile")
+    return namespace
+
+
+def sqlite_noncooperation(run, inputs, candidate, *, namespace="sqlite-native-noncooperation"):
+    namespace = _admit_metadata_control_namespace(inputs, namespace, "sqlite-native-noncooperation")
     runtime = candidate / TESTS / PACKAGE_TEST_OUTPUT / "Release/net10.0"
     assembly = runtime / "Hoard.Conformance.Tests.dll"
     require_sqlite_environment(inputs, assembly, run.root)
-    parent = run.root / "stores/sqlite-native-noncooperation"
+    parent = run.root / f"stores/{namespace}"
     no_symlinks(parent)
     parent.mkdir(mode=0o700)
-    output = run.root / "proofs/sqlite-native-noncooperation.json"
+    output = run.root / f"proofs/{namespace}.json"
     inputs_sha256 = evidence.digest(inputs)
     provider_sha = evidence.package_identity(
         run.root / "feed/candidate", "Hoard.Fixtures.Metadata.Sqlite", "0.1.0")["sha256"]
@@ -887,7 +896,7 @@ def sqlite_noncooperation(run, inputs, candidate):
         run.command(
             ["dotnet", str(assembly), "sqlite-native-noncooperation", str(output),
              str(parent), str(candidate), provider_sha, inputs_sha256],
-            cwd=runtime, scope="recovery", timeout=45, cache_id="sqlite-native-noncooperation")
+            cwd=runtime, scope="recovery", timeout=45, cache_id=namespace)
     except evidence.ConformanceError as error:
         if str(error) != "DeadlineExceeded":
             raise
@@ -914,8 +923,10 @@ def sqlite_noncooperation(run, inputs, candidate):
 def admit_owned_command(command, sequence, *, scope, detail, exit_code, max_duration):
     fields = {
         "schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
-        "exitCode", "diagnosticCode", "groupState", "scope", detail,
+        "exitCode", "diagnosticCode", "groupState", "scope",
     }
+    if detail is not None:
+        fields.add(detail)
     if (type(sequence) is not int or sequence <= 0
             or not isinstance(command, dict) or set(command) != fields
             or type(command["schemaVersion"]) is not int or command["schemaVersion"] != 1
@@ -1074,10 +1085,14 @@ def recovery_command(run, assembly, arguments, *, cache_id, value=None):
     command = evidence.load_json(raw)
     if value is not None:
         admit_recovery_barrier(command, sequence, value)
+    else:
+        admit_owned_command(
+            command, sequence, scope="recovery", detail=None, exit_code=0, max_duration=300000)
     return hashlib.sha256(raw).hexdigest(), command
 
 
-def metadata_recovery_diagnostics(run, inputs, candidate):
+def metadata_recovery_diagnostics(run, inputs, candidate, *, namespace="sqlite-recovery"):
+    namespace = _admit_metadata_control_namespace(inputs, namespace, "sqlite-recovery")
     runtime = candidate / METADATA_RECOVERY / "bin/Release/net10.0"
     assembly = runtime / "Hoard.Fixtures.Metadata.CrashRunner.dll"
     require_sqlite_environment(inputs, assembly, run.root)
@@ -1085,14 +1100,14 @@ def metadata_recovery_diagnostics(run, inputs, candidate):
     assembly_key = assembly.relative_to(run.root).as_posix()
     if inputs.get("runtimeAssemblies", {}).get(assembly_key) != evidence.file_sha256(assembly):
         raise evidence.ConformanceError("InputChanged")
-    parent = run.root / "stores/sqlite-recovery"
+    parent = run.root / f"stores/{namespace}"
     no_symlinks(parent)
     parent.mkdir(mode=0o700)
 
     def execute(mode, directory, barrier, value=None):
         return recovery_command(
             run, assembly, [mode, str(directory / "metadata.db"), str(directory), barrier],
-            cache_id="sqlite-recovery", value=value)
+            cache_id=namespace, value=value)
 
     observations = []
     for kind, barriers in (
@@ -1118,7 +1133,7 @@ def metadata_recovery_diagnostics(run, inputs, candidate):
         "inputsSha256": evidence.digest(inputs), "barriers": observations,
         "walkthroughSha256": walkthrough_sha,
     }
-    write_new(run.root / "proofs/sqlite-recovery.json", evidence.canonical_bytes(result))
+    write_new(run.root / f"proofs/{namespace}.json", evidence.canonical_bytes(result))
     return result
 
 
@@ -2478,6 +2493,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             *(scenario[0] for scenario in original_observation_scenarios()),
             *(scenario[0] for scenario in original_inspection_literal_scenarios()),
             *(scenario[0] for scenario in original_inspection_prepared_scenarios()),
+            "metadata-category-native-noncooperation", "metadata-category-recovery",
             "metadata-category", "artifact-category-transfers", "artifact-category"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
@@ -3635,6 +3651,12 @@ def execute(repository, destination):
             observations.append(test_attempt(
                 run, inputs, candidate, scenario,
                 inspection_cases=inspection_inputs, inspection_configurations=inspection_configurations))
+        print(json.dumps({"qualification": False, "phase": "metadata-category-native-noncooperation"}), flush=True)
+        metadata_category_noncooperation = sqlite_noncooperation(
+            run, category_inputs["metadata"], candidate, namespace="category-sqlite-native-noncooperation")
+        print(json.dumps({"qualification": False, "phase": "metadata-category-recovery"}), flush=True)
+        metadata_category_recovery = metadata_recovery_diagnostics(
+            run, category_inputs["metadata"], candidate, namespace="category-sqlite-recovery")
         print(json.dumps({"qualification": False, "phase": "metadata-category"}), flush=True)
         metadata_category = category_diagnostics(
             run, category_inputs["metadata"], candidate,
@@ -3703,6 +3725,8 @@ def execute(repository, destination):
                    "lockPreparation": lock_preparation,
                    "nativeNonCooperation": native_noncooperation,
                    "metadataRecovery": metadata_recovery,
+                   "metadataCategoryNoncooperation": metadata_category_noncooperation,
+                   "metadataCategoryRecovery": metadata_category_recovery,
                    "artifactRecovery": artifact_recovery,
                    "artifactTransfers": artifact_transfers,
                    "artifactNonCooperation": artifact_noncooperative,

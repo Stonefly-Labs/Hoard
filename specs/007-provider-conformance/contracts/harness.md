@@ -87,6 +87,13 @@ with captured inputs/digest. Normal admission shares that parser and still
 requires its original qualification-origin policy. Inspection validates all
 hash/provenance/timing/completion constraints, but never supplies missing
 source/controller corroboration or a qualifying pass.
+Metadata category controls additionally rerun SQLite native-stall containment
+and all ten recovery barriers/walkthrough with fresh
+`category-sqlite-native-noncooperation` and `category-sqlite-recovery`
+stores/cache/proofs bound to metadata inputs. Harness defaults are unchanged;
+old receipts cannot replace those fresh invocations. Successful seed/readback
+events also require exact settled owned-command records. These diagnostic
+controls do not yet satisfy the remaining category-control imports.
 
 For category discovery and execution, an available native command record is
 independently joined to the exact run/root/sequence, argv/cwd hashes, PID/start,

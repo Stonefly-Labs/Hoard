@@ -6003,6 +6003,19 @@ deployment surface changes.
 
 ## Summary
 
+The latest metadata-category controller wiring independently reruns native
+SQLite non-cooperation and all ten recovery barriers/walkthrough under the
+metadata input snapshot, using fresh `category-sqlite-native-noncooperation`
+and `category-sqlite-recovery` stores/cache/proof namespaces. Legacy paths remain
+unchanged. Seed/readback records additionally require exact sequence, valid PID/start,
+successful exit/settlement and bounded monotonic timing; wrong-seed/readback
+records were accepted in red regressions before repair. Both namespaces and
+foreign profile/mode/traversal rejection pass all 380 tooling checks (363 passed/
+seventeen native macOS skips), inventory/catalog and patch checks. This wiring
+has not yet been independently observed natively or imported as completed
+category controls. All affected task/checklist markers and qualification gates
+remain unchanged.
+
 
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately

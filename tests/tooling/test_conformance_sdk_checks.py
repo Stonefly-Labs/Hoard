@@ -1578,8 +1578,11 @@ class SdkDiagnosticTests(unittest.TestCase):
                 checks.admit_recovery_barrier(command | change, 3, 10)
 
     def test_metadata_recovery_controller_drives_each_real_runner_mode_and_rejects_missing_proof(self):
-        for mutation in (None, "normal-exit", "missing-event", "wrong-receipt"):
-            root = self.directory / str(mutation)
+        for namespace, mutation in (
+                ("sqlite-recovery", None), ("category-sqlite-recovery", None),
+                *(("sqlite-recovery", mutation) for mutation in (
+                    "normal-exit", "missing-event", "wrong-receipt", "wrong-seed-record", "wrong-readback-record"))):
+            root = self.directory / f"{namespace}-{mutation}"
             candidate = root / "candidate"
             assembly = candidate / checks.METADATA_RECOVERY / (
                 "bin/Release/net10.0/Hoard.Fixtures.Metadata.CrashRunner.dll")
@@ -1600,6 +1603,9 @@ class SdkDiagnosticTests(unittest.TestCase):
                     "exitCode": 0 if value is None or mutation == "normal-exit" else -9,
                     "diagnosticCode": "None", "groupState": "Exited", "scope": "recovery",
                 }
+                if ((mutation == "wrong-seed-record" and args[2].startswith("seed-"))
+                        or (mutation == "wrong-readback-record" and args[2].startswith("recover-"))):
+                    receipt["sequence"] += 1
                 if value is not None:
                     receipt["barrier"] = {
                         "value": value + (mutation == "wrong-receipt"),
@@ -1613,17 +1619,17 @@ class SdkDiagnosticTests(unittest.TestCase):
                 return SimpleNamespace(exit_code=receipt["exitCode"], events=events)
 
             run.command = command
-            inputs = {"runtimeAssemblies": {
+            inputs = {"profileId": "metadata", "mode": "diagnostic", "runtimeAssemblies": {
                 assembly.relative_to(root).as_posix(): hashlib.sha256(assembly.read_bytes()).hexdigest()}}
             with self.subTest(mutation=mutation), patch.object(
                     checks, "require_sqlite_environment"), patch.object(checks, "verify_runtime_packages"):
                 if mutation is not None:
                     with self.assertRaisesRegex(checks.evidence.ConformanceError,
                                                 "EvidenceIncomplete" if mutation == "missing-event" else "ProofMismatch"):
-                        checks.metadata_recovery_diagnostics(run, inputs, candidate)
-                    self.assertFalse((root / "proofs/sqlite-recovery.json").exists())
+                        checks.metadata_recovery_diagnostics(run, inputs, candidate, namespace=namespace)
+                    self.assertFalse((root / f"proofs/{namespace}.json").exists())
                     continue
-                result = checks.metadata_recovery_diagnostics(run, inputs, candidate)
+                result = checks.metadata_recovery_diagnostics(run, inputs, candidate, namespace=namespace)
                 self.assertFalse(result["qualification"])
                 self.assertEqual(result["inputsSha256"], checks.evidence.digest(inputs))
                 self.assertEqual([item["barrierId"] for item in result["barriers"]],
@@ -1638,6 +1644,25 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertEqual(options["scope"], "recovery")
                     self.assertEqual(options["env"], {"HOARD_CONFORMANCE_SAFE_EVENTS": "1"})
                     self.assertEqual(Path(args[3]).parent, Path(args[4]))
+                    self.assertTrue(Path(args[4]).is_relative_to(root / f"stores/{namespace}"))
+                    self.assertEqual(options["cache_id"], namespace)
+                self.assertEqual(
+                    json.loads((root / f"proofs/{namespace}.json").read_bytes()), result)
+
+    def test_category_metadata_controls_reject_foreign_scope_before_executing(self):
+        run = SimpleNamespace(root=self.directory, command=unittest.mock.Mock())
+        for method, namespace in (
+                (checks.metadata_recovery_diagnostics, "category-sqlite-recovery"),
+                (checks.sqlite_noncooperation, "category-sqlite-native-noncooperation")):
+            for inputs, selected in (
+                    ({"profileId": "artifacts", "mode": "diagnostic"}, namespace),
+                    ({"profileId": "metadata", "mode": "qualification"}, namespace),
+                    ({"profileId": "metadata", "mode": "diagnostic"}, "../foreign"),
+                    ({"profileId": "metadata", "mode": "diagnostic"}, "foreign")):
+                with self.subTest(method=method.__name__, inputs=inputs, namespace=selected):
+                    with self.assertRaises(checks.evidence.ConformanceError):
+                        method(run, inputs, self.directory / "candidate", namespace=selected)
+        run.command.assert_not_called()
 
     def test_local_recovery_uses_each_real_crash_boundary_without_borrowing_simulation_proof(self):
         self.assertTrue(callable(getattr(checks, "artifact_recovery_diagnostics", None)),
@@ -3880,6 +3905,37 @@ class SdkDiagnosticTests(unittest.TestCase):
             with self.subTest(controller=field), self.assertRaisesRegex(
                     checks.evidence.ConformanceError, "ProofMismatch"):
                 checks.admit_sqlite_noncooperation(observed, changed, "a" * 64)
+        for namespace in ("sqlite-native-noncooperation", "category-sqlite-native-noncooperation"):
+            root = self.directory / namespace
+            (root / "stores").mkdir(parents=True)
+            (root / "proofs").mkdir()
+            inputs = {"profileId": "metadata", "mode": "diagnostic"}
+            producer = {**observed, "inputsSha256": checks.evidence.digest(inputs)}
+            record = {**command, "sequence": 5}
+            invocations = []
+
+            def execute(arguments, **options):
+                invocations.append((arguments, options))
+                self.assertEqual(Path(arguments[3]), root / f"proofs/{namespace}.json")
+                self.assertEqual(Path(arguments[4]), root / f"stores/{namespace}")
+                self.assertEqual(arguments[-1], checks.evidence.digest(inputs))
+                self.assertEqual(options["cache_id"], namespace)
+                Path(arguments[3]).write_bytes(checks.evidence.canonical_bytes(producer))
+                (root / "proofs/recovery-command-0005.json").write_bytes(
+                    checks.evidence.canonical_bytes(record))
+                raise checks.evidence.ConformanceError("DeadlineExceeded")
+
+            run = SimpleNamespace(root=root, command_sequence=4, command=execute, live_children=lambda: ())
+            with self.subTest(namespace=namespace), patch.object(
+                    checks, "require_sqlite_environment"), patch.object(
+                    checks.evidence, "package_identity", return_value={"sha256": "f" * 64}):
+                result = checks.sqlite_noncooperation(
+                    run, inputs, root / "candidate", namespace=namespace)
+                self.assertFalse(result["qualification"])
+                self.assertEqual(result["inputsSha256"], checks.evidence.digest(inputs))
+                self.assertEqual(result["producerSha256"], checks.evidence.digest(producer))
+                self.assertEqual(result["controllerSha256"], checks.evidence.digest(record))
+                self.assertEqual(len(invocations), 1)
 
     def test_native_noncooperation_cannot_turn_an_exit_setup_failure_or_live_child_into_success(self):
         for outcome, expected in (

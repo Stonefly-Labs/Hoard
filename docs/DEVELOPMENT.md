@@ -8831,6 +8831,21 @@ for independent source corroboration, not its implementation or a qualifying
 profile. Tasks/checklists, package/provider/reference/lock bytes and deployment
 diagrams are unaffected.
 
+Metadata category orchestration now separately executes the SQLite native
+stall/retained-cleanup control and all M0..2/U0..4/R0..1 recovery barriers plus
+walkthrough against the captured metadata inputs. The closed
+`category-sqlite-native-noncooperation` and `category-sqlite-recovery`
+namespaces allocate fresh stores, cache and producer/proof paths; legacy
+defaults remain unchanged. Native-stall packets carry the current input hash.
+Seed and readback controller records now require the exact sequence, valid PID/start,
+successful exit/settlement, finite timing and five-minute recovery bound, not
+just a successful event. Wrong-seed/readback regressions first reproduced
+acceptance before repair. Both namespaces, wrong-profile/mode/traversal rejection
+and unchanged failure handling pass all 380 tooling checks (363 passed/seventeen
+native macOS skips), frozen inventory/catalog and patch checks. New native
+execution and control import remain pending; no missing obligation is marked
+passed and no qualification gate changes.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full
