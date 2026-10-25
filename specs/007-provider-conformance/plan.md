@@ -5602,9 +5602,9 @@ qualifying profile gates remain unfinished. Three focused regressions first
 fail at missing scope/admission functions before implementation.
 All 108 SDK diagnostic tooling checks and 354 tooling checks pass (337 passed/
 seventeen explicit macOS-native skips); frozen inventory, SDK catalog and patch
-checks pass. The native target becomes 246 foundations, 108 scopes/1,320 exact
+checks pass. At that checkpoint the native target became 246 foundations, 108 scopes/1,320 exact
 discoveries/executions, every inherited prerequisite and the additional
-three-source inspection receipt, unadmitted.
+three-source inspection receipt; its admission is recorded below.
 
 Non-session-policy native
 [40178051713](https://github.com/Stonefly-Labs/Hoard/actions/runs/40178051713)
@@ -5652,9 +5652,78 @@ Replay input:
 replay inspection receipt:
 `87011b2aa44bae88da54b007a91b6970f9614930a7376419ca26059bfdbdc442`.
 These are diagnostic inputs with zero historical baselines, no native
-containment claim and no category qualification. The pending native run remains
-unadmitted. Graph recipe reuse, exact selected-file inventories and prepared
-fact runtime admission remain unwired; no task/checklist marker is changed.
+containment claim and no category qualification. At that checkpoint graph recipe
+reuse, exact selected-file inventories and prepared fact runtime admission
+remained unwired; no task/checklist marker was changed.
+
+### Prepared inspection selection, execution and input recomputation
+
+Literal-inspection native
+[40180137288](https://github.com/Stonefly-Labs/Hoard/actions/runs/40180137288)
+at exact `3eaa70c842a7a9b24affdcda361ca473600663d1` is independently admitted:
+all three jobs successful, 246 foundations without failures/errors/skips,
+108 scopes/1,320 exact discoveries/executions and every prerequisite.
+Typed input `48f176803cb49ef7b26dd56a70be368f461fa113a9815edf3676996f036a7bfe`;
+original input `703b5cce69ff86d58cc80bdb3a89829a78a6b5cc145806baba4918282cd6e98c`;
+sixteen-source receipt
+`573aedbe09a0f8c4463aa1f7ff76791fd60c9a93d3c09b34b2ca43c6f1d40ca9`;
+three-source inspection receipt
+`79c4d2538dbdaa28f1241170b3dd18a06e0db8dec0204235de56ce0d1366e3a8`;
+preparation `41b210b8650f0c6070215818fd1699beffe28cb047b68ae37a45d4a997fa9081`.
+Both inputs independently recompute; free scratch is 91,715,252,224 bytes.
+This admits only that snapshot, not subsequent resolver/prepared sources.
+
+Pure recipes now share the unchanged predecessor ownership/root scans. The
+owned resolver constructs seven metadata and eight artifact graphs, caching
+each distinct project's actual resolution within its category. Independent
+file selection matches the original full/consumer-body reads, restricts all
+ordinary inputs to the owned root and admits external framework PE references
+only beneath the independently resolved SDK reference packs with matching
+framework/package metadata. Selected files are immutable and bounded; the
+configuration fingerprint records opaque path/content assignments without
+changing source/runtime inventory semantics or exposing paths.
+
+The prepared scope discovers and executes exactly the other three frozen
+architecture facts. Discovery receives no capture context; execution receives
+exact configuration-bound maps. The strict parent rejects missing/extra/stale/
+changed files and runtime/source proof mismatches before retaining its separate
+hash-only receipt. The native candidate builds Application and both original
+consumer/negative pairs with locked preparation, never adding an Application
+package. It verifies the exact metadata-marker/artifact-marker sealed images
+before execution and independently recollects all selected files when
+recomputing both input documents at completion.
+
+Actual local preparation builds seventeen distinct projects and resolves seven
+metadata/ten-project and eight artifact/eleven-project graphs. All three facts
+pass against separately sealed predecessor images. A fresh locked build replay
+uses the production dispatcher and strict parent, selecting exactly 367
+metadata, 336 artifact consumer-body and 376 full artifact files.
+Replay input:
+`493b155be668177f56c6ff3ce52bd54529cb64a357115f7cee0d8b5950c6fb3f`;
+prepared parent receipt:
+`7415b178f872b81b58cb2440ee2a53c3403d0bc79c8f77da6bbd09d036f8d39a`.
+The schema-1 predecessor seal independently reverifies:
+`a725a20dcbb635944f64fed007205d06de532ca7f2b4f87c104ac4434ffa8215`;
+metadata image:
+`c5ea078292ead84de9819bc95b1c6a9884445f0e4a23097829ea9e5df941dc12`;
+artifact image:
+`3bed6885177572e7ce81308f15ac91f15a692e9ef80c40974641facfd456090e`.
+Independent production file recollection matches the replay fingerprint.
+These are non-qualifying local diagnostics, not native containment, complete
+historical compatibility or complete category/profile acceptance.
+
+Eight added focused regressions first fail at the missing graph/selection/
+receipt/context/dispatch/preparation APIs and pass after implementation.
+The existing real-input capture checks also prove selected file changes fail
+completion recomputation without changing source/runtime inventory.
+The locked-build regression additionally checks all five missing projects,
+explicit prepared locks/receipts and absence of package-feed extension.
+All 120 SDK diagnostic and all 366 tooling checks pass (349 passed/seventeen
+explicit native macOS skips); frozen inventory, SDK catalog and patch checks
+pass. Next native target: 258 foundations, 109 scopes/1,323 exact discoveries/
+executions and both separate three-source inspection receipts, not yet admitted.
+T019/T020 and all qualifying gates remain unfinished. No task/checklist marker,
+production API/reference, lockfile, deployment example or diagram changes.
 
 ## Summary
 

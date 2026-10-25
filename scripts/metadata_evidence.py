@@ -567,16 +567,7 @@ def logical_cases(work):
     return inventories
 
 
-def compatibility_cases(root, work):
-    retained = json.loads((work / "retained-binaries.json").read_text())
-    runtime = work / "compatible-runtime"
-    shutil.copytree(work / "retained/bin/Release/net10.0", runtime)
-    for name in ("Abstractions", "Core", "Hosting", "Application"):
-        shutil.copy2(work / f"current/src/Hoard.{name}/bin/Release/net10.0/Hoard.{name}.dll", runtime)
-    if (sha256(runtime / "RetainedMarker.dll") != retained["binarySha256"]
-            or run("dotnet", str(runtime / "RetainedMarker.dll")).strip() != "metadata-marker-compatible"
-            or any(sha256(proof_file(work, path)) != digest for path, digest in retained["files"].items())):
-        raise RuntimeError("Frozen pre-F-05 metadata binary compatibility failed.")
+def inspection_recipe(current):
     ownership = {
         "Hoard.Abstractions": "Abstractions", "Hoard.Core": "Core", "Hoard.Hosting": "Hosting",
         "Hoard.Application": "Application", "NuGet.Versioning": "Versioning",
@@ -589,13 +580,27 @@ def compatibility_cases(root, work):
             "SQLitePCLRaw.bundle_e_sqlite3", "SQLitePCLRaw.core", "SQLitePCLRaw.provider.e_sqlite3",
             "SQLitePCLRaw.lib.e_sqlite3", "System.Memory")}
     }
-    graphs = []
-    current = work / "current"
     projects = [("platform", [current / f"src/Hoard.{name}/Hoard.{name}.csproj"
                              for name in ("Abstractions", "Core", "Hosting", "Application")])]
     projects += [(scan, [current / f"tests/fixtures/metadata/{name}/{name}.csproj"])
                  for scan, name in (("sqlite", "Sqlite"), ("memory", "Memory"), ("host-adapters", "HostAdapters"),
                                     ("consumer", "Consumer"), ("crash-runner", "CrashRunner"), ("boundary-leak", "BoundaryLeak"))]
+    return ownership, projects
+
+
+def compatibility_cases(root, work):
+    retained = json.loads((work / "retained-binaries.json").read_text())
+    runtime = work / "compatible-runtime"
+    shutil.copytree(work / "retained/bin/Release/net10.0", runtime)
+    for name in ("Abstractions", "Core", "Hosting", "Application"):
+        shutil.copy2(work / f"current/src/Hoard.{name}/bin/Release/net10.0/Hoard.{name}.dll", runtime)
+    if (sha256(runtime / "RetainedMarker.dll") != retained["binarySha256"]
+            or run("dotnet", str(runtime / "RetainedMarker.dll")).strip() != "metadata-marker-compatible"
+            or any(sha256(proof_file(work, path)) != digest for path, digest in retained["files"].items())):
+        raise RuntimeError("Frozen pre-F-05 metadata binary compatibility failed.")
+    current = work / "current"
+    ownership, projects = inspection_recipe(current)
+    graphs = []
     previous = os.environ.get("NUGET_PACKAGES")
     os.environ["NUGET_PACKAGES"] = str(work / "cache")
     try:

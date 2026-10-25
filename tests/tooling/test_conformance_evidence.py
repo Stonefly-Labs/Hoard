@@ -768,7 +768,7 @@ class ConformanceInputTests(unittest.TestCase):
         group_id = str(uuid.uuid4())
         package_versions = [{"packageId": "Hoard.Fixture", "version": "0.1.0"}]
         binding_sources = [{"path": "binding.json", "adapterId": "fixture.adapter"}]
-        def capture():
+        def capture(**options):
             return evidence.capture_profile_inputs(
                 run, self.repo, snapshot, profile_id="metadata", mode="diagnostic",
                 invocation_group_id=group_id,
@@ -778,7 +778,7 @@ class ConformanceInputTests(unittest.TestCase):
                 runtime_paths=["compiled/Hoard.Fixture.dll"],
                 binding_sources=binding_sources,
                 observed_environment=fixture["environment"], budgets=fixture["budgets"],
-                invocation=["profile", "metadata"])
+                invocation=["profile", "metadata"], **options)
         before = capture()
         self.assertEqual(before["catalogSha256"], hashlib.sha256(b"{}").hexdigest())
         self.assertEqual(before["runtimeAssemblies"]["compiled/Hoard.Fixture.dll"],
@@ -787,6 +787,25 @@ class ConformanceInputTests(unittest.TestCase):
         self.assertEqual(before["bindings"][0]["descriptorSha256"], hashlib.sha256(binding.read_bytes()).hexdigest())
         self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(before))
         self.assertEqual(evidence.verify_input_recomputation(before, capture()), evidence.digest(before))
+        identity = ("Hoard.Architecture.Tests.MetadataBoundaryTests."
+                    "Prepared_metadata_packages_and_negative_contracts_preserve_boundaries_and_binary_surface")
+        selected = {identity: {"/private/inspection/project.csproj": "a" * 64}}
+        with_inspection = capture(inspection_inputs=selected)
+        self.assertNotEqual(before["configurationSha256"], with_inspection["configurationSha256"])
+        self.assertEqual(before["runtimeAssemblies"], with_inspection["runtimeAssemblies"])
+        self.assertEqual(before["sourceManifest"], with_inspection["sourceManifest"])
+        self.assertNotIn(b"/private/inspection", evidence.canonical_bytes(with_inspection))
+        self.assertEqual(evidence.verify_input_recomputation(
+            with_inspection, capture(inspection_inputs=selected)), evidence.digest(with_inspection))
+        for changed in (
+                {identity: {"/private/inspection/project.csproj": "b" * 64}},
+                {identity: {"/private/inspection/other.csproj": "a" * 64}}):
+            with self.subTest(changed=changed), self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+                evidence.verify_input_recomputation(with_inspection, capture(inspection_inputs=changed))
+        for invalid in ({}, {"foreign": selected[identity]}, {identity: {}},
+                        {identity: {"../foreign": "a" * 64}}):
+            with self.subTest(invalid=invalid), self.assertRaises(evidence.ConformanceError):
+                capture(inspection_inputs=invalid)
         package_id = "Hoard.Fixtures.Metadata.Memory"
         with zipfile.ZipFile(feed / (package_id + ".0.1.0.nupkg"), "w") as archive:
             archive.writestr(package_id + ".nuspec", (

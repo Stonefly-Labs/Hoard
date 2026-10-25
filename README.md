@@ -1874,17 +1874,27 @@ requirements.
 The actual boundary inspectors now support optional bounded exact-read capture
 of selected JSON, project/nuspec XML, feature sources and PE bytes. Hash-only
 packets are written only after assertions complete and selected inputs reverify.
-Prepared graph parent/runtime admission remains unwired; these packets cannot
-qualify a category or invent a provider session.
+These packets cannot qualify a category or invent a provider session.
 The three literal-only metadata inspection facts now have a separately selected
 diagnostic scope in their actual architecture assembly. Its parent receipt
 joins exact current source packets to safely admitted runtime proofs and
-requires the frozen empty external-file assignment. Prepared graph inspection
-admission and qualifying category integration remain unfinished.
+requires the frozen empty external-file assignment.
 Prepared-graph plumbing now supports a bounded MSBuild metadata probe and an
 owned-child resolver that supplies actual assembly/assets paths to the existing
-graph constructor, without persisting raw tool output. Graph recipes, exact
-selected-file inventories and prepared-fact runtime admission are not yet wired.
+graph constructor, without persisting raw tool output. The predecessor graph
+recipes are reused without changing their default runners. The three prepared
+facts now have a separate diagnostic scope with exact independently selected
+file inventories, configuration-bound input fingerprints and execution-only
+capture. Parent admission joins their actual packets to current runtime proofs.
+The native diagnostic path prepares the missing locked projects without adding
+an Application package, selects the sealed family-specific predecessor images,
+and independently recollects inspected bytes for completion recomputation.
+Actual local execution and a fresh locked build replay pass all three facts;
+the replay uses the production dispatcher/parent and matches 367 metadata,
+336 artifact consumer-body and 376 full artifact input files. These are
+non-qualifying local observations, not native containment or complete historical
+compatibility/profile acceptance. Exact-head native admission and qualifying
+category integration remain unfinished.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

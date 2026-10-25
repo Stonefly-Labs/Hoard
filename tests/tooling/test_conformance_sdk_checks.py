@@ -162,6 +162,208 @@ class SdkDiagnosticTests(unittest.TestCase):
                                                    "expected": manifest["expected"][:-1]}, inspection_literals=True)
         self.assertEqual(len(commands), 2)
 
+    def test_prepared_inspection_receipts_bind_exact_file_assignments_to_current_configuration_and_runtime(self):
+        self.assertTrue(callable(getattr(checks, "original_inspection_prepared_proofs", None)),
+                        "Actual prepared source packets need configuration-bound independent parent admission.")
+        identities = tuple(identity for identity in checks.ORIGINAL_INSPECTION_WITNESSES
+                           if identity not in checks.ORIGINAL_INSPECTION_LITERAL_WITNESSES)
+        for name in ("stores", "proofs", "feed", "feed/candidate"):
+            (self.directory / name).mkdir()
+        config = self.directory / "stores/candidate.NuGet.Config"
+        config.write_bytes(checks.evidence.synthetic_nuget_configuration(self.directory / "feed/candidate"))
+        selected = {identity: {str(self.directory / ("input-" + str(index) + ".xml")): str(index + 1) * 64}
+                    for index, identity in enumerate(identities)}
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()), "mode": "diagnostic",
+            "configurationSha256": checks.evidence.configuration_fingerprint(
+                checks.evidence.verify_synthetic_source_mapping(
+                    self.directory, "stores/candidate.NuGet.Config", "feed/candidate"),
+                inspection_inputs=selected)}
+        manifest = {**inputs, "attemptId": str(uuid.uuid4()), "inputSha256": checks.evidence.digest(inputs),
+                    "expected": [{"testIdentity": identity} for identity in identities]}
+        witnesses = [{
+            "testIdentity": identity, "executionId": str(uuid.uuid4()), "proofSha256": str(index + 1) * 64,
+            "status": "Passed", "bindingId": "none"} for index, identity in enumerate(identities)]
+        ingested = {"diagnosticCode": "None", "attemptId": manifest["attemptId"], "witnesses": witnesses,
+                    "proofs": {f'proof-{row["executionId"]}.json': row["proofSha256"] for row in witnesses}}
+        capture = self.directory / "stores" / ("original-inspection-" + manifest["attemptId"])
+        capture.mkdir()
+        packets = {}
+        for identity in identities:
+            path = capture / ("inspection-" + hashlib.sha256(identity.encode()).hexdigest() + ".json")
+            packets[path] = checks.evidence.canonical_bytes({
+                "schemaVersion": 1, "qualification": False, "runId": inputs["runId"], "attemptId": manifest["attemptId"],
+                "testIdentity": identity, "inputsSha256": checks.evidence.digest(inputs),
+                "files": {hashlib.sha256(name.encode()).hexdigest(): hashed for name, hashed in selected[identity].items()}})
+            path.write_bytes(packets[path])
+        run = SimpleNamespace(root=self.directory)
+        result = checks.original_inspection_prepared_proofs(run, inputs, manifest, ingested, selected)
+        receipt = self.directory / ("proofs/original-inspection-prepared-" + manifest["attemptId"] + ".json")
+        self.assertEqual(result["sourceExecutions"], 3)
+        self.assertEqual(result["inspectionProofsSha256"], checks.evidence.file_sha256(receipt))
+        receipt.unlink()
+        selected_packet = next(iter(packets))
+        for files in ({}, {"f" * 64: "e" * 64},
+                      {next(iter(json.loads(packets[selected_packet])["files"])): "f" * 64}):
+            selected_packet.write_bytes(checks.evidence.canonical_bytes(
+                checks.evidence.load_json(packets[selected_packet]) | {"files": files}))
+            with self.subTest(files=files), self.assertRaises(checks.evidence.ConformanceError):
+                checks.original_inspection_prepared_proofs(run, inputs, manifest, ingested, selected)
+            self.assertFalse(receipt.exists())
+        selected_packet.write_bytes(packets[selected_packet])
+        changed = {identity: dict(files) for identity, files in selected.items()}
+        changed[identities[0]][next(iter(changed[identities[0]]))] = "f" * 64
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+            checks.original_inspection_prepared_proofs(run, inputs, manifest, ingested, changed)
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.original_inspection_prepared_proofs(run, inputs, manifest, ingested, {})
+        self.assertFalse(receipt.exists())
+
+    def test_prepared_inspection_runtime_allocates_exact_execution_context_without_discovery_capture(self):
+        (self.directory / "stores").mkdir()
+        (self.directory / "runtime-owner.json").write_bytes(b"{}")
+        identities = tuple(identity for identity in checks.ORIGINAL_INSPECTION_WITNESSES
+                           if identity not in checks.ORIGINAL_INSPECTION_LITERAL_WITNESSES)
+        configurations = {family: self.directory / (family + ".json") for family in ("metadata", "artifacts")}
+        for path in configurations.values():
+            path.write_bytes(b"{}")
+        cases = {}
+        for identity in identities:
+            path = configurations["metadata" if ".MetadataBoundaryTests." in identity else "artifacts"]
+            cases[identity] = {str(path): checks.evidence.file_sha256(path)}
+        commands = []
+        def execute(arguments, **options):
+            commands.append(arguments)
+            return SimpleNamespace(exit_code=0)
+        run = SimpleNamespace(root=self.directory, command=execute)
+        assembly = self.directory / "Hoard.Architecture.Tests.dll"
+        for purpose in ("discovery", "execution"):
+            manifest = {
+                "runId": str(uuid.uuid4()), "attemptId": str(uuid.uuid4()), "purpose": purpose,
+                "inputSha256": "a" * 64,
+                "expected": [{"testIdentity": identity, "fullyQualifiedName": identity} for identity in identities]}
+            checks.runtime_command(run, assembly, manifest,
+                                   inspection_cases=cases, inspection_configurations=configurations)
+            context = self.directory / "stores" / ("inspection-context-" + manifest["attemptId"] + ".json")
+            settings = ET.parse(self.directory / "stores" / ("settings-" + manifest["attemptId"] + ".runsettings"))
+            if purpose == "discovery":
+                self.assertFalse(context.exists())
+                self.assertIsNone(settings.find("./RunConfiguration/EnvironmentVariables"))
+            else:
+                self.assertEqual(json.loads(context.read_bytes())["cases"], cases)
+                for family, variable in (("metadata", "HOARD_METADATA_BOUNDARIES"), ("artifacts", "HOARD_ARTIFACT_BOUNDARIES")):
+                    self.assertEqual(settings.findtext("./RunConfiguration/EnvironmentVariables/" + variable),
+                                     str(configurations[family]))
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.runtime_command(run, assembly, {**manifest, "attemptId": str(uuid.uuid4())},
+                                   inspection_cases=cases, inspection_configurations=configurations, inspection_literals=True)
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.runtime_command(run, assembly, {**manifest, "attemptId": str(uuid.uuid4())},
+                                   inspection_cases=cases, inspection_configurations={"metadata": configurations["metadata"]})
+        self.assertEqual(len(commands), 2)
+
+    def test_prepared_inspection_dispatch_checks_input_fingerprint_before_selecting_the_real_assembly(self):
+        scenario, = checks.original_inspection_prepared_scenarios()
+        candidate = self.directory / "current"
+        assembly = candidate / checks.ARCHITECTURE_TESTS / "bin/Release/net10.0/Hoard.Architecture.Tests.dll"
+        (self.directory / "stores").mkdir()
+        (self.directory / "feed/candidate").mkdir(parents=True)
+        (self.directory / "stores/candidate.NuGet.Config").write_bytes(
+            checks.evidence.synthetic_nuget_configuration(self.directory / "feed/candidate"))
+        selected = {identity: {str(self.directory / "input.xml"): "a" * 64} for identity in scenario[1]}
+        configurations = {category: self.directory / (category + ".json") for category in ("metadata", "artifacts")}
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()), "mode": "diagnostic",
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "b" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "c" * 64}],
+            "configurationSha256": checks.evidence.configuration_fingerprint(
+                checks.evidence.verify_synthetic_source_mapping(
+                    self.directory, "stores/candidate.NuGet.Config", "feed/candidate"), inspection_inputs=selected)}
+        run = SimpleNamespace(root=self.directory)
+        options = {"inspection_cases": selected, "inspection_configurations": configurations}
+        with patch.object(checks, "runtime_command", side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(run, inputs, candidate, scenario, **options)
+        self.assertEqual(launch.call_args.args[1], assembly)
+        self.assertEqual(launch.call_args.kwargs, options)
+        with patch.object(checks, "runtime_command") as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                checks.test_attempt(run, {**inputs, "configurationSha256": "d" * 64}, candidate, scenario, **options)
+        launch.assert_not_called()
+
+    def test_prepared_inspection_configuration_uses_the_sealed_family_image_and_rejects_changed_bytes(self):
+        candidate = self.directory / "current"
+        relative = "src/Hoard.Abstractions/bin/Release/net10.0/Hoard.Abstractions.dll"
+        current = candidate / relative
+        current.parent.mkdir(parents=True)
+        current.write_bytes(b"current")
+        entries = []
+        for family in ("metadata", "artifact"):
+            image = self.directory / "stores" / (family + "-marker") / relative
+            image.parent.mkdir(parents=True)
+            image.write_bytes(family.encode())
+            entries.append({"id": family + "-marker", "binaries": {relative: checks.evidence.file_sha256(image)}})
+        run = SimpleNamespace(root=self.directory)
+        with patch.object(checks.baselines, "verify_prepared_baselines", return_value={"entries": entries}) as verify, \
+                patch.object(checks, "prepared_inspection_graphs", return_value=[]) as graphs:
+            configurations = checks.prepare_inspection_configurations(run, candidate, "a" * 64)
+        verify.assert_called_once_with(self.directory, "a" * 64)
+        self.assertEqual(graphs.call_count, 2)
+        for category, marker in (("metadata", "metadata"), ("artifacts", "artifact")):
+            value = checks.evidence.load_json(configurations[category].read_bytes())
+            self.assertEqual(value["baselineAbstractions"],
+                             str(self.directory / "stores" / (marker + "-marker") / relative))
+            self.assertEqual(value["currentAbstractions"], str(current))
+        (self.directory / "stores/metadata-marker" / relative).write_bytes(b"changed")
+        with patch.object(checks.baselines, "verify_prepared_baselines", return_value={"entries": entries}), \
+                patch.object(checks, "prepared_inspection_graphs"):
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                checks.prepare_inspection_configurations(run, candidate, "a" * 64)
+
+    def test_inspection_reference_roots_come_from_the_resolved_tool_not_graph_supplied_labels(self):
+        installed = self.directory / "dotnet"
+        installed.mkdir()
+        binary = installed / "dotnet"
+        binary.touch()
+        expected = {name: installed / "packs" / (name + ".Ref")
+                    for name in ("Microsoft.NETCore.App", "Microsoft.AspNetCore.App")}
+        for root in expected.values():
+            root.mkdir(parents=True)
+        with patch.object(checks.shutil, "which", return_value=str(binary)):
+            self.assertEqual(checks.inspection_reference_roots(), expected)
+            next(iter(expected.values())).rmdir()
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "PrerequisiteMissing"):
+                checks.inspection_reference_roots()
+        with patch.object(checks.shutil, "which", return_value=None):
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "PrerequisiteMissing"):
+                checks.inspection_reference_roots()
+
+    def test_missing_inspection_projects_use_locked_builds_without_extending_the_package_feed(self):
+        (self.directory / "proofs").mkdir()
+        candidate = self.directory / "current"
+        feed, config = self.directory / "feed", self.directory / "candidate.NuGet.Config"
+        receipts = []
+        def prepare(project, selected, archives, feed_id):
+            self.assertEqual((selected, archives, feed_id), (candidate, feed, "candidate"))
+            receipt = {"project": project.relative_to(candidate).as_posix()}
+            receipts.append(receipt)
+            return project.parent / "obj/selected.packages.lock.json", receipt
+        with patch.object(checks, "prepare_project_lock", side_effect=prepare), \
+                patch.object(checks, "build") as build, patch.object(checks, "verify_project_lock") as verify:
+            observed = checks.build_inspection_projects(SimpleNamespace(root=self.directory), candidate, config, feed)
+        self.assertEqual(observed, tuple(receipts))
+        self.assertEqual({row["project"] for row in observed}, {
+            "src/Hoard.Application/Hoard.Application.csproj",
+            *(f"tests/fixtures/{family}/{name}/{name}.csproj"
+              for family in ("metadata", "artifacts") for name in ("Consumer", "BoundaryLeak"))})
+        for call in build.call_args_list:
+            self.assertEqual(call.kwargs, {"lock": call.args[1].parent / "obj/selected.packages.lock.json"})
+            self.assertEqual(call.args[2], config)
+        self.assertEqual(verify.call_count, len(observed))
+        self.assertEqual({json.loads(path.read_bytes())["project"] for path in
+                          (self.directory / "proofs").glob("inspection-*-lock-derivation.json")},
+                         {row["project"] for row in observed})
+
     def test_inspection_graph_uses_explicit_resolved_outputs_without_legacy_raw_execution(self):
         import foundation_evidence as foundation
         parent = self.directory / "Parent.csproj"
@@ -288,6 +490,167 @@ class SdkDiagnosticTests(unittest.TestCase):
             with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
                 checks.probe_inspection_project(project, output)
         self.assertFalse(output.exists())
+
+    def test_prepared_graphs_reuse_original_recipes_and_resolve_each_actual_project_once(self):
+        self.assertTrue(callable(getattr(checks, "prepared_inspection_graphs", None)),
+                        "Prepared metadata/artifact graphs need the original recipes without raw orchestration.")
+        import artifact_evidence as artifacts
+        import foundation_evidence as foundation
+        import metadata_evidence as metadata
+        candidate = self.directory / "current"
+        for name, dependency in (("Abstractions", None), ("Core", "Abstractions"),
+                                 ("Hosting", "Core"), ("Application", "Hosting")):
+            project = candidate / f"src/Hoard.{name}/Hoard.{name}.csproj"
+            project.parent.mkdir(parents=True)
+            project.write_text("<Project/>" if dependency is None else
+                               f'<Project><ItemGroup><ProjectReference Include="../Hoard.{dependency}/Hoard.{dependency}.csproj"/>'
+                               "</ItemGroup></Project>")
+        for family, names in (
+                ("metadata", ("Sqlite", "Memory", "HostAdapters", "Consumer", "CrashRunner", "BoundaryLeak")),
+                ("artifacts", ("Local", "ObjectSemantics", "HostAdapters", "Consumer", "CrashRunner",
+                               "TransferRunner", "BoundaryLeak"))):
+            for name in names:
+                project = candidate / f"tests/fixtures/{family}/{name}/{name}.csproj"
+                project.parent.mkdir(parents=True)
+                project.write_text("<Project/>")
+        calls = []
+        def resolve(run, project):
+            calls.append(project)
+            return {"Properties": {
+                "TargetPath": str(project.parent / (project.stem + ".Actual.dll")),
+                "ProjectAssetsFile": str(project.parent / "obj/actual.assets.json")},
+                "Items": {"ReferencePath": [{"Identity": str(self.directory / "Reference.dll")}], "Compile": []}}
+        with (patch.object(checks, "resolve_inspection_project", side_effect=resolve),
+              patch.object(foundation, "run", side_effect=AssertionError("Raw predecessor runner must not execute.")),
+              patch.object(metadata, "compatibility_cases", side_effect=AssertionError("Full legacy orchestration must not execute.")),
+              patch.object(artifacts, "package_checks", side_effect=AssertionError("Full legacy orchestration must not execute."))):
+            for family, expected in (
+                    ("metadata", {"platform", "sqlite", "memory", "host-adapters", "consumer", "crash-runner", "boundary-leak"}),
+                    ("artifacts", {"platform", "local", "object", "host-adapters", "consumer", "crash-runner",
+                                   "transfer-runner", "boundary-leak"})):
+                calls.clear()
+                graphs = checks.prepared_inspection_graphs(SimpleNamespace(root=self.directory), candidate, family)
+                self.assertEqual({graph["scanId"] for graph in graphs}, expected)
+                projects = {Path(row["project"]) for graph in graphs for row in graph["projects"]}
+                self.assertEqual(set(calls), projects)
+                self.assertEqual(len(calls), len(projects))
+                for graph in graphs:
+                    for row in graph["projects"]:
+                        self.assertEqual(row["assembly"], str(Path(row["project"]).parent / (row["id"] + ".Actual.dll")))
+                        self.assertEqual(row["assets"], str(Path(row["project"]).parent / "obj/actual.assets.json"))
+                self.assertEqual({row["id"] for row in next(graph for graph in graphs
+                                                          if graph["scanId"] == "platform")["projects"]},
+                                 {"Hoard.Abstractions", "Hoard.Core", "Hoard.Hosting", "Hoard.Application"})
+            with self.assertRaises(checks.evidence.ConformanceError):
+                checks.prepared_inspection_graphs(SimpleNamespace(root=self.directory), candidate, "unknown")
+
+    def test_prepared_file_selection_matches_full_and_consumer_only_actual_read_sets(self):
+        self.assertTrue(callable(getattr(checks, "inspection_file_inputs", None)),
+                        "Source contexts require an independent exact input selection, not all graph files.")
+        projects = {}
+        graphs = []
+        for scan in ("platform", "local", "object", "host-adapters", "consumer", "crash-runner",
+                     "transfer-runner", "boundary-leak"):
+            folder = self.directory / scan
+            folder.mkdir()
+            files = {}
+            for name in ("project.csproj", "assembly.dll", "Reference.dll", "Features/Read/Feature.cs", "Ignored.cs"):
+                path = folder / name
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(name)
+                files[name] = path
+            cache = self.directory / "packages" / scan
+            cache.mkdir(parents=True)
+            nuspec = cache / "package.nuspec"
+            nuspec.write_text("<package/>")
+            assets = folder / "assets.json"
+            assets.write_bytes(checks.evidence.canonical_bytes({
+                "targets": {"net10.0": {scan + "/1.0.0": {}}},
+                "libraries": {scan + "/1.0.0": {"type": "package", "path": scan}},
+                "packageFolders": {str(self.directory / "packages") + "/": {}}}))
+            row = {"id": scan, "project": str(files["project.csproj"]), "assembly": str(files["assembly.dll"]),
+                   "assets": str(assets), "references": [{"Identity": str(files["Reference.dll"])}],
+                   "sources": [str(files["Features/Read/Feature.cs"]), str(files["Ignored.cs"])]}
+            graphs.append({"scanId": scan, "projects": [row], "ownership": {}})
+            projects[scan] = {**files, "assets.json": assets, "nuspec": nuspec}
+        baseline, current = self.directory / "old.dll", self.directory / "new.dll"
+        baseline.write_bytes(b"old")
+        current.write_bytes(b"new")
+        configuration = self.directory / "artifacts.json"
+        configuration.write_bytes(checks.evidence.canonical_bytes({
+            "graphs": graphs, "baselineAbstractions": str(baseline), "currentAbstractions": str(current)}))
+        prefix = "Hoard.Architecture.Tests.ArtifactBoundaryTests."
+        full = prefix + "Prepared_artifact_packages_preserve_independence_and_existing_public_members"
+        consumer = prefix + "Prepared_artifact_consumer_bodies_are_provider_neutral_and_object_mechanisms_do_not_rename"
+        all_files = checks.inspection_file_inputs(self.directory, configuration, full, reference_roots={})
+        expected = {str(configuration), str(baseline), str(current)}
+        expected.update(str(path) for files in projects.values() for name, path in files.items() if name != "Ignored.cs")
+        self.assertEqual(set(all_files), expected)
+        for path, hashed in all_files.items():
+            self.assertEqual(hashed, checks.evidence.file_sha256(Path(path)))
+        selected = checks.inspection_file_inputs(self.directory, configuration, consumer, reference_roots={})
+        expected = {str(configuration)}
+        for scan in ("consumer", "boundary-leak", "local", "object"):
+            expected.update(str(path) for name, path in projects[scan].items()
+                            if name != "Ignored.cs" and (scan == "boundary-leak" or name not in ("project.csproj", "nuspec")))
+        self.assertEqual(set(selected), expected)
+        with self.assertRaises(TypeError):
+            selected["foreign"] = "f" * 64
+        projects["consumer"]["project.csproj"].unlink()
+        self.assertEqual(checks.inspection_file_inputs(
+            self.directory, configuration, consumer, reference_roots={}), selected)
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.inspection_file_inputs(self.directory, configuration, full, reference_roots={})
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.inspection_file_inputs(self.directory, configuration, "foreign", reference_roots={})
+
+    def test_prepared_file_selection_accepts_only_explicit_matching_sdk_reference_roots_and_bounds(self):
+        self.assertTrue(callable(getattr(checks, "inspection_file_inputs", None)),
+                        "External PE inputs require an independently trusted framework root, not arbitrary paths.")
+        for name, data in (("project.csproj", b"<Project/>"), ("assembly.dll", b"assembly"),
+                           ("assets.json", b'{"targets":{"net10.0":{}}}')):
+            (self.directory / name).write_bytes(data)
+        configuration = self.directory / "artifacts.json"
+        identity = ("Hoard.Architecture.Tests.ArtifactBoundaryTests."
+                    "Prepared_artifact_consumer_bodies_are_provider_neutral_and_object_mechanisms_do_not_rename")
+        with tempfile.TemporaryDirectory(dir=ROOT / ".foundation", prefix="sdk-reference-") as temporary:
+            framework = "Microsoft.NETCore.App"
+            trusted = Path(temporary) / (framework + ".Ref")
+            reference = trusted / "10.0.7/ref/net10.0/Reference.dll"
+            reference.parent.mkdir(parents=True)
+            reference.write_bytes(b"reference")
+            row = {
+                "id": "source", "project": str(self.directory / "project.csproj"),
+                "assembly": str(self.directory / "assembly.dll"), "assets": str(self.directory / "assets.json"),
+                "sources": [], "references": [{"Identity": str(reference),
+                    "FrameworkReferenceName": framework, "NuGetPackageId": framework + ".Ref"}]}
+            def configure(selected=row):
+                configuration.write_bytes(checks.evidence.canonical_bytes({
+                    "graphs": [{"scanId": scan, "projects": [selected], "ownership": {}}
+                               for scan in ("platform", "local", "object", "host-adapters", "consumer",
+                                            "crash-runner", "transfer-runner", "boundary-leak")],
+                    "baselineAbstractions": "unused", "currentAbstractions": "unused"}))
+            configure()
+            files = checks.inspection_file_inputs(
+                self.directory, configuration, identity, reference_roots={framework: trusted})
+            self.assertEqual(files[str(reference)], hashlib.sha256(b"reference").hexdigest())
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "OwnershipInvalid"):
+                checks.inspection_file_inputs(self.directory, configuration, identity, reference_roots={})
+            for mutation in (
+                    {"NuGetPackageId": "Provider.Pretending.Framework"},
+                    {"FrameworkReferenceName": "Microsoft.AspNetCore.App"},
+                    {"Identity": str(Path(temporary) / "foreign.dll")}):
+                configure({**row, "references": [{**row["references"][0], **mutation}]})
+                with self.subTest(mutation=mutation), self.assertRaisesRegex(
+                        checks.evidence.ConformanceError, "OwnershipInvalid"):
+                    checks.inspection_file_inputs(
+                        self.directory, configuration, identity, reference_roots={framework: trusted})
+            configure()
+            with reference.open("wb") as destination:
+                destination.truncate(65 * 1024 * 1024)
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "OutputLimitExceeded"):
+                checks.inspection_file_inputs(
+                    self.directory, configuration, identity, reference_roots={framework: trusted})
 
     @staticmethod
     def original_crash_fixture(barrier):
@@ -3294,9 +3657,9 @@ class SdkDiagnosticTests(unittest.TestCase):
             "pragmas": {"journalMode": "none", "synchronous": 0, "foreignKeys": 0, "busyTimeout": 0},
         }
         identity = checks.evidence.source_identity(repository)
-        def capture(group_id=None):
+        def capture(group_id=None, inspection_inputs=None):
             return checks.make_inputs(run, repository, candidate, sources,
-                                      environment, identity, None, group_id=group_id)
+                                      environment, identity, None, group_id=group_id, inspection_inputs=inspection_inputs)
         unconsumed = runtime / "unused-native-build.a"
         with unconsumed.open("wb") as output:
             output.truncate(checks.evidence.MAX_PROOF_BYTES + 1)
@@ -3320,6 +3683,20 @@ class SdkDiagnosticTests(unittest.TestCase):
         foreign_native.unlink()
         self.assertEqual(len(before["packages"]), 15)
         self.assertNotIn(str(self.directory).encode(), checks.evidence.canonical_bytes(before))
+        inspection = self.directory / "stores/inspection.xml"
+        inspection.write_bytes(b"selected before execution")
+        def selected():
+            return {checks.original_inspection_prepared_scenarios()[0][1][0]:
+                    {str(inspection): checks.evidence.file_sha256(inspection)}}
+        inspected = capture(before["invocationGroupId"], selected())
+        self.assertEqual(inspected["sourceManifest"], before["sourceManifest"])
+        self.assertEqual(inspected["runtimeAssemblies"], before["runtimeAssemblies"])
+        self.assertNotEqual(inspected["configurationSha256"], before["configurationSha256"])
+        self.assertNotIn(str(inspection).encode(), checks.evidence.canonical_bytes(inspected))
+        inspection.write_bytes(b"changed after execution")
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+            checks.evidence.verify_input_recomputation(
+                inspected, capture(before["invocationGroupId"], selected()))
         for path in (native, wrapped, artifact_wrapped, artifact_consumer,
                      runtime / "Added.dll", runtime / "Tests.runtimeconfig.json",
                      candidate / "added.packages.lock.json"):

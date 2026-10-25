@@ -815,10 +815,36 @@ def _binding_source(value):
     return _record(fields)(value)
 
 
+def configuration_fingerprint(source_mapping, *, inspection_inputs=None):
+    policy = {
+        "revision": CATALOG_REVISION, "stores": "fresh-owned-synthetic", "sources": source_mapping,
+        "restore": "locked", "runtimeLogger": "HoardSafe", "consoleLogger": False}
+    if inspection_inputs is not None:
+        from conformance_case_catalog import ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES
+        expected = set(ORIGINAL_INSPECTION_WITNESSES) - set(ORIGINAL_INSPECTION_LITERAL_WITNESSES)
+        if (not isinstance(inspection_inputs, (dict, MappingProxyType)) or not inspection_inputs
+                or set(inspection_inputs) - expected):
+            _invalid()
+        selected = {}
+        for identity, files in inspection_inputs.items():
+            if not isinstance(files, (dict, MappingProxyType)) or not 0 < len(files) <= 2048:
+                _invalid()
+            assignments = {}
+            for path, hashed in files.items():
+                if (not isinstance(path, str) or not 0 < len(path.encode("utf-8")) <= 4096
+                        or not Path(path).is_absolute() or os.path.normpath(path) != path
+                        or any(ord(character) < 32 or ord(character) == 127 for character in path)):
+                    _invalid()
+                assignments[hashlib.sha256(path.encode("utf-8")).hexdigest()] = sha256(hashed)
+            selected[identity] = assignments
+        policy["inspectionInputs"] = selected
+    return digest(policy)
+
+
 def capture_profile_inputs(run, repository, snapshot, *, profile_id, mode, invocation_group_id,
                            package_versions, feed, configuration, lock_paths, runtime_paths,
                            binding_sources, observed_environment, budgets, invocation,
-                           baseline_sha256=None, ci_revision=None):
+                           baseline_sha256=None, ci_revision=None, inspection_inputs=None):
     from conformance_case_catalog import CATEGORY_BINDING_SLOTS
     run._check_ledger()
     profile_id, mode = _one_of(*PROFILES)(profile_id), _one_of(
@@ -870,9 +896,7 @@ def capture_profile_inputs(run, repository, snapshot, *, profile_id, mode, invoc
         "sourceManifest": sources, "sourceManifestSha256": digest(sources),
         "packages": packages, "locks": input_manifest(run.root, lock_paths),
         "runtimeAssemblies": input_manifest(run.root, runtime_paths),
-        "configurationSha256": digest({
-            "revision": CATALOG_REVISION, "stores": "fresh-owned-synthetic", "sources": source_mapping,
-            "restore": "locked", "runtimeLogger": "HoardSafe", "consoleLogger": False}),
+        "configurationSha256": configuration_fingerprint(source_mapping, inspection_inputs=inspection_inputs),
         "capabilitySha256": digest({binding["bindingId"]: binding["capabilitySha256"] for binding in bindings}),
         "bindings": bindings, "baselines": baseline_inputs,
         "environment": observed_environment, "environmentSha256": digest(observed_environment),

@@ -660,17 +660,7 @@ def consumer_journeys(work):
     return journeys
 
 
-def package_checks(root, work):
-    retained = json.loads((work / "retained-binaries.json").read_text())
-    runtime = work / "compatible-runtime"
-    shutil.copytree(work / "retained/bin/Release/net10.0", runtime)
-    current = work / "current"
-    for name in ("Abstractions", "Core", "Hosting", "Application"):
-        shutil.copy2(current / f"src/Hoard.{name}/bin/Release/net10.0/Hoard.{name}.dll", runtime)
-    if (sha256(runtime / "RetainedMarker.dll") != retained["binarySha256"]
-            or run("dotnet", str(runtime / "RetainedMarker.dll")).strip() != "artifact-marker-compatible"
-            or any(sha256(proof_file(work, path)) != digest for path, digest in retained["files"].items())):
-        raise RuntimeError("Frozen pre-F-06 artifact binary compatibility failed.")
+def inspection_recipe(current):
     ownership = {
         **{f"Hoard.{name}": name for name in ("Abstractions", "Core", "Hosting", "Application")},
         "NuGet.Versioning": "Versioning", "Microsoft.Extensions.DependencyInjection.Abstractions": "Di",
@@ -691,6 +681,21 @@ def package_checks(root, work):
                                     ("host-adapters", "HostAdapters"), ("consumer", "Consumer"),
                                     ("crash-runner", "CrashRunner"), ("transfer-runner", "TransferRunner"),
                                     ("boundary-leak", "BoundaryLeak"))]
+    return ownership, projects
+
+
+def package_checks(root, work):
+    retained = json.loads((work / "retained-binaries.json").read_text())
+    runtime = work / "compatible-runtime"
+    shutil.copytree(work / "retained/bin/Release/net10.0", runtime)
+    current = work / "current"
+    for name in ("Abstractions", "Core", "Hosting", "Application"):
+        shutil.copy2(current / f"src/Hoard.{name}/bin/Release/net10.0/Hoard.{name}.dll", runtime)
+    if (sha256(runtime / "RetainedMarker.dll") != retained["binarySha256"]
+            or run("dotnet", str(runtime / "RetainedMarker.dll")).strip() != "artifact-marker-compatible"
+            or any(sha256(proof_file(work, path)) != digest for path, digest in retained["files"].items())):
+        raise RuntimeError("Frozen pre-F-06 artifact binary compatibility failed.")
+    ownership, projects = inspection_recipe(current)
     graphs = []
     previous = os.environ.get("NUGET_PACKAGES")
     os.environ["NUGET_PACKAGES"] = str(work / "cache")

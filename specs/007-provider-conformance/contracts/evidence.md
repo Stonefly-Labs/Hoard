@@ -137,8 +137,37 @@ deadline inside the 120-second owning command. Parent admission requires the
 exact current project/hash and projected schema; foreign/symlinked projects,
 changed inputs, extra/stale response fields and outputs outside the owned root
 reject. The existing graph constructor accepts this resolver without invoking
-its predecessor raw runner. These plumbing APIs do not yet assemble prepared
-graphs, select their exact file inventories or admit prepared facts.
+its predecessor raw runner. Pure predecessor recipes retain their original
+ownership and seven metadata/eight artifact scans; actual project resolution
+is cached per distinct project within each category.
+
+The separate prepared-inspection diagnostic scope selects all three frozen
+prepared facts. Its independent file selector follows the actual full versus
+consumer-body read sets, including the appropriate configuration, assets,
+project/reference PE images, feature sources, project XML and package nuspecs.
+Full inspections additionally select the exact sealed metadata-marker or
+artifact-marker Abstractions image and current Abstractions image.
+Ordinary files must remain in the owned root with no symlinks. External PE
+references are restricted to the corresponding framework reference packs under
+the independently resolved dotnet installation, with matching framework/package
+metadata and the actual .NET 10 reference layout. Graph labels cannot establish
+these trusted roots. Missing/foreign/oversized inputs reject, never shorten a
+successful selection.
+
+Selected immutable path/content assignments extend the synthetic configuration
+policy fingerprint using opaque path IDs. No path or file body enters public
+RunInputs, and these files are not mislabeled as runtime assemblies or source
+inputs. Discovery allocates no capture context. Execution binds exact current
+run/attempt/input assignments and the selected files; parent admission requires
+all and only the matching source packets joined to admitted runtime proofs.
+A separate non-qualifying hash-only receipt preserves those correspondences.
+The native diagnostic candidate explicitly builds missing Application/consumer/
+negative projects with locked preparation but does not pack Application or
+extend the existing package inventory. It verifies the family-specific sealed
+images before execution and independently selects/hashes files again for both
+input documents' completion recomputation. This path does not establish full
+historical compatibility, native containment on unsupported hosts, or qualifying
+category admission; the non-session qualification gate remains closed.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private
