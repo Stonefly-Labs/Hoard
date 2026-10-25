@@ -8852,9 +8852,24 @@ successful exit/settlement, finite timing and five-minute recovery bound, not
 just a successful event. Wrong-seed/readback regressions first reproduced
 acceptance before repair. Both namespaces, wrong-profile/mode/traversal rejection
 and unchanged failure handling pass all 380 tooling checks (363 passed/seventeen
-native macOS skips), frozen inventory/catalog and patch checks. New native
-execution and control import remain pending; no missing obligation is marked
+native macOS skips), frozen inventory/catalog and patch checks. Exact native
+run 40192845240 at `fffaf6f` passes 272 foundations without skips and the
+13-lock/18-package replay, but SDK diagnostics end `EvidenceIncomplete` after
+entering metadata batching. It is not admitted; phase progression alone is
+not a control receipt or root-cause diagnosis. No missing obligation is marked
 passed and no qualification gate changes.
+
+Unexpected runtime results now retain bounded closed diagnostic context instead
+of losing everything behind `EvidenceIncomplete`: observed code/exit, witness
+state counts, mismatch count and at most four exact identity hashes. Full
+runtime evidence remains unchanged; this truncates diagnostic context only,
+never a passing inventory. Native category errors distinguish the current
+catalog scope from joint admission. No raw identity, assertion message, private
+path or output is printed. The missing-context regression first fails before
+repair; safe projection and both batch failure phases pass all 381 tooling
+checks (364 passed/seventeen native macOS skips), inventory/catalog and patch
+checks. This enables diagnosis of the pending native failure, not a claimed
+repair or qualifying result.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

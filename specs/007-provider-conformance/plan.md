@@ -6028,6 +6028,19 @@ has not yet been independently observed natively or imported as completed
 category controls. All affected task/checklist markers and qualification gates
 remain unchanged.
 
+Native run 40192845240 at `fffaf6f` passes 272 foundations without skips and
+13-lock/18-package replay, then SDK execution ends `EvidenceIncomplete` after
+entering metadata batching. Neither that run nor its controls are admitted.
+Phase progression does not diagnose the failed scope or establish a producer
+receipt. Unexpected-runtime errors now retain only observed closed code/exit,
+state/mismatch counts and at most four identity hashes; native category errors
+separate scope execution from joint admission. No raw failure text/private
+identity is exposed, and original evidence/admission checks remain unchanged.
+The missing-context regression first fails, then bounded projection and both
+failure paths pass all 381 tooling checks (364 passed/seventeen native macOS
+skips), frozen inventory/catalog and patch checks. Root-cause repair and native
+admission remain outstanding.
+
 
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately

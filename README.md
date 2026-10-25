@@ -1964,6 +1964,10 @@ control and all ten recovery barriers plus walkthrough under its own captured
 inputs, with fresh category stores/cache/proofs. Legacy harness receipts are
 not relabeled. Seed/readback command records are independently checked too;
 these controls remain non-qualifying until category admission is implemented.
+Their first native run (`40192845240` at `fffaf6f`) reached metadata batching
+but ended `EvidenceIncomplete`; it is not admitted. Native category failures
+now distinguish scope execution from joint admission and retain only closed
+codes/counts and up to four mismatched test-identity hashes, never raw messages.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

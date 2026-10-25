@@ -2892,12 +2892,21 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
                 run_inputs_path=f"proofs/category-{profile}-run-inputs.json", **options)
             transports[scope_id], scopes[scope_id] = observed["transport"], observed["summary"]
     except evidence.ConformanceError as error:
+        if isinstance(run, OwnedRun):
+            print(json.dumps({
+                "qualification": False, "phase": "category-scope-failure",
+                "profileId": profile, "scopeId": scope_id, "code": str(error),
+                **(error.runtime_diagnostic if isinstance(error, _RuntimeObservationError) else {})}), flush=True)
         history.interrupt_joint(str(error))
         _category_record(run, inputs, history, scopes, str(error))
         raise
     try:
         history.finish_joint(transports=transports)
     except evidence.ConformanceError as error:
+        if isinstance(run, OwnedRun):
+            print(json.dumps({
+                "qualification": False, "phase": "category-admission-failure",
+                "profileId": profile, "scopeCount": len(plan), "code": str(error)}), flush=True)
         _category_record(run, inputs, history, scopes, str(error))
         raise
     return _category_record(run, inputs, history, scopes)
@@ -3286,6 +3295,20 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
     }
 
 
+class _RuntimeObservationError(evidence.ConformanceError):
+    def __init__(self, ingested, result, expected_status):
+        super().__init__("EvidenceIncomplete")
+        mismatched = [hashlib.sha256(row["testIdentity"].encode()).hexdigest()
+                      for row in ingested["witnesses"] if row["status"] != expected_status]
+        self.runtime_diagnostic = {
+            "observedCode": str(evidence.ConformanceError(ingested["diagnosticCode"])),
+            "observedExit": result.exit_code,
+            "witnessStates": {
+                state: sum(row["status"] == state for row in ingested["witnesses"])
+                for state in ("Passed", "Failed", "Incomplete")},
+            "mismatchCount": len(mismatched), "mismatchedTestsSha256": sorted(mismatched)[:4]}
+
+
 def validate_observation(ingested, result, identities, code, status, exit_code, proofs, failure_kind):
     if (result.exit_code != exit_code or ingested["diagnosticCode"] != code
             or len(result.events) != 1 or dict(result.events[0]) !=
@@ -3295,7 +3318,7 @@ def validate_observation(ingested, result, identities, code, status, exit_code, 
             or any(witness["status"] != status for witness in ingested["witnesses"])
             or len(proofs) != len(identities)
             or any(evidence.load_json(raw)["failureKind"] != failure_kind for raw in proofs.values())):
-        raise evidence.ConformanceError("EvidenceIncomplete")
+        raise _RuntimeObservationError(ingested, result, status)
 
 
 def execute(repository, destination):

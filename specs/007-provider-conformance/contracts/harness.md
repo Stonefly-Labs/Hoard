@@ -94,6 +94,11 @@ stores/cache/proofs bound to metadata inputs. Harness defaults are unchanged;
 old receipts cannot replace those fresh invocations. Successful seed/readback
 events also require exact settled owned-command records. These diagnostic
 controls do not yet satisfy the remaining category-control imports.
+Native category failures identify scope execution versus joint admission with
+closed catalog scope IDs/codes. Unexpected runtime results additionally retain
+only observed code/exit, state/mismatch counts and up to four identity hashes;
+raw test/failure text and private paths remain excluded. This diagnostic limit
+never truncates the actual evidence or admits an incomplete inventory.
 
 For category discovery and execution, an available native command record is
 independently joined to the exact run/root/sequence, argv/cwd hashes, PID/start,

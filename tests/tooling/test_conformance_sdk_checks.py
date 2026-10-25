@@ -154,7 +154,9 @@ class SdkDiagnosticTests(unittest.TestCase):
                     raise checks.evidence.ConformanceError("ProofMismatch")
                 return {"transport": transports[scope_id],
                         "summary": {"tests": len(plan["tests"]), "qualification": False, "code": "None"}}
-            with self.subTest(failure=failure), patch.object(
+            diagnostics = io.StringIO()
+            with self.subTest(failure=failure), contextlib.redirect_stdout(diagnostics), patch.object(
+                    checks, "OwnedRun", SimpleNamespace), patch.object(
                     checks.evidence, "CategoryRuntimeHistory", return_value=history), patch.object(
                         checks, "category_attempt", side_effect=execute):
                 arguments = (
@@ -186,6 +188,16 @@ class SdkDiagnosticTests(unittest.TestCase):
                 self.assertFalse(record["qualification"])
                 self.assertEqual(record["code"], "ProofMismatch" if failure else "EvidenceIncomplete")
                 self.assertEqual(len(record["results"]), case_count)
+                if failure == "execution":
+                    self.assertEqual(json.loads(diagnostics.getvalue()), {
+                        "qualification": False, "phase": "category-scope-failure",
+                        "profileId": profile, "scopeId": captured[-1], "code": "ProofMismatch"})
+                elif failure == "admission":
+                    self.assertEqual(json.loads(diagnostics.getvalue()), {
+                        "qualification": False, "phase": "category-admission-failure",
+                        "profileId": profile, "scopeCount": len(plans), "code": "ProofMismatch"})
+                else:
+                    self.assertEqual(diagnostics.getvalue(), "")
 
     def test_category_runtime_scopes_preserve_exact_catalog_binding_and_case_assignments(self):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases
@@ -4426,6 +4438,26 @@ class SdkDiagnosticTests(unittest.TestCase):
                 with self.assertRaisesRegex(checks.evidence.ConformanceError, "EvidenceIncomplete"):
                     checks.validate_observation(changed, command_result, identities, code, status,
                                                 exit_code, proof_data, kind)
+
+    def test_unexpected_runtime_failure_retains_only_bounded_closed_observations(self):
+        identities = tuple(f"PrivateCanary.Case{index}" for index in range(9))
+        ingested = {"diagnosticCode": "AssertionFailed", "witnesses": tuple(
+            {"testIdentity": identity, "status": "Failed"} for identity in identities)}
+        result = SimpleNamespace(exit_code=1, events=(
+            {"event": "control", "code": "AssertionFailed", "value": len(identities)},))
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "EvidenceIncomplete") as raised:
+            checks.validate_observation(
+                ingested, result, identities, "None", "Passed", 0, {}, "None")
+        observed = raised.exception.runtime_diagnostic
+        self.assertEqual(observed["observedCode"], "AssertionFailed")
+        self.assertEqual(observed["observedExit"], 1)
+        self.assertEqual(observed["witnessStates"], {"Passed": 0, "Failed": 9, "Incomplete": 0})
+        self.assertEqual(observed["mismatchCount"], 9)
+        self.assertEqual(observed["mismatchedTestsSha256"], sorted(
+            hashlib.sha256(identity.encode()).hexdigest() for identity in identities)[:4])
+        raw = json.dumps(observed).encode()
+        self.assertLessEqual(len(raw), 1024)
+        self.assertNotIn(b"PrivateCanary", raw)
 
     def test_safe_reads_reject_oversized_and_linked_diagnostics(self):
         path = self.directory / "proof.json"
