@@ -6751,6 +6751,41 @@ locations identify `conformance_evidence.py:1619`, the unchanged ordinary
 source-only admission guard addressed by `13aecdf`'s routing repair. This failed
 snapshot is not admitted and does not prove native success of the repair.
 
+### Fresh QC-12 original integration source path
+
+A separate qualification-only `original-integration` scope now runs all 32
+catalog rows from the package-only Consumer, retaining actual Local/Object
+provider archives and primary QC-12 context. Original facts emit the actual
+metadata-store, artifact-store and composition loaded-contract images; shared
+business assertions remain unchanged. The SQLite prerequisite precedes launch.
+Independent source admission selects all images/packages from the fixed pairing
+map and reconstructs the exact six-image manifest/source receipt. It joins the
+original executor-held record, owner/RunInputs/settings/context, fixed argv/cwd,
+complete immutable inputs, successful settled exit and bounded command/witness
+times before admitting one complete source parent. Current QC-12 witness IDs
+cannot borrow a previous attempt, foreign binding, omitted row or missing
+parent. No inherited AS row is substituted.
+
+All 433 tooling tests pass with 19 native skips; all 133 source SDK tests pass.
+The actual package-only Consumer locally passes all 32 cases with three image
+observations each, without skips. The native factory model additionally rejects
+changed argv/input map/cwd/exit/sequence/times, rehashed replaced records,
+settings changes, shortened rows and missing/reversed images. Scoped formatting,
+frozen inventory, embedded catalog and whitespace pass. These are local/model
+checks, not fresh native integration source admission. T033 and all other
+unchecked tasks/checklists remain unchanged.
+
+Exact `a5fe97e`/run40238458550 independently passes all three Linux jobs:
+317 native foundations without skips, 13-lock/18-package replay and 135 aggregate
+scopes/2,048 witnesses. Metadata has 90/3/9/0 and artifacts 95/4/4/0 in
+Passed/Incomplete/NotApplicable/Failed order. Artifact input/result are
+`a161574f6f1326a03bb560a7a81f2a51f1e2953078b82638be64ba6825e366a7` /
+`19e4168a8b64194cd755b2608dd0c8b54f6c7d59f63b1e63289d40f5d84097c0`;
+its QC-09 source basis is
+`e00261cc4038bf1d3feee4093b8ebcd628a5776760d88c8fa63f50516d31583d`.
+This admits the preceding controller routing/QC-09 basis repair, not this
+integration scope or the later public-report gate.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

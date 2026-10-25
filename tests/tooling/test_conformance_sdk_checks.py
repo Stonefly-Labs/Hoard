@@ -28,6 +28,71 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_fresh_authority_scope_uses_consumer_and_both_exact_loaded_provider_images(self):
+        candidate = self.directory / "current"
+        run = SimpleNamespace(root=self.directory)
+
+        class Sources:
+            def __init__(self):
+                self._run = run
+
+        originals = checks.original_observation_inputs(candidate, run.root, include_integrations=True)
+        tests = checks._category_scope_tests(("artifacts", "original-integration"))
+        self.assertEqual(len(tests), 32)
+        packages = {(category, binding): package for category, binding, _, package in checks.CATEGORY_BINDING_SLOTS}
+        assembly = candidate / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
+        images = {assembly.relative_to(run.root).as_posix(): "a" * 64}
+        for identity, (binding, metadata, _) in checks.AUTHORITY_INTEGRATION_ROWS.items():
+            nodes = checks.evidence.original_node_assignments(identity, originals[binding][identity])
+            self.assertEqual(tuple(node["contract"][1] for node in nodes),
+                             (packages["metadata", metadata], packages["artifacts", binding],
+                              "Hoard.Fixtures.Artifacts.HostAdapters"))
+            images.update({path: hashlib.sha256(path.encode()).hexdigest() for node in nodes for path, _ in node.values()})
+        inputs = {
+            "profileId": "artifacts", "mode": "qualification", "runId": str(uuid.uuid4()),
+            "invocationGroupId": str(uuid.uuid4()), "runtimeAssemblies": images,
+            "bindings": [{"bindingId": binding, "category": category, "package": {
+                "packageId": package, "version": "0.1.0", "sha256": hashlib.sha256(package.encode()).hexdigest()}}
+                for category, binding, _, package in checks.CATEGORY_BINDING_SLOTS],
+        }
+        inputs["packages"] = [binding["package"] for binding in inputs["bindings"]]
+        inputs["packages"].append({
+            "packageId": "Hoard.Fixtures.Artifacts.HostAdapters", "version": "0.1.0", "sha256": "f" * 64})
+        path = "proofs/authority-inputs.json"
+        (run.root / "proofs").mkdir()
+        (run.root / path).write_bytes(checks.evidence.canonical_bytes(inputs))
+        plan = {"attemptId": str(uuid.uuid4()), "tests": tests}
+        with patch.object(checks, "NativeCategorySources", Sources), patch.object(
+                checks, "require_sqlite_environment") as sqlite, patch.object(
+                checks, "_execute_runtime_transport", side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.category_attempt(run, inputs, candidate, "original-integration", plan,
+                                        run_inputs_path=path, native_sources=Sources())
+            sqlite.assert_called_once_with(inputs, assembly, run.root)
+        self.assertEqual(launch.call_args.args[2], assembly)
+        manifest = launch.call_args.args[3]
+        self.assertEqual({row["caseId"] for row in manifest["expected"]}, {"QC-12"})
+        self.assertEqual({row["path"] for row in manifest["assemblies"]}, set(images))
+        self.assertTrue(launch.call_args.args[5]["original_observations"])
+        self.assertEqual(launch.call_args.kwargs["original_inputs"], originals)
+        checks.write_new(run.root / "runtime-owner.json", b"owner")
+        (run.root / "stores").mkdir()
+        with patch.object(run, "command", create=True, side_effect=checks.evidence.ConformanceError(
+                "PrerequisiteMissing")) as command:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "PrerequisiteMissing"):
+                checks.runtime_command(run, assembly, manifest, category_scope=("artifacts", "original-integration"),
+                                       original_observations=True)
+        self.assertEqual(set(command.call_args.kwargs["execution_inputs"]), {
+            f'runtime-input-{manifest["attemptId"]}.json', "runtime-owner.json", path,
+            f'stores/settings-{manifest["attemptId"]}.runsettings', *images})
+        settings = ET.parse(run.root / f'stores/settings-{manifest["attemptId"]}.runsettings')
+        context = settings.findtext(".//EnvironmentVariables/HOARD_ORIGINAL_CONTEXT")
+        self.assertEqual(checks.evidence.load_json(base64.b64decode(context)), {
+            "schemaVersion": 1, "runId": inputs["runId"],
+            "cases": {identity: {"caseId": "QC-12", "bindingId": binding}
+                      for identity, (binding, _) in tests.items()}})
+
     def test_qualification_artifact_controller_inspects_before_independent_source_admission(self):
         discovery, execution = self.directory / "discovery", self.directory / "execution"
         for folder, records in ((discovery, "discovered.jsonl"), (execution, "witnesses.jsonl")):
@@ -42,6 +107,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         observation = {"diagnosticCode": "None"}
         for mode, scope, source in (
                 ("qualification", "controller", True),
+                ("qualification", "original-integration", True),
                 ("diagnostic", "controller", False), ("qualification", "original", False)):
             with self.subTest(mode=mode, scope=scope), patch.object(checks, "runtime_command", side_effect=(
                     (result, discovery, transport), (result, execution, transport))), patch.object(

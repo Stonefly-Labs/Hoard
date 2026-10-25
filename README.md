@@ -2231,9 +2231,26 @@ QC-12 now names all 32 actual authority-integration rows in the independent
 Python and embedded SDK catalogs: eight consumers for each of the four
 metadata/artifact pairings. SDK diagnostics use that same exact selection and
 reject a missing pairing, consumer or parameter row before launch. Cross-binding
-quality witnesses do not enter ordinary provider execution scopes. QC-12 remains
-`Incomplete` pending fresh qualification-origin source admission; earlier
-diagnostic success is not promoted.
+quality witnesses do not enter ordinary provider execution scopes. A separate
+qualification-only `original-integration` scope now executes all 32 rows from
+the package-only Consumer. Each emits the actual metadata, artifact-store and
+composition loaded images. Independent source admission reconstructs the full
+matrix, six-image manifest, original executor-held command, immutable input map,
+settings/context, argv/cwd and settled execution bounds before admitting one
+source parent for all rows. QC-12 derives only from that current complete set
+and its parent; missing, borrowed or previous-attempt rows cannot qualify.
+Local checks pass 433 tooling tests (19 native skips), 133 source SDK tests and
+32 actual package-only integration rows with all three image observations.
+The latter is non-native validation, not qualification. Fresh Linux admission
+of this scope and full profile/evaluator acceptance remain pending.
+
+Exact `a5fe97e`, [run40238458550](https://github.com/Stonefly-Labs/Hoard/actions/runs/40238458550),
+independently passes all three Linux jobs: 317 native foundations without skips,
+13-lock/18-package replay and 135 aggregate scopes/2,048 witnesses including the
+four category batches. Metadata has 90 Passed/3 Incomplete/9 NotApplicable;
+artifacts has 95 Passed/4 Incomplete/4 NotApplicable, with no Failed cases.
+This establishes the earlier controller-routing and QC-09 source-basis repair,
+not the newer public-report gate or fresh QC-12 integration admission.
 
 Exact `5f81b926ca7add6845cb19cccba200b668eb0831`,
 [run40232608162](https://github.com/Stonefly-Labs/Hoard/actions/runs/40232608162),

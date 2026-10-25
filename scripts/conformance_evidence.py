@@ -1773,6 +1773,45 @@ def _catalog_case_result(inputs, case, status, attempts):
     })
 
 
+def _authority_quality_composition(inputs, results, witnesses, *, sequence, started_ms, ended_ms):
+    from conformance_case_catalog import AUTHORITY_INTEGRATION_ROWS
+
+    result = results.get(("artifacts", "none", "none", "QC-12"))
+    attempts = () if result is None else result["attempts"]
+    current = None if len(attempts) < sequence else attempts[sequence - 1]
+    if current is not None and (
+            result["runId"] != inputs["runId"] or current["sequence"] != sequence
+            or current["startedMs"] != started_ms or current["endedMs"] != ended_ms):
+        raise ConformanceError("ProofMismatch")
+    selected_ids = () if current is None else current["witnessIds"]
+    prior_ids = {execution for attempt in attempts[:sequence - 1] for execution in attempt["witnessIds"]}
+    if set(selected_ids) & prior_ids or not set(selected_ids) <= witnesses.keys():
+        raise ConformanceError("ProofMismatch")
+    selected = tuple(sorted((witnesses[execution] for execution in selected_ids), key=lambda row: row["executionId"]))
+    identities = {row["testIdentity"] for row in selected}
+    if (len(identities) != len(selected)
+            or any(row["testIdentity"] not in AUTHORITY_INTEGRATION_ROWS
+                   or row["bindingId"] != AUTHORITY_INTEGRATION_ROWS[row["testIdentity"]][0]
+                   or row["matrixId"] != "none"
+                   or not started_ms <= row["startedMs"] <= row["endedMs"] <= ended_ms for row in selected)):
+        raise ConformanceError("ProofMismatch")
+    complete = identities == AUTHORITY_INTEGRATION_ROWS.keys() and all(row["status"] == "Passed" for row in selected)
+    runtime_proofs = {row["proofSha256"] for row in selected}
+    parents = set() if current is None else set(current["proofSha256"]) - runtime_proofs
+    complete &= len(parents) == 1
+    failed = any(row["status"] == "Failed" for row in selected)
+    status = "Failed" if failed else "Passed" if complete else "Incomplete"
+    return MappingProxyType({
+        "attempt": admit_entity("Attempt", {
+            "sequence": sequence, "startedMs": started_ms, "endedMs": ended_ms, "status": status,
+            "diagnosticCode": "AssertionFailed" if failed else "None" if complete else "EvidenceIncomplete",
+            "witnessIds": tuple(row["executionId"] for row in selected),
+            "proofSha256": sorted(runtime_proofs | parents),
+        }),
+        "sourceProofs": MappingProxyType({}),
+    })
+
+
 def _category_quality_composition(inputs, case_id, results, witnesses, *, sequence, started_ms, ended_ms):
     """Compose only the exact current-attempt basis; never relabel its executions."""
     from conformance_case_catalog import (
@@ -1784,6 +1823,9 @@ def _category_quality_composition(inputs, case_id, results, witnesses, *, sequen
     quality_basis = CATEGORY_QUALITY_BASIS.get(profile, {})
     if inputs["mode"] != "qualification" or case_id not in quality_basis:
         raise ConformanceError("ProofMismatch")
+    if profile == "artifacts" and case_id == "QC-12":
+        return _authority_quality_composition(
+            inputs, results, witnesses, sequence=sequence, started_ms=started_ms, ended_ms=ended_ms)
     required = tuple(case for case in category_cases()
                      if case.profile_id == profile and int(case.case_id[3:]) in quality_basis[case_id])
     complete, failure, executions, proofs = True, None, set(), set()
@@ -2246,6 +2288,10 @@ class CategoryRuntimeHistory:
                 continue
             selected = tuple(witness for witness in witnesses
                              if witness["bindingId"] == binding_id and witness["testIdentity"] in case.witnesses)
+            if self._inputs["profileId"] == "artifacts" and binding_id == "none" and case.case_id == "QC-12":
+                selected = tuple(witness for witness in witnesses if witness["testIdentity"] in case.witnesses
+                                 and (witness["status"] != "Passed"
+                                      or source_parents is not None and witness["executionId"] in source_parents))
             expected = set(case.witnesses)
             source_identity = (
                 METADATA_INVENTORY_SOURCE_WITNESSES[binding_id] if case.case_id == "MP-48" else
@@ -2365,7 +2411,7 @@ class CategoryRuntimeHistory:
             source_options = {}
             if self._native_sources is not None and (
                     scope_id.startswith("inspection-") or scope_id in ("recovery-controller", "inventory-controller")
-                    or self._inputs["profileId"] == "artifacts" and scope_id == "controller"):
+                    or self._inputs["profileId"] == "artifacts" and scope_id in ("controller", "original-integration")):
                 admit_attempt = self._native_sources.ingest_attempt
                 source_options["category_scope"] = self._inputs["profileId"], scope_id
             observed = admit_attempt(

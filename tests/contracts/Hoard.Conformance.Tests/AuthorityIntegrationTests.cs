@@ -3,11 +3,13 @@ using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Testing.Conformance.Artifacts;
 using Hoard.Testing.Conformance.Bindings;
+using Hoard.Testing.Conformance.Evidence;
+using Xunit.Abstractions;
 using RecordingDirectories = Hoard.Fixtures.Conformance.Consumer.LocalArtifactSessionTests.RecordingDirectories;
 
 namespace Hoard.Conformance.Tests;
 
-public sealed class AuthorityIntegrationTests
+public sealed class AuthorityIntegrationTests(ITestOutputHelper output)
 {
     public static IEnumerable<object[]> Rows()
     {
@@ -34,6 +36,18 @@ public sealed class AuthorityIntegrationTests
             provider, metadataProvider, root.DirectoryPath);
         try
         {
+            var identity = "Hoard.Conformance.Tests.AuthorityIntegrationTests."
+                + $"Actual_compositions_preserve_shared_authority(provider: \"{provider}\", "
+                + $"metadataProvider: \"{metadataProvider}\", consumer: \"{consumer}\")";
+            var metadata = ConformanceOriginalObservationOutput.WriteIfRequested(
+                output, identity, provider, "loaded-contract", null, null,
+                ("contract", session.Metadata.GetType()));
+            var artifacts = ConformanceOriginalObservationOutput.WriteIfRequested(
+                output, identity, provider, "loaded-contract", null, metadata,
+                ("contract", session.Artifacts.Store.GetType()));
+            ConformanceOriginalObservationOutput.WriteIfRequested(
+                output, identity, provider, "loaded-contract", null, artifacts,
+                ("contract", session.GetType()));
             var assertions = new ArtifactMetadataIntegrationAssertions(
                 session.Artifacts.Store, session.Metadata, session.Artifacts.Identity,
                 session.Artifacts.Authority, session.Publication.Encode);

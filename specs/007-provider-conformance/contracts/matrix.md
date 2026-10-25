@@ -31,6 +31,11 @@ failed transaction, live references, lost acknowledgment, incarnation fencing,
 held reader, foreign authority and shutdown. All 32 exact parameter rows are
 mandatory alongside the seven QC controls. Diagnostic execution or catalog
 presence alone does not establish qualification-origin integration admission.
+The fresh qualification-only `original-integration` scope retains all 32 rows
+under their actual Local/Object bindings. Three actual loaded images per row
+and one independently reconstructed native command/source parent form its
+current-attempt basis; no inherited AS row substitutes for a pairing/consumer.
+Its implementation and local execution do not claim a completed Linux matrix.
 
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service

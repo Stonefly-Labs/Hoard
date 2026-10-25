@@ -9611,8 +9611,8 @@ catalog/scenario assertions first reproduce the missing witness set; source-row
 parity, missing-pairing, missing-consumer and single-row/foreign-row negatives
 then pass. Cross-binding quality rows remain outside ordinary provider scopes.
 No existing diagnostic execution becomes qualification evidence: fresh
-qualification-origin integration source admission remains unbuilt and QC-12
-stays `Incomplete`.
+qualification-origin integration source admission was still unbuilt at that
+catalog checkpoint.
 
 Exact `3166f667bf70a0756f7b2a8c42ec35034d6fc35b`,
 [run40237666479](https://github.com/Stonefly-Labs/Hoard/actions/runs/40237666479),
@@ -9622,7 +9622,7 @@ Its bounded safe locations independently attribute `WitnessMissing` to
 already addressed by controller routing repair `13aecdf`. The failed snapshot
 is not admitted; this attribution does not establish native repair success.
 
-Current validation: all 427 tooling checks pass with 19 explicit native skips;
+Catalog checkpoint validation: all 427 tooling checks pass with 19 explicit native skips;
 all 133 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
 and whitespace checks pass. The preceding byte-capture checkpoint compiled
 the original artifact package-acceptance project with freshly rebuilt SDK,
@@ -9636,6 +9636,45 @@ absent API before implementation. These local checks do not execute fresh large
 transfers, establish native artifact admission or finish the implementation stage.
 Provider/contributor/deployment guides, examples and diagrams are unaffected:
 there is no new supported command, provider API, package dependency or deployment.
+
+### Fresh authority-integration source admission
+
+Qualification-only `original-integration` now executes the complete 32-row matrix
+in the package-only Consumer with primary case QC-12 and actual Local/Object
+binding archives. Each original row emits its actual metadata, artifact-store
+and composition loaded-contract images before the unchanged assertions. SQLite
+prerequisites are checked before launch. The exact six-image manifest and
+original context are immutable execution inputs, not provider-selected claims.
+
+The independent native factory reconstructs metadata/artifact/package image
+assignments and the full source receipt, then joins the executor-held ordinary
+command record, owner, RunInputs, manifest, settings/encoded context, fixed
+argv/cwd, complete input map, successful exit, no live children and bounded
+command/witness times. Source-parent publication and history admission are
+atomic for all 32 rows. QC-12 consumes only its current witness IDs and one
+native source parent; missing parents, incomplete rows, retiming and borrowed
+earlier-attempt executions reject or remain incomplete. Failed modeled attempts
+remain retained across passing retries. No existing diagnostic is promoted.
+
+`python3 -m unittest discover -s tests/tooling -v` passes 433 tests with 19
+explicit native skips. `dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --no-restore --verbosity quiet`
+passes all 133 source SDK tests. Scoped C# whitespace, frozen inventory, embedded
+catalog and whitespace checks pass. A private local package-only restore/run
+executes all 32 actual integration cases with three image observations each:
+all pass without skips. This is non-native validation; fresh Linux integration
+source admission remains pending. No tracked lock, public provider API,
+production dependency or supported command changes; provider/contributor/
+deployment guides, examples and diagrams are unaffected.
+
+Exact `a5fe97e`, [run40238458550](https://github.com/Stonefly-Labs/Hoard/actions/runs/40238458550),
+independently passes all three Linux jobs: 317 native foundations without skips,
+13 locks/18 packages and 135 aggregate scopes/2,048 witnesses. Metadata's native
+qualification-input batch has 8 scopes/137 witnesses/6 parents and 90 Passed,
+3 Incomplete, 9 NotApplicable, 0 Failed. Artifacts has 6 scopes/227 witnesses/
+3 parents and 95 Passed, 4 Incomplete, 4 NotApplicable, 0 Failed. This establishes
+the earlier controller-routing and QC-09 basis repairs, not this fresh
+integration scope or the newer public-report admission gate. No task or
+reviewer-owned checklist markers advance; the implementation stage remains open.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

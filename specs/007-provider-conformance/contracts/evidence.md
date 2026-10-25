@@ -65,9 +65,19 @@ witnesses in the independent and embedded SDK catalogs, in addition to its
 seven controls. The SDK diagnostic scenario uses that exact selection and
 rejects missing pairings, consumers or individual rows before execution.
 These cross-binding quality witnesses are not ordinary single-provider runtime
-scopes. Catalog inclusion and earlier diagnostic runs do not provide fresh
-qualification-origin integration sources; QC-12 remains incomplete until that
-source admission is implemented and executed.
+scopes. Qualification has a separate fresh `original-integration` scope in the
+package-only Consumer. Its three loaded-contract observations independently
+identify the actual metadata store, artifact store and composition images for
+each row; they do not assert object identity by image alone. Independent native
+source admission reconstructs all 32 rows, the exact six-image manifest and
+provider package correspondence. It checks the executor-held command record,
+owner, inputs, settings/encoded original context, fixed argv/cwd, complete
+immutable input map, successful settled exit and command/witness bounds before
+admitting one parent shared by the complete set. Rehashing a replaced record or
+receipt is not authority. QC-12 requires all current-attempt rows and that parent;
+missing source parents or rows cannot qualify, and prior execution IDs cannot be
+reused in a retry. Local execution and modeled rejection checks do not establish
+fresh Linux source admission, which remains pending.
 
 The implemented category batch history derives each binding's entire frozen
 runtime union from the independent catalog and requires both category package

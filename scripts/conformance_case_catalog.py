@@ -21,6 +21,14 @@ CATEGORY_BINDING_SLOTS = (
     ("artifacts", "object", "fixture.artifact.object", "Hoard.Fixtures.Artifacts.ObjectSemantics"),
 )
 
+AUTHORITY_INTEGRATION_ROWS = MappingProxyType({
+    "Hoard.Conformance.Tests.AuthorityIntegrationTests."
+    f'Actual_compositions_preserve_shared_authority(provider: "{provider}", metadataProvider: "{metadata}", consumer: "{consumer}")':
+        (provider, metadata, consumer)
+    for provider in ("local", "object") for metadata in ("memory", "sqlite") for consumer in (
+        "reference-admission", "failed-transaction", "live-references", "lost-acknowledgment",
+        "incarnation", "reader", "foreign-authority", "shutdown")})
+
 ORIGINAL_INSPECTION_LITERAL_WITNESSES = tuple(sorted(
     "Hoard.Architecture.Tests.MetadataBoundaryTests." + method for method in (
         "Native_only_packages_cannot_hide_managed_assets",
@@ -317,7 +325,7 @@ def original_witness_policy(identity):
                  "Hoard.Artifacts.Tests.ArtifactValueTests.Identity_bounds_preserve_empty_and_reject_overflow_negative_or_null")
     if identity in ORIGINAL_METADATA_WITNESSES:
         return "metadata", "original-instance", _ORIGINAL_METADATA_ROLES
-    if identity in contracts:
+    if identity in contracts or identity in AUTHORITY_INTEGRATION_ROWS:
         return "artifacts", "loaded-contract", ("contract",)
     if identity in (*ORIGINAL_ARTIFACT_SHARED_OWNER_WITNESSES, *ORIGINAL_ARTIFACT_MODULE_OWNER_WITNESSES):
         return "artifacts", "original-owner", ("owner",)
@@ -343,6 +351,8 @@ def original_witness_parents(identity):
     """The independently selected creation/reopen forest for one exact execution."""
     if original_witness_policy(identity) is None:
         return None
+    if identity in AUTHORITY_INTEGRATION_ROWS:
+        return None, None, None
     return ORIGINAL_METADATA_FORESTS.get(identity, ORIGINAL_ARTIFACT_FORESTS.get(identity, (None,)))
 
 
@@ -384,6 +394,9 @@ def category_runtime_cases(profile, binding_id, *, mode="diagnostic"):
             or any(control.startswith("parent-kill:") for control in case.controls))
     if profile == "metadata" and binding_id in METADATA_INVENTORY_SOURCE_WITNESSES and mode == "qualification":
         selected[METADATA_INVENTORY_SOURCE_WITNESSES[binding_id]] = "MP-48"
+    if profile == "artifacts" and mode == "qualification":
+        selected.update({identity: "QC-12" for identity, row in AUTHORITY_INTEGRATION_ROWS.items()
+                         if row[0] == binding_id})
     return MappingProxyType(selected)
 
 
@@ -401,6 +414,8 @@ def category_execution_partitions(profile, *, mode="diagnostic"):
             scope = "recovery-controller"
         elif identity in METADATA_INVENTORY_SOURCE_WITNESSES.values():
             scope = "inventory-controller"
+        elif identity in AUTHORITY_INTEGRATION_ROWS:
+            scope = "original-integration"
         elif policy is not None and policy[0] == profile:
             scope = "original-" + binding if identity in repeated else "original"
         elif ORIGINAL_INSPECTION_WITNESSES.get(identity) == profile:
@@ -797,6 +812,7 @@ CATEGORY_QUALITY_BASIS = MappingProxyType({
         "QC-09": tuple(number for number in range(1, 49) if number not in (11, 12, 41, 42, 43, 44)),
         "QC-10": (11, 12),
         "QC-11": (41, 42, 43, 44),
+        "QC-12": (),  # Its basis is the fresh integration scope, not inherited AS rows.
     }),
 })
 
@@ -822,12 +838,7 @@ def catalog_admission_witnesses():
 
 
 def authority_integration_witnesses():
-    method = "Hoard.Conformance.Tests.AuthorityIntegrationTests.Actual_compositions_preserve_shared_authority"
-    return tuple(sorted(
-        f'{method}(provider: "{provider}", metadataProvider: "{metadata}", consumer: "{consumer}")'
-        for provider in ("local", "object") for metadata in ("memory", "sqlite") for consumer in (
-            "reference-admission", "failed-transaction", "live-references", "lost-acknowledgment",
-            "incarnation", "reader", "foreign-authority", "shutdown")))
+    return tuple(sorted(AUTHORITY_INTEGRATION_ROWS))
 
 
 def category_cases():
