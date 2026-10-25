@@ -239,8 +239,20 @@ packets/source snapshots, exact original argv/cwd, settled commands and joint
 bounds. The red must be the named assertion with zero setup errors/skips.
 Two binding-specific source facts consume all actual files and supply distinct
 runtime execution UUIDs; recovery's UUID never qualifies MP-48. Imported
-`inventorySourcesSha256` is required. The modeled target is 87/6/9/0 across eight
-scopes/137 witnesses/seven source parents, not a native or qualifying receipt.
+`inventorySourcesSha256` is required. The QC-only `none` binding receives no
+invented source fact. QC-06/07/08 compose only complete frozen logical,
+uncertainty/ownership and schema/recovery bases from both actual bindings in
+the same joint attempt. Original UUIDs/proof hashes remain unchanged; report
+admission recomputes exact unions and frozen exclusions. Only these fixed QC
+keys allow cross-binding links, not arbitrary `none` dimensions. Missing
+controls remain incomplete, failed attempts survive and exceeding 128 proofs
+on retry rejects without truncation. The modeled target is 90/3/9/0 across
+unchanged eight scopes/137 witnesses/seven parents, not a native or qualifying
+receipt; QC-02/04/05 remain incomplete.
+Exactb1/run40220115471 independently passes all three Linux jobs, 291 native
+foundations without skips, 13-lock/18-package replay and 128 scopes/1,819
+witnesses. Qualification metadata has seven scopes/135 witnesses/five parents
+at 85/8/9/0, admitting controls through MP-47 only, not later inventory/QC work.
 Exact5bc/run40218754070 fails at an original MP-19 queue/deadline witness after
 287 native foundations and lock/package replay pass; its cause remains unknown
 and no ownership/consumer admission follows from that failed run.

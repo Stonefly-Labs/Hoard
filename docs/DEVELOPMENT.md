@@ -9294,9 +9294,49 @@ and joint bounds. Separate SQLite/memory runtime facts read and hash the complet
 graph and emit distinct original execution UUIDs. Original source inputs and all
 snapshot bytes remain unchanged; the frozen 192 inherited keys are untouched.
 Missing authority fails in red; rehashed setup failure and borrowing recovery's
-UUID also reject. The modeled target is 87/6/9/0 with eight scopes/137 witnesses/
-seven source parents, not a native or qualifying receipt. Six QC obligations and
-the full stage remain incomplete.
+UUID also reject. Its initial modeled target is 87/6/9/0 with eight scopes/137
+witnesses/seven source parents, not a native or qualifying receipt. A subsequent
+qualification joint-plan regression reaches an unguarded inventory lookup for
+the QC-only `none` binding. Only actual provider bindings now receive source
+facts; the complete joint plan includes `none` without inventing a source fact.
+No native inventory admission is inferred from local source/controller checks.
+
+QC-06/07/08 now derive from independently fixed complete logical,
+uncertainty/ownership and schema/recovery bases for both metadata options.
+The joint history composes only freshly admitted same-sequence case attempts
+inside the same joint bounds, retaining original witness UUIDs and every
+runtime/controller/source proof hash. The report model independently recomputes
+the same unions and exact catalog witness sets. Cross-binding proof links are
+permitted only for these three exact QC keys; ordinary dimension matching and
+all other QC gates remain unchanged. All nine frozen memory durability
+exclusions must match exactly, with no invented durability execution. Diagnostic
+mode never promotes a QC. Missing controls stay incomplete; assertion failures
+remain failed, and histories preserve failed attempts. A retry exceeding the
+existing 128-proof collection bound fails explicitly as `OutputLimitExceeded`;
+neither earlier failures nor evidence are truncated. The new modeled target is
+90/3/9/0, with the same eight scopes/137 witnesses/seven parents. QC-02/04/05,
+native admission and full profile/stage completion remain pending.
+
+`python3 -m unittest discover -s tests/tooling -q` passes 406 checks with 18
+explicit native skips. New state/report tests first fail on missing QC
+composition and cover same-attempt proof unions, diagnostic refusal, missing
+recovery controls, retained failure history, bounded retries, shortened/foreign
+witnesses, missing cases, changed timing and unauthorized exclusions. Their
+native-import seam is explicitly modeled, not actual native execution.
+Frozen inventory/SDK catalog checks and `git diff --check` pass; no C# source,
+package references or locks change in this increment.
+
+Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
+[run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
+independently passes all three jobs: 291 native foundations without failures/
+errors/skips, 13-lock/18-package fresh replay and 128 scopes/1,819 witnesses.
+Qualification-input metadata has seven scopes/135 witnesses/five source parents
+and 85/8/9/0; input
+`12f73c5aaf1ac6c6c7d1a0370d96ed951f98039346f6a16ea5c2a9c767085150`,
+result `3ba98fed69680237fcc8bea2833f1aa82bf8817aad7bd87649465a48efec5ae8`,
+binary graph `25e6f7d54d15dc2f39d714b3c2a687050ca48be1000ac505126a32c0a7d6ebb2`.
+This admits ownership, unchanged consumer and frozen-binary controls through
+MP-47. It does not admit later inventory/QC changes or a complete profile.
 
 `python3 -m unittest discover -s tests/tooling -q` passes 402 checks with 18
 explicit native skips. The source SDK project passes all 121 checks; scoped
@@ -9316,7 +9356,8 @@ passes 287 native foundations with no failures/errors/skips and the 13-lock/
 resolves against known identities to
 `MetadataDeadlineTests.MP19_Queue_capacity_and_held_work_deadlines_have_finite_owned_results`.
 The underlying cause is not established. This is not ownership/consumer admission;
-the exact newer binary checkpoint is being observed independently. No legacy
+the exact later binary checkpoint succeeds independently. That success does
+not diagnose this earlier failure. No legacy
 deadline assertions or native admission gates are weakened to obtain a pass.
 
 Earlier exact `f038df04ee1d989b3cd81fe7d9247c0fb041016c`,

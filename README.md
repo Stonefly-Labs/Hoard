@@ -2085,7 +2085,7 @@ rebuilding or changing retained files. Exact legacy output has a closed
 projector, not raw-log retention. Its four-file graph independently binds
 baseline/current image hashes, complete runtime input snapshots and original
 owned execution. The unchanged marker runs against current platform assemblies
-locally; the modeled target is 85/8/9/0. Linux confirmation remains pending.
+locally; the modeled target is 85/8/9/0. Exact Linux confirmation is recorded below.
 
 MP-48 adds actual complete unchanged verifier-suite execution before and after
 the original failed-case-refusal mutation. The same private adapter is repaired,
@@ -2094,15 +2094,38 @@ A bounded runner retains only closed diagnostics, sealed source snapshots and
 hash-only native provenance. Fourteen-file authority requires original inputs,
 argv/cwd, ordered settled commands and joint bounds. Two binding-specific runtime
 facts consume the actual graph; neither can borrow recovery's execution UUID.
-The modeled target becomes 87/6/9/0 across eight scopes/137 witnesses/seven source
-parents, with six QC obligations still incomplete and native admission pending.
+Its initial modeled target is 87/6/9/0 across eight scopes/137 witnesses/seven
+source parents. Qualification joint-plan regression subsequently exposed an
+unguarded lookup for the QC-only `none` binding; source facts now select only
+real provider bindings. Native inventory admission is still pending.
+
+QC-06/07/08 now compose the complete frozen logical, uncertainty/ownership and
+schema/recovery bases across both metadata bindings. They retain original
+execution UUIDs and runtime/controller/source proof hashes, never relabeling a
+provider execution as `none` or inventing a QC execution. Report admission
+recomputes these exact same-attempt unions; missing cases/parameters/controls,
+foreign witnesses, wrong timing and changed memory durability exclusions reject
+or remain incomplete. This narrowly permits only these three independently
+fixed cross-binding QC relationships. Failed attempts survive; exceeding the
+unchanged 128-proof limit on retry explicitly rejects rather than truncating.
+The modeled target becomes 90/3/9/0 with unchanged eight scopes/137 witnesses/
+seven parents. QC-02/04/05, native confirmation and full qualification remain
+incomplete.
+
+Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
+[run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
+independently passes all three Linux jobs: 291 foundations without failures/
+errors/skips, 13-lock/18-package replay and 128 scopes/1,819 witnesses.
+Qualification-input metadata has seven scopes/135 witnesses/five parents at
+85/8/9/0. This admits ownership, unchanged consumer and frozen-binary controls
+through MP-47, not later inventory/QC changes or complete profile qualification.
 
 Exact `5bc86fe`, [run40218754070](https://github.com/Stonefly-Labs/Hoard/actions/runs/40218754070),
 passes 287 native foundations without skips and lock/package replay, but its SDK
 batch rejects an original MP-19 queue/held-work deadline witness with
 `UnknownDiagnostic`. Its cause is not established, and this failed replay admits
-neither ownership nor package-consumer controls. The newer frozen-binary replay
-is still being observed; earlier successful receipts are not superseded.
+neither ownership nor package-consumer controls. The later successful binary
+receipt does not establish this earlier failure's cause.
 
 Earlier exact `f038df0`,
 [run40216546349](https://github.com/Stonefly-Labs/Hoard/actions/runs/40216546349),

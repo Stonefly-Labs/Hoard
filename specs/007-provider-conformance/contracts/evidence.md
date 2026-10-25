@@ -268,6 +268,21 @@ distinct original execution UUIDs. Neither can borrow recovery's unrelated UUID.
 `inventorySourcesSha256` references only imported proof bytes; public schemas
 and frozen inherited inventory remain unchanged.
 
+QC-06/07/08 are fixed composite relationships, not extra runtime executions.
+Their complete frozen logical, uncertainty/ownership and schema/recovery bases
+span both metadata bindings within one joint attempt/sequence. Preserve every
+original witness UUID and runtime/controller/source proof hash; no provider
+witness is relabeled `none`. Report admission independently reconstructs each
+exact union and complete named witness set from its basis attempts. Only these
+three exact QC keys may link both binding dimensions, with unchanged matrix/
+run/input/time/proof validation. All nine frozen memory durability exclusions
+must match exactly and contribute no invented execution. Missing cases,
+parameters or controls remain incomplete or reject; failures retain their
+original diagnostic and append-only history. Diagnostics never promote QCs.
+The unchanged 128-proof collection bound still applies across retries; overflow
+is explicit `OutputLimitExceeded`, never truncated evidence. QC-02/04/05,
+independent final evaluation and full profile qualification remain unfinished.
+
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private
 revision-2 execution proof adds a distinct `originalObservations` collection;

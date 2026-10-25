@@ -6373,8 +6373,51 @@ authority reconstructs original source inputs, three commands, sealed packets/
 source snapshots, argv/cwd and ordered joint bounds. Independent binding-specific
 runtime facts consume all actual files and retain distinct execution UUIDs.
 Recovery's UUID cannot stand in for inventory evidence. The modeled metadata
-target becomes 87/6/9/0 across eight scopes/137 witnesses/seven source parents.
-Native admission and the six remaining QC obligations are still pending.
+initial target becomes 87/6/9/0 across eight scopes/137 witnesses/seven source
+parents. A subsequent joint qualification-plan regression exposes an unguarded
+inventory lookup for the QC-only `none` binding. Source facts now select only
+actual provider bindings, and joint admission retains the complete QC dimension
+without inventing a source fact. Native inventory admission remains pending.
+
+QC-06/07/08 now compose their independently fixed complete frozen logical,
+uncertainty/ownership and schema/recovery bases across both bindings. Original
+runtime UUIDs and every runtime/controller/source proof hash remain unchanged.
+Only freshly admitted same-sequence attempts within the joint bounds contribute;
+all nine memory durability exclusions must equal the frozen catalog exactly.
+Report admission recomputes the exact same unions and checks complete named
+witness sets. Only these three exact QC relationships may reference both binding
+dimensions; no generic `none`-binding bypass is introduced. Diagnostic mode does
+not promote them, missing controls remain incomplete, assertion failures remain
+failed and retries retain failure history. A retry exceeding the unchanged
+128-proof collection limit rejects `OutputLimitExceeded`, never truncates.
+The new modeled target is 90/3/9/0 with unchanged eight scopes/137 witnesses/
+seven parents. QC-02/04/05 and native/full-profile confirmation remain pending.
+
+The new state/report regressions first fail on missing QC composition after
+exposing the real `none` lookup defect. They cover same-attempt union/proof
+preservation, missing controller inputs, diagnostic refusal, assertion failure
+history, bounded retries, missing/shortened/foreign basis, timing, exclusions
+and unsupported QC keys. The import seam is explicitly modeled; it is not
+native execution or independent final qualification. All 406 tooling checks
+pass with 18 explicit native skips, frozen inventory/SDK catalog checks and
+`git diff --check` pass. No C# sources, package references or locks change.
+
+Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
+[run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
+independently passes all three Linux jobs: 291 native foundations without
+failures/errors/skips, 13-lock/18-package replay and 128 scopes/1,819 witnesses.
+Qualification-input metadata has seven scopes/135 witnesses/five source parents
+and 85/8/9/0; input/result
+`12f73c5aaf1ac6c6c7d1a0370d96ed951f98039346f6a16ea5c2a9c767085150` /
+`3ba98fed69680237fcc8bea2833f1aa82bf8817aad7bd87649465a48efec5ae8`.
+Native/recovery/ownership/consumer/binary source digests are respectively
+`9fdb133db915b0a556aaf6dcfca2173ad25cc78dfdb00a0e919d5ec73f8cc918`,
+`cc9569d30db53cf10e5acdef083712a4cc4a169248630a4c6c759670ff3350b3`,
+`d457ff98b9762fb108faae53dcc69332165bc554af2f72b6ae72d69c3b54963b`,
+`34e1429eb6431b48d2c2d7564db356d7b8f1d32159b7d3b696d116819073c541`,
+`25e6f7d54d15dc2f39d714b3c2a687050ca48be1000ac505126a32c0a7d6ebb2`.
+This admits ownership, unchanged consumer and frozen-binary controls through
+MP-47 only, not later inventory/QC changes or complete profile qualification.
 
 All 402 tooling checks pass with 18 explicit native skips; all 121 source SDK
 checks, scoped C# whitespace, frozen inventory and catalog checks pass. Actual
@@ -6388,7 +6431,8 @@ Exact `5bc86fe`, run40218754070, passes 287 native foundations with no skips and
 13-lock/18-package replay, but the SDK batch rejects an original MP-19 queue/
 held-work deadline witness (`UnknownDiagnostic`, 62 Passed/1 Failed). Its cause
 is not established. The failed replay does not admit ownership/consumer changes;
-the newer binary checkpoint is observed independently without weakening tests.
+the later binary checkpoint succeeds independently without weakening tests or
+establishing the cause of this earlier failure.
 
 Earlier exact `f038df04ee1d989b3cd81fe7d9247c0fb041016c`,
 [run40216546349](https://github.com/Stonefly-Labs/Hoard/actions/runs/40216546349),

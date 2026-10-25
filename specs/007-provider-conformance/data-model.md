@@ -478,6 +478,18 @@ specific source facts, each consuming the complete graph with its own actual
 execution UUID and source parent. Recovery's UUID is not reusable for MP-48.
 Public entities and frozen inherited case keys are unchanged.
 
+QC-06/07/08 use their existing `none`-binding CaseResults as fixed composite
+relationships over complete current-attempt frozen metadata bases. Original
+provider UUIDs and all runtime/controller/source proof hashes are retained,
+not relabeled or synthesized. Report admission reconstructs each exact union,
+checks complete named witnesses and equal sequence/joint bounds, and admits
+cross-binding links only for these three fixed QC keys. Ordinary dimension
+matching is unchanged elsewhere. The nine frozen memory durability exclusions
+remain exact execution-free NotApplicable results. Missing controls stay
+incomplete, failed histories remain visible and exceeding 128 proof hashes
+across retries rejects without truncation. Diagnostic mode cannot promote a
+composite QC. No new public entity, field or runtime identity is introduced.
+
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits
 `Released`; expiration/cancellation/observation timeout does not. Retained

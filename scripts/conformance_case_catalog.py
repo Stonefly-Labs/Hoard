@@ -363,7 +363,7 @@ def category_runtime_cases(profile, binding_id, *, mode="diagnostic"):
         selected[METADATA_RECOVERY_SOURCE_WITNESS] = min(
             case.case_id for case in applicable if "verified-recovery-walkthrough" in case.controls
             or any(control.startswith("parent-kill:") for control in case.controls))
-    if profile == "metadata" and mode == "qualification":
+    if profile == "metadata" and binding_id in METADATA_INVENTORY_SOURCE_WITNESSES and mode == "qualification":
         selected[METADATA_INVENTORY_SOURCE_WITNESSES[binding_id]] = "MP-48"
     return MappingProxyType(selected)
 
@@ -765,6 +765,12 @@ QC_CONTROLS = {
          "all-private-diagnostics", "all-proof-files-and-filenames", "public-json-junit-markdown",
          "ci-summaries", "no-raw-spooling", "unknown-text-incomplete"),
 }
+
+METADATA_QUALITY_BASIS = MappingProxyType({
+    "QC-06": (*range(1, 18), *range(20, 26), *range(28, 32)),
+    "QC-07": (14, 15, 16, 17, 18, 19, 26, 27, 37),
+    "QC-08": (*range(32, 37), *range(38, 46)),
+})
 
 
 def obligation_controls(number):

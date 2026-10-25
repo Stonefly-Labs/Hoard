@@ -550,6 +550,8 @@ def _validate_input_links(inputs):
 
 
 def _validate_report_links(report):
+    from conformance_case_catalog import METADATA_QUALITY_BASIS
+
     inputs = report["inputs"]
     input_sha = digest(inputs)
     executions = {witness["executionId"]: witness for witness in report["witnesses"]}
@@ -574,15 +576,26 @@ def _validate_report_links(report):
                     and (binding is None or binding["package"]["sha256"] != witness["packageSha256"]))):
             _invalid()
     referenced = set()
+    results = {(row["profileId"], row["bindingId"], row["matrixId"], row["caseId"]): row
+               for row in report["results"]}
     for result in report["results"]:
         if (result["runId"] != inputs["runId"] or result["profileId"] != inputs["profileId"]
                 or not set(result["proofSha256"]).issubset(proofs)):
             _invalid()
         for attempt in result["attempts"]:
+            quality_link = False
+            if (result["profileId"] == "metadata" and result["bindingId"] == result["matrixId"] == "none"
+                    and result["caseId"] in METADATA_QUALITY_BASIS and attempt["witnessIds"]):
+                if inputs["mode"] != "qualification" or attempt != _metadata_quality_attempt(
+                        inputs, result["caseId"], results, executions, sequence=attempt["sequence"],
+                        started_ms=attempt["startedMs"], ended_ms=attempt["endedMs"]):
+                    _invalid()
+                quality_link = True
             for execution_id in attempt["witnessIds"]:
                 witness = executions.get(execution_id)
                 if (witness is None or witness["proofSha256"] not in attempt["proofSha256"]
-                        or witness["bindingId"] != result["bindingId"] or witness["matrixId"] != result["matrixId"]
+                        or (not quality_link and witness["bindingId"] != result["bindingId"])
+                        or witness["matrixId"] != result["matrixId"]
                         or witness["startedMs"] < attempt["startedMs"] or witness["endedMs"] > attempt["endedMs"]
                         or (attempt["status"] == "Passed" and witness["status"] != "Passed")):
                     _invalid()
@@ -1756,6 +1769,63 @@ def _catalog_case_result(inputs, case, status, attempts):
     })
 
 
+def _metadata_quality_attempt(inputs, case_id, results, witnesses, *, sequence, started_ms, ended_ms):
+    """Compose only the exact current-attempt basis; never relabel its executions."""
+    from conformance_case_catalog import METADATA_QUALITY_BASIS, METADATA_RECOVERY_SOURCE_WITNESS, category_cases
+
+    if inputs["profileId"] != "metadata" or inputs["mode"] != "qualification" or case_id not in METADATA_QUALITY_BASIS:
+        raise ConformanceError("ProofMismatch")
+    required = tuple(case for case in category_cases()
+                     if case.profile_id == "metadata" and int(case.case_id[3:]) in METADATA_QUALITY_BASIS[case_id])
+    complete, failure, executions, proofs = True, None, set(), set()
+    for case in required:
+        result = results.get(case.key)
+        if result is None:
+            complete = False
+            continue
+        if (result["runId"] != inputs["runId"] or (
+                result["profileId"], result["bindingId"], result["matrixId"], result["caseId"]) != case.key):
+            raise ConformanceError("ProofMismatch")
+        if case.exclusion is not None:
+            if result != _catalog_case_result(inputs, case, "NotApplicable", ()):
+                raise ConformanceError("ProofMismatch")
+            continue
+        if not result["applicable"] or result["exclusionRule"] != "none":
+            raise ConformanceError("ProofMismatch")
+        if len(result["attempts"]) < sequence:
+            complete = False
+            continue
+        attempt = result["attempts"][sequence - 1]
+        if (attempt["sequence"] != sequence
+                or not started_ms <= attempt["startedMs"] <= attempt["endedMs"] <= ended_ms):
+            raise ConformanceError("ProofMismatch")
+        observed = tuple(witnesses.get(execution) for execution in attempt["witnessIds"])
+        if any(witness is None or witness["bindingId"] != case.binding_id
+               or witness["matrixId"] != case.matrix_id or witness["proofSha256"] not in attempt["proofSha256"]
+               for witness in observed):
+            raise ConformanceError("ProofMismatch")
+        expected = set(case.witnesses)
+        if not expected and case.binding_id == "sqlite" and (
+                "verified-recovery-walkthrough" in case.controls
+                or any(control.startswith("parent-kill:") for control in case.controls)):
+            expected.add(METADATA_RECOVERY_SOURCE_WITNESS)
+        if attempt["status"] == "Passed" and (
+                len(observed) != len(expected) or {row["testIdentity"] for row in observed} != expected
+                or any(row["status"] != "Passed" for row in observed)):
+            raise ConformanceError("WitnessMissing")
+        complete &= attempt["status"] == "Passed"
+        if attempt["status"] == "Failed" and failure is None:
+            failure = attempt["diagnosticCode"]
+        executions.update(attempt["witnessIds"])
+        proofs.update(attempt["proofSha256"])
+    code = failure or ("None" if complete and executions and proofs else "EvidenceIncomplete")
+    return admit_entity("Attempt", {
+        "sequence": sequence, "startedMs": started_ms, "endedMs": ended_ms,
+        "status": "Passed" if code == "None" else failure_status(code), "diagnosticCode": code,
+        "witnessIds": sorted(executions), "proofSha256": sorted(proofs),
+    })
+
+
 def _origin_input_assignments(origin_inputs):
     if origin_inputs is None:
         return None
@@ -2297,6 +2367,21 @@ class CategoryRuntimeHistory:
             results = {key: value for binding in self._bindings
                        for key, value in self._case_results(
                            binding, code, ended, witnesses, source_parents, controls).items()}
+            if (self._inputs["profileId"] == "metadata" and self._inputs["mode"] == "qualification"
+                    and code in ("None", "AssertionFailed")):
+                from conformance_case_catalog import METADATA_QUALITY_BASIS
+
+                basis = {**self._results, **results}
+                executions = {row["executionId"]: row for row in (*self._witnesses, *witnesses)}
+                for case in self._cases:
+                    if case.binding_id != "none" or case.case_id not in METADATA_QUALITY_BASIS:
+                        continue
+                    attempt = _metadata_quality_attempt(
+                        self._inputs, case.case_id, basis, executions, sequence=self._sequences["none"] + 1,
+                        started_ms=self._active["none"][1], ended_ms=ended)
+                    previous = self._results.get(case.key, {}).get("attempts", ())
+                    results[case.key] = _catalog_case_result(
+                        self._inputs, case, attempt["status"], (*previous, attempt))
             committed = self._commit(self._bindings, results, witnesses, proofs)
             self._session_origins = MappingProxyType({**self._session_origins, **origins})
             self._original_observations = MappingProxyType({**self._original_observations, **originals})
