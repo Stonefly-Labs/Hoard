@@ -37,6 +37,13 @@ internal static class FrozenAgreement
         }
     }
 
+    internal static IEnumerable<(ConformanceExpectedCase Entry, string[] Witnesses)> ParameterizedGroups(
+        string profile, string binding) =>
+        Read(profile).Where(entry => entry.BindingId == binding && entry.Exclusion is null)
+            .SelectMany(entry => entry.Witnesses.GroupBy(witness => witness.Split('(')[0], StringComparer.Ordinal)
+                .Where(group => group.Any(witness => witness.Contains('(')))
+                .Select(group => (entry, group.ToArray())));
+
     internal static void Select(RuntimeLoggerTests.OwnedInput owned, ConformanceExpectedCase entry,
         IReadOnlyList<string> witnesses)
     {

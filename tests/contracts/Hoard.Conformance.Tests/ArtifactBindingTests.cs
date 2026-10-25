@@ -22,32 +22,35 @@ public sealed class ArtifactBindingTests
     public void Both_streaming_handoff_rows_are_required_and_cannot_borrow_the_other_provider(
         string binding, string mutation, ConformanceDiagnosticCode expected)
     {
-        const string method = "Hoard.Artifacts.Tests.ArtifactBudgetTests.Cancellation_at_result_handoff_cannot_discard_a_reserved_ticket_or_live_read";
-        var entry = Assert.Single(FrozenAgreement.Read("artifacts"),
-            entry => entry.BindingId == binding && entry.CaseId == "AS-15");
-        var witnesses = entry.Witnesses.Where(name => name.Split('(')[0] == method).ToArray();
-        Assert.True(witnesses.Length > 1);
-        using var owned = new RuntimeLoggerTests.OwnedInput(witnesses.Length, purpose: "discovery");
-        FrozenAgreement.Select(owned, entry, witnesses);
-        using var recorder = owned.Open();
-        var count = mutation == "missing" ? witnesses.Length - 1 : witnesses.Length;
-        for (var index = 0; index < count; index++)
+        var groups = FrozenAgreement.ParameterizedGroups("artifacts", binding).ToArray();
+        Assert.NotEmpty(groups);
+        foreach (var (entry, witnesses) in groups)
         {
-            var test = owned.Result(index).TestCase;
-            if (mutation == "foreign" && index == count - 1)
+            var method = witnesses[0].Split('(')[0];
+            using var owned = new RuntimeLoggerTests.OwnedInput(witnesses.Length, purpose: "discovery");
+            FrozenAgreement.Select(owned, entry, witnesses);
+            using var recorder = owned.Open();
+            var count = mutation == "missing" ? witnesses.Length - 1 : witnesses.Length;
+            for (var index = 0; index < count; index++)
             {
-                var other = binding == "local" ? "object" : "local";
-                test.DisplayName = witnesses[index].Replace($"provider: \"{binding}\"", $"provider: \"{other}\"",
-                    StringComparison.Ordinal);
-                Assert.NotEqual(witnesses[index], test.DisplayName);
+                var test = owned.Result(index).TestCase;
+                if (mutation == "foreign" && index == count - 1)
+                {
+                    var other = binding == "local" ? "object" : "local";
+                    test.DisplayName = witnesses[index].Contains($"provider: \"{binding}\"", StringComparison.Ordinal)
+                        ? witnesses[index].Replace($"provider: \"{binding}\"", $"provider: \"{other}\"",
+                            StringComparison.Ordinal)
+                        : method + "(shape: \"provider-selected\")";
+                    Assert.NotEqual(witnesses[index], test.DisplayName);
+                }
+                recorder.ObserveDiscovery(test);
             }
-            recorder.ObserveDiscovery(test);
+            recorder.Complete();
+            Assert.Equal(expected, recorder.Diagnostic);
+            Assert.Equal(mutation == "complete" ? witnesses.Length : witnesses.Length - 1,
+                File.ReadAllLines(Path.Combine(owned.Output, "discovered.jsonl")).Length);
+            Assert.False(File.Exists(Path.Combine(owned.Output, "witnesses.jsonl")));
         }
-        recorder.Complete();
-        Assert.Equal(expected, recorder.Diagnostic);
-        Assert.Equal(mutation == "complete" ? witnesses.Length : witnesses.Length - 1,
-            File.ReadAllLines(Path.Combine(owned.Output, "discovered.jsonl")).Length);
-        Assert.False(File.Exists(Path.Combine(owned.Output, "witnesses.jsonl")));
     }
 
     [Theory]

@@ -5725,6 +5725,26 @@ executions and both separate three-source inspection receipts, not yet admitted.
 T019/T020 and all qualifying gates remain unfinished. No task/checklist marker,
 production API/reference, lockfile, deployment example or diagram changes.
 
+### Complete frozen parameter-family transport controls
+
+The two existing extraction test families now independently select all
+applicable embedded frozen parameter groups instead of sampling MP-21 and
+AS-15. Single-selected-row families are included; catalog-authorized excluded
+cases are not manufactured into runtime tests. Each complete control is paired
+with one missing row and one exact-method changed/foreign row. Artifact rows
+with an explicit provider parameter use the opposite provider; neutral families
+use an unselected parameter. Existing runtime identities and catalog bytes
+remain unchanged.
+
+Coverage is 2 SQLite/2 memory/85 Local/84 ObjectSemantics family/case groups
+under three controls each, inside the existing 23 .NET checks. The missing
+shared selection API first produces CS0117; all 23 then pass without skips.
+Changed-file whitespace, frozen inventory, SDK catalog and patch checks pass.
+This is discovery/manifest transport coverage, not full extraction or actual
+category/profile execution. T019/T020 and custom review markers remain
+unchecked; production/SDK/package/lock bytes and deployment examples/diagrams
+are unaffected.
+
 ## Summary
 
 

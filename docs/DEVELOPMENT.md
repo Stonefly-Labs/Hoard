@@ -8607,6 +8607,20 @@ receipts. It is not admitted yet. Qualifying profiles and T019/T020 remain
 unfinished; no task/checklist marker, production/reference/lock bytes,
 deployment example or diagram is changed.
 
+The extraction transport guards now select every applicable parameter family
+from the immutable embedded inventory, rather than only MP-21 and AS-15.
+They include families with one selected row and test the full selection,
+one omitted row and one changed/foreign row. Foreign artifact controls borrow
+the opposite provider where the frozen row has that parameter; provider-neutral
+families use a deliberately unselected parameter instead. All 2 SQLite/
+2 memory/85 Local/84 ObjectSemantics family/case groups are exercised under
+the three controls without changing any runtime test identity or catalog row.
+The missing shared selection helper first fails compilation with CS0117;
+the repaired 23 focused .NET checks pass without skips, with changed-file
+whitespace, frozen inventory, SDK catalog and patch checks passing.
+This expands discovery/ownership transport guards only, not actual extraction
+or category acceptance. T019/T020 and qualifying profiles remain unchecked.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

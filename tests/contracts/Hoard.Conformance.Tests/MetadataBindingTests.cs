@@ -22,27 +22,28 @@ public sealed class MetadataBindingTests
     public void Each_provider_requires_every_exact_corruption_parameter(
         string binding, string mutation, ConformanceDiagnosticCode expected)
     {
-        const string method = "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters";
-        var entry = Assert.Single(FrozenAgreement.Read("metadata"),
-            entry => entry.BindingId == binding && entry.CaseId == "MP-21");
-        var witnesses = entry.Witnesses.Where(name => name.Split('(')[0] == method).ToArray();
-        Assert.True(witnesses.Length > 1);
-        using var owned = new RuntimeLoggerTests.OwnedInput(witnesses.Length, purpose: "discovery");
-        FrozenAgreement.Select(owned, entry, witnesses);
-        using var recorder = owned.Open();
-        var count = mutation == "missing" ? witnesses.Length - 1 : witnesses.Length;
-        for (var index = 0; index < count; index++)
+        var groups = FrozenAgreement.ParameterizedGroups("metadata", binding).ToArray();
+        Assert.NotEmpty(groups);
+        foreach (var (entry, witnesses) in groups)
         {
-            var test = owned.Result(index).TestCase;
-            if (mutation == "changed" && index == count - 1)
-            { test.DisplayName = method + "(shape: \"provider-selected\")"; }
-            recorder.ObserveDiscovery(test);
+            var method = witnesses[0].Split('(')[0];
+            using var owned = new RuntimeLoggerTests.OwnedInput(witnesses.Length, purpose: "discovery");
+            FrozenAgreement.Select(owned, entry, witnesses);
+            using var recorder = owned.Open();
+            var count = mutation == "missing" ? witnesses.Length - 1 : witnesses.Length;
+            for (var index = 0; index < count; index++)
+            {
+                var test = owned.Result(index).TestCase;
+                if (mutation == "changed" && index == count - 1)
+                { test.DisplayName = method + "(shape: \"provider-selected\")"; }
+                recorder.ObserveDiscovery(test);
+            }
+            recorder.Complete();
+            Assert.Equal(expected, recorder.Diagnostic);
+            Assert.Equal(mutation == "complete" ? witnesses.Length : witnesses.Length - 1,
+                File.ReadAllLines(Path.Combine(owned.Output, "discovered.jsonl")).Length);
+            Assert.False(File.Exists(Path.Combine(owned.Output, "witnesses.jsonl")));
         }
-        recorder.Complete();
-        Assert.Equal(expected, recorder.Diagnostic);
-        Assert.Equal(mutation == "complete" ? witnesses.Length : witnesses.Length - 1,
-            File.ReadAllLines(Path.Combine(owned.Output, "discovered.jsonl")).Length);
-        Assert.False(File.Exists(Path.Combine(owned.Output, "witnesses.jsonl")));
     }
 
     [Theory]

@@ -1895,6 +1895,10 @@ the replay uses the production dispatcher/parent and matches 367 metadata,
 non-qualifying local observations, not native containment or complete historical
 compatibility/profile acceptance. Exact-head native admission and qualifying
 category integration remain unfinished.
+Extraction transport guards also exercise every applicable frozen parameter
+family, including families with one selected row, against complete, missing
+and changed/foreign discovery controls for both options. These remain transport
+guards, not proof that the common provider assertions or profiles completed.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce
