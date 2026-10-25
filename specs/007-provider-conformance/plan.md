@@ -6517,6 +6517,34 @@ Its six independent metadata source digests remain distinct. This admits the
 original actual-byte capture, not later complete-set output seals, original
 measurement records, any new task completion or profile qualification.
 
+The next original transfer-output increment adds an optional sixth runner
+argument restricted to safe-event mode and an exact absolute output path.
+The runner writes the same bounded original JSON create-new to its unchanged
+legacy store location and explicit proof path before settlement. Only measured
+native transfer commands may now predeclare outputs; cleanup and unmeasured
+transfers still reject. Existing ownership, absence, proof-path, regular/current-
+user/no-link, actual settled-exit and combined sixteen-file checks are unchanged.
+Each native measurement uses two immutable inputs plus one output. Controller
+admission requires the original raw producer hash in the held output map and
+retains it as `producerSha256`; semantically identical reserialized replacement
+JSON cannot substitute original bytes. Non-native five-argument behavior stays
+unchanged; no qualification namespace or full source authority opens.
+
+Focused reds expose rejected measured-output eligibility and the missing
+original producer-output declaration (the latter was corrected from a lookup
+error to a named assertion before implementation). Repairs pass; all 411
+tooling checks pass with 19 explicit native skips. The actual transfer runner
+compiles with zero warnings/errors after missing assets require a verified
+private lock derivation and restore; no tracked locks/references change.
+Scoped formatting, frozen inventory/catalog and whitespace checks pass.
+Actual bounded local 256 MiB runs on Local and ObjectSemantics confirm original
+legacy/explicit proof-byte equality, exact process/run/provider/count/hash and
+pacing flags. These intentionally claim neither native containment nor OS peak,
+and no local 4 GiB/native qualification is inferred. Store data is removed only
+after actual child exit; safe producer proofs remain private. Fresh Linux output
+sealing, complete independent transfer/control corroboration, all remaining
+artifact QCs and task completion remain pending.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

@@ -6,7 +6,7 @@ using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Fixtures.Artifacts.TransferRunner;
 
-if (args.Length != 5 || args[0] is not ("local" or "object")
+if (args.Length is not (5 or 6) || args[0] is not ("local" or "object")
     || !long.TryParse(args[2], out var size) || size is not (268435456L or 4294967296L)
     || args[3].Length != 64 || args[3].Any(character => !char.IsAsciiHexDigitLower(character)))
 {
@@ -22,6 +22,8 @@ var safeEvents = Environment.GetEnvironmentVariable("HOARD_CONFORMANCE_SAFE_EVEN
 };
 if (safeEvents && !Guid.TryParseExact(args[4], "D", out _))
 { throw new ArgumentException("Safe artifact transfer requires an exact run ID."); }
+if (args.Length == 6 && (!safeEvents || !Path.IsPathFullyQualified(args[5]) || Path.GetFullPath(args[5]) != args[5]))
+{ throw new ArgumentException("Sealed artifact transfer proof requires safe events and an exact absolute output path."); }
 
 await using var store = await ArtifactFixtureSession.CreateForQualificationAsync(args[0], args[1],
     limits: new ArtifactLimits(transferSlots: 1));
@@ -94,6 +96,12 @@ if (safeEvents)
     await using (var output = new FileStream(Path.Combine(args[1], "transfer-proof.json"),
         FileMode.CreateNew, FileAccess.Write, FileShare.None))
     {
+        await output.WriteAsync(proof);
+        output.Flush(flushToDisk: true);
+    }
+    if (args.Length == 6)
+    {
+        await using var output = new FileStream(args[5], FileMode.CreateNew, FileAccess.Write, FileShare.None);
         await output.WriteAsync(proof);
         output.Flush(flushToDisk: true);
     }

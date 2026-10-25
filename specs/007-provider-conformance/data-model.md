@@ -509,8 +509,12 @@ Private per-transfer native receipts retain original command sequences,
 run/root/group/input identities and controller/execution hashes. Actual runner
 and current-input documents are original immutable execution inputs. A native
 receipt requires the original executor-held controller hash and returned
-command digest to agree; it is not a producer-output seal or a new public
-entity/qualification gate.
+command digest to agree. The measured command additionally declares the
+runner's explicit create-new original JSON proof as its one output, sealed
+after actual owned exit. Admission checks its raw hash in the original held
+output map; the private receipt adds `producerSha256`. This introduces no new
+public entity or qualification gate and does not complete independent
+transfer/control admission.
 
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits

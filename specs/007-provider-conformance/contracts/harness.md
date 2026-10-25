@@ -276,8 +276,14 @@ Native paced transfer children additionally capture their actual immutable
 assembly and current input document. Original controller bytes must match the
 executor-held control digest and returned command digest, with exact argv/cwd,
 run/root/input-map and settled-exit equality. Per-transfer read-only native
-receipts retain original sequences and hashes; they do not seal original
-producer bytes or open independent complete artifact source admission.
+receipts retain original sequences and hashes. An optional sixth safe-mode
+runner argument now names its create-new original JSON proof output before
+settlement; the measured native command predeclares and seals that output only
+after actual exit. Two inputs plus one output preserve the combined sixteen-file
+bound. Raw producer hashes must match original held output maps; reserialized
+current bytes cannot substitute them. Legacy five-argument behavior is unchanged.
+Cleanup and unmeasured transfer output declarations reject. This does not open
+independent complete artifact source admission.
 The shared pure measurement validator retains all existing exact qualified
 sizes, kernel peak, protocol timing and settlement constraints.
 The prior byte-capture checkpoint cf4/run40227343651 independently passes

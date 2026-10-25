@@ -312,9 +312,16 @@ current-input documents and original execution receipts. Exact assembly/input
 hashes, run/root, argv/cwd and executor-held original controller digest must
 agree with the returned command digest before a read-only native receipt is
 written. The receipt retains original sequence and controller/execution hashes,
-not raw paths or output. It is measurement provenance only: original producer
-output sealing and complete independent transfer/control admission remain
-required. Non-native diagnostic adapters cannot emit these native receipts.
+not raw paths or output. The optional explicit safe-mode producer path is now
+the measured command's one predeclared output: original bounded JSON is written
+create-new before settlement and sealed only after actual exit. Admission
+requires its raw hash in the original held output map and records
+`producerSha256`; even semantically identical reserialization rejects. Two
+immutable inputs plus one output preserve the combined sixteen-file limit.
+Legacy five-argument behavior remains unchanged; unmeasured transfers/cleanup
+cannot declare outputs. Complete independent transfer/control admission and
+fresh native corroboration remain required. Non-native diagnostic adapters
+cannot emit these native receipts.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

@@ -902,6 +902,8 @@ def measured_artifact_transfer(run, inputs, assembly, provider, size, expected_h
     store.mkdir(mode=0o700)
     native = type(run) is OwnedRun
     execution_inputs = ()
+    directory = run.root / f"proofs/{namespace}/transfer-{provider}-{size}"
+    producer_path = store / "transfer-proof.json"
     if native:
         assembly_path = assembly.relative_to(run.root).as_posix()
         if (inputs.get("runId") != run.run_id
@@ -910,13 +912,18 @@ def measured_artifact_transfer(run, inputs, assembly, provider, size, expected_h
         inputs_path = f"proofs/{namespace}/transfer-{provider}-{size}-native-inputs.json"
         write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
         execution_inputs = (assembly_path, inputs_path)
+        directory.mkdir(mode=0o700)
+        producer_path = directory / "producer.json"
     arguments = ["dotnet", str(assembly), provider, str(store), str(size), expected_hash, run.run_id]
+    if native:
+        arguments.append(str(producer_path))
     sequence = run.command_sequence + 1
     result = run.command(
         arguments,
         cwd=assembly.parent, scope="transfer", measure_transfer_bytes=size, cache_id=namespace,
         env={"HOARD_CONFORMANCE_SAFE_EVENTS": "1"},
-        **({"record_execution": True, "execution_inputs": execution_inputs} if native else {}))
+        **({"record_execution": True, "execution_inputs": execution_inputs,
+            "execution_outputs": (producer_path.relative_to(run.root).as_posix(),)} if native else {}))
     if run.live_children():
         raise evidence.ConformanceError("CleanupIncomplete")
     if result.exit_code or tuple(dict(item) for item in result.events) != (
@@ -928,15 +935,17 @@ def measured_artifact_transfer(run, inputs, assembly, provider, size, expected_h
     command = evidence.load_json(raw)
     admit_transfer_measurement(command, sequence, size)
     native_raw = None
+    producer_raw = read_bounded(producer_path, 8192)
     if native:
+        if producer_path.stat().st_mode & 0o777 != 0o400:
+            raise evidence.ConformanceError("ProofMismatch")
         native_raw = native_control_record(
             run, sequence, raw, arguments=arguments, cwd=assembly.parent,
             input_files={assembly_path: inputs["runtimeAssemblies"][assembly_path],
-                         inputs_path: evidence.digest(inputs)})
+                         inputs_path: evidence.digest(inputs)},
+            output_files={producer_path.relative_to(run.root).as_posix(): hashlib.sha256(producer_raw).hexdigest()})
         if hashlib.sha256(native_raw).hexdigest() != result.execution_record_sha256:
             raise evidence.ConformanceError("ProofMismatch")
-    producer_path = store / "transfer-proof.json"
-    producer_raw = read_bounded(producer_path, 8192)
     producer = evidence.load_json(producer_raw)
     fields = {
         "eventName", "provider", "runId", "pid", "size", "written", "read", "expectedSha256",
@@ -955,8 +964,8 @@ def measured_artifact_transfer(run, inputs, assembly, provider, size, expected_h
         artifacts.verify_transfer(proof, provider, size, run.run_id, peak_methods=("proc-status",))
     except RuntimeError:
         raise evidence.ConformanceError("ProofMismatch") from None
-    directory = run.root / f"proofs/{namespace}/transfer-{provider}-{size}"
-    directory.mkdir(mode=0o700)
+    if not native:
+        directory.mkdir(mode=0o700)
     proof_path = directory / "proof.json"
     write_new(proof_path, evidence.canonical_bytes(proof))
     producer_path.chmod(0o400)
@@ -966,6 +975,7 @@ def measured_artifact_transfer(run, inputs, assembly, provider, size, expected_h
             "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
             "provider": provider, "size": size, "assemblyPath": assembly_path, "inputsPath": inputs_path,
             "sequence": sequence, "controllerSha256": hashlib.sha256(raw).hexdigest(),
+            "producerSha256": hashlib.sha256(producer_raw).hexdigest(),
             "executionSha256": hashlib.sha256(native_raw).hexdigest()}))
     return {
         "provider": provider, "size": size, "controllerSha256": hashlib.sha256(raw).hexdigest(),

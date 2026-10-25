@@ -2154,8 +2154,15 @@ executor-authenticated controller digest. Changed controller bytes, substituted
 command-result digests and foreign input/assembly identities reject; the shared
 measurement validator retains all size, pacing-protocol, peak-memory and settled
 exit requirements. All 411 local tooling tests pass with 19 native skips.
-This prepares original measurement authority, not original producer-output
-sealing, full transfer/control admission or artifact qualification.
+The following producer-output increment adds an optional safe-mode proof path
+to the actual transfer runner. Its original bounded JSON is written create-new
+before settlement, then sealed as the measured native command's one declared
+output. Original input/controller/output maps and returned command digest must
+all agree; reserializing even semantically identical producer JSON rejects.
+Legacy five-argument behavior remains unchanged. Actual local 256 MiB runs on
+both options confirm matching original output bytes without native-containment
+or OS-peak claims. Full independent transfer/control admission and artifact
+qualification remain closed pending complete native corroboration.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

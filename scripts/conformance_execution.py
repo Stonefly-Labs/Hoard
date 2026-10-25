@@ -679,7 +679,8 @@ class OwnedRun:
         if kind == "metadata-marker" and (not record_execution or scope != "recovery" or not execution_inputs):
             raise ConformanceError("OwnershipInvalid")
         if (not isinstance(execution_outputs, (tuple, list)) or len(execution_inputs) + len(execution_outputs) > 16
-                or execution_outputs and (not record_execution or scope not in ("ordinary", "recovery"))):
+                or execution_outputs and (not record_execution or scope not in ("ordinary", "recovery", "transfer")
+                                          or scope == "transfer" and measure_transfer_bytes is None)):
             raise ConformanceError("OwnershipInvalid")
         execution_outputs = tuple(relative_path(path) for path in execution_outputs)
         if (len(set(execution_outputs)) != len(execution_outputs)

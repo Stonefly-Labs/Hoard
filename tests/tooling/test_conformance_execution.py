@@ -330,6 +330,7 @@ class ConformanceExecutionTests(unittest.TestCase):
             for options in (
                     {"execution_outputs": ["proofs/output"], "scope": "recovery"},
                     {"execution_outputs": ["proofs/output"], "record_execution": True, "scope": "cleanup"},
+                    {"execution_outputs": ["proofs/output"], "record_execution": True, "scope": "transfer"},
                     {"execution_outputs": ["proofs/output"], "execution_inputs": ["proofs/output"],
                      "record_execution": True, "scope": "recovery"}):
                 with self.subTest(options=options), self.assertRaises(ConformanceError):
@@ -378,11 +379,13 @@ class ConformanceExecutionTests(unittest.TestCase):
         run.transition("Settling")
         run.release()
 
-    def test_ordinary_output_capture_requires_native_execution_without_weakening_other_admission(self):
+    def test_ordinary_and_measured_transfer_outputs_require_native_execution_without_weakening_other_admission(self):
         run = execution.OwnedRun.allocate(self.parent / "run", ROOT, profile="harness")
         with mock.patch.object(execution, "native_execution_supported", return_value=False):
-            with self.assertRaisesRegex(ConformanceError, "PrerequisiteMissing"):
-                run.command([sys.executable], record_execution=True, execution_outputs=("proofs/source-index.json",))
+            for options in ({}, {"scope": "transfer", "measure_transfer_bytes": 268435456}):
+                with self.subTest(options=options), self.assertRaisesRegex(ConformanceError, "PrerequisiteMissing"):
+                    run.command(
+                        [sys.executable], record_execution=True, execution_outputs=("proofs/source-index.json",), **options)
 
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Actual original output sealing requires Linux.")
     def test_native_ordinary_source_index_is_sealed_only_after_owned_exit_and_pinned_to_original_bytes(self):
@@ -750,11 +753,13 @@ time.sleep(60)
         run = self.workspace()
         program = """
 import json,sys
+from pathlib import Path
 print(json.dumps({"event":"control","code":"None","value":0}),flush=True)
 assert sys.stdin.readline()=="transfer\\n"
 buffer=bytearray(4*1024**2)
 print(json.dumps({"event":"test","code":"None","value":268435456}),flush=True)
 assert sys.stdin.readline()=="settle\\n"
+Path(sys.argv[1]).write_bytes(b'{"qualification":false}')
 print(json.dumps({"event":"control","code":"None","value":1}),flush=True)
 """
         script = run.root / "stores/measurement.py"
@@ -763,10 +768,12 @@ print(json.dumps({"event":"control","code":"None","value":1}),flush=True)
         inputs = run.root / "proofs/measurement-inputs.json"
         inputs.write_bytes(b'{"qualification":false}')
         inputs.chmod(0o400)
-        arguments = [sys.executable, "-I", "-S", str(script)]
+        producer = run.root / "proofs/measurement-producer.json"
+        arguments = [sys.executable, "-I", "-S", str(script), str(producer)]
         result = run.command(
             arguments, scope="transfer", measure_transfer_bytes=268435456, record_execution=True,
-            execution_inputs=("stores/measurement.py", "proofs/measurement-inputs.json"))
+            execution_inputs=("stores/measurement.py", "proofs/measurement-inputs.json"),
+            execution_outputs=("proofs/measurement-producer.json",))
         self.assertEqual(result.exit_code, 0)
         control = (run.root / "proofs/transfer-command-0001.json").read_bytes()
         receipt = json.loads(control)
@@ -778,6 +785,9 @@ print(json.dumps({"event":"control","code":"None","value":1}),flush=True)
         self.assertEqual(record["inputFiles"], {
             "stores/measurement.py": hashlib.sha256(script.read_bytes()).hexdigest(),
             "proofs/measurement-inputs.json": hashlib.sha256(inputs.read_bytes()).hexdigest()})
+        self.assertEqual(record["outputFiles"], {
+            "proofs/measurement-producer.json": hashlib.sha256(producer.read_bytes()).hexdigest()})
+        self.assertEqual(stat.S_IMODE(producer.stat().st_mode), 0o400)
         self.assertEqual((receipt["exitCode"], receipt["diagnosticCode"], receipt["groupState"]), (0, "None", "Exited"))
         measured = receipt["transfer"]
         self.assertEqual(measured["bytes"], 268435456)

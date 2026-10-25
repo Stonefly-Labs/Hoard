@@ -1695,7 +1695,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             execute.assert_not_called()
 
     def test_native_transfer_measurement_pins_original_inputs_controller_and_command_result(self):
-        for changed in (None, "result", "controller", "assembly", "run", "provider", "size"):
+        for changed in (None, "result", "controller", "producer", "assembly", "run", "provider", "size"):
             root = self.directory / str(changed)
             (root / "stores/category-artifact-transfers").mkdir(parents=True)
             (root / "proofs/category-artifact-transfers").mkdir(parents=True)
@@ -1722,7 +1722,9 @@ class SdkDiagnosticTests(unittest.TestCase):
                 self.assertTrue(options.get("record_execution"))
                 input_path = "proofs/category-artifact-transfers/transfer-local-268435456-native-inputs.json"
                 self.assertEqual(options["execution_inputs"], ("candidate/transfer.dll", input_path))
-                self.assertNotIn("execution_outputs", options)
+                producer_path = "proofs/category-artifact-transfers/transfer-local-268435456/producer.json"
+                self.assertEqual(options.get("execution_outputs"), (producer_path,))
+                self.assertEqual(arguments[-1], str(root / producer_path))
                 self.assertEqual((root / input_path).read_bytes(), checks.evidence.canonical_bytes(inputs))
                 self.assertEqual((root / input_path).stat().st_mode & 0o777, 0o400)
                 run.command_sequence += 1
@@ -1743,6 +1745,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                     "generated": True, "independentExpectedHash": True, "warmupComplete": True,
                     "bufferBytes": 262144, "providerBufferLimit": 2097152, "slots": 1}
                 (Path(arguments[3]) / "transfer-proof.json").write_bytes(checks.evidence.canonical_bytes(producer))
+                (root / producer_path).write_bytes(checks.evidence.canonical_bytes(producer))
+                (root / producer_path).chmod(0o400)
                 held[1] = checks.evidence.canonical_bytes({
                     **{key: value for key, value in control.items() if key != "transfer"},
                     "runId": run.run_id, "rootId": run.root_id,
@@ -1750,10 +1754,15 @@ class SdkDiagnosticTests(unittest.TestCase):
                     "cwdSha256": hashlib.sha256(str(assembly.parent).encode()).hexdigest(),
                     "controlRecordSha256": hashlib.sha256(raw).hexdigest(),
                     "inputFiles": {"candidate/transfer.dll": checks.evidence.file_sha256(assembly),
-                                   input_path: checks.evidence.digest(inputs)}})
+                                   input_path: checks.evidence.digest(inputs)},
+                    "outputFiles": {producer_path: checks.evidence.digest(producer)}})
                 if changed == "controller":
                     control["transfer"]["osPeakRssBytes"] += 1024
                     (root / "proofs/transfer-command-0001.json").write_bytes(checks.evidence.canonical_bytes(control))
+                elif changed == "producer":
+                    (root / producer_path).chmod(0o600)
+                    (root / producer_path).write_bytes(json.dumps(producer, separators=(",", ":")).encode())
+                    (root / producer_path).chmod(0o400)
                 return SimpleNamespace(
                     exit_code=0, events=(
                         {"event": "control", "code": "None", "value": 0},

@@ -9381,8 +9381,9 @@ and immutable context hash to that original ordinary execution. C# JSON order
 need not equal Python canonical order. Consumption and source-parent checks
 revalidate the same seal; rehashing current packets/index cannot replace the
 executor's original output hash. Legacy/discovery paths declare no such output.
-Cleanup/transfer commands still cannot declare outputs; ordinary/recovery
-commands retain the same ownership, count, path and settlement safeguards.
+Cleanup and unmeasured transfer commands still cannot declare outputs;
+ordinary/recovery and the measured-only transfer mode below retain the same
+ownership, count, path and settlement safeguards.
 This is implemented diagnostic output authority, not complete artifact source
 qualification or fresh Linux acceptance.
 
@@ -9400,7 +9401,27 @@ native receipt. The unchanged pure measurement validator now lives in the
 shared source module, not the SDK orchestration layer. The Linux process
 protocol regression additionally checks actual original input/controller
 hashes; its small handshake child is not a real 256 MiB/4 GiB transfer.
-This is not producer-output sealing or independent complete transfer authority.
+The subsequent original-output increment supplies an optional sixth transfer
+runner argument only in safe-event mode, requiring an exact absolute proof
+path. The original bounded JSON is written create-new both to the unchanged
+legacy store location and to that explicit proof path before settlement.
+Native measured commands predeclare only the latter as an output; after actual
+owned exit the existing regular/current-user/no-link checks seal its original
+bytes read-only. Two immutable inputs plus one output retain the combined
+sixteen-file bound. Unmeasured transfers/cleanup cannot request output sealing.
+Controller admission joins the producer's raw hash to the original output map,
+not a late canonical reserialization; even semantically identical replacement
+JSON rejects. The per-transfer native receipt retains `producerSha256`.
+Non-native adapters preserve their original five-argument behavior.
+
+The actual TransferRunner compiles with zero warnings/errors after a verified
+private lock derivation and required restore; tracked locks/references remain
+unchanged. Its scoped whitespace check passes. Actual local 256 MiB transfers
+on both options produce byte-identical legacy and explicit proof files with
+correct PID/run/provider/count/digest/pacing values. These are bounded local
+diagnostics without native-containment or OS-peak assertions, not the full
+4 GiB/Linux qualification chain. The original native-output protocol regression
+and all independent complete transfer/control authority still require replay.
 All seven artifact QCs and artifact qualification remain closed.
 
 Exact `cf4a70f278d9e5542cc344e9cd4aa77d78273b40`,
