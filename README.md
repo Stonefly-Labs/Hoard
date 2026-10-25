@@ -1923,6 +1923,12 @@ argument/working-directory hashes join the actual PID/start identity, command
 sequence, timing, exit and whole-group settlement. Raw arguments and paths are
 not persisted. Native record assertions await Linux execution; this plumbing
 does not open the source/controller qualification gate.
+The native diagnostic path now captures/recomputes a separate metadata input
+document, predeclares all six category scopes, and submits their 134 untouched
+transports together to joint history admission. Its private 96-case snapshot
+retains failures and explicitly leaves unverified parent controls incomplete.
+This orchestration is wired and locally unit-checked; its complete Linux
+execution has not yet been admitted and is not a qualifying metadata profile.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

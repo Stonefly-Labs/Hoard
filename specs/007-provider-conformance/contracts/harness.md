@@ -90,6 +90,12 @@ they are diagnostic and do not open qualification. Actual local execution
 covers all six category inspection scopes/twelve source executions; remaining
 scopes leave the histories explicitly incomplete, with no native containment or
 complete profile execution claim.
+The native diagnostic path now additionally predeclares and executes all six
+metadata scopes under separately captured/recomputed metadata inputs, then
+atomically imports all unchanged transports into a private 96-case diagnostic
+history. Missing parent controls remain incomplete; execution/admission errors
+persist incomplete attempts and propagate. The complete Linux batch is wired
+but not yet admitted, and remains non-qualifying.
 
 The Memory binding package now supplies current/legacy factories, the same
 controlled clock/authority across logical reopen, all required typed controls

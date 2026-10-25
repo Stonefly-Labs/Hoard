@@ -5862,6 +5862,36 @@ no raw canary persistence. These expanded native assertions are not yet run
 locally; Linux validation is required. No qualifying gate or task/checklist
 marker changes, and no product/reference/lock/deployment surface is affected.
 
+### Complete metadata diagnostic batch wiring
+
+The native diagnostic path now separately captures metadata RunInputs, including
+its two catalog-bound declarations, before execution; completion independently
+recaptures that same profile and inspected-input map. It never changes the
+profile label of an existing harness input or completed proof.
+
+All six metadata scopes/134 binding-identity occurrences are predeclared and
+executed through the actual category dispatcher. Only the complete collection
+of unchanged source transports reaches joint history admission. A private
+96-case snapshot retains terminal state counts, scope summaries and result
+hashes, while unobserved parent controls remain incomplete. A child failure
+interrupts both binding histories before any joint import; an admission failure
+retains the model's incomplete attempts. Both errors persist the diagnostic
+history and propagate. Success of this orchestration is not profile
+qualification; all output remains `qualification: false`.
+
+The new regression first fails at the missing orchestration API, then checks
+all six scopes, exact predeclared maps, untouched transport object identity,
+partial execution failure and rejected atomic admission. The real capture
+regression also verifies separately captured/recomputed metadata input identity.
+All 124 SDK checks and all 376 tooling checks pass (359 passed/seventeen
+macOS-native skips), with frozen inventory/catalog and patch checks passing.
+The final admission-error fixture additionally passes its focused rerun.
+Complete native execution is pending: six additional scopes/134 exact
+discoveries/executions and 96 diagnostic cases are requested, not admitted.
+Independent source/controller qualification, missing parent controls, full
+artifact/category backends and T019/T020 remain unfinished; no task/checklist,
+product/reference/lock or deployment claims change.
+
 ## Summary
 
 

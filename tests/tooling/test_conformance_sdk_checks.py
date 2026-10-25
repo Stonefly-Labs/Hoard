@@ -35,6 +35,68 @@ class SdkDiagnosticTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.directory)
 
+    def test_metadata_category_batch_keeps_predeclared_transports_and_failure_history(self):
+        from conformance_case_catalog import category_execution_partitions, category_runtime_cases
+        partitions = category_execution_partitions("metadata")
+        plans = {scope_id: {
+            "attemptId": str(uuid.uuid4()),
+            "tests": {identity: (binding, category_runtime_cases("metadata", binding)[identity])
+                      for binding, identity in rows}} for scope_id, rows in partitions.items()}
+        for failure in (None, "execution", "admission"):
+            root = self.directory / str(failure)
+            (root / "proofs").mkdir(parents=True)
+            inputs = {
+                "profileId": "metadata", "mode": "diagnostic",
+                "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4())}
+            transports = {scope: object() for scope in plans}
+            history = unittest.mock.Mock()
+            history.joint_partitions.return_value = plans
+            history.results.return_value = [{"status": "Incomplete"} for _ in range(96)]
+            if failure == "admission":
+                history.finish_joint.side_effect = checks.evidence.ConformanceError("ProofMismatch")
+            captured = []
+            def execute(run, captured_inputs, candidate, scope_id, plan, **options):
+                self.assertIs(captured_inputs, inputs)
+                self.assertIs(plan, plans[scope_id])
+                self.assertEqual(options["run_inputs_path"], "proofs/category-metadata-run-inputs.json")
+                if "prepared" in scope_id:
+                    self.assertEqual(options["inspection_cases"], {"selected": "inputs"})
+                captured.append(scope_id)
+                if failure == "execution" and len(captured) == 3:
+                    raise checks.evidence.ConformanceError("ProofMismatch")
+                return {"transport": transports[scope_id],
+                        "summary": {"tests": len(plan["tests"]), "qualification": False, "code": "None"}}
+            with self.subTest(failure=failure), patch.object(
+                    checks.evidence, "CategoryRuntimeHistory", return_value=history), patch.object(
+                        checks, "category_attempt", side_effect=execute):
+                arguments = (
+                    SimpleNamespace(root=root), inputs, root / "candidate")
+                options = {"inspection_cases": {"selected": "inputs"}, "inspection_configurations": {}}
+                if failure is not None:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                        checks.metadata_category_diagnostics(*arguments, **options)
+                    if failure == "execution":
+                        history.interrupt_joint.assert_called_once_with("ProofMismatch")
+                        history.finish_joint.assert_not_called()
+                    else:
+                        history.interrupt_joint.assert_not_called()
+                        history.finish_joint.assert_called_once()
+                else:
+                    summary = checks.metadata_category_diagnostics(*arguments, **options)
+                    history.finish_joint.assert_called_once()
+                    received = history.finish_joint.call_args.kwargs["transports"]
+                    self.assertEqual(set(received), set(plans))
+                    self.assertTrue(all(received[key] is value for key, value in transports.items()))
+                    self.assertEqual(summary["tests"], 134)
+                    self.assertEqual(summary["caseCount"], 96)
+                    self.assertFalse(summary["qualification"])
+                    history.interrupt_joint.assert_not_called()
+                self.assertEqual(history.begin_joint.call_args.kwargs["partitions"], partitions)
+                record = json.loads((root / "proofs/category-metadata-diagnostic-history.json").read_bytes())
+                self.assertFalse(record["qualification"])
+                self.assertEqual(record["code"], "ProofMismatch" if failure else "EvidenceIncomplete")
+                self.assertEqual(len(record["results"]), 96)
+
     def test_category_runtime_scopes_preserve_exact_catalog_binding_and_case_assignments(self):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases
         (self.directory / "stores").mkdir()
@@ -3903,15 +3965,22 @@ class SdkDiagnosticTests(unittest.TestCase):
             "pragmas": {"journalMode": "none", "synchronous": 0, "foreignKeys": 0, "busyTimeout": 0},
         }
         identity = checks.evidence.source_identity(repository)
-        def capture(group_id=None, inspection_inputs=None):
+        def capture(group_id=None, inspection_inputs=None, profile_id="harness"):
             return checks.make_inputs(run, repository, candidate, sources,
-                                      environment, identity, None, group_id=group_id, inspection_inputs=inspection_inputs)
+                                      environment, identity, None, group_id=group_id, inspection_inputs=inspection_inputs,
+                                      profile_id=profile_id)
         unconsumed = runtime / "unused-native-build.a"
         with unconsumed.open("wb") as output:
             output.truncate(checks.evidence.MAX_PROOF_BYTES + 1)
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
             checks.evidence.proof_manifest(candidate)
         before = capture()
+        metadata_inputs = capture(profile_id="metadata")
+        self.assertEqual(metadata_inputs["profileId"], "metadata")
+        self.assertEqual(metadata_inputs["mode"], "diagnostic")
+        self.assertNotEqual(checks.evidence.digest(metadata_inputs), checks.evidence.digest(before))
+        checks.evidence.verify_input_recomputation(
+            metadata_inputs, capture(metadata_inputs["invocationGroupId"], profile_id="metadata"))
         selected_large = runtime / "Oversized.dll"
         with selected_large.open("wb") as output:
             output.truncate(checks.evidence.MAX_PROOF_BYTES + 1)

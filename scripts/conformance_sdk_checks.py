@@ -2411,7 +2411,9 @@ def probe(path):
 
 
 def make_inputs(run, repository, candidate, sources, observed_environment, identity, seal_sha,
-                *, group_id=None, ci_revision=None, binding_sources=(), inspection_inputs=None):
+                *, group_id=None, ci_revision=None, binding_sources=(), inspection_inputs=None, profile_id="harness"):
+    if profile_id not in ("harness", "metadata", "artifacts"):
+        raise evidence.ConformanceError("UnsupportedProfile")
     run._check_ledger()
     runtime_folders = {f"{TESTS}/bin/Release/net10.0", f"{LOGGER}/Smoke/bin/Release/net10.0",
                        f"{TESTS}/{PACKAGE_TEST_OUTPUT}/Release/net10.0",
@@ -2439,7 +2441,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     if not runtime or not locks:
         raise evidence.ConformanceError("EvidenceIncomplete")
     inputs = evidence.capture_profile_inputs(
-        run, repository, candidate, profile_id="harness", mode="diagnostic",
+        run, repository, candidate, profile_id=profile_id, mode="diagnostic",
         invocation_group_id=str(uuid.uuid4()) if group_id is None else group_id,
         package_versions=[{"packageId": name, "version": "0.1.0"} for name in INPUT_PACKAGES],
         feed="feed/candidate", configuration="stores/candidate.NuGet.Config",
@@ -2825,6 +2827,52 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
             **(original_inspection_literal_proofs(run, inputs, manifest, ingested) if inspection_literals else {}),
             **(original_inspection_prepared_proofs(run, inputs, manifest, ingested, inspection_cases)
                if inspection_prepared else {})}
+
+
+def _metadata_category_record(run, inputs, history, scopes, code=None):
+    results = history.results()
+    states = {state: sum(result["status"] == state for result in results)
+              for state in ("Passed", "Failed", "Incomplete", "NotApplicable")}
+    if code is None:
+        code = "AssertionFailed" if states["Failed"] else "EvidenceIncomplete" if states["Incomplete"] else "None"
+    summary = {
+        "qualification": False, "profileId": "metadata", "code": code,
+        "inputsSha256": evidence.digest(inputs), "scopeCount": len(scopes),
+        "tests": sum(scope["tests"] for scope in scopes.values()),
+        "caseCount": len(results), "caseStates": states, "resultsSha256": evidence.digest(results)}
+    write_new(run.root / "proofs/category-metadata-diagnostic-history.json", evidence.canonical_bytes({
+        "schemaVersion": 1, **summary, "scopes": scopes, "results": results}))
+    return MappingProxyType(summary)
+
+
+def metadata_category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection_configurations):
+    if inputs["profileId"] != "metadata" or inputs["mode"] != "diagnostic":
+        raise evidence.ConformanceError("UnsupportedProfile")
+    history = evidence.CategoryRuntimeHistory(
+        inputs, original_inputs=original_observation_inputs(candidate, run.root))
+    history.begin_joint(str(uuid.uuid4()), partitions=category_execution_partitions("metadata"))
+    plan = history.joint_partitions()
+    write_new(run.root / "proofs/category-metadata-plan.json", evidence.canonical_bytes({
+        "schemaVersion": 1, "qualification": False, "inputsSha256": evidence.digest(inputs), "scopes": plan}))
+    transports, scopes = {}, {}
+    try:
+        for scope_id, scope in plan.items():
+            options = ({"inspection_cases": inspection_cases, "inspection_configurations": inspection_configurations}
+                       if scope_id.startswith("inspection-prepared-") else {})
+            observed = category_attempt(
+                run, inputs, candidate, scope_id, scope,
+                run_inputs_path="proofs/category-metadata-run-inputs.json", **options)
+            transports[scope_id], scopes[scope_id] = observed["transport"], observed["summary"]
+    except evidence.ConformanceError as error:
+        history.interrupt_joint(str(error))
+        _metadata_category_record(run, inputs, history, scopes, str(error))
+        raise
+    try:
+        history.finish_joint(transports=transports)
+    except evidence.ConformanceError as error:
+        _metadata_category_record(run, inputs, history, scopes, str(error))
+        raise
+    return _metadata_category_record(run, inputs, history, scopes)
 
 
 def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path, attempt_sequence=1,
@@ -3338,6 +3386,13 @@ def execute(repository, destination):
             run, repository, candidate, sources, admitted_environment, identity, seal_sha,
             group_id=inputs["invocationGroupId"], ci_revision=ci_revision, binding_sources=original_binding_sources,
             inspection_inputs=inspection_inputs)
+        metadata_bindings = {binding for profile, binding, _, _ in CATEGORY_BINDING_SLOTS if profile == "metadata"}
+        metadata_binding_sources = [
+            source for source in original_binding_sources if source.get("catalogBindingId") in metadata_bindings]
+        metadata_inputs = make_inputs(
+            run, repository, candidate, sources, admitted_environment, identity, seal_sha,
+            group_id=inputs["invocationGroupId"], ci_revision=ci_revision, binding_sources=metadata_binding_sources,
+            inspection_inputs=inspection_inputs, profile_id="metadata")
         for name in sources:
             (candidate / name).chmod(0o400)
         for name in inputs["runtimeAssemblies"]:
@@ -3346,6 +3401,7 @@ def execute(repository, destination):
             package.chmod(0o400)
         write_new(run.root / "proofs/run-inputs.json", evidence.canonical_bytes(inputs))
         write_new(run.root / "proofs/original-run-inputs.json", evidence.canonical_bytes(original_inputs))
+        write_new(run.root / "proofs/category-metadata-run-inputs.json", evidence.canonical_bytes(metadata_inputs))
         write_new(run.root / "runtime-owner.json", evidence.canonical_bytes({
             "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
             "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest(),
@@ -3503,6 +3559,10 @@ def execute(repository, destination):
             observations.append(test_attempt(
                 run, inputs, candidate, scenario,
                 inspection_cases=inspection_inputs, inspection_configurations=inspection_configurations))
+        print(json.dumps({"qualification": False, "phase": "metadata-category"}), flush=True)
+        metadata_category = metadata_category_diagnostics(
+            run, metadata_inputs, candidate,
+            inspection_cases=inspection_inputs, inspection_configurations=inspection_configurations)
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)
         post_identity = evidence.source_identity(repository, ci_revision=ci_revision)
@@ -3542,11 +3602,17 @@ def execute(repository, destination):
             group_id=inputs["invocationGroupId"], ci_revision=ci_revision, binding_sources=original_binding_sources,
             inspection_inputs=post_inspection_inputs)
         evidence.verify_input_recomputation(original_inputs, original_post_inputs)
+        metadata_post_inputs = make_inputs(
+            run, repository, candidate, post_sources, post_environment, post_identity, seal_sha,
+            group_id=inputs["invocationGroupId"], ci_revision=ci_revision, binding_sources=metadata_binding_sources,
+            inspection_inputs=post_inspection_inputs, profile_id="metadata")
+        evidence.verify_input_recomputation(metadata_inputs, metadata_post_inputs)
         native_provenance = evidence.load_json(read_bounded(
             run.root / "proofs/sqlite-native-provenance-completion.json", 64 * 1024))
         summary = {"qualification": False, "code": "None", "baselines": 6,
                    "baselineSha256": seal_sha, "inputsSha256": evidence.digest(inputs),
                    "originalWrapperInputsSha256": evidence.digest(original_inputs),
+                   "metadataCategory": metadata_category,
                    "lockPreparation": lock_preparation,
                    "nativeNonCooperation": native_noncooperation,
                    "metadataRecovery": metadata_recovery,

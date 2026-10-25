@@ -8710,6 +8710,30 @@ receipt and absence of raw canaries; those native assertions await Linux.
 No native success or source/controller qualification is inferred from local
 skips. Task/checklist markers, packages/locks and deployment diagrams stay fixed.
 
+Complete metadata batch orchestration is now wired into the native diagnostic
+path. It independently captures the metadata profile and its two frozen binding
+declarations before any execution, writes a dedicated input document and
+predeclares all six scope UUID/maps. The dispatcher executes all 134 catalog
+witness occurrences and passes the original transport objects to joint
+admission only after every scope finishes. A create-new private 96-case history
+records scope/result hashes and terminal state counts; execution or admission
+failure preserves incomplete histories and propagates the original failure.
+Missing parent controls are not treated as passes. The whole diagnostic retains
+`qualification: false` and never substitutes for the qualification backend.
+Completion independently recaptures metadata inputs and inspected bytes again.
+
+The new orchestration regression first fails at the missing API, then verifies
+all scopes/unchanged transport identity, partial execution failure and rejected
+atomic admission. Existing real input-capture checks additionally verify a
+separately captured/recomputed metadata profile rather than relabeled harness
+inputs. All 124 SDK checks and all 376 tooling checks pass (359 passed/seventeen
+explicit native macOS skips); frozen inventory/catalog and patch checks pass.
+The added admission-error fixture passes its focused rerun.
+The requested native addition is six scopes/134 exact executions and a
+96-case diagnostic history; parent controls, independent non-session
+qualification, full artifact/category CLI acceptance and T019/T020 remain
+unfinished. That complete Linux metadata batch is not yet admitted.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full
