@@ -4804,6 +4804,53 @@ than borrowing a generic fixture package. Bounded custom architecture review
 found no confirmed blocker for this first slice; complete qualifying inputs and
 coverage remain explicitly outstanding.
 
+### Full-input original-observation diagnostic wiring
+
+The initial identity-bound contract probe is an auxiliary original test, not
+one of the frozen category value witnesses. Both actual frozen value witnesses
+(expectations/checksums and redacted diagnostics/get-only members) now have
+package-only loaded-contract observations after their unchanged assertions.
+The auxiliary hook remains supported. No frozen identity/assertion/ownership,
+SDK archive, public contract, tracked lock or predecessor dependency changes.
+
+Five exact native scopes now schedule eight original executions. A separately
+captured full input document projects original binding descriptors into frozen
+catalog slots while preserving their raw bytes/hash and package relationships;
+the existing typed-binding input document retains its original IDs. Source,
+runtime/package bytes and invocation group are shared. Both documents recompute
+independently after execution and report separate digests. Manifest primary-case
+selection reuses the same immutable helper as category history. Selected
+component images are independently declared; every new passing execution must
+contain exactly one original observation of its independently selected kind,
+not an unrelated typed session or only a successful result.
+
+Two focused regressions first fail on the missing APIs, then pass after wiring.
+They check exact scopes, selected frozen binding/case/image/context before
+launch, real settings generation, shortened/provider-selected rejection and
+missing/replayed/substituted observations. Full tooling passes 337 checks
+(320 passed/seventeen macOS-native skips). The predecessor value-test command
+`dotnet test tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj --no-restore -c Release --filter FullyQualifiedName~ArtifactValueTests -p:UseSharedCompilation=false -nodeReuse:false -v quiet`
+passes all seven tests without skips, with no original context/SDK dependency.
+Actual local package-only observation and independent fresh-cache locked replay
+each pass eight discoveries/executions, four original owners, four session-free
+contract contexts and 28 image correspondences, reproducing the unchanged SDK
+archive `a94e225acd4ef19a8d1b363f5c7eedf498bae9364fbc2838f917f17c595485e3`.
+These remain minimal-input diagnostics; the new full-input path requires its
+own exact-head native receipt (105 scopes/990 observations plus every existing
+prerequisite). No such receipt or category qualification is claimed yet.
+`dotnet format tests/contracts/Hoard.Artifacts.Tests/Hoard.Artifacts.Tests.csproj --no-restore --verify-no-changes --verbosity quiet`,
+`python3 tests/fixtures/conformance/baselines/freeze_inventory.py --check`,
+`python3 scripts/conformance_case_catalog.py --check-sdk` and `git diff --check`
+all pass.
+
+Capacity-only tooling failures were resolved by reclaiming eighteen inspected
+completed private caches, retaining source/archive/runtime/proof/receipt data
+and the unchanged 24 GiB guard. README and affected guides/model/contracts are
+updated; production/deployment examples and diagrams are unaffected. Broader
+original/direct/reopen/controller coverage and executable qualifying profiles,
+later stories and final T081 remain unfinished. No task/reviewer marker or flow
+checkpoint is advanced.
+
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations
 without failures/errors/skips, 87 scopes/757 exact discoveries/executions and

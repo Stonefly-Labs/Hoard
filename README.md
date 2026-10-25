@@ -1876,6 +1876,12 @@ session origins. The first original MP-01/AS-01/value-test instrumentation
 preserves actual owners, clocks and assertions. Actual observation and independent
 fresh-cache replay each pass six executions/26 image correspondences through the
 safe logger, not full qualifying inputs or complete category execution.
+The next increment adds both actual frozen artifact value witnesses: observation
+and independent locked replay pass eight executions/28 image correspondences.
+Five native diagnostic scopes are now wired to separately captured/recomputed
+full inputs with frozen binding slots, alongside unchanged typed-binding inputs.
+That full-input path still requires an exact-head native receipt; complete
+category/profile qualification remains unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

@@ -605,6 +605,12 @@ catalogued original-instance or session-free loaded-contract observations while
 retaining strict typed origins elsewhere. The first actual original-wrapper
 observation/replay pass six executions/26 image correspondences using minimal
 local logger inputs. They do not implement complete category qualification.
+The expanded frozen-witness observation/replay pass eight executions/28 image
+correspondences, including both actual frozen artifact value witnesses. Five
+native scopes now use separately captured/recomputed full inputs and frozen
+binding slots, alongside preserved typed-binding inputs. Native admission of
+this path remains pending; it requests 105 scopes/990 observations plus every
+existing prerequisite, not full category/profile qualification.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

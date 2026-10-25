@@ -939,6 +939,15 @@ and 26 image correspondences. These minimal-input local logger diagnostics do
 not qualify full categories; wider original/reopen/controller coverage remains
 unfinished.
 
+The native diagnostic now also schedules five original-observation scopes
+(eight executions), including both frozen artifact value witnesses rather than
+only the auxiliary identity-bound test. Original and typed-binding inputs retain
+separate immutable manifests and binding IDs, the same actual packages/source/
+invocation group, and independent pre/post recomputation. Native execution of
+this full-input path is not yet admitted. Local observation and fresh-cache
+replay pass eight executions/28 role-image correspondences using minimal inputs,
+not qualifying category evidence.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and
 actual prerequisites/replay, not full category/profile qualification.

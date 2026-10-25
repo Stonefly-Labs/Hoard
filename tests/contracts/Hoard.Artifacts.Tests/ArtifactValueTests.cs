@@ -5,7 +5,7 @@ namespace Hoard.Artifacts.Tests;
 
 public sealed partial class ArtifactValueTests
 {
-    partial void ObserveIdentityContract();
+    partial void ObserveContract(string method, Type contract);
     private static readonly ArtifactDigest Digest = new(new string('a', 64));
     private static ArtifactStoreIdentity Store() => new("fixture.artifact", Guid.NewGuid(), Guid.NewGuid());
     private static ArtifactOperationTicket Ticket() => new(Store(), Guid.NewGuid(), ArtifactOperationKind.Write,
@@ -22,7 +22,7 @@ public sealed partial class ArtifactValueTests
         Assert.Throws<ArgumentException>(() => new ArtifactIdentity(Digest, 4, 3));
         Assert.Throws<ArgumentException>(() => new ArtifactIdentity(Digest, 0, 0));
         Assert.Throws<ArgumentNullException>(() => new ArtifactIdentity(null!, 0));
-        ObserveIdentityContract();
+        ObserveContract(nameof(Identity_bounds_preserve_empty_and_reject_overflow_negative_or_null), typeof(ArtifactIdentity));
     }
 
     [Fact]
@@ -64,6 +64,7 @@ public sealed partial class ArtifactValueTests
         Assert.Throws<ArgumentException>(() => new ArtifactChecksumExpectation("sha512", new byte[65]));
         Assert.NotNull(new ArtifactChecksumExpectation("unknown", [1]));
         Assert.Throws<ArgumentNullException>(() => new ArtifactOption<ArtifactDigest>.Some(null!));
+        ObserveContract(nameof(Expectations_and_checksums_copy_input_and_reject_each_bound), typeof(ArtifactExpectations));
     }
 
     [Fact]
@@ -134,5 +135,6 @@ public sealed partial class ArtifactValueTests
             foreach (var property in type.GetProperties().Where(property => property.DeclaringType == type))
             { Assert.Null(property.SetMethod); }
         }
+        ObserveContract(nameof(Public_diagnostic_formatting_is_redacted_and_contract_members_are_get_only), typeof(ArtifactIdentity));
     }
 }

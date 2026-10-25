@@ -1195,6 +1195,16 @@ Original MP-01/AS-01/value-test local observations and independent locked replay
 pass six executions/26 image correspondences using minimal diagnostic inputs,
 not full category RunInputs. All original, child/reopen and controller paths
 must still be wired before complete profiles can qualify.
+Five additional native scopes now request original observations against a
+separate full captured/recomputed input document with frozen binding slots.
+They select exact primary cases using the same catalog helper as category
+history, require one original proof per execution and reject unrelated typed
+origins. The eight executions include both frozen artifact value witnesses,
+not only the auxiliary identity-bound test. Local actual observation and
+independent locked replay pass all eight with 28 image correspondences, but
+remain minimal-input diagnostics. This new full-input native path still needs
+an exact-head receipt: it requires 105 scopes/990 observations and all existing
+recovery/transfer/containment/replay prerequisites, not complete qualification.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

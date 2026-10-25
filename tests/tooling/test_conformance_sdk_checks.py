@@ -997,6 +997,93 @@ class SdkDiagnosticTests(unittest.TestCase):
             self.assertEqual({item["testIdentity"] for item in manifest["expected"]}, expected)
             self.assertEqual({item["caseId"] for item in manifest["expected"]}, {scenario[0]})
 
+    def test_original_observation_scopes_select_frozen_bindings_images_and_context_before_launch(self):
+        self.assertTrue(callable(getattr(checks, "original_observation_scenarios", None)),
+                        "Actual original observations must join captured native inputs, not minimal diagnostic labels.")
+        candidate = self.directory / "candidate"
+        assignments = checks.original_observation_inputs(candidate, self.directory)
+        runtime = {path: "a" * 64 for roles in assignments.values() for path, _ in roles.values()}
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": runtime,
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+            "bindings": [{"bindingId": binding} for binding in assignments],
+        }
+        (self.directory / "stores").mkdir()
+        (self.directory / "runtime-owner.json").write_bytes(b"{}")
+        run = SimpleNamespace(root=self.directory)
+        scenarios = checks.original_observation_scenarios()
+        self.assertEqual(len(scenarios), 5)
+        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 8)
+        for scenario in scenarios:
+            metadata = "-metadata-" in scenario[0]
+            provider = scenario[0].rsplit("-", 1)[1] if metadata or "-contract-" in scenario[0] else None
+            with self.subTest(scope=scenario[0]), patch.object(checks, "require_sqlite_environment") as admission:
+                with patch.object(checks, "runtime_command",
+                                  side_effect=checks.evidence.ConformanceError("DeadlineExceeded")) as launch:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "DeadlineExceeded"):
+                        checks.test_attempt(run, inputs, candidate, scenario)
+                    manifest = launch.call_args.args[2]
+                    assembly = launch.call_args.args[1]
+                    self.assertEqual(manifest["runInputsPath"], "proofs/original-run-inputs.json")
+                    self.assertEqual(manifest["inputSha256"], checks.evidence.digest(inputs))
+                    self.assertEqual({entry["testIdentity"] for entry in manifest["expected"]}, set(scenario[1]))
+                    self.assertEqual(launch.call_args.kwargs, {
+                        "original_observations": True, **({"metadata_provider": provider} if metadata else {})})
+                    for entry in manifest["expected"]:
+                        binding = provider if provider is not None else (
+                            "local" if '(provider: "local")' in entry["testIdentity"] else "object")
+                        self.assertEqual(entry["bindingId"], binding)
+                        cases = [case.case_id for case in checks.category_cases()
+                                 if case.binding_id == binding and entry["testIdentity"] in case.witnesses]
+                        self.assertEqual(entry["caseId"], min(cases))
+                        self.assertIn(assignments[binding]["contract" if "-contract-" in scenario[0] else "store"][0],
+                                      {item["path"] for item in manifest["assemblies"]})
+                    self.assertEqual(assembly.name, "Hoard.Metadata.Tests.dll" if metadata else "Hoard.Artifacts.Tests.dll")
+                    if provider == "sqlite":
+                        admission.assert_called_once_with(inputs, assembly, self.directory)
+                with patch.object(run, "command", create=True,
+                                  side_effect=checks.evidence.ConformanceError("DeadlineExceeded")) as launch:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "DeadlineExceeded"):
+                        checks.runtime_command(run, assembly, manifest, **{
+                            "original_observations": True, **({"metadata_provider": provider} if metadata else {})})
+                    settings = ET.fromstring((
+                        self.directory / "stores" / f"settings-{manifest['attemptId']}.runsettings").read_bytes())
+                    encoded = settings.find("./RunConfiguration/EnvironmentVariables/HOARD_ORIGINAL_CONTEXT").text
+                    context = checks.evidence.load_json(base64.b64decode(encoded))
+                    self.assertEqual(context, {"schemaVersion": 1, "runId": inputs["runId"], "cases": {
+                        entry["testIdentity"]: {"bindingId": entry["bindingId"], "caseId": entry["caseId"]}
+                        for entry in manifest["expected"]}})
+            for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+                            ("observed-original-provider-selected", *scenario[1:])):
+                with patch.object(checks, "runtime_command") as launch:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                        checks.test_attempt(run, {}, candidate, changed)
+                    launch.assert_not_called()
+
+    def test_original_observation_scope_cannot_pass_without_each_original_execution_proof(self):
+        self.assertTrue(callable(getattr(checks, "validate_original_observations", None)),
+                        "Successful diagnostics cannot substitute for observed original execution proofs.")
+        identity = ("Hoard.Metadata.Tests.MetadataRoundTripTests."
+                    "MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes")
+        execution = str(uuid.uuid4())
+        observation = {"kind": "original-instance", "operation": "create", "parentObservationId": None}
+        ingested = {
+            "witnesses": [{"testIdentity": identity, "executionId": execution}],
+            "sessionOrigins": {execution: ()}, "originalObservations": {execution: (observation,)},
+        }
+        checks.validate_original_observations(ingested)
+        for changes in (
+                {"originalObservations": {}},
+                {"originalObservations": {execution: ()}},
+                {"originalObservations": {execution: (observation, observation)}},
+                {"originalObservations": {execution: (observation | {"kind": "loaded-contract"},)}},
+                {"originalObservations": {execution: (observation | {"parentObservationId": str(uuid.uuid4())},)}},
+                {"sessionOrigins": {execution: ({"unrelated": "typed-origin"},)}}):
+            with self.subTest(changes=changes), self.assertRaisesRegex(
+                    checks.evidence.ConformanceError, "WitnessMissing"):
+                checks.validate_original_observations(ingested | changes)
+
     def test_artifact_wrapper_scope_cannot_drop_parameters_or_borrow_other_methods(self):
         self.assertTrue(callable(getattr(checks, "original_artifact_publication_scenarios", None)),
                         "Artifact wrapper dispatch must reject shortened frozen scopes.")

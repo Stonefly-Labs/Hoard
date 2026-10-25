@@ -3,6 +3,7 @@
 from dataclasses import dataclass
 import json
 from pathlib import Path
+from types import MappingProxyType
 
 from conformance_evidence import (
     CATALOG_REVISION, ConformanceError, MAX_RESULTS, MAX_WITNESSES, PROFILES,
@@ -27,17 +28,32 @@ def original_witness_policy(identity):
     """Closed incremental attribution; unclassified witnesses retain strict typed-origin admission."""
     metadata = ("Hoard.Metadata.Tests.MetadataRoundTripTests."
                 "MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes")
-    contract = ("Hoard.Artifacts.Tests.ArtifactValueTests."
-                "Identity_bounds_preserve_empty_and_reject_overflow_negative_or_null")
+    contracts = tuple("Hoard.Artifacts.Tests.ArtifactValueTests." + method for method in (
+        "Identity_bounds_preserve_empty_and_reject_overflow_negative_or_null",
+        "Expectations_and_checksums_copy_input_and_reject_each_bound",
+        "Public_diagnostic_formatting_is_redacted_and_contract_members_are_get_only"))
     if identity == metadata:
         return "metadata", "original-instance", _ORIGINAL_METADATA_ROLES
-    if identity == contract:
+    if identity in contracts:
         return "artifacts", "loaded-contract", ("contract",)
     if identity in tuple('Hoard.Artifacts.Tests.ArtifactPublicationTests.'
                          f'Empty_content_and_true_absence_are_distinct(provider: "{provider}")'
                          for provider in ("local", "object")):
         return "artifacts", "original-instance", _ORIGINAL_ARTIFACT_ROLES
     return None
+
+
+def category_runtime_cases(profile, binding_id):
+    """Select the same primary frozen case for manifest construction and admission."""
+    if profile not in ("metadata", "artifacts"):
+        raise ConformanceError("UnsupportedProfile")
+    cases = tuple(case for case in expected_cases(profile) if case.binding_id == binding_id)
+    if not cases:
+        raise ConformanceError("BindingInvalid")
+    applicable = tuple(case for case in cases if case.exclusion is None)
+    return MappingProxyType({
+        identity: min(case.case_id for case in applicable if identity in case.witnesses)
+        for identity in {identity for case in applicable for identity in case.witnesses}})
 
 
 @dataclass(frozen=True)

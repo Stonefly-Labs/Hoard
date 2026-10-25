@@ -7961,6 +7961,25 @@ thirteen inspected completed private caches, preserving all retained images,
 archives, source and receipts and the unchanged 24 GiB guard. Scoped custom
 architecture review found no confirmed blocker for the first increment, not
 complete qualification readiness.
+The subsequent full-input diagnostic wiring selects five additional native
+scopes/eight executions, including both frozen artifact value witnesses. A
+separate fully captured input document projects frozen binding slots without
+changing raw descriptor bytes or typed SDK binding inputs; both documents share
+actual source/packages/runtime/invocation group and independently recompute
+after execution. Primary-case selection is shared with category history, and
+every new execution requires its original observation rather than successful
+status or an unrelated typed session. Native admission remains pending.
+
+The two dispatch/proof regressions first fail on the missing APIs, then pass.
+Full tooling passes 337 checks (320 passed/seventeen macOS-native skips).
+The default predecessor `ArtifactValueTests` passes all seven tests without
+skips; actual package-only observation and independent fresh-cache replay pass
+eight executions/28 role-image correspondences. Those local probes still use
+minimal inputs, not full qualifying inputs. Eighteen more inspected completed
+private caches were reclaimed after capacity-only failures, with the 24 GiB
+guard and all source/archive/runtime/proof/receipt data preserved. This code
+requests a future exact-head native vector of 105 scopes/990 observations and
+all existing prerequisites; complete category/profile qualification remains open.
 README and affected model/contracts/guides are updated; production/deployment
 examples and diagrams are unaffected. Tasks/reviewer markers remain unchanged.
 

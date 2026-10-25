@@ -191,8 +191,9 @@ session. Actual typed SDK binding consumers retain complete typed-session origin
 Unclassified witnesses retain the existing typed-origin requirement; there is
 no permissive default or provider-selected classification.
 
-The first closed policy covers MP-01's original roundtrip, AS-01's two original
-provider parameters, and the original artifact identity-bound value test. The
+The closed incremental policy covers MP-01's original roundtrip, AS-01's two original
+provider parameters, both frozen artifact value witnesses (expectations/checksums
+and redacted diagnostics/get-only members), and the auxiliary identity-bound value test. The
 non-owning `ConformanceOriginalObservation` captures exact run/case/test/binding,
 fresh observation UUID, nullable parent observation, kind, operation, actual
 runtime/architecture and immutable components. Metadata roles are owner/store/
@@ -222,6 +223,17 @@ observation and independent fresh-cache locked replay cover six executions and
 26 actual image correspondences, but use minimal local logger inputs. They are
 bounded diagnostics, not full qualifying RunInputs or complete wrapper/profile
 coverage. Broader creation/reopen/child/controller instrumentation remains work.
+The expanded local frozen-witness observation/replay passes eight executions
+and 28 image correspondences, still with minimal diagnostic inputs. Five native
+scopes now use a second fully captured immutable `RunInputs` document at
+`proofs/original-run-inputs.json`, preserving raw typed-binding inputs separately.
+Only its explicit descriptor-source projection selects frozen binding slots;
+raw descriptor bytes/hash and archive attribution remain unchanged. Both input
+documents share source/runtime/package bytes and invocation group, and are
+independently recomputed after execution. Their digests are separately reported
+as `inputsSha256` and `originalWrapperInputsSha256` in the diagnostic summary.
+This native path remains unadmitted pending its exact-head run, not a qualifying
+profile or a public report-schema change.
 
 ### Shared bounds
 

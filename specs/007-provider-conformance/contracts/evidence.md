@@ -97,6 +97,17 @@ pass six exact executions with 26 actual image correspondences. They deliberatel
 use minimal diagnostic logger inputs and do not qualify category profiles.
 Complete original-wrapper/direct-construction/reopen/controller instrumentation
 and full current-run input/evaluator integration remain unfinished.
+The policy now also includes both actual frozen artifact value witnesses:
+expectations/checksums and redacted diagnostics/get-only members. Their loaded
+types are observed after the unchanged assertions; the default predecessor build
+still has no SDK dependency. Expanded local observation and independent locked
+replay pass eight executions/28 actual image correspondences, with minimal inputs.
+Five new native diagnostic scopes use separate full captured inputs with frozen
+slots, exact primary-case ownership shared with category admission, mandatory
+original proofs per execution and independent post-run recomputation. The typed
+binding input document remains unchanged in meaning. Native admission for this
+new full-input path is pending; complete category/profile/evaluator integration
+and wider original/direct/reopen/controller coverage remain unbuilt.
 
 The implemented private transport distinguishes `purpose: discovery` from
 `purpose: execution` and hashes each complete JSONL stream in its completion

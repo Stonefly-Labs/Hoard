@@ -25,7 +25,10 @@ from xml.sax.saxutils import escape
 import conformance_baselines as baselines
 import artifact_evidence as artifacts
 import conformance_evidence as evidence
-from conformance_case_catalog import catalog_admission_witnesses, category_cases, original_witness_policy
+from conformance_case_catalog import (
+    CATEGORY_BINDING_SLOTS, catalog_admission_witnesses, category_cases, category_runtime_cases,
+    original_witness_policy,
+)
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_lock_preparation import prepare_project_lock, rebind_local_archives, verify_project_lock
 from foundation_evidence import canonicalize_acceptance_archive
@@ -1860,7 +1863,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-recovery-reopen", "original-artifact-admission",
             "original-artifact-deletion-settlement", "artifact-direct-verification", "artifact-capacity-injection",
             "artifact-unclaimed-cleanup", "artifact-synchronous-storage", "full-artifact-binding", "full-metadata-binding",
-            "actual-authority-integration", *(scenario[0] for scenario in category_mutation_scenarios())],
+            "actual-authority-integration", *(scenario[0] for scenario in category_mutation_scenarios()),
+            *(scenario[0] for scenario in original_observation_scenarios())],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1868,8 +1872,61 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
     return inputs
 
 
+def original_observation_scenarios():
+    metadata = ("Hoard.Metadata.Tests.MetadataRoundTripTests."
+                "MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes")
+    artifacts = tuple('Hoard.Artifacts.Tests.ArtifactPublicationTests.'
+                      f'Empty_content_and_true_absence_are_distinct(provider: "{provider}")'
+                      for provider in ("local", "object"))
+    contracts = tuple("Hoard.Artifacts.Tests.ArtifactValueTests." + method for method in (
+        "Expectations_and_checksums_copy_input_and_reject_each_bound",
+        "Public_diagnostic_formatting_is_redacted_and_contract_members_are_get_only"))
+    return (
+        *((f"observed-original-metadata-{provider}", (metadata,), "None", "Passed", 0, "None")
+          for provider in ("memory", "sqlite")),
+        ("observed-original-artifact-instances", artifacts, "None", "Passed", 0, "None"),
+        *((f"observed-original-contract-{provider}", contracts, "None", "Passed", 0, "None")
+          for provider in ("local", "object")),
+    )
+
+
+def original_observation_inputs(candidate, root):
+    result = {}
+    for category, provider, _, package in CATEGORY_BINDING_SLOTS:
+        metadata = category == "metadata"
+        folder, output = (METADATA_TESTS, METADATA_TEST_OUTPUT) if metadata else (ARTIFACT_TESTS, ARTIFACT_TEST_OUTPUT)
+        runtime = candidate / folder / output / "Release/net10.0"
+        assembly = "Hoard.Metadata.Tests" if metadata else "Hoard.Artifacts.Tests"
+        host = "Hoard.Fixtures." + ("Metadata" if metadata else "Artifacts") + ".HostAdapters"
+        roles = ({"owner": host, "store": package, "schema": package, "authority": None, "controls": host}
+                 if metadata else
+                 {"owner": None, "store": package, "validator": package, "maintenance": package,
+                  "lifetime": package, "authority": host, "controls": package, "contract": "Hoard.Abstractions"})
+        try:
+            result[provider] = {
+                role: ((runtime / ((package_id or assembly) + ".dll")).relative_to(root).as_posix(), package_id)
+                for role, package_id in roles.items()}
+        except ValueError as error:
+            raise evidence.ConformanceError("InputChanged") from error
+    return result
+
+
+def validate_original_observations(ingested):
+    for witness in ingested["witnesses"]:
+        execution = witness["executionId"]
+        policy = original_witness_policy(witness["testIdentity"])
+        observations = ingested["originalObservations"].get(execution, ())
+        if (policy is None or len(observations) != 1 or ingested["sessionOrigins"].get(execution)
+                or observations[0]["kind"] != policy[1] or observations[0]["parentObservationId"] is not None
+                or observations[0]["operation"] != ("contract" if policy[1] == "loaded-contract" else "create")):
+            raise evidence.ConformanceError("WitnessMissing")
+
+
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
+    original_observations = name.startswith("observed-original-")
+    if original_observations and scenario not in original_observation_scenarios():
+        raise evidence.ConformanceError("WitnessMissing")
     if (name == "full-metadata-binding"
             or any(identity.startswith(FULL_METADATA_CONSUMER_PREFIX) for identity in identities)):
         if scenario not in full_metadata_binding_scenarios():
@@ -1886,15 +1943,15 @@ def test_attempt(run, inputs, candidate, scenario):
                             *full_artifact_binding_scenarios(), *actual_authority_integration_scenarios(),
                             *category_mutation_scenarios()):
             raise evidence.ConformanceError("WitnessMissing")
-    original_metadata = name.startswith("original-metadata-")
-    original_artifacts = name.startswith("original-artifact-")
+    original_metadata = name.startswith(("original-metadata-", "observed-original-metadata-"))
+    original_artifacts = name.startswith(("original-artifact-", "observed-original-artifact-", "observed-original-contract-"))
     original_tests = original_metadata or original_artifacts
     metadata_provider = None
     if original_metadata:
-        if scenario not in original_metadata_scenarios():
+        if not original_observations and scenario not in original_metadata_scenarios():
             raise evidence.ConformanceError("WitnessMissing")
-        metadata_provider = name.removeprefix("original-metadata-")
-    if original_artifacts and scenario not in (
+        metadata_provider = name.rsplit("-", 1)[1]
+    if original_artifacts and not original_observations and scenario not in (
             *original_artifact_publication_scenarios(), *original_artifact_read_delete_scenarios(),
             *original_artifact_evidence_scenarios(), *original_artifact_damaged_read_scenarios(),
             *original_artifact_read_race_scenarios(),
@@ -1954,7 +2011,21 @@ def test_attempt(run, inputs, candidate, scenario):
     package = next(package for package in inputs["packages"] if package["packageId"] == package_id)
     attempt_id = str(uuid.uuid4())
     origin_inputs = None
+    original_inputs = None
+    original_cases = {}
     expected = {identity: ("origin-probe" if name == "origin-output" else "none", "none") for identity in identities}
+    if original_observations:
+        provider = name.rsplit("-", 1)[1] if original_metadata or "-contract-" in name else None
+        expected = {
+            identity: (provider if provider is not None else
+                       "local" if '(provider: "local")' in identity else "object", "none")
+            for identity in identities}
+        original_inputs = original_observation_inputs(candidate, run.root)
+        if not {binding for binding, _ in expected.values()} <= {item["bindingId"] for item in inputs["bindings"]}:
+            raise evidence.ConformanceError("BindingInvalid")
+        original_cases = {
+            identity: category_runtime_cases(original_witness_policy(identity)[0], binding)[identity]
+            for identity, (binding, _) in expected.items()}
     if name == "full-artifact-binding":
         expected = {
             identity: ("fixture.artifact." + provider, "none")
@@ -1971,7 +2042,7 @@ def test_attempt(run, inputs, candidate, scenario):
         "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
         "attemptId": attempt_id, "attemptSequence": 1, "purpose": "execution",
         "inputSha256": evidence.digest(inputs),
-        "runInputsPath": "proofs/run-inputs.json",
+        "runInputsPath": "proofs/original-run-inputs.json" if original_observations else "proofs/run-inputs.json",
         "assemblies": [{"id": "test-assembly", "path": assembly_path,
                         "sha256": inputs["runtimeAssemblies"][assembly_path]}],
         "packages": [{"id": package_id, "path": f"feed/candidate/{package_id}.0.1.0.nupkg",
@@ -1985,13 +2056,19 @@ def test_attempt(run, inputs, candidate, scenario):
                 if name == "category-mutation-metadata-faulty" else
                 "Hoard.Testing.Conformance.Artifacts.ArtifactPublicationAssertions.PrivateStagingAsync"
                 if name == "category-mutation-artifacts-faulty" else ASSERTION if name == "assertion" else None),
-            "caseId": name if original_tests or name in ("full-artifact-binding", "full-metadata-binding") else "runtime",
+            "caseId": original_cases[identity] if original_observations else
+                name if original_tests or name in ("full-artifact-binding", "full-metadata-binding") else "runtime",
         } for identity, (binding, matrix) in expected.items()],
     }
-    if name in ("full-artifact-binding", "full-metadata-binding"):
-        origin_inputs = (artifact_origin_inputs(candidate, run.root) if name == "full-artifact-binding"
-                         else metadata_origin_inputs(candidate, run.root))
-        component_paths = {path for roles in origin_inputs.values() for path, _ in roles.values()}
+    if original_observations or name in ("full-artifact-binding", "full-metadata-binding"):
+        if original_observations:
+            component_assignments = {binding: original_inputs[binding] for binding, _ in expected.values()}
+        else:
+            origin_inputs = (artifact_origin_inputs(candidate, run.root) if name == "full-artifact-binding"
+                             else metadata_origin_inputs(candidate, run.root))
+            component_assignments = origin_inputs
+        component_paths = {path for roles in component_assignments.values() for path, _ in roles.values()}
+        component_paths.discard(assembly_path)
         for index, path in enumerate(sorted(component_paths)):
             sha256 = inputs["runtimeAssemblies"].get(path)
             if sha256 is None:
@@ -1999,6 +2076,8 @@ def test_attempt(run, inputs, candidate, scenario):
             manifest["assemblies"].append({"id": f"binding-component-{index}", "path": path, "sha256": sha256})
     discovery_manifest = {**manifest, "purpose": "discovery", "attemptId": str(uuid.uuid4())}
     runtime_options = {"metadata_provider": metadata_provider} if original_metadata else {}
+    if original_observations:
+        runtime_options["original_observations"] = True
     if name == "full-artifact-binding" or name.startswith("category-mutation-artifacts-"):
         packages = {item["packageId"]: item["sha256"] for item in inputs["packages"]}
         required = ("Hoard.Fixtures.Artifacts.Local", "Hoard.Fixtures.Artifacts.ObjectSemantics")
@@ -2054,7 +2133,8 @@ def test_attempt(run, inputs, candidate, scenario):
         inputs=inputs, expected_tests=expected,
         witnesses_data=read_bounded(output / "witnesses.jsonl", 1024 * 1024), proofs=proof_data,
         completion_data=read_bounded(output / "completion.json", 64 * 1024),
-        **({"origin_inputs": origin_inputs} if origin_inputs is not None else {}), **transport)
+        **({"origin_inputs": origin_inputs} if origin_inputs is not None else {}),
+        **({"original_inputs": original_inputs} if original_inputs is not None else {}), **transport)
     validate_observation(ingested, result, identities, expected_code, expected_status, expected_exit,
                          proof_data, failure_kind)
     if name == "origin-output" and (
@@ -2066,6 +2146,8 @@ def test_attempt(run, inputs, candidate, scenario):
         counts = (full_metadata_binding_origin_counts() if name == "full-metadata-binding" else
                   {identity: 2 if identity.split("(")[0] == reopen else 1 for identity in identities})
         validate_full_binding_origins(ingested, inputs, counts)
+    if original_observations:
+        validate_original_observations(ingested)
     return {"code": expected_code, "tests": len(identities),
             "discoverySha256": evidence.file_sha256(discovery_output / "completion.json"),
             "completionSha256": evidence.file_sha256(output / "completion.json")}
@@ -2384,6 +2466,14 @@ def execute(repository, destination):
         print(json.dumps({"qualification": False, "phase": "runtime-input-capture"}), flush=True)
         inputs = make_inputs(run, repository, candidate, sources, admitted_environment, identity, seal_sha,
                              ci_revision=ci_revision, binding_sources=binding_sources)
+        catalog_bindings = {declaration: binding for _, binding, declaration, _ in CATEGORY_BINDING_SLOTS}
+        original_binding_sources = [
+            {**source, **({"catalogBindingId": catalog_bindings[source["adapterId"]]}
+                         if source["adapterId"] in catalog_bindings else {})}
+            for source in binding_sources]
+        original_inputs = make_inputs(
+            run, repository, candidate, sources, admitted_environment, identity, seal_sha,
+            group_id=inputs["invocationGroupId"], ci_revision=ci_revision, binding_sources=original_binding_sources)
         for name in sources:
             (candidate / name).chmod(0o400)
         for name in inputs["runtimeAssemblies"]:
@@ -2391,6 +2481,7 @@ def execute(repository, destination):
         for package in feed.glob("*.nupkg"):
             package.chmod(0o400)
         write_new(run.root / "proofs/run-inputs.json", evidence.canonical_bytes(inputs))
+        write_new(run.root / "proofs/original-run-inputs.json", evidence.canonical_bytes(original_inputs))
         write_new(run.root / "runtime-owner.json", evidence.canonical_bytes({
             "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
             "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest(),
@@ -2537,6 +2628,9 @@ def execute(repository, destination):
         print(json.dumps({"qualification": False, "phase": "category-mutations"}), flush=True)
         for scenario in category_mutation_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "original-wrapper-observations"}), flush=True)
+        for scenario in original_observation_scenarios():
+            observations.append(test_attempt(run, original_inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)
         post_identity = evidence.source_identity(repository, ci_revision=ci_revision)
@@ -2567,10 +2661,15 @@ def execute(repository, destination):
             run, repository, candidate, post_sources, post_environment, post_identity, seal_sha,
             group_id=inputs["invocationGroupId"], ci_revision=ci_revision, binding_sources=binding_sources)
         evidence.verify_input_recomputation(inputs, post_inputs)
+        original_post_inputs = make_inputs(
+            run, repository, candidate, post_sources, post_environment, post_identity, seal_sha,
+            group_id=inputs["invocationGroupId"], ci_revision=ci_revision, binding_sources=original_binding_sources)
+        evidence.verify_input_recomputation(original_inputs, original_post_inputs)
         native_provenance = evidence.load_json(read_bounded(
             run.root / "proofs/sqlite-native-provenance-completion.json", 64 * 1024))
         summary = {"qualification": False, "code": "None", "baselines": 6,
                    "baselineSha256": seal_sha, "inputsSha256": evidence.digest(inputs),
+                   "originalWrapperInputsSha256": evidence.digest(original_inputs),
                    "lockPreparation": lock_preparation,
                    "nativeNonCooperation": native_noncooperation,
                    "metadataRecovery": metadata_recovery,

@@ -1918,13 +1918,11 @@ class CategoryRuntimeHistory:
 
     def expected_runtime_tests(self, binding_id):
         """Select primary owned cases before building the runtime manifest."""
+        from conformance_case_catalog import category_runtime_cases
         binding_id = stable_id(binding_id)
         if binding_id not in self._bindings:
             raise ConformanceError("BindingInvalid")
-        cases = tuple(case for case in self._cases if case.binding_id == binding_id and case.exclusion is None)
-        return MappingProxyType({
-            identity: min(case.case_id for case in cases if identity in case.witnesses)
-            for identity in {identity for case in cases for identity in case.witnesses}})
+        return category_runtime_cases(self._inputs["profileId"], binding_id)
 
     def begin(self, binding_id, attempt_id):
         binding_id, attempt_id = stable_id(binding_id), _uuid(attempt_id)
