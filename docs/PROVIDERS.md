@@ -798,6 +798,16 @@ fresh replay passes 311 artifact, 111 Consumer and 89+89 metadata cases.
 The next native request is 95 scopes/818 observations, pending; complete
 category/profile imports and qualification remain unfinished.
 
+The observed metadata scope now also imports twenty actual rows using unchanged
+entity/relationship, final-graph, independent-candidate, faulted-atomic-candidate,
+grouped-read and lease overflow/fence/decision-expiry consumers. Both independent
+factories execute the same consumers with real fault controls and the injected
+clock. All 28 rows produce 30 actual origins/180 role/image/archive matches.
+Fresh preparation/replay pass 311 artifact, 131 Consumer and 89+89 metadata cases;
+the next native request is 95 scopes/838 observations, not yet admitted. These
+standalone metadata authority checks are not shared artifact-authority integration,
+durable Memory recovery or complete category/profile qualification.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and
 actual prerequisites/replay, not full category/profile qualification.

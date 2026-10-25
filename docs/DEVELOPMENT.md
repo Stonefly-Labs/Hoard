@@ -7629,6 +7629,27 @@ The admitted metadata-origin receipt binds input
 preparation `5b4f9f3b1438fa5910ba8c8770c66b6e216f366e677e2fe68ba0ed99570ded51`
 and 91,716,923,392 free scratch bytes; it predates the reopen increment.
 
+Twenty further actual metadata rows now execute unchanged shared entity/
+relationship, final-graph, independent-candidate, faulted-atomic-candidate,
+grouped-read and lease generation/fence/decision-expiry consumers through both
+observed factories. All three expiry actions use the actual injected clock and
+real boundary observers. The exact-scope regression first rejected the missing
+rows. Common assertion bytes, frozen wrappers, independent store mechanisms,
+locks, historical seals and reviewer markers are unchanged.
+
+Fresh exclusive preparation and independent replay pass 311 artifact,
+131 Consumer and 89+89 metadata cases without failures/skips. Fifteen archives
+still reproduce map `f351b872a7a4c111fe1b1321c7a7955e2b82c5763be59c00eab3ecd69b28789c`.
+Actual bounded output observation in an independent empty runtime cache discovers
+all 28 metadata rows and verifies 30 genuine origins, 28 creates/two reopens and
+180 actual role/image/archive correspondences. Tooling passes 322 checks
+(305 passed/seventeen macOS-native skips), including 96 SDK checks; Consumer
+formatting and patch checks pass. The next native request is 214 foundations
+and 95 scopes/838 observations, not yet admitted. These standalone metadata
+checks are not shared artifact-authority integration or complete category/profile
+qualification. Remaining imports/integrations and final T081 stay open;
+production/deployment examples and architecture diagrams are unaffected.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

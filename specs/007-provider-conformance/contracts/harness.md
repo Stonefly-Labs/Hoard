@@ -1011,6 +1011,20 @@ passes 311 artifact, 111 Consumer and 89+89 metadata cases. The next native
 request is 214 foundations and 95 scopes/818 observations, pending; complete
 category/profile imports, qualification and final T081 remain open.
 
+The same observed factories now execute twenty further actual metadata rows:
+unchanged entity/relationship and final-graph consumers, independent candidate
+snapshots, faulted atomic candidates, grouped reads, lease-generation overflow,
+owner/generation/revision fencing and all three decision-time expiry actions.
+The actual run clock drives expiry and real fault hooks supply observations;
+no common assertion bytes or frozen wrapper identities change. Strict parent
+admission requires the complete 28-row scope, with one origin per ordinary row
+and two per exact compatible-reopen row: 30 genuine origins and 180 actual
+role/image/archive correspondences. Fresh preparation/replay pass 311 artifact,
+131 Consumer and 89+89 metadata cases; the next native request is 214 foundations
+and 95 scopes/838 observations, not yet admitted. Standalone metadata authority
+checks do not establish artifact/metadata shared authority; complete category/
+profile qualification and final T081 remain open.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and
 every actual prerequisite chain/replay, not full qualification.

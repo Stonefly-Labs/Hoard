@@ -39,15 +39,36 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     [InlineData("memory", "capacity")]
     [InlineData("memory", "writer")]
     [InlineData("memory", "publication")]
+    [InlineData("memory", "entities")]
+    [InlineData("memory", "graph")]
+    [InlineData("memory", "independent")]
+    [InlineData("memory", "atomic")]
+    [InlineData("memory", "grouped")]
+    [InlineData("memory", "lease-generation")]
+    [InlineData("memory", "lease-fences")]
+    [InlineData("memory", "lease-renew")]
+    [InlineData("memory", "lease-release")]
+    [InlineData("memory", "lease-guard")]
     [InlineData("sqlite", "capacity")]
     [InlineData("sqlite", "writer")]
     [InlineData("sqlite", "publication")]
+    [InlineData("sqlite", "entities")]
+    [InlineData("sqlite", "graph")]
+    [InlineData("sqlite", "independent")]
+    [InlineData("sqlite", "atomic")]
+    [InlineData("sqlite", "grouped")]
+    [InlineData("sqlite", "lease-generation")]
+    [InlineData("sqlite", "lease-fences")]
+    [InlineData("sqlite", "lease-renew")]
+    [InlineData("sqlite", "lease-release")]
+    [InlineData("sqlite", "lease-guard")]
     public async Task Observed_factories_execute_unchanged_common_consumers_with_actual_origins(
         string provider, string consumer)
     {
         await using var resources = new SqliteBindingTests.RecordingDirectories();
+        var clock = new MetadataConformanceClock(new(1_800_000_000_000));
         var context = new ConformanceRunContext(RunId(), "full-metadata-binding",
-            new MetadataConformanceClock(new(1_800_000_000_000)), resources, new ConformanceEvidenceBuffer());
+            clock, resources, new ConformanceEvidenceBuffer());
         await using var session = await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default);
         Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Success>(
             await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
@@ -59,6 +80,25 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
                 session.Store, session.Faults.HoldWriterAsync, session.Faults.AwaitSettlementAsync, default),
             "publication" => MetadataPublicationAssertions.ProtectionThroughSettlementAsync(
                 session.Store, session.Authority, session.Faults.ObserveBoundaryAsync, session.Faults.AwaitSettlementAsync, default),
+            "entities" => MetadataEntityAssertions.RoundTripAndInvalidRelationshipsAsync(
+                session.Store, session.Authority, default),
+            "graph" => MetadataEntityAssertions.FinalGraphDeletionAndDisabledRetentionAsync(
+                session.Store, session.Authority, default),
+            "independent" => MetadataAtomicityAssertions.IndependentCandidateAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, session.Faults.ObserveIndependentSnapshotAsync, default),
+            "atomic" => MetadataAtomicityAssertions.FaultedCandidatesAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, default),
+            "grouped" => MetadataAtomicityAssertions.GroupedReadsAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, default),
+            "lease-generation" => MetadataLeaseAssertions.GenerationOverflowAsync(
+                session.Store, session.Faults.SetLeaseGenerationAsync, default),
+            "lease-fences" => MetadataLeaseAssertions.OwnerGenerationAndRevisionFencesAsync(session.Store, default),
+            "lease-renew" => MetadataLeaseAssertions.ExpiryAtDecisionAsync(
+                session.Store, clock, session.Faults.ObserveBoundaryAsync, MetadataLeaseExpiryAction.Renew, default),
+            "lease-release" => MetadataLeaseAssertions.ExpiryAtDecisionAsync(
+                session.Store, clock, session.Faults.ObserveBoundaryAsync, MetadataLeaseExpiryAction.Release, default),
+            "lease-guard" => MetadataLeaseAssertions.ExpiryAtDecisionAsync(
+                session.Store, clock, session.Faults.ObserveBoundaryAsync, MetadataLeaseExpiryAction.Guard, default),
             _ => throw new ArgumentException("BindingInvalid")
         });
         ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
