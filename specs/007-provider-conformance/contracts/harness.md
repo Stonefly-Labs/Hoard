@@ -1181,8 +1181,12 @@ prefix, retaining exact SDK-frame checks and safe projection. All 46 logger
 tests pass; actual local observation/replay each reproduce four named failures
 and four corrected passes using unchanged Consumer/SDK images. Tooling passes
 332 checks (315 passed/seventeen macOS-native skips). That failed run and
-confirmed canceled `40162771846 @c1f79b2` are not admitted; the replacement
-requires 223 foundations and 100 scopes/982 observations with all prerequisites.
+confirmed canceled `40162771846 @c1f79b2` are not admitted. Replacement run
+`40164176338` at exact `2ecda7f` passed all three jobs, 223 foundations without
+failures/errors/skips and 100 scopes/982 exact discoveries/executions with all
+prerequisites and mutation scopes. It admits the repaired diagnostic run, not
+full category qualification or later `90fd088`. The unresolved original-wrapper
+proof-contract decision does not relax existing admission.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

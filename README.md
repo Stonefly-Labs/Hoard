@@ -1865,6 +1865,12 @@ logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce
 four named mutation failures and four corrected passes. That failed run and
 superseded canceled run `40162771846` are not admitted native receipts.
+Replacement [40164176338](https://github.com/Stonefly-Labs/Hoard/actions/runs/40164176338)
+at exact `2ecda7f` passed all three jobs, 223 foundations without skips and
+100 scopes/982 exact discoveries/executions, including all four mutation scopes
+and every prerequisite. This admits the repaired diagnostic run, not full
+category qualification or the later `90fd088` follow-up. The original-wrapper
+evidence-contract decision remains unresolved.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

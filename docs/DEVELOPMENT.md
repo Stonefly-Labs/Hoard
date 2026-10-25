@@ -7925,8 +7925,18 @@ observe all eight discoveries/executions: four named assertion failures and
 four corrected passes through the real launch settings/logger. These are
 bounded local logger diagnostics, not full category input/profile evidence.
 Superseded run `40162771846 @c1f79b2` is confirmed canceled and not admitted.
-The replacement requires 223 foundations and 100 scopes/982 observations,
-including every native prerequisite; no replacement receipt is claimed yet.
+Replacement run `40164176338` at exact head
+`2ecda7f4ae7f96a0be64bbb838e07bdf07dc4873` passed all three jobs,
+223 foundations without failures/errors/skips and the strict 100-scope/
+982-discovery/execution vector, including every native prerequisite and all
+four mutation scopes. Input:
+`a9b4f33d0b3e6dde4ea577d856f0d7a54e113fe712daf5054b55bce4501b0e91`;
+preparation:
+`69a1b07eb8ac465a00fc829cb2d5bfdf7b13929f6500e371245f4e5ab2352af1`;
+free scratch 91,719,884,800 bytes. It is admitted diagnostic evidence, not full
+category qualification or verification of the later `90fd088` follow-up.
+The original-wrapper proof-contract decision remains unresolved; the existing
+universal typed-session-origin rule is unchanged.
 README and affected model/contracts/guides are updated; production/deployment
 examples and diagrams are unaffected. Tasks/reviewer markers remain unchanged.
 

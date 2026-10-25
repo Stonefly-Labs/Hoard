@@ -595,8 +595,12 @@ Tooling passes 332 checks (315 passed/seventeen macOS-native skips).
 The real logger's missing `Assert.IsType()` prefix is repaired with exact
 SDK-frame attribution unchanged; actual observation/replay reproduce four
 named failures/four corrected passes. Failed run `40161613939` and superseded
-canceled `40162771846` are not admitted. The replacement requires 223 native
-foundations and 100 scopes/982 observations with every prerequisite.
+canceled `40162771846` are not admitted. Replacement run `40164176338` at exact
+`2ecda7f` passed all three jobs, 223 native foundations without skips and
+100 scopes/982 exact discoveries/executions with every prerequisite and all
+mutation scopes. This admits diagnostics, not full category qualification or
+the later `90fd088` follow-up; the wrapper proof-contract decision remains
+unresolved.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

@@ -924,8 +924,12 @@ Run `40161613939 @abfa812` exposed a real `Assert.IsType()` logger-prefix gap.
 Its bounded repair retains exact SDK-frame attribution and reproduces four
 named failures/four corrected passes through the actual logger in independent
 local observations. That failed run and canceled `40162771846 @c1f79b2` are not
-admitted receipts; the replacement requires 223 foundations and 100 scopes/982
-observations with every prerequisite.
+admitted receipts. Replacement run `40164176338` at exact `2ecda7f` passed all
+three jobs, 223 foundations without failures/errors/skips and 100 scopes/982
+exact discoveries/executions with every prerequisite, including all mutation
+scopes. It is admitted diagnostic evidence, not full category qualification or
+evidence for later `90fd088`; the wrapper evidence-contract decision remains
+unresolved.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

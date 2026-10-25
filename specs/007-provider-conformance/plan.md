@@ -4737,8 +4737,19 @@ private dependency caches, preserving sources/archives/images/receipts and the
 unchanged 24 GiB guard; the follow-up reclaimed another twelve completed
 red-probe dependency caches after the same capacity-only failure recurred.
 C# logger/tests formatting, frozen inventory/catalog
-and patch checks pass. The replacement request is 223 native foundations and
-100 scopes/982 observations with every prerequisite, not yet admitted.
+and patch checks pass. Replacement native run
+[40164176338](https://github.com/Stonefly-Labs/Hoard/actions/runs/40164176338)
+at exact head `2ecda7f4ae7f96a0be64bbb838e07bdf07dc4873` passed all three jobs,
+223 foundations without failures/errors/skips and the strict 100-scope/
+982-discovery/execution vector with every prerequisite and all mutation scopes.
+Input: `a9b4f33d0b3e6dde4ea577d856f0d7a54e113fe712daf5054b55bce4501b0e91`;
+preparation:
+`69a1b07eb8ac465a00fc829cb2d5bfdf7b13929f6500e371245f4e5ab2352af1`;
+free scratch 91,719,884,800 bytes. This is admitted diagnostic evidence, not
+full category qualification or verification of later `90fd088`.
+The original-wrapper proof-contract decision remains unresolved; no admission
+rule or proof schema changed. The data model/evidence contract, product and
+deployment examples/diagrams are unaffected by recording this receipt.
 README and affected guides/model/contracts are updated; product/deployment
 examples and diagrams, historical seals, task/reviewer markers and locks are
 unchanged. Implementation remains running.
