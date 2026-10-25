@@ -1043,7 +1043,7 @@ def recovery_command(run, assembly, arguments, *, cache_id, value=None, executio
     if native:
         recorded = native_control_record(
             run, sequence, raw, arguments=arguments, cwd=assembly.parent, input_files=input_files)
-        if hashlib.sha256(recorded).hexdigest() != result.execution_sha256:
+        if hashlib.sha256(recorded).hexdigest() != result.execution_record_sha256:
             raise evidence.ConformanceError("ProofMismatch")
     return hashlib.sha256(raw).hexdigest(), command
 

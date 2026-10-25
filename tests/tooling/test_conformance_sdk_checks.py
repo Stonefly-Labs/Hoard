@@ -1794,6 +1794,37 @@ class SdkDiagnosticTests(unittest.TestCase):
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "OwnershipInvalid"):
             sources.native_control_record(run, 3, raw, arguments=arguments, cwd=cwd, input_files=input_files)
 
+    def test_native_recovery_command_checks_the_actual_command_result_record_digest(self):
+        from conformance_execution import CommandResult
+
+        (self.directory / "proofs").mkdir()
+        command = {
+            "schemaVersion": 1, "sequence": 1, "childPid": 200,
+            "childStartSha256": "a" * 64, "startedMs": 1000, "endedMs": 1200,
+            "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited", "scope": "recovery",
+        }
+        raw = checks.evidence.canonical_bytes(command)
+        (self.directory / "proofs/recovery-command-0001.json").write_bytes(raw)
+        recorded = b"executor-retained-record"
+        result = CommandResult(
+            0, ({"event": "test", "code": "None", "value": 1},), 200,
+            hashlib.sha256(recorded).hexdigest())
+        run = SimpleNamespace(
+            root=self.directory, command_sequence=0, live_children=lambda: (),
+            command=unittest.mock.Mock(return_value=result))
+        with patch.object(checks, "OwnedRun", type(run)), patch.object(
+                checks, "native_control_record", return_value=recorded):
+            self.assertEqual(checks.recovery_command(
+                run, self.directory / "runner.dll", ["recover-mutation"], cache_id="recovery"),
+                (hashlib.sha256(raw).hexdigest(), command))
+            self.assertTrue(run.command.call_args.kwargs["record_execution"])
+            for digest in (None, "0" * 64):
+                run.command.return_value = CommandResult(0, result.events, 200, digest)
+                with self.subTest(digest=digest), self.assertRaisesRegex(
+                        checks.evidence.ConformanceError, "ProofMismatch"):
+                    checks.recovery_command(
+                        run, self.directory / "runner.dll", ["recover-mutation"], cache_id="recovery")
+
     def test_metadata_recovery_controller_drives_each_real_runner_mode_and_rejects_missing_proof(self):
         for namespace, mutation in (
                 ("sqlite-recovery", None), ("category-sqlite-recovery", None),

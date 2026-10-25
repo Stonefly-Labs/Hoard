@@ -9071,8 +9071,10 @@ inputs/timing and consistently rewired wrong native input maps reject. All 386
 local tooling checks pass with 17 explicit macOS-native skips.
 
 Exact `d0b6bd3` run 40207993043 has a failed foundation job: 275 checks, one
-`OwnershipInvalid` in release-publication retry, no skips; SDK execution is
-still pending observation. The failure is not diagnosed or admitted. Both
+`OwnershipInvalid` in release-publication retry, no skips. Its SDK and lock jobs
+subsequently succeeded: 127 scopes and 1,818 actual witnesses, including the six
+fresh qualification-input metadata scopes and four source parents. The overall
+run remains failed and unadmitted. The ownership failure is not diagnosed. Both
 bounded observers transiently failed TLS; a completed-job API stream recovered
 only safe failure identities, without persisting raw logs. The foundational
 runner now additionally retains at most four allowlisted repository-relative
@@ -9080,6 +9082,18 @@ source/line locations, never raw traceback text, private paths, locals or
 exception messages. Its missing-location regression fails before implementation;
 the canary projection passes afterwards. Native confirmation of the later graph/
 location changes is pending. No ownership guard, control or task marker is relaxed.
+
+The subsequent `d80f9cc` run 40208706531 failed SDK execution during metadata
+recovery and its 276-check foundation job. Exact `7649a8a` run 40210363855 then
+localized the same foundation failure to the barrier test's result-digest
+assertion at line 479. Both the test and native recovery producer referenced
+nonexistent `CommandResult.execution_sha256`; the executor exposes
+`execution_record_sha256`. The portable regression uses the actual dataclass,
+fails with the old attribute, and rejects absent or mismatched actual record
+digests after correction. All 387 local tooling checks pass with 17 explicit
+native skips. Corrected native execution is pending; these failed runs are not
+admitted, and the earlier release-retry ownership failure is not explained by
+this distinct defect. Evidence and harness contracts are unchanged.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

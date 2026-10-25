@@ -476,7 +476,7 @@ print('{"event":"control","code":"None","value":1}')
         self.assertLessEqual(barrier["signalMs"], receipt["endedMs"])
         control_raw = (run.root / "proofs/recovery-command-0001.json").read_bytes()
         native_raw = run.read_execution_record(1)
-        self.assertEqual(hashlib.sha256(native_raw).hexdigest(), result.execution_sha256)
+        self.assertEqual(hashlib.sha256(native_raw).hexdigest(), result.execution_record_sha256)
         self.assertEqual(json.loads(native_raw)["controlRecordSha256"], hashlib.sha256(control_raw).hexdigest())
         with mock.patch.object(run, "terminate", return_value=False):
             with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):

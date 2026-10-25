@@ -6193,8 +6193,10 @@ foreign sequences/inputs/timing and rewired native input maps reject. All 386
 local tooling checks pass with 17 explicit macOS-native skips.
 
 Exact `d0b6bd3`, run 40207993043, has a failed foundation job: 275 checks,
-one OwnershipInvalid in release-publication retry, zero skips. SDK evidence is
-not yet observed; this run is not admitted. Both observers transiently failed
+one OwnershipInvalid in release-publication retry, zero skips. Its SDK and lock
+jobs subsequently succeeded, with 127 scopes and 1,818 actual witnesses, including
+the separate qualification-input metadata replay. The failed overall run is
+not admitted. Both observers transiently failed
 TLS; the completed-job API stream then recovered only safe failure identities.
 The foundational runner now projects at most four allowlisted relative source/
 line locations without traceback text, private paths, exception messages or
@@ -6202,6 +6204,18 @@ locals. A missing-location regression fails first and its canary projection
 passes afterwards. No speculative ownership repair is claimed; exact native
 graph/location execution, actual controller-witness attribution and all full
 profile gates remain unfinished.
+
+Exact `d80f9cc` run 40208706531 failed SDK execution at metadata recovery and
+its native foundations. The instrumented 278-check foundation job at `7649a8a`
+pinpointed the barrier-test digest assertion, line 479. The new recovery producer
+and that assertion used nonexistent `CommandResult.execution_sha256` rather
+than the executor's actual `execution_record_sha256`. A portable regression
+using the real dataclass reproduces the attribute error before correction and
+checks success plus absent/wrong record digests afterwards. All 387 tooling
+checks pass with 17 explicit native skips. Corrected exact-head Linux execution
+is pending; no failed run is admitted and the separate earlier release-retry
+OwnershipInvalid remains undiagnosed. The field correction changes no evidence
+or harness contract, and no case/task/stage gate is relaxed.
 
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately

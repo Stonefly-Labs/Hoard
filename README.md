@@ -2024,6 +2024,12 @@ case evidence. Control-only cases still remain incomplete: no runtime execution
 UUID is fabricated from a controller label or receipt hash. Actual Linux
 confirmation is pending. The earlier `d0b6bd3` foundation job reported one
 `OwnershipInvalid` in release-publication retry; that run is not admitted.
+Its SDK and lock jobs subsequently succeeded, including 127 scopes and 1,818
+actual witnesses; that partial result does not admit the failed overall run.
+Later native foundations pinpointed a recovery-result field mismatch. Recovery
+now checks the actual `CommandResult.execution_record_sha256`, with a portable
+regression using that real result type. Exact corrected Linux execution remains
+pending; no controller-only case or full-profile gate is promoted.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce
