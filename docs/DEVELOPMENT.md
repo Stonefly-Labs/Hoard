@@ -9422,7 +9422,32 @@ correct PID/run/provider/count/digest/pacing values. These are bounded local
 diagnostics without native-containment or OS-peak assertions, not the full
 4 GiB/Linux qualification chain. The original native-output protocol regression
 and all independent complete transfer/control authority still require replay.
-All seven artifact QCs and artifact qualification remain closed.
+An independent transfer source reader now selects the actual fixed runner
+suffix, exact provider/qualified-size namespace paths, immutable original
+inputs, read-only recipe/controller/producer/composite and original executor
+record. It independently recomputes the generated-byte expectation, reuses the
+same pure complete producer/measurement validators, requires exact original
+argv/cwd/input/output/control maps and reconstructs the closed recipe. It reads
+the original explicit sequence even after later commands; producer labels and
+rewired current hashes do not replace executor-held bytes. Both initial
+source-consumption ingestion and its parent recheck require all four graphs.
+Missing or changed graphs propagate; no capture/index receipt is admitted as a
+fallback. Shared runtime assembly hashing is reused by metadata and artifacts;
+the generic source layer never imports SDK build orchestration.
+All seven artifact QCs and artifact qualification remain closed: fresh
+qualification-origin namespaces/joint bounds and complete crash/retention
+source corroboration still need implementation.
+
+Exact source-index `a9e75c848c3572a035a7317a6a20b8e89540cd0f`,
+[run40228504830](https://github.com/Stonefly-Labs/Hoard/actions/runs/40228504830),
+passes SDK diagnostics and locked package replay but fails one of 302 native
+foundations, with zero errors/skips. Safe source attribution resolves exactly
+to `test_conformance_execution.py:410`: the new test compares the correct empty
+`frozenset` returned by `live_children()` to an empty tuple. The correction
+asserts emptiness, preserving the actual original settled-record and ownership
+checks. This is a demonstrated assertion-shape error, not a runtime ownership
+repair or overall native admission. Pending `055abe1`/run40229217713 was
+superseded before execution by the producer checkpoint and grants no evidence.
 
 Exact `cf4a70f278d9e5542cc344e9cd4aa77d78273b40`,
 [run40227343651](https://github.com/Stonefly-Labs/Hoard/actions/runs/40227343651),
@@ -9441,7 +9466,7 @@ This admits original byte capture only, not the later output-seal or native
 measurement-record increments. Their exact native replays remain pending;
 neither profile qualifies.
 
-Current validation: all 411 tooling checks pass with 19 explicit native skips;
+Current validation: all 412 tooling checks pass with 19 explicit native skips;
 all 133 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
 and whitespace checks pass. The preceding byte-capture checkpoint compiled
 the original artifact package-acceptance project with freshly rebuilt SDK,

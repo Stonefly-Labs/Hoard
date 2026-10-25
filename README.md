@@ -2161,8 +2161,19 @@ output. Original input/controller/output maps and returned command digest must
 all agree; reserializing even semantically identical producer JSON rejects.
 Legacy five-argument behavior remains unchanged. Actual local 256 MiB runs on
 both options confirm matching original output bytes without native-containment
-or OS-peak claims. Full independent transfer/control admission and artifact
-qualification remain closed pending complete native corroboration.
+or OS-peak claims. An independent reader now reselects each original
+runner/input/recipe/controller/producer/composite and executor-held command,
+including after later commands. Ingestion and source-parent admission recheck
+all four transfer graphs; rewired current hashes cannot replace original native
+input/output/control maps. All 412 tooling checks pass with 19 native skips.
+Fresh qualification namespaces, complete crash/retention corroboration and full
+artifact qualification remain closed.
+
+Exact source-index run40228504830 at `a9e75c8` fails one native foundation
+assertion comparing an empty `frozenset` to an empty tuple; its SDK and lock jobs
+succeed, but the overall run is not admitted. The test now checks no live
+children without changing ownership/settlement behavior. Pending measurement
+run40229217713 was superseded before execution and grants no admission.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

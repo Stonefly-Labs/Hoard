@@ -346,6 +346,93 @@ def admit_transfer_measurement(command, sequence, size):
         raise evidence.ConformanceError("ProofMismatch")
 
 
+def admit_artifact_transfer_namespace(inputs, namespace):
+    if (namespace not in ("artifact-transfers", "category-artifact-transfers")
+            or namespace == "category-artifact-transfers" and (
+                inputs.get("profileId") != "artifacts" or inputs.get("mode") != "diagnostic")):
+        raise evidence.ConformanceError("ProofMismatch")
+
+
+def admit_artifact_transfer_producer(producer, command, provider, size, expected_hash, run_id, runtime):
+    import artifact_evidence as artifacts
+    fields = {
+        "eventName", "provider", "runId", "pid", "size", "written", "read", "expectedSha256",
+        "sourceSha256", "sinkSha256", "runtime", "sourcePaced", "sinkPaced", "nonSeekable",
+        "generated", "independentExpectedHash", "warmupComplete", "bufferBytes", "providerBufferLimit", "slots",
+    }
+    if (not isinstance(producer, dict) or set(producer) != fields or producer["eventName"] != "complete"
+            or producer["pid"] != command["childPid"] or producer["expectedSha256"] != expected_hash
+            or producer["runtime"] != ".NET " + runtime):
+        raise evidence.ConformanceError("ProofMismatch")
+    measured = command["transfer"]
+    proof = {**producer, **{name: measured[name] for name in (
+        "baselineRssBytes", "osPeakRssBytes", "sampledPeakRssBytes", "samples", "osPeakMethod")},
+             "rssUnits": "bytes", "exitCode": command["exitCode"]}
+    try:
+        artifacts.verify_transfer(proof, provider, size, run_id, peak_methods=("proc-status",))
+    except RuntimeError:
+        raise evidence.ConformanceError("ProofMismatch") from None
+    return proof
+
+
+def native_artifact_transfer_source(run, inputs, provider, size, *, namespace):
+    import artifact_evidence as artifacts
+    if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    admit_artifact_transfer_namespace(inputs, namespace)
+    if (inputs["runId"] != run.run_id or provider not in ("local", "object")
+            or type(size) is not int or size not in (268435456, 4294967296)):
+        raise evidence.ConformanceError("InputChanged")
+    assembly_path, assembly = _control_assembly(
+        run, inputs, "/tests/fixtures/artifacts/TransferRunner/bin/Release/net10.0/Hoard.Fixtures.Artifacts.TransferRunner.dll")
+    prefix = f"proofs/{namespace}/transfer-{provider}-{size}"
+    input_path = prefix + "-native-inputs.json"
+    input_raw = _readonly(run.root / input_path, 16 * 1024 * 1024)
+    if input_raw != evidence.canonical_bytes(inputs):
+        raise evidence.ConformanceError("InputChanged")
+    recipe_path = prefix + "/native-execution.json"
+    recipe_raw = _readonly(run.root / recipe_path, 64 * 1024)
+    recipe = evidence.load_json(recipe_raw)
+    sequence = recipe.get("sequence") if isinstance(recipe, dict) else None
+    if type(sequence) is not int or not 0 < sequence <= run.command_sequence:
+        raise evidence.ConformanceError("ProofMismatch")
+    control_path = f"proofs/transfer-command-{sequence:04}.json"
+    control_raw = _readonly(run.root / control_path, 64 * 1024)
+    command = evidence.load_json(control_raw)
+    admit_transfer_measurement(command, sequence, size)
+    producer_path = prefix + "/producer.json"
+    producer_raw = _readonly(run.root / producer_path, 8192)
+    expected = artifacts.expected_transfer_hash(size)
+    proof = admit_artifact_transfer_producer(
+        evidence.load_json(producer_raw), command, provider, size, expected, run.run_id, inputs["environment"]["runtime"])
+    proof_path = prefix + "/proof.json"
+    proof_raw = _readonly(run.root / proof_path, 16384)
+    if proof_raw != evidence.canonical_bytes(proof):
+        raise evidence.ConformanceError("ProofMismatch")
+    store = run.root / f"stores/{namespace}/transfer-{provider}-{size}"
+    native_raw = native_control_record(
+        run, sequence, control_raw, arguments=[
+            "dotnet", str(assembly), provider, str(store), str(size), expected, run.run_id, str(run.root / producer_path)],
+        cwd=assembly.parent, input_files={assembly_path: inputs["runtimeAssemblies"][assembly_path],
+                                         input_path: evidence.digest(inputs)},
+        output_files={producer_path: hashlib.sha256(producer_raw).hexdigest()})
+    expected_recipe = {
+        "schemaVersion": 1, "qualification": False, "runId": run.run_id, "rootId": run.root_id,
+        "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
+        "provider": provider, "size": size, "assemblyPath": assembly_path, "inputsPath": input_path,
+        "sequence": sequence, "controllerSha256": hashlib.sha256(control_raw).hexdigest(),
+        "producerSha256": hashlib.sha256(producer_raw).hexdigest(),
+        "executionSha256": hashlib.sha256(native_raw).hexdigest()}
+    if recipe_raw != evidence.canonical_bytes(expected_recipe):
+        raise evidence.ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        "sequence": sequence, "producerSha256": expected_recipe["producerSha256"],
+        "sourceProofs": MappingProxyType({
+            input_path: input_raw, recipe_path: recipe_raw, control_path: control_raw,
+            producer_path: producer_raw, proof_path: proof_raw,
+            f"proofs/execution-command-{sequence:04}.json": native_raw})})
+
+
 def admit_recovery_barrier(command, sequence, value, *, inspection=None):
     admit_owned_command(command, sequence, scope="recovery", detail="barrier", exit_code=-9, max_duration=15000)
     fields = {"value", "observedMs", "signalMs"} | ({"inspection"} if inspection is not None else set())
@@ -414,7 +501,7 @@ def admit_sqlite_noncooperation(observed, command, inputs_sha256):
         raise evidence.ConformanceError("ProofMismatch")
 
 
-def _metadata_control_assembly(run, inputs, suffix):
+def _control_assembly(run, inputs, suffix):
     assemblies = [path for path in inputs["runtimeAssemblies"] if path.endswith(suffix)]
     if len(assemblies) != 1:
         raise evidence.ConformanceError("InputChanged")
@@ -445,7 +532,7 @@ def native_metadata_noncooperation_control(run, inputs, *, started_ms, ended_ms)
         raise evidence.ConformanceError("InputChanged")
     suffix = ("/tests/contracts/Hoard.Conformance.Tests/bin/package-diagnostic/"
               "Release/net10.0/Hoard.Conformance.Tests.dll")
-    assembly_path, assembly = _metadata_control_assembly(run, inputs, suffix)
+    assembly_path, assembly = _control_assembly(run, inputs, suffix)
     namespace = "qualification-sqlite-native-noncooperation"
     inputs_path = f"proofs/{namespace}-native-inputs.json"
     input_raw = _readonly(run.root / inputs_path, 16 * 1024 * 1024)
@@ -505,7 +592,7 @@ def native_metadata_recovery_controls(run, inputs, *, started_ms, ended_ms):
         raise evidence.ConformanceError("InputChanged")
     namespace = "qualification-sqlite-recovery"
     suffix = "/tests/fixtures/metadata/CrashRunner/bin/Release/net10.0/Hoard.Fixtures.Metadata.CrashRunner.dll"
-    assembly_path, assembly = _metadata_control_assembly(run, inputs, suffix)
+    assembly_path, assembly = _control_assembly(run, inputs, suffix)
     inputs_path = f"proofs/{namespace}-native-inputs.json"
     input_raw = _readonly(run.root / inputs_path, 16 * 1024 * 1024)
     if input_raw != evidence.canonical_bytes(inputs):
@@ -591,7 +678,7 @@ def native_metadata_ownership_control(run, inputs, *, started_ms, ended_ms):
     if (inputs["profileId"] != "metadata" or inputs["mode"] != "qualification"
             or inputs["runId"] != run.run_id or ended_ms < started_ms):
         raise evidence.ConformanceError("InputChanged")
-    assembly_path, assembly = _metadata_control_assembly(
+    assembly_path, assembly = _control_assembly(
         run, inputs, "/tests/fixtures/metadata/CrashRunner/bin/Release/net10.0/Hoard.Fixtures.Metadata.CrashRunner.dll")
     namespace = "qualification-sqlite-ownership"
     inputs_path = f"proofs/{namespace}-native-inputs.json"
@@ -668,7 +755,7 @@ def native_metadata_package_consumer_control(run, inputs, *, started_ms, ended_m
     if (inputs["profileId"] != "metadata" or inputs["mode"] != "qualification"
             or inputs["runId"] != run.run_id or ended_ms < started_ms):
         raise evidence.ConformanceError("InputChanged")
-    assembly_path, assembly = _metadata_control_assembly(
+    assembly_path, assembly = _control_assembly(
         run, inputs, "/tests/fixtures/metadata/Consumer/bin/Release/net10.0/Hoard.Fixtures.Metadata.Consumer.dll")
     namespace = "qualification-metadata-package-consumer"
     inputs_path = f"proofs/{namespace}-native-inputs.json"
@@ -729,7 +816,7 @@ def native_metadata_binary_control(run, inputs, *, started_ms, ended_ms):
             or inputs["runId"] != run.run_id or ended_ms < started_ms):
         raise evidence.ConformanceError("InputChanged")
     suffix = "tests/fixtures/metadata/RetainedMarker/bin/compatibility/net10.0/RetainedMarker.dll"
-    assembly_path, assembly = _metadata_control_assembly(run, inputs, "/" + suffix)
+    assembly_path, assembly = _control_assembly(run, inputs, "/" + suffix)
     prefix = assembly_path.removesuffix("RetainedMarker.dll")
     candidate_prefix = assembly_path.removesuffix(suffix)
     baselines = [row for row in inputs["baselines"] if row["apiScope"] == "metadata-marker"]

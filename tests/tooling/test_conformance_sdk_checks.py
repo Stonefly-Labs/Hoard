@@ -1694,13 +1694,43 @@ class SdkDiagnosticTests(unittest.TestCase):
                     run, {"runtimeAssemblies": {assembly.relative_to(root).as_posix(): "0" * 64}}, candidate)
             execute.assert_not_called()
 
+    def test_artifact_source_consumption_rechecks_all_four_original_transfer_graphs_and_propagates_failure(self):
+        run, inputs, manifest, ingested = SimpleNamespace(root=self.directory), {}, {}, {}
+        for failed in (False, True):
+            with self.subTest(failed=failed), patch.object(
+                    checks, "native_artifact_transfer_source",
+                    side_effect=checks.evidence.ConformanceError("ProofMismatch") if failed else None) as transfer, patch.object(
+                    checks, "artifact_source_observations", return_value=([], {})) as capture, patch.object(
+                    checks, "artifact_source_output_seal", return_value=b"original-index") as seal:
+                if failed:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                        checks._artifact_source_consumption(run, inputs, manifest, ingested, "category-artifact-transfers")
+                    capture.assert_not_called()
+                    seal.assert_not_called()
+                else:
+                    complete_inputs = {"runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4())}
+                    complete_manifest = {"attemptId": str(uuid.uuid4())}
+                    checks._artifact_source_consumption(
+                        run, complete_inputs, complete_manifest, ingested, "category-artifact-transfers")
+                    self.assertEqual(
+                        [call.args[2:] for call in transfer.call_args_list],
+                        [("local", 268435456), ("local", 4294967296), ("object", 268435456), ("object", 4294967296)])
+                    self.assertTrue(all(call.kwargs == {"namespace": "category-artifact-transfers"}
+                                        for call in transfer.call_args_list))
+                    capture.assert_called_once()
+                    seal.assert_called_once()
+
     def test_native_transfer_measurement_pins_original_inputs_controller_and_command_result(self):
+        import conformance_sources as sources
+        self.assertTrue(callable(getattr(sources, "native_artifact_transfer_source", None)))
         for changed in (None, "result", "controller", "producer", "assembly", "run", "provider", "size"):
             root = self.directory / str(changed)
             (root / "stores/category-artifact-transfers").mkdir(parents=True)
             (root / "proofs/category-artifact-transfers").mkdir(parents=True)
-            assembly = root / "candidate/transfer.dll"
-            assembly.parent.mkdir()
+            assembly_path = ("candidate/tests/fixtures/artifacts/TransferRunner/"
+                             "bin/Release/net10.0/Hoard.Fixtures.Artifacts.TransferRunner.dll")
+            assembly = root / assembly_path
+            assembly.parent.mkdir(parents=True)
             assembly.write_bytes(b"modeled-transfer-assembly")
             assembly.chmod(0o400)
             run = object.__new__(checks.OwnedRun)
@@ -1710,18 +1740,18 @@ class SdkDiagnosticTests(unittest.TestCase):
             inputs = {
                 "runId": run.run_id, "invocationGroupId": str(uuid.uuid4()),
                 "environment": ENVIRONMENT, "profileId": "artifacts", "mode": "diagnostic",
-                "runtimeAssemblies": {"candidate/transfer.dll": checks.evidence.file_sha256(assembly)}}
+                "runtimeAssemblies": {assembly_path: checks.evidence.file_sha256(assembly)}}
             if changed == "assembly":
-                inputs["runtimeAssemblies"]["candidate/transfer.dll"] = "c" * 64
+                inputs["runtimeAssemblies"][assembly_path] = "c" * 64
             elif changed == "run":
                 inputs["runId"] = str(uuid.uuid4())
-            expected_hash = "a" * 64
+            expected_hash = checks.artifacts.expected_transfer_hash(268435456)
             held = {}
 
             def command(arguments, **options):
                 self.assertTrue(options.get("record_execution"))
                 input_path = "proofs/category-artifact-transfers/transfer-local-268435456-native-inputs.json"
-                self.assertEqual(options["execution_inputs"], ("candidate/transfer.dll", input_path))
+                self.assertEqual(options["execution_inputs"], (assembly_path, input_path))
                 producer_path = "proofs/category-artifact-transfers/transfer-local-268435456/producer.json"
                 self.assertEqual(options.get("execution_outputs"), (producer_path,))
                 self.assertEqual(arguments[-1], str(root / producer_path))
@@ -1753,7 +1783,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     "argvSha256": checks.evidence.digest(arguments),
                     "cwdSha256": hashlib.sha256(str(assembly.parent).encode()).hexdigest(),
                     "controlRecordSha256": hashlib.sha256(raw).hexdigest(),
-                    "inputFiles": {"candidate/transfer.dll": checks.evidence.file_sha256(assembly),
+                    "inputFiles": {assembly_path: checks.evidence.file_sha256(assembly),
                                    input_path: checks.evidence.digest(inputs)},
                     "outputFiles": {producer_path: checks.evidence.digest(producer)}})
                 if changed == "controller":
@@ -1792,6 +1822,55 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertEqual(observed["sequence"], 1)
                     self.assertEqual(observed["rootId"], run.root_id)
                     self.assertEqual(receipt.stat().st_mode & 0o777, 0o400)
+                    control_path = root / "proofs/transfer-command-0001.json"
+                    control_path.chmod(0o400)
+                    run.command_sequence += 1
+                    admitted = sources.native_artifact_transfer_source(
+                        run, inputs, "local", 268435456, namespace="category-artifact-transfers")
+                    self.assertEqual(admitted["sequence"], 1)
+                    self.assertEqual(admitted["producerSha256"], observed["producerSha256"])
+                    original = receipt.read_bytes()
+                    for defect in ("recipe", "control", "producer", "inputs", "combined"):
+                        with self.subTest(source=defect):
+                            target = {
+                                "recipe": receipt, "control": control_path,
+                                "producer": receipt.parent / "producer.json",
+                                "inputs": root / "proofs/category-artifact-transfers/transfer-local-268435456-native-inputs.json",
+                                "combined": receipt.parent / "proof.json"}[defect]
+                            before = target.read_bytes()
+                            target.chmod(0o600)
+                            body = checks.evidence.load_json(before)
+                            if defect == "recipe":
+                                body["sequence"] = 2
+                            elif defect == "control":
+                                body["transfer"]["osPeakRssBytes"] += 1024
+                            elif defect == "inputs":
+                                body["runId"] = str(uuid.uuid4())
+                            elif defect == "combined":
+                                body["samples"] += 1
+                            replacement = (json.dumps(dict(reversed(tuple(body.items()))), separators=(",", ":")).encode()
+                                           if defect == "producer" else checks.evidence.canonical_bytes(body))
+                            self.assertNotEqual(replacement, before)
+                            target.write_bytes(replacement)
+                            target.chmod(0o400)
+                            if defect in ("control", "producer"):
+                                rewired = checks.evidence.load_json(original)
+                                rewired["controllerSha256" if defect == "control" else "producerSha256"] = (
+                                    hashlib.sha256(replacement).hexdigest())
+                                receipt.chmod(0o600)
+                                receipt.write_bytes(checks.evidence.canonical_bytes(rewired))
+                                receipt.chmod(0o400)
+                            with self.assertRaises(checks.evidence.ConformanceError):
+                                sources.native_artifact_transfer_source(
+                                    run, inputs, "local", 268435456, namespace="category-artifact-transfers")
+                            target.chmod(0o600)
+                            target.write_bytes(before)
+                            target.chmod(0o400)
+                            if defect in ("control", "producer"):
+                                receipt.chmod(0o600)
+                                receipt.write_bytes(original)
+                                receipt.chmod(0o400)
+                    self.assertEqual(receipt.read_bytes(), original)
 
     def test_noncooperative_observations_require_real_retention_and_matching_live_child(self):
         self.assertTrue(callable(getattr(checks, "admit_artifact_noncooperation", None)),

@@ -40,11 +40,12 @@ from conformance_case_catalog import (
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_sources import (
     METADATA_RECOVERY_SCENARIOS, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
-    admit_sqlite_noncooperation, admit_transfer_measurement,
+    admit_sqlite_noncooperation, admit_transfer_measurement, admit_artifact_transfer_producer,
+    admit_artifact_transfer_namespace as _admit_transfer_namespace,
     artifact_source_context, artifact_source_observations, artifact_source_output_seal,
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
     metadata_inventory_arguments, metadata_inventory_context, metadata_inventory_observations,
-    metadata_inventory_source_inputs, native_metadata_inventory_controls,
+    metadata_inventory_source_inputs, native_metadata_inventory_controls, native_artifact_transfer_source,
     native_control_record, native_metadata_binary_control, native_metadata_ownership_control,
     native_metadata_package_consumer_control,
     read_bounded, runtime_arguments, runtime_settings,
@@ -946,24 +947,9 @@ def measured_artifact_transfer(run, inputs, assembly, provider, size, expected_h
             output_files={producer_path.relative_to(run.root).as_posix(): hashlib.sha256(producer_raw).hexdigest()})
         if hashlib.sha256(native_raw).hexdigest() != result.execution_record_sha256:
             raise evidence.ConformanceError("ProofMismatch")
-    producer = evidence.load_json(producer_raw)
-    fields = {
-        "eventName", "provider", "runId", "pid", "size", "written", "read", "expectedSha256",
-        "sourceSha256", "sinkSha256", "runtime", "sourcePaced", "sinkPaced", "nonSeekable",
-        "generated", "independentExpectedHash", "warmupComplete", "bufferBytes", "providerBufferLimit", "slots",
-    }
-    if (not isinstance(producer, dict) or set(producer) != fields or producer["eventName"] != "complete"
-            or producer["pid"] != command["childPid"] or producer["expectedSha256"] != expected_hash
-            or producer["runtime"] != ".NET " + inputs["environment"]["runtime"]):
-        raise evidence.ConformanceError("ProofMismatch")
-    measured = command["transfer"]
-    proof = {**producer, **{name: measured[name] for name in (
-        "baselineRssBytes", "osPeakRssBytes", "sampledPeakRssBytes", "samples", "osPeakMethod")},
-             "rssUnits": "bytes", "exitCode": command["exitCode"]}
-    try:
-        artifacts.verify_transfer(proof, provider, size, run.run_id, peak_methods=("proc-status",))
-    except RuntimeError:
-        raise evidence.ConformanceError("ProofMismatch") from None
+    proof = admit_artifact_transfer_producer(
+        evidence.load_json(producer_raw), command, provider, size, expected_hash, run.run_id,
+        inputs["environment"]["runtime"])
     if not native:
         directory.mkdir(mode=0o700)
     proof_path = directory / "proof.json"
@@ -982,13 +968,6 @@ def measured_artifact_transfer(run, inputs, assembly, provider, size, expected_h
         "producerSha256": hashlib.sha256(producer_raw).hexdigest(),
         "proofSha256": evidence.file_sha256(proof_path), "childStartSha256": command["childStartSha256"],
     }
-
-
-def _admit_transfer_namespace(inputs, namespace):
-    if (namespace not in ("artifact-transfers", "category-artifact-transfers")
-            or namespace == "category-artifact-transfers" and (
-                inputs.get("profileId") != "artifacts" or inputs.get("mode") != "diagnostic")):
-        raise evidence.ConformanceError("ProofMismatch")
 
 
 def artifact_transfer_diagnostics(run, inputs, candidate, *, namespace="artifact-transfers"):
@@ -2092,6 +2071,9 @@ def _original_inspection_proofs(run, inputs, manifest, ingested, selected, mode,
 
 
 def _artifact_source_consumption(run, inputs, manifest, ingested, namespace):
+    for provider in ("local", "object"):
+        for size in (268435456, 4294967296):
+            native_artifact_transfer_source(run, inputs, provider, size, namespace=namespace)
     captured, packets = artifact_source_observations(run.root, inputs, manifest, ingested, namespace=namespace)
     seal = artifact_source_output_seal(run, inputs, manifest, captured, namespace=namespace)
     return evidence.canonical_bytes({

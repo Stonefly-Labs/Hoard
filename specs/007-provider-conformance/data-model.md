@@ -515,6 +515,13 @@ after actual owned exit. Admission checks its raw hash in the original held
 output map; the private receipt adds `producerSha256`. This introduces no new
 public entity or qualification gate and does not complete independent
 transfer/control admission.
+Independent graph admission reconstructs the exact fixed recipe from original
+explicit native sequence, immutable inputs, complete producer/measurement/
+composite bytes and original input/output/control hashes, including after later
+commands. Initial consumption and source parents require all four transfer
+graphs. Rewired current hashes do not replace original executor provenance.
+Fresh qualification-origin/joint-bound and crash/retention authority remain
+separate unbuilt gates; public schemas and status rules are unchanged.
 
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits

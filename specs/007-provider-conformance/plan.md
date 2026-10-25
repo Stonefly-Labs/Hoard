@@ -6545,6 +6545,42 @@ after actual child exit; safe producer proofs remain private. Fresh Linux output
 sealing, complete independent transfer/control corroboration, all remaining
 artifact QCs and task completion remain pending.
 
+Independent native transfer source admission now reselects fixed original
+runner, provider/qualified-size recipe paths, immutable inputs, read-only
+controller/producer/composite and original executor record. It independently
+recomputes the generated-byte expectation and reconstructs the exact closed
+recipe from original input/output/control maps and argv/cwd. Original explicit
+sequences remain readable after later commands. Pure producer/measurement/
+namespace validation and runtime assembly hashing are shared, with no generic
+source import of SDK build orchestration. Both initial capture consumption and
+its source-parent recheck require all four graphs; missing/changed source
+authority propagates before admitting capture/index receipts.
+
+The missing independent-reader API fails in red. Positive original graphs,
+post-later-command lookup, foreign sequence, changed immutable input/composite
+and fully rewired control/semantically identical producer replacements are
+covered; the latter mutation is explicitly checked to change actual bytes.
+An initially ineffective reserialization mutation is corrected to reverse key
+order, not to weaken original-byte admission. Complete four-graph dispatch and
+failure propagation are covered. All 412 local tooling checks pass with
+19 explicit native skips; frozen inventory/catalog and whitespace checks pass.
+No C# sources/references/locks change after the actual producer build and local
+paced diagnostics. Qualification-origin namespaces/joint bounds, complete
+crash/retention authority, artifact QCs and task completion remain unbuilt.
+
+Exact `a9e75c848c3572a035a7317a6a20b8e89540cd0f`,
+[run40228504830](https://github.com/Stonefly-Labs/Hoard/actions/runs/40228504830),
+passes SDK diagnostics/13-lock/18-package replay but fails one of 302 native
+foundations, zero errors/skips. Safe attribution names the new original-output
+test at `tests/tooling/test_conformance_execution.py:410`, where an empty
+`frozenset` is compared with an empty tuple. The actual `live_children()` API
+returns `frozenset`; the corrected test asserts no live children and retains
+original record/hash/settlement checks. This fixes a demonstrated fixture
+assertion, not native ownership behavior. The overall failed run is not
+admitted. Pending `055abe1`/run40229217713 is superseded before execution and
+grants no evidence. Current producer replay is still active; no failed snapshot
+or job success alone advances the stage.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

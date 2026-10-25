@@ -410,7 +410,7 @@ class ConformanceExecutionTests(unittest.TestCase):
         self.assertEqual(record["diagnosticCode"], "None")
         self.assertEqual(record["outputFiles"], {"proofs/source-index.json": hashed})
         self.assertEqual(stat.S_IMODE(output.stat().st_mode), 0o400)
-        self.assertEqual(run.live_children(), ())
+        self.assertFalse(run.live_children())
         with self.assertRaisesRegex(ConformanceError, "InputChanged"):
             run.command(
                 arguments, record_execution=True, execution_inputs=("stores/source.py",),

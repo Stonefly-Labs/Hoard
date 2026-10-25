@@ -323,6 +323,18 @@ cannot declare outputs. Complete independent transfer/control admission and
 fresh native corroboration remain required. Non-native diagnostic adapters
 cannot emit these native receipts.
 
+Independent transfer graph admission reselects the unique fixed runner suffix,
+exact provider/qualified-size recipe paths and original immutable input document.
+It recomputes the generated-byte expectation, validates complete producer/kernel
+measurement fields and the exact composite, and joins raw output/controller
+hashes to the executor-held original explicit sequence/argv/cwd/input map.
+The complete closed recipe must equal those independently selected values.
+Ingestion and source-parent rechecking require all four graphs, even after later
+commands. Rewired current recipe/control/producer hashes cannot replace original
+native records. This closes diagnostic transfer-graph substitution only; fresh
+qualification-origin joint bounds and complete artifact controller admission
+remain required.
+
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private
 revision-2 execution proof adds a distinct `originalObservations` collection;

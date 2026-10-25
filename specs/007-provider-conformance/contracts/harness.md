@@ -286,6 +286,15 @@ Cleanup and unmeasured transfer output declarations reject. This does not open
 independent complete artifact source admission.
 The shared pure measurement validator retains all existing exact qualified
 sizes, kernel peak, protocol timing and settlement constraints.
+Independent source admission now reconstructs each fixed runner/input/recipe/
+controller/producer/composite/native-record graph from its original explicit
+sequence, including after later commands. Exact generated-byte expectation,
+argv/cwd and original held input/output/control hashes are mandatory. Both
+consumption and source-parent checks require all four graphs, without fallback.
+Qualification-origin joint bounds and complete crash/retention admission remain
+unbuilt. Source-index run40228504830 fails its empty-frozenset-versus-tuple test
+assertion despite SDK/lock success; the test now asserts no live children.
+That overall failed snapshot is not admitted.
 The prior byte-capture checkpoint cf4/run40227343651 independently passes
 three Linux jobs, 300 native foundations without skips, 13-lock/18-package
 replay and 129 scopes/1,821 witnesses. It admits original byte capture, not the
