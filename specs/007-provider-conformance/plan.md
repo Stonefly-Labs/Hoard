@@ -6682,7 +6682,7 @@ missing/shortened cases, foreign anchors and changed original attempts reject.
 History preserves original immutable receipts and counts cumulative proof bytes
 and files before committing. Budget failure records incompleteness atomically.
 SDK persistence rejects replaced/mutable/hash-mismatched receipts and adds an
-explicit non-qualifying quality-source digest/count. All 423 tooling checks
+explicit non-qualifying quality-source digest/count. All 424 tooling checks
 pass with 19 native skips; frozen inventory, SDK catalog and whitespace checks
 pass. Actual Linux replay is pending; QC-03/04/05/12 and complete acceptance
 remain unfinished. No tasks/checklists advance.
@@ -6695,8 +6695,15 @@ This admits original native output-index/transfer graphs, not later
 controller/QC increments or qualification-origin joint execution. Pending 97a/
 run40234467588 was superseded without execution and grants no native admission.
 Exact f1ba/run40235078726 passes 311 native foundations and the lock job but
-fails SDK diagnostics at artifact `controller` with `WitnessMissing`, before
-qualification-origin artifact execution. It is not admitted. Category failures
+fails SDK diagnostics at the qualification-origin artifact `controller` with
+`WitnessMissing`. It is not admitted. The safe projector originally omitted the
+two new qualification phase labels; independently projecting them corrects
+the earlier diagnostic-phase attribution. A focused regression reproduces
+ordinary session admission running prematurely for the source-only controller.
+It now receives validated transport inspection before unchanged mandatory
+independent source reconstruction, parent checks and native history admission,
+matching other source-only controllers. Actual Linux replay remains pending.
+Category failures
 now expose at most four static source-role/line locations, without raw
 tracebacks, messages or locals, to locate the failure in the next native replay.
 

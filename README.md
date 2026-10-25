@@ -2205,10 +2205,12 @@ source anchors, not a shortened underlying inventory. Report admission
 recomputes the complete receipt and its hash; missing/changed receipts,
 shortened cases and foreign anchors reject. Original receipt bytes survive
 retries, and file/byte budget failures commit no partial passing basis.
-All 423 tooling checks pass with 19 native skips. QC-03/04/05/12 and full
+All 424 tooling checks pass with 19 native skips. QC-03/04/05/12 and full
 profile/evaluator acceptance remain incomplete. The preceding f1ba Linux replay
-passes 311 foundations but fails the diagnostic artifact controller with
-`WitnessMissing`; it is not admitted. Category errors now expose at most four
+passes 311 foundations but fails the qualification-origin artifact controller
+with `WitnessMissing`; it is not admitted. The controller now uses validated
+transport inspection before mandatory independent source admission, matching
+the other source-only controllers. Category errors expose at most four
 static source-role/line locations, never raw tracebacks or exception messages,
 to support the next replay.
 

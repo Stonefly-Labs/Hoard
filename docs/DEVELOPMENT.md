@@ -9560,14 +9560,21 @@ This admits original native index/output and transfer-source graphs in the
 existing diagnostic execution, not later complete controller/QC joins or fresh
 qualification-origin transfers. Superseded pending 97a/run40234467588 grants no
 native evidence. Exact f1ba/run40235078726 passes 311 native foundations and
-the lock job but fails SDK diagnostics at artifact `controller` with
-`WitnessMissing`, before qualification-origin artifact execution. That snapshot
+the lock job but fails SDK diagnostics at the qualification-origin artifact
+`controller` with `WitnessMissing`. That snapshot
 is not admitted. Category control/scope/admission failures now emit at most four
 static source-role/line locations, matching the foundational safe diagnostic
 pattern without retaining raw traceback text, exception messages or frame locals.
-The next native replay must locate and resolve this failure.
+The original safe projector omitted the two new qualification phase labels;
+their independently projected presence corrects the earlier diagnostic-phase
+attribution. A focused regression reproduces premature ordinary session admission
+for the source-only artifact controller. It now uses validated transport
+inspection before its unchanged mandatory source reconstruction/parent checks
+and final native history admission, matching inspection/metadata controllers.
+Ordinary/diagnostic session admission is unchanged. Actual Linux replay of the
+repair remains pending.
 
-Current validation: all 423 tooling checks pass with 19 explicit native skips;
+Current validation: all 424 tooling checks pass with 19 explicit native skips;
 all 133 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
 and whitespace checks pass. The preceding byte-capture checkpoint compiled
 the original artifact package-acceptance project with freshly rebuilt SDK,

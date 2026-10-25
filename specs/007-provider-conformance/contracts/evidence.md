@@ -382,6 +382,10 @@ cumulative profile proof budgets are checked before atomic commit; missing,
 replaced, shortened or overflowing bases reject. SDK recording requires exact
 read-only originals and emits quality-source count/digest without a passing
 qualification claim. Actual native replay and remaining QCs are still pending.
+The qualification-origin artifact controller uses validated transport inspection
+before independent original source/parent checks and final native history
+admission. Inspection alone does not qualify a witness or bypass session/source
+policy; ordinary and diagnostic transports retain their original admission.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

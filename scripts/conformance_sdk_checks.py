@@ -2648,6 +2648,7 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
     }
     inspect_source = (inputs["mode"] == "qualification" and runtime_options.get("category_scope") is not None
                       and (runtime_options["category_scope"][1].startswith("inspection-")
+                           or tuple(runtime_options["category_scope"]) == ("artifacts", "controller")
                            or runtime_options["category_scope"][1] in ("recovery-controller", "inventory-controller")))
     ingest = evidence.inspect_runtime_attempt if inspect_source else evidence.ingest_runtime_attempt
     ingested = ingest(

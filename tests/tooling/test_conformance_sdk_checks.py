@@ -28,6 +28,41 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_qualification_artifact_controller_inspects_before_independent_source_admission(self):
+        discovery, execution = self.directory / "discovery", self.directory / "execution"
+        for folder, records in ((discovery, "discovered.jsonl"), (execution, "witnesses.jsonl")):
+            folder.mkdir()
+            (folder / records).write_bytes(b"")
+            (folder / "completion.json").write_bytes(b"{}")
+        result = SimpleNamespace(exit_code=0, events=({"event": "control", "code": "None", "value": 1},))
+        transport = {
+            "manifest_data": b"manifest", "owner_data": b"owner",
+            "manifest_sha256": "a" * 64, "owner_sha256": "b" * 64,
+            "started_ms": 1, "ended_ms": 2}
+        observation = {"diagnosticCode": "None"}
+        for mode, scope, source in (
+                ("qualification", "controller", True),
+                ("diagnostic", "controller", False), ("qualification", "original", False)):
+            with self.subTest(mode=mode, scope=scope), patch.object(checks, "runtime_command", side_effect=(
+                    (result, discovery, transport), (result, execution, transport))), patch.object(
+                    checks.evidence, "ingest_runtime_discovery", return_value={
+                        "diagnosticCode": "None", "discoveries": ({"testIdentity": "Test.Source"},)}), patch.object(
+                    checks.evidence, "ingest_runtime_attempt", return_value=observation,
+                    side_effect=checks.evidence.ConformanceError("WitnessMissing") if source else None
+                    ) as ordinary, patch.object(
+                    checks.evidence, "inspect_runtime_attempt", return_value={"observation": observation},
+                    side_effect=None if source else checks.evidence.ConformanceError("ProofMismatch")) as inspect:
+                observed = checks._execute_runtime_transport(
+                    None, {"mode": mode}, None, {}, {"Test.Source": ("local", "none")},
+                    {"category_scope": ("artifacts", scope)})
+            self.assertIs(observed[1], observation)
+            if source:
+                ordinary.assert_not_called()
+                inspect.assert_called_once()
+            else:
+                ordinary.assert_called_once()
+                inspect.assert_not_called()
+
     def test_category_failure_locations_are_bounded_static_source_roles_only(self):
         trace = None
         for source, line in (
