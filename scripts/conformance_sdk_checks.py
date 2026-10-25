@@ -2031,10 +2031,13 @@ def test_attempt(run, inputs, candidate, scenario):
     expected = {identity: ("origin-probe" if name == "origin-output" else "none", "none") for identity in identities}
     if original_observations:
         provider = name.rsplit("-", 1)[1] if original_metadata or "-contract-" in name else None
-        expected = {
-            identity: (provider if provider is not None else
-                       "local" if '(provider: "local")' in identity else "object", "none")
-            for identity in identities}
+        expected = ({identity: (provider, "none") for identity in identities}
+                    if provider is not None else {
+                        identity: (selected, "none")
+                        for selected in ("local", "object") for identity in identities
+                        if f'(provider: "{selected}"' in identity})
+        if set(expected) != set(identities):
+            raise evidence.ConformanceError("WitnessMissing")
         original_inputs = original_observation_inputs(candidate, run.root)
         if not {binding for binding, _ in expected.values()} <= {item["bindingId"] for item in inputs["bindings"]}:
             raise evidence.ConformanceError("BindingInvalid")

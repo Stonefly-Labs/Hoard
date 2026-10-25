@@ -82,6 +82,7 @@ public sealed class ArtifactBudgetTests(ITestOutputHelper output)
             references: (_, _) => ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
         await ArtifactHistoryAssertions.TicketExpiryCapacityAsync(driver.Store, driver.Maintenance,
             driver.Identity, clock.Advance, clock.SetUtc, reserveDelete, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests), parameter: $"reserveDelete: {reserveDelete}");
     }
 
     [Theory]
@@ -180,6 +181,7 @@ public sealed class ArtifactBudgetTests(ITestOutputHelper output)
                 driver.LocalControls?.RemoveObserver("operation.released");
                 driver.ObjectControls?.RemoveObserver("object.operation-released");
             }, released.Release, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests), parameter: $"readSession: {readSession}");
     }
 
     [Theory]
@@ -203,6 +205,7 @@ public sealed class ArtifactBudgetTests(ITestOutputHelper output)
                 driver.ObjectControls?.RemoveObserver("object.operation-completed");
                 produced.Release();
             }, driver.WhenIdleAsync, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests), parameter: $"readSession: {readSession}");
     }
 
     [Theory]
@@ -223,6 +226,7 @@ public sealed class ArtifactBudgetTests(ITestOutputHelper output)
                 driver.ObjectControls?.RemoveObserver("object.operation-completed");
                 produced.Release();
             }, driver.WhenIdleAsync, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests));
     }
 
     [Theory]
@@ -251,6 +255,7 @@ public sealed class ArtifactBudgetTests(ITestOutputHelper output)
                 driver.LocalControls?.RemoveObserver("operation.reclaim");
                 driver.ObjectControls?.RemoveObserver("object.operation-reclaim");
             }, driver.WhenIdleAsync, driver.StopAsync, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests), parameter: $"readSession: {readSession}");
     }
 
     [Theory]
@@ -265,6 +270,7 @@ public sealed class ArtifactBudgetTests(ITestOutputHelper output)
             ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
         await ArtifactBudgetAssertions.CancelledCommitFencingAsync(
             driver.Store, driver.Authority, driver.Identity, driver.WhenIdleAsync, alreadyCancelled, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests), parameter: $"alreadyCancelled: {alreadyCancelled}");
     }
 
     [Theory]
@@ -280,6 +286,7 @@ public sealed class ArtifactBudgetTests(ITestOutputHelper output)
                 if (driver.LocalControls is { } local) { local.SetObserver("transfer.queued", observe); }
                 else { driver.ObjectControls!.SetObserver("object.transfer-queued", observe); }
             }, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests));
     }
 
     [Theory]
@@ -290,6 +297,7 @@ public sealed class ArtifactBudgetTests(ITestOutputHelper output)
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider,
             limits: new ArtifactLimits(10, 10, 1));
         await ArtifactBudgetAssertions.CapCrossingAsync(driver.Store, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests));
     }
 
     [Theory]
@@ -300,6 +308,7 @@ public sealed class ArtifactBudgetTests(ITestOutputHelper output)
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, references: (_, _) =>
             ValueTask.FromResult(new ArtifactReferenceDecision(true, 0, Guid.NewGuid())));
         await ArtifactBudgetAssertions.AuthorityDeadlineAsync(driver.Store, driver.Authority, driver.Identity, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests));
     }
 
     [Theory]
@@ -309,6 +318,7 @@ public sealed class ArtifactBudgetTests(ITestOutputHelper output)
     {
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactBudgetAssertions.CooperativeCancellationAsync(driver.Store, default);
+        driver.ObserveOriginal(output, nameof(ArtifactBudgetTests));
     }
 
     internal sealed class PendingSource(bool cooperative) : ArtifactOwnershipAssertions.PendingSource(cooperative);

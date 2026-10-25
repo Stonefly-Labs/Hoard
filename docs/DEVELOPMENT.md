@@ -8172,6 +8172,41 @@ lifetimes and qualifying backends remain unfinished. README and related
 guides/model/contracts are updated; product/deployment examples and diagrams
 are unaffected.
 
+Forty-four further original artifact budget/recovery parameters now observe
+their existing drivers, including all frozen boolean variants. Source argument
+names/values are preserved. The expanded frozen inventory first fails exact
+counting; actual parent dispatch then exposes a one-parameter-only provider
+selector that misassigns Local boolean rows to Object. Explicit total provider
+assignment fixes it without a fallback; the regression independently derives
+binding identity from frozen cases.
+
+Actual minimal-input observation and independent empty-cache locked replay
+each pass 224 executions, 248 records (244 original owners/four contracts) and
+1,412 role/image correspondences with the same SDK archive. Full tooling passes
+339 checks (322 passed/seventeen explicit macOS-native skips); changed artifact
+source whitespace, frozen inventory and SDK catalog checks pass. Four inspected
+completed diagnostic dependency caches were reclaimed while preserving
+source/archive/runtime/proof/receipt data and the unchanged 24 GiB guard.
+Native admission requires 231 foundations and 105 scopes/1,207 observations,
+pending. Controllers, remaining artifact lifetimes and qualifying backends remain
+unfinished; public contracts, locks, task/reviewer markers and production/
+deployment examples and diagrams are unchanged.
+
+Earlier parameterized run
+[40169478754](https://github.com/Stonefly-Labs/Hoard/actions/runs/40169478754)
+at exact `ed235eeac3ec1e460fc449bc7aa4e9f4f765fc31` passed all three jobs,
+230 foundations without failures/errors/skips, 105 scopes/1,108 exact
+discoveries/executions and every recovery/transfer/containment/replay prerequisite.
+Typed input:
+`dc470af7df962339056aa5f0aa92b5ae3137655f3275c4ed265b753193e2e296`;
+separate original input:
+`fef2354d0ed33670ffb8a4a128851bea09dd7c3b3ab3c4d138491c9025ba8b01`;
+preparation:
+`54b224c34992d3c9a45553bd80d9ada659b1b8023c9506269a707d335120b435`.
+Both input documents independently recompute; free scratch is 91,721,109,504
+bytes. This admits that earlier diagnostic, not later forest/host/artifact
+sources or qualifying profiles.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

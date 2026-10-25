@@ -5109,6 +5109,52 @@ README and affected guides/model/contracts are updated; product/deployment
 examples and diagrams, public product contracts, historical seals, locks and
 reviewer/task markers are unaffected.
 
+### Exact artifact budget booleans and recovery owners
+
+Forty-four further frozen artifact budget/recovery parameters now observe their
+actual driver/interfaces after unchanged common assertions. The helper retains
+source-owned argument names and actual bool values. Existing roots, clocks,
+barriers, ownership and disposal stay unchanged. Recovery cases that genuinely
+reopen or directly construct different owners are not admitted as single roots.
+Coverage is now 63 operational metadata identities/provider and 94 artifact
+parameters.
+
+The expanded inventory first fails exact execution counting. Full dispatch then
+fails on a Local boolean identity: the previous one-parameter-only selector
+silently selected Object. Explicit total assignments now handle additional
+parameters and reject absent assignments, with independent test expectations
+derived from frozen case ownership rather than copying the selector.
+Actual minimal-input observation and independent empty-cache locked replay each
+pass 224 exact discoveries/executions, 248 records
+(244 original owners/four contracts) and 1,412 actual role/image correspondences.
+SDK archive remains
+`032389ce6626072e1d3b455d1af77779e6656f46f5cba1187df3dbdf591922c1`.
+
+`python3 -m unittest discover -s tests/tooling -q` passes 339 checks
+(322 passed/seventeen explicit macOS-native skips); changed artifact source
+whitespace, frozen inventory, SDK catalog and patch checks pass. Four inspected
+completed diagnostic dependency caches were reclaimed, preserving all
+source/archive/runtime/proof/receipt data and the unchanged 24 GiB guard.
+Native admission requires 231 foundations and 105 scopes/1,207 observations,
+pending. Controllers, remaining artifact lifetimes and qualifying backends are
+unfinished; no task/checklist completion or profile qualification is inferred.
+README and related guides/model/contracts are updated; product/deployment
+examples and diagrams, public contracts, historical seals and locks are unaffected.
+
+Earlier parameterized run
+[40169478754](https://github.com/Stonefly-Labs/Hoard/actions/runs/40169478754)
+binds exact `ed235eeac3ec1e460fc449bc7aa4e9f4f765fc31`: all three jobs,
+230 foundations without failures/errors/skips, 105 scopes/1,108 exact
+discoveries/executions and every prerequisite pass. Typed input:
+`dc470af7df962339056aa5f0aa92b5ae3137655f3275c4ed265b753193e2e296`;
+separate original input:
+`fef2354d0ed33670ffb8a4a128851bea09dd7c3b3ab3c4d138491c9025ba8b01`;
+preparation:
+`54b224c34992d3c9a45553bd80d9ada659b1b8023c9506269a707d335120b435`.
+Both input documents independently recompute; free scratch is 91,721,109,504
+bytes. This admits that earlier diagnostic, not the later forest/host/artifact
+sources or qualifying profiles.
+
 ## Summary
 
 

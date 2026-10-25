@@ -2,11 +2,12 @@ using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Fixtures.Artifacts.Local;
 using Hoard.Testing.Conformance.Artifacts;
+using Xunit.Abstractions;
 using static Hoard.Artifacts.Tests.ArtifactPublicationTests;
 
 namespace Hoard.Artifacts.Tests;
 
-public sealed class ArtifactRecoveryTests
+public sealed class ArtifactRecoveryTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task Stop_retains_unselected_object_ownership_and_retries_only_its_private_payload()
@@ -42,6 +43,7 @@ public sealed class ArtifactRecoveryTests
             driver.Store, driver.Maintenance, driver.Identity, clock.Advance,
             provider == "local" ? ArtifactEnumerationConsistency.Snapshot : ArtifactEnumerationConsistency.Incomplete,
             default);
+        driver.ObserveOriginal(output, nameof(ArtifactRecoveryTests));
     }
 
     [Theory]
@@ -71,6 +73,7 @@ public sealed class ArtifactRecoveryTests
         await ArtifactRecoveryAssertions.AdmittedDeleteHistoryAsync(
             driver.Store, driver.Maintenance, driver.Identity, clock.SetUtc,
             hold => SetObserver(driver, "delete.removed", "pointer.tombstone", hold), default);
+        driver.ObserveOriginal(output, nameof(ArtifactRecoveryTests));
     }
 
     [Theory]
@@ -118,6 +121,7 @@ public sealed class ArtifactRecoveryTests
             driver.Store, driver.Maintenance, driver.Identity, clock.Advance,
             hold => SetObserver(driver, "cleanup.candidate", "multipart.cleanup", hold),
             () => RemoveObserver(driver, "cleanup.candidate", "multipart.cleanup"), default);
+        driver.ObserveOriginal(output, nameof(ArtifactRecoveryTests));
     }
 
     [Theory]
@@ -128,6 +132,7 @@ public sealed class ArtifactRecoveryTests
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactRecoveryAssertions.ChangedInventoryAsync(
             driver.Store, driver.Maintenance, driver.Identity, default);
+        driver.ObserveOriginal(output, nameof(ArtifactRecoveryTests));
     }
 
     [Theory]
@@ -140,6 +145,7 @@ public sealed class ArtifactRecoveryTests
         await ArtifactRecoveryAssertions.ProgressingCommitAsync(
             driver.Store, clock.Advance,
             observe => SetObserver(driver, "publish.progress", "object.commit-progress", observe), default);
+        driver.ObserveOriginal(output, nameof(ArtifactRecoveryTests));
     }
 
     [Fact]
@@ -191,6 +197,7 @@ public sealed class ArtifactRecoveryTests
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
         await ArtifactRecoveryAssertions.ExpiryGenerationAsync(
             driver.Store, driver.Maintenance, driver.Identity, clock.Advance, default);
+        driver.ObserveOriginal(output, nameof(ArtifactRecoveryTests));
     }
 
     [Theory]
@@ -201,6 +208,7 @@ public sealed class ArtifactRecoveryTests
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         await ArtifactRecoveryAssertions.RecoveryPagesAsync(
             driver.Store, driver.Maintenance, driver.Identity, default);
+        driver.ObserveOriginal(output, nameof(ArtifactRecoveryTests));
     }
 
     private static void LoseAcknowledgment(ArtifactProviderDriver driver) =>

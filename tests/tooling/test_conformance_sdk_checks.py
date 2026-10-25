@@ -1015,7 +1015,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         run = SimpleNamespace(root=self.directory)
         scenarios = checks.original_observation_scenarios()
         self.assertEqual(len(scenarios), 5)
-        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 180)
+        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 224)
         frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_bytes())
         expected_metadata = {name for entry in frozen["entries"] if entry["profileId"] == "metadata"
                              for name in entry["runtimeTests"] if name.startswith((
@@ -1050,11 +1050,9 @@ class SdkDiagnosticTests(unittest.TestCase):
                                   "ArtifactPublicationRaceTests.Conflicting_staged_",
                                   "ArtifactFailureTests.Storage_failures_",
                                   "ArtifactFailureTests.Unexpected_fault_",
-                                  "ArtifactBudgetTests.Reclaimed_identity_",
-                                  "ArtifactBudgetTests.History_candidate_pages_",
-                                  "ArtifactBudgetTests.Producer_and_consumer_",
-                                  "ArtifactBudgetTests.Cancellation_of_an_admitted_",
-                                  "ArtifactBudgetTests.Cancellation_after_resource_")))}
+                                  "ArtifactBudgetTests.",
+                                  "ArtifactRecoveryTests."))) and (
+                                      ".ArtifactRecoveryTests." not in name or '(provider: "' in name)}
         self.assertEqual(set(scenarios[2][1]), expected_artifacts)
         for scenario in scenarios:
             metadata = "-metadata-" in scenario[0]
@@ -1072,8 +1070,12 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertEqual(launch.call_args.kwargs, {
                         "original_observations": True, **({"metadata_provider": provider} if metadata else {})})
                     for entry in manifest["expected"]:
-                        binding = provider if provider is not None else (
-                            "local" if '(provider: "local")' in entry["testIdentity"] else "object")
+                        matches = {case.binding_id for case in checks.category_cases()
+                                   if case.profile_id == ("metadata" if metadata else "artifacts")
+                                   and entry["testIdentity"] in case.witnesses}
+                        if provider is None:
+                            self.assertEqual(len(matches), 1)
+                        binding = provider if provider is not None else matches.pop()
                         self.assertEqual(entry["bindingId"], binding)
                         cases = [case.case_id for case in checks.category_cases()
                                  if case.binding_id == binding and entry["testIdentity"] in case.witnesses]

@@ -35,9 +35,10 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
     public IArtifactMaintenance Maintenance { get; }
     public LocalFaultControls? LocalControls { get; }
     public ObjectFaultControls? ObjectControls { get; }
-    public void ObserveOriginal(ITestOutputHelper output, string testClass, [CallerMemberName] string method = "") =>
+    public void ObserveOriginal(ITestOutputHelper output, string testClass, [CallerMemberName] string method = "",
+        string? parameter = null) =>
         ConformanceOriginalObservationOutput.WriteIfRequested(output,
-            $"Hoard.Artifacts.Tests.{testClass}.{method}(provider: \"{ProviderId}\")",
+            $"Hoard.Artifacts.Tests.{testClass}.{method}(provider: \"{ProviderId}\"{(parameter is null ? "" : ", " + parameter)})",
             ProviderId, "original-instance", ("owner", this), ("store", Store),
             ("validator", Validator), ("maintenance", Maintenance), ("lifetime", lifetime), ("authority", Authority),
             ("controls", LocalControls is { } local ? local : (object)ObjectControls!));

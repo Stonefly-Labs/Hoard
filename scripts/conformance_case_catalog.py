@@ -112,8 +112,8 @@ ORIGINAL_METADATA_WITNESSES = tuple(sorted((
               "MP28_Lease_owners_generations_and_revisions_are_fenced",
               "MP30_Clock_rollback_does_not_undo_expiry_and_new_generation_is_retained")),
       ) for method in methods))))
-ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted(
-    f'Hoard.Artifacts.Tests.{fixture}.{method}(provider: "{provider}")'
+ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted((
+    *(f'Hoard.Artifacts.Tests.{fixture}.{method}(provider: "{provider}")'
     for fixture, methods in (
         ("ArtifactPublicationTests", (
         "Empty_content_and_true_absence_are_distinct",
@@ -146,9 +146,32 @@ ORIGINAL_ARTIFACT_WITNESSES = tuple(sorted(
             "History_candidate_pages_resume_past_ineligible_entries_and_preserve_a_faulted_candidate",
             "Producer_and_consumer_inactivity_deadlines_release_cooperative_work_without_closing_borrowed_streams",
             "Cancellation_of_an_admitted_commit_cannot_fence_an_externally_renewed_owner",
-            "Cancellation_after_resource_release_cannot_retain_an_already_settled_operation")),
+            "Cancellation_after_resource_release_cannot_retain_an_already_settled_operation",
+            "Undelivered_verified_staging_is_reclaimed_after_ownership_expiry",
+            "Full_transfer_queue_rejects_without_input_io_and_capacity_returns_after_release",
+            "Cap_crossing_rejects_excess_before_append_and_capacity_recovers",
+            "Total_deadline_includes_shared_authority_contention_before_publication",
+            "Cooperative_cancellation_stops_input_without_disposing_borrowed_stream")),
+        ("ArtifactRecoveryTests", (
+            "Sequential_recovery_retires_consumed_cursors_without_starving_independent_scans",
+            "Expired_reclaimed_history_remains_owned_until_the_admitted_delete_physically_settles",
+            "Late_cleanup_rechecks_the_exact_generation_after_replacement",
+            "Changed_inventory_rejects_old_continuations_and_fresh_pages_cover_every_current_identity",
+            "Progressing_commit_renews_owner_across_the_original_ttl",
+            "Expiry_cleanup_and_restage_fence_the_old_generation",
+            "Recovery_pages_are_bounded_query_bound_and_not_deletion_authority")),
     ) for method in methods
-    for provider in ("local", "object")))
+    for provider in ("local", "object")),
+    *(f'Hoard.Artifacts.Tests.ArtifactBudgetTests.{method}(provider: "{provider}", {parameter}: {value})'
+      for method, parameter in (
+          ("Expired_ticket_history_restores_write_and_delete_capacity_without_losing_committed_or_removed_identity",
+           "reserveDelete"),
+          ("Cancellation_at_result_handoff_cannot_discard_a_reserved_ticket_or_live_read", "readSession"),
+          ("Cancellation_before_result_handoff_reclaims_the_unclaimed_ticket_or_read", "readSession"),
+          ("Failed_unclaimed_result_cleanup_blocks_admission_and_stop_until_exact_retry", "readSession"),
+          ("Cancelled_commit_before_decision_fences_the_ticket_and_cannot_publish_on_retry", "alreadyCancelled"))
+      for provider in ("local", "object") for value in ("False", "True")),
+)))
 
 
 def original_witness_policy(identity):
