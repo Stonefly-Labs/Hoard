@@ -7273,8 +7273,8 @@ full-filename map SHA-256
 `61e01e8345fa09ef873567e1e3451af5aef9f83a1f814566318d782116f6e935`.
 Ten actual Consumer dependency images match package bytes in each preparation;
 transfer packets remain reused unchanged, not new origins.
-The newest request is 204 foundations and 87 scopes/757
-observations, pending. Original recovery-body extraction is complete, not T027
+Run `40146117625` at `994f9fb` passed all three jobs, 204 foundations and
+87 scopes/757 observations. Original recovery-body extraction is complete, not T027
 or full bindings/origins/category/profile acceptance. Tasks, reviewer markers,
 locks, historical seals and product/architecture/deployment examples remain
 unaffected.
@@ -7308,8 +7308,9 @@ catalogs and patch checks pass. Fresh preparation/replay passes 311 artifact,
 reproduce exactly, canonical full-filename map SHA-256
 `e9b04122b8c1012d0b7e8af1650eec2bd9f419a1568d1bdf3f99912192182213`.
 Ten actual dependency images match package bytes per preparation; transfer
-packets are reused unchanged, not new origins. The next request is
-205 foundations and 88 scopes/768 observations, pending, not complete
+packets are reused unchanged, not new origins. Its native request
+`40146850203` was canceled before any jobs ran and is not admitted; all eleven
+identities remain in the latest expanded request. This is not complete
 bindings/origins/category/profile acceptance. Tasks, reviewer markers, locks,
 historical seals and product/architecture/deployment examples are unaffected.
 
@@ -7333,6 +7334,41 @@ are now shared, not T027/T030 or full bindings/origins/category/profile
 acceptance. The next request is 206 foundations and 89 scopes/772 observations,
 pending. Tasks, reviewer markers, locks, historical seals and product/
 architecture/deployment examples are unaffected.
+
+Recovery-reopen native run `40146117625` binds exact head
+`994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations
+without failures/errors/skips, 87 scopes/757 exact discoveries/executions and
+every actual prerequisite recovery/transfer/ownership/native-containment and
+eighteen-package/thirteen-lock replay chain pass. Input:
+`b3ae300a176e670997e660d96364e71c2061bac336fb8a536efb9b93e7b0c491`;
+preparation:
+`6fc731b1195af2c5a1ee8f575aba556933327c7e915813c5bf178a801fe99b37`;
+free scratch 91,717,259,264 bytes. This does not complete category qualification.
+
+Preliminary adapter architecture review rejected using selection as a generic
+direct-verification witness, because duplicates need not select a new pointer.
+The new `DirectVerification` observation maps Local's optional `publish.direct`
+immediately before its original new/duplicate direct checks and Object's existing
+`object.direct`. Local's complete publication implementation is unchanged apart
+from those two optional observations; provider mechanisms remain independent.
+Four shared consumer rows hold actual publication before acknowledgment, then
+join completion/worker settlement and check correct outcome, exact duplicate
+incarnation, borrowed-source ownership and public bytes. They do not claim
+independent readability while a verification/selection gate is held.
+The absent common method first fails intended `CS0117`; the four-row scope first
+fails its missing-factory regression. Full tooling passes 315 checks (298 passed/
+seventeen macOS-native skips), including 89 SDK checks. Actual prepared-assembly
+discovery matches all four declared parameters; formatting, frozen inventory,
+catalogs and patch checks pass. Fresh preparation/replay passes 311 artifact,
+69 Consumer and 89+89 metadata cases without skips; fifteen actual archives
+reproduce exactly, canonical full-filename map SHA-256
+`298788d00993d47090cc2c433bd176311704767e623e3bdc788fba7943b57474`.
+Ten dependency images match package bytes per preparation; transfer packets
+remain reused unchanged, not new origins. The next native request is
+207 foundations and 90 scopes/776 observations, pending. Complete mandatory
+fault drivers, origins, category/profile admission and final T081 remain open.
+Tasks, reviewer markers, locks, historical seals and product/architecture/
+deployment examples remain unaffected.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

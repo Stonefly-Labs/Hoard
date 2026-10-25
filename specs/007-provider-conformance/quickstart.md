@@ -423,17 +423,24 @@ and 86 scopes/754 observations.
 The three remaining recovery bodies now also share exact object-stop and actual
 Local-reopen checks, with original lifetimes and physical controls fixture-side.
 Fresh independent replay passes 311 artifact and 65 Consumer cases.
-The newest request is 87 scopes/757 observations, pending, not full qualification.
+Run `40146117625` at `994f9fb` passed all three jobs, 204 foundations and
+87 scopes/757 observations, not full qualification.
 Six original admission methods now share eleven exact identities while retaining
 real initialization/cleanup ownership, manifest/sentinel observations and fixed
 Local/Object reopen scope. Physical and native child controls remain fixture-side.
 Fresh independent replay passes 311 artifact and 65 Consumer cases; the next
-native request is 88 scopes/768 observations, pending, not full qualification.
+native request `40146850203` was canceled without jobs, not admitted; the latest
+expanded request retains all eleven admission identities.
 The remaining two deletion bodies now share four frozen parameters, retaining
 actual pending/reclaimed receipt continuity and live/unavailable reference
 denial with physical fault/reference controls fixture-side. Fresh independent
 replay passes 311 artifact and 65 Consumer cases; the next native request is
 89 scopes/772 observations, pending, not full qualification.
+Distinct direct-verification observations now hold new and duplicate publication
+on both actual providers, without substituting selection or claiming independent
+readability while held. Fresh independent replay passes 311 artifact and
+69 Consumer cases; the next native request is 90 scopes/776 observations,
+pending, not complete fault-driver/category/profile qualification.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

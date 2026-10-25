@@ -15,6 +15,19 @@ public sealed class ArtifactPayloadSessionTests
     [InlineData("local", true)]
     [InlineData("object", false)]
     [InlineData("object", true)]
+    public async Task Direct_verification_observation_holds_new_and_duplicate_publication_before_acknowledgement(
+        string provider, bool duplicate)
+    {
+        await using var resources = new RecordingDirectories();
+        await using var session = await CreateAsync(provider, resources);
+        await ArtifactObservationAssertions.DirectVerificationAsync(session, duplicate, default);
+    }
+
+    [Theory]
+    [InlineData("local", false)]
+    [InlineData("local", true)]
+    [InlineData("object", false)]
+    [InlineData("object", true)]
     public async Task Actual_payload_damage_invalidates_copy_and_later_open(string provider, bool truncate)
     {
         await using var resources = new RecordingDirectories();

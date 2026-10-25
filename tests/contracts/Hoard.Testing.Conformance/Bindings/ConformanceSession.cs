@@ -163,7 +163,8 @@ public enum ArtifactObservationPoint
     StagePrefix, StageVerified, PublicationAdmitted, BeforePublicationDecision,
     PublicationSelected, ReceiptPersisted, ReadOpened, ReadCopy, DeleteRemoved,
     DeleteReclaimed, CleanupCandidate, TransferQueued, BeforeReconciliation,
-    ReconciliationVerified, OperationReleased, OperationCompleted, OperationReclaim, PayloadDamage
+    ReconciliationVerified, OperationReleased, OperationCompleted, OperationReclaim, PayloadDamage,
+    DirectVerification
 }
 
 /// <summary>An owned assertion projection, not admission as a complete artifact category binding.</summary>

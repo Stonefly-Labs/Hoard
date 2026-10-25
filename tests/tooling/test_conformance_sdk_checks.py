@@ -1091,6 +1091,37 @@ class SdkDiagnosticTests(unittest.TestCase):
                 body = "".join(text[start:text.index("\n    }", start)].split())
                 self.assertIn("awaitQuarantineIsPermanentAsync(store,receipt,bytes,cancellationToken,reopen);", body)
 
+    def test_direct_verification_scope_requires_actual_new_and_duplicate_publications_on_both_providers(self):
+        factory = getattr(checks, "artifact_direct_verification_scenarios", None)
+        self.assertTrue(callable(factory), "Direct verification must not borrow the publication-selection witness.")
+        method = ("Hoard.Fixtures.Conformance.Consumer.ArtifactPayloadSessionTests."
+                  "Direct_verification_observation_holds_new_and_duplicate_publication_before_acknowledgement")
+        expected = {method + f'(provider: "{provider}", duplicate: {duplicate})'
+                    for provider in ("local", "object") for duplicate in ("False", "True")}
+        scenario, = factory()
+        self.assertEqual(scenario, ("artifact-direct-verification", tuple(sorted(expected)), "None", "Passed", 0, "None"))
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+        }
+        with patch.object(checks, "runtime_command",
+                          side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+            self.assertEqual(launch.call_args.args[1], assembly)
+            self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, expected)
+        for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+                        (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
+                        ("artifact-direct-verification-foreign", *scenario[1:])):
+            with patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, candidate, changed)
+                launch.assert_not_called()
+
     def test_deletion_settlement_scope_requires_both_original_providers_and_all_four_parameters(self):
         factory = getattr(checks, "original_artifact_deletion_settlement_scenarios", None)
         self.assertTrue(callable(factory), "Deletion extraction must retain both original physical and reference cases.")

@@ -1678,21 +1678,28 @@ checks, preserving retry, exact ownership, 105 retired incarnations, rollback
 readback and the borrowed source spanning stop/reopen. Physical permissions,
 fresh construction and root-cleanup authorization stay fixture-side.
 Fresh independent replay passes 311 artifact and 65 Consumer cases.
-The newest expanded request is 87 scopes/757 observations, pending; full
-bindings/category/profile acceptance remains unfinished.
+Native run `40146117625` at `994f9fb` passed all three jobs, 204 foundations
+and 87 scopes/757 observations; full bindings/category/profile acceptance
+remains unfinished.
 Six original admission methods now share interface-only checks across eleven
 identities, retaining actual initialization holds, exclusive create, corrupt
 manifest non-reset, fixed Local/Object reopen scope and symlink sentinel checks.
 Physical construction, manifest/sentinel I/O and root cleanup stay fixture-side;
 native concurrency and cross-process ownership helpers remain unchanged.
 Fresh independent replay passes 311 artifact and 65 Consumer cases.
-The next expanded native request is 88 scopes/768 observations, pending.
+Its native request `40146850203` was canceled before any jobs ran; its scope
+is retained in the latest expanded request.
 The two remaining deletion methods now also forward all four original parameters
 to common checks, preserving uncertain removal, actual reclamation, exact receipt
 continuity and live/unavailable reference denial. Fault registration and actual
 reference controls stay fixture-side. Fresh independent replay passes 311 artifact
 and 65 Consumer cases; the next native request is 89 scopes/772 observations,
 pending, not full qualification.
+Typed direct-verification observations now cover both new and verified-duplicate
+publications on both actual providers, without treating selection as verification
+or holding a selected pointer as proof of independent readability.
+Fresh independent replay passes 311 artifact and 69 Consumer cases; the next
+native request is 90 scopes/776 observations, pending, not full qualification.
 Full bindings, remaining mandatory fault controls and category/profile
 acceptance remain unfinished.
 

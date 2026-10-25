@@ -821,7 +821,8 @@ Physical permissions/snapshots, fresh construction, record-write registration
 and root-cleanup authorization remain fixture-side, with no assertion or expected
 outcome supplied by callbacks. The common consumer determines the real stop
 result before the fixture setter/getter reflects root-cleanup permission.
-The newest request is 87 scopes/757 observations, pending, not qualification.
+Run `40146117625` at `994f9fb` passed all three jobs, 204 foundations and
+87 scopes/757 observations, not qualification.
 
 Six logical admission methods now forward eleven exact identities (four frozen
 witnesses and seven additional existing cases) to interface-only consumers.
@@ -837,7 +838,8 @@ fixture-owned. Native concurrent-admission and cross-process root ownership
 tests, including bounded output/PID/exit/retained-root helper obligations, are
 unchanged. Method-level discovery must match all eleven declared identities;
 missing/foreign parameters and renamed scopes reject before launch. The next
-request is 88 scopes/768 observations, pending, not full qualification.
+request `40146850203` was canceled before jobs, not admitted; its complete scope
+is retained in the latest expanded request.
 
 The two remaining deletion methods now forward all four frozen parameters to
 shared pending-reclamation and live-reference consumers. Original assertions,
@@ -849,6 +851,19 @@ intact public readback and eventual removal. Lost-ack fault registration and
 actual reference count/availability remain fixture-side; no callback supplies
 an expected result. Exact method-level discovery must contain all four rows.
 The next request is 89 scopes/772 observations, pending, not full qualification.
+
+`DirectVerification` is a distinct typed observation, not an alias for selection
+or receipt persistence. Local's optional `publish.direct` runs before original
+direct validation for both new/duplicate publication; Object maps its existing
+`object.direct`, which also covers both branches. Existing checks, locks,
+publication decisions and actual reads remain unchanged. A common consumer holds
+real publication at that boundary, rejects a returned acknowledgment while held,
+then joins actual completion/worker settlement before checking expected outcome,
+same-incarnation duplicate reuse, borrowed-source ownership and public bytes.
+It does not assert independent readability at a held selection/verification gate.
+Preliminary architecture review identified the selection-only substitution gap;
+full fault-driver/origin/category/profile admission and final T081 remain open.
+The next request is 90 scopes/776 observations, pending, not full qualification.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

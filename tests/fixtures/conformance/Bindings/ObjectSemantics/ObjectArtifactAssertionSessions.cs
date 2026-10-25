@@ -57,6 +57,7 @@ public static class ObjectArtifactAssertionSessions
             ArtifactObservationPoint.OperationCompleted => "object.operation-completed",
             ArtifactObservationPoint.OperationReclaim => "object.operation-reclaim",
             ArtifactObservationPoint.PayloadDamage => "object.payload-damage",
+            ArtifactObservationPoint.DirectVerification => "object.direct",
             _ => throw new ArgumentException("BindingInvalid")
         };
     }

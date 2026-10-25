@@ -57,6 +57,7 @@ public static class LocalArtifactAssertionSessions
             ArtifactObservationPoint.OperationCompleted => "operation.completed",
             ArtifactObservationPoint.OperationReclaim => "operation.reclaim",
             ArtifactObservationPoint.PayloadDamage => "payload.damage",
+            ArtifactObservationPoint.DirectVerification => "publish.direct",
             _ => throw new ArgumentException("BindingInvalid")
         };
     }

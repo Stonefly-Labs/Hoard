@@ -13,7 +13,7 @@ public sealed class LocalFaultControls
         "publish.admitted", "publish.before-decision", "publish.decided", "publish.receipted", "publish.progress",
         "read.opened", "read.copy", "delete.removed", "delete.reclaimed", "cleanup.candidate", "transfer.queued",
         "reconcile.before-resolution", "reconcile.verified", "operation.released", "operation.completed", "operation.reclaim",
-        "payload.damage"
+        "payload.damage", "publish.direct"
     };
     public string[] Observed => observed.ToArray();
     public Action? BeforeRecordWrite { get; set; }

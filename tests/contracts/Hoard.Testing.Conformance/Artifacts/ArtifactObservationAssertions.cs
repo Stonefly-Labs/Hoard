@@ -1,10 +1,48 @@
 using Hoard.Abstractions.Storage;
+using Hoard.Testing.Conformance.Bindings;
 using static Hoard.Testing.Conformance.Artifacts.ArtifactPublicationAssertions;
 
 namespace Hoard.Testing.Conformance.Artifacts;
 
 public static class ArtifactObservationAssertions
 {
+    public static async Task DirectVerificationAsync(
+        IArtifactAssertionSession session, bool duplicate, CancellationToken cancellationToken)
+    {
+        var bytes = "direct verification before acknowledgement"u8.ToArray();
+        ArtifactMutationReceipt? original = null;
+        if (duplicate)
+        {
+            using var initial = new ShortSource(bytes);
+            original = await PublishAsync(session.Store, initial, new(1024), cancellationToken);
+        }
+        using var source = new ShortSource(bytes);
+        var ticket = Success(await session.Store.ReserveWriteAsync(
+            new(new ArtifactExpectations(1024)), new(), cancellationToken));
+        var staged = Success(await session.Store.StageAsync(ticket, source, new(), cancellationToken));
+        await using var barrier = new ArtifactConformanceBarrier("direct-verification");
+        await using var observation = await session.ObserveBoundaryAsync(
+            ArtifactObservationPoint.DirectVerification, () => new(barrier.HoldAsync()), cancellationToken);
+        var committing = session.Store.CommitAsync(staged, new(), cancellationToken).AsTask();
+        ArtifactMutationReceipt receipt;
+        try
+        {
+            await barrier.Entered.WaitAsync(cancellationToken);
+            Assert.False(committing.IsCompleted);
+        }
+        finally
+        {
+            barrier.Release();
+            receipt = Success(await committing.WaitAsync(TimeSpan.FromSeconds(10)));
+            await session.AwaitSettlementAsync(CancellationToken.None);
+        }
+        Assert.Equal(duplicate ? ArtifactMutationOutcome.AlreadyPresentVerified : ArtifactMutationOutcome.Published,
+            receipt.Outcome);
+        if (original is not null) { Assert.Equal(original.Stamp, receipt.Stamp); }
+        Assert.False(source.WasDisposed);
+        Assert.Equal(bytes, await ReadAsync(session.Store, receipt.Stamp, cancellationToken));
+    }
+
     public static async Task ReceiptPersistedAsync(
         IArtifactStore store, Action<Func<ValueTask>> observe, Action remove, CancellationToken cancellationToken)
     {

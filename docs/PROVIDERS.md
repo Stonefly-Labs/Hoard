@@ -658,7 +658,8 @@ original stop/retry and source lifetimes. Physical permissions, fresh Local
 construction, record-write registration and cleanup authorization stay
 fixture-side; Object gains no durable-reopen claim.
 Fresh independent replay passes 311 artifact and 65 Consumer cases.
-The newest request is 87 scopes/757 observations, pending, not qualification.
+Run `40146117625` at `994f9fb` passed all three jobs, 204 foundations and
+87 scopes/757 observations, not qualification.
 
 Six original admission methods now forward eleven identities (four frozen
 witnesses and seven additional existing cases) to provider-free checks.
@@ -669,7 +670,8 @@ Actual construction, fault registration, manifest/sentinel I/O, symlink
 try/finally and root-cleanup permission stay fixture-side. The two native
 concurrency/cross-process tests and complete child ownership helper are unchanged.
 Fresh independent replay passes 311 artifact and 65 Consumer cases; the next
-native request is 88 scopes/768 observations, pending, not qualification.
+native request `40146850203` was canceled without jobs, not admitted; the latest
+expanded request retains all eleven admission identities.
 
 Both remaining original deletion bodies now share all four frozen parameters:
 lost delete acknowledgment retains pending physical reclamation through exact
@@ -678,6 +680,17 @@ removal without harming public bytes. Common checks own every expected
 code/receipt/size; actual observer registration and reference controls remain
 fixture-side. Fresh independent replay passes 311 artifact and 65 Consumer cases;
 the next native request is 89 scopes/772 observations, pending, not qualification.
+
+The owned projections now expose a distinct `DirectVerification` observation:
+Local's optional `publish.direct` precedes its original direct validation on
+both new and duplicate publication; Object uses its existing `object.direct`.
+Selection, verification and independently readable acknowledgment are not
+interchangeable. Four common rows hold actual publication before acknowledgment,
+then check outcome, same-incarnation duplicate reuse, borrowed source and public
+bytes after genuine settlement. No provider mechanism is shared or replaced,
+and this does not yet admit full fault drivers/bindings. Fresh independent replay
+passes 311 artifact and 69 Consumer cases; the next native request is
+90 scopes/776 observations, pending, not qualification.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

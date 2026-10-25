@@ -3977,8 +3977,8 @@ full-filename map SHA-256
 `61e01e8345fa09ef873567e1e3451af5aef9f83a1f814566318d782116f6e935`.
 Ten actual Consumer dependency images match package bytes in each preparation;
 transfer packets remain reused unchanged, not new origins.
-The newest request is 204 foundations and 87 scopes/757
-observations, pending. Original recovery-body extraction is complete, not T027,
+Run `40146117625` at `994f9fb` passed all three jobs, 204 foundations and
+87 scopes/757 observations. Original recovery-body extraction is complete, not T027,
 full bindings, origins or category/profile acceptance. Tasks, reviewer markers,
 tracked locks, historical seals and product/architecture/deployment examples
 are unaffected.
@@ -4017,8 +4017,9 @@ cases without skips; all fifteen actual archive hashes reproduce exactly,
 canonical full-filename map SHA-256
 `e9b04122b8c1012d0b7e8af1650eec2bd9f419a1568d1bdf3f99912192182213`.
 Ten actual dependency images match package bytes per preparation; transfer
-packets remain reused unchanged, not new origins. The next request is
-205 foundations and 88 scopes/768 observations, pending, not complete
+packets remain reused unchanged, not new origins. Its native request
+`40146850203` was canceled before jobs and is not admitted; the latest expanded
+request retains all eleven identities. This is not complete
 bindings/origins/category/profile acceptance. Tasks, reviewer markers, locks,
 historical seals and product/architecture/deployment examples remain unaffected.
 
@@ -4049,6 +4050,53 @@ extraction is complete, not T027/T030 or full bindings/origins/category/profile
 acceptance. The next request is 206 foundations and 89 scopes/772 observations,
 pending. Tasks, reviewer markers, locks, historical seals and product/
 architecture/deployment examples are unaffected.
+
+### Distinct direct-verification control and adapter architecture constraints
+
+Preliminary architecture review identified that publication selection cannot
+stand in for direct verification: Object duplicates do not invoke
+`pointer.selected`, and Local's digest gate also prevents equating a held
+selection with independent readable acknowledgment. The additive
+`DirectVerification` observation now maps Local's optional `publish.direct`
+before its original new/duplicate direct validation and Object's existing
+`object.direct`. Local's complete implementation is unchanged apart from those
+two observations; no provider mechanism or production reference edge is shared.
+Four common rows hold actual publication before acknowledgment, then join
+completion/worker settlement and assert correct outcome, same-incarnation
+duplicate reuse, borrowed-source ownership and actual public bytes. No held-gate
+independent-readability guarantee is invented.
+
+The missing shared method first fails intended `CS0117`; the exact four-row
+scope first fails its missing-factory regression. Actual prepared-assembly
+discovery matches all four parameters. Full tooling passes 315 checks (298 passed/
+seventeen macOS-native skips), including 89 SDK checks; formatting, frozen
+inventory, catalogs and patch checks pass. Fresh preparation/replay passes
+311 artifact, 69 Consumer and 89+89 metadata cases without skips; fifteen actual
+archives reproduce exactly, canonical full-filename map SHA-256
+`298788d00993d47090cc2c433bd176311704767e623e3bdc788fba7943b57474`.
+Ten dependency images match package bytes per preparation; transfer packets
+remain reused unchanged, not new origins. The next request is
+207 foundations and 90 scopes/776 observations, pending.
+
+The remaining full-adapter design must keep intentional typed fault injection
+separate from observer failures that poison final settlement, target payload
+damage by exact stamp, preserve actual borrowed source/sink work and classify
+synchronous provider-boundary blocking truthfully rather than claiming a stalled
+filesystem syscall. Controls must not be released implicitly before lifetime
+settlement. Complete fault-driver/origin/category/profile admission and final
+T081 remain open; the preliminary review is not a final architecture pass.
+Tasks, reviewer markers, locks, historical seals and product/architecture/
+deployment examples are unaffected.
+
+Recovery-reopen native run `40146117625` binds exact head
+`994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations
+without failures/errors/skips, 87 scopes/757 exact discoveries/executions and
+every prerequisite recovery/transfer/ownership/native-containment and
+eighteen-package/thirteen-lock replay chain pass. Input:
+`b3ae300a176e670997e660d96364e71c2061bac336fb8a536efb9b93e7b0c491`;
+preparation:
+`6fc731b1195af2c5a1ee8f575aba556933327c7e915813c5bf178a801fe99b37`;
+free scratch 91,717,259,264 bytes. This is diagnostic evidence, not qualification.
 
 ## Summary
 
