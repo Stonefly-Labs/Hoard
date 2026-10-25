@@ -1036,7 +1036,8 @@ original empty/partial layout expectations. Neither common assertion bodies nor
 provider mechanisms change. Strict admission now requires all 58 metadata rows,
 60 actual origins and 360 actual role/image/archive matches. Fresh preparation/
 replay pass 311 artifact, 161 Consumer and 89+89 metadata cases; the next native
-request is 214 foundations and 95 scopes/868 observations, not yet admitted.
+request passed as run `40157571215` at `8fed412`: all three jobs,
+214 foundations and 95 scopes/868 exact discoveries/executions with every prerequisite.
 These metadata revision checks do not qualify artifact-incarnation fencing,
 the real cross-store authority bridge or complete category/profile acceptance.
 
@@ -1057,6 +1058,24 @@ The complete 66-row scope emits 82 genuine origins, 68 creates/14 reopens and
 The next native request is 215 foundations and 95 scopes/876 observations,
 not yet admitted. Memory upgrades/reopen remain logical; native backup/recovery,
 complete category/profile imports and final T081 remain separate unfinished work.
+
+Forty-two further observed rows import unchanged bounds/scopes, all page kinds,
+request/result bounds, bounded datasets, ticket/lease clock rollback, cancellation
+decisions, queue capacity, exception mapping, ledger/diagnostic behavior,
+publication evidence/replay/orphan handling, corrupt groups/pages and explicit
+admission/invalid-budget/incomplete-cleanup/disposal ownership consumers.
+Admission/budget cases start genuinely unprepared. The common disposal callbacks
+target the actual store while the enclosing session retains resource ownership.
+Origins are captured while components are live and emitted only after assertions
+pass. The incomplete-cleanup consumers release their real held work and join
+actual settlement before outer disposal; finite timeout never means Released.
+
+Strict parent admission requires all 108 rows and 124 genuine origins
+(110 creates/14 reopens), with 744 actual role/image/archive correspondences.
+Fresh preparation/replay pass 311 artifact, 211 Consumer and 89+89 metadata
+cases. The next native request is 215 foundations and 95 scopes/918 observations,
+not yet admitted. Common assertion/disposal scopes and provider mechanisms are
+unchanged; complete category/profile imports and final T081 remain unfinished.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

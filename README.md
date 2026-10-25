@@ -1782,7 +1782,8 @@ authorization isolation, reference replacement/ABA/rollback, create/revision rac
 reconciliation and malformed-schema consumers. All 58 metadata rows produce
 60 genuine origins/360 actual role/image/archive matches. Fresh preparation/
 replay pass 311 artifact, 161 Consumer and 89+89 metadata cases; the next native
-request is 95 scopes/868 observations, not yet admitted. Metadata reference ABA
+request passed as run `40157571215` at `8fed412`: all three jobs,
+214 foundations and 95 scopes/868 exact discoveries/executions with every prerequisite. Metadata reference ABA
 is not artifact-incarnation/shared-authority qualification.
 
 Eight further observed schema rows execute unchanged upgrade, invalid-upgrade,
@@ -1793,6 +1794,15 @@ assertions and cleanup ownership. All 66 metadata rows produce 82 origins/
 169 Consumer and 89+89 metadata cases; the next native request is
 215 foundations and 95 scopes/876 observations, not yet admitted.
 Memory upgrades/reopens remain logical, not durable recovery or full qualification.
+
+Forty-two more actual rows import unchanged bounds, paging, clock rollback,
+cancellation/queue/exception, ledger/diagnostic, publication, corruption, admission
+and disposal consumers. Store-level disposal keeps its outer session owner;
+origins are captured while live and emitted only after assertions succeed.
+All 108 metadata rows emit 124 origins/744 actual role/image/archive matches.
+Fresh preparation/replay pass 311 artifact, 211 Consumer and 89+89 metadata cases;
+the next native request is 215 foundations and 95 scopes/918 observations,
+not yet admitted or complete category/profile qualification.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

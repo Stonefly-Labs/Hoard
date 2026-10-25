@@ -4436,7 +4436,9 @@ Actual bounded output observation with a separate empty runtime cache confirms
 role/image/archive correspondences. Tooling passes 322 checks (305 passed/
 seventeen macOS-native skips), including 96 SDK checks; Consumer formatting,
 frozen catalogs/inventory and patch checks pass. The next native request is
-214 foundations and 95 scopes/868 observations, not yet admitted.
+214 foundations and 95 scopes/868 observations; it passed as run `40157571215`
+at `8fed4125a4457e21af84b33a5c1f9be80b4dca26`, all three jobs,
+zero foundation failures/errors/skips and every prerequisite.
 
 Compatible-reopen run `40155922560` binds input
 `6269c9ddadd831a7cdef59dfd7e8d2194bd767e316e7e8fb7d2272fc04886890`,
@@ -4483,6 +4485,37 @@ Memory upgrades/reopens are logical, not durable recovery. Complete category/
 profile imports, complete recovery-profile admission, integrations and final T081 remain
 separate unfinished work. Historical seals, locks, tasks and reviewer markers
 stay untouched; production/deployment examples and diagrams are unaffected.
+
+### Actual metadata bounds, diagnostics and ownership consumers
+
+Forty-two observed rows now import unchanged bounds/scopes, page kinds/request/
+result limits/datasets, ticket/lease clock rollback, cancellation/queue/exception
+mapping, ledger/diagnostic, publication evidence/replay/orphan, corrupt groups/
+pages and explicit admission/invalid-budget/incomplete-cleanup/disposal consumers.
+Admission/budget cases start unprepared. Store-level disposal stays inside the
+original common consumer while the enclosing session retains resource ownership;
+origins are captured while actual components are live and emitted only after
+assertions pass. Incomplete-cleanup cases retain actual held work until release
+and genuine settlement, never equating finite return with Released.
+
+The missing identities first fail the exact-inventory regression. Fresh exclusive
+preparation/replay pass 311 artifact, 211 Consumer and 89+89 metadata cases
+without failures/skips, preserving the same fifteen-archive map. Actual bounded
+output observation with an independent empty runtime cache confirms 108 exact
+rows, 124 origins, 110 creates/14 reopens and 744 actual role/image/archive
+correspondences. Tooling passes 323 checks (306 passed/seventeen macOS-native
+skips), including 97 SDK checks; Consumer formatting, frozen catalog/inventory
+and patch checks pass. The next native request is 215 foundations and
+95 scopes/918 observations, not yet admitted.
+
+Reference/reconciliation native admission binds input
+`1fd6680fdc710f2753985b0b24f7c7a6f1351ec1b47d15a5f1527534035b70cc`,
+preparation `d5ee7e5f0d0c4e43c46b95cb7861df4d08f1ccd55f82d6da2ec13bbdd29a2fe3`
+and 91,721,572,352 free scratch bytes. It predates schema/control increments.
+Common assertions/disposal scopes, provider mechanisms, historical seals, locks,
+tasks and reviewer markers remain unchanged. Complete category/profile imports,
+integrations and final T081 remain open; production/deployment examples and
+architecture diagrams are unaffected by these test-only imports.
 
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations

@@ -817,7 +817,8 @@ and both malformed-schema layouts. Layout checks start genuinely unprepared;
 no common assertion or independent provider mechanism changes. All 58 metadata
 rows emit 60 genuine origins/360 actual role/image/archive matches. Fresh
 preparation/replay pass 311 artifact, 161 Consumer and 89+89 metadata cases;
-the next native request is 95 scopes/868 observations, not yet admitted.
+its native request passed as run `40157571215` at `8fed412`: all three jobs,
+214 foundations and 95 scopes/868 exact discoveries/executions with every prerequisite.
 Metadata zero-reference revision ABA is not artifact-incarnation fencing or
 shared-authority integration; full category/profile qualification remains open.
 
@@ -831,6 +832,18 @@ emit 82 actual origins/492 role/image/archive matches; fresh preparation/replay
 pass 311 artifact, 169 Consumer and 89+89 metadata cases. The next native request
 is 215 foundations and 95 scopes/876 observations, not yet admitted. Memory
 upgrades are logical; native backup/recovery and complete profiles remain separate.
+
+Forty-two further rows invoke unchanged bounds/scopes, paging, time rollback,
+cancellation/queue/exception mapping, ledger/diagnostic, publication, corruption,
+admission and disposal consumers. Admission/budget cases start unprepared;
+store-level disposal retains the enclosing session/resource owner. Origins are
+captured while actual components are live and emitted only after assertions
+succeed. Both real incomplete-cleanup cases retain work until barrier release
+and genuine settlement; no timeout is promoted to Released. All 108 rows emit
+124 actual origins/744 role/image/archive matches. Fresh preparation/replay pass
+311 artifact, 211 Consumer and 89+89 metadata cases; the next native request is
+215 foundations and 95 scopes/918 observations, not yet admitted or full
+category/profile qualification.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

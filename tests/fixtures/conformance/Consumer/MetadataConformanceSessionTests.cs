@@ -104,6 +104,27 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     [InlineData("memory", "receipts")]
     [InlineData("memory", "layout-empty")]
     [InlineData("memory", "layout-partial")]
+    [InlineData("memory", "bounds")]
+    [InlineData("memory", "scopes")]
+    [InlineData("memory", "page-kinds")]
+    [InlineData("memory", "page-size")]
+    [InlineData("memory", "page-datasets")]
+    [InlineData("memory", "time-ticket")]
+    [InlineData("memory", "time-lease")]
+    [InlineData("memory", "cancel")]
+    [InlineData("memory", "queue")]
+    [InlineData("memory", "exceptions")]
+    [InlineData("memory", "ledger")]
+    [InlineData("memory", "diagnostics")]
+    [InlineData("memory", "evidence")]
+    [InlineData("memory", "publication-replay")]
+    [InlineData("memory", "publication-orphan")]
+    [InlineData("memory", "corrupt-groups")]
+    [InlineData("memory", "corrupt-pages")]
+    [InlineData("memory", "admission")]
+    [InlineData("memory", "invalid-budget")]
+    [InlineData("memory", "incomplete-cleanup")]
+    [InlineData("memory", "disposal")]
     [InlineData("sqlite", "capacity")]
     [InlineData("sqlite", "writer")]
     [InlineData("sqlite", "publication")]
@@ -132,6 +153,27 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     [InlineData("sqlite", "receipts")]
     [InlineData("sqlite", "layout-empty")]
     [InlineData("sqlite", "layout-partial")]
+    [InlineData("sqlite", "bounds")]
+    [InlineData("sqlite", "scopes")]
+    [InlineData("sqlite", "page-kinds")]
+    [InlineData("sqlite", "page-size")]
+    [InlineData("sqlite", "page-datasets")]
+    [InlineData("sqlite", "time-ticket")]
+    [InlineData("sqlite", "time-lease")]
+    [InlineData("sqlite", "cancel")]
+    [InlineData("sqlite", "queue")]
+    [InlineData("sqlite", "exceptions")]
+    [InlineData("sqlite", "ledger")]
+    [InlineData("sqlite", "diagnostics")]
+    [InlineData("sqlite", "evidence")]
+    [InlineData("sqlite", "publication-replay")]
+    [InlineData("sqlite", "publication-orphan")]
+    [InlineData("sqlite", "corrupt-groups")]
+    [InlineData("sqlite", "corrupt-pages")]
+    [InlineData("sqlite", "admission")]
+    [InlineData("sqlite", "invalid-budget")]
+    [InlineData("sqlite", "incomplete-cleanup")]
+    [InlineData("sqlite", "disposal")]
     public async Task Observed_factories_execute_unchanged_common_consumers_with_actual_origins(
         string provider, string consumer)
     {
@@ -140,7 +182,8 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
         var context = new ConformanceRunContext(RunId(), "full-metadata-binding",
             clock, resources, new ConformanceEvidenceBuffer());
         await using var session = await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default);
-        if (consumer is not ("layout-empty" or "layout-partial"))
+        var origin = session.CaptureOrigin();
+        if (consumer is not ("layout-empty" or "layout-partial" or "admission" or "invalid-budget"))
         {
             Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Success>(
                 await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
@@ -196,9 +239,44 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
                 session.Store, session.Faults.CorruptAsync, default),
             "layout-empty" => MetadataSchemaAssertions.UnrecognizedLayoutAsync(session, false, default),
             "layout-partial" => MetadataSchemaAssertions.UnrecognizedLayoutAsync(session, true, default),
+            "bounds" => MetadataBoundsAssertions.ExactBoundsAsync(session.Store, default),
+            "scopes" => MetadataBoundsAssertions.ScopesAndIntervalsAsync(session.Store, default),
+            "page-kinds" => MetadataPagingAssertions.AllQueryKindsAsync(session.Store, session.Authority, default),
+            "page-size" => MetadataPagingAssertions.OversizedRequestsAndResultsAsync(
+                session.Store, session.Authority, default),
+            "page-datasets" => MetadataPagingAssertions.BoundedDatasetsAsync(session.Store, default),
+            "time-ticket" => MetadataTimeAssertions.TicketExpiryAndRollbackAsync(session.Store, clock, default),
+            "time-lease" => MetadataTimeAssertions.LeaseRollbackAsync(session.Store, clock, default),
+            "cancel" => MetadataDeadlineAssertions.CancellationDecisionsAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, session.Faults.AwaitSettlementAsync, default),
+            "queue" => MetadataDeadlineAssertions.QueueCapacityAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, session.Faults.AwaitSettlementAsync, default),
+            "exceptions" => MetadataDeadlineAssertions.KnownExceptionsAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, default),
+            "ledger" => MetadataFailureAssertions.LedgerCapacityAsync(session.Store, session.Faults.FillLedgerAsync, default),
+            "diagnostics" => MetadataFailureAssertions.DiagnosticsAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, () => session.Faults.Counters, default),
+            "evidence" => MetadataPublicationAssertions.MatchingEvidenceAsync(session.Store, session.Authority, default),
+            "publication-replay" => MetadataPublicationAssertions.ReplayWithoutReacquisitionAsync(
+                session.Store, session.Authority, default),
+            "publication-orphan" => MetadataPublicationAssertions.OrphanNotRollbackAsync(
+                session.Store, session.Authority, session.Faults.ObserveBoundaryAsync, default),
+            "corrupt-groups" => MetadataCorruptionAssertions.AbsenceAndCorruptGroupsAsync(
+                session.Store, session.Faults.CorruptRecordAsync, default),
+            "corrupt-pages" => MetadataCorruptionAssertions.PageRecordsAsync(
+                session.Store, session.Faults.CorruptAsync, session.Faults.CorruptRecordAsync, default),
+            "admission" => MetadataAdmissionAssertions.ExplicitAdmissionAsync(
+                session.Store, session.Schema, () => session.Faults.Counters, default),
+            "invalid-budget" => MetadataAdmissionAssertions.InvalidBudgetsAsync(
+                session.Store, session.Schema, () => session.Faults.Counters, session.Store.DisposeAsync, default),
+            "incomplete-cleanup" => MetadataDeadlineAssertions.IncompleteCleanupAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, () => session.Faults.Counters,
+                session.Store.DisposeAsync, session.Faults.AwaitSettlementAsync, default),
+            "disposal" => MetadataDeadlineAssertions.DisposalOwnershipAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, session.Store.DisposeAsync, default),
             _ => throw new ArgumentException("BindingInvalid")
         });
-        ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        ConformanceSessionOriginOutput.Write(output, origin);
     }
 
     private sealed class OriginSession(

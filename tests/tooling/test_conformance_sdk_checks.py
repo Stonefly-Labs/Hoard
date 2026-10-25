@@ -1137,7 +1137,11 @@ class SdkDiagnosticTests(unittest.TestCase):
                         "lease-renew", "lease-release", "lease-guard",
                         "text", "registry", "authorization", "references", "reference-aba", "telemetry",
                         "create-race", "revision-race", "reconcile-writer", "reconcile-io",
-                        "reconcile-ack", "contributions", "receipts", "layout-empty", "layout-partial")}
+                        "reconcile-ack", "contributions", "receipts", "layout-empty", "layout-partial",
+                        "bounds", "scopes", "page-kinds", "page-size", "page-datasets",
+                        "time-ticket", "time-lease", "cancel", "queue", "exceptions", "ledger", "diagnostics",
+                        "evidence", "publication-replay", "publication-orphan", "corrupt-groups", "corrupt-pages",
+                        "admission", "invalid-budget", "incomplete-cleanup", "disposal")}
         reopen = ("Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
                   "Observed_reopen_preserves_public_state_and_fences_stale_controls")
         expected.update(f'{reopen}(provider: "{provider}")' for provider in ("memory", "sqlite"))

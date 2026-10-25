@@ -1301,7 +1301,11 @@ def full_metadata_binding_origin_counts():
             "lease-renew", "lease-release", "lease-guard",
             "text", "registry", "authorization", "references", "reference-aba", "telemetry",
             "create-race", "revision-race", "reconcile-writer", "reconcile-io",
-            "reconcile-ack", "contributions", "receipts", "layout-empty", "layout-partial")}
+            "reconcile-ack", "contributions", "receipts", "layout-empty", "layout-partial",
+            "bounds", "scopes", "page-kinds", "page-size", "page-datasets",
+            "time-ticket", "time-lease", "cancel", "queue", "exceptions", "ledger", "diagnostics",
+            "evidence", "publication-replay", "publication-orphan", "corrupt-groups", "corrupt-pages",
+            "admission", "invalid-budget", "incomplete-cleanup", "disposal")}
     reopen = FULL_METADATA_CONSUMER_PREFIX + "Observed_reopen_preserves_public_state_and_fences_stale_controls"
     identities.update({f'{reopen}(provider: "{provider}")': 2 for provider in ("memory", "sqlite")})
     schema = FULL_METADATA_CONSUMER_PREFIX + "Observed_schema_consumers_preserve_actual_reopen_lineage"

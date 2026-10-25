@@ -7670,7 +7670,9 @@ Independent fresh-cache actual-output observation verifies all 58 rows,
 correspondences. Tooling passes 322 checks (305 passed/seventeen macOS-native
 skips), including 96 SDK checks; Consumer formatting, frozen catalog/inventory
 and patch checks pass. The next native request is 214 foundations and
-95 scopes/868 observations, not yet admitted. Standalone metadata reference
+95 scopes/868 observations; it passed as run `40157571215` at
+`8fed4125a4457e21af84b33a5c1f9be80b4dca26`, all three jobs,
+214 foundations without failures/errors/skips and every prerequisite. Standalone metadata reference
 revision ABA is not artifact-incarnation or shared-authority qualification;
 remaining category/profile imports, integrations and final T081 remain open.
 Product/deployment examples and architecture diagrams are unaffected.
@@ -7707,6 +7709,32 @@ The admitted entity/atomicity/lease run binds input
 `b964bc83022faac1ac7891361f8b89dddb97f97a03d760553f9b26ec8adfd432`,
 preparation `5927c9a5161d6646c61102a0cb3f0442efa1da4c1009f66bba533aa4d6b00999`
 and 91,721,551,872 free scratch bytes; it predates reference/schema increments.
+
+Forty-two further observed rows now import unchanged bounds/scopes, page kinds/
+request/result limits/datasets, ticket/lease clock rollback, cancellation/queue/
+exception mapping, ledger/diagnostic, publication evidence/replay/orphan,
+corrupt groups/pages and admission/budget/incomplete-cleanup/disposal consumers.
+Admission/budget cases start unprepared. Store disposal stays inside the common
+consumer while the enclosing session owns resources; origins are captured while
+live and emitted only after assertions pass. Real held work is released and
+joined before outer disposal, never declared Released because a timeout returned.
+
+The missing inventory first fails its regression. Fresh preparation/replay pass
+311 artifact, 211 Consumer and 89+89 metadata cases without failures/skips;
+the same fifteen-archive map reproduces. Actual bounded fresh-cache observation
+verifies all 108 rows, 124 origins, 110 creates/14 reopens and 744 actual
+role/image/archive correspondences. Tooling passes 323 checks (306 passed/
+seventeen macOS-native skips), including 97 SDK checks; Consumer formatting,
+frozen catalog/inventory and patch checks pass. The next native request is
+215 foundations and 95 scopes/918 observations, not yet admitted. Common
+assertions, provider mechanisms, historical seals, locks, tasks and reviewer
+markers are unchanged. Complete category/profile imports, integrations and
+final T081 remain open; product/deployment examples and diagrams are unaffected.
+
+The admitted reference/reconciliation run binds input
+`1fd6680fdc710f2753985b0b24f7c7a6f1351ec1b47d15a5f1527534035b70cc`,
+preparation `d5ee7e5f0d0c4e43c46b95cb7861df4d08f1ccd55f82d6da2ec13bbdd29a2fe3`
+and 91,721,572,352 free scratch bytes; it predates schema/control increments.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
