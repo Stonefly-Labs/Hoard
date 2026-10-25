@@ -39,7 +39,7 @@ from conformance_case_catalog import (
 )
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_sources import (
-    NativeCategorySources, inspection_observations, read_bounded, runtime_arguments, runtime_settings,
+    NativeCategorySources, inspection_observations, native_control_record, read_bounded, runtime_arguments, runtime_settings,
     source_witnesses as _source_witnesses,
 )
 from conformance_lock_preparation import prepare_project_lock, rebind_local_archives, verify_project_lock
@@ -1060,11 +1060,15 @@ def artifact_transfer_diagnostics(run, inputs, candidate, *, namespace="artifact
     return result
 
 
-def recovery_command(run, assembly, arguments, *, cache_id, value=None):
+def recovery_command(run, assembly, arguments, *, cache_id, value=None, execution_inputs=()):
     sequence = run.command_sequence + 1
+    native = type(run) is OwnedRun
+    input_files = {path: evidence.file_sha256(run.root / path) for path in execution_inputs} if native else {}
+    arguments = ["dotnet", str(assembly), *arguments]
     result = run.command(
-        ["dotnet", str(assembly), *arguments], cwd=assembly.parent, scope="recovery",
-        env={"HOARD_CONFORMANCE_SAFE_EVENTS": "1"}, stop_at_barrier=value, cache_id=cache_id)
+        arguments, cwd=assembly.parent, scope="recovery",
+        env={"HOARD_CONFORMANCE_SAFE_EVENTS": "1"}, stop_at_barrier=value, cache_id=cache_id,
+        **({"record_execution": True, "execution_inputs": execution_inputs} if native else {}))
     if run.live_children():
         raise evidence.ConformanceError("CleanupIncomplete")
     if value is None:
@@ -1081,6 +1085,11 @@ def recovery_command(run, assembly, arguments, *, cache_id, value=None):
     else:
         admit_owned_command(
             command, sequence, scope="recovery", detail=None, exit_code=0, max_duration=300000)
+    if native:
+        recorded = native_control_record(
+            run, sequence, raw, arguments=arguments, cwd=assembly.parent, input_files=input_files)
+        if hashlib.sha256(recorded).hexdigest() != result.execution_sha256:
+            raise evidence.ConformanceError("ProofMismatch")
     return hashlib.sha256(raw).hexdigest(), command
 
 
@@ -1096,11 +1105,17 @@ def metadata_recovery_diagnostics(run, inputs, candidate, *, namespace="sqlite-r
     parent = run.root / f"stores/{namespace}"
     no_symlinks(parent)
     parent.mkdir(mode=0o700)
+    execution_inputs = ()
+    if type(run) is OwnedRun:
+        inputs_path = f"proofs/{namespace}-native-inputs.json"
+        write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
+        execution_inputs = (assembly_key, inputs_path)
 
     def execute(mode, directory, barrier, value=None):
         return recovery_command(
             run, assembly, [mode, str(directory / "metadata.db"), str(directory), barrier],
-            cache_id=namespace, value=value)
+            cache_id=namespace, value=value,
+            **({"execution_inputs": execution_inputs} if execution_inputs else {}))
 
     observations = []
     for kind, barriers in (

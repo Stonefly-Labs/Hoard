@@ -2011,6 +2011,12 @@ pre/post input snapshots. It preserves source parents in case evidence and
 retains sanitized source packets outside disposable stores. A separate complete
 metadata admission execution is wired, but its exact-head Linux run is pending.
 Controller qualification, control imports and complete profile CLI remain closed.
+
+Recovery execution now also anchors the exact barrier/controller receipt bytes
+to the executor's original native record, rather than matching only PID/start
+and exit. Actual metadata seed/kill/readback commands capture their assembly and
+current input document before/after execution. This prepares independent control
+corroboration; it does not admit those controls or promote incomplete cases.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

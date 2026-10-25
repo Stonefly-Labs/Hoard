@@ -105,6 +105,32 @@ def runtime_arguments(assembly, settings, identities, *, discovery=False):
             f"--Settings:{settings}", f"--TestCaseFilter:{filter_text}"]
 
 
+def native_control_record(run, sequence, control_raw, *, arguments, cwd, input_files):
+    if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    control = evidence.load_json(control_raw)
+    fields = {"schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
+              "exitCode", "diagnosticCode", "groupState", "scope"}
+    if (not isinstance(control, dict) or not fields <= control.keys()
+            or control["scope"] not in ("recovery", "transfer")
+            or set(control) - fields not in (
+                (set(), {"barrier"}) if control["scope"] == "recovery" else ({"transfer"},))
+            or control["sequence"] != sequence or control["diagnosticCode"] != "None"
+            or control["groupState"] != "Exited" or run.live_children()):
+        raise evidence.ConformanceError("ProofMismatch")
+    raw = run.read_execution_record(sequence)
+    expected = {
+        **{key: control[key] for key in fields}, "runId": run.run_id, "rootId": run.root_id,
+        "argvSha256": evidence.digest(arguments),
+        "cwdSha256": hashlib.sha256(str(Path(cwd).absolute()).encode()).hexdigest(),
+        "controlRecordSha256": hashlib.sha256(control_raw).hexdigest(),
+        **({"inputFiles": input_files} if input_files else {}),
+    }
+    if raw != evidence.canonical_bytes(expected):
+        raise evidence.ConformanceError("ProofMismatch")
+    return raw
+
+
 class NativeCategorySources:
     def __init__(self, run, *, inspection_inputs, inspection_configurations):
         if type(run) is not OwnedRun:

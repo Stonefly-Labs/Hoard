@@ -955,15 +955,19 @@ class OwnedRun:
                                    str(failure) if isinstance(failure, ConformanceError) else "EvidenceIncomplete"),
                 "groupState": "Exited" if exited else "Retained", "scope": scope,
             }
+            control_receipt = None
             if scope == "recovery" or measure_transfer_bytes is not None:
-                receipts.append((f"{scope}-command-{self.command_sequence:04}.json", canonical_bytes({
+                control_receipt = canonical_bytes({
                     **observed, **({"barrier": barrier} if stop_at_barrier is not None else {}),
                     **({"transfer": transfer} if measure_transfer_bytes is not None else {}),
-                })))
+                })
+                receipts.append((f"{scope}-command-{self.command_sequence:04}.json", control_receipt))
             if record_execution:
                 execution_receipt = canonical_bytes({
                     **observed, "runId": self.run_id, "rootId": self.root_id,
                     "argvSha256": argv_sha, "cwdSha256": cwd_sha,
+                    **({"controlRecordSha256": hashlib.sha256(control_receipt).hexdigest()}
+                       if control_receipt is not None else {}),
                     **({"inputFiles": {path: value[0] for path, value in input_snapshot.items()}}
                        if execution_inputs else {})})
                 execution_sha = hashlib.sha256(execution_receipt).hexdigest()

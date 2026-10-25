@@ -6160,6 +6160,20 @@ Linux execution of this later increment is pending. Actual controller-source
 qualification, remaining controls and full profile CLI are still unfinished.
 No additional task or reviewer-owned checklist markers advance.
 
+Recovery controls now request actual native recording and corroborate their
+original controller bytes against an executor-held `controlRecordSha256`,
+exact argv/cwd/input map and returned execution digest. Merely sharing a valid
+PID/start/exit cannot authenticate changed barrier observations or measurements.
+Metadata's 31 actual seed/kill/readback/walkthrough commands additionally capture
+their read-only assembly and a separately retained immutable current-input file
+before/after execution. Existing diagnostic/category namespaces and output
+schemas stay unchanged; their controls are not yet imported as obligations.
+The missing independent reader API fails first; changed barrier values/timing,
+foreign sequences/commands/cwd/input maps and native-reader rejection fail after
+implementation. All 384 local tooling checks pass with 17 explicit macOS-native
+skips. The Linux-only actual barrier regression additionally checks its original
+native control digest; this later increment awaits its own native execution.
+
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately
 packable `Hoard.Testing.Conformance` library supplies the common consumers,

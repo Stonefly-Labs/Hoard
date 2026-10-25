@@ -1746,6 +1746,54 @@ class SdkDiagnosticTests(unittest.TestCase):
                     checks.evidence.ConformanceError, "ProofMismatch"):
                 checks.admit_recovery_barrier(command | change, 3, 10)
 
+    def test_native_control_receipts_bind_actual_controller_bytes_not_only_exit_and_pid(self):
+        import conformance_sources as sources
+
+        run = SimpleNamespace(
+            run_id=str(uuid.uuid4()), root_id=str(uuid.uuid4()), live_children=lambda: ())
+        control = {
+            "schemaVersion": 1, "sequence": 3, "childPid": 200,
+            "childStartSha256": "a" * 64, "startedMs": 1000, "endedMs": 1200,
+            "exitCode": -9, "diagnosticCode": "None", "groupState": "Exited", "scope": "recovery",
+            "barrier": {"value": 10, "observedMs": 1050, "signalMs": 1100},
+        }
+        arguments, cwd = ["dotnet", "owned-runner.dll", "run-upgrade"], self.directory
+        input_files = {"proofs/current-inputs.json": "b" * 64}
+        raw = checks.evidence.canonical_bytes(control)
+        record = {
+            **{key: value for key, value in control.items() if key != "barrier"},
+            "runId": run.run_id, "rootId": run.root_id,
+            "argvSha256": checks.evidence.digest(arguments),
+            "cwdSha256": hashlib.sha256(str(cwd.absolute()).encode()).hexdigest(),
+            "inputFiles": input_files, "controlRecordSha256": hashlib.sha256(raw).hexdigest(),
+        }
+        native_raw = checks.evidence.canonical_bytes(record)
+        run.read_execution_record = unittest.mock.Mock(return_value=native_raw)
+        with patch.object(sources, "OwnedRun", type(run)):
+            self.assertEqual(sources.native_control_record(
+                run, 3, raw, arguments=arguments, cwd=cwd, input_files=input_files), native_raw)
+            run.read_execution_record.assert_called_once_with(3)
+            for changed in (
+                    control | {"barrier": control["barrier"] | {"value": 11}},
+                    control | {"barrier": control["barrier"] | {"observedMs": 1060}},
+                    control | {"childStartSha256": "c" * 64}):
+                with self.subTest(changed=changed), self.assertRaises(checks.evidence.ConformanceError):
+                    sources.native_control_record(
+                        run, 3, checks.evidence.canonical_bytes(changed),
+                        arguments=arguments, cwd=cwd, input_files=input_files)
+            for change in (
+                    {"sequence": 4}, {"arguments": ["dotnet", "unrelated.dll"]},
+                    {"cwd": cwd / "foreign"}, {"input_files": input_files | {"foreign.json": "d" * 64}}):
+                options = {"sequence": 3, "arguments": arguments, "cwd": cwd, "input_files": input_files} | change
+                with self.subTest(change=change), self.assertRaises(checks.evidence.ConformanceError):
+                    sources.native_control_record(run, control_raw=raw, **options)
+            run.read_execution_record.side_effect = checks.evidence.ConformanceError("OwnershipInvalid")
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "OwnershipInvalid"):
+                sources.native_control_record(
+                    run, 3, raw, arguments=arguments, cwd=cwd, input_files=input_files)
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "OwnershipInvalid"):
+            sources.native_control_record(run, 3, raw, arguments=arguments, cwd=cwd, input_files=input_files)
+
     def test_metadata_recovery_controller_drives_each_real_runner_mode_and_rejects_missing_proof(self):
         for namespace, mutation in (
                 ("sqlite-recovery", None), ("category-sqlite-recovery", None),

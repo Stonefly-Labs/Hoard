@@ -159,6 +159,14 @@ qualification-input metadata replay is wired; default transport admission and
 controller-origin qualification remain closed. This later increment has local
 tooling coverage but awaits exact-head native execution. Overall histories remain
 non-qualifying with their incomplete obligations; full profile CLI is unfinished.
+
+Recorded native recovery/transfer invocations additionally anchor the exact
+control receipt bytes in `controlRecordSha256`. Native recovery orchestration
+rechecks that digest, argv/cwd/input map and returned execution hash, not just
+PID/start/exit. Metadata seed/kill/readback/walkthrough commands declare both
+their actual assembly and immutable current-input document for pre/post capture.
+This is provenance preparation only: no controller qualification, passing
+metadata control import or complete profile backend is inferred.
 The earlier source-linking execution, before executor-held byte anchoring, is
 independently admitted at exact `78c5919`, run
 40202060742: all three Linux jobs, 273 foundations without skips and all

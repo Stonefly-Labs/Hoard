@@ -9035,6 +9035,22 @@ capacity; removing eight inspected obsolete task-generated restore caches,
 without deleting feeds/images/receipts or weakening the guard, restored admission.
 Controller-source qualification, control imports and the full CLI are unfinished.
 
+A subsequent recovery increment now records an executor-held digest of the
+actual recovery/transfer control receipt whenever native execution recording is
+requested. Thus matching PID/start/exit alone cannot authenticate rewritten
+barrier observations or measurements. Native SDK recovery commands require that
+anchored record to match the exact argv/cwd and returned result hash; diagnostic
+adapters cannot manufacture a native parent. Metadata's 31 seed/kill/readback/
+walkthrough commands additionally snapshot the actual assembly and a create-new
+immutable current-input document. Both old and category namespaces retain their
+existing closed outputs and qualification false. A missing corroboration API
+fails before implementation; changed barrier values/timing, sequence, argv/cwd,
+input maps and rejected native readers fail afterwards. All 384 local tooling
+checks pass with 17 explicit macOS-native skips; the actual Linux barrier test
+now also checks the executor-held controller-byte digest. Native execution of
+this later increment is pending. These records are prerequisites, not admitted
+metadata obligations or controller qualification.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

@@ -439,7 +439,8 @@ print('{"event":"control","code":"None","value":1}')
             "import subprocess,sys,time; "
             "subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)']); "
             "print('{\"event\":\"barrier\",\"code\":\"None\",\"value\":7}',flush=True); time.sleep(60)")
-        result = run.command([sys.executable, "-c", program], scope="recovery", stop_at_barrier=7)
+        result = run.command(
+            [sys.executable, "-c", program], scope="recovery", stop_at_barrier=7, record_execution=True)
         self.assertEqual(result.exit_code, -9)
         self.assertEqual([dict(event) for event in result.events],
                          [{"event": "barrier", "code": "None", "value": 7}])
@@ -454,6 +455,10 @@ print('{"event":"control","code":"None","value":1}')
         self.assertLessEqual(receipt["startedMs"], barrier["observedMs"])
         self.assertLessEqual(barrier["observedMs"], barrier["signalMs"])
         self.assertLessEqual(barrier["signalMs"], receipt["endedMs"])
+        control_raw = (run.root / "proofs/recovery-command-0001.json").read_bytes()
+        native_raw = run.read_execution_record(1)
+        self.assertEqual(hashlib.sha256(native_raw).hexdigest(), result.execution_sha256)
+        self.assertEqual(json.loads(native_raw)["controlRecordSha256"], hashlib.sha256(control_raw).hexdigest())
         with mock.patch.object(run, "terminate", return_value=False):
             with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
                 run.command([sys.executable, "-c", program], scope="recovery", stop_at_barrier=7)
