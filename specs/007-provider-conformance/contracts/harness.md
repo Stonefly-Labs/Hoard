@@ -183,6 +183,12 @@ hashes after complete graph assertions; a packet is not a RuntimeWitness.
 Category dispatch, independent native source joining and case attribution are
 not yet wired. Missing context fails explicitly and unrelated valid sessions
 remain rejected; no controller qualification is inferred from modeled tests.
+The later qualification path now dispatches that fact in its own seventh scope.
+Its immutable context and native input snapshots bind the complete consumed
+graph; independent source corroboration joins the real runtime UUID/proof to
+actual native execution and case controls. Diagnostic scope selection is
+unchanged. Bare graphs or unparented runtime witnesses cannot pass. Exact native
+execution of the new wiring is pending; model tests are not native receipts.
 The earlier source-linking execution, before executor-held byte anchoring, is
 independently admitted at exact `78c5919`, run
 40202060742: all three Linux jobs, 273 foundations without skips and all

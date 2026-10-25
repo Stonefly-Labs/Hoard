@@ -32,7 +32,7 @@ from conformance_case_catalog import (
     CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_BINDINGS, ORIGINAL_ARTIFACT_CONTRACT_WITNESSES,
     ORIGINAL_ARTIFACT_PROOF_SOURCES, ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES,
     ORIGINAL_ARTIFACT_REOPENS, ORIGINAL_ARTIFACT_SHARED_OWNER_WITNESSES, ORIGINAL_ARTIFACT_WITNESSES,
-    ORIGINAL_METADATA_FACADE_WITNESSES,
+    METADATA_RECOVERY_SOURCE_WITNESS, ORIGINAL_METADATA_FACADE_WITNESSES,
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
     catalog_admission_witnesses, category_cases, category_execution_partitions, category_runtime_cases,
     original_witness_parents, original_witness_policy,
@@ -40,7 +40,8 @@ from conformance_case_catalog import (
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_sources import (
     METADATA_RECOVERY_SCENARIOS, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
-    inspection_observations, native_control_record, read_bounded, runtime_arguments, runtime_settings,
+    inspection_observations, metadata_recovery_context, metadata_recovery_observations,
+    native_control_record, read_bounded, runtime_arguments, runtime_settings,
     source_witnesses as _source_witnesses,
 )
 from conformance_lock_preparation import prepare_project_lock, rebind_local_archives, verify_project_lock
@@ -1903,6 +1904,17 @@ def category_inspection_proofs(run, inputs, manifest, ingested, *, category_scop
         bindings={identity: binding for identity, (binding, _) in tests.items()})
 
 
+def category_metadata_recovery_proofs(run, inputs, manifest, ingested):
+    context = metadata_recovery_context(run, inputs, manifest, ended_ms=time.monotonic() * 1000)
+    observations, _ = metadata_recovery_observations(run.root, inputs, manifest, ingested, context)
+    receipt = {
+        "schemaVersion": 1, "qualification": False, "mode": "category-metadata-recovery-controller",
+        "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "attemptId": manifest["attemptId"], "inputsSha256": evidence.digest(inputs), "observations": observations}
+    write_new(run.root / f'proofs/{receipt["mode"]}-{manifest["attemptId"]}.json', evidence.canonical_bytes(receipt))
+    return {"sourceExecutions": len(observations), "metadataRecoveryProofsSha256": evidence.digest(receipt)}
+
+
 def _original_inspection_proofs(run, inputs, manifest, ingested, selected, mode, *, bindings=None):
     identities = tuple(selected)
     bindings = {identity: "none" for identity in identities} if bindings is None else bindings
@@ -2555,7 +2567,8 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
         "completion_data": read_bounded(output / "completion.json", 64 * 1024),
     }
     inspect_source = (inputs["mode"] == "qualification" and runtime_options.get("category_scope") is not None
-                      and runtime_options["category_scope"][1].startswith("inspection-"))
+                      and (runtime_options["category_scope"][1].startswith("inspection-")
+                           or runtime_options["category_scope"][1] == "recovery-controller"))
     ingest = evidence.inspect_runtime_attempt if inspect_source else evidence.ingest_runtime_attempt
     ingested = ingest(
         inputs=inputs, expected_tests=expected, **data,
@@ -2830,7 +2843,7 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
     profile = inputs["profileId"]
     history = evidence.CategoryRuntimeHistory(
         inputs, original_inputs=original_observation_inputs(candidate, run.root), native_sources=native_sources)
-    history.begin_joint(str(uuid.uuid4()), partitions=category_execution_partitions(profile))
+    history.begin_joint(str(uuid.uuid4()), partitions=category_execution_partitions(profile, mode=inputs["mode"]))
     plan = history.joint_partitions()
     suffix = "-qualification" if qualification else ""
     write_new(run.root / f"proofs/category-{profile}{suffix}-plan.json", evidence.canonical_bytes({
@@ -2882,6 +2895,8 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
     profile = inputs["profileId"]
     category_scope = profile, scope_id
     tests = _category_scope_tests(category_scope)
+    if scope_id == "recovery-controller" and inputs["mode"] != "qualification":
+        raise evidence.ConformanceError("WitnessMissing")
     if ((inputs["mode"] != "diagnostic" and not (
             inputs["mode"] == "qualification" and type(native_sources) is NativeCategorySources
             and native_sources._run is run)) or not isinstance(plan, Mapping)
@@ -2910,6 +2925,8 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
         folder, output, assembly_name = ARCHITECTURE_TESTS, "bin", "Hoard.Architecture.Tests.dll"
         if not prepared:
             options["inspection_literals"] = True
+    elif scope_id == "recovery-controller":
+        folder, output, assembly_name = TESTS, PACKAGE_TEST_OUTPUT, "Hoard.Conformance.Tests.dll"
     elif profile == "metadata":
         folder, output, assembly_name = METADATA_TESTS, METADATA_TEST_OUTPUT, "Hoard.Metadata.Tests.dll"
         options["metadata_provider"] = next(iter(tests.values()))[0]
@@ -2966,6 +2983,8 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
     if inspection:
         sources = category_inspection_proofs(
             run, inputs, manifest, ingested, category_scope=category_scope, selected=inspection_cases)
+    elif scope_id == "recovery-controller":
+        sources = category_metadata_recovery_proofs(run, inputs, manifest, ingested)
     elif scope_id == "controller":
         sources = original_artifact_external_proofs(
             run, inputs, manifest, ingested, category_scope=category_scope)
@@ -2985,10 +3004,11 @@ def _category_scope_tests(category_scope):
     if not isinstance(category_scope, (tuple, list)) or len(category_scope) != 2:
         raise evidence.ConformanceError("WitnessMissing")
     profile, scope_id = category_scope
-    partitions = category_execution_partitions(profile)
+    mode = "qualification" if scope_id == "recovery-controller" else "diagnostic"
+    partitions = category_execution_partitions(profile, mode=mode)
     if not isinstance(scope_id, str) or scope_id not in partitions:
         raise evidence.ConformanceError("WitnessMissing")
-    return {identity: (binding, category_runtime_cases(profile, binding)[identity])
+    return {identity: (binding, category_runtime_cases(profile, binding, mode=mode)[identity])
             for binding, identity in partitions[scope_id]}
 
 
@@ -3009,8 +3029,8 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
             inputs["mode"] == "qualification" and type(run) is OwnedRun))
             or type(result.exit_code) is not int or result.exit_code != 0):
         raise evidence.ConformanceError("ProofMismatch")
-    if scope_id.startswith("inspection-"):
-        source_key = "inspectionProofsSha256"
+    if scope_id.startswith("inspection-") or (profile, scope_id) == ("metadata", "recovery-controller"):
+        source_key = "metadataRecoveryProofsSha256" if scope_id == "recovery-controller" else "inspectionProofsSha256"
         mode = f"category-{profile}-{scope_id}"
         filename = f'{mode}-{manifest["attemptId"]}.json'
         observation_fields = {"sourceProofSha256": evidence.sha256}
@@ -3181,6 +3201,7 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
     scope_tests = None
     if category_scope is not None:
         scope_tests = _category_manifest_tests(category_scope, manifest)
+        category_scope = tuple(category_scope)
         profile, scope_id = category_scope
         if (artifact_packages is not None or metadata_packages is not None
                 or inspection_literals != scope_id.startswith("inspection-literals-")
@@ -3193,6 +3214,21 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             raise evidence.ConformanceError("WitnessMissing")
     discovery = manifest["purpose"] == "discovery"
     origin_environment = ""
+    if category_scope == ("metadata", "recovery-controller") and not discovery:
+        inputs = evidence.admit_entity(
+            "RunInputs", evidence.load_json(read_bounded(run.root / manifest["runInputsPath"], 16 * 1024 * 1024)))
+        context_data = evidence.canonical_bytes(metadata_recovery_context(
+            run, inputs, manifest, ended_ms=time.monotonic() * 1000))
+        if len(context_data) > 1024 * 1024:
+            raise evidence.ConformanceError("OutputLimitExceeded")
+        capture = run.root / "stores" / ("metadata-recovery-source-" + attempt_id)
+        no_symlinks(capture)
+        capture.mkdir(mode=0o700)
+        context = run.root / "stores" / f"metadata-recovery-context-{attempt_id}.json"
+        write_new(context, context_data)
+        origin_environment = (
+            "<EnvironmentVariables><HOARD_METADATA_RECOVERY_CONTEXT>"
+            + escape(str(context)) + "</HOARD_METADATA_RECOVERY_CONTEXT></EnvironmentVariables>")
     if inspection_literals or inspection_cases is not None or inspection_configurations is not None:
         selected, variables = {}, {}
         if inspection_literals:
@@ -3360,6 +3396,11 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
                 execution_inputs.extend(
                     Path(inspection_configurations[family]).relative_to(run.root).as_posix()
                     for family in ("metadata", "artifacts"))
+        if not discovery and category_scope == ("metadata", "recovery-controller"):
+            execution_inputs.extend((
+                f"stores/metadata-recovery-context-{attempt_id}.json",
+                "proofs/qualification-sqlite-recovery-native-executions.json",
+                "proofs/qualification-sqlite-recovery-native-inputs.json"))
     result = run.command(
         arguments,
         cwd=assembly.parent, timeout=180, kind="discovery" if discovery else "tests", cache_id="runtime",

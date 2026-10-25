@@ -2029,7 +2029,7 @@ class CategoryRuntimeHistory:
         binding_id = stable_id(binding_id)
         if binding_id not in self._bindings:
             raise ConformanceError("BindingInvalid")
-        return category_runtime_cases(self._inputs["profileId"], binding_id)
+        return category_runtime_cases(self._inputs["profileId"], binding_id, mode=self._inputs["mode"])
 
     def runtime_partitions(self, binding_id):
         binding_id = stable_id(binding_id)
@@ -2127,19 +2127,33 @@ class CategoryRuntimeHistory:
         return self._joint_plan
 
     def _case_results(self, binding_id, code, ended, witnesses, source_parents=None, control_proofs=None):
+        from conformance_case_catalog import METADATA_RECOVERY_SOURCE_WITNESS
+
         results = {}
         for case in self._cases:
             if case.binding_id != binding_id or case.exclusion is not None:
                 continue
             selected = tuple(witness for witness in witnesses
                              if witness["bindingId"] == binding_id and witness["testIdentity"] in case.witnesses)
+            expected = set(case.witnesses)
+            if (self._inputs["mode"] == "qualification" and self._inputs["profileId"] == "metadata"
+                    and binding_id == "sqlite" and case.controls
+                    and control_proofs is not None and set(case.controls) <= control_proofs.keys()
+                    and source_parents is not None):
+                source = tuple(witness for witness in witnesses
+                               if witness["bindingId"] == binding_id
+                               and witness["testIdentity"] == METADATA_RECOVERY_SOURCE_WITNESS
+                               and witness["executionId"] in source_parents)
+                selected = (*selected, *source)
+                if source:
+                    expected.add(METADATA_RECOVERY_SOURCE_WITNESS)
             case_code = code
             if code in ("None", "AssertionFailed"):
                 if any(witness["status"] == "Failed" for witness in selected):
                     case_code = "AssertionFailed"
                 elif (not selected
                       or any(control_proofs is None or control not in control_proofs for control in case.controls)
-                      or {witness["testIdentity"] for witness in selected} != set(case.witnesses)
+                      or {witness["testIdentity"] for witness in selected} != expected
                       or any(witness["status"] != "Passed" for witness in selected)):
                     case_code = "EvidenceIncomplete"
                 else:
@@ -2225,7 +2239,8 @@ class CategoryRuntimeHistory:
                 raise ConformanceError()
             admit_attempt = ingest_runtime_attempt
             source_options = {}
-            if self._native_sources is not None and scope_id.startswith("inspection-"):
+            if self._native_sources is not None and (
+                    scope_id.startswith("inspection-") or scope_id == "recovery-controller"):
                 admit_attempt = self._native_sources.ingest_attempt
                 source_options["category_scope"] = self._inputs["profileId"], scope_id
             observed = admit_attempt(

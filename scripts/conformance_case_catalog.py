@@ -339,30 +339,39 @@ def original_witness_parents(identity):
     return ORIGINAL_METADATA_FORESTS.get(identity, ORIGINAL_ARTIFACT_FORESTS.get(identity, (None,)))
 
 
-def category_runtime_cases(profile, binding_id):
+def category_runtime_cases(profile, binding_id, *, mode="diagnostic"):
     """Select the same primary frozen case for manifest construction and admission."""
     if profile not in ("metadata", "artifacts"):
         raise ConformanceError("UnsupportedProfile")
+    if mode not in ("diagnostic", "qualification"):
+        raise ConformanceError("EvidenceSchemaInvalid")
     cases = tuple(case for case in expected_cases(profile) if case.binding_id == binding_id)
     if not cases:
         raise ConformanceError("BindingInvalid")
     applicable = tuple(case for case in cases if case.exclusion is None)
-    return MappingProxyType({
+    selected = {
         identity: min(case.case_id for case in applicable if identity in case.witnesses)
-        for identity in {identity for case in applicable for identity in case.witnesses}})
+        for identity in {identity for case in applicable for identity in case.witnesses}}
+    if profile == "metadata" and binding_id == "sqlite" and mode == "qualification":
+        selected[METADATA_RECOVERY_SOURCE_WITNESS] = min(
+            case.case_id for case in applicable if "verified-recovery-walkthrough" in case.controls
+            or any(control.startswith("parent-kill:") for control in case.controls))
+    return MappingProxyType(selected)
 
 
-def category_execution_partitions(profile):
+def category_execution_partitions(profile, *, mode="diagnostic"):
     """Keep complete method families together without merging repeated binding contexts."""
     if profile not in ("metadata", "artifacts"):
         raise ConformanceError("UnsupportedProfile")
     rows = tuple(sorted((binding, identity) for category, binding, _, _ in CATEGORY_BINDING_SLOTS
-                        if category == profile for identity in category_runtime_cases(profile, binding)))
+                        if category == profile for identity in category_runtime_cases(profile, binding, mode=mode)))
     repeated = {identity for identity, count in Counter(identity for _, identity in rows).items() if count > 1}
     scopes = {}
     for binding, identity in rows:
         policy = original_witness_policy(identity)
-        if policy is not None and policy[0] == profile:
+        if identity == METADATA_RECOVERY_SOURCE_WITNESS:
+            scope = "recovery-controller"
+        elif policy is not None and policy[0] == profile:
             scope = "original-" + binding if identity in repeated else "original"
         elif ORIGINAL_INSPECTION_WITNESSES.get(identity) == profile:
             scope = ("inspection-literals-" if identity in ORIGINAL_INSPECTION_LITERAL_WITNESSES

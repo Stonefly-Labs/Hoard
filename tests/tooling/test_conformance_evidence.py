@@ -1494,6 +1494,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                  if case.binding_id == binding and case.exclusion is None]
         assignments = {identity: min(case.case_id for case in cases if identity in case.witnesses)
                        for identity in {identity for case in cases for identity in case.witnesses}}
+        if self.inputs["mode"] == "qualification" and self.inputs["profileId"] == "metadata" and binding == "sqlite":
+            assignments[catalog.METADATA_RECOVERY_SOURCE_WITNESS] = "MP-36"
         if identities is not None:
             assignments = {identity: assignments[identity] for identity in identities}
         selected = ({identity: (binding, case_id) for identity, case_id in assignments.items()}
@@ -1995,6 +1997,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.assertEqual(dict(history.original_observations), {})
 
     def test_native_metadata_recovery_requires_every_actual_input_bound_seed_kill_and_readback(self):
+        import conformance_case_catalog as catalog
         import conformance_sources as sources
         from types import SimpleNamespace
 
@@ -2096,6 +2099,62 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 self.assertEqual(after["status"], "Incomplete")
                 self.assertEqual(after["attempts"][0]["witnessIds"], ())
                 self.assertTrue(set(admitted["controls"]["parent-kill:M0"]) <= set(after["attempts"][0]["proofSha256"]))
+                runtime_source = {
+                    "bindingId": "sqlite", "testIdentity": catalog.METADATA_RECOVERY_SOURCE_WITNESS,
+                    "executionId": str(uuid.uuid4()), "status": "Passed", "proofSha256": "f" * 64}
+                attributed = history._case_results(
+                    "sqlite", "None", 110, (*witnesses, runtime_source),
+                    source_parents={runtime_source["executionId"]: "d" * 64},
+                    control_proofs=admitted["controls"])[case.key]
+                self.assertEqual(attributed["status"], "Passed")
+                self.assertEqual(attributed["attempts"][0]["witnessIds"], (runtime_source["executionId"],))
+                recovered_cases = [
+                    item for item in catalog.expected_cases("metadata")
+                    if item.binding_id == "sqlite" and item.exclusion is None and item.controls
+                    and set(item.controls) <= admitted["controls"].keys()]
+                self.assertEqual({item.case_id for item in recovered_cases},
+                                 {"MP-36", "MP-38", "MP-39", "MP-40", "MP-41", "MP-42", "MP-44", "MP-45"})
+                source_results = history._case_results(
+                    "sqlite", "None", 110, (runtime_source,),
+                    source_parents={runtime_source["executionId"]: "d" * 64},
+                    control_proofs=admitted["controls"])
+                for item in recovered_cases:
+                    self.assertEqual(source_results[item.key]["status"], "Passed")
+                    self.assertEqual(source_results[item.key]["attempts"][0]["witnessIds"],
+                                     (runtime_source["executionId"],))
+                self.assertEqual(history._case_results(
+                    "sqlite", "None", 110, (*witnesses, runtime_source),
+                    source_parents={}, control_proofs=admitted["controls"])[case.key]["status"], "Incomplete")
+                source_manifest = {
+                    **self.manifest, "inputSha256": evidence.digest(self.inputs),
+                    "expected": [{**self.manifest["expected"][0], "bindingId": "sqlite", "caseId": "MP-36",
+                                  "testIdentity": catalog.METADATA_RECOVERY_SOURCE_WITNESS}]}
+                context = sources.metadata_recovery_context(run, self.inputs, source_manifest, ended_ms=110)
+                self.assertEqual(len(context["files"]), 65)
+                packet = {
+                    "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+                    "attemptId": source_manifest["attemptId"], "inputsSha256": evidence.digest(self.inputs),
+                    "testIdentity": catalog.METADATA_RECOVERY_SOURCE_WITNESS,
+                    "files": {hashlib.sha256(path.encode()).hexdigest(): value
+                              for path, value in context["files"].items()}}
+                packet_path = Path(context["outputDirectory"]) / (
+                    "metadata-recovery-" + hashlib.sha256(catalog.METADATA_RECOVERY_SOURCE_WITNESS.encode()).hexdigest()
+                    + ".json")
+                write(packet_path, evidence.canonical_bytes(packet))
+                observed_source = {
+                    "diagnosticCode": "None", "attemptId": source_manifest["attemptId"],
+                    "witnesses": (runtime_source,), "proofs": {
+                        f'proof-{runtime_source["executionId"]}.json': runtime_source["proofSha256"]}}
+                source_observations, source_packets = sources.metadata_recovery_observations(
+                    root, self.inputs, source_manifest, observed_source, context)
+                self.assertEqual(source_observations[0]["executionId"], runtime_source["executionId"])
+                self.assertEqual(len(source_packets), 1)
+                changed = {**packet, "files": dict(packet["files"])}
+                changed["files"][next(iter(changed["files"]))] = "0" * 64
+                write(packet_path, evidence.canonical_bytes(changed))
+                with self.assertRaises(evidence.ConformanceError):
+                    sources.metadata_recovery_observations(
+                        root, self.inputs, source_manifest, observed_source, context)
                 missing = dict(admitted["controls"])
                 del missing["parent-kill:M0"]
                 self.assertEqual(history._case_results(

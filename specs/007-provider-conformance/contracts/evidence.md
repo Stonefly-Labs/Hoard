@@ -199,6 +199,12 @@ graph. It contains no fabricated execution UUID. Its bounded decoder has modeled
 unit coverage, but dispatch, actual native execution and independent
 packet-to-RuntimeWitness/case attribution remain pending. A correct unrelated
 session cannot substitute for this known independent source.
+The subsequent qualification-only source scope now retains the actual runtime
+proof, native command/source parent and hash-only packet as a corroborated graph.
+Only the logger-supplied execution UUID, independently bound to this graph and
+complete case controls, may satisfy recovery case witnessIds. No caller pass
+map or fabricated label is accepted. Diagnostic source admission stays closed
+and unchanged; actual native confirmation of this additional scope is pending.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

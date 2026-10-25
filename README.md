@@ -2034,9 +2034,13 @@ pending; no controller-only case or full-profile gate is promoted.
 A package-only metadata recovery source fact and its bounded source decoder now
 exist. The decoder checks all 65 current-input, graph, summary, controller and
 native proof files before publishing a create-new hash-only consumption packet.
-Its five modeled cases and all 119 SDK source tests pass. The fact is not yet
-dispatched or joined to case attempts; no actual controller execution UUID or
-passing case is claimed. Unrelated valid sessions cannot qualify this source.
+Its five modeled cases and all 119 SDK source tests pass. A later increment now
+dispatches it as the seventh qualification-input metadata scope, independently
+joins its consumed-file packet to the original native command and recovery
+graph, and attributes only the logger's actual execution UUID to eligible cases.
+Bare controller graphs, unrelated sessions and unparented witnesses cannot pass.
+Exact native confirmation of this wiring is pending; modeled passes are not
+actual qualification receipts.
 The corrected producer's native foundation run then exposed a second,
 test-only defect at the same assertion: the Linux-only barrier test lacked its
 `hashlib` import. That import is now explicit; native confirmation remains

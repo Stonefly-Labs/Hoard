@@ -28,6 +28,20 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_qualification_selects_an_independent_metadata_recovery_source_scope(self):
+        import conformance_case_catalog as catalog
+
+        diagnostic = catalog.category_execution_partitions("metadata")
+        qualification = catalog.category_execution_partitions("metadata", mode="qualification")
+        self.assertEqual({key: value for key, value in qualification.items() if key != "recovery-controller"},
+                         dict(diagnostic))
+        self.assertEqual(qualification["recovery-controller"],
+                         (("sqlite", catalog.METADATA_RECOVERY_SOURCE_WITNESS),))
+        self.assertNotIn(catalog.METADATA_RECOVERY_SOURCE_WITNESS,
+                         catalog.category_runtime_cases("metadata", "memory", mode="qualification"))
+        self.assertEqual(checks._category_scope_tests(("metadata", "recovery-controller")),
+                         {catalog.METADATA_RECOVERY_SOURCE_WITNESS: ("sqlite", "MP-36")})
+
     def setUp(self):
         self.directory = ROOT / ".foundation" / ("sdk-diagnostic-test-" + uuid.uuid4().hex)
         self.directory.mkdir(parents=True, mode=0o700)

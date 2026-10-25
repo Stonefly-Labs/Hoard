@@ -420,6 +420,13 @@ A package-only source fact and bounded 65-file graph decoder now prepare the
 missing instrumentation, but modeled source packets are not RuntimeWitness
 entities. Dispatch, actual logger execution and independent attribution remain
 unwired, so the incomplete case states and entity validation are unchanged.
+The later qualification-only dispatcher now supplies that independent source
+scope and retains its actual logger execution UUID only after native command,
+consumed-file packet and complete recovery-graph corroboration. Eligible SQLite
+control cases reference that UUID and source proof hashes. Bare graphs and
+unparented witnesses still remain incomplete; no entity schema or UUID semantics
+change. Modeled eight-case passes do not claim native execution; its exact
+confirmation remains pending.
 
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits

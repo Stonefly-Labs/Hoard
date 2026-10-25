@@ -11,7 +11,7 @@ from xml.sax.saxutils import escape
 
 import conformance_evidence as evidence
 from conformance_case_catalog import (
-    ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES,
+    METADATA_RECOVERY_SOURCE_WITNESS, ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES,
     category_execution_partitions, category_runtime_cases,
 )
 from conformance_execution import OwnedRun, no_symlinks
@@ -58,14 +58,29 @@ def source_witnesses(inputs, manifest, observed, identities):
 
 
 def inspection_observations(root, inputs, manifest, observed, selected, bindings):
+    return _consumption_observations(
+        root, inputs, manifest, observed, selected, bindings,
+        capture_prefix="original-inspection-", packet_prefix="inspection-", retained_prefix="source-inspection-")
+
+
+def metadata_recovery_observations(root, inputs, manifest, observed, context):
+    selected = {METADATA_RECOVERY_SOURCE_WITNESS: context["files"]}
+    return _consumption_observations(
+        root, inputs, manifest, observed, selected, {METADATA_RECOVERY_SOURCE_WITNESS: "sqlite"},
+        capture_prefix="metadata-recovery-source-", packet_prefix="metadata-recovery-",
+        retained_prefix="source-metadata-recovery-")
+
+
+def _consumption_observations(root, inputs, manifest, observed, selected, bindings, *,
+                              capture_prefix, packet_prefix, retained_prefix):
     witnesses = source_witnesses(inputs, manifest, observed, selected)
     if any(row["bindingId"] != bindings[identity] for identity, row in witnesses.items()):
         raise evidence.ConformanceError("ProofMismatch")
-    capture = root / "stores" / ("original-inspection-" + manifest["attemptId"])
+    capture = root / "stores" / (capture_prefix + manifest["attemptId"])
     no_symlinks(capture)
     if not capture.is_dir():
         raise evidence.ConformanceError("EvidenceIncomplete")
-    expected = {"inspection-" + hashlib.sha256(identity.encode()).hexdigest() + ".json": identity
+    expected = {packet_prefix + hashlib.sha256(identity.encode()).hexdigest() + ".json": identity
                 for identity in selected}
     files = set()
     for path in capture.iterdir():
@@ -89,8 +104,27 @@ def inspection_observations(root, inputs, manifest, observed, selected, bindings
         observations.append({
             "testIdentity": identity, "executionId": witness["executionId"],
             "runtimeProofSha256": witness["proofSha256"], "sourceProofSha256": hashlib.sha256(raw).hexdigest()})
-        packets[f'proofs/source-inspection-{manifest["attemptId"]}-{hashlib.sha256(identity.encode()).hexdigest()}.json'] = raw
+        packets[f'proofs/{retained_prefix}{manifest["attemptId"]}-{hashlib.sha256(identity.encode()).hexdigest()}.json'] = raw
     return observations, MappingProxyType(packets)
+
+
+def metadata_recovery_context(run, inputs, manifest, *, ended_ms):
+    if (manifest["runId"] != inputs["runId"] or manifest["invocationGroupId"] != inputs["invocationGroupId"]
+            or manifest["inputSha256"] != evidence.digest(inputs)
+            or len(manifest["expected"]) != 1
+            or manifest["expected"][0]["testIdentity"] != METADATA_RECOVERY_SOURCE_WITNESS
+            or manifest["expected"][0]["bindingId"] != "sqlite"):
+        raise evidence.ConformanceError("ProofMismatch")
+    recovered = native_metadata_recovery_controls(run, inputs, started_ms=0, ended_ms=ended_ms)
+    return {
+        "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": inputs["invocationGroupId"],
+        "attemptId": evidence._uuid(manifest["attemptId"]), "rootId": run.root_id,
+        "inputsSha256": evidence.digest(inputs), "rootPath": str(run.root),
+        "graphPath": "proofs/qualification-sqlite-recovery-native-executions.json",
+        "sourcePath": "proofs/qualification-sqlite-recovery.json",
+        "outputDirectory": str(run.root / "stores" / ("metadata-recovery-source-" + manifest["attemptId"])),
+        "files": {str(run.root / path): hashlib.sha256(raw).hexdigest()
+                  for path, raw in recovered["sourceProofs"].items()}}
 
 
 def runtime_settings(root, assembly, attempt, manifest_sha, owner_sha, environment):
@@ -325,12 +359,13 @@ class NativeCategorySources:
         if not isinstance(category_scope, (tuple, list)) or len(category_scope) != 2:
             raise evidence.ConformanceError("WitnessMissing")
         profile, scope_id = category_scope
-        partitions = category_execution_partitions(profile)
+        partitions = category_execution_partitions(profile, mode=inputs["mode"])
+        metadata = profile == "metadata" and scope_id == "recovery-controller"
         if (inputs["mode"] != "qualification" or inputs["profileId"] != profile
                 or inputs["runId"] != run.run_id or not isinstance(scope_id, str)
-                or not scope_id.startswith("inspection-") or scope_id not in partitions):
+                or not (scope_id.startswith("inspection-") or metadata) or scope_id not in partitions):
             raise evidence.ConformanceError("WitnessMissing")
-        tests = {identity: (binding, category_runtime_cases(profile, binding)[identity])
+        tests = {identity: (binding, category_runtime_cases(profile, binding, mode=inputs["mode"])[identity])
                  for binding, identity in partitions[scope_id]}
         if (len(manifest["expected"]) != len(tests)
                 or {entry["testIdentity"] for entry in manifest["expected"]} != set(tests)
@@ -346,10 +381,17 @@ class NativeCategorySources:
                 mapping, inspection_inputs=self._selected):
             raise evidence.ConformanceError("InputChanged")
         attempt = evidence._uuid(manifest["attemptId"])
-        selected = ({identity: self._selected[identity] for identity in tests}
-                    if scope_id.startswith("inspection-prepared-") else {identity: {} for identity in tests})
-        observations, packets = inspection_observations(
-            run.root, inputs, manifest, observed, selected, {identity: pair[0] for identity, pair in tests.items()})
+        if metadata:
+            metadata_context = metadata_recovery_context(
+                run, inputs, manifest, ended_ms=time.monotonic() * 1000)
+            selected = {METADATA_RECOVERY_SOURCE_WITNESS: metadata_context["files"]}
+            observations, packets = metadata_recovery_observations(
+                run.root, inputs, manifest, observed, metadata_context)
+        else:
+            selected = ({identity: self._selected[identity] for identity in tests}
+                        if scope_id.startswith("inspection-prepared-") else {identity: {} for identity in tests})
+            observations, packets = inspection_observations(
+                run.root, inputs, manifest, observed, selected, {identity: pair[0] for identity, pair in tests.items()})
         source = {
             "schemaVersion": 1, "qualification": False, "mode": f"category-{profile}-{scope_id}",
             "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
@@ -390,10 +432,11 @@ class NativeCategorySources:
                 or {entry["packageId"] for entry in manifest["expected"]} != {"Hoard.Testing.Conformance"}):
             raise evidence.ConformanceError("ProofMismatch")
         assembly = run.root / manifest["assemblies"][0]["path"]
-        if assembly.name != "Hoard.Architecture.Tests.dll":
+        if assembly.name != ("Hoard.Conformance.Tests.dll" if metadata else "Hoard.Architecture.Tests.dll"):
             raise evidence.ConformanceError("ProofMismatch")
-        context = run.root / "stores" / f"inspection-context-{attempt}.json"
-        expected_context = {
+        context = run.root / "stores" / f'{"metadata-recovery" if metadata else "inspection"}-context-{attempt}.json'
+        expected_context = metadata_recovery_context(
+            run, inputs, manifest, ended_ms=record["startedMs"]) if metadata else {
             "schemaVersion": 1, "runId": run.run_id, "attemptId": attempt,
             "inputsSha256": evidence.digest(inputs),
             "outputDirectory": str(run.root / "stores" / ("original-inspection-" + attempt)), "cases": selected}
@@ -410,7 +453,7 @@ class NativeCategorySources:
                     raise evidence.ConformanceError("InputChanged")
                 variables[variable] = str(path)
                 configuration_hashes[path.relative_to(run.root).as_posix()] = hashed
-        variables["HOARD_INSPECTION_CONTEXT"] = str(context)
+        variables["HOARD_METADATA_RECOVERY_CONTEXT" if metadata else "HOARD_INSPECTION_CONTEXT"] = str(context)
         environment = "<EnvironmentVariables>" + "".join(
             f"<{key}>{escape(value)}</{key}>" for key, value in variables.items()) + "</EnvironmentVariables>"
         settings = run.root / "stores" / f"settings-{attempt}.runsettings"
@@ -437,6 +480,9 @@ class NativeCategorySources:
             settings.relative_to(run.root).as_posix(): hashlib.sha256(settings_raw).hexdigest(),
             manifest["assemblies"][0]["path"]: inputs["runtimeAssemblies"][manifest["assemblies"][0]["path"]],
             context.relative_to(run.root).as_posix(): evidence.digest(expected_context), **configuration_hashes}
+        if metadata:
+            for path in (expected_context["graphPath"], "proofs/qualification-sqlite-recovery-native-inputs.json"):
+                input_files[path] = hashlib.sha256(_readonly(run.root / path, 16 * 1024 * 1024)).hexdigest()
         if (not isinstance(record, dict) or set(record) != fields
                 or type(record["schemaVersion"]) is not int or record["schemaVersion"] != 1
                 or type(record["sequence"]) is not int or record["sequence"] != sequence

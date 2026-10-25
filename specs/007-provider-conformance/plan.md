@@ -6247,6 +6247,23 @@ compile selections, 119 SDK source tests and focused formatting pass. Full
 package/native replay is still pending; the failed overall run is not admitted,
 no dependency or lock changes, and control-to-case attribution remains unwired.
 
+A subsequent increment wires actual controller-source attribution. The
+qualification metadata catalog adds one independently selected source fact in a
+seventh scope, without changing frozen inherited identities or the diagnostic
+six-scope plan. Fresh discovery/execution snapshot the actual current context,
+graph/input documents and assembly. Concrete native source corroboration checks
+all 65 consumed-file hashes against the complete executor-held recovery graph,
+the real runtime witness/proof, exact owned command/settings/input bytes and
+nested timings. The graph must precede the source command and stay inside the
+joint attempt. Only complete control sets with the independently parented actual
+logger UUID can satisfy the eight eligible SQLite cases; no UUID is derived from
+hashes/labels. Tests keep bare/unparented graphs incomplete and reject rehashed
+wrong consumption. All 388 tooling checks pass with 17 native skips. Target
+qualification metadata states become modeled 79/14/9/0 across seven scopes/135
+witnesses/five parents; actual native confirmation is pending, not claimed.
+Default admission, memory exclusions, diagnostic outputs and all remaining task/
+profile/QC gates are unchanged.
+
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately
 packable `Hoard.Testing.Conformance` library supplies the common consumers,

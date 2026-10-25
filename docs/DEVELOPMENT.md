@@ -9135,6 +9135,26 @@ decoder, and package-mode SDK tests contain both. All 119 SDK source tests and
 the focused formatter check pass. Full package/native replay remains pending;
 the failed overall run is not admitted. No package references or locks change.
 
+The subsequent runtime-source integration now selects a seventh metadata scope
+only for qualification inputs. It runs the package-only source fact through
+fresh discovery/execution, with a create-new current context and pre/post native
+snapshots of that context, recovery graph and recovery input document. Source
+corroboration independently recomputes all 65 expected consumed-file hashes
+from the executor-held 31-command graph, requires the actual runtime proof/UUID,
+and verifies exact native command/settings/input maps, root ownership and nested
+timing. The controller graph must precede that source command and remain inside
+the overall joint attempt. Safe source packets/parents are retained atomically.
+
+Only eligible SQLite cases with complete corroborated controls and that
+independently parented actual source witness can pass. Eight modeled recovery
+cases pass with the real modeled execution UUID; bare graphs, missing parent/
+witness and rewritten consumed-file hashes reject or remain incomplete.
+Diagnostic metadata stays at six scopes/134 witnesses and 71/22/9/0; the new
+qualification-input execution requires seven scopes/135 witnesses and five
+source parents, with a modeled target of 79/14/9/0. Actual native confirmation is
+pending; no modeled UUID is admitted as a native receipt. All 388 tooling checks
+pass with 17 explicit macOS-native skips. Full profile/QC work remains unfinished.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full
