@@ -6343,6 +6343,11 @@ providers with unchanged consumer/common assertion hashes, without a Linux
 containment claim. The modeled target is 83/10/9/0 across unchanged seven
 scopes/135 witnesses/five parents; exact native and full-stage gates are pending.
 
+Build-path review additionally removes a duplicate consumer build/derived-lock
+allocation: existing prepared inspection already builds that project. Its
+runtime is verified immediately afterwards and reused unchanged; create-new
+lock safety is not weakened. All 134 focused SDK tooling checks pass.
+
 Earlier exact `2ac4ed66505c1035aab0c490510eeee44d475e32`,
 [run40215065690](https://github.com/Stonefly-Labs/Hoard/actions/runs/40215065690),
 now independently passes three Linux jobs, 280 foundations without skips,

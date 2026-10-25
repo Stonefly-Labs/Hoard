@@ -9252,6 +9252,11 @@ across all four executions. These are non-qualifying diagnostics, not Linux
 containment. The modeled target is 83/10/9/0; seven scopes/135 witnesses/five
 parents are unchanged, and exact Linux/full-stage confirmation remains pending.
 
+Build-path review found that prepared inspection already builds this consumer.
+The SDK path now reuses it rather than allocating its create-new derived lock
+twice, and verifies runtime package bytes immediately after that existing
+build. All 134 focused SDK tooling checks pass; no lock overwrite is permitted.
+
 Earlier exact `2ac4ed66505c1035aab0c490510eeee44d475e32`,
 [run40215065690](https://github.com/Stonefly-Labs/Hoard/actions/runs/40215065690),
 now independently passes all three Linux jobs: 280 native foundations without

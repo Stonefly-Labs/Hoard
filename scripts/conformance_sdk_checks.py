@@ -3576,15 +3576,6 @@ def execute(repository, destination):
                       evidence.canonical_bytes(recovery_record))
         verify_runtime_packages(candidate / METADATA_RECOVERY / "bin/Release/net10.0",
                                 feed, METADATA_RECOVERY_PACKAGES)
-        consumer_project = candidate / METADATA_PACKAGE_CONSUMER / "Consumer.csproj"
-        consumer_lock, consumer_record = prepare_project_lock(consumer_project, candidate, feed, "candidate")
-        build(run, consumer_project, config, "metadata-package-consumer", lock=consumer_lock)
-        if consumer_record is not None:
-            verify_project_lock(consumer_record, candidate, feed)
-            write_new(run.root / "proofs/metadata-consumer-lock-derivation.json",
-                      evidence.canonical_bytes(consumer_record))
-        verify_runtime_packages(candidate / METADATA_PACKAGE_CONSUMER / "bin/Release/net10.0",
-                                feed, METADATA_RECOVERY_PACKAGES)
         artifact_records = []
         for name in ("Local", "ObjectSemantics", "HostAdapters"):
             project = candidate / f"tests/fixtures/artifacts/{name}/{name}.csproj"
@@ -3660,6 +3651,8 @@ def execute(repository, destination):
         build_artifact_assertion_consumer(run, candidate, config, feed)
         print(json.dumps({"qualification": False, "phase": "inspection-preparation"}), flush=True)
         inspection_records = build_inspection_projects(run, candidate, config, feed)
+        verify_runtime_packages(candidate / METADATA_PACKAGE_CONSUMER / "bin/Release/net10.0",
+                                feed, METADATA_RECOVERY_PACKAGES)
         inspection_configurations = prepare_inspection_configurations(run, candidate, seal_sha)
         inspection_inputs = collect_inspection_inputs(run, inspection_configurations)
         if evidence.source_identity(repository, ci_revision=ci_revision) != identity:

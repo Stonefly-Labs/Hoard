@@ -2069,8 +2069,8 @@ NotApplicable, with unchanged seven scopes/135 witnesses/five source parents.
 Fresh locked package preparation and a real two-process macOS diagnostic pass;
 neither supplies Linux containment or a qualifying profile receipt.
 
-MP-46 now builds and runs the same package-only consumer binary against both
-explicit bindings in separate owned stores. Its common assertion body is
+MP-46 reuses the prepared-inspection build and runs the same package-only
+consumer binary against both explicit bindings in separate owned stores. Its common assertion body is
 unchanged; opt-in safe events use provider/database argv instead of ambient
 selection, while legacy invocation/output remains unchanged. Independent
 six-file graph admission requires both original native executions and the same
