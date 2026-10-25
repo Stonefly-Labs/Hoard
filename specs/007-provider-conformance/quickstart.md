@@ -663,7 +663,11 @@ without invented sessions/interfaces, provider parameters or reopen edges.
 Actual local observation/replay pass 333 executions,
 370 records and 2,122 image
 correspondences with the extended private-evidence SDK. Native admission requires
-233 foundations and 107 scopes/1,317 observations, pending. Controller and
+236 foundations and 107 scopes/1,317 observations, pending. The external-wrapper
+scope additionally requires all sixteen source producer packets linked to actual
+runtime proofs/current inputs and the same-run transfer measurement receipt.
+The supplemental hash-only receipt makes no session/origin or qualification
+claim. Controller and
 remaining artifact lifetime attribution and executable profiles remain unfinished.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.

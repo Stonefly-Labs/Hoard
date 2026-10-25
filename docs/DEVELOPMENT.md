@@ -8387,6 +8387,40 @@ profiles. README and affected guides/model/contracts are updated; product
 APIs/providers, common assertions, package references/locks, task/reviewer
 markers and production/deployment examples/diagrams are unaffected.
 
+The existing external-wrapper diagnostic now independently admits all sixteen
+crash/retention/transfer producer packets after safe runtime ingestion. Its
+hash-only parent receipt binds exact source execution/runtime-proof hashes,
+producer/state bytes, attempt/group/current inputs and the same-run parent
+transfer measurement receipt. Kill/state/readback/acknowledged-receipt and
+ordered live-retention invariants remain mandatory; stale/self-reported transfer
+packets cannot substitute for the parent measurements.
+
+Three new missing-function reds are repaired. All 105 SDK diagnostic tooling
+tests and 344 tooling checks pass (327 passed/seventeen native macOS skips);
+frozen inventory, SDK catalog and patch checks pass. Twelve preserved genuine
+source packets also pass re-admission, explicitly historical readback rather
+than fresh current-run evidence. No fresh complete controller receipt is claimed
+locally. The unchanged 107-scope/1,317-execution native request now requires 236
+foundations and the sixteen-source receipt hash, pending. Category/controller
+provenance and qualifying backends remain unfinished. This supplemental receipt
+invents no provider session/component or child-start proof. SDK binaries,
+provider code, source wrappers, common assertions, locks, task/reviewer markers,
+production/deployment examples and diagrams are unaffected.
+
+Loaded-contract run
+[40174640775](https://github.com/Stonefly-Labs/Hoard/actions/runs/40174640775)
+at exact `8c969bda5050b7c67f7fac87a27e7fbe19e35c7f` passes all three jobs,
+232 foundations without failures/errors/skips, 105 scopes/1,306 exact executions
+and every prerequisite. Typed input:
+`1aae44bb77b109090b75209437639ccdd5884c47dacd0a6a13ee35c50224941a`;
+original input:
+`2df4b9914a51514d197a7ccfa4f60d53c94d84844d51a85083f60850e20d3642`;
+preparation:
+`aa9ea7e25ce3014341491b674f7290b94832cb5a73a74fc1229388f345eee7de`.
+Both documents independently recompute; free scratch is 91,721,003,008 bytes.
+This admits composed/contract sources, not later owner-only/producer-packet
+sources or qualifying profiles.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

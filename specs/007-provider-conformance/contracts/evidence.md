@@ -179,7 +179,16 @@ original-instance reject. The copied-handle fact observes both independent
 authorities with shared reference history and distinct owner IDs. Rejected
 modules never expose a session; observation transfers no cleanup ownership.
 Local observation/replay pass 333 executions, 370 records and 2,122 image
-correspondences. Native admission requires 233 foundations and
+correspondences. The existing external-wrapper scope separately validates its
+sixteen genuine crash/retention/transfer producer packets. A hash-only supplemental
+receipt links each to the actual runtime execution/proof and attempt/group/input
+document. Crash state/handshake/kill/fresh readback and acknowledged receipt,
+ordered retained-work phases and signal exit, and same-run independently measured
+transfer proof correspondence are required. Missing/foreign packets, false
+settlement, extra files, reused child runs and stale measurement receipts reject.
+It invents no session/component/child-start proof and does not yet satisfy
+category/controller qualification.
+Native admission requires 236 foundations and
 107 scopes/1,317 observations, pending; controllers, remaining artifact lifetimes
 and complete qualification are not inferred.
 

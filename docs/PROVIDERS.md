@@ -1021,7 +1021,13 @@ handle fact observes both independent authorities; rejected modules never expose
 a session. Owner-only evidence cannot replace any full session-role policy.
 Local observation/replay pass 333 executions, 370 records
 (354 original owners/sixteen contracts) and 2,122 image correspondences with the
-extended private-evidence SDK archive. Native admission requires 233 foundations and
+extended private-evidence SDK archive. The external-wrapper scope now separately
+admits all sixteen controller/transfer producer packets and links their hashes
+to the actual runtime execution/proof and current input document. Real kill/
+state/readback and both retained-work phases are checked; transfer packets must
+also match the same-run parent measurement receipt. This is no replacement for
+loaded-provider provenance, owned-controller/category acceptance or qualification.
+Native admission requires 236 foundations and
 107 scopes/1,317 observations, pending. Controllers, remaining artifact lifetimes
 and complete qualifying profiles are still unfinished.
 

@@ -5403,6 +5403,63 @@ bytes. It admits lifecycle/rejection sources, not later composed/contract/
 owner-only sources or qualifying profiles. Controller and remaining owned-child
 attribution, category acceptance and executable qualifying backends remain open.
 
+### Runtime-linked original controller producer packets
+
+The existing 21-test external-wrapper diagnostic now independently checks the
+sixteen frozen crash, retained-child and transfer producer packets after exact
+safe runtime ingestion. A separate hash-only parent receipt binds every actual
+source execution/runtime-proof SHA to producer/state hashes, attempt/group/
+current inputs and the same-run parent transfer measurement receipt. Only the
+closed sixteen identities and exact 24-file crash/retention capture are admitted.
+Missing/extra packets, replayed child run IDs, failed runtime observations or
+changed runtime-proof references reject before receipt publication.
+
+Crash checks retain exact barrier/acknowledgment/state bytes, canonical child
+run/receipt IDs, actual SIGKILL exit 137, distinct child/reopen PIDs, successful
+fresh readback and B3 acknowledged-receipt equality. The existing independent
+recovery validator checks exact known content/control bytes, owner fencing,
+reconstruction, outcome and reclamation. Retained-child packets require ordered
+contained/inspected observations, both matching the actual source child/run/
+provider/scenario and actual signal exit. They remain explicitly non-durable.
+Transfer packets retain exact sizes/hashes/pacing/runtime/RSS and match the
+same-run independently measured parent receipt; a self-reported peak packet
+alone cannot substitute.
+
+Three regressions first fail at missing admission/import functions. Models then
+pass the full 16-source batch and reject altered state/acknowledgment/kill/
+readback/retention, reordered/missing phases, wrong execution/proof/status,
+missing/extra files and stale transfer-parent inputs. All 105 SDK diagnostic
+tooling tests and 344 full tooling checks pass (327 passed/seventeen explicit
+macOS-native skips). Frozen inventory, SDK catalog and patch checks pass.
+Twelve preserved genuine original producer packets also pass independent
+re-admission; this is explicitly historical packet replay, not fresh current-run
+evidence. No fresh complete controller receipt is claimed locally. Native target
+is 236 foundations and the unchanged 107 scopes/1,317 executions, now also
+requiring the sixteen-source receipt hash, pending.
+
+The receipt is supplemental diagnostic evidence, not a fake original-instance,
+loaded contract, provider component or child-start attestation. Category runtime
+admission remains fail-closed for unbuilt architecture/controller provenance and
+control keys; complete category/profile qualification is not implied. No SDK
+binary/signature, provider implementation, common assertion, source wrapper,
+package/lock, task/reviewer marker, production/deployment example or diagram
+changes. README and affected evidence/development/provider/model guides are
+updated.
+
+Loaded-contract run
+[40174640775](https://github.com/Stonefly-Labs/Hoard/actions/runs/40174640775)
+at exact `8c969bda5050b7c67f7fac87a27e7fbe19e35c7f` now passes all three jobs,
+232 foundations without failures/errors/skips, 105 scopes/1,306 exact executions
+(323 originals) and every prerequisite. Typed input:
+`1aae44bb77b109090b75209437639ccdd5884c47dacd0a6a13ee35c50224941a`;
+original input:
+`2df4b9914a51514d197a7ccfa4f60d53c94d84844d51a85083f60850e20d3642`;
+preparation:
+`aa9ea7e25ce3014341491b674f7290b94832cb5a73a74fc1229388f345eee7de`.
+Both documents independently recompute; free scratch is 91,721,003,008 bytes.
+This admits composed owners and loaded contracts, not later owner-only or
+runtime-linked producer-packet sources or qualifying profiles.
+
 ## Summary
 
 

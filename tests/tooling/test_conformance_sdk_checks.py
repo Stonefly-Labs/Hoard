@@ -35,6 +35,197 @@ class SdkDiagnosticTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.directory)
 
+    @staticmethod
+    def original_crash_fixture(barrier):
+        run_id = str(uuid.uuid4())
+        receipt_id = str(uuid.uuid4())
+        content = hashlib.sha256(bytes((index * 17 + 11) % 256 for index in range(256)) * 4096).hexdigest()
+        control = b"acknowledged independent control before crash"
+        state = checks.evidence.canonical_bytes({
+            "Run": run_id, "Barrier": barrier, "TargetDigest": content, "TargetLength": 1048576,
+            "Control": {"Digest": hashlib.sha256(control).hexdigest(), "Length": len(control)},
+            "AcknowledgedReceipt": receipt_id if barrier == "B3" else None})
+        recovered = {
+            "eventName": "recovered", "provider": "local", "qualification": False,
+            "pid": 43, "runId": run_id, "barrier": barrier,
+            **{key: True for key in ("controlReadback", "controlReceipt", "exactReceipt",
+                                     "contentReadback", "ownerFenced", "noDuplicateEffect")},
+            "reconstructed": barrier in ("B0", "B1"),
+            "reclamation": {"D0": "Pending", "D1": "Reclaimed"}.get(barrier, "NotApplicable"),
+            "contentSha256": content, "contentLength": 1048576,
+            "controlSha256": hashlib.sha256(control).hexdigest(), "controlLength": len(control),
+            "outcome": "Removed" if barrier.startswith("D") else "Published", "receiptId": receipt_id}
+        return {
+            "provider": "local", "qualification": False, "runId": run_id, "barrier": barrier, "signal": 9,
+            "parentPid": 41, "killedPid": 42, "killedExitCode": 137, "recoveredPid": 43, "reopenedExitCode": 0,
+            "barrierProof": {"eventName": "barrier", "pid": 42, "runId": run_id, "barrier": barrier,
+                             "stateSha256": hashlib.sha256(state).hexdigest(), "acknowledged": barrier == "B3"},
+            "recovery": recovered}, state
+
+    def test_original_crash_packets_require_actual_state_exit_and_fresh_readback_correspondence(self):
+        self.assertTrue(callable(getattr(checks, "admit_original_artifact_crash", None)),
+                        "Original process wrappers need independently admitted producer/state packets, not only green VSTest.")
+        for barrier in ("B0", "B1", "B2", "B3", "D0", "D1"):
+            original, state = self.original_crash_fixture(barrier)
+            checks.admit_original_artifact_crash(original, state, barrier)
+            for change in (
+                    {"provider": "object"}, {"qualification": True}, {"runId": str(uuid.uuid4())},
+                    {"runId": "not-a-uuid"}, {"signal": True}, {"parentPid": True}, {"killedPid": True}, {"recoveredPid": True},
+                    {"killedExitCode": 1}, {"reopenedExitCode": True}, {"recoveredPid": 42},
+                    {"parentPid": 42}, {"parentPid": 2147483648}, {"recoveredPid": 2147483648}, {"extra": True},
+                    *({"barrierProof": original["barrierProof"] | item} for item in (
+                        {"stateSha256": "0" * 64}, {"pid": 43}, {"runId": str(uuid.uuid4())},
+                        {"acknowledged": barrier != "B3"}, {"extra": True})),
+                    *({"recovery": original["recovery"] | item} for item in (
+                        {"contentReadback": False}, {"noDuplicateEffect": False}, {"ownerFenced": False},
+                        {"contentSha256": "0" * 64}, {"controlLength": 0}, {"pid": True},
+                        {"runId": str(uuid.uuid4())}, {"receiptId": ""}, {"extra": True}))):
+                with self.subTest(barrier=barrier, change=change), self.assertRaisesRegex(
+                        checks.evidence.ConformanceError, "ProofMismatch"):
+                    checks.admit_original_artifact_crash(original | change, state, barrier)
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.admit_original_artifact_crash(original, state + b" ", barrier)
+            if barrier == "B3":
+                altered = checks.evidence.canonical_bytes(
+                    checks.evidence.load_json(state) | {"AcknowledgedReceipt": str(uuid.uuid4())})
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                    checks.admit_original_artifact_crash(original | {
+                        "barrierProof": original["barrierProof"] | {"stateSha256": hashlib.sha256(altered).hexdigest()}},
+                        altered, barrier)
+
+    @staticmethod
+    def original_retention_fixture(provider, scenario):
+        run_id = str(uuid.uuid4())
+        return {
+            "qualification": False, "durableCrashProof": False, "provider": provider, "scenario": scenario,
+            "runId": run_id, "parentPid": 41, "killedPid": 42, "killedExitCode": 137,
+            "observations": [{
+                "eventName": "noncooperative", "phase": phase, "pid": 42, "runId": run_id,
+                "provider": provider, "scenario": scenario, "durableCrashProof": False,
+                "cleanup": "RetainedLiveOwnership",
+                "callerCode": "Uncertain" if scenario == "native" else "CancelledBeforeCommit",
+                "admissionCode": "CleanupIncomplete", "shutdownCode": "CleanupIncomplete",
+                "enteredWorkers": 1, "workerPending": True, "borrowedStreamsIntact": True,
+                "rootStillOwned": True, "readinessBlocked": True, "protectionRetained": scenario != "source",
+            } for phase in ("contained", "inspected")]}
+
+    def test_original_retained_child_packets_require_both_live_phases_and_actual_signal_exit(self):
+        self.assertTrue(callable(getattr(checks, "admit_original_artifact_retention", None)),
+                        "Original retained-child packets must not borrow unrelated controller diagnostics.")
+        for provider in ("local", "object"):
+            for scenario in ("source", "destination", "native"):
+                original = self.original_retention_fixture(provider, scenario)
+                checks.admit_original_artifact_retention(original, provider, scenario)
+                for change in (
+                        {"provider": "foreign"}, {"scenario": "foreign"}, {"runId": str(uuid.uuid4())},
+                        {"qualification": True}, {"durableCrashProof": True}, {"parentPid": True},
+                        {"parentPid": 42}, {"killedPid": True}, {"killedExitCode": 1}, {"extra": True},
+                        {"observations": original["observations"][:1]},
+                        {"observations": original["observations"][::-1]},
+                        {"observations": [original["observations"][0], original["observations"][1] | {
+                            "workerPending": False}]}):
+                    with self.subTest(provider=provider, scenario=scenario, change=change), self.assertRaisesRegex(
+                            checks.evidence.ConformanceError, "ProofMismatch"):
+                        checks.admit_original_artifact_retention(original | change, provider, scenario)
+
+    def test_original_external_packets_are_linked_to_exact_runtime_executions_without_session_claims(self):
+        self.assertTrue(callable(getattr(checks, "original_artifact_external_proofs", None)),
+                        "Original controller producer packets must join the actual source execution before admission.")
+        sources = checks.original_artifact_proof_sources()
+        frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_bytes())
+        expected = {name for case in frozen["entries"] if case["profileId"] == "artifacts"
+                    for name in case["runtimeTests"] if name.startswith((
+                        "Hoard.Artifacts.Tests.ArtifactCrashTests.",
+                        "Hoard.Artifacts.Tests.ArtifactNonCooperativeChildTests.",
+                        "Hoard.Artifacts.Tests.ArtifactTransferProofTests."))}
+        self.assertEqual(set(sources), expected)
+        run_id, group, attempt = str(uuid.uuid4()), str(uuid.uuid4()), str(uuid.uuid4())
+        inputs = {"runId": run_id, "invocationGroupId": group, "environment": {"runtime": "10.0.7"}}
+        capture = self.directory / "stores" / ("original-artifact-" + attempt)
+        capture.mkdir(parents=True)
+        (self.directory / "proofs").mkdir()
+        paths = {}
+        for identity, (kind, provider, parameter) in sources.items():
+            if kind == "crash":
+                proof, state = self.original_crash_fixture(parameter)
+                (capture / (parameter + "-state.json")).write_bytes(state)
+                (capture / (parameter + "-recovery-errors.txt")).write_bytes(b"")
+                path = capture / (parameter + ".json")
+            elif kind == "retention":
+                proof = self.original_retention_fixture(provider, parameter)
+                path = capture / f"noncooperative-{provider}-{parameter}.json"
+            else:
+                proof = {"runId": run_id, "runtime": ".NET 10.0.7", "expectedSha256": "a" * 64}
+                path = self.directory / f"proofs/artifact-transfers/transfer-{provider}-{parameter}/proof.json"
+                path.parent.mkdir(parents=True)
+            path.write_bytes(checks.evidence.canonical_bytes(proof))
+            paths[identity] = path
+        transfer_receipt = {
+            "qualification": False, "mode": "artifact-transfers", "code": "None",
+            "inputsSha256": checks.evidence.digest(inputs),
+            "transfers": [{"provider": provider, "size": parameter, "controllerSha256": "c" * 64,
+                           "producerSha256": "d" * 64, "childStartSha256": "e" * 64,
+                           "proofSha256": checks.evidence.file_sha256(paths[identity])}
+                          for identity, (kind, provider, parameter) in sources.items() if kind == "transfer"]}
+        transfer_receipt_path = self.directory / "proofs/artifact-transfers.json"
+        transfer_receipt_path.write_bytes(checks.evidence.canonical_bytes(transfer_receipt))
+        identities = checks.original_artifact_external_scenarios()[0][1]
+        witnesses = [{"testIdentity": identity, "executionId": str(uuid.uuid4()), "status": "Passed",
+                      "proofSha256": hashlib.sha256(identity.encode()).hexdigest()} for identity in identities]
+        observed = {"attemptId": attempt, "diagnosticCode": "None", "witnesses": witnesses,
+                    "proofs": {f'proof-{row["executionId"]}.json': row["proofSha256"] for row in witnesses}}
+        manifest = {"attemptId": attempt, "runId": run_id, "invocationGroupId": group,
+                    "inputSha256": checks.evidence.digest(inputs),
+                    "expected": [{"testIdentity": identity} for identity in identities]}
+        with patch.object(checks.artifacts, "verify_transfer"), patch.object(
+                checks.artifacts, "expected_transfer_hash", return_value="a" * 64):
+            receipt = checks.original_artifact_external_proofs(SimpleNamespace(root=self.directory), inputs, manifest, observed)
+            self.assertEqual(receipt["sourceExecutions"], 16)
+            retained = checks.evidence.load_json((
+                self.directory / f"proofs/original-artifact-external-{attempt}.json").read_bytes())
+            self.assertEqual(receipt["externalProofsSha256"], checks.evidence.digest(retained))
+            self.assertFalse(retained["qualification"])
+            self.assertEqual(retained["inputsSha256"], checks.evidence.digest(inputs))
+            self.assertEqual({row["testIdentity"] for row in retained["observations"]}, expected)
+            for row in retained["observations"]:
+                witness = next(witness for witness in witnesses if witness["testIdentity"] == row["testIdentity"])
+                self.assertEqual((row["executionId"], row["runtimeProofSha256"]),
+                                 (witness["executionId"], witness["proofSha256"]))
+                self.assertEqual(row["sourceProofs"]["producer"], checks.evidence.file_sha256(paths[row["testIdentity"]]))
+                self.assertNotIn("sessionOrigins", row)
+            for mutation in ("execution", "runtime-proof", "status", "missing-file", "extra-file",
+                             "transfer-run", "transfer-parent"):
+                with self.subTest(mutation=mutation), contextlib.ExitStack() as cleanup:
+                    changed = [dict(row) for row in witnesses]
+                    if mutation == "execution":
+                        changed[0]["executionId"] = changed[1]["executionId"]
+                    elif mutation == "runtime-proof":
+                        changed[0]["proofSha256"] = "b" * 64
+                    elif mutation == "status":
+                        changed[0]["status"] = "Incomplete"
+                    elif mutation == "missing-file":
+                        path = paths[next(iter(sources))]
+                        before = path.read_bytes()
+                        path.unlink()
+                        cleanup.callback(path.write_bytes, before)
+                    elif mutation == "extra-file":
+                        path = capture / "foreign.json"
+                        path.write_bytes(b"{}")
+                        cleanup.callback(path.unlink)
+                    elif mutation == "transfer-run":
+                        path = next(path for identity, path in paths.items() if "TransferProofTests" in identity)
+                        before = path.read_bytes()
+                        path.write_bytes(checks.evidence.canonical_bytes({"runId": str(uuid.uuid4())}))
+                        cleanup.callback(path.write_bytes, before)
+                    else:
+                        before = transfer_receipt_path.read_bytes()
+                        transfer_receipt_path.write_bytes(checks.evidence.canonical_bytes(
+                            transfer_receipt | {"inputsSha256": "0" * 64}))
+                        cleanup.callback(transfer_receipt_path.write_bytes, before)
+                    with self.assertRaises(checks.evidence.ConformanceError):
+                        checks.original_artifact_external_proofs(
+                            SimpleNamespace(root=self.directory), inputs, manifest, observed | {"witnesses": changed})
+
     def test_transfer_measurement_admits_only_exact_parent_memory_and_settlement_proof(self):
         self.assertTrue(callable(getattr(checks, "admit_transfer_measurement", None)),
                         "Actual large transfers need parent kernel memory and settlement admission.")

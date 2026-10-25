@@ -1273,7 +1273,13 @@ parameters carry owner-only observations, never invented sessions/interfaces or
 parent edges. The copied-handle fact observes two independent genuine authorities
 with non-owning reference history. Existing full-session policies remain strict.
 Local observation/replay pass 333 executions, 370 records and
-2,122 image correspondences. Native admission requires 233 foundations and
+2,122 image correspondences. The external-wrapper scope now separately checks
+sixteen source producer packets after exact safe runtime ingestion. Its hash-only
+parent receipt binds actual runtime execution/proof IDs, state/producer hashes,
+attempt/group/current inputs and the same-run parent transfer measurements.
+It creates no provider session, component origin, child-start attestation or
+qualifying category result.
+Native admission requires 236 foundations and
 107 scopes/1,317 observations, pending. Controller and remaining artifact
 lifetime attribution and qualifying backends remain unfinished.
 

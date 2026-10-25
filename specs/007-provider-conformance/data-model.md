@@ -319,7 +319,14 @@ interface, control, provider parameter or cleanup ownership is invented.
 Current local observation/replay pass 333 executions, 370 records
 (354 original owners/sixteen contracts) and 2,122 image correspondences with SDK
 archive `7651009db9b2ae1f857deb2973198d74edbf051e37514dbc4f013ddafe13dd26`.
-Native admission requires 233 foundations and 107 scopes/1,317 observations,
+The existing external-wrapper scope separately emits a hash-only, non-qualifying
+parent receipt for sixteen actual source executions. It links immutable runtime
+execution/proof IDs to producer/state hashes, the attempt/group/input document
+and the same-run transfer measurement receipt. Source-selected booleans do not
+substitute for independently checked kill/state/readback/retention/transfer
+invariants. No session, component origin, child-start identity or category pass
+is invented by this supplemental receipt.
+Native admission requires 236 foundations and 107 scopes/1,317 observations,
 pending. Private revision-2 evidence adds this closed kind; public schemas,
 existing kind policies and typed-session origins are unchanged.
 

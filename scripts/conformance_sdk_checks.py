@@ -1149,6 +1149,73 @@ def admit_artifact_noncooperation(observed, provider, scenario, phase, pid, run_
         raise evidence.ConformanceError("ProofMismatch")
 
 
+def _admit_original_artifact_uuid(value):
+    if not isinstance(value, str) or len(value) != 36:
+        raise evidence.ConformanceError("ProofMismatch")
+    try:
+        identity = uuid.UUID(value)
+    except ValueError:
+        raise evidence.ConformanceError("ProofMismatch") from None
+    if identity.int == 0 or str(identity) != value:
+        raise evidence.ConformanceError("ProofMismatch")
+
+
+def _admit_original_artifact_child(proof, fields):
+    if (not isinstance(proof, dict) or set(proof) != fields or proof["qualification"] is not False
+            or any(type(proof[key]) is not int or not 0 < proof[key] <= 2147483647 for key in ("parentPid", "killedPid"))
+            or proof["parentPid"] == proof["killedPid"]
+            or type(proof["killedExitCode"]) is not int or proof["killedExitCode"] != 137):
+        raise evidence.ConformanceError("ProofMismatch")
+    _admit_original_artifact_uuid(proof["runId"])
+
+
+def admit_original_artifact_crash(proof, state_data, barrier):
+    _admit_original_artifact_child(proof, {
+        "provider", "qualification", "runId", "barrier", "signal", "parentPid", "killedPid",
+        "killedExitCode", "recoveredPid", "reopenedExitCode", "barrierProof", "recovery"})
+    handshake, recovered = proof["barrierProof"], proof["recovery"]
+    if (barrier not in ("B0", "B1", "B2", "B3", "D0", "D1")
+            or proof["provider"] != "local" or proof["barrier"] != barrier
+            or type(proof["signal"]) is not int or proof["signal"] != 9
+            or type(proof["recoveredPid"]) is not int or not 0 < proof["recoveredPid"] <= 2147483647
+            or proof["recoveredPid"] in (proof["parentPid"], proof["killedPid"])
+            or type(proof["reopenedExitCode"]) is not int or proof["reopenedExitCode"] != 0
+            or not isinstance(state_data, bytes) or not 0 < len(state_data) <= 16384
+            or not isinstance(handshake, dict) or set(handshake) != {
+                "eventName", "pid", "runId", "barrier", "stateSha256", "acknowledged"}
+            or handshake["eventName"] != "barrier" or type(handshake["pid"]) is not int
+            or handshake["pid"] != proof["killedPid"] or handshake["runId"] != proof["runId"]
+            or handshake["barrier"] != barrier or handshake["acknowledged"] is not (barrier == "B3")
+            or handshake["stateSha256"] != hashlib.sha256(state_data).hexdigest()
+            or not isinstance(recovered, dict) or set(recovered) != {
+                "eventName", "provider", "qualification", "pid", "runId", "barrier",
+                "controlReadback", "controlReceipt", "exactReceipt", "contentReadback", "ownerFenced",
+                "reconstructed", "reclamation", "noDuplicateEffect", "contentSha256", "contentLength",
+                "controlSha256", "controlLength", "outcome", "receiptId"}
+            or type(recovered["pid"]) is not int):
+        raise evidence.ConformanceError("ProofMismatch")
+    _admit_original_artifact_uuid(recovered["receiptId"])
+    state = evidence.load_json(state_data)
+    if barrier == "B3" and (not isinstance(state, dict) or state.get("AcknowledgedReceipt") != recovered["receiptId"]):
+        raise evidence.ConformanceError("ProofMismatch")
+    try:
+        artifacts.validate_recovery_readback(
+            recovered, state, barrier, proof["runId"], proof["recoveredPid"])
+    except RuntimeError:
+        raise evidence.ConformanceError("ProofMismatch") from None
+
+
+def admit_original_artifact_retention(proof, provider, scenario):
+    _admit_original_artifact_child(proof, {
+        "qualification", "durableCrashProof", "provider", "scenario", "runId",
+        "parentPid", "killedPid", "killedExitCode", "observations"})
+    if (proof["durableCrashProof"] is not False or proof["provider"] != provider or proof["scenario"] != scenario
+            or not isinstance(proof["observations"], list) or len(proof["observations"]) != 2):
+        raise evidence.ConformanceError("ProofMismatch")
+    for phase, observation in zip(("contained", "inspected"), proof["observations"]):
+        admit_artifact_noncooperation(observation, provider, scenario, phase, proof["killedPid"], proof["runId"])
+
+
 def artifact_noncooperation(run, assembly, provider, scenario):
     directory = run.root / f"stores/artifact-noncooperation/{provider}-{scenario}"
     directory.mkdir(mode=0o700)
@@ -1769,6 +1836,114 @@ def original_artifact_external_scenarios():
     return (("original-artifact-external", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
+def original_artifact_proof_sources():
+    prefix = "Hoard.Artifacts.Tests."
+    return {
+        **{prefix + "ArtifactCrashTests.Real_parent_kill_and_fresh_process_reopen_preserve_exact_receipts_and_control_bytes"
+           + f'(barrier: "{barrier}")': ("crash", "local", barrier) for barrier in ("B0", "B1", "B2", "B3", "D0", "D1")},
+        **{prefix + "ArtifactNonCooperativeChildTests.Owned_child_retains_noncooperative_work_until_parent_termination"
+           + f'(provider: "{provider}", scenario: "{scenario}")': ("retention", provider, scenario)
+           for provider in ("local", "object") for scenario in ("source", "destination", "native")},
+        **{prefix + "ArtifactTransferProofTests.Measured_transfer_binds_actual_bytes_pacing_hashes_and_os_peak"
+           + f'(provider: "{provider}", size: {size})': ("transfer", provider, size)
+           for provider in ("local", "object") for size in (268435456, 4294967296)},
+    }
+
+
+def original_artifact_external_proofs(run, inputs, manifest, ingested):
+    identities = original_artifact_external_scenarios()[0][1]
+    witnesses = ingested["witnesses"]
+    if (ingested["diagnosticCode"] != "None" or ingested["attemptId"] != manifest["attemptId"]
+            or manifest["runId"] != inputs["runId"] or manifest["invocationGroupId"] != inputs["invocationGroupId"]
+            or manifest["inputSha256"] != evidence.digest(inputs)
+            or len(manifest["expected"]) != len(identities)
+            or {entry["testIdentity"] for entry in manifest["expected"]} != set(identities)
+            or len(witnesses) != len(identities) or {row["testIdentity"] for row in witnesses} != set(identities)
+            or len({row["executionId"] for row in witnesses}) != len(witnesses)
+            or any(row["status"] != "Passed" or ingested["proofs"].get(
+                f'proof-{row["executionId"]}.json') != row["proofSha256"] for row in witnesses)):
+        raise evidence.ConformanceError("ProofMismatch")
+    capture = run.root / "stores" / ("original-artifact-" + manifest["attemptId"])
+    no_symlinks(capture)
+    if not capture.is_dir():
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    expected_files = {
+        *(barrier + suffix for barrier in ("B0", "B1", "B2", "B3", "D0", "D1")
+          for suffix in (".json", "-state.json", "-recovery-errors.txt")),
+        *(f"noncooperative-{provider}-{scenario}.json" for provider in ("local", "object")
+          for scenario in ("source", "destination", "native")),
+    }
+    files = set()
+    for path in capture.iterdir():
+        files.add(path.name)
+        if len(files) > len(expected_files):
+            raise evidence.ConformanceError("EvidenceIncomplete")
+    if files != expected_files:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    transfer_raw = read_bounded(run.root / "proofs/artifact-transfers.json", 64 * 1024)
+    transfer_receipt = evidence.load_json(transfer_raw)
+    if (not isinstance(transfer_receipt, dict) or set(transfer_receipt) != {
+            "qualification", "mode", "code", "inputsSha256", "transfers"}
+            or transfer_receipt["qualification"] is not False or transfer_receipt["mode"] != "artifact-transfers"
+            or transfer_receipt["code"] != "None" or transfer_receipt["inputsSha256"] != evidence.digest(inputs)
+            or not isinstance(transfer_receipt["transfers"], list) or len(transfer_receipt["transfers"]) != 4):
+        raise evidence.ConformanceError("ProofMismatch")
+    transfers = {}
+    for row in transfer_receipt["transfers"]:
+        if (not isinstance(row, dict) or set(row) != {
+                "provider", "size", "controllerSha256", "producerSha256", "proofSha256", "childStartSha256"}
+                or row["provider"] not in ("local", "object") or type(row["size"]) is not int
+                or row["size"] not in (268435456, 4294967296) or (row["provider"], row["size"]) in transfers
+                or any(not isinstance(row[key], str) or re.fullmatch("[0-9a-f]{64}", row[key]) is None
+                       for key in ("controllerSha256", "producerSha256", "proofSha256", "childStartSha256"))):
+            raise evidence.ConformanceError("ProofMismatch")
+        transfers[row["provider"], row["size"]] = row
+    observations, transfer_hashes, child_runs = [], {}, set()
+    for identity, (kind, provider, parameter) in sorted(original_artifact_proof_sources().items()):
+        witness = next(row for row in witnesses if row["testIdentity"] == identity)
+        path = (capture / (parameter + ".json") if kind == "crash" else
+                capture / f"noncooperative-{provider}-{parameter}.json" if kind == "retention" else
+                run.root / f"proofs/artifact-transfers/transfer-{provider}-{parameter}/proof.json")
+        raw = read_bounded(path, 16384)
+        proof = evidence.load_json(raw)
+        source_proofs = {"producer": hashlib.sha256(raw).hexdigest()}
+        if kind == "crash":
+            state = read_bounded(capture / (parameter + "-state.json"), 16384)
+            admit_original_artifact_crash(proof, state, parameter)
+            if read_bounded(capture / (parameter + "-recovery-errors.txt"), 16384):
+                raise evidence.ConformanceError("ProofMismatch")
+            source_proofs["state"] = hashlib.sha256(state).hexdigest()
+        elif kind == "retention":
+            admit_original_artifact_retention(proof, provider, parameter)
+        else:
+            if parameter not in transfer_hashes:
+                transfer_hashes[parameter] = artifacts.expected_transfer_hash(parameter)
+            if (not isinstance(proof, dict) or proof.get("expectedSha256") != transfer_hashes[parameter]
+                    or transfers[provider, parameter]["proofSha256"] != source_proofs["producer"]
+                    or proof.get("runtime") != ".NET " + inputs["environment"]["runtime"]):
+                raise evidence.ConformanceError("ProofMismatch")
+            try:
+                artifacts.verify_transfer(proof, provider, parameter, inputs["runId"],
+                                          peak_methods=("proc-status", "getrusage", "time-l", "time-v"))
+            except RuntimeError:
+                raise evidence.ConformanceError("ProofMismatch") from None
+        if kind != "transfer":
+            if proof["runId"] == inputs["runId"] or proof["runId"] in child_runs:
+                raise evidence.ConformanceError("ProofMismatch")
+            child_runs.add(proof["runId"])
+        observations.append({
+            "testIdentity": identity, "executionId": witness["executionId"],
+            "runtimeProofSha256": witness["proofSha256"], "sourceProofs": source_proofs})
+    receipt = {
+        "schemaVersion": 1, "qualification": False, "mode": "original-artifact-proofs",
+        "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "attemptId": manifest["attemptId"], "inputsSha256": evidence.digest(inputs),
+        "transferParentSha256": hashlib.sha256(transfer_raw).hexdigest(), "observations": observations}
+    write_new(run.root / f'proofs/original-artifact-external-{manifest["attemptId"]}.json',
+              evidence.canonical_bytes(receipt))
+    return {"sourceExecutions": len(observations), "externalProofsSha256": evidence.digest(receipt)}
+
+
 def environment(run, *, phase="admission", candidate=None):
     # The probe is itself an owned child. Captured SDK text is bounded transient
     # input, validated before serialization, never sent to the console.
@@ -2192,7 +2367,9 @@ def test_attempt(run, inputs, candidate, scenario):
         validate_original_observations(ingested)
     return {"code": expected_code, "tests": len(identities),
             "discoverySha256": evidence.file_sha256(discovery_output / "completion.json"),
-            "completionSha256": evidence.file_sha256(output / "completion.json")}
+            "completionSha256": evidence.file_sha256(output / "completion.json"),
+            **(original_artifact_external_proofs(run, inputs, manifest, ingested)
+               if name == "original-artifact-external" else {})}
 
 
 def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact_runner=None,

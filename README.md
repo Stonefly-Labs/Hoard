@@ -1936,7 +1936,10 @@ Explicit owner-only proof now observes genuine authorities, the metadata bridge
 and rejected modules without inventing unavailable sessions or interfaces.
 Actual local observation/replay pass 333 executions, 370 records and
 2,122 image correspondences with the extended private-evidence SDK.
-Native admission requires 233 foundations and 107 scopes/1,317 observations,
+The existing external-wrapper scope now also requires a hash-only parent receipt
+linking all sixteen crash/retention/transfer producer packets to their actual
+runtime executions; it invents no session or loaded-provider proof.
+Native admission requires 236 foundations and 107 scopes/1,317 observations,
 pending. Controller attribution, remaining artifact lifetimes and complete
 qualifying profiles remain unfinished.
 Earlier parameterized run
