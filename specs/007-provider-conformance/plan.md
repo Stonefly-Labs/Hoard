@@ -4851,6 +4851,41 @@ original/direct/reopen/controller coverage and executable qualifying profiles,
 later stories and final T081 remain unfinished. No task/reviewer marker or flow
 checkpoint is advanced.
 
+### Original identity, publication and reference owners
+
+Original metadata MP-02/03/13/23..27/31 now share the existing non-owning
+observation policy with MP-01. Each wrapper pins exactly the authority facade
+already passed to its unchanged common assertion. A shared source helper
+observes that facade plus the original returned fixture/store/schema/controls,
+while the same `await using` still owns disposal. `CallerMemberName` identifies
+each exact unparameterized source method; no parameter-selected fallback,
+companion factory/session, new clock/root or ownership transfer is introduced.
+Uninstrumented/parameterized identities remain subject to their existing strict
+admission rather than inheriting this policy.
+
+The expanded routing regression first fails as intended on the prior
+eight-execution scope. Actual local source launch and independent empty-cache
+locked replay each pass 26 exact discoveries/executions, twenty metadata owners,
+two artifact owners, four loaded-contract contexts and 118 image correspondences.
+Both reproduce the unchanged SDK archive
+`a94e225acd4ef19a8d1b363f5c7eedf498bae9364fbc2838f917f17c595485e3`.
+These local probes still use minimal diagnostic inputs, not qualifying reports.
+The expanded full-input native path requires 105 scopes/1,008 observations and
+all existing prerequisites; the earlier `0005638` request covers only the
+eight-execution increment and cannot admit these later source changes.
+
+`python3 -m unittest discover -s tests/tooling -q` passes 337 checks
+(320 passed/seventeen macOS-native skips).
+`dotnet format whitespace --folder tests/contracts/Hoard.Metadata.Tests/Cases --verify-no-changes --verbosity quiet`,
+`python3 tests/fixtures/conformance/baselines/freeze_inventory.py --check`,
+`python3 scripts/conformance_case_catalog.py --check-sdk` and `git diff --check`
+all pass. The 23 focused metadata/artifact inventory/discovery/hook guards also
+pass without skips; their historical partial-T019/T020 limits still apply.
+README and affected guides/model/contracts are updated; production/deployment
+examples and diagrams are unaffected. No task/checklist marker, historical seal,
+lock or flow checkpoint is advanced; complete original/direct/reopen/controller
+coverage, category/profile qualification and later stages remain unfinished.
+
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations
 without failures/errors/skips, 87 scopes/757 exact discoveries/executions and

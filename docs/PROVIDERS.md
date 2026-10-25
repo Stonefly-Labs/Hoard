@@ -947,6 +947,12 @@ invocation group, and independent pre/post recomputation. Native execution of
 this full-input path is not yet admitted. Local observation and fresh-cache
 replay pass eight executions/28 role-image correspondences using minimal inputs,
 not qualifying category evidence.
+Original metadata coverage subsequently adds MP-02/03/13/23..27/31. The actual
+facade passed to each unchanged common assertion is pinned and observed with
+its original owner, never replaced by a companion SDK session. Local observation
+and independent locked replay pass 26 executions/118 image correspondences.
+Native admission must now cover 105 scopes/1,008 observations; wider originals,
+direct/reopen/controller paths and qualifying profiles remain unfinished.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

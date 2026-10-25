@@ -108,6 +108,13 @@ original proofs per execution and independent post-run recomputation. The typed
 binding input document remains unchanged in meaning. Native admission for this
 new full-input path is pending; complete category/profile/evaluator integration
 and wider original/direct/reopen/controller coverage remain unbuilt.
+Metadata MP-02/03/13/23..27/31 now also observe their genuine original owners
+and the same authority facade passed to unchanged common assertions. One source
+helper captures actual references without reopening, disposing or replacing
+anything. Local actual observation and independent locked replay pass 26
+executions/118 image correspondences with the unchanged SDK archive; they
+remain minimal-input diagnostics. Native admission must include the expanded
+105-scope/1,008-observation vector, not reuse the earlier eight-execution request.
 
 The implemented private transport distinguishes `purpose: discovery` from
 `purpose: execution` and hashes each complete JSONL stream in its completion

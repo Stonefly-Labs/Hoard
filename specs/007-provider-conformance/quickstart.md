@@ -611,6 +611,11 @@ native scopes now use separately captured/recomputed full inputs and frozen
 binding slots, alongside preserved typed-binding inputs. Native admission of
 this path remains pending; it requests 105 scopes/990 observations plus every
 existing prerequisite, not full category/profile qualification.
+Further original metadata observation covers MP-02/03/13/23..27/31, retaining
+the actual authority facade used by common assertions. Observation/replay now
+pass 26 executions/118 image correspondences, still with minimal local inputs.
+The expanded native request requires 105 scopes/1,008 observations and every
+existing prerequisite; no expanded native receipt is claimed.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

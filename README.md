@@ -1882,6 +1882,10 @@ Five native diagnostic scopes are now wired to separately captured/recomputed
 full inputs with frozen binding slots, alongside unchanged typed-binding inputs.
 That full-input path still requires an exact-head native receipt; complete
 category/profile qualification remains unfinished.
+Original metadata observation now also covers MP-02/03/13/23..27/31, preserving
+the exact authority facade used by each common assertion. Actual observation
+and independent locked replay pass 26 executions/118 image correspondences;
+the corresponding native request is 105 scopes/1,008 observations, not a receipt.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

@@ -26,7 +26,7 @@ import conformance_baselines as baselines
 import artifact_evidence as artifacts
 import conformance_evidence as evidence
 from conformance_case_catalog import (
-    CATEGORY_BINDING_SLOTS, catalog_admission_witnesses, category_cases, category_runtime_cases,
+    CATEGORY_BINDING_SLOTS, ORIGINAL_METADATA_WITNESSES, catalog_admission_witnesses, category_cases, category_runtime_cases,
     original_witness_policy,
 )
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
@@ -1873,8 +1873,6 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
 
 
 def original_observation_scenarios():
-    metadata = ("Hoard.Metadata.Tests.MetadataRoundTripTests."
-                "MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes")
     artifacts = tuple('Hoard.Artifacts.Tests.ArtifactPublicationTests.'
                       f'Empty_content_and_true_absence_are_distinct(provider: "{provider}")'
                       for provider in ("local", "object"))
@@ -1882,7 +1880,7 @@ def original_observation_scenarios():
         "Expectations_and_checksums_copy_input_and_reject_each_bound",
         "Public_diagnostic_formatting_is_redacted_and_contract_members_are_get_only"))
     return (
-        *((f"observed-original-metadata-{provider}", (metadata,), "None", "Passed", 0, "None")
+        *((f"observed-original-metadata-{provider}", ORIGINAL_METADATA_WITNESSES, "None", "Passed", 0, "None")
           for provider in ("memory", "sqlite")),
         ("observed-original-artifact-instances", artifacts, "None", "Passed", 0, "None"),
         *((f"observed-original-contract-{provider}", contracts, "None", "Passed", 0, "None")

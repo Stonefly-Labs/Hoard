@@ -22,17 +22,30 @@ CATEGORY_BINDING_SLOTS = (
 
 _ORIGINAL_METADATA_ROLES = ("owner", "store", "schema", "authority", "controls")
 _ORIGINAL_ARTIFACT_ROLES = ("owner", "store", "validator", "maintenance", "lifetime", "authority", "controls")
+ORIGINAL_METADATA_WITNESSES = tuple(sorted(
+    "Hoard.Metadata.Tests." + fixture + "." + method
+    for fixture, methods in (
+        ("MetadataRoundTripTests", ("MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes",)),
+        ("MetadataIdentityTests", ("MP02_Registry_identity_is_exact_and_isolated",
+                                   "MP03_Anonymous_and_authenticated_request_partitions_remain_separate")),
+        ("MetadataRelationshipTests", ("MP13_Explicit_final_graph_deletion_and_disabled_retention_are_atomic",)),
+        ("MetadataPublicationTests", (
+            "MP23_Publication_requires_committed_matching_authority_evidence",
+            "MP24_Entry_edges_replace_remove_and_compete_without_double_counts",
+            "MP25_Zero_reference_confirmation_is_invalidated_even_by_ABA",
+            "MP26_Blob_commit_then_metadata_failure_is_an_orphan_not_a_blob_rollback",
+            "MP27_Protection_survives_caller_timeout_through_owned_settlement",
+            "MP31_Invalid_telemetry_rolls_back_its_declared_entry_and_reference_group")),
+    ) for method in methods))
 
 
 def original_witness_policy(identity):
     """Closed incremental attribution; unclassified witnesses retain strict typed-origin admission."""
-    metadata = ("Hoard.Metadata.Tests.MetadataRoundTripTests."
-                "MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes")
     contracts = tuple("Hoard.Artifacts.Tests.ArtifactValueTests." + method for method in (
         "Identity_bounds_preserve_empty_and_reject_overflow_negative_or_null",
         "Expectations_and_checksums_copy_input_and_reject_each_bound",
         "Public_diagnostic_formatting_is_redacted_and_contract_members_are_get_only"))
-    if identity == metadata:
+    if identity in ORIGINAL_METADATA_WITNESSES:
         return "metadata", "original-instance", _ORIGINAL_METADATA_ROLES
     if identity in contracts:
         return "artifacts", "loaded-contract", ("contract",)

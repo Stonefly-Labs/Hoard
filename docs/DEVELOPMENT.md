@@ -7980,6 +7980,19 @@ private caches were reclaimed after capacity-only failures, with the 24 GiB
 guard and all source/archive/runtime/proof/receipt data preserved. This code
 requests a future exact-head native vector of 105 scopes/990 observations and
 all existing prerequisites; complete category/profile qualification remains open.
+The next metadata expansion adds original MP-02/03/13/23..27/31 observations.
+Each caller pins the same authority facade it actually passes to unchanged
+common assertions; one shared non-owning helper captures only original
+fixture/interfaces before their existing disposal. No extra factory/session,
+clock or root is introduced. Exact source-owned case names come from
+`CallerMemberName`, not provider outcomes. Actual local observation and
+independent fresh-cache replay pass 26 executions/118 image correspondences
+(twenty metadata owners, two artifact owners and four session-free contexts),
+reproducing the same SDK archive. The expanded routing requirement first fails
+on the old eight-execution scope. Tooling remains 337 checks passing
+(320 passed/seventeen macOS-native skips); metadata source whitespace and frozen
+inventory/SDK catalog checks pass. Local probes still use minimal inputs; the
+new native requirement is 105 scopes/1,008 observations, not an admitted receipt.
 README and affected model/contracts/guides are updated; production/deployment
 examples and diagrams are unaffected. Tasks/reviewer markers remain unchanged.
 

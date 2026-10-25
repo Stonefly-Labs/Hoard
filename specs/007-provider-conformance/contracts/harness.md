@@ -1205,6 +1205,12 @@ independent locked replay pass all eight with 28 image correspondences, but
 remain minimal-input diagnostics. This new full-input native path still needs
 an exact-head receipt: it requires 105 scopes/990 observations and all existing
 recovery/transfer/containment/replay prerequisites, not complete qualification.
+The following metadata expansion observes original MP-02/03/13/23..27/31 with
+their actual common-assertion authority facades, through one non-owning source
+helper. Actual observation and independent fresh-cache replay pass 26
+executions/118 image correspondences using minimal inputs. This changes the
+native requirement to 105 scopes/1,008 observations while retaining all
+prerequisites; that expanded path requires its own exact-head receipt.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

@@ -1,8 +1,11 @@
 using System.Collections.Immutable;
+using System.Runtime.CompilerServices;
 using Hoard.Abstractions.Metadata;
 using Hoard.Fixtures.Metadata.Hosting;
 using Hoard.Testing.Conformance.Bindings;
+using Hoard.Testing.Conformance.Evidence;
 using Hoard.Testing.Conformance.Metadata;
+using Xunit.Abstractions;
 
 namespace Hoard.Metadata.Tests;
 
@@ -10,6 +13,13 @@ internal static class MetadataCases
 {
     public static IMetadataConformanceAuthority CommonAuthority(MetadataFixtureSession fixture) =>
         new PublicationAuthority(fixture.Authority);
+
+    public static void ObserveOriginal(ITestOutputHelper output, MetadataFixtureSession fixture,
+        IMetadataConformanceAuthority authority, string fixtureType, [CallerMemberName] string method = "") =>
+        ConformanceOriginalObservationOutput.WriteIfRequested(output,
+            "Hoard.Metadata.Tests." + fixtureType + "." + method,
+            fixture.Provider, "original-instance", ("owner", fixture), ("store", fixture.Store),
+            ("schema", fixture.Schema), ("authority", authority), ("controls", fixture.Controls));
 
     public static MetadataFaultCounters CommonCounters(MetadataFixtureSession fixture)
     {

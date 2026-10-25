@@ -191,7 +191,7 @@ session. Actual typed SDK binding consumers retain complete typed-session origin
 Unclassified witnesses retain the existing typed-origin requirement; there is
 no permissive default or provider-selected classification.
 
-The closed incremental policy covers MP-01's original roundtrip, AS-01's two original
+The closed incremental policy covers original MP-01/02/03/13/23..27/31, AS-01's two original
 provider parameters, both frozen artifact value witnesses (expectations/checksums
 and redacted diagnostics/get-only members), and the auxiliary identity-bound value test. The
 non-owning `ConformanceOriginalObservation` captures exact run/case/test/binding,
@@ -234,6 +234,13 @@ independently recomputed after execution. Their digests are separately reported
 as `inputsSha256` and `originalWrapperInputsSha256` in the diagnostic summary.
 This native path remains unadmitted pending its exact-head run, not a qualifying
 profile or a public report-schema change.
+The metadata expansion retains the actual facade passed to each common
+assertion and emits through one non-owning source helper. `CallerMemberName`
+preserves exact unparameterized identities; parameterized/unclassified cases
+are not silently admitted. Expanded local observation/replay pass 26 executions
+and 118 image correspondences with the unchanged SDK archive. The corresponding
+native scope vector is 105 scopes/1,008 observations, still requiring its
+own exact-head receipt and every existing prerequisite.
 
 ### Shared bounds
 
