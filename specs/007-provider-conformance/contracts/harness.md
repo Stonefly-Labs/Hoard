@@ -261,7 +261,15 @@ diagnostics reselect current source bytes and require all sixteen original
 runtime UUID/proof joins and immutable retained packets/consumption receipt.
 Twelve native input snapshots include context, actual runner and current
 transfer evidence. Discovery and legacy invocations request no capture.
-These packets do not replace original native output/control seals; independent
+The complete original publisher now emits one aggregate packet-hash index.
+Only this index is declared as an ordinary command output: twelve immutable
+inputs plus one output remain below the unchanged combined sixteen-file limit.
+Actual owned exit precedes read-only output sealing. Independent source checks
+bind the exact index/context to the executor-held original output/input hashes
+and require every original packet hash; current-byte rehashing cannot substitute
+the original seal. Partial sets emit no index. Legacy/discovery paths request
+neither capture nor index output. Native replay of this increment is pending.
+These packets/index do not replace original transfer/control authority; independent
 artifact controller qualification remains closed and its 92/7/4/0 diagnostic
 state is unchanged.
 Exactb1/run40220115471 independently passes all three Linux jobs, 291 native

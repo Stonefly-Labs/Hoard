@@ -1085,6 +1085,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         from types import SimpleNamespace
         self.assertTrue(callable(getattr(sources, "artifact_source_context", None)))
         self.assertTrue(callable(getattr(sources, "artifact_source_observations", None)))
+        self.assertTrue(callable(getattr(sources, "artifact_source_output_seal", None)))
         inputs = {**self.inputs, "profileId": "artifacts"}
         manifest = {**self.manifest, "inputSha256": evidence.digest(inputs), "expected": [
             {"testIdentity": identity, "bindingId": provider}
@@ -1132,6 +1133,61 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 self.assertEqual(hashlib.sha256(originals[row["testIdentity"]]).hexdigest(), row["sourceProofSha256"])
             self.assertNotIn(str(root), b"".join(retained.values()).decode())
             self.assertNotIn("synthetic-source-", b"".join(retained.values()).decode())
+            context_path = root / f'stores/artifact-source-context-{manifest["attemptId"]}.json'
+            context_raw = evidence.canonical_bytes(context)
+            context_path.write_bytes(context_raw)
+            context_path.chmod(0o400)
+            seal_path = root / f'proofs/artifact-source-seal-{manifest["attemptId"]}.json'
+            seal = {
+                "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+                "invocationGroupId": inputs["invocationGroupId"], "attemptId": manifest["attemptId"],
+                "rootId": run.root_id, "inputsSha256": evidence.digest(inputs),
+                "packets": {packet_paths[row["testIdentity"]].name: row["sourceProofSha256"] for row in observations}}
+            seal_raw = json.dumps(seal, separators=(",", ":")).encode()
+            seal_path.write_bytes(seal_raw)
+            seal_path.chmod(0o400)
+            record = {
+                "runId": run.run_id, "rootId": run.root_id, "scope": "ordinary", "groupState": "Exited",
+                "exitCode": 0, "diagnosticCode": "None",
+                "inputFiles": {context_path.relative_to(root).as_posix(): hashlib.sha256(context_raw).hexdigest()},
+                "outputFiles": {seal_path.relative_to(root).as_posix(): hashlib.sha256(seal_raw).hexdigest()}}
+            native = object.__new__(sources.OwnedRun)
+            native.root, native.run_id, native.root_id, native.command_sequence = root, run.run_id, run.root_id, 1
+            native.read_execution_record = lambda sequence: evidence.canonical_bytes(record)
+            self.assertEqual(sources.artifact_source_output_seal(
+                native, inputs, manifest, observations, namespace="category-artifact-transfers"), seal_raw)
+            for mutation in ("foreign-root", "foreign-run", "wrong-scope", "missing-output", "missing-context",
+                             "mutable-output", "rehashed-replacement"):
+                with self.subTest(seal=mutation):
+                    changed_record = copy.deepcopy(record)
+                    changed_observations = copy.deepcopy(observations)
+                    if mutation == "foreign-root":
+                        changed_record["rootId"] = uuid.uuid4().hex
+                    elif mutation == "foreign-run":
+                        changed_record["runId"] = str(uuid.uuid4())
+                    elif mutation == "wrong-scope":
+                        changed_record["scope"] = "recovery"
+                    elif mutation == "missing-output":
+                        changed_record["outputFiles"] = {}
+                    elif mutation == "missing-context":
+                        changed_record["inputFiles"] = {}
+                    elif mutation == "mutable-output":
+                        seal_path.chmod(0o600)
+                    else:
+                        changed_observations[0]["sourceProofSha256"] = "e" * 64
+                        replacement = {**seal, "packets": {
+                            packet_paths[row["testIdentity"]].name: row["sourceProofSha256"]
+                            for row in changed_observations}}
+                        seal_path.chmod(0o600)
+                        seal_path.write_bytes(evidence.canonical_bytes(replacement))
+                        seal_path.chmod(0o400)
+                    native.read_execution_record = lambda sequence: evidence.canonical_bytes(changed_record)
+                    with self.assertRaises(evidence.ConformanceError):
+                        sources.artifact_source_output_seal(
+                            native, inputs, manifest, changed_observations, namespace="category-artifact-transfers")
+                    seal_path.chmod(0o600)
+                    seal_path.write_bytes(seal_raw)
+                    seal_path.chmod(0o400)
             identity = next(iter(packet_paths))
             for mutation in ("missing", "foreign-run", "foreign-inputs", "extra-field", "changed-bytes",
                              "missing-witness", "failed-witness", "wrong-binding", "extra-packet"):

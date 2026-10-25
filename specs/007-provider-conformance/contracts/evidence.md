@@ -294,8 +294,18 @@ hashes and original actual runtime UUIDs/proofs, retaining read-only packets
 and a checked consumption receipt. Native inputs additionally snapshot context,
 actual runner, transfer summary and four current transfer proofs. No paths or
 source bodies enter the retained packets. Legacy harness and discovery do not
-request this channel. These packets are not original executor-sealed outputs,
-and independent native artifact control/source qualification stays closed.
+request this channel. A complete-set hash-only index now retains hashes of the
+original serialized packets, not late rereads. It is the one predeclared output
+of the original ordinary native command, sealed only after actual settled exit.
+Independent admission requires its closed schema and exact run/group/attempt/
+root/input identities, exact sixteen packet-name/hash entries, immutable
+context equality and original executor input/output hashes. Raw index bytes
+are authenticated without imposing Python canonical JSON order on C# output.
+The consumption receipt retains `outputSealSha256`; parent admission rechecks
+the same original index and immutable retained packets. The combined sixteen
+input/output bound is unchanged. This implemented diagnostic seal still needs
+fresh native execution, and independent native artifact control/source
+qualification stays closed.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

@@ -40,7 +40,7 @@ from conformance_case_catalog import (
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_sources import (
     METADATA_RECOVERY_SCENARIOS, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
-    admit_sqlite_noncooperation, artifact_source_context, artifact_source_observations,
+    admit_sqlite_noncooperation, artifact_source_context, artifact_source_observations, artifact_source_output_seal,
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
     metadata_inventory_arguments, metadata_inventory_context, metadata_inventory_observations,
     metadata_inventory_source_inputs, native_metadata_inventory_controls,
@@ -2073,10 +2073,12 @@ def _original_inspection_proofs(run, inputs, manifest, ingested, selected, mode,
 
 def _artifact_source_consumption(run, inputs, manifest, ingested, namespace):
     captured, packets = artifact_source_observations(run.root, inputs, manifest, ingested, namespace=namespace)
+    seal = artifact_source_output_seal(run, inputs, manifest, captured, namespace=namespace)
     return evidence.canonical_bytes({
         "schemaVersion": 1, "qualification": False, "runId": inputs["runId"],
         "invocationGroupId": inputs["invocationGroupId"], "attemptId": manifest["attemptId"],
-        "inputsSha256": evidence.digest(inputs), "observations": captured}), packets
+        "inputsSha256": evidence.digest(inputs), "observations": captured,
+        "outputSealSha256": hashlib.sha256(seal).hexdigest()}), packets
 
 
 def original_artifact_external_proofs(run, inputs, manifest, ingested, *, category_scope=None):
@@ -3358,6 +3360,8 @@ def category_command_proof(run, result, *, arguments, cwd, manifest, settings_da
         "exitCode", "diagnosticCode", "groupState", "scope", "runId", "rootId", "argvSha256", "cwdSha256"}
     if isinstance(record, dict) and "inputFiles" in record:
         fields.add("inputFiles")
+    if isinstance(record, dict) and "outputFiles" in record:
+        fields.add("outputFiles")
     if (hashlib.sha256(raw).hexdigest() != record_sha or path.stat().st_mode & 0o777 != 0o400
             or not isinstance(record, dict) or set(record) != fields
             or type(record["schemaVersion"]) is not int or record["schemaVersion"] != 1
@@ -3380,6 +3384,16 @@ def category_command_proof(run, result, *, arguments, cwd, manifest, settings_da
         for path, hashed in record["inputFiles"].items():
             evidence.relative_path(path)
             evidence.sha256(hashed)
+    if "outputFiles" in record:
+        if (not isinstance(record["outputFiles"], dict) or not record["outputFiles"]
+                or len(record["outputFiles"]) + len(record.get("inputFiles", {})) > 16
+                or set(record["outputFiles"]) & set(record.get("inputFiles", {}))):
+            raise evidence.ConformanceError("ProofMismatch")
+        for path, hashed in record["outputFiles"].items():
+            evidence.relative_path(path)
+            evidence.sha256(hashed)
+            if not path.startswith("proofs/"):
+                raise evidence.ConformanceError("ProofMismatch")
     times = (started_ms, record["startedMs"], record["endedMs"], ended_ms)
     if (any(type(value) not in (int, float) or not 0 <= value <= 2**63 - 1 or not math.isfinite(value)
             for value in times) or tuple(sorted(times)) != times or run.live_children()):
@@ -3614,6 +3628,7 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
     started = time.monotonic() * 1000
     arguments = runtime_arguments(assembly, settings, identities, discovery=discovery)
     execution_inputs = []
+    execution_outputs = ()
     if category_scope is not None:
         execution_inputs = [
             f"runtime-input-{attempt_id}.json", "runtime-owner.json", manifest["runInputsPath"],
@@ -3638,10 +3653,12 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
                 "proofs/category-artifact-transfers.json",
                 *(f"proofs/category-artifact-transfers/transfer-{provider}-{size}/proof.json"
                   for provider in ("local", "object") for size in (268435456, 4294967296))))
+            execution_outputs = (f"proofs/artifact-source-seal-{attempt_id}.json",)
     result = run.command(
         arguments,
         cwd=assembly.parent, timeout=180, kind="discovery" if discovery else "tests", cache_id="runtime",
         **({"record_execution": True, "execution_inputs": execution_inputs} if category_scope is not None else {}),
+        **({"execution_outputs": execution_outputs} if execution_outputs else {}),
         **({"discovery_tests": frozenset(identities)} if discovery else {}))
     ended = time.monotonic() * 1000
     if category_scope is not None:

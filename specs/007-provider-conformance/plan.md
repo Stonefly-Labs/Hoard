@@ -6448,6 +6448,33 @@ preserve the unchanged 24 GiB gate. Actual native artifact capture, fresh
 transfers and independent native source/control admission remain pending.
 T019/T020 and all later task markers remain unchecked; no stage is finished.
 
+The following increment implements the original artifact source output seal,
+without opening artifact qualification. A bounded locked publisher accumulates
+original serialized packet hashes and creates one hash-only complete-set index;
+partial sets emit no index, and later packet substitution cannot change the
+original hash. Native ordinary commands now accept predeclared outputs under
+the same existing ownership/absence/path/count/settlement checks as recovery
+commands; cleanup/transfer scopes still reject them. The artifact controller
+declares one index alongside twelve immutable inputs, below the unchanged
+combined sixteen-file cap. Independent admission requires the exact closed
+index/context and original executor-held input/output hashes; it authenticates
+raw C# JSON without assuming canonical property order. Consumption/source-parent
+admission rechecks the same original seal and immutable packet copies. Rehashed
+replacement indexes cannot replace original executor bytes.
+
+Intended reds expose missing independent seal admission, rejected ordinary
+output eligibility and incorrectly admitted empty native output maps. Focused
+repairs pass; the source SDK passes 133 checks including complete-set and
+original-hash preservation cases. All 410 tooling checks pass with 19 explicit
+native skips; the new actual Linux ordinary-output test is not a local native
+claim. The unchanged 24 GiB gate is restored by removing only two exact old
+diagnostic candidate restore caches, preserving feeds, baselines, retained
+binaries and proofs. Actual native index execution and independent original
+transfer/control authority remain pending. No product/reference/lock changes,
+task-marker advancement, stage completion or full profile qualification is
+claimed. Provider/operations/deployment guides and diagrams are unaffected:
+this changes only private conformance diagnostic provenance.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

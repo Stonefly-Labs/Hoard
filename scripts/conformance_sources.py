@@ -140,6 +140,41 @@ def artifact_source_observations(root, inputs, manifest, observed, *, namespace)
         retained_prefix="source-artifact-")
 
 
+def artifact_source_output_seal(run, inputs, manifest, observations, *, namespace):
+    if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    context = artifact_source_context(run, inputs, manifest, namespace=namespace)
+    attempt = manifest["attemptId"]
+    context_path = f"stores/artifact-source-context-{attempt}.json"
+    context_raw = _readonly(run.root / context_path, 1024 * 1024)
+    if context_raw != evidence.canonical_bytes(context):
+        raise evidence.ConformanceError("InputChanged")
+    identities = set(context["cases"])
+    if len(observations) != len(identities) or {row["testIdentity"] for row in observations} != identities:
+        raise evidence.ConformanceError("ProofMismatch")
+    seal_path = f"proofs/artifact-source-seal-{attempt}.json"
+    raw = _readonly(run.root / seal_path, 64 * 1024)
+    evidence._runtime_json(raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "runId": evidence._constant(inputs["runId"]),
+        "invocationGroupId": evidence._constant(inputs["invocationGroupId"]),
+        "attemptId": evidence._constant(attempt), "rootId": evidence._constant(run.root_id),
+        "inputsSha256": evidence._constant(evidence.digest(inputs)),
+        "packets": evidence._record({
+            "artifact-source-" + hashlib.sha256(row["testIdentity"].encode()).hexdigest() + ".json":
+                evidence._constant(row["sourceProofSha256"]) for row in observations})}, limit=64 * 1024)
+    record = evidence.load_json(run.read_execution_record(run.command_sequence))
+    if (not isinstance(record, dict) or record.get("runId") != run.run_id
+            or record.get("rootId") != run.root_id or record.get("scope") != "ordinary"
+            or record.get("groupState") != "Exited" or type(record.get("exitCode")) is not int
+            or record["exitCode"] != 0 or record.get("diagnosticCode") != "None"
+            or not isinstance(record.get("inputFiles"), dict)
+            or record["inputFiles"].get(context_path) != hashlib.sha256(context_raw).hexdigest()
+            or record.get("outputFiles") != {seal_path: hashlib.sha256(raw).hexdigest()}):
+        raise evidence.ConformanceError("ProofMismatch")
+    return raw
+
+
 def _consumption_observations(root, inputs, manifest, observed, selected, bindings, *,
                               capture_prefix, packet_prefix, retained_prefix):
     witnesses = source_witnesses(inputs, manifest, observed, selected)

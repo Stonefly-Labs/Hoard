@@ -2127,9 +2127,18 @@ inputs include the context, actual runner and current transfer proofs. Legacy
 and discovery paths do not request capture. All 408 tooling checks pass with
 18 native skips, 131 source SDK checks pass, and the original artifact package
 acceptance project compiles against freshly rebuilt SDK/provider/adapter
-fixtures. These are not fresh native artifact receipts: executor-sealed output
-and independent control/source admission still need implementation, so artifact
+fixtures. These are not fresh native artifact receipts: independent
+control/source admission still needs implementation, so artifact
 qualification remains closed and its diagnostic states remain 92/7/4/0.
+The original publisher now emits one aggregate hash-only index only after the
+complete selected source set publishes. The ordinary native command predeclares
+that index as its only output and seals it after actual owned exit; independent
+admission checks its original executor hash, exact immutable context and all
+sixteen original packet hashes. Twelve inputs plus one output preserve the
+unchanged combined sixteen-file bound. Rehashed replacement indexes, mutable
+outputs and malformed output maps reject. Current local checks pass 410 tooling
+tests with 19 explicit native skips and 133 source SDK tests; actual Linux
+execution of this output-sealing increment remains pending.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

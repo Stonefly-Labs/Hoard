@@ -7,6 +7,10 @@ namespace Hoard.Artifacts.Tests;
 
 internal static class ArtifactSourceCapture
 {
+    private static readonly object Gate = new();
+    private static readonly Dictionary<string, (string ContextSha256, Dictionary<string, string> Packets)> Pending =
+        new(StringComparer.Ordinal);
+
     internal static void PublishIfRequested(string identity, params (string Path, byte[] Bytes)[] files)
     {
         var context = Environment.GetEnvironmentVariable("HOARD_ARTIFACT_SOURCE_CONTEXT");
@@ -16,7 +20,8 @@ internal static class ArtifactSourceCapture
     internal static void Publish(string contextPath, string identity, params (string Path, byte[] Bytes)[] files)
     {
         var started = Stopwatch.GetTimestamp();
-        using var document = JsonDocument.Parse(Read(contextPath, 1024 * 1024));
+        var contextBytes = Read(contextPath, 1024 * 1024);
+        using var document = JsonDocument.Parse(contextBytes);
         var context = document.RootElement;
         Fields(context, "schemaVersion", "runId", "invocationGroupId", "attemptId", "rootId",
             "inputsSha256", "rootPath", "outputDirectory", "cases");
@@ -72,9 +77,43 @@ internal static class ArtifactSourceCapture
             files = consumed
         });
         Assert.True(Stopwatch.GetElapsedTime(started) <= TimeSpan.FromSeconds(5));
-        using var output = new FileStream(Path.Combine(outputDirectory,
-            "artifact-source-" + Hash(Encoding.UTF8.GetBytes(identity)) + ".json"), FileMode.CreateNew, FileAccess.Write);
-        output.Write(packet);
+        var packetName = "artifact-source-" + Hash(Encoding.UTF8.GetBytes(identity)) + ".json";
+        using (var output = new FileStream(Path.Combine(outputDirectory, packetName), FileMode.CreateNew, FileAccess.Write))
+        { output.Write(packet); }
+        lock (Gate)
+        {
+            Assert.True(Stopwatch.GetElapsedTime(started) <= TimeSpan.FromSeconds(5));
+            if (!Pending.TryGetValue(contextPath, out var pending))
+            {
+                Assert.InRange(Pending.Count, 0, 127);
+                pending = (Hash(contextBytes), new Dictionary<string, string>(StringComparer.Ordinal));
+                Pending.Add(contextPath, pending);
+            }
+            Assert.Equal(pending.ContextSha256, Hash(contextBytes));
+            Assert.True(pending.Packets.TryAdd(packetName, Hash(packet)));
+            if (pending.Packets.Count == cases.Count)
+            {
+                Assert.Equal(cases.Keys.Select(value => "artifact-source-" + Hash(Encoding.UTF8.GetBytes(value)) + ".json")
+                    .Order(StringComparer.Ordinal), pending.Packets.Keys.Order(StringComparer.Ordinal));
+                var directory = Path.Combine(root, "proofs");
+                CheckPath(directory);
+                var index = JsonSerializer.SerializeToUtf8Bytes(new
+                {
+                    schemaVersion = 1,
+                    qualification = false,
+                    runId = Text(context, "runId"),
+                    invocationGroupId = Text(context, "invocationGroupId"),
+                    attemptId = Text(context, "attemptId"),
+                    rootId = Text(context, "rootId"),
+                    inputsSha256 = Text(context, "inputsSha256"),
+                    packets = pending.Packets
+                });
+                using var output = new FileStream(Path.Combine(directory,
+                    "artifact-source-seal-" + Text(context, "attemptId") + ".json"), FileMode.CreateNew, FileAccess.Write);
+                output.Write(index);
+                Assert.True(Pending.Remove(contextPath));
+            }
+        }
 
         void InsideRoot(string path)
         {

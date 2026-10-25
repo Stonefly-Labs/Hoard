@@ -9363,14 +9363,34 @@ current bytes, require exactly sixteen matching packets, bind original runtime
 UUIDs/proofs, retain immutable hash-only copies and recheck their consumption
 receipt. Twelve immutable native inputs include the original context, actual
 crash runner, current transfer summary and four transfer proofs. The source
-authority still rejects artifact controller qualification: sealed native
-outputs, original transfer controls and independent full source admission remain
+authority still rejects artifact controller qualification: original transfer
+controls and independent full source admission remain
 unbuilt. Diagnostic 92/7/4/0 is unchanged; no borrowed old run qualifies it.
 
-Current validation: all 408 tooling checks pass with 18 explicit native skips;
-all 131 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
-and whitespace checks pass. The original artifact package-acceptance project
-compiles with freshly rebuilt SDK, metadata/artifact providers and adapters
+The original capture publisher additionally aggregates original serialized
+packet hashes under a bounded per-context lock. Only the complete selected
+source set emits `proofs/artifact-source-seal-ATTEMPT.json`; partial publication
+emits no index, and replacing an earlier packet cannot change its retained
+original hash. The native ordinary command declares this one previously absent
+output alongside twelve immutable inputs, preserving the combined sixteen-file
+limit. Existing settled-exit, regular/current-user/no-link output checks seal
+the index read-only and pin its original bytes in the executor-held record.
+Independent source admission reparses a closed, duplicate-free index, requires
+the exact original packet-name/hash set and identities, and joins its raw hash
+and immutable context hash to that original ordinary execution. C# JSON order
+need not equal Python canonical order. Consumption and source-parent checks
+revalidate the same seal; rehashing current packets/index cannot replace the
+executor's original output hash. Legacy/discovery paths declare no such output.
+Cleanup/transfer commands still cannot declare outputs; ordinary/recovery
+commands retain the same ownership, count, path and settlement safeguards.
+This is implemented diagnostic output authority, not complete artifact source
+qualification or fresh Linux acceptance.
+
+Current validation: all 410 tooling checks pass with 19 explicit native skips;
+all 133 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
+and whitespace checks pass. The preceding byte-capture checkpoint compiled
+the original artifact package-acceptance project with freshly rebuilt SDK,
+metadata/artifact providers and adapters
 against a private prepared lock; no tracked locks change. Initial compile
 attempts correctly reject stale retained fixture archives; rebuilding the
 matching graph resolves them, without changing APIs. Removing only this task's

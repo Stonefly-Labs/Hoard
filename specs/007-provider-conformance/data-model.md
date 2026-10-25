@@ -496,7 +496,12 @@ Hash-only packets associate opaque path IDs with bytes actually consumed or
 serialized at those original assertion sites. Exact original runtime UUID/proof
 links, fresh input/run/attempt identities and a checked immutable consumption
 receipt are retained. Native input snapshots include context, runner and
-current transfer evidence; packets are not original native output seals.
+current transfer evidence. A private complete-set index binds the publisher's
+original packet hashes. The original native ordinary execution seals its one
+declared output after actual settled exit; admission joins its raw hash and
+the immutable context hash to the executor-held output/input maps. A private
+consumption receipt adds `outputSealSha256` and is rechecked by source parents.
+Twelve inputs plus one output preserve the combined sixteen-file bound.
 This adds no public entity or qualification authority. Legacy/discovery paths
 remain unchanged and independent artifact source admission stays closed.
 

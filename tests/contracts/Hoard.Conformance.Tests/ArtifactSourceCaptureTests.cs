@@ -36,6 +36,37 @@ public sealed class ArtifactSourceCaptureTests
     }
 
     [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Complete_source_set_emits_one_index_of_original_packet_bytes(bool replaceFirstPacket)
+    {
+        using var owned = new OwnedCapture();
+        var second = Identity.Replace("268435456", "4294967296", StringComparison.Ordinal);
+        owned.WriteContext(secondIdentity: second);
+        ArtifactSourceCapture.Publish(owned.ContextPath, Identity, (owned.ProofPath, owned.Bytes));
+        Assert.False(File.Exists(owned.SealPath));
+        var first = Assert.Single(Directory.GetFiles(owned.Output));
+        var originalHash = Hash(File.ReadAllBytes(first));
+        if (replaceFirstPacket) { File.WriteAllText(first, "replaced"); }
+        ArtifactSourceCapture.Publish(owned.ContextPath, second, (owned.ProofPath, owned.Bytes));
+        using var document = JsonDocument.Parse(File.ReadAllBytes(owned.SealPath));
+        var seal = document.RootElement;
+        Assert.False(seal.GetProperty("qualification").GetBoolean());
+        Assert.Equal(owned.RunId, seal.GetProperty("runId").GetGuid());
+        Assert.Equal(owned.AttemptId, seal.GetProperty("attemptId").GetGuid());
+        var packets = seal.GetProperty("packets").EnumerateObject().ToArray();
+        Assert.Equal(2, packets.Length);
+        foreach (var packet in packets)
+        {
+            Assert.Equal(packet.Name == Path.GetFileName(first) ? originalHash
+                : Hash(File.ReadAllBytes(Path.Combine(owned.Output, packet.Name))), packet.Value.GetString());
+        }
+        var text = File.ReadAllText(owned.SealPath);
+        Assert.DoesNotContain(owned.Root, text, StringComparison.Ordinal);
+        Assert.DoesNotContain("synthetic-proof-canary", text, StringComparison.Ordinal);
+    }
+
+    [Theory]
     [InlineData("changed-bytes")]
     [InlineData("missing-file")]
     [InlineData("unknown-field")]
@@ -108,26 +139,30 @@ public sealed class ArtifactSourceCaptureTests
         internal string Root { get; } = Path.GetFullPath(Path.Combine(
             ".artifact-source-capture-tests", Guid.NewGuid().ToString("D")));
         internal Guid RunId { get; } = Guid.NewGuid();
+        internal Guid AttemptId { get; } = Guid.NewGuid();
         internal string ContextPath => Path.Combine(Root, "context.json");
         internal string ProofPath => Path.Combine(Root, "proof.json");
         internal string Output => Path.Combine(Root, "capture");
+        internal string SealPath => Path.Combine(Root, "proofs", $"artifact-source-seal-{AttemptId:D}.json");
         internal byte[] Bytes { get; } = Encoding.UTF8.GetBytes("synthetic-proof-canary");
 
         internal OwnedCapture()
         {
             Directory.CreateDirectory(Output);
+            Directory.CreateDirectory(Path.Combine(Root, "proofs"));
             File.WriteAllBytes(ProofPath, Bytes);
             WriteContext();
         }
 
-        internal void WriteContext(bool extra = false, bool duplicate = false, string? source = null)
+        internal void WriteContext(bool extra = false, bool duplicate = false, string? source = null,
+            string? secondIdentity = null)
         {
             var context = new Dictionary<string, object>
             {
                 ["schemaVersion"] = 1,
                 ["runId"] = RunId,
                 ["invocationGroupId"] = Guid.NewGuid(),
-                ["attemptId"] = Guid.NewGuid(),
+                ["attemptId"] = AttemptId,
                 ["rootId"] = Guid.NewGuid().ToString("N"),
                 ["inputsSha256"] = new string('a', 64),
                 ["rootPath"] = Root,
@@ -137,6 +172,10 @@ public sealed class ArtifactSourceCaptureTests
                     [Identity] = duplicate ? [ProofPath, ProofPath] : [source ?? ProofPath]
                 }
             };
+            if (secondIdentity is not null)
+            {
+                ((Dictionary<string, string[]>)context["cases"]).Add(secondIdentity, [ProofPath]);
+            }
             if (extra) { context["unexpected"] = "synthetic-proof-canary"; }
             File.WriteAllBytes(ContextPath, JsonSerializer.SerializeToUtf8Bytes(context));
         }

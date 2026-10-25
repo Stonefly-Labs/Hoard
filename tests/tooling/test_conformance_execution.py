@@ -329,7 +329,7 @@ class ConformanceExecutionTests(unittest.TestCase):
                     run.command([sys.executable], record_execution=True, scope="recovery", execution_outputs=outputs)
             for options in (
                     {"execution_outputs": ["proofs/output"], "scope": "recovery"},
-                    {"execution_outputs": ["proofs/output"], "record_execution": True},
+                    {"execution_outputs": ["proofs/output"], "record_execution": True, "scope": "cleanup"},
                     {"execution_outputs": ["proofs/output"], "execution_inputs": ["proofs/output"],
                      "record_execution": True, "scope": "recovery"}):
                 with self.subTest(options=options), self.assertRaises(ConformanceError):
@@ -375,6 +375,48 @@ class ConformanceExecutionTests(unittest.TestCase):
         changed = run._capture_execution_inputs(("stores/command-input.json",), time.monotonic() + 5)
         self.assertEqual(changed["stores/command-input.json"][0], original["stores/command-input.json"][0])
         self.assertNotEqual(changed, original)
+        run.transition("Settling")
+        run.release()
+
+    def test_ordinary_output_capture_requires_native_execution_without_weakening_other_admission(self):
+        run = execution.OwnedRun.allocate(self.parent / "run", ROOT, profile="harness")
+        with mock.patch.object(execution, "native_execution_supported", return_value=False):
+            with self.assertRaisesRegex(ConformanceError, "PrerequisiteMissing"):
+                run.command([sys.executable], record_execution=True, execution_outputs=("proofs/source-index.json",))
+
+    @unittest.skipUnless(NATIVE_CONTAINMENT, "Actual original output sealing requires Linux.")
+    def test_native_ordinary_source_index_is_sealed_only_after_owned_exit_and_pinned_to_original_bytes(self):
+        run = execution.OwnedRun.allocate(self.parent / "run", ROOT, profile="harness")
+        script = run.root / "stores/source.py"
+        script.write_text(
+            "from pathlib import Path\nimport sys\n"
+            "Path(sys.argv[1]).write_bytes(b'original-source-index')\n"
+            "print('{\"event\":\"test\",\"code\":\"None\",\"value\":1}')\n")
+        script.chmod(0o400)
+        output = run.root / "proofs/source-index.json"
+        arguments = [sys.executable, "-I", "-S", str(script), str(output)]
+        result = run.command(
+            arguments, record_execution=True, execution_inputs=("stores/source.py",),
+            execution_outputs=("proofs/source-index.json",))
+        original = run.read_execution_record(run.command_sequence)
+        record = json.loads(original)
+        hashed = hashlib.sha256(b"original-source-index").hexdigest()
+        self.assertEqual(result.exit_code, 0)
+        self.assertEqual(record["scope"], "ordinary")
+        self.assertEqual(record["groupState"], "Exited")
+        self.assertEqual(record["diagnosticCode"], "None")
+        self.assertEqual(record["outputFiles"], {"proofs/source-index.json": hashed})
+        self.assertEqual(stat.S_IMODE(output.stat().st_mode), 0o400)
+        self.assertEqual(run.live_children(), ())
+        with self.assertRaisesRegex(ConformanceError, "InputChanged"):
+            run.command(
+                arguments, record_execution=True, execution_inputs=("stores/source.py",),
+                execution_outputs=("proofs/source-index.json",))
+        output.chmod(0o600)
+        output.write_bytes(b"replacement-source-index")
+        output.chmod(0o400)
+        self.assertEqual(run.read_execution_record(record["sequence"]), original)
+        self.assertNotEqual(hashlib.sha256(output.read_bytes()).hexdigest(), record["outputFiles"]["proofs/source-index.json"])
         run.transition("Settling")
         run.release()
 

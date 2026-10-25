@@ -71,7 +71,9 @@ class SdkDiagnosticTests(unittest.TestCase):
             "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited", "scope": "ordinary",
             "runId": run.run_id, "rootId": run.root_id,
             "argvSha256": checks.evidence.digest(arguments),
-            "cwdSha256": hashlib.sha256(str(self.directory.absolute()).encode()).hexdigest()}
+            "cwdSha256": hashlib.sha256(str(self.directory.absolute()).encode()).hexdigest(),
+            "inputFiles": {"stores/source-context.json": "d" * 64},
+            "outputFiles": {"proofs/source-index.json": "e" * 64}}
         path = self.directory / "proofs/execution-command-0007.json"
         parent = self.directory / f'proofs/category-command-{manifest["attemptId"]}-execution.json'
         changes = (
@@ -82,7 +84,13 @@ class SdkDiagnosticTests(unittest.TestCase):
             {"exitCode": True}, {"exitCode": 1}, {"diagnosticCode": "AssertionFailed"},
             {"groupState": "Retained"}, {"scope": "recovery"},
             {"runId": str(uuid.uuid4())}, {"rootId": str(uuid.uuid4())},
-            {"argvSha256": "c" * 64}, {"cwdSha256": "c" * 64}, {"extra": "forbidden"})
+            {"argvSha256": "c" * 64}, {"cwdSha256": "c" * 64}, {"extra": "forbidden"},
+            {"outputFiles": []}, {"outputFiles": {}},
+            {"outputFiles": {"../source-index.json": "e" * 64}},
+            {"outputFiles": {"stores/source-index.json": "e" * 64}},
+            {"outputFiles": {"proofs/source-index.json": "invalid"}},
+            {"inputFiles": {"proofs/source-index.json": "d" * 64}},
+            {"outputFiles": {f"proofs/source-{index}.json": "e" * 64 for index in range(16)}})
         def persist(value):
             if path.exists():
                 path.chmod(0o600)
@@ -4100,8 +4108,11 @@ class SdkDiagnosticTests(unittest.TestCase):
                           for provider in ("local", "object") for size in (268435456, 4294967296))}
                     self.assertEqual(set(launches[-1]["execution_inputs"]), expected)
                     self.assertTrue(launches[-1]["record_execution"])
+                    self.assertEqual(launches[-1]["execution_outputs"],
+                                     (f'proofs/artifact-source-seal-{selected["attemptId"]}.json',))
                 else:
                     self.assertIsNone(context_path)
+                    self.assertNotIn("execution_outputs", launches[-1])
                     self.assertFalse((self.directory / f'stores/artifact-source-context-{selected["attemptId"]}.json').exists())
 
     def test_external_artifact_settings_bind_the_actual_runner_current_run_and_parent_transfer_proofs(self):
