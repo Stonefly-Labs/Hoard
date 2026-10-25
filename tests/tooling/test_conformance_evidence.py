@@ -2293,7 +2293,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
                     sources.native_metadata_inventory_controls(run, self.inputs, started_ms=999, ended_ms=3101)
 
-    def category_history(self, *, profile="metadata", mode="diagnostic", max_attempts=1, origin_inputs=None):
+    def category_history(self, *, profile="metadata", mode="diagnostic", max_attempts=1, origin_inputs=None,
+                         distinct_packages=False):
         self.inputs.update(mode=mode, profileId=profile, invocation=["profile", profile])
         self.inputs["budgets"]["profileSeconds"] = 5400 if profile == "metadata" else 10800
         original = self.inputs["bindings"][0]
@@ -2302,6 +2303,9 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         family = "Metadata" if profile == "metadata" else "Artifacts"
         packages = [{**original["package"], "packageId": "Hoard.Fixtures." + family + "." + provider}
                     for _, provider in bindings]
+        if distinct_packages:
+            for package in packages:
+                package["sha256"] = hashlib.sha256(package["packageId"].encode()).hexdigest()
         self.inputs["packages"].extend(packages)
         self.inputs["bindings"] = [
             {**original, "bindingId": binding, "package": package, "category": profile,
@@ -2334,11 +2338,15 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             assignments = {identity: assignments[identity] for identity in identities}
         selected = ({identity: (binding, case_id) for identity, case_id in assignments.items()}
                     if selections is None else selections)
+        packages = catalog.category_runtime_packages(self.inputs, {binding for binding, _ in selected.values()})
         manifest = {**self.manifest, "attemptId": self.attempt, "attemptSequence": sequence,
-                    "inputSha256": evidence.digest(self.inputs), "expected": [
+                    "inputSha256": evidence.digest(self.inputs),
+                    "packages": [{"id": package["packageId"],
+                                  "path": f'feed/candidate/{package["packageId"]}.{package["version"]}.nupkg',
+                                  "sha256": package["sha256"]} for package in packages.values()], "expected": [
                         {**self.manifest["expected"][0], "testIdentity": identity,
                          "fullyQualifiedName": identity.split("(")[0], "bindingId": selected_binding,
-                         "caseId": case_id}
+                         "caseId": case_id, "packageId": packages[selected_binding]["packageId"]}
                         for identity, (selected_binding, case_id) in sorted(selected.items())]}
         proofs, witnesses = {}, []
         for entry in manifest["expected"]:
@@ -2347,7 +2355,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             proof = {**self.proof, "executionId": execution, "attemptId": self.attempt,
                      "attemptSequence": sequence, "inputSha256": evidence.digest(self.inputs),
                      "manifestSha256": evidence.digest(manifest), "testIdentity": entry["testIdentity"],
-                     "bindingId": binding, "caseId": entry["caseId"], "durationMs": 0.5}
+                     "bindingId": binding, "caseId": entry["caseId"], "durationMs": 0.5,
+                     "packageSha256": packages[binding]["sha256"]}
             if entry["testIdentity"] == failed_identity:
                 proof.update(status="Failed", failureKind="Assertion", assertionSymbol=entry["assertionSymbol"])
             if origin is not None:
@@ -2380,6 +2389,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             proofs[f"proof-{execution}.json"] = evidence.canonical_bytes(proof)
             witnesses.append({**self.witness, "executionId": execution, "testIdentity": entry["testIdentity"],
                               "bindingId": binding, "inputSha256": evidence.digest(self.inputs),
+                              "packageSha256": packages[binding]["sha256"],
                               "startedMs": started + 0.25, "endedMs": started + 0.75,
                               "status": proof["status"], "proofSha256": evidence.digest(proof)})
         lines = b"".join(evidence.canonical_bytes(witness) + b"\n" for witness in witnesses)
@@ -2401,9 +2411,11 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 selected.add(identity)
         return partitions
 
-    def category_quality_fixture(self, *, profile="metadata", mode="qualification", max_attempts=1):
+    def category_quality_fixture(self, *, profile="metadata", mode="qualification", max_attempts=1,
+                                 distinct_packages=False):
         import conformance_case_catalog as catalog
-        history = self.category_history(profile=profile, mode=mode, max_attempts=max_attempts)
+        history = self.category_history(profile=profile, mode=mode, max_attempts=max_attempts,
+                                        distinct_packages=distinct_packages)
 
         def finish(sequence=1, *, failed=None, missing_control=None, missing_parent=None, proof_bytes=0):
             start = 9 + (sequence - 1) * 4
@@ -2417,6 +2429,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     hashed = hashlib.sha256(execution.encode()).hexdigest()
                     witnesses.append({
                         **self.witness, "executionId": execution, "bindingId": binding,
+                        "packageSha256": next(row["package"]["sha256"] for row in history._inputs["bindings"]
+                                              if row["bindingId"] == binding),
                         "inputSha256": evidence.digest(self.inputs), "testIdentity": identity,
                         "startedMs": start + 1, "endedMs": start + 2, "proofSha256": hashed,
                         "status": "Failed" if (binding, identity) == failed else "Passed"})
@@ -2447,6 +2461,22 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             "witnesses": history.witnesses, "resources": [], "proofs": history.proofs,
             "state": "Incomplete", "qualification": False, "scope": ["common-logical"],
         }
+
+    def test_category_quality_reports_preserve_distinct_provider_package_provenance(self):
+        for profile in ("metadata", "artifacts"):
+            with self.subTest(profile=profile):
+                self.setUp()
+                history, finish = self.category_quality_fixture(profile=profile, distinct_packages=True)
+                finish()
+                report = self.category_quality_report(history)
+                evidence.admit_entity("QualificationReport", report)
+                changed = evidence.load_json(evidence.canonical_bytes(report))
+                witness = changed["witnesses"][0]
+                witness["packageSha256"] = next(
+                    binding["package"]["sha256"] for binding in history._inputs["bindings"]
+                    if binding["bindingId"] != witness["bindingId"])
+                with self.assertRaises(evidence.ConformanceError):
+                    evidence.admit_entity("QualificationReport", changed)
 
     def test_metadata_quality_reuses_complete_same_attempt_runtime_and_controller_provenance(self):
         history, finish = self.category_quality_fixture()
@@ -3287,9 +3317,6 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         from xml.sax.saxutils import escape
 
         self.category_history(profile="artifacts", mode="qualification")
-        self.inputs["packages"][0]["packageId"] = "Hoard.Testing.Conformance"
-        self.manifest["packages"][0]["id"] = "Hoard.Testing.Conformance"
-        self.manifest["expected"][0]["packageId"] = "Hoard.Testing.Conformance"
         assembly_path = "candidate/Hoard.Artifacts.Tests.dll"
         crash_path = ("candidate/tests/fixtures/artifacts/CrashRunner/bin/Release/net10.0/"
                       "Hoard.Fixtures.Artifacts.CrashRunner.dll")
@@ -3444,9 +3471,6 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         from xml.sax.saxutils import escape
 
         self.category_history(mode="qualification")
-        self.inputs["packages"][0]["packageId"] = "Hoard.Testing.Conformance"
-        self.manifest["packages"][0]["id"] = "Hoard.Testing.Conformance"
-        self.manifest["expected"][0]["packageId"] = "Hoard.Testing.Conformance"
         assembly_path = "candidate/Hoard.Architecture.Tests.dll"
         self.inputs["runtimeAssemblies"] = {assembly_path: "e" * 64}
         self.manifest["assemblies"][0]["path"] = assembly_path

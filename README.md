@@ -2205,7 +2205,7 @@ source anchors, not a shortened underlying inventory. Report admission
 recomputes the complete receipt and its hash; missing/changed receipts,
 shortened cases and foreign anchors reject. Original receipt bytes survive
 retries, and file/byte budget failures commit no partial passing basis.
-All 424 tooling checks pass with 19 native skips. QC-03/04/05/12 and full
+All 425 tooling checks pass with 19 native skips. QC-03/04/05/12 and full
 profile/evaluator acceptance remain incomplete. The preceding f1ba Linux replay
 passes 311 foundations but fails the qualification-origin artifact controller
 with `WitnessMissing`; it is not admitted. The controller now uses validated
@@ -2213,6 +2213,13 @@ transport inspection before mandatory independent source admission, matching
 the other source-only controllers. Category errors expose at most four
 static source-role/line locations, never raw tracebacks or exception messages,
 to support the next replay.
+
+Category manifests now identify the actual selected provider archive per binding,
+not the SDK wrapper package. A shared frozen-slot selector binds archive identity
+and hash to captured inputs; independent source admission rechecks the complete
+package set and each witness's binding/package association. Distinct-package
+models admit the correct reports and reject cross-provider borrowing without
+weakening report package equality. Actual native replay remains pending.
 
 Exact `5f81b926ca7add6845cb19cccba200b668eb0831`,
 [run40232608162](https://github.com/Stonefly-Labs/Hoard/actions/runs/40232608162),

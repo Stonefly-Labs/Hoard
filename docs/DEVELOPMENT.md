@@ -9574,7 +9574,20 @@ and final native history admission, matching inspection/metadata controllers.
 Ordinary/diagnostic session admission is unchanged. Actual Linux replay of the
 repair remains pending.
 
-Current validation: all 424 tooling checks pass with 19 explicit native skips;
+Category execution/discovery manifests now select the provider archive for each
+binding rather than using the SDK package as every witness's package identity.
+The common frozen-slot selector requires the exact captured binding/category/
+provider archive and inventory hash; foreign or changed assignments reject
+before launch. Mixed scopes retain both actual provider archives and each exact
+entry's association. Independent native source admission reselects that complete
+set and checks each entry, while report admission keeps its existing exact
+binding/package hash equality. Wrapper assembly and SDK provenance remain
+separate captured inputs. Twelve scope assertion reds and both distinct-package
+report failures reproduce the old mismatch before repair; corrected models and
+cross-provider borrowing negatives pass. These models do not replace native
+execution or complete qualification acceptance.
+
+Current validation: all 425 tooling checks pass with 19 explicit native skips;
 all 133 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
 and whitespace checks pass. The preceding byte-capture checkpoint compiled
 the original artifact package-acceptance project with freshly rebuilt SDK,

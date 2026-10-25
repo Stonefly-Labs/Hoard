@@ -343,6 +343,12 @@ Qualification-origin artifact controller transports use validated inspection
 before mandatory independent source reconstruction and native history
 admission, as do other source-only controllers. Ordinary diagnostic and
 session-based transports retain their existing admission path.
+Category manifests select actual captured provider archives per binding, not the
+SDK wrapper package. Frozen-slot/category/inventory mismatches reject before
+launch; mixed scopes retain both archives. Native source admission independently
+checks the full package set and each entry's association. Existing report
+binding/package hash equality remains unchanged; distinct-package models do
+not establish actual native qualification.
 The prior byte-capture checkpoint cf4/run40227343651 independently passes
 three Linux jobs, 300 native foundations without skips, 13-lock/18-package
 replay and 129 scopes/1,821 witnesses. It admits original byte capture, not the

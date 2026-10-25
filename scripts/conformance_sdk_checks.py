@@ -1,7 +1,8 @@
 """Bounded Linux SDK/logger diagnostics, never provider qualification.
 
 Historical preparation is sealed and verified before any candidate compilation.
-Only closed diagnostic codes, counts and hashes may reach the CI console.
+Only closed diagnostic codes, counts, hashes and bounded static source
+locations may reach the CI console.
 Copied smoke-lock preparation rebinds only current local archive hashes; an
 independent fresh cache then replays that unchanged graph in locked mode.
 """
@@ -34,7 +35,8 @@ from conformance_case_catalog import (
     ORIGINAL_ARTIFACT_REOPENS, ORIGINAL_ARTIFACT_SHARED_OWNER_WITNESSES, ORIGINAL_ARTIFACT_WITNESSES,
     METADATA_INVENTORY_SOURCE_WITNESSES, METADATA_RECOVERY_SOURCE_WITNESS, ORIGINAL_METADATA_FACADE_WITNESSES,
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
-    catalog_admission_witnesses, category_cases, category_execution_partitions, category_runtime_cases,
+    catalog_admission_witnesses, category_cases, category_execution_partitions,
+    category_runtime_cases, category_runtime_packages,
     original_witness_parents, original_witness_policy,
 )
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
@@ -3067,21 +3069,20 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
     assembly_path = assembly.relative_to(run.root).as_posix()
     if assembly_path not in inputs["runtimeAssemblies"]:
         raise evidence.ConformanceError("InputChanged")
-    package_id = "Hoard.Testing.Conformance"
-    package = next((item for item in inputs["packages"] if item["packageId"] == package_id), None)
-    if package is None:
-        raise evidence.ConformanceError("PrerequisiteMissing")
+    packages = category_runtime_packages(inputs, {binding for binding, _ in tests.values()})
     manifest = {
         "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
         "attemptId": attempt_id, "attemptSequence": attempt_sequence, "purpose": "execution",
         "inputSha256": evidence.digest(inputs), "runInputsPath": run_inputs_path,
         "assemblies": [{"id": "test-assembly", "path": assembly_path,
                         "sha256": inputs["runtimeAssemblies"][assembly_path]}],
-        "packages": [{"id": package_id, "path": f"feed/candidate/{package_id}.0.1.0.nupkg",
-                      "sha256": package["sha256"]}],
+        "packages": [{
+            "id": package["packageId"],
+            "path": f'feed/candidate/{package["packageId"]}.{package["version"]}.nupkg',
+            "sha256": package["sha256"]} for package in packages.values()],
         "expected": [{
             "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
-            "assemblyId": "test-assembly", "packageId": package_id, "bindingId": binding,
+            "assemblyId": "test-assembly", "packageId": packages[binding]["packageId"], "bindingId": binding,
             "matrixId": "none", "assertionSymbol": None, "caseId": case_id,
         } for identity, (binding, case_id) in tests.items()],
     }

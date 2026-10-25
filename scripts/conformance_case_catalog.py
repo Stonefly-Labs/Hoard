@@ -346,6 +346,25 @@ def original_witness_parents(identity):
     return ORIGINAL_METADATA_FORESTS.get(identity, ORIGINAL_ARTIFACT_FORESTS.get(identity, (None,)))
 
 
+def category_runtime_packages(inputs, selected_bindings):
+    """Select provider archives independently from the executing SDK wrapper."""
+    slots = {binding: package for profile, binding, _, package in CATEGORY_BINDING_SLOTS
+             if profile == inputs["profileId"]}
+    bindings = {binding["bindingId"]: binding for binding in inputs["bindings"]}
+    packages = {package["packageId"].casefold(): package for package in inputs["packages"]}
+    selected = frozenset(selected_bindings)
+    if (not selected or not selected <= slots.keys() or not selected <= bindings.keys()
+            or len(bindings) != len(inputs["bindings"]) or len(packages) != len(inputs["packages"])):
+        raise ConformanceError("BindingInvalid")
+    for binding_id in selected:
+        binding = bindings[binding_id]
+        if (binding["category"] != inputs["profileId"]
+                or binding["package"]["packageId"].casefold() != slots[binding_id].casefold()
+                or packages.get(slots[binding_id].casefold()) != binding["package"]):
+            raise ConformanceError("BindingInvalid")
+    return MappingProxyType({binding: bindings[binding]["package"] for binding in sorted(selected)})
+
+
 def category_runtime_cases(profile, binding_id, *, mode="diagnostic"):
     """Select the same primary frozen case for manifest construction and admission."""
     if profile not in ("metadata", "artifacts"):

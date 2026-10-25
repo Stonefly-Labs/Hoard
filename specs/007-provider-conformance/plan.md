@@ -6682,7 +6682,7 @@ missing/shortened cases, foreign anchors and changed original attempts reject.
 History preserves original immutable receipts and counts cumulative proof bytes
 and files before committing. Budget failure records incompleteness atomically.
 SDK persistence rejects replaced/mutable/hash-mismatched receipts and adds an
-explicit non-qualifying quality-source digest/count. All 424 tooling checks
+explicit non-qualifying quality-source digest/count. All 425 tooling checks
 pass with 19 native skips; frozen inventory, SDK catalog and whitespace checks
 pass. Actual Linux replay is pending; QC-03/04/05/12 and complete acceptance
 remain unfinished. No tasks/checklists advance.
@@ -6706,6 +6706,18 @@ matching other source-only controllers. Actual Linux replay remains pending.
 Category failures
 now expose at most four static source-role/line locations, without raw
 tracebacks, messages or locals, to locate the failure in the next native replay.
+
+Category manifest package identity is now the independently selected captured
+provider archive per binding, not the SDK package containing the common wrapper.
+Twelve real scope-construction assertion reds and two distinct-provider report
+failures reproduce the mismatch. A shared frozen-slot selector checks category,
+provider package identity and exact inventory equality before launch. Mixed
+scopes retain both archives and per-entry associations; native source admission
+independently reselects the complete set and each binding's entry. Public report
+binding/package equality is unchanged. Models now admit distinct provider hashes
+and reject cross-provider borrowing/foreign assignments; actual native replay
+and complete category acceptance remain pending. No public schemas, C# sources,
+project references, package locks or tasks/checklists change.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

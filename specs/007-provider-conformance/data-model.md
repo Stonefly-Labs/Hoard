@@ -58,6 +58,14 @@ safe observations survive interrupted/skipped/unknown executions; they remain
 incomplete. Only an actual frozen assertion symbol can classify an assertion
 negative. Test-source hashes do not substitute for loaded-provider evidence.
 
+Category witnesses identify the captured provider archive for their exact
+binding, independently of the SDK wrapper/test assembly. The shared frozen-slot
+selector requires matching category, provider identity and complete inventory
+entry. Mixed scopes retain each selected archive; independent source admission
+reselects the full set and per-entry association. Report binding/package hash
+equality remains mandatory. SDK package hashes cannot substitute merely because
+the common assertion executes from the SDK assembly.
+
 Private attempt manifests and completion records require `purpose` equal to
 `discovery` or `execution`; completion also hashes the exact complete JSONL
 bytes as `recordsSha256`. A retained exclusive attempt claim prevents replay

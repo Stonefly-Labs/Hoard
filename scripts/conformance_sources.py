@@ -17,7 +17,7 @@ from conformance_case_catalog import (
     METADATA_INVENTORY_SOURCE_WITNESSES, METADATA_RECOVERY_SOURCE_WITNESS,
     ORIGINAL_ARTIFACT_PROOF_SOURCES,
     ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES,
-    category_execution_partitions, category_runtime_cases,
+    category_execution_partitions, category_runtime_cases, category_runtime_packages,
 )
 from conformance_execution import OwnedRun, no_symlinks
 
@@ -1367,14 +1367,18 @@ class NativeCategorySources:
         owner = {
             "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": inputs["invocationGroupId"],
             "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest()}
+        provider_packages = category_runtime_packages(inputs, {binding for binding, _ in tests.values()})
+        expected_packages = {package["packageId"]: package["sha256"] for package in provider_packages.values()}
         if (owner_data != evidence.canonical_bytes(owner)
                 or _readonly(run.root / "runtime-owner.json", 64 * 1024) != owner_data
                 or _readonly(run.root / f"runtime-input-{attempt}.json", 1024 * 1024) != manifest_data
                 or _readonly(run.root / manifest["runInputsPath"], 16 * 1024 * 1024) != evidence.canonical_bytes(inputs)
                 or len(manifest["assemblies"]) != 1
                 or {entry["assemblyId"] for entry in manifest["expected"]} != {manifest["assemblies"][0]["id"]}
-                or len(manifest["packages"]) != 1 or manifest["packages"][0]["id"] != "Hoard.Testing.Conformance"
-                or {entry["packageId"] for entry in manifest["expected"]} != {"Hoard.Testing.Conformance"}):
+                or len(manifest["packages"]) != len(expected_packages)
+                or {package["id"]: package["sha256"] for package in manifest["packages"]} != expected_packages
+                or any(entry["packageId"] != provider_packages[entry["bindingId"]]["packageId"]
+                       for entry in manifest["expected"])):
             raise evidence.ConformanceError("ProofMismatch")
         assembly = run.root / manifest["assemblies"][0]["path"]
         if assembly.name != ("Hoard.Conformance.Tests.dll" if metadata else

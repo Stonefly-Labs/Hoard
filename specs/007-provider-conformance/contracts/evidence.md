@@ -386,6 +386,12 @@ The qualification-origin artifact controller uses validated transport inspection
 before independent original source/parent checks and final native history
 admission. Inspection alone does not qualify a witness or bypass session/source
 policy; ordinary and diagnostic transports retain their original admission.
+Category runtime witnesses identify the actual provider archive selected for
+their binding, separately from the executing SDK/test assembly. Frozen-slot
+selection requires exact captured binding/category/package/inventory agreement.
+Mixed scopes retain the complete archive set and per-entry identities; native
+source admission reselects both independently. Public report binding/package
+hash equality is not weakened to accommodate an SDK package hash.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

@@ -690,7 +690,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertFalse(receipt.exists())
 
     def test_category_attempt_uses_the_predeclared_scope_without_relabelling_runtime_inputs(self):
-        from conformance_case_catalog import category_execution_partitions, category_runtime_cases
+        from conformance_case_catalog import CATEGORY_BINDING_SLOTS, category_execution_partitions, category_runtime_cases
         candidate = self.directory / "current"
         runner = candidate / checks.ARTIFACT_RECOVERY / "bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll"
         runner.parent.mkdir(parents=True)
@@ -721,8 +721,14 @@ class SdkDiagnosticTests(unittest.TestCase):
                     "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
                     "profileId": profile, "mode": "diagnostic",
                     "runtimeAssemblies": assemblies,
-                    "bindings": [{"bindingId": binding} for binding in ("sqlite", "memory", "local", "object")],
-                    "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "c" * 64}],
+                    "bindings": [{"bindingId": binding, "category": category, "package": {
+                        "packageId": package, "version": "0.1.0",
+                        "sha256": hashlib.sha256(package.encode()).hexdigest()}}
+                        for category, binding, _, package in CATEGORY_BINDING_SLOTS],
+                    "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "c" * 64},
+                                 *({"packageId": package, "version": "0.1.0",
+                                    "sha256": hashlib.sha256(package.encode()).hexdigest()}
+                                   for _, _, _, package in CATEGORY_BINDING_SLOTS)],
                     "configurationSha256": checks.evidence.configuration_fingerprint(
                         checks.evidence.verify_synthetic_source_mapping(
                             self.directory, "stores/candidate.NuGet.Config", "feed/candidate"),
@@ -751,6 +757,14 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertEqual(manifest["runInputsPath"], path)
                     self.assertEqual({item["testIdentity"]: (item["bindingId"], item["caseId"])
                                       for item in manifest["expected"]}, plan["tests"])
+                    packages = {binding["bindingId"]: binding["package"] for binding in inputs["bindings"]}
+                    self.assertEqual({entry["packageId"] for entry in manifest["expected"]},
+                                     {packages[binding]["packageId"] for binding, _ in pairs})
+                    self.assertTrue(all(entry["packageId"] == packages[entry["bindingId"]]["packageId"]
+                                        for entry in manifest["expected"]))
+                    self.assertEqual({row["id"]: row["sha256"] for row in manifest["packages"]},
+                                     {packages[binding]["packageId"]: packages[binding]["sha256"]
+                                      for binding, _ in pairs})
                     self.assertEqual(launch.call_args.args[5]["category_scope"], (profile, scope_id))
                     if inspection or scope_id == "controller":
                         source_function = "category_inspection_proofs" if inspection else "original_artifact_external_proofs"
@@ -769,6 +783,19 @@ class SdkDiagnosticTests(unittest.TestCase):
                                     run=SimpleNamespace(root=self.directory), inputs=inputs,
                                     candidate=candidate, scope_id=scope_id, plan=plan, **options)
                     launch.reset_mock()
+                    binding_id = pairs[0][0]
+                    foreign_package = next(binding["package"] for binding in inputs["bindings"]
+                                           if binding["bindingId"] != binding_id)
+                    changed_inputs = {**inputs, "bindings": [
+                        {**binding, "package": foreign_package} if binding["bindingId"] == binding_id else binding
+                        for binding in inputs["bindings"]]}
+                    (self.directory / path).write_bytes(checks.evidence.canonical_bytes(changed_inputs))
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "BindingInvalid"):
+                        checks.category_attempt(
+                            run=SimpleNamespace(root=self.directory), inputs=changed_inputs,
+                            candidate=candidate, scope_id=scope_id, plan=plan, **options)
+                    launch.assert_not_called()
+                    (self.directory / path).write_bytes(checks.evidence.canonical_bytes(inputs))
                     changed = {**plan, "tests": {**plan["tests"], "Foreign.Check": ("foreign", "MP-01")}}
                     with self.assertRaises(checks.evidence.ConformanceError):
                         checks.category_attempt(run=SimpleNamespace(root=self.directory), inputs=inputs,
