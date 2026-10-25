@@ -85,6 +85,13 @@ Shared witnesses use the lexicographically first mapped case as their owned
 runtime context and retain the same execution UUID/hash across mapped results.
 The immutable identity-to-primary-case map is exposed before manifest creation
 and reused during import; callers do not supply a separate selection algorithm.
+Before launch, callers may partition that whole map into disjoint, nonempty
+scopes. The history copies/fixes those maps, independently allocates child
+attempt UUIDs and requires each actual manifest to retain its assigned scope
+and sequence. Every scope is validated before any batch witness/proof/provenance
+is committed. Cross-scope execution/session/observation reuse rejects; failures
+remain append-only and fresh retries cannot overwrite them. Actual assertion
+failures retain their original witnesses and hashes and affect mapped cases.
 No input-selected reduced inventory, rewritten proof, lost failed retry or
 excluded execution is admitted. Both binding options and all QC/control keys
 remain required; missing controller observations remain incomplete.

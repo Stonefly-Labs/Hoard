@@ -1166,9 +1166,17 @@ runtime union and both required package options. Primary runtime context is
 the lexicographically first mapped case; UUIDs/hashes are reused only for
 catalog-owned obligations without rewriting proofs. Failed attempts persist
 through retries and identities/components remain consistent across batches.
+Optional prelaunch partitions must be nonempty/disjoint and cover that exact
+union. Their copied primary-case maps and independently allocated child attempt
+UUIDs are immutable. `finish_parts` admits every scope atomically against its
+predeclared attempt/sequence and manifest, rejecting missing/extra scopes,
+cross-scope execution/origin reuse and aggregate proof-budget overflow.
+Assertion failures retain actual proofs and affect only mapped obligations;
+invalid batches append a failed/incomplete attempt without accepting earlier
+valid scopes. Single-scope imports follow the same checks.
 All original QC rows remain required; missing controller controls stay
 incomplete, exclusions invent no execution, and actual profile/evaluator
-dispatch remains guarded. Five synthetic transport regressions exercise this
+dispatch remains guarded. Ten synthetic transport regressions exercise this
 model, including a positive qualification-origin fixture and cross-binding
 execution-ID replay rejected without changing accepted witnesses/proofs.
 The immutable primary-case map is shared by prelaunch manifest selection and

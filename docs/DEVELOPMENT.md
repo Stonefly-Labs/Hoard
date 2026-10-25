@@ -7901,10 +7901,25 @@ Append-only retries retain failed attempts; execution/session identities and
 component consistency extend across batches. Results require every profile key,
 including six metadata/seven artifact QC rows. Unobserved controller controls
 stay incomplete, and exclusions have no invented attempts or runtime evidence.
+`CategoryRuntimeHistory.begin(..., partitions=...)` can predeclare nonempty,
+disjoint scopes covering exactly the complete frozen binding inventory.
+`runtime_partitions(binding_id)` exposes copied immutable primary-case maps and
+independent child attempt UUIDs for manifest construction. `finish_parts`
+requires every declared scope, its exact attempt/sequence and unchanged proofs;
+cross-scope execution/session/observation replay and component inconsistency
+reject atomically. A failed batch appends a failed/incomplete attempt without
+admitting successful earlier scopes; a fresh retry preserves that history.
+Valid assertion failures retain their actual witnesses/proofs and affect their
+mapped obligations, not unrelated passed cases. Existing single-scope callers
+use the same admission path. Aggregate proof counts/bytes remain bounded.
 This is an import/state-model increment: actual profile runners, lower-level
 adapter wiring, controller evidence and independent evaluation remain unbuilt.
-The initial three regressions expose the absent importer; five focused cases
-now pass. The fifth supplies structurally valid synthetic qualification origins
+The initial three regressions exposed the absent importer. Three partition
+regressions first failed at the missing API; a fourth covers assertion
+attribution. Ten category-focused cases now pass,
+including malformed/reduced/overlapping plans, independent scope attempts,
+cross-scope replay, atomic retries and assertion attribution. The earlier
+single-scope fixture supplies structurally valid synthetic qualification origins
 and rejects a cross-binding execution-ID replay without changing accepted
 witnesses/proofs. It is not actual original-wrapper provenance. An immutable
 identity-to-primary-case map is available before manifest construction and

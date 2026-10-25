@@ -5460,6 +5460,41 @@ Both documents independently recompute; free scratch is 91,721,003,008 bytes.
 This admits composed owners and loaded contracts, not later owner-only or
 runtime-linked producer-packet sources or qualifying profiles.
 
+### Atomic predeclared category execution scopes
+
+The category history now accepts immutable prelaunch partitions of each
+binding's complete frozen runtime union. Every scope must be nonempty/disjoint;
+missing, duplicate or foreign identities reject before any attempt starts.
+The parent independently allocates scope attempt UUIDs and exposes copied
+primary-case maps for actual manifest construction. All original package,
+input, proof, observation and monotonic checks remain mandatory.
+
+`finish_parts` validates all declared scopes before committing any witness,
+hash or provenance. Wrong attempts/sequences, missing/extra scopes and
+cross-scope execution/session/observation reuse reject atomically. An invalid
+batch appends a failed/incomplete attempt without accepting earlier valid
+scopes; fresh retries preserve it. Valid assertion failures retain actual
+proofs and affect their mapped obligations, not unrelated passing cases.
+Single-scope imports share this path and aggregate proof bounds remain finite.
+
+Three regressions first failed at the absent partition API after fixture
+isolation was corrected. Four focused partition tests now cover immutable
+whole-inventory selection, malformed/reduced/overlapping plans, exact scope
+attempts, atomic failure/retry, execution/session replay and per-case assertion
+attribution. All ten category-focused tests and 348 tooling checks pass
+(331 passed/seventeen explicit macOS-native skips). Frozen inventory, SDK
+catalog and patch checks pass. The native target is now 240 foundations with
+the same 107 scopes/1,317 executions and sixteen-source receipt; no new native
+result is claimed. Earlier owner/packet requests remain unadmitted.
+
+These are synthetic state-model fixtures, not actual partitioned profile
+execution, controller qualification or completion of T019/T020/T035. Actual
+runners, architecture/controller provenance and independent evaluation remain
+unfinished and qualifying CLI modes remain guarded. README, DEVELOPMENT,
+data-model and harness/evidence contracts are updated. Provider behavior,
+SDK/package/lock bytes, invocation examples, diagrams, production APIs and
+reviewer-owned markers are unaffected.
+
 ## Summary
 
 

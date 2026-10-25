@@ -1856,7 +1856,12 @@ mutations and category-slot input wiring.
 Category batch ingestion now requires each binding's complete frozen runtime
 inventory, preserves shared execution/proof identities and all 192 inherited
 keys, and keeps missing controller/QC proofs incomplete. It is not yet wired
-to executable profiles. The same immutable primary-case selection is available
+to executable profiles. Before execution, that complete inventory can be
+partitioned into immutable disjoint scopes with independent attempt UUIDs.
+Import is atomic across all scopes: a missing/changed scope or execution/origin
+replay admits none of the batch, while observed assertion failures retain their
+actual proofs and affect only their mapped obligations.
+The same immutable primary-case selection is available
 before manifest construction. A synthetic positive-origin regression also
 rejects cross-binding execution-ID replay without changing accepted evidence;
 it does not establish real wrapper provenance.

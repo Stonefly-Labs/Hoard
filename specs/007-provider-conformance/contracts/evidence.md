@@ -65,13 +65,22 @@ options. The primary execution context for a shared runtime witness is its
 lexicographically first mapped case. Projection retains the original execution
 UUID/proof hash across all explicitly mapped obligations; no transport or proof
 is relabeled. Results cannot omit either binding or any QC/control key.
+Before launch, the complete map can be partitioned into copied immutable,
+nonempty disjoint scopes with independent child attempt UUIDs. Admission is
+atomic across exactly those scopes and preserves their actual proof bytes,
+primary cases and attempt sequences. Missing/changed scopes or cross-scope
+execution/session/observation replay reject without accepting earlier scopes.
+Assertion failures retain actual proofs and affect only mapped obligations;
+retry history and aggregate proof bounds remain unchanged.
 Append-only failures survive retries, excluded cases have no invented
 executions, and unobserved controller controls stay incomplete. This state
 model does not yet wire actual profile runners or independent evaluation.
 Manifest builders can obtain the same immutable primary-case map used by
 import. A synthetic qualification-origin batch followed by a structurally valid
 cross-binding execution-ID replay confirms rejection without changing accepted
-witnesses/proofs; it is not actual provider qualification or wrapper provenance.
+witnesses/proofs. Partitioned model fixtures additionally check immutable plans,
+atomic failure/retry, cross-scope provenance and assertion attribution; none is
+actual provider qualification or wrapper provenance.
 
 Original-wrapper proof requirements are now explicitly selected by frozen
 runtime identity, not solely the binding dimension. The initial closed policy

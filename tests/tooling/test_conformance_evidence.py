@@ -1444,12 +1444,15 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         return evidence.CategoryRuntimeHistory(
             self.inputs, max_attempts=max_attempts, origin_inputs=origin_inputs, original_inputs=original_inputs)
 
-    def category_transport(self, binding, *, sequence=1, started=9, origin=None):
+    def category_transport(self, binding, *, sequence=1, started=9, origin=None, identities=None,
+                           failed_identity=None):
         import conformance_case_catalog as catalog
         cases = [case for case in catalog.expected_cases(self.inputs["profileId"])
                  if case.binding_id == binding and case.exclusion is None]
         assignments = {identity: min(case.case_id for case in cases if identity in case.witnesses)
                        for identity in {identity for case in cases for identity in case.witnesses}}
+        if identities is not None:
+            assignments = {identity: assignments[identity] for identity in identities}
         manifest = {**self.manifest, "attemptId": self.attempt, "attemptSequence": sequence,
                     "inputSha256": evidence.digest(self.inputs), "expected": [
                         {**self.manifest["expected"][0], "testIdentity": identity,
@@ -1463,6 +1466,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                      "attemptSequence": sequence, "inputSha256": evidence.digest(self.inputs),
                      "manifestSha256": evidence.digest(manifest), "testIdentity": entry["testIdentity"],
                      "bindingId": binding, "caseId": entry["caseId"], "durationMs": 0.5}
+            if entry["testIdentity"] == failed_identity:
+                proof.update(status="Failed", failureKind="Assertion", assertionSymbol=entry["assertionSymbol"])
             if origin is not None:
                 captured = copy.deepcopy(origin)
                 captured.update(caseId=entry["caseId"], sessionId=str(uuid.uuid4()),
@@ -1494,16 +1499,160 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             witnesses.append({**self.witness, "executionId": execution, "testIdentity": entry["testIdentity"],
                               "bindingId": binding, "inputSha256": evidence.digest(self.inputs),
                               "startedMs": started + 0.25, "endedMs": started + 0.75,
-                              "proofSha256": evidence.digest(proof)})
+                              "status": proof["status"], "proofSha256": evidence.digest(proof)})
         lines = b"".join(evidence.canonical_bytes(witness) + b"\n" for witness in witnesses)
         completion = {**self.completion, "attemptId": self.attempt, "attemptSequence": sequence,
                       "inputSha256": evidence.digest(self.inputs), "manifestSha256": evidence.digest(manifest),
                       "expectedCount": len(witnesses), "observedCount": len(witnesses),
-                      "recordsSha256": hashlib.sha256(lines).hexdigest()}
+                      "recordsSha256": hashlib.sha256(lines).hexdigest(),
+                      "diagnosticCode": "AssertionFailed" if failed_identity in assignments else "None"}
         return {
             "manifest_data": evidence.canonical_bytes(manifest), "owner_data": evidence.canonical_bytes(self.owner),
             "witnesses_data": lines, "proofs": proofs, "completion_data": evidence.canonical_bytes(completion),
             "manifest_sha256": evidence.digest(manifest), "owner_sha256": evidence.digest(self.owner)}
+
+    def test_category_partitioned_import_freezes_the_complete_inventory_and_preserves_actual_scope_proofs(self):
+        import conformance_case_catalog as catalog
+        history = self.category_history()
+        identities = tuple(history.expected_runtime_tests("sqlite"))
+        partitions = {"first": list(identities[::2]), "second": list(identities[1::2])}
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            sequence = history.begin("sqlite", self.attempt, partitions=partitions)
+        plan = history.runtime_partitions("sqlite")
+        self.assertEqual(sequence, 1)
+        self.assertEqual(set(plan), set(partitions))
+        self.assertEqual({identity for scope in plan.values() for identity in scope["tests"]}, set(identities))
+        self.assertEqual(len({scope["attemptId"] for scope in plan.values()} | {self.attempt}), 3)
+        partitions["first"].clear()
+        with self.assertRaises(TypeError):
+            plan["first"]["tests"][identities[0]] = "foreign"
+        transports, actual_proofs = {}, {}
+        for scope_id, scope in plan.items():
+            self.attempt = scope["attemptId"]
+            transports[scope_id] = self.category_transport("sqlite", identities=scope["tests"])
+            actual_proofs.update({path: hashlib.sha256(data).hexdigest()
+                                  for path, data in transports[scope_id]["proofs"].items()})
+        self.assertEqual(history.witnesses, ())
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            results = history.finish_parts("sqlite", transports=transports)
+        self.assertEqual({row["testIdentity"] for row in history.witnesses}, set(identities))
+        self.assertEqual(dict(history.proofs), actual_proofs)
+        cases = {case.key: case for case in catalog.expected_cases("metadata") if case.binding_id == "sqlite"}
+        for result in results:
+            case = cases[result["profileId"], result["bindingId"], result["matrixId"], result["caseId"]]
+            self.assertEqual(result["status"], "Incomplete" if case.controls else "Passed")
+        with self.assertRaisesRegex(evidence.ConformanceError, "OwnershipInvalid"):
+            history.runtime_partitions("sqlite")
+
+    def test_category_partitioned_import_rejects_reduced_overlapping_or_foreign_plans_before_start(self):
+        original_inputs = copy.deepcopy(self.inputs)
+        for mutation in ("missing", "overlap", "foreign", "empty", "duplicate"):
+            with self.subTest(mutation=mutation):
+                self.inputs = copy.deepcopy(original_inputs)
+                history = self.category_history()
+                identities = tuple(history.expected_runtime_tests("sqlite"))
+                partitions = {"first": list(identities[::2]), "second": list(identities[1::2])}
+                if mutation == "missing":
+                    partitions["first"].pop()
+                elif mutation == "overlap":
+                    partitions["second"].append(partitions["first"][0])
+                elif mutation == "foreign":
+                    partitions["first"][0] = "Foreign.Unselected.Fact"
+                elif mutation == "empty":
+                    partitions["empty"] = []
+                else:
+                    partitions["first"].append(partitions["first"][0])
+                with self.assertRaises(evidence.ConformanceError):
+                    history.begin("sqlite", self.attempt, partitions=partitions)
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+                    self.assertEqual(history.begin("sqlite", self.attempt), 1)
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+                    history.interrupt("sqlite", "EvidenceIncomplete")
+                self.assertEqual(history.witnesses, ())
+
+    def test_category_partitioned_import_is_atomic_for_missing_scopes_wrong_attempts_and_replayed_origins(self):
+        original_inputs = copy.deepcopy(self.inputs)
+        for mutation in ("missing", "attempt", "session", "execution"):
+            with self.subTest(mutation=mutation):
+                self.inputs = copy.deepcopy(original_inputs)
+                origin, assignments = self.runtime_origin("runtime")
+                history = self.category_history(
+                    max_attempts=2, origin_inputs={"sqlite": assignments, "memory": assignments})
+                identities = tuple(history.expected_runtime_tests("sqlite"))
+                partitions = {"first": identities[::2], "second": identities[1::2]}
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+                    history.begin("sqlite", self.attempt, partitions=partitions)
+                plan = history.runtime_partitions("sqlite")
+                transports = {}
+                for scope_id, scope in plan.items():
+                    self.attempt = plan["first"]["attemptId"] if mutation == "attempt" else scope["attemptId"]
+                    transports[scope_id] = self.category_transport(
+                        "sqlite", identities=scope["tests"], origin=origin)
+                if mutation == "missing":
+                    del transports["second"]
+                elif mutation in ("session", "execution"):
+                    first = evidence.load_json(next(iter(transports["first"]["proofs"].values())))
+                    transport = transports["second"]
+                    witnesses = [evidence.load_json(line) for line in transport["witnesses_data"].splitlines()]
+                    witness = witnesses[0]
+                    path = f'proof-{witness["executionId"]}.json'
+                    proof = evidence.load_json(transport["proofs"].pop(path))
+                    if mutation == "session":
+                        proof["sessionOrigins"][0]["sessionId"] = first["sessionOrigins"][0]["sessionId"]
+                    else:
+                        proof["executionId"] = witness["executionId"] = first["executionId"]
+                    transport["proofs"][f'proof-{proof["executionId"]}.json'] = evidence.canonical_bytes(proof)
+                    witness["proofSha256"] = evidence.digest(proof)
+                    transport["witnesses_data"] = b"".join(
+                        evidence.canonical_bytes(row) + b"\n" for row in witnesses)
+                    completion = evidence.load_json(transport["completion_data"])
+                    completion["recordsSha256"] = hashlib.sha256(transport["witnesses_data"]).hexdigest()
+                    transport["completion_data"] = evidence.canonical_bytes(completion)
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.012), self.assertRaisesRegex(
+                        evidence.ConformanceError, "EvidenceIncomplete" if mutation == "missing" else "ProofMismatch"):
+                    history.finish_parts("sqlite", transports=transports)
+                self.assertEqual(history.witnesses, ())
+                self.assertEqual(dict(history.proofs), {})
+                self.assertEqual(dict(history.session_origins), {})
+                self.assertEqual(dict(history.original_observations), {})
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.020):
+                    self.assertEqual(history.begin("sqlite", str(uuid.uuid4()), partitions=partitions), 2)
+                retry = history.runtime_partitions("sqlite")
+                transports = {}
+                for scope_id, scope in retry.items():
+                    self.attempt = scope["attemptId"]
+                    transports[scope_id] = self.category_transport(
+                        "sqlite", sequence=2, started=20, identities=scope["tests"], origin=origin)
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.023):
+                    results = history.finish_parts("sqlite", transports=transports)
+                self.assertTrue(any(result["status"] == "Passed" for result in results))
+                self.assertTrue(all(len(result["attempts"]) == 2 for result in results))
+
+    def test_category_partitioned_import_preserves_a_failed_scope_without_failing_unrelated_cases(self):
+        import conformance_case_catalog as catalog
+        history = self.category_history()
+        identities = tuple(history.expected_runtime_tests("sqlite"))
+        failed = next(identity for identity in identities if ".MP01_" in identity)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin("sqlite", self.attempt, partitions={
+                "failed": [failed], "unchanged": [identity for identity in identities if identity != failed]})
+        transports = {}
+        for scope_id, scope in history.runtime_partitions("sqlite").items():
+            self.attempt = scope["attemptId"]
+            transports[scope_id] = self.category_transport(
+                "sqlite", identities=scope["tests"], failed_identity=failed)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            results = history.finish_parts("sqlite", transports=transports)
+        cases = {case.case_id: case for case in catalog.expected_cases("metadata") if case.binding_id == "sqlite"}
+        self.assertTrue(any(result["status"] == "Failed" for result in results))
+        self.assertTrue(any(result["status"] == "Passed" for result in results))
+        for result in results:
+            case = cases[result["caseId"]]
+            expected = "Failed" if failed in case.witnesses else "Incomplete" if case.controls else "Passed"
+            self.assertEqual(result["status"], expected)
+        failed_witness = next(row for row in history.witnesses if row["testIdentity"] == failed)
+        self.assertEqual(failed_witness["status"], "Failed")
+        self.assertEqual(history.proofs[f'proof-{failed_witness["executionId"]}.json'], failed_witness["proofSha256"])
 
     def test_category_import_expands_all_frozen_keys_without_inventing_controls_or_excluded_executions(self):
         import conformance_case_catalog as catalog
