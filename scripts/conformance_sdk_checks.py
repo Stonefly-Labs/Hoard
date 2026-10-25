@@ -1998,6 +1998,103 @@ def original_artifact_external_proofs(run, inputs, manifest, ingested):
     return {"sourceExecutions": len(observations), "externalProofsSha256": evidence.digest(receipt)}
 
 
+def _inspection_path(value):
+    if (not isinstance(value, str) or not 0 < len(value.encode("utf-8")) <= 4096
+            or any(ord(character) < 32 or ord(character) == 127 for character in value)):
+        raise evidence.ConformanceError()
+    path = Path(value)
+    try:
+        canonical = str(path.resolve())
+    except (OSError, RuntimeError, ValueError):
+        raise evidence.ConformanceError() from None
+    if not path.is_absolute() or canonical != value:
+        raise evidence.ConformanceError()
+    return value
+
+
+def _inspection_resolution(value, project):
+    if (not isinstance(value, dict) or not isinstance(value.get("Properties"), dict)
+            or not isinstance(value.get("Items"), dict)
+            or set(value["Properties"]) != {"TargetPath", "ProjectAssetsFile"}
+            or set(value["Items"]) != {"ReferencePath", "Compile"}):
+        raise evidence.ConformanceError()
+    references, sources = value["Items"]["ReferencePath"], value["Items"]["Compile"]
+    if (not isinstance(references, list) or not 0 < len(references) <= 2048
+            or not isinstance(sources, list) or len(sources) > 2048):
+        raise evidence.ConformanceError()
+    selected = []
+    for reference in references:
+        if not isinstance(reference, dict) or "Identity" not in reference:
+            raise evidence.ConformanceError()
+        row = {"Identity": _inspection_path(reference["Identity"])}
+        for name in ("FrameworkReferenceName", "NuGetPackageId"):
+            if name in reference:
+                identifier = reference[name]
+                if not isinstance(identifier, str) or re.fullmatch(r"[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}", identifier) is None:
+                    raise evidence.ConformanceError()
+                row[name] = identifier
+        selected.append(row)
+    compiled = []
+    for source in sources:
+        if (not isinstance(source, dict) or not isinstance(source.get("Identity"), str)
+                or not 0 < len(source["Identity"].encode("utf-8")) <= 4096
+                or any(ord(character) < 32 or ord(character) == 127 for character in source["Identity"])):
+            raise evidence.ConformanceError()
+        full_path = _inspection_path(source.get("FullPath"))
+        if os.path.abspath(project.parent / source["Identity"]) != full_path:
+            raise evidence.ConformanceError()
+        compiled.append({"Identity": source["Identity"], "FullPath": full_path})
+    return {
+        "Properties": {name: _inspection_path(path) for name, path in value["Properties"].items()},
+        "Items": {"ReferencePath": selected, "Compile": compiled}}
+
+
+def probe_inspection_project(project, output):
+    project = Path(_inspection_path(str(project)))
+    no_symlinks(project)
+    before = hashlib.sha256(read_bounded(project, 1024 * 1024)).hexdigest()
+    code, raw = capture_control([
+        "dotnet", "msbuild", str(project), "-target:ResolveReferences", "-property:Configuration=Release",
+        "-getProperty:TargetPath,ProjectAssetsFile", "-getItem:ReferencePath,Compile",
+        "-property:UseSharedCompilation=false", "-nodeReuse:false", "-verbosity:quiet"],
+        limit=1024 * 1024, timeout=110)
+    if code:
+        raise evidence.ConformanceError("CommandFailed")
+    value = evidence.load_json(raw)
+    if not isinstance(value, dict) or set(value) != {"Properties", "Items"}:
+        raise evidence.ConformanceError()
+    selected = _inspection_resolution(value, project)
+    if hashlib.sha256(read_bounded(project, 1024 * 1024)).hexdigest() != before:
+        raise evidence.ConformanceError("InputChanged")
+    write_new(output, evidence.canonical_bytes({
+        "schemaVersion": 1, "project": str(project), "projectSha256": before, **selected}))
+
+
+def resolve_inspection_project(run, project):
+    project = Path(_inspection_path(str(project)))
+    if not project.is_relative_to(run.root) or project.suffix != ".csproj":
+        raise evidence.ConformanceError("OwnershipInvalid")
+    no_symlinks(project)
+    before = hashlib.sha256(read_bounded(project, 1024 * 1024)).hexdigest()
+    output = run.root / "stores" / ("inspection-resolution-" + str(uuid.uuid4()) + ".json")
+    result = run.command([
+        sys.executable, str(Path(__file__).resolve()), "--inspection-project", str(project),
+        "--inspection-output", str(output)],
+        cwd=Path(__file__).resolve().parents[1], kind="build", timeout=120)
+    if result.exit_code or result.events:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    value = evidence.load_json(read_bounded(output, 1024 * 1024))
+    selected = _inspection_resolution(value, project)
+    if (type(value.get("schemaVersion")) is not int or value != {
+            "schemaVersion": 1, "project": str(project), "projectSha256": before, **selected}):
+        raise evidence.ConformanceError("ProofMismatch")
+    if hashlib.sha256(read_bounded(project, 1024 * 1024)).hexdigest() != before:
+        raise evidence.ConformanceError("InputChanged")
+    if any(not Path(path).is_relative_to(run.root) for path in selected["Properties"].values()):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    return selected
+
+
 def environment(run, *, phase="admission", candidate=None):
     # The probe is itself an owned child. Captured SDK text is bounded transient
     # input, validated before serialization, never sent to the console.
@@ -3011,8 +3108,16 @@ def main():
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--evidence", type=Path)
     parser.add_argument("--probe", type=Path, help=argparse.SUPPRESS)
+    parser.add_argument("--inspection-project", type=Path, help=argparse.SUPPRESS)
+    parser.add_argument("--inspection-output", type=Path, help=argparse.SUPPRESS)
     options = parser.parse_args()
     try:
+        if options.inspection_project is not None or options.inspection_output is not None:
+            if (options.inspection_project is None or options.inspection_output is None
+                    or options.probe is not None or options.evidence is not None):
+                raise evidence.ConformanceError()
+            probe_inspection_project(options.inspection_project, options.inspection_output)
+            return 0
         if options.probe is not None:
             probe(options.probe)
             return 0

@@ -162,6 +162,133 @@ class SdkDiagnosticTests(unittest.TestCase):
                                                    "expected": manifest["expected"][:-1]}, inspection_literals=True)
         self.assertEqual(len(commands), 2)
 
+    def test_inspection_graph_uses_explicit_resolved_outputs_without_legacy_raw_execution(self):
+        import foundation_evidence as foundation
+        parent = self.directory / "Parent.csproj"
+        child = self.directory / "Child.csproj"
+        parent.write_text('<Project><ItemGroup><ProjectReference Include="Child.csproj"/></ItemGroup></Project>')
+        child.write_text("<Project/>")
+        calls = []
+        def resolve(project):
+            calls.append(project)
+            return {
+                "Properties": {"TargetPath": str(self.directory / (project.stem + ".Actual.dll")),
+                               "ProjectAssetsFile": str(self.directory / (project.stem + ".assets.json"))},
+                "Items": {"ReferencePath": [{"Identity": str(self.directory / "Reference.dll")}],
+                          "Compile": [{"Identity": "Feature.cs", "FullPath": str(self.directory / "Feature.cs")}]}}
+        with patch.object(foundation, "run", side_effect=AssertionError("Legacy raw execution must not run.")):
+            graph = foundation.inspection_graph([parent], {"Parent": "Core", "Child": "Abstractions"}, resolve=resolve)
+        self.assertEqual(calls, [parent, child])
+        for row in graph["projects"]:
+            self.assertEqual(row["assembly"], str(self.directory / (row["id"] + ".Actual.dll")))
+            self.assertEqual(row["assets"], str(self.directory / (row["id"] + ".assets.json")))
+            self.assertEqual(row["sources"], [str(self.directory / "Feature.cs")])
+
+    def test_owned_inspection_resolution_uses_a_bounded_projecting_child_and_actual_outputs(self):
+        self.assertTrue(callable(getattr(checks, "resolve_inspection_project", None)),
+                        "Prepared graphs must not invoke the predecessor raw-output runner.")
+        project = self.directory / "Actual.csproj"
+        project.write_text("<Project/>")
+        (self.directory / "stores").mkdir()
+        calls = []
+        selected = {
+            "Properties": {"TargetPath": str(self.directory / "Actual.Output.dll"),
+                           "ProjectAssetsFile": str(self.directory / "actual.assets.json")},
+            "Items": {"ReferencePath": [{"Identity": str(self.directory / "Reference.dll"),
+                                         "NuGetPackageId": "Example.Package"}],
+                      "Compile": [{"Identity": "Feature.cs", "FullPath": str(self.directory / "Feature.cs")}]}}
+        def command(arguments, **options):
+            calls.append((arguments, options))
+            output = Path(arguments[arguments.index("--inspection-output") + 1])
+            output.write_bytes(checks.evidence.canonical_bytes({
+                "schemaVersion": 1, "project": str(project),
+                "projectSha256": checks.evidence.file_sha256(project), **selected}))
+            return SimpleNamespace(exit_code=0, events=())
+        run = SimpleNamespace(root=self.directory, command=command)
+        self.assertEqual(checks.resolve_inspection_project(run, project), selected)
+        arguments, options = calls[0]
+        self.assertEqual(arguments[arguments.index("--inspection-project") + 1], str(project))
+        self.assertEqual(options["timeout"], 120)
+        self.assertEqual(options["kind"], "build")
+        self.assertTrue(Path(arguments[arguments.index("--inspection-output") + 1]).is_relative_to(self.directory / "stores"))
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.resolve_inspection_project(run, ROOT / "src/Hoard.Core/Hoard.Core.csproj")
+        linked = self.directory / "Linked.csproj"
+        linked.symlink_to(project)
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks.resolve_inspection_project(run, linked)
+        self.assertEqual(len(calls), 1)
+        for mutation in (
+                {"schemaVersion": True}, {"projectSha256": "f" * 64}, {"project": str(linked)},
+                {"unknown": "private-canary"},
+                {"Properties": {**selected["Properties"], "TargetPath": str(ROOT / "foreign.dll")}},
+                {"Items": {**selected["Items"], "ReferencePath": [
+                    {**selected["Items"]["ReferencePath"][0], "UnusedMetadata": "private-canary"}]}}):
+            def invalid(arguments, **options):
+                command(arguments, **options)
+                output = Path(arguments[arguments.index("--inspection-output") + 1])
+                output.write_bytes(checks.evidence.canonical_bytes(
+                    checks.evidence.load_json(output.read_bytes()) | mutation))
+                return SimpleNamespace(exit_code=0, events=())
+            with self.subTest(mutation=mutation), self.assertRaises(checks.evidence.ConformanceError):
+                checks.resolve_inspection_project(SimpleNamespace(root=self.directory, command=invalid), project)
+        def changed(arguments, **options):
+            result = command(arguments, **options)
+            project.write_text("<Project changed='true'/>")
+            return result
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+            checks.resolve_inspection_project(SimpleNamespace(root=self.directory, command=changed), project)
+
+    def test_inspection_probe_projects_only_read_metadata_and_rejects_changed_or_malformed_inputs(self):
+        self.assertTrue(callable(getattr(checks, "probe_inspection_project", None)),
+                        "MSBuild metadata must be bounded transient input, never retained raw output.")
+        project = self.directory / "Actual.csproj"
+        project.write_text("<Project/>")
+        output = self.directory / "resolution.json"
+        raw = {
+            "Properties": {"TargetPath": str(self.directory / "Actual.Output.dll"),
+                           "ProjectAssetsFile": str(self.directory / "actual.assets.json")},
+            "Items": {"ReferencePath": [{"Identity": str(self.directory / "Reference.dll"),
+                                        "NuGetPackageId": "Example.Package", "UnusedMetadata": "private-canary"}],
+                      "Compile": [{"Identity": "Feature.cs", "FullPath": str(self.directory / "Feature.cs"),
+                                   "UnusedMetadata": "private-canary"}]}}
+        with patch.object(checks, "capture_control", return_value=(0, checks.evidence.canonical_bytes(raw))) as capture:
+            checks.probe_inspection_project(project, output)
+        self.assertNotIn(b"private-canary", output.read_bytes())
+        selected = checks.evidence.load_json(output.read_bytes())
+        self.assertEqual(selected["Properties"], raw["Properties"])
+        self.assertEqual(selected["Items"]["ReferencePath"], [{
+            "Identity": str(self.directory / "Reference.dll"), "NuGetPackageId": "Example.Package"}])
+        self.assertEqual(selected["projectSha256"], checks.evidence.file_sha256(project))
+        arguments = capture.call_args.args[0]
+        self.assertIn("-getProperty:TargetPath,ProjectAssetsFile", arguments)
+        self.assertIn("-getItem:ReferencePath,Compile", arguments)
+        self.assertEqual(capture.call_args.kwargs["limit"], 1024 * 1024)
+        self.assertEqual(capture.call_args.kwargs["timeout"], 110)
+        output.unlink()
+        malformed = [
+            b'{"Properties":{},"Properties":{},"Items":{}}',
+            checks.evidence.canonical_bytes({**raw, "Properties": {**raw["Properties"], "TargetPath": "../guessed.dll"}}),
+            checks.evidence.canonical_bytes({**raw, "Items": {**raw["Items"], "ReferencePath": []}}),
+            checks.evidence.canonical_bytes({**raw, "Items": {**raw["Items"], "Compile": [{
+                "Identity": "Feature.cs", "FullPath": str(self.directory / "Different.cs")}]}})]
+        for data in malformed:
+            with self.subTest(data=data), patch.object(checks, "capture_control", return_value=(0, data)):
+                with self.assertRaises(checks.evidence.ConformanceError):
+                    checks.probe_inspection_project(project, output)
+            self.assertFalse(output.exists())
+        with patch.object(checks, "capture_control", return_value=(1, b"private-canary")):
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "CommandFailed"):
+                checks.probe_inspection_project(project, output)
+        self.assertFalse(output.exists())
+        def changed(*arguments, **options):
+            project.write_text("<Project changed='true'/>")
+            return 0, checks.evidence.canonical_bytes(raw)
+        with patch.object(checks, "capture_control", side_effect=changed):
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                checks.probe_inspection_project(project, output)
+        self.assertFalse(output.exists())
+
     @staticmethod
     def original_crash_fixture(barrier):
         run_id = str(uuid.uuid4())

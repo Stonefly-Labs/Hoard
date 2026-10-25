@@ -5622,6 +5622,40 @@ Both input documents independently recompute; free scratch is 91,720,114,176
 bytes. This admits atomic category/non-session-gate sources, not later
 inspection capture/parent sources or qualifying profiles.
 
+### Bounded prepared-project resolution and actual local literal execution
+
+The existing graph constructor now accepts an explicit resolver while preserving
+its predecessor default. The callback supplies actual MSBuild assembly/assets
+paths and recursively follows project references, without calling the raw
+predecessor runner. A separate owned-child wrapper invokes a projecting probe:
+1 MiB transient tool-output bound, 110-second inner deadline, 120-second outer
+budget, exact actual output/assets/reference/compile fields and current project
+hash. Private response admission rejects foreign/symlinked projects, stale or
+extra response fields, changed project bytes and outputs outside the owned root.
+Only used metadata enters private configuration; raw MSBuild output never does.
+An actual local Hosting probe resolves 310 references and 84 compile inputs.
+No native ownership or complete graph-input selection is claimed by that probe.
+Three focused regressions first fail at the missing callback/functions before
+implementation. All 357 tooling checks pass (340 passed/seventeen explicit
+native macOS skips); exact inventory and SDK catalog remain unchanged.
+
+Actual local discovery/execution and independent fresh-root replay each pass
+the three literal facts, strict runtime-proof ingestion and three source-packet
+parent joins. Shared actual architecture image:
+`1ae924ee321b8ec990fd826563ea7a316b0cc141cbc3a4c0b0de92f06cc099d8`.
+First input:
+`265363038a9aab71e153b4df316e6ffaa19ffcdfaef5424648605a78891ebcf9`;
+first inspection receipt:
+`ab7eeaad7f143f16fef68fed3d07b8d88088115aa6ee98a9b5168148b62e1735`.
+Replay input:
+`5eb3125b4a792976552c2e289b6f765db22caac5aa412bd6deb5b1ab7ab55d00`;
+replay inspection receipt:
+`87011b2aa44bae88da54b007a91b6970f9614930a7376419ca26059bfdbdc442`.
+These are diagnostic inputs with zero historical baselines, no native
+containment claim and no category qualification. The pending native run remains
+unadmitted. Graph recipe reuse, exact selected-file inventories and prepared
+fact runtime admission remain unwired; no task/checklist marker is changed.
+
 ## Summary
 
 

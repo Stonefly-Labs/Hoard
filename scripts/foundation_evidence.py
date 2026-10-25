@@ -168,20 +168,28 @@ def packages(root, work, update):
     return core_proof, proofs, config
 
 
-def inspection_graph(projects, ownership):
+def inspection_graph(projects, ownership, *, resolve=None):
     pending = list(projects)
     result = {}
     while pending:
         project = pending.pop().resolve()
         if str(project) in result:
             continue
-        resolved = json.loads(run(
-            "dotnet", "msbuild", str(project), "-target:ResolveReferences", "-property:Configuration=Release",
-            "-getItem:ReferencePath,Compile", "-verbosity:quiet").stdout)["Items"]
+        if resolve is None:
+            resolved = json.loads(run(
+                "dotnet", "msbuild", str(project), "-target:ResolveReferences", "-property:Configuration=Release",
+                "-getItem:ReferencePath,Compile", "-verbosity:quiet").stdout)["Items"]
+            assembly = str(project.parent / f"bin/Release/net10.0/{project.stem}.dll")
+            assets = str(project.parent / "obj/project.assets.json")
+        else:
+            selected = resolve(project)
+            resolved = selected["Items"]
+            assembly = selected["Properties"]["TargetPath"]
+            assets = selected["Properties"]["ProjectAssetsFile"]
         result[str(project)] = {
             "id": project.stem, "project": str(project),
-            "assembly": str(project.parent / f"bin/Release/net10.0/{project.stem}.dll"),
-            "assets": str(project.parent / "obj/project.assets.json"),
+            "assembly": assembly,
+            "assets": assets,
             "references": resolved["ReferencePath"],
             "sources": [str((project.parent / p["Identity"]).resolve())
                         for p in resolved["Compile"] if "/obj/" not in p["FullPath"]]}

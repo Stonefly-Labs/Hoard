@@ -1881,6 +1881,10 @@ diagnostic scope in their actual architecture assembly. Its parent receipt
 joins exact current source packets to safely admitted runtime proofs and
 requires the frozen empty external-file assignment. Prepared graph inspection
 admission and qualifying category integration remain unfinished.
+Prepared-graph plumbing now supports a bounded MSBuild metadata probe and an
+owned-child resolver that supplies actual assembly/assets paths to the existing
+graph constructor, without persisting raw tool output. Graph recipes, exact
+selected-file inventories and prepared-fact runtime admission are not yet wired.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

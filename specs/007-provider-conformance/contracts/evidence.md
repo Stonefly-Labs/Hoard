@@ -129,6 +129,16 @@ records source execution/runtime/source packet digests. It never replaces a
 provider session or opens category qualification. The architecture project has
 no SDK reference; its diagnostic output receives independently package-verified
 logger dependencies rather than introducing a test-project dependency edge.
+Prepared-project resolution has an additional private projecting probe. It
+queries actual MSBuild output/assets paths and reference/compile metadata
+inside the owned child, retaining only fields the original inspectors use.
+Raw tool output is transient and bounded to 1 MiB with a 110-second inner
+deadline inside the 120-second owning command. Parent admission requires the
+exact current project/hash and projected schema; foreign/symlinked projects,
+changed inputs, extra/stale response fields and outputs outside the owned root
+reject. The existing graph constructor accepts this resolver without invoking
+its predecessor raw runner. These plumbing APIs do not yet assemble prepared
+graphs, select their exact file inventories or admit prepared facts.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

@@ -8535,6 +8535,32 @@ Both input documents independently recompute; free scratch is 91,720,114,176
 bytes. This admits the atomic category/non-session gate snapshot, not later
 inspection capture/parent sources or qualifying profiles.
 
+Prepared-graph plumbing now has an injected resolver in the existing graph
+constructor. The predecessor default is unchanged; the new callback path never
+invokes its raw-output runner or guesses output names. A separate bounded
+MSBuild probe queries actual `TargetPath`, `ProjectAssetsFile`, `ReferencePath`
+and `Compile` values. Only the metadata actually consumed by inspectors is
+projected into private configuration. Unknown metadata is not retained.
+The owned-child wrapper rejects foreign/symlinked projects, changed project
+bytes, stale/extra/changed response fields and outputs outside its root.
+Raw tool output stays transient, bounded to 1 MiB with a 110-second inner
+deadline inside the 120-second owned-child budget. An actual local Hosting
+probe resolves 310 references and 84 compile inputs. This is metadata plumbing,
+not native ownership or prepared-graph acceptance.
+
+The actual literal inspection scope also passes local discovery/execution and
+an independent fresh-root replay: three exact facts and three source packets
+per run, with actual runtime proofs admitted by the existing strict parent.
+Both use the same architecture image
+`1ae924ee321b8ec990fd826563ea7a316b0cc141cbc3a4c0b0de92f06cc099d8`.
+Their explicitly diagnostic inputs have no historical baselines or native
+containment claim. They do not replace the pending native run.
+Three resolver regressions first fail at the missing callback/functions and
+now pass. All 357 tooling checks pass (340 passed/seventeen explicit native
+macOS skips). Exact selected-file inventories, prepared graph execution and
+qualifying profile admission remain unfinished. Production/reference/lock
+bytes and deployment examples/diagrams are unaffected.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full
