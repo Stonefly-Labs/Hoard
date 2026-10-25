@@ -76,7 +76,7 @@ Append-only failures survive retries, excluded cases have no invented
 executions, and unobserved controller controls stay incomplete. This state
 model does not yet wire actual profile runners or independent evaluation.
 Manifest builders can obtain the same immutable primary-case map used by
-import. A synthetic qualification-origin batch followed by a structurally valid
+import. A synthetic diagnostic batch with admitted origins followed by a structurally valid
 cross-binding execution-ID replay confirms rejection without changing accepted
 witnesses/proofs. Partitioned model fixtures additionally check immutable plans,
 atomic failure/retry, cross-scope provenance and assertion attribution; none is
@@ -90,6 +90,14 @@ artifact identity-bound test. Typed SDK consumers and unclassified witnesses
 retain complete typed-session requirements. No extra SDK session can substitute
 for an original observation. This test-evidence clarification changes no
 production provider contract or mandatory outcome.
+The separate closed non-session policy identifies all six frozen inspection
+witnesses and sixteen crash/retention/transfer producer identities. Valid
+ordinary provider sessions cannot substitute for their independent source
+proofs. Their qualification admission remains unimplemented and fails closed,
+including when the execution selects `none` rather than a provider binding.
+Known original observation requirements likewise cannot be skipped through
+that context. Diagnostic producer receipts and structural model fixtures never
+qualify those source witnesses.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

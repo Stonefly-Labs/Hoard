@@ -1176,8 +1176,8 @@ invalid batches append a failed/incomplete attempt without accepting earlier
 valid scopes. Single-scope imports follow the same checks.
 All original QC rows remain required; missing controller controls stay
 incomplete, exclusions invent no execution, and actual profile/evaluator
-dispatch remains guarded. Ten synthetic transport regressions exercise this
-model, including a positive qualification-origin fixture and cross-binding
+dispatch remains guarded. Eleven synthetic transport regressions exercise this
+model, including an admitted-origin diagnostic fixture and cross-binding
 execution-ID replay rejected without changing accepted witnesses/proofs.
 The immutable primary-case map is shared by prelaunch manifest selection and
 import. These fixtures do not establish actual original-wrapper provenance or
@@ -1203,6 +1203,11 @@ Original MP-01/AS-01/value-test local observations and independent locked replay
 pass six executions/26 image correspondences using minimal diagnostic inputs,
 not full category RunInputs. All original, child/reopen and controller paths
 must still be wired before complete profiles can qualify.
+Six known inspection facts and sixteen controller producer facts now have an
+explicit separate non-session policy. An unrelated valid SDK session does not
+qualify them. Missing independent inspection/controller admission fails closed,
+and selecting a `none` context cannot skip known original evidence requirements.
+Diagnostic packet imports remain separate from qualification.
 Five additional native scopes now request original observations against a
 separate full captured/recomputed input document with frozen binding slots.
 They select exact primary cases using the same catalog helper as category

@@ -7916,10 +7916,10 @@ This is an import/state-model increment: actual profile runners, lower-level
 adapter wiring, controller evidence and independent evaluation remain unbuilt.
 The initial three regressions exposed the absent importer. Three partition
 regressions first failed at the missing API; a fourth covers assertion
-attribution. Ten category-focused cases now pass,
+attribution. Eleven category-focused cases now pass,
 including malformed/reduced/overlapping plans, independent scope attempts,
 cross-scope replay, atomic retries and assertion attribution. The earlier
-single-scope fixture supplies structurally valid synthetic qualification origins
+single-scope diagnostic fixture supplies structurally valid synthetic origins
 and rejects a cross-binding execution-ID replay without changing accepted
 witnesses/proofs. It is not actual original-wrapper provenance. An immutable
 identity-to-primary-case map is available before manifest construction and
@@ -8435,6 +8435,38 @@ preparation:
 Both documents independently recompute; free scratch is 91,721,003,008 bytes.
 This admits composed/contract sources, not later owner-only/producer-packet
 sources or qualifying profiles.
+
+The closed source policy separately identifies all six frozen inspection
+witnesses and sixteen original crash/retention/transfer producers. A structurally
+valid but unrelated provider session is not their proof; qualification rejects
+until actual independent inspection/controller evidence is admitted. Known
+original requirements also apply to `none` binding contexts rather than being
+skipped when no provider is selected. Diagnostic observations remain separate
+and non-qualifying; ordinary typed consumers keep their prior requirements.
+Twenty-four source/binding substitutions and three missing-provider contexts
+first passed incorrectly before the regressions/repair. The whole qualified
+metadata batch also now rejects despite valid ordinary provider origins.
+The earlier positive-origin cross-binding replay fixture is explicitly
+diagnostic, not a successful qualified batch. Shared immutable producer policy
+now drives both packet import and this gate, without changing source wrappers,
+SDK/package/lock bytes or frozen identities. Full tooling passes 351 checks
+(334 passed/seventeen explicit macOS-native skips); native target is 243
+foundations, 107 scopes/1,317 executions and the sixteen-source receipt,
+unadmitted.
+
+Owner-only run
+[40175617630](https://github.com/Stonefly-Labs/Hoard/actions/runs/40175617630)
+at exact `c2d3e2b137540528e35fb9e61c35019ff99e095c` now passes all three jobs,
+233 foundations without failures/errors/skips, 107 scopes/1,317 exact executions
+and every prerequisite. Typed input:
+`514c741d134f348c36543d0d8360f72194cf4a5ff3c8045f56d96b71f37705a5`;
+original input:
+`48190daa0a42318bb9aba59415e04c1bfb56fdd2c6dc26b44690201d9702ebe7`;
+preparation:
+`4f91a94daa5d3f8102121025c6762b03330910dc32486954428f8baff905e737`.
+Both documents independently recompute; free scratch is 91,720,790,016 bytes.
+This admits genuine owner-only sources, not later controller-packet,
+partitioned-category or non-session-gate sources or qualifying profiles.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

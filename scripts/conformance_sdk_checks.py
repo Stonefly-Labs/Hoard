@@ -27,6 +27,7 @@ import artifact_evidence as artifacts
 import conformance_evidence as evidence
 from conformance_case_catalog import (
     CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_BINDINGS, ORIGINAL_ARTIFACT_CONTRACT_WITNESSES,
+    ORIGINAL_ARTIFACT_PROOF_SOURCES,
     ORIGINAL_ARTIFACT_REOPENS, ORIGINAL_ARTIFACT_SHARED_OWNER_WITNESSES, ORIGINAL_ARTIFACT_WITNESSES,
     ORIGINAL_METADATA_FACADE_WITNESSES,
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
@@ -1837,17 +1838,7 @@ def original_artifact_external_scenarios():
 
 
 def original_artifact_proof_sources():
-    prefix = "Hoard.Artifacts.Tests."
-    return {
-        **{prefix + "ArtifactCrashTests.Real_parent_kill_and_fresh_process_reopen_preserve_exact_receipts_and_control_bytes"
-           + f'(barrier: "{barrier}")': ("crash", "local", barrier) for barrier in ("B0", "B1", "B2", "B3", "D0", "D1")},
-        **{prefix + "ArtifactNonCooperativeChildTests.Owned_child_retains_noncooperative_work_until_parent_termination"
-           + f'(provider: "{provider}", scenario: "{scenario}")': ("retention", provider, scenario)
-           for provider in ("local", "object") for scenario in ("source", "destination", "native")},
-        **{prefix + "ArtifactTransferProofTests.Measured_transfer_binds_actual_bytes_pacing_hashes_and_os_peak"
-           + f'(provider: "{provider}", size: {size})': ("transfer", provider, size)
-           for provider in ("local", "object") for size in (268435456, 4294967296)},
-    }
+    return dict(ORIGINAL_ARTIFACT_PROOF_SOURCES)
 
 
 def original_artifact_external_proofs(run, inputs, manifest, ingested):

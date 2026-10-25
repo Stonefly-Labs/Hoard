@@ -20,6 +20,33 @@ CATEGORY_BINDING_SLOTS = (
     ("artifacts", "object", "fixture.artifact.object", "Hoard.Fixtures.Artifacts.ObjectSemantics"),
 )
 
+ORIGINAL_INSPECTION_WITNESSES = MappingProxyType({
+    **{"Hoard.Architecture.Tests.MetadataBoundaryTests." + method: "metadata" for method in (
+        "Native_only_packages_cannot_hide_managed_assets",
+        "Package_groups_follow_actual_resolved_assets_not_a_guessed_framework",
+        "Prepared_metadata_packages_and_negative_contracts_preserve_boundaries_and_binary_surface",
+        "Pruned_dependency_needs_sdk_evidence_a_compatible_version_and_an_actual_framework_reference",
+    )},
+    **{"Hoard.Architecture.Tests.ArtifactBoundaryTests." + method: "artifacts" for method in (
+        "Prepared_artifact_consumer_bodies_are_provider_neutral_and_object_mechanisms_do_not_rename",
+        "Prepared_artifact_packages_preserve_independence_and_existing_public_members",
+    )},
+})
+ORIGINAL_ARTIFACT_PROOF_SOURCES = MappingProxyType({
+    **{"Hoard.Artifacts.Tests.ArtifactCrashTests."
+       "Real_parent_kill_and_fresh_process_reopen_preserve_exact_receipts_and_control_bytes"
+       + f'(barrier: "{barrier}")': ("crash", "local", barrier)
+       for barrier in ("B0", "B1", "B2", "B3", "D0", "D1")},
+    **{"Hoard.Artifacts.Tests.ArtifactNonCooperativeChildTests."
+       "Owned_child_retains_noncooperative_work_until_parent_termination"
+       + f'(provider: "{provider}", scenario: "{scenario}")': ("retention", provider, scenario)
+       for provider in ("local", "object") for scenario in ("source", "destination", "native")},
+    **{"Hoard.Artifacts.Tests.ArtifactTransferProofTests."
+       "Measured_transfer_binds_actual_bytes_pacing_hashes_and_os_peak"
+       + f'(provider: "{provider}", size: {size})': ("transfer", provider, size)
+       for provider in ("local", "object") for size in (268435456, 4294967296)},
+})
+
 _ORIGINAL_METADATA_ROLES = ("owner", "store", "schema", "authority", "controls")
 _ORIGINAL_ARTIFACT_ROLES = ("owner", "store", "validator", "maintenance", "lifetime", "authority", "controls")
 ORIGINAL_METADATA_FORESTS = MappingProxyType({
@@ -272,7 +299,7 @@ ORIGINAL_ARTIFACT_FORESTS = MappingProxyType({
 
 
 def original_witness_policy(identity):
-    """Closed incremental attribution; unclassified witnesses retain strict typed-origin admission."""
+    """Select original instance/contract attribution, distinct from non-session proofs."""
     contracts = (*ORIGINAL_ARTIFACT_CONTRACT_WITNESSES,
                  "Hoard.Artifacts.Tests.ArtifactValueTests.Identity_bounds_preserve_empty_and_reject_overflow_negative_or_null")
     if identity in ORIGINAL_METADATA_WITNESSES:
@@ -284,6 +311,15 @@ def original_witness_policy(identity):
     if identity in ORIGINAL_ARTIFACT_WITNESSES:
         return "artifacts", "original-instance", _ORIGINAL_ARTIFACT_ROLES
     return None
+
+
+def original_non_session_policy(identity):
+    """A provider session cannot stand in for an inspection or controller proof."""
+    category = ORIGINAL_INSPECTION_WITNESSES.get(identity)
+    if category is not None:
+        return category, "inspection"
+    source = ORIGINAL_ARTIFACT_PROOF_SOURCES.get(identity)
+    return None if source is None else ("artifacts", source[0])
 
 
 def original_witness_parents(identity):

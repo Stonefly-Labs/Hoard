@@ -1865,6 +1865,12 @@ The same immutable primary-case selection is available
 before manifest construction. A synthetic positive-origin regression also
 rejects cross-binding execution-ID replay without changing accepted evidence;
 it does not establish real wrapper provenance.
+The six frozen inspection witnesses and sixteen crash/retention/transfer
+producers now have a separate closed non-session classification. An unrelated
+valid provider session cannot qualify them; missing independent inspection/
+controller admission rejects, including with a `none` binding. Diagnostic
+packets remain non-qualifying and ordinary typed consumers keep their existing
+requirements.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

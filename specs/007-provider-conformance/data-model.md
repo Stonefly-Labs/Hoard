@@ -98,6 +98,12 @@ remain required; missing controller observations remain incomplete.
 Synthetic positive-origin coverage verifies that a cross-binding execution-ID
 replay rejects without mutating previously accepted witnesses or proof bytes.
 These model fixtures do not establish actual wrapper provenance.
+Known inspection/controller witnesses have a separate immutable source policy,
+not a typed provider-session requirement. Unrelated valid sessions cannot make
+them qualify, and selecting `none` cannot bypass their evidence. Independent
+inspection/controller admission remains unimplemented and rejects; diagnostic
+producer receipts confer no qualification. The positive-origin batch/replay
+fixture is explicitly diagnostic.
 
 ### Binding input snapshot
 

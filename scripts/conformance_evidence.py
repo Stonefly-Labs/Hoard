@@ -1641,12 +1641,14 @@ def ingest_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data,
             raise ConformanceError("ProofMismatch")
         selected_binding = next((binding for binding in inputs["bindings"]
                                  if binding["bindingId"] == witness["bindingId"]), None)
-        if inputs["mode"] == "qualification" and witness["status"] == "Passed" and selected_binding is not None:
-            from conformance_case_catalog import original_witness_policy
+        if inputs["mode"] == "qualification" and witness["status"] == "Passed":
+            from conformance_case_catalog import original_non_session_policy, original_witness_policy
             if original_witness_policy(witness["testIdentity"]) is not None:
                 if not originals:
                     raise ConformanceError("WitnessMissing")
-            elif (selected_binding["category"] in _SESSION_ROLES
+            elif original_non_session_policy(witness["testIdentity"]) is not None:
+                raise ConformanceError("WitnessMissing")
+            elif (selected_binding is not None and selected_binding["category"] in _SESSION_ROLES
                   and not any(origin["descriptorSha256"] == selected_binding["descriptorSha256"] for origin in origins)):
                 raise ConformanceError("WitnessMissing")
         session_origins[witness["executionId"]] = origins

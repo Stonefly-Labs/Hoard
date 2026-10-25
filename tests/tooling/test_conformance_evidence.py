@@ -1726,6 +1726,91 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.assertEqual(history.witnesses, ())
         self.assertEqual(dict(history.proofs), {})
 
+    def test_known_inspection_and_controller_witnesses_cannot_qualify_with_unrelated_valid_sessions(self):
+        import conformance_case_catalog as catalog
+        baseline = copy.deepcopy((self.inputs, self.manifest, self.proof, self.witness, self.completion))
+        fixtures = (".MetadataBoundaryTests.", ".ArtifactBoundaryTests.", ".ArtifactCrashTests.",
+                    ".ArtifactNonCooperativeChildTests.", ".ArtifactTransferProofTests.")
+        for profile, binding in (("metadata", "sqlite"), ("artifacts", "local"), ("artifacts", "object")):
+            for identity in catalog.category_runtime_cases(profile, binding):
+                if not any(fixture in identity for fixture in fixtures):
+                    continue
+                with self.subTest(binding=binding, identity=identity):
+                    self.inputs, self.manifest, self.proof, self.witness, self.completion = copy.deepcopy(baseline)
+                    origin, assignments = self.runtime_origin("runtime")
+                    if profile == "artifacts":
+                        del origin["components"]["schema"], assignments["schema"]
+                        for role in ("validator", "maintenance", "lifetime"):
+                            origin["components"][role] = {
+                                **origin["components"]["store"], "instanceId": str(uuid.uuid4())}
+                            assignments[role] = assignments["store"]
+                    self.inputs["bindings"][0].update(bindingId=binding, category=profile)
+                    self.identity = identity
+                    self.manifest["expected"][0].update(
+                        testIdentity=identity, fullyQualifiedName=identity.split("(")[0], bindingId=binding)
+                    self.proof.update(testIdentity=identity, bindingId=binding, sessionOrigins=[origin])
+                    self.witness.update(testIdentity=identity, bindingId=binding)
+                    for mode in ("diagnostic", "qualification"):
+                        self.inputs["mode"] = mode
+                        input_sha = evidence.digest(self.inputs)
+                        self.manifest["inputSha256"] = input_sha
+                        manifest_sha = evidence.digest(self.manifest)
+                        self.proof.update(inputSha256=input_sha, manifestSha256=manifest_sha)
+                        self.witness.update(inputSha256=input_sha, proofSha256=evidence.digest(self.proof))
+                        self.completion.update(inputSha256=input_sha, manifestSha256=manifest_sha)
+                        options = {"origin_inputs": {binding: assignments},
+                                   "expected_tests": {identity: (binding, "none")}}
+                        if mode == "diagnostic":
+                            self.assertEqual(self.ingest(**options)["diagnosticCode"], "None")
+                        else:
+                            with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+                                self.ingest(**options)
+
+    def test_category_import_requires_inspection_evidence_even_when_all_provider_origins_are_valid(self):
+        origin, assignments = self.runtime_origin("runtime")
+        history = self.category_history(
+            mode="qualification", origin_inputs={"sqlite": assignments, "memory": assignments})
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin("sqlite", self.attempt)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012), self.assertRaisesRegex(
+                evidence.ConformanceError, "WitnessMissing"):
+            history.finish("sqlite", **self.category_transport("sqlite", origin=origin))
+        self.assertEqual(history.witnesses, ())
+        self.assertEqual(dict(history.session_origins), {})
+        self.assertEqual(dict(history.original_observations), {})
+
+    def test_known_original_evidence_cannot_be_bypassed_by_selecting_no_provider_binding(self):
+        baseline = copy.deepcopy((self.inputs, self.manifest, self.proof, self.witness, self.completion))
+        identities = (
+            "Hoard.Metadata.Tests.MetadataRoundTripTests."
+            "MP01_Every_entity_round_trips_and_invalid_relationships_leave_no_changes",
+            "Hoard.Architecture.Tests.MetadataBoundaryTests.Native_only_packages_cannot_hide_managed_assets",
+            "Hoard.Artifacts.Tests.ArtifactCrashTests."
+            'Real_parent_kill_and_fresh_process_reopen_preserve_exact_receipts_and_control_bytes(barrier: "B0")',
+        )
+        for identity in identities:
+            with self.subTest(identity=identity):
+                self.inputs, self.manifest, self.proof, self.witness, self.completion = copy.deepcopy(baseline)
+                self.identity = identity
+                self.manifest["expected"][0].update(
+                    testIdentity=identity, fullyQualifiedName=identity.split("(")[0], bindingId="none")
+                self.proof.update(testIdentity=identity, bindingId="none")
+                self.witness.update(testIdentity=identity, bindingId="none")
+                for mode in ("diagnostic", "qualification"):
+                    self.inputs["mode"] = mode
+                    input_sha = evidence.digest(self.inputs)
+                    self.manifest["inputSha256"] = input_sha
+                    manifest_sha = evidence.digest(self.manifest)
+                    self.proof.update(inputSha256=input_sha, manifestSha256=manifest_sha)
+                    self.witness.update(inputSha256=input_sha, proofSha256=evidence.digest(self.proof))
+                    self.completion.update(inputSha256=input_sha, manifestSha256=manifest_sha)
+                    options = {"expected_tests": {identity: ("none", "none")}}
+                    if mode == "diagnostic":
+                        self.assertEqual(self.ingest(**options)["diagnosticCode"], "None")
+                    else:
+                        with self.assertRaisesRegex(evidence.ConformanceError, "WitnessMissing"):
+                            self.ingest(**options)
+
     def test_category_import_requires_both_artifact_options_and_keeps_all_seven_qc_controls_incomplete(self):
         import conformance_case_catalog as catalog
         history = self.category_history(profile="artifacts")
@@ -1748,10 +1833,10 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.assertEqual(sum(result["status"] == "Incomplete" for result in results), 7)
         self.assertTrue(all(result["status"] == "Passed" for result in results if result["bindingId"] == "local"))
 
-    def test_category_import_checks_qualified_origins_and_rejects_reused_execution_ids_across_bindings(self):
+    def test_category_import_checks_admitted_origins_and_rejects_reused_execution_ids_across_bindings(self):
         origin, assignments = self.runtime_origin("runtime")
         history = self.category_history(
-            mode="qualification", origin_inputs={"sqlite": assignments, "memory": assignments})
+            mode="diagnostic", origin_inputs={"sqlite": assignments, "memory": assignments})
         with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
             history.begin("sqlite", self.attempt)
         with mock.patch.object(evidence.time, "monotonic", return_value=0.012):

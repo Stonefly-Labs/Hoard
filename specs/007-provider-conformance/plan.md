@@ -5495,6 +5495,47 @@ data-model and harness/evidence contracts are updated. Provider behavior,
 SDK/package/lock bytes, invocation examples, diagrams, production APIs and
 reviewer-owned markers are unaffected.
 
+### Non-session provenance cannot be replaced by unrelated sessions
+
+Two genuine admission gaps were exposed: twenty-four frozen source/binding
+contexts incorrectly qualified with structurally valid unrelated provider
+sessions, and three known original/inspection/controller identities bypassed
+their required evidence through a `none` binding. Diagnostic counterparts pass,
+proving these were missing qualification guards rather than fixture/setup
+errors. A qualified full metadata batch also demonstrates the first gap.
+
+The catalog now independently and immutably classifies all six inspection facts
+and sixteen original producer identities. Packet import reuses the same closed
+producer mapping instead of duplicating it. Qualification requires their
+independent non-session channel; it remains unimplemented and rejects. Known
+original observation requirements are enforced even without a selected
+provider. Ordinary typed consumers and diagnostic behavior are unchanged. The
+earlier positive-origin replay fixture is correctly diagnostic; unrelated
+sessions no longer create a successful synthetic qualified category batch.
+
+All 351 tooling checks pass (334 passed/seventeen explicit macOS-native skips);
+frozen inventory, SDK catalog and patch checks pass. Current source parity/hook
+tests also pass 23 focused .NET cases without skips; this reconfirms their
+inventory/transport guards, not complete extraction/category acceptance.
+The new native target is 243 foundations and the unchanged 107 scopes/1,317
+executions plus sixteen-source receipt, unadmitted. No new SDK/provider/
+source-wrapper/package/lock, product contract, task/reviewer marker or
+deployment/example/diagram changes.
+
+Owner-only native
+[40175617630](https://github.com/Stonefly-Labs/Hoard/actions/runs/40175617630)
+at exact `c2d3e2b137540528e35fb9e61c35019ff99e095c` is now admitted:
+all three jobs, 233 foundations without failures/errors/skips, 107 scopes/
+1,317 exact discoveries/executions and every prerequisite. Typed input:
+`514c741d134f348c36543d0d8360f72194cf4a5ff3c8045f56d96b71f37705a5`;
+original input:
+`48190daa0a42318bb9aba59415e04c1bfb56fdd2c6dc26b44690201d9702ebe7`;
+preparation:
+`4f91a94daa5d3f8102121025c6762b03330910dc32486954428f8baff905e737`.
+Both documents independently recompute; free scratch is 91,720,790,016 bytes.
+This admits actual owner-only sources, not later controller-packet,
+partitioned-category or non-session-gate sources or qualifying profiles.
+
 ## Summary
 
 
