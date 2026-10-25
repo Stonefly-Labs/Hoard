@@ -40,9 +40,15 @@ ORIGINAL_METADATA_FACADE_WITNESSES = tuple(sorted(
         ("MetadataPagingTests", (
             "MP07_All_seven_query_kinds_keep_scope_and_tuple_order",
             "MP07_Oversized_requests_and_results_fail_whole_instead_of_truncating")),
-    ) for method in methods))
+    ) for method in methods)) + tuple(
+        "Hoard.Metadata.Tests.MetadataFailureTests."
+        f'MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters(shape: "{shape}")'
+        for shape in ("cache-auth", "aggregate-auth", "aggregate-start", "aggregate-end", "lease-resource"))
 ORIGINAL_METADATA_WITNESSES = tuple(sorted((
     *ORIGINAL_METADATA_FACADE_WITNESSES,
+    *("Hoard.Metadata.Tests.MetadataPagingTests."
+      f'MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume(shape: "{shape}")'
+      for shape in ("null", "omitted", "wrong-type", "empty", "odd-hex", "invalid-hex")),
     *("Hoard.Metadata.Tests." + fixture + "." + method
       for fixture, methods in (
           ("MetadataRoundTripTests", (
@@ -50,6 +56,9 @@ ORIGINAL_METADATA_WITNESSES = tuple(sorted((
               "MP06_Scopes_and_intervals_cannot_cross_registry_boundaries")),
           ("MetadataIdentityTests", (
               "MP04_Canonical_text_is_not_normalized_and_forbidden_credentials_are_rejected",)),
+          ("MetadataAdmissionTests", (
+              "MP32_Ordinary_use_requires_explicit_schema_admission",
+              "MP19_Invalid_budgets_and_closed_instances_do_not_dispatch_work")),
           ("MetadataAtomicityTests", (
               "MP09_Independent_engine_reads_cannot_see_an_uncommitted_candidate",
               "MP09_Each_faulted_candidate_is_invisible_and_success_is_complete",

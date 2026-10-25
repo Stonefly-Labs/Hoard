@@ -625,11 +625,16 @@ and 100 scopes/982 observations with all prerequisites; that admitted diagnostic
 receipt does not execute the later full-input original scopes.
 The next increment freezes original role images per exact witness within each
 binding, distinguishing genuine fixture authorities from already-used facades.
-Forty-two single-owner metadata identities per provider now observe actual
+Fifty-five single-owner metadata identities per provider now observe actual
 references without companion construction. Local minimal-input observation and
-independent locked replay pass 100 executions/508 image correspondences.
-Native admission requires 230 foundations and 105 scopes/1,082 observations,
-still pending; broader multi-owner/reopen/controller and qualifying profiles
+independent locked replay pass 126 executions/638 image correspondences,
+including exact corruption/continuation parameters and both direct-construction
+admission witnesses. Native admission requires 230 foundations and
+105 scopes/1,108 observations, still pending. Earlier full-input
+`40167209164 @0005638` passed all three jobs, 229 foundations and
+105 scopes/990 observations with distinct original/typed input digests and
+every prerequisite. Its earlier eight-original diagnostic does not admit these
+expanded sources; broader multi-owner/reopen/controller and qualifying profiles
 remain unfinished.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.

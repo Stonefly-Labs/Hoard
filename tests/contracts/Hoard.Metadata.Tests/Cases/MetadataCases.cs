@@ -15,17 +15,18 @@ internal static class MetadataCases
         new PublicationAuthority(fixture.Authority);
 
     public static void ObserveOriginal(ITestOutputHelper output, MetadataFixtureSession fixture,
-        IMetadataConformanceAuthority authority, string fixtureType, [CallerMemberName] string method = "") =>
-        WriteOriginal(output, fixture, authority, fixtureType, method);
+        IMetadataConformanceAuthority authority, string fixtureType, [CallerMemberName] string method = "",
+        string? shape = null) =>
+        WriteOriginal(output, fixture, authority, fixtureType, method, shape);
 
     public static void ObserveOriginal(ITestOutputHelper output, MetadataFixtureSession fixture,
-        string fixtureType, [CallerMemberName] string method = "") =>
-        WriteOriginal(output, fixture, fixture.Authority, fixtureType, method);
+        string fixtureType, [CallerMemberName] string method = "", string? shape = null) =>
+        WriteOriginal(output, fixture, fixture.Authority, fixtureType, method, shape);
 
     private static void WriteOriginal(ITestOutputHelper output, MetadataFixtureSession fixture,
-        object authority, string fixtureType, string method) =>
+        object authority, string fixtureType, string method, string? shape) =>
         ConformanceOriginalObservationOutput.WriteIfRequested(output,
-            "Hoard.Metadata.Tests." + fixtureType + "." + method,
+            "Hoard.Metadata.Tests." + fixtureType + "." + method + (shape is null ? "" : $"(shape: \"{shape}\")"),
             fixture.Provider, "original-instance", ("owner", fixture), ("store", fixture.Store),
             ("schema", fixture.Schema), ("authority", authority), ("controls", fixture.Controls));
 

@@ -128,9 +128,15 @@ inside each binding and freeze them before execution. Admission accepts no flat
 or foreign-witness fallback and requires the exact role inventory. Metadata
 wrappers capture the fixture's actual authority unless their unchanged assertion
 already used a facade, in which case that same facade is pinned and observed.
-Expanded single-owner observation/replay pass 100 executions/508 image
-correspondences with minimal inputs. Native admission requires 230 foundations
-and 105 scopes/1,082 observations; it remains pending. Multi-owner/reopen and
+Expanded single-owner observation/replay pass 126 executions/638 image
+correspondences with minimal inputs, including exact query-corruption/
+continuation parameters and both direct-construction admission witnesses.
+Admission also rejects extra roots for the current one-observation policies.
+Native admission requires 230 foundations and 105 scopes/1,108 observations;
+it remains pending. Earlier full-input `40167209164 @0005638` passed all three
+jobs, 229 foundations and 105 scopes/990 observations with distinct original/
+typed input digests and every prerequisite. Its earlier eight-original
+diagnostic does not admit these expanded sources. Multi-owner/reopen and
 controller/category/profile coverage are not implied.
 
 The implemented private transport distinguishes `purpose: discovery` from

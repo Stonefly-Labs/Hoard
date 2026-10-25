@@ -1015,7 +1015,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         run = SimpleNamespace(root=self.directory)
         scenarios = checks.original_observation_scenarios()
         self.assertEqual(len(scenarios), 5)
-        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 100)
+        self.assertEqual(sum(len(scenario[1]) for scenario in scenarios), 126)
         frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_bytes())
         expected_metadata = {name for entry in frozen["entries"] if entry["profileId"] == "metadata"
                              for name in entry["runtimeTests"] if name.startswith((
@@ -1025,12 +1025,13 @@ class SdkDiagnosticTests(unittest.TestCase):
                                  "Hoard.Metadata.Tests.MetadataRoundTripTests.",
                                  "Hoard.Metadata.Tests.MetadataAtomicityTests.",
                                  "Hoard.Metadata.Tests.MetadataDeadlineTests.",
+                                 "Hoard.Metadata.Tests.MetadataAdmissionTests.",
                                  "Hoard.Metadata.Tests.MetadataReconciliationTests.",
                                  "Hoard.Metadata.Tests.MetadataFailureTests.MP20_",
-                                 "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Absence",
-                                 "Hoard.Metadata.Tests.MetadataFailureTests.MP21_Stored",
+                                 "Hoard.Metadata.Tests.MetadataFailureTests.MP21_",
                                  "Hoard.Metadata.Tests.MetadataFailureTests.MP22_",
                                  "Hoard.Metadata.Tests.MetadataPagingTests.MP07_",
+                                 "Hoard.Metadata.Tests.MetadataPagingTests.MP08_Malformed_",
                                  "Hoard.Metadata.Tests.MetadataLeaseTests.MP28_",
                                  "Hoard.Metadata.Tests.MetadataLeaseTests.MP30_"))}
         self.assertEqual(set(scenarios[0][1]), expected_metadata)
@@ -1073,6 +1074,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                                 "MetadataPublicationTests.", "MetadataRelationshipTests.",
                                 "MetadataIdentityTests.MP02_", "MetadataIdentityTests.MP03_",
                                 "MetadataRoundTripTests.MP01_", "MetadataReconciliationTests.MP14_",
+                                "MetadataFailureTests.MP21_Corrupt_query_",
                                 "MetadataPagingTests.MP07_All_seven_", "MetadataPagingTests.MP07_Oversized_"))
                             authority = roles["authority"]
                             self.assertEqual(authority[1], None if facade else "Hoard.Fixtures.Metadata.HostAdapters")

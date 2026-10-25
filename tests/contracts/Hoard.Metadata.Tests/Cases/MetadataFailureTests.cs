@@ -71,9 +71,11 @@ public sealed class MetadataFailureTests(ITestOutputHelper output)
             "lease-resource" => MetadataRecordCorruption.LeaseResource,
             _ => throw new ArgumentException("Unknown corruption test shape.", nameof(shape))
         };
-        await MetadataCorruptionAssertions.QueryDimensionsAsync(fixture.Store, CommonAuthority(fixture),
+        var authority = CommonAuthority(fixture);
+        await MetadataCorruptionAssertions.QueryDimensionsAsync(fixture.Store, authority,
             (request, token) => CommonCorruptionAsync(fixture, request, token), corruption, default);
         CommonDiagnosticAssertions(fixture);
+        ObserveOriginal(output, fixture, authority, nameof(MetadataFailureTests), shape: shape);
     }
 
     [Fact]

@@ -99,5 +99,6 @@ public sealed class MetadataPagingTests(ITestOutputHelper output)
         };
         await MetadataPagingAssertions.MalformedContinuationFieldsAsync(
             fixture.Store, CommonContinuationCorruption(fixture), corruption, default);
+        ObserveOriginal(output, fixture, nameof(MetadataPagingTests), shape: shape);
     }
 }

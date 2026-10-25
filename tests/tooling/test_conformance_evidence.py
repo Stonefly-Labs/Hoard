@@ -1166,7 +1166,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
     def test_original_observation_rejects_foreign_kind_context_roles_or_package(self):
         for mutation in ("kind", "identity", "binding", "run", "roles", "package", "assignment-role", "missing", "typed-only",
-                         "replay", "parent"):
+                         "replay", "extra-root", "parent"):
             with self.subTest(mutation=mutation):
                 self.setUp()
                 observation, assignments = self.original_transport()
@@ -1189,6 +1189,10 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     self.proof["originalObservations"] = []
                 elif mutation == "replay":
                     self.proof["originalObservations"].append(copy.deepcopy(observation))
+                elif mutation == "extra-root":
+                    extra = copy.deepcopy(observation)
+                    extra["observationId"] = str(uuid.uuid4())
+                    self.proof["originalObservations"].append(extra)
                 elif mutation == "parent":
                     observation.update(parentObservationId=str(uuid.uuid4()), operation="reopen")
                 else:

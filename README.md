@@ -1899,9 +1899,16 @@ Original image assignments are now independently selected and frozen per exact
 witness, rather than sharing one authority shape across a binding. Expanded
 single-owner metadata coverage observes either the actual fixture authority
 or the exact facade already used by assertions, never a new companion.
-Local observation/replay pass 100 executions/508 image correspondences using
-minimal inputs; the new native requirement is 230 foundations and
-105 scopes/1,082 observations, still pending. Multi-owner/reopen/controller
+Exact corruption/continuation parameters and both direct-construction admission
+witnesses are now included. Local observation/replay pass 126 executions/
+638 image correspondences using minimal inputs; the new native requirement is
+230 foundations and 105 scopes/1,108 observations, still pending.
+Full-input run
+[40167209164](https://github.com/Stonefly-Labs/Hoard/actions/runs/40167209164)
+at `0005638` passed all three jobs, 229 foundations and 105 scopes/990 observations
+with distinct recomputed original/typed input digests and every prerequisite.
+That admits the earlier eight-original-execution diagnostic, not these later
+expanded sources or qualifying profiles. Multi-owner/reopen/controller
 coverage and complete qualifying profiles remain unfinished.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized

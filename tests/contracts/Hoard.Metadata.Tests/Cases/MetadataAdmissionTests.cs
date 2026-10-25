@@ -1,10 +1,11 @@
 using Hoard.Fixtures.Metadata.Hosting;
 using Hoard.Testing.Conformance.Metadata;
+using Xunit.Abstractions;
 using static Hoard.Metadata.Tests.MetadataCases;
 
 namespace Hoard.Metadata.Tests;
 
-public sealed class MetadataAdmissionTests
+public sealed class MetadataAdmissionTests(ITestOutputHelper output)
 {
     [Fact]
     public async Task MP32_Ordinary_use_requires_explicit_schema_admission()
@@ -12,6 +13,7 @@ public sealed class MetadataAdmissionTests
         await using var fixture = MetadataFixtureSession.CreateFromEnvironment(new MetadataTestClock());
         await MetadataAdmissionAssertions.ExplicitAdmissionAsync(
             fixture.Store, fixture.Schema, () => CommonCounters(fixture), default);
+        ObserveOriginal(output, fixture, nameof(MetadataAdmissionTests));
     }
 
     [Fact]
@@ -20,5 +22,6 @@ public sealed class MetadataAdmissionTests
         var fixture = MetadataFixtureSession.CreateFromEnvironment(new MetadataTestClock());
         await MetadataAdmissionAssertions.InvalidBudgetsAsync(
             fixture.Store, fixture.Schema, () => CommonCounters(fixture), fixture.DisposeAsync, default);
+        ObserveOriginal(output, fixture, nameof(MetadataAdmissionTests));
     }
 }

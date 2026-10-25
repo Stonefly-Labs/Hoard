@@ -4979,6 +4979,54 @@ examples and diagrams are unaffected. Tasks/reviewer markers, locks, historical
 seals and the running checkpoint remain unchanged. Complete original/reopen/
 controller attribution and later implementation tasks remain unfinished.
 
+### Exact parameterized and direct-construction originals
+
+All five query-dimension corruption parameters and six malformed-continuation
+parameters now observe genuine original instances after unchanged assertions.
+The shared helper uses the actual `shape` argument plus source-owned caller
+identity; independent frozen selection includes every parameter, with the same
+already-used facade for query dimensions and real fixture authority for
+continuations. Both original admission witnesses also observe their directly
+constructed fixtures without adding factories, initialization or disposal.
+Original metadata coverage is now 55 exact identities per provider.
+
+Parent ingestion additionally requires the current policy's one observation;
+an extra independently numbered root can no longer pass merely because its
+roles and context otherwise match. The added regression first fails because
+the previous ingestion accepts it. Expanded routing first fails at 100 versus
+122 executions before adding the two direct witnesses brings the total to 126.
+Actual minimal-input observation and independent fresh-cache locked replay
+each pass 126 exact discoveries/executions, 122 original owners, four
+session-free contexts and 638 role/image correspondences, reproducing SDK
+`a94e225acd4ef19a8d1b363f5c7eedf498bae9364fbc2838f917f17c595485e3`.
+No category/profile qualification is inferred.
+
+`python3 -m unittest discover -s tests/tooling -v` passes 338 checks
+(321 passed/seventeen macOS-native skips).
+`dotnet format whitespace --folder tests/contracts/Hoard.Metadata.Tests/Cases --verify-no-changes --verbosity quiet`,
+`python3 tests/fixtures/conformance/baselines/freeze_inventory.py --check`,
+`python3 scripts/conformance_case_catalog.py --check-sdk` and `git diff --check`
+pass. The new full-input native vector requires 230 foundations and
+105 scopes/1,108 observations, pending. Broader multi-owner/reopen/controller
+coverage and qualifying runners remain unfinished. README and affected
+guides/model/contracts are updated; product/deployment examples and diagrams,
+SDK/public contracts, locks, historical seals, reviewer/task markers and the
+running checkpoint are unchanged.
+
+Full-input run
+[40167209164](https://github.com/Stonefly-Labs/Hoard/actions/runs/40167209164)
+binds exact head `0005638ac1b6a75f267d95332ebbb865b51ec436`: all three jobs,
+229 native foundations without failures/errors/skips, 105 scopes/990 exact
+discoveries/executions (including eight originals) and every recovery/transfer/
+containment/replay prerequisite pass. Typed input:
+`824568e3af9b8df6bd2cc69dda0464875a1d6c009d9a25c66fef3865a1e8b39c`;
+separate original input:
+`743646e7c2a0094bf4e1df8c2d8700fba64e6ce899ee9ef57ba24d193049c8b9`;
+preparation:
+`3f7f3616d95db05ffe188f099dac364f7b1e6d28fc175605c95ee2583fd1fc19`.
+Both input documents independently recompute. This admits only that earlier
+diagnostic increment, not later expanded sources or qualifying profiles.
+
 ## Summary
 
 

@@ -1220,11 +1220,16 @@ still pending. Earlier `40166560899 @8aaa36d` passed all three jobs,
 227 native foundations and 100 scopes/982 observations with every prerequisite;
 it is admitted diagnostic evidence, not execution of the later full-input scopes.
 Role-image selection subsequently becomes exact-witness-specific within each
-binding and is deeply frozen by both histories. Forty-two single-owner metadata
+binding and is deeply frozen by both histories. Fifty-five single-owner metadata
 identities per provider observe the genuine authority shape already used, not
-an invented facade. Actual minimal-input observation/replay pass 100 executions/
-508 image correspondences; the expanded native requirement is 230 foundations
-and 105 scopes/1,082 observations, pending. Existing one-root admission remains
+an invented facade, including exact corruption/continuation parameters and
+both direct-construction admission witnesses. Actual minimal-input observation/
+replay pass 126 executions/638 image correspondences; the expanded native
+requirement is 230 foundations and 105 scopes/1,108 observations, pending.
+Earlier full-input run `40167209164 @0005638` passed all three jobs,
+229 foundations and 105 scopes/990 observations with distinct original/typed
+input digests and every prerequisite; its earlier eight-original diagnostic
+does not admit these expanded sources. Existing one-root admission remains
 strict; multi-owner/reopen scopes are not silently promoted into this policy.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,

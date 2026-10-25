@@ -191,8 +191,8 @@ session. Actual typed SDK binding consumers retain complete typed-session origin
 Unclassified witnesses retain the existing typed-origin requirement; there is
 no permissive default or provider-selected classification.
 
-The closed incremental policy covers original MP-01/02/03/13/23..27/31, AS-01's two original
-provider parameters, both frozen artifact value witnesses (expectations/checksums
+The closed incremental policy covers 55 single-owner metadata identities per
+provider, twelve original artifact publication parameters, both frozen artifact value witnesses (expectations/checksums
 and redacted diagnostics/get-only members), and the auxiliary identity-bound value test. The
 non-owning `ConformanceOriginalObservation` captures exact run/case/test/binding,
 fresh observation UUID, nullable parent observation, kind, operation, actual
@@ -254,10 +254,17 @@ identity, then role. Both histories deeply freeze this bounded structure before
 execution. Ingestion requires the selected identity and exact role inventory;
 flat, foreign-witness or cross-binding assignments cannot serve as fallback.
 This permits truthful original authority shapes without inventing an unused
-facade. Forty-two single-owner metadata identities per provider are observed.
-Minimal-input observation/replay pass 100 executions/508 image correspondences;
-the expanded native path requires 230 foundations and 105 scopes/1,082
+facade. Fifty-five single-owner metadata identities per provider are observed,
+including exact query-corruption/continuation parameters and direct-construction
+admission witnesses. The current one-observation policy also rejects extra
+roots rather than accepting arbitrary passing provenance.
+Minimal-input observation/replay pass 126 executions/638 image correspondences;
+the expanded native path requires 230 foundations and 105 scopes/1,108
 observations, still pending. Public entity/proof schemas remain unchanged.
+Earlier full-input run `40167209164 @0005638` independently reproduced distinct
+original and typed input digests across 105 scopes/990 observations and every
+prerequisite. This admits only its earlier eight-original diagnostic, not these
+expanded sources or qualifying profiles.
 
 ### Shared bounds
 

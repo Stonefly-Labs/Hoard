@@ -8046,6 +8046,39 @@ still pending. README and affected guides/model/contracts are updated;
 production/deployment examples and diagrams are unaffected. No task/reviewer,
 historical-seal, lock, public schema or running-stage marker changes.
 
+Exact query-corruption and continuation parameters plus both directly
+constructed admission witnesses now extend original metadata coverage to
+55 identities per provider. The same source helper carries the actual `shape`
+argument; the independent frozen catalog selects all parameter rows and their
+genuine authority image. Assertions, construction and disposal are unchanged.
+Parent ingestion now rejects additional roots for these one-observation
+policies, not just the diagnostic post-check. The added extra-root regression
+first fails because the old ingestion accepts it; expanded routing first fails
+at 100 instead of 122 executions, before the two direct cases bring it to 126.
+Actual local minimal-input observation and independent fresh-cache locked replay
+each pass 126 discoveries/executions, 122 original owners, four contract
+contexts and 638 image correspondences, reproducing the unchanged SDK archive.
+Full tooling remains 338 checks passing (321 passed/seventeen macOS-native
+skips); metadata whitespace and both frozen catalogs pass.
+The expanded native requirement is 230 foundations and 105 scopes/1,108
+observations, pending; broader multi-owner/reopen/controller paths remain work.
+
+Full-input run
+[40167209164](https://github.com/Stonefly-Labs/Hoard/actions/runs/40167209164)
+binds exact head `0005638ac1b6a75f267d95332ebbb865b51ec436`: all three jobs,
+229 foundations without failures/errors/skips and 105 scopes/990 exact
+discoveries/executions, including eight original executions, plus every
+recovery/transfer/containment/replay prerequisite pass. Typed input:
+`824568e3af9b8df6bd2cc69dda0464875a1d6c009d9a25c66fef3865a1e8b39c`;
+separate original input:
+`743646e7c2a0094bf4e1df8c2d8700fba64e6ce899ee9ef57ba24d193049c8b9`;
+preparation:
+`3f7f3616d95db05ffe188f099dac364f7b1e6d28fc175605c95ee2583fd1fc19`.
+Both inputs independently recompute. This admitted diagnostic receipt does
+not qualify later expanded sources, category profiles or the unfinished stage.
+README and affected guides/model/contracts reflect that distinction;
+production/deployment examples and diagrams are unaffected.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

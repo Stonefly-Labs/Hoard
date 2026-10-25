@@ -1485,7 +1485,7 @@ def _ingest_original_observations(inputs, observations, *, original_inputs, entr
     if not observations:
         return ()
     policy = original_witness_policy(entry["testIdentity"])
-    if policy is None:
+    if policy is None or len(observations) != 1:
         raise ConformanceError("WitnessMissing")
     category, kind, roles = policy
     binding_id = entry["bindingId"]
