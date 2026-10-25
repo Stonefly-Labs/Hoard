@@ -52,6 +52,7 @@ OBJECT_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ObjectArt
 CONFIGURED_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ArtifactConfiguredSessionTests."
 PAYLOAD_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ArtifactPayloadSessionTests."
 FULL_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ArtifactConformanceSessionTests."
+FULL_METADATA_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
 ARTIFACT_CONSUMER_PREFIXES = (
     ARTIFACT_CONSUMER_PREFIX, OBJECT_ARTIFACT_CONSUMER_PREFIX, CONFIGURED_ARTIFACT_CONSUMER_PREFIX,
     PAYLOAD_ARTIFACT_CONSUMER_PREFIX, FULL_ARTIFACT_CONSUMER_PREFIX)
@@ -82,7 +83,7 @@ SQLITE_BINDING_PREFIX = "Hoard.Fixtures.Conformance.Consumer.SqliteBindingTests.
 SQLITE_MECHANISM_PREFIX = "Hoard.Fixtures.Conformance.Consumer.SqliteMechanismTests."
 BINDING_TEST_PREFIXES = (
     BINDING_TEST_PREFIX, BINDING_OWNERSHIP_PREFIX, SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX,
-    *ARTIFACT_CONSUMER_PREFIXES)
+    FULL_METADATA_CONSUMER_PREFIX, *ARTIFACT_CONSUMER_PREFIXES)
 PACKAGE_TEST_OUTPUT = "bin/package-diagnostic"
 PACKAGE_TEST_PREFIX = "Hoard.Conformance.Tests.MemoryMechanismTests."
 PACKAGE_TEST_METHOD = (PACKAGE_TEST_PREFIX +
@@ -1284,21 +1285,58 @@ def full_artifact_binding_scenarios():
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
-def artifact_origin_inputs(candidate, root):
+def full_metadata_binding_scenarios():
+    method = (FULL_METADATA_CONSUMER_PREFIX
+              + "Observed_factories_execute_unchanged_common_consumers_with_actual_origins")
+    identities = tuple(sorted(
+        f'{method}(provider: "{provider}", consumer: "{consumer}")'
+        for provider in ("memory", "sqlite") for consumer in ("capacity", "writer", "publication")))
+    return (("full-metadata-binding", identities, "None", "Passed", 0, "None"),)
+
+
+def _binding_origin_inputs(candidate, root, category, providers, store_roles):
     runtime = candidate / ARTIFACT_CONSUMER / PACKAGE_TEST_OUTPUT / "Release/net10.0"
     result = {}
-    for provider, adapter in (("local", "Local"), ("object", "ObjectSemantics")):
+    for provider, adapter in providers:
         binding = "Hoard.Fixtures.Conformance.Bindings." + adapter
-        store = "Hoard.Fixtures.Artifacts." + adapter
+        store = "Hoard.Fixtures." + category.title() + "." + adapter
         try:
-            result["fixture.artifact." + provider] = {
+            result["fixture." + category.rstrip("s") + "." + provider] = {
                 role: ((runtime / (package + ".dll")).relative_to(root).as_posix(), package)
                 for role, package in (
                     ("factory", binding), ("session", binding), ("faults", binding), ("authority", binding),
-                    ("store", store), ("validator", store), ("maintenance", store), ("lifetime", store))}
+                    *((role, store) for role in store_roles))}
         except ValueError as error:
             raise evidence.ConformanceError("InputChanged") from error
     return result
+
+
+def artifact_origin_inputs(candidate, root):
+    return _binding_origin_inputs(candidate, root, "artifacts",
+                                  (("local", "Local"), ("object", "ObjectSemantics")),
+                                  ("store", "validator", "maintenance", "lifetime"))
+
+
+def metadata_origin_inputs(candidate, root):
+    return _binding_origin_inputs(candidate, root, "metadata",
+                                  (("memory", "Memory"), ("sqlite", "Sqlite")), ("store", "schema"))
+
+
+def metadata_binding_declarations(feed):
+    faults = [
+        "IndependentSnapshot", "WriterContention", "CommitAcknowledgement", "PersistedCorruption",
+        "Capacity", "SchemaState", "LeaseBoundary", "NativeNonCooperation", "CleanupFailure"]
+    result = []
+    for provider, adapter, capabilities in (
+            ("memory", "Memory", ["metadata", "non-durable", "logical-schema-upgrade"]),
+            ("sqlite", "Sqlite", ["metadata", "durable", "schema-upgrade", "backup-recovery"])):
+        package = "Hoard.Fixtures.Metadata." + adapter
+        result.append({
+            "schemaVersion": 1, "bindingId": "fixture.metadata." + provider, "category": "metadata",
+            "packageId": package, "packageVersion": "0.1.0",
+            "packageSha256": evidence.package_identity(feed, package, "0.1.0")["sha256"],
+            "capabilities": capabilities, "faults": list(faults)})
+    return tuple(result)
 
 
 def artifact_binding_declarations(feed):
@@ -1745,7 +1783,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-recovery-pages", "original-artifact-recovery-races",
             "original-artifact-recovery-reopen", "original-artifact-admission",
             "original-artifact-deletion-settlement", "artifact-direct-verification", "artifact-capacity-injection",
-            "artifact-unclaimed-cleanup", "artifact-synchronous-storage", "full-artifact-binding"],
+            "artifact-unclaimed-cleanup", "artifact-synchronous-storage", "full-artifact-binding", "full-metadata-binding"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1755,6 +1793,10 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
 
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
+    if (name == "full-metadata-binding"
+            or any(identity.startswith(FULL_METADATA_CONSUMER_PREFIX) for identity in identities)):
+        if scenario not in full_metadata_binding_scenarios():
+            raise evidence.ConformanceError("WitnessMissing")
     if (name in ("local-artifact-session", "object-artifact-session", "configured-artifact-session",
                  "payload-artifact-session", "artifact-direct-verification", "artifact-capacity-injection",
                  "artifact-unclaimed-cleanup", "artifact-synchronous-storage", "full-artifact-binding")
@@ -1798,7 +1840,7 @@ def test_attempt(run, inputs, candidate, scenario):
             *artifact_observation_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
-    sqlite_tests = metadata_provider == "sqlite" or any(
+    sqlite_tests = name == "full-metadata-binding" or metadata_provider == "sqlite" or any(
         identity.startswith((SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX)) for identity in identities)
     source_tests = original_tests or all(
         identity.startswith("Hoard.Conformance.Tests.") for identity in identities) or binding_tests
@@ -1817,7 +1859,7 @@ def test_attempt(run, inputs, candidate, scenario):
         folder, output, assembly_name = ARTIFACT_TESTS, ARTIFACT_TEST_OUTPUT, "Hoard.Artifacts.Tests.dll"
     elif original_metadata:
         folder, output, assembly_name = METADATA_TESTS, METADATA_TEST_OUTPUT, "Hoard.Metadata.Tests.dll"
-    elif all(identity.startswith(ARTIFACT_CONSUMER_PREFIXES) for identity in identities):
+    elif all(identity.startswith((*ARTIFACT_CONSUMER_PREFIXES, FULL_METADATA_CONSUMER_PREFIX)) for identity in identities):
         folder, output, assembly_name = ARTIFACT_CONSUMER, PACKAGE_TEST_OUTPUT, "Hoard.Fixtures.Conformance.Consumer.dll"
     else:
         output = PACKAGE_TEST_OUTPUT if package_tests else "bin"
@@ -1838,6 +1880,12 @@ def test_attempt(run, inputs, candidate, scenario):
             for provider in ("local", "object") for identity in identities if f'(provider: "{provider}"' in identity}
         if set(expected) != set(identities):
             raise evidence.ConformanceError("WitnessMissing")
+    if name == "full-metadata-binding":
+        expected = {
+            identity: ("fixture.metadata." + provider, "none")
+            for provider in ("memory", "sqlite") for identity in identities if f'(provider: "{provider}"' in identity}
+        if set(expected) != set(identities):
+            raise evidence.ConformanceError("WitnessMissing")
     manifest = {
         "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
         "attemptId": attempt_id, "attemptSequence": 1, "purpose": "execution",
@@ -1852,17 +1900,18 @@ def test_attempt(run, inputs, candidate, scenario):
             "assemblyId": "test-assembly", "packageId": package_id,
             "bindingId": binding, "matrixId": matrix,
             "assertionSymbol": ASSERTION if name == "assertion" else None,
-            "caseId": name if original_tests or name == "full-artifact-binding" else "runtime",
+            "caseId": name if original_tests or name in ("full-artifact-binding", "full-metadata-binding") else "runtime",
         } for identity, (binding, matrix) in expected.items()],
     }
-    if name == "full-artifact-binding":
-        origin_inputs = artifact_origin_inputs(candidate, run.root)
+    if name in ("full-artifact-binding", "full-metadata-binding"):
+        origin_inputs = (artifact_origin_inputs(candidate, run.root) if name == "full-artifact-binding"
+                         else metadata_origin_inputs(candidate, run.root))
         component_paths = {path for roles in origin_inputs.values() for path, _ in roles.values()}
         for index, path in enumerate(sorted(component_paths)):
             sha256 = inputs["runtimeAssemblies"].get(path)
             if sha256 is None:
                 raise evidence.ConformanceError("InputChanged")
-            manifest["assemblies"].append({"id": f"artifact-component-{index}", "path": path, "sha256": sha256})
+            manifest["assemblies"].append({"id": f"binding-component-{index}", "path": path, "sha256": sha256})
     discovery_manifest = {**manifest, "purpose": "discovery", "attemptId": str(uuid.uuid4())}
     runtime_options = {"metadata_provider": metadata_provider} if original_metadata else {}
     if name == "full-artifact-binding":
@@ -1871,6 +1920,12 @@ def test_attempt(run, inputs, candidate, scenario):
         if any(package not in packages for package in required):
             raise evidence.ConformanceError("PrerequisiteMissing")
         runtime_options["artifact_packages"] = {package: packages[package] for package in required}
+    if name == "full-metadata-binding":
+        packages = {item["packageId"]: item["sha256"] for item in inputs["packages"]}
+        required = ("Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite")
+        if any(package not in packages for package in required):
+            raise evidence.ConformanceError("PrerequisiteMissing")
+        runtime_options["metadata_packages"] = {package: packages[package] for package in required}
     if name == "original-artifact-external":
         runner = candidate / ARTIFACT_RECOVERY / "bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll"
         if inputs["runtimeAssemblies"].get(runner.relative_to(run.root).as_posix()) != evidence.file_sha256(runner):
@@ -1921,7 +1976,7 @@ def test_attempt(run, inputs, candidate, scenario):
             len(ingested["sessionOrigins"]) != 1
             or any(len(origins) != 1 for origins in ingested["sessionOrigins"].values())):
         raise evidence.ConformanceError("WitnessMissing")
-    if name == "full-artifact-binding":
+    if name in ("full-artifact-binding", "full-metadata-binding"):
         bindings = {binding["bindingId"]: binding["descriptorSha256"] for binding in inputs["bindings"]}
         reopen = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
         for witness in ingested["witnesses"]:
@@ -1935,26 +1990,34 @@ def test_attempt(run, inputs, candidate, scenario):
             "completionSha256": evidence.file_sha256(output / "completion.json")}
 
 
-def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact_runner=None, artifact_packages=None):
+def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact_runner=None,
+                    artifact_packages=None, metadata_packages=None):
     attempt_id = manifest["attemptId"]
     identities = tuple(entry["testIdentity"] for entry in manifest["expected"])
     if manifest["purpose"] not in ("discovery", "execution"):
         raise evidence.ConformanceError()
     discovery = manifest["purpose"] == "discovery"
     origin_environment = ""
-    if artifact_packages is not None:
+    if artifact_packages is not None or metadata_packages is not None:
+        if artifact_packages is not None and metadata_packages is not None:
+            raise evidence.ConformanceError("WitnessMissing")
         required = {
             "Hoard.Fixtures.Artifacts.Local": "HOARD_ARTIFACT_LOCAL_PACKAGE_SHA256",
             "Hoard.Fixtures.Artifacts.ObjectSemantics": "HOARD_ARTIFACT_OBJECT_PACKAGE_SHA256",
+        } if artifact_packages is not None else {
+            "Hoard.Fixtures.Metadata.Memory": "HOARD_METADATA_MEMORY_PACKAGE_SHA256",
+            "Hoard.Fixtures.Metadata.Sqlite": "HOARD_METADATA_SQLITE_PACKAGE_SHA256",
         }
+        packages = artifact_packages if artifact_packages is not None else metadata_packages
+        scenarios = full_artifact_binding_scenarios() if artifact_packages is not None else full_metadata_binding_scenarios()
         if (metadata_provider is not None or artifact_runner is not None
                 or assembly.name != "Hoard.Fixtures.Conformance.Consumer.dll"
-                or set(identities) != set(full_artifact_binding_scenarios()[0][1])
-                or not isinstance(artifact_packages, dict) or set(artifact_packages) != set(required)):
+                or set(identities) != set(scenarios[0][1])
+                or not isinstance(packages, dict) or set(packages) != set(required)):
             raise evidence.ConformanceError("WitnessMissing")
         variables = {}
         for package, variable in required.items():
-            sha256 = artifact_packages[package]
+            sha256 = packages[package]
             if not isinstance(sha256, str) or re.fullmatch("[0-9a-f]{64}", sha256) is None:
                 raise evidence.ConformanceError("InputChanged")
             archive = run.root / "feed/candidate" / (package + ".0.1.0.nupkg")
@@ -2205,7 +2268,7 @@ def execute(repository, destination):
         write_new(run.root / "stores/origin-probe.json",
                   json.dumps(declaration, separators=(",", ":"), ensure_ascii=True).encode("ascii"))
         binding_sources = [{"path": "stores/origin-probe.json", "adapterId": "sdk-origin-probe"}]
-        for declaration in artifact_binding_declarations(feed):
+        for declaration in (*artifact_binding_declarations(feed), *metadata_binding_declarations(feed)):
             path = "stores/" + declaration["bindingId"] + ".json"
             write_new(run.root / path, json.dumps(declaration, separators=(",", ":"), ensure_ascii=True).encode("ascii"))
             binding_sources.append({"path": path, "adapterId": declaration["bindingId"]})
@@ -2357,6 +2420,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "full-artifact-binding"}), flush=True)
         for scenario in full_artifact_binding_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "full-metadata-binding"}), flush=True)
+        for scenario in full_metadata_binding_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)

@@ -1109,6 +1109,82 @@ class SdkDiagnosticTests(unittest.TestCase):
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
             factory(candidate, candidate / "foreign")
 
+    def test_full_metadata_origins_require_both_independent_factories_and_actual_role_images(self):
+        factory = getattr(checks, "metadata_origin_inputs", None)
+        self.assertTrue(callable(factory), "Metadata origins require actual factory and provider image assignments.")
+        candidate = self.directory / "candidate"
+        runtime = candidate / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / "Release/net10.0"
+        expected = {}
+        for provider, adapter in (("memory", "Memory"), ("sqlite", "Sqlite")):
+            binding = "Hoard.Fixtures.Conformance.Bindings." + adapter
+            store = "Hoard.Fixtures.Metadata." + adapter
+            expected["fixture.metadata." + provider] = {
+                role: ((runtime / (package + ".dll")).relative_to(self.directory).as_posix(), package)
+                for role, package in (
+                    ("factory", binding), ("session", binding), ("faults", binding), ("authority", binding),
+                    ("store", store), ("schema", store))}
+        self.assertEqual(factory(candidate, self.directory), expected)
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+            factory(candidate, candidate / "foreign")
+
+    def test_full_metadata_scope_admits_exact_common_work_and_rejects_missing_images_or_packages(self):
+        method = ("Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
+                  "Observed_factories_execute_unchanged_common_consumers_with_actual_origins")
+        expected = {f'{method}(provider: "{provider}", consumer: "{consumer}")'
+                    for provider in ("memory", "sqlite") for consumer in ("capacity", "writer", "publication")}
+        scenario, = checks.full_metadata_binding_scenarios()
+        self.assertEqual(scenario, ("full-metadata-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [
+                {"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64},
+                {"packageId": "Hoard.Fixtures.Metadata.Memory", "sha256": "c" * 64},
+                {"packageId": "Hoard.Fixtures.Metadata.Sqlite", "sha256": "d" * 64}],
+        }
+        for roles in checks.metadata_origin_inputs(candidate, self.directory).values():
+            for path, _ in roles.values():
+                inputs["runtimeAssemblies"][path] = "e" * 64
+        run = SimpleNamespace(root=self.directory)
+        with patch.object(checks, "require_sqlite_environment") as admission:
+            with patch.object(checks, "runtime_command",
+                              side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                    checks.test_attempt(run, inputs, candidate, scenario)
+                admission.assert_called_once_with(inputs, assembly, self.directory)
+                manifest = launch.call_args.args[2]
+                packages = launch.call_args.kwargs["metadata_packages"]
+                self.assertEqual(packages, {
+                    "Hoard.Fixtures.Metadata.Memory": "c" * 64, "Hoard.Fixtures.Metadata.Sqlite": "d" * 64})
+                self.assertEqual({item["path"] for item in manifest["assemblies"]}, set(inputs["runtimeAssemblies"]))
+                self.assertEqual({item["caseId"] for item in manifest["expected"]}, {"full-metadata-binding"})
+                self.assertEqual({item["bindingId"] for item in manifest["expected"]},
+                                 {"fixture.metadata.memory", "fixture.metadata.sqlite"})
+            for changed, code in (
+                    ({**inputs, "packages": inputs["packages"][:1]}, "PrerequisiteMissing"),
+                    ({**inputs, "runtimeAssemblies": {
+                        assembly.relative_to(self.directory).as_posix(): "a" * 64}}, "InputChanged")):
+                with patch.object(checks, "runtime_command") as launch:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, code):
+                        checks.test_attempt(run, changed, candidate, scenario)
+                    launch.assert_not_called()
+        for artifact_packages, metadata_packages, code in (
+                (None, {**packages, "foreign": "e" * 64}, "WitnessMissing"),
+                (packages, packages, "WitnessMissing"), (None, packages, "InputChanged")):
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, code):
+                checks.runtime_command(run, assembly, manifest,
+                                       artifact_packages=artifact_packages, metadata_packages=metadata_packages)
+        for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+                        (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
+                        ("full-metadata-binding-foreign", *scenario[1:])):
+            with patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(run, {}, candidate, changed)
+                launch.assert_not_called()
+
     def test_full_artifact_binding_scope_requires_all_real_controls_and_observed_reopen(self):
         factory = getattr(checks, "full_artifact_binding_scenarios", None)
         self.assertTrue(callable(factory), "Full bindings require actual controls, not declarations alone.")

@@ -473,8 +473,10 @@ payload targets, borrowed source/sink streams and actual origin-preserving reope
 Twenty-four new package-only parameters include concurrent release/rearming:
 the architecture review's cross-control deadlock first failed both providers,
 then passed after release joins moved outside the registry lock. Fresh replay
-passes 311 artifact, 103 Consumer and 89+89 metadata cases. The next native request
-is 94 scopes/810 observations, pending. Remaining category parity, parent-origin
+passes 311 artifact, 103 Consumer and 89+89 metadata cases. Native run
+`40153251707` at `f73a55a` passed all three jobs, 211 foundations and
+94 scopes/810 exact discoveries/executions with every prerequisite.
+Remaining category parity, parent-origin
 ingestion, integrations and complete profile qualification are still unfinished.
 The full-binding diagnostic now emits 26 actual origins for those 24 rows and
 pins all eight roles to independently selected runtime DLL/package bytes.
@@ -484,6 +486,14 @@ lineages and 208 role/image/archive correspondences with a separate runtime cach
 The controller supplies the required run ID through private runsettings.
 Origin-enabled native verification remains pending; other category/profile
 imports and qualification are still incomplete.
+Six additional metadata rows now run unchanged capacity, writer-budget and
+publication-protection consumers through observed independent Memory/SQLite
+factories. Local fresh-cache observation matches six actual origins and all
+36 role/image/archive correspondences. Their parent ingestion admits the four
+actual component images, exact binding/counts and actual SQLite environment.
+Fresh replay passes 311 artifact, 109 Consumer and 89+89 metadata cases; the
+expanded native request is 95 scopes/816 observations, pending. Metadata reopen
+attribution and other complete category/profile imports remain unfinished.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

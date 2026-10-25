@@ -951,8 +951,9 @@ settlement observation can be retried before stable scope disposal. The
 architecture review's two-provider deadlock regression first failed, then passed
 with independent release/rearming. Twenty-four exact new parameters cover all ten
 controls, actual origin capture/reopen and concurrency. Fresh replay passes
-311 artifact, 103 Consumer and 89+89 metadata cases. The next native request is
-94 scopes/810 observations, pending. Complete parent-origin/profile ingestion,
+311 artifact, 103 Consumer and 89+89 metadata cases. Native run `40153251707`
+at `f73a55a` passed all three jobs, 211 foundations and 94 scopes/810 exact
+discoveries/executions with every prerequisite. Complete parent-origin/profile ingestion,
 category parity/integration, qualification and final T081 remain open.
 The diagnostic parent passes only the two admitted provider archive hashes to
 these fixture factories and rechecks the exact candidate archive bytes before
@@ -975,6 +976,23 @@ Fresh local observation corroborates all 208 role/image/archive matches, exact
 Raw VSTest output remains in bounded memory only, never retained as proof.
 Origin-enabled native admission is pending. This upgrades the existing diagnostic
 scope, not complete category/profile qualification or other pending origin imports.
+
+The metadata diagnostic adds six exact rows executing unchanged capacity,
+writer-budget and publication-protection consumers through observed independent
+Memory/SQLite factories. It requires controller run/case IDs, independent
+archive-bound declarations and all six actual component roles, with their four
+binding/provider images in the logger manifest. Missing packages/images, foreign
+or mixed package families and shortened/foreign inventories reject before launch.
+Actual SQLite environment admission remains mandatory. Fixed private metadata
+runsettings variables contain only independently rechecked provider archive hashes;
+runtime caches remain independent. Exactly one matching origin per row is required.
+
+Local bounded observation confirms six actual metadata origins/36 role/image/
+archive matches, not native acceptance or metadata reopen attribution. Fresh replay
+passes 311 artifact, 109 Consumer and 89+89 metadata cases. The expanded native
+request is 214 foundations and 95 scopes/816 observations, pending.
+Other origin/profile imports, complete category/integration qualification and
+final T081 remain unfinished; locks, historical seals and reviewer markers are unchanged.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and

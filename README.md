@@ -1739,8 +1739,9 @@ actual origin capture/reopen, stale fencing and independent concurrent release.
 The architecture review's release-lock deadlock was reproduced on both providers
 and fixed without changing provider mechanisms or stable settlement promises.
 Fresh replay covers 311 artifact, 103 Consumer and 89+89 metadata cases.
-The next native request is 94 scopes/810 observations, pending; full category/
-profile qualification and remaining implementation tasks are still unfinished.
+Native run `40153251707` at `f73a55a` passed all three jobs, 211 foundations
+and 94 scopes/810 exact discoveries/executions with every prerequisite.
+Full category/profile qualification and remaining implementation tasks are unfinished.
 The full-binding diagnostic now emits 26 actual component origins across those
 24 rows, including two genuine reopen lineages. Parent ingestion pins every role
 to its independently selected runtime DLL and package; the logger manifest also
@@ -1748,6 +1749,13 @@ admits the four real binding/provider images. Fresh local observation matches al
 208 role/image/archive correspondences with an independent runtime cache.
 Native verification of this origin-enabled increment remains pending; these
 diagnostics do not establish complete category/profile qualification.
+Six additional metadata rows now execute unchanged capacity, writer-budget and
+publication-protection consumers through observed Memory/SQLite factories.
+Their six actual origins match all 36 role/image/archive correspondences; parent
+ingestion uses independent binding declarations, actual component images and
+archive-bound runsettings, retaining SQLite environment admission. Fresh replay
+covers 311 artifact, 109 Consumer and 89+89 metadata cases. The expanded native
+request is 95 scopes/816 observations, pending; other origin/profile imports remain open.
 
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.

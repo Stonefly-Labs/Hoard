@@ -758,7 +758,9 @@ timeout does not permanently cache a failed disposal task. Actual full-session
 origin capture/reopen preserves Local identity/publication and gives the simulation
 a fresh empty epoch. Twenty-four new package-only parameters pass; fresh replay
 covers 311 artifact, 103 Consumer and 89+89 metadata cases. The next native request
-is 94 scopes/810 observations, pending. Parent-origin ingestion, remaining category
+passed as run `40153251707` at `f73a55a`: all three jobs, 211 foundations and
+94 scopes/810 exact discoveries/executions, including every prerequisite.
+Parent-origin ingestion, remaining category
 parity/integration and complete profiles remain unfinished; this is not qualification.
 
 Those 24 full-binding rows now emit 26 actual component origins, including the
@@ -770,6 +772,17 @@ launch. Local fresh-cache observation corroborates all 208 role/image/archive
 matches and actual reopen lineage without persisting raw output. Origin-enabled
 native acceptance is pending; this does not complete other category/profile imports
 or upgrade the simulation to durable recovery.
+
+Six metadata-origin rows now use the actual independent Memory/SQLite factories
+with unchanged shared capacity, writer-budget and publication-protection consumers.
+Each of six origins binds all six actual roles to its own adapter/provider images
+and archives; the safe logger admits those four images and the parent retains
+SQLite environment admission and exact binding/count checks. Local fresh-cache
+observation confirms 36 image/archive correspondences; fresh replay covers
+311 artifact, 109 Consumer and 89+89 metadata cases. The expanded native request
+is 95 scopes/816 observations, pending. Metadata reopen attribution and other
+category/profile imports remain unfinished; no durable memory or category
+qualification is claimed.
 
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and

@@ -4269,7 +4269,9 @@ ten runtime dependency DLLs match archive bytes per preparation. Tooling passes
 20 typed binding/origin unit cases pass after restoring missing dependencies.
 SDK/both adapter/Consumer formatting, frozen inventory/catalogs and patch checks
 pass. Transfer packets are reused unchanged, not new origins. The next native
-request is 211 foundations and 94 scopes/810 observations, pending. Parent-origin/
+run `40153251707` at `f73a55a530b887eb9db70d8924ce7f7921a45028` passed all
+three jobs, 211 foundations and 94 scopes/810 exact discoveries/executions with
+every prerequisite. Parent-origin/
 profile ingestion, remaining category parity/integrations, full qualification and
 final T081 remain open. Tasks/reviewer markers, tracked locks, historical seals and
 production architecture/deployment examples/diagrams remain unchanged.
@@ -4306,6 +4308,39 @@ origin-enabled native successor requests 212 foundations and unchanged
 integrations, complete qualification and final T081 remain unfinished.
 Tasks/reviewer markers, tracked locks and historical seals remain untouched;
 test-only provenance changes do not alter product/deployment examples or diagrams.
+
+### Actual metadata factory origins through unchanged common work
+
+Six additional package-only rows run existing capacity, writer-budget and
+publication-protection consumers through observed Memory/SQLite sessions. There
+is no new provider mechanism or result substitution. Independent declarations
+preserve exact metadata capability/fault serialization order and provider archive
+hashes. All six actual component roles are assigned independently to their adapter/
+provider runtime images and archives. The four real component images enter the
+safe logger manifest; exact per-witness origin count and descriptor checks apply,
+with existing SQLite environment admission before launch. The existing
+settlement-aware test allocator is reused without claiming physical release.
+
+The absent metadata origin map first failed its intended regression. Fresh
+preparation/replay pass 311 artifact, 109 Consumer and 89+89 metadata cases;
+all fifteen archives reproduce the unchanged map above, and ten actual runtime
+dependencies match archive bytes per preparation. Bounded actual VSTest observation
+with a separate empty runtime cache proves exact six-row discovery, six metadata
+origins and 36 role/image/archive correspondences. Artifact observation still
+matches 24 rows, 26 origins and 208 correspondences. These local checks do not
+establish native parent acceptance. Tooling passes 322 checks (305 passed/seventeen
+macOS-native skips), including 96 SDK checks; Consumer formatting, frozen
+inventory/catalogs and patch checks pass. The next native request is 214
+foundations and 95 scopes/816 observations, pending.
+
+The earlier admitted full-control run binds input
+`7b14f67d94d2800d7b4bbba02b4f018d3409bb6920eab160371b05a2ac2ca6be`,
+preparation `13c78f0aea8139bc54e5052cc6a49b035bc03d15fa3ea18205104750ac9ce11c`
+and 91,716,939,776 free scratch bytes; it predates both origin increments.
+Metadata reopen attribution, other origin/profile imports, remaining parity/
+integrations, full qualification and final T081 remain open. Task/reviewer markers,
+tracked locks and historical seals are unchanged. Test-only provenance wiring does
+not alter production/deployment examples or architecture diagrams.
 
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations

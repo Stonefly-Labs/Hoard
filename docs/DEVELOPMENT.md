@@ -7525,7 +7525,9 @@ ten runtime dependency images match archive bytes per preparation. Tooling passe
 20 typed binding/origin unit cases pass after restoring missing test dependencies.
 SDK/both adapter/Consumer formatting, frozen inventory/catalogs and patch checks
 pass. Transfer packets remain reused unchanged, not fresh origins. The next native
-request is 211 foundations and 94 scopes/810 observations, pending. Remaining
+run `40153251707` at `f73a55a530b887eb9db70d8924ce7f7921a45028` passed all
+three jobs, 211 foundations and 94 scopes/810 exact discoveries/executions with
+every prerequisite. Remaining
 category parity, parent-origin ingestion, integrations, complete profiles and final
 T081 remain unfinished. Tasks/reviewer markers, historical seals and tracked locks
 are unchanged; production architecture, deployment examples and diagrams are
@@ -7560,6 +7562,33 @@ observations. Other origin/profile imports, category parity/integrations and fin
 T081 remain unfinished. Tasks/reviewer markers, historical seals and tracked locks
 are unchanged. Product/deployment examples and architecture diagrams are unaffected:
 this increment only wires test provenance into the existing diagnostic boundary.
+
+Six new metadata rows now run the unchanged shared capacity, writer-budget and
+publication-protection consumers through observed Memory/SQLite sessions. Actual
+controller run/case IDs and independent provider-archive declarations accompany
+all six origins. Every role is pinned to its actual binding/provider runtime
+image and respective archive; all four component images enter the safe logger
+manifest, exact binding/count checks apply, and actual SQLite environment admission
+still precedes launch. The existing settlement-aware SQLite test allocator is
+reused, not a second physical-release implementation.
+
+The missing origin mapping first failed its intended regression. Fresh preparation/
+replay pass 311 artifact, 109 Consumer and 89+89 metadata cases. Bounded local
+observation confirms exact six-row discovery and 36 actual metadata role/image/
+archive matches with a separate empty runtime cache; the 24 artifact rows still
+produce 26 origins/208 matches. The fifteen-package map is unchanged. Tooling
+passes 322 checks (305 passed/seventeen macOS-native skips), including 96 SDK checks;
+Consumer formatting, frozen safeguards and patch checks pass. The new native request
+is 214 foundations and 95 scopes/816 observations, pending, not category qualification.
+Other origin imports, metadata reopen attribution, complete profiles/integrations
+and final T081 remain open; tasks/reviewer markers, locks and historical seals are
+unchanged. Production/deployment examples and diagrams are unaffected.
+
+The admitted earlier full-control receipt binds input
+`7b14f67d94d2800d7b4bbba02b4f018d3409bb6920eab160371b05a2ac2ca6be`,
+preparation `13c78f0aea8139bc54e5052cc6a49b035bc03d15fa3ea18205104750ac9ce11c`
+and 91,716,939,776 free scratch bytes. It predates both origin increments and
+must not be cited as their native acceptance.
 
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,

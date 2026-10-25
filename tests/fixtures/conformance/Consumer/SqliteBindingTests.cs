@@ -441,7 +441,7 @@ public sealed class SqliteBindingTests
         Assert.IsType<MetadataResult<T>.Success>(result).Value;
 
     // Unit resource observations, not controller-authorized physical release.
-    private sealed class RecordingDirectories : IConformanceResourceAllocator, IAsyncDisposable
+    internal sealed class RecordingDirectories : IConformanceResourceAllocator, IAsyncDisposable
     {
         public List<ConformanceOwnedDirectory> Directories { get; } = [];
         public ConcurrentDictionary<ConformanceOwnedDirectory, Task> Settlements { get; } = new();
