@@ -1144,6 +1144,23 @@ Cursor native run `40159593512` at `5c7522f` passed all three jobs,
 discoveries/executions, including every prerequisite. It predates authority/
 mutation increments and does not establish complete category qualification.
 
+Category input sources can explicitly select `catalogBindingId` for one of the
+four known frozen slots. Independent parent mapping checks category, original
+fixture declaration ID and provider package before projecting only the outer
+binding identity. Raw descriptor bytes/hash, capabilities and archive
+attribution are unchanged; duplicate original declaration IDs reject even under
+different projected/unprojected IDs or JSON serialization. Full capture/recapture
+binds the selected assignment.
+Actual bounded observation/replay each verify four factory/reopen cases,
+eight genuine origins and 56 role/image/archive correspondences, without
+promoting the selected subset or input wiring to complete profile execution.
+Tooling passes 327 checks (310 passed/seventeen macOS-native skips).
+Authority run `40160483040` at `eeaa6bf` passed all three jobs,
+216 foundations without failures/errors/skips and 96 scopes/974 exact
+observations with every prerequisite. It predates mutation/slot input wiring;
+the next request is 219 foundations and 100 scopes/982 observations, not yet
+admitted or full category/controller qualification.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and
 every actual prerequisite chain/replay, not full qualification.

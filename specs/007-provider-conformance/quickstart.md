@@ -576,6 +576,16 @@ admitted.
 Cursor run `40159593512` at `5c7522f` passed all three jobs,
 215 foundations without skips and 95 scopes/942 exact observations with every
 prerequisite; it predates authority integrations and category mutations.
+Category input capture now supports explicit `catalogBindingId` assignments for
+the four known frozen slots. Parent validation retains raw declaration bytes/
+hashes and exact provider attribution; mismatches or duplicate descriptors
+reject. Actual observation/replay each verify four factory/reopen cases, eight
+origins and 56 role/image/archive matches. This does not implement category
+execution, applicability, verification or aggregation.
+Authority run `40160483040` at `eeaa6bf` passed all three jobs,
+216 foundations without skips and 96 scopes/974 observations with every
+prerequisite. It predates mutations/slot input wiring; the next request is
+219 foundations and 100 scopes/982 observations, not yet admitted.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

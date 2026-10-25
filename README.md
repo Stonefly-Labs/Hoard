@@ -1843,6 +1843,16 @@ Cursor native run `40159593512` at `5c7522f` passed all three jobs,
 215 foundations without skips and 95 scopes/942 exact observations with every
 prerequisite. It predates authority integrations and category mutations.
 
+Explicit category input assignments now connect the four frozen catalog slots
+to their existing fixture declarations without renaming providers or rewriting
+declaration bytes. Category/descriptor/package mismatches and duplicate
+declarations reject. Actual factory/reopen observation and independent replay
+each verify four cases, eight origins and 56 role/image/archive matches.
+This is input wiring, not an executable qualification profile. Authority run
+`40160483040` at `eeaa6bf` passed all three jobs, 216 foundations without skips
+and 96 scopes/974 exact observations with every prerequisite; it predates
+mutations and category-slot input wiring.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

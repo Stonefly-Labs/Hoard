@@ -7853,6 +7853,45 @@ preparation:
 `8166e2e6cef3c6b3430721ba11d6f23ccea4d8ada689463e1d9721d4a88d6c1d`;
 free scratch 91,721,383,936 bytes. It predates authority/mutation increments.
 
+Category input sources may explicitly select `catalogBindingId` for the four
+frozen slots. Parent capture checks the independently selected category,
+existing fixture declaration ID and exact provider package identity before
+projecting only `ProviderBinding.bindingId`. Raw declaration bytes/hash,
+capabilities, adapter and archive attribution remain unchanged. Without this
+field the existing declaration identity is retained. One original declaration
+ID cannot enter the profile twice, even with different JSON serialization or
+projected/unprojected identities. These are capture-time
+assignments, not new descriptor/report fields, provider-renaming APIs or
+provider-selected exclusions.
+
+The absent slot API, missing profile-source field and duplicate-descriptor
+admission each first fail their focused regressions. A differently serialized
+duplicate also failed before identity-based rejection replaced hash-only checks.
+Full capture/recapture
+checks prove changing the assignment or capabilities changes admitted inputs.
+Actual bounded observation plus independent empty-cache replay each verify
+four selected factory/reopen cases, eight genuine origins (four creates/four
+reopens), 56 role/image/archive matches and fourteen unchanged runtime Hoard
+images. Every emitted descriptor hash matches its original unmodified captured
+declaration despite the projected outer slot ID. Tooling passes 327 checks
+(310 passed/seventeen macOS-native skips); frozen inventory/catalog and patch
+checks pass. No SDK/provider package, lock or common assertion changed.
+Complete category runners/imports, applicability/evaluation and T035/T081
+remain unfinished; admitted execution/verify/aggregate still reject explicitly.
+README and affected guides/model/contracts are updated; product/deployment
+examples and diagrams are unaffected by this test-only input projection.
+
+Authority native run `40160483040` at exact head
+`eeaa6bf261a87edbb4df2b5cedebfb633fdacc5e` passed all three jobs,
+216 foundations without failures/errors/skips, 96 scopes/974 exact discoveries/
+executions and every prerequisite. Input:
+`66c397e9b6a3824d1c0770794185e079ca10db6fe5d346fdcdf41f0683721d94`;
+preparation:
+`ac34b453116593d113688cee1c89130f565b2ef9d930ce3a08b484f469c75809`;
+free scratch 91,721,281,536 bytes. It predates mutations/slot input wiring.
+The next request is 219 foundations and 100 scopes/982 observations, not yet
+admitted or complete category/controller qualification.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

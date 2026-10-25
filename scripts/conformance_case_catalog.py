@@ -12,6 +12,13 @@ from conformance_evidence import (
 
 INVENTORY = Path(__file__).resolve().parents[1] / "tests/fixtures/conformance/baselines/inventory.json"
 
+CATEGORY_BINDING_SLOTS = (
+    ("metadata", "sqlite", "fixture.metadata.sqlite", "Hoard.Fixtures.Metadata.Sqlite"),
+    ("metadata", "memory", "fixture.metadata.memory", "Hoard.Fixtures.Metadata.Memory"),
+    ("artifacts", "local", "fixture.artifact.local", "Hoard.Fixtures.Artifacts.Local"),
+    ("artifacts", "object", "fixture.artifact.object", "Hoard.Fixtures.Artifacts.ObjectSemantics"),
+)
+
 
 @dataclass(frozen=True)
 class ExpectedCase:

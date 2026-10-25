@@ -4647,6 +4647,47 @@ preparation:
 free scratch 91,721,383,936 bytes. It predates authority/mutation increments
 and remains diagnostic, not category qualification.
 
+### Explicit category binding-slot input checkpoint
+
+Capture-time `binding_sources` can explicitly select `catalogBindingId` for the
+four frozen category slots. The independent catalog mapping requires the
+original fixture declaration ID, category and exact provider package identity;
+only the outer `ProviderBinding.bindingId` is projected. Descriptor bytes/hash,
+capability hash, adapter identity and actual package identity remain unchanged.
+Unprojected capture preserves existing IDs, and one original declaration ID
+cannot enter a profile twice through projected/unprojected assignments, including
+different JSON serialization. No C# declaration,
+provider/SDK operation, package graph, lock or SDK catalog changes.
+
+Focused intended failures expose the absent slot argument, missing profile
+source field and duplicate-descriptor admission before repair. A differently
+serialized duplicate also failed before original-ID rejection replaced hash-only
+checks. Full profile
+capture/recapture proves assignment/capability changes alter admitted inputs.
+Actual bounded observation and independent empty-cache replay each verify all
+four slots through four selected factory/reopen cases: eight genuine origins,
+four creates/four reopens, 56 role/image/archive correspondences and fourteen
+unchanged Hoard runtime images. Every origin joins the original raw descriptor
+hash, not a rewritten projected declaration. Policy source-map digest:
+`c690a938f46e50f37a8ca4392648d51a63c856a4f6dc789b61ab213f53329de7`.
+Tooling passes 327 checks (310 passed/seventeen macOS-native skips); frozen
+inventory/catalog and patch checks pass. This is input wiring only: complete
+category runtime/import/applicability/evaluation and T035/T081 remain unfinished.
+Execution/verify/aggregate guards are unchanged. Task/reviewer markers and
+historical seals remain unchanged; product/deployment examples and diagrams
+are unaffected.
+
+Authority native run `40160483040` binds exact head
+`eeaa6bf261a87edbb4df2b5cedebfb633fdacc5e`: all three jobs, 216 foundations
+without failures/errors/skips, 96 scopes/974 exact discoveries/executions and
+every prerequisite pass. Input:
+`66c397e9b6a3824d1c0770794185e079ca10db6fe5d346fdcdf41f0683721d94`;
+preparation:
+`ac34b453116593d113688cee1c89130f565b2ef9d930ce3a08b484f469c75809`;
+free scratch 91,721,281,536 bytes. It predates mutation/slot input increments.
+The next request is 219 foundations and 100 scopes/982 observations, not yet
+admitted or complete category/controller qualification.
+
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations
 without failures/errors/skips, 87 scopes/757 exact discoveries/executions and

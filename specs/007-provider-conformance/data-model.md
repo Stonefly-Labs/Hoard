@@ -94,6 +94,23 @@ file, checks its package against captured archive bytes, hashes that complete
 binding descriptor and separately hashes its category/capabilities/faults.
 The adapter ID is still a selected stable identity; actual loaded factory/
 session provenance belongs to runtime ingestion, not this snapshot.
+
+Capture-time binding source assignments may additionally specify
+`catalogBindingId`. This is not a descriptor or report schema field. The
+independent four-slot catalog mapping checks the original declaration ID,
+category and exact provider package before projecting only the outer
+`ProviderBinding.bindingId` to `sqlite`, `memory`, `local` or `object`.
+Descriptor bytes/hash, capability hash, adapter and package identity remain
+unchanged; no field is rewritten inside the declaration. Without this explicit
+assignment, capture retains the original declaration ID. A profile rejects
+duplicate original declaration IDs, including simultaneous projected/unprojected
+assignments with identical or differently serialized declaration bytes.
+Recapture binds assignment changes through the actual binding
+inventory and capability-map keys. Origin matching still uses the original
+complete descriptor hash and independently selected component assignments.
+This input mechanism does not select exclusions, execute profiles or qualify
+a provider.
+
 `capture_profile_inputs` assembles all source/material/declaration roles from
 actual files and observed producers. Completion recaptures those same roles;
 only measured free-space variation is excluded from immutable machine identity,

@@ -898,6 +898,20 @@ Cursor native run `40159593512` at `5c7522f` passed all three jobs,
 215 foundations without skips and 95 scopes/942 exact observations with every
 prerequisite. It does not verify authority integrations or category mutations.
 
+An explicit `catalogBindingId` input assignment can project a known fixture
+declaration into its frozen `sqlite`, `memory`, `local` or `object` catalog slot.
+Parent capture verifies the exact category, original declaration ID and package,
+preserving all raw declaration bytes/hashes and provider package attribution.
+Foreign assignments and duplicate original declaration IDs reject, regardless
+of JSON serialization; ordinary
+declaration capture is unchanged. Actual factory/reopen observation and fresh
+replay each verify four cases/eight origins and 56 role/image/archive matches,
+not a complete category run or applicability/exclusion decision.
+Authority native run `40160483040` at `eeaa6bf` passed all three jobs,
+216 foundations without skips and 96 scopes/974 exact observations with every
+prerequisite. It predates mutations and slot input wiring; the next request is
+219 foundations and 100 scopes/982 observations, not yet admitted.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and
 actual prerequisites/replay, not full category/profile qualification.

@@ -684,6 +684,53 @@ class ConformanceInputTests(unittest.TestCase):
         with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
             evidence.capture_binding(self.parent, source.name, packages=[package], adapter_id="fixture.adapter")
 
+    def test_category_binding_capture_projects_only_its_frozen_slot_without_rewriting_declarations(self):
+        import conformance_sdk_checks as checks
+        feed = self.parent / "feed"
+        feed.mkdir(mode=0o700)
+        for package_id in (
+                "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite",
+                "Hoard.Fixtures.Artifacts.Local", "Hoard.Fixtures.Artifacts.ObjectSemantics"):
+            with zipfile.ZipFile(feed / (package_id + ".0.1.0.nupkg"), "w") as archive:
+                archive.writestr(package_id + ".nuspec", (
+                    f"<package><metadata><id>{package_id}</id><version>0.1.0</version></metadata></package>"))
+                archive.writestr("lib/net10.0/" + package_id + ".dll", b"fixture assembly")
+        declarations = (*checks.metadata_binding_declarations(feed), *checks.artifact_binding_declarations(feed))
+        packages = [evidence.package_identity(feed, declaration["packageId"], "0.1.0")
+                    for declaration in declarations]
+        source = self.parent / "declaration.json"
+        for declaration in declarations:
+            source.write_bytes(evidence.canonical_bytes(declaration))
+            original = source.read_bytes()
+            slot = declaration["bindingId"].rsplit(".", 1)[1]
+            options = {"packages": packages, "adapter_id": "fixture.adapter"}
+            captured = evidence.capture_binding(self.parent, source.name, **options)
+            projected = evidence.capture_binding(
+                self.parent, source.name, catalog_binding_id=slot, **options)
+            self.assertEqual(projected["bindingId"], slot)
+            self.assertEqual({key: value for key, value in projected.items() if key != "bindingId"},
+                             {key: value for key, value in captured.items() if key != "bindingId"})
+            self.assertEqual(projected["descriptorSha256"], hashlib.sha256(original).hexdigest())
+            self.assertEqual(source.read_bytes(), original)
+            for invalid in ("unknown", *(other["bindingId"].rsplit(".", 1)[1]
+                                       for other in declarations if other is not declaration)):
+                with self.subTest(slot=slot, foreign=invalid), self.assertRaisesRegex(
+                        evidence.ConformanceError, "BindingInvalid"):
+                    evidence.capture_binding(self.parent, source.name, catalog_binding_id=invalid, **options)
+            for field, value in (("bindingId", "fixture.foreign"), ("category", "metadata"
+                                 if declaration["category"] == "artifacts" else "artifacts")):
+                source.write_bytes(evidence.canonical_bytes({**declaration, field: value}))
+                with self.subTest(slot=slot, field=field), self.assertRaisesRegex(
+                        evidence.ConformanceError, "BindingInvalid"):
+                    evidence.capture_binding(self.parent, source.name, catalog_binding_id=slot, **options)
+            foreign = next(other for other in declarations
+                           if other is not declaration and other["category"] == declaration["category"])
+            source.write_bytes(evidence.canonical_bytes({
+                **declaration, "packageId": foreign["packageId"], "packageSha256": foreign["packageSha256"]}))
+            with self.subTest(slot=slot, field="package"), self.assertRaisesRegex(
+                    evidence.ConformanceError, "BindingInvalid"):
+                evidence.capture_binding(self.parent, source.name, catalog_binding_id=slot, **options)
+
     def test_profile_capture_derives_source_packages_bindings_and_materials_in_one_manifest(self):
         from conformance_execution import OwnedRun
         sdk = "tests/contracts/Hoard.Testing.Conformance"
@@ -719,15 +766,17 @@ class ConformanceInputTests(unittest.TestCase):
         binding.write_bytes(evidence.canonical_bytes(declaration))
         fixture = ConformanceAdmissionTests().inputs()
         group_id = str(uuid.uuid4())
+        package_versions = [{"packageId": "Hoard.Fixture", "version": "0.1.0"}]
+        binding_sources = [{"path": "binding.json", "adapterId": "fixture.adapter"}]
         def capture():
             return evidence.capture_profile_inputs(
                 run, self.repo, snapshot, profile_id="metadata", mode="diagnostic",
                 invocation_group_id=group_id,
-                package_versions=[{"packageId": "Hoard.Fixture", "version": "0.1.0"}],
+                package_versions=package_versions,
                 feed="feed/candidate", configuration="stores/candidate.NuGet.Config",
                 lock_paths=[f"snapshot/{sdk}/packages.lock.json"],
                 runtime_paths=["compiled/Hoard.Fixture.dll"],
-                binding_sources=[{"path": "binding.json", "adapterId": "fixture.adapter"}],
+                binding_sources=binding_sources,
                 observed_environment=fixture["environment"], budgets=fixture["budgets"],
                 invocation=["profile", "metadata"])
         before = capture()
@@ -738,6 +787,34 @@ class ConformanceInputTests(unittest.TestCase):
         self.assertEqual(before["bindings"][0]["descriptorSha256"], hashlib.sha256(binding.read_bytes()).hexdigest())
         self.assertNotIn(str(self.parent).encode(), evidence.canonical_bytes(before))
         self.assertEqual(evidence.verify_input_recomputation(before, capture()), evidence.digest(before))
+        package_id = "Hoard.Fixtures.Metadata.Memory"
+        with zipfile.ZipFile(feed / (package_id + ".0.1.0.nupkg"), "w") as archive:
+            archive.writestr(package_id + ".nuspec", (
+                f"<package><metadata><id>{package_id}</id><version>0.1.0</version></metadata></package>"))
+            archive.writestr("lib/net10.0/" + package_id + ".dll", b"fixture metadata assembly")
+        package_versions.append({"packageId": package_id, "version": "0.1.0"})
+        package = evidence.package_identity(feed, package_id, "0.1.0")
+        declaration.update(bindingId="fixture.metadata.memory", packageId=package_id, packageSha256=package["sha256"])
+        binding.write_bytes(evidence.canonical_bytes(declaration))
+        binding_sources[0]["catalogBindingId"] = "memory"
+        before = capture()
+        self.assertEqual(before["bindings"][0]["bindingId"], "memory")
+        self.assertEqual(before["bindings"][0]["descriptorSha256"], hashlib.sha256(binding.read_bytes()).hexdigest())
+        self.assertEqual(evidence.verify_input_recomputation(before, capture()), evidence.digest(before))
+        binding_sources.append({"path": "binding.json", "adapterId": "same.factory"})
+        with self.assertRaisesRegex(evidence.ConformanceError, "BindingInvalid"):
+            capture()
+        binding_sources.pop()
+        alternate = run.root / "alternate-binding.json"
+        alternate.write_text(json.dumps(declaration, indent=2))
+        binding_sources.append({"path": alternate.name, "adapterId": "same.factory"})
+        with self.assertRaisesRegex(evidence.ConformanceError, "BindingInvalid"):
+            capture()
+        binding_sources.pop()
+        del binding_sources[0]["catalogBindingId"]
+        with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):
+            evidence.verify_input_recomputation(before, capture())
+        binding_sources[0]["catalogBindingId"] = "memory"
         declaration["capabilities"].append("additional-fixture-capability")
         binding.write_bytes(evidence.canonical_bytes(declaration))
         with self.assertRaisesRegex(evidence.ConformanceError, "InputChanged"):

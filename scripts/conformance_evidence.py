@@ -760,7 +760,7 @@ _BINDING_REQUIRED_FAULTS = {
 }
 
 
-def capture_binding(root, declaration_path, *, packages, adapter_id):
+def capture_binding(root, declaration_path, *, packages, adapter_id, catalog_binding_id=None):
     deadline = time.monotonic() + 5
     declaration_path, adapter_id = relative_path(declaration_path), stable_id(adapter_id)
     packages = _list(_entity("PackageIdentity"), 1024)(packages)
@@ -787,8 +787,18 @@ def capture_binding(root, declaration_path, *, packages, adapter_id):
                 and package["version"].casefold() == declaration["packageVersion"].casefold()]
     if len(matching) != 1 or matching[0]["sha256"] != declaration["packageSha256"]:
         raise ConformanceError("BindingInvalid")
+    binding_id = declaration["bindingId"]
+    if catalog_binding_id is not None:
+        from conformance_case_catalog import CATEGORY_BINDING_SLOTS
+        catalog_binding_id = stable_id(catalog_binding_id)
+        selected = [slot for slot in CATEGORY_BINDING_SLOTS if slot[1] == catalog_binding_id]
+        if (len(selected) != 1 or selected[0][0] != declaration["category"]
+                or selected[0][2] != binding_id
+                or selected[0][3].casefold() != matching[0]["packageId"].casefold()):
+            raise ConformanceError("BindingInvalid")
+        binding_id = catalog_binding_id
     admitted = admit_entity("ProviderBinding", {
-        "bindingId": declaration["bindingId"], "package": matching[0], "category": declaration["category"],
+        "bindingId": binding_id, "package": matching[0], "category": declaration["category"],
         "descriptorSha256": hashlib.sha256(raw).hexdigest(),
         "capabilitySha256": digest({field: declaration[field] for field in ("category", "capabilities", "faults")}),
         "adapterId": adapter_id,
@@ -798,10 +808,18 @@ def capture_binding(root, declaration_path, *, packages, adapter_id):
     return admitted
 
 
+def _binding_source(value):
+    fields = {"path": relative_path, "adapterId": stable_id}
+    if isinstance(value, (dict, MappingProxyType)) and "catalogBindingId" in value:
+        fields["catalogBindingId"] = stable_id
+    return _record(fields)(value)
+
+
 def capture_profile_inputs(run, repository, snapshot, *, profile_id, mode, invocation_group_id,
                            package_versions, feed, configuration, lock_paths, runtime_paths,
                            binding_sources, observed_environment, budgets, invocation,
                            baseline_sha256=None, ci_revision=None):
+    from conformance_case_catalog import CATEGORY_BINDING_SLOTS
     run._check_ledger()
     profile_id, mode = _one_of(*PROFILES)(profile_id), _one_of(
         "qualification", "diagnostic", "preparation")(mode)
@@ -809,8 +827,7 @@ def capture_profile_inputs(run, repository, snapshot, *, profile_id, mode, invoc
     feed, configuration = relative_path(feed), relative_path(configuration)
     package_versions = _list(_record({"packageId": stable_id, "version": stable_id}),
                              1024, unique=True)(package_versions)
-    binding_sources = _list(_record({"path": relative_path, "adapterId": stable_id}),
-                            128, minimum=0, unique=True)(binding_sources)
+    binding_sources = _list(_binding_source, 128, minimum=0, unique=True)(binding_sources)
     try:
         snapshot_relative = relative_path(Path(snapshot).relative_to(run.root).as_posix())
     except ValueError:
@@ -825,8 +842,15 @@ def capture_profile_inputs(run, repository, snapshot, *, profile_id, mode, invoc
     source_mapping = verify_synthetic_source_mapping(run.root, configuration, feed)
     packages = [package_identity(run.root / feed, item["packageId"], item["version"])
                 for item in package_versions]
-    bindings = [capture_binding(run.root, item["path"], packages=packages, adapter_id=item["adapterId"])
+    bindings = [capture_binding(run.root, item["path"], packages=packages, adapter_id=item["adapterId"],
+                                catalog_binding_id=item.get("catalogBindingId"))
                 for item in binding_sources]
+    original_ids = {slot[1]: slot[2] for slot in CATEGORY_BINDING_SLOTS}
+    declaration_ids = {
+        original_ids[source["catalogBindingId"]] if "catalogBindingId" in source else binding["bindingId"]
+        for source, binding in zip(binding_sources, bindings)}
+    if len(declaration_ids) != len(bindings):
+        raise ConformanceError("BindingInvalid")
     baseline_inputs = []
     if baseline_sha256 is not None:
         from conformance_baselines import verify_prepared_baselines

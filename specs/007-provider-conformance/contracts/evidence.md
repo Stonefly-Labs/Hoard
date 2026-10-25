@@ -22,6 +22,18 @@ and actual resolved/runtime loaded assemblies. Equal version labels with
 different bytes are different tested inputs. No arbitrary commit label, empty
 hash map or hash of a filename counts as source/content proof.
 
+An explicit capture-time `catalogBindingId` assignment connects each known
+fixture declaration to its frozen category slot without changing the
+declaration. Independent parent mapping checks category, original declaration
+ID and exact provider package before projecting only `ProviderBinding.bindingId`.
+The original raw descriptor hash, capabilities, adapter and package attribution
+remain bound; unknown/cross-slot assignments and duplicate original declaration
+IDs reject, including differently serialized declarations.
+Assignment removal/change must alter recaptured inputs. This adds no descriptor
+or report field and grants no applicability, exclusion or passing-result claim.
+Actual factory/reopen observations continue to join the original complete
+descriptor hash, not a rewritten declaration or copied display label.
+
 Profile reports in one baseline share source/catalog/configuration-policy
 inputs and invocation group, not necessarily package or environment hashes:
 different providers and CI runners have different exact bytes/environments.
