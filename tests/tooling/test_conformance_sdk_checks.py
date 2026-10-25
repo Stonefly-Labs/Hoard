@@ -152,8 +152,10 @@ class SdkDiagnosticTests(unittest.TestCase):
                 captured.append(scope_id)
                 if failure == "execution" and len(captured) == 3:
                     raise checks.evidence.ConformanceError("ProofMismatch")
+                source = ({"sourceParentSha256": hashlib.sha256(scope_id.encode()).hexdigest()}
+                          if scope_id.startswith("inspection-") or scope_id == "controller" else {})
                 return {"transport": transports[scope_id],
-                        "summary": {"tests": len(plan["tests"]), "qualification": False, "code": "None"}}
+                        "summary": {"tests": len(plan["tests"]), "qualification": False, "code": "None", **source}}
             diagnostics = io.StringIO()
             with self.subTest(failure=failure), contextlib.redirect_stdout(diagnostics), patch.object(
                     checks, "OwnedRun", SimpleNamespace), patch.object(
@@ -179,6 +181,10 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertTrue(all(received[key] is value for key, value in transports.items()))
                     self.assertEqual(summary["tests"], witness_count)
                     self.assertEqual(summary["caseCount"], case_count)
+                    parents = {scope: hashlib.sha256(scope.encode()).hexdigest()
+                               for scope in plans if scope.startswith("inspection-") or scope == "controller"}
+                    self.assertEqual(summary["sourceParentCount"], len(parents))
+                    self.assertEqual(summary["sourceParentsSha256"], checks.evidence.digest(parents))
                     self.assertFalse(summary["qualification"])
                     self.assertEqual(
                         json.loads(json.dumps({"category": summary}))["category"], summary)
@@ -315,7 +321,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                         inspection_inputs=selected)}
                 manifest = {
                     "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
-                    "inputSha256": checks.evidence.digest(inputs), "attemptId": str(uuid.uuid4()),
+                    "inputSha256": checks.evidence.digest(inputs), "attemptId": str(uuid.uuid4()), "purpose": "execution",
                     "expected": [{
                         "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
                         "bindingId": binding, "caseId": category_runtime_cases(profile, binding)[identity],
@@ -358,6 +364,93 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertEqual(result["sourceExecutions"], len(pairs))
                     self.assertEqual(result["inspectionProofsSha256"], checks.evidence.file_sha256(receipt))
                     self.assertFalse(json.loads(receipt.read_bytes())["qualification"])
+                    parent = self.directory / f'proofs/category-source-{manifest["attemptId"]}.json'
+                    source_options = {
+                        "category_scope": (profile, scope_id), "result": SimpleNamespace(exit_code=0)}
+                    changed_sources = {**result, "inspectionProofsSha256": "0" * 64}
+                    for sources in (changed_sources, {**result, "sourceExecutions": len(pairs) + 1}):
+                        with self.assertRaises(checks.evidence.ConformanceError):
+                            checks.category_source_parent(
+                                run, inputs, manifest, ingested, sources, **source_options)
+                        self.assertFalse(parent.exists())
+                    with patch.object(checks, "OwnedRun", SimpleNamespace):
+                        with self.assertRaises(checks.evidence.ConformanceError):
+                            checks.category_source_parent(
+                                run, inputs, manifest, ingested, result, **source_options)
+                    self.assertFalse(parent.exists())
+                    source_hash = checks.category_source_parent(
+                        run, inputs, manifest, ingested, result, **source_options)
+                    linked = json.loads(parent.read_bytes())
+                    self.assertEqual(source_hash, checks.evidence.file_sha256(parent))
+                    self.assertFalse(linked["qualification"])
+                    self.assertFalse(linked["nativeContainment"])
+                    self.assertIsNone(linked["executionParentSha256"])
+                    self.assertEqual(linked["sourceReceiptSha256"], result["inspectionProofsSha256"])
+                    self.assertEqual(
+                        {(row["bindingId"], row["caseId"], row["executionId"], row["runtimeProofSha256"])
+                         for row in linked["observations"]},
+                        {(binding, category_runtime_cases(profile, binding)[identity],
+                          next(row["executionId"] for row in witnesses if row["testIdentity"] == identity),
+                          next(row["proofSha256"] for row in witnesses if row["testIdentity"] == identity))
+                         for binding, identity in pairs})
+                    parent.unlink()
+                    run.run_id, run.root_id = inputs["runId"], str(uuid.uuid4())
+                    run.command_sequence, run.live_children = 1, lambda: ()
+                    arguments, settings = ["dotnet", "vstest", "synthetic-source-command-canary"], b"<RunSettings/>"
+                    settings_path = self.directory / f'stores/settings-{manifest["attemptId"]}.runsettings'
+                    settings_path.write_bytes(settings)
+                    record = {
+                        "schemaVersion": 1, "sequence": 1, "childPid": 123, "childStartSha256": "b" * 64,
+                        "startedMs": 2, "endedMs": 3, "exitCode": 0, "diagnosticCode": "None",
+                        "groupState": "Exited", "scope": "ordinary", "runId": run.run_id, "rootId": run.root_id,
+                        "argvSha256": checks.evidence.digest(arguments),
+                        "cwdSha256": hashlib.sha256(str(self.directory.absolute()).encode()).hexdigest()}
+                    record_path = self.directory / "proofs/execution-command-0001.json"
+                    checks.write_new(record_path, checks.evidence.canonical_bytes(record))
+                    execution = SimpleNamespace(exit_code=0, execution_record_sha256=checks.evidence.file_sha256(record_path))
+                    command_parent = self.directory / f'proofs/category-command-{manifest["attemptId"]}-execution.json'
+                    source_options["result"] = execution
+                    with patch.object(checks, "OwnedRun", SimpleNamespace):
+                        checks.category_command_proof(
+                             run, execution, arguments=arguments, cwd=self.directory, manifest=manifest,
+                             settings_data=settings, started_ms=1, ended_ms=4)
+                        command_raw = command_parent.read_bytes()
+                        command_value = json.loads(command_raw)
+                        for change in (
+                                 {"runId": str(uuid.uuid4())}, {"rootId": str(uuid.uuid4())},
+                                 {"attemptId": str(uuid.uuid4())}, {"invocationGroupId": str(uuid.uuid4())},
+                                 {"inputsSha256": "0" * 64}, {"manifestSha256": "0" * 64},
+                                 {"executionRecordSha256": "0" * 64}, {"settingsSha256": "0" * 64},
+                                 {"nativeContainment": False}, {"purpose": "discovery"}, {"extra": True}):
+                             command_parent.chmod(0o600)
+                             command_parent.write_bytes(checks.evidence.canonical_bytes({**command_value, **change}))
+                             command_parent.chmod(0o400)
+                             with self.assertRaises(checks.evidence.ConformanceError):
+                                 checks.category_source_parent(run, inputs, manifest, ingested, result, **source_options)
+                             self.assertFalse(parent.exists())
+                        command_parent.chmod(0o600)
+                        command_parent.write_bytes(command_raw)
+                        with self.assertRaises(checks.evidence.ConformanceError):
+                             checks.category_source_parent(run, inputs, manifest, ingested, result, **source_options)
+                        command_parent.chmod(0o400)
+                        settings_path.write_bytes(b"<Changed/>")
+                        with self.assertRaises(checks.evidence.ConformanceError):
+                             checks.category_source_parent(run, inputs, manifest, ingested, result, **source_options)
+                        settings_path.write_bytes(settings)
+                        with patch.object(run, "live_children", return_value=(123,)):
+                             with self.assertRaises(checks.evidence.ConformanceError):
+                                 checks.category_source_parent(run, inputs, manifest, ingested, result, **source_options)
+                        record_path.chmod(0o600)
+                        with self.assertRaises(checks.evidence.ConformanceError):
+                             checks.category_source_parent(run, inputs, manifest, ingested, result, **source_options)
+                        record_path.chmod(0o400)
+                        checks.category_source_parent(run, inputs, manifest, ingested, result, **source_options)
+                    linked = json.loads(parent.read_bytes())
+                    self.assertTrue(linked["nativeContainment"])
+                    self.assertFalse(linked["qualification"])
+                    self.assertEqual(linked["executionParentSha256"], hashlib.sha256(command_raw).hexdigest())
+                    self.assertNotIn(b"synthetic-source-command-canary", parent.read_bytes())
+                    record_path.unlink()
                     receipt.unlink()
                     changed_manifest = {**manifest, "expected": [
                         {**manifest["expected"][0], "caseId": "foreign"}, *manifest["expected"][1:]]}
@@ -428,6 +521,22 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertEqual({item["testIdentity"]: (item["bindingId"], item["caseId"])
                                       for item in manifest["expected"]}, plan["tests"])
                     self.assertEqual(launch.call_args.args[5]["category_scope"], (profile, scope_id))
+                    if inspection or scope_id == "controller":
+                        source_function = "category_inspection_proofs" if inspection else "original_artifact_external_proofs"
+                        source_key = "inspectionProofsSha256" if inspection else "externalProofsSha256"
+                        with patch.object(
+                                checks, "_execute_runtime_transport",
+                                return_value=(SimpleNamespace(exit_code=0), {},
+                                              {"proofs": {}, "completion_data": b""}, "c" * 64)), patch.object(
+                                    checks, "validate_observation"), patch.object(
+                                        checks, source_function, return_value={
+                                            "sourceExecutions": len(pairs), source_key: "d" * 64}), patch.object(
+                                                checks, "category_source_parent",
+                                                side_effect=checks.evidence.ConformanceError("OwnershipInvalid")):
+                            with self.assertRaisesRegex(checks.evidence.ConformanceError, "OwnershipInvalid"):
+                                checks.category_attempt(
+                                    run=SimpleNamespace(root=self.directory), inputs=inputs,
+                                    candidate=candidate, scope_id=scope_id, plan=plan, **options)
                     launch.reset_mock()
                     changed = {**plan, "tests": {**plan["tests"], "Foreign.Check": ("foreign", "MP-01")}}
                     with self.assertRaises(checks.evidence.ConformanceError):
@@ -1285,6 +1394,45 @@ class SdkDiagnosticTests(unittest.TestCase):
                 SimpleNamespace(root=self.directory), category_inputs, category_manifest, category_observed, **options)
             self.assertEqual(result["sourceExecutions"], 16)
             self.assertEqual(result["externalProofsSha256"], checks.evidence.file_sha256(category_receipt))
+            run = SimpleNamespace(root=self.directory)
+            source_options = {**options, "result": SimpleNamespace(exit_code=0)}
+            parent = self.directory / f"proofs/category-source-{category_attempt}.json"
+            source_raw = category_receipt.read_bytes()
+            source = json.loads(source_raw)
+            for change in (
+                    {"attemptId": str(uuid.uuid4())}, {"runId": str(uuid.uuid4())},
+                    {"inputsSha256": "0" * 64}, {"qualification": True},
+                    {"observations": [
+                        {**source["observations"][0], "executionId": str(uuid.uuid4())},
+                        *source["observations"][1:]]},
+                    {"observations": [
+                        {**source["observations"][0], "runtimeProofSha256": "0" * 64},
+                        *source["observations"][1:]]},
+                    {"observations": [
+                        {**source["observations"][0], "sourceProofs": {"foreign": "a" * 64}},
+                        *source["observations"][1:]]},
+                    {"observations": source["observations"][:-1]}):
+                category_receipt.chmod(0o600)
+                category_receipt.write_bytes(checks.evidence.canonical_bytes({**source, **change}))
+                category_receipt.chmod(0o400)
+                changed = {**result, "externalProofsSha256": checks.evidence.file_sha256(category_receipt)}
+                with self.assertRaises(checks.evidence.ConformanceError):
+                    checks.category_source_parent(
+                        run, category_inputs, category_manifest, category_observed, changed, **source_options)
+                self.assertFalse(parent.exists())
+            category_receipt.chmod(0o600)
+            category_receipt.write_bytes(source_raw)
+            with self.assertRaises(checks.evidence.ConformanceError):
+                checks.category_source_parent(
+                    run, category_inputs, category_manifest, category_observed, result, **source_options)
+            category_receipt.chmod(0o400)
+            checks.category_source_parent(
+                run, category_inputs, category_manifest, category_observed, result, **source_options)
+            linked = json.loads(parent.read_bytes())
+            self.assertFalse(linked["qualification"])
+            self.assertFalse(linked["nativeContainment"])
+            self.assertEqual(linked["sourceReceiptSha256"], result["externalProofsSha256"])
+            self.assertEqual(len(linked["observations"]), 16)
 
     def test_transfer_measurement_admits_only_exact_parent_memory_and_settlement_proof(self):
         self.assertTrue(callable(getattr(checks, "admit_transfer_measurement", None)),

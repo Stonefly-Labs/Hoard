@@ -1981,8 +1981,18 @@ regression reproduces expiry before the intended native stall. That fixture
 now advances a test-only deadline clock after physical boundary entry, retaining
 the unchanged common deadline/ownership/stop assertions and waiting for actual
 settlement before disposing its blocking event. All twelve artifact
-noncooperation cases pass locally; exact-head Linux confirmation is pending.
+noncooperation cases pass locally. Exact `0107db5`, run
+[40199986870](https://github.com/Stonefly-Labs/Hoard/actions/runs/40199986870),
+also passes all three Linux jobs, 273 foundations without skips and the complete
+121-scope/1,684-witness diagnostic chain, including fresh category controls.
 This does not admit the failed run or advance qualification obligations.
+Category inspection/controller receipts now additionally join their exact
+frozen binding/case/runtime execution to the independently admitted owned
+execution parent, read-only command record and unchanged settings. Missing
+native parents fail explicitly; non-native fixtures remain labeled as such.
+Safe summaries expose only parent counts/digests. These links remain
+non-qualifying: they do not import missing controls or open source admission.
+Their later implementation is not covered by the `0107db5` receipt.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

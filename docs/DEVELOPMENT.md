@@ -8921,10 +8921,54 @@ passes all twelve cases on macOS. This is local diagnostic evidence, not native
 Linux containment. All 381 tooling checks (seventeen explicit native macOS
 skips), frozen inventory/catalog checks,
 `dotnet format whitespace --folder tests/contracts/Hoard.Artifacts.Tests/Cases --include ArtifactNonCooperationTests.cs --verify-no-changes --verbosity quiet`
-and `git diff --check` pass. Exact-head Linux confirmation remains pending;
+and `git diff --check` pass. Exact-head Linux confirmation was then pending;
 the reproduction establishes a real setup race but does not prove the precise
 assertion behind every earlier intermittent run. No task/checklist marker or
 qualification gate changes. Deployment diagrams/examples are unaffected.
+
+Exact `0107db5546578ae8b10ec2177223fe38fbee208c`, run
+[40199986870](https://github.com/Stonefly-Labs/Hoard/actions/runs/40199986870),
+now passes all three Linux jobs and 273 foundations without failures/errors/
+skips. Independent strict projection admits all 121 scopes/1,684 exact witnesses,
+both complete batches, fresh metadata native-stall/ten-barrier recovery and
+independent artifact transfers. The delayed-entry case now passes in the real
+native chain; the failed `4e6f03b` receipt remains unadmitted. Metadata input
+`24813b35ddc840ec4fe8640f523c93649e3a7f27293a70e3252209d0269b898b`;
+result `a6a526ba772f1d09cfb7671c28060a5d9a363ea7704252660d4752822725df87`.
+Artifact input `b80273f8bb92d8dd0fa8ce9ce4caa4e9174247ccc5bbe541fd258a7a00334516`;
+result `763e256aed15d97740ff268da7a600259ed801b1031da9a68d2a4d129028a59a`.
+The 13-lock/18-package fresh replay also passes. Histories still retain 22
+metadata/seven artifact incomplete obligations and `qualification: false`.
+The transient watcher TLS failure was retried without admitting unavailable
+logs. This exact receipt does not cover the later source-parent changes below.
+
+Category inspection/controller execution now additionally writes a create-new,
+read-only `category-source-<attempt>.json` parent. It independently rereads the
+exact source receipt and joins every frozen identity/binding/primary-case to its
+actual execution ID and runtime proof hash. Source receipt hashes, schemas,
+scope/run/group/attempt/input agreement, exact complete witness sets and
+kind-specific controller proof keys are checked, not accepted from a count.
+For a native owned run, its existing execution parent and command record are
+mandatory: current root/run/attempt/manifest/input, actual result record hash,
+read-only parent/record bytes, unchanged settings and settled children must
+agree. Explicit non-native fixtures may have no command parent, but retain
+`nativeContainment: false`; no native success fallback exists.
+
+The scope summary retains this new parent hash, and safe category summaries
+expose a parent count plus canonical scope-to-parent digest (four metadata/
+three artifact sources on a complete run). The missing-API regression fails
+first; tests cover every inspection scope, controller source/execution/proof
+substitution, foreign/writable command parents, changed settings, retained
+children, missing native records and propagation of source-parent failures
+through the actual category dispatcher. These are simulated tooling fixtures,
+not native receipts. This increment does not qualify source origins or import
+the remaining controller/QC obligations. Shared assertions, providers,
+packages/locks, inventories, task/checklist markers and deployment examples/
+diagrams remain unchanged. Exact-head Linux execution is still required.
+All 381 tooling checks pass (seventeen explicit native macOS skips), as do
+frozen inventory/catalog and patch checks. A rerun temporarily hit the unchanged
+24 GiB workspace-capacity gate; removing only this increment's four disposable
+restore caches restored capacity and the full suite passed without a bypass.
 
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005

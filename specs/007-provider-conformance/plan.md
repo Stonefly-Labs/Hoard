@@ -6077,6 +6077,36 @@ is pending. The failed run remains unadmitted, and the precise earlier native
 assertion cannot be inferred from the hash alone. No task/checklist markers
 or qualification obligations advance.
 
+Exact `0107db5546578ae8b10ec2177223fe38fbee208c`, run 40199986870,
+now passes all three Linux jobs and 273 foundations without skips. Strict
+projection independently admits the complete 121 scopes/1,684 exact witnesses,
+both batches, fresh metadata stall/ten recovery barriers and independent
+artifact transfers, plus 13-lock/18-package replay. The delayed-entry native
+case passes; failed `4e6f03b` is not admitted. Metadata input/result
+`24813b35ddc840ec4fe8640f523c93649e3a7f27293a70e3252209d0269b898b`/
+`a6a526ba772f1d09cfb7671c28060a5d9a363ea7704252660d4752822725df87`;
+artifact input/result
+`b80273f8bb92d8dd0fa8ce9ce4caa4e9174247ccc5bbe541fd258a7a00334516`/
+`763e256aed15d97740ff268da7a600259ed801b1031da9a68d2a4d129028a59a`.
+All 22 metadata/seven artifact incomplete obligations remain. This receipt
+does not admit the source-parent increment below or establish qualification.
+
+Category source receipts now also bind exact frozen identities, binding/case,
+execution IDs and runtime proof hashes to independently reread source packets
+and the owned execution parent. Native runs require their current read-only
+parent/record, actual result hash, unchanged settings and settled children;
+explicit non-native fixtures retain their false containment flag. Create-new
+read-only source parents are retained per scope and summarized only by count/
+canonical digest (four metadata and three artifact parents when complete).
+Missing-API red and source/command substitution, mutable inputs, unsettled work
+and dispatcher-failure propagation checks cover every source family. This
+links already validated diagnostic evidence; it does not open qualification
+or import remaining controls. Native execution is pending. Existing
+providers/shared assertions/packages/locks/inventories and markers are unchanged.
+All 381 tooling checks (seventeen native macOS skips), frozen inventory/catalog
+and patch checks pass. A temporary local capacity failure was resolved by
+deleting only task-generated restore caches, not weakening the 24 GiB guard.
+
 
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately

@@ -2862,10 +2862,13 @@ def _category_record(run, inputs, history, scopes, code=None):
               for state in ("Passed", "Failed", "Incomplete", "NotApplicable")}
     if code is None:
         code = "AssertionFailed" if states["Failed"] else "EvidenceIncomplete" if states["Incomplete"] else "None"
+    source_parents = {scope_id: evidence.sha256(scope["sourceParentSha256"])
+                      for scope_id, scope in scopes.items() if "sourceParentSha256" in scope}
     summary = {
         "qualification": False, "profileId": inputs["profileId"], "code": code,
         "inputsSha256": evidence.digest(inputs), "scopeCount": len(scopes),
         "tests": sum(scope["tests"] for scope in scopes.values()),
+        "sourceParentCount": len(source_parents), "sourceParentsSha256": evidence.digest(source_parents),
         "caseCount": len(results), "caseStates": states, "resultsSha256": evidence.digest(results)}
     write_new(run.root / f'proofs/category-{inputs["profileId"]}-diagnostic-history.json', evidence.canonical_bytes({
         "schemaVersion": 1, **summary, "scopes": scopes, "results": results}))
@@ -3002,6 +3005,9 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
     elif scope_id == "controller":
         sources = original_artifact_external_proofs(
             run, inputs, manifest, ingested, category_scope=category_scope)
+    if sources:
+        sources["sourceParentSha256"] = category_source_parent(
+            run, inputs, manifest, ingested, sources, category_scope=category_scope, result=result)
     return MappingProxyType({
         "transport": transport, "observation": ingested,
         "summary": MappingProxyType({
@@ -3030,6 +3036,107 @@ def _category_manifest_tests(category_scope, manifest):
                    or entry["fullyQualifiedName"] != entry["testIdentity"].split("(")[0] for entry in expected)):
         raise evidence.ConformanceError("WitnessMissing")
     return tests
+
+
+def category_source_parent(run, inputs, manifest, ingested, sources, *, category_scope, result):
+    tests = _category_manifest_tests(category_scope, manifest)
+    profile, scope_id = category_scope
+    if (inputs["profileId"] != profile or inputs["mode"] != "diagnostic"
+            or type(result.exit_code) is not int or result.exit_code != 0):
+        raise evidence.ConformanceError("ProofMismatch")
+    if scope_id.startswith("inspection-"):
+        source_key = "inspectionProofsSha256"
+        mode = f"category-{profile}-{scope_id}"
+        filename = f'{mode}-{manifest["attemptId"]}.json'
+        observation_fields = {"sourceProofSha256": evidence.sha256}
+    elif (profile, scope_id) == ("artifacts", "controller"):
+        source_key = "externalProofsSha256"
+        mode = "original-artifact-proofs"
+        filename = f'original-artifact-external-{manifest["attemptId"]}.json'
+        observation_fields = {"sourceProofs": lambda value: value}
+    else:
+        raise evidence.ConformanceError("WitnessMissing")
+    if (not isinstance(sources, Mapping) or set(sources) != {"sourceExecutions", source_key}
+            or type(sources["sourceExecutions"]) is not int or sources["sourceExecutions"] != len(tests)):
+        raise evidence.ConformanceError("ProofMismatch")
+    witnesses = _source_witnesses(inputs, manifest, ingested, tests)
+    if any(row["bindingId"] != tests[identity][0] for identity, row in witnesses.items()):
+        raise evidence.ConformanceError("ProofMismatch")
+    source_path = run.root / "proofs" / filename
+    raw = read_bounded(source_path, 512 * 1024)
+    if source_path.stat().st_mode & 0o777 != 0o400 or hashlib.sha256(raw).hexdigest() != sources[source_key]:
+        raise evidence.ConformanceError("ProofMismatch")
+    receipt = evidence._runtime_json(raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "mode": evidence._constant(mode), "runId": evidence._constant(inputs["runId"]),
+        "invocationGroupId": evidence._constant(inputs["invocationGroupId"]),
+        "attemptId": evidence._constant(manifest["attemptId"]),
+        "inputsSha256": evidence._constant(evidence.digest(inputs)),
+        **({"transferParentSha256": evidence.sha256} if scope_id == "controller" else {}),
+        "observations": evidence._list(evidence._record({
+            "testIdentity": evidence._runtime_identity, "executionId": evidence._uuid,
+            "runtimeProofSha256": evidence.sha256, **observation_fields}), 128),
+    }, limit=512 * 1024)
+    observations = receipt["observations"]
+    if (len(observations) != len(tests)
+            or {row["testIdentity"] for row in observations} != set(tests)):
+        raise evidence.ConformanceError("ProofMismatch")
+    linked = []
+    for row in observations:
+        identity = row["testIdentity"]
+        witness = witnesses[identity]
+        if (row["executionId"] != witness["executionId"]
+                or row["runtimeProofSha256"] != witness["proofSha256"]):
+            raise evidence.ConformanceError("ProofMismatch")
+        if scope_id == "controller":
+            kind = ORIGINAL_ARTIFACT_PROOF_SOURCES[identity][0]
+            evidence._record({
+                key: evidence.sha256 for key in (("producer", "state") if kind == "crash" else ("producer",))
+            })(row["sourceProofs"])
+        binding, case = tests[identity]
+        linked.append({**row, "bindingId": binding, "caseId": case})
+    native = isinstance(run, OwnedRun)
+    record_sha = getattr(result, "execution_record_sha256", None)
+    execution_parent_sha = None
+    if record_sha is None:
+        if native:
+            raise evidence.ConformanceError("OwnershipInvalid")
+    else:
+        evidence.sha256(record_sha)
+        sequence = getattr(run, "command_sequence", None)
+        if type(sequence) is not int or not 0 < sequence <= 2**63 - 1:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        path = run.root / f'proofs/category-command-{manifest["attemptId"]}-execution.json'
+        parent_raw = read_bounded(path, 64 * 1024)
+        parent = evidence._runtime_json(parent_raw, {
+            "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+            "nativeContainment": evidence._constant(native),
+            "runId": evidence._constant(run.run_id), "rootId": evidence._constant(run.root_id),
+            "invocationGroupId": evidence._constant(inputs["invocationGroupId"]),
+            "attemptId": evidence._constant(manifest["attemptId"]), "purpose": evidence._constant("execution"),
+            "inputsSha256": evidence._constant(evidence.digest(inputs)),
+            "executionRecordSha256": evidence._constant(record_sha),
+            "manifestSha256": evidence._constant(evidence.digest(manifest)), "settingsSha256": evidence.sha256,
+        }, limit=64 * 1024)
+        record_path = run.root / f"proofs/execution-command-{sequence:04}.json"
+        record_raw = read_bounded(record_path, 64 * 1024)
+        settings_raw = read_bounded(run.root / f'stores/settings-{manifest["attemptId"]}.runsettings', 256 * 1024)
+        if (path.stat().st_mode & 0o777 != 0o400 or record_path.stat().st_mode & 0o777 != 0o400
+                or run.run_id != inputs["runId"] or run.live_children()
+                or hashlib.sha256(record_raw).hexdigest() != record_sha
+                or hashlib.sha256(settings_raw).hexdigest() != parent["settingsSha256"]):
+            raise evidence.ConformanceError("ProofMismatch")
+        execution_parent_sha = hashlib.sha256(parent_raw).hexdigest()
+    parent = {
+        "schemaVersion": 1, "qualification": False, "nativeContainment": native,
+        "profileId": profile, "scopeId": scope_id, "runId": inputs["runId"],
+        "invocationGroupId": inputs["invocationGroupId"], "attemptId": manifest["attemptId"],
+        "inputsSha256": evidence.digest(inputs), "manifestSha256": evidence.digest(manifest),
+        "executionParentSha256": execution_parent_sha, "sourceReceiptSha256": hashlib.sha256(raw).hexdigest(),
+        "observations": sorted(linked, key=lambda row: row["testIdentity"]),
+    }
+    write_new(run.root / f'proofs/category-source-{manifest["attemptId"]}.json', evidence.canonical_bytes(parent))
+    return evidence.digest(parent)
 
 
 def category_command_proof(run, result, *, arguments, cwd, manifest, settings_data, started_ms, ended_ms):

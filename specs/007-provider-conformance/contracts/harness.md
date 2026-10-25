@@ -111,9 +111,12 @@ a 200 ms pre-entry ObjectSemantics observer covers delayed worker execution.
 Its common entry/deadline/retained-ownership/20 ms stop assertions remain
 unchanged, and actual settlement precedes blocking-event disposal. This
 corrects fixture scheduling, not provider behavior or qualification policy.
-The twelve related cases pass locally; Linux confirmation of this change is
-pending. Failed run 40197707264 at `4e6f03b` identifies this ObjectSemantics
-witness but is not admitted evidence.
+The twelve related cases pass locally. Exact `0107db5`, run 40199986870, also
+passes all three Linux jobs, 273 foundations without skips and the complete
+121-scope/1,684-witness diagnostic chain, including this delayed-entry case and
+fresh category controls. Failed run 40197707264 at `4e6f03b` identifies this
+ObjectSemantics witness but is not admitted evidence. Source-parent changes
+below are later than that receipt and still require their own native execution.
 
 For category discovery and execution, an available native command record is
 independently joined to the exact run/root/sequence, argv/cwd hashes, PID/start,
@@ -123,7 +126,17 @@ required. Create-new hash-only parents bind the record, settings and manifest
 to current input/group/attempt/purpose. Native executors cannot omit the record;
 explicit non-native diagnostic adapters emit no native receipt. These parents
 prove invocation ownership, not assertion success or qualification.
-That parent path passes exact `ac561f2`, run 40188204924: all three jobs,
+Each category inspection/controller scope additionally joins its independently
+validated source receipt to those exact execution-parent bytes, current
+read-only command record, actual result record hash and unchanged settings.
+Source observations preserve the frozen binding/primary-case/execution/runtime
+proof mapping; exact schemas and kind-specific controller proof keys are
+required. Native records cannot be omitted or replaced by non-native fixtures.
+Create-new read-only source parents remain explicitly non-qualifying; safe
+summaries retain only their count and canonical scope-to-parent digest.
+This is source linkage, not admission of missing control obligations or a
+qualification-origin bypass. Native execution of these links is pending.
+The earlier command-parent path passes exact `ac561f2`, run 40188204924: all three jobs,
 269 foundations without failures/errors/skips and 115 scopes/1,457 executions.
 This admits invocation ownership for that snapshot, not source qualification.
 Complete artifact/metadata diagnostic execution additionally passes exact
