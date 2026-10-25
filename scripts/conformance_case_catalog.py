@@ -772,6 +772,14 @@ METADATA_QUALITY_BASIS = MappingProxyType({
     "QC-08": (*range(32, 37), *range(38, 46)),
 })
 
+CATEGORY_QUALITY_BASIS = MappingProxyType({
+    "metadata": METADATA_QUALITY_BASIS,
+    "artifacts": MappingProxyType({
+        "QC-10": (11, 12),
+        "QC-11": (41, 42, 43, 44),
+    }),
+})
+
 
 def obligation_controls(number):
     if set(QC_CONTROLS) != set(range(1, 49)) or number not in QC_CONTROLS or not QC_CONTROLS[number]:

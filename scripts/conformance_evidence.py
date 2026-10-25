@@ -550,9 +550,10 @@ def _validate_input_links(inputs):
 
 
 def _validate_report_links(report):
-    from conformance_case_catalog import METADATA_QUALITY_BASIS
+    from conformance_case_catalog import CATEGORY_QUALITY_BASIS
 
     inputs = report["inputs"]
+    quality_basis = CATEGORY_QUALITY_BASIS.get(inputs["profileId"], {})
     input_sha = digest(inputs)
     executions = {witness["executionId"]: witness for witness in report["witnesses"]}
     packages = {package["sha256"] for package in inputs["packages"]}
@@ -584,9 +585,9 @@ def _validate_report_links(report):
             _invalid()
         for attempt in result["attempts"]:
             quality_link = False
-            if (result["profileId"] == "metadata" and result["bindingId"] == result["matrixId"] == "none"
-                    and result["caseId"] in METADATA_QUALITY_BASIS and attempt["witnessIds"]):
-                if inputs["mode"] != "qualification" or attempt != _metadata_quality_attempt(
+            if (result["bindingId"] == result["matrixId"] == "none"
+                    and result["caseId"] in quality_basis and attempt["witnessIds"]):
+                if inputs["mode"] != "qualification" or attempt != _category_quality_attempt(
                         inputs, result["caseId"], results, executions, sequence=attempt["sequence"],
                         started_ms=attempt["startedMs"], ended_ms=attempt["endedMs"]):
                     _invalid()
@@ -1769,14 +1770,16 @@ def _catalog_case_result(inputs, case, status, attempts):
     })
 
 
-def _metadata_quality_attempt(inputs, case_id, results, witnesses, *, sequence, started_ms, ended_ms):
+def _category_quality_attempt(inputs, case_id, results, witnesses, *, sequence, started_ms, ended_ms):
     """Compose only the exact current-attempt basis; never relabel its executions."""
-    from conformance_case_catalog import METADATA_QUALITY_BASIS, METADATA_RECOVERY_SOURCE_WITNESS, category_cases
+    from conformance_case_catalog import CATEGORY_QUALITY_BASIS, METADATA_RECOVERY_SOURCE_WITNESS, category_cases
 
-    if inputs["profileId"] != "metadata" or inputs["mode"] != "qualification" or case_id not in METADATA_QUALITY_BASIS:
+    profile = inputs["profileId"]
+    quality_basis = CATEGORY_QUALITY_BASIS.get(profile, {})
+    if inputs["mode"] != "qualification" or case_id not in quality_basis:
         raise ConformanceError("ProofMismatch")
     required = tuple(case for case in category_cases()
-                     if case.profile_id == "metadata" and int(case.case_id[3:]) in METADATA_QUALITY_BASIS[case_id])
+                     if case.profile_id == profile and int(case.case_id[3:]) in quality_basis[case_id])
     complete, failure, executions, proofs = True, None, set(), set()
     for case in required:
         result = results.get(case.key)
@@ -1813,6 +1816,9 @@ def _metadata_quality_attempt(inputs, case_id, results, witnesses, *, sequence, 
                 len(observed) != len(expected) or {row["testIdentity"] for row in observed} != expected
                 or any(row["status"] != "Passed" for row in observed)):
             raise ConformanceError("WitnessMissing")
+        if (profile == "artifacts" and attempt["status"] == "Passed"
+                and not set(attempt["proofSha256"]) - {row["proofSha256"] for row in observed}):
+            raise ConformanceError("ProofMismatch")
         complete &= attempt["status"] == "Passed"
         if attempt["status"] == "Failed" and failure is None:
             failure = attempt["diagnosticCode"]
@@ -2197,7 +2203,9 @@ class CategoryRuntimeHistory:
         return self._joint_plan
 
     def _case_results(self, binding_id, code, ended, witnesses, source_parents=None, control_proofs=None):
-        from conformance_case_catalog import METADATA_INVENTORY_SOURCE_WITNESSES, METADATA_RECOVERY_SOURCE_WITNESS
+        from conformance_case_catalog import (
+            METADATA_INVENTORY_SOURCE_WITNESSES, METADATA_RECOVERY_SOURCE_WITNESS, ORIGINAL_ARTIFACT_PROOF_SOURCES,
+        )
 
         results = {}
         for case in self._cases:
@@ -2229,6 +2237,10 @@ class CategoryRuntimeHistory:
                     case_code = "AssertionFailed"
                 elif (not selected
                       or any(control_proofs is None or control not in control_proofs for control in case.controls)
+                      or self._inputs["profileId"] == "artifacts" and self._inputs["mode"] == "qualification" and any(
+                          witness["testIdentity"] in ORIGINAL_ARTIFACT_PROOF_SOURCES
+                          and (source_parents is None or witness["executionId"] not in source_parents)
+                          for witness in selected)
                       or {witness["testIdentity"] for witness in selected} != expected
                       or any(witness["status"] != "Passed" for witness in selected)):
                     case_code = "EvidenceIncomplete"
@@ -2368,16 +2380,17 @@ class CategoryRuntimeHistory:
             results = {key: value for binding in self._bindings
                        for key, value in self._case_results(
                            binding, code, ended, witnesses, source_parents, controls).items()}
-            if (self._inputs["profileId"] == "metadata" and self._inputs["mode"] == "qualification"
+            if (self._inputs["mode"] == "qualification"
                     and code in ("None", "AssertionFailed")):
-                from conformance_case_catalog import METADATA_QUALITY_BASIS
+                from conformance_case_catalog import CATEGORY_QUALITY_BASIS
 
+                quality_basis = CATEGORY_QUALITY_BASIS[self._inputs["profileId"]]
                 basis = {**self._results, **results}
                 executions = {row["executionId"]: row for row in (*self._witnesses, *witnesses)}
                 for case in self._cases:
-                    if case.binding_id != "none" or case.case_id not in METADATA_QUALITY_BASIS:
+                    if case.binding_id != "none" or case.case_id not in quality_basis:
                         continue
-                    attempt = _metadata_quality_attempt(
+                    attempt = _category_quality_attempt(
                         self._inputs, case.case_id, basis, executions, sequence=self._sequences["none"] + 1,
                         started_ms=self._active["none"][1], ended_ms=ended)
                     previous = self._results.get(case.key, {}).get("attempts", ())

@@ -321,6 +321,14 @@ recompute both category qualification inputs and emit a separate non-qualifying
 artifact admission summary; transfer/scope failures interrupt rather than pass.
 Local complete/factory/history models pass, but actual Linux replay remains
 pending and artifact QCs/full profile qualification remain incomplete.
+The current quality composer separately requires both bindings' source-parented
+AS-11/12 for QC-10 and Local AS-41..44 with exactly four Object simulation
+exclusions for QC-11. The independent report join recomputes complete current
+attempts, runtime/proof links, timing and exclusions. Missing source parents
+prevent source-sensitive qualification cases from passing; foreign/shortened
+bases and borrowed durability reject. Diagnostic mode and other artifact QCs
+remain incomplete. Retry history is preserved. Local modeled validation passes;
+actual Linux replay and full profile qualification remain pending.
 The prior byte-capture checkpoint cf4/run40227343651 independently passes
 three Linux jobs, 300 native foundations without skips, 13-lock/18-package
 replay and 129 scopes/1,821 witnesses. It admits original byte capture, not the

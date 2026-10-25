@@ -6651,6 +6651,25 @@ and active SDK execution, not overall admission. C# source/projects/locks,
 public schemas and production provider boundaries are unchanged. All artifact
 QCs/full profile acceptance remain incomplete; no tasks/checklists advance.
 
+Artifact QC-10/11 composition first fails expected Passed/Failed assertions
+because neither QC is derived. The existing metadata composer is generalized
+without changing its metadata basis/behavior. A frozen artifact basis requires
+AS-11/12 for both bindings and Local AS-41..44 plus four exact Object durability
+exclusions. Qualification source-sensitive cases additionally require their
+original controller parents. Report admission recomputes same-attempt basis
+closure and exact runtime/proof/exclusion links; source-parent omissions,
+shortened/missing/foreign bases, wrong intervals and borrowed durability reject.
+Retries preserve earlier failures. Diagnostic mode and QC-03/04/05/09/12 remain
+incomplete. All 419 tooling checks pass with 19 explicit native skips; frozen
+inventory, SDK catalog and whitespace checks pass. Actual Linux replay remains
+pending, with no task/checklist advancement or full qualification claim.
+
+Safe projection of exact a86/run40230791595 independently resolves its one
+failure among 303 foundations (zero errors/skips) to original source line 413,
+the same empty-frozenset-versus-tuple assertion fixed in `72899cf`. SDK/lock
+success does not admit that failed snapshot. No runtime ownership repair or
+weakened settlement check is inferred.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

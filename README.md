@@ -2188,6 +2188,16 @@ summary remains explicitly non-qualifying. All 417 local tooling checks pass
 with 19 native skips. Actual Linux replay of this increment is pending; artifact
 QCs, full profile/evaluator work and the implementation stage remain incomplete.
 
+Current quality composition derives QC-10 from the four source-parented
+AS-11/12 transfer cases and QC-11 from Local AS-41..44 plus exactly four
+ObjectSemantics exclusions. Missing source parents, shortened/foreign bases
+and borrowed durability reject; retries preserve failed attempts. Diagnostic
+mode cannot promote these QCs. All 419 tooling checks pass with 19 native
+skips; actual Linux validation is pending, and QC-03/04/05/09/12 remain
+incomplete. Producer run40230791595 independently resolves to the same
+empty-frozenset-versus-tuple assertion at its original line 413, already fixed
+without changing native ownership behavior; that failed run is not admitted.
+
 Exact source-index run40228504830 at `a9e75c8` fails one native foundation
 assertion comparing an empty `frozenset` to an empty tuple; its SDK and lock jobs
 succeed, but the overall run is not admitted. The test now checks no live

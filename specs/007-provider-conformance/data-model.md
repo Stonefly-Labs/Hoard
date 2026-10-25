@@ -538,9 +538,18 @@ twelve immutable inputs, sole output, argv/cwd, owner/manifest and nested
 witness times. Mode-derived qualification namespaces are shared by fresh
 transfer orchestration, runtime/context/input declaration and parent rechecks.
 Both category qualification input snapshots are recomputed at SDK completion.
-These private source proofs and the non-qualifying admission summary do not
-derive passing artifact QCs or a complete profile. Actual Linux validation of
+These private source proofs and the non-qualifying admission summary alone do
+not derive passing artifact QCs or a complete profile. Actual Linux validation of
 this increment remains pending; public schemas and status rules are unchanged.
+
+The quality composer separately derives QC-10 from both bindings' AS-11/12
+and QC-11 from Local AS-41..44 plus the four exact Object durability exclusions.
+Only current-attempt complete runtime/proof/source-parent bases are admitted;
+source-sensitive qualification cases without original parents stay incomplete.
+Report links are independently recomputed, not accepted from a QC status.
+Wrong/missing/foreign/shortened bases and borrowed exclusions reject. Diagnostic
+mode cannot promote these cases, and retries retain failed history. Other
+artifact QCs and actual native validation remain incomplete.
 
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits

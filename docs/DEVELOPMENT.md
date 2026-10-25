@@ -9506,12 +9506,25 @@ or scope failure retains an interrupted history without publishing success.
 The new `artifactQualificationAdmission` diagnostic summary remains
 `qualification: false`; artifact QCs and full profile/evaluator work are not
 completed by this source join. Actual Linux execution of this increment is
-pending. Run40230791595 has now finished with failed foundations and successful
-SDK/lock jobs; its exact foundation failure is not independently attributed
-here. Run40232608162 passes foundations/locks with SDK execution still running
+pending. Safe projection now attributes run40230791595's sole foundation failure
+(303 tests, zero errors/skips) to its original source line 413: the same empty
+frozenset-versus-tuple assertion already fixed in `72899cf`. Its SDK/lock jobs
+succeed, but that overall failed snapshot is not admitted.
+Run40232608162 passes foundations/locks with SDK execution still running
 at observation, not an overall admitted snapshot.
 
-Current validation: all 417 tooling checks pass with 19 explicit native skips;
+The current quality composer reuses the unchanged metadata algorithm with a
+catalog-owned per-category basis. Artifact QC-10 requires both bindings'
+AS-11/12 cases and their original controller source parents; QC-11 requires
+Local AS-41..44 and exactly four empty-attempt simulation exclusions on Object.
+Missing source authority keeps inherited source-sensitive cases incomplete.
+Report admission independently recomputes complete same-attempt bases, exact
+runtime/proof links, bounded intervals and exclusions. Wrong/shortened/foreign
+or borrowed provenance rejects; failed retries remain visible. Diagnostic mode
+and QC-03/04/05/09/12 remain incomplete. Actual native execution of this
+increment is pending; these local models are not qualification evidence.
+
+Current validation: all 419 tooling checks pass with 19 explicit native skips;
 all 133 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
 and whitespace checks pass. The preceding byte-capture checkpoint compiled
 the original artifact package-acceptance project with freshly rebuilt SDK,

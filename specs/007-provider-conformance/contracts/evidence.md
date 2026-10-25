@@ -364,6 +364,14 @@ mode-derived namespaces agree across producer/context/input/parent surfaces.
 This private 44-file source graph and its non-qualifying diagnostic summary
 introduce no public schema or status changes. Actual Linux replay remains
 pending and artifact QCs/full profile qualification remain incomplete.
+Quality composition separately uses a catalog-owned basis: QC-10 includes
+AS-11/12 on both options; QC-11 includes Local AS-41..44 and the four exact empty
+Object exclusion records. Source-sensitive inherited qualification cases require
+original controller parents. Report validation recomputes exact current-attempt
+basis closure, runtime/proof links, timing and exclusions; missing/shortened/
+foreign or borrowed provenance rejects. Earlier failed attempts survive retries.
+Diagnostic mode and other artifact QCs remain incomplete; actual Linux replay
+and full profile qualification remain pending. No public schema changes.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

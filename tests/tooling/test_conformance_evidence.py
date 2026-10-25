@@ -2401,17 +2401,17 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 selected.add(identity)
         return partitions
 
-    def metadata_quality_fixture(self, *, mode="qualification", max_attempts=1):
+    def category_quality_fixture(self, *, profile="metadata", mode="qualification", max_attempts=1):
         import conformance_case_catalog as catalog
-        history = self.category_history(mode=mode, max_attempts=max_attempts)
+        history = self.category_history(profile=profile, mode=mode, max_attempts=max_attempts)
 
-        def finish(sequence=1, *, failed=None, missing_control=None):
+        def finish(sequence=1, *, failed=None, missing_control=None, missing_parent=None):
             start = 9 + (sequence - 1) * 4
             with mock.patch.object(evidence.time, "monotonic", return_value=start / 1000):
                 history.begin_joint(str(uuid.uuid4()), partitions=catalog.category_execution_partitions(
-                    "metadata", mode=mode))
+                    profile, mode=mode))
             witnesses, proofs, parents = [], {}, {}
-            for binding in ("sqlite", "memory"):
+            for binding in (("sqlite", "memory") if profile == "metadata" else ("local", "object")):
                 for identity in history.expected_runtime_tests(binding):
                     execution = str(uuid.uuid4())
                     hashed = hashlib.sha256(execution.encode()).hexdigest()
@@ -2421,7 +2421,11 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         "startedMs": start + 1, "endedMs": start + 2, "proofSha256": hashed,
                         "status": "Failed" if (binding, identity) == failed else "Passed"})
                     proofs["proof-" + execution + ".json"] = hashed
-                    parents[execution] = hashed
+                    if (binding, identity) != missing_parent:
+                        parents[execution] = (hashed if profile == "metadata" else
+                                              hashlib.sha256(("original-parent-" + str(sequence)).encode()).hexdigest())
+                        if profile == "artifacts":
+                            proofs["parent-" + execution + ".json"] = parents[execution]
             controls = {control: (hashlib.sha256(control.encode()).hexdigest(),)
                         for case in history._cases if case.binding_id != "none" and case.exclusion is None
                         for control in case.controls if control != missing_control}
@@ -2436,7 +2440,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
         return history, finish
 
-    def metadata_quality_report(self, history):
+    def category_quality_report(self, history):
         return {
             "schemaVersion": 1, "catalogRevision": "f07-v1", "inputs": history._inputs,
             "postInputSha256": evidence.digest(history._inputs), "results": history.results(),
@@ -2445,7 +2449,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         }
 
     def test_metadata_quality_reuses_complete_same_attempt_runtime_and_controller_provenance(self):
-        history, finish = self.metadata_quality_fixture()
+        history, finish = self.category_quality_fixture()
         qualities = finish()
         for identity in ("QC-06", "QC-07", "QC-08"):
             with self.subTest(identity=identity):
@@ -2461,16 +2465,16 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.assertEqual("Incomplete", qualities["QC-02"]["status"])
         self.assertEqual("Incomplete", qualities["QC-04"]["status"])
         self.assertEqual("Incomplete", qualities["QC-05"]["status"])
-        evidence.admit_entity("QualificationReport", self.metadata_quality_report(history))
+        evidence.admit_entity("QualificationReport", self.category_quality_report(history))
 
     def test_metadata_quality_diagnostic_missing_control_and_failed_basis_do_not_become_passes(self):
-        history, finish = self.metadata_quality_fixture(mode="diagnostic")
+        history, finish = self.category_quality_fixture(mode="diagnostic")
         self.assertTrue(all(row["status"] == "Incomplete" for row in finish().values()))
         self.setUp()
-        history, finish = self.metadata_quality_fixture()
+        history, finish = self.category_quality_fixture()
         self.assertEqual("Incomplete", finish(missing_control="parent-kill:U3")["QC-08"]["status"])
         self.setUp()
-        history, finish = self.metadata_quality_fixture(max_attempts=2)
+        history, finish = self.category_quality_fixture(max_attempts=2)
         failed = next(identity for identity in history.expected_runtime_tests("memory")
                       if ".MP15_Lost_acknowledgment_" in identity)
         first = finish(failed=("memory", failed))
@@ -2483,12 +2487,12 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.assertEqual("Incomplete", second["status"])
         self.assertEqual("OutputLimitExceeded", second["attempts"][1]["diagnosticCode"])
         self.assertEqual(first_attempt, second["attempts"][0])
-        evidence.admit_entity("QualificationReport", self.metadata_quality_report(history))
+        evidence.admit_entity("QualificationReport", self.category_quality_report(history))
 
     def test_metadata_quality_report_rejects_shortened_foreign_and_borrowed_durability_provenance(self):
-        history, finish = self.metadata_quality_fixture()
+        history, finish = self.category_quality_fixture()
         self.assertEqual("Passed", finish()["QC-08"]["status"])
-        original = evidence.load_json(evidence.canonical_bytes(self.metadata_quality_report(history)))
+        original = evidence.load_json(evidence.canonical_bytes(self.category_quality_report(history)))
         for defect in ("missing-case", "missing-witness", "shortened-basis", "foreign-witness", "wrong-sequence",
                        "wrong-exclusion", "logical-exclusion", "unrelated-quality"):
             with self.subTest(defect=defect):
@@ -2520,6 +2524,82 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     quality["caseId"] = "QC-99"
                 with self.assertRaises(evidence.ConformanceError):
                     evidence.admit_entity("QualificationReport", report)
+
+    def test_artifact_transfer_and_durability_quality_require_exact_current_original_sources(self):
+        import conformance_case_catalog as catalog
+        history, finish = self.category_quality_fixture(profile="artifacts")
+        qualities = finish()
+        for identity, bindings in (("QC-10", {"local", "object"}), ("QC-11", {"local"})):
+            with self.subTest(identity=identity):
+                result = qualities[identity]
+                self.assertEqual(result["status"], "Passed")
+                attempt = result["attempts"][0]
+                selected = [row for row in history.witnesses if row["executionId"] in attempt["witnessIds"]]
+                self.assertEqual({row["bindingId"] for row in selected}, bindings)
+                self.assertTrue({row["proofSha256"] for row in selected} < set(attempt["proofSha256"]))
+                self.assertLessEqual(len(attempt["proofSha256"]), evidence.MAX_WITNESSES)
+        for identity in ("QC-03", "QC-04", "QC-05", "QC-09", "QC-12"):
+            self.assertEqual(qualities[identity]["status"], "Incomplete")
+        excluded = [row for row in history.results() if row["bindingId"] == "object"
+                    and row["caseId"] in ("AS-41", "AS-42", "AS-43", "AS-44")]
+        self.assertEqual(len(excluded), 4)
+        self.assertTrue(all(row["status"] == "NotApplicable" and row["attempts"] == ()
+                            and row["exclusionRule"] == "simulation-no-durable-restart" for row in excluded))
+        evidence.admit_entity("QualificationReport", self.category_quality_report(history))
+        transfer = next(identity for identity, source in catalog.ORIGINAL_ARTIFACT_PROOF_SOURCES.items()
+                        if source == ("transfer", "local", 268435456))
+        for mode, missing in (("diagnostic", None), ("qualification", ("local", transfer))):
+            self.setUp()
+            history, finish = self.category_quality_fixture(profile="artifacts", mode=mode)
+            observed = finish(missing_parent=missing)
+            self.assertEqual(observed["QC-10"]["status"], "Incomplete")
+            self.assertEqual(observed["QC-11"]["status"], "Passed" if missing else "Incomplete")
+
+    def test_artifact_durability_quality_preserves_failed_attempts_and_rejects_borrowed_provenance(self):
+        import conformance_case_catalog as catalog
+        history, finish = self.category_quality_fixture(profile="artifacts", max_attempts=2)
+        crash = next(identity for identity, source in catalog.ORIGINAL_ARTIFACT_PROOF_SOURCES.items()
+                     if source[0] == "crash")
+        first = finish(failed=("local", crash))["QC-11"]["attempts"][0]
+        self.assertEqual(first["status"], "Failed")
+        self.assertEqual(first["diagnosticCode"], "AssertionFailed")
+        second = finish(2)["QC-11"]
+        self.assertEqual(second["status"], "Passed")
+        self.assertEqual(second["attempts"][0], first)
+        self.assertEqual(len(second["attempts"]), 2)
+        original = evidence.load_json(evidence.canonical_bytes(self.category_quality_report(history)))
+        evidence.admit_entity("QualificationReport", original)
+        for defect in ("missing-case", "missing-witness", "shortened-basis", "foreign-witness",
+                       "wrong-sequence", "wrong-exclusion", "logical-exclusion", "missing-source-parent"):
+            report = copy.deepcopy(original)
+            quality = next(row for row in report["results"] if row["caseId"] == "QC-11")
+            basis = next(row for row in report["results"] if row["bindingId"] == "local" and row["caseId"] == "AS-41")
+            if defect == "missing-case":
+                report["results"].remove(basis)
+            elif defect == "missing-witness":
+                quality["attempts"][1]["witnessIds"].pop()
+            elif defect == "shortened-basis":
+                basis["attempts"][1]["witnessIds"].clear()
+            elif defect == "foreign-witness":
+                foreign = next(row for row in history.witnesses if row["bindingId"] == "object")
+                quality["attempts"][1]["witnessIds"].append(foreign["executionId"])
+                quality["attempts"][1]["proofSha256"].append(foreign["proofSha256"])
+                quality["proofSha256"].append(foreign["proofSha256"])
+            elif defect == "wrong-sequence":
+                basis["attempts"][1]["startedMs"] = 8
+            elif defect == "wrong-exclusion":
+                excluded = next(row for row in report["results"]
+                                if row["bindingId"] == "object" and row["caseId"] == "AS-41")
+                excluded["exclusionRule"] = "non-durable-fixture"
+            elif defect == "missing-source-parent":
+                own = {row["proofSha256"] for row in report["witnesses"]
+                       if row["executionId"] in basis["attempts"][1]["witnessIds"]}
+                basis["attempts"][1]["proofSha256"] = sorted(own)
+            else:
+                basis.update(status="NotApplicable", applicable=False, exclusionRule="simulation-no-durable-restart",
+                             attempts=[], proofSha256=[])
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("QualificationReport", report)
 
     def test_joint_category_import_freezes_both_bindings_and_retains_unmodified_mixed_scope_proofs(self):
         import conformance_case_catalog as catalog
