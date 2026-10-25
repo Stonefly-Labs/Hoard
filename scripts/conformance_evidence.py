@@ -587,9 +587,12 @@ def _validate_report_links(report):
             quality_link = False
             if (result["bindingId"] == result["matrixId"] == "none"
                     and result["caseId"] in quality_basis and attempt["witnessIds"]):
-                if inputs["mode"] != "qualification" or attempt != _category_quality_attempt(
+                material = _category_quality_composition(
                         inputs, result["caseId"], results, executions, sequence=attempt["sequence"],
-                        started_ms=attempt["startedMs"], ended_ms=attempt["endedMs"]):
+                        started_ms=attempt["startedMs"], ended_ms=attempt["endedMs"])
+                if (inputs["mode"] != "qualification" or attempt != material["attempt"]
+                        or any(report["proofs"].get(path) != hashlib.sha256(raw).hexdigest()
+                               for path, raw in material["sourceProofs"].items())):
                     _invalid()
                 quality_link = True
             for execution_id in attempt["witnessIds"]:
@@ -1770,9 +1773,12 @@ def _catalog_case_result(inputs, case, status, attempts):
     })
 
 
-def _category_quality_attempt(inputs, case_id, results, witnesses, *, sequence, started_ms, ended_ms):
+def _category_quality_composition(inputs, case_id, results, witnesses, *, sequence, started_ms, ended_ms):
     """Compose only the exact current-attempt basis; never relabel its executions."""
-    from conformance_case_catalog import CATEGORY_QUALITY_BASIS, METADATA_RECOVERY_SOURCE_WITNESS, category_cases
+    from conformance_case_catalog import (
+        CATEGORY_QUALITY_BASIS, METADATA_RECOVERY_SOURCE_WITNESS,
+        ORIGINAL_ARTIFACT_PROOF_SOURCES, ORIGINAL_INSPECTION_WITNESSES, category_cases,
+    )
 
     profile = inputs["profileId"]
     quality_basis = CATEGORY_QUALITY_BASIS.get(profile, {})
@@ -1781,7 +1787,11 @@ def _category_quality_attempt(inputs, case_id, results, witnesses, *, sequence, 
     required = tuple(case for case in category_cases()
                      if case.profile_id == profile and int(case.case_id[3:]) in quality_basis[case_id])
     complete, failure, executions, proofs = True, None, set(), set()
+    basis, packets = [], {}
+    authorities = set(ORIGINAL_ARTIFACT_PROOF_SOURCES) | set(ORIGINAL_INSPECTION_WITNESSES)
     for case in required:
+        row = {"key": case.key, "exclusion": case.exclusion, "attempt": None}
+        basis.append(row)
         result = results.get(case.key)
         if result is None:
             complete = False
@@ -1799,12 +1809,14 @@ def _category_quality_attempt(inputs, case_id, results, witnesses, *, sequence, 
             complete = False
             continue
         attempt = result["attempts"][sequence - 1]
+        row["attempt"] = attempt
         if (attempt["sequence"] != sequence
                 or not started_ms <= attempt["startedMs"] <= attempt["endedMs"] <= ended_ms):
             raise ConformanceError("ProofMismatch")
         observed = tuple(witnesses.get(execution) for execution in attempt["witnessIds"])
         if any(witness is None or witness["bindingId"] != case.binding_id
                or witness["matrixId"] != case.matrix_id or witness["proofSha256"] not in attempt["proofSha256"]
+               or not attempt["startedMs"] <= witness["startedMs"] <= witness["endedMs"] <= attempt["endedMs"]
                for witness in observed):
             raise ConformanceError("ProofMismatch")
         expected = set(case.witnesses)
@@ -1816,7 +1828,7 @@ def _category_quality_attempt(inputs, case_id, results, witnesses, *, sequence, 
                 len(observed) != len(expected) or {row["testIdentity"] for row in observed} != expected
                 or any(row["status"] != "Passed" for row in observed)):
             raise ConformanceError("WitnessMissing")
-        if (profile == "artifacts" and attempt["status"] == "Passed"
+        if (profile == "artifacts" and expected & authorities and attempt["status"] == "Passed"
                 and not set(attempt["proofSha256"]) - {row["proofSha256"] for row in observed}):
             raise ConformanceError("ProofMismatch")
         complete &= attempt["status"] == "Passed"
@@ -1825,11 +1837,26 @@ def _category_quality_attempt(inputs, case_id, results, witnesses, *, sequence, 
         executions.update(attempt["witnessIds"])
         proofs.update(attempt["proofSha256"])
     code = failure or ("None" if complete and executions and proofs else "EvidenceIncomplete")
-    return admit_entity("Attempt", {
+    if (profile, case_id) == ("artifacts", "QC-09"):
+        raw = canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "mode": "category-quality-basis",
+            "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+            "profileId": profile, "caseId": case_id, "inputsSha256": digest(inputs),
+            "sequence": sequence, "startedMs": started_ms, "endedMs": ended_ms,
+            "basis": basis, "witnesses": [witnesses[execution] for execution in sorted(executions)]})
+        if len(raw) > MAX_REPORT_BYTES:
+            raise ConformanceError("OutputLimitExceeded")
+        packets[f"proofs/category-{profile}-{case_id}-basis-{sequence:04}.json"] = raw
+        runtime_hashes = {witnesses[execution]["proofSha256"] for execution in executions}
+        executions = {execution for execution in executions if witnesses[execution]["testIdentity"] in authorities}
+        proofs = ((proofs - runtime_hashes) | {witnesses[execution]["proofSha256"] for execution in executions}
+                  | {hashlib.sha256(raw).hexdigest()})
+    attempt = admit_entity("Attempt", {
         "sequence": sequence, "startedMs": started_ms, "endedMs": ended_ms,
         "status": "Passed" if code == "None" else failure_status(code), "diagnosticCode": code,
         "witnessIds": sorted(executions), "proofSha256": sorted(proofs),
     })
+    return MappingProxyType({"attempt": attempt, "sourceProofs": MappingProxyType(packets)})
 
 
 def _origin_input_assignments(origin_inputs):
@@ -2078,6 +2105,8 @@ class CategoryRuntimeHistory:
         self._instances = {}
         self._witnesses = ()
         self._proofs = MappingProxyType({})
+        self._proof_bytes = 0
+        self._quality_proofs = MappingProxyType({})
         self._session_origins = MappingProxyType({})
         self._original_observations = MappingProxyType({})
         self._results = {case.key: _catalog_case_result(self._inputs, case, "NotApplicable", ())
@@ -2098,6 +2127,10 @@ class CategoryRuntimeHistory:
     @property
     def original_observations(self):
         return self._original_observations
+
+    @property
+    def quality_proofs(self):
+        return self._quality_proofs
 
     def expected_runtime_tests(self, binding_id):
         """Select primary owned cases before building the runtime manifest."""
@@ -2265,7 +2298,7 @@ class CategoryRuntimeHistory:
             results[case.key] = _catalog_case_result(self._inputs, case, status, (*previous, attempt))
         return results
 
-    def _commit(self, bindings, results, witnesses, proofs):
+    def _commit(self, bindings, results, witnesses, proofs, *, proof_bytes=None):
         self._results.update(results)
         for binding_id in bindings:
             self._sequences[binding_id] += 1
@@ -2273,14 +2306,16 @@ class CategoryRuntimeHistory:
             del self._partitions[binding_id]
         self._witnesses = (*self._witnesses, *witnesses)
         self._proofs = MappingProxyType({**self._proofs, **proofs})
+        if proof_bytes is not None:
+            self._proof_bytes = proof_bytes
         self._used_executions = self._used_executions | {witness["executionId"] for witness in witnesses}
         return tuple(self._results[case.key] for case in self._cases if case.binding_id in bindings)
 
     def _append(self, binding_id, code, ended, witnesses=(), proofs=MappingProxyType({}),
-                source_parents=None, control_proofs=None):
+                source_parents=None, control_proofs=None, *, proof_bytes=None):
         return self._commit(
             (binding_id,), self._case_results(binding_id, code, ended, witnesses, source_parents, control_proofs),
-            witnesses, proofs)
+            witnesses, proofs, proof_bytes=proof_bytes)
 
     def finish(self, binding_id, *, manifest_data, owner_data, witnesses_data, proofs, completion_data,
                manifest_sha256, owner_sha256):
@@ -2299,9 +2334,10 @@ class CategoryRuntimeHistory:
             plan = {scope_id: {**scope, "tests": {
                 identity: (binding_id, case_id) for identity, case_id in scope["tests"].items()}}
                 for scope_id, scope in self._partitions[binding_id].items()}
-            code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls = self._ingest_parts(
+            code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls, proof_bytes = self._ingest_parts(
                 plan, transports, self._active[binding_id][1], ended, self._sequences[binding_id] + 1)
-            results = self._append(binding_id, code, ended, witnesses, proofs, source_parents, controls)
+            results = self._append(
+                binding_id, code, ended, witnesses, proofs, source_parents, controls, proof_bytes=proof_bytes)
             self._session_origins = MappingProxyType({**self._session_origins, **origins})
             self._original_observations = MappingProxyType({
                 **self._original_observations, **originals})
@@ -2320,7 +2356,7 @@ class CategoryRuntimeHistory:
                   "manifest_sha256", "owner_sha256"}
         witnesses, proofs, origins, originals, codes, source_parents = (), {}, {}, {}, [], {}
         used_executions, used_sessions, instances = self._used_executions, self._used_sessions, self._instances
-        proof_bytes = 0
+        proof_bytes = self._proof_bytes
         for scope_id, scope in sorted(plan.items()):
             transport = transports[scope_id]
             if not isinstance(transport, Mapping) or set(transport) != fields:
@@ -2353,7 +2389,7 @@ class CategoryRuntimeHistory:
                 source_parents.update(observed["sourceParents"])
                 proofs.update({path: hashlib.sha256(raw).hexdigest() for path, raw in observed["sourceProofs"].items()})
                 proof_bytes += sum(len(raw) for raw in observed["sourceProofs"].values())
-            if len(proofs) > MAX_PROOF_FILES or proof_bytes > MAX_PROOF_BYTES:
+            if len({**self._proofs, **proofs}) > MAX_PROOF_FILES or proof_bytes > MAX_PROOF_BYTES:
                 raise ConformanceError("OutputLimitExceeded")
             origins.update(observed["sessionOrigins"])
             originals.update(observed["originalObservations"])
@@ -2364,22 +2400,23 @@ class CategoryRuntimeHistory:
             controls = recovered["controls"]
             proofs.update({path: hashlib.sha256(raw).hexdigest() for path, raw in recovered["sourceProofs"].items()})
             proof_bytes += sum(len(raw) for raw in recovered["sourceProofs"].values())
-            if len(proofs) > MAX_PROOF_FILES or proof_bytes > MAX_PROOF_BYTES:
+            if len({**self._proofs, **proofs}) > MAX_PROOF_FILES or proof_bytes > MAX_PROOF_BYTES:
                 raise ConformanceError("OutputLimitExceeded")
         code = next((code for code in codes if code not in ("None", "AssertionFailed")),
                     "AssertionFailed" if "AssertionFailed" in codes else "None")
-        return code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls
+        return code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls, proof_bytes
 
     def finish_joint(self, *, transports):
         plan = self.joint_partitions()
         ended = _number(time.monotonic() * 1000)
         try:
             binding = next(iter(self._bindings))
-            code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls = self._ingest_parts(
+            code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls, proof_bytes = self._ingest_parts(
                 plan, transports, self._active[binding][1], ended, self._sequences[binding] + 1)
             results = {key: value for binding in self._bindings
                        for key, value in self._case_results(
                            binding, code, ended, witnesses, source_parents, controls).items()}
+            packets = {}
             if (self._inputs["mode"] == "qualification"
                     and code in ("None", "AssertionFailed")):
                 from conformance_case_catalog import CATEGORY_QUALITY_BASIS
@@ -2390,13 +2427,23 @@ class CategoryRuntimeHistory:
                 for case in self._cases:
                     if case.binding_id != "none" or case.case_id not in quality_basis:
                         continue
-                    attempt = _category_quality_attempt(
+                    material = _category_quality_composition(
                         self._inputs, case.case_id, basis, executions, sequence=self._sequences["none"] + 1,
                         started_ms=self._active["none"][1], ended_ms=ended)
+                    attempt = material["attempt"]
+                    packets.update(material["sourceProofs"])
+                    for path, raw in material["sourceProofs"].items():
+                        if path in proofs or path in self._proofs:
+                            raise ConformanceError("ProofMismatch")
+                        proofs[path] = hashlib.sha256(raw).hexdigest()
+                        proof_bytes += len(raw)
+                    if len({**self._proofs, **proofs}) > MAX_PROOF_FILES or proof_bytes > MAX_PROOF_BYTES:
+                        raise ConformanceError("OutputLimitExceeded")
                     previous = self._results.get(case.key, {}).get("attempts", ())
                     results[case.key] = _catalog_case_result(
                         self._inputs, case, attempt["status"], (*previous, attempt))
-            committed = self._commit(self._bindings, results, witnesses, proofs)
+            committed = self._commit(self._bindings, results, witnesses, proofs, proof_bytes=proof_bytes)
+            self._quality_proofs = MappingProxyType({**self._quality_proofs, **packets})
             self._session_origins = MappingProxyType({**self._session_origins, **origins})
             self._original_observations = MappingProxyType({**self._original_observations, **originals})
             self._used_sessions, self._instances = used_sessions, instances

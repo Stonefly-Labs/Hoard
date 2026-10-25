@@ -329,6 +329,16 @@ prevent source-sensitive qualification cases from passing; foreign/shortened
 bases and borrowed durability reject. Diagnostic mode and other artifact QCs
 remain incomplete. Retry history is preserved. Local modeled validation passes;
 actual Linux replay and full profile qualification remain pending.
+QC-09 retains all 84 inherited logical case/binding rows and all current-attempt
+runtime observations in a canonical private basis receipt. The ten exact source
+anchors and receipt/source-parent hashes form its bounded direct projection;
+the underlying complete evidence is never shortened. Report admission rebuilds
+the entire receipt and exact proof-path digest. Original bytes survive retries.
+Cumulative file/byte budgets include basis receipts before atomic commit.
+SDK persistence checks original bytes, read-only permissions and retained
+hashes; non-qualifying summaries add quality-source count/digest. Missing,
+changed, shortened or overflowing bases reject. Local models pass; actual
+native replay, QC-03/04/05/12 and complete profile qualification remain pending.
 The prior byte-capture checkpoint cf4/run40227343651 independently passes
 three Linux jobs, 300 native foundations without skips, 13-lock/18-package
 replay and 129 scopes/1,821 witnesses. It admits original byte capture, not the

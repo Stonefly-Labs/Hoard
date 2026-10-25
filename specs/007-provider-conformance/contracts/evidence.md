@@ -372,6 +372,16 @@ basis closure, runtime/proof links, timing and exclusions; missing/shortened/
 foreign or borrowed provenance rejects. Earlier failed attempts survive retries.
 Diagnostic mode and other artifact QCs remain incomplete; actual Linux replay
 and full profile qualification remain pending. No public schema changes.
+QC-09's private canonical basis receipt retains every original current attempt
+and all runtime observations for all 84 inherited logical case/binding rows.
+Its ten catalog-selected source anchors and receipt/source-parent hashes are
+a bounded direct projection, not shortened evidence. Report links independently
+reconstruct the entire receipt and require its exact retained path/hash.
+Earlier receipt bytes remain identical across retries. The 16 MiB receipt and
+cumulative profile proof budgets are checked before atomic commit; missing,
+replaced, shortened or overflowing bases reject. SDK recording requires exact
+read-only originals and emits quality-source count/digest without a passing
+qualification claim. Actual native replay and remaining QCs are still pending.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

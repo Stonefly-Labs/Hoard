@@ -2889,6 +2889,17 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
 
 
 def _category_record(run, inputs, history, scopes, code=None):
+    quality_sources = {}
+    for path, raw in history.quality_proofs.items():
+        quality_sources[path] = hashlib.sha256(raw).hexdigest()
+        if history.proofs.get(path) != quality_sources[path]:
+            raise evidence.ConformanceError("ProofMismatch")
+        destination = run.root / path
+        try:
+            write_new(destination, raw)
+        except FileExistsError:
+            if destination.stat().st_mode & 0o777 != 0o400 or read_bounded(destination, 16 * 1024 * 1024) != raw:
+                raise evidence.ConformanceError("ProofMismatch") from None
     recovery_source = {}
     if code is None and inputs["mode"] == "qualification" and inputs["profileId"] == "metadata":
         for name, namespace in (("recoverySourcesSha256", "qualification-sqlite-recovery"),
@@ -2913,11 +2924,27 @@ def _category_record(run, inputs, history, scopes, code=None):
         "inputsSha256": evidence.digest(inputs), "scopeCount": len(scopes),
         "tests": sum(scope["tests"] for scope in scopes.values()),
         "sourceParentCount": len(source_parents), "sourceParentsSha256": evidence.digest(source_parents),
-        "caseCount": len(results), "caseStates": states, "resultsSha256": evidence.digest(results), **recovery_source}
+        "caseCount": len(results), "caseStates": states, "resultsSha256": evidence.digest(results), **recovery_source,
+        **({"qualitySourceCount": len(quality_sources), "qualitySourcesSha256": evidence.digest(quality_sources)}
+           if quality_sources else {})}
     history_mode = "qualification" if inputs["mode"] == "qualification" else "diagnostic"
     write_new(run.root / f'proofs/category-{inputs["profileId"]}-{history_mode}-history.json', evidence.canonical_bytes({
         "schemaVersion": 1, **summary, "scopes": scopes, "results": results}))
     return summary
+
+
+def _category_failure_locations(error):
+    folder = Path(__file__).resolve().parent
+    sources = {str(folder / name): "scripts/" + name for name in (
+        "conformance_sdk_checks.py", "conformance_evidence.py",
+        "conformance_sources.py", "conformance_case_catalog.py")}
+    trace, locations, count = error.__traceback__, [], 0
+    while trace is not None and count < 1024:
+        source = sources.get(trace.tb_frame.f_code.co_filename)
+        if source is not None and type(trace.tb_lineno) is int and 0 < trace.tb_lineno <= 2**31 - 1:
+            locations = [*locations[-3:], {"source": source, "line": trace.tb_lineno}]
+        trace, count = trace.tb_next, count + 1
+    return locations
 
 
 def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection_configurations, native_sources=None):
@@ -2954,7 +2981,8 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
         except evidence.ConformanceError as error:
             print(json.dumps({
                 "qualification": False, "phase": "category-control-failure",
-                "profileId": profile, "code": str(error)}), flush=True)
+                "profileId": profile, "code": str(error),
+                "locations": _category_failure_locations(error)}), flush=True)
             history.interrupt_joint(str(error))
             _category_record(run, inputs, history, scopes, str(error))
             raise
@@ -2972,6 +3000,7 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
             print(json.dumps({
                 "qualification": False, "phase": "category-scope-failure",
                 "profileId": profile, "scopeId": scope_id, "code": str(error),
+                "locations": _category_failure_locations(error),
                 **(error.runtime_diagnostic if isinstance(error, _RuntimeObservationError) else {})}), flush=True)
         history.interrupt_joint(str(error))
         _category_record(run, inputs, history, scopes, str(error))
@@ -2982,7 +3011,8 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
         if isinstance(run, OwnedRun):
             print(json.dumps({
                 "qualification": False, "phase": "category-admission-failure",
-                "profileId": profile, "scopeCount": len(plan), "code": str(error)}), flush=True)
+                "profileId": profile, "scopeCount": len(plan), "code": str(error),
+                "locations": _category_failure_locations(error)}), flush=True)
         _category_record(run, inputs, history, scopes, str(error))
         raise
     return _category_record(run, inputs, history, scopes)

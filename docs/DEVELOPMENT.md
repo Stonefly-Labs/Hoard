@@ -9513,7 +9513,7 @@ succeed, but that overall failed snapshot is not admitted.
 Run40232608162 passes foundations/locks with SDK execution still running
 at observation, not an overall admitted snapshot.
 
-The current quality composer reuses the unchanged metadata algorithm with a
+The transfer/durability quality checkpoint reuses the metadata algorithm with a
 catalog-owned per-category basis. Artifact QC-10 requires both bindings'
 AS-11/12 cases and their original controller source parents; QC-11 requires
 Local AS-41..44 and exactly four empty-attempt simulation exclusions on Object.
@@ -9524,7 +9524,50 @@ or borrowed provenance rejects; failed retries remain visible. Diagnostic mode
 and QC-03/04/05/09/12 remain incomplete. Actual native execution of this
 increment is pending; these local models are not qualification evidence.
 
-Current validation: all 419 tooling checks pass with 19 explicit native skips;
+Current QC-09 composition covers all 84 applicable inherited logical
+case/binding rows (AS-01..10,13..40,45..48). Their complete original current
+attempts and runtime observations are retained in a canonical private basis
+receipt, never truncated to the 128-direct-witness limit. The complete model
+has 217 nested observations and ten catalog-selected source anchors. Public
+report admission independently reconstructs the entire receipt and requires its
+exact proof-path digest; outer projections cannot omit/replace cases, source
+anchors or earlier attempt bytes. Metadata and QC-10/11 retain their direct
+composition. Case/attempt witness/hash bounds are unchanged.
+
+History retains immutable basis bytes across retries and accounts for their
+bytes/files before atomic commit, including cumulative profile proof budgets.
+SDK recording writes create-new/read-only originals and checks existing bytes,
+permissions and proof hashes before publishing a history. Its non-qualifying
+summary adds `qualitySourceCount` and `qualitySourcesSha256` only when such
+receipts exist. Missing/changed/mutable receipts and budget overflow reject;
+failure retains incomplete/failed history without a partial passing basis.
+QC-03/04/05/12 and full profile/evaluator acceptance remain incomplete; actual
+Linux execution of this increment is pending.
+
+Exact `5f81b926ca7add6845cb19cccba200b668eb0831`,
+[run40232608162](https://github.com/Stonefly-Labs/Hoard/actions/runs/40232608162),
+independently passes all three jobs: 306 native foundations without failures/
+errors/skips, 13-lock/18-package replay and 129 aggregate scopes/1,821 witnesses.
+Metadata qualification inputs/results:
+`67751d46b2bbb9921c47d37517d40cf5ac71a5e039314bdd7a740ecef34969dd` /
+`9a19332e8a626b9166f09100a897d309ca1eacf284392d6bc3f183d364d18f75`,
+eight scopes/137 witnesses/six source parents, still 90/3/9/0.
+Artifact diagnostic inputs/results:
+`c5fac58965e91b057f49abe1ee2ce4e770824a5a100be182f99c8250f89f5a37` /
+`bd5a427e736b27e235a62441782e99ca056ec8fd410f97f2846c81f5c45d8d2b`,
+six scopes/227 witnesses/three source parents, still 92/7/4/0.
+This admits original native index/output and transfer-source graphs in the
+existing diagnostic execution, not later complete controller/QC joins or fresh
+qualification-origin transfers. Superseded pending 97a/run40234467588 grants no
+native evidence. Exact f1ba/run40235078726 passes 311 native foundations and
+the lock job but fails SDK diagnostics at artifact `controller` with
+`WitnessMissing`, before qualification-origin artifact execution. That snapshot
+is not admitted. Category control/scope/admission failures now emit at most four
+static source-role/line locations, matching the foundational safe diagnostic
+pattern without retaining raw traceback text, exception messages or frame locals.
+The next native replay must locate and resolve this failure.
+
+Current validation: all 423 tooling checks pass with 19 explicit native skips;
 all 133 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
 and whitespace checks pass. The preceding byte-capture checkpoint compiled
 the original artifact package-acceptance project with freshly rebuilt SDK,

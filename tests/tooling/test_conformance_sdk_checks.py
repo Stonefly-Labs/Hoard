@@ -28,6 +28,25 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_category_failure_locations_are_bounded_static_source_roles_only(self):
+        trace = None
+        for source, line in (
+                ("conformance_sdk_checks.py", 1), ("conformance_evidence.py", 2),
+                ("conformance_sources.py", 3), ("conformance_case_catalog.py", 4),
+                ("conformance_sdk_checks.py", 5), ("conformance_sources.py", 6),
+                ("secret/credentials.py", 7), ("conformance_evidence.py", 0),
+                ("conformance_evidence.py", 2**31)):
+            trace = SimpleNamespace(
+                tb_frame=SimpleNamespace(f_code=SimpleNamespace(co_filename=str(ROOT / "scripts" / source))),
+                tb_lineno=line, tb_next=trace)
+        error = SimpleNamespace(__traceback__=trace, message="secret-value")
+        self.assertEqual(checks._category_failure_locations(error), [
+            {"source": "scripts/conformance_case_catalog.py", "line": 4},
+            {"source": "scripts/conformance_sources.py", "line": 3},
+            {"source": "scripts/conformance_evidence.py", "line": 2},
+            {"source": "scripts/conformance_sdk_checks.py", "line": 1}])
+        self.assertEqual(checks._category_failure_locations(SimpleNamespace(__traceback__=None)), [])
+
     def test_qualification_selects_independent_metadata_recovery_and_inventory_source_scopes(self):
         import conformance_case_catalog as catalog
 
@@ -254,6 +273,34 @@ class SdkDiagnosticTests(unittest.TestCase):
                     history.finish_joint.assert_not_called()
                     self.assertEqual(record.call_args.args[-1], "ProofMismatch")
 
+    def test_category_record_persists_original_quality_basis_and_rejects_replacement(self):
+        path, raw = "proofs/category-artifacts-QC-09-basis-0001.json", b'{"original":"complete-basis"}'
+        for defect in (None, "existing", "changed", "mutable", "hash"):
+            root = self.directory / str(defect)
+            destination = root / path
+            destination.parent.mkdir(parents=True)
+            if defect in ("existing", "changed", "mutable"):
+                destination.write_bytes(b"replacement" if defect == "changed" else raw)
+                destination.chmod(0o600 if defect == "mutable" else 0o400)
+            history = SimpleNamespace(
+                quality_proofs={path: raw},
+                proofs={path: "0" * 64 if defect == "hash" else hashlib.sha256(raw).hexdigest()},
+                results=lambda: [{"status": "Incomplete"}])
+            with self.subTest(defect=defect):
+                if defect in ("changed", "mutable", "hash"):
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                        checks._category_record(
+                            SimpleNamespace(root=root), {"profileId": "artifacts", "mode": "qualification"}, history, {})
+                    self.assertFalse((root / "proofs/category-artifacts-qualification-history.json").exists())
+                else:
+                    summary = checks._category_record(
+                        SimpleNamespace(root=root), {"profileId": "artifacts", "mode": "qualification"}, history, {})
+                    self.assertEqual(destination.read_bytes(), raw)
+                    self.assertEqual(destination.stat().st_mode & 0o777, 0o400)
+                    self.assertEqual(summary["qualitySourceCount"], 1)
+                    self.assertEqual(summary["qualitySourcesSha256"], checks.evidence.digest(history.proofs))
+                    self.assertFalse(summary["qualification"])
+
     def _assert_category_batch(self, profile, witness_count):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases, expected_cases
         partitions = category_execution_partitions(profile)
@@ -272,6 +319,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             history = unittest.mock.Mock()
             history.joint_partitions.return_value = plans
             history.results.return_value = [{"status": "Incomplete"} for _ in range(case_count)]
+            history.quality_proofs = {}
             if failure == "admission":
                 history.finish_joint.side_effect = checks.evidence.ConformanceError("ProofMismatch")
             captured = []
@@ -326,12 +374,19 @@ class SdkDiagnosticTests(unittest.TestCase):
                 self.assertFalse(record["qualification"])
                 self.assertEqual(record["code"], "ProofMismatch" if failure else "EvidenceIncomplete")
                 self.assertEqual(len(record["results"]), case_count)
+                if failure:
+                    diagnostic = json.loads(diagnostics.getvalue())
+                    locations = diagnostic.pop("locations")
+                    self.assertTrue(0 < len(locations) <= 4)
+                    self.assertTrue(all(location["source"] == "scripts/conformance_sdk_checks.py"
+                                        and type(location["line"]) is int and location["line"] > 0
+                                        for location in locations))
                 if failure == "execution":
-                    self.assertEqual(json.loads(diagnostics.getvalue()), {
+                    self.assertEqual(diagnostic, {
                         "qualification": False, "phase": "category-scope-failure",
                         "profileId": profile, "scopeId": captured[-1], "code": "ProofMismatch"})
                 elif failure == "admission":
-                    self.assertEqual(json.loads(diagnostics.getvalue()), {
+                    self.assertEqual(diagnostic, {
                         "qualification": False, "phase": "category-admission-failure",
                         "profileId": profile, "scopeCount": len(plans), "code": "ProofMismatch"})
                 else:

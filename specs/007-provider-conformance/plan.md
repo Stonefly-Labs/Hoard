@@ -6670,6 +6670,36 @@ the same empty-frozenset-versus-tuple assertion fixed in `72899cf`. SDK/lock
 success does not admit that failed snapshot. No runtime ownership repair or
 weakened settlement check is inferred.
 
+QC-09's missing Passed/Failed derivation first fails two intended named
+assertions. The complete inherited logical basis has 84 case/binding rows and
+217 modeled current-attempt observations, exceeding the direct witness bound.
+A canonical private basis receipt retains every original attempt and runtime
+observation; ten catalog-owned source anchors plus the receipt digest provide
+the bounded direct projection. No underlying evidence, inherited case or bound
+is removed. Independent report admission reconstructs exact receipt bytes and
+path/hash links, including earlier retries. Missing/changed receipts,
+missing/shortened cases, foreign anchors and changed original attempts reject.
+History preserves original immutable receipts and counts cumulative proof bytes
+and files before committing. Budget failure records incompleteness atomically.
+SDK persistence rejects replaced/mutable/hash-mismatched receipts and adds an
+explicit non-qualifying quality-source digest/count. All 423 tooling checks
+pass with 19 native skips; frozen inventory, SDK catalog and whitespace checks
+pass. Actual Linux replay is pending; QC-03/04/05/12 and complete acceptance
+remain unfinished. No tasks/checklists advance.
+
+Exact 5f81/run40232608162 independently passes all three Linux jobs, 306 native
+foundations without failures/errors/skips, 13-lock/18-package replay and 129
+aggregate scopes/1,821 observations. Metadata remains 90/3/9/0; artifact
+diagnostics remain 92/7/4/0. Their input/result hashes are recorded in DEVELOPMENT.
+This admits original native output-index/transfer graphs, not later
+controller/QC increments or qualification-origin joint execution. Pending 97a/
+run40234467588 was superseded without execution and grants no native admission.
+Exact f1ba/run40235078726 passes 311 native foundations and the lock job but
+fails SDK diagnostics at artifact `controller` with `WitnessMissing`, before
+qualification-origin artifact execution. It is not admitted. Category failures
+now expose at most four static source-role/line locations, without raw
+tracebacks, messages or locals, to locate the failure in the next native replay.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

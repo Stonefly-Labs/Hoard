@@ -2405,7 +2405,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         import conformance_case_catalog as catalog
         history = self.category_history(profile=profile, mode=mode, max_attempts=max_attempts)
 
-        def finish(sequence=1, *, failed=None, missing_control=None, missing_parent=None):
+        def finish(sequence=1, *, failed=None, missing_control=None, missing_parent=None, proof_bytes=0):
             start = 9 + (sequence - 1) * 4
             with mock.patch.object(evidence.time, "monotonic", return_value=start / 1000):
                 history.begin_joint(str(uuid.uuid4()), partitions=catalog.category_execution_partitions(
@@ -2432,7 +2432,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             proofs.update({"control-" + hashlib.sha256(name.encode()).hexdigest() + ".json": hashes[0]
                            for name, hashes in controls.items()})
             imported = ("AssertionFailed" if failed else "None", tuple(witnesses), proofs, {}, {},
-                        frozenset(), {}, parents, controls)
+                        frozenset(), {}, parents, controls, history._proof_bytes + proof_bytes)
             with mock.patch.object(history, "_ingest_parts", return_value=imported), mock.patch.object(
                     evidence.time, "monotonic", return_value=(start + 3) / 1000):
                 history.finish_joint(transports={})
@@ -2538,7 +2538,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 self.assertEqual({row["bindingId"] for row in selected}, bindings)
                 self.assertTrue({row["proofSha256"] for row in selected} < set(attempt["proofSha256"]))
                 self.assertLessEqual(len(attempt["proofSha256"]), evidence.MAX_WITNESSES)
-        for identity in ("QC-03", "QC-04", "QC-05", "QC-09", "QC-12"):
+        for identity in ("QC-03", "QC-04", "QC-05", "QC-12"):
             self.assertEqual(qualities[identity]["status"], "Incomplete")
         excluded = [row for row in history.results() if row["bindingId"] == "object"
                     and row["caseId"] in ("AS-41", "AS-42", "AS-43", "AS-44")]
@@ -2600,6 +2600,76 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                              attempts=[], proofSha256=[])
             with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
                 evidence.admit_entity("QualificationReport", report)
+
+    def test_artifact_logical_quality_retains_complete_basis_without_truncating_direct_witnesses(self):
+        import conformance_case_catalog as catalog
+        history, finish = self.category_quality_fixture(profile="artifacts", max_attempts=2)
+        quality = finish()["QC-09"]
+        self.assertEqual(quality["status"], "Passed", "Complete artifact logical closure must derive QC-09.")
+        packets = dict(history.quality_proofs)
+        self.assertEqual(len(packets), 1)
+        path, raw = next(iter(packets.items()))
+        packet = evidence.load_json(raw)
+        required = {case.key for case in catalog.category_cases() if case.profile_id == "artifacts"
+                    and int(case.case_id[3:]) not in (11, 12, 41, 42, 43, 44)}
+        self.assertEqual({tuple(row["key"]) for row in packet["basis"]}, required)
+        expected = {execution for row in packet["basis"] for execution in row["attempt"]["witnessIds"]}
+        self.assertGreater(len(expected), evidence.MAX_WITNESSES)
+        self.assertEqual({row["executionId"] for row in packet["witnesses"]}, expected)
+        self.assertLessEqual(len(quality["attempts"][0]["witnessIds"]), evidence.MAX_WITNESSES)
+        self.assertLessEqual(len(quality["attempts"][0]["proofSha256"]), evidence.MAX_WITNESSES)
+        self.assertEqual(history.proofs[path], hashlib.sha256(raw).hexdigest())
+        with self.assertRaises(TypeError):
+            history.quality_proofs[path] = b"replacement"
+        self.assertIn(history.proofs[path], quality["attempts"][0]["proofSha256"])
+        evidence.admit_entity("QualificationReport", self.category_quality_report(history))
+        self.assertEqual(finish(2)["QC-09"]["status"], "Passed")
+        self.assertEqual(history.quality_proofs[path], raw)
+        self.assertEqual(len(history.quality_proofs), 2)
+        original = evidence.load_json(evidence.canonical_bytes(self.category_quality_report(history)))
+        evidence.admit_entity("QualificationReport", original)
+        for defect in ("missing-basis-packet", "changed-basis-packet", "missing-case", "shortened-case",
+                       "foreign-anchor", "changed-original-attempt"):
+            report = copy.deepcopy(original)
+            result = next(row for row in report["results"] if row["caseId"] == "QC-09")
+            basis = next(row for row in report["results"] if row["bindingId"] == "local" and row["caseId"] == "AS-01")
+            if defect == "missing-basis-packet":
+                del report["proofs"][path]
+            elif defect == "changed-basis-packet":
+                report["proofs"][path] = "0" * 64
+            elif defect == "missing-case":
+                report["results"].remove(basis)
+            elif defect == "shortened-case":
+                basis["attempts"][1]["witnessIds"].clear()
+            elif defect == "foreign-anchor":
+                foreign = next(row for row in report["witnesses"]
+                               if row["executionId"] in basis["attempts"][1]["witnessIds"])
+                result["attempts"][1]["witnessIds"].append(foreign["executionId"])
+                result["attempts"][1]["proofSha256"].append(foreign["proofSha256"])
+                result["proofSha256"].append(foreign["proofSha256"])
+            else:
+                basis["attempts"][0]["endedMs"] = 10.5
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("QualificationReport", report)
+
+    def test_artifact_logical_quality_basis_budget_rejection_is_atomic_and_failed_history_survives(self):
+        history, finish = self.category_quality_fixture(profile="artifacts", max_attempts=2)
+        identity = next(identity for identity in history.expected_runtime_tests("local")
+                        if ".Empty_content_and_true_absence_" in identity)
+        first = finish(failed=("local", identity))["QC-09"]
+        self.assertEqual(first["status"], "Failed", "QC-09 must preserve the actual failed logical basis.")
+        packets = dict(history.quality_proofs)
+        self.assertEqual(finish(2)["QC-09"]["attempts"][0], first["attempts"][0])
+        evidence.admit_entity("QualificationReport", self.category_quality_report(history))
+        self.assertTrue(all(history.quality_proofs[path] == raw for path, raw in packets.items()))
+        self.setUp()
+        history, finish = self.category_quality_fixture(profile="artifacts")
+        with self.assertRaisesRegex(evidence.ConformanceError, "OutputLimitExceeded"):
+            finish(proof_bytes=evidence.MAX_PROOF_BYTES)
+        self.assertFalse(history.quality_proofs)
+        self.assertFalse(history.proofs)
+        self.assertTrue(all(row["status"] == "Incomplete" for row in history.results()
+                            if row["applicable"]))
 
     def test_joint_category_import_freezes_both_bindings_and_retains_unmodified_mixed_scope_proofs(self):
         import conformance_case_catalog as catalog

@@ -551,6 +551,19 @@ Wrong/missing/foreign/shortened bases and borrowed exclusions reject. Diagnostic
 mode cannot promote these cases, and retries retain failed history. Other
 artifact QCs and actual native validation remain incomplete.
 
+QC-09 separately retains every applicable inherited logical case's original
+current attempt and every referenced runtime observation in a canonical private
+basis receipt. Its bounded direct references select all catalog-owned source
+anchors in that basis, plus source-parent and receipt hashes. This is a complete
+proof graph, not truncation: report admission recomputes the entire receipt,
+its exact path/hash and direct projection. Original attempt bytes remain stable
+after later retries. The 128-per-case bounds and public schemas are unchanged.
+Basis files are bounded to 16 MiB and counted inside cumulative profile proof
+file/byte budgets before atomic commit. Native diagnostic persistence requires
+matching read-only originals and retained hashes. Missing/replaced/shortened
+bases and overflow reject; other unfinished QCs and actual native validation
+cannot be promoted by this composition.
+
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits
 `Released`; expiration/cancellation/observation timeout does not. Retained

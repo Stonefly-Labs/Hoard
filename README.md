@@ -2198,6 +2198,28 @@ incomplete. Producer run40230791595 independently resolves to the same
 empty-frozenset-versus-tuple assertion at its original line 413, already fixed
 without changing native ownership behavior; that failed run is not admitted.
 
+QC-09 now retains all 84 inherited logical case/binding rows and their complete
+current-attempt runtime/proof closure in a canonical private basis receipt
+(217 observations in the model). Its bounded direct projection uses ten exact
+source anchors, not a shortened underlying inventory. Report admission
+recomputes the complete receipt and its hash; missing/changed receipts,
+shortened cases and foreign anchors reject. Original receipt bytes survive
+retries, and file/byte budget failures commit no partial passing basis.
+All 423 tooling checks pass with 19 native skips. QC-03/04/05/12 and full
+profile/evaluator acceptance remain incomplete. The preceding f1ba Linux replay
+passes 311 foundations but fails the diagnostic artifact controller with
+`WitnessMissing`; it is not admitted. Category errors now expose at most four
+static source-role/line locations, never raw tracebacks or exception messages,
+to support the next replay.
+
+Exact `5f81b926ca7add6845cb19cccba200b668eb0831`,
+[run40232608162](https://github.com/Stonefly-Labs/Hoard/actions/runs/40232608162),
+independently passes all three Linux jobs: 306 foundations without skips,
+13-lock/18-package replay and 129 aggregate scopes/1,821 witnesses. Metadata
+remains 90/3/9/0 and artifact diagnostics 92/7/4/0. This admits original native
+index/output and transfer-source graphs, not the later controller/QC increments
+or actual qualification-origin transfer joins.
+
 Exact source-index run40228504830 at `a9e75c8` fails one native foundation
 assertion comparing an empty `frozenset` to an empty tuple; its SDK and lock jobs
 succeed, but the overall run is not admitted. The test now checks no live
