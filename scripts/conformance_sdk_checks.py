@@ -30,13 +30,14 @@ import artifact_evidence as artifacts
 import metadata_evidence as metadata
 import conformance_evidence as evidence
 from conformance_case_catalog import (
-    AUTHORITY_INTEGRATION_ROWS, CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_BINDINGS, ORIGINAL_ARTIFACT_CONTRACT_WITNESSES,
+    AUTHORITY_INTEGRATION_ROWS, CATEGORY_BINDING_SLOTS, CATEGORY_MUTATION_METHODS,
+    ORIGINAL_ARTIFACT_BINDINGS, ORIGINAL_ARTIFACT_CONTRACT_WITNESSES,
     ORIGINAL_ARTIFACT_PROOF_SOURCES, ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES,
     ORIGINAL_ARTIFACT_REOPENS, ORIGINAL_ARTIFACT_SHARED_OWNER_WITNESSES, ORIGINAL_ARTIFACT_WITNESSES,
     METADATA_INVENTORY_SOURCE_WITNESSES, METADATA_RECOVERY_SOURCE_WITNESS, ORIGINAL_METADATA_FACADE_WITNESSES,
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
     authority_integration_witnesses, catalog_admission_witnesses, category_cases, category_execution_partitions,
-    category_runtime_cases, category_runtime_packages, expected_cases,
+    category_mutation_witnesses, category_runtime_cases, category_runtime_packages, expected_cases,
     original_witness_parents, original_witness_policy,
 )
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
@@ -45,6 +46,7 @@ from conformance_sources import (
     admit_sqlite_noncooperation, admit_transfer_measurement, admit_artifact_transfer_producer,
     admit_artifact_noncooperation, admit_original_artifact_crash, admit_original_artifact_retention,
     artifact_original_child_sources, artifact_category_transfer_namespace, authority_integration_observations,
+    category_mutation_images, category_mutation_observations,
     admit_artifact_transfer_namespace as _admit_transfer_namespace,
     artifact_source_context, artifact_source_observations, artifact_source_output_seal,
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
@@ -1433,17 +1435,10 @@ def full_artifact_binding_scenarios():
 
 def category_mutation_scenarios():
     result = []
-    for category, providers, faulty_method, corrected_method in (
-            ("metadata", ("memory", "sqlite"),
-             "Stale_metadata_replay_is_rejected", "Corrected_metadata_replay_passes"),
-            ("artifacts", ("local", "object"),
-             "Premature_artifact_publication_is_rejected", "Corrected_artifact_staging_passes")):
+    for category in CATEGORY_MUTATION_METHODS:
         for corrected in (False, True):
             name = f"category-mutation-{category}-{'corrected' if corrected else 'faulty'}"
-            selected = corrected_method if corrected else faulty_method
-            identities = tuple(sorted(
-                CATEGORY_MUTATION_PREFIX + selected + f'(provider: "{provider}")'
-                for provider in providers))
+            identities = tuple(sorted(category_mutation_witnesses(category, corrected=corrected)))
             result.append((name, identities, "None" if corrected else "AssertionFailed",
                            "Passed" if corrected else "Failed", 0 if corrected else 1,
                            "None" if corrected else "Assertion"))
@@ -2654,7 +2649,8 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
                       and (runtime_options["category_scope"][1].startswith("inspection-")
                            or tuple(runtime_options["category_scope"]) in (
                                ("artifacts", "controller"), ("artifacts", "original-integration"))
-                           or runtime_options["category_scope"][1] in ("recovery-controller", "inventory-controller")))
+                           or runtime_options["category_scope"][1] in (
+                               "recovery-controller", "inventory-controller", "mutation-faulty", "mutation-repair")))
     ingest = evidence.inspect_runtime_attempt if inspect_source else evidence.ingest_runtime_attempt
     ingested = ingest(
         inputs=inputs, expected_tests=expected, **data,
@@ -3075,7 +3071,10 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
     profile = inputs["profileId"]
     category_scope = profile, scope_id
     tests = _category_scope_tests(category_scope)
-    if scope_id in ("recovery-controller", "inventory-controller", "original-integration") and inputs["mode"] != "qualification":
+    mutation = scope_id == "mutation-repair"
+    if scope_id in (
+            "recovery-controller", "inventory-controller", "original-integration", "mutation-repair"
+    ) and inputs["mode"] != "qualification":
         raise evidence.ConformanceError("WitnessMissing")
     if ((inputs["mode"] != "diagnostic" and not (
             inputs["mode"] == "qualification" and type(native_sources) is NativeCategorySources
@@ -3107,7 +3106,7 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
             options["inspection_literals"] = True
     elif scope_id in ("recovery-controller", "inventory-controller"):
         folder, output, assembly_name = TESTS, PACKAGE_TEST_OUTPUT, "Hoard.Conformance.Tests.dll"
-    elif scope_id == "original-integration":
+    elif scope_id == "original-integration" or mutation:
         folder, output, assembly_name = ARTIFACT_CONSUMER, PACKAGE_TEST_OUTPUT, "Hoard.Fixtures.Conformance.Consumer.dll"
     elif profile == "metadata":
         folder, output, assembly_name = METADATA_TESTS, METADATA_TEST_OUTPUT, "Hoard.Metadata.Tests.dll"
@@ -3116,7 +3115,7 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
         folder, output, assembly_name = ARTIFACT_TESTS, ARTIFACT_TEST_OUTPUT, "Hoard.Artifacts.Tests.dll"
     assembly = candidate / folder / output / "Release/net10.0" / assembly_name
     if (profile == "metadata" and original and options["metadata_provider"] == "sqlite"
-            or scope_id == "original-integration"):
+            or scope_id == "original-integration" or mutation and profile == "metadata"):
         require_sqlite_environment(inputs, assembly, run.root)
     assembly_path = assembly.relative_to(run.root).as_posix()
     if assembly_path not in inputs["runtimeAssemblies"]:
@@ -3151,6 +3150,31 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
             if hashed is None:
                 raise evidence.ConformanceError("InputChanged")
             manifest["assemblies"].append({"id": f"binding-component-{index}", "path": path, "sha256": hashed})
+    if mutation:
+        images = category_mutation_images(run, inputs)
+        manifest["assemblies"].extend(
+            {"id": f"mutation-component-{index}", "path": path, "sha256": hashed}
+            for index, (path, hashed) in enumerate(images.items()) if path != assembly_path)
+        options["metadata_packages" if profile == "metadata" else "artifact_packages"] = {
+            package["packageId"]: package["sha256"] for package in packages.values()}
+        faulty = {
+            **manifest, "attemptId": str(uuid.uuid4()), "expected": [{
+                **next(entry for entry in manifest["expected"] if entry["bindingId"] == binding),
+                "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+                "assertionSymbol": CATEGORY_MUTATION_METHODS[profile][2]}
+                for identity, binding in sorted(category_mutation_witnesses(profile, corrected=False).items())]}
+        faulty_tests = {identity: (binding, "none") for identity, binding in category_mutation_witnesses(
+            profile, corrected=False).items()}
+        failed_result, failure, failed_transport, _ = _execute_runtime_transport(
+            run, inputs, assembly, faulty, faulty_tests,
+            {**options, "category_scope": (profile, "mutation-faulty")})
+        validate_observation(failure, failed_result, tuple(faulty_tests), "AssertionFailed", "Failed", 1,
+                             failed_transport["proofs"], "Assertion")
+        write_new(run.root / f"proofs/category-mutation-{attempt_id}-fault.json", evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "runId": inputs["runId"],
+            "invocationGroupId": inputs["invocationGroupId"], "attemptId": attempt_id,
+            "inputsSha256": evidence.digest(inputs), "profileId": profile,
+            "faultyAttemptId": faulty["attemptId"], "commandSequence": run.command_sequence}))
     if scope_id == "controller":
         runner = candidate / ARTIFACT_RECOVERY / "bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll"
         if inputs["runtimeAssemblies"].get(runner.relative_to(run.root).as_posix()) != evidence.file_sha256(runner):
@@ -3183,6 +3207,18 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
         write_new(run.root / f'proofs/category-{profile}-{scope_id}-{manifest["attemptId"]}.json', source)
         sources = {"sourceExecutions": len(observations),
                    "authorityIntegrationProofsSha256": hashlib.sha256(source).hexdigest()}
+    elif mutation:
+        observations, _ = category_mutation_observations(
+            run, inputs, manifest, ingested, sequence=run.command_sequence,
+            started_ms=0, ended_ms=time.monotonic() * 1000)
+        source = evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "mode": f"category-{profile}-{scope_id}",
+            "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+            "attemptId": manifest["attemptId"], "inputsSha256": evidence.digest(inputs),
+            "observations": observations})
+        write_new(run.root / f'proofs/category-{profile}-{scope_id}-{manifest["attemptId"]}.json', source)
+        sources = {"sourceExecutions": len(observations),
+                   "mutationProofsSha256": hashlib.sha256(source).hexdigest()}
     if sources:
         sources["sourceParentSha256"] = category_source_parent(
             run, inputs, manifest, ingested, sources, category_scope=category_scope, result=result)
@@ -3199,8 +3235,11 @@ def _category_scope_tests(category_scope):
     if not isinstance(category_scope, (tuple, list)) or len(category_scope) != 2:
         raise evidence.ConformanceError("WitnessMissing")
     profile, scope_id = category_scope
+    if scope_id == "mutation-faulty":
+        return {identity: (binding, "QC-04") for identity, binding in category_mutation_witnesses(
+            profile, corrected=False).items()}
     mode = "qualification" if scope_id in (
-        "recovery-controller", "inventory-controller", "original-integration") else "diagnostic"
+        "recovery-controller", "inventory-controller", "original-integration", "mutation-repair") else "diagnostic"
     partitions = category_execution_partitions(profile, mode=mode)
     if not isinstance(scope_id, str) or scope_id not in partitions:
         raise evidence.ConformanceError("WitnessMissing")
@@ -3215,6 +3254,10 @@ def _category_manifest_tests(category_scope, manifest):
             or any((entry["bindingId"], entry["caseId"]) != tests[entry["testIdentity"]]
                    or entry["fullyQualifiedName"] != entry["testIdentity"].split("(")[0] for entry in expected)):
         raise evidence.ConformanceError("WitnessMissing")
+    if category_scope[1] in ("mutation-faulty", "mutation-repair") and any(
+            entry["assertionSymbol"] != (CATEGORY_MUTATION_METHODS[category_scope[0]][2]
+                                        if category_scope[1] == "mutation-faulty" else None) for entry in expected):
+        raise evidence.ConformanceError("WitnessMissing")
     return tests
 
 
@@ -3225,12 +3268,14 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
             inputs["mode"] == "qualification" and type(run) is OwnedRun))
             or type(result.exit_code) is not int or result.exit_code != 0):
         raise evidence.ConformanceError("ProofMismatch")
-    if scope_id.startswith("inspection-") or scope_id == "original-integration" or profile == "metadata" and scope_id in (
+    if scope_id.startswith("inspection-") or scope_id in ("original-integration", "mutation-repair") or profile == "metadata" and scope_id in (
             "recovery-controller", "inventory-controller"):
         source_key = ("metadataRecoveryProofsSha256" if scope_id == "recovery-controller" else
                       "metadataInventoryProofsSha256" if scope_id == "inventory-controller" else "inspectionProofsSha256")
         if scope_id == "original-integration":
             source_key = "authorityIntegrationProofsSha256"
+        elif scope_id == "mutation-repair":
+            source_key = "mutationProofsSha256"
         mode = f"category-{profile}-{scope_id}"
         filename = f'{mode}-{manifest["attemptId"]}.json'
         observation_fields = {"sourceProofSha256": evidence.sha256}
@@ -3429,7 +3474,9 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
         scope_tests = _category_manifest_tests(category_scope, manifest)
         category_scope = tuple(category_scope)
         profile, scope_id = category_scope
-        if (artifact_packages is not None or metadata_packages is not None
+        mutation = scope_id in ("mutation-faulty", "mutation-repair")
+        if (not mutation and (artifact_packages is not None or metadata_packages is not None)
+                or mutation and (metadata_packages is None if profile == "metadata" else artifact_packages is None)
                 or inspection_literals != scope_id.startswith("inspection-literals-")
                 or (inspection_cases is not None) != scope_id.startswith("inspection-prepared-")
                 or (inspection_configurations is not None) != scope_id.startswith("inspection-prepared-")
@@ -3639,7 +3686,8 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
         execution_inputs = [
             f"runtime-input-{attempt_id}.json", "runtime-owner.json", manifest["runInputsPath"],
             settings.relative_to(run.root).as_posix(), assembly.relative_to(run.root).as_posix()]
-        if category_scope == ("artifacts", "original-integration"):
+        if category_scope == ("artifacts", "original-integration") or category_scope[1] in (
+                "mutation-faulty", "mutation-repair"):
             execution_inputs.extend(entry["path"] for entry in manifest["assemblies"]
                                     if entry["path"] != assembly.relative_to(run.root).as_posix())
         if not discovery and (inspection_literals or inspection_cases is not None):

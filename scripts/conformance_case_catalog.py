@@ -29,6 +29,23 @@ AUTHORITY_INTEGRATION_ROWS = MappingProxyType({
         "reference-admission", "failed-transaction", "live-references", "lost-acknowledgment",
         "incarnation", "reader", "foreign-authority", "shutdown")})
 
+CATEGORY_MUTATION_METHODS = MappingProxyType({
+    "metadata": ("Stale_metadata_replay_is_rejected", "Corrected_metadata_replay_passes",
+                 "Hoard.Testing.Conformance.Metadata.MetadataTimeAssertions.TicketExpiryAndRollbackAsync"),
+    "artifacts": ("Premature_artifact_publication_is_rejected", "Corrected_artifact_staging_passes",
+                  "Hoard.Testing.Conformance.Artifacts.ArtifactPublicationAssertions.PrivateStagingAsync"),
+})
+
+
+def category_mutation_witnesses(profile, *, corrected):
+    if profile not in CATEGORY_MUTATION_METHODS or type(corrected) is not bool:
+        raise ConformanceError("WitnessMissing")
+    method = CATEGORY_MUTATION_METHODS[profile][int(corrected)]
+    return MappingProxyType({
+        "Hoard.Conformance.Tests.CategoryMutationTests." + method + f'(provider: "{binding}")': binding
+        for category, binding, _, _ in CATEGORY_BINDING_SLOTS if category == profile})
+
+
 ORIGINAL_INSPECTION_LITERAL_WITNESSES = tuple(sorted(
     "Hoard.Architecture.Tests.MetadataBoundaryTests." + method for method in (
         "Native_only_packages_cannot_hide_managed_assets",
@@ -336,6 +353,9 @@ def original_witness_policy(identity):
 
 def original_non_session_policy(identity):
     """A provider session cannot stand in for an inspection or controller proof."""
+    for profile in CATEGORY_MUTATION_METHODS:
+        if identity in category_mutation_witnesses(profile, corrected=True):
+            return profile, "mutation"
     if identity == METADATA_RECOVERY_SOURCE_WITNESS:
         return "metadata", "recovery"
     if identity in METADATA_INVENTORY_SOURCE_WITNESSES.values():
@@ -397,6 +417,9 @@ def category_runtime_cases(profile, binding_id, *, mode="diagnostic"):
     if profile == "artifacts" and mode == "qualification":
         selected.update({identity: "QC-12" for identity, row in AUTHORITY_INTEGRATION_ROWS.items()
                          if row[0] == binding_id})
+    if mode == "qualification":
+        selected.update({identity: "QC-04" for identity, binding in category_mutation_witnesses(
+            profile, corrected=True).items() if binding == binding_id})
     return MappingProxyType(selected)
 
 
@@ -416,6 +439,8 @@ def category_execution_partitions(profile, *, mode="diagnostic"):
             scope = "inventory-controller"
         elif identity in AUTHORITY_INTEGRATION_ROWS:
             scope = "original-integration"
+        elif identity in category_mutation_witnesses(profile, corrected=True):
+            scope = "mutation-repair"
         elif policy is not None and policy[0] == profile:
             scope = "original-" + binding if identity in repeated else "original"
         elif ORIGINAL_INSPECTION_WITNESSES.get(identity) == profile:
@@ -801,6 +826,7 @@ QC_CONTROLS = {
 }
 
 METADATA_QUALITY_BASIS = MappingProxyType({
+    "QC-04": (),
     "QC-06": (*range(1, 18), *range(20, 26), *range(28, 32)),
     "QC-07": (14, 15, 16, 17, 18, 19, 26, 27, 37),
     "QC-08": (*range(32, 37), *range(38, 46)),
@@ -809,6 +835,7 @@ METADATA_QUALITY_BASIS = MappingProxyType({
 CATEGORY_QUALITY_BASIS = MappingProxyType({
     "metadata": METADATA_QUALITY_BASIS,
     "artifacts": MappingProxyType({
+        "QC-04": (),
         "QC-09": tuple(number for number in range(1, 49) if number not in (11, 12, 41, 42, 43, 44)),
         "QC-10": (11, 12),
         "QC-11": (41, 42, 43, 44),
@@ -912,6 +939,8 @@ def expected_cases(profile):
         witnesses = catalog_admission_witnesses() if number == 1 else ()
         if number == 12:
             witnesses = authority_integration_witnesses()
+        elif number == 4:
+            witnesses = tuple(sorted(category_mutation_witnesses(profile, corrected=True)))
         cases.append(ExpectedCase(profile, "none", "none", f"QC-{number:02}", witnesses,
                                   obligation_controls(number)))
     if len(cases) > MAX_RESULTS or len({case.key for case in cases}) != len(cases):

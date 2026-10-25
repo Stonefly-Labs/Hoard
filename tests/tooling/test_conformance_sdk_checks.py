@@ -28,6 +28,85 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_qualified_mutation_launches_named_failure_before_unchanged_repair_and_records_all_images(self):
+        for profile in ("metadata", "artifacts"):
+            with self.subTest(profile=profile), tempfile.TemporaryDirectory(dir=self.directory) as temporary:
+                root = Path(temporary)
+                candidate = root / "snapshot"
+                run = SimpleNamespace(root=root, command_sequence=7)
+
+                class Sources:
+                    def __init__(self):
+                        self._run = run
+
+                assembly = candidate / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / (
+                    "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
+                images = {assembly.relative_to(root).as_posix(): "a" * 64, **{
+                    (assembly.parent / ("Image" + str(index) + ".dll")).relative_to(root).as_posix(): "b" * 64
+                    for index in range(5)}}
+                packages = [{"packageId": package, "version": "0.1.0",
+                             "sha256": hashlib.sha256(package.encode()).hexdigest()}
+                            for category, _, _, package in checks.CATEGORY_BINDING_SLOTS if category == profile]
+                inputs = {
+                    "profileId": profile, "mode": "qualification", "runId": str(uuid.uuid4()),
+                    "invocationGroupId": str(uuid.uuid4()), "runtimeAssemblies": images, "packages": packages,
+                    "bindings": [{"bindingId": binding, "category": category,
+                                  "package": next(item for item in packages if item["packageId"] == package)}
+                                 for category, binding, _, package in checks.CATEGORY_BINDING_SLOTS if category == profile]}
+                path = f"proofs/category-{profile}-qualification-run-inputs.json"
+                (root / "proofs").mkdir()
+                checks.write_new(root / path, checks.evidence.canonical_bytes(inputs))
+                checks.write_new(root / "runtime-owner.json", b"owner")
+                (root / "stores").mkdir()
+                feed = root / "feed/candidate"
+                feed.mkdir(parents=True)
+                for package in packages:
+                    checks.write_new(feed / (package["packageId"] + ".0.1.0.nupkg"), package["packageId"].encode())
+                tests = checks._category_scope_tests((profile, "mutation-repair"))
+                plan = {"attemptId": str(uuid.uuid4()), "tests": tests}
+                result = SimpleNamespace(exit_code=0)
+                failed = SimpleNamespace(exit_code=1)
+                with patch.object(checks, "NativeCategorySources", Sources), patch.object(
+                        checks, "category_mutation_images", return_value=images), patch.object(
+                        checks, "require_sqlite_environment") as sqlite, patch.object(
+                        checks, "_execute_runtime_transport", side_effect=(
+                            (failed, {}, {"proofs": {}, "completion_data": b"{}"}, "a" * 64),
+                            (result, {}, {"proofs": {}, "completion_data": b"{}"}, "b" * 64))) as launch, patch.object(
+                        checks, "validate_observation") as validate, patch.object(
+                        checks, "category_mutation_observations", return_value=([], {})), patch.object(
+                        checks, "category_source_parent", return_value="c" * 64):
+                    checks.category_attempt(
+                        run, inputs, candidate, "mutation-repair", plan,
+                        run_inputs_path=path, native_sources=Sources())
+                self.assertEqual(sqlite.call_count, int(profile == "metadata"))
+                self.assertEqual(launch.call_count, 2)
+                for call, corrected in zip(launch.call_args_list, (False, True)):
+                    self.assertEqual(call.args[2], assembly)
+                    manifest = call.args[3]
+                    self.assertEqual({entry["testIdentity"] for entry in manifest["expected"]},
+                                     checks.category_mutation_witnesses(profile, corrected=corrected).keys())
+                    self.assertEqual({entry["assertionSymbol"] for entry in manifest["expected"]}, {
+                        None if corrected else checks.CATEGORY_MUTATION_METHODS[profile][2]})
+                    self.assertEqual({row["path"] for row in manifest["assemblies"]}, images.keys())
+                    with patch.object(run, "command", create=True, side_effect=checks.evidence.ConformanceError(
+                            "PrerequisiteMissing")) as command:
+                        with self.assertRaisesRegex(checks.evidence.ConformanceError, "PrerequisiteMissing"):
+                            checks.runtime_command(run, assembly, manifest, **call.args[5])
+                    self.assertEqual(set(command.call_args.kwargs["execution_inputs"]), {
+                        f'runtime-input-{manifest["attemptId"]}.json', "runtime-owner.json", path,
+                        f'stores/settings-{manifest["attemptId"]}.runsettings', *images})
+                    settings = ET.parse(root / f'stores/settings-{manifest["attemptId"]}.runsettings')
+                    variables = settings.find(".//EnvironmentVariables")
+                    expected = {
+                        **{variable: package["sha256"] for package, variable in zip(
+                            packages, ("HOARD_METADATA_SQLITE_PACKAGE_SHA256", "HOARD_METADATA_MEMORY_PACKAGE_SHA256")
+                            if profile == "metadata" else (
+                                "HOARD_ARTIFACT_LOCAL_PACKAGE_SHA256", "HOARD_ARTIFACT_OBJECT_PACKAGE_SHA256"))},
+                        "HOARD_ORIGIN_RUN_ID": inputs["runId"]}
+                    self.assertEqual({node.tag: node.text for node in variables}, expected)
+                self.assertEqual(validate.call_args_list[0].args[3:6], ("AssertionFailed", "Failed", 1))
+                self.assertEqual(validate.call_args_list[1].args[3:6], ("None", "Passed", 0))
+
     def test_fresh_authority_scope_uses_consumer_and_both_exact_loaded_provider_images(self):
         candidate = self.directory / "current"
         run = SimpleNamespace(root=self.directory)
@@ -154,7 +233,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         diagnostic = catalog.category_execution_partitions("metadata")
         qualification = catalog.category_execution_partitions("metadata", mode="qualification")
         self.assertEqual({key: value for key, value in qualification.items()
-                          if key not in ("recovery-controller", "inventory-controller")},
+                          if key not in ("recovery-controller", "inventory-controller", "mutation-repair")},
                          dict(diagnostic))
         self.assertEqual(qualification["recovery-controller"],
                          (("sqlite", catalog.METADATA_RECOVERY_SOURCE_WITNESS),))

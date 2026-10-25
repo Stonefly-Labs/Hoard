@@ -9676,6 +9676,45 @@ the earlier controller-routing and QC-09 basis repairs, not this fresh
 integration scope or the newer public-report admission gate. No task or
 reviewer-owned checklist markers advance; the implementation stage remains open.
 
+### Fresh named category mutation source pairs
+
+Qualification-only `mutation-repair` scopes now execute each category's two
+faulty bindings before their two corrected bindings in the same package-only
+Consumer. Both sides pin the same six images, actual provider archives, SDK and
+immutable RunInputs. The negative must exit one with both fixed named assertion
+failures; a build/setup error cannot substitute. The corrected side must pass
+unchanged consumers. No old diagnostic execution is promoted.
+
+The independent native factory reconstructs the full negative manifest,
+re-ingests its original logger transport and checks original executor-held
+argv/cwd/input files, settings, owner, exact identities/frames, settled exit and
+ordered command/witness bounds. Rehashed replacement records are not authority.
+Its retained negative packets join the fresh corrected parent atomically;
+QC-04 requires the complete current pair and one parent, with no prior-attempt
+execution reuse. Focused models exercise actual producer parent publication
+and independent factory admission, including a coherently rehashed foreign
+assertion/setup failure. These are modeled rejection checks, not native passes.
+
+`python3 -m unittest discover -s tests/tooling -v` passes 437 tests with 19
+native skips. An initial run hit the existing real descendant startup timing
+assertion; its unchanged focused rerun and full rerun pass.
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --no-restore --verbosity quiet`
+passes 133 tests without skips. Frozen inventory, embedded catalog and patch
+whitespace pass. Native pair admission remains pending; no task/checklist
+markers advance. README, plan and evidence/matrix contracts are updated.
+Provider/contributor/deployment guides, examples and diagrams are unaffected:
+no public API, dependency, supported command or deployment behavior changes.
+
+Exact `a83380c`/run40240608803 independently passes all three Linux jobs:
+319 native foundations without skips, locked replay and 135 aggregate scopes/
+2,048 witnesses. The four public category reports are admitted as `Incomplete`;
+metadata remains 90/3/9/0 and artifacts 95/4/4/0. This predates fresh QC-12/QC-04
+admission. Exact `9a5ebdb`/run40243784950 attempt one passes 325 foundations and
+locked replay, but its SDK job fails the earlier MP-46 configured-selection
+wrapper with `UnknownDiagnostic` before reaching the new QC-12 scope.
+Only that failed job was retried at the unchanged head; its result is pending.
+The unchanged row passed at `a83380c`; no timing or other cause is established.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three jobs: 291 native foundations without failures/

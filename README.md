@@ -2244,6 +2244,25 @@ Local checks pass 433 tooling tests (19 native skips), 133 source SDK tests and
 The latter is non-native validation, not qualification. Fresh Linux admission
 of this scope and full profile/evaluator acceptance remain pending.
 
+QC-04 now has a separate qualification-only `mutation-repair` scope for each
+category. It executes both faulty bindings first, requires the exact named
+assertion failures, then runs both corrected bindings through the unchanged
+consumer. Independent source admission re-ingests the original negative
+transport and executor-held command, checks the shared six-image/package/input
+closure, ordered settled times and fixed settings/argv, and retains the negative
+proofs under one current corrected source parent. Setup failures, replaced
+records, missing rows and prior-attempt borrowing cannot qualify. Local checks
+pass 437 tooling tests (19 native skips) and 133 source SDK tests; fresh Linux
+admission of these new pairs remains pending. No task/checklist advances.
+
+Exact `a83380c`, [run40240608803](https://github.com/Stonefly-Labs/Hoard/actions/runs/40240608803),
+independently admits the four public `Incomplete` category reports: all three
+Linux jobs pass, with 319 native foundations without skips and 135 aggregate
+scopes/2,048 witnesses. It predates the fresh QC-12/QC-04 scopes.
+The first `9a5ebdb` attempt passes 325 native foundations and locked replay but
+fails an earlier metadata wrapper row before reaching fresh QC-12 admission.
+Its unchanged-head failed-job retry is pending; no cause or success is inferred.
+
 Exact `a5fe97e`, [run40238458550](https://github.com/Stonefly-Labs/Hoard/actions/runs/40238458550),
 independently passes all three Linux jobs: 317 native foundations without skips,
 13-lock/18-package replay and 135 aggregate scopes/2,048 witnesses including the

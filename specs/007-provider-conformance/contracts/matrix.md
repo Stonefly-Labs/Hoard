@@ -37,6 +37,17 @@ and one independently reconstructed native command/source parent form its
 current-attempt basis; no inherited AS row substitutes for a pairing/consumer.
 Its implementation and local execution do not claim a completed Linux matrix.
 
+QC-04 requires two corrected metadata identities and two corrected artifact
+identities across their respective category profiles. A qualification-only
+`mutation-repair` scope in each profile runs its fresh faulty family first,
+requiring the fixed named assertion failures, then its unchanged corrected
+family. Both sides share six pinned images, SDK/provider bytes and immutable
+inputs. The independent source parent retains the original negative transport
+and held command closure with ordered settled bounds; setup failures and
+previous-attempt borrowing reject. Negative rows are retained source evidence,
+not failed public witnesses. Local/model validation is not fresh Linux
+qualification of these pairs.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

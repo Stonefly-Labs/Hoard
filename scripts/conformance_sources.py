@@ -15,11 +15,11 @@ from xml.sax.saxutils import escape
 
 import conformance_evidence as evidence
 from conformance_case_catalog import (
-    AUTHORITY_INTEGRATION_ROWS, CATEGORY_BINDING_SLOTS,
+    AUTHORITY_INTEGRATION_ROWS, CATEGORY_BINDING_SLOTS, CATEGORY_MUTATION_METHODS,
     METADATA_INVENTORY_SOURCE_WITNESSES, METADATA_RECOVERY_SOURCE_WITNESS,
     ORIGINAL_ARTIFACT_PROOF_SOURCES,
     ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES,
-    category_execution_partitions, category_runtime_cases, category_runtime_packages,
+    category_execution_partitions, category_mutation_witnesses, category_runtime_cases, category_runtime_packages,
 )
 from conformance_execution import OwnedRun, no_symlinks
 
@@ -106,6 +106,168 @@ def authority_integration_observations(run, inputs, manifest, observed):
             or {row["path"]: row["sha256"] for row in manifest["assemblies"]} != images):
         raise evidence.ConformanceError("ProofMismatch")
     return observations
+
+
+def category_mutation_images(run, inputs):
+    assembly_path, assembly = _control_assembly(
+        run, inputs, "/tests/fixtures/conformance/Consumer/bin/package-diagnostic/Release/net10.0/"
+        "Hoard.Fixtures.Conformance.Consumer.dll")
+    selected = category_runtime_packages(inputs, category_mutation_witnesses(
+        inputs["profileId"], corrected=True).values())
+    images = {assembly_path: inputs["runtimeAssemblies"][assembly_path]}
+    packages = ("Hoard.Testing.Conformance",
+                *(package["packageId"] for package in selected.values()),
+                *("Hoard.Fixtures.Conformance.Bindings." + {
+                    "memory": "Memory", "sqlite": "Sqlite", "local": "Local", "object": "ObjectSemantics"}[binding]
+                  for binding in selected))
+    for package in packages:
+        path = (assembly.parent / (package + ".dll")).relative_to(run.root).as_posix()
+        hashed = inputs["runtimeAssemblies"].get(path)
+        if hashed is None:
+            raise evidence.ConformanceError("InputChanged")
+        evidence._runtime_bytes_correspondence(inputs, hashed, path, package)
+        images[path] = hashed
+    return images
+
+
+def category_mutation_environment(inputs):
+    packages = category_runtime_packages(inputs, category_mutation_witnesses(
+        inputs["profileId"], corrected=True).values())
+    family = "METADATA" if inputs["profileId"] == "metadata" else "ARTIFACT"
+    names = {"memory": "MEMORY", "sqlite": "SQLITE", "local": "LOCAL", "object": "OBJECT"}
+    return {**{f"HOARD_{family}_{names[binding]}_PACKAGE_SHA256": package["sha256"]
+               for binding, package in sorted(packages.items(), key=lambda item: item[1]["packageId"])},
+            "HOARD_ORIGIN_RUN_ID": inputs["runId"]}
+
+
+def category_mutation_observations(run, inputs, manifest, observed, *, sequence, started_ms, ended_ms):
+    profile = inputs["profileId"]
+    corrected = category_mutation_witnesses(profile, corrected=True)
+    witnesses = source_witnesses(inputs, manifest, observed, corrected)
+    images = category_mutation_images(run, inputs)
+    if (len(manifest["assemblies"]) != len(images)
+            or {row["path"]: row["sha256"] for row in manifest["assemblies"]} != images
+            or manifest["assemblies"][0]["path"] != next(iter(images))
+            or any(row["bindingId"] != corrected[row["testIdentity"]] for row in witnesses.values())):
+        raise evidence.ConformanceError("ProofMismatch")
+    attempt = manifest["attemptId"]
+    link_path = f"proofs/category-mutation-{attempt}-fault.json"
+    link_raw = _readonly(run.root / link_path, 64 * 1024)
+    link = evidence._runtime_json(link_raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "runId": evidence._constant(inputs["runId"]), "invocationGroupId": evidence._constant(inputs["invocationGroupId"]),
+        "attemptId": evidence._constant(attempt), "inputsSha256": evidence._constant(evidence.digest(inputs)),
+        "profileId": evidence._constant(profile), "faultyAttemptId": evidence._uuid,
+        "commandSequence": evidence._integer,
+    }, limit=64 * 1024)
+    faulty_attempt, faulty_sequence = link["faultyAttemptId"], link["commandSequence"]
+    if (not 0 < faulty_sequence < sequence or faulty_attempt == attempt
+            or inputs["mode"] != "qualification" or inputs["runId"] != run.run_id):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    manifest_path = f"runtime-input-{faulty_attempt}.json"
+    faulty_manifest_raw = _readonly(run.root / manifest_path, 1024 * 1024)
+    faulty_manifest = evidence.load_json(faulty_manifest_raw)
+    output = f"runtime-{faulty_attempt}"
+    lines_path, completion_path = f"{output}/witnesses.jsonl", f"{output}/completion.json"
+    lines_raw = _readonly(run.root / lines_path, 1024 * 1024)
+    lines = lines_raw.splitlines()
+    if len(lines) != len(corrected):
+        raise evidence.ConformanceError("ProofMismatch")
+    proofs = {}
+    for line in lines:
+        row = evidence.load_json(line)
+        if not isinstance(row, dict):
+            raise evidence.ConformanceError("ProofMismatch")
+        execution = evidence._uuid(row.get("executionId"))
+        path = f"proof-{execution}.json"
+        proofs[path] = _readonly(run.root / output / path, 64 * 1024)
+    owner_raw = _readonly(run.root / "runtime-owner.json", 64 * 1024)
+    completion_raw = _readonly(run.root / completion_path, 64 * 1024)
+    expected = category_mutation_witnesses(profile, corrected=False)
+    failure = evidence.inspect_runtime_attempt(
+        inputs=inputs, manifest_data=faulty_manifest_raw, owner_data=owner_raw,
+        witnesses_data=lines_raw, proofs=proofs, completion_data=completion_raw,
+        expected_tests={identity: (binding, "none") for identity, binding in expected.items()},
+        manifest_sha256=hashlib.sha256(faulty_manifest_raw).hexdigest(),
+        owner_sha256=hashlib.sha256(owner_raw).hexdigest(), started_ms=started_ms, ended_ms=ended_ms)["observation"]
+    assertion = CATEGORY_MUTATION_METHODS[profile][2]
+    expected_manifest = {
+        **manifest, "attemptId": faulty_attempt, "expected": [{
+            **next(entry for entry in manifest["expected"] if entry["bindingId"] == binding),
+            "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0], "assertionSymbol": assertion}
+            for identity, binding in sorted(expected.items())]}
+    if (faulty_manifest != expected_manifest
+            or failure["diagnosticCode"] != "AssertionFailed"
+            or len(failure["witnesses"]) != len(expected)
+            or {row["testIdentity"] for row in failure["witnesses"]} != expected.keys()
+            or {row["executionId"] for row in failure["witnesses"]} & {
+                row["executionId"] for row in observed["witnesses"]}
+            or any(row["status"] != "Failed" or row["bindingId"] != expected[row["testIdentity"]]
+                   for row in failure["witnesses"])
+            or any(entry["caseId"] != "QC-04" or entry["assertionSymbol"] != assertion
+                   or entry["assemblyId"] != manifest["assemblies"][0]["id"]
+                   for entry in faulty_manifest["expected"])
+            or any(evidence.load_json(raw)["failureKind"] != "Assertion"
+                   or evidence.load_json(raw)["assertionSymbol"] != assertion for raw in proofs.values())):
+        raise evidence.ConformanceError("ProofMismatch")
+    record_raw = run.read_execution_record(faulty_sequence)
+    record = evidence.load_json(record_raw)
+    fields = {"schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
+              "exitCode", "diagnosticCode", "groupState", "scope"}
+    if not isinstance(record, dict) or set(record) != fields | {
+            "runId", "rootId", "argvSha256", "cwdSha256", "inputFiles"}:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    admit_owned_command({key: record[key] for key in fields}, faulty_sequence,
+                        scope="ordinary", detail=None, exit_code=1, max_duration=180000)
+    current = evidence.load_json(run.read_execution_record(sequence))
+    if not isinstance(current, dict):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    current_started = evidence._number(current.get("startedMs"))
+    if (run.live_children() or not 1 < record["childPid"] <= 2**31 - 1
+            or not started_ms <= record["startedMs"] <= record["endedMs"] <= current_started <= ended_ms
+            or any(not record["startedMs"] <= row["startedMs"] <= row["endedMs"] <= record["endedMs"]
+                   for row in failure["witnesses"])
+            or record["runId"] != run.run_id or record["rootId"] != run.root_id):
+        raise evidence.ConformanceError("OwnershipInvalid")
+    assembly = run.root / next(iter(images))
+    settings_path = f"stores/settings-{faulty_attempt}.runsettings"
+    settings = run.root / settings_path
+    environment = "<EnvironmentVariables>" + "".join(
+        f"<{key}>{escape(value)}</{key}>" for key, value in category_mutation_environment(inputs).items()
+    ) + "</EnvironmentVariables>"
+    settings_raw = _readonly(settings, 256 * 1024)
+    execution_path = f"proofs/category-command-{faulty_attempt}-execution.json"
+    execution_raw = _readonly(run.root / execution_path, 64 * 1024)
+    execution = {
+        "schemaVersion": 1, "qualification": False, "nativeContainment": True,
+        "runId": run.run_id, "rootId": run.root_id, "invocationGroupId": inputs["invocationGroupId"],
+        "attemptId": faulty_attempt, "purpose": "execution", "commandSequence": faulty_sequence,
+        "inputsSha256": evidence.digest(inputs), "executionRecordSha256": hashlib.sha256(record_raw).hexdigest(),
+        "manifestSha256": hashlib.sha256(faulty_manifest_raw).hexdigest(),
+        "settingsSha256": hashlib.sha256(settings_raw).hexdigest()}
+    native_path = f"proofs/execution-command-{faulty_sequence:04}.json"
+    if (settings_raw != runtime_settings(run.root, assembly, faulty_attempt,
+                                        hashlib.sha256(faulty_manifest_raw).hexdigest(),
+                                        hashlib.sha256(owner_raw).hexdigest(), environment)
+            or execution_raw != evidence.canonical_bytes(execution)
+            or _readonly(run.root / native_path, 64 * 1024) != record_raw
+            or record["argvSha256"] != evidence.digest(runtime_arguments(assembly, settings, tuple(expected)))
+            or record["cwdSha256"] != hashlib.sha256(str(assembly.parent.absolute()).encode()).hexdigest()
+            or record["inputFiles"] != {
+                manifest_path: hashlib.sha256(faulty_manifest_raw).hexdigest(),
+                "runtime-owner.json": hashlib.sha256(owner_raw).hexdigest(),
+                manifest["runInputsPath"]: evidence.digest(inputs),
+                settings_path: hashlib.sha256(settings_raw).hexdigest(), **images}):
+        raise evidence.ConformanceError("ProofMismatch")
+    failed = {row["bindingId"]: row for row in failure["witnesses"]}
+    observations = [{
+        "testIdentity": identity, "executionId": row["executionId"], "runtimeProofSha256": row["proofSha256"],
+        "sourceProofSha256": failed[corrected[identity]]["proofSha256"]}
+        for identity, row in sorted(witnesses.items())]
+    return observations, {
+        link_path: link_raw, manifest_path: faulty_manifest_raw, lines_path: lines_raw,
+        completion_path: completion_raw, settings_path: settings_raw, execution_path: execution_raw,
+        native_path: record_raw, **{f"{output}/{path}": raw for path, raw in proofs.items()}}
 
 
 def inspection_observations(root, inputs, manifest, observed, selected, bindings):
@@ -1335,9 +1497,10 @@ class NativeCategorySources:
         metadata = profile == "metadata" and scope_id in ("recovery-controller", "inventory-controller")
         artifact = profile == "artifacts" and scope_id == "controller"
         integration = (profile, scope_id) == ("artifacts", "original-integration")
+        mutation = scope_id == "mutation-repair"
         if (inputs["mode"] != "qualification" or inputs["profileId"] != profile
                 or inputs["runId"] != run.run_id or not isinstance(scope_id, str)
-                or not (scope_id.startswith("inspection-") or metadata or artifact or integration)
+                or not (scope_id.startswith("inspection-") or metadata or artifact or integration or mutation)
                 or scope_id not in partitions):
             raise evidence.ConformanceError("WitnessMissing")
         tests = {identity: (binding, category_runtime_cases(profile, binding, mode=inputs["mode"])[identity])
@@ -1372,6 +1535,9 @@ class NativeCategorySources:
             source = evidence.load_json(source_raw)
             source_path = f"proofs/original-artifact-external-{attempt}.json"
             observations, packets = source["observations"], material["sourcePackets"]
+        elif mutation:
+            observations, packets = category_mutation_observations(
+                run, inputs, manifest, observed, sequence=sequence, started_ms=started_ms, ended_ms=ended_ms)
         elif integration:
             observations = authority_integration_observations(run, inputs, manifest, observed)
             packets = {}
@@ -1417,7 +1583,7 @@ class NativeCategorySources:
                 or _readonly(run.root / "runtime-owner.json", 64 * 1024) != owner_data
                 or _readonly(run.root / f"runtime-input-{attempt}.json", 1024 * 1024) != manifest_data
                 or _readonly(run.root / manifest["runInputsPath"], 16 * 1024 * 1024) != evidence.canonical_bytes(inputs)
-                or len(manifest["assemblies"]) != (6 if integration else 1)
+                or len(manifest["assemblies"]) != (6 if integration or mutation else 1)
                 or {entry["assemblyId"] for entry in manifest["expected"]} != {manifest["assemblies"][0]["id"]}
                 or len(manifest["packages"]) != len(expected_packages)
                 or {package["id"]: package["sha256"] for package in manifest["packages"]} != expected_packages
@@ -1425,14 +1591,14 @@ class NativeCategorySources:
                        for entry in manifest["expected"])):
             raise evidence.ConformanceError("ProofMismatch")
         assembly = run.root / manifest["assemblies"][0]["path"]
-        if assembly.name != ("Hoard.Fixtures.Conformance.Consumer.dll" if integration else
+        if assembly.name != ("Hoard.Fixtures.Conformance.Consumer.dll" if integration or mutation else
                              "Hoard.Conformance.Tests.dll" if metadata else
                              "Hoard.Artifacts.Tests.dll" if artifact else "Hoard.Architecture.Tests.dll"):
             raise evidence.ConformanceError("ProofMismatch")
         metadata_prefix = "metadata-inventory" if inventory else "metadata-recovery"
         context_prefix = metadata_prefix if metadata else "artifact-source" if artifact else "inspection"
         context = run.root / "stores" / f"{context_prefix}-context-{attempt}.json"
-        expected_context = {
+        expected_context = {} if mutation else {
             "schemaVersion": 1, "runId": manifest["runId"],
             "cases": {entry["testIdentity"]: {"caseId": entry["caseId"], "bindingId": entry["bindingId"]}
                       for entry in manifest["expected"]}} if integration else artifact_source_context(
@@ -1442,7 +1608,7 @@ class NativeCategorySources:
             "schemaVersion": 1, "runId": run.run_id, "attemptId": attempt,
             "inputsSha256": evidence.digest(inputs),
             "outputDirectory": str(run.root / "stores" / ("original-inspection-" + attempt)), "cases": selected}
-        if not integration and _readonly(context, 1024 * 1024) != evidence.canonical_bytes(expected_context):
+        if not (integration or mutation) and _readonly(context, 1024 * 1024) != evidence.canonical_bytes(expected_context):
             raise evidence.ConformanceError("ProofMismatch")
         variables = {}
         configuration_hashes = {}
@@ -1463,7 +1629,9 @@ class NativeCategorySources:
                     raise evidence.ConformanceError("InputChanged")
                 variables[variable] = str(path)
                 configuration_hashes[path.relative_to(run.root).as_posix()] = hashed
-        if integration:
+        if mutation:
+            variables = category_mutation_environment(inputs)
+        elif integration:
             variables["HOARD_ORIGINAL_CONTEXT"] = base64.b64encode(evidence.canonical_bytes(expected_context)).decode()
         else:
             variables["HOARD_ARTIFACT_SOURCE_CONTEXT" if artifact else (
@@ -1497,7 +1665,7 @@ class NativeCategorySources:
             settings.relative_to(run.root).as_posix(): hashlib.sha256(settings_raw).hexdigest(),
             **{entry["path"]: inputs["runtimeAssemblies"][entry["path"]] for entry in manifest["assemblies"]},
             **configuration_hashes}
-        if not integration:
+        if not (integration or mutation):
             input_files[context.relative_to(run.root).as_posix()] = evidence.digest(expected_context)
         if metadata:
             for path in (expected_context["graphPath"],
@@ -1530,7 +1698,7 @@ class NativeCategorySources:
         times = (record["startedMs"], record["endedMs"])
         if (any(type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 2**63 - 1
                 for value in times) or times[1] < times[0]
-                or integration and not started_ms <= times[0] <= times[1] <= ended_ms
+                or (integration or mutation) and not started_ms <= times[0] <= times[1] <= ended_ms
                 or any(not times[0] <= row["startedMs"] <= row["endedMs"] <= times[1]
                        for row in observed["witnesses"])):
             raise evidence.ConformanceError("ProofMismatch")

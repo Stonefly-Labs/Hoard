@@ -20,6 +20,28 @@ import conformance_evidence as evidence
 
 
 class ConformanceAdmissionTests(unittest.TestCase):
+    def test_qualified_mutation_scope_selects_only_complete_corrected_family_with_fresh_source_policy(self):
+        import conformance_case_catalog as catalog
+        prefix = "Hoard.Conformance.Tests.CategoryMutationTests."
+        for profile, providers, method in (
+                ("metadata", ("memory", "sqlite"), "Corrected_metadata_replay_passes"),
+                ("artifacts", ("local", "object"), "Corrected_artifact_staging_passes")):
+            expected = {prefix + method + f'(provider: "{provider}")' for provider in providers}
+            quality, = (case for case in catalog.expected_cases(profile) if case.case_id == "QC-04")
+            with self.subTest(profile=profile):
+                self.assertEqual(set(quality.witnesses), expected)
+                diagnostic = catalog.category_execution_partitions(profile)
+                self.assertFalse(any(identity in expected for pairs in diagnostic.values() for _, identity in pairs))
+                qualified = catalog.category_execution_partitions(profile, mode="qualification")
+                self.assertEqual(set(qualified["mutation-repair"]), {
+                    (provider, prefix + method + f'(provider: "{provider}")') for provider in providers})
+                for provider in providers:
+                    identity = prefix + method + f'(provider: "{provider}")'
+                    self.assertEqual(catalog.category_runtime_cases(profile, provider, mode="qualification")[identity],
+                                     "QC-04")
+                    self.assertEqual(catalog.original_non_session_policy(identity), (profile, "mutation"))
+                    self.assertIsNone(catalog.original_witness_policy(identity))
+
     def test_authority_quality_catalog_requires_all_actual_composition_parameters(self):
         import conformance_case_catalog as catalog
         method = "Hoard.Conformance.Tests.AuthorityIntegrationTests.Actual_compositions_preserve_shared_authority"
@@ -2540,9 +2562,11 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         "status": "Failed" if (binding, identity) == failed else "Passed"})
                     proofs["proof-" + execution + ".json"] = hashed
                     if (binding, identity) != missing_parent:
-                        parents[execution] = (hashed if profile == "metadata" else
+                        native_parent = profile == "artifacts" or identity in catalog.category_mutation_witnesses(
+                            profile, corrected=True)
+                        parents[execution] = (hashed if not native_parent else
                                               hashlib.sha256(("original-parent-" + str(sequence)).encode()).hexdigest())
-                        if profile == "artifacts":
+                        if native_parent:
                             proofs["parent-" + execution + ".json"] = parents[execution]
             controls = {control: (hashlib.sha256(control.encode()).hexdigest(),)
                         for case in history._cases if case.binding_id != "none" and case.exclusion is None
@@ -2661,7 +2685,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 self.assertTrue({row["proofSha256"] for row in selected} <= set(attempt["proofSha256"]))
                 self.assertLessEqual(len(attempt["proofSha256"]), evidence.MAX_WITNESSES)
         self.assertEqual("Incomplete", qualities["QC-02"]["status"])
-        self.assertEqual("Incomplete", qualities["QC-04"]["status"])
+        self.assertEqual("Passed", qualities["QC-04"]["status"])
         self.assertEqual("Incomplete", qualities["QC-05"]["status"])
         evidence.admit_entity("QualificationReport", self.category_quality_report(history))
 
@@ -2742,6 +2766,28 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.assertEqual([attempt["status"] for attempt in third["attempts"]], ["Passed", "Failed", "Passed"])
         evidence.admit_entity("QualificationReport", self.category_quality_report(history))
 
+    def test_mutation_quality_requires_current_complete_paired_source_and_retains_failed_repairs(self):
+        import conformance_case_catalog as catalog
+        for profile in ("metadata", "artifacts"):
+            self.setUp()
+            _, finish = self.category_quality_fixture(profile=profile)
+            selected = catalog.category_mutation_witnesses(profile, corrected=True)
+            identity = next(iter(selected))
+            first = finish(missing_parent=(selected[identity], identity))["QC-04"]
+            self.assertEqual(first["status"], "Incomplete")
+            self.setUp()
+            history, finish = self.category_quality_fixture(profile=profile)
+            self.assertEqual(finish()["QC-04"]["status"], "Passed")
+            evidence.admit_entity("QualificationReport", self.category_quality_report(history))
+        self.setUp()
+        history, finish = self.category_quality_fixture(profile="artifacts", max_attempts=2)
+        identity, binding = next(iter(catalog.category_mutation_witnesses("artifacts", corrected=True).items()))
+        self.assertEqual(finish(failed=(binding, identity))["QC-04"]["status"], "Failed")
+        repaired = finish(2)["QC-04"]
+        self.assertEqual([attempt["status"] for attempt in repaired["attempts"]], ["Failed", "Passed"])
+        self.assertEqual(len(repaired["attempts"][-1]["witnessIds"]), 2)
+        evidence.admit_entity("QualificationReport", self.category_quality_report(history))
+
     def test_authority_quality_rejects_missing_borrowed_or_retimed_integration_rows(self):
         import conformance_case_catalog as catalog
         missing = catalog.authority_integration_witnesses()[0]
@@ -2801,7 +2847,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 self.assertEqual({row["bindingId"] for row in selected}, bindings)
                 self.assertTrue({row["proofSha256"] for row in selected} < set(attempt["proofSha256"]))
                 self.assertLessEqual(len(attempt["proofSha256"]), evidence.MAX_WITNESSES)
-        for identity in ("QC-03", "QC-04", "QC-05"):
+        for identity in ("QC-03", "QC-05"):
             self.assertEqual(qualities[identity]["status"], "Incomplete")
         excluded = [row for row in history.results() if row["bindingId"] == "object"
                     and row["caseId"] in ("AS-41", "AS-42", "AS-43", "AS-44")]
@@ -3230,7 +3276,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             else:
                 actual = {witness["testIdentity"] for witness in history.witnesses
                           if witness["executionId"] in result["attempts"][0]["witnessIds"]}
-                self.assertEqual(actual, set(case.witnesses))
+                self.assertEqual(actual, set() if case.binding_id == "none" else set(case.witnesses))
         uses = [execution for result in results for attempt in result["attempts"]
                 for execution in attempt["witnessIds"]]
         self.assertGreater(len(uses), len(set(uses)))
@@ -3868,6 +3914,265 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 if mutation in ("missing-image", "borrowed-image"):
                     observed["originalObservations"][first] = nodes
                 write(settings, settings_raw)
+
+    def test_native_mutation_pairs_require_exact_named_failures_and_same_current_images(self):
+        import conformance_case_catalog as catalog
+        import conformance_sdk_checks as checks
+        import conformance_sources as sources
+        from types import SimpleNamespace
+        from xml.sax.saxutils import escape
+
+        for profile in ("metadata", "artifacts"):
+            self.setUp()
+            self.category_history(profile=profile, mode="qualification", distinct_packages=True)
+            corrected_id, faulty_id = str(uuid.uuid4()), str(uuid.uuid4())
+            directory = Path("snapshot/tests/fixtures/conformance/Consumer/bin/package-diagnostic/Release/net10.0")
+            assembly_path = (directory / "Hoard.Fixtures.Conformance.Consumer.dll").as_posix()
+            providers = {row["bindingId"]: row["package"] for row in self.inputs["bindings"]}
+            binding_names = {"memory": "Memory", "sqlite": "Sqlite", "local": "Local", "object": "ObjectSemantics"}
+            image_packages = ("Hoard.Testing.Conformance", *(package["packageId"] for package in providers.values()),
+                              *("Hoard.Fixtures.Conformance.Bindings." + binding_names[binding] for binding in providers))
+            images = {assembly_path: hashlib.sha256(b"consumer").hexdigest(), **{
+                (directory / (package + ".dll")).as_posix(): hashlib.sha256(package.encode()).hexdigest()
+                for package in image_packages}}
+            self.inputs["runtimeAssemblies"] = images
+            captured = {package["packageId"]: package for package in self.inputs["packages"]}
+            template = self.inputs["packages"][0]
+            for package in image_packages:
+                captured[package] = {**captured.get(package, template), "packageId": package,
+                                     "runtimeAssemblies": {"lib/net10.0/" + package + ".dll":
+                                                          images[(directory / (package + ".dll")).as_posix()]}}
+            self.inputs["packages"] = list(captured.values())
+            for binding in self.inputs["bindings"]:
+                binding["package"] = captured[binding["package"]["packageId"]]
+            self.manifest["assemblies"] = [
+                {"id": "tests" if path == assembly_path else "component-" + str(index), "path": path, "sha256": hashed}
+                for index, (path, hashed) in enumerate(images.items())]
+            self.proof["assemblySha256"] = self.witness["assemblySha256"] = images[assembly_path]
+            with self.subTest(profile=profile), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+
+                def write(path, raw):
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    if path.exists():
+                        path.chmod(0o600)
+                    path.write_bytes(raw)
+                    path.chmod(0o400)
+
+                for path in images:
+                    write(root / path, b"consumer" if path == assembly_path else Path(path).stem.encode())
+                write(root / "stores/candidate.NuGet.Config",
+                      evidence.synthetic_nuget_configuration(root / "feed/candidate"))
+                (root / "feed/candidate").mkdir(parents=True)
+                configurations = {family: root / "stores" / (family + ".json") for family in ("metadata", "artifacts")}
+                for path in configurations.values():
+                    write(path, b"{}")
+                inspection = {
+                    identity: {str(configurations[family]): hashlib.sha256(b"{}").hexdigest()}
+                    for identity, family in catalog.ORIGINAL_INSPECTION_WITNESSES.items()
+                    if identity not in catalog.ORIGINAL_INSPECTION_LITERAL_WITNESSES}
+                self.inputs["configurationSha256"] = evidence.configuration_fingerprint(
+                    evidence.verify_synthetic_source_mapping(root, "stores/candidate.NuGet.Config", "feed/candidate"),
+                    inspection_inputs=inspection)
+                self.owner["rootPathSha256"] = hashlib.sha256(str(root).encode()).hexdigest()
+                self.proof["ownerSha256"] = evidence.digest(self.owner)
+                self.attempt = faulty_id
+                self.manifest["expected"][0]["assertionSymbol"] = catalog.CATEGORY_MUTATION_METHODS[profile][2]
+                faulty = self.category_transport(None, selections={
+                    identity: (binding, "QC-04") for identity, binding in catalog.category_mutation_witnesses(
+                        profile, corrected=False).items()})
+                failed = []
+                for line in faulty["witnesses_data"].splitlines():
+                    row = evidence.load_json(line)
+                    path = f'proof-{row["executionId"]}.json'
+                    proof = evidence.load_json(faulty["proofs"][path])
+                    proof.update(status="Failed", failureKind="Assertion",
+                                 assertionSymbol=catalog.CATEGORY_MUTATION_METHODS[profile][2])
+                    faulty["proofs"][path] = evidence.canonical_bytes(proof)
+                    failed.append({**row, "status": "Failed", "proofSha256": evidence.digest(proof)})
+                faulty["witnesses_data"] = b"".join(evidence.canonical_bytes(row) + b"\n" for row in failed)
+                completion = evidence.load_json(faulty["completion_data"])
+                completion.update(diagnosticCode="AssertionFailed", recordsSha256=hashlib.sha256(
+                    faulty["witnesses_data"]).hexdigest())
+                faulty["completion_data"] = evidence.canonical_bytes(completion)
+                faulty_manifest = evidence.load_json(faulty["manifest_data"])
+                self.attempt = corrected_id
+                self.manifest["expected"][0]["assertionSymbol"] = None
+                corrected = catalog.category_mutation_witnesses(profile, corrected=True)
+                transport = self.category_transport(
+                    None, started=10, selections={identity: (binding, "QC-04") for identity, binding in corrected.items()})
+                manifest = evidence.load_json(transport["manifest_data"])
+                observed = evidence.inspect_runtime_attempt(
+                    inputs=self.inputs, **transport,
+                    expected_tests={identity: (binding, "none") for identity, binding in corrected.items()},
+                    started_ms=9, ended_ms=12)["observation"]
+                run = SimpleNamespace(root=root, run_id=self.inputs["runId"], root_id=self.owner["rootId"],
+                                      command_sequence=2, live_children=lambda: ())
+                write(root / "runtime-owner.json", transport["owner_data"])
+                write(root / manifest["runInputsPath"], evidence.canonical_bytes(self.inputs))
+                write(root / f"runtime-input-{faulty_id}.json", faulty["manifest_data"])
+                for path, raw in {**faulty["proofs"], "witnesses.jsonl": faulty["witnesses_data"],
+                                  "completion.json": faulty["completion_data"]}.items():
+                    write(root / f"runtime-{faulty_id}" / path, raw)
+                environment = "<EnvironmentVariables>" + "".join(
+                    f"<{key}>{escape(value)}</{key}>" for key, value in sources.category_mutation_environment(
+                        self.inputs).items()) + "</EnvironmentVariables>"
+                assembly = root / assembly_path
+                settings_path = f"stores/settings-{faulty_id}.runsettings"
+                settings = root / settings_path
+                settings_raw = sources.runtime_settings(
+                    root, assembly, faulty_id, evidence.digest(faulty_manifest), evidence.digest(self.owner), environment)
+                write(settings, settings_raw)
+                record = {
+                    "schemaVersion": 1, "sequence": 1, "childPid": 123, "childStartSha256": "a" * 64,
+                    "startedMs": 9, "endedMs": 10, "exitCode": 1, "diagnosticCode": "None",
+                    "groupState": "Exited", "scope": "ordinary", "runId": run.run_id, "rootId": run.root_id,
+                    "argvSha256": evidence.digest(sources.runtime_arguments(
+                        assembly, settings, tuple(catalog.category_mutation_witnesses(profile, corrected=False)))),
+                    "cwdSha256": hashlib.sha256(str(assembly.parent).encode()).hexdigest(),
+                    "inputFiles": {f"runtime-input-{faulty_id}.json": evidence.digest(faulty_manifest),
+                                   "runtime-owner.json": evidence.digest(self.owner),
+                                   manifest["runInputsPath"]: evidence.digest(self.inputs),
+                                   settings_path: hashlib.sha256(settings_raw).hexdigest(), **images}}
+                retained = {1: evidence.canonical_bytes(record), 2: evidence.canonical_bytes({"startedMs": 10})}
+                run.read_execution_record = lambda sequence: retained[sequence]
+                execution = {
+                    "schemaVersion": 1, "qualification": False, "nativeContainment": True,
+                    "runId": run.run_id, "rootId": run.root_id, "invocationGroupId": self.inputs["invocationGroupId"],
+                    "attemptId": faulty_id, "purpose": "execution", "commandSequence": 1,
+                    "inputsSha256": evidence.digest(self.inputs), "executionRecordSha256": evidence.digest(record),
+                    "manifestSha256": evidence.digest(faulty_manifest),
+                    "settingsSha256": hashlib.sha256(settings_raw).hexdigest()}
+                execution_path = root / f"proofs/category-command-{faulty_id}-execution.json"
+                native_path = root / "proofs/execution-command-0001.json"
+                link = {"schemaVersion": 1, "qualification": False, "runId": run.run_id,
+                        "invocationGroupId": self.inputs["invocationGroupId"], "attemptId": corrected_id,
+                        "inputsSha256": evidence.digest(self.inputs), "profileId": profile,
+                        "faultyAttemptId": faulty_id, "commandSequence": 1}
+                link_path = root / f"proofs/category-mutation-{corrected_id}-fault.json"
+                write(link_path, evidence.canonical_bytes(link))
+                write(execution_path, evidence.canonical_bytes(execution))
+                write(native_path, retained[1])
+
+                def admit():
+                    return sources.category_mutation_observations(
+                        run, self.inputs, manifest, observed, sequence=2, started_ms=9, ended_ms=12)
+
+                facts, packets = admit()
+                self.assertEqual({row["testIdentity"] for row in facts}, corrected.keys())
+                self.assertEqual({row["sourceProofSha256"] for row in facts}, {row["proofSha256"] for row in failed})
+                self.assertIn(f"proofs/execution-command-0001.json", packets)
+                write(root / f"runtime-input-{corrected_id}.json", transport["manifest_data"])
+                current_settings = root / "stores" / f"settings-{corrected_id}.runsettings"
+                current_settings_raw = sources.runtime_settings(
+                    root, assembly, corrected_id, evidence.digest(manifest), evidence.digest(self.owner), environment)
+                write(current_settings, current_settings_raw)
+                current_record = {
+                    **record, "sequence": 2, "startedMs": 10, "endedMs": 12, "exitCode": 0,
+                    "argvSha256": evidence.digest(sources.runtime_arguments(assembly, current_settings, tuple(corrected))),
+                    "inputFiles": {f"runtime-input-{corrected_id}.json": evidence.digest(manifest),
+                                   "runtime-owner.json": evidence.digest(self.owner),
+                                   manifest["runInputsPath"]: evidence.digest(self.inputs),
+                                   current_settings.relative_to(root).as_posix(): hashlib.sha256(
+                                       current_settings_raw).hexdigest(), **images}}
+                retained[2] = evidence.canonical_bytes(current_record)
+                write(root / "proofs/execution-command-0002.json", retained[2])
+                write(root / f"proofs/category-command-{corrected_id}-execution.json", evidence.canonical_bytes({
+                    **execution, "attemptId": corrected_id, "commandSequence": 2,
+                    "executionRecordSha256": evidence.digest(current_record), "manifestSha256": evidence.digest(manifest),
+                    "settingsSha256": hashlib.sha256(current_settings_raw).hexdigest()}))
+                receipt = {
+                    "schemaVersion": 1, "qualification": False, "mode": f"category-{profile}-mutation-repair",
+                    "runId": run.run_id, "invocationGroupId": self.inputs["invocationGroupId"],
+                    "attemptId": corrected_id, "inputsSha256": evidence.digest(self.inputs), "observations": facts}
+                write(root / f'proofs/{receipt["mode"]}-{corrected_id}.json', evidence.canonical_bytes(receipt))
+                with mock.patch.object(checks, "OwnedRun", SimpleNamespace):
+                    parent = checks.category_source_parent(
+                        run, self.inputs, manifest, observed,
+                        {"sourceExecutions": 2, "mutationProofsSha256": evidence.digest(receipt)},
+                        category_scope=(profile, "mutation-repair"),
+                        result=SimpleNamespace(exit_code=0, execution_record_sha256=evidence.digest(current_record)))
+                native = object.__new__(sources.NativeCategorySources)
+                native._run, native._selected = run, inspection
+                admitted = native._corroborate(
+                    self.inputs, manifest, observed, category_scope=(profile, "mutation-repair"),
+                    manifest_data=transport["manifest_data"], owner_data=transport["owner_data"],
+                    started_ms=9, ended_ms=12)
+                self.assertEqual(set(admitted["sourceParents"].values()), {parent})
+                self.assertTrue(packets.keys() <= admitted["sourceProofs"].keys())
+                for mutation in ("argv", "cwd", "inputs", "exit", "old-command", "overlap", "replaced-record", "setup-failure",
+                                 "settings", "missing-row", "borrowed-image", "missing-negative", "old-attempt"):
+                    changed = copy.deepcopy(record)
+                    changed_execution = dict(execution)
+                    if mutation in ("argv", "cwd"):
+                        changed[mutation + "Sha256"] = "0" * 64
+                    elif mutation == "inputs":
+                        changed["inputFiles"].pop((directory / "Hoard.Testing.Conformance.dll").as_posix())
+                    elif mutation == "exit":
+                        changed["exitCode"] = 0
+                    elif mutation == "old-command":
+                        changed["startedMs"] = 8
+                    elif mutation == "overlap":
+                        changed["endedMs"] = 11
+                    elif mutation == "settings":
+                        write(settings, settings_raw + b" ")
+                    elif mutation == "missing-row":
+                        changed_observed = {**observed, "witnesses": observed["witnesses"][:-1]}
+                    elif mutation == "borrowed-image":
+                        changed_manifest = copy.deepcopy(manifest)
+                        changed_manifest["assemblies"][1]["sha256"] = "0" * 64
+                    elif mutation == "missing-negative":
+                        write(root / f"runtime-{faulty_id}/witnesses.jsonl",
+                              evidence.canonical_bytes(failed[0]) + b"\n")
+                    elif mutation == "old-attempt":
+                        write(link_path, evidence.canonical_bytes({**link, "faultyAttemptId": corrected_id}))
+                    elif mutation == "setup-failure":
+                        other = catalog.CATEGORY_MUTATION_METHODS["artifacts" if profile == "metadata" else "metadata"][2]
+                        foreign_manifest = copy.deepcopy(faulty_manifest)
+                        for entry in foreign_manifest["expected"]:
+                            entry["assertionSymbol"] = other
+                        foreign_manifest_raw = evidence.canonical_bytes(foreign_manifest)
+                        write(root / f"runtime-input-{faulty_id}.json", foreign_manifest_raw)
+                        foreign_rows = []
+                        for row in failed:
+                            proof_path = f'proof-{row["executionId"]}.json'
+                            proof = evidence.load_json(faulty["proofs"][proof_path])
+                            proof.update(assertionSymbol=other, manifestSha256=evidence.digest(foreign_manifest))
+                            write(root / f"runtime-{faulty_id}" / proof_path, evidence.canonical_bytes(proof))
+                            foreign_rows.append({**row, "proofSha256": evidence.digest(proof)})
+                        foreign_lines = b"".join(evidence.canonical_bytes(row) + b"\n" for row in foreign_rows)
+                        write(root / f"runtime-{faulty_id}/witnesses.jsonl", foreign_lines)
+                        write(root / f"runtime-{faulty_id}/completion.json", evidence.canonical_bytes({
+                            **completion, "manifestSha256": evidence.digest(foreign_manifest),
+                            "recordsSha256": hashlib.sha256(foreign_lines).hexdigest()}))
+                        foreign_settings = sources.runtime_settings(
+                            root, assembly, faulty_id, evidence.digest(foreign_manifest),
+                            evidence.digest(self.owner), environment)
+                        write(settings, foreign_settings)
+                        changed["inputFiles"].update({
+                            f"runtime-input-{faulty_id}.json": evidence.digest(foreign_manifest),
+                            settings_path: hashlib.sha256(foreign_settings).hexdigest()})
+                        changed_execution.update(manifestSha256=evidence.digest(foreign_manifest),
+                                                 settingsSha256=hashlib.sha256(foreign_settings).hexdigest())
+                    raw = evidence.canonical_bytes(changed)
+                    retained[1] = evidence.canonical_bytes(record) if mutation == "replaced-record" else raw
+                    if mutation == "replaced-record":
+                        raw = evidence.canonical_bytes({**record, "childPid": 456})
+                    write(native_path, raw)
+                    write(execution_path, evidence.canonical_bytes({
+                        **changed_execution, "executionRecordSha256": hashlib.sha256(raw).hexdigest()}))
+                    with self.subTest(mutation=mutation), self.assertRaises(evidence.ConformanceError):
+                        sources.category_mutation_observations(
+                            run, self.inputs, changed_manifest if mutation == "borrowed-image" else manifest,
+                            changed_observed if mutation == "missing-row" else observed,
+                            sequence=2, started_ms=9, ended_ms=12)
+                    retained[1] = evidence.canonical_bytes(record)
+                    write(settings, settings_raw)
+                    write(root / f"runtime-{faulty_id}/witnesses.jsonl", faulty["witnesses_data"])
+                    write(link_path, evidence.canonical_bytes(link))
+                    write(root / f"runtime-input-{faulty_id}.json", faulty["manifest_data"])
+                    for path, original in {**faulty["proofs"], "completion.json": faulty["completion_data"]}.items():
+                        write(root / f"runtime-{faulty_id}" / path, original)
 
     def test_native_inspection_admission_rechecks_the_complete_source_and_command_graph(self):
         import conformance_case_catalog as catalog

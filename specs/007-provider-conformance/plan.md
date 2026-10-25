@@ -6786,6 +6786,42 @@ its QC-09 source basis is
 This admits the preceding controller routing/QC-09 basis repair, not this
 integration scope or the later public-report gate.
 
+### Fresh QC-04 faulty/corrected native source pairs
+
+The independent and embedded catalogs now name both corrected mutation rows
+per category. Separate qualification-only `mutation-repair` scopes first run
+fresh exact faulty rows, require both named assertion failures/exit one, then
+run the corrected rows through unchanged consumer/assertion bytes. Both commands
+pin the same six images, provider archives, SDK and immutable qualification
+inputs. Ordinary diagnostic scopes remain unchanged.
+
+Independent source reconstruction re-ingests the negative logger transport,
+rebuilds its entire expected manifest, and requires the original executor-held
+negative command and readonly source receipts. Exact identities/bindings/frames,
+settings, argv/cwd, complete image/input map, settled exit and ordered current
+batch bounds are checked before the corrected native parent is admitted.
+Negative packets remain source evidence, not failed public witnesses.
+QC-04 derives from the current complete corrected pair and exactly one source
+parent; missing parents/rows and previous executions cannot qualify. Native
+factory models additionally reject coherently rehashed setup/foreign-frame
+failures, borrowed images, old attempts and replaced command records.
+
+All 437 tooling tests pass with 19 native skips; all 133 source SDK tests pass
+without skips. One initial tooling run failed the existing real descendant
+startup timing assertion; both its unchanged focused rerun and full rerun pass.
+Frozen inventory, embedded catalog and patch whitespace pass. These are local/
+modeled checks, not fresh Linux pair admission. T034, all other unchecked tasks
+and reviewer-owned checklist markers remain unchanged.
+
+Exact `a83380c`/run40240608803 independently admits the four public category
+reports as `Incomplete`: all three jobs pass, 319 native foundations without
+skips, locked replay and 135 aggregate scopes/2,048 witnesses. Metadata remains
+90/3/9/0 and artifacts 95/4/4/0. This predates fresh QC-12 and QC-04 source paths.
+Exact `9a5ebdb`/run40243784950 attempt one passes 325 native foundations and
+locked replay, but SDK diagnostics fail the earlier MP-46 configured-selection
+wrapper with `UnknownDiagnostic`, before fresh QC-12. The unchanged-head failed
+SDK job retry is pending; no cause or successful source admission is inferred.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

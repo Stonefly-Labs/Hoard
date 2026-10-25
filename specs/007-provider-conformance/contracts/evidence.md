@@ -79,6 +79,21 @@ missing source parents or rows cannot qualify, and prior execution IDs cannot be
 reused in a retry. Local execution and modeled rejection checks do not establish
 fresh Linux source admission, which remains pending.
 
+QC-04 has a separate qualification-only `mutation-repair` scope per category,
+with both corrected binding identities fixed in the independent/SDK catalogs.
+Each scope first executes fresh faulty rows against the same Consumer, SDK,
+provider packages, six images and immutable inputs. Independent native admission
+re-ingests the original negative transport and reconstructs its entire manifest,
+requiring both exact named assertion frames, Failed/Assertion status and exit
+one. Setup failures cannot substitute. Its original executor-held command,
+readonly receipt, settings, argv/cwd, full input map, owner and ordered settled
+command/witness bounds must match the same current pair. Rehashed file records
+do not replace held authority. The corrected successful source parent retains
+the negative packets; they are not failed public report witnesses. QC-04
+requires both current corrected rows and one common source parent, never
+missing rows/parents or borrowed previous-attempt executions. Implementation
+and modeled rejection checks do not claim fresh Linux pair admission.
+
 The implemented category batch history derives each binding's entire frozen
 runtime union from the independent catalog and requires both category package
 options. The primary execution context for a shared runtime witness is its
