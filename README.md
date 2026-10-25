@@ -1874,8 +1874,13 @@ requirements.
 The actual boundary inspectors now support optional bounded exact-read capture
 of selected JSON, project/nuspec XML, feature sources and PE bytes. Hash-only
 packets are written only after assertions complete and selected inputs reverify.
-Independent parent/runtime admission remains unwired; these packets cannot
+Prepared graph parent/runtime admission remains unwired; these packets cannot
 qualify a category or invent a provider session.
+The three literal-only metadata inspection facts now have a separately selected
+diagnostic scope in their actual architecture assembly. Its parent receipt
+joins exact current source packets to safely admitted runtime proofs and
+requires the frozen empty external-file assignment. Prepared graph inspection
+admission and qualifying category integration remain unfinished.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

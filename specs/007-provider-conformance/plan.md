@@ -5581,6 +5581,47 @@ Both input documents independently recompute; free scratch is 91,720,732,672
 bytes. This admits that diagnostic snapshot only, not later partition/gate/
 inspection sources or qualifying profiles.
 
+### Parent admission for actual literal inspection diagnostics
+
+Exactly the three frozen literal-only metadata inspection facts now execute
+through an explicit scope in their actual architecture assembly. Their closed
+policy is shared with the six-source classification, not inferred from a
+provider or missing graph files. Discovery receives no source capture context;
+execution gets independent current run/attempt/input assignments and the frozen
+empty external-file inventory. Parent admission requires the exact bounded
+packet set/schema, current source identity and admitted runtime proof/hash.
+Missing/extra/duplicate/stale packets and external-file claims reject without
+publishing a successful parent receipt.
+
+The native diagnostic candidate build and runtime inventory now include the
+actual architecture assembly and package-verified logger dependencies, without
+adding an SDK/project dependency. The separate hash-only receipt records source
+execution/runtime/source packet correspondences, not provider sessions,
+components or child-start claims. Prepared graph inspection admission and all
+qualifying profile gates remain unfinished. Three focused regressions first
+fail at missing scope/admission functions before implementation.
+All 108 SDK diagnostic tooling checks and 354 tooling checks pass (337 passed/
+seventeen explicit macOS-native skips); frozen inventory, SDK catalog and patch
+checks pass. The native target becomes 246 foundations, 108 scopes/1,320 exact
+discoveries/executions, every inherited prerequisite and the additional
+three-source inspection receipt, unadmitted.
+
+Non-session-policy native
+[40178051713](https://github.com/Stonefly-Labs/Hoard/actions/runs/40178051713)
+at exact `0d08045a4ca36426f27043899932a02acc028769` is now admitted: all three
+jobs successful, 243 foundations without failures/errors/skips, 107 scopes/
+1,317 exact discoveries/executions and every prerequisite. Typed input
+`948de6053b9d2d7ecf73c9c3d33dea500b2d1de4410e9fbfd25af50c1e901673`;
+original input
+`ffbd5cbb055f3b66662432bbd580b9cb0dc8abf79682708a78437793088430b5`;
+sixteen-source receipt
+`5c033a90b6223ebe194a152c2f68e4c1c985e9e87e1af6e5f7b0bd02b2bd56d9`;
+preparation
+`e32e432ddaf71067e487c98d9c1450a340562c592a291271961bdc2207305cb5`.
+Both input documents independently recompute; free scratch is 91,720,114,176
+bytes. This admits atomic category/non-session-gate sources, not later
+inspection capture/parent sources or qualifying profiles.
+
 ## Summary
 
 

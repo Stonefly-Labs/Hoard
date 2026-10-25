@@ -27,7 +27,7 @@ import artifact_evidence as artifacts
 import conformance_evidence as evidence
 from conformance_case_catalog import (
     CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_BINDINGS, ORIGINAL_ARTIFACT_CONTRACT_WITNESSES,
-    ORIGINAL_ARTIFACT_PROOF_SOURCES,
+    ORIGINAL_ARTIFACT_PROOF_SOURCES, ORIGINAL_INSPECTION_LITERAL_WITNESSES,
     ORIGINAL_ARTIFACT_REOPENS, ORIGINAL_ARTIFACT_SHARED_OWNER_WITNESSES, ORIGINAL_ARTIFACT_WITNESSES,
     ORIGINAL_METADATA_FACADE_WITNESSES,
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
@@ -54,6 +54,7 @@ METADATA_TESTS = f"{CONTRACTS}/Hoard.Metadata.Tests"
 METADATA_TEST_OUTPUT = "bin/wrapper-diagnostic"
 ARTIFACT_TESTS = f"{CONTRACTS}/Hoard.Artifacts.Tests"
 ARTIFACT_TEST_OUTPUT = "bin/wrapper-diagnostic"
+ARCHITECTURE_TESTS = "tests/architecture/Hoard.Architecture.Tests"
 ARTIFACT_CONSUMER = "tests/fixtures/conformance/Consumer"
 ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.LocalArtifactSessionTests."
 OBJECT_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ObjectArtifactSessionTests."
@@ -677,6 +678,18 @@ def _original_wrapper_runtime(candidate, feed, project, output_folder, packages)
     write_new(output / f"{logger}.dll", read_bounded(
         candidate / LOGGER / f"bin/Release/net10.0/{logger}.dll", 64 * 1024 * 1024))
     verify_runtime_packages(output, feed, (*packages, logger))
+
+
+def build_inspection_runtime(run, candidate, config, feed):
+    project = candidate / ARCHITECTURE_TESTS / "Hoard.Architecture.Tests.csproj"
+    build(run, project, config, "inspection-build")
+    output = project.parent / "bin/Release/net10.0"
+    for folder, name in ((LOGGER, "Hoard.Conformance.TestLogger"), (SDK, "Hoard.Testing.Conformance"),
+                         ("src/Hoard.Abstractions", "Hoard.Abstractions")):
+        write_new(output / (name + ".dll"), read_bounded(
+            candidate / folder / f"bin/Release/net10.0/{name}.dll", 64 * 1024 * 1024))
+    verify_runtime_packages(output, feed,
+                            ("Hoard.Conformance.TestLogger", "Hoard.Testing.Conformance", "Hoard.Abstractions"))
 
 
 def metadata_wrapper_runtime(candidate, feed):
@@ -1841,8 +1854,7 @@ def original_artifact_proof_sources():
     return dict(ORIGINAL_ARTIFACT_PROOF_SOURCES)
 
 
-def original_artifact_external_proofs(run, inputs, manifest, ingested):
-    identities = original_artifact_external_scenarios()[0][1]
+def _source_witnesses(inputs, manifest, ingested, identities):
     witnesses = ingested["witnesses"]
     if (ingested["diagnosticCode"] != "None" or ingested["attemptId"] != manifest["attemptId"]
             or manifest["runId"] != inputs["runId"] or manifest["invocationGroupId"] != inputs["invocationGroupId"]
@@ -1854,6 +1866,57 @@ def original_artifact_external_proofs(run, inputs, manifest, ingested):
             or any(row["status"] != "Passed" or ingested["proofs"].get(
                 f'proof-{row["executionId"]}.json') != row["proofSha256"] for row in witnesses)):
         raise evidence.ConformanceError("ProofMismatch")
+    return {row["testIdentity"]: row for row in witnesses}
+
+
+def original_inspection_literal_scenarios():
+    return (("original-inspection-literals", ORIGINAL_INSPECTION_LITERAL_WITNESSES, "None", "Passed", 0, "None"),)
+
+
+def original_inspection_literal_proofs(run, inputs, manifest, ingested):
+    identities = original_inspection_literal_scenarios()[0][1]
+    witnesses = _source_witnesses(inputs, manifest, ingested, identities)
+    if inputs["mode"] != "diagnostic" or any(row["bindingId"] != "none" for row in witnesses.values()):
+        raise evidence.ConformanceError("ProofMismatch")
+    capture = run.root / "stores" / ("original-inspection-" + manifest["attemptId"])
+    no_symlinks(capture)
+    if not capture.is_dir():
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    expected = {"inspection-" + hashlib.sha256(identity.encode()).hexdigest() + ".json": identity
+                for identity in identities}
+    files = set()
+    for path in capture.iterdir():
+        files.add(path.name)
+        if len(files) > len(expected):
+            raise evidence.ConformanceError("EvidenceIncomplete")
+    if files != set(expected):
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    observations = []
+    for name, identity in expected.items():
+        raw = read_bounded(capture / name, 512 * 1024)
+        packet = evidence._runtime_json(raw, {
+            "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+            "runId": evidence._uuid, "attemptId": evidence._uuid, "inputsSha256": evidence.sha256,
+            "testIdentity": evidence._runtime_identity, "files": evidence._record({})}, limit=512 * 1024)
+        if (packet["runId"] != inputs["runId"] or packet["attemptId"] != manifest["attemptId"]
+                or packet["inputsSha256"] != evidence.digest(inputs) or packet["testIdentity"] != identity):
+            raise evidence.ConformanceError("ProofMismatch")
+        witness = witnesses[identity]
+        observations.append({
+            "testIdentity": identity, "executionId": witness["executionId"],
+            "runtimeProofSha256": witness["proofSha256"], "sourceProofSha256": hashlib.sha256(raw).hexdigest()})
+    receipt = {
+        "schemaVersion": 1, "qualification": False, "mode": "original-inspection-literals",
+        "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "attemptId": manifest["attemptId"], "inputsSha256": evidence.digest(inputs), "observations": observations}
+    write_new(run.root / f'proofs/original-inspection-literals-{manifest["attemptId"]}.json',
+              evidence.canonical_bytes(receipt))
+    return {"sourceExecutions": len(observations), "inspectionProofsSha256": evidence.digest(receipt)}
+
+
+def original_artifact_external_proofs(run, inputs, manifest, ingested):
+    identities = original_artifact_external_scenarios()[0][1]
+    witnesses = _source_witnesses(inputs, manifest, ingested, identities)
     capture = run.root / "stores" / ("original-artifact-" + manifest["attemptId"])
     no_symlinks(capture)
     if not capture.is_dir():
@@ -1891,7 +1954,7 @@ def original_artifact_external_proofs(run, inputs, manifest, ingested):
         transfers[row["provider"], row["size"]] = row
     observations, transfer_hashes, child_runs = [], {}, set()
     for identity, (kind, provider, parameter) in sorted(original_artifact_proof_sources().items()):
-        witness = next(row for row in witnesses if row["testIdentity"] == identity)
+        witness = witnesses[identity]
         path = (capture / (parameter + ".json") if kind == "crash" else
                 capture / f"noncooperative-{provider}-{parameter}.json" if kind == "retention" else
                 run.root / f"proofs/artifact-transfers/transfer-{provider}-{parameter}/proof.json")
@@ -1994,6 +2057,7 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
                        f"{ARTIFACT_CONSUMER}/{PACKAGE_TEST_OUTPUT}/Release/net10.0",
                        f"{METADATA_TESTS}/{METADATA_TEST_OUTPUT}/Release/net10.0",
                        f"{ARTIFACT_TESTS}/{ARTIFACT_TEST_OUTPUT}/Release/net10.0"}
+    runtime_folders.add(f"{ARCHITECTURE_TESTS}/bin/Release/net10.0")
     runtime_folders.add(f"{METADATA_RECOVERY}/bin/Release/net10.0")
     runtime_folders.add(f"{ARTIFACT_RECOVERY}/bin/Release/net10.0")
     runtime_folders.add(f"{ARTIFACT_TRANSFER}/bin/Release/net10.0")
@@ -2038,7 +2102,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-deletion-settlement", "artifact-direct-verification", "artifact-capacity-injection",
             "artifact-unclaimed-cleanup", "artifact-synchronous-storage", "full-artifact-binding", "full-metadata-binding",
             "actual-authority-integration", *(scenario[0] for scenario in category_mutation_scenarios()),
-            *(scenario[0] for scenario in original_observation_scenarios())],
+            *(scenario[0] for scenario in original_observation_scenarios()),
+            *(scenario[0] for scenario in original_inspection_literal_scenarios())],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -2126,6 +2191,9 @@ def validate_original_observations(ingested):
 def test_attempt(run, inputs, candidate, scenario):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
     original_observations = name.startswith("observed-original-")
+    inspection_literals = name == "original-inspection-literals"
+    if inspection_literals and scenario not in original_inspection_literal_scenarios():
+        raise evidence.ConformanceError("WitnessMissing")
     if original_observations and scenario not in original_observation_scenarios():
         raise evidence.ConformanceError("WitnessMissing")
     if (name == "full-metadata-binding"
@@ -2183,7 +2251,7 @@ def test_attempt(run, inputs, candidate, scenario):
         or name.startswith("category-mutation-metadata-") or metadata_provider == "sqlite"
         or any('metadataProvider: "sqlite"' in identity for identity in identities)
         or any(identity.startswith((SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX)) for identity in identities))
-    source_tests = original_tests or all(
+    source_tests = inspection_literals or original_tests or all(
         identity.startswith("Hoard.Conformance.Tests.") for identity in identities) or binding_tests
     smoke_tests = all(identity.startswith(SMOKE) for identity in identities)
     package_tests = binding_tests or any(identity.startswith(PACKAGE_TEST_PREFIX) for identity in identities)
@@ -2191,7 +2259,9 @@ def test_attempt(run, inputs, candidate, scenario):
             or package_tests and not binding_tests
             and not all(identity.startswith(PACKAGE_TEST_PREFIX) for identity in identities)):
         raise evidence.ConformanceError("WitnessMissing")
-    if original_artifacts:
+    if inspection_literals:
+        folder, output, assembly_name = ARCHITECTURE_TESTS, "bin", "Hoard.Architecture.Tests.dll"
+    elif original_artifacts:
         selected_methods = {identity.split("(")[0] for identity in identities}
         if any(witness.split("(")[0] in selected_methods and witness not in identities
                for case in category_cases() if case.profile_id == "artifacts"
@@ -2263,7 +2333,8 @@ def test_attempt(run, inputs, candidate, scenario):
                 "Hoard.Testing.Conformance.Artifacts.ArtifactPublicationAssertions.PrivateStagingAsync"
                 if name == "category-mutation-artifacts-faulty" else ASSERTION if name == "assertion" else None),
             "caseId": original_cases[identity] if original_observations else
-                name if original_tests or name in ("full-artifact-binding", "full-metadata-binding") else "runtime",
+                name if inspection_literals or original_tests or name in ("full-artifact-binding", "full-metadata-binding")
+                else "runtime",
         } for identity, (binding, matrix) in expected.items()],
     }
     if original_observations or name in ("full-artifact-binding", "full-metadata-binding"):
@@ -2284,6 +2355,8 @@ def test_attempt(run, inputs, candidate, scenario):
             manifest["assemblies"].append({"id": f"binding-component-{index}", "path": path, "sha256": sha256})
     discovery_manifest = {**manifest, "purpose": "discovery", "attemptId": str(uuid.uuid4())}
     runtime_options = {"metadata_provider": metadata_provider} if original_metadata else {}
+    if inspection_literals:
+        runtime_options["inspection_literals"] = True
     if original_observations:
         runtime_options["original_observations"] = True
     if name == "full-artifact-binding" or name.startswith("category-mutation-artifacts-"):
@@ -2360,17 +2433,35 @@ def test_attempt(run, inputs, candidate, scenario):
             "discoverySha256": evidence.file_sha256(discovery_output / "completion.json"),
             "completionSha256": evidence.file_sha256(output / "completion.json"),
             **(original_artifact_external_proofs(run, inputs, manifest, ingested)
-               if name == "original-artifact-external" else {})}
+               if name == "original-artifact-external" else {}),
+            **(original_inspection_literal_proofs(run, inputs, manifest, ingested) if inspection_literals else {})}
 
 
 def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact_runner=None,
-                    artifact_packages=None, metadata_packages=None, original_observations=False):
+                    artifact_packages=None, metadata_packages=None, original_observations=False, inspection_literals=False):
     attempt_id = manifest["attemptId"]
     identities = tuple(entry["testIdentity"] for entry in manifest["expected"])
     if manifest["purpose"] not in ("discovery", "execution"):
         raise evidence.ConformanceError()
     discovery = manifest["purpose"] == "discovery"
     origin_environment = ""
+    if inspection_literals:
+        if (tuple(sorted(identities)) != ORIGINAL_INSPECTION_LITERAL_WITNESSES
+                or assembly.name != "Hoard.Architecture.Tests.dll" or metadata_provider is not None
+                or artifact_runner is not None or artifact_packages is not None or metadata_packages is not None
+                or original_observations):
+            raise evidence.ConformanceError("WitnessMissing")
+        if not discovery:
+            capture = run.root / "stores" / ("original-inspection-" + attempt_id)
+            no_symlinks(capture)
+            capture.mkdir(mode=0o700)
+            context = run.root / "stores" / ("inspection-context-" + attempt_id + ".json")
+            write_new(context, evidence.canonical_bytes({
+                "schemaVersion": 1, "runId": manifest["runId"], "attemptId": attempt_id,
+                "inputsSha256": manifest["inputSha256"], "outputDirectory": str(capture),
+                "cases": {identity: {} for identity in identities}}))
+            origin_environment = ("<EnvironmentVariables><HOARD_INSPECTION_CONTEXT>" + escape(str(context))
+                                  + "</HOARD_INSPECTION_CONTEXT></EnvironmentVariables>")
     if artifact_packages is not None or metadata_packages is not None:
         if artifact_packages is not None and metadata_packages is not None:
             raise evidence.ConformanceError("WitnessMissing")
@@ -2542,6 +2633,7 @@ def execute(repository, destination):
         ):
             build(run, candidate / folder / f"{project_name}.csproj", config, "candidate-build", feed=feed)
         build(run, candidate / TESTS / "Hoard.Conformance.Tests.csproj", config, "candidate-build")
+        build_inspection_runtime(run, candidate, config, feed)
         memory_lock, memory_record = prepare_project_lock(candidate / MEMORY, candidate, feed, "candidate")
         build(run, candidate / MEMORY, config, "memory-package", lock=memory_lock, feed=feed,
               package_id="Hoard.Fixtures.Metadata.Memory")
@@ -2841,6 +2933,9 @@ def execute(repository, destination):
         print(json.dumps({"qualification": False, "phase": "original-wrapper-observations"}), flush=True)
         for scenario in original_observation_scenarios():
             observations.append(test_attempt(run, original_inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "original-inspection-literals"}), flush=True)
+        for scenario in original_inspection_literal_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)
         post_identity = evidence.source_identity(repository, ci_revision=ci_revision)

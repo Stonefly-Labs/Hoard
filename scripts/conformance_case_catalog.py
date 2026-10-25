@@ -20,13 +20,16 @@ CATEGORY_BINDING_SLOTS = (
     ("artifacts", "object", "fixture.artifact.object", "Hoard.Fixtures.Artifacts.ObjectSemantics"),
 )
 
-ORIGINAL_INSPECTION_WITNESSES = MappingProxyType({
-    **{"Hoard.Architecture.Tests.MetadataBoundaryTests." + method: "metadata" for method in (
+ORIGINAL_INSPECTION_LITERAL_WITNESSES = tuple(sorted(
+    "Hoard.Architecture.Tests.MetadataBoundaryTests." + method for method in (
         "Native_only_packages_cannot_hide_managed_assets",
         "Package_groups_follow_actual_resolved_assets_not_a_guessed_framework",
-        "Prepared_metadata_packages_and_negative_contracts_preserve_boundaries_and_binary_surface",
         "Pruned_dependency_needs_sdk_evidence_a_compatible_version_and_an_actual_framework_reference",
-    )},
+    )))
+ORIGINAL_INSPECTION_WITNESSES = MappingProxyType({
+    **{identity: "metadata" for identity in ORIGINAL_INSPECTION_LITERAL_WITNESSES},
+    "Hoard.Architecture.Tests.MetadataBoundaryTests."
+    "Prepared_metadata_packages_and_negative_contracts_preserve_boundaries_and_binary_surface": "metadata",
     **{"Hoard.Architecture.Tests.ArtifactBoundaryTests." + method: "artifacts" for method in (
         "Prepared_artifact_consumer_bodies_are_provider_neutral_and_object_mechanisms_do_not_rename",
         "Prepared_artifact_packages_preserve_independence_and_existing_public_members",

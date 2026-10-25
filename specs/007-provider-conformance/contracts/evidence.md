@@ -119,6 +119,16 @@ non-qualifying. Literal-only facts may have an empty preselected file map;
 their executing assembly still requires independent runtime attribution.
 This hook is not parent/runtime admission, containment or provider/component
 observation, and does not open the fail-closed qualification gate.
+The three literal-only metadata facts additionally have a diagnostic parent
+channel: exact discovery/execution in the actual architecture assembly,
+independent execution-only context allocation, exact packet set/schema and
+run/attempt/current-input/runtime-proof correspondence. Their independently
+selected external-file inventory is empty; this does not admit a prepared
+graph fact with missing file evidence. An additional hash-only parent receipt
+records source execution/runtime/source packet digests. It never replaces a
+provider session or opens category qualification. The architecture project has
+no SDK reference; its diagnostic output receives independently package-verified
+logger dependencies rather than introducing a test-project dependency edge.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

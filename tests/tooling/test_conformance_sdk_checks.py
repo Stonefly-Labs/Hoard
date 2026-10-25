@@ -35,6 +35,133 @@ class SdkDiagnosticTests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.directory)
 
+    def test_original_literal_inspections_select_the_actual_architecture_assembly_before_launch(self):
+        factory = getattr(checks, "original_inspection_literal_scenarios", None)
+        self.assertTrue(callable(factory), "Literal inspection witnesses need their own real architecture execution scope.")
+        scenario, = factory()
+        prefix = "Hoard.Architecture.Tests.MetadataBoundaryTests."
+        expected = {prefix + method for method in (
+            "Native_only_packages_cannot_hide_managed_assets",
+            "Package_groups_follow_actual_resolved_assets_not_a_guessed_framework",
+            "Pruned_dependency_needs_sdk_evidence_a_compatible_version_and_an_actual_framework_reference")}
+        self.assertEqual(scenario, ("original-inspection-literals", tuple(sorted(expected)), "None", "Passed", 0, "None"))
+        candidate = self.directory / "candidate"
+        assembly = candidate / "tests/architecture/Hoard.Architecture.Tests/bin/Release/net10.0/Hoard.Architecture.Tests.dll"
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}]}
+        with patch.object(checks, "runtime_command", side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.test_attempt(SimpleNamespace(root=self.directory), inputs, candidate, scenario)
+        launch.assert_called_once()
+        self.assertEqual(launch.call_args.args[1], assembly)
+        self.assertEqual(launch.call_args.kwargs, {"inspection_literals": True})
+        self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, expected)
+        self.assertEqual({item["bindingId"] for item in launch.call_args.args[2]["expected"]}, {"none"})
+
+    def test_original_literal_inspection_receipts_require_exact_current_packets_and_runtime_proofs(self):
+        self.assertTrue(callable(getattr(checks, "original_inspection_literal_proofs", None)),
+                        "A source-created inspection packet must independently join its admitted runtime proof.")
+        scenario, = checks.original_inspection_literal_scenarios()
+        inputs = {"runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()), "mode": "diagnostic"}
+        manifest = {
+            **inputs, "inputSha256": checks.evidence.digest(inputs), "attemptId": str(uuid.uuid4()),
+            "expected": [{"testIdentity": identity} for identity in scenario[1]]}
+        witnesses = [{
+            "testIdentity": identity, "executionId": str(uuid.uuid4()), "proofSha256": str(index + 1) * 64,
+            "status": "Passed", "bindingId": "none"} for index, identity in enumerate(scenario[1])]
+        ingested = {
+            "diagnosticCode": "None", "attemptId": manifest["attemptId"], "witnesses": witnesses,
+            "proofs": {f'proof-{row["executionId"]}.json': row["proofSha256"] for row in witnesses}}
+        capture = self.directory / "stores" / ("original-inspection-" + manifest["attemptId"])
+        capture.mkdir(parents=True)
+        (self.directory / "proofs").mkdir()
+        packets = {}
+        for identity in scenario[1]:
+            path = capture / ("inspection-" + hashlib.sha256(identity.encode()).hexdigest() + ".json")
+            packets[path] = checks.evidence.canonical_bytes({
+                "schemaVersion": 1, "qualification": False, "runId": inputs["runId"],
+                "attemptId": manifest["attemptId"], "inputsSha256": checks.evidence.digest(inputs),
+                "testIdentity": identity, "files": {}})
+        def restore():
+            for path in capture.iterdir():
+                path.unlink()
+            for path, raw in packets.items():
+                path.write_bytes(raw)
+        restore()
+        run = SimpleNamespace(root=self.directory)
+        result = checks.original_inspection_literal_proofs(run, inputs, manifest, ingested)
+        receipt_path = self.directory / ("proofs/original-inspection-literals-" + manifest["attemptId"] + ".json")
+        receipt = checks.evidence.load_json(receipt_path.read_bytes())
+        self.assertEqual(result, {"sourceExecutions": 3, "inspectionProofsSha256": checks.evidence.digest(receipt)})
+        self.assertEqual({row["testIdentity"] for row in receipt["observations"]}, set(scenario[1]))
+        receipt_path.unlink()
+        selected = next(iter(packets))
+        for change in (
+                {"schemaVersion": True}, {"qualification": True}, {"runId": str(uuid.uuid4())},
+                {"attemptId": str(uuid.uuid4())}, {"inputsSha256": "f" * 64}, {"extra": True},
+                {"testIdentity": scenario[1][1]}, {"files": {"a" * 64: "b" * 64}}):
+            restore()
+            selected.write_bytes(checks.evidence.canonical_bytes(checks.evidence.load_json(packets[selected]) | change))
+            with self.subTest(change=change), self.assertRaises(checks.evidence.ConformanceError):
+                checks.original_inspection_literal_proofs(run, inputs, manifest, ingested)
+            self.assertFalse(receipt_path.exists())
+        for mutation in ("missing", "extra", "duplicate"):
+            restore()
+            if mutation == "missing":
+                selected.unlink()
+            elif mutation == "extra":
+                (capture / "foreign.json").write_bytes(b"{}")
+            else:
+                selected.write_bytes(b'{"schemaVersion":1,' + packets[selected][1:])
+            with self.subTest(mutation=mutation), self.assertRaises(checks.evidence.ConformanceError):
+                checks.original_inspection_literal_proofs(run, inputs, manifest, ingested)
+            self.assertFalse(receipt_path.exists())
+        restore()
+        wrong = {**ingested, "proofs": dict(ingested["proofs"])}
+        wrong["proofs"][next(iter(wrong["proofs"]))] = "f" * 64
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+            checks.original_inspection_literal_proofs(run, inputs, manifest, wrong)
+        self.assertFalse(receipt_path.exists())
+
+    def test_original_literal_inspection_context_is_exact_and_never_created_for_discovery(self):
+        factory = getattr(checks, "original_inspection_literal_scenarios", None)
+        self.assertTrue(callable(factory), "Inspection context must be independently allocated per execution.")
+        scenario, = factory()
+        (self.directory / "stores").mkdir()
+        (self.directory / "runtime-owner.json").write_bytes(b"{}")
+        commands = []
+        def execute(args, **options):
+            commands.append(args)
+            return SimpleNamespace(exit_code=0)
+        run = SimpleNamespace(root=self.directory, command=execute)
+        assembly = self.directory / "Hoard.Architecture.Tests.dll"
+        for purpose in ("discovery", "execution"):
+            attempt = str(uuid.uuid4())
+            manifest = {
+                "runId": str(uuid.uuid4()), "attemptId": attempt, "purpose": purpose, "inputSha256": "a" * 64,
+                "expected": [{"testIdentity": identity, "fullyQualifiedName": identity} for identity in scenario[1]]}
+            checks.runtime_command(run, assembly, manifest, inspection_literals=True)
+            context = self.directory / "stores" / ("inspection-context-" + attempt + ".json")
+            if purpose == "discovery":
+                self.assertFalse(context.exists())
+            else:
+                actual = json.loads(context.read_bytes())
+                self.assertEqual(actual["runId"], manifest["runId"])
+                self.assertEqual(actual["attemptId"], attempt)
+                self.assertEqual(actual["inputsSha256"], manifest["inputSha256"])
+                self.assertEqual(actual["cases"], {identity: {} for identity in scenario[1]})
+                self.assertEqual(Path(actual["outputDirectory"]),
+                                 self.directory / "stores" / ("original-inspection-" + attempt))
+                settings = ET.parse(self.directory / "stores" / ("settings-" + attempt + ".runsettings"))
+                self.assertEqual(settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_INSPECTION_CONTEXT"),
+                                 str(context))
+        with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+            checks.runtime_command(run, assembly, {**manifest, "attemptId": str(uuid.uuid4()),
+                                                   "expected": manifest["expected"][:-1]}, inspection_literals=True)
+        self.assertEqual(len(commands), 2)
+
     @staticmethod
     def original_crash_fixture(barrier):
         run_id = str(uuid.uuid4())

@@ -8503,6 +8503,38 @@ inventory, SDK catalog and patch checks passing. Production/provider APIs,
 package/SDK references and lockfiles, reviewer/task markers and deployment
 examples/diagrams are unaffected.
 
+The first independent inspection diagnostic channel now selects exactly the
+three literal-only metadata facts in their actual architecture assembly.
+The source context is allocated only for execution, independently from
+discovery, and binds the current run/attempt/inputs and frozen empty external
+file maps. Parent admission joins the exact packets to admitted runtime proofs,
+rejecting missing/extra/duplicate/stale/mismatched packets or external file
+claims, and retains a separate hash-only receipt. The candidate build and
+runtime input inventory include this actual assembly and independently verified
+logger dependencies without adding a project/SDK reference. Prepared graph
+inspection provenance and qualifying categories remain incomplete.
+All 108 SDK diagnostic tooling checks and 354 tooling checks pass (337 passed/
+seventeen explicit macOS-native skips); frozen inventory, SDK catalog and patch
+checks pass. Fresh native execution is requested for 246 foundations and
+108 scopes/1,320 exact discoveries/executions, including the three-source
+inspection receipt; it is not yet admitted.
+
+Non-session-policy run
+[40178051713](https://github.com/Stonefly-Labs/Hoard/actions/runs/40178051713)
+at exact `0d08045a4ca36426f27043899932a02acc028769` is now admitted: all three
+jobs successful, 243 foundations without failures/errors/skips, 107 scopes/
+1,317 exact discoveries/executions and every prerequisite. Typed input:
+`948de6053b9d2d7ecf73c9c3d33dea500b2d1de4410e9fbfd25af50c1e901673`;
+original input:
+`ffbd5cbb055f3b66662432bbd580b9cb0dc8abf79682708a78437793088430b5`;
+sixteen-source receipt:
+`5c033a90b6223ebe194a152c2f68e4c1c985e9e87e1af6e5f7b0bd02b2bd56d9`;
+preparation:
+`e32e432ddaf71067e487c98d9c1450a340562c592a291271961bdc2207305cb5`.
+Both input documents independently recompute; free scratch is 91,720,114,176
+bytes. This admits the atomic category/non-session gate snapshot, not later
+inspection capture/parent sources or qualifying profiles.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full
