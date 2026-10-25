@@ -458,6 +458,34 @@ class OwnedRun:
             raise ConformanceError("OutputLimitExceeded")
         return captured
 
+    def _capture_execution_outputs(self, paths, deadline):
+        descriptor = self._root_descriptor()
+        sealed = {}
+        try:
+            for path in paths:
+                if time.monotonic() >= deadline:
+                    raise ConformanceError("DeadlineExceeded")
+                with _input_parent(descriptor, path) as (parent, name):
+                    output = os.open(name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=parent)
+                try:
+                    info = os.fstat(output)
+                    if not stat.S_ISREG(info.st_mode) or info.st_uid != os.getuid() or info.st_nlink != 1:
+                        raise ConformanceError("InputChanged")
+                    os.fchmod(output, 0o400)
+                    info = os.fstat(output)
+                    sealed[path] = (info.st_dev, info.st_ino, info.st_mode, info.st_size,
+                                    info.st_mtime_ns, info.st_ctime_ns)
+                finally:
+                    os.close(output)
+        except OSError:
+            raise ConformanceError("InputChanged") from None
+        finally:
+            os.close(descriptor)
+        captured = self._capture_execution_inputs(paths, deadline)
+        if any(captured[path][1] != sealed[path] for path in paths):
+            raise ConformanceError("InputChanged")
+        return captured
+
     def _root_descriptor(self):
         no_symlinks(self.root)
         try:
@@ -629,7 +657,7 @@ class OwnedRun:
     def command(self, args, *, cwd=None, timeout=None, kind="events", env=None,
                 scope="ordinary", cache_id="default", deadline=None, discovery_tests=frozenset(),
                 stop_at_barrier=None, measure_transfer_bytes=None, inspect_at_barrier=None, record_execution=False,
-                execution_inputs=()):
+                execution_inputs=(), execution_outputs=()):
         started = time.monotonic()
         if type(record_execution) is not bool or record_execution and scope == "cleanup":
             raise ConformanceError("OwnershipInvalid")
@@ -638,6 +666,14 @@ class OwnedRun:
             raise ConformanceError("OwnershipInvalid")
         execution_inputs = tuple(relative_path(path) for path in execution_inputs)
         if len(set(execution_inputs)) != len(execution_inputs):
+            raise ConformanceError("OwnershipInvalid")
+        if (not isinstance(execution_outputs, (tuple, list)) or len(execution_inputs) + len(execution_outputs) > 16
+                or execution_outputs and (not record_execution or scope != "recovery")):
+            raise ConformanceError("OwnershipInvalid")
+        execution_outputs = tuple(relative_path(path) for path in execution_outputs)
+        if (len(set(execution_outputs)) != len(execution_outputs)
+                or set(execution_inputs) & set(execution_outputs)
+                or any(not path.startswith("proofs/") for path in execution_outputs)):
             raise ConformanceError("OwnershipInvalid")
         argv_sha = cwd_sha = None
         if record_execution:
@@ -725,6 +761,20 @@ class OwnedRun:
         if scope != "cleanup" and not native_execution_supported():
             raise ConformanceError("PrerequisiteMissing")
         input_snapshot = self._capture_execution_inputs(execution_inputs, deadline) if execution_inputs else {}
+        if execution_outputs:
+            descriptor = self._root_descriptor()
+            try:
+                for path in execution_outputs:
+                    with _input_parent(descriptor, path) as (parent, name):
+                        try:
+                            os.stat(name, dir_fd=parent, follow_symlinks=False)
+                        except FileNotFoundError:
+                            continue
+                        raise ConformanceError("InputChanged")
+            except OSError:
+                raise ConformanceError("InputChanged") from None
+            finally:
+                os.close(descriptor)
         environment = command_environment(self.root, cache, env)
         acknowledgement, writer = socket.socketpair()
         launch = (list(args) if scope == "cleanup" else
@@ -923,13 +973,21 @@ class OwnedRun:
                 if handle is not None:
                     os.close(handle)
                 self._persist()
+        verification_deadline = (min(self.deadline - reserve, time.monotonic() + 5)
+                                 if exited and isinstance(failure, ConformanceError)
+                                 and str(failure) == "DeadlineExceeded" else deadline)
         if execution_inputs and (failure is None or exited and isinstance(failure, ConformanceError)
                                  and str(failure) == "DeadlineExceeded"):
             try:
-                verification_deadline = (deadline if failure is None
-                                         else min(self.deadline - reserve, time.monotonic() + 5))
                 if self._capture_execution_inputs(execution_inputs, verification_deadline) != input_snapshot:
                     failure = ConformanceError("InputChanged")
+            except ConformanceError as error:
+                failure = error
+        output_snapshot = {}
+        if execution_outputs and exited and (failure is None or isinstance(failure, ConformanceError)
+                                             and str(failure) == "DeadlineExceeded"):
+            try:
+                output_snapshot = self._capture_execution_outputs(execution_outputs, verification_deadline)
             except ConformanceError as error:
                 failure = error
         if failure is None and time.monotonic() >= transfer_deadline:
@@ -972,7 +1030,9 @@ class OwnedRun:
                     **({"controlRecordSha256": hashlib.sha256(control_receipt).hexdigest()}
                        if control_receipt is not None else {}),
                     **({"inputFiles": {path: value[0] for path, value in input_snapshot.items()}}
-                       if execution_inputs else {})})
+                       if execution_inputs else {}),
+                    **({"outputFiles": {path: value[0] for path, value in output_snapshot.items()}}
+                       if execution_outputs else {})})
                 execution_sha = hashlib.sha256(execution_receipt).hexdigest()
                 if (len(execution_receipt) > READ_BYTES
                         or self._execution_record_bytes + len(execution_receipt) > MAX_PROOF_BYTES):

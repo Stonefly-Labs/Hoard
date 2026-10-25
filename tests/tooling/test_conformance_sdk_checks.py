@@ -136,6 +136,57 @@ class SdkDiagnosticTests(unittest.TestCase):
     def test_artifact_category_batch_keeps_predeclared_transports_and_failure_history(self):
         self._assert_category_batch("artifacts", 227)
 
+    def test_qualification_stall_and_recovery_are_fresh_inside_joint_attempt_before_scopes(self):
+        for failed in (None, "stall", "recovery"):
+            root = self.directory / str(failed)
+            (root / "proofs").mkdir(parents=True)
+            run = SimpleNamespace(root=root)
+            sources = checks.NativeCategorySources.__new__(checks.NativeCategorySources)
+            sources._run = run
+            inputs = {"profileId": "metadata", "mode": "qualification"}
+            candidate = root / "candidate"
+            calls = []
+            history = unittest.mock.Mock()
+            history.begin_joint.side_effect = lambda *args, **options: calls.append("begin")
+            history.joint_partitions.return_value = {"scope": {}}
+            history.finish_joint.side_effect = lambda **options: calls.append("finish")
+
+            def controls(name, namespace):
+                def execute(actual_run, actual_inputs, actual_candidate, **options):
+                    self.assertIs(actual_run, run)
+                    self.assertIs(actual_inputs, inputs)
+                    self.assertEqual(actual_candidate, candidate)
+                    self.assertEqual(options, {"namespace": namespace})
+                    calls.append(name)
+                    if failed == name:
+                        raise checks.evidence.ConformanceError("ProofMismatch")
+                return execute
+
+            def scope(*args, **options):
+                calls.append("scope")
+                return {"transport": {}, "summary": {}}
+
+            with self.subTest(failed=failed), patch.object(
+                    checks.evidence, "CategoryRuntimeHistory", return_value=history), patch.object(
+                    checks, "original_observation_inputs", return_value={}), patch.object(
+                    checks, "sqlite_noncooperation", side_effect=controls(
+                        "stall", "qualification-sqlite-native-noncooperation")), patch.object(
+                    checks, "metadata_recovery_diagnostics", side_effect=controls(
+                        "recovery", "qualification-sqlite-recovery")), patch.object(
+                    checks, "category_attempt", side_effect=scope), patch.object(
+                    checks, "_category_record", return_value={"qualification": False}), contextlib.redirect_stdout(io.StringIO()):
+                options = {"inspection_cases": {}, "inspection_configurations": {}, "native_sources": sources}
+                if failed is None:
+                    self.assertFalse(checks.category_diagnostics(run, inputs, candidate, **options)["qualification"])
+                    self.assertEqual(calls, ["begin", "stall", "recovery", "scope", "finish"])
+                    history.interrupt_joint.assert_not_called()
+                else:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                        checks.category_diagnostics(run, inputs, candidate, **options)
+                    self.assertEqual(calls, ["begin", "stall"] + (["recovery"] if failed == "recovery" else []))
+                    history.interrupt_joint.assert_called_once_with("ProofMismatch")
+                    history.finish_joint.assert_not_called()
+
     def _assert_category_batch(self, profile, witness_count):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases, expected_cases
         partitions = category_execution_partitions(profile)
@@ -4213,6 +4264,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 input_path = f"proofs/{namespace}-native-inputs.json"
                 self.assertEqual(options["execution_inputs"], (
                     Path(arguments[1]).relative_to(root).as_posix(), input_path))
+                self.assertEqual(options["execution_outputs"], (f"proofs/{namespace}.json",))
                 self.assertEqual((root / input_path).read_bytes(), checks.evidence.canonical_bytes(inputs))
                 self.assertEqual((root / input_path).stat().st_mode & 0o777, 0o400)
                 Path(arguments[3]).write_bytes(checks.evidence.canonical_bytes(producer))
@@ -4223,6 +4275,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     "argvSha256": checks.evidence.digest(arguments),
                     "cwdSha256": hashlib.sha256(str(options["cwd"].absolute()).encode()).hexdigest(),
                     "controlRecordSha256": checks.evidence.digest(record),
+                    "outputFiles": {f"proofs/{namespace}.json": checks.evidence.digest(producer)},
                     "inputFiles": {assembly_path: "a" * 64, input_path: checks.evidence.digest(inputs)}})
                 raise checks.evidence.ConformanceError("DeadlineExceeded")
 

@@ -1455,6 +1455,140 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             del options[key]
         return history.finish(**options)
 
+    def test_native_stall_graph_requires_original_owned_inputs_and_expected_deadline(self):
+        import conformance_sources as sources
+        from types import SimpleNamespace
+
+        self.category_history(mode="qualification")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+
+            def write(path, raw):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(raw)
+                path.chmod(0o400)
+
+            assembly = ("candidate/tests/contracts/Hoard.Conformance.Tests/bin/package-diagnostic/"
+                        "Release/net10.0/Hoard.Conformance.Tests.dll")
+            write(root / assembly, b"explicit-stall-controller-model-not-native-execution")
+            self.inputs["runtimeAssemblies"] = {assembly: evidence.file_sha256(root / assembly)}
+            namespace = "qualification-sqlite-native-noncooperation"
+            inputs_path = f"proofs/{namespace}-native-inputs.json"
+            write(root / inputs_path, evidence.canonical_bytes(self.inputs))
+            run = SimpleNamespace(
+                root=root, run_id=self.inputs["runId"], root_id=str(uuid.uuid4()), live_children=lambda: ())
+            command = {
+                "schemaVersion": 1, "sequence": 7, "childPid": 200, "childStartSha256": "c" * 64,
+                "startedMs": 10, "endedMs": 45010, "exitCode": -9,
+                "diagnosticCode": "DeadlineExceeded", "groupState": "Exited", "scope": "recovery"}
+            producer = {
+                "schemaVersion": 1, "inputsSha256": evidence.digest(self.inputs), "childPid": 200,
+                "boundaryObservations": 1, "guards": [1, 1, 1],
+                "commitCode": "Uncertain", "commitPhase": "Commit", "commitRetry": "Reconcile",
+                "ticketSha256": "d" * 64, "failureTicketSha256": "d" * 64,
+                "disposeCode": "CleanupIncomplete", "incompleteCleanups": 1,
+                "admissionCode": "Disposed", "settlementCompleted": False, "cleanupState": "Retained",
+                "resourceIds": ["resource-a"], "ledgerStates": ["Allocated", "Active", "Settling", "Retained"]}
+            provider = next(package for package in self.inputs["packages"]
+                            if package["packageId"] == "Hoard.Fixtures.Metadata.Sqlite")
+            args = ["dotnet", str(root / assembly), "sqlite-native-noncooperation",
+                    str(root / f"proofs/{namespace}.json"), str(root / "stores" / namespace),
+                    str(root / "candidate"), provider["sha256"], evidence.digest(self.inputs)]
+            native = {
+                **command, "runId": run.run_id, "rootId": run.root_id,
+                "argvSha256": evidence.digest(args),
+                "cwdSha256": hashlib.sha256(str((root / assembly).parent).encode()).hexdigest(),
+                "controlRecordSha256": evidence.digest(command),
+                "outputFiles": {f"proofs/{namespace}.json": evidence.digest(producer)},
+                "inputFiles": {assembly: self.inputs["runtimeAssemblies"][assembly],
+                               inputs_path: evidence.digest(self.inputs)}}
+            original = evidence.canonical_bytes(native)
+            run.read_execution_record = mock.Mock(return_value=original)
+            control_path = root / "proofs/recovery-command-0007.json"
+            native_path = root / "proofs/execution-command-0007.json"
+            producer_path = root / f"proofs/{namespace}.json"
+            graph_path = root / f"proofs/{namespace}-native-executions.json"
+            write(control_path, evidence.canonical_bytes(command))
+            write(native_path, original)
+            write(producer_path, evidence.canonical_bytes(producer))
+            graph = {
+                "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+                "invocationGroupId": self.inputs["invocationGroupId"], "inputsSha256": evidence.digest(self.inputs),
+                "assemblyPath": assembly, "inputsPath": inputs_path, "sequence": 7,
+                "producerSha256": evidence.digest(producer), "controllerSha256": evidence.digest(command),
+                "executionSha256": hashlib.sha256(original).hexdigest()}
+            write(graph_path, evidence.canonical_bytes(graph))
+            with mock.patch.object(sources, "OwnedRun", type(run)):
+                admitted = sources.native_metadata_noncooperation_control(
+                    run, self.inputs, started_ms=9, ended_ms=45011)
+                self.assertEqual(set(admitted["controls"]), {"sqlite3-step-stall-and-incomplete-cleanup"})
+                self.assertEqual(len(admitted["sourceProofs"]), 5)
+                self.assertEqual(admitted["sourceProofs"][native_path.relative_to(root).as_posix()], original)
+                for change in ({"mode": "diagnostic"}, {"runId": str(uuid.uuid4())},
+                               {"invocationGroupId": str(uuid.uuid4())}):
+                    with self.subTest(inputs=change), self.assertRaises(evidence.ConformanceError):
+                        sources.native_metadata_noncooperation_control(
+                            run, {**self.inputs, **change}, started_ms=9, ended_ms=45011)
+                import conformance_case_catalog as catalog
+
+                history = evidence.CategoryRuntimeHistory(self.inputs)
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+                    history.begin("sqlite", self.attempt)
+                case = next(case for case in history._cases if case.binding_id == "sqlite" and case.case_id == "MP-37")
+                witnesses = tuple({
+                    "bindingId": "sqlite", "testIdentity": identity, "executionId": str(uuid.uuid4()),
+                    "status": "Passed", "proofSha256": "e" * 64} for identity in case.witnesses)
+                self.assertEqual(history._case_results(
+                    "sqlite", "None", 45011, witnesses)[case.key]["status"], "Incomplete")
+                unrelated_source = {
+                    "bindingId": "sqlite", "testIdentity": catalog.METADATA_RECOVERY_SOURCE_WITNESS,
+                    "executionId": str(uuid.uuid4()), "status": "Passed", "proofSha256": "f" * 64}
+                result = history._case_results(
+                    "sqlite", "None", 45011, (*witnesses, unrelated_source),
+                    source_parents={unrelated_source["executionId"]: "d" * 64},
+                    control_proofs=admitted["controls"])[case.key]
+                self.assertEqual(result["status"], "Passed")
+                self.assertEqual(set(result["attempts"][0]["witnessIds"]),
+                                 {witness["executionId"] for witness in witnesses})
+                self.assertTrue(set(admitted["controls"]["sqlite3-step-stall-and-incomplete-cleanup"])
+                                <= set(result["attempts"][0]["proofSha256"]))
+                self.assertEqual(history._case_results(
+                    "sqlite", "None", 45011, (*witnesses[:-1], unrelated_source),
+                    source_parents={unrelated_source["executionId"]: "d" * 64},
+                    control_proofs=admitted["controls"])[case.key]["status"], "Incomplete")
+                for change in (
+                        {"argvSha256": "a" * 64}, {"cwdSha256": "a" * 64},
+                        {"inputFiles": {}}, {"controlRecordSha256": "a" * 64},
+                        {"diagnosticCode": "None"}, {"groupState": "Retained"}):
+                    rewritten = evidence.canonical_bytes({**native, **change})
+                    write(native_path, rewritten)
+                    write(graph_path, evidence.canonical_bytes({
+                        **graph, "executionSha256": hashlib.sha256(rewritten).hexdigest()}))
+                    with self.subTest(change=change), self.assertRaises(evidence.ConformanceError):
+                        sources.native_metadata_noncooperation_control(
+                            run, self.inputs, started_ms=9, ended_ms=45011)
+                write(native_path, original)
+                write(graph_path, evidence.canonical_bytes(graph))
+                for bounds in ((11, 45011), (9, 45009)):
+                    with self.subTest(bounds=bounds), self.assertRaises(evidence.ConformanceError):
+                        sources.native_metadata_noncooperation_control(
+                            run, self.inputs, started_ms=bounds[0], ended_ms=bounds[1])
+                rewritten_producer = {**producer, "ticketSha256": "e" * 64, "failureTicketSha256": "e" * 64}
+                write(producer_path, evidence.canonical_bytes(rewritten_producer))
+                write(graph_path, evidence.canonical_bytes({
+                    **graph, "producerSha256": evidence.digest(rewritten_producer)}))
+                with self.assertRaises(evidence.ConformanceError):
+                    sources.native_metadata_noncooperation_control(
+                        run, self.inputs, started_ms=9, ended_ms=45011)
+                write(producer_path, evidence.canonical_bytes({**producer, "guards": [1, 1, 0]}))
+                write(graph_path, evidence.canonical_bytes({
+                    **graph, "producerSha256": evidence.digest({**producer, "guards": [1, 1, 0]})}))
+                with self.assertRaises(evidence.ConformanceError):
+                    sources.native_metadata_noncooperation_control(
+                        run, self.inputs, started_ms=9, ended_ms=45011)
+
     def category_history(self, *, profile="metadata", mode="diagnostic", max_attempts=1, origin_inputs=None):
         self.inputs.update(mode=mode, profileId=profile, invocation=["profile", profile])
         self.inputs["budgets"]["profileSeconds"] = 5400 if profile == "metadata" else 10800

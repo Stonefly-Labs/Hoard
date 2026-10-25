@@ -432,6 +432,17 @@ executor-held record and immutable assembly/current-input map. Settled timeout
 commands undergo bounded post-containment verification; input rewrites cannot
 be admitted as an expected deadline. These private non-qualifying graphs do not
 change entity validation or supply the still-missing MP-37 case source.
+The subsequent native-stall importer now independently binds the complete
+five-file graph to the concrete current owned command and joint attempt.
+MP-37's existing two actual runtime witness UUIDs remain required; the separate
+recovery-source UUID is added only to previously control-only cases, not MP-37.
+Its model now passes with imported controls, while missing witnesses remain
+incomplete. Native confirmation is pending; no entity schema changes.
+Private native-stall records now additionally pin an executor-captured output
+map. Predeclared absent retained outputs are sealed and hashed only after settled
+containment, under the shared bounded post-check deadline. The graph's producer
+hash must match that original map; self-consistent replacement files reject.
+The normal record shape and public report entities are unchanged.
 
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits

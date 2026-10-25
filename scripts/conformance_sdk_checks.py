@@ -40,6 +40,7 @@ from conformance_case_catalog import (
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_sources import (
     METADATA_RECOVERY_SCENARIOS, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
+    admit_sqlite_noncooperation,
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
     native_control_record, read_bounded, runtime_arguments, runtime_settings,
     source_witnesses as _source_witnesses,
@@ -807,53 +808,6 @@ def sqlite_environment(run, candidate, platform, *, phase):
     return {**platform, "nativeSqlite": observed["nativeSqlite"], "pragmas": observed["pragmas"]}
 
 
-def admit_sqlite_noncooperation(observed, command, inputs_sha256):
-    producer_fields = {
-        "schemaVersion", "inputsSha256", "childPid", "boundaryObservations", "guards",
-        "commitCode", "commitPhase", "commitRetry", "ticketSha256", "failureTicketSha256",
-        "disposeCode", "incompleteCleanups", "admissionCode", "settlementCompleted",
-        "cleanupState", "resourceIds", "ledgerStates",
-    }
-    command_fields = {
-        "schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
-        "exitCode", "diagnosticCode", "groupState", "scope",
-    }
-    if (not isinstance(observed, dict) or set(observed) != producer_fields
-            or not isinstance(command, dict) or set(command) != command_fields
-            or type(observed["schemaVersion"]) is not int or observed["schemaVersion"] != 1
-            or type(command["schemaVersion"]) is not int or command["schemaVersion"] != 1
-            or observed["inputsSha256"] != inputs_sha256
-            or type(observed["childPid"]) is not int or observed["childPid"] <= 0
-            or type(command["childPid"]) is not int or command["childPid"] != observed["childPid"]
-            or type(command["sequence"]) is not int or command["sequence"] <= 0
-            or not isinstance(command["childStartSha256"], str)
-            or re.fullmatch("[0-9a-f]{64}", command["childStartSha256"]) is None
-            or command["childStartSha256"] == "0" * 64
-            or any(type(command[key]) not in (int, float) or not math.isfinite(command[key])
-                   or not 0 <= command[key] <= 2**63 - 1 for key in ("startedMs", "endedMs"))
-            or command["endedMs"] - command["startedMs"] < 45000
-            or type(command["exitCode"]) is not int or command["exitCode"] != -9
-            or command["diagnosticCode"] != "DeadlineExceeded"
-            or command["groupState"] != "Exited" or command["scope"] != "recovery"
-            or type(observed["boundaryObservations"]) is not int or observed["boundaryObservations"] != 1
-            or not isinstance(observed["guards"], list) or observed["guards"] != [1, 1, 1]
-            or any(type(value) is not int for value in observed["guards"])
-            or observed["commitCode"] != "Uncertain" or observed["commitPhase"] != "Commit"
-            or observed["commitRetry"] != "Reconcile"
-            or not isinstance(observed["ticketSha256"], str)
-            or re.fullmatch("[0-9a-f]{64}", observed["ticketSha256"]) is None
-            or observed["failureTicketSha256"] != observed["ticketSha256"]
-            or observed["disposeCode"] != "CleanupIncomplete"
-            or type(observed["incompleteCleanups"]) is not int or observed["incompleteCleanups"] != 1
-            or observed["admissionCode"] != "Disposed" or observed["settlementCompleted"] is not False
-            or observed["cleanupState"] != "Retained"
-            or not isinstance(observed["resourceIds"], list) or len(observed["resourceIds"]) != 1
-            or not isinstance(observed["resourceIds"][0], str)
-            or re.fullmatch("[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}", observed["resourceIds"][0]) is None
-            or observed["ledgerStates"] != ["Allocated", "Active", "Settling", "Retained"]):
-        raise evidence.ConformanceError("ProofMismatch")
-
-
 def require_sqlite_environment(inputs, assembly, root):
     observed = inputs.get("environment", {})
     rid = {"x86_64": "linux-x64", "aarch64": "linux-arm64"}.get(observed.get("architecture"))
@@ -895,7 +849,8 @@ def sqlite_noncooperation(run, inputs, candidate, *, namespace="sqlite-native-no
     try:
         run.command(
             arguments, cwd=runtime, scope="recovery", timeout=45, cache_id=namespace,
-            record_execution=True, execution_inputs=(assembly_path, inputs_path))
+            record_execution=True, execution_inputs=(assembly_path, inputs_path),
+            execution_outputs=(output.relative_to(run.root).as_posix(),))
     except evidence.ConformanceError as error:
         if str(error) != "DeadlineExceeded":
             raise
@@ -915,7 +870,8 @@ def sqlite_noncooperation(run, inputs, candidate, *, namespace="sqlite-native-no
         native_raw = native_control_record(
             run, sequence, command_raw, arguments=arguments, cwd=runtime,
             input_files={assembly_path: inputs["runtimeAssemblies"][assembly_path], inputs_path: inputs_sha256},
-            diagnostic_code="DeadlineExceeded")
+            diagnostic_code="DeadlineExceeded",
+            output_files={output.relative_to(run.root).as_posix(): hashlib.sha256(observed_raw).hexdigest()})
         write_new(run.root / f"proofs/{namespace}-native-executions.json", evidence.canonical_bytes({
             "schemaVersion": 1, "qualification": False, "runId": run.run_id,
             "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": inputs_sha256,
@@ -2827,10 +2783,12 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
 def _category_record(run, inputs, history, scopes, code=None):
     recovery_source = {}
     if code is None and inputs["mode"] == "qualification" and inputs["profileId"] == "metadata":
-        path = "proofs/qualification-sqlite-recovery-native-executions.json"
-        if path not in history.proofs:
-            raise evidence.ConformanceError("ProofMismatch")
-        recovery_source["recoverySourcesSha256"] = history.proofs[path]
+        for name, namespace in (("recoverySourcesSha256", "qualification-sqlite-recovery"),
+                                ("nativeSourcesSha256", "qualification-sqlite-native-noncooperation")):
+            path = f"proofs/{namespace}-native-executions.json"
+            if path not in history.proofs:
+                raise evidence.ConformanceError("ProofMismatch")
+            recovery_source[name] = history.proofs[path]
     results = history.results()
     states = {state: sum(result["status"] == state for result in results)
               for state in ("Passed", "Failed", "Incomplete", "NotApplicable")}
@@ -2868,6 +2826,7 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
     if qualification and profile == "metadata":
         print(json.dumps({"qualification": False, "phase": "metadata-qualification-recovery"}), flush=True)
         try:
+            sqlite_noncooperation(run, inputs, candidate, namespace="qualification-sqlite-native-noncooperation")
             metadata_recovery_diagnostics(run, inputs, candidate, namespace="qualification-sqlite-recovery")
         except evidence.ConformanceError as error:
             print(json.dumps({

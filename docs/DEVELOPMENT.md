@@ -9176,6 +9176,51 @@ regression now checks post-timeout reads and rejects changed/restored inputs;
 that native extension is explicitly skipped on macOS, not claimed executed.
 All 388 tooling checks pass with 17 native skips; exact Linux replay is pending.
 
+The subsequent MP-37 integration independently consumes that five-file native
+stall graph through the concrete owned-run authority. Exact current input bytes,
+assembly/package, original native record, argv/cwd/input map, expected deadline,
+retained guards/cleanup and joint-attempt bounds must all agree. The pure stall
+validator is shared with production of the diagnostic packet, not reimplemented
+in the category backend. A fresh qualification stall now runs after joint begin,
+before recovery commands and all runtime scopes; either control failure
+interrupts the joint attempt and cannot reach admission.
+
+MP-37 retains its two frozen actual runtime witness IDs plus the corroborated
+control proof graph. The recovery fact's UUID is used only for previously
+control-only cases, never copied into an already-witnessed unrelated case.
+Missing either original witness remains incomplete. Final atomic admission
+requires both native/recovery graphs, and the summary's native graph digest is
+taken from actually imported proofs. The seven scopes/135 witnesses/five source
+parents are unchanged; the new modeled metadata target is 80/13/9/0. Exact Linux
+confirmation is pending. Missing graph admission and unrelated source-UUID
+attribution fail in red before repair. All 391 tooling checks pass with 17 native
+skips; the full stage and other controls/QC graphs remain unfinished.
+
+A further red regression demonstrates that rehashing a schema-valid replacement
+producer packet could otherwise escape the original command/control linkage.
+Expected native output paths are now predeclared only for recorded recovery
+commands, bounded together with input paths to 16, inside retained `proofs/`,
+disjoint from inputs and absent before launch. Only after exact settled
+containment does the executor seal regular single-link owned outputs read-only,
+hash their actual bytes and retain those hashes in its original native receipt.
+The input/output post-check shares the same bounded deadline. Symlinks, hard
+links, directories, unsafe paths or changed identities reject without touching
+outside sentinels. Native-stall source admission requires that exact output map,
+so a self-consistent replacement producer/graph now rejects. The extended
+watchdog exercises actual timeout output capture on Linux; its local skip is
+explicit, while the filesystem sealing/substitution regressions run portably.
+
+The earlier source-ownership correction at exact `602fa44820c68d55222971ffdd93e9c7105f3cdb`,
+[run40213503846](https://github.com/Stonefly-Labs/Hoard/actions/runs/40213503846),
+now independently passes all three Linux jobs: 279 foundations without
+failures/errors/skips, 13-lock/18-package fresh replay and 127 scopes/1,818
+witnesses. Its six-scope qualification-input metadata graph retains 71/22/9/0;
+input `52dab298cfee5cfa75f9be4666c6fe6512b30ed1a06ea37b98a570713d6fd479`,
+result `5c9290141ad44332229e29027720e8304eea120a13d0962650d1c8d01f2aae4e`.
+This validates source compile ownership and the prior complete native recovery
+graph, not the later seventh scope, timeout repair or MP-37 import. No later
+native success or profile qualification is inferred.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

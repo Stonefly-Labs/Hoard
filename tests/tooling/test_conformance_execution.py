@@ -293,6 +293,17 @@ class ConformanceExecutionTests(unittest.TestCase):
                     run.command([sys.executable], record_execution=True, execution_inputs=paths)
             with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
                 run.command([sys.executable], execution_inputs=["input"])
+            for outputs in (None, {}, ["../outside"], ["stores/output"], ["proofs/same"] * 2,
+                            ["proofs/output"] * 17):
+                with self.subTest(outputs=outputs), self.assertRaises(ConformanceError):
+                    run.command([sys.executable], record_execution=True, scope="recovery", execution_outputs=outputs)
+            for options in (
+                    {"execution_outputs": ["proofs/output"], "scope": "recovery"},
+                    {"execution_outputs": ["proofs/output"], "record_execution": True},
+                    {"execution_outputs": ["proofs/output"], "execution_inputs": ["proofs/output"],
+                     "record_execution": True, "scope": "recovery"}):
+                with self.subTest(options=options), self.assertRaises(ConformanceError):
+                    run.command([sys.executable], **options)
             with mock.patch.object(execution, "MAX_PROOF_FILES", 0):
                 with self.assertRaisesRegex(ConformanceError, "OutputLimitExceeded"):
                     run.command([sys.executable], record_execution=True)
@@ -334,6 +345,32 @@ class ConformanceExecutionTests(unittest.TestCase):
         changed = run._capture_execution_inputs(("stores/command-input.json",), time.monotonic() + 5)
         self.assertEqual(changed["stores/command-input.json"][0], original["stores/command-input.json"][0])
         self.assertNotEqual(changed, original)
+        run.transition("Settling")
+        run.release()
+
+    def test_settled_output_capture_seals_exact_bytes_without_touching_links_or_foreign_files(self):
+        run = self.workspace()
+        path = run.root / "proofs/producer.json"
+        path.write_bytes(b'{"observed":1}')
+        captured = run._capture_execution_outputs(("proofs/producer.json",), time.monotonic() + 5)
+        self.assertEqual(captured["proofs/producer.json"][0], hashlib.sha256(path.read_bytes()).hexdigest())
+        self.assertEqual(stat.S_IMODE(path.stat().st_mode), 0o400)
+        self.assertEqual(captured, run._capture_execution_inputs(("proofs/producer.json",), time.monotonic() + 5))
+        outside = self.parent / "outside-output"
+        outside.write_bytes(b"untouched")
+        outside.chmod(0o600)
+        links = (run.root / "proofs/symlink", run.root / "proofs/hardlink")
+        links[0].symlink_to(outside)
+        os.link(outside, links[1])
+        directory = run.root / "proofs/directory"
+        directory.mkdir()
+        for invalid in (*links, directory):
+            with self.subTest(path=invalid), self.assertRaises(ConformanceError):
+                run._capture_execution_outputs((invalid.relative_to(run.root).as_posix(),), time.monotonic() + 5)
+        self.assertEqual(outside.read_bytes(), b"untouched")
+        self.assertEqual(stat.S_IMODE(outside.stat().st_mode), 0o600)
+        for link in links:
+            link.unlink()
         run.transition("Settling")
         run.release()
 
@@ -411,16 +448,18 @@ print('{"event":"control","code":"None","value":1}')
         input_file = run.root / "stores/command-input.json"
         input_file.write_bytes(b"one")
         input_file.chmod(0o400)
-        for code in (
+        for sequence, code in enumerate((
                 'import subprocess,sys,time; '
                 'subprocess.Popen([sys.executable,"-c","import time; time.sleep(60)"]); time.sleep(60)',
-                "import os,time; os.close(1); os.close(2); time.sleep(60)"):
+                'import os,time; from pathlib import Path; Path("proofs/timeout-output.json").write_bytes(b"actual"); '
+                'os.close(1); os.close(2); time.sleep(60)'), 1):
             with self.subTest(code=code), mock.patch.object(
                     run, "_capture_execution_inputs", wraps=run._capture_execution_inputs) as capture:
                 with self.assertRaisesRegex(ConformanceError, "DeadlineExceeded"):
-                    run.command([sys.executable, "-c", code], scope="recovery", timeout=0.2,
-                                record_execution=True, execution_inputs=("stores/command-input.json",))
-                self.assertEqual(capture.call_count, 2)
+                    run.command([sys.executable, "-c", code], cwd=run.root, scope="recovery", timeout=0.2,
+                                record_execution=True, execution_inputs=("stores/command-input.json",),
+                                execution_outputs=("proofs/timeout-output.json",) if sequence == 2 else ())
+                self.assertEqual(capture.call_count, 3 if sequence == 2 else 2)
         self.assertFalse(run.live_children())
         for sequence in (1, 2):
             self.assertEqual(json.loads((run.root / "diagnostics" / f"command-{sequence:04}.jsonl").read_bytes())["code"],
@@ -439,6 +478,9 @@ print('{"event":"control","code":"None","value":1}')
             self.assertEqual(native["controlRecordSha256"], hashlib.sha256(
                 (run.root / "proofs" / f"recovery-command-{sequence:04}.json").read_bytes()).hexdigest())
             self.assertEqual(native["inputFiles"], {"stores/command-input.json": hashlib.sha256(b"one").hexdigest()})
+            if sequence == 2:
+                self.assertEqual(native["outputFiles"], {"proofs/timeout-output.json": hashlib.sha256(b"actual").hexdigest()})
+                self.assertEqual(stat.S_IMODE((run.root / "proofs/timeout-output.json").stat().st_mode), 0o400)
         with self.assertRaisesRegex(ConformanceError, "InputChanged"):
             run.command([
                 sys.executable, "-c",

@@ -194,6 +194,16 @@ inputs and independently retain exact native/control linkage. Post-containment
 verification runs only after settled timeout ownership, under a bounded
 five-second window within the profile budget/reserve; an input change cannot
 masquerade as the expected deadline. This prerequisite is not MP-37 case import.
+The subsequent MP-37 path now freshly executes that stall inside joint-attempt
+bounds and independently corroborates its five-file graph before atomic import.
+Its two frozen runtime witnesses remain mandatory; an unrelated recovery-source
+UUID cannot substitute or be copied into their case. Both native/recovery graph
+digests must come from imported proofs. This wiring is modeled, native-pending.
+Its producer bytes additionally require executor-held post-containment output
+hashes: predeclared absent retained outputs are sealed only after actual settled
+ownership, within the combined input/output bound and post-check deadline.
+Regular ownership, identity, no links and read-only retention are enforced;
+rehashing replacement producer/graph files cannot replace that original map.
 The earlier source-linking execution, before executor-held byte anchoring, is
 independently admitted at exact `78c5919`, run
 40202060742: all three Linux jobs, 273 foundations without skips and all

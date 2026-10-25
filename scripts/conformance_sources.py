@@ -148,7 +148,8 @@ def runtime_arguments(assembly, settings, identities, *, discovery=False):
             f"--Settings:{settings}", f"--TestCaseFilter:{filter_text}"]
 
 
-def native_control_record(run, sequence, control_raw, *, arguments, cwd, input_files, diagnostic_code="None"):
+def native_control_record(run, sequence, control_raw, *, arguments, cwd, input_files, diagnostic_code="None",
+                          output_files=None):
     if type(run) is not OwnedRun:
         raise evidence.ConformanceError("OwnershipInvalid")
     control = evidence.load_json(control_raw)
@@ -170,6 +171,7 @@ def native_control_record(run, sequence, control_raw, *, arguments, cwd, input_f
         "cwdSha256": hashlib.sha256(str(Path(cwd).absolute()).encode()).hexdigest(),
         "controlRecordSha256": hashlib.sha256(control_raw).hexdigest(),
         **({"inputFiles": input_files} if input_files else {}),
+        **({"outputFiles": output_files} if output_files else {}),
     }
     if raw != evidence.canonical_bytes(expected):
         raise evidence.ConformanceError("ProofMismatch")
@@ -222,16 +224,54 @@ def admit_recovery_barrier(command, sequence, value, *, inspection=None):
         raise evidence.ConformanceError("ProofMismatch")
 
 
-def native_metadata_recovery_controls(run, inputs, *, started_ms, ended_ms):
-    if type(run) is not OwnedRun:
-        raise evidence.ConformanceError("OwnershipInvalid")
-    inputs = evidence.admit_entity("RunInputs", inputs)
-    started_ms, ended_ms = evidence._number(started_ms), evidence._number(ended_ms)
-    if (inputs["profileId"] != "metadata" or inputs["mode"] != "qualification"
-            or inputs["runId"] != run.run_id or ended_ms < started_ms):
-        raise evidence.ConformanceError("InputChanged")
-    namespace = "qualification-sqlite-recovery"
-    suffix = "/tests/fixtures/metadata/CrashRunner/bin/Release/net10.0/Hoard.Fixtures.Metadata.CrashRunner.dll"
+def admit_sqlite_noncooperation(observed, command, inputs_sha256):
+    producer_fields = {
+        "schemaVersion", "inputsSha256", "childPid", "boundaryObservations", "guards",
+        "commitCode", "commitPhase", "commitRetry", "ticketSha256", "failureTicketSha256",
+        "disposeCode", "incompleteCleanups", "admissionCode", "settlementCompleted",
+        "cleanupState", "resourceIds", "ledgerStates",
+    }
+    command_fields = {
+        "schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
+        "exitCode", "diagnosticCode", "groupState", "scope",
+    }
+    if (not isinstance(observed, dict) or set(observed) != producer_fields
+            or not isinstance(command, dict) or set(command) != command_fields
+            or type(observed["schemaVersion"]) is not int or observed["schemaVersion"] != 1
+            or type(command["schemaVersion"]) is not int or command["schemaVersion"] != 1
+            or observed["inputsSha256"] != inputs_sha256
+            or type(observed["childPid"]) is not int or observed["childPid"] <= 0
+            or type(command["childPid"]) is not int or command["childPid"] != observed["childPid"]
+            or type(command["sequence"]) is not int or command["sequence"] <= 0
+            or not isinstance(command["childStartSha256"], str)
+            or re.fullmatch("[0-9a-f]{64}", command["childStartSha256"]) is None
+            or command["childStartSha256"] == "0" * 64
+            or any(type(command[key]) not in (int, float) or not math.isfinite(command[key])
+                   or not 0 <= command[key] <= 2**63 - 1 for key in ("startedMs", "endedMs"))
+            or command["endedMs"] - command["startedMs"] < 45000
+            or type(command["exitCode"]) is not int or command["exitCode"] != -9
+            or command["diagnosticCode"] != "DeadlineExceeded"
+            or command["groupState"] != "Exited" or command["scope"] != "recovery"
+            or type(observed["boundaryObservations"]) is not int or observed["boundaryObservations"] != 1
+            or not isinstance(observed["guards"], list) or observed["guards"] != [1, 1, 1]
+            or any(type(value) is not int for value in observed["guards"])
+            or observed["commitCode"] != "Uncertain" or observed["commitPhase"] != "Commit"
+            or observed["commitRetry"] != "Reconcile"
+            or not isinstance(observed["ticketSha256"], str)
+            or re.fullmatch("[0-9a-f]{64}", observed["ticketSha256"]) is None
+            or observed["failureTicketSha256"] != observed["ticketSha256"]
+            or observed["disposeCode"] != "CleanupIncomplete"
+            or type(observed["incompleteCleanups"]) is not int or observed["incompleteCleanups"] != 1
+            or observed["admissionCode"] != "Disposed" or observed["settlementCompleted"] is not False
+            or observed["cleanupState"] != "Retained"
+            or not isinstance(observed["resourceIds"], list) or len(observed["resourceIds"]) != 1
+            or not isinstance(observed["resourceIds"][0], str)
+            or re.fullmatch("[a-zA-Z0-9][a-zA-Z0-9._:-]{0,127}", observed["resourceIds"][0]) is None
+            or observed["ledgerStates"] != ["Allocated", "Active", "Settling", "Retained"]):
+        raise evidence.ConformanceError("ProofMismatch")
+
+
+def _metadata_control_assembly(run, inputs, suffix):
     assemblies = [path for path in inputs["runtimeAssemblies"] if path.endswith(suffix)]
     if len(assemblies) != 1:
         raise evidence.ConformanceError("InputChanged")
@@ -245,6 +285,84 @@ def native_metadata_recovery_controls(run, inputs, *, started_ms, ended_ms):
             descriptor, assembly_path, remaining=evidence.MAX_PROOF_BYTES, deadline=time.monotonic() + 5)
     if hashed != inputs["runtimeAssemblies"][assembly_path]:
         raise evidence.ConformanceError("InputChanged")
+    return assembly_path, assembly
+
+
+def native_metadata_noncooperation_control(run, inputs, *, started_ms, ended_ms):
+    if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    started_ms, ended_ms = evidence._number(started_ms), evidence._number(ended_ms)
+    if (inputs["profileId"] != "metadata" or inputs["mode"] != "qualification"
+            or inputs["runId"] != run.run_id or ended_ms < started_ms):
+        raise evidence.ConformanceError("InputChanged")
+    packages = [package for package in inputs["packages"]
+                if package["packageId"] == "Hoard.Fixtures.Metadata.Sqlite" and package["version"] == "0.1.0"]
+    if len(packages) != 1:
+        raise evidence.ConformanceError("InputChanged")
+    suffix = ("/tests/contracts/Hoard.Conformance.Tests/bin/package-diagnostic/"
+              "Release/net10.0/Hoard.Conformance.Tests.dll")
+    assembly_path, assembly = _metadata_control_assembly(run, inputs, suffix)
+    namespace = "qualification-sqlite-native-noncooperation"
+    inputs_path = f"proofs/{namespace}-native-inputs.json"
+    input_raw = _readonly(run.root / inputs_path, 16 * 1024 * 1024)
+    if input_raw != evidence.canonical_bytes(inputs):
+        raise evidence.ConformanceError("InputChanged")
+    graph_path = f"proofs/{namespace}-native-executions.json"
+    graph_raw = _readonly(run.root / graph_path, 64 * 1024)
+    graph = evidence.load_json(graph_raw)
+    sequence = graph.get("sequence") if isinstance(graph, dict) else None
+    if type(sequence) is not int or sequence <= 0:
+        raise evidence.ConformanceError("ProofMismatch")
+    control_path = f"proofs/recovery-command-{sequence:04}.json"
+    native_path = f"proofs/execution-command-{sequence:04}.json"
+    producer_path = f"proofs/{namespace}.json"
+    control_raw = _readonly(run.root / control_path, 64 * 1024)
+    producer_raw = _readonly(run.root / producer_path, 64 * 1024)
+    command = evidence.load_json(control_raw)
+    admit_sqlite_noncooperation(evidence.load_json(producer_raw), command, evidence.digest(inputs))
+    if (command["sequence"] != sequence
+            or not started_ms <= command["startedMs"] <= command["endedMs"] <= ended_ms
+            or command["endedMs"] - command["startedMs"] > 300000):
+        raise evidence.ConformanceError("ProofMismatch")
+    arguments = [
+        "dotnet", str(assembly), "sqlite-native-noncooperation", str(run.root / producer_path),
+        str(run.root / "stores" / namespace), str(run.root / assembly_path.removesuffix(suffix)),
+        packages[0]["sha256"], evidence.digest(inputs)]
+    native_raw = native_control_record(
+        run, sequence, control_raw, arguments=arguments, cwd=assembly.parent,
+        input_files={assembly_path: inputs["runtimeAssemblies"][assembly_path], inputs_path: evidence.digest(inputs)},
+        diagnostic_code="DeadlineExceeded", output_files={producer_path: hashlib.sha256(producer_raw).hexdigest()})
+    expected_graph = {
+        "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+        "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
+        "assemblyPath": assembly_path, "inputsPath": inputs_path, "sequence": sequence,
+        "producerSha256": hashlib.sha256(producer_raw).hexdigest(),
+        "controllerSha256": hashlib.sha256(control_raw).hexdigest(),
+        "executionSha256": hashlib.sha256(native_raw).hexdigest()}
+    if (graph_raw != evidence.canonical_bytes(expected_graph)
+            or _readonly(run.root / native_path, 64 * 1024) != native_raw):
+        raise evidence.ConformanceError("ProofMismatch")
+    proofs = {graph_path: graph_raw, inputs_path: input_raw, producer_path: producer_raw,
+              control_path: control_raw, native_path: native_raw}
+    return MappingProxyType({
+        "controls": MappingProxyType({
+            "sqlite3-step-stall-and-incomplete-cleanup": tuple(hashlib.sha256(raw).hexdigest()
+                                                            for raw in proofs.values())}),
+        "sourceProofs": MappingProxyType(proofs)})
+
+
+def native_metadata_recovery_controls(run, inputs, *, started_ms, ended_ms):
+    if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    started_ms, ended_ms = evidence._number(started_ms), evidence._number(ended_ms)
+    if (inputs["profileId"] != "metadata" or inputs["mode"] != "qualification"
+            or inputs["runId"] != run.run_id or ended_ms < started_ms):
+        raise evidence.ConformanceError("InputChanged")
+    namespace = "qualification-sqlite-recovery"
+    suffix = "/tests/fixtures/metadata/CrashRunner/bin/Release/net10.0/Hoard.Fixtures.Metadata.CrashRunner.dll"
+    assembly_path, assembly = _metadata_control_assembly(run, inputs, suffix)
     inputs_path = f"proofs/{namespace}-native-inputs.json"
     input_raw = _readonly(run.root / inputs_path, 16 * 1024 * 1024)
     if input_raw != evidence.canonical_bytes(inputs):
@@ -354,7 +472,15 @@ class NativeCategorySources:
         return MappingProxyType({**inspected["observation"], **graph})
 
     def metadata_controls(self, inputs, *, started_ms, ended_ms):
-        return native_metadata_recovery_controls(self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
+        recovered = native_metadata_recovery_controls(
+            self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
+        native = native_metadata_noncooperation_control(
+            self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
+        if (set(recovered["controls"]) & set(native["controls"])
+                or set(recovered["sourceProofs"]) & set(native["sourceProofs"])):
+            raise evidence.ConformanceError("ProofMismatch")
+        return MappingProxyType({
+            key: MappingProxyType({**recovered[key], **native[key]}) for key in ("controls", "sourceProofs")})
 
     def _corroborate(self, inputs, manifest, observed, *, category_scope, manifest_data, owner_data):
         run = self._run

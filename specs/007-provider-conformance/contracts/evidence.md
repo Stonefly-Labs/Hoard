@@ -210,6 +210,17 @@ controller/producer graph and immutable current-input document. Only its explici
 expected-deadline corroboration accepts `DeadlineExceeded`; changed post-inputs
 become `InputChanged`, and ordinary source/command admission still requires
 success. No MP-37 runtime source or qualifying case is inferred from that graph.
+The later MP-37 importer now independently corroborates that complete graph
+against concrete owned execution and exact joint timings. It retains MP-37's
+two actual frozen runtime IDs, with the graph's proof hashes, rather than
+borrowing the recovery fact's UUID. Missing original witnesses or graphs stay
+incomplete. Summary native/recovery digests require actually imported proofs;
+no producer flag establishes admission. Actual native confirmation is pending.
+Native-stall producer hashes must also match output bytes independently sealed
+and hashed by the executor after settled containment, retained in its original
+native record. Caller-authored or consistently rehashed replacement packets do
+not establish provenance. Ordinary command/source record shapes stay unchanged
+when no retained outputs were explicitly requested.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

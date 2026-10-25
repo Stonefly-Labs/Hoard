@@ -2009,8 +2009,9 @@ A later inspection-origin path now independently corroborates complete native
 source graphs against freshly captured qualification inputs and executor-held
 pre/post input snapshots. It preserves source parents in case evidence and
 retains sanitized source packets outside disposable stores. A separate complete
-metadata admission execution is wired, but its exact-head Linux run is pending.
-Controller qualification, control imports and complete profile CLI remain closed.
+metadata admission execution is wired; its six-scope path is independently
+confirmed at `602fa44` below. Complete controller/profile qualification remains
+unfinished; later limited control imports are described separately.
 
 Recovery execution now also anchors the exact barrier/controller receipt bytes
 to the executor's original native record, rather than matching only PID/start
@@ -2020,16 +2021,16 @@ corroboration; it does not admit those controls or promote incomplete cases.
 
 The qualification-input metadata path now reruns all 31 recovery commands in a
 separate namespace and independently retains their complete native graph in
-case evidence. Control-only cases still remain incomplete: no runtime execution
-UUID is fabricated from a controller label or receipt hash. Actual Linux
-confirmation is pending. The earlier `d0b6bd3` foundation job reported one
+case evidence. At this checkpoint control-only cases still remained incomplete:
+no runtime execution UUID was fabricated from a controller label or receipt hash.
+The earlier `d0b6bd3` foundation job reported one
 `OwnershipInvalid` in release-publication retry; that run is not admitted.
 Its SDK and lock jobs subsequently succeeded, including 127 scopes and 1,818
 actual witnesses; that partial result does not admit the failed overall run.
 Later native foundations pinpointed a recovery-result field mismatch. Recovery
 now checks the actual `CommandResult.execution_record_sha256`, with a portable
-regression using that real result type. Exact corrected Linux execution remains
-pending; no controller-only case or full-profile gate is promoted.
+regression using that real result type. The later `602fa44` run confirms this
+correction; no full-profile gate is promoted by that earlier receipt.
 
 A package-only metadata recovery source fact and its bounded source decoder now
 exist. The decoder checks all 65 current-input, graph, summary, controller and
@@ -2042,21 +2043,31 @@ Bare controller graphs, unrelated sessions and unparented witnesses cannot pass.
 Exact native confirmation of this wiring is pending; modeled passes are not
 actual qualification receipts.
 
-The native-stall prerequisite now also records its original owned execution and
+The native-stall control now also records its original owned execution and
 immutable assembly/current-input snapshots. A settled expected timeout receives
 a bounded post-containment input check; changed or rewritten inputs remain
-`InputChanged`, not a successful expected-timeout proof. The retained graph is
-non-qualifying and is not yet imported into MP-37 case attribution.
+`InputChanged`, not a successful expected-timeout proof. A fresh qualification
+stall runs inside the joint attempt and its independently corroborated graph
+joins MP-37's two original runtime witnesses, never the unrelated recovery
+fact's UUID. The executor itself seals and hashes the producer's actual output
+after settled containment; consistently rehashed replacement packets reject.
+The modeled metadata target is now 80 Passed/13 Incomplete/9
+NotApplicable; native confirmation of this import remains pending.
 The corrected producer's native foundation run then exposed a second,
 test-only defect at the same assertion: the Linux-only barrier test lacked its
-`hashlib` import. That import is now explicit; native confirmation remains
-pending and the failed checkpoint is not admitted.
+`hashlib` import. That import is now explicit; the failed checkpoint is not admitted.
 Exact `7dc1ac8` subsequently passes all 279 native foundations without skips.
 Its SDK/lock jobs expose `CS0103`: the new source fact was also picked up by the
 unrelated fixture consumer's default compile glob, without its decoder. The fact
 now lives in its owning SDK test project and is excluded from ordinary source
-mode. All three actual MSBuild compile selections are checked; full native
-replay of that ownership correction remains pending.
+mode. All three actual MSBuild compile selections are checked. Exact
+`602fa44820c68d55222971ffdd93e9c7105f3cdb`,
+[run40213503846](https://github.com/Stonefly-Labs/Hoard/actions/runs/40213503846),
+now independently passes all three Linux jobs: 279 foundations without skips,
+13-lock/18-package replay and 127 scopes/1,818 witnesses. Qualification-input
+metadata remains six scopes and 71 Passed/22 Incomplete/9 NotApplicable.
+This validates compile ownership and the prior native graph, not later runtime
+witness dispatch, timeout verification, MP-37 import or full qualification.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

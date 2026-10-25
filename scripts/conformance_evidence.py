@@ -2137,7 +2137,7 @@ class CategoryRuntimeHistory:
                              if witness["bindingId"] == binding_id and witness["testIdentity"] in case.witnesses)
             expected = set(case.witnesses)
             if (self._inputs["mode"] == "qualification" and self._inputs["profileId"] == "metadata"
-                    and binding_id == "sqlite" and case.controls
+                    and binding_id == "sqlite" and case.controls and not case.witnesses
                     and control_proofs is not None and set(case.controls) <= control_proofs.keys()
                     and source_parents is not None):
                 source = tuple(witness for witness in witnesses

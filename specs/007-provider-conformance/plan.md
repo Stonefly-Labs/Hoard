@@ -6279,6 +6279,43 @@ afterwards across harness/diagnostic/qualification namespaces. The extended
 actual Linux watchdog test remains skipped locally; 388 tooling checks pass
 with 17 native skips. No MP-37 source/case import or native success is claimed.
 
+A subsequent increment independently admits the five-file native-stall graph
+through the concrete owned-run authority, sharing its pure producer validator.
+Exact current input/assembly/package hashes, original native bytes, argv/cwd/
+input maps, settled expected-deadline termination, retained cleanup and joint
+timings must agree. Fresh qualification stall and recovery commands both run
+after joint begin and before scopes; either failure interrupts without
+admission. MP-37 uses its two frozen actual witnesses and the imported control
+graph. The unrelated recovery fact's UUID is never added to already-witnessed
+cases; it remains mandatory for the eight formerly control-only cases.
+Missing original witnesses remain incomplete. Both graph digests are required
+from actually imported proof maps. Missing admission and false extra UUIDs fail
+in red; modeled target states are now 80/13/9/0 across unchanged seven scopes/
+135 witnesses/five parents. All 391 tooling checks pass with 17 native skips.
+Exact native confirmation of this increment remains pending.
+
+An additional red regression replaces the producer with a schema-valid rehashed
+packet while retaining its original native/control bytes; it was incorrectly
+accepted. Recorded recovery commands now predeclare absent retained output paths
+within the combined 16-input/output bound. After settled containment, the
+executor seals only regular owned single-link output files, hashes their actual
+bytes under the same bounded post-check deadline and pins the output map in its
+original native receipt. Source admission requires that map. Rehashed producer
+substitution now rejects; symlink/hard-link/directory/foreign-path regressions
+preserve outside sentinels. Normal commands and other receipt field sets are
+unchanged. Actual Linux timeout output capture remains pending, not modeled
+into native success.
+
+Earlier exact `602fa44820c68d55222971ffdd93e9c7105f3cdb`,
+[run40213503846](https://github.com/Stonefly-Labs/Hoard/actions/runs/40213503846),
+now independently passes all three jobs: 279 native foundations without skips,
+13-lock/18-package replay and 127 scopes/1,818 witnesses. Its qualification-input
+metadata remains six scopes and 71/22/9/0; input/result
+`52dab298cfee5cfa75f9be4666c6fe6512b30ed1a06ea37b98a570713d6fd479` /
+`5c9290141ad44332229e29027720e8304eea120a13d0962650d1c8d01f2aae4e`.
+This admits the source compile-owner correction and prior recovery graph only,
+not later runtime-source/timeout/stall changes or complete qualification.
+
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately
 packable `Hoard.Testing.Conformance` library supplies the common consumers,
