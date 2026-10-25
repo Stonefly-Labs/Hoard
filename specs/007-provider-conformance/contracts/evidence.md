@@ -346,7 +346,24 @@ start/end bounds, serial increasing sequences/nonoverlapping transfer windows
 and disjoint original proof paths. It returns immutable source bytes and seven
 control-role hash sets. Native transfer controllers invoke it before summary
 publication; missing/rejected source authority cannot produce a success-shaped
-summary. This does not open artifact case/controller qualification.
+summary. This does not derive artifact QCs or full profile qualification.
+
+Complete controller-source admission now independently reconstructs the twelve
+original crash/retained-child observations from exactly 24 original files.
+Shared predicates, distinct non-profile child run IDs and empty recovery-error
+bytes are mandatory. The same join validates all four qualification-origin
+transfers, sixteen consumed source packets and canonical transfer/consumption/
+external receipts against the original complete-set output index. Original
+explicit command sequences survive later scopes; a latest-command substitution
+cannot replace held output authority. The native factory joins exact owner,
+manifest/settings, twelve input hashes, one output, argv/cwd, settlement and
+witness timing, and category history routes this controller through that
+factory. Both SDK qualification input sets are recomputed at completion.
+Fresh qualification transfers precede scopes inside the observed joint attempt;
+mode-derived namespaces agree across producer/context/input/parent surfaces.
+This private 44-file source graph and its non-qualifying diagnostic summary
+introduce no public schema or status changes. Actual Linux replay remains
+pending and artifact QCs/full profile qualification remain incomplete.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

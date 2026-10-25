@@ -6620,6 +6620,37 @@ native execution are unchanged. Complete artifact controller/crash/retention
 authority and actual fresh qualification execution remain unbuilt; no
 task/checklist markers advance.
 
+The subsequent complete controller-source model first fails its named
+missing-API assertion, then reconstructs all four qualification-origin native
+transfer graphs, twelve original crash/retained-child observations, sixteen
+consumption packets and the original complete-set output index. Child capture
+inventory is exact (24 files); profile/duplicate child run IDs and nonempty
+recovery errors reject. Both SDK receipt production and source-parent rechecks
+reuse the independent child reader. Explicit original command lookup preserves
+output-index admission after later commands without relaxing the default
+latest-command path.
+
+Native source factory/history routing now admits the artifact controller only
+through this source graph and the exact owner/manifest/settings, twelve inputs,
+one output, original command argv/cwd/settlement and nested witness times.
+Rehashed outer execution/source parents do not hide missing inputs, substituted
+outputs or changed invocation/timing. The complete source model retains 44
+immutable proof files; the factory retains its original execution parents too.
+Fresh qualification transfers execute after joint begin and before scopes;
+all runtime/context/input/parent surfaces share the qualification namespace.
+Transfer/scope failure interrupts history without success-shaped fallback.
+The SDK batch captures/recomputes both categories' qualification inputs and
+adds explicitly non-qualifying `artifactQualificationAdmission` diagnostics.
+
+All 417 tooling checks pass with 19 explicit macOS-native skips; frozen
+inventory, SDK catalog and whitespace checks pass. Actual Linux replay of this
+increment is pending. Exact a86/run40230791595 is finished: foundations failed,
+SDK/locks succeeded; its foundation failure is not independently attributed
+by this checkpoint. Exact 5f81/run40232608162 has successful foundations/locks
+and active SDK execution, not overall admission. C# source/projects/locks,
+public schemas and production provider boundaries are unchanged. All artifact
+QCs/full profile acceptance remain incomplete; no tasks/checklists advance.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

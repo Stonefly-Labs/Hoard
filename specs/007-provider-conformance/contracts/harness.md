@@ -307,6 +307,20 @@ all four original graphs in increasing sequence, nonoverlapping transfer times
 inside the actual common controller window and disjoint proof paths. Rejection
 propagates before publication. The seven immutable transfer-control role hash
 sets are source authority only, not qualifying case statuses.
+The current artifact controller reader independently reconstructs all twelve
+original child observations (exactly 24 original files), four original transfer
+graphs, sixteen consumed source packets and the complete-set index sealed by
+the original controller. Child run-ID reuse and recovery-error bytes reject.
+Explicit original sequence lookup permits delayed admission after later
+commands. Native factory/history admission additionally binds the owner,
+manifest, exact settings/argv/cwd, twelve input hashes, sole output hash,
+settled original command and nested witness times. Mode-derived qualification
+namespaces now reach fresh joint-transfer orchestration, runtime contexts,
+declared inputs and parent rechecks consistently. SDK diagnostics prepare and
+recompute both category qualification inputs and emit a separate non-qualifying
+artifact admission summary; transfer/scope failures interrupt rather than pass.
+Local complete/factory/history models pass, but actual Linux replay remains
+pending and artifact QCs/full profile qualification remain incomplete.
 The prior byte-capture checkpoint cf4/run40227343651 independently passes
 three Linux jobs, 300 native foundations without skips, 13-lock/18-package
 replay and 129 scopes/1,821 witnesses. It admits original byte capture, not the

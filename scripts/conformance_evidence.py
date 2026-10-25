@@ -2316,7 +2316,8 @@ class CategoryRuntimeHistory:
             admit_attempt = ingest_runtime_attempt
             source_options = {}
             if self._native_sources is not None and (
-                    scope_id.startswith("inspection-") or scope_id in ("recovery-controller", "inventory-controller")):
+                    scope_id.startswith("inspection-") or scope_id in ("recovery-controller", "inventory-controller")
+                    or self._inputs["profileId"] == "artifacts" and scope_id == "controller"):
                 admit_attempt = self._native_sources.ingest_attempt
                 source_options["category_scope"] = self._inputs["profileId"], scope_id
             observed = admit_attempt(

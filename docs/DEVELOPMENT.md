@@ -9485,7 +9485,33 @@ This admits original byte capture only, not the later output-seal or native
 measurement-record increments. Their exact native replays remain pending;
 neither profile qualifies.
 
-Current validation: all 414 tooling checks pass with 19 explicit native skips;
+The next controller-source increment independently reconstructs all six
+crash/state/recovery-error triples and six retained-child packets, requiring
+the exact 24-file inventory, distinct child run IDs and empty recovery errors.
+SDK receipt generation and parent consumption share this reader. Independent
+controller admission reconstructs the four original qualification transfers,
+sixteen consumed packets, summary/consumption/external receipts and original
+output index: 44 immutable source proof files in its complete graph model.
+Delayed admission selects the original explicit controller sequence rather
+than the latest command. Native factory/history admission additionally binds
+the exact owner/manifest/settings, twelve input hashes, sole index output,
+argv/cwd, original settled command and nested witness times. Rehashed outer
+parents cannot conceal changed inputs, outputs, invocation or witness windows.
+
+SDK diagnostics now prepare/recompute distinct qualification inputs for both
+categories and schedule fresh artifact qualification-origin transfers inside
+the joint attempt before its scopes. Runtime settings, declared inputs, source
+contexts and parent rechecks use that same mode-derived namespace. Transfer
+or scope failure retains an interrupted history without publishing success.
+The new `artifactQualificationAdmission` diagnostic summary remains
+`qualification: false`; artifact QCs and full profile/evaluator work are not
+completed by this source join. Actual Linux execution of this increment is
+pending. Run40230791595 has now finished with failed foundations and successful
+SDK/lock jobs; its exact foundation failure is not independently attributed
+here. Run40232608162 passes foundations/locks with SDK execution still running
+at observation, not an overall admitted snapshot.
+
+Current validation: all 417 tooling checks pass with 19 explicit native skips;
 all 133 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
 and whitespace checks pass. The preceding byte-capture checkpoint compiled
 the original artifact package-acceptance project with freshly rebuilt SDK,

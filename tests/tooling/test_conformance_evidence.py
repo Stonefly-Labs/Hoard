@@ -1079,6 +1079,128 @@ class ConformanceInputTests(unittest.TestCase):
 
 
 class ConformanceRuntimeIngestionTests(unittest.TestCase):
+    def test_native_artifact_controller_joins_original_children_transfers_packets_and_explicit_execution(self):
+        import conformance_sources as sources
+        from conformance_case_catalog import ORIGINAL_ARTIFACT_PROOF_SOURCES
+        self.assertTrue(callable(getattr(sources, "native_artifact_controller_source", None)),
+                        "Artifact controller authority must reconstruct its original complete source graph independently.")
+        inputs = evidence.admit_entity("RunInputs", {**self.inputs, "profileId": "artifacts", "mode": "qualification"})
+        attempt = str(uuid.uuid4())
+        manifest = {"attemptId": attempt, "runId": inputs["runId"],
+                    "invocationGroupId": inputs["invocationGroupId"], "inputSha256": evidence.digest(inputs),
+                    "expected": [{"testIdentity": identity, "bindingId": provider}
+                                 for identity, (_, provider, _) in ORIGINAL_ARTIFACT_PROOF_SOURCES.items()]}
+        witnesses = [{
+            "testIdentity": identity, "bindingId": provider, "executionId": str(uuid.uuid4()),
+            "proofSha256": hashlib.sha256(identity.encode()).hexdigest(), "status": "Passed"}
+            for identity, (_, provider, _) in ORIGINAL_ARTIFACT_PROOF_SOURCES.items()]
+        observed = {"attemptId": attempt, "diagnosticCode": "None", "witnesses": witnesses,
+                    "proofs": {f'proof-{row["executionId"]}.json': row["proofSha256"] for row in witnesses}}
+        captures = [{**{key: row[key] for key in ("testIdentity", "executionId")},
+                     "runtimeProofSha256": row["proofSha256"], "sourceProofSha256": "a" * 64} for row in witnesses]
+        packets = {f"proofs/source-artifact-{attempt}-{index}.json": f"original-packet-{index}".encode()
+                   for index in range(16)}
+        proofs, transfers, children = {}, [], {}
+        for identity, (kind, provider, parameter) in ORIGINAL_ARTIFACT_PROOF_SOURCES.items():
+            if kind != "transfer":
+                children[identity] = {"producer": hashlib.sha256(identity.encode()).hexdigest()}
+                if kind == "crash":
+                    children[identity]["state"] = "b" * 64
+                continue
+            sequence = len(transfers) + 1
+            prefix = f"proofs/qualification-artifact-transfers/transfer-{provider}-{parameter}"
+            control = evidence.canonical_bytes({"childStartSha256": "c" * 64})
+            producer, composite = f"original-producer-{sequence}".encode(), f"original-composite-{sequence}".encode()
+            proofs.update({
+                prefix + "/native-execution.json": evidence.canonical_bytes({"sequence": sequence}),
+                prefix + "-native-inputs.json": evidence.canonical_bytes(inputs),
+                f"proofs/transfer-command-{sequence:04}.json": control,
+                f"proofs/execution-command-{sequence:04}.json": f"original-execution-{sequence}".encode(),
+                prefix + "/producer.json": producer, prefix + "/proof.json": composite})
+            transfers.append({
+                "provider": provider, "size": parameter, "controllerSha256": hashlib.sha256(control).hexdigest(),
+                "producerSha256": hashlib.sha256(producer).hexdigest(),
+                "proofSha256": hashlib.sha256(composite).hexdigest(), "childStartSha256": "c" * 64})
+        transfers.sort(key=lambda row: (row["provider"] != "local", row["size"]))
+        summary = evidence.canonical_bytes({
+            "qualification": False, "mode": "artifact-transfers", "code": "None",
+            "inputsSha256": evidence.digest(inputs), "transfers": transfers})
+        seal = b"original-held-output-index"
+        consumption = evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "runId": inputs["runId"],
+            "invocationGroupId": inputs["invocationGroupId"], "attemptId": attempt,
+            "inputsSha256": evidence.digest(inputs), "observations": captures,
+            "outputSealSha256": hashlib.sha256(seal).hexdigest()})
+        by_identity = {row["testIdentity"]: row for row in witnesses}
+        observations = []
+        for identity, (kind, provider, parameter) in sorted(ORIGINAL_ARTIFACT_PROOF_SOURCES.items()):
+            row = by_identity[identity]
+            hashes = children[identity] if kind != "transfer" else {"producer": next(
+                item["proofSha256"] for item in transfers if (item["provider"], item["size"]) == (provider, parameter))}
+            observations.append({"testIdentity": identity, "executionId": row["executionId"],
+                                 "runtimeProofSha256": row["proofSha256"], "sourceProofs": hashes})
+        receipt = evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "mode": "original-artifact-proofs",
+            "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"], "attemptId": attempt,
+            "inputsSha256": evidence.digest(inputs), "transferParentSha256": hashlib.sha256(summary).hexdigest(),
+            "observations": observations, "consumptionSha256": hashlib.sha256(consumption).hexdigest()})
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory).resolve()
+            (root / "proofs").mkdir()
+            run = object.__new__(sources.OwnedRun)
+            run.root, run.run_id, run.command_sequence = root, inputs["runId"], 99
+            for defect in (None, "summary", "consumption", "receipt", "runtime-proof", "late-controller",
+                           "transfer-failure", "children-failure", "seal-failure"):
+                originals = {
+                    "proofs/qualification-artifact-transfers.json": summary,
+                    f"proofs/artifact-source-capture-{attempt}.json": consumption,
+                    f"proofs/original-artifact-external-{attempt}.json": receipt}
+                for name, raw in originals.items():
+                    path = root / name
+                    if path.exists():
+                        path.chmod(0o600)
+                    path.write_bytes(raw + (b" " if defect == "summary" and name.endswith("transfers.json")
+                                           or defect == "consumption" and "/artifact-source-capture-" in name
+                                           or defect == "receipt" and "/original-artifact-external-" in name else b""))
+                    path.chmod(0o400)
+                changed = copy.deepcopy(observed)
+                if defect == "runtime-proof":
+                    changed["witnesses"][0]["proofSha256"] = "d" * 64
+
+                def original_execution(sequence):
+                    if sequence != 17:
+                        raise evidence.ConformanceError("OwnershipInvalid")
+                    return evidence.canonical_bytes({
+                        "startedMs": 900, "endedMs": 1001 if defect == "late-controller" else 950})
+
+                run.read_execution_record = original_execution
+                with self.subTest(defect=defect), mock.patch.object(
+                        sources, "native_artifact_transfer_controls",
+                        side_effect=evidence.ConformanceError("ProofMismatch") if defect == "transfer-failure" else None,
+                        return_value={"sourceProofs": proofs}) as transfer, mock.patch.object(
+                        sources, "artifact_original_child_sources",
+                        side_effect=evidence.ConformanceError("ProofMismatch") if defect == "children-failure" else None,
+                        return_value={"observations": children}) as child, mock.patch.object(
+                        sources, "artifact_source_observations", return_value=(captures, packets)), mock.patch.object(
+                        sources, "artifact_source_output_seal",
+                        side_effect=evidence.ConformanceError("ProofMismatch") if defect == "seal-failure" else None,
+                        return_value=seal) as output:
+                    if defect:
+                        with self.assertRaises(evidence.ConformanceError):
+                            sources.native_artifact_controller_source(
+                                run, inputs, manifest, changed, sequence=17, started_ms=100, ended_ms=1000)
+                    else:
+                        admitted = sources.native_artifact_controller_source(
+                            run, inputs, manifest, observed, sequence=17, started_ms=100, ended_ms=1000)
+                        self.assertEqual(admitted["sourceReceipt"], receipt)
+                        self.assertEqual(len(admitted["sourceProofs"]), 44)
+                        transfer.assert_called_once_with(run, inputs, started_ms=100, ended_ms=900)
+                        child.assert_called_once_with(
+                            root, inputs, attempt, namespace="qualification-artifact-transfers")
+                        self.assertEqual(output.call_args.kwargs["sequence"], 17)
+                        with self.assertRaises(TypeError):
+                            admitted["sourceProofs"]["replacement"] = b""
+
     def test_native_artifact_transfer_controls_require_fresh_complete_serial_joint_graphs(self):
         import conformance_sources as sources
         from conformance_execution import OwnedRun
@@ -1227,6 +1349,27 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             native.read_execution_record = lambda sequence: evidence.canonical_bytes(record)
             self.assertEqual(sources.artifact_source_output_seal(
                 native, inputs, manifest, observations, namespace="category-artifact-transfers"), seal_raw)
+            native.command_sequence = 2
+            reads = []
+
+            def original_record(sequence):
+                reads.append(sequence)
+                return evidence.canonical_bytes(record if sequence == 1 else {**record, "outputFiles": {}})
+
+            native.read_execution_record = original_record
+            with self.assertRaises(evidence.ConformanceError):
+                sources.artifact_source_output_seal(
+                    native, inputs, manifest, observations, namespace="category-artifact-transfers")
+            self.assertEqual(sources.artifact_source_output_seal(
+                native, inputs, manifest, observations, namespace="category-artifact-transfers", sequence=1), seal_raw)
+            self.assertEqual(reads, [2, 1])
+            for sequence in (0, True, 3):
+                with self.subTest(sequence=sequence), self.assertRaises(evidence.ConformanceError):
+                    sources.artifact_source_output_seal(
+                        native, inputs, manifest, observations, namespace="category-artifact-transfers", sequence=sequence)
+            self.assertEqual(reads, [2, 1])
+            native.command_sequence = 1
+            native.read_execution_record = lambda sequence: evidence.canonical_bytes(record)
             for mutation in ("foreign-root", "foreign-run", "wrong-scope", "missing-output", "missing-context",
                              "mutable-output", "rehashed-replacement"):
                 with self.subTest(seal=mutation):
@@ -2987,6 +3130,162 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 write(graph_path, evidence.canonical_bytes(graph))
                 with self.assertRaises(evidence.ConformanceError):
                     sources.native_metadata_recovery_controls(run, self.inputs, started_ms=9, ended_ms=110)
+
+    def test_native_artifact_controller_admission_binds_settings_inputs_output_and_original_command(self):
+        import conformance_case_catalog as catalog
+        import conformance_sources as sources
+        from xml.sax.saxutils import escape
+
+        self.category_history(profile="artifacts", mode="qualification")
+        self.inputs["packages"][0]["packageId"] = "Hoard.Testing.Conformance"
+        self.manifest["packages"][0]["id"] = "Hoard.Testing.Conformance"
+        self.manifest["expected"][0]["packageId"] = "Hoard.Testing.Conformance"
+        assembly_path = "candidate/Hoard.Artifacts.Tests.dll"
+        crash_path = ("candidate/tests/fixtures/artifacts/CrashRunner/bin/Release/net10.0/"
+                      "Hoard.Fixtures.Artifacts.CrashRunner.dll")
+        self.inputs["runtimeAssemblies"] = {
+            assembly_path: "e" * 64, crash_path: hashlib.sha256(b"original-crash-runner").hexdigest()}
+        self.manifest["assemblies"][0]["path"] = assembly_path
+        tests = {identity: (binding, catalog.category_runtime_cases("artifacts", binding)[identity])
+                 for binding, identity in catalog.category_execution_partitions("artifacts")["controller"]}
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+
+            def write(path, raw):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                if path.exists():
+                    path.chmod(0o600)
+                path.write_bytes(raw)
+                path.chmod(0o400)
+
+            write(root / crash_path, b"original-crash-runner")
+            write(root / "stores/candidate.NuGet.Config", evidence.synthetic_nuget_configuration(root / "feed/candidate"))
+            (root / "feed/candidate").mkdir(parents=True)
+            configurations = {family: root / "stores" / (family + ".json") for family in ("metadata", "artifacts")}
+            for path in configurations.values():
+                write(path, b"{}")
+            selected = {
+                identity: {str(configurations[family]): hashlib.sha256(b"{}").hexdigest()}
+                for identity, family in catalog.ORIGINAL_INSPECTION_WITNESSES.items()
+                if identity not in catalog.ORIGINAL_INSPECTION_LITERAL_WITNESSES}
+            self.inputs["configurationSha256"] = evidence.configuration_fingerprint(
+                evidence.verify_synthetic_source_mapping(root, "stores/candidate.NuGet.Config", "feed/candidate"),
+                inspection_inputs=selected)
+            self.owner["rootPathSha256"] = hashlib.sha256(str(root).encode()).hexdigest()
+            self.proof["ownerSha256"] = evidence.digest(self.owner)
+            transport = self.category_transport(None, selections=tests)
+            options = {**transport, "inputs": self.inputs,
+                       "expected_tests": {identity: (binding, "none") for identity, (binding, _) in tests.items()},
+                       "started_ms": 0, "ended_ms": 20}
+            observed = evidence.inspect_runtime_attempt(**options)["observation"]
+            manifest = evidence.load_json(transport["manifest_data"])
+            run = object.__new__(sources.OwnedRun)
+            run.root, run.run_id, run.root_id = root, self.inputs["runId"], self.owner["rootId"]
+            run.command_sequence, run.live_children = 99, lambda: frozenset()
+            write(root / "runtime-owner.json", transport["owner_data"])
+            write(root / f"runtime-input-{self.attempt}.json", transport["manifest_data"])
+            write(root / manifest["runInputsPath"], evidence.canonical_bytes(self.inputs))
+            context = sources.artifact_source_context(
+                run, self.inputs, manifest, namespace="qualification-artifact-transfers")
+            context_path = f"stores/artifact-source-context-{self.attempt}.json"
+            write(root / context_path, evidence.canonical_bytes(context))
+            variables = {
+                "HOARD_ARTIFACT_CRASH_RUNNER": str(root / crash_path),
+                "HOARD_ARTIFACT_CRASH_PROOFS": str(root / "stores" / ("original-artifact-" + self.attempt)),
+                "HOARD_ARTIFACT_TRANSFER_PROOFS": str(root / "proofs/qualification-artifact-transfers"),
+                "HOARD_ARTIFACT_RUN_ID": run.run_id,
+                "HOARD_ARTIFACT_SOURCE_CONTEXT": str(root / context_path)}
+            environment = "<EnvironmentVariables>" + "".join(
+                f"<{key}>{escape(value)}</{key}>" for key, value in variables.items()) + "</EnvironmentVariables>"
+            settings = root / "stores" / f"settings-{self.attempt}.runsettings"
+            settings_raw = sources.runtime_settings(
+                root, root / assembly_path, self.attempt, evidence.digest(manifest), evidence.digest(self.owner), environment)
+            write(settings, settings_raw)
+            facts = [{
+                "testIdentity": row["testIdentity"], "executionId": row["executionId"],
+                "runtimeProofSha256": row["proofSha256"], "sourceProofs": {"producer": "a" * 64}}
+                for row in observed["witnesses"]]
+            source_raw = evidence.canonical_bytes({"observations": facts})
+            source_path = f"proofs/original-artifact-external-{self.attempt}.json"
+            seal_path = f"proofs/artifact-source-seal-{self.attempt}.json"
+            graph = {
+                "proofs/qualification-artifact-transfers.json": b"original-summary",
+                **{f"proofs/qualification-artifact-transfers/transfer-{provider}-{size}/proof.json":
+                   f"original-{provider}-{size}".encode()
+                   for provider in ("local", "object") for size in (268435456, 4294967296)},
+                source_path: source_raw, seal_path: b"original-source-index"}
+            packets = {f"proofs/source-artifact-{self.attempt}-packet.json": b"original-capture"}
+            for path, raw in graph.items():
+                write(root / path, raw)
+            record = {
+                "schemaVersion": 1, "sequence": 17, "childPid": 123, "childStartSha256": "a" * 64,
+                "startedMs": 9, "endedMs": 12, "exitCode": 0, "diagnosticCode": "None",
+                "groupState": "Exited", "scope": "ordinary", "runId": run.run_id, "rootId": run.root_id,
+                "argvSha256": evidence.digest(sources.runtime_arguments(root / assembly_path, settings, tuple(tests))),
+                "cwdSha256": hashlib.sha256(str((root / assembly_path).parent).encode()).hexdigest(),
+                "inputFiles": {
+                    f"runtime-input-{self.attempt}.json": evidence.digest(manifest),
+                    "runtime-owner.json": evidence.digest(self.owner),
+                    manifest["runInputsPath"]: evidence.digest(self.inputs),
+                    settings.relative_to(root).as_posix(): hashlib.sha256(settings_raw).hexdigest(),
+                    assembly_path: "e" * 64, context_path: evidence.digest(context),
+                    crash_path: self.inputs["runtimeAssemblies"][crash_path],
+                    **{path: hashlib.sha256(raw).hexdigest() for path, raw in graph.items()
+                       if path.startswith("proofs/qualification-artifact-transfers")}},
+                "outputFiles": {seal_path: hashlib.sha256(graph[seal_path]).hexdigest()}}
+            native = sources.NativeCategorySources(
+                run, inspection_inputs=selected, inspection_configurations=configurations)
+            for defect in (None, "argv", "cwd", "input", "output", "witness-window", "source-failure"):
+                changed = copy.deepcopy(record)
+                if defect in ("argv", "cwd"):
+                    changed[defect + "Sha256"] = "0" * 64
+                elif defect == "input":
+                    changed["inputFiles"].pop(crash_path)
+                elif defect == "output":
+                    changed["outputFiles"][seal_path] = "0" * 64
+                elif defect == "witness-window":
+                    changed["endedMs"] = 9.5
+                run.read_execution_record = mock.Mock(return_value=evidence.canonical_bytes(changed))
+                execution = {
+                    "schemaVersion": 1, "qualification": False, "nativeContainment": True,
+                    "runId": run.run_id, "rootId": run.root_id, "invocationGroupId": self.inputs["invocationGroupId"],
+                    "attemptId": self.attempt, "purpose": "execution", "commandSequence": 17,
+                    "inputsSha256": evidence.digest(self.inputs), "executionRecordSha256": evidence.digest(changed),
+                    "manifestSha256": evidence.digest(manifest), "settingsSha256": hashlib.sha256(settings_raw).hexdigest()}
+                parent = {
+                    "schemaVersion": 1, "qualification": False, "nativeContainment": True,
+                    "profileId": "artifacts", "scopeId": "controller", "runId": run.run_id,
+                    "invocationGroupId": self.inputs["invocationGroupId"], "attemptId": self.attempt,
+                    "inputsSha256": evidence.digest(self.inputs), "manifestSha256": evidence.digest(manifest),
+                    "commandSequence": 17, "executionParentSha256": evidence.digest(execution),
+                    "sourceReceiptSha256": hashlib.sha256(source_raw).hexdigest(),
+                    "observations": sorted(
+                        ({**row, "bindingId": tests[row["testIdentity"]][0], "caseId": tests[row["testIdentity"]][1]}
+                         for row in facts), key=lambda row: row["testIdentity"])}
+                write(root / f"proofs/category-command-{self.attempt}-execution.json", evidence.canonical_bytes(execution))
+                write(root / f"proofs/category-source-{self.attempt}.json", evidence.canonical_bytes(parent))
+                with self.subTest(defect=defect), mock.patch.object(
+                        sources, "native_artifact_controller_source",
+                        side_effect=evidence.ConformanceError("ProofMismatch") if defect == "source-failure" else None,
+                        return_value={"sourceReceipt": source_raw, "sourceProofs": graph, "sourcePackets": packets}) as authority:
+                    if defect:
+                        with self.assertRaises(evidence.ConformanceError):
+                            native.ingest_attempt(category_scope=("artifacts", "controller"), **options)
+                    else:
+                        admitted = native.ingest_attempt(category_scope=("artifacts", "controller"), **options)
+                        self.assertEqual(set(admitted["sourceParents"].values()), {evidence.digest(parent)})
+                        self.assertEqual(len(record["inputFiles"]), 12)
+                        for path, raw in packets.items():
+                            self.assertEqual((root / path).read_bytes(), raw)
+                        history = evidence.CategoryRuntimeHistory(self.inputs, native_sources=native)
+                        result = history._ingest_parts(
+                            {"controller": {"attemptId": self.attempt, "tests": tests}},
+                            {"controller": transport}, 0, 20, 1)
+                        self.assertEqual(set(result[7].values()), {evidence.digest(parent)})
+                        self.assertIn(seal_path, result[2])
+                        self.assertEqual(authority.call_args.kwargs,
+                                         {"sequence": 17, "started_ms": 0, "ended_ms": 20})
+                        run.read_execution_record.assert_called_with(17)
 
     def test_native_inspection_admission_rechecks_the_complete_source_and_command_graph(self):
         import conformance_case_catalog as catalog

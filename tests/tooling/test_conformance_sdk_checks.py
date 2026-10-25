@@ -204,6 +204,56 @@ class SdkDiagnosticTests(unittest.TestCase):
                     history.interrupt_joint.assert_called_once_with("ProofMismatch")
                     history.finish_joint.assert_not_called()
 
+    def test_qualification_artifact_transfers_are_fresh_before_scopes_and_fail_closed(self):
+        for failed in (None, "transfers", "scope"):
+            root = self.directory / str(failed)
+            (root / "proofs").mkdir(parents=True)
+            run = SimpleNamespace(root=root)
+            sources = object.__new__(checks.NativeCategorySources)
+            sources._run = run
+            inputs = {"profileId": "artifacts", "mode": "qualification"}
+            candidate, calls = root / "candidate", []
+            history = unittest.mock.Mock()
+            history.begin_joint.side_effect = lambda *args, **options: calls.append("begin")
+            history.joint_partitions.return_value = {"controller": {}}
+            history.finish_joint.side_effect = lambda **options: calls.append("finish")
+
+            def transfers(actual_run, actual_inputs, actual_candidate, **options):
+                self.assertIs(actual_run, run)
+                self.assertIs(actual_inputs, inputs)
+                self.assertEqual(actual_candidate, candidate)
+                self.assertEqual(options, {"namespace": "qualification-artifact-transfers"})
+                calls.append("transfers")
+                if failed == "transfers":
+                    raise checks.evidence.ConformanceError("ProofMismatch")
+
+            def scope(*args, **options):
+                self.assertIs(options["native_sources"], sources)
+                self.assertEqual(options["run_inputs_path"], "proofs/category-artifacts-qualification-run-inputs.json")
+                calls.append("scope")
+                if failed == "scope":
+                    raise checks.evidence.ConformanceError("ProofMismatch")
+                return {"transport": {}, "summary": {}}
+
+            with self.subTest(failed=failed), patch.object(
+                    checks.evidence, "CategoryRuntimeHistory", return_value=history), patch.object(
+                    checks, "original_observation_inputs", return_value={}), patch.object(
+                    checks, "artifact_transfer_diagnostics", side_effect=transfers), patch.object(
+                    checks, "category_attempt", side_effect=scope), patch.object(
+                    checks, "_category_record", return_value={"qualification": False}) as record, contextlib.redirect_stdout(io.StringIO()):
+                options = {"inspection_cases": {}, "inspection_configurations": {}, "native_sources": sources}
+                if failed is None:
+                    self.assertFalse(checks.category_diagnostics(run, inputs, candidate, **options)["qualification"])
+                    self.assertEqual(calls, ["begin", "transfers", "scope", "finish"])
+                    history.interrupt_joint.assert_not_called()
+                else:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                        checks.category_diagnostics(run, inputs, candidate, **options)
+                    self.assertEqual(calls, ["begin", "transfers"] + (["scope"] if failed == "scope" else []))
+                    history.interrupt_joint.assert_called_once_with("ProofMismatch")
+                    history.finish_joint.assert_not_called()
+                    self.assertEqual(record.call_args.args[-1], "ProofMismatch")
+
     def _assert_category_batch(self, profile, witness_count):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases, expected_cases
         partitions = category_execution_partitions(profile)
@@ -1380,8 +1430,11 @@ class SdkDiagnosticTests(unittest.TestCase):
                         checks.admit_original_artifact_retention(original | change, provider, scenario)
 
     def test_original_external_packets_are_linked_to_exact_runtime_executions_without_session_claims(self):
+        import conformance_sources as native_sources
         self.assertTrue(callable(getattr(checks, "original_artifact_external_proofs", None)),
                         "Original controller producer packets must join the actual source execution before admission.")
+        self.assertTrue(callable(getattr(native_sources, "artifact_original_child_sources", None)),
+                        "Independent source admission must reconstruct every original crash and retained-child graph.")
         sources = checks.original_artifact_proof_sources()
         frozen = json.loads((ROOT / "tests/fixtures/conformance/baselines/inventory.json").read_bytes())
         expected = {name for case in frozen["entries"] if case["profileId"] == "artifacts"
@@ -1411,6 +1464,14 @@ class SdkDiagnosticTests(unittest.TestCase):
                 path.parent.mkdir(parents=True)
             path.write_bytes(checks.evidence.canonical_bytes(proof))
             paths[identity] = path
+        children = native_sources.artifact_original_child_sources(
+            self.directory, inputs, attempt, namespace="artifact-transfers")
+        self.assertEqual(len(children["observations"]), 12)
+        self.assertEqual(len(children["sourceProofs"]), 24)
+        for identity, hashes in children["observations"].items():
+            self.assertEqual(hashes["producer"], checks.evidence.file_sha256(paths[identity]))
+        with self.assertRaises(TypeError):
+            children["observations"][next(iter(children["observations"]))]["producer"] = "0" * 64
         transfer_receipt = {
             "qualification": False, "mode": "artifact-transfers", "code": "None",
             "inputsSha256": checks.evidence.digest(inputs),
@@ -1445,7 +1506,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 self.assertEqual(row["sourceProofs"]["producer"], checks.evidence.file_sha256(paths[row["testIdentity"]]))
                 self.assertNotIn("sessionOrigins", row)
             for mutation in ("execution", "runtime-proof", "status", "missing-file", "extra-file",
-                             "transfer-run", "transfer-parent"):
+                             "transfer-run", "transfer-parent", "child-run", "child-alias", "recovery-errors"):
                 with self.subTest(mutation=mutation), contextlib.ExitStack() as cleanup:
                     changed = [dict(row) for row in witnesses]
                     if mutation == "execution":
@@ -1468,6 +1529,22 @@ class SdkDiagnosticTests(unittest.TestCase):
                         before = path.read_bytes()
                         path.write_bytes(checks.evidence.canonical_bytes({"runId": str(uuid.uuid4())}))
                         cleanup.callback(path.write_bytes, before)
+                    elif mutation in ("child-run", "child-alias"):
+                        retained = [paths[identity] for identity, (kind, _, _) in sources.items() if kind == "retention"]
+                        path = retained[0]
+                        before = path.read_bytes()
+                        body = checks.evidence.load_json(before)
+                        identity = (run_id if mutation == "child-run" else
+                                    checks.evidence.load_json(retained[1].read_bytes())["runId"])
+                        body["runId"] = identity
+                        for observation in body["observations"]:
+                            observation["runId"] = identity
+                        path.write_bytes(checks.evidence.canonical_bytes(body))
+                        cleanup.callback(path.write_bytes, before)
+                    elif mutation == "recovery-errors":
+                        path = capture / "B0-recovery-errors.txt"
+                        path.write_bytes(b"raw child diagnostics must not enter source proof retention")
+                        cleanup.callback(path.write_bytes, b"")
                     else:
                         before = transfer_receipt_path.read_bytes()
                         transfer_receipt_path.write_bytes(checks.evidence.canonical_bytes(
@@ -1749,11 +1826,16 @@ class SdkDiagnosticTests(unittest.TestCase):
             self.assertFalse((root / "proofs/qualification-artifact-transfers.json").exists())
 
     def test_artifact_source_consumption_rechecks_all_four_original_transfer_graphs_and_propagates_failure(self):
-        run, inputs, manifest, ingested = SimpleNamespace(root=self.directory), {}, {}, {}
-        for failed in (False, True):
+        run, inputs, manifest, ingested = (
+            SimpleNamespace(root=self.directory), {}, {"attemptId": str(uuid.uuid4())}, {})
+        for failed in (None, "transfer", "children"):
             with self.subTest(failed=failed), patch.object(
                     checks, "native_artifact_transfer_source",
-                    side_effect=checks.evidence.ConformanceError("ProofMismatch") if failed else None) as transfer, patch.object(
+                    side_effect=checks.evidence.ConformanceError("ProofMismatch") if failed == "transfer" else None
+                    ) as transfer, patch.object(
+                    checks, "artifact_original_child_sources",
+                    side_effect=checks.evidence.ConformanceError("ProofMismatch") if failed == "children" else None
+                    ) as children, patch.object(
                     checks, "artifact_source_observations", return_value=([], {})) as capture, patch.object(
                     checks, "artifact_source_output_seal", return_value=b"original-index") as seal:
                 if failed:
@@ -1761,6 +1843,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                         checks._artifact_source_consumption(run, inputs, manifest, ingested, "category-artifact-transfers")
                     capture.assert_not_called()
                     seal.assert_not_called()
+                    self.assertEqual(children.call_count, int(failed == "children"))
                 else:
                     complete_inputs = {"runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4())}
                     complete_manifest = {"attemptId": str(uuid.uuid4())}
@@ -1773,6 +1856,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                                         for call in transfer.call_args_list))
                     capture.assert_called_once()
                     seal.assert_called_once()
+                    children.assert_called_once_with(
+                        run.root, complete_inputs, complete_manifest["attemptId"], namespace="category-artifact-transfers")
 
     def test_native_transfer_measurement_pins_original_inputs_controller_and_command_result(self):
         import conformance_sources as sources
@@ -4300,6 +4385,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         inputs = {**ConformanceAdmissionTests().inputs(), "profileId": "artifacts", "mode": "diagnostic"}
         (self.directory / "stores").mkdir()
         (self.directory / "proofs/category-artifact-transfers").mkdir(parents=True)
+        (self.directory / "proofs/qualification-artifact-transfers").mkdir()
         (self.directory / "proofs/artifact-transfers").mkdir()
         (self.directory / "runtime-owner.json").write_bytes(b"{}")
         (self.directory / "proofs/category-inputs.json").write_bytes(checks.evidence.canonical_bytes(inputs))
@@ -4317,9 +4403,12 @@ class SdkDiagnosticTests(unittest.TestCase):
         run.root, run.run_id, run.root_id = self.directory, inputs["runId"], uuid.uuid4().hex
         launches = []
         run.command = lambda arguments, **options: launches.append(options) or SimpleNamespace(exit_code=0)
-        for kind in ("category", "discovery", "legacy"):
+        for kind in ("category", "qualification", "discovery", "qualification-discovery", "legacy"):
+            selected_inputs = {**inputs, "mode": "qualification" if kind.startswith("qualification") else "diagnostic"}
+            (self.directory / "proofs/category-inputs.json").write_bytes(checks.evidence.canonical_bytes(selected_inputs))
             selected = {**manifest, "attemptId": str(uuid.uuid4()),
-                        "purpose": "discovery" if kind == "discovery" else "execution"}
+                        "purpose": "discovery" if kind.endswith("discovery") else "execution",
+                        "inputSha256": checks.evidence.digest(selected_inputs)}
             if kind == "legacy":
                 selected["expected"] = [{
                     "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
@@ -4330,10 +4419,15 @@ class SdkDiagnosticTests(unittest.TestCase):
                     {} if kind == "legacy" else {"category_scope": ("artifacts", "controller")}))
                 settings = ET.fromstring((self.directory / f'stores/settings-{selected["attemptId"]}.runsettings').read_bytes())
                 context_path = settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_ARTIFACT_SOURCE_CONTEXT")
-                if kind == "category":
+                namespace = ("qualification-artifact-transfers" if kind.startswith("qualification")
+                             else "category-artifact-transfers")
+                self.assertEqual(
+                    settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_ARTIFACT_TRANSFER_PROOFS"),
+                    str(self.directory / "proofs" / ("artifact-transfers" if kind == "legacy" else namespace)))
+                if kind in ("category", "qualification"):
                     context = checks.evidence.load_json(Path(context_path).read_bytes())
                     self.assertEqual(context["rootId"], run.root_id)
-                    self.assertEqual(context["inputsSha256"], checks.evidence.digest(inputs))
+                    self.assertEqual(context["inputsSha256"], checks.evidence.digest(selected_inputs))
                     self.assertEqual(set(context["cases"]), set(tests))
                     self.assertEqual(context["outputDirectory"], str(
                         self.directory / f'stores/artifact-source-capture-{selected["attemptId"]}'))
@@ -4341,8 +4435,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                         f'runtime-input-{selected["attemptId"]}.json', "runtime-owner.json",
                         "proofs/category-inputs.json", f'stores/settings-{selected["attemptId"]}.runsettings',
                         "Hoard.Artifacts.Tests.dll", f'stores/artifact-source-context-{selected["attemptId"]}.json',
-                        runner.name, "proofs/category-artifact-transfers.json",
-                        *(f"proofs/category-artifact-transfers/transfer-{provider}-{size}/proof.json"
+                        runner.name, f"proofs/{namespace}.json",
+                        *(f"proofs/{namespace}/transfer-{provider}-{size}/proof.json"
                           for provider in ("local", "object") for size in (268435456, 4294967296))}
                     self.assertEqual(set(launches[-1]["execution_inputs"]), expected)
                     self.assertTrue(launches[-1]["record_execution"])

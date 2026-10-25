@@ -2172,8 +2172,21 @@ Crash/retained-child validators are shared with independent source admission
 without changing their assertions. Qualification-origin transfer admission
 requires all four original graphs in serial sequence inside one observed joint
 window, with disjoint proof paths; rejection prevents publishing a transfer
-summary. Fresh native qualification execution, complete crash/retention
-corroboration and full artifact qualification remain closed.
+summary. At that checkpoint, fresh native qualification execution and complete
+crash/retention controller corroboration remained unbuilt.
+
+The controller source reader now independently joins all twelve original
+crash/retained-child observations, all four transfer graphs, sixteen consumed
+source packets and the original command's complete-set output index. Child
+run-ID reuse and nonempty recovery errors reject. Explicit original command
+sequences remain authoritative after later scopes. Native factory/history
+admission additionally checks exact settings, twelve immutable inputs, the
+sole index output, argv/cwd, owner and witness timing. SDK diagnostics now
+schedule a separate artifact qualification-input admission batch with fresh
+qualification-origin transfers and completion-time input recomputation; its
+summary remains explicitly non-qualifying. All 417 local tooling checks pass
+with 19 native skips. Actual Linux replay of this increment is pending; artifact
+QCs, full profile/evaluator work and the implementation stage remain incomplete.
 
 Exact source-index run40228504830 at `a9e75c8` fails one native foundation
 assertion comparing an empty `frozenset` to an empty tuple; its SDK and lock jobs

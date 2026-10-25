@@ -143,8 +143,11 @@ def artifact_source_observations(root, inputs, manifest, observed, *, namespace)
         retained_prefix="source-artifact-")
 
 
-def artifact_source_output_seal(run, inputs, manifest, observations, *, namespace):
+def artifact_source_output_seal(run, inputs, manifest, observations, *, namespace, sequence=None):
     if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    sequence = run.command_sequence if sequence is None else sequence
+    if type(sequence) is not int or not 0 < sequence <= run.command_sequence:
         raise evidence.ConformanceError("OwnershipInvalid")
     context = artifact_source_context(run, inputs, manifest, namespace=namespace)
     attempt = manifest["attemptId"]
@@ -166,7 +169,7 @@ def artifact_source_output_seal(run, inputs, manifest, observations, *, namespac
         "packets": evidence._record({
             "artifact-source-" + hashlib.sha256(row["testIdentity"].encode()).hexdigest() + ".json":
                 evidence._constant(row["sourceProofSha256"]) for row in observations})}, limit=64 * 1024)
-    record = evidence.load_json(run.read_execution_record(run.command_sequence))
+    record = evidence.load_json(run.read_execution_record(sequence))
     if (not isinstance(record, dict) or record.get("runId") != run.run_id
             or record.get("rootId") != run.root_id or record.get("scope") != "ordinary"
             or record.get("groupState") != "Exited" or type(record.get("exitCode")) is not int
@@ -355,6 +358,13 @@ def admit_artifact_transfer_namespace(inputs, namespace):
                 inputs.get("profileId") != "artifacts" or inputs.get("mode") != (
                     "qualification" if namespace == "qualification-artifact-transfers" else "diagnostic"))):
         raise evidence.ConformanceError("ProofMismatch")
+
+
+def artifact_category_transfer_namespace(inputs):
+    namespace = ("qualification-artifact-transfers" if inputs.get("mode") == "qualification"
+                 else "category-artifact-transfers")
+    admit_artifact_transfer_namespace(inputs, namespace)
+    return namespace
 
 
 def admit_artifact_transfer_producer(producer, command, provider, size, expected_hash, run_id, runtime):
@@ -555,6 +565,119 @@ def admit_original_artifact_retention(proof, provider, scenario):
         raise evidence.ConformanceError("ProofMismatch")
     for phase, observation in zip(("contained", "inspected"), proof["observations"]):
         admit_artifact_noncooperation(observation, provider, scenario, phase, proof["killedPid"], proof["runId"])
+
+
+def artifact_original_child_sources(root, inputs, attempt_id, *, namespace):
+    selected = _artifact_source_paths(root, attempt_id, namespace)
+    admit_artifact_transfer_namespace(inputs, namespace)
+    children = {identity: tuple(Path(path) for path in selected[identity])
+                for identity, (kind, _, _) in ORIGINAL_ARTIFACT_PROOF_SOURCES.items() if kind != "transfer"}
+    capture = root / "stores" / ("original-artifact-" + attempt_id)
+    no_symlinks(capture)
+    if not capture.is_dir():
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    expected = {path.name for paths in children.values() for path in paths}
+    found = set()
+    for path in capture.iterdir():
+        found.add(path.name)
+        if len(found) > len(expected):
+            raise evidence.ConformanceError("EvidenceIncomplete")
+    if found != expected:
+        raise evidence.ConformanceError("EvidenceIncomplete")
+    observations, proofs, child_runs = {}, {}, set()
+    for identity, paths in children.items():
+        kind, provider, parameter = ORIGINAL_ARTIFACT_PROOF_SOURCES[identity]
+        raw = tuple(read_bounded(path, 16384) for path in paths)
+        producer = evidence.load_json(raw[0])
+        hashes = {"producer": hashlib.sha256(raw[0]).hexdigest()}
+        if kind == "crash":
+            admit_original_artifact_crash(producer, raw[1], parameter)
+            if raw[2]:
+                raise evidence.ConformanceError("ProofMismatch")
+            hashes["state"] = hashlib.sha256(raw[1]).hexdigest()
+        else:
+            admit_original_artifact_retention(producer, provider, parameter)
+        if producer["runId"] == inputs["runId"] or producer["runId"] in child_runs:
+            raise evidence.ConformanceError("ProofMismatch")
+        child_runs.add(producer["runId"])
+        observations[identity] = MappingProxyType(hashes)
+        proofs.update({path.relative_to(root).as_posix(): data for path, data in zip(paths, raw, strict=True)})
+    return MappingProxyType({
+        "observations": MappingProxyType(observations), "sourceProofs": MappingProxyType(proofs)})
+
+
+def native_artifact_controller_source(run, inputs, manifest, observed, *, sequence, started_ms, ended_ms):
+    if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    started_ms, ended_ms = evidence._number(started_ms), evidence._number(ended_ms)
+    if (inputs["profileId"] != "artifacts" or inputs["mode"] != "qualification"
+            or inputs["runId"] != run.run_id or type(sequence) is not int
+            or not 0 < sequence <= run.command_sequence or ended_ms < started_ms):
+        raise evidence.ConformanceError("InputChanged")
+    witnesses = source_witnesses(inputs, manifest, observed, ORIGINAL_ARTIFACT_PROOF_SOURCES)
+    if any(row["bindingId"] != ORIGINAL_ARTIFACT_PROOF_SOURCES[identity][1]
+           for identity, row in witnesses.items()):
+        raise evidence.ConformanceError("ProofMismatch")
+    record = evidence.load_json(run.read_execution_record(sequence))
+    if not started_ms <= record["startedMs"] <= record["endedMs"] <= ended_ms:
+        raise evidence.ConformanceError("ProofMismatch")
+    namespace = "qualification-artifact-transfers"
+    transfer_sources = native_artifact_transfer_controls(
+        run, inputs, started_ms=started_ms, ended_ms=record["startedMs"])
+    proofs = dict(transfer_sources["sourceProofs"])
+    children = artifact_original_child_sources(run.root, inputs, manifest["attemptId"], namespace=namespace)
+    rows, by_transfer = [], {}
+    for provider in ("local", "object"):
+        for size in (268435456, 4294967296):
+            prefix = f"proofs/{namespace}/transfer-{provider}-{size}"
+            recipe = evidence.load_json(proofs[prefix + "/native-execution.json"])
+            controller = proofs[f'proofs/transfer-command-{recipe["sequence"]:04}.json']
+            row = {
+                "provider": provider, "size": size, "controllerSha256": hashlib.sha256(controller).hexdigest(),
+                "producerSha256": hashlib.sha256(proofs[prefix + "/producer.json"]).hexdigest(),
+                "proofSha256": hashlib.sha256(proofs[prefix + "/proof.json"]).hexdigest(),
+                "childStartSha256": evidence.load_json(controller)["childStartSha256"]}
+            rows.append(row)
+            by_transfer[provider, size] = row
+    summary_path = f"proofs/{namespace}.json"
+    summary = _readonly(run.root / summary_path, 64 * 1024)
+    if summary != evidence.canonical_bytes({
+            "qualification": False, "mode": "artifact-transfers", "code": "None",
+            "inputsSha256": evidence.digest(inputs), "transfers": rows}):
+        raise evidence.ConformanceError("ProofMismatch")
+    captured, packets = artifact_source_observations(run.root, inputs, manifest, observed, namespace=namespace)
+    seal = artifact_source_output_seal(run, inputs, manifest, captured, namespace=namespace, sequence=sequence)
+    consumption_path = f'proofs/artifact-source-capture-{manifest["attemptId"]}.json'
+    consumption = _readonly(run.root / consumption_path, 512 * 1024)
+    if consumption != evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "runId": inputs["runId"],
+            "invocationGroupId": inputs["invocationGroupId"], "attemptId": manifest["attemptId"],
+            "inputsSha256": evidence.digest(inputs), "observations": captured,
+            "outputSealSha256": hashlib.sha256(seal).hexdigest()}):
+        raise evidence.ConformanceError("ProofMismatch")
+    observations = []
+    for identity, (kind, provider, parameter) in sorted(ORIGINAL_ARTIFACT_PROOF_SOURCES.items()):
+        witness = witnesses[identity]
+        hashes = ({"producer": by_transfer[provider, parameter]["proofSha256"]} if kind == "transfer" else
+                  dict(children["observations"][identity]))
+        observations.append({
+            "testIdentity": identity, "executionId": witness["executionId"],
+            "runtimeProofSha256": witness["proofSha256"], "sourceProofs": hashes})
+    source_path = f'proofs/original-artifact-external-{manifest["attemptId"]}.json'
+    source = _readonly(run.root / source_path, 512 * 1024)
+    if source != evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "mode": "original-artifact-proofs",
+            "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+            "attemptId": manifest["attemptId"], "inputsSha256": evidence.digest(inputs),
+            "transferParentSha256": hashlib.sha256(summary).hexdigest(),
+            "observations": observations, "consumptionSha256": hashlib.sha256(consumption).hexdigest()}):
+        raise evidence.ConformanceError("ProofMismatch")
+    return MappingProxyType({
+        "sourceReceipt": source, "sourcePackets": MappingProxyType(dict(packets)),
+        "sourceProofs": MappingProxyType({
+            **proofs, **packets, summary_path: summary, consumption_path: consumption, source_path: source,
+            f'proofs/artifact-source-seal-{manifest["attemptId"]}.json': seal})})
 
 
 def admit_recovery_barrier(command, sequence, value, *, inspection=None):
@@ -1146,7 +1269,8 @@ class NativeCategorySources:
         inspected = evidence.inspect_runtime_attempt(**transport)
         graph = self._corroborate(inspected["inputs"], evidence.load_json(transport["manifest_data"]),
                                   inspected["observation"], category_scope=category_scope,
-                                  manifest_data=transport["manifest_data"], owner_data=transport["owner_data"])
+                                  manifest_data=transport["manifest_data"], owner_data=transport["owner_data"],
+                                  started_ms=transport["started_ms"], ended_ms=transport["ended_ms"])
         return MappingProxyType({**inspected["observation"], **graph})
 
     def metadata_controls(self, inputs, *, started_ms, ended_ms):
@@ -1162,7 +1286,8 @@ class NativeCategorySources:
         return MappingProxyType({
             key: MappingProxyType(value) for key, value in collected.items()})
 
-    def _corroborate(self, inputs, manifest, observed, *, category_scope, manifest_data, owner_data):
+    def _corroborate(self, inputs, manifest, observed, *, category_scope, manifest_data, owner_data,
+                     started_ms, ended_ms):
         run = self._run
         if not isinstance(category_scope, (tuple, list)) or len(category_scope) != 2:
             raise evidence.ConformanceError("WitnessMissing")
@@ -1170,9 +1295,10 @@ class NativeCategorySources:
         partitions = category_execution_partitions(profile, mode=inputs["mode"])
         inventory = profile == "metadata" and scope_id == "inventory-controller"
         metadata = profile == "metadata" and scope_id in ("recovery-controller", "inventory-controller")
+        artifact = profile == "artifacts" and scope_id == "controller"
         if (inputs["mode"] != "qualification" or inputs["profileId"] != profile
                 or inputs["runId"] != run.run_id or not isinstance(scope_id, str)
-                or not (scope_id.startswith("inspection-") or metadata) or scope_id not in partitions):
+                or not (scope_id.startswith("inspection-") or metadata or artifact) or scope_id not in partitions):
             raise evidence.ConformanceError("WitnessMissing")
         tests = {identity: (binding, category_runtime_cases(profile, binding, mode=inputs["mode"])[identity])
                  for binding, identity in partitions[scope_id]}
@@ -1190,7 +1316,22 @@ class NativeCategorySources:
                 mapping, inspection_inputs=self._selected):
             raise evidence.ConformanceError("InputChanged")
         attempt = evidence._uuid(manifest["attemptId"])
-        if metadata:
+        parent_raw = _readonly(run.root / f"proofs/category-source-{attempt}.json", 512 * 1024)
+        parent = evidence.load_json(parent_raw)
+        sequence = parent.get("commandSequence") if isinstance(parent, dict) else None
+        if type(sequence) is not int or not 0 < sequence <= run.command_sequence:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        record_raw = run.read_execution_record(sequence)
+        record = evidence.load_json(record_raw)
+        material = {}
+        if artifact:
+            material = native_artifact_controller_source(
+                run, inputs, manifest, observed, sequence=sequence, started_ms=started_ms, ended_ms=ended_ms)
+            source_raw = material["sourceReceipt"]
+            source = evidence.load_json(source_raw)
+            source_path = f"proofs/original-artifact-external-{attempt}.json"
+            observations, packets = source["observations"], material["sourcePackets"]
+        elif metadata:
             metadata_context = (metadata_inventory_context if inventory else metadata_recovery_context)(
                 run, inputs, manifest, ended_ms=time.monotonic() * 1000)
             selected = {identity: metadata_context["files"] for identity in tests}
@@ -1201,20 +1342,15 @@ class NativeCategorySources:
                         if scope_id.startswith("inspection-prepared-") else {identity: {} for identity in tests})
             observations, packets = inspection_observations(
                 run.root, inputs, manifest, observed, selected, {identity: pair[0] for identity, pair in tests.items()})
-        source = {
-            "schemaVersion": 1, "qualification": False, "mode": f"category-{profile}-{scope_id}",
-            "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
-            "attemptId": attempt, "inputsSha256": evidence.digest(inputs), "observations": observations}
-        source_raw = _readonly(run.root / f'proofs/{source["mode"]}-{attempt}.json', 512 * 1024)
-        if source_raw != evidence.canonical_bytes(source):
-            raise evidence.ConformanceError("ProofMismatch")
-        parent_raw = _readonly(run.root / f"proofs/category-source-{attempt}.json", 512 * 1024)
-        parent = evidence.load_json(parent_raw)
-        sequence = parent.get("commandSequence") if isinstance(parent, dict) else None
-        if type(sequence) is not int or not 0 < sequence <= run.command_sequence:
-            raise evidence.ConformanceError("OwnershipInvalid")
-        record_raw = run.read_execution_record(sequence)
-        record = evidence.load_json(record_raw)
+        if not artifact:
+            source = {
+                "schemaVersion": 1, "qualification": False, "mode": f"category-{profile}-{scope_id}",
+                "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+                "attemptId": attempt, "inputsSha256": evidence.digest(inputs), "observations": observations}
+            source_path = f'proofs/{source["mode"]}-{attempt}.json'
+            source_raw = _readonly(run.root / source_path, 512 * 1024)
+            if source_raw != evidence.canonical_bytes(source):
+                raise evidence.ConformanceError("ProofMismatch")
         execution_raw = _readonly(run.root / f"proofs/category-command-{attempt}-execution.json", 64 * 1024)
         expected_parent = {
             "schemaVersion": 1, "qualification": False, "nativeContainment": True,
@@ -1241,11 +1377,15 @@ class NativeCategorySources:
                 or {entry["packageId"] for entry in manifest["expected"]} != {"Hoard.Testing.Conformance"}):
             raise evidence.ConformanceError("ProofMismatch")
         assembly = run.root / manifest["assemblies"][0]["path"]
-        if assembly.name != ("Hoard.Conformance.Tests.dll" if metadata else "Hoard.Architecture.Tests.dll"):
+        if assembly.name != ("Hoard.Conformance.Tests.dll" if metadata else
+                             "Hoard.Artifacts.Tests.dll" if artifact else "Hoard.Architecture.Tests.dll"):
             raise evidence.ConformanceError("ProofMismatch")
         metadata_prefix = "metadata-inventory" if inventory else "metadata-recovery"
-        context = run.root / "stores" / f'{metadata_prefix if metadata else "inspection"}-context-{attempt}.json'
-        expected_context = (metadata_inventory_context if inventory else metadata_recovery_context)(
+        context_prefix = metadata_prefix if metadata else "artifact-source" if artifact else "inspection"
+        context = run.root / "stores" / f"{context_prefix}-context-{attempt}.json"
+        expected_context = artifact_source_context(
+            run, inputs, manifest, namespace="qualification-artifact-transfers") if artifact else (
+            metadata_inventory_context if inventory else metadata_recovery_context)(
             run, inputs, manifest, ended_ms=record["startedMs"]) if metadata else {
             "schemaVersion": 1, "runId": run.run_id, "attemptId": attempt,
             "inputsSha256": evidence.digest(inputs),
@@ -1254,6 +1394,14 @@ class NativeCategorySources:
             raise evidence.ConformanceError("ProofMismatch")
         variables = {}
         configuration_hashes = {}
+        if artifact:
+            crash_path, crash_assembly = _control_assembly(
+                run, inputs, "/tests/fixtures/artifacts/CrashRunner/bin/Release/net10.0/Hoard.Fixtures.Artifacts.CrashRunner.dll")
+            variables.update({
+                "HOARD_ARTIFACT_CRASH_RUNNER": str(crash_assembly),
+                "HOARD_ARTIFACT_CRASH_PROOFS": str(run.root / "stores" / ("original-artifact-" + attempt)),
+                "HOARD_ARTIFACT_TRANSFER_PROOFS": str(run.root / "proofs/qualification-artifact-transfers"),
+                "HOARD_ARTIFACT_RUN_ID": run.run_id})
         if scope_id.startswith("inspection-prepared-"):
             for family, variable in (("metadata", "HOARD_METADATA_BOUNDARIES"), ("artifacts", "HOARD_ARTIFACT_BOUNDARIES")):
                 path = self._configurations[family]
@@ -1263,7 +1411,8 @@ class NativeCategorySources:
                     raise evidence.ConformanceError("InputChanged")
                 variables[variable] = str(path)
                 configuration_hashes[path.relative_to(run.root).as_posix()] = hashed
-        variables[("HOARD_METADATA_INVENTORY_CONTEXT" if inventory else "HOARD_METADATA_RECOVERY_CONTEXT")
+        variables["HOARD_ARTIFACT_SOURCE_CONTEXT" if artifact else (
+                  "HOARD_METADATA_INVENTORY_CONTEXT" if inventory else "HOARD_METADATA_RECOVERY_CONTEXT")
                   if metadata else "HOARD_INSPECTION_CONTEXT"] = str(context)
         environment = "<EnvironmentVariables>" + "".join(
             f"<{key}>{escape(value)}</{key}>" for key, value in variables.items()) + "</EnvironmentVariables>"
@@ -1284,6 +1433,8 @@ class NativeCategorySources:
         fields = {"schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
                   "exitCode", "diagnosticCode", "groupState", "scope", "runId", "rootId",
                   "argvSha256", "cwdSha256", "inputFiles"}
+        if artifact:
+            fields.add("outputFiles")
         input_files = {
             f"runtime-input-{attempt}.json": hashlib.sha256(manifest_data).hexdigest(),
             "runtime-owner.json": hashlib.sha256(owner_data).hexdigest(),
@@ -1295,6 +1446,16 @@ class NativeCategorySources:
             for path in (expected_context["graphPath"],
                          expected_context["graphPath"].removesuffix("-native-executions.json") + "-native-inputs.json"):
                 input_files[path] = hashlib.sha256(_readonly(run.root / path, 16 * 1024 * 1024)).hexdigest()
+        if artifact:
+            input_files[crash_path] = inputs["runtimeAssemblies"][crash_path]
+            for path in ("proofs/qualification-artifact-transfers.json", *(
+                    f"proofs/qualification-artifact-transfers/transfer-{provider}-{size}/proof.json"
+                    for provider in ("local", "object") for size in (268435456, 4294967296))):
+                input_files[path] = hashlib.sha256(material["sourceProofs"][path]).hexdigest()
+            seal_path = f"proofs/artifact-source-seal-{attempt}.json"
+            if record.get("outputFiles") != {
+                    seal_path: hashlib.sha256(material["sourceProofs"][seal_path]).hexdigest()}:
+                raise evidence.ConformanceError("ProofMismatch")
         if (not isinstance(record, dict) or set(record) != fields
                 or type(record["schemaVersion"]) is not int or record["schemaVersion"] != 1
                 or type(record["sequence"]) is not int or record["sequence"] != sequence
@@ -1329,7 +1490,8 @@ class NativeCategorySources:
                 row["executionId"]: hashlib.sha256(parent_raw).hexdigest() for row in observations}),
             "sourceProofs": MappingProxyType({
                 f"proofs/category-source-{attempt}.json": parent_raw,
-                f'proofs/{source["mode"]}-{attempt}.json': source_raw,
+                source_path: source_raw,
                 f"proofs/category-command-{attempt}-execution.json": execution_raw,
-                f"proofs/execution-command-{sequence:04}.json": record_raw, **packets}),
+                f"proofs/execution-command-{sequence:04}.json": record_raw,
+                **material.get("sourceProofs", {}), **packets}),
         })

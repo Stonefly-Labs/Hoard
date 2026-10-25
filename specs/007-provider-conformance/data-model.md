@@ -527,9 +527,20 @@ Native qualification-origin transfer joins additionally require all four
 original graphs in increasing sequence, serial times within the actual common
 window and disjoint proof paths. Rejection prevents summary publication.
 Immutable proof bytes/seven control-role hash sets do not change case status.
-Actual fresh native qualification execution and complete crash/retention
-authority remain separate unbuilt gates; public schemas and status rules are
-unchanged.
+The complete independent controller source join now reconstructs all twelve
+original child observations from an exact 24-file capture inventory, rejecting
+duplicate/profile child run IDs and any recovery-error bytes. It also joins all
+four original qualification transfers, sixteen consumed source packets,
+canonical summary/consumption/external receipts and the original output index.
+The explicit original controller sequence remains authoritative after later
+commands. Native factory/history routing requires the exact original settings,
+twelve immutable inputs, sole output, argv/cwd, owner/manifest and nested
+witness times. Mode-derived qualification namespaces are shared by fresh
+transfer orchestration, runtime/context/input declaration and parent rechecks.
+Both category qualification input snapshots are recomputed at SDK completion.
+These private source proofs and the non-qualifying admission summary do not
+derive passing artifact QCs or a complete profile. Actual Linux validation of
+this increment remains pending; public schemas and status rules are unchanged.
 
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits

@@ -42,6 +42,7 @@ from conformance_sources import (
     METADATA_RECOVERY_SCENARIOS, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
     admit_sqlite_noncooperation, admit_transfer_measurement, admit_artifact_transfer_producer,
     admit_artifact_noncooperation, admit_original_artifact_crash, admit_original_artifact_retention,
+    artifact_original_child_sources, artifact_category_transfer_namespace,
     admit_artifact_transfer_namespace as _admit_transfer_namespace,
     artifact_source_context, artifact_source_observations, artifact_source_output_seal,
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
@@ -1990,6 +1991,7 @@ def _artifact_source_consumption(run, inputs, manifest, ingested, namespace):
     for provider in ("local", "object"):
         for size in (268435456, 4294967296):
             native_artifact_transfer_source(run, inputs, provider, size, namespace=namespace)
+    artifact_original_child_sources(run.root, inputs, manifest["attemptId"], namespace=namespace)
     captured, packets = artifact_source_observations(run.root, inputs, manifest, ingested, namespace=namespace)
     seal = artifact_source_output_seal(run, inputs, manifest, captured, namespace=namespace)
     return evidence.canonical_bytes({
@@ -2005,31 +2007,18 @@ def original_artifact_external_proofs(run, inputs, manifest, ingested, *, catego
     else:
         tests = _category_manifest_tests(category_scope, manifest)
         if (tuple(category_scope) != ("artifacts", "controller") or inputs["profileId"] != "artifacts"
-                or inputs["mode"] != "diagnostic"):
+                or inputs["mode"] not in ("diagnostic", "qualification")
+                or inputs["mode"] == "qualification" and type(run) is not OwnedRun):
             raise evidence.ConformanceError("WitnessMissing")
         identities = tuple(tests)
     witnesses = _source_witnesses(inputs, manifest, ingested, identities)
     if category_scope is not None and any(
             row["bindingId"] != tests[identity][0] for identity, row in witnesses.items()):
         raise evidence.ConformanceError("ProofMismatch")
-    capture = run.root / "stores" / ("original-artifact-" + manifest["attemptId"])
-    no_symlinks(capture)
-    if not capture.is_dir():
-        raise evidence.ConformanceError("EvidenceIncomplete")
-    expected_files = {
-        *(barrier + suffix for barrier in ("B0", "B1", "B2", "B3", "D0", "D1")
-          for suffix in (".json", "-state.json", "-recovery-errors.txt")),
-        *(f"noncooperative-{provider}-{scenario}.json" for provider in ("local", "object")
-          for scenario in ("source", "destination", "native")),
-    }
-    files = set()
-    for path in capture.iterdir():
-        files.add(path.name)
-        if len(files) > len(expected_files):
-            raise evidence.ConformanceError("EvidenceIncomplete")
-    if files != expected_files:
-        raise evidence.ConformanceError("EvidenceIncomplete")
-    transfer_namespace = "artifact-transfers" if category_scope is None else "category-artifact-transfers"
+    transfer_namespace = ("artifact-transfers" if category_scope is None
+                          else artifact_category_transfer_namespace(inputs))
+    children = artifact_original_child_sources(
+        run.root, inputs, manifest["attemptId"], namespace=transfer_namespace)
     transfer_raw = read_bounded(run.root / f"proofs/{transfer_namespace}.json", 64 * 1024)
     transfer_receipt = evidence.load_json(transfer_raw)
     if (not isinstance(transfer_receipt, dict) or set(transfer_receipt) != {
@@ -2048,24 +2037,14 @@ def original_artifact_external_proofs(run, inputs, manifest, ingested, *, catego
                        for key in ("controllerSha256", "producerSha256", "proofSha256", "childStartSha256"))):
             raise evidence.ConformanceError("ProofMismatch")
         transfers[row["provider"], row["size"]] = row
-    observations, transfer_hashes, child_runs = [], {}, set()
+    observations, transfer_hashes = [], {}
     for identity, (kind, provider, parameter) in sorted(original_artifact_proof_sources().items()):
         witness = witnesses[identity]
-        path = (capture / (parameter + ".json") if kind == "crash" else
-                capture / f"noncooperative-{provider}-{parameter}.json" if kind == "retention" else
-                run.root / f"proofs/{transfer_namespace}/transfer-{provider}-{parameter}/proof.json")
-        raw = read_bounded(path, 16384)
-        proof = evidence.load_json(raw)
-        source_proofs = {"producer": hashlib.sha256(raw).hexdigest()}
-        if kind == "crash":
-            state = read_bounded(capture / (parameter + "-state.json"), 16384)
-            admit_original_artifact_crash(proof, state, parameter)
-            if read_bounded(capture / (parameter + "-recovery-errors.txt"), 16384):
-                raise evidence.ConformanceError("ProofMismatch")
-            source_proofs["state"] = hashlib.sha256(state).hexdigest()
-        elif kind == "retention":
-            admit_original_artifact_retention(proof, provider, parameter)
-        else:
+        if kind == "transfer":
+            path = run.root / f"proofs/{transfer_namespace}/transfer-{provider}-{parameter}/proof.json"
+            raw = read_bounded(path, 16384)
+            proof = evidence.load_json(raw)
+            source_proofs = {"producer": hashlib.sha256(raw).hexdigest()}
             if parameter not in transfer_hashes:
                 transfer_hashes[parameter] = artifacts.expected_transfer_hash(parameter)
             if (not isinstance(proof, dict) or proof.get("expectedSha256") != transfer_hashes[parameter]
@@ -2077,10 +2056,8 @@ def original_artifact_external_proofs(run, inputs, manifest, ingested, *, catego
                                           peak_methods=("proc-status", "getrusage", "time-l", "time-v"))
             except RuntimeError:
                 raise evidence.ConformanceError("ProofMismatch") from None
-        if kind != "transfer":
-            if proof["runId"] == inputs["runId"] or proof["runId"] in child_runs:
-                raise evidence.ConformanceError("ProofMismatch")
-            child_runs.add(proof["runId"])
+        else:
+            source_proofs = dict(children["observations"][identity])
         observations.append({
             "testIdentity": identity, "executionId": witness["executionId"],
             "runtimeProofSha256": witness["proofSha256"], "sourceProofs": source_proofs})
@@ -2958,15 +2935,22 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
     write_new(run.root / f"proofs/category-{profile}{suffix}-plan.json", evidence.canonical_bytes({
         "schemaVersion": 1, "qualification": False, "inputsSha256": evidence.digest(inputs), "scopes": plan}))
     transports, scopes = {}, {}
-    if qualification and profile == "metadata":
-        print(json.dumps({"qualification": False, "phase": "metadata-qualification-recovery"}), flush=True)
+    if qualification:
+        print(json.dumps({
+            "qualification": False,
+            "phase": "metadata-qualification-recovery" if profile == "metadata" else "artifact-qualification-transfers"}),
+            flush=True)
         try:
-            sqlite_noncooperation(run, inputs, candidate, namespace="qualification-sqlite-native-noncooperation")
-            metadata_recovery_diagnostics(run, inputs, candidate, namespace="qualification-sqlite-recovery")
-            metadata_ownership_diagnostics(run, inputs, candidate)
-            metadata_package_consumer_diagnostics(run, inputs, candidate)
-            metadata_binary_diagnostics(run, inputs, candidate)
-            metadata_inventory_diagnostics(run, inputs, candidate)
+            if profile == "metadata":
+                sqlite_noncooperation(run, inputs, candidate, namespace="qualification-sqlite-native-noncooperation")
+                metadata_recovery_diagnostics(run, inputs, candidate, namespace="qualification-sqlite-recovery")
+                metadata_ownership_diagnostics(run, inputs, candidate)
+                metadata_package_consumer_diagnostics(run, inputs, candidate)
+                metadata_binary_diagnostics(run, inputs, candidate)
+                metadata_inventory_diagnostics(run, inputs, candidate)
+            else:
+                artifact_transfer_diagnostics(
+                    run, inputs, candidate, namespace=artifact_category_transfer_namespace(inputs))
         except evidence.ConformanceError as error:
             print(json.dumps({
                 "qualification": False, "phase": "category-control-failure",
@@ -3184,7 +3168,7 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
     }, limit=512 * 1024)
     if scope_id == "controller" and isinstance(run, OwnedRun):
         consumption_raw, packets = _artifact_source_consumption(
-            run, inputs, manifest, ingested, "category-artifact-transfers")
+            run, inputs, manifest, ingested, artifact_category_transfer_namespace(inputs))
         consumption_path = run.root / f'proofs/artifact-source-capture-{manifest["attemptId"]}.json'
         if (consumption_path.stat().st_mode & 0o777 != 0o400
                 or read_bounded(consumption_path, 512 * 1024) != consumption_raw
@@ -3476,8 +3460,12 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
         if (not isinstance(artifact_runner, Path) or not artifact_runner.is_relative_to(run.root)
                 or ".." in artifact_runner.parts or artifact_runner.name != "Hoard.Fixtures.Artifacts.CrashRunner.dll"):
             raise evidence.ConformanceError("InputChanged")
-        transfer_proofs = run.root / "proofs" / (
-            "artifact-transfers" if category_scope is None else "category-artifact-transfers")
+        transfer_namespace = "artifact-transfers" if category_scope is None else "category-artifact-transfers"
+        if category_scope is not None and isinstance(run, OwnedRun):
+            inputs = evidence.admit_entity("RunInputs", evidence.load_json(
+                read_bounded(run.root / manifest["runInputsPath"], 16 * 1024 * 1024)))
+            transfer_namespace = artifact_category_transfer_namespace(inputs)
+        transfer_proofs = run.root / "proofs" / transfer_namespace
         no_symlinks(artifact_runner)
         no_symlinks(transfer_proofs)
         if not artifact_runner.is_file() or not transfer_proofs.is_dir():
@@ -3568,8 +3556,8 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
         if not discovery and artifact_runner is not None and isinstance(run, OwnedRun):
             execution_inputs.extend((
                 f"stores/artifact-source-context-{attempt_id}.json", artifact_runner.relative_to(run.root).as_posix(),
-                "proofs/category-artifact-transfers.json",
-                *(f"proofs/category-artifact-transfers/transfer-{provider}-{size}/proof.json"
+                f"proofs/{transfer_namespace}.json",
+                *(f"proofs/{transfer_namespace}/transfer-{provider}-{size}/proof.json"
                   for provider in ("local", "object") for size in (268435456, 4294967296))))
             execution_outputs = (f"proofs/artifact-source-seal-{attempt_id}.json",)
     result = run.command(
@@ -3807,11 +3795,13 @@ def execute(repository, destination):
                 group_id=inputs["invocationGroupId"], ci_revision=ci_revision,
                 binding_sources=category_binding_sources[profile],
                 inspection_inputs=inspection_inputs, profile_id=profile)
-        metadata_qualification_inputs = make_inputs(
-            run, repository, candidate, sources, admitted_environment, identity, seal_sha,
-            group_id=inputs["invocationGroupId"], ci_revision=ci_revision,
-            binding_sources=category_binding_sources["metadata"], inspection_inputs=inspection_inputs,
-            profile_id="metadata", mode="qualification")
+        qualification_inputs = {
+            profile: make_inputs(
+                run, repository, candidate, sources, admitted_environment, identity, seal_sha,
+                group_id=inputs["invocationGroupId"], ci_revision=ci_revision,
+                binding_sources=category_binding_sources[profile], inspection_inputs=inspection_inputs,
+                profile_id=profile, mode="qualification")
+            for profile in ("metadata", "artifacts")}
         for name in sources:
             (candidate / name).chmod(0o400)
         for name in inputs["runtimeAssemblies"]:
@@ -3822,8 +3812,9 @@ def execute(repository, destination):
         write_new(run.root / "proofs/original-run-inputs.json", evidence.canonical_bytes(original_inputs))
         for profile, captured in category_inputs.items():
             write_new(run.root / f"proofs/category-{profile}-run-inputs.json", evidence.canonical_bytes(captured))
-        write_new(run.root / "proofs/category-metadata-qualification-run-inputs.json",
-                  evidence.canonical_bytes(metadata_qualification_inputs))
+        for profile, captured in qualification_inputs.items():
+            write_new(run.root / f"proofs/category-{profile}-qualification-run-inputs.json",
+                      evidence.canonical_bytes(captured))
         write_new(run.root / "runtime-owner.json", evidence.canonical_bytes({
             "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
             "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest(),
@@ -3993,7 +3984,7 @@ def execute(repository, destination):
             inspection_cases=inspection_inputs, inspection_configurations=inspection_configurations)
         print(json.dumps({"qualification": False, "phase": "metadata-qualification-admission"}), flush=True)
         metadata_qualification_admission = category_diagnostics(
-            run, metadata_qualification_inputs, candidate,
+            run, qualification_inputs["metadata"], candidate,
             inspection_cases=inspection_inputs, inspection_configurations=inspection_configurations,
             native_sources=NativeCategorySources(
                 run, inspection_inputs=inspection_inputs, inspection_configurations=inspection_configurations))
@@ -4004,6 +3995,12 @@ def execute(repository, destination):
         artifact_category = category_diagnostics(
             run, category_inputs["artifacts"], candidate,
             inspection_cases=inspection_inputs, inspection_configurations=inspection_configurations)
+        print(json.dumps({"qualification": False, "phase": "artifact-qualification-admission"}), flush=True)
+        artifact_qualification_admission = category_diagnostics(
+            run, qualification_inputs["artifacts"], candidate,
+            inspection_cases=inspection_inputs, inspection_configurations=inspection_configurations,
+            native_sources=NativeCategorySources(
+                run, inspection_inputs=inspection_inputs, inspection_configurations=inspection_configurations))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)
         post_identity = evidence.source_identity(repository, ci_revision=ci_revision)
@@ -4050,12 +4047,13 @@ def execute(repository, destination):
                 binding_sources=category_binding_sources[profile],
                 inspection_inputs=post_inspection_inputs, profile_id=profile)
             evidence.verify_input_recomputation(captured, category_post_inputs)
-        metadata_qualification_post_inputs = make_inputs(
-            run, repository, candidate, post_sources, post_environment, post_identity, seal_sha,
-            group_id=inputs["invocationGroupId"], ci_revision=ci_revision,
-            binding_sources=category_binding_sources["metadata"], inspection_inputs=post_inspection_inputs,
-            profile_id="metadata", mode="qualification")
-        evidence.verify_input_recomputation(metadata_qualification_inputs, metadata_qualification_post_inputs)
+        for profile, captured in qualification_inputs.items():
+            qualification_post_inputs = make_inputs(
+                run, repository, candidate, post_sources, post_environment, post_identity, seal_sha,
+                group_id=inputs["invocationGroupId"], ci_revision=ci_revision,
+                binding_sources=category_binding_sources[profile], inspection_inputs=post_inspection_inputs,
+                profile_id=profile, mode="qualification")
+            evidence.verify_input_recomputation(captured, qualification_post_inputs)
         native_provenance = evidence.load_json(read_bounded(
             run.root / "proofs/sqlite-native-provenance-completion.json", 64 * 1024))
         summary = {"qualification": False, "code": "None", "baselines": 6,
@@ -4065,6 +4063,7 @@ def execute(repository, destination):
                    "metadataQualificationAdmission": metadata_qualification_admission,
                    "artifactCategory": artifact_category,
                    "artifactCategoryTransfers": artifact_category_transfers,
+                   "artifactQualificationAdmission": artifact_qualification_admission,
                    "lockPreparation": lock_preparation,
                    "nativeNonCooperation": native_noncooperation,
                    "metadataRecovery": metadata_recovery,
