@@ -3802,7 +3802,9 @@ def main():
     except (evidence.ConformanceError, OSError, ValueError, zipfile.BadZipFile) as error:
         code = str(error) if isinstance(error, evidence.ConformanceError) else "PrerequisiteMissing"
         status = evidence.failure_status(code)
-        print(json.dumps({"qualification": False, "status": status, "code": code}))
+        print(json.dumps({
+            "qualification": False, "status": status, "code": code,
+            **(error.runtime_diagnostic if isinstance(error, _RuntimeObservationError) else {})}))
         return 2 if status == "Incomplete" else 1
 
 

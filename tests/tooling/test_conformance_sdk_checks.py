@@ -4458,6 +4458,15 @@ class SdkDiagnosticTests(unittest.TestCase):
         raw = json.dumps(observed).encode()
         self.assertLessEqual(len(raw), 1024)
         self.assertNotIn(b"PrivateCanary", raw)
+        output = io.StringIO()
+        with patch.object(sys, "argv", ["conformance_sdk_checks.py", "--evidence", "unused"]), \
+                patch.object(checks, "execute", side_effect=raised.exception), contextlib.redirect_stdout(output):
+            exit_code = checks.main()
+        self.assertEqual(exit_code, 2)
+        self.assertEqual(json.loads(output.getvalue()), {
+            "qualification": False, "status": "Incomplete", "code": "EvidenceIncomplete", **observed})
+        self.assertNotIn("PrivateCanary", output.getvalue())
+        self.assertLessEqual(len(output.getvalue().encode()), 1024)
 
     def test_safe_reads_reject_oversized_and_linked_diagnostics(self):
         path = self.directory / "proof.json"

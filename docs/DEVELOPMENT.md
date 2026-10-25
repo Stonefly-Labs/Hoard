@@ -8871,6 +8871,28 @@ checks (364 passed/seventeen native macOS skips), inventory/catalog and patch
 checks. This enables diagnosis of the pending native failure, not a claimed
 repair or qualifying result.
 
+Exact `564c67ff384b1cdf93cc8eb7944e725d1073df73`, run
+[40193163127](https://github.com/Stonefly-Labs/Hoard/actions/runs/40193163127),
+now passes all three jobs and 272 foundations without skips, independently
+admitting both complete batches plus the fresh metadata-input stall and all
+ten recovery barriers/walkthrough. Controller/start and seed/readback hashes
+are disjoint from earlier harness controls. Metadata input
+`cee1270735cad75aa57f343da95f2f6128ae1c5e0b702d61e0f6bb3adff4200f`;
+result `b39503b9196fca72c6c9a96bc92e16a37e5556d2f8827e71e28900802454e6cc`;
+recovery summary `e4f96944ee4e7e370db20dc285ca2cbc8a7330969513de507f0beda6d1342d7a`.
+The 121 scopes/1,684 witnesses and both incomplete category states remain
+unchanged; actual controls are not yet imported as passing case obligations.
+
+Later `f5daff9`, run 40194969166, passes 273 foundations and lock replay but
+fails earlier during original-wrapper observations, before category execution.
+This is not the same failing phase or evidence of a deterministic controller
+regression. Its top-level CLI path discarded the bounded unexpected-result
+context added for category failures. A main-path regression reproduces that
+loss; the CLI now preserves the same <=1KiB closed/hash-only context without
+changing exit/status/admission policy. All 381 tooling checks, frozen inventory/
+catalog and patch checks pass. The intermittent failure's cause and native
+verification of this final projection remain unresolved.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

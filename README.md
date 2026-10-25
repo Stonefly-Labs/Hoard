@@ -1968,6 +1968,12 @@ Their first native run (`40192845240` at `fffaf6f`) reached metadata batching
 but ended `EvidenceIncomplete`; it is not admitted. Native category failures
 now distinguish scope execution from joint admission and retain only closed
 codes/counts and up to four mismatched test-identity hashes, never raw messages.
+The subsequent exact `564c67f`, run
+[40193163127](https://github.com/Stonefly-Labs/Hoard/actions/runs/40193163127),
+now independently admits both complete batches and the fresh metadata-input
+stall plus ten recovery barriers/walkthrough. All obligations remain diagnostic.
+A later run failed earlier in original-wrapper execution; the CLI now preserves
+the same bounded unexpected-result context outside category batches too.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

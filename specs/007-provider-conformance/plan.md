@@ -6041,6 +6041,23 @@ failure paths pass all 381 tooling checks (364 passed/seventeen native macOS
 skips), frozen inventory/catalog and patch checks. Root-cause repair and native
 admission remain outstanding.
 
+Subsequent exact `564c67ff384b1cdf93cc8eb7944e725d1073df73`, run
+[40193163127](https://github.com/Stonefly-Labs/Hoard/actions/runs/40193163127),
+independently passes all three jobs/272 foundations without skips, both
+complete batches (121 scopes/1,684 witnesses) and fresh metadata-input native
+stall plus ten barriers/walkthrough. New controller/start and seed/readback
+hashes differ from old harness controls. Metadata input
+`cee1270735cad75aa57f343da95f2f6128ae1c5e0b702d61e0f6bb3adff4200f`;
+result `b39503b9196fca72c6c9a96bc92e16a37e5556d2f8827e71e28900802454e6cc`;
+recovery summary `e4f96944ee4e7e370db20dc285ca2cbc8a7330969513de507f0beda6d1342d7a`.
+Control import and category qualification remain unimplemented; no markers
+advance. Later `f5daff9` run 40194969166 fails earlier in original-wrapper
+execution, not the metadata category. Its top-level error path still discarded
+bounded runtime context; a red regression reproduces that loss and the CLI now
+preserves the same <=1KiB closed/hash-only fields. All 381 tooling checks and
+inventory/catalog/patch checks pass. The intermittent cause and native
+verification of the final projection remain unresolved.
+
 
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately

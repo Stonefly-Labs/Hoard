@@ -99,6 +99,11 @@ closed catalog scope IDs/codes. Unexpected runtime results additionally retain
 only observed code/exit, state/mismatch counts and up to four identity hashes;
 raw test/failure text and private paths remain excluded. This diagnostic limit
 never truncates the actual evidence or admits an incomplete inventory.
+The CLI's final failure record also preserves that bounded unexpected-result
+context for non-category runtime attempts; exit/status rules remain unchanged.
+Fresh metadata-input controls and both complete batches are independently
+admitted at exact `564c67f`, run 40193163127 (three jobs/272 foundations without
+skips). They remain non-qualifying until control import is implemented.
 
 For category discovery and execution, an available native command record is
 independently joined to the exact run/root/sequence, argv/cwd hashes, PID/start,
