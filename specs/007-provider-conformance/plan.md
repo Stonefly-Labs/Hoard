@@ -6264,6 +6264,21 @@ witnesses/five parents; actual native confirmation is pending, not claimed.
 Default admission, memory exclusions, diagnostic outputs and all remaining task/
 profile/QC gates are unchanged.
 
+The next MP-37 prerequisite closes native expected-timeout input provenance.
+The executor previously skipped post-input verification whenever a command
+failed, including the intentionally timed-out native-stall proof. After exact
+settled containment it now rechecks those immutable inputs in at most five
+seconds within the remaining profile budget/cleanup reserve. Modified or
+restored-byte inputs yield `InputChanged`, not an acceptable expected deadline.
+The stall command snapshots the actual assembly/current-input document and
+retains its original native execution. A create-new hash-only graph independently
+joins exact argv/cwd/input/controller bytes to that record, with expected-deadline
+admission explicit and separate from normal successful-control admission.
+Portable missing-attestation/snapshot regressions fail before repair and pass
+afterwards across harness/diagnostic/qualification namespaces. The extended
+actual Linux watchdog test remains skipped locally; 388 tooling checks pass
+with 17 native skips. No MP-37 source/case import or native success is claimed.
+
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately
 packable `Hoard.Testing.Conformance` library supplies the common consumers,

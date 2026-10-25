@@ -1805,6 +1805,24 @@ class SdkDiagnosticTests(unittest.TestCase):
             with self.assertRaisesRegex(checks.evidence.ConformanceError, "OwnershipInvalid"):
                 sources.native_control_record(
                     run, 3, raw, arguments=arguments, cwd=cwd, input_files=input_files)
+            run.read_execution_record.side_effect = None
+            timed_out = {key: value for key, value in control.items() if key != "barrier"}
+            timed_out["diagnosticCode"] = "DeadlineExceeded"
+            timeout_raw = checks.evidence.canonical_bytes(timed_out)
+            timeout_native = checks.evidence.canonical_bytes({
+                **record, "diagnosticCode": "DeadlineExceeded",
+                "controlRecordSha256": hashlib.sha256(timeout_raw).hexdigest()})
+            run.read_execution_record.return_value = timeout_native
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                sources.native_control_record(
+                    run, 3, timeout_raw, arguments=arguments, cwd=cwd, input_files=input_files)
+            self.assertEqual(sources.native_control_record(
+                run, 3, timeout_raw, arguments=arguments, cwd=cwd, input_files=input_files,
+                diagnostic_code="DeadlineExceeded"), timeout_native)
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                sources.native_control_record(
+                    run, 3, raw, arguments=arguments, cwd=cwd, input_files=input_files,
+                    diagnostic_code="DeadlineExceeded")
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "OwnershipInvalid"):
             sources.native_control_record(run, 3, raw, arguments=arguments, cwd=cwd, input_files=input_files)
 
@@ -4167,14 +4185,23 @@ class SdkDiagnosticTests(unittest.TestCase):
             with self.subTest(controller=field), self.assertRaisesRegex(
                     checks.evidence.ConformanceError, "ProofMismatch"):
                 checks.admit_sqlite_noncooperation(observed, changed, "a" * 64)
-        for namespace in ("sqlite-native-noncooperation", "category-sqlite-native-noncooperation"):
+        import conformance_sources as sources
+
+        for namespace in ("sqlite-native-noncooperation", "category-sqlite-native-noncooperation",
+                          "qualification-sqlite-native-noncooperation"):
             root = self.directory / namespace
             (root / "stores").mkdir(parents=True)
             (root / "proofs").mkdir()
-            inputs = {"profileId": "metadata", "mode": "diagnostic"}
+            assembly_path = (Path("candidate") / checks.TESTS / checks.PACKAGE_TEST_OUTPUT
+                             / "Release/net10.0/Hoard.Conformance.Tests.dll").as_posix()
+            inputs = {
+                "profileId": "metadata", "mode": "qualification" if namespace.startswith("qualification-") else "diagnostic",
+                "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+                "runtimeAssemblies": {assembly_path: "a" * 64}}
             producer = {**observed, "inputsSha256": checks.evidence.digest(inputs)}
             record = {**command, "sequence": 5}
             invocations = []
+            original_records = {}
 
             def execute(arguments, **options):
                 invocations.append((arguments, options))
@@ -4182,15 +4209,31 @@ class SdkDiagnosticTests(unittest.TestCase):
                 self.assertEqual(Path(arguments[4]), root / f"stores/{namespace}")
                 self.assertEqual(arguments[-1], checks.evidence.digest(inputs))
                 self.assertEqual(options["cache_id"], namespace)
+                self.assertIs(options.get("record_execution"), True)
+                input_path = f"proofs/{namespace}-native-inputs.json"
+                self.assertEqual(options["execution_inputs"], (
+                    Path(arguments[1]).relative_to(root).as_posix(), input_path))
+                self.assertEqual((root / input_path).read_bytes(), checks.evidence.canonical_bytes(inputs))
+                self.assertEqual((root / input_path).stat().st_mode & 0o777, 0o400)
                 Path(arguments[3]).write_bytes(checks.evidence.canonical_bytes(producer))
                 (root / "proofs/recovery-command-0005.json").write_bytes(
                     checks.evidence.canonical_bytes(record))
+                original_records[5] = checks.evidence.canonical_bytes({
+                    **record, "runId": run.run_id, "rootId": run.root_id,
+                    "argvSha256": checks.evidence.digest(arguments),
+                    "cwdSha256": hashlib.sha256(str(options["cwd"].absolute()).encode()).hexdigest(),
+                    "controlRecordSha256": checks.evidence.digest(record),
+                    "inputFiles": {assembly_path: "a" * 64, input_path: checks.evidence.digest(inputs)}})
                 raise checks.evidence.ConformanceError("DeadlineExceeded")
 
-            run = SimpleNamespace(root=root, command_sequence=4, command=execute, live_children=lambda: ())
+            run = SimpleNamespace(
+                root=root, run_id=inputs["runId"], root_id=str(uuid.uuid4()),
+                command_sequence=4, command=execute, live_children=lambda: (),
+                read_execution_record=lambda sequence: original_records[sequence])
             with self.subTest(namespace=namespace), patch.object(
                     checks, "require_sqlite_environment"), patch.object(
-                    checks.evidence, "package_identity", return_value={"sha256": "f" * 64}):
+                    checks.evidence, "package_identity", return_value={"sha256": "f" * 64}), patch.object(
+                    checks, "OwnedRun", type(run)), patch.object(sources, "OwnedRun", type(run)):
                 result = checks.sqlite_noncooperation(
                     run, inputs, root / "candidate", namespace=namespace)
                 self.assertFalse(result["qualification"])
@@ -4198,6 +4241,14 @@ class SdkDiagnosticTests(unittest.TestCase):
                 self.assertEqual(result["producerSha256"], checks.evidence.digest(producer))
                 self.assertEqual(result["controllerSha256"], checks.evidence.digest(record))
                 self.assertEqual(len(invocations), 1)
+                graph_path = root / f"proofs/{namespace}-native-executions.json"
+                graph = checks.evidence.load_json(graph_path.read_bytes())
+                self.assertFalse(graph["qualification"])
+                self.assertEqual(graph["sequence"], 5)
+                self.assertEqual(graph["executionSha256"], hashlib.sha256(original_records[5]).hexdigest())
+                self.assertEqual(graph["producerSha256"], checks.evidence.digest(producer))
+                self.assertEqual(graph["inputsPath"], f"proofs/{namespace}-native-inputs.json")
+                self.assertEqual(graph_path.stat().st_mode & 0o777, 0o400)
 
     def test_native_noncooperation_cannot_turn_an_exit_setup_failure_or_live_child_into_success(self):
         for outcome, expected in (
@@ -4205,6 +4256,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 ("missing-proof", "OutputLimitExceeded"), ("live-child", "CleanupIncomplete")):
             root = self.directory / outcome
             (root / "stores").mkdir(parents=True)
+            (root / "proofs").mkdir()
             command = unittest.mock.Mock(return_value=SimpleNamespace(exit_code=0))
             if outcome != "normal-exit":
                 command.side_effect = checks.evidence.ConformanceError(

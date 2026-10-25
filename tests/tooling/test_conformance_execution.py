@@ -408,12 +408,19 @@ print('{"event":"control","code":"None","value":1}')
     @unittest.skipUnless(NATIVE_CONTAINMENT, "Native process-group confinement requires Linux.")
     def test_watchdog_terminates_only_owned_process_tree_and_confirms_exit(self):
         run = self.workspace()
+        input_file = run.root / "stores/command-input.json"
+        input_file.write_bytes(b"one")
+        input_file.chmod(0o400)
         for code in (
                 'import subprocess,sys,time; '
                 'subprocess.Popen([sys.executable,"-c","import time; time.sleep(60)"]); time.sleep(60)',
                 "import os,time; os.close(1); os.close(2); time.sleep(60)"):
-            with self.subTest(code=code), self.assertRaisesRegex(ConformanceError, "DeadlineExceeded"):
-                run.command([sys.executable, "-c", code], scope="recovery", timeout=0.2)
+            with self.subTest(code=code), mock.patch.object(
+                    run, "_capture_execution_inputs", wraps=run._capture_execution_inputs) as capture:
+                with self.assertRaisesRegex(ConformanceError, "DeadlineExceeded"):
+                    run.command([sys.executable, "-c", code], scope="recovery", timeout=0.2,
+                                record_execution=True, execution_inputs=("stores/command-input.json",))
+                self.assertEqual(capture.call_count, 2)
         self.assertFalse(run.live_children())
         for sequence in (1, 2):
             self.assertEqual(json.loads((run.root / "diagnostics" / f"command-{sequence:04}.jsonl").read_bytes())["code"],
@@ -428,8 +435,21 @@ print('{"event":"control","code":"None","value":1}')
             self.assertEqual(receipt["diagnosticCode"], "DeadlineExceeded")
             self.assertEqual(receipt["groupState"], "Exited")
             self.assertGreaterEqual(receipt["endedMs"] - receipt["startedMs"], 200)
+            native = json.loads(run.read_execution_record(sequence))
+            self.assertEqual(native["controlRecordSha256"], hashlib.sha256(
+                (run.root / "proofs" / f"recovery-command-{sequence:04}.json").read_bytes()).hexdigest())
+            self.assertEqual(native["inputFiles"], {"stores/command-input.json": hashlib.sha256(b"one").hexdigest()})
+        with self.assertRaisesRegex(ConformanceError, "InputChanged"):
+            run.command([
+                sys.executable, "-c",
+                'from pathlib import Path; import time; p = Path("stores/command-input.json"); '
+                'p.chmod(0o600); p.write_bytes(b"two"); p.write_bytes(b"one"); p.chmod(0o400); time.sleep(60)',
+            ], cwd=run.root, scope="recovery", timeout=1, record_execution=True,
+                execution_inputs=("stores/command-input.json",))
+        self.assertEqual(json.loads(run.read_execution_record(3))["diagnosticCode"], "InputChanged")
+        self.assertFalse(run.live_children())
         self.assertEqual(run.command([sys.executable, "-c", "pass"], scope="recovery", timeout=5).exit_code, 0)
-        normal = json.loads((run.root / "proofs/recovery-command-0003.json").read_bytes())
+        normal = json.loads((run.root / "proofs/recovery-command-0004.json").read_bytes())
         self.assertEqual((normal["exitCode"], normal["diagnosticCode"], normal["groupState"]),
                          (0, "None", "Exited"))
         run.transition("Settling")

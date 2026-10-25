@@ -9155,6 +9155,27 @@ source parents, with a modeled target of 79/14/9/0. Actual native confirmation i
 pending; no modeled UUID is admitted as a native receipt. All 388 tooling checks
 pass with 17 explicit macOS-native skips. Full profile/QC work remains unfinished.
 
+The next native-stall prerequisite retains the original executor command for its
+expected deadline, with the actual test assembly and a create-new immutable
+current-input document in the pre/post snapshot map. Previously post-input
+verification ran only when no failure existed: a deliberately timed-out command
+could therefore retain pre-input hashes without a post-containment check. A
+settled `DeadlineExceeded` now gets a fresh at-most-five-second verification
+window, still capped by the profile deadline and cleanup reserve. Restored-byte
+rewrites or other changed inputs become `InputChanged`, not the expected timeout.
+Retained/live groups and unrelated failure handling are unchanged.
+
+The native-stall producer independently joins its exact arguments, working
+directory, input map and controller bytes to the executor-held original record,
+requiring the explicit expected deadline. Normal source corroboration still
+requires `None`; it cannot inherit this exception. Its create-new hash-only graph
+remains non-qualifying and is not yet imported as MP-37 case evidence. Portable
+regressions fail first for omitted native snapshots and missing expected-deadline
+corroboration, then pass for all three namespaces. The existing Linux watchdog
+regression now checks post-timeout reads and rejects changed/restored inputs;
+that native extension is explicitly skipped on macOS, not claimed executed.
+All 388 tooling checks pass with 17 native skips; exact Linux replay is pending.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

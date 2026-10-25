@@ -886,12 +886,16 @@ def sqlite_noncooperation(run, inputs, candidate, *, namespace="sqlite-native-no
     inputs_sha256 = evidence.digest(inputs)
     provider_sha = evidence.package_identity(
         run.root / "feed/candidate", "Hoard.Fixtures.Metadata.Sqlite", "0.1.0")["sha256"]
+    assembly_path = assembly.relative_to(run.root).as_posix()
+    inputs_path = f"proofs/{namespace}-native-inputs.json"
+    write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
+    arguments = ["dotnet", str(assembly), "sqlite-native-noncooperation", str(output),
+                 str(parent), str(candidate), provider_sha, inputs_sha256]
     sequence = run.command_sequence + 1
     try:
         run.command(
-            ["dotnet", str(assembly), "sqlite-native-noncooperation", str(output),
-             str(parent), str(candidate), provider_sha, inputs_sha256],
-            cwd=runtime, scope="recovery", timeout=45, cache_id=namespace)
+            arguments, cwd=runtime, scope="recovery", timeout=45, cache_id=namespace,
+            record_execution=True, execution_inputs=(assembly_path, inputs_path))
     except evidence.ConformanceError as error:
         if str(error) != "DeadlineExceeded":
             raise
@@ -907,6 +911,18 @@ def sqlite_noncooperation(run, inputs, candidate, *, namespace="sqlite-native-no
     if command["sequence"] != sequence:
         raise evidence.ConformanceError("ProofMismatch")
     output.chmod(0o400)
+    if isinstance(run, OwnedRun):
+        native_raw = native_control_record(
+            run, sequence, command_raw, arguments=arguments, cwd=runtime,
+            input_files={assembly_path: inputs["runtimeAssemblies"][assembly_path], inputs_path: inputs_sha256},
+            diagnostic_code="DeadlineExceeded")
+        write_new(run.root / f"proofs/{namespace}-native-executions.json", evidence.canonical_bytes({
+            "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+            "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": inputs_sha256,
+            "assemblyPath": assembly_path, "inputsPath": inputs_path, "sequence": sequence,
+            "producerSha256": hashlib.sha256(observed_raw).hexdigest(),
+            "controllerSha256": hashlib.sha256(command_raw).hexdigest(),
+            "executionSha256": hashlib.sha256(native_raw).hexdigest()}))
     return {
         "qualification": False, "mode": "native-noncooperation", "code": "None",
         "inputsSha256": inputs_sha256, "producerSha256": hashlib.sha256(observed_raw).hexdigest(),

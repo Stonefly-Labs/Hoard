@@ -2041,6 +2041,12 @@ graph, and attributes only the logger's actual execution UUID to eligible cases.
 Bare controller graphs, unrelated sessions and unparented witnesses cannot pass.
 Exact native confirmation of this wiring is pending; modeled passes are not
 actual qualification receipts.
+
+The native-stall prerequisite now also records its original owned execution and
+immutable assembly/current-input snapshots. A settled expected timeout receives
+a bounded post-containment input check; changed or rewritten inputs remain
+`InputChanged`, not a successful expected-timeout proof. The retained graph is
+non-qualifying and is not yet imported into MP-37 case attribution.
 The corrected producer's native foundation run then exposed a second,
 test-only defect at the same assertion: the Linux-only barrier test lacked its
 `hashlib` import. That import is now explicit; native confirmation remains

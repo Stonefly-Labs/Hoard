@@ -189,6 +189,11 @@ graph; independent source corroboration joins the real runtime UUID/proof to
 actual native execution and case controls. Diagnostic scope selection is
 unchanged. Bare graphs or unparented runtime witnesses cannot pass. Exact native
 execution of the new wiring is pending; model tests are not native receipts.
+Expected-timeout native-stall commands now snapshot immutable assembly/current
+inputs and independently retain exact native/control linkage. Post-containment
+verification runs only after settled timeout ownership, under a bounded
+five-second window within the profile budget/reserve; an input change cannot
+masquerade as the expected deadline. This prerequisite is not MP-37 case import.
 The earlier source-linking execution, before executor-held byte anchoring, is
 independently admitted at exact `78c5919`, run
 40202060742: all three Linux jobs, 273 foundations without skips and all

@@ -427,6 +427,11 @@ control cases reference that UUID and source proof hashes. Bare graphs and
 unparented witnesses still remain incomplete; no entity schema or UUID semantics
 change. Modeled eight-case passes do not claim native execution; its exact
 confirmation remains pending.
+Native-stall expected-timeout prerequisite graphs now also reference the original
+executor-held record and immutable assembly/current-input map. Settled timeout
+commands undergo bounded post-containment verification; input rewrites cannot
+be admitted as an expected deadline. These private non-qualifying graphs do not
+change entity validation or supply the still-missing MP-37 case source.
 
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits

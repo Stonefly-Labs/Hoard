@@ -205,6 +205,11 @@ Only the logger-supplied execution UUID, independently bound to this graph and
 complete case controls, may satisfy recovery case witnessIds. No caller pass
 map or fabricated label is accepted. Diagnostic source admission stays closed
 and unchanged; actual native confirmation of this additional scope is pending.
+The native-stall prerequisite separately retains a hash-only original execution/
+controller/producer graph and immutable current-input document. Only its explicit
+expected-deadline corroboration accepts `DeadlineExceeded`; changed post-inputs
+become `InputChanged`, and ordinary source/command admission still requires
+success. No MP-37 runtime source or qualifying case is inferred from that graph.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

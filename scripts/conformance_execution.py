@@ -923,9 +923,12 @@ class OwnedRun:
                 if handle is not None:
                     os.close(handle)
                 self._persist()
-        if failure is None and execution_inputs:
+        if execution_inputs and (failure is None or exited and isinstance(failure, ConformanceError)
+                                 and str(failure) == "DeadlineExceeded"):
             try:
-                if self._capture_execution_inputs(execution_inputs, deadline) != input_snapshot:
+                verification_deadline = (deadline if failure is None
+                                         else min(self.deadline - reserve, time.monotonic() + 5))
+                if self._capture_execution_inputs(execution_inputs, verification_deadline) != input_snapshot:
                     failure = ConformanceError("InputChanged")
             except ConformanceError as error:
                 failure = error

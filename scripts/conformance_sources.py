@@ -148,17 +148,19 @@ def runtime_arguments(assembly, settings, identities, *, discovery=False):
             f"--Settings:{settings}", f"--TestCaseFilter:{filter_text}"]
 
 
-def native_control_record(run, sequence, control_raw, *, arguments, cwd, input_files):
+def native_control_record(run, sequence, control_raw, *, arguments, cwd, input_files, diagnostic_code="None"):
     if type(run) is not OwnedRun:
         raise evidence.ConformanceError("OwnershipInvalid")
     control = evidence.load_json(control_raw)
     fields = {"schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
               "exitCode", "diagnosticCode", "groupState", "scope"}
-    if (not isinstance(control, dict) or not fields <= control.keys()
+    if (diagnostic_code not in ("None", "DeadlineExceeded")
+            or not isinstance(control, dict) or not fields <= control.keys()
             or control["scope"] not in ("recovery", "transfer")
+            or diagnostic_code == "DeadlineExceeded" and control["scope"] != "recovery"
             or set(control) - fields not in (
                 (set(), {"barrier"}) if control["scope"] == "recovery" else ({"transfer"},))
-            or control["sequence"] != sequence or control["diagnosticCode"] != "None"
+            or control["sequence"] != sequence or control["diagnosticCode"] != diagnostic_code
             or control["groupState"] != "Exited" or run.live_children()):
         raise evidence.ConformanceError("ProofMismatch")
     raw = run.read_execution_record(sequence)
