@@ -90,6 +90,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertEqual(summary["tests"], 134)
                     self.assertEqual(summary["caseCount"], 96)
                     self.assertFalse(summary["qualification"])
+                    self.assertEqual(
+                        json.loads(json.dumps({"metadataCategory": summary}))["metadataCategory"], summary)
                     history.interrupt_joint.assert_not_called()
                 self.assertEqual(history.begin_joint.call_args.kwargs["partitions"], partitions)
                 record = json.loads((root / "proofs/category-metadata-diagnostic-history.json").read_bytes())

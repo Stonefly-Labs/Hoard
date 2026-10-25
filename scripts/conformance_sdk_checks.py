@@ -2842,7 +2842,7 @@ def _metadata_category_record(run, inputs, history, scopes, code=None):
         "caseCount": len(results), "caseStates": states, "resultsSha256": evidence.digest(results)}
     write_new(run.root / "proofs/category-metadata-diagnostic-history.json", evidence.canonical_bytes({
         "schemaVersion": 1, **summary, "scopes": scopes, "results": results}))
-    return MappingProxyType(summary)
+    return summary
 
 
 def metadata_category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection_configurations):
