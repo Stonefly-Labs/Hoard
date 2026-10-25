@@ -9587,7 +9587,24 @@ report failures reproduce the old mismatch before repair; corrected models and
 cross-provider borrowing negatives pass. These models do not replace native
 execution or complete qualification acceptance.
 
-Current validation: all 425 tooling checks pass with 19 explicit native skips;
+Category histories now retain all safe runtime witnesses and proof links in an
+original read-only, bounded file with an independently returned `historySha256`.
+Runtime proof keys name the actual `runtime-<attempt UUID>/proof-<execution
+UUID>.json` files; bytes and execution identities are unchanged. After actual
+post-input recapture and immutable-input comparison, SDK completion admits the
+public report shape, exact frozen final keys/exclusions, original history hash
+and every retained proof file's current hash through bounded descriptor-based
+input reads. Missing/changed/mutable histories, shortened cases, changed inputs
+and substituted proof bytes reject before writing a report. Free-space variation
+retains its actual post-input digest without fabricating equal measurements.
+The four diagnostic/qualification-input category reports explicitly remain
+`Incomplete`/`qualification: false`, with no resource-release or full-baseline
+claim. Final summaries add `reportState`/`reportSha256`; terminal SDK failures
+retain only the same bounded static source locations, never raw traceback text.
+This wires real report admission into the next Linux replay; it does not finish
+the profile evaluator or remaining QCs.
+
+Current validation: all 426 tooling checks pass with 19 explicit native skips;
 all 133 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
 and whitespace checks pass. The preceding byte-capture checkpoint compiled
 the original artifact package-acceptance project with freshly rebuilt SDK,

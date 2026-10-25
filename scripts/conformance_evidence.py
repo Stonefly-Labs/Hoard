@@ -2383,7 +2383,8 @@ class CategoryRuntimeHistory:
             used_sessions = used_sessions | sessions
             used_executions = used_executions | {row["executionId"] for row in observed["witnesses"]}
             witnesses = (*witnesses, *observed["witnesses"])
-            proofs.update(observed["proofs"])
+            proofs.update({f'runtime-{scope["attemptId"]}/{path}': hashed
+                           for path, hashed in observed["proofs"].items()})
             proof_bytes += sum(len(data) for data in transport["proofs"].values())
             if source_options:
                 source_parents.update(observed["sourceParents"])

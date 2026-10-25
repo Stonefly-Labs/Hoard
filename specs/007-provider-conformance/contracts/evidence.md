@@ -392,6 +392,15 @@ selection requires exact captured binding/category/package/inventory agreement.
 Mixed scopes retain the complete archive set and per-entry identities; native
 source admission reselects both independently. Public report binding/package
 hash equality is not weakened to accommodate an SDK package hash.
+Original bounded read-only category histories retain every safe witness and
+proof link with an independently returned history hash. Runtime proof paths name
+the actual owned logger files. After post-input recapture, SDK completion checks
+that original history, exact frozen final keys/exclusions, public report links
+and every current proof-file hash using bounded descriptor-based reads. It then
+emits four Incomplete/non-qualifying category reports with explicit state/hash,
+never resource-release or full-profile claims. Changed inputs, histories,
+inventories and proof bytes reject before publication. Admissible free-space
+variation retains its actual post-input hash, not a fabricated equal snapshot.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

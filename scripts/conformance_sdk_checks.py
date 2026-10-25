@@ -36,7 +36,7 @@ from conformance_case_catalog import (
     METADATA_INVENTORY_SOURCE_WITNESSES, METADATA_RECOVERY_SOURCE_WITNESS, ORIGINAL_METADATA_FACADE_WITNESSES,
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
     catalog_admission_witnesses, category_cases, category_execution_partitions,
-    category_runtime_cases, category_runtime_packages,
+    category_runtime_cases, category_runtime_packages, expected_cases,
     original_witness_parents, original_witness_policy,
 )
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
@@ -2931,9 +2931,53 @@ def _category_record(run, inputs, history, scopes, code=None):
         **({"qualitySourceCount": len(quality_sources), "qualitySourcesSha256": evidence.digest(quality_sources)}
            if quality_sources else {})}
     history_mode = "qualification" if inputs["mode"] == "qualification" else "diagnostic"
-    write_new(run.root / f'proofs/category-{inputs["profileId"]}-{history_mode}-history.json', evidence.canonical_bytes({
-        "schemaVersion": 1, **summary, "scopes": scopes, "results": results}))
-    return summary
+    raw = evidence.canonical_bytes({
+        "schemaVersion": 1, **summary, "scopes": scopes, "results": results,
+        "witnesses": history.witnesses, "proofs": history.proofs})
+    if len(raw) > evidence.MAX_REPORT_BYTES:
+        raise evidence.ConformanceError("OutputLimitExceeded")
+    write_new(run.root / f'proofs/category-{inputs["profileId"]}-{history_mode}-history.json', raw)
+    return {**summary, "historySha256": hashlib.sha256(raw).hexdigest()}
+
+
+def _category_report(run, inputs, post_inputs, summary):
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    evidence.verify_input_recomputation(inputs, post_inputs)
+    if inputs["profileId"] not in ("metadata", "artifacts"):
+        raise evidence.ConformanceError("UnsupportedProfile")
+    if not isinstance(summary, Mapping) or "historySha256" not in summary:
+        raise evidence.ConformanceError("ProofMismatch")
+    prefix = f'proofs/category-{inputs["profileId"]}-{inputs["mode"]}'
+    path = run.root / (prefix + "-history.json")
+    raw = read_bounded(path, evidence.MAX_REPORT_BYTES)
+    if path.stat().st_mode & 0o777 != 0o400 or hashlib.sha256(raw).hexdigest() != summary["historySha256"]:
+        raise evidence.ConformanceError("ProofMismatch")
+    record = evidence.load_json(raw)
+    summary_keys = set(summary) - {"historySha256"}
+    if (not isinstance(record, dict)
+            or set(record) != summary_keys | {"schemaVersion", "scopes", "results", "witnesses", "proofs"}
+            or type(record["schemaVersion"]) is not int or record["schemaVersion"] != 1
+            or any(record[key] != summary[key] for key in summary_keys)
+            or record["inputsSha256"] != evidence.digest(inputs)
+            or record["resultsSha256"] != evidence.digest(record["results"])):
+        raise evidence.ConformanceError("ProofMismatch")
+    report = evidence.admit_entity("QualificationReport", {
+        "schemaVersion": 1, "catalogRevision": evidence.CATALOG_REVISION, "inputs": inputs,
+        "postInputSha256": evidence.digest(post_inputs), "results": record["results"],
+        "witnesses": record["witnesses"], "resources": [], "proofs": record["proofs"],
+        "state": "Incomplete", "qualification": False, "scope": ["category-runtime-diagnostic"]})
+    cases = {case.key: case for case in expected_cases(inputs["profileId"])}
+    results = {(row["profileId"], row["bindingId"], row["matrixId"], row["caseId"]): row
+               for row in report["results"]}
+    if (results.keys() != cases.keys()
+            or any(row != evidence._catalog_case_result(inputs, cases[key], row["status"], row["attempts"])
+                   for key, row in results.items())):
+        raise evidence.ConformanceError("ProofMismatch")
+    if report["proofs"] and evidence.input_manifest(run.root, list(report["proofs"])) != report["proofs"]:
+        raise evidence.ConformanceError("ProofMismatch")
+    raw = evidence.canonical_bytes(report)
+    write_new(run.root / (prefix + "-report.json"), raw)
+    return {**summary, "reportState": "Incomplete", "reportSha256": hashlib.sha256(raw).hexdigest()}
 
 
 def _category_failure_locations(error):
@@ -4072,6 +4116,9 @@ def execute(repository, destination):
             group_id=inputs["invocationGroupId"], ci_revision=ci_revision, binding_sources=original_binding_sources,
             inspection_inputs=post_inspection_inputs)
         evidence.verify_input_recomputation(original_inputs, original_post_inputs)
+        category_summaries = {"metadata": metadata_category, "artifacts": artifact_category}
+        qualification_summaries = {
+            "metadata": metadata_qualification_admission, "artifacts": artifact_qualification_admission}
         for profile, captured in category_inputs.items():
             category_post_inputs = make_inputs(
                 run, repository, candidate, post_sources, post_environment, post_identity, seal_sha,
@@ -4079,6 +4126,8 @@ def execute(repository, destination):
                 binding_sources=category_binding_sources[profile],
                 inspection_inputs=post_inspection_inputs, profile_id=profile)
             evidence.verify_input_recomputation(captured, category_post_inputs)
+            category_summaries[profile] = _category_report(
+                run, captured, category_post_inputs, category_summaries[profile])
         for profile, captured in qualification_inputs.items():
             qualification_post_inputs = make_inputs(
                 run, repository, candidate, post_sources, post_environment, post_identity, seal_sha,
@@ -4086,16 +4135,18 @@ def execute(repository, destination):
                 binding_sources=category_binding_sources[profile], inspection_inputs=post_inspection_inputs,
                 profile_id=profile, mode="qualification")
             evidence.verify_input_recomputation(captured, qualification_post_inputs)
+            qualification_summaries[profile] = _category_report(
+                run, captured, qualification_post_inputs, qualification_summaries[profile])
         native_provenance = evidence.load_json(read_bounded(
             run.root / "proofs/sqlite-native-provenance-completion.json", 64 * 1024))
         summary = {"qualification": False, "code": "None", "baselines": 6,
                    "baselineSha256": seal_sha, "inputsSha256": evidence.digest(inputs),
                    "originalWrapperInputsSha256": evidence.digest(original_inputs),
-                   "metadataCategory": metadata_category,
-                   "metadataQualificationAdmission": metadata_qualification_admission,
-                   "artifactCategory": artifact_category,
+                   "metadataCategory": category_summaries["metadata"],
+                   "metadataQualificationAdmission": qualification_summaries["metadata"],
+                   "artifactCategory": category_summaries["artifacts"],
                    "artifactCategoryTransfers": artifact_category_transfers,
-                   "artifactQualificationAdmission": artifact_qualification_admission,
+                   "artifactQualificationAdmission": qualification_summaries["artifacts"],
                    "lockPreparation": lock_preparation,
                    "nativeNonCooperation": native_noncooperation,
                    "metadataRecovery": metadata_recovery,
@@ -4155,6 +4206,7 @@ def main():
         status = evidence.failure_status(code)
         print(json.dumps({
             "qualification": False, "status": status, "code": code,
+            "locations": _category_failure_locations(error),
             **(error.runtime_diagnostic if isinstance(error, _RuntimeObservationError) else {})}))
         return 2 if status == "Incomplete" else 1
 

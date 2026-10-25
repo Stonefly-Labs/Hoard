@@ -6682,7 +6682,7 @@ missing/shortened cases, foreign anchors and changed original attempts reject.
 History preserves original immutable receipts and counts cumulative proof bytes
 and files before committing. Budget failure records incompleteness atomically.
 SDK persistence rejects replaced/mutable/hash-mismatched receipts and adds an
-explicit non-qualifying quality-source digest/count. All 425 tooling checks
+explicit non-qualifying quality-source digest/count. All 426 tooling checks
 pass with 19 native skips; frozen inventory, SDK catalog and whitespace checks
 pass. Actual Linux replay is pending; QC-03/04/05/12 and complete acceptance
 remain unfinished. No tasks/checklists advance.
@@ -6718,6 +6718,21 @@ binding/package equality is unchanged. Models now admit distinct provider hashes
 and reject cross-provider borrowing/foreign assignments; actual native replay
 and complete category acceptance remain pending. No public schemas, C# sources,
 project references, package locks or tasks/checklists change.
+
+The next native SDK replay now exercises real public category-report admission
+after post-input recapture rather than only private diagnostic totals. The
+missing report publisher fails its intended named assertion before repair.
+Original bounded read-only histories retain witnesses/proof links and have
+independently returned hashes. Runtime proof links identify actual owned logger
+files, without rewriting original bytes. Before publication, independent
+admission checks the original history hash, full frozen final keys/exclusions,
+public runtime/package/quality links and every actual proof-file hash through
+bounded descriptor-based reads. Changed inputs, replaced/mutable histories,
+shortened inventories and substituted proof files reject; actual free-space
+variation retains its actual post-input digest. All four category reports remain
+explicitly Incomplete/non-qualifying, with no release/cleanup or full-evaluator
+claim. Their state/hash appears in final safe diagnostics; terminal failures
+carry only bounded static source locations. Actual Linux execution is pending.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

@@ -319,6 +319,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 destination.chmod(0o600 if defect == "mutable" else 0o400)
             history = SimpleNamespace(
                 quality_proofs={path: raw},
+                witnesses=(),
                 proofs={path: "0" * 64 if defect == "hash" else hashlib.sha256(raw).hexdigest()},
                 results=lambda: [{"status": "Incomplete"}])
             with self.subTest(defect=defect):
@@ -355,6 +356,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             history.joint_partitions.return_value = plans
             history.results.return_value = [{"status": "Incomplete"} for _ in range(case_count)]
             history.quality_proofs = {}
+            history.witnesses, history.proofs = (), {}
             if failure == "admission":
                 history.finish_joint.side_effect = checks.evidence.ConformanceError("ProofMismatch")
             captured = []
@@ -5421,7 +5423,12 @@ class SdkDiagnosticTests(unittest.TestCase):
                 contextlib.redirect_stdout(output):
             code = checks.main()
         self.assertEqual(code, 1)
-        self.assertEqual(json.loads(output.getvalue()), {
+        diagnostic = json.loads(output.getvalue())
+        locations = diagnostic.pop("locations")
+        self.assertTrue(0 < len(locations) <= 4)
+        self.assertTrue(all(location["source"] == "scripts/conformance_sdk_checks.py"
+                            and location["line"] > 0 for location in locations))
+        self.assertEqual(diagnostic, {
             "qualification": False, "status": "Failed", "code": "ProofMismatch",
         })
 
@@ -5471,7 +5478,12 @@ class SdkDiagnosticTests(unittest.TestCase):
                 patch.object(checks, "execute", side_effect=raised.exception), contextlib.redirect_stdout(output):
             exit_code = checks.main()
         self.assertEqual(exit_code, 2)
-        self.assertEqual(json.loads(output.getvalue()), {
+        diagnostic = json.loads(output.getvalue())
+        locations = diagnostic.pop("locations")
+        self.assertTrue(0 < len(locations) <= 4)
+        self.assertTrue(all(location["source"] == "scripts/conformance_sdk_checks.py"
+                            and location["line"] > 0 for location in locations))
+        self.assertEqual(diagnostic, {
             "qualification": False, "status": "Incomplete", "code": "EvidenceIncomplete", **observed})
         self.assertNotIn("PrivateCanary", output.getvalue())
         self.assertLessEqual(len(output.getvalue().encode()), 1024)

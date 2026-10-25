@@ -2478,6 +2478,70 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 with self.assertRaises(evidence.ConformanceError):
                     evidence.admit_entity("QualificationReport", changed)
 
+    def test_native_category_reports_recheck_original_history_inputs_and_proof_files(self):
+        import conformance_sdk_checks as checks
+        from types import SimpleNamespace
+
+        publish = getattr(checks, "_category_report", None)
+        self.assertTrue(callable(publish), "Native category evidence must pass real public report admission.")
+        for profile in ("metadata", "artifacts"):
+            for defect in (None, "free-space", "inputs", "history", "mutable-history", "proof", "shortened"):
+                with self.subTest(profile=profile, defect=defect), tempfile.TemporaryDirectory() as temporary:
+                    self.setUp()
+                    history, finish = self.category_quality_fixture(profile=profile, distinct_packages=True)
+                    finish()
+                    root = Path(temporary).resolve()
+                    (root / "proofs").mkdir()
+                    originals = {hashlib.sha256(row["executionId"].encode()).hexdigest(): row["executionId"].encode()
+                                 for row in history.witnesses}
+                    originals[hashlib.sha256(b"original-parent-1").hexdigest()] = b"original-parent-1"
+                    originals.update({hashlib.sha256(control.encode()).hexdigest(): control.encode()
+                                      for case in history._cases for control in case.controls})
+                    originals.update({hashlib.sha256(raw).hexdigest(): raw for raw in history.quality_proofs.values()})
+                    for path, hashed in history.proofs.items():
+                        checks.write_new(root / path, originals[hashed])
+                    run = SimpleNamespace(root=root)
+                    summary = checks._category_record(run, history._inputs, history, {}, "EvidenceIncomplete")
+                    record_path = root / f"proofs/category-{profile}-qualification-history.json"
+                    report_path = root / f"proofs/category-{profile}-qualification-report.json"
+                    post = evidence.load_json(evidence.canonical_bytes(history._inputs))
+                    if defect == "inputs":
+                        post["runId"] = str(uuid.uuid4())
+                    elif defect == "free-space":
+                        post["environment"]["freeBytes"] += 1
+                        post["environmentSha256"] = evidence.digest(post["environment"])
+                    elif defect in ("history", "mutable-history", "shortened"):
+                        record_path.chmod(0o600)
+                        if defect == "history":
+                            record_path.write_bytes(b"{}")
+                            record_path.chmod(0o400)
+                        elif defect == "shortened":
+                            record = evidence.load_json(record_path.read_bytes())
+                            record["results"].pop()
+                            record["resultsSha256"] = evidence.digest(record["results"])
+                            summary = {**summary, "resultsSha256": record["resultsSha256"]}
+                            raw = evidence.canonical_bytes(record)
+                            record_path.write_bytes(raw)
+                            record_path.chmod(0o400)
+                            summary["historySha256"] = hashlib.sha256(raw).hexdigest()
+                    elif defect == "proof":
+                        path = root / next(iter(history.proofs))
+                        path.chmod(0o600)
+                        path.write_bytes(b"replacement")
+                    if defect not in (None, "free-space"):
+                        with self.assertRaises(evidence.ConformanceError):
+                            publish(run, history._inputs, post, summary)
+                        self.assertFalse(report_path.exists())
+                    else:
+                        observed = publish(run, history._inputs, post, summary)
+                        report = evidence.admit_entity("QualificationReport", evidence.load_json(report_path.read_bytes()))
+                        self.assertEqual(observed["reportSha256"], evidence.file_sha256(report_path))
+                        self.assertEqual(observed["reportState"], "Incomplete")
+                        self.assertFalse(report["qualification"])
+                        self.assertEqual(report["postInputSha256"], evidence.digest(post))
+                        self.assertEqual(len(report["witnesses"]), len(history.witnesses))
+                        self.assertEqual(dict(report["proofs"]), dict(history.proofs))
+
     def test_metadata_quality_reuses_complete_same_attempt_runtime_and_controller_provenance(self):
         history, finish = self.category_quality_fixture()
         qualities = finish()
@@ -2720,7 +2784,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         for scope_id, scope in plan.items():
             self.attempt = scope["attemptId"]
             transports[scope_id] = self.category_transport(None, selections=scope["tests"])
-            actual.update({name: hashlib.sha256(raw).hexdigest() for name, raw in transports[scope_id]["proofs"].items()})
+            actual.update({f'runtime-{scope["attemptId"]}/{name}': hashlib.sha256(raw).hexdigest()
+                           for name, raw in transports[scope_id]["proofs"].items()})
         with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
             results = history.finish_joint(transports=transports)
         self.assertEqual(dict(history.proofs), actual)
@@ -2837,7 +2902,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         for scope_id, scope in plan.items():
             self.attempt = scope["attemptId"]
             transports[scope_id] = self.category_transport("sqlite", identities=scope["tests"])
-            actual_proofs.update({path: hashlib.sha256(data).hexdigest()
+            actual_proofs.update({f'runtime-{scope["attemptId"]}/{path}': hashlib.sha256(data).hexdigest()
                                   for path, data in transports[scope_id]["proofs"].items()})
         self.assertEqual(history.witnesses, ())
         with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
@@ -2959,7 +3024,9 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             self.assertEqual(result["status"], expected)
         failed_witness = next(row for row in history.witnesses if row["testIdentity"] == failed)
         self.assertEqual(failed_witness["status"], "Failed")
-        self.assertEqual(history.proofs[f'proof-{failed_witness["executionId"]}.json'], failed_witness["proofSha256"])
+        attempt = evidence.load_json(transports["failed"]["manifest_data"])["attemptId"]
+        self.assertEqual(history.proofs[f'runtime-{attempt}/proof-{failed_witness["executionId"]}.json'],
+                         failed_witness["proofSha256"])
 
     def test_category_import_expands_all_frozen_keys_without_inventing_controls_or_excluded_executions(self):
         import conformance_case_catalog as catalog

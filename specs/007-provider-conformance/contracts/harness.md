@@ -349,6 +349,14 @@ launch; mixed scopes retain both archives. Native source admission independently
 checks the full package set and each entry's association. Existing report
 binding/package hash equality remains unchanged; distinct-package models do
 not establish actual native qualification.
+SDK completion now emits the four partial public category reports only after
+input recapture and rechecking the original read-only history hash, complete
+frozen final keys/exclusions, public links and every actual proof-file hash.
+Runtime proof paths identify original owned logger outputs without copying or
+rewriting bytes. Missing/changed histories or files and shortened inventories
+reject before report publication. Reports remain explicitly Incomplete/
+non-qualifying and make no resource-release/full-evaluator claim; safe summaries
+retain history/report hashes and report state. Actual Linux execution is pending.
 The prior byte-capture checkpoint cf4/run40227343651 independently passes
 three Linux jobs, 300 native foundations without skips, 13-lock/18-package
 replay and 129 scopes/1,821 witnesses. It admits original byte capture, not the

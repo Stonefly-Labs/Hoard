@@ -66,6 +66,17 @@ reselects the full set and per-entry association. Report binding/package hash
 equality remains mandatory. SDK package hashes cannot substitute merely because
 the common assertion executes from the SDK assembly.
 
+Private category histories retain the full safe witnesses/proof map in a
+bounded read-only file whose original bytes have an independently returned
+`historySha256`. Runtime leaf paths identify actual owned logger output files.
+After input recapture, SDK completion checks that original history, exact frozen
+final keys/exclusions, public report links and all actual proof-file hashes
+before writing four partial category reports. Each remains
+`state: Incomplete`, `qualification: false`, scope `category-runtime-diagnostic`.
+No resource-release or full-profile completion is inferred. The actual
+post-input digest is retained even when admissible free-space variation changes
+it; measurements are not rewritten to fabricate equal hashes.
+
 Private attempt manifests and completion records require `purpose` equal to
 `discovery` or `execution`; completion also hashes the exact complete JSONL
 bytes as `recordsSha256`. A retained exclusive attempt claim prevents replay
