@@ -208,18 +208,18 @@ internal static class MetadataRecoverySource
         }
     }
 
-    private static string Text(JsonElement value, string name)
+    internal static string Text(JsonElement value, string name)
         => Assert.IsType<string>(value.GetProperty(name).GetString());
 
-    private static void Fields(JsonElement value, params string[] names)
+    internal static void Fields(JsonElement value, params string[] names)
         => Assert.Equal(names.Order(), value.EnumerateObject().Select(item => item.Name).Order());
 
-    private static void HashValue(string value)
+    internal static void HashValue(string value)
         => Assert.Matches("^[0-9a-f]{64}$", value);
 
-    private static string Hash(byte[] value) => Convert.ToHexStringLower(SHA256.HashData(value));
+    internal static string Hash(byte[] value) => Convert.ToHexStringLower(SHA256.HashData(value));
 
-    private static byte[] ReadFile(string path, int limit)
+    internal static byte[] ReadFile(string path, int limit)
     {
         Assert.InRange(limit, 0, 16 * 1024 * 1024);
         Assert.Equal(0, (int)(File.GetAttributes(path) & (FileAttributes.Directory | FileAttributes.ReparsePoint)));

@@ -467,6 +467,17 @@ native input snapshots. Original execution, argv/cwd, settled success and joint
 bounds must agree. The exact-line projector retains only a closed safe event;
 existing actual runtime witnesses and public entities remain unchanged.
 
+MP-48 references a fourteen-file graph and original baseline/mutation/repair
+commands. Ten actual interpreter sources plus current inputs are immutable
+native snapshots; safe packets and executed source copies are sealed original
+outputs. The complete unchanged suite exposes the named assertion, not an
+import/setup error, and the same private adapter returns to original bytes.
+Independent authority checks actual inventory, original argv/cwd/records and
+ordered joint bounds. A separate inventory-controller scope has two binding-
+specific source facts, each consuming the complete graph with its own actual
+execution UUID and source parent. Recovery's UUID is not reusable for MP-48.
+Public entities and frozen inherited case keys are unchanged.
+
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits
 `Released`; expiration/cancellation/observation timeout does not. Retained

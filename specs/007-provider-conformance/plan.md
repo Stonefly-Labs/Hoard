@@ -6365,6 +6365,31 @@ retained files remain unchanged; this is non-qualifying and does not supply
 Linux confinement or baseline-before-candidate temporal evidence. The modeled
 target is 85/8/9/0 with seven scopes/135 witnesses/five parents unchanged.
 
+MP-48 adds actual unchanged complete verifier-suite execution, its original
+failed-case-refusal mutation and repair of the same private adapter. A fresh
+unfiltered loader and bounded diagnostics preserve all original assertions;
+import/setup errors cannot replace the named red assertion. Fourteen-file
+authority reconstructs original source inputs, three commands, sealed packets/
+source snapshots, argv/cwd and ordered joint bounds. Independent binding-specific
+runtime facts consume all actual files and retain distinct execution UUIDs.
+Recovery's UUID cannot stand in for inventory evidence. The modeled metadata
+target becomes 87/6/9/0 across eight scopes/137 witnesses/seven source parents.
+Native admission and the six remaining QC obligations are still pending.
+
+All 402 tooling checks pass with 18 explicit native skips; all 121 source SDK
+checks, scoped C# whitespace, frozen inventory and catalog checks pass. Actual
+isolated CLI baseline/mutation/repair commands run the unchanged 17-test suite
+with 0/1/0 assertion failures, no setup errors/skips/raw output and the same
+private adapter restored. Actual package compile selection includes both native
+facts and decoder. This is explicitly non-qualifying; native confirmation remains
+pending and T001-T018 are still the only checked tasks.
+
+Exact `5bc86fe`, run40218754070, passes 287 native foundations with no skips and
+13-lock/18-package replay, but the SDK batch rejects an original MP-19 queue/
+held-work deadline witness (`UnknownDiagnostic`, 62 Passed/1 Failed). Its cause
+is not established. The failed replay does not admit ownership/consumer changes;
+the newer binary checkpoint is observed independently without weakening tests.
+
 Earlier exact `f038df04ee1d989b3cd81fe7d9247c0fb041016c`,
 [run40216546349](https://github.com/Stonefly-Labs/Hoard/actions/runs/40216546349),
 now independently passes all three jobs: 283 native foundations without skips,

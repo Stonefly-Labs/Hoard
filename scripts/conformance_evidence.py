@@ -2127,7 +2127,7 @@ class CategoryRuntimeHistory:
         return self._joint_plan
 
     def _case_results(self, binding_id, code, ended, witnesses, source_parents=None, control_proofs=None):
-        from conformance_case_catalog import METADATA_RECOVERY_SOURCE_WITNESS
+        from conformance_case_catalog import METADATA_INVENTORY_SOURCE_WITNESSES, METADATA_RECOVERY_SOURCE_WITNESS
 
         results = {}
         for case in self._cases:
@@ -2136,17 +2136,23 @@ class CategoryRuntimeHistory:
             selected = tuple(witness for witness in witnesses
                              if witness["bindingId"] == binding_id and witness["testIdentity"] in case.witnesses)
             expected = set(case.witnesses)
+            source_identity = (
+                METADATA_INVENTORY_SOURCE_WITNESSES[binding_id] if case.case_id == "MP-48" else
+                METADATA_RECOVERY_SOURCE_WITNESS if binding_id == "sqlite" and (
+                    "verified-recovery-walkthrough" in case.controls
+                    or any(control.startswith("parent-kill:") for control in case.controls)) else None
+            ) if self._inputs["profileId"] == "metadata" else None
             if (self._inputs["mode"] == "qualification" and self._inputs["profileId"] == "metadata"
-                    and binding_id == "sqlite" and case.controls and not case.witnesses
+                    and source_identity is not None and case.controls and not case.witnesses
                     and control_proofs is not None and set(case.controls) <= control_proofs.keys()
                     and source_parents is not None):
                 source = tuple(witness for witness in witnesses
                                if witness["bindingId"] == binding_id
-                               and witness["testIdentity"] == METADATA_RECOVERY_SOURCE_WITNESS
+                               and witness["testIdentity"] == source_identity
                                and witness["executionId"] in source_parents)
                 selected = (*selected, *source)
                 if source:
-                    expected.add(METADATA_RECOVERY_SOURCE_WITNESS)
+                    expected.add(source_identity)
             case_code = code
             if code in ("None", "AssertionFailed"):
                 if any(witness["status"] == "Failed" for witness in selected):
@@ -2240,7 +2246,7 @@ class CategoryRuntimeHistory:
             admit_attempt = ingest_runtime_attempt
             source_options = {}
             if self._native_sources is not None and (
-                    scope_id.startswith("inspection-") or scope_id == "recovery-controller"):
+                    scope_id.startswith("inspection-") or scope_id in ("recovery-controller", "inventory-controller")):
                 admit_attempt = self._native_sources.ingest_attempt
                 source_options["category_scope"] = self._inputs["profileId"], scope_id
             observed = admit_attempt(

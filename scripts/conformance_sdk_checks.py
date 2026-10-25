@@ -32,7 +32,7 @@ from conformance_case_catalog import (
     CATEGORY_BINDING_SLOTS, ORIGINAL_ARTIFACT_BINDINGS, ORIGINAL_ARTIFACT_CONTRACT_WITNESSES,
     ORIGINAL_ARTIFACT_PROOF_SOURCES, ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES,
     ORIGINAL_ARTIFACT_REOPENS, ORIGINAL_ARTIFACT_SHARED_OWNER_WITNESSES, ORIGINAL_ARTIFACT_WITNESSES,
-    METADATA_RECOVERY_SOURCE_WITNESS, ORIGINAL_METADATA_FACADE_WITNESSES,
+    METADATA_INVENTORY_SOURCE_WITNESSES, METADATA_RECOVERY_SOURCE_WITNESS, ORIGINAL_METADATA_FACADE_WITNESSES,
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
     catalog_admission_witnesses, category_cases, category_execution_partitions, category_runtime_cases,
     original_witness_parents, original_witness_policy,
@@ -42,6 +42,8 @@ from conformance_sources import (
     METADATA_RECOVERY_SCENARIOS, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
     admit_sqlite_noncooperation,
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
+    metadata_inventory_arguments, metadata_inventory_context, metadata_inventory_observations,
+    metadata_inventory_source_inputs, native_metadata_inventory_controls,
     native_control_record, native_metadata_binary_control, native_metadata_ownership_control,
     native_metadata_package_consumer_control,
     read_bounded, runtime_arguments, runtime_settings,
@@ -1200,6 +1202,46 @@ def metadata_binary_diagnostics(run, inputs, candidate):
     return evidence.digest(graph)
 
 
+def metadata_inventory_diagnostics(run, inputs, candidate):
+    if (type(run) is not OwnedRun or inputs.get("profileId") != "metadata" or inputs.get("mode") != "qualification"
+            or candidate != run.root / "snapshot"):
+        raise evidence.ConformanceError("UnsupportedProfile")
+    namespace = "qualification-metadata-inventory"
+    material = metadata_inventory_source_inputs(run, inputs)
+    directory = run.root / "stores" / namespace
+    no_symlinks(directory)
+    directory.mkdir(mode=0o700)
+    inputs_path = f"proofs/{namespace}-native-inputs.json"
+    write_new(run.root / inputs_path, evidence.canonical_bytes(inputs))
+    commands = []
+    for mode in ("baseline", "mutation", "repair"):
+        sequence = run.command_sequence + 1
+        outputs = (f"proofs/{namespace}-{mode}.json", f"proofs/{namespace}-{mode}.py")
+        result = run.command(
+            metadata_inventory_arguments(run.root, mode), cwd=candidate, scope="recovery",
+            cache_id=namespace, record_execution=True, execution_inputs=(*material, inputs_path),
+            execution_outputs=outputs)
+        packet = evidence.load_json(read_bounded(run.root / outputs[0], 64 * 1024))
+        if (not isinstance(packet, dict) or type(packet.get("tests")) is not int
+                or not 1 <= packet["tests"] <= 10000
+                or result.exit_code != (1 if mode == "mutation" else 0)
+                or tuple(dict(event) for event in result.events) != (
+                    {"event": "test", "code": "AssertionFailed" if mode == "mutation" else "None",
+                     "value": packet["tests"]},)):
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        commands.append({
+            "mode": mode, "sequence": sequence,
+            "controllerSha256": evidence.file_sha256(run.root / f"proofs/recovery-command-{sequence:04}.json"),
+            "executionSha256": hashlib.sha256(run.read_execution_record(sequence)).hexdigest()})
+    graph = {
+        "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+        "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
+        "scriptPath": "snapshot/scripts/conformance_unit_checks.py", "inputsPath": inputs_path, "commands": commands}
+    write_new(run.root / f"proofs/{namespace}-native-executions.json", evidence.canonical_bytes(graph))
+    native_metadata_inventory_controls(run, inputs, started_ms=0, ended_ms=time.monotonic() * 1000)
+    return evidence.digest(graph)
+
+
 def artifact_recovery_diagnostics(run, inputs, candidate):
     runtime = candidate / ARTIFACT_RECOVERY / "bin/Release/net10.0"
     assembly = runtime / "Hoard.Fixtures.Artifacts.CrashRunner.dll"
@@ -2002,6 +2044,17 @@ def category_metadata_recovery_proofs(run, inputs, manifest, ingested):
     return {"sourceExecutions": len(observations), "metadataRecoveryProofsSha256": evidence.digest(receipt)}
 
 
+def category_metadata_inventory_proofs(run, inputs, manifest, ingested):
+    context = metadata_inventory_context(run, inputs, manifest, ended_ms=time.monotonic() * 1000)
+    observations, _ = metadata_inventory_observations(run.root, inputs, manifest, ingested, context)
+    receipt = {
+        "schemaVersion": 1, "qualification": False, "mode": "category-metadata-inventory-controller",
+        "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "attemptId": manifest["attemptId"], "inputsSha256": evidence.digest(inputs), "observations": observations}
+    write_new(run.root / f'proofs/{receipt["mode"]}-{manifest["attemptId"]}.json', evidence.canonical_bytes(receipt))
+    return {"sourceExecutions": len(observations), "metadataInventoryProofsSha256": evidence.digest(receipt)}
+
+
 def _original_inspection_proofs(run, inputs, manifest, ingested, selected, mode, *, bindings=None):
     identities = tuple(selected)
     bindings = {identity: "none" for identity in identities} if bindings is None else bindings
@@ -2683,7 +2736,7 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
     }
     inspect_source = (inputs["mode"] == "qualification" and runtime_options.get("category_scope") is not None
                       and (runtime_options["category_scope"][1].startswith("inspection-")
-                           or runtime_options["category_scope"][1] == "recovery-controller"))
+                           or runtime_options["category_scope"][1] in ("recovery-controller", "inventory-controller")))
     ingest = evidence.inspect_runtime_attempt if inspect_source else evidence.ingest_runtime_attempt
     ingested = ingest(
         inputs=inputs, expected_tests=expected, **data,
@@ -2930,7 +2983,8 @@ def _category_record(run, inputs, history, scopes, code=None):
                                 ("nativeSourcesSha256", "qualification-sqlite-native-noncooperation"),
                                 ("ownershipSourcesSha256", "qualification-sqlite-ownership"),
                                 ("consumerSourcesSha256", "qualification-metadata-package-consumer"),
-                                ("binarySourcesSha256", "qualification-metadata-frozen-binary")):
+                                ("binarySourcesSha256", "qualification-metadata-frozen-binary"),
+                                ("inventorySourcesSha256", "qualification-metadata-inventory")):
             path = f"proofs/{namespace}-native-executions.json"
             if path not in history.proofs:
                 raise evidence.ConformanceError("ProofMismatch")
@@ -2977,6 +3031,7 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
             metadata_ownership_diagnostics(run, inputs, candidate)
             metadata_package_consumer_diagnostics(run, inputs, candidate)
             metadata_binary_diagnostics(run, inputs, candidate)
+            metadata_inventory_diagnostics(run, inputs, candidate)
         except evidence.ConformanceError as error:
             print(json.dumps({
                 "qualification": False, "phase": "category-control-failure",
@@ -3019,7 +3074,7 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
     profile = inputs["profileId"]
     category_scope = profile, scope_id
     tests = _category_scope_tests(category_scope)
-    if scope_id == "recovery-controller" and inputs["mode"] != "qualification":
+    if scope_id in ("recovery-controller", "inventory-controller") and inputs["mode"] != "qualification":
         raise evidence.ConformanceError("WitnessMissing")
     if ((inputs["mode"] != "diagnostic" and not (
             inputs["mode"] == "qualification" and type(native_sources) is NativeCategorySources
@@ -3049,7 +3104,7 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
         folder, output, assembly_name = ARCHITECTURE_TESTS, "bin", "Hoard.Architecture.Tests.dll"
         if not prepared:
             options["inspection_literals"] = True
-    elif scope_id == "recovery-controller":
+    elif scope_id in ("recovery-controller", "inventory-controller"):
         folder, output, assembly_name = TESTS, PACKAGE_TEST_OUTPUT, "Hoard.Conformance.Tests.dll"
     elif profile == "metadata":
         folder, output, assembly_name = METADATA_TESTS, METADATA_TEST_OUTPUT, "Hoard.Metadata.Tests.dll"
@@ -3109,6 +3164,8 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
             run, inputs, manifest, ingested, category_scope=category_scope, selected=inspection_cases)
     elif scope_id == "recovery-controller":
         sources = category_metadata_recovery_proofs(run, inputs, manifest, ingested)
+    elif scope_id == "inventory-controller":
+        sources = category_metadata_inventory_proofs(run, inputs, manifest, ingested)
     elif scope_id == "controller":
         sources = original_artifact_external_proofs(
             run, inputs, manifest, ingested, category_scope=category_scope)
@@ -3128,7 +3185,7 @@ def _category_scope_tests(category_scope):
     if not isinstance(category_scope, (tuple, list)) or len(category_scope) != 2:
         raise evidence.ConformanceError("WitnessMissing")
     profile, scope_id = category_scope
-    mode = "qualification" if scope_id == "recovery-controller" else "diagnostic"
+    mode = "qualification" if scope_id in ("recovery-controller", "inventory-controller") else "diagnostic"
     partitions = category_execution_partitions(profile, mode=mode)
     if not isinstance(scope_id, str) or scope_id not in partitions:
         raise evidence.ConformanceError("WitnessMissing")
@@ -3153,8 +3210,10 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
             inputs["mode"] == "qualification" and type(run) is OwnedRun))
             or type(result.exit_code) is not int or result.exit_code != 0):
         raise evidence.ConformanceError("ProofMismatch")
-    if scope_id.startswith("inspection-") or (profile, scope_id) == ("metadata", "recovery-controller"):
-        source_key = "metadataRecoveryProofsSha256" if scope_id == "recovery-controller" else "inspectionProofsSha256"
+    if scope_id.startswith("inspection-") or profile == "metadata" and scope_id in (
+            "recovery-controller", "inventory-controller"):
+        source_key = ("metadataRecoveryProofsSha256" if scope_id == "recovery-controller" else
+                      "metadataInventoryProofsSha256" if scope_id == "inventory-controller" else "inspectionProofsSha256")
         mode = f"category-{profile}-{scope_id}"
         filename = f'{mode}-{manifest["attemptId"]}.json'
         observation_fields = {"sourceProofSha256": evidence.sha256}
@@ -3338,21 +3397,24 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             raise evidence.ConformanceError("WitnessMissing")
     discovery = manifest["purpose"] == "discovery"
     origin_environment = ""
-    if category_scope == ("metadata", "recovery-controller") and not discovery:
+    if category_scope in (("metadata", "recovery-controller"), ("metadata", "inventory-controller")) and not discovery:
         inputs = evidence.admit_entity(
             "RunInputs", evidence.load_json(read_bounded(run.root / manifest["runInputsPath"], 16 * 1024 * 1024)))
-        context_data = evidence.canonical_bytes(metadata_recovery_context(
+        inventory = category_scope[1] == "inventory-controller"
+        prefix = "metadata-inventory" if inventory else "metadata-recovery"
+        variable = "HOARD_METADATA_INVENTORY_CONTEXT" if inventory else "HOARD_METADATA_RECOVERY_CONTEXT"
+        context_data = evidence.canonical_bytes((metadata_inventory_context if inventory else metadata_recovery_context)(
             run, inputs, manifest, ended_ms=time.monotonic() * 1000))
         if len(context_data) > 1024 * 1024:
             raise evidence.ConformanceError("OutputLimitExceeded")
-        capture = run.root / "stores" / ("metadata-recovery-source-" + attempt_id)
+        capture = run.root / "stores" / (prefix + "-source-" + attempt_id)
         no_symlinks(capture)
         capture.mkdir(mode=0o700)
-        context = run.root / "stores" / f"metadata-recovery-context-{attempt_id}.json"
+        context = run.root / "stores" / f"{prefix}-context-{attempt_id}.json"
         write_new(context, context_data)
         origin_environment = (
-            "<EnvironmentVariables><HOARD_METADATA_RECOVERY_CONTEXT>"
-            + escape(str(context)) + "</HOARD_METADATA_RECOVERY_CONTEXT></EnvironmentVariables>")
+            f"<EnvironmentVariables><{variable}>"
+            + escape(str(context)) + f"</{variable}></EnvironmentVariables>")
     if inspection_literals or inspection_cases is not None or inspection_configurations is not None:
         selected, variables = {}, {}
         if inspection_literals:
@@ -3520,11 +3582,14 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
                 execution_inputs.extend(
                     Path(inspection_configurations[family]).relative_to(run.root).as_posix()
                     for family in ("metadata", "artifacts"))
-        if not discovery and category_scope == ("metadata", "recovery-controller"):
+        if not discovery and category_scope in (("metadata", "recovery-controller"), ("metadata", "inventory-controller")):
+            inventory = category_scope[1] == "inventory-controller"
+            prefix = "metadata-inventory" if inventory else "metadata-recovery"
+            namespace = "qualification-metadata-inventory" if inventory else "qualification-sqlite-recovery"
             execution_inputs.extend((
-                f"stores/metadata-recovery-context-{attempt_id}.json",
-                "proofs/qualification-sqlite-recovery-native-executions.json",
-                "proofs/qualification-sqlite-recovery-native-inputs.json"))
+                f"stores/{prefix}-context-{attempt_id}.json",
+                f"proofs/{namespace}-native-executions.json",
+                f"proofs/{namespace}-native-inputs.json"))
     result = run.command(
         arguments,
         cwd=assembly.parent, timeout=180, kind="discovery" if discovery else "tests", cache_id="runtime",

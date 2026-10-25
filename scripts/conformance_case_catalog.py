@@ -55,6 +55,11 @@ METADATA_RECOVERY_SOURCE_WITNESS = (
     "Hoard.Conformance.Tests.MetadataRecoveryRuntimeTests."
     "Complete_current_input_native_recovery_graph_preserves_all_barriers_and_readbacks")
 
+METADATA_INVENTORY_SOURCE_WITNESSES = MappingProxyType({
+    binding: "Hoard.Conformance.Tests.MetadataInventoryRuntimeTests."
+    + binding.capitalize() + "_current_input_inventory_preserves_named_assertion_and_same_source_repair"
+    for binding in ("sqlite", "memory")})
+
 _ORIGINAL_METADATA_ROLES = ("owner", "store", "schema", "authority", "controls")
 _ORIGINAL_ARTIFACT_ROLES = ("owner", "store", "validator", "maintenance", "lifetime", "authority", "controls")
 ORIGINAL_METADATA_FORESTS = MappingProxyType({
@@ -325,6 +330,8 @@ def original_non_session_policy(identity):
     """A provider session cannot stand in for an inspection or controller proof."""
     if identity == METADATA_RECOVERY_SOURCE_WITNESS:
         return "metadata", "recovery"
+    if identity in METADATA_INVENTORY_SOURCE_WITNESSES.values():
+        return "metadata", "inventory"
     category = ORIGINAL_INSPECTION_WITNESSES.get(identity)
     if category is not None:
         return category, "inspection"
@@ -356,6 +363,8 @@ def category_runtime_cases(profile, binding_id, *, mode="diagnostic"):
         selected[METADATA_RECOVERY_SOURCE_WITNESS] = min(
             case.case_id for case in applicable if "verified-recovery-walkthrough" in case.controls
             or any(control.startswith("parent-kill:") for control in case.controls))
+    if profile == "metadata" and mode == "qualification":
+        selected[METADATA_INVENTORY_SOURCE_WITNESSES[binding_id]] = "MP-48"
     return MappingProxyType(selected)
 
 
@@ -371,6 +380,8 @@ def category_execution_partitions(profile, *, mode="diagnostic"):
         policy = original_witness_policy(identity)
         if identity == METADATA_RECOVERY_SOURCE_WITNESS:
             scope = "recovery-controller"
+        elif identity in METADATA_INVENTORY_SOURCE_WITNESSES.values():
+            scope = "inventory-controller"
         elif policy is not None and policy[0] == profile:
             scope = "original-" + binding if identity in repeated else "original"
         elif ORIGINAL_INSPECTION_WITNESSES.get(identity) == profile:

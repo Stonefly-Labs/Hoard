@@ -255,6 +255,19 @@ or original execution records reject. Existing runtime witnesses remain required
 `binarySourcesSha256` references only imported proof bytes. Public schemas stay
 unchanged and macOS execution supplies no Linux/temporal-baseline receipt.
 
+MP-48 retains fourteen graph/input/three native-controller-packet-source groups.
+All ten actual interpreter source files and the current-input document are
+immutable native inputs; packets and executed source snapshots are original
+executor-sealed outputs. The complete unchanged verifier suite runs before
+mutation and after repair of the same private adapter. Independent authority
+reconstructs its inventory from actual source, requires the named assertion red
+with no errors/skips/raw diagnostic bytes, checks exact original argv/cwd and
+ordered settled joint bounds, and rejects consistently rehashed setup failures.
+Two binding-specific runtime facts consume the complete graph and produce
+distinct original execution UUIDs. Neither can borrow recovery's unrelated UUID.
+`inventorySourcesSha256` references only imported proof bytes; public schemas
+and frozen inherited inventory remain unchanged.
+
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private
 revision-2 execution proof adds a distinct `originalObservations` collection;

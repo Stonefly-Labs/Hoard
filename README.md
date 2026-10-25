@@ -2087,6 +2087,23 @@ baseline/current image hashes, complete runtime input snapshots and original
 owned execution. The unchanged marker runs against current platform assemblies
 locally; the modeled target is 85/8/9/0. Linux confirmation remains pending.
 
+MP-48 adds actual complete unchanged verifier-suite execution before and after
+the original failed-case-refusal mutation. The same private adapter is repaired,
+not the assertions; the named red must be an assertion, not setup/import failure.
+A bounded runner retains only closed diagnostics, sealed source snapshots and
+hash-only native provenance. Fourteen-file authority requires original inputs,
+argv/cwd, ordered settled commands and joint bounds. Two binding-specific runtime
+facts consume the actual graph; neither can borrow recovery's execution UUID.
+The modeled target becomes 87/6/9/0 across eight scopes/137 witnesses/seven source
+parents, with six QC obligations still incomplete and native admission pending.
+
+Exact `5bc86fe`, [run40218754070](https://github.com/Stonefly-Labs/Hoard/actions/runs/40218754070),
+passes 287 native foundations without skips and lock/package replay, but its SDK
+batch rejects an original MP-19 queue/held-work deadline witness with
+`UnknownDiagnostic`. Its cause is not established, and this failed replay admits
+neither ownership nor package-consumer controls. The newer frozen-binary replay
+is still being observed; earlier successful receipts are not superseded.
+
 Earlier exact `f038df0`,
 [run40216546349](https://github.com/Stonefly-Labs/Hoard/actions/runs/40216546349),
 now independently passes all three Linux jobs: 283 foundations without skips,

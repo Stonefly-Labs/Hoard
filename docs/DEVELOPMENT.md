@@ -9279,6 +9279,46 @@ This is explicitly non-qualifying, not a Linux containment or temporal-baseline
 receipt. The modeled metadata target is 85/8/9/0 across unchanged seven scopes/
 135 witnesses/five parents; native/full-stage gates remain pending.
 
+MP-48 now runs the complete unchanged original metadata verifier suite in three
+separate commands: baseline, the original failed-case-refusal mutation, and
+repair of that same private adapter to original bytes. A fresh unfiltered loader
+prevents inherited runner filters from narrowing the inventory. Existing bounded
+diagnostic handling suppresses raw exception text; named assertion failure,
+zero errors/skips/diagnostic bytes, complete unchanged test inventory and exact
+source restoration are required. Create-new read-only packets/source snapshots
+are executor-declared outputs, not caller-supplied success flags.
+
+Fourteen-file independent authority checks all ten actual interpreter source
+inputs, original command/output records, exact argv/cwd, ordered settled commands
+and joint bounds. Separate SQLite/memory runtime facts read and hash the complete
+graph and emit distinct original execution UUIDs. Original source inputs and all
+snapshot bytes remain unchanged; the frozen 192 inherited keys are untouched.
+Missing authority fails in red; rehashed setup failure and borrowing recovery's
+UUID also reject. The modeled target is 87/6/9/0 with eight scopes/137 witnesses/
+seven source parents, not a native or qualifying receipt. Six QC obligations and
+the full stage remain incomplete.
+
+`python3 -m unittest discover -s tests/tooling -q` passes 402 checks with 18
+explicit native skips. The source SDK project passes all 121 checks; scoped
+`dotnet format whitespace ... --verify-no-changes` passes. The unchanged
+inventory/catalog checks pass, and actual MSBuild package compile selection
+includes both the decoder and its native facts. Actual isolated CLI commands on
+macOS run all 17 unchanged tests three times: 0/1/0 assertion failures, no setup
+errors/skips/raw diagnostics, with the same adapter restored and original suite/
+verifier unchanged. These are non-qualifying diagnostics, not Linux admission.
+
+Exact `5bc86feada20039e93c203669b8c8941786ea84d`,
+[run40218754070](https://github.com/Stonefly-Labs/Hoard/actions/runs/40218754070),
+passes 287 native foundations with no failures/errors/skips and the 13-lock/
+18-package replay. Its SDK batch rejects `EvidenceIncomplete` from
+`UnknownDiagnostic`, exit 1, with 62 Passed/1 Failed. The mismatch hash
+`8761af132f080f40d5999df167d880f419587ca1418400246a283227e0f63d87`
+resolves against known identities to
+`MetadataDeadlineTests.MP19_Queue_capacity_and_held_work_deadlines_have_finite_owned_results`.
+The underlying cause is not established. This is not ownership/consumer admission;
+the exact newer binary checkpoint is being observed independently. No legacy
+deadline assertions or native admission gates are weakened to obtain a pass.
+
 Earlier exact `f038df04ee1d989b3cd81fe7d9247c0fb041016c`,
 [run40216546349](https://github.com/Stonefly-Labs/Hoard/actions/runs/40216546349),
 now independently passes all three Linux jobs: 283 foundations without

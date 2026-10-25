@@ -1,12 +1,18 @@
 """Run foundational regressions without retaining raw framework diagnostics."""
 
 import contextlib
+import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import re
 import shutil
 import sys
 import unittest
+
+
+METADATA_INVENTORY_FAILURE = ("test_metadata_evidence.MetadataEvidenceTests."
+                              "test_stale_failed_unpaired_foreign_and_false_memory_durability_reject")
 
 
 class SafeResult(unittest.TestResult):
@@ -55,6 +61,102 @@ class DiagnosticBoundary:
         pass
 
 
+def metadata_inventory(root, mode, source):
+    from conformance_evidence import ConformanceError, canonical_bytes
+    from conformance_sources import read_bounded
+    if mode not in ("baseline", "mutation", "repair"):
+        raise ConformanceError("EvidenceSchemaInvalid")
+    original = read_bounded(root / "scripts/metadata_evidence.py", 1024 * 1024)
+    suite_path = root / "tests/tooling/test_metadata_evidence.py"
+    suite_bytes = read_bounded(suite_path, 1024 * 1024)
+    needle = b'\n        elif entry.get("result") != "Passed":\n'
+    if original.count(needle) != 1:
+        raise ConformanceError("ProofMismatch")
+    mutation = original.replace(needle, b"\n        elif False:\n")
+    expected = mutation if mode == "mutation" else original
+    if mode == "baseline":
+        with source.open("xb") as output:
+            output.write(original)
+        source.chmod(0o600)
+    else:
+        if read_bounded(source, 1024 * 1024) != (mutation if mode == "repair" else original):
+            raise ConformanceError("ProofMismatch")
+        source.write_bytes(expected)
+    diagnostics = DiagnosticBoundary()
+    previous = sys.dont_write_bytecode
+    previous_path = sys.path[:]
+    sys.dont_write_bytecode = True
+    try:
+        with contextlib.redirect_stdout(diagnostics), contextlib.redirect_stderr(diagnostics):
+            spec = importlib.util.spec_from_file_location("test_metadata_evidence", suite_path)
+            module = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(module)
+            module.SPEC = importlib.util.spec_from_file_location("metadata_evidence", source)
+            suite = unittest.TestLoader().loadTestsFromModule(module)
+
+            def identities(selected):
+                for test in selected:
+                    if isinstance(test, unittest.TestSuite):
+                        yield from identities(test)
+                    else:
+                        yield test.id()
+
+            selected = sorted(identities(suite))
+            if (not selected or len(selected) != len(set(selected))
+                    or METADATA_INVENTORY_FAILURE not in selected
+                    or any(re.fullmatch(r"test_metadata_evidence\.MetadataEvidenceTests\.test_[a-z_]+", identity)
+                           is None for identity in selected)):
+                raise ConformanceError("WitnessMissing")
+            result = SafeResult()
+            suite.run(result)
+    finally:
+        sys.dont_write_bytecode = previous
+        sys.path[:] = previous_path
+    failures = [row["test"] for row in failed_tests(result)]
+    if (set(failures) - set(selected) or result.testsRun != len(selected)
+            or read_bounded(source, 1024 * 1024) != expected
+            or read_bounded(root / "scripts/metadata_evidence.py", 1024 * 1024) != original
+            or read_bounded(suite_path, 1024 * 1024) != suite_bytes):
+        raise ConformanceError("InputChanged")
+    return {
+        "schemaVersion": 1, "qualification": False, "mode": mode,
+        "baselineSha256": hashlib.sha256(original).hexdigest(),
+        "executedSha256": hashlib.sha256(expected).hexdigest(),
+        "suiteSha256": hashlib.sha256(suite_bytes).hexdigest(),
+        "testsSha256": hashlib.sha256(canonical_bytes(selected)).hexdigest(),
+        "tests": result.testsRun, "failures": len(result.failures), "errors": len(result.errors),
+        "skipped": len(result.skipped), "failedTests": failures, "diagnosticBytes": diagnostics.bytes,
+        "exitCode": (1 if result.failures or result.errors else 2 if result.skipped or diagnostics.bytes else 0),
+    }
+
+
+def metadata_inventory_main(arguments):
+    root = Path(__file__).resolve().parents[1]
+    sys.path.insert(0, str(root / "scripts"))
+    from conformance_evidence import ConformanceError, canonical_bytes
+    from conformance_sources import read_bounded
+    try:
+        if len(arguments) != 4:
+            raise ConformanceError("EvidenceSchemaInvalid")
+        mode, source, proof, snapshot = arguments
+        source = Path(source)
+        packet = metadata_inventory(root, mode, source)
+        raw = read_bounded(source, 1024 * 1024)
+        if hashlib.sha256(raw).hexdigest() != packet["executedSha256"]:
+            raise ConformanceError("InputChanged")
+        for path, data in ((Path(snapshot), raw), (Path(proof), canonical_bytes(packet))):
+            with path.open("xb") as output:
+                output.write(data)
+            path.chmod(0o400)
+    except (ConformanceError, OSError) as error:
+        print(json.dumps({"event": "control", "code": str(error) if isinstance(error, ConformanceError)
+                          else "EvidenceIncomplete", "value": 0}))
+        return 2
+    print(json.dumps({"event": "test", "code": "None" if packet["exitCode"] == 0 else "AssertionFailed",
+                      "value": packet["tests"]}))
+    return packet["exitCode"]
+
+
 def main():
     root = Path(__file__).resolve().parents[1]
     diagnostics = DiagnosticBoundary()
@@ -73,4 +175,4 @@ def main():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(metadata_inventory_main(sys.argv[2:]) if sys.argv[1:2] == ["--metadata-inventory"] else main())

@@ -231,6 +231,19 @@ Four-file authority checks original baseline/current platform hashes, complete
 native input map, argv/cwd, actual settled success and joint bounds.
 `binarySourcesSha256` must come from imported proofs; original runtime witnesses
 remain mandatory. Actual macOS execution is non-qualifying and native-pending.
+MP-48 runs the entire unchanged verifier suite with an unfiltered fresh loader:
+original baseline, original failed-case-refusal mutation, then repair of the same
+private adapter. A bounded runner retains no raw diagnostics. A fourteen-file
+graph requires complete original interpreter sources and test inventory, sealed
+packets/source snapshots, exact original argv/cwd, settled commands and joint
+bounds. The red must be the named assertion with zero setup errors/skips.
+Two binding-specific source facts consume all actual files and supply distinct
+runtime execution UUIDs; recovery's UUID never qualifies MP-48. Imported
+`inventorySourcesSha256` is required. The modeled target is 87/6/9/0 across eight
+scopes/137 witnesses/seven source parents, not a native or qualifying receipt.
+Exact5bc/run40218754070 fails at an original MP-19 queue/deadline witness after
+287 native foundations and lock/package replay pass; its cause remains unknown
+and no ownership/consumer admission follows from that failed run.
 Earlier exact `f038df0`, run 40216546349, independently passes three Linux jobs,
 283 foundations without skips, 13-lock/18-package replay and 128 scopes/1,819
 witnesses, including seven-scope metadata at 80/13/9/0. This admits MP-37/output

@@ -28,12 +28,13 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
-    def test_qualification_selects_an_independent_metadata_recovery_source_scope(self):
+    def test_qualification_selects_independent_metadata_recovery_and_inventory_source_scopes(self):
         import conformance_case_catalog as catalog
 
         diagnostic = catalog.category_execution_partitions("metadata")
         qualification = catalog.category_execution_partitions("metadata", mode="qualification")
-        self.assertEqual({key: value for key, value in qualification.items() if key != "recovery-controller"},
+        self.assertEqual({key: value for key, value in qualification.items()
+                          if key not in ("recovery-controller", "inventory-controller")},
                          dict(diagnostic))
         self.assertEqual(qualification["recovery-controller"],
                          (("sqlite", catalog.METADATA_RECOVERY_SOURCE_WITNESS),))
@@ -41,6 +42,9 @@ class SdkDiagnosticTests(unittest.TestCase):
                          catalog.category_runtime_cases("metadata", "memory", mode="qualification"))
         self.assertEqual(checks._category_scope_tests(("metadata", "recovery-controller")),
                          {catalog.METADATA_RECOVERY_SOURCE_WITNESS: ("sqlite", "MP-36")})
+        self.assertEqual(checks._category_scope_tests(("metadata", "inventory-controller")), {
+            identity: (binding, "MP-48") for binding, identity in catalog.METADATA_INVENTORY_SOURCE_WITNESSES.items()})
+        self.assertEqual(2, len(qualification["inventory-controller"]))
 
     def setUp(self):
         self.directory = ROOT / ".foundation" / ("sdk-diagnostic-test-" + uuid.uuid4().hex)
@@ -137,7 +141,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         self._assert_category_batch("artifacts", 227)
 
     def test_qualification_stall_and_recovery_are_fresh_inside_joint_attempt_before_scopes(self):
-        for failed in (None, "stall", "recovery", "ownership", "consumer", "binary"):
+        for failed in (None, "stall", "recovery", "ownership", "consumer", "binary", "inventory"):
             root = self.directory / str(failed)
             (root / "proofs").mkdir(parents=True)
             run = SimpleNamespace(root=root)
@@ -176,17 +180,18 @@ class SdkDiagnosticTests(unittest.TestCase):
                     checks, "metadata_ownership_diagnostics", side_effect=controls("ownership", None)), patch.object(
                     checks, "metadata_package_consumer_diagnostics", side_effect=controls("consumer", None)), patch.object(
                     checks, "metadata_binary_diagnostics", side_effect=controls("binary", None)), patch.object(
+                    checks, "metadata_inventory_diagnostics", side_effect=controls("inventory", None)), patch.object(
                     checks, "category_attempt", side_effect=scope), patch.object(
                     checks, "_category_record", return_value={"qualification": False}), contextlib.redirect_stdout(io.StringIO()):
                 options = {"inspection_cases": {}, "inspection_configurations": {}, "native_sources": sources}
                 if failed is None:
                     self.assertFalse(checks.category_diagnostics(run, inputs, candidate, **options)["qualification"])
-                    self.assertEqual(calls, ["begin", "stall", "recovery", "ownership", "consumer", "binary", "scope", "finish"])
+                    self.assertEqual(calls, ["begin", "stall", "recovery", "ownership", "consumer", "binary", "inventory", "scope", "finish"])
                     history.interrupt_joint.assert_not_called()
                 else:
                     with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
                         checks.category_diagnostics(run, inputs, candidate, **options)
-                    expected = ["begin", "stall", "recovery", "ownership", "consumer", "binary"]
+                    expected = ["begin", "stall", "recovery", "ownership", "consumer", "binary", "inventory"]
                     self.assertEqual(calls, expected[:expected.index(failed) + 1])
                     history.interrupt_joint.assert_called_once_with("ProofMismatch")
                     history.finish_joint.assert_not_called()

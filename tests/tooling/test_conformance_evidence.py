@@ -1812,6 +1812,112 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     target.write_bytes(files[name])
                     target.chmod(0o400)
 
+    def test_metadata_verifier_inventory_requires_original_native_red_and_same_source_repair(self):
+        import conformance_sources as sources
+        import conformance_unit_checks as checks
+        import time
+        from types import SimpleNamespace
+
+        self.category_history(mode="qualification")
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            original = Path(__file__).resolve().parents[2]
+            self.inputs["sourceManifest"] = {}
+            for path in sources.METADATA_INVENTORY_SOURCE_FILES:
+                raw = (original / path).read_bytes()
+                target = root / "snapshot" / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(raw)
+                target.chmod(0o400)
+                self.inputs["sourceManifest"][path] = hashlib.sha256(raw).hexdigest()
+            self.inputs["sourceManifestSha256"] = evidence.digest(self.inputs["sourceManifest"])
+            namespace = "qualification-metadata-inventory"
+            (root / "proofs").mkdir()
+            work = root / "stores" / namespace
+            work.mkdir(parents=True)
+            inputs_path = f"proofs/{namespace}-native-inputs.json"
+            source_files = {"snapshot/" + path: hashed for path, hashed in self.inputs["sourceManifest"].items()}
+            records, commands = {}, []
+            run = SimpleNamespace(root=root, run_id=self.inputs["runId"], root_id=str(uuid.uuid4()),
+                                  live_children=lambda: (), read_execution_record=lambda sequence: records[sequence])
+            for sequence, mode in enumerate(("baseline", "mutation", "repair"), 1):
+                packet = checks.metadata_inventory(root / "snapshot", mode, work / "metadata_evidence.py")
+                outputs = {
+                    f"proofs/{namespace}-{mode}.json": evidence.canonical_bytes(packet),
+                    f"proofs/{namespace}-{mode}.py": (work / "metadata_evidence.py").read_bytes()}
+                for path, raw in outputs.items():
+                    (root / path).write_bytes(raw)
+                    (root / path).chmod(0o400)
+                control = {
+                    "schemaVersion": 1, "sequence": sequence, "childPid": 200 + sequence,
+                    "childStartSha256": str(sequence) * 64, "startedMs": sequence * 1000,
+                    "endedMs": sequence * 1000 + 100, "exitCode": packet["exitCode"],
+                    "diagnosticCode": "None", "groupState": "Exited", "scope": "recovery"}
+                arguments = [
+                    sys.executable, "-I", "-B", "-S", str(root / "snapshot/scripts/conformance_unit_checks.py"),
+                    "--metadata-inventory", mode, str(work / "metadata_evidence.py"),
+                    str(root / f"proofs/{namespace}-{mode}.json"), str(root / f"proofs/{namespace}-{mode}.py")]
+                native = {
+                    **control, "runId": run.run_id, "rootId": run.root_id,
+                    "argvSha256": evidence.digest(arguments),
+                    "cwdSha256": hashlib.sha256(str(root / "snapshot").encode()).hexdigest(),
+                    "controlRecordSha256": evidence.digest(control),
+                    "inputFiles": {**source_files, inputs_path: evidence.digest(self.inputs)},
+                    "outputFiles": {path: hashlib.sha256(raw).hexdigest() for path, raw in outputs.items()}}
+                records[sequence] = evidence.canonical_bytes(native)
+                for path, value in ((f"proofs/recovery-command-{sequence:04}.json", control),
+                                    (f"proofs/execution-command-{sequence:04}.json", native)):
+                    (root / path).write_bytes(evidence.canonical_bytes(value))
+                    (root / path).chmod(0o400)
+                commands.append({
+                    "mode": mode, "sequence": sequence, "controllerSha256": evidence.digest(control),
+                    "executionSha256": evidence.digest(native)})
+            graph = {
+                "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+                "invocationGroupId": self.inputs["invocationGroupId"], "inputsSha256": evidence.digest(self.inputs),
+                "scriptPath": "snapshot/scripts/conformance_unit_checks.py", "inputsPath": inputs_path,
+                "commands": commands}
+            for path, value in ((inputs_path, self.inputs),
+                                (f"proofs/{namespace}-native-executions.json", graph)):
+                (root / path).write_bytes(evidence.canonical_bytes(value))
+                (root / path).chmod(0o400)
+            with mock.patch.object(sources, "OwnedRun", type(run)):
+                admitted = sources.native_metadata_inventory_controls(run, self.inputs, started_ms=999, ended_ms=3101)
+                self.assertEqual(set(admitted["controls"]), {
+                    "MetadataEvidenceTests:positive-complete-and-negative-inventories",
+                    "test_stale_failed_unpaired_foreign_and_false_memory_durability_reject"})
+                self.assertEqual(14, len(admitted["sourceProofs"]))
+                import conformance_case_catalog as catalog
+                history = evidence.CategoryRuntimeHistory(self.inputs)
+                history.begin("sqlite", self.attempt)
+                unrelated = {
+                    "bindingId": "sqlite", "testIdentity": catalog.METADATA_RECOVERY_SOURCE_WITNESS,
+                    "executionId": str(uuid.uuid4()), "status": "Passed", "proofSha256": "f" * 64}
+                case = next(case for case in history._cases
+                            if case.binding_id == "sqlite" and case.case_id == "MP-48")
+                result = history._case_results(
+                    "sqlite", "None", time.monotonic() * 1000, (unrelated,),
+                    source_parents={unrelated["executionId"]: "d" * 64},
+                    control_proofs=admitted["controls"])[case.key]
+                self.assertEqual("Incomplete", result["status"])
+                self.assertEqual((), result["attempts"][0]["witnessIds"])
+                witness = {**unrelated, "testIdentity": catalog.METADATA_INVENTORY_SOURCE_WITNESSES["sqlite"],
+                           "executionId": str(uuid.uuid4())}
+                result = history._case_results(
+                    "sqlite", "None", time.monotonic() * 1000, (unrelated, witness),
+                    source_parents={witness["executionId"]: "d" * 64, unrelated["executionId"]: "e" * 64},
+                    control_proofs=admitted["controls"])[case.key]
+                self.assertEqual("Passed", result["status"])
+                self.assertEqual((witness["executionId"],), result["attempts"][0]["witnessIds"])
+                packet_path = root / f"proofs/{namespace}-mutation.json"
+                packet = evidence.load_json(packet_path.read_bytes())
+                packet["errors"], packet["failures"] = 1, 0
+                packet_path.chmod(0o600)
+                packet_path.write_bytes(evidence.canonical_bytes(packet))
+                packet_path.chmod(0o400)
+                with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+                    sources.native_metadata_inventory_controls(run, self.inputs, started_ms=999, ended_ms=3101)
+
     def category_history(self, *, profile="metadata", mode="diagnostic", max_attempts=1, origin_inputs=None):
         self.inputs.update(mode=mode, profileId=profile, invocation=["profile", profile])
         self.inputs["budgets"]["profileSeconds"] = 5400 if profile == "metadata" else 10800
@@ -1847,12 +1953,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
     def category_transport(self, binding, *, sequence=1, started=9, origin=None, identities=None,
                            failed_identity=None, selections=None):
         import conformance_case_catalog as catalog
-        cases = [case for case in catalog.expected_cases(self.inputs["profileId"])
-                 if case.binding_id == binding and case.exclusion is None]
-        assignments = {identity: min(case.case_id for case in cases if identity in case.witnesses)
-                       for identity in {identity for case in cases for identity in case.witnesses}}
-        if self.inputs["mode"] == "qualification" and self.inputs["profileId"] == "metadata" and binding == "sqlite":
-            assignments[catalog.METADATA_RECOVERY_SOURCE_WITNESS] = "MP-36"
+        assignments = (dict(catalog.category_runtime_cases(self.inputs["profileId"], binding, mode=self.inputs["mode"]))
+                       if binding is not None else {})
         if identities is not None:
             assignments = {identity: assignments[identity] for identity in identities}
         selected = ({identity: (binding, case_id) for identity, case_id in assignments.items()}
