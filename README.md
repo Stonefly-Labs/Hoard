@@ -1813,6 +1813,18 @@ observations, not yet admitted. Schema run `40158238921` at `9399c3c` passed all
 three jobs, 215 foundations without skips and 95 scopes/876 observations with
 every prerequisite; it does not verify subsequent controls/cursor increments.
 
+The package-only Consumer now executes 32 exact authority-integration rows
+across SQLite/Memory and Local/ObjectSemantics, using the actual evidence bridge
+and unchanged common reference, uncertain-outcome, reader, incarnation and
+foreign-handle assertions. A separate qualification-close helper joins real
+authority holdings, metadata worker settlement and both disposals; the unit
+owner alone reclaims its root after successful settlement. Fresh preparation/
+replay pass 267 Consumer, 311 artifact and 89+89 metadata cases. This remains
+diagnostic, not completed T033/category qualification. Controls run `40158951602`
+at `3fb2705` passed all three jobs, 215 foundations without skips and
+95 scopes/918 observations; the new native request is 216 foundations and
+96 scopes/974 observations, not yet admitted.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

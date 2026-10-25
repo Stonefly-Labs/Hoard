@@ -856,6 +856,24 @@ Schema run `40158238921` at `9399c3c` passed all three jobs, 215 foundations
 without skips and 95 scopes/876 observations with every prerequisite. It
 predates controls/cursor imports and is not complete category qualification.
 
+The package-only Consumer now runs 32 exact actual authority-integration rows:
+each SQLite/Memory and Local/Object combination exercises reference admission,
+failed transactions, live references, lost acknowledgments, current-incarnation
+ABA, protected readers, foreign/copied handles and shutdown holdings. The real
+bridge and existing common assertion bodies are used, not synthetic standalone
+metadata evidence. A stable separate close task joins authority admissions/
+holdings, genuine metadata worker settlement and both actual disposals. The
+existing unit owner observes that task before reclaiming its root; this is not
+controller-authorized Released or category qualification. Original wrapper
+disposal remains unchanged. Fresh preparation/replay pass 267 Consumer,
+311 artifact and 89+89 metadata cases; fourteen consumed Hoard images match
+their actual archives. The Consumer-only HostAdapters edge and its lock graph
+are updated; SDK/Core dependency boundaries and historical locks are unchanged.
+Bounded architecture review found no confirmed blocker. Controls native run
+`40158951602` at `3fb2705` passed all three jobs, 215 foundations without skips
+and 95 scopes/918 observations; the next request is 216 foundations and
+96 scopes/974 observations, not yet admitted.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, all five object-cleanup rows and
 actual prerequisites/replay, not full category/profile qualification.

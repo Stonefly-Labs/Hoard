@@ -4547,6 +4547,50 @@ locks, tasks and reviewer markers remain unchanged. Complete category/profile
 qualification, integrations and final T081 remain open; production/deployment
 examples and diagrams are unaffected by these test-only imports.
 
+### Actual four-way authority integration consumers
+
+The package-only Consumer now source-links the planned
+`Hoard.Conformance.Tests/AuthorityIntegrationTests.cs` while the ordinary SDK
+test project excludes it. This reuses the Consumer's existing unit resource
+owner and isolates the additional explicit HostAdapters package dependency
+from SDK/Core. All four actual SQLite/Memory and Local/Object compositions
+run reference-admission, failed-transaction, live-reference, lost-acknowledgment,
+incarnation ABA, protected-reader, foreign/copied-handle and shutdown consumers.
+The first seven reuse unchanged common bodies; shutdown holds a real recognized
+guard while a separate stable close task fences admissions and joins genuine
+metadata worker settlement, authority holdings and both disposals. Root
+reclamation belongs only to the unit owner after successful settlement.
+Original wrapper disposal is unchanged; no synthetic metadata bridge or
+fabricated Released substitutes for actual composition.
+
+The absent scope fails its initial regression. NU1004 then correctly rejects
+the missing direct dependency graph; the Consumer lock is regenerated from
+actual packed archives for the explicit new edge, not by relaxing locked replay
+or rewriting historical locks. Fresh preparation/replay pass 267 Consumer,
+311 artifact and 89+89 metadata cases without failures/skips. Fifteen normalized
+archives reproduce map
+`2a2290ffc16031eed65385620927f0768f9b54631eb734f76cc2f473d0200079`;
+fourteen actual Hoard images match archive bytes per preparation. Separate
+empty-cache observation verifies exactly 32 discoveries/passes. Tooling passes
+324 checks (307 passed/seventeen macOS-native skips), including 98 SDK checks;
+ordinary binding/catalog tests pass 23 without skips. Consumer/HostAdapters
+formatting, frozen inventory/catalog and patch checks pass. Bounded custom
+architecture review found no confirmed blocker; the actual preparation/replay
+and execution address its pending runtime/lock evidence gaps.
+
+Controls run `40158951602` at
+`3fb2705c1639e11e7c1ca730e769cffe92b131e5` passed all three jobs,
+215 foundations without failures/errors/skips, 95 scopes/918 exact observations
+and every prerequisite. Input:
+`5cc167d09eb4b693ea636094e623b6bf2b9bb45586e497016e42b8da2a091591`;
+preparation:
+`79a05caec7d7126f532473f579c6cc8d736f14c81bd33265665afecc8b99f59e`;
+free scratch 91,721,510,912 bytes. It predates cursor/authority imports.
+The new native request is 216 foundations and 96 scopes/974 observations,
+not yet admitted. T033/category qualification, subsequent profiles and final
+T081 remain unfinished. Tasks/reviewer markers and historical seals are
+unchanged; production/deployment examples and diagrams are unaffected.
+
 Recovery-reopen native run `40146117625` binds exact head
 `994f9fb8819b7ff363382c3ff66b6087d5e34002`: all three jobs, 204 foundations
 without failures/errors/skips, 87 scopes/757 exact discoveries/executions and

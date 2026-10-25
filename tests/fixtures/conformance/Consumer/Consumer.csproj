@@ -6,7 +6,9 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="SqliteEnvironmentProbe.cs;SqliteNativeOwnershipProbe.cs" />
+    <Compile Include="../../../contracts/Hoard.Conformance.Tests/AuthorityIntegrationTests.cs" Link="AuthorityIntegrationTests.cs" />
     <PackageReference Include="Hoard.Testing.Conformance" />
+    <PackageReference Include="Hoard.Fixtures.Artifacts.HostAdapters" />
     <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Sqlite" />
     <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Memory" />
     <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Local" />

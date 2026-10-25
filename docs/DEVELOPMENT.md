@@ -7764,6 +7764,50 @@ preparation:
 `a2f2fb64e77dc059b89e55d8e7bd5cd8e6df6a0743b3eb06fbb1fa5c4fe82167`;
 free scratch 91,721,506,816 bytes. It predates controls/cursor imports.
 
+The package-only Consumer now source-links
+`tests/contracts/Hoard.Conformance.Tests/AuthorityIntegrationTests.cs`; the
+ordinary SDK contract project excludes that file so it does not acquire a
+concrete provider dependency. All four actual SQLite/Memory and Local/Object
+compositions exercise eight consumers: reference admission, failed transaction,
+actual live references, lost acknowledgment, incarnation ABA, protected reader,
+foreign/copied authority handles and shutdown with a real recognized guard.
+Existing common assertion bodies and original wrapper disposal are unchanged.
+
+A separate stable qualification-close task fences new authority admissions,
+captures genuine metadata lifetime/work settlement after disposal starts and
+joins actual authority holdings and both disposals. The existing unit owner
+receives that actual task and reclaims only after success; pending/faulted
+settlement cannot mean Released. This remains unit/package diagnostic evidence,
+not the final native controller/category ownership proof.
+
+The new exact-scope regression first fails for absent scope. Initial package
+restore then rejects the missing direct dependency graph with NU1004; the
+Consumer lock is explicitly regenerated from the actual packed feed for its
+new HostAdapters edge, existing versions and actual archive hashes. Historical
+locks and preparation's no-graph-resolution rules remain unchanged. Fresh
+preparation/replay pass 267 Consumer, 311 artifact and 89+89 metadata cases,
+with fifteen matching archives and fourteen actual Hoard image/archive pairs.
+An independent empty runtime cache confirms exactly 32 discoveries/passes.
+Tooling passes 324 checks (307 passed/seventeen macOS-native skips), including
+98 SDK checks; ordinary binding/catalog tests pass 23 without skips. Consumer
+and HostAdapters formatting, frozen inventory/catalog and patch checks pass.
+Bounded custom architecture review finds no confirmed blocker; its pending
+runtime/lock-replay evidence gaps are addressed by these actual runs.
+
+Controls native run `40158951602` at exact head
+`3fb2705c1639e11e7c1ca730e769cffe92b131e5` passed all three jobs,
+215 foundations without failures/errors/skips, 95 scopes/918 exact
+discoveries/executions and every prerequisite. Input:
+`5cc167d09eb4b693ea636094e623b6bf2b9bb45586e497016e42b8da2a091591`;
+preparation:
+`79a05caec7d7126f532473f579c6cc8d736f14c81bd33265665afecc8b99f59e`;
+free scratch 91,721,510,912 bytes. It predates cursor/authority imports.
+The new native request is 216 foundations and 96 scopes/974 observations, not
+yet admitted. T033/category qualification, later profiles and final T081 remain
+open; tasks, reviewer markers and historical seals are unchanged. README and
+affected guides/contracts are updated; product/deployment examples and diagrams
+are unaffected by this test-only package edge and additional close helper.
+
 Prefix-cleanup run `40125248164` at exact head
 `871e3a860a07646c513de01095cc29ad3e4add70` passed all three jobs,
 183 foundations without failures/errors/skips and 71 scopes/608 exact

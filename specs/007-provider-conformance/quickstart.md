@@ -546,6 +546,16 @@ cases. The next native request is 215 foundations and 95 scopes/942 observations
 not yet admitted. Schema run `40158238921` at `9399c3c` passed all three jobs,
 215 foundations without skips and 95 scopes/876 observations with every
 prerequisite; it predates controls/cursor increments, not full qualification.
+The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
+Consumer, not the ordinary SDK contract assembly: all four actual compositions
+and eight consumers produce 32 exact passing rows. Actual bridge/authority/
+worker shutdown is joined before the unit owner reclaims its root. Fresh
+preparation/replay pass 267 Consumer, 311 artifact and 89+89 metadata cases;
+the Consumer HostAdapters dependency lock is updated, not historical locks.
+Controls run `40158951602` at `3fb2705` passed all three jobs,
+215 foundations without skips and 95 scopes/918 observations. The next native
+request is 216 foundations and 96 scopes/974 observations, not yet admitted;
+complete category/profile qualification and T033 remain unfinished.
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, not complete qualification.
 Prefix cleanup passed `40125248164` at `871e3a8`, all three jobs,

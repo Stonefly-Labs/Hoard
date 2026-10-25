@@ -1216,6 +1216,43 @@ class SdkDiagnosticTests(unittest.TestCase):
                     checks.test_attempt(run, {}, candidate, changed)
                 launch.assert_not_called()
 
+    def test_actual_authority_matrix_requires_every_composition_and_rejects_reduced_scope(self):
+        factory = getattr(checks, "actual_authority_integration_scenarios", None)
+        self.assertTrue(callable(factory), "Actual authority integration requires its own exact observed scope.")
+        method = "Hoard.Conformance.Tests.AuthorityIntegrationTests.Actual_compositions_preserve_shared_authority"
+        expected = {
+            f'{method}(provider: "{provider}", metadataProvider: "{metadata}", consumer: "{consumer}")'
+            for provider in ("local", "object") for metadata in ("memory", "sqlite") for consumer in (
+                "reference-admission", "failed-transaction", "live-references", "lost-acknowledgment",
+                "incarnation", "reader", "foreign-authority", "shutdown")}
+        scenario, = factory()
+        self.assertEqual(scenario, ("actual-authority-integration", tuple(sorted(expected)),
+                                    "None", "Passed", 0, "None"))
+        candidate = self.directory / "candidate"
+        assembly = candidate / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
+        inputs = {
+            "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+            "runtimeAssemblies": {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+            "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
+        }
+        run = SimpleNamespace(root=self.directory)
+        with patch.object(checks, "require_sqlite_environment") as admission:
+            with patch.object(checks, "runtime_command",
+                              side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                    checks.test_attempt(run, inputs, candidate, scenario)
+                admission.assert_called_once_with(inputs, assembly, self.directory)
+                self.assertEqual(launch.call_args.args[1], assembly)
+                self.assertEqual({item["testIdentity"] for item in launch.call_args.args[2]["expected"]}, expected)
+        for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+                        (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
+                        ("actual-authority-integration-foreign", *scenario[1:])):
+            with patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory), {}, self.directory, changed)
+                launch.assert_not_called()
+
     def test_full_schema_origin_admission_rejects_missing_extra_and_foreign_lineages(self):
         witness = (
             "Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."

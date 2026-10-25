@@ -1089,6 +1089,25 @@ correspondences. Fresh preparation/replay pass 311 artifact, 235 Consumer and
 95 scopes/876 exact observations and every prerequisite. It does not verify
 the later controls/cursor increments or establish complete qualification.
 
+The separate `actual-authority-integration` diagnostic scope requires all
+32 exact rows: four actual compositions times eight unchanged/common or
+ownership consumers. Reduced/foreign scopes reject before launch; routing
+requires the package-only Consumer and actual SQLite environment admission.
+`AuthorityIntegrationTests.cs` is source-linked into that Consumer and excluded
+from the ordinary SDK test assembly. Its explicit HostAdapters package edge
+and updated lock graph are checked with fourteen actual Hoard image/archive
+correspondences per preparation. A stable close helper fences new authority
+admissions and joins genuine authority holdings, metadata lifetime/work
+settlement and both actual disposals. Only the unit resource owner reclaims
+after successful settlement; no binding deletion or fabricated Released.
+Original common assertion bodies and wrapper disposal remain unchanged.
+Fresh preparation/replay pass 267 Consumer, 311 artifact and 89+89 metadata
+cases; separate empty-cache discovery/execution confirms all 32 actual rows.
+Controls native run `40158951602` at `3fb2705` passed all three jobs,
+215 foundations without failures/errors/skips, 95 scopes/918 observations and
+every prerequisite. The next request is 216 foundations and 96 scopes/974
+observations, not yet admitted or complete T033/category qualification.
+
 Object cleanup passed `40126135553` at `3de87aa`, all three jobs,
 184 foundations and 72 scopes/613 observations, including all five new rows and
 every actual prerequisite chain/replay, not full qualification.

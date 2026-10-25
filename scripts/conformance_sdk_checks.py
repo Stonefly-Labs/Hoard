@@ -53,13 +53,15 @@ CONFIGURED_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.Artif
 PAYLOAD_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ArtifactPayloadSessionTests."
 FULL_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ArtifactConformanceSessionTests."
 FULL_METADATA_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
+AUTHORITY_INTEGRATION_PREFIX = "Hoard.Conformance.Tests.AuthorityIntegrationTests."
 ARTIFACT_CONSUMER_PREFIXES = (
     ARTIFACT_CONSUMER_PREFIX, OBJECT_ARTIFACT_CONSUMER_PREFIX, CONFIGURED_ARTIFACT_CONSUMER_PREFIX,
-    PAYLOAD_ARTIFACT_CONSUMER_PREFIX, FULL_ARTIFACT_CONSUMER_PREFIX)
+    PAYLOAD_ARTIFACT_CONSUMER_PREFIX, FULL_ARTIFACT_CONSUMER_PREFIX, AUTHORITY_INTEGRATION_PREFIX)
 ARTIFACT_CONSUMER_PACKAGES = (
     "Hoard.Abstractions", "Hoard.Testing.Conformance",
     "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite",
     "Hoard.Fixtures.Artifacts.Local", "Hoard.Fixtures.Artifacts.ObjectSemantics",
+    "Hoard.Core", "Hoard.Hosting", "Hoard.Fixtures.Metadata.HostAdapters", "Hoard.Fixtures.Artifacts.HostAdapters",
     *(f"Hoard.Fixtures.Conformance.Bindings.{name}" for name in ("Memory", "Sqlite", "Local", "ObjectSemantics")),
 )
 LOCAL_PACKAGES = (
@@ -1285,6 +1287,16 @@ def full_artifact_binding_scenarios():
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
+def actual_authority_integration_scenarios():
+    method = AUTHORITY_INTEGRATION_PREFIX + "Actual_compositions_preserve_shared_authority"
+    identities = {
+        f'{method}(provider: "{provider}", metadataProvider: "{metadata}", consumer: "{consumer}")'
+        for provider in ("local", "object") for metadata in ("memory", "sqlite") for consumer in (
+            "reference-admission", "failed-transaction", "live-references", "lost-acknowledgment",
+            "incarnation", "reader", "foreign-authority", "shutdown")}
+    return (("actual-authority-integration", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
 def full_metadata_binding_scenarios():
     return (("full-metadata-binding", tuple(sorted(full_metadata_binding_origin_counts())),
              "None", "Passed", 0, "None"),)
@@ -1826,7 +1838,8 @@ def make_inputs(run, repository, candidate, sources, observed_environment, ident
             "original-artifact-recovery-pages", "original-artifact-recovery-races",
             "original-artifact-recovery-reopen", "original-artifact-admission",
             "original-artifact-deletion-settlement", "artifact-direct-verification", "artifact-capacity-injection",
-            "artifact-unclaimed-cleanup", "artifact-synchronous-storage", "full-artifact-binding", "full-metadata-binding"],
+            "artifact-unclaimed-cleanup", "artifact-synchronous-storage", "full-artifact-binding", "full-metadata-binding",
+            "actual-authority-integration"],
         baseline_sha256=seal_sha, ci_revision=ci_revision)
     if (inputs["sourceManifest"] != sources
             or any(inputs[key] != value for key, value in identity.items())):
@@ -1842,13 +1855,14 @@ def test_attempt(run, inputs, candidate, scenario):
             raise evidence.ConformanceError("WitnessMissing")
     if (name in ("local-artifact-session", "object-artifact-session", "configured-artifact-session",
                  "payload-artifact-session", "artifact-direct-verification", "artifact-capacity-injection",
-                 "artifact-unclaimed-cleanup", "artifact-synchronous-storage", "full-artifact-binding")
+                 "artifact-unclaimed-cleanup", "artifact-synchronous-storage", "full-artifact-binding",
+                 "actual-authority-integration")
             or any(identity.startswith(ARTIFACT_CONSUMER_PREFIXES) for identity in identities)):
         if scenario not in (*local_artifact_session_scenarios(), *object_artifact_session_scenarios(),
                             *configured_artifact_session_scenarios(), *payload_artifact_session_scenarios(),
                             *artifact_direct_verification_scenarios(), *artifact_capacity_injection_scenarios(),
                             *artifact_unclaimed_cleanup_scenarios(), *artifact_synchronous_storage_scenarios(),
-                            *full_artifact_binding_scenarios()):
+                            *full_artifact_binding_scenarios(), *actual_authority_integration_scenarios()):
             raise evidence.ConformanceError("WitnessMissing")
     original_metadata = name.startswith("original-metadata-")
     original_artifacts = name.startswith("original-artifact-")
@@ -1883,7 +1897,7 @@ def test_attempt(run, inputs, candidate, scenario):
             *artifact_observation_scenarios()):
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
-    sqlite_tests = name == "full-metadata-binding" or metadata_provider == "sqlite" or any(
+    sqlite_tests = name in ("full-metadata-binding", "actual-authority-integration") or metadata_provider == "sqlite" or any(
         identity.startswith((SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX)) for identity in identities)
     source_tests = original_tests or all(
         identity.startswith("Hoard.Conformance.Tests.") for identity in identities) or binding_tests
@@ -2462,6 +2476,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "full-metadata-binding"}), flush=True)
         for scenario in full_metadata_binding_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "actual-authority-integration"}), flush=True)
+        for scenario in actual_authority_integration_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         post_environment = environment(run, phase="completion", candidate=candidate)
         post_sources = evidence.source_manifest(repository)
