@@ -9122,6 +9122,19 @@ The old line location alone did not prove which expression failed; the SDK's
 separately projected AttributeError remains the evidence for the result-field
 defect. No separate release-retry ownership repair or native success is claimed.
 
+Exact `7dc1ac8`, run 40212543819, subsequently passes all 279 Linux foundations
+without failures, errors or skips, including the repaired native barrier proof.
+Both SDK diagnostics and lock replay fail with safe compiler code `CS0103`
+during fresh candidate replay. Actual MSBuild evaluation reproduces the source
+ownership bug: the new fact under `fixtures/conformance/Consumer/` is also
+compiled by that separate consumer, which does not contain its decoder.
+The fact now resides in `Hoard.Conformance.Tests/Native/` and the existing
+non-package condition removes `Native/**/*.cs`. Evaluated compile items verify
+that the fixture consumer excludes it, default SDK tests contain only the
+decoder, and package-mode SDK tests contain both. All 119 SDK source tests and
+the focused formatter check pass. Full package/native replay remains pending;
+the failed overall run is not admitted. No package references or locks change.
+
 The [plan checkpoint](../specs/007-provider-conformance/plan.md#partial-implementation-checkpoint)
 records the delivered scope, review findings and remaining evidence. T002..T005
 manifest/solution setup is complete; remaining task markers await their full

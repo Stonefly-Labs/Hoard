@@ -15,6 +15,7 @@
     <ProjectReference Include="../Hoard.Conformance.TestLogger/Hoard.Conformance.TestLogger.csproj" />
     <ProjectReference Include="../Hoard.Testing.Conformance/Hoard.Testing.Conformance.csproj" />
     <Compile Remove="MemoryMechanismTests.cs" />
+    <Compile Remove="Native/**/*.cs" />
   </ItemGroup>
   <PropertyGroup Condition="'$(ConformancePackageAcceptance)' == 'true'">
     <NuGetLockFilePath>PackageAcceptance/packages.lock.json</NuGetLockFilePath>
@@ -39,6 +40,5 @@
     <Compile Include="../../fixtures/conformance/Consumer/SqliteMechanismTests.cs" Link="SqliteMechanismTests.cs" />
     <Compile Include="../../fixtures/conformance/Consumer/SqliteEnvironmentProbe.cs" Link="SqliteEnvironmentProbe.cs" />
     <Compile Include="../../fixtures/conformance/Consumer/SqliteNativeOwnershipProbe.cs" Link="SqliteNativeOwnershipProbe.cs" />
-    <Compile Include="../../fixtures/conformance/Consumer/MetadataRecoveryRuntimeTests.cs" Link="MetadataRecoveryRuntimeTests.cs" />
   </ItemGroup>
 </Project>

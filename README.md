@@ -2041,6 +2041,12 @@ The corrected producer's native foundation run then exposed a second,
 test-only defect at the same assertion: the Linux-only barrier test lacked its
 `hashlib` import. That import is now explicit; native confirmation remains
 pending and the failed checkpoint is not admitted.
+Exact `7dc1ac8` subsequently passes all 279 native foundations without skips.
+Its SDK/lock jobs expose `CS0103`: the new source fact was also picked up by the
+unrelated fixture consumer's default compile glob, without its decoder. The fact
+now lives in its owning SDK test project and is excluded from ordinary source
+mode. All three actual MSBuild compile selections are checked; full native
+replay of that ownership correction remains pending.
 Native run `40161613939` exposed an `Assert.IsType()`
 logger classification gap; the bounded allowlist repair preserves exact SDK
 frame checks. Actual logger observation and independent replay now reproduce

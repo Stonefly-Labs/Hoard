@@ -6237,6 +6237,16 @@ field mismatch. Native import-correction execution remains pending; neither
 failed overall run is admitted and the old release-retry ownership error is
 still a separate undiagnosed failure.
 
+Exact `7dc1ac8` run 40212543819 confirms all 279 native foundations pass with
+zero skips, but candidate SDK/lock replay fails with `CS0103`. Evaluated MSBuild
+items reproduce the wrong ownership: placing the new fact under the fixture
+consumer also includes it in that unrelated assembly without its decoder.
+Moving it into the SDK test project's `Native/` folder and excluding that
+folder only in non-package mode preserves the intended owner. All three actual
+compile selections, 119 SDK source tests and focused formatting pass. Full
+package/native replay is still pending; the failed overall run is not admitted,
+no dependency or lock changes, and control-to-case attribution remains unwired.
+
 Extract reusable, test-only category suites from the existing package-acceptance
 tests, keeping their assertions and independent implementations. A separately
 packable `Hoard.Testing.Conformance` library supplies the common consumers,
