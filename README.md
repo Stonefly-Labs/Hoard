@@ -2165,13 +2165,15 @@ or OS-peak claims. An independent reader now reselects each original
 runner/input/recipe/controller/producer/composite and executor-held command,
 including after later commands. Ingestion and source-parent admission recheck
 all four transfer graphs; rewired current hashes cannot replace original native
-input/output/control maps. All 412 tooling checks pass with 19 native skips.
+input/output/control maps. All 414 tooling checks pass with 19 native skips.
 Private qualification-origin transfer paths now require artifact qualification
 inputs; diagnostic/category paths and receipts cannot be relabeled into them.
 Crash/retained-child validators are shared with independent source admission
-without changing their assertions. Fresh qualification execution/joint bounds,
-complete crash/retention corroboration and full artifact qualification remain
-closed.
+without changing their assertions. Qualification-origin transfer admission
+requires all four original graphs in serial sequence inside one observed joint
+window, with disjoint proof paths; rejection prevents publishing a transfer
+summary. Fresh native qualification execution, complete crash/retention
+corroboration and full artifact qualification remain closed.
 
 Exact source-index run40228504830 at `a9e75c8` fails one native foundation
 assertion comparing an empty `frozenset` to an empty tuple; its SDK and lock jobs

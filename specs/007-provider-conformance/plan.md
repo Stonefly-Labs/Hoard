@@ -6602,6 +6602,24 @@ not actual fresh qualification-origin transfers or opened controller/profile
 qualification. Joint execution bounds and complete crash/retention source
 authority remain unbuilt; no tasks/checklists advance.
 
+Missing four-transfer joint-source admission fails its intended named API
+assertion before implementation. The new independent qualification-origin
+join requires complete original graphs in fixed provider/size order, strictly
+increasing native sequence, nonoverlapping transfer windows inside the observed
+joint start/end bounds and disjoint original proof paths. It returns immutable
+source bytes and seven transfer-control role hash sets, not passing cases.
+Native qualification-origin controllers invoke it before summary publication;
+source rejection propagates and no summary is created. Positive complete joins,
+early/late/overlapping/reordered/duplicate-path/missing graphs, invalid bounds
+and foreign inputs are covered, together with actual dispatch/failure
+propagation. An initial test-only unqualified `patch` name is corrected to this
+file's existing `mock.patch` convention; source admission is unchanged.
+All 414 tooling checks pass with 19 explicit native skips; frozen inventory,
+SDK catalog and whitespace checks pass. C# source/projects/locks and actual
+native execution are unchanged. Complete artifact controller/crash/retention
+authority and actual fresh qualification execution remain unbuilt; no
+task/checklist markers advance.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

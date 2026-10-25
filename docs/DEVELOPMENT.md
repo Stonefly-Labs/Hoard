@@ -9446,9 +9446,16 @@ share this gate. Diagnostic/category receipts or foreign modes/profiles cannot
 substitute; all three namespace variants retain the same measurement and
 original-input/output substitution negatives. These are local unit models,
 not actual qualification-origin transfers or an opened qualifying backend.
-All seven artifact QCs and artifact qualification remain closed: fresh
-qualification execution/joint bounds and complete crash/retention source
-corroboration still need implementation.
+Native qualification-origin transfer controllers now recheck all four graphs
+against their actual common start/end window before publishing a summary.
+Sequences must increase, transfer windows must not overlap, and source proof
+paths must be disjoint. The independent reader returns immutable original
+proofs and seven transfer-control role hash sets; this does not change any
+case status. Early/late, overlap, reordered sequence, reused proof path and
+missing-source cases reject. No summary is written after joint-source rejection.
+All seven artifact QCs and artifact qualification remain closed: actual fresh
+native qualification execution and complete crash/retention source
+corroboration still need completion.
 
 Exact source-index `a9e75c848c3572a035a7317a6a20b8e89540cd0f`,
 [run40228504830](https://github.com/Stonefly-Labs/Hoard/actions/runs/40228504830),
@@ -9478,7 +9485,7 @@ This admits original byte capture only, not the later output-seal or native
 measurement-record increments. Their exact native replays remain pending;
 neither profile qualifies.
 
-Current validation: all 412 tooling checks pass with 19 explicit native skips;
+Current validation: all 414 tooling checks pass with 19 explicit native skips;
 all 133 source SDK checks pass. Focused formatting, frozen inventory, SDK catalog
 and whitespace checks pass. The preceding byte-capture checkpoint compiled
 the original artifact package-acceptance project with freshly rebuilt SDK,

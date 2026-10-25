@@ -47,6 +47,7 @@ from conformance_sources import (
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
     metadata_inventory_arguments, metadata_inventory_context, metadata_inventory_observations,
     metadata_inventory_source_inputs, native_metadata_inventory_controls, native_artifact_transfer_source,
+    native_artifact_transfer_controls,
     native_control_record, native_metadata_binary_control, native_metadata_ownership_control,
     native_metadata_package_consumer_control,
     read_bounded, runtime_arguments, runtime_settings,
@@ -983,9 +984,12 @@ def artifact_transfer_diagnostics(run, inputs, candidate, *, namespace="artifact
         no_symlinks(parent)
         parent.mkdir(mode=0o700)
     hashes = {size: artifacts.expected_transfer_hash(size) for size in (268435456, 4294967296)}
+    started_ms = time.monotonic() * 1000
     observations = [
         measured_artifact_transfer(run, inputs, assembly, provider, size, hashes[size], namespace=namespace)
         for provider in ("local", "object") for size in hashes]
+    if type(run) is OwnedRun and namespace == "qualification-artifact-transfers":
+        native_artifact_transfer_controls(run, inputs, started_ms=started_ms, ended_ms=time.monotonic() * 1000)
     result = {
         "qualification": False, "mode": "artifact-transfers", "code": "None",
         "inputsSha256": evidence.digest(inputs), "transfers": observations,

@@ -1695,10 +1695,13 @@ class SdkDiagnosticTests(unittest.TestCase):
                     checks.artifact_transfer_diagnostics(run, captured, candidate, namespace=namespace)
             self.assertEqual(execute.call_count, 4)
         qualified_inputs = {**category_inputs, "mode": "qualification"}
+        native_run = object.__new__(checks.OwnedRun)
+        native_run.root, native_run.run_id = root, run.run_id
         with patch.object(checks, "verify_runtime_packages"), patch.object(
-                checks, "measured_artifact_transfer", return_value={"proofSha256": "f" * 64}) as execute:
+                checks, "measured_artifact_transfer", return_value={"proofSha256": "f" * 64}) as execute, patch.object(
+                checks, "native_artifact_transfer_controls") as admit:
             qualified = checks.artifact_transfer_diagnostics(
-                run, qualified_inputs, candidate, namespace="qualification-artifact-transfers")
+                native_run, qualified_inputs, candidate, namespace="qualification-artifact-transfers")
             self.assertEqual(qualified["inputsSha256"], checks.evidence.digest(qualified_inputs))
             self.assertFalse(qualified["qualification"])
             self.assertTrue(all(call.kwargs["namespace"] == "qualification-artifact-transfers"
@@ -1707,16 +1710,43 @@ class SdkDiagnosticTests(unittest.TestCase):
                 [call.args[3:5] for call in execute.call_args_list],
                 [("local", 268435456), ("local", 4294967296), ("object", 268435456), ("object", 4294967296)])
             self.assertTrue((root / "proofs/qualification-artifact-transfers.json").exists())
+            admit.assert_called_once()
+            self.assertEqual(admit.call_args.args, (native_run, qualified_inputs))
+            self.assertLessEqual(admit.call_args.kwargs["started_ms"], admit.call_args.kwargs["ended_ms"])
             for captured in (inputs, category_inputs, {**qualified_inputs, "profileId": "metadata"}):
                 with self.assertRaises(checks.evidence.ConformanceError):
                     checks.artifact_transfer_diagnostics(
                         run, captured, candidate, namespace="qualification-artifact-transfers")
             self.assertEqual(execute.call_count, 4)
+            admit.assert_called_once()
         with patch.object(checks, "verify_runtime_packages"), patch.object(checks, "measured_artifact_transfer") as execute:
             with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
                 checks.artifact_transfer_diagnostics(
                     run, {"runtimeAssemblies": {assembly.relative_to(root).as_posix(): "0" * 64}}, candidate)
             execute.assert_not_called()
+
+    def test_qualification_transfer_controller_does_not_publish_a_summary_after_joint_source_rejection(self):
+        root = self.directory
+        assembly = root / "candidate" / checks.ARTIFACT_TRANSFER / (
+            "bin/Release/net10.0/Hoard.Fixtures.Artifacts.TransferRunner.dll")
+        assembly.parent.mkdir(parents=True)
+        assembly.write_bytes(b"transfer-controller-unit-double")
+        (root / "stores").mkdir()
+        (root / "proofs").mkdir()
+        run = object.__new__(checks.OwnedRun)
+        run.root, run.run_id = root, str(uuid.uuid4())
+        inputs = {"profileId": "artifacts", "mode": "qualification", "runtimeAssemblies": {
+            assembly.relative_to(root).as_posix(): hashlib.sha256(assembly.read_bytes()).hexdigest()}}
+        with patch.object(checks, "verify_runtime_packages"), patch.object(
+                checks, "measured_artifact_transfer", return_value={"proofSha256": "f" * 64}) as execute, patch.object(
+                checks, "native_artifact_transfer_controls",
+                side_effect=checks.evidence.ConformanceError("ProofMismatch")) as admit:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                checks.artifact_transfer_diagnostics(
+                    run, inputs, root / "candidate", namespace="qualification-artifact-transfers")
+            self.assertEqual(execute.call_count, 4)
+            admit.assert_called_once()
+            self.assertFalse((root / "proofs/qualification-artifact-transfers.json").exists())
 
     def test_artifact_source_consumption_rechecks_all_four_original_transfer_graphs_and_propagates_failure(self):
         run, inputs, manifest, ingested = SimpleNamespace(root=self.directory), {}, {}, {}

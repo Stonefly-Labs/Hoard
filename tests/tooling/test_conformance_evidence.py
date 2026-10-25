@@ -1079,6 +1079,62 @@ class ConformanceInputTests(unittest.TestCase):
 
 
 class ConformanceRuntimeIngestionTests(unittest.TestCase):
+    def test_native_artifact_transfer_controls_require_fresh_complete_serial_joint_graphs(self):
+        import conformance_sources as sources
+        from conformance_execution import OwnedRun
+        self.assertTrue(callable(getattr(sources, "native_artifact_transfer_controls", None)),
+                        "Qualification transfers need all four original graphs inside the same serial joint window.")
+        inputs = {**self.inputs, "profileId": "artifacts", "mode": "qualification"}
+        run = object.__new__(OwnedRun)
+        run.run_id = inputs["runId"]
+        rows = [("local", 268435456), ("local", 4294967296), ("object", 268435456), ("object", 4294967296)]
+        for defect in (None, "early", "late", "overlap", "sequence", "duplicate-proof", "missing"):
+            graphs = []
+            for index, (provider, size) in enumerate(rows, 1):
+                sequence = 1 if defect == "sequence" and index == 2 else index
+                started, ended = index * 100, index * 100 + 50
+                if defect == "early" and index == 1:
+                    started = 99
+                elif defect == "late" and index == 4:
+                    ended = 451
+                elif defect == "overlap" and index == 2:
+                    started = 149
+                prefix = f"proofs/qualification-artifact-transfers/transfer-{provider}-{size}"
+                graph = {"sequence": sequence, "sourceProofs": {
+                    f"proofs/transfer-command-{sequence:04}.json": evidence.canonical_bytes({
+                        "startedMs": started, "endedMs": ended}),
+                    prefix + "/producer.json": f"original-{provider}-{size}".encode()}}
+                if defect == "duplicate-proof":
+                    graph["sourceProofs"]["proofs/shared-source.json"] = b"same bytes cannot hide path reuse"
+                graphs.append(graph)
+            if defect == "missing":
+                graphs[-1] = evidence.ConformanceError("ProofMismatch")
+            with self.subTest(defect=defect), mock.patch.object(
+                    sources, "native_artifact_transfer_source", side_effect=graphs) as selected:
+                if defect:
+                    with self.assertRaises(evidence.ConformanceError):
+                        sources.native_artifact_transfer_controls(run, inputs, started_ms=100, ended_ms=450)
+                else:
+                    admitted = sources.native_artifact_transfer_controls(run, inputs, started_ms=100, ended_ms=450)
+                    self.assertEqual(len(admitted["controls"]), 7)
+                    self.assertEqual(len(admitted["sourceProofs"]), 8)
+                    hashes = {hashlib.sha256(raw).hexdigest() for raw in admitted["sourceProofs"].values()}
+                    self.assertTrue(all(set(values) <= hashes for values in admitted["controls"].values()))
+                    self.assertEqual([call.args[2:] for call in selected.call_args_list], rows)
+                    self.assertTrue(all(call.kwargs == {"namespace": "qualification-artifact-transfers"}
+                                        for call in selected.call_args_list))
+                    with self.assertRaises(TypeError):
+                        admitted["controls"]["local-256m-write-read"] = ()
+        with mock.patch.object(sources, "native_artifact_transfer_source") as selected:
+            for captured, started, ended in (
+                    ({**inputs, "mode": "diagnostic"}, 100, 450),
+                    ({**inputs, "profileId": "metadata"}, 100, 450),
+                    ({**inputs, "runId": str(uuid.uuid4())}, 100, 450),
+                    (inputs, 450, 100), (inputs, True, 450), (inputs, 100, float("nan"))):
+                with self.subTest(captured=captured, started=started, ended=ended), self.assertRaises(evidence.ConformanceError):
+                    sources.native_artifact_transfer_controls(run, captured, started_ms=started, ended_ms=ended)
+            selected.assert_not_called()
+
     def test_artifact_source_capture_requires_exact_current_bytes_and_original_runtime_witnesses(self):
         import conformance_sources as sources
         from conformance_case_catalog import ORIGINAL_ARTIFACT_PROOF_SOURCES

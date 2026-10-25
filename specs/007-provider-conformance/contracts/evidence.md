@@ -341,6 +341,12 @@ artifact qualification inputs; diagnostic/category paths and foreign
 mode/profile labels reject before execution. Complete original native graph
 checks also apply there. Local modeled graphs are not fresh native
 qualification execution or complete controller authority.
+The independent qualification-origin four-transfer join requires actual common
+start/end bounds, serial increasing sequences/nonoverlapping transfer windows
+and disjoint original proof paths. It returns immutable source bytes and seven
+control-role hash sets. Native transfer controllers invoke it before summary
+publication; missing/rejected source authority cannot produce a success-shaped
+summary. This does not open artifact case/controller qualification.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

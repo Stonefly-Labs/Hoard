@@ -523,8 +523,13 @@ graphs. Rewired current hashes do not replace original executor provenance.
 Private qualification-origin transfer paths require artifact qualification
 inputs and cannot borrow diagnostic/category receipts. Original crash/state/
 readback and retained-child validators share the source layer unchanged.
-Fresh qualification execution/joint-bound and complete crash/retention authority
-remain separate unbuilt gates; public schemas and status rules are unchanged.
+Native qualification-origin transfer joins additionally require all four
+original graphs in increasing sequence, serial times within the actual common
+window and disjoint proof paths. Rejection prevents summary publication.
+Immutable proof bytes/seven control-role hash sets do not change case status.
+Actual fresh native qualification execution and complete crash/retention
+authority remain separate unbuilt gates; public schemas and status rules are
+unchanged.
 
 **Ownership**: `Allocated -> Active -> Settling -> Released`, or
 `Settling -> Retained -> Settling`. Only actual settlement/exit permits

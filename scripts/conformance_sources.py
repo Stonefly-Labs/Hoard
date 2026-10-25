@@ -437,6 +437,36 @@ def native_artifact_transfer_source(run, inputs, provider, size, *, namespace):
             f"proofs/execution-command-{sequence:04}.json": native_raw})})
 
 
+def native_artifact_transfer_controls(run, inputs, *, started_ms, ended_ms):
+    if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    started_ms, ended_ms = evidence._number(started_ms), evidence._number(ended_ms)
+    if (inputs["profileId"] != "artifacts" or inputs["mode"] != "qualification"
+            or inputs["runId"] != run.run_id or ended_ms < started_ms):
+        raise evidence.ConformanceError("InputChanged")
+    controls, proofs, previous_sequence, previous_end = {}, {}, 0, started_ms
+    for provider in ("local", "object"):
+        for size in (268435456, 4294967296):
+            graph = native_artifact_transfer_source(
+                run, inputs, provider, size, namespace="qualification-artifact-transfers")
+            sequence = graph["sequence"]
+            command = evidence.load_json(graph["sourceProofs"][f"proofs/transfer-command-{sequence:04}.json"])
+            if (sequence <= previous_sequence
+                    or not previous_end <= command["startedMs"] <= command["endedMs"] <= ended_ms
+                    or set(proofs) & set(graph["sourceProofs"])):
+                raise evidence.ConformanceError("ProofMismatch")
+            controls[provider + ("-256m" if size == 268435456 else "-4g") + "-write-read"] = tuple(
+                hashlib.sha256(raw).hexdigest() for raw in graph["sourceProofs"].values())
+            proofs.update(graph["sourceProofs"])
+            previous_sequence, previous_end = sequence, command["endedMs"]
+    shared = tuple(hashlib.sha256(raw).hexdigest() for raw in proofs.values())
+    controls.update({role: shared for role in (
+        "per-transfer-os-rss", "paced-nonseekable-streams", "stricter-inner-limits")})
+    return MappingProxyType({
+        "controls": MappingProxyType(controls), "sourceProofs": MappingProxyType(proofs)})
+
+
 def admit_artifact_noncooperation(observed, provider, scenario, phase, pid, run_id):
     fields = {
         "eventName", "phase", "pid", "runId", "provider", "scenario", "durableCrashProof",

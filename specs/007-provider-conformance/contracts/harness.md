@@ -302,6 +302,11 @@ diagnostic/category namespaces and foreign modes/profiles cannot substitute.
 Selection, measured production, source recipes and contexts use that same gate.
 This implements isolation/admission, not actual qualification transfers or
 complete controller source authority.
+Native qualification-origin transfer summary publication additionally requires
+all four original graphs in increasing sequence, nonoverlapping transfer times
+inside the actual common controller window and disjoint proof paths. Rejection
+propagates before publication. The seven immutable transfer-control role hash
+sets are source authority only, not qualifying case statuses.
 The prior byte-capture checkpoint cf4/run40227343651 independently passes
 three Linux jobs, 300 native foundations without skips, 13-lock/18-package
 replay and 129 scopes/1,821 witnesses. It admits original byte capture, not the
