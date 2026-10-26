@@ -7556,7 +7556,31 @@ Metadata remains 92 Passed/1 Incomplete/9 NotApplicable/0 Failed, report
 `Incomplete`, qualification false. Pairing/newer artifact scopes remain pending;
 no tasks, reviewer-owned checklists or stage markers advance here.
 
-The current artifact201 increment retains Local committed-decision rollback
+The current artifact217 increment extracts all four original validation-access
+parameters through an awaited overload retaining the synchronous wrapper and
+every original assertion. Actual private Unix permission/directory faults expose
+only an opaque disposable scope. A pending owner is installed before application;
+native scope capture precedes release callbacks. The real exact-stamp read guard
+survives until restoration, then releases; failed restoration remains retryable.
+Shutdown joins application/restoration before store/worker/authority closure and
+rejects stale successful handoff. Ordinary callback failures are retained by
+exact exception in faulted settlement, never forgiven as intentional faults.
+
+Four original-validation rows plus twelve shutdown/deletion/release-error controls
+pass from fourteen fresh packages: 373 selected consumers, zero skips. Sixteen
+actual/four original parity cases pass; an SDK-only failure-code mutant causes
+four named shared assertion failures per family, with matching SDK/archive
+images. Independent safe-logger replay checks 217 witnesses/227 origins and all
+ten reopen edges at source
+`a8fa61dc9fe174048b6f1d1e61f8615e99ae2d2dd8dfde55697547648695f709`,
+SDK archive
+`d04357234dbcddf3d1150d5b04de37361080f9db05d902cb0a1a463c003053ac`.
+Contracts152/tooling452 (19 native skips) pass. Scoped review's guard-lifetime
+and release-handoff findings are repaired; follow-up finds no actionable issue,
+not final T081. Native artifact217 admission, full QC-03 and remaining stage
+tasks are unfinished; no checklist or stage markers advance.
+
+The preceding artifact201 increment retains Local committed-decision rollback
 after all 105 original retired-history cycles and durable-receipt staging
 release. Valid uninitialized setup lets the unchanged common initializer
 run against the actual original store. Awaited compatible reopen returns an

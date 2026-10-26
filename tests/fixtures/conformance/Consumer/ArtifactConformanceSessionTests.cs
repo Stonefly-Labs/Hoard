@@ -13,6 +13,187 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local", false)]
+    [InlineData("local", true)]
+    [InlineData("object", false)]
+    [InlineData("object", true)]
+    public async Task Observed_access_scope_protects_actual_incarnation_until_restoration(string provider, bool unavailable)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        IAsyncDisposable? access = null;
+        try
+        {
+            using var source = new ArtifactPublicationAssertions.ShortSource("access restoration must precede physical reclamation"u8.ToArray());
+            var receipt = await ArtifactPublicationAssertions.PublishAsync(session.Store, source, new(1024), default);
+            var ticket = Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Success>(
+                await session.Store.ReserveDeleteAsync(new(receipt.Stamp), new(), default)).Value;
+            access = await session.Faults.RestrictPayloadAccessAsync(receipt.Stamp, unavailable, default);
+            var deleting = session.Store.DeleteAsync(ticket, new(), default).AsTask();
+            try
+            {
+                using var budget = new CancellationTokenSource(context.ControlBudget);
+                while (session.Faults.WaitingAuthorityAdmissions == 0) { await Task.Delay(1, budget.Token); }
+                Assert.False(deleting.IsCompleted);
+            }
+            finally { await access.DisposeAsync(); }
+            Assert.Equal(ArtifactReclamation.Reclaimed, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Success>(
+                await deleting).Value.Reclamation);
+            Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+                await session.Store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), default)).Code);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally
+        {
+            try { if (access is not null) { await access.DisposeAsync(); } }
+            finally { await session.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local", false)]
+    [InlineData("local", true)]
+    [InlineData("object", false)]
+    [InlineData("object", true)]
+    public async Task Ordinary_access_release_errors_restore_actual_payload_before_faulted_settlement(
+        string provider, bool unavailable)
+    {
+        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        var bytes = "payload access restoration after a release observer exception"u8.ToArray();
+        var failure = new IOException("Ordinary access release failure");
+        IAsyncDisposable? observation = null;
+        Exception? disposalFailure = null;
+        try
+        {
+            using var source = new ArtifactPublicationAssertions.ShortSource(bytes);
+            var receipt = await ArtifactPublicationAssertions.PublishAsync(session.Store, source, new(1024), default);
+            observation = await session.Faults.ObserveBoundaryAsync(ArtifactObservationPoint.OperationReleased,
+                () => ValueTask.FromException(failure), default);
+            Assert.Same(failure, await Record.ExceptionAsync(
+                () => session.Faults.RestrictPayloadAccessAsync(receipt.Stamp, unavailable, default).AsTask()));
+            await observation.DisposeAsync();
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally
+        {
+            if (observation is not null) { await observation.DisposeAsync(); }
+            disposalFailure = await Record.ExceptionAsync(() => session.DisposeAsync().AsTask());
+        }
+        Assert.Equal("CleanupIncomplete", Assert.IsType<InvalidOperationException>(disposalFailure).Message);
+        var settlement = Assert.Single(resources.Settlements).Value;
+        Assert.True(settlement.IsFaulted);
+        Assert.Contains(failure, settlement.Exception!.InnerExceptions);
+        var root = Assert.Single(resources.Directories).DirectoryPath;
+        Assert.Empty(Directory.GetDirectories(root, "*-qualification-offline", SearchOption.AllDirectories));
+        var payload = Assert.Single(Directory.GetFiles(root, "*", SearchOption.AllDirectories),
+            path => new FileInfo(path).Length == bytes.Length);
+        Assert.Equal(bytes, await File.ReadAllBytesAsync(payload));
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local", false)]
+    [InlineData("local", true)]
+    [InlineData("object", false)]
+    [InlineData("object", true)]
+    public async Task Observed_access_application_joins_actual_shutdown_before_releasing_owned_resources(
+        string provider, bool unavailable)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var released = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        IAsyncDisposable? observation = null;
+        try
+        {
+            using var source = new ArtifactPublicationAssertions.ShortSource("access scope remains genuine owned work"u8.ToArray());
+            var receipt = await ArtifactPublicationAssertions.PublishAsync(session.Store, source, new(1024), default);
+            var origin = session.CaptureOrigin();
+            observation = await session.Faults.ObserveBoundaryAsync(ArtifactObservationPoint.PayloadSelected,
+                () =>
+                {
+                    entered.TrySetResult();
+                    return new(released.Task.WaitAsync(context.BarrierBudget));
+                }, default);
+            var applying = session.Faults.RestrictPayloadAccessAsync(receipt.Stamp, unavailable, default).AsTask();
+            await entered.Task.WaitAsync(context.ControlBudget);
+            var disposing = session.DisposeAsync().AsTask();
+            try
+            {
+                await resources.Observing.Task.WaitAsync(context.ControlBudget);
+                Assert.False(disposing.IsCompleted);
+                Assert.False(Assert.Single(resources.Settlements).Value.IsCompleted);
+            }
+            finally { released.TrySetResult(); }
+            Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<InvalidOperationException>(() => applying)).Message);
+            await disposing;
+            ConformanceSessionOriginOutput.Write(output, origin);
+        }
+        finally
+        {
+            released.TrySetResult();
+            try { if (observation is not null) { await observation.DisposeAsync(); } }
+            finally { await session.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local", false)]
+    [InlineData("local", true)]
+    [InlineData("object", false)]
+    [InlineData("object", true)]
+    public async Task Observed_validation_access_failures_preserve_actual_intact_content(string provider, bool unavailable)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        IAsyncDisposable? access = null;
+        try
+        {
+            async ValueTask Deny(ArtifactStamp stamp, CancellationToken token)
+            {
+                var stale = new ArtifactStamp(stamp.Store, stamp.Identity, Guid.NewGuid());
+                Assert.Equal("FaultControl.Conflict", (await Assert.ThrowsAsync<InvalidOperationException>(
+                    () => session.Faults.RestrictPayloadAccessAsync(stale, unavailable, token).AsTask())).Message);
+                access = await session.Faults.RestrictPayloadAccessAsync(stamp, unavailable, token);
+                Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<InvalidOperationException>(
+                    () => session.Faults.RestrictPayloadAccessAsync(stamp, unavailable, token).AsTask())).Message);
+            }
+            async ValueTask Restore()
+            {
+                if (access is not null) { await access.DisposeAsync(); }
+            }
+            await ArtifactEvidenceAssertions.ValidationAccessFailureAsync(
+                session.Store, session.Validator, session.Authority, session.Identity, unavailable,
+                () =>
+                {
+                    if (OperatingSystem.IsWindows())
+                    { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
+                }, Deny, Restore, default);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally
+        {
+            try { if (access is not null) { await access.DisposeAsync(); } }
+            finally { await session.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("object")]
     public async Task Object_record_write_fault_rejects_without_borrowing_actual_deletion(string provider)
     {

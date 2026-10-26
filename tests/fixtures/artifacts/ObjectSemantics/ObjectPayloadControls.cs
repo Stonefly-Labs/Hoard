@@ -62,8 +62,66 @@ public sealed partial class ObjectArtifactStore
             }));
     }
 
+    public ValueTask<ArtifactResult<IAsyncDisposable>> RestrictPayloadAccessForQualificationAsync(
+        ArtifactStamp stamp, bool unavailable, Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(stamp);
+        ArgumentNullException.ThrowIfNull(ownScope);
+        return OwnedAsync(ArtifactPhase.Maintenance, TimeSpan.FromSeconds(5), cancellationToken,
+            token => WithQualificationPayloadAsync<IAsyncDisposable>(stamp, token, async (path, protection) =>
+            {
+                var access = QualificationPayloadAccess.Create(path, unavailable, protection);
+                try { ownScope(access); return access; }
+                catch { await access.DisposeAsync(); throw; }
+            }, transferProtection: true),
+            undelivered: access => access.DisposeAsync());
+    }
+
+    private sealed class QualificationPayloadAccess(
+        string path, string directory, bool unavailable, UnixFileMode originalMode,
+        IArtifactProtectionGuard protection) : IAsyncDisposable
+    {
+        private readonly SemaphoreSlim gate = new(1, 1);
+        private bool restored;
+        private bool released;
+        public static QualificationPayloadAccess Create(
+            string path, bool unavailable, IArtifactProtectionGuard protection)
+        {
+            if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
+            var directory = Path.GetDirectoryName(path) ?? throw new InvalidOperationException("BindingInvalid");
+            var access = new QualificationPayloadAccess(path, directory, unavailable,
+                unavailable ? default : File.GetUnixFileMode(path), protection);
+            if (unavailable) { Directory.Move(directory, directory + "-qualification-offline"); }
+            else { File.SetUnixFileMode(path, UnixFileMode.UserWrite); }
+            return access;
+        }
+        public async ValueTask DisposeAsync()
+        {
+            if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
+            await gate.WaitAsync();
+            try
+            {
+                if (released) { return; }
+                if (!restored)
+                {
+                    if (unavailable) { Directory.Move(directory + "-qualification-offline", directory); }
+                    else { File.SetUnixFileMode(path, originalMode); }
+                    restored = true;
+                }
+                await protection.DisposeAsync();
+                released = true;
+            }
+            finally { gate.Release(); }
+        }
+    }
+
+    private Task<T> WithQualificationPayloadAsync<T>(
+        ArtifactStamp stamp, CancellationToken cancellationToken, Func<string, Task<T>> action) =>
+        WithQualificationPayloadAsync(stamp, cancellationToken, (path, _) => action(path), transferProtection: false);
+
     private async Task<T> WithQualificationPayloadAsync<T>(
-        ArtifactStamp stamp, CancellationToken cancellationToken, Func<string, Task<T>> action)
+        ArtifactStamp stamp, CancellationToken cancellationToken,
+        Func<string, IArtifactProtectionGuard, Task<T>> action, bool transferProtection)
     {
         await qualificationPayload.WaitAsync(cancellationToken);
         try
@@ -76,17 +134,24 @@ public sealed partial class ObjectArtifactStore
                 throw new ObjectOperationException(admission is ArtifactResult<IArtifactProtectionGuard>.Failure failure
                     ? failure.Code : ArtifactFailureCode.InternalFailure);
             }
-            await using var protection = accepted.Value;
-            ObjectPointer pointer;
-            lock (pointerSync)
+            var protection = accepted.Value;
+            var transferred = false;
+            try
             {
-                if (!pointers.TryGetValue(stamp.Identity.Digest.Hex, out var selected)
-                    || selected.Removed || selected.Stamp != stamp)
-                { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
-                pointer = selected;
+                ObjectPointer pointer;
+                lock (pointerSync)
+                {
+                    if (!pointers.TryGetValue(stamp.Identity.Digest.Hex, out var selected)
+                        || selected.Removed || selected.Stamp != stamp)
+                    { throw new ObjectOperationException(ArtifactFailureCode.Conflict); }
+                    pointer = selected;
+                }
+                await faults.ObserveAsync("object.qualification-payload-selected");
+                var result = await action(ObjectPath(pointer.ObjectId), protection);
+                transferred = transferProtection;
+                return result;
             }
-            await faults.ObserveAsync("object.qualification-payload-selected");
-            return await action(ObjectPath(pointer.ObjectId));
+            finally { if (!transferred) { await protection.DisposeAsync(); } }
         }
         finally { qualificationPayload.Release(); }
     }

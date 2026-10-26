@@ -213,6 +213,10 @@ internal sealed class ArtifactConformanceFaults(
     public ValueTask RemovePayloadAsync(ArtifactStamp stamp, CancellationToken cancellationToken) =>
         session.RemovePayloadAsync(stamp, cancellationToken);
 
+    public ValueTask<IAsyncDisposable> RestrictPayloadAccessAsync(
+        ArtifactStamp stamp, bool unavailable, CancellationToken cancellationToken) =>
+        session.RestrictPayloadAccessAsync(stamp, unavailable, cancellationToken);
+
     internal async ValueTask DisposeAfterSettlementAsync()
     {
         await EnterAsync(CancellationToken.None);

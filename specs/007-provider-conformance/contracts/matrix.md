@@ -245,7 +245,18 @@ correspondence; missing, extra and foreign validation origins reject. Exact
 jobs/341 native foundations passing without skips. Pairing/newer artifact native
 admission and complete QC-03 remain outstanding.
 
-The current artifact201 scope adds Local committed-decision rollback after
+The current artifact217 scope adds four original validation-access parameters
+and twelve actual shutdown/deletion/release-error controls. Real Unix permission
+and directory faults retain exact-stamp deletion protection until restoration;
+pending ownership captures the actual handle before release callbacks. Ordinary
+errors still fault settlement after restoration. Fresh fourteen-package replay
+passes 373 consumers; sixteen actual/four original parity cases pass. An SDK-only
+failure-code mutant gives four named failures per family with matching loaded
+SDK/archive images. Safe-logger replay checks 217 witnesses/227 origins and ten
+reopen edges. Scoped findings are repaired, not final T081 or complete QC-03.
+Native artifact217 admission and feature acceptance remain unfinished.
+
+The preceding artifact201 scope adds Local committed-decision rollback after
 105 retired histories, durable-receipt staging-release recovery, ordinary
 record-callback failure ownership and Object's explicit unsupported-boundary
 guard. Original limits/assertions and genuine compatible reopen remain.

@@ -10406,7 +10406,22 @@ QC-02 pairing/newer artifact native confirmation and full acceptance remain open
 Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 
-The current artifact201 extension retains Local committed-decision rollback
+The current artifact217 extension owns real Unix payload permission/directory
+access faults through application, restoration and closure. Exact-stamp guards
+prevent physical deletion until restoration; capturing the native scope before
+release callbacks closes the reviewed failed-result handoff gap. Four rows each
+cover original validation, concurrent shutdown, queued deletion and ordinary
+release errors. Ordinary errors still produce `CleanupIncomplete` and faulted
+settlement after actual restoration. Fresh fourteen-package replay passes 373
+consumers; sixteen actual controls/four original wrappers pass. The SDK-only
+failure-code mutant yields four named failures per family with matching loaded
+SDK/archive images. Safe-logger replay checks 217 witnesses/227 origins and ten
+reopen edges. Contracts152 and tooling452/19 native skips pass; scoped review
+finds no remaining actionable issues, not final T081. Full QC-03/stage acceptance
+remain open. Examples, diagrams, production dependencies and infrastructure are
+unaffected.
+
+The preceding artifact201 extension retains Local committed-decision rollback
 after 105 retired histories and durable-receipt staging-release recovery.
 Original limits, UTC/monotonic distinction, synchronous signatures and assertions
 remain. Awaited reopen uses the genuinely initialized owned replacement; old

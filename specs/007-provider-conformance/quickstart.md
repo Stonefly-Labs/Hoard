@@ -667,7 +667,19 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen argument maps
 three Linux jobs/341 native foundations pass without skips. Pairing/newer
 artifact native admission and full qualification remain outstanding.
 
-The current artifact201 scope also retains Local committed-decision rollback
+The current artifact217 scope runs genuine payload-access faults and all four
+original validation parameters. Exact-stamp scopes hold deletion protection
+until real restoration, and pending ownership captures handles before release
+observers run. Concurrent shutdown cannot hand off a stale scope or release
+resources before restoration. Ordinary callback errors retain faulted settlement
+and explicit `CleanupIncomplete`. Fresh fourteen-package replay passes 373
+consumers; sixteen actual controls/four original wrappers pass. An SDK-only
+failure-code mutant causes four named failures per family, with matching loaded
+SDK/archive images. Safe-logger replay checks 217 witnesses/227 origins and ten
+reopen edges. Scoped findings are repaired; native admission/full QC-03 and
+feature acceptance remain unfinished.
+
+The preceding artifact201 scope also retains Local committed-decision rollback
 after 105 retired histories and durable-receipt staging-release recovery.
 Awaited compatible reopen preserves original initialization/cleanup, limits
 and assertions. Owned third-record-write interruption rejects hold/duplicate

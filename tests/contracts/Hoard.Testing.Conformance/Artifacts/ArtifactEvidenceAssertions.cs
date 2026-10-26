@@ -98,9 +98,18 @@ public static class ArtifactEvidenceAssertions
         Assert.Equal(bytes, await ReadAsync(store, replacement.Stamp, cancellationToken));
     }
 
-    public static async Task ValidationAccessFailureAsync(
+    public static Task ValidationAccessFailureAsync(
         IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
         ArtifactStoreIdentity identity, bool unavailable, Action prepare, Action deny, Action restore,
+        CancellationToken cancellationToken) =>
+        ValidationAccessFailureAsync(store, validator, authority, identity, unavailable, prepare,
+            (_, _) => { deny(); return ValueTask.CompletedTask; },
+            () => { restore(); return ValueTask.CompletedTask; }, cancellationToken);
+
+    public static async Task ValidationAccessFailureAsync(
+        IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
+        ArtifactStoreIdentity identity, bool unavailable, Action prepare,
+        Func<ArtifactStamp, CancellationToken, ValueTask> deny, Func<ValueTask> restore,
         CancellationToken cancellationToken)
     {
         var bytes = "permission failure is not corruption"u8.ToArray();
@@ -113,12 +122,12 @@ public static class ArtifactEvidenceAssertions
         prepare();
         try
         {
-            deny();
+            await deny(receipt.Stamp, cancellationToken);
             Assert.Equal(unavailable ? ArtifactFailureCode.Unavailable : ArtifactFailureCode.AccessDenied,
                 Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(
                 await validator.ValidateAsync(proof, guard, new(), cancellationToken)).Code);
         }
-        finally { restore(); }
+        finally { await restore(); }
         Assert.Equal(receipt.Stamp, Success(await validator.ValidateAsync(proof, guard, new(), cancellationToken)));
         Assert.Equal(bytes, await ReadAsync(store, receipt.Stamp, cancellationToken));
     }

@@ -1593,7 +1593,22 @@ Object has no borrowed durable restart. Exact `e39b2ce`/run40293145453 admits
 earlier frozen argument maps on Linux: three jobs/341 native foundations pass
 without skips. Pairing/newer artifact scopes remain unadmitted natively.
 
-The current artifact201 scope also retains Local committed-decision rollback
+The current artifact217 scope owns real permission/directory access faults with
+opaque exact-stamp scopes. Pending registration precedes application; native
+handle capture precedes release observers. Read protection persists through
+physical restoration, so deletion cannot reclaim/resurrect restricted bytes.
+Cleanup joins application/restoration before native shutdown; failed restoration
+remains owned/retryable. Ordinary release errors are retained in faulted
+settlement with explicit `CleanupIncomplete`, not converted to successful
+qualification. Four rows each cover original validation, concurrent shutdown,
+queued deletion and throwing release observers. Fresh fourteen-package replay
+passes 373 consumers; sixteen actual/four original parity cases pass. An SDK-only
+failure-code mutant causes four named failures per family with matching runtime/
+archive SDK images. Safe-logger replay checks 217 witnesses/227 origins and ten
+reopen edges. Reviewed guard-lifetime/handoff findings are repaired; this is not
+final T081, native artifact217 admission or full QC-03/feature acceptance.
+
+The preceding artifact201 scope also retains Local committed-decision rollback
 after 105 retired histories and durable-receipt staging release. Awaited owned
 reopen preserves initialization/cleanup and all original assertions/limits.
 Third-record-write interruption has one owner, rejects duplicate/hold overlap

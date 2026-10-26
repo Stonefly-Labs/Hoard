@@ -2588,7 +2588,19 @@ argument maps on Linux: three jobs/341 native foundations pass without skips.
 QC-02 pairing and the newer artifact scopes still await native observation;
 full qualification and the implementation stage remain unfinished.
 
-The current artifact201 scope also preserves Local committed-decision rollback
+The current artifact217 scope preserves all four original validation-access
+cases through real Unix permission denial and payload-directory removal.
+Opaque, exact-stamp scopes retain deletion protection until restoration;
+pending ownership captures the actual handle before release observers can fail.
+Shutdown joins application/restoration, rejects stale handoff and preserves
+ordinary observer errors in faulted settlement. Fresh fourteen-package replay
+passes 373 consumers; sixteen actual controls/four original wrappers pass.
+An SDK-only failure-code mutant gives four named failures per family with
+matching runtime/archive SDK images. Safe-logger replay checks 217 witnesses/
+227 origins and ten reopen edges. Scoped review findings are repaired, not
+final T081. Full QC-03 and feature acceptance remain unfinished.
+
+The preceding artifact201 scope also preserves Local committed-decision rollback
 after 105 retired histories and durable-receipt staging release through genuine
 compatible reopen. An owned third-record-write interruption preserves ordinary
 callback failures and cannot overwrite the synchronous hold. Object explicitly

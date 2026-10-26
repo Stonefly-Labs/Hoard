@@ -1524,6 +1524,16 @@ def full_artifact_binding_scenarios():
                       for consumer in ("committed-decision", "durable-receipt"))
     identities.add(prefix + 'Ordinary_record_write_callback_errors_still_fault_actual_settlement(provider: "local")')
     identities.add(prefix + 'Object_record_write_fault_rejects_without_borrowing_actual_deletion(provider: "object")')
+    identities.update(prefix + "Observed_validation_access_failures_preserve_actual_intact_content"
+                      + f'(provider: "{provider}", unavailable: {unavailable})'
+                      for provider in ("local", "object") for unavailable in ("False", "True"))
+    identities.update(prefix + "Observed_access_application_joins_actual_shutdown_before_releasing_owned_resources"
+                      + f'(provider: "{provider}", unavailable: {unavailable})'
+                      for provider in ("local", "object") for unavailable in ("False", "True"))
+    identities.update(prefix + method + f'(provider: "{provider}", unavailable: {unavailable})'
+                      for method in ("Observed_access_scope_protects_actual_incarnation_until_restoration",
+                                     "Ordinary_access_release_errors_restore_actual_payload_before_faulted_settlement")
+                      for provider in ("local", "object") for unavailable in ("False", "True"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 

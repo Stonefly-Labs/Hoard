@@ -4306,6 +4306,16 @@ class SdkDiagnosticTests(unittest.TestCase):
                         for consumer in ("committed-decision", "durable-receipt"))
         expected.add(prefix + 'Ordinary_record_write_callback_errors_still_fault_actual_settlement(provider: "local")')
         expected.add(prefix + 'Object_record_write_fault_rejects_without_borrowing_actual_deletion(provider: "object")')
+        expected.update(prefix + "Observed_validation_access_failures_preserve_actual_intact_content"
+                        + f'(provider: "{provider}", unavailable: {unavailable})'
+                        for provider in ("local", "object") for unavailable in ("False", "True"))
+        expected.update(prefix + "Observed_access_application_joins_actual_shutdown_before_releasing_owned_resources"
+                        + f'(provider: "{provider}", unavailable: {unavailable})'
+                        for provider in ("local", "object") for unavailable in ("False", "True"))
+        expected.update(prefix + method + f'(provider: "{provider}", unavailable: {unavailable})'
+                        for method in ("Observed_access_scope_protects_actual_incarnation_until_restoration",
+                                       "Ordinary_access_release_errors_restore_actual_payload_before_faulted_settlement")
+                        for provider in ("local", "object") for unavailable in ("False", "True"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"

@@ -211,6 +211,7 @@ internal sealed class ArtifactAssertionOwnership
         {
             foreach (var session in sessions)
             {
+                await session.RestorePayloadAccessAsync().AsTask().WaitAsync(Remaining(started));
                 var result = await session.StopAsync(Remaining(started)).WaitAsync(Remaining(started));
                 if (result is not ArtifactResult<ArtifactShutdown>.Success { Value.State: ArtifactCleanupState.Released })
                 { throw new InvalidOperationException("CleanupIncomplete"); }
@@ -255,6 +256,7 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
     private HistoryRegistration? historyFailure;
     private SynchronousHold? synchronousHold;
     private RecordWriteRegistration? recordWriteFailure;
+    private PayloadAccessRegistration? payloadAccess;
     private readonly object stopGate = new();
     private Task<ArtifactResult<ArtifactShutdown>>? stopping;
 
@@ -345,6 +347,34 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
         ArtifactStamp stamp, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken);
     protected abstract ValueTask<ArtifactResult<long>> RemoveProviderPayloadAsync(
         ArtifactStamp stamp, CancellationToken cancellationToken);
+    protected abstract ValueTask<ArtifactResult<IAsyncDisposable>> RestrictProviderPayloadAccessAsync(
+        ArtifactStamp stamp, bool unavailable, Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken);
+
+    public ValueTask<IAsyncDisposable> RestrictPayloadAccessAsync(
+        ArtifactStamp stamp, bool unavailable, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(stamp);
+        cancellationToken.ThrowIfCancellationRequested();
+        var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        PayloadAccessRegistration registration;
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false } || payloadAccess is not null)
+            { throw new InvalidOperationException("BindingInvalid"); }
+            payloadAccess = registration = new(this, stamp, unavailable, start.Task, cancellationToken);
+        }
+        start.SetResult();
+        return registration.OpenAsync(cancellationToken);
+    }
+
+    public ValueTask RestorePayloadAccessAsync()
+    {
+        lock (ownership.Gate)
+        {
+            return payloadAccess is { } current ? current.DisposeAsync() : ValueTask.CompletedTask;
+        }
+    }
 
     public ValueTask<byte[]> CapturePayloadAsync(ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken) =>
         PayloadControlAsync(stamp, () => CaptureProviderPayloadAsync(stamp, maximumBytes, cancellationToken), cancellationToken);
@@ -621,6 +651,93 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
                 { session.SetHistoryCandidateObserver(null); }
             }
             return ValueTask.CompletedTask;
+        }
+    }
+
+    private sealed class PayloadAccessRegistration
+    {
+        private readonly ArtifactAssertionSession session;
+        private readonly Task<ArtifactResult<IAsyncDisposable>> application;
+        private Task? disposal;
+        private IAsyncDisposable? capturedScope;
+
+        public PayloadAccessRegistration(ArtifactAssertionSession session, ArtifactStamp stamp, bool unavailable,
+            Task start, CancellationToken cancellationToken)
+        {
+            this.session = session;
+            application = ApplyAsync();
+            async Task<ArtifactResult<IAsyncDisposable>> ApplyAsync()
+            {
+                await start;
+                return await session.RestrictProviderPayloadAccessAsync(stamp, unavailable, scope =>
+                {
+                    lock (session.ownership.Gate)
+                    {
+                        if (capturedScope is not null) { throw new InvalidOperationException("BindingInvalid"); }
+                        capturedScope = scope;
+                    }
+                }, cancellationToken);
+            }
+        }
+
+        public async ValueTask<IAsyncDisposable> OpenAsync(CancellationToken cancellationToken)
+        {
+            var result = await application;
+            if (result is ArtifactResult<IAsyncDisposable>.Success && !cancellationToken.IsCancellationRequested)
+            {
+                lock (session.ownership.Gate)
+                {
+                    if (ReferenceEquals(session.ownership.Current, session) && !session.ownership.Closing
+                        && session.ownership.Transition is not { IsCompleted: false }
+                        && ReferenceEquals(session.payloadAccess, this))
+                    { return new AccessScope(this); }
+                }
+            }
+            await DisposeAsync();
+            cancellationToken.ThrowIfCancellationRequested();
+            throw new InvalidOperationException(result is ArtifactResult<IAsyncDisposable>.Failure failure
+                ? "FaultControl." + failure.Code : "BindingInvalid");
+        }
+
+        public ValueTask DisposeAsync()
+        {
+            var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+            Task task;
+            lock (session.ownership.Gate)
+            {
+                if (disposal is { IsCompleted: false } or { IsCompletedSuccessfully: true }) { return new(disposal); }
+                disposal = task = RestoreAsync(start.Task);
+            }
+            start.SetResult();
+            return new(task);
+        }
+
+        private async Task RestoreAsync(Task start)
+        {
+            await start;
+            try
+            {
+                var result = await application;
+                if (result is not (ArtifactResult<IAsyncDisposable>.Success or ArtifactResult<IAsyncDisposable>.Failure))
+                { throw new InvalidOperationException("BindingInvalid"); }
+            }
+            catch (Exception error) when (application.IsFaulted)
+            {
+                if (!session.ownership.ObserverFailures.Any(current => ReferenceEquals(current, error)))
+                { session.ownership.ObserverFailures.Enqueue(error); }
+            }
+            IAsyncDisposable? scope;
+            lock (session.ownership.Gate) { scope = capturedScope; }
+            if (scope is not null) { await scope.DisposeAsync(); }
+            lock (session.ownership.Gate)
+            {
+                if (ReferenceEquals(session.payloadAccess, this)) { session.payloadAccess = null; }
+            }
+        }
+
+        private sealed class AccessScope(PayloadAccessRegistration registration) : IAsyncDisposable
+        {
+            public ValueTask DisposeAsync() => registration.DisposeAsync();
         }
     }
 

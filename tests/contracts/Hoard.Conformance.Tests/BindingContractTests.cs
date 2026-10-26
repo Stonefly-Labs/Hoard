@@ -539,6 +539,8 @@ public sealed class BindingContractTests
         IArtifactStoreLifetime, IArtifactCoordinationAuthority, IArtifactConformanceFaultDriver
     {
         public ArtifactInitializationObservation ObserveInitialization() => throw new NotSupportedException();
+        public ValueTask<IAsyncDisposable> RestrictPayloadAccessAsync(
+            ArtifactStamp stamp, bool unavailable, CancellationToken cancellationToken) => throw new NotSupportedException();
         public ValueTask<IArtifactFaultRegistration> InjectRecordWriteFailureAsync(
             int occurrence, Action beforeFailure, CancellationToken cancellationToken) => throw new NotSupportedException();
         public ImmutableArray<ConformanceFault> SupportedFaults { get; set; } =

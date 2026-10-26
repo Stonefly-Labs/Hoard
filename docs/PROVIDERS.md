@@ -168,7 +168,20 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen metadata
 argument maps with all three Linux jobs/341 native foundations passing without
 skips. QC-02 pairing/newer artifact scopes and complete QC-03 remain unadmitted.
 
-The current artifact201 scope retains Local committed-decision clock rollback
+The current artifact217 scope preserves original validation access failures with
+real Unix mode changes/directory removal, not synthetic result codes. Opaque
+exact-stamp scopes retain read protection until restoration, preventing deletion
+or payload resurrection. Their pending owner captures the actual native scope
+before release callbacks, so an ordinary callback exception cannot strand it.
+Shutdown joins pending application/restoration before worker/authority settlement;
+ordinary errors remain explicit `CleanupIncomplete` with faulted settlement.
+Fresh fourteen-package replay passes 373 consumers; sixteen actual controls/
+four original wrappers pass. An SDK-only failure-code mutant gives four named
+failures per family with matching SDK/archive images. Safe-logger replay checks
+217 witnesses/227 origins and ten reopen edges. Scoped findings are repaired,
+not final T081 or full QC-03/feature acceptance.
+
+The preceding artifact201 scope retains Local committed-decision clock rollback
 after 105 retired histories and durable-receipt staging-release recovery.
 Awaited compatible reopen preserves original assertions and synchronous
 wrappers. Exact-occurrence record interruption is owned and mutually exclusive

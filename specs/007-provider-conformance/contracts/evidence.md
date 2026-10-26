@@ -353,7 +353,22 @@ passes unchanged checks. Exact `e39b2ce`/run40293145453 admits earlier frozen
 metadata argument maps with three Linux jobs/341 native foundations passing
 without skips, not QC-02 pairing/newer artifact scopes or full qualification.
 
-The current artifact201 scope also preserves Local committed-decision rollback
+The current artifact217 scope preserves all four original validation-access
+parameters and twelve actual ownership controls. Permission/directory faults are
+genuine private I/O mutations; the SDK gets an opaque exact-stamp scope, never a
+payload path or synthetic verdict. Its native read guard survives restoration.
+Pending ownership captures the scope before release observers; shutdown joins
+application/restoration, while ordinary callback errors retain faulted settlement
+and explicit `CleanupIncomplete`. Fresh fourteen-package replay passes 373
+consumers; sixteen actual/four original parity cases pass. An SDK-only failure-code
+mutant gives exactly four named shared-assertion failures per family, other rows
+passing, with matching runtime/archive SDK images. Independent safe-logger replay
+validates 217 witnesses/227 origins, ten reopen edges, exact counts, unique
+sessions, parent/factory lineage and all role/image/archive correspondences.
+Scoped findings are repaired, not final T081. Native artifact217 admission,
+complete QC-03 and stage acceptance remain unfinished.
+
+The preceding artifact201 scope also preserves Local committed-decision rollback
 after 105 retired histories and durable-receipt staging release, with original
 limits/assertions and genuine compatible reopen. Owned third-record-write
 interruption preserves ordinary callback failure by exact exception identity;
