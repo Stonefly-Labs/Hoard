@@ -7692,6 +7692,34 @@ profile, resource-release or full-stage pass. No task/checklist/flow marker is
 advanced. Product APIs, package graph, examples, diagrams, charter, architecture,
 ADRs, infrastructure and release behavior are unaffected.
 
+### Isolated native category extraction and actual cleanup
+
+Add an explicitly non-qualifying `conformance_sdk_checks.py --category metadata`
+or `--category artifacts` path. Shared historical/package preparation is unchanged,
+but execution branches before unrelated diagnostic scenarios. The selected
+qualification-input batch retains its native source supervisor and complete
+recovery/transfer controls, recaptures immutable inputs, and requires bounded
+actual synthetic-resource release before publishing the category report with its
+real resource projection. The report remains `Incomplete`, qualification false.
+The diagnostic command is bounded to 60 minutes (including preparation/cleanup);
+it is not public standalone qualification or a final five-profile baseline.
+Preserve the existing three CI jobs and add two isolated, non-fail-fast,
+explicitly non-qualifying native extraction jobs with the same pinned actions.
+Native confirmation is pending.
+
+The tests-first selected-path regression fails before implementation and then
+passes for both categories. Input changes and cleanup failures prevent report
+publication; only the selected category runs, and reporting follows actual
+release. Complete SDK/evidence tooling-file suites pass:
+`python3 -m unittest discover -s tests/tooling -p test_conformance_sdk_checks.py -q`
+(150 tests) and
+`python3 -m unittest discover -s tests/tooling -p test_conformance_evidence.py -q`
+(138 tests), without failures/errors/skips. Workflow YAML parses with
+`ruby -e 'require "yaml"; YAML.load_file(".github/workflows/conformance.yml"); puts "workflow YAML: passed"'`;
+`git diff --check` passes. No task/checklist/flow marker advances. Production
+APIs/provider mechanisms, package graph, examples, diagrams, charter/architecture/
+ADRs, infrastructure and release behavior are unchanged.
+
 ### Object access-fault boundary repair
 
 Linux `516b6e4` / run `40312172408` fails the prepared Object no-rename witness;

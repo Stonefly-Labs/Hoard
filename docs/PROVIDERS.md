@@ -201,6 +201,12 @@ to `postInputSha256` and independently rechecked against admission inputs. Free
 space may vary as a measurement; immutable provider/source/environment inputs
 may not. The reports remain non-qualifying.
 
+`conformance_sdk_checks.py --category metadata|artifacts` selects only one native
+extraction batch after shared package/baseline preparation. It must recheck
+inputs and release synthetic resources before reporting actual ownership.
+The report remains `Incomplete`/non-qualifying; independent public profile
+evaluation and native confirmation of this isolated path are still pending.
+
 Object's driver-owned access faults now reside in its concrete binding, not the
 provider assembly; native exact-stamp selection/protection and pre-hook handle
 capture are unchanged. The provider has no rename mechanism. The unchanged

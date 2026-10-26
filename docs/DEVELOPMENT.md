@@ -10469,6 +10469,19 @@ variation is not hidden by rewriting either measurement or hash. Missing,
 writable, altered, foreign-input, malformed and symlink packets reject. This
 does not change the CLI guard, release resources or qualify a category.
 
+For an isolated native extraction diagnostic, use
+`python3 scripts/conformance_sdk_checks.py --root <checkout> --evidence <fresh-private-path> --category metadata`
+or select `artifacts`. The same Linux ownership/scratch prerequisites and shared
+historical/package preparation apply. The selected batch performs its own
+recovery/transfer/source controls, then recaptures inputs and performs bounded
+synthetic-store/feed/cache release before report publication. The captured
+resource projection is actual, not an inferred successful exit; failed input
+recomputation or cleanup prevents publication. Reports remain `Incomplete`,
+qualification false. The existing full diagnostic job is preserved alongside
+two explicitly non-qualifying isolated extraction jobs. Native admission of
+these new paths is pending; public `validate-conformance.sh` profile, verify and
+aggregate execution is not inferred.
+
 Linux run `40312172408` at `516b6e4` fails the prepared Object no-rename architecture
 witness; its other two jobs pass. The cause is qualification-only directory moves
 introduced inside the Object provider assembly, not its publication mechanism.

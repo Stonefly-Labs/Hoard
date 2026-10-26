@@ -2623,6 +2623,13 @@ read-only, hash-linked proof packet. Independent recomputation permits only the
 existing free-space measurement variation; it never replaces the completion
 hash with the admission hash. This adds inspectable evidence, not qualification.
 
+The native SDK diagnostic command also accepts `--category metadata` or
+`--category artifacts`: after shared preparation it executes only that category's
+source-admitted extraction, rechecks inputs and releases synthetic resources
+before publishing its still-`Incomplete` report. Separate Linux matrix jobs
+exercise these paths; native confirmation is pending. Public conformance
+profile/verify/aggregate commands remain guarded.
+
 The Object access-fault implementation now lives in its concrete test binding,
 as the original driver-owned fault did. The provider still selects/protects the
 exact stamp and captures the scope before release hooks, but contains no rename

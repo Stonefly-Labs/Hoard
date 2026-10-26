@@ -90,3 +90,34 @@ jobs:
             tests/contracts/Hoard.Conformance.Tests/**/packages.lock.json
             tests/fixtures/conformance/**/packages.lock.json
             tests/integration/Hoard.Composition.Tests/PackageAcceptance/packages.lock.json
+
+  category-extraction:
+    name: Non-qualifying isolated ${{ matrix.category }} extraction and cleanup
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        category: [metadata, artifacts]
+    steps:
+      - name: Check out source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Install the global.json compatible .NET SDK
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          dotnet-version: 10.0.203
+          global-json-file: global.json
+      - name: Execute only the selected native category and release synthetic resources
+        shell: bash
+        env:
+          CONFORMANCE_CATEGORY: ${{ matrix.category }}
+        run: |
+          set -euo pipefail
+          private_parent="$(dirname "$GITHUB_WORKSPACE")/category-extraction-${CONFORMANCE_CATEGORY}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          mkdir -m 700 "$private_parent"
+          python3 scripts/conformance_sdk_checks.py \
+            --root "$GITHUB_WORKSPACE" --evidence "$private_parent/run" \
+            --category "$CONFORMANCE_CATEGORY"

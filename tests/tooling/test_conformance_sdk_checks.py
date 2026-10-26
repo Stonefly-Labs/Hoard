@@ -28,6 +28,67 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_selected_category_extraction_recomputes_inputs_and_releases_before_reporting(self):
+        finish = getattr(checks, "_execute_selected_category", None)
+        self.assertTrue(callable(finish), "Selected categories need their own bounded native execution path.")
+        for profile in ("metadata", "artifacts"):
+            for defect in (None, "inputs", "cleanup"):
+                with self.subTest(profile=profile, defect=defect):
+                    inputs = {"profileId": profile, "mode": "qualification", "invocationGroupId": str(uuid.uuid4())}
+                    post = {"post": profile}
+                    order = []
+                    resources = ({"state": "Released"},)
+                    run = SimpleNamespace(
+                        root=self.directory,
+                        transition=lambda state: order.append(state),
+                        release=lambda: order.append("release"),
+                        resource_projection=lambda: resources)
+                    if defect == "cleanup":
+                        def release():
+                            order.append("release")
+                            raise checks.evidence.ConformanceError("CleanupIncomplete")
+                        run.release = release
+                    with patch.object(checks, "category_diagnostics", return_value={"code": "None"}) as category, patch.object(
+                            checks, "NativeCategorySources", return_value="sources"), patch.object(
+                            checks, "environment", return_value=ENVIRONMENT), patch.object(
+                            checks.evidence, "source_manifest", return_value={"source": "a" * 64}), patch.object(
+                            checks.evidence, "source_identity", return_value={"identity": profile}), patch.object(
+                            checks.evidence, "verify_snapshot") as snapshot, patch.object(
+                            checks, "collect_inspection_inputs", return_value={"inspection": "b" * 64}), patch.object(
+                            checks, "make_inputs", return_value=post) as capture, patch.object(
+                            checks.evidence, "verify_input_recomputation",
+                            side_effect=checks.evidence.ConformanceError("InputChanged")
+                            if defect == "inputs" else None) as recompute, patch.object(
+                            checks, "_category_report", side_effect=lambda *args, **kwargs: (
+                                order.append("report") or {"qualification": False, "reportState": "Incomplete"})) as publish:
+                        if defect is not None:
+                            with self.assertRaisesRegex(checks.evidence.ConformanceError,
+                                                        "InputChanged" if defect == "inputs" else "CleanupIncomplete"):
+                                finish(run, ROOT, self.directory / "candidate", inputs,
+                                       binding_sources=("binding",), inspection_cases={"original": "c" * 64},
+                                       inspection_configurations={"metadata": "metadata", "artifacts": "artifacts"},
+                                       baseline_sha256="d" * 64, ci_revision="e" * 40)
+                            publish.assert_not_called()
+                            self.assertEqual(order, [] if defect == "inputs" else ["Settling", "release"])
+                        else:
+                            result = finish(run, ROOT, self.directory / "candidate", inputs,
+                                            binding_sources=("binding",), inspection_cases={"original": "c" * 64},
+                                            inspection_configurations={"metadata": "metadata", "artifacts": "artifacts"},
+                                            baseline_sha256="d" * 64, ci_revision="e" * 40)
+                            self.assertEqual(result["reportState"], "Incomplete")
+                            self.assertFalse(result["qualification"])
+                            self.assertEqual(order, ["Settling", "release", "report"])
+                            self.assertEqual(publish.call_args.kwargs["resources"], resources)
+                        category.assert_called_once_with(
+                            run, inputs, self.directory / "candidate",
+                            inspection_cases={"original": "c" * 64},
+                            inspection_configurations={"metadata": "metadata", "artifacts": "artifacts"},
+                            native_sources="sources")
+                        snapshot.assert_called_once_with(self.directory / "candidate", {"source": "a" * 64})
+                        recompute.assert_called_once_with(inputs, post)
+                        self.assertEqual(capture.call_args.kwargs["profile_id"], profile)
+                        self.assertEqual(capture.call_args.kwargs["binding_sources"], ("binding",))
+
     def test_hook_admission_scopes_select_complete_dedicated_families_and_pin_sdk(self):
         factory = getattr(checks, "hook_admission_scenarios", None)
         self.assertTrue(callable(factory), "Hook admission needs independently selectable complete method families.")

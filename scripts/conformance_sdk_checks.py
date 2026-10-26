@@ -2922,7 +2922,7 @@ def _category_record(run, inputs, history, scopes, code=None):
     return {**summary, "historySha256": hashlib.sha256(raw).hexdigest()}
 
 
-def _category_report(run, inputs, post_inputs, summary):
+def _category_report(run, inputs, post_inputs, summary, *, resources=()):
     inputs = evidence.admit_entity("RunInputs", inputs)
     post_inputs = evidence.admit_entity("RunInputs", post_inputs)
     evidence.verify_input_recomputation(inputs, post_inputs)
@@ -2952,7 +2952,7 @@ def _category_report(run, inputs, post_inputs, summary):
     report = evidence.admit_entity("QualificationReport", {
         "schemaVersion": 1, "catalogRevision": evidence.CATALOG_REVISION, "inputs": inputs,
         "postInputSha256": evidence.digest(post_inputs), "results": record["results"],
-        "witnesses": record["witnesses"], "resources": [],
+        "witnesses": record["witnesses"], "resources": resources,
         "proofs": {**record["proofs"], completion_path: hashlib.sha256(completion_raw).hexdigest()},
         "state": "Incomplete", "qualification": False, "scope": ["category-runtime-diagnostic"]})
     cases = {case.key: case for case in expected_cases(inputs["profileId"])}
@@ -3788,11 +3788,35 @@ def validate_observation(ingested, result, identities, code, status, exit_code, 
         raise _RuntimeObservationError(ingested, result, status)
 
 
-def execute(repository, destination):
+def _execute_selected_category(run, repository, candidate, inputs, *, binding_sources, inspection_cases,
+                               inspection_configurations, baseline_sha256, ci_revision):
+    summary = category_diagnostics(
+        run, inputs, candidate, inspection_cases=inspection_cases,
+        inspection_configurations=inspection_configurations,
+        native_sources=NativeCategorySources(
+            run, inspection_inputs=inspection_cases, inspection_configurations=inspection_configurations))
+    sources = evidence.source_manifest(repository)
+    identity = evidence.source_identity(repository, ci_revision=ci_revision)
+    evidence.verify_snapshot(candidate, sources)
+    post = make_inputs(
+        run, repository, candidate, sources, environment(run, phase="completion", candidate=candidate),
+        identity, baseline_sha256, group_id=inputs["invocationGroupId"], ci_revision=ci_revision,
+        binding_sources=binding_sources,
+        inspection_inputs=collect_inspection_inputs(run, inspection_configurations),
+        profile_id=inputs["profileId"], mode="qualification")
+    evidence.verify_input_recomputation(inputs, post)
+    run.transition("Settling")
+    run.release()
+    return _category_report(run, inputs, post, summary, resources=run.resource_projection())
+
+
+def execute(repository, destination, *, category=None):
+    if category not in (None, "metadata", "artifacts"):
+        raise evidence.ConformanceError("UnsupportedProfile")
     if not native_execution_supported() or not callable(getattr(evidence, "ingest_runtime_attempt", None)):
         raise evidence.ConformanceError("PrerequisiteMissing")
-    run = OwnedRun.allocate(destination, repository, profile="baseline")
-    run.deadline = min(run.deadline, time.monotonic() + 100 * 60)
+    run = OwnedRun.allocate(destination, repository, profile=category or "baseline")
+    run.deadline = min(run.deadline, time.monotonic() + (60 if category is not None else 100) * 60)
     try:
         home = run.root / "cache"
         home.mkdir(exist_ok=True, mode=0o700)
@@ -4001,6 +4025,13 @@ def execute(repository, destination):
             "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
             "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest(),
         }))
+        if category is not None:
+            summary = _execute_selected_category(
+                run, repository, candidate, qualification_inputs[category],
+                binding_sources=category_binding_sources[category], inspection_cases=inspection_inputs,
+                inspection_configurations=inspection_configurations, baseline_sha256=seal_sha, ci_revision=ci_revision)
+            print(json.dumps(summary, sort_keys=True))
+            return 0
         observations = []
         for scenario in (*SCENARIOS, *original_metadata_scenarios(), *original_artifact_publication_scenarios(),
                          *original_artifact_read_delete_scenarios(), *original_artifact_evidence_scenarios()):
@@ -4293,6 +4324,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument("--evidence", type=Path)
+    parser.add_argument("--category", choices=("metadata", "artifacts"),
+                        help="only the selected native extraction batch; reports remain non-qualifying")
     parser.add_argument("--probe", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--inspection-project", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--inspection-output", type=Path, help=argparse.SUPPRESS)
@@ -4300,16 +4333,19 @@ def main():
     try:
         if options.inspection_project is not None or options.inspection_output is not None:
             if (options.inspection_project is None or options.inspection_output is None
-                    or options.probe is not None or options.evidence is not None):
+                    or options.probe is not None or options.evidence is not None or options.category is not None):
                 raise evidence.ConformanceError()
             probe_inspection_project(options.inspection_project, options.inspection_output)
             return 0
         if options.probe is not None:
+            if options.category is not None:
+                raise evidence.ConformanceError()
             probe(options.probe)
             return 0
         if options.evidence is None:
             raise evidence.ConformanceError("PrerequisiteMissing")
-        return execute(options.root.resolve(), options.evidence)
+        return execute(options.root.resolve(), options.evidence, **({"category": options.category}
+                                                                  if options.category is not None else {}))
     except (evidence.ConformanceError, OSError, ValueError, zipfile.BadZipFile) as error:
         code = str(error) if isinstance(error, evidence.ConformanceError) else "PrerequisiteMissing"
         status = evidence.failure_status(code)
