@@ -163,6 +163,13 @@ Original limits and Local/Object observation boundaries remain unchanged.
 Identical-SDK local wrapper parity and three assertion negatives do not grant
 QC-03 or native admission of the new scope.
 
+Metadata's 152 actual rows and 63+63 original witnesses pass complete local
+identical-SDK replay, including corresponding named failures under continuation,
+query-dimension and lease-expiry SDK mutations. Qualification-input original
+memory/SQLite scopes now require independently reconstructed role forests and
+held-command parents with sealed transport and exact SDK/provider/host/wrapper
+pins. This is not complete QC-02 or native admission of the extension.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

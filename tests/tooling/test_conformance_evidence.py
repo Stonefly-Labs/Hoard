@@ -3938,6 +3938,308 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     observed["originalObservations"][first] = nodes
                 write(settings, settings_raw)
 
+    def test_original_metadata_sources_require_complete_forests_exact_roles_and_sdk_image(self):
+        import conformance_case_catalog as catalog
+        import conformance_sources as sources
+        from types import SimpleNamespace
+
+        self.assertTrue(callable(getattr(sources, "metadata_original_observations", None)))
+        self.category_history(profile="metadata", mode="qualification", distinct_packages=True)
+        assembly_path = ("candidate/tests/contracts/Hoard.Metadata.Tests/bin/wrapper-diagnostic/Release/net10.0/"
+                         "Hoard.Metadata.Tests.dll")
+        directory = Path(assembly_path).parent
+        packages = ("Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite",
+                    "Hoard.Fixtures.Metadata.HostAdapters", "Hoard.Testing.Conformance")
+        images = {assembly_path: hashlib.sha256(b"wrapper").hexdigest(), **{
+            (directory / (package + ".dll")).as_posix(): hashlib.sha256(package.encode()).hexdigest()
+            for package in packages}}
+        self.inputs["runtimeAssemblies"] = images
+        template = self.inputs["packages"][0]
+        captured = {package["packageId"]: package for package in self.inputs["packages"]}
+        self.inputs["packages"] = [
+            {**captured.get(package, template), "packageId": package, "runtimeAssemblies": {
+                "lib/net10.0/" + package + ".dll": images[(directory / (package + ".dll")).as_posix()]}}
+            for package in packages]
+        for binding in self.inputs["bindings"]:
+            binding["package"] = next(package for package in self.inputs["packages"]
+                                      if package["packageId"] == binding["package"]["packageId"])
+        with tempfile.TemporaryDirectory() as temporary:
+            run = SimpleNamespace(root=Path(temporary).resolve())
+            for path in images:
+                destination = run.root / path
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(b"wrapper" if path == assembly_path else Path(path).stem.encode())
+                destination.chmod(0o400)
+            config = run.root / "stores/candidate.NuGet.Config"
+            config.parent.mkdir(parents=True, exist_ok=True)
+            (run.root / "feed/candidate").mkdir(parents=True)
+            config.write_bytes(evidence.synthetic_nuget_configuration(run.root / "feed/candidate"))
+            selected = {}
+            for family in ("metadata", "artifacts"):
+                path = run.root / "stores" / (family + ".json")
+                path.write_bytes(b"{}")
+                selected.update({
+                    identity: {str(path): hashlib.sha256(b"{}").hexdigest()}
+                    for identity, category in catalog.ORIGINAL_INSPECTION_WITNESSES.items()
+                    if category == family and identity not in catalog.ORIGINAL_INSPECTION_LITERAL_WITNESSES})
+            self.inputs["configurationSha256"] = evidence.configuration_fingerprint(
+                evidence.verify_synthetic_source_mapping(run.root, "stores/candidate.NuGet.Config", "feed/candidate"),
+                inspection_inputs=selected)
+            self.owner["rootPathSha256"] = hashlib.sha256(str(run.root).encode()).hexdigest()
+            for provider in ("memory", "sqlite"):
+                scope = "original-" + provider
+                tests = {identity: (provider, catalog.category_runtime_cases(
+                    "metadata", provider, mode="qualification")[identity])
+                    for identity in catalog.ORIGINAL_METADATA_WITNESSES}
+                assignments = sources.metadata_original_inputs(run, self.inputs)[provider]
+                manifest = {**self.manifest, "assemblies": [
+                    {"id": "image-" + str(index), "path": path, "sha256": images[path]}
+                    for index, path in enumerate(images) if Path(path).name != (
+                        "Hoard.Fixtures.Metadata.Sqlite.dll" if provider == "memory"
+                        else "Hoard.Fixtures.Metadata.Memory.dll")]}
+                self.manifest["assemblies"] = manifest["assemblies"]
+                self.manifest["expected"][0]["assemblyId"] = manifest["assemblies"][0]["id"]
+                transport = self.category_transport(None, selections=tests)
+                manifest = evidence.load_json(transport["manifest_data"])
+                witnesses = [evidence.load_json(line) for line in transport["witnesses_data"].splitlines()]
+                observed = {"diagnosticCode": "None", "attemptId": self.attempt, "witnesses": witnesses,
+                            "proofs": {path: hashlib.sha256(raw).hexdigest()
+                                       for path, raw in transport["proofs"].items()},
+                            "sessionOrigins": {row["executionId"]: () for row in witnesses},
+                            "originalObservations": {}}
+                for witness in witnesses:
+                    identity = witness["testIdentity"]
+                    nodes = []
+                    for parent in catalog.original_witness_parents(identity):
+                        nodes.append({
+                            "schemaVersion": 1, "runId": self.inputs["runId"], "caseId": tests[identity][1],
+                            "testIdentity": identity, "bindingId": provider, "observationId": str(uuid.uuid4()),
+                            "parentObservationId": None if parent is None else nodes[parent]["observationId"],
+                            "kind": "original-instance", "operation": "create" if parent is None else "reopen",
+                            "runtimeVersion": self.inputs["environment"]["runtime"], "processArchitecture": "x64",
+                            "components": {role: {
+                                "instanceId": str(uuid.uuid4()), "assemblySha256": images[path],
+                                "moduleVersionId": str(uuid.uuid4()), "typeSha256": "a" * 64}
+                                for role, (path, _) in assignments[identity].items()}})
+                    observed["originalObservations"][witness["executionId"]] = nodes
+                    path = f'proof-{witness["executionId"]}.json'
+                    proof = evidence.load_json(transport["proofs"][path])
+                    proof.update(schemaVersion=2, originalObservations=nodes, sessionOrigins=[],
+                                 ownerSha256=evidence.digest(self.owner), assemblySha256=images[assembly_path])
+                    raw = evidence.canonical_bytes(proof)
+                    transport["proofs"][path] = raw
+                    destination = run.root / f"runtime-{self.attempt}" / path
+                    destination.parent.mkdir(parents=True, exist_ok=True)
+                    destination.write_bytes(raw)
+                    destination.chmod(0o400)
+                    witness["proofSha256"] = hashlib.sha256(raw).hexdigest()
+                    witness["assemblySha256"] = images[assembly_path]
+                    observed["proofs"][path] = witness["proofSha256"]
+                transport["witnesses_data"] = b"".join(
+                    evidence.canonical_bytes(row) + b"\n" for row in witnesses)
+                completion = evidence.load_json(transport["completion_data"])
+                completion["recordsSha256"] = hashlib.sha256(transport["witnesses_data"]).hexdigest()
+                transport["completion_data"] = evidence.canonical_bytes(completion)
+                for path, raw in (("witnesses.jsonl", transport["witnesses_data"]),
+                                  ("completion.json", transport["completion_data"])):
+                    destination = run.root / f"runtime-{self.attempt}" / path
+                    if destination.exists():
+                        destination.chmod(0o600)
+                    destination.write_bytes(raw)
+                    destination.chmod(0o400)
+
+                def admit():
+                    return sources.metadata_original_observations(
+                        run, self.inputs, manifest, observed, scope_id=scope)
+
+                self.assertEqual(len(admit()), 63)
+                self.original_metadata_command_fixture(run, manifest, observed, transport, scope, selected)
+                for mutation in ("missing-row", "parameter", "forest", "role", "context", "sdk", "image"):
+                    changed_manifest, changed_observed = copy.deepcopy(manifest), copy.deepcopy(observed)
+                    first = witnesses[0]["executionId"]
+                    proof_path = run.root / f"runtime-{self.attempt}/proof-{first}.json"
+                    proof_raw = proof_path.read_bytes()
+                    if mutation == "missing-row":
+                        observed["witnesses"] = witnesses[:-1]
+                    elif mutation == "parameter":
+                        manifest["expected"][0]["testIdentity"] += "(foreign)"
+                    elif mutation == "forest":
+                        observed["originalObservations"][first] = []
+                    elif mutation == "role":
+                        observed["originalObservations"][first][0]["components"]["store"]["assemblySha256"] = images[
+                            (directory / "Hoard.Fixtures.Metadata.HostAdapters.dll").as_posix()]
+                    elif mutation == "context":
+                        observed["originalObservations"][first][0]["bindingId"] = (
+                            "sqlite" if provider == "memory" else "memory")
+                    elif mutation == "sdk":
+                        manifest["assemblies"] = [row for row in manifest["assemblies"]
+                                                  if not row["path"].endswith("/Hoard.Testing.Conformance.dll")]
+                    else:
+                        manifest["assemblies"][-1]["sha256"] = "0" * 64
+                    if mutation in ("forest", "role", "context"):
+                        changed_proof = evidence.load_json(proof_raw)
+                        changed_proof["originalObservations"] = observed["originalObservations"][first]
+                        raw = evidence.canonical_bytes(changed_proof)
+                        proof_path.chmod(0o600)
+                        proof_path.write_bytes(raw)
+                        proof_path.chmod(0o400)
+                        observed["witnesses"][0]["proofSha256"] = hashlib.sha256(raw).hexdigest()
+                        observed["proofs"][proof_path.name] = hashlib.sha256(raw).hexdigest()
+                    with self.subTest(provider=provider, mutation=mutation), self.assertRaises(evidence.ConformanceError):
+                        admit()
+                    proof_path.chmod(0o600)
+                    proof_path.write_bytes(proof_raw)
+                    proof_path.chmod(0o400)
+                    manifest, observed = changed_manifest, changed_observed
+
+    def original_metadata_command_fixture(self, run, manifest, observed, transport, scope, selected):
+        import base64
+        import conformance_sdk_checks as checks
+        import conformance_sources as sources
+
+        def write(path, raw):
+            path.parent.mkdir(parents=True, exist_ok=True)
+            if path.exists():
+                path.chmod(0o600)
+            path.write_bytes(raw)
+            path.chmod(0o400)
+
+        run.run_id, run.root_id = self.inputs["runId"], self.owner["rootId"]
+        run.command_sequence, run.live_children = 1, lambda: ()
+        native = object.__new__(sources.NativeCategorySources)
+        native._run, native._selected = run, selected
+        facts = sources.metadata_original_observations(run, self.inputs, manifest, observed, scope_id=scope)
+        receipt = {"schemaVersion": 1, "qualification": False, "mode": "category-metadata-" + scope,
+                   "runId": run.run_id, "invocationGroupId": self.inputs["invocationGroupId"],
+                   "attemptId": self.attempt, "inputsSha256": evidence.digest(self.inputs), "observations": facts}
+        write(run.root / f'proofs/{receipt["mode"]}-{self.attempt}.json', evidence.canonical_bytes(receipt))
+        write(run.root / "runtime-owner.json", transport["owner_data"])
+        write(run.root / f"runtime-input-{self.attempt}.json", transport["manifest_data"])
+        write(run.root / manifest["runInputsPath"], evidence.canonical_bytes(self.inputs))
+        context = {"schemaVersion": 1, "runId": run.run_id, "cases": {
+            entry["testIdentity"]: {"caseId": entry["caseId"], "bindingId": entry["bindingId"]}
+            for entry in manifest["expected"]}}
+        provider = scope.removeprefix("original-")
+        environment = ("<EnvironmentVariables><HOARD_METADATA_PROVIDER>" + provider
+                       + "</HOARD_METADATA_PROVIDER><HOARD_ORIGINAL_CONTEXT>"
+                       + base64.b64encode(evidence.canonical_bytes(context)).decode()
+                       + "</HOARD_ORIGINAL_CONTEXT></EnvironmentVariables>")
+        assembly = run.root / manifest["assemblies"][0]["path"]
+        settings = run.root / "stores" / f"settings-{self.attempt}.runsettings"
+        settings_raw = sources.runtime_settings(
+            run.root, assembly, self.attempt, evidence.digest(manifest), evidence.digest(self.owner), environment)
+        write(settings, settings_raw)
+        record = {
+            "schemaVersion": 1, "sequence": 1, "childPid": 123, "childStartSha256": "a" * 64,
+            "startedMs": 9, "endedMs": 12, "exitCode": 0, "diagnosticCode": "None", "groupState": "Exited",
+            "scope": "ordinary", "runId": run.run_id, "rootId": run.root_id,
+            "argvSha256": evidence.digest(sources.runtime_arguments(
+                assembly, settings, [entry["testIdentity"] for entry in manifest["expected"]])),
+            "cwdSha256": hashlib.sha256(str(assembly.parent).encode()).hexdigest(),
+            "inputFiles": {f"runtime-input-{self.attempt}.json": evidence.digest(manifest),
+                           "runtime-owner.json": evidence.digest(self.owner),
+                           manifest["runInputsPath"]: evidence.digest(self.inputs),
+                           settings.relative_to(run.root).as_posix(): hashlib.sha256(settings_raw).hexdigest(),
+                           **{row["path"]: row["sha256"] for row in manifest["assemblies"]}}}
+        original = evidence.canonical_bytes(record)
+        run.read_execution_record = mock.Mock(return_value=original)
+        execution = {
+            "schemaVersion": 1, "qualification": False, "nativeContainment": True,
+            "runId": run.run_id, "rootId": run.root_id, "invocationGroupId": self.inputs["invocationGroupId"],
+            "attemptId": self.attempt, "purpose": "execution", "commandSequence": 1,
+            "inputsSha256": evidence.digest(self.inputs), "executionRecordSha256": evidence.digest(record),
+            "manifestSha256": evidence.digest(manifest), "settingsSha256": hashlib.sha256(settings_raw).hexdigest()}
+        parent = {
+            "schemaVersion": 1, "qualification": False, "nativeContainment": True, "profileId": "metadata",
+            "scopeId": scope, "runId": run.run_id, "invocationGroupId": self.inputs["invocationGroupId"],
+            "attemptId": self.attempt, "inputsSha256": evidence.digest(self.inputs),
+            "manifestSha256": evidence.digest(manifest), "commandSequence": 1,
+            "executionParentSha256": evidence.digest(execution), "sourceReceiptSha256": evidence.digest(receipt),
+            "observations": [{**row, "bindingId": provider,
+                              "caseId": next(entry["caseId"] for entry in manifest["expected"]
+                                             if entry["testIdentity"] == row["testIdentity"])} for row in facts]}
+        execution_path = run.root / f"proofs/category-command-{self.attempt}-execution.json"
+        parent_path = run.root / f"proofs/category-source-{self.attempt}.json"
+        write(execution_path, evidence.canonical_bytes(execution))
+        write(run.root / "proofs/execution-command-0001.json", original)
+        if parent_path.exists():
+            parent_path.unlink()
+        with mock.patch.object(checks, "OwnedRun", type(run)):
+            produced = checks.category_source_parent(
+                run, self.inputs, manifest, observed,
+                {"sourceExecutions": 63, "originalMetadataProofsSha256": evidence.digest(receipt)},
+                category_scope=("metadata", scope),
+                result=type(run)(exit_code=0, execution_record_sha256=hashlib.sha256(original).hexdigest()))
+        self.assertEqual(produced, evidence.digest(parent))
+        self.assertEqual(parent_path.read_bytes(), evidence.canonical_bytes(parent))
+
+        def admit():
+            return native._corroborate(
+                self.inputs, manifest, observed, category_scope=("metadata", scope),
+                manifest_data=transport["manifest_data"], owner_data=transport["owner_data"],
+                started_ms=9, ended_ms=12)
+
+        self.assertEqual(len(admit()["sourceParents"]), 63)
+        def ingest(**overrides):
+            return native.ingest_attempt(
+                inputs=self.inputs, category_scope=("metadata", scope), **{**transport, **overrides},
+                expected_tests={entry["testIdentity"]: (entry["bindingId"], "none") for entry in manifest["expected"]},
+                started_ms=9, ended_ms=12)
+
+        self.assertEqual(len(ingest()["sourceParents"]), 63)
+        wrong_inputs = sources.metadata_original_inputs(run, self.inputs)
+        identity = next(iter(wrong_inputs[provider]))
+        wrong_inputs[provider][identity]["store"] = wrong_inputs[provider][identity]["controls"]
+        with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+            ingest(original_inputs=wrong_inputs)
+        for filename in ("witnesses.jsonl", "completion.json"):
+            path = run.root / f"runtime-{self.attempt}" / filename
+            path.chmod(0o600)
+            with self.subTest(scope=scope, unsealed=filename), self.assertRaises(evidence.ConformanceError):
+                ingest()
+            path.chmod(0o400)
+        for mutation in ("argv", "inputs", "cwd", "exit", "time", "sequence", "replaced-record", "settings",
+                         "missing-parent", "borrowed-parent", "unsealed-proof", "changed-proof"):
+            changed = copy.deepcopy(record)
+            proof = run.root / f'runtime-{self.attempt}/proof-{observed["witnesses"][0]["executionId"]}.json'
+            proof_raw = proof.read_bytes()
+            if mutation in ("argv", "cwd"):
+                changed[mutation + "Sha256"] = "0" * 64
+            elif mutation == "inputs":
+                changed["inputFiles"].pop(next(path for path in changed["inputFiles"]
+                                               if path.endswith("/Hoard.Testing.Conformance.dll")))
+            elif mutation == "exit":
+                changed["exitCode"] = 1
+            elif mutation == "time":
+                changed["startedMs"] = 8
+            elif mutation == "sequence":
+                changed["sequence"] = 2
+            elif mutation == "settings":
+                write(settings, settings_raw.replace(provider.encode(), b"foreign"))
+            elif mutation == "unsealed-proof":
+                proof.chmod(0o600)
+            elif mutation == "changed-proof":
+                write(proof, proof_raw + b" ")
+            raw = evidence.canonical_bytes(changed)
+            run.read_execution_record.return_value = original if mutation == "replaced-record" else raw
+            if mutation == "replaced-record":
+                raw = evidence.canonical_bytes({**record, "childPid": 456})
+            changed_execution = {**execution, "executionRecordSha256": hashlib.sha256(raw).hexdigest()}
+            write(execution_path, evidence.canonical_bytes(changed_execution))
+            changed_parent = {**parent, "executionParentSha256": evidence.digest(changed_execution)}
+            if mutation == "borrowed-parent":
+                changed_parent["attemptId"] = str(uuid.uuid4())
+            write(parent_path, evidence.canonical_bytes(changed_parent))
+            if mutation == "missing-parent":
+                parent_path.unlink()
+            with self.subTest(scope=scope, mutation=mutation), self.assertRaises((evidence.ConformanceError, OSError)):
+                admit()
+            run.read_execution_record.return_value = original
+            write(settings, settings_raw)
+            write(proof, proof_raw)
+        write(execution_path, evidence.canonical_bytes(execution))
+        write(parent_path, evidence.canonical_bytes(parent))
+
     def test_native_shared_metadata_consumer_reconstructs_all_rows_origins_and_original_command(self):
         self.native_consumer_source_fixture(profile="metadata", hooks=False)
 

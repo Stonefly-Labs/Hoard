@@ -7365,6 +7365,25 @@ Source SDK contracts pass 133 tests/zero skips; tooling passes 444 tests/19
 native skips, with focused whitespace/catalog checks passing. This remains
 local diagnostic parity; task/checklist markers do not advance.
 
+Complete local metadata extraction parity passes 152 actual consumers plus all
+63 original memory and 63 original SQLite witnesses with the same unchanged
+SDK archive `274f543fb026d7b75e64466673a9cda74376c3dd3af85af1869f46958ad21c90`.
+Continuation SDK mutation produces 12/6/6 named failures, query dimensions
+10/5/5, and lease expiry 6/1/1, respectively; all other selected rows pass,
+without skips or incidental failures. Lease-loop versus split-row correspondence
+is retained rather than inferred from equal counts.
+
+Original qualification-input memory/SQLite scopes now gain independent native
+source parents. The factory reconstructs frozen role assignments and original
+forests, requires sealed runtime proof/witness/completion bytes, pins exact
+wrapper/provider/host/SDK images and independently verifies held command
+argv/cwd/input closure, provider/context settings and current attempt parents.
+Closed-scope, forest, role, context, SDK, command, parent and sealing controls
+pass in modeled tooling: 445 tests discovered, 19 native skips, no failures.
+This source-admission change awaits actual Linux observation. QC-02 composition
+and complete category acceptance are still unbuilt; no task/checklist markers
+or implementation stage advance.
+
 Exact earlier `831b00c3999e94958bc3afecb77bf9d99a3cb9fa`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),
 passes all three Linux jobs and strict source admission: 336 native foundations/

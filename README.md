@@ -2492,6 +2492,14 @@ bytes; three SDK-only assertion mutations each produce the same two named
 failures in both families. Awaited recovery overloads preserve original wrappers,
 limits, observation boundaries and assertions. This extension remains local.
 
+Complete local metadata parity now passes all 152 actual rows and both
+63-row frozen wrapper families with identical SDK bytes. Three SDK-only
+mutations produce the expected named failures in every family. Qualification-
+input memory/SQLite originals now require independent native command parents,
+exact role forests, sealed runtime packets and a pinned SDK image. Tooling
+passes 445 tests with 19 native skips. This source-admission extension awaits
+Linux observation; QC-02 and implementation remain incomplete.
+
 Exact earlier `831b00c`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),
 passed all three Linux jobs and strict admission of the 129-row artifact and

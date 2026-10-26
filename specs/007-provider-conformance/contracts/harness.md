@@ -1500,6 +1500,15 @@ Exact earlier `831b00c`/run40271691109 strictly admits artifact129/metadata152:
 336 foundations/no skips, unchanged native transfer/recovery obligations.
 It does not admit this extension or complete QC-02/QC-03.
 
+Original qualification-input metadata scopes now require independently selected
+63-row families, exact role/creation/reopen forests, sealed original runtime
+packets and SDK/provider/host/wrapper image pins. Their source parents are
+reconstructed from actual held command inputs, provider/context settings,
+argv/cwd and current-attempt execution receipts, not caller-provided role maps.
+Complete local 152/63/63 metadata replay and three SDK-only mutations pass;
+445 tooling tests/19 native skips cover source substitutions. Native observation
+of this extension and QC-02 composition remain outstanding.
+
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or
 ownership consumers. Reduced/foreign scopes reject before launch; routing

@@ -844,9 +844,18 @@ class SdkDiagnosticTests(unittest.TestCase):
                 manifest = {
                     "runId": run.run_id, "invocationGroupId": str(uuid.uuid4()),
                     "attemptId": str(uuid.uuid4()), "purpose": "execution",
+                    "assemblies": [{"path": assembly.relative_to(self.directory).as_posix()}],
                     "inputSha256": "a" * 64, "runInputsPath": "proofs/category-inputs.json", "expected": expected}
+                if profile == "metadata" and scope_id.startswith("original-"):
+                    manifest["assemblies"].extend(
+                        {"path": "images/" + name + ".dll"}
+                        for name in ("Hoard.Testing.Conformance", "Hoard.Fixtures.Metadata.HostAdapters",
+                                     "Hoard.Fixtures.Metadata." + ("Memory" if pairs[0][0] == "memory" else "Sqlite")))
                 with self.subTest(profile=profile, scope=scope_id):
                     checks.runtime_command(run, assembly, manifest, **options)
+                    if profile == "metadata" and scope_id.startswith("original-"):
+                        self.assertTrue({entry["path"] for entry in manifest["assemblies"]} <= set(
+                            launches[-1][1]["execution_inputs"]))
                     if scope_id == "controller":
                         settings = ET.fromstring((self.directory / "stores" / (
                             "settings-" + manifest["attemptId"] + ".runsettings")).read_bytes())

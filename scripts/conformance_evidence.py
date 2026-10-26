@@ -2420,6 +2420,7 @@ class CategoryRuntimeHistory:
             if self._native_sources is not None and (
                     scope_id.startswith("inspection-")
                     or scope_id in ("recovery-controller", "inventory-controller", "mutation-repair", "hook-admission")
+                    or self._inputs["profileId"] == "metadata" and scope_id in ("original-memory", "original-sqlite")
                     or self._inputs["profileId"] == "artifacts" and scope_id in ("controller", "original-integration")):
                 admit_attempt = self._native_sources.ingest_attempt
                 source_options["category_scope"] = self._inputs["profileId"], scope_id

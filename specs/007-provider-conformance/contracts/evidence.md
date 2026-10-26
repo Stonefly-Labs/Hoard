@@ -251,6 +251,16 @@ negative controls remain local diagnostics, not complete QC-03. Strict native
 run40271691109 at `831b00c` admits the earlier artifact129/metadata152 sources
 only; its metadata report remains explicitly `Incomplete`, qualification false.
 
+Qualification-input original metadata scopes no longer use ordinary runtime
+ingestion: independent source admission reconstructs all 63 witnesses per
+provider and their exact role/creation/reopen forests, checks sealed runtime
+proof/witness/completion bytes and pins the SDK/provider/host/wrapper images.
+Source parents bind the original argv, cwd, complete held input closure, provider
+and original-context settings, execution receipt and current attempt. Missing,
+foreign, unsealed or borrowed sources reject. Complete local 152/63/63 parity
+and three SDK-only negative controls do not themselves grant QC-02; actual
+Linux observation and complete extraction-quality composition remain outstanding.
+
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,

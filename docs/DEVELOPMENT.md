@@ -10279,6 +10279,22 @@ contracts pass 133/zero skips, and focused whitespace/catalog checks pass.
 This extension is not native admission, complete extraction or stage completion.
 Examples, diagrams, production module boundaries and deployment are unaffected.
 
+Complete local metadata parity now passes all 152 actual consumers, 63 original
+memory witnesses and 63 original SQLite witnesses with identical SDK archives.
+SDK-only continuation, query-dimension and lease-expiry mutations yield,
+respectively, 12/6/6, 10/5/5 and 6/1/1 named failures across those families, with
+no skips or incidental failures. Original lease loops explain the split-row
+counts; method totals are not parameter parity.
+
+Qualification-input original metadata scopes now enter `NativeCategorySources`
+rather than ordinary runtime ingestion. Admission independently selects every
+role image/creation/reopen forest, checks sealed runtime packets against actual
+transport bytes, pins SDK/provider/host/wrapper images and reconstructs exact
+provider/context settings plus held argv/cwd/input closure and current attempt
+parents. Modeled substitutions and the full tooling suite pass: 445 tests,
+19 native skips. This extension has not yet been observed on Linux and does
+not grant QC-02 or advance any task/checklist/stage marker.
+
 Exact `58a949543ea160b5be21c13db581f01387d33719`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
 independently passes all three Linux jobs: 331 native foundations without

@@ -57,6 +57,7 @@ from conformance_sources import (
     metadata_inventory_source_inputs, native_metadata_inventory_controls, native_artifact_transfer_source,
     metadata_common_consumer_manifest, native_metadata_common_consumer_control,
     metadata_common_consumer_sdk_images, metadata_common_consumer_sdk_paths,
+    metadata_original_observations,
     native_artifact_transfer_controls,
     native_control_record, native_metadata_binary_control, native_metadata_ownership_control,
     native_metadata_package_consumer_control,
@@ -2724,7 +2725,8 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
     inspect_source = (inputs["mode"] == "qualification" and runtime_options.get("category_scope") is not None
                       and (runtime_options["category_scope"][1].startswith("inspection-")
                            or tuple(runtime_options["category_scope"]) in (
-                               ("artifacts", "controller"), ("artifacts", "original-integration"))
+                               ("artifacts", "controller"), ("artifacts", "original-integration"),
+                               ("metadata", "original-memory"), ("metadata", "original-sqlite"))
                            or runtime_options["category_scope"][1] in (
                                "recovery-controller", "inventory-controller", "mutation-faulty", "mutation-repair",
                                "shared-consumer", "hook-admission")))
@@ -3260,6 +3262,8 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
         paths = {path for identity, (binding, _) in tests.items()
                  for node in evidence.original_node_assignments(identity, originals[binding][identity])
                  for path, _ in node.values()}
+        if profile == "metadata" and inputs["mode"] == "qualification":
+            paths.add((assembly.parent / "Hoard.Testing.Conformance.dll").relative_to(run.root).as_posix())
         for index, path in enumerate(sorted(paths - {assembly_path})):
             hashed = inputs["runtimeAssemblies"].get(path)
             if hashed is None:
@@ -3312,8 +3316,9 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
     elif scope_id == "controller":
         sources = original_artifact_external_proofs(
             run, inputs, manifest, ingested, category_scope=category_scope)
-    elif scope_id == "original-integration":
-        observations = authority_integration_observations(run, inputs, manifest, ingested)
+    elif scope_id == "original-integration" or profile == "metadata" and original and inputs["mode"] == "qualification":
+        observations = (metadata_original_observations(run, inputs, manifest, ingested, scope_id=scope_id)
+                        if profile == "metadata" else authority_integration_observations(run, inputs, manifest, ingested))
         source = evidence.canonical_bytes({
             "schemaVersion": 1, "qualification": False, "mode": f"category-{profile}-{scope_id}",
             "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
@@ -3321,7 +3326,8 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
             "observations": observations})
         write_new(run.root / f'proofs/category-{profile}-{scope_id}-{manifest["attemptId"]}.json', source)
         sources = {"sourceExecutions": len(observations),
-                   "authorityIntegrationProofsSha256": hashlib.sha256(source).hexdigest()}
+                   ("originalMetadataProofsSha256" if profile == "metadata" else
+                    "authorityIntegrationProofsSha256"): hashlib.sha256(source).hexdigest()}
     elif mutation:
         observations, _ = category_mutation_observations(
             run, inputs, manifest, ingested, sequence=run.command_sequence,
@@ -3390,13 +3396,15 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
             or type(result.exit_code) is not int or result.exit_code != 0):
         raise evidence.ConformanceError("ProofMismatch")
     if scope_id.startswith("inspection-") or scope_id in ("original-integration", "mutation-repair") or profile == "metadata" and scope_id in (
-            "recovery-controller", "inventory-controller"):
+            "recovery-controller", "inventory-controller", "original-memory", "original-sqlite"):
         source_key = ("metadataRecoveryProofsSha256" if scope_id == "recovery-controller" else
                       "metadataInventoryProofsSha256" if scope_id == "inventory-controller" else "inspectionProofsSha256")
         if scope_id == "original-integration":
             source_key = "authorityIntegrationProofsSha256"
         elif scope_id == "mutation-repair":
             source_key = "mutationProofsSha256"
+        elif scope_id in ("original-memory", "original-sqlite"):
+            source_key = "originalMetadataProofsSha256"
         mode = f"category-{profile}-{scope_id}"
         filename = f'{mode}-{manifest["attemptId"]}.json'
         observation_fields = {"sourceProofSha256": evidence.sha256}
@@ -3809,7 +3817,8 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             f"runtime-input-{attempt_id}.json", "runtime-owner.json", manifest["runInputsPath"],
             settings.relative_to(run.root).as_posix(), assembly.relative_to(run.root).as_posix()]
         if category_scope == ("artifacts", "original-integration") or category_scope[1] in (
-                "mutation-faulty", "mutation-repair", "shared-consumer", "hook-admission"):
+                "mutation-faulty", "mutation-repair", "shared-consumer", "hook-admission") or category_scope in (
+                    ("metadata", "original-memory"), ("metadata", "original-sqlite")):
             execution_inputs.extend(entry["path"] for entry in manifest["assemblies"]
                                     if entry["path"] != assembly.relative_to(run.root).as_posix())
         if category_scope == ("metadata", "shared-consumer"):

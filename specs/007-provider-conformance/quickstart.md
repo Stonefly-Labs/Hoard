@@ -590,6 +590,12 @@ recovery overloads preserve original wrapper signatures, limits and boundaries.
 Earlier `831b00c`/run40271691109 strictly admits artifact129/metadata152 with
 336 native foundations/no skips; it does not admit this extension. Metadata
 remains 92 Passed/1 Incomplete/9 NotApplicable/0 Failed and non-qualifying.
+Complete local metadata parity passes 152 actual and 63+63 original rows using
+identical SDK archives; three SDK-only mutations produce corresponding named
+failures without skips. Qualification-input originals now require independent
+native source/command parents, sealed runtime transport, exact role forests and
+SDK/provider/host/wrapper image pins. Tooling passes 445 tests/19 native skips;
+Linux observation of this extension and QC-02 composition remain outstanding.
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

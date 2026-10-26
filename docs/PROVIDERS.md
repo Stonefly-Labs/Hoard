@@ -77,6 +77,14 @@ parity and three named assertion negatives remain local, non-qualifying evidence
 Strict native run40271691109 at `831b00c` admits the earlier 129/152 artifact/
 metadata sources, not this 141-row extension or complete category qualification.
 
+Complete local metadata parity passes 152 actual rows and both 63-row original
+families using identical SDK archives. Continuation, query-dimension and lease-
+expiry SDK mutations fail the corresponding named assertions in all families.
+Qualification-input original memory/SQLite scopes now independently reconstruct
+role/creation/reopen attribution and require sealed original runtime packets,
+the exact SDK/provider/host/wrapper images and their held command inputs.
+This does not yet establish native admission of this change or complete QC-02.
+
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run
