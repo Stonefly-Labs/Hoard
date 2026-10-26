@@ -2575,6 +2575,19 @@ failures per family with matching runtime SDK/archive images. QC-03 remains
 unfinished. QC-02 pairing run40295489832 was canceled before jobs and is not
 admitted; replacement deletion run40297863544 still awaits observation.
 
+The following validation-first increment preserves all four missing/truncated
+payload parameters and Local compatible-reopen assertions, extending the
+artifact scope to 172. Fresh packages pass 328 selected consumers; all four
+actual/original pairs pass, and an SDK-only incarnation assertion mutant gives
+four named failures per family with matching SDK/archive images. Safe-logger
+replay admits all 172 actual witnesses/178 source origins, including six reopen
+edges, with exact per-witness counts and all role/image/archive matches.
+Tooling452/19 native skips and source contracts152/zero skips pass. Exact
+`e39b2ce`/run40293145453 now independently admits the earlier frozen metadata
+argument maps on Linux: three jobs/341 native foundations pass without skips.
+QC-02 pairing and the newer artifact scopes still await native observation;
+full qualification and the implementation stage remain unfinished.
+
 Fresh fourteen-package replay passes 318 selected consumers. The safe logger
 then passes all 152 shared/63 memory-original/63 SQLite-original witnesses,
 with exactly 32/16/16 source-bound argument calls and identical SDK/archive

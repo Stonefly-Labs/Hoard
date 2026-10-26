@@ -7534,6 +7534,28 @@ SDK images. Source contracts152/zero skips and tooling451/19 native skips pass.
 Full QC-03 remains open. Pairing run40295489832 was canceled before jobs and is
 not admitted; replacement deletion run40297863544 awaits independent observation.
 
+The next artifact172 increment retains all four validation-first parameters:
+missing payloads and genuine provider truncation, including Local compatible
+reopen, restoration denial, safe deletion/recreation and original receipt
+corroboration. Awaited overloads preserve the original synchronous signatures.
+Fresh fourteen-package replay passes 328 consumers at source
+`8ee48b94c1d84f30ef3387de60e90b9c6e4d836a0384239eb764a928e88b7044`,
+SDK archive `6e4dc233112d99255c3e1283cc5bff7bd03222f33b557217a2e88dc60fa6f4cf`.
+Both complete four-row actual/original families pass. An SDK-only incarnation
+assertion mutant produces exactly four named `ValidationFirstCorruptionAsync`
+failures in each family, with matching loaded SDK/archive images. Independent
+safe-logger replay validates all 172 actual witnesses/178 origins, six reopen
+edges, exact per-witness counts and all role/image/archive correspondences.
+Its first attempt rejects an incorrectly arranged private candidate feed with
+`InputChanged`; the fresh correctly owned feed passes without weakening checks.
+Tooling452/19 native skips and source contracts152/zero skips pass. Exact
+`e39b2ce6d10417ed24fca070aebe5347c08257e5`/run40293145453 independently passes
+all three Linux jobs and 341 native foundations without skips, admitting the
+earlier frozen argument maps, artifact162/metadata152 and ten metadata parents.
+Metadata remains 92 Passed/1 Incomplete/9 NotApplicable/0 Failed, report
+`Incomplete`, qualification false. Pairing/newer artifact scopes remain pending;
+no tasks, reviewer-owned checklists or stage markers advance here.
+
 Exact earlier `831b00c3999e94958bc3afecb77bf9d99a3cb9fa`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),
 passes all three Linux jobs and strict source admission: 336 native foundations/

@@ -157,6 +157,17 @@ with matching runtime SDK/archive images. QC-03 remains unfinished. Pairing
 run40295489832 was canceled before jobs, not admitted; replacement deletion
 run40297863544 awaits independent observation.
 
+All four validation-first missing/truncated payload rows now run through the
+actual bindings, retaining Local compatible reopen without borrowing it for
+Object. The artifact scope is 172; fresh packages pass 328 selected consumers.
+Four actual/original pairs pass; an SDK-only incarnation assertion mutant gives
+four named failures per family with matching SDK/archive images. Safe-logger
+replay checks 172 witnesses/178 origins, six reopen edges and exact role/image/
+archive matches. Missing, extra and foreign validation origins reject.
+Exact `e39b2ce`/run40293145453 independently admits earlier frozen metadata
+argument maps with all three Linux jobs/341 native foundations passing without
+skips. QC-02 pairing/newer artifact scopes and complete QC-03 remain unadmitted.
+
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run

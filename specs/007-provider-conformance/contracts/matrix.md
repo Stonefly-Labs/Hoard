@@ -234,6 +234,17 @@ failures per family with matching runtime SDK/archive images. QC-03 remains
 unfinished. Pairing run40295489832 was canceled before jobs, not admitted;
 replacement deletion run40297863544 awaits independent observation.
 
+The following artifact172 scope preserves all four validation-first missing/
+truncated parameters, including Local compatible reopen and original receipt/
+recreation assertions. Fresh packages pass 328 consumers; four actual/original
+pairs pass. An SDK-only incarnation assertion mutant gives four named failures
+per family with matching SDK/archive images. Safe-logger replay validates
+172 witnesses/178 origins, six reopen edges and exact per-row counts/role-image
+correspondence; missing, extra and foreign validation origins reject. Exact
+`e39b2ce`/run40293145453 admits earlier frozen argument maps with three Linux
+jobs/341 native foundations passing without skips. Pairing/newer artifact native
+admission and complete QC-03 remain outstanding.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

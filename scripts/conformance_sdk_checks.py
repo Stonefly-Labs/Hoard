@@ -1507,7 +1507,20 @@ def full_artifact_binding_scenarios():
                       for provider in ("local", "object") for point in ("ReadOpened", "ReconciliationVerified", "DeleteRemoved"))
     identities.update(prefix + "Observed_admitted_open_rechecks_actual_quarantine_before_result_handoff"
                       + f'(provider: "{provider}")' for provider in ("local", "object"))
+    identities.update(prefix + "Observed_validation_first_quarantine_survives_actual_restoration_and_reopen"
+                      + f'(provider: "{provider}", missing: {missing})'
+                      for provider in ("local", "object") for missing in ("False", "True"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
+def full_artifact_binding_origin_counts():
+    reopen = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
+    payload = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_payload_and_progress_consumers_preserve_actual_binding_guarantees"
+    validation = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_validation_first_quarantine_survives_actual_restoration_and_reopen"
+    return {identity: 2 if identity.split("(")[0] == reopen or ('(provider: "local"' in identity and (
+                identity.split("(")[0] == validation or (identity.split("(")[0] == payload and any(
+                    f'consumer: "{consumer}"' in identity for consumer in ("read-bitflip", "read-truncate")))))
+            else 1 for identity in full_artifact_binding_scenarios()[0][1]}
 
 
 def category_mutation_scenarios():
@@ -2986,13 +2999,8 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
             or any(len(origins) != 1 for origins in ingested["sessionOrigins"].values())):
         raise evidence.ConformanceError("WitnessMissing")
     if name in ("full-artifact-binding", "full-metadata-binding"):
-        reopen = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
-        payload_reopen = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_payload_and_progress_consumers_preserve_actual_binding_guarantees"
         counts = (full_metadata_binding_origin_counts() if name == "full-metadata-binding" else
-                  {identity: 2 if identity.split("(")[0] == reopen or (
-                      identity.split("(")[0] == payload_reopen and '(provider: "local"' in identity
-                      and any(f'consumer: "{consumer}"' in identity for consumer in ("read-bitflip", "read-truncate")))
-                   else 1 for identity in identities})
+                  full_artifact_binding_origin_counts())
         validate_full_binding_origins(ingested, inputs, counts)
     if hook_admission:
         validate_full_binding_origins(ingested, inputs, {identity: 1 for identity in identities})

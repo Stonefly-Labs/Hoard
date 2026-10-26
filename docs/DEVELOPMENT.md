@@ -10392,6 +10392,17 @@ pairs pass; an SDK-only final quarantine assertion mutant gives exactly two
 named failures per family, with matching runtime SDK/archive images. Full
 QC-03 remains open. Pairing run40295489832 was canceled before jobs and is not
 admitted; replacement deletion run40297863544 awaits independent observation.
+The next artifact172 increment retains all four validation-first missing/
+truncated parameters and Local compatible-reopen proof. Fresh packages pass
+328 selected consumers; four actual/original pairs pass. An SDK-only incarnation
+assertion mutant gives four named failures per family with matching runtime
+SDK/archive images. Safe-logger replay validates all 172 witnesses/178 origins,
+six reopen edges and exact per-row origin counts/role-image-package matches.
+Missing, extra or foreign validation origins reject; Object never borrows a
+Local restart. Tooling452/19 native skips and source contracts152/zero skips
+pass. Exact `e39b2ce`/run40293145453 independently admits earlier frozen argument
+maps with three Linux jobs/341 native foundations passing without skips.
+QC-02 pairing/newer artifact native confirmation and full acceptance remain open.
 Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 

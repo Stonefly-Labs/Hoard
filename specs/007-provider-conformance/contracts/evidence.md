@@ -341,6 +341,18 @@ named parity successes. Full QC-03 remains unfinished. Pairing run40295489832
 was canceled before jobs and is not admitted; replacement deletion run40297863544
 awaits independent observation.
 
+The following artifact172 scope preserves four validation-first missing/
+truncated parameters and Local compatible-reopen assertions. Fresh packages
+pass 328 consumers; four actual/original pairs pass. An SDK-only incarnation
+assertion mutant gives four named failures per family with matching runtime
+SDK/archive images. Safe-logger replay validates 172 witnesses/178 origins,
+six reopen edges and exact per-witness counts/role-image-package matches.
+Missing, extra and foreign validation origins reject. A wrongly arranged
+private feed initially rejects `InputChanged`; fresh correct feed ownership
+passes unchanged checks. Exact `e39b2ce`/run40293145453 admits earlier frozen
+metadata argument maps with three Linux jobs/341 native foundations passing
+without skips, not QC-02 pairing/newer artifact scopes or full qualification.
+
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,

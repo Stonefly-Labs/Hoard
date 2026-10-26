@@ -657,6 +657,16 @@ matching runtime SDK/archive images. This is not complete QC-03. Pairing
 run40295489832 was canceled before jobs and is not admitted; replacement
 deletion run40297863544 awaits observation.
 
+All four validation-first missing/truncated parameters extend the artifact
+scope to 172 and fresh-package replay to 328 passes. Original assertions and
+Local compatible reopen are preserved. Four actual/original pairs pass; an
+SDK-only incarnation assertion mutant gives four named failures per family
+with matching SDK/archive images. Safe-logger replay validates 172 witnesses/
+178 origins and six reopen edges with exact counts/role-image-package matches.
+Exact `e39b2ce`/run40293145453 independently admits earlier frozen argument maps:
+three Linux jobs/341 native foundations pass without skips. Pairing/newer
+artifact native admission and full qualification remain outstanding.
+
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

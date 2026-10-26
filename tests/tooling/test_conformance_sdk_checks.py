@@ -4170,6 +4170,28 @@ class SdkDiagnosticTests(unittest.TestCase):
                 with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
                     checks.validate_full_binding_origins(ingested, inputs, counts)
 
+    def test_full_artifact_binding_origins_require_validation_reopen_without_object_restart(self):
+        counts = checks.full_artifact_binding_origin_counts()
+        for provider in ("local", "object"):
+            for missing in ("False", "True"):
+                identity = (checks.FULL_ARTIFACT_CONSUMER_PREFIX
+                            + "Observed_validation_first_quarantine_survives_actual_restoration_and_reopen"
+                            + f'(provider: "{provider}", missing: {missing})')
+                binding = "fixture.artifact." + provider
+                execution = str(uuid.uuid4())
+                inputs = {"bindings": [{"bindingId": binding, "descriptorSha256": "a" * 64}]}
+                witness = {"testIdentity": identity, "bindingId": binding, "executionId": execution}
+                origins = tuple({"descriptorSha256": "a" * 64}
+                                for _ in range(2 if provider == "local" else 1))
+                observed = {"witnesses": [witness], "sessionOrigins": {execution: origins}}
+                checks.validate_full_binding_origins(observed, inputs, counts)
+                for altered in (origins[:-1], (*origins, origins[0]),
+                                (*origins[:-1], {"descriptorSha256": "b" * 64})):
+                    with self.subTest(provider=provider, missing=missing, count=len(altered)):
+                        with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                            checks.validate_full_binding_origins(
+                                {**observed, "sessionOrigins": {execution: altered}}, inputs, counts)
+
     def test_full_artifact_binding_scope_requires_all_real_controls_and_observed_reopen(self):
         factory = getattr(checks, "full_artifact_binding_scenarios", None)
         self.assertTrue(callable(factory), "Full bindings require actual controls, not declarations alone.")
@@ -4258,6 +4280,9 @@ class SdkDiagnosticTests(unittest.TestCase):
                         for point in ("ReadOpened", "ReconciliationVerified", "DeleteRemoved"))
         expected.update(prefix + "Observed_admitted_open_rechecks_actual_quarantine_before_result_handoff"
                         + f'(provider: "{provider}")' for provider in ("local", "object"))
+        expected.update(prefix + "Observed_validation_first_quarantine_survives_actual_restoration_and_reopen"
+                        + f'(provider: "{provider}", missing: {missing})'
+                        for provider in ("local", "object") for missing in ("False", "True"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"

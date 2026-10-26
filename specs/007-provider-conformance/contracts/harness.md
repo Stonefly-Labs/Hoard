@@ -1582,6 +1582,17 @@ runtime SDK/archive images. QC-03 remains open. Pairing run40295489832 was
 canceled before jobs, not admitted; replacement deletion run40297863544 awaits
 independent observation.
 
+The next artifact172 increment retains all four validation-first missing/
+truncated parameters and Local compatible-reopen assertions through awaited
+typed overloads. Fresh packages pass 328 consumers. Four actual/original pairs
+pass; an SDK-only incarnation assertion mutant gives four named failures per
+family with matching SDK/archive images. Safe-logger replay validates all
+172 witnesses/178 origins, six reopen edges, exact counts and role/image/
+archive correspondence. Missing, extra or foreign validation origins reject;
+Object has no borrowed durable restart. Exact `e39b2ce`/run40293145453 admits
+earlier frozen argument maps on Linux: three jobs/341 native foundations pass
+without skips. Pairing/newer artifact scopes remain unadmitted natively.
+
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or
 ownership consumers. Reduced/foreign scopes reject before launch; routing

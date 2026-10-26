@@ -13,6 +13,57 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local", false)]
+    [InlineData("local", true)]
+    [InlineData("object", false)]
+    [InlineData("object", true)]
+    public async Task Observed_validation_first_quarantine_survives_actual_restoration_and_reopen(
+        string provider, bool missing)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        IArtifactConformanceSession current = await ConformanceObservedArtifactSession.OpenAsync(
+            Binding(provider), context, default);
+        var origins = new List<ConformanceSessionOrigin>
+        {
+            Assert.IsType<ConformanceObservedArtifactSession>(current).CaptureOrigin()
+        };
+        try
+        {
+            async ValueTask Damage(ArtifactStamp stamp, CancellationToken token)
+            {
+                if (missing) { await current.Faults.RemovePayloadAsync(stamp, token); }
+                else
+                {
+                    await current.Faults.ArmAsync(ConformanceFault.PayloadDamage, token);
+                    try
+                    {
+                        await current.Faults.DamagePayloadAsync(stamp, truncate: true, token);
+                        await current.Faults.WaitForBoundaryAsync(ConformanceFault.PayloadDamage, token);
+                    }
+                    finally { await current.Faults.ReleaseAsync(ConformanceFault.PayloadDamage, default); }
+                }
+            }
+            await ArtifactEvidenceAssertions.ValidationFirstCorruptionAsync(
+                current.Store, current.Validator, current.Authority, current.Identity,
+                Damage, current.Faults.ReplacePayloadAsync, default, null,
+                provider == "local" ? async token =>
+                {
+                    current = await current.ReopenAsync(token);
+                    var reopened = Assert.IsType<ConformanceObservedArtifactSession>(current).CaptureOrigin();
+                    Assert.Equal(origins[0].SessionId, reopened.ParentSessionId);
+                    origins.Add(reopened);
+                    return current.Store;
+                } : null);
+            foreach (var origin in origins) { ConformanceSessionOriginOutput.Write(output, origin); }
+        }
+        finally { await current.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local")]
     [InlineData("object")]
     public async Task Observed_admitted_open_rechecks_actual_quarantine_before_result_handoff(string provider)

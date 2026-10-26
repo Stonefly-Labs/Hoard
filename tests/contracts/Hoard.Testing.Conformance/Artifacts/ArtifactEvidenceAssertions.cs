@@ -47,10 +47,21 @@ public static class ArtifactEvidenceAssertions
         await QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen);
     }
 
-    public static async Task ValidationFirstCorruptionAsync(
+    public static Task ValidationFirstCorruptionAsync(
         IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
         ArtifactStoreIdentity identity, Action damage, Action<byte[]> restore,
-        CancellationToken cancellationToken, ArtifactQuarantineReopen? reopen)
+        CancellationToken cancellationToken, ArtifactQuarantineReopen? reopen) =>
+        ValidationFirstCorruptionAsync(store, validator, authority, identity,
+            (_, _) => { damage(); return ValueTask.CompletedTask; },
+            (_, bytes, _) => { restore(bytes.ToArray()); return ValueTask.CompletedTask; },
+            cancellationToken, reopen);
+
+    public static async Task ValidationFirstCorruptionAsync(
+        IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
+        ArtifactStoreIdentity identity, Func<ArtifactStamp, CancellationToken, ValueTask> damage,
+        Func<ArtifactStamp, ReadOnlyMemory<byte>, CancellationToken, ValueTask> restore,
+        CancellationToken cancellationToken, ArtifactQuarantineReopen? reopen,
+        Func<CancellationToken, ValueTask<IArtifactStore>>? reopenAsync = null)
     {
         var bytes = "validation must quarantine this incarnation"u8.ToArray();
         using var source = new ShortSource(bytes);
@@ -61,16 +72,22 @@ public static class ArtifactEvidenceAssertions
         await using (var protection = Success(await authority.AcquireAsync(request, new(), cancellationToken)))
         {
             Assert.Equal(receipt.Stamp, Success(await validator.ValidateAsync(proof, protection, new(), cancellationToken)));
-            damage();
+            await damage(receipt.Stamp, cancellationToken);
             Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(
                 await validator.ValidateAsync(proof, protection, new(), cancellationToken)).Code);
             Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
                 await store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken)).Code);
-            restore(bytes);
+            await restore(receipt.Stamp, bytes, cancellationToken);
             Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(
                 await validator.ValidateAsync(proof, protection, new(), cancellationToken)).Code);
         }
-        await QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen);
+        if (reopenAsync is not null)
+        {
+            Assert.Null(reopen);
+            await QuarantineAfterCompatibleReopenAsync(store, receipt, bytes, cancellationToken,
+                async token => store = await reopenAsync(token));
+        }
+        else { await QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen); }
         var deletion = Success(await store.ReserveDeleteAsync(new(receipt.Stamp), new(), cancellationToken));
         Success(await store.DeleteAsync(deletion, new(), cancellationToken));
         using var replacementSource = new ShortSource(bytes);
