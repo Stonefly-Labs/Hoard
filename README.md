@@ -2588,12 +2588,18 @@ argument maps on Linux: three jobs/341 native foundations pass without skips.
 QC-02 pairing and the newer artifact scopes still await native observation;
 full qualification and the implementation stage remain unfinished.
 
-The current artifact221 scope additionally checks release-observer cancellation
-for both providers/access modes. Already delivered scopes remain delivered, as
-required by existing supervisor semantics; the exact ordinary callback error
-still faults settlement after actual restoration. No supervisor behavior changes.
-Fresh fourteen-package replay passes 377 consumers; safe-logger replay checks
-221 witnesses/231 origins and ten reopen edges. Full qualification remains open.
+The current artifact226 scope also preserves Local failed-quarantine persistence
+through real decisions-directory permission denial, failed stop, permission
+restoration, stop retry and compatible reopen. It shares the existing pending
+access owner; Object rejects this Local-only control before allocating an owner.
+Original synchronous assertions remain supported. Ordinary release errors and
+cancellation retain faulted settlement after actual mode restoration; existing
+delivered-success semantics are unchanged. Fresh fourteen-package replay passes
+382 consumers; five actual controls/one original wrapper pass. An SDK-only
+readiness mutant gives one named failure per family with matching SDK/archive
+images. Safe-logger replay checks 226 witnesses/237 origins and eleven reopen
+edges. Scoped review finds no actionable issues, not final T081. Full QC-03 and
+feature acceptance remain unfinished.
 
 The preceding artifact217 scope preserves all four original validation-access
 cases through real Unix permission denial and payload-directory removal.

@@ -1593,14 +1593,20 @@ Object has no borrowed durable restart. Exact `e39b2ce`/run40293145453 admits
 earlier frozen argument maps on Linux: three jobs/341 native foundations pass
 without skips. Pairing/newer artifact scopes remain unadmitted natively.
 
-The current artifact221 scope includes four release-cancellation controls.
-Already delivered access scopes survive subsequent observer cancellation under
-the unchanged supervisor rule. Closure restores their actual payload access,
-then preserves the exact ordinary exception in faulted settlement and reports
-`CleanupIncomplete`. Fresh fourteen-package replay passes 377 consumers;
-safe-logger replay checks 221 witnesses/231 origins and ten reopen edges.
-Initial private expectations that cancellation discard delivered success were
-incorrect, not proven ownership bugs. Native/full qualification remains open.
+The current artifact226 scope adds Local record-write permission ownership through
+the same pending access registration, capturing the native scope before release
+callbacks and restoring the exact original directory mode before closure. Object
+rejects this Local-only control before registration. Original failed-quarantine
+assertions retain failed stop, payload/mode restoration, retry and same-lifetime
+compatible initialization before owned replacement. Pending application joins
+shutdown; ordinary release errors/cancellation retain exact faulted settlement.
+Already delivered success survives, with no supervisor changes. Initial private
+discarded-success expectations were invalid, not proven bugs. Fresh fourteen-
+package replay passes 382 consumers; five actual controls/one original wrapper
+pass. An SDK-only readiness mutant gives one named failure per family with matching
+SDK/archive images. Safe-logger replay checks 226 witnesses/237 origins and eleven
+reopen edges. Scoped review finds no actionable issues, not final T081. Native/
+full qualification remains open.
 
 The preceding artifact217 scope owns real permission/directory access faults with
 opaque exact-stamp scopes. Pending registration precedes application; native

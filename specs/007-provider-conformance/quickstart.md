@@ -667,12 +667,16 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen argument maps
 three Linux jobs/341 native foundations pass without skips. Pairing/newer
 artifact native admission and full qualification remain outstanding.
 
-The current artifact221 scope also checks release-observer cancellation for
-both providers/access modes. Already delivered scope success survives, while
-the exact ordinary error still faults settlement after actual restoration.
-Supervisor semantics are unchanged. Fresh fourteen-package replay passes 377
-consumers; safe-logger replay checks 221 witnesses/231 origins and ten reopen
-edges. Native/full qualification remains unfinished.
+The current artifact226 scope adds real Local record-directory permission denial
+and the original failed-quarantine stop/retry/reopen sequence. The shared pending
+access owner restores actual original modes before shutdown; Object explicitly
+rejects unsupported record permissions before allocation. Ordinary release errors/
+cancellation still fault settlement after restoration, without changing delivered-
+success semantics. Fresh fourteen-package replay passes 382 consumers; five
+actual controls/one original wrapper pass. An SDK-only readiness mutant gives one
+named failure per family with matching SDK/archive images. Safe-logger replay
+checks 226 witnesses/237 origins and eleven reopen edges. Native/full qualification
+remains unfinished.
 
 The preceding artifact217 scope runs genuine payload-access faults and all four
 original validation parameters. Exact-stamp scopes hold deletion protection

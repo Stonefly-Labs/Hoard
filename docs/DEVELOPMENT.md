@@ -10406,15 +10406,22 @@ QC-02 pairing/newer artifact native confirmation and full acceptance remain open
 Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 
-The current artifact221 extension adds four release-cancellation controls.
-Existing supervisors preserve an already delivered scope rather than discarding
-it for a later observer cancellation. The exact ordinary callback exception
-remains in faulted settlement; closure restores the real payload before reporting
-`CleanupIncomplete`. No supervisor implementation changes. Fresh fourteen-package
-replay passes 377 consumers; safe-logger replay checks 221 witnesses/231 origins
-and ten reopen edges. Tooling452/19 native skips passes. Earlier private probes
-incorrectly expected cancellation to discard delivered success; they are not
-ownership-defect evidence. Native/full feature qualification remains unfinished.
+The current artifact226 extension adds genuine Local decisions-directory write
+denial through the same pending access owner, not synthetic validator failures.
+The original failed-quarantine test retains failed stop, payload restoration,
+permission restoration, stop retry and same-lifetime compatible initialization
+before owned replacement. Object rejects this unsupported control before owner
+allocation. Pending application joins shutdown; ordinary release errors and
+cancellation retain exact errors/faulted settlement after original mode
+restoration. Existing delivered-success semantics are unchanged; earlier private
+discarded-success expectations were invalid, not proven bugs. Fresh fourteen-
+package replay passes 382 consumers; five actual controls/one original wrapper
+pass. An SDK-only readiness mutant causes one named failure per family with
+matching SDK/archive images. Safe-logger replay checks 226 witnesses/237 origins
+and eleven reopen edges. Contracts152/tooling452 (19 native skips) pass. Scoped
+review finds no actionable issues, not final T081. Native/full qualification
+remains unfinished; examples, diagrams, production dependencies and infrastructure
+are unaffected.
 
 The preceding artifact217 extension owns real Unix payload permission/directory
 access faults through application, restoration and closure. Exact-stamp guards

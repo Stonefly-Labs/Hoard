@@ -245,12 +245,15 @@ correspondence; missing, extra and foreign validation origins reject. Exact
 jobs/341 native foundations passing without skips. Pairing/newer artifact native
 admission and complete QC-03 remain outstanding.
 
-The current artifact221 scope adds four release-cancellation rows. Existing
-supervisors preserve already delivered success; closure still restores genuine
-payload access and retains the exact ordinary callback exception in faulted
-settlement. Fresh fourteen-package replay passes 377 consumers; safe-logger
-replay checks 221 witnesses/231 origins and ten reopen edges. Native admission
-and complete qualification remain unfinished.
+The current artifact226 scope adds five actual record-permission controls:
+Local failed-quarantine persistence, unsupported Object, pending application/
+shutdown and ordinary release error/cancellation. Genuine Local directory mode
+denial uses the same access owner. Original synchronous assertions, failed stop,
+payload/mode restoration, retry and compatible initialization/reopen remain.
+Fresh fourteen-package replay passes 382 consumers; five actual/one original
+parity cases pass. An SDK-only readiness mutant gives one named failure per family
+with matching runtime/archive SDK images. Safe-logger replay checks 226 witnesses/
+237 origins and eleven reopen edges. Native/full qualification remains unfinished.
 
 The preceding artifact217 scope adds four original validation-access parameters
 and twelve actual shutdown/deletion/release-error controls. Real Unix permission

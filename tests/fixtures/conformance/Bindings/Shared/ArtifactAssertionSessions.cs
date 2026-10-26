@@ -211,7 +211,7 @@ internal sealed class ArtifactAssertionOwnership
         {
             foreach (var session in sessions)
             {
-                await session.RestorePayloadAccessAsync().AsTask().WaitAsync(Remaining(started));
+                await session.RestoreAccessRestrictionAsync().AsTask().WaitAsync(Remaining(started));
                 var result = await session.StopAsync(Remaining(started)).WaitAsync(Remaining(started));
                 if (result is not ArtifactResult<ArtifactShutdown>.Success { Value.State: ArtifactCleanupState.Released })
                 { throw new InvalidOperationException("CleanupIncomplete"); }
@@ -256,7 +256,7 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
     private HistoryRegistration? historyFailure;
     private SynchronousHold? synchronousHold;
     private RecordWriteRegistration? recordWriteFailure;
-    private PayloadAccessRegistration? payloadAccess;
+    private AccessRegistration? accessRestriction;
     private readonly object stopGate = new();
     private Task<ArtifactResult<ArtifactShutdown>>? stopping;
 
@@ -354,25 +354,36 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
         ArtifactStamp stamp, bool unavailable, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(stamp);
+        return RestrictAccessAsync((capture, token) =>
+            RestrictProviderPayloadAccessAsync(stamp, unavailable, capture, token), cancellationToken);
+    }
+
+    public virtual ValueTask<IAsyncDisposable> RestrictRecordWritesAsync(CancellationToken cancellationToken) =>
+        throw new InvalidOperationException("FaultControl.Unsupported");
+
+    protected ValueTask<IAsyncDisposable> RestrictAccessAsync(
+        Func<Action<IAsyncDisposable>, CancellationToken, ValueTask<ArtifactResult<IAsyncDisposable>>> apply,
+        CancellationToken cancellationToken)
+    {
         cancellationToken.ThrowIfCancellationRequested();
         var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        PayloadAccessRegistration registration;
+        AccessRegistration registration;
         lock (ownership.Gate)
         {
             if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
-                || ownership.Transition is { IsCompleted: false } || payloadAccess is not null)
+                || ownership.Transition is { IsCompleted: false } || accessRestriction is not null)
             { throw new InvalidOperationException("BindingInvalid"); }
-            payloadAccess = registration = new(this, stamp, unavailable, start.Task, cancellationToken);
+            accessRestriction = registration = new(this, apply, start.Task, cancellationToken);
         }
         start.SetResult();
         return registration.OpenAsync(cancellationToken);
     }
 
-    public ValueTask RestorePayloadAccessAsync()
+    public ValueTask RestoreAccessRestrictionAsync()
     {
         lock (ownership.Gate)
         {
-            return payloadAccess is { } current ? current.DisposeAsync() : ValueTask.CompletedTask;
+            return accessRestriction is { } current ? current.DisposeAsync() : ValueTask.CompletedTask;
         }
     }
 
@@ -654,14 +665,15 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
         }
     }
 
-    private sealed class PayloadAccessRegistration
+    private sealed class AccessRegistration
     {
         private readonly ArtifactAssertionSession session;
         private readonly Task<ArtifactResult<IAsyncDisposable>> application;
         private Task? disposal;
         private IAsyncDisposable? capturedScope;
 
-        public PayloadAccessRegistration(ArtifactAssertionSession session, ArtifactStamp stamp, bool unavailable,
+        public AccessRegistration(ArtifactAssertionSession session,
+            Func<Action<IAsyncDisposable>, CancellationToken, ValueTask<ArtifactResult<IAsyncDisposable>>> apply,
             Task start, CancellationToken cancellationToken)
         {
             this.session = session;
@@ -669,7 +681,7 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
             async Task<ArtifactResult<IAsyncDisposable>> ApplyAsync()
             {
                 await start;
-                return await session.RestrictProviderPayloadAccessAsync(stamp, unavailable, scope =>
+                return await apply(scope =>
                 {
                     lock (session.ownership.Gate)
                     {
@@ -689,7 +701,7 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
                 {
                     if (ReferenceEquals(session.ownership.Current, session) && !session.ownership.Closing
                         && session.ownership.Transition is not { IsCompleted: false }
-                        && ReferenceEquals(session.payloadAccess, this))
+                        && ReferenceEquals(session.accessRestriction, this))
                     { return new AccessScope(this); }
                 }
             }
@@ -731,11 +743,11 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
             if (scope is not null) { await scope.DisposeAsync(); }
             lock (session.ownership.Gate)
             {
-                if (ReferenceEquals(session.payloadAccess, this)) { session.payloadAccess = null; }
+                if (ReferenceEquals(session.accessRestriction, this)) { session.accessRestriction = null; }
             }
         }
 
-        private sealed class AccessScope(PayloadAccessRegistration registration) : IAsyncDisposable
+        private sealed class AccessScope(AccessRegistration registration) : IAsyncDisposable
         {
             public ValueTask DisposeAsync() => registration.DisposeAsync();
         }

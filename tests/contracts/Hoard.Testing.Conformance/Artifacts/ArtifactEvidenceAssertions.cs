@@ -9,30 +9,43 @@ public sealed record ArtifactQuarantineReopen(
 
 public static class ArtifactEvidenceAssertions
 {
-    public static async Task FailedQuarantinePersistenceAsync(
+    public static Task FailedQuarantinePersistenceAsync(
         IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
         ArtifactStoreIdentity identity, IArtifactStoreLifetime lifetime, Func<bool> ready,
         Action capturePaths, Action damage, Action requirePermissionProof, Action denyPersistence,
         Action<byte[]> restorePayload, Action restorePermissions, CancellationToken cancellationToken,
-        ArtifactQuarantineReopen? reopen)
+        ArtifactQuarantineReopen? reopen) =>
+        FailedQuarantinePersistenceAsync(store, validator, authority, identity, lifetime, ready,
+            (_, _) => { capturePaths(); damage(); return ValueTask.CompletedTask; }, requirePermissionProof,
+            _ => { denyPersistence(); return ValueTask.CompletedTask; },
+            (_, bytes, _) => { restorePayload(bytes.ToArray()); return ValueTask.CompletedTask; },
+            () => { restorePermissions(); return ValueTask.CompletedTask; }, cancellationToken, null, reopen);
+
+    public static async Task FailedQuarantinePersistenceAsync(
+        IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
+        ArtifactStoreIdentity identity, IArtifactStoreLifetime lifetime, Func<bool> ready,
+        Func<ArtifactStamp, CancellationToken, ValueTask> damage, Action requirePermissionProof,
+        Func<CancellationToken, ValueTask> denyPersistence,
+        Func<ArtifactStamp, ReadOnlyMemory<byte>, CancellationToken, ValueTask> restorePayload,
+        Func<ValueTask> restorePermissions, CancellationToken cancellationToken,
+        Func<CancellationToken, ValueTask<IArtifactStore>>? reopenAsync, ArtifactQuarantineReopen? reopen = null)
     {
         var bytes = "quarantine survives denied decision persistence"u8.ToArray();
         using var source = new ShortSource(bytes);
         var receipt = await PublishAsync(store, source, new(1024), cancellationToken);
         var proof = Assert.IsType<ArtifactOption<ArtifactCommitEvidence>.Some>(receipt.Evidence).Value;
-        capturePaths();
-        damage();
+        await damage(receipt.Stamp, cancellationToken);
         requirePermissionProof();
         try
         {
-            denyPersistence();
+            await denyPersistence(cancellationToken);
             await using var guard = Success(await authority.AcquireAsync(new(Guid.NewGuid(),
                 ArtifactProtectionOperation.Reference, identity, receipt.Stamp.Identity.Digest,
                 new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp)), new(), cancellationToken));
             var failed = Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(
                 await validator.ValidateAsync(proof, guard, new(), cancellationToken));
             Assert.Equal(ArtifactFailureCode.AccessDenied, failed.Code);
-            restorePayload(bytes);
+            await restorePayload(receipt.Stamp, bytes, cancellationToken);
             Assert.False(ready());
             Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, failed.Cleanup);
             Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
@@ -40,11 +53,16 @@ public static class ArtifactEvidenceAssertions
             Assert.IsType<ArtifactResult<ArtifactShutdown>.Failure>(
                 await lifetime.StopAsync(new(TimeSpan.FromSeconds(1)), cancellationToken));
         }
-        finally { restorePermissions(); }
+        finally { await restorePermissions(); }
         Success(await lifetime.StopAsync(new(), cancellationToken));
         Success(await lifetime.InitializeAsync(new(ArtifactInitializationMode.ReopenCompatible,
             identity, authority), new(), cancellationToken));
-        await QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen);
+        if (reopenAsync is not null)
+        {
+            Assert.Null(reopen);
+            await QuarantineAfterCompatibleReopenAsync(store, receipt, bytes, cancellationToken, reopenAsync);
+        }
+        else { await QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen); }
     }
 
     public static Task ValidationFirstCorruptionAsync(

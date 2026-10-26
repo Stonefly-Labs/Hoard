@@ -77,13 +77,41 @@ public sealed partial class LocalArtifactStore
             undelivered: access => access.DisposeAsync());
     }
 
+    public ValueTask<ArtifactResult<IAsyncDisposable>> RestrictRecordWritesForQualificationAsync(
+        Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(ownScope);
+        return ExecuteAsync<IAsyncDisposable>(ArtifactPhase.Maintenance, TimeSpan.FromSeconds(5), cancellationToken,
+            async token =>
+            {
+                await qualificationPayload.WaitAsync(token);
+                try
+                {
+                    var directory = Path.GetDirectoryName(ownership!.RecordPath("decisions", "qualification"))
+                        ?? throw new InvalidOperationException("BindingInvalid");
+                    var access = QualificationPayloadAccess.RestrictDirectoryWrites(directory);
+                    try { ownScope(access); return access; }
+                    catch { await access.DisposeAsync(); throw; }
+                }
+                finally { qualificationPayload.Release(); }
+            }, undelivered: access => access.DisposeAsync());
+    }
+
     private sealed class QualificationPayloadAccess(
         string path, string directory, bool unavailable, UnixFileMode originalMode,
-        IArtifactProtectionGuard protection) : IAsyncDisposable
+        IArtifactProtectionGuard? protection) : IAsyncDisposable
     {
         private readonly SemaphoreSlim gate = new(1, 1);
         private bool restored;
         private bool released;
+        public static QualificationPayloadAccess RestrictDirectoryWrites(string directory)
+        {
+            if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
+            var mode = File.GetUnixFileMode(directory);
+            var access = new QualificationPayloadAccess(directory, directory, false, mode, null);
+            File.SetUnixFileMode(directory, mode & ~(UnixFileMode.UserWrite | UnixFileMode.GroupWrite | UnixFileMode.OtherWrite));
+            return access;
+        }
         public static QualificationPayloadAccess Create(
             string path, bool unavailable, IArtifactProtectionGuard protection)
         {
@@ -108,7 +136,7 @@ public sealed partial class LocalArtifactStore
                     else { File.SetUnixFileMode(path, originalMode); }
                     restored = true;
                 }
-                await protection.DisposeAsync();
+                if (protection is not null) { await protection.DisposeAsync(); }
                 released = true;
             }
             finally { gate.Release(); }

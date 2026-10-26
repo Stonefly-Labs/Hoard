@@ -4185,6 +4185,9 @@ class SdkDiagnosticTests(unittest.TestCase):
             ("Observed_local_durable_reopen_preserves_retired_decisions_and_receipt_release"
              + f'(provider: "local", consumer: "{consumer}")', "local", True)
             for consumer in ("committed-decision", "durable-receipt"))
+        cases.append(
+            ('Observed_failed_quarantine_persistence_retains_actual_ownership_through_retry_and_reopen(provider: "local")',
+             "local", True))
         for name, provider, reopens in cases:
             identity = checks.FULL_ARTIFACT_CONSUMER_PREFIX + name
             binding = "fixture.artifact." + provider
@@ -4306,6 +4309,11 @@ class SdkDiagnosticTests(unittest.TestCase):
                         for consumer in ("committed-decision", "durable-receipt"))
         expected.add(prefix + 'Ordinary_record_write_callback_errors_still_fault_actual_settlement(provider: "local")')
         expected.add(prefix + 'Object_record_write_fault_rejects_without_borrowing_actual_deletion(provider: "object")')
+        expected.add(prefix + 'Observed_failed_quarantine_persistence_retains_actual_ownership_through_retry_and_reopen(provider: "local")')
+        expected.add(prefix + 'Object_record_permissions_reject_without_borrowing_payload_access(provider: "object")')
+        expected.add(prefix + 'Observed_record_permission_application_joins_actual_shutdown_before_resource_settlement(provider: "local")')
+        expected.update(prefix + "Ordinary_record_permission_release_errors_restore_actual_mode_before_faulted_settlement"
+                        + f'(provider: "local", cancellation: {cancellation})' for cancellation in ("False", "True"))
         expected.update(prefix + "Observed_validation_access_failures_preserve_actual_intact_content"
                         + f'(provider: "{provider}", unavailable: {unavailable})'
                         for provider in ("local", "object") for unavailable in ("False", "True"))

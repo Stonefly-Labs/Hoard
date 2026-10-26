@@ -13,6 +13,80 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local")]
+    public async Task Observed_failed_quarantine_persistence_retains_actual_ownership_through_retry_and_reopen(string provider)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var current = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        IAsyncDisposable? restriction = null;
+        try
+        {
+            async ValueTask Damage(ArtifactStamp stamp, CancellationToken token)
+            {
+                await current.Faults.ArmAsync(ConformanceFault.PayloadDamage, token);
+                try { await current.Faults.DamagePayloadAsync(stamp, truncate: true, token); }
+                finally { await current.Faults.ReleaseAsync(ConformanceFault.PayloadDamage, default); }
+            }
+            async ValueTask Deny(CancellationToken token)
+            {
+                restriction = await current.Faults.RestrictRecordWritesAsync(token);
+                Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<InvalidOperationException>(
+                    () => current.Faults.RestrictRecordWritesAsync(token).AsTask())).Message);
+            }
+            ValueTask RestorePermissions() =>
+                (restriction ?? throw new InvalidOperationException("BindingInvalid")).DisposeAsync();
+            async ValueTask<IArtifactStore> Reopen(CancellationToken token)
+            {
+                ConformanceSessionOriginOutput.Write(output, current.CaptureOrigin());
+                current = Assert.IsType<ConformanceObservedArtifactSession>(await current.ReopenAsync(token));
+                return current.Store;
+            }
+            await ArtifactEvidenceAssertions.FailedQuarantinePersistenceAsync(
+                current.Store, current.Validator, current.Authority, current.Identity,
+                current.Lifetime, () => current.Faults.ObserveInitialization().Ready, Damage,
+                () =>
+                {
+                    if (OperatingSystem.IsWindows())
+                    { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
+                }, Deny, (stamp, bytes, token) => current.Faults.ReplacePayloadAsync(stamp, bytes, token),
+                RestorePermissions, default, Reopen);
+            ConformanceSessionOriginOutput.Write(output, current.CaptureOrigin());
+        }
+        finally
+        {
+            try { if (restriction is not null) { await restriction.DisposeAsync(); } }
+            finally { await current.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("object")]
+    public async Task Object_record_permissions_reject_without_borrowing_payload_access(string provider)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        try
+        {
+            Assert.Equal("FaultControl.Unsupported", (await Assert.ThrowsAsync<InvalidOperationException>(
+                () => session.Faults.RestrictRecordWritesAsync(default).AsTask())).Message);
+            using var source = new ArtifactPublicationAssertions.ShortSource("unsupported record permissions leave actual payload usable"u8.ToArray());
+            var receipt = await ArtifactPublicationAssertions.PublishAsync(session.Store, source, new(1024), default);
+            await using (var access = await session.Faults.RestrictPayloadAccessAsync(receipt.Stamp, unavailable: true, default)) { }
+            Assert.Equal("unsupported record permissions leave actual payload usable"u8.ToArray(),
+                await ArtifactPublicationAssertions.ReadAsync(session.Store, receipt.Stamp, default));
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+    }
+
+    [Theory]
     [InlineData("local", false)]
     [InlineData("local", true)]
     [InlineData("object", false)]
@@ -72,7 +146,16 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         string provider, bool unavailable) =>
         await AccessReleaseErrorAsync(provider, unavailable, new OperationCanceledException("Ordinary access release cancellation"));
 
-    private async Task AccessReleaseErrorAsync(string provider, bool unavailable, Exception failure)
+    [Theory]
+    [InlineData("local", false)]
+    [InlineData("local", true)]
+    public async Task Ordinary_record_permission_release_errors_restore_actual_mode_before_faulted_settlement(
+        string provider, bool cancellation) =>
+        await AccessReleaseErrorAsync(provider, false,
+            cancellation ? new OperationCanceledException("Ordinary record access cancellation")
+                : new IOException("Ordinary record access failure"), recordWrites: true);
+
+    private async Task AccessReleaseErrorAsync(string provider, bool unavailable, Exception failure, bool recordWrites = false)
     {
         await using var resources = new RecordingDirectories(allowFailedSettlement: true);
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
@@ -81,19 +164,30 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         var bytes = "payload access restoration after a release observer exception"u8.ToArray();
         IAsyncDisposable? observation = null;
         IAsyncDisposable? access = null;
+        string? recordDirectory = null;
+        UnixFileMode? originalMode = null;
         Exception? disposalFailure = null;
         try
         {
             using var source = new ArtifactPublicationAssertions.ShortSource(bytes);
             var receipt = await ArtifactPublicationAssertions.PublishAsync(session.Store, source, new(1024), default);
+            if (recordWrites)
+            {
+                if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
+                recordDirectory = Assert.Single(Directory.GetDirectories(
+                    Assert.Single(resources.Directories).DirectoryPath, "decisions", SearchOption.AllDirectories));
+                originalMode = File.GetUnixFileMode(recordDirectory);
+            }
+            ValueTask<IAsyncDisposable> Restrict() => recordWrites
+                ? session.Faults.RestrictRecordWritesAsync(default)
+                : session.Faults.RestrictPayloadAccessAsync(receipt.Stamp, unavailable, default);
             observation = await session.Faults.ObserveBoundaryAsync(ArtifactObservationPoint.OperationReleased,
                 () => ValueTask.FromException(failure), default);
             if (failure is OperationCanceledException)
-            { access = await session.Faults.RestrictPayloadAccessAsync(receipt.Stamp, unavailable, default); }
+            { access = await Restrict(); }
             else
             {
-                Assert.Same(failure, await Record.ExceptionAsync(
-                    () => session.Faults.RestrictPayloadAccessAsync(receipt.Stamp, unavailable, default).AsTask()));
+                Assert.Same(failure, await Record.ExceptionAsync(() => Restrict().AsTask()));
             }
             await observation.DisposeAsync();
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
@@ -113,6 +207,11 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         var payload = Assert.Single(Directory.GetFiles(root, "*", SearchOption.AllDirectories),
             path => new FileInfo(path).Length == bytes.Length);
         Assert.Equal(bytes, await File.ReadAllBytesAsync(payload));
+        if (recordDirectory is not null)
+        {
+            if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
+            Assert.Equal(originalMode, File.GetUnixFileMode(recordDirectory));
+        }
         Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
     }
 
@@ -122,7 +221,14 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
     [InlineData("object", false)]
     [InlineData("object", true)]
     public async Task Observed_access_application_joins_actual_shutdown_before_releasing_owned_resources(
-        string provider, bool unavailable)
+        string provider, bool unavailable) => await AccessApplicationShutdownAsync(provider, unavailable);
+
+    [Theory]
+    [InlineData("local")]
+    public async Task Observed_record_permission_application_joins_actual_shutdown_before_resource_settlement(string provider) =>
+        await AccessApplicationShutdownAsync(provider, false, recordWrites: true);
+
+    private async Task AccessApplicationShutdownAsync(string provider, bool unavailable, bool recordWrites = false)
     {
         await using var resources = new RecordingDirectories();
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
@@ -136,13 +242,15 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
             using var source = new ArtifactPublicationAssertions.ShortSource("access scope remains genuine owned work"u8.ToArray());
             var receipt = await ArtifactPublicationAssertions.PublishAsync(session.Store, source, new(1024), default);
             var origin = session.CaptureOrigin();
-            observation = await session.Faults.ObserveBoundaryAsync(ArtifactObservationPoint.PayloadSelected,
+            observation = await session.Faults.ObserveBoundaryAsync(
+                recordWrites ? ArtifactObservationPoint.OperationCompleted : ArtifactObservationPoint.PayloadSelected,
                 () =>
                 {
                     entered.TrySetResult();
                     return new(released.Task.WaitAsync(context.BarrierBudget));
                 }, default);
-            var applying = session.Faults.RestrictPayloadAccessAsync(receipt.Stamp, unavailable, default).AsTask();
+            var applying = (recordWrites ? session.Faults.RestrictRecordWritesAsync(default)
+                : session.Faults.RestrictPayloadAccessAsync(receipt.Stamp, unavailable, default)).AsTask();
             await entered.Task.WaitAsync(context.ControlBudget);
             var disposing = session.DisposeAsync().AsTask();
             try

@@ -168,13 +168,18 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen metadata
 argument maps with all three Linux jobs/341 native foundations passing without
 skips. QC-02 pairing/newer artifact scopes and complete QC-03 remain unadmitted.
 
-The current artifact221 scope also preserves the existing settled-success rule
-under release-observer cancellation: a delivered access scope remains delivered,
-but the exact ordinary callback error still faults settlement after physical
-restoration. Four actual rows cover both providers/access modes without changing
-their supervisors. Fresh fourteen-package replay passes 377 consumers;
-safe-logger replay checks 221 witnesses/231 origins and ten reopen edges.
-Native/full qualification remains unfinished.
+The current artifact226 scope also owns genuine Local decisions-directory write
+denial. Original failed-quarantine assertions retain failed stop, payload/mode
+restoration, retry and same-lifetime compatible initialization before owned reopen.
+The same single pending access owner captures handles before release callbacks
+and restores modes before closure; Object rejects this Local-only control before
+allocation. Ordinary release errors/cancellation retain exact faulted settlement;
+delivered success remains delivered under unchanged supervisor semantics.
+Fresh fourteen-package replay passes 382 consumers; five actual controls/one
+original wrapper pass. An SDK-only readiness mutant gives one named failure per
+family with matching SDK/archive images. Safe-logger replay checks 226 witnesses/
+237 origins and eleven reopen edges. Scoped review finds no actionable issues,
+not final T081 or native/full qualification.
 
 The preceding artifact217 scope preserves original validation access failures with
 real Unix mode changes/directory removal, not synthetic result codes. Opaque

@@ -207,6 +207,7 @@ public interface IArtifactAssertionSession : IAsyncDisposable
     ValueTask RemovePayloadAsync(ArtifactStamp stamp, CancellationToken cancellationToken);
     ValueTask<IAsyncDisposable> RestrictPayloadAccessAsync(
         ArtifactStamp stamp, bool unavailable, CancellationToken cancellationToken);
+    ValueTask<IAsyncDisposable> RestrictRecordWritesAsync(CancellationToken cancellationToken);
     /// <summary>Joins current provider workers; this does not close authority admission or release owned roots.</summary>
     ValueTask AwaitSettlementAsync(CancellationToken cancellationToken);
     ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken cancellationToken);
@@ -258,6 +259,7 @@ public interface IArtifactConformanceFaultDriver : IConformanceFaultDriver
     ValueTask RemovePayloadAsync(ArtifactStamp stamp, CancellationToken cancellationToken);
     ValueTask<IAsyncDisposable> RestrictPayloadAccessAsync(
         ArtifactStamp stamp, bool unavailable, CancellationToken cancellationToken);
+    ValueTask<IAsyncDisposable> RestrictRecordWritesAsync(CancellationToken cancellationToken);
     ValueTask AwaitSettlementAsync(CancellationToken cancellationToken);
 }
 

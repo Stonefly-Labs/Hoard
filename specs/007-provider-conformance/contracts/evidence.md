@@ -353,15 +353,20 @@ passes unchanged checks. Exact `e39b2ce`/run40293145453 admits earlier frozen
 metadata argument maps with three Linux jobs/341 native foundations passing
 without skips, not QC-02 pairing/newer artifact scopes or full qualification.
 
-The current artifact221 scope adds four release-cancellation controls, preserving
-already delivered scope success under unchanged supervisor semantics. The exact
-ordinary observer exception remains in faulted settlement after physical access
-restoration. Fresh fourteen-package replay passes 377 consumers; independent
-safe-logger replay checks 221 witnesses/231 origins and ten reopen edges.
-The artifact217 parity/mutant receipt below belongs to its own source/package,
-not this later snapshot. Earlier private discarded-success expectations are
-invalid, not evidence of an ownership defect. Native/full qualification stays
-unfinished.
+The current artifact226 scope preserves Local failed-quarantine persistence with
+genuine record-directory write denial, failed stop, payload/mode restoration,
+retry and compatible initialization/reopen. The same pending access owner retains
+application/restoration; Object rejects unsupported record permissions before
+allocation. Ordinary release errors/cancellation retain exact faulted settlement
+after original mode restoration; delivered-success semantics are unchanged.
+Fresh fourteen-package replay passes 382 consumers; five actual controls/one
+original wrapper pass. An SDK-only readiness mutant gives exactly one named
+shared-assertion failure per family, other rows passing, with matching runtime/
+archive SDK images. Independent safe-logger replay checks 226 witnesses/237
+origins, eleven reopen edges and all role/image/archive ownership. Earlier
+private discarded-success expectations were invalid, not ownership-defect
+evidence. Scoped review finds no actionable issues, not final T081. Native/full
+qualification stays unfinished; prior receipts retain their own source identities.
 
 The preceding artifact217 scope preserves all four original validation-access
 parameters and twelve actual ownership controls. Permission/directory faults are

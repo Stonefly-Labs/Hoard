@@ -7556,22 +7556,30 @@ Metadata remains 92 Passed/1 Incomplete/9 NotApplicable/0 Failed, report
 `Incomplete`, qualification false. Pairing/newer artifact scopes remain pending;
 no tasks, reviewer-owned checklists or stage markers advance here.
 
-The current artifact221 increment adds four release-cancellation controls for
-the new access scopes. Existing supervisor semantics intentionally return already
-delivered success despite subsequent cancellation; no supervisor change is made.
-Closure still restores actual payload access and retains the exact ordinary
-observer exception in faulted settlement with `CleanupIncomplete`. Initial
-private probes expecting discarded success were invalid expectations, not
-evidence of an ownership defect.
+The current artifact226 increment also extracts Local failed-quarantine
+persistence through genuine decisions-directory mode denial. The generalized
+single pending access registration captures native handles before release
+callbacks and restores the exact original mode before closure. Object rejects
+this Local-only control before registration; no private Object record boundary
+is invented. Original synchronous signatures/assertions remain. Failed stop,
+payload restoration, permission restoration, stop retry and same-lifetime
+compatible initialization precede owned compatible replacement. Five actual
+rows cover the original sequence, unsupported Object, pending application/
+shutdown and ordinary release error/cancellation with exact mode restoration.
+Previously added release-cancellation rows preserve already delivered success;
+no supervisor changes are made. Initial private discarded-success expectations
+were invalid, not evidence of an ownership defect.
 
-Fresh fourteen-package replay passes 377 consumers/zero skips at source
-`196f3c8eaca008123683dd087340252920fec1112fb7c7f31223b01b860ab7ce`,
+Fresh fourteen-package replay passes 382 consumers/zero skips at source
+`b02901f93057a02c5d46f41866e4d633d128374674963ac7c120fb82a8b953a6`,
 SDK archive
-`b592b23eb05bc4b99648e6b0652417298104cab673e73f7ff50d51c61f4f7c11`.
-Safe-logger replay checks 221 witnesses/231 origins and ten reopen edges;
-tooling452/19 native skips passes. Native admission, QC-03 and stage tasks remain
-unfinished. The preceding artifact217 assertion parity receipt retains its own
-source/package identity, not this later snapshot.
+`6fbd8109b26ef60b6f33aff33926afcac7be37e799b6692e62ea0771f2d8c6b4`.
+Five actual controls/one original wrapper pass; an SDK-only readiness assertion
+mutant gives one named failure per family with matching runtime/archive SDK
+images. Safe-logger replay checks 226 witnesses/237 origins and eleven reopen
+edges. Contracts152/tooling452 (19 native skips) pass; scoped review finds no
+actionable issues, not final T081. Native admission, QC-03 and stage tasks remain
+unfinished. Prior parity receipts retain their own source/package identities.
 
 The preceding artifact217 increment extracts all four original validation-access
 parameters through an awaited overload retaining the synchronous wrapper and
