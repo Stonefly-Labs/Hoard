@@ -2,6 +2,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Hoard.Abstractions.Metadata;
+using Hoard.Fixtures.Conformance.Bindings.Shared;
 using Hoard.Fixtures.Metadata.Sqlite;
 using Hoard.Testing.Conformance.Bindings;
 using Hoard.Testing.Conformance.Metadata;
@@ -10,6 +11,10 @@ namespace Hoard.Fixtures.Conformance.Bindings.Sqlite;
 
 internal sealed partial class SqliteMetadataFaults
 {
+    private readonly MetadataCorruptionOwnership corruptions = new(context.ControlBudget);
+    public void BeginCorruptionClosure() => corruptions.BeginClosure();
+    public ValueTask RestoreCorruptionsAsync(CancellationToken cancellationToken) => corruptions.RestoreAsync(cancellationToken);
+
     public ValueTask<MetadataContinuation> CorruptContinuationAsync(
         MetadataContinuation continuation, MetadataContinuationComponent component,
         MetadataContinuationCorruption corruption, CancellationToken cancellationToken)
@@ -44,7 +49,6 @@ internal sealed partial class SqliteMetadataFaults
         cancellationToken.ThrowIfCancellationRequested();
         if (request is MetadataCorruptionRequest.Record record)
         {
-            var original = Value(await Store.ObserveRecordPayloadForTestAsync(record.Selector, cancellationToken));
             var shape = record.Corruption switch
             {
                 MetadataRecordCorruption.NullLabel => "null-label",
@@ -59,16 +63,16 @@ internal sealed partial class SqliteMetadataFaults
                 MetadataRecordCorruption.LeaseResource => "lease-resource",
                 _ => throw new ArgumentException("BindingInvalid")
             };
-            var damaged = SqlitePayloadDamage.Record(original, shape, MetadataReconciliationAssertions.CorruptionCanary);
-            cancellationToken.ThrowIfCancellationRequested();
-            Value(await Store.CompareExchangeRecordPayloadForTestAsync(record.Selector, original, damaged));
-            return new CorruptionScope<string>(original,
+            return await corruptions.ApplyAsync(request,
                 async () => Value(await Store.ObserveRecordPayloadForTestAsync(record.Selector, default)),
+                original => SqlitePayloadDamage.Record(original, shape, MetadataReconciliationAssertions.CorruptionCanary),
+                async (original, damaged, applied) =>
+                { Value(await Store.CompareExchangeRecordPayloadForTestAsync(record.Selector, original, damaged, applied)); },
                 async value => { Value(await Store.ReplaceRecordPayloadForTestAsync(record.Selector, value)); },
-                value => Fingerprint(Encoding.UTF8.GetBytes(value)));
+                value => Fingerprint(Encoding.UTF8.GetBytes(value)),
+                () => OnBoundaryAsync("corruption.captured"), AwaitSettlementAsync, cancellationToken);
         }
         if (request is not MetadataCorruptionRequest.Operation operation) { throw new ArgumentException("BindingInvalid"); }
-        var image = Value(await Store.ObserveOperationImageForTestAsync(operation.Ticket, cancellationToken));
         var operationShape = operation.Corruption switch
         {
             MetadataOperationCorruption.NullTarget => "null-target",
@@ -87,14 +91,15 @@ internal sealed partial class SqliteMetadataFaults
             MetadataOperationCorruption.InvalidState => "fractional-state",
             _ => throw new ArgumentException("BindingInvalid")
         };
-        var damagedImage = SqlitePayloadDamage.Operation(image, operationShape,
-            operation.ForeignTicket, MetadataReconciliationAssertions.CorruptionCanary);
-        cancellationToken.ThrowIfCancellationRequested();
-        Value(await Store.CompareExchangeOperationImageForTestAsync(operation.Ticket, image, damagedImage));
-        return new CorruptionScope<SqliteOperationTestImage>(image,
+        return await corruptions.ApplyAsync(request,
             async () => Value(await Store.ObserveOperationImageForTestAsync(operation.Ticket, default)),
+            image => SqlitePayloadDamage.Operation(image, operationShape,
+                operation.ForeignTicket, MetadataReconciliationAssertions.CorruptionCanary),
+            async (image, damaged, applied) =>
+            { Value(await Store.CompareExchangeOperationImageForTestAsync(operation.Ticket, image, damaged, applied)); },
             async value => { Value(await Store.ReplaceOperationImageForTestAsync(operation.Ticket, value)); },
-            value => Fingerprint(JsonSerializer.SerializeToUtf8Bytes(value)));
+            value => Fingerprint(JsonSerializer.SerializeToUtf8Bytes(value)),
+            () => OnBoundaryAsync("corruption.captured"), AwaitSettlementAsync, cancellationToken);
     }
 
     private static T Value<T>(MetadataResult<T> result) where T : notnull => result switch
@@ -107,29 +112,4 @@ internal sealed partial class SqliteMetadataFaults
     private static ConformanceStateFingerprint Fingerprint(byte[] bytes) =>
         new(Convert.ToHexStringLower(SHA256.HashData(bytes)));
 
-    private sealed class CorruptionScope<T>(T original, Func<ValueTask<T>> read,
-        Func<T, ValueTask> restore, Func<T, ConformanceStateFingerprint> fingerprint) : IMetadataCorruptionScope
-    {
-        private readonly SemaphoreSlim restoring = new(1, 1);
-        private bool restored;
-        public ConformanceStateFingerprint Original { get; } = fingerprint(original);
-
-        public async ValueTask<ConformanceStateFingerprint> ObserveAsync(CancellationToken cancellationToken)
-        {
-            cancellationToken.ThrowIfCancellationRequested();
-            return fingerprint(await read());
-        }
-
-        public async ValueTask DisposeAsync()
-        {
-            if (!await restoring.WaitAsync(TimeSpan.FromSeconds(5))) { throw new InvalidOperationException("BindingInvalid"); }
-            try
-            {
-                if (restored) { return; }
-                await restore(original);
-                restored = true;
-            }
-            finally { restoring.Release(); }
-        }
-    }
 }

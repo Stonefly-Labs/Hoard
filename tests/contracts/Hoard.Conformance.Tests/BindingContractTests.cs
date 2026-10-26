@@ -480,6 +480,7 @@ public sealed class BindingContractTests
         public ValueTask ReleaseAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
         public ValueTask<ConformanceFaultObservation> ObserveAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
         public ValueTask<IMetadataCorruptionScope> CorruptAsync(MetadataCorruptionRequest r, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask RestoreCorruptionsAsync(CancellationToken t) => throw new NotSupportedException();
         public MetadataFaultCounters Counters => throw new NotSupportedException();
         public ValueTask<ConformanceStateFingerprint> ObserveStateAsync(CancellationToken t) => throw new NotSupportedException();
         public ValueTask<MetadataContinuation> CorruptContinuationAsync(MetadataContinuation c,

@@ -6,6 +6,174 @@ namespace Hoard.Testing.Conformance.Metadata;
 
 public static class MetadataCorruptionAssertions
 {
+    public static async Task ScopeOwnershipAsync(
+        IMetadataStore store,
+        Func<MetadataCorruptionRequest, CancellationToken, ValueTask<IMetadataCorruptionScope>> corruptAsync,
+        Func<Task> reopenAsync, Func<Task> disposeAsync, bool operation, CancellationToken cancellationToken)
+    {
+        var registry = Registry();
+        var receipt = await Commit(store, cancellationToken,
+            new MetadataMutation.PutRegistry(registry, new ExpectedRevision.Absent()));
+        var baseline = MetadataEncoding.Encode(await Read<MetadataRegistry>(store, registry.Selector, cancellationToken));
+        var foreign = await Ticket(store, cancellationToken);
+        MetadataCorruptionRequest request = operation
+            ? new MetadataCorruptionRequest.Operation(receipt.Ticket, MetadataOperationCorruption.MissingReceipt, foreign)
+            : new MetadataCorruptionRequest.Record(registry.Selector, MetadataRecordCorruption.NullLabel);
+        MetadataCorruptionRequest overlapping = operation
+            ? new MetadataCorruptionRequest.Operation(receipt.Ticket, MetadataOperationCorruption.InvalidState, foreign)
+            : new MetadataCorruptionRequest.Record(registry.Selector, MetadataRecordCorruption.MalformedEncoding);
+        await using var scope = await corruptAsync(request, cancellationToken);
+        var damaged = await scope.ObserveAsync(cancellationToken);
+        Assert.NotEqual(scope.Original, damaged);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => corruptAsync(overlapping, cancellationToken).AsTask());
+        await Assert.ThrowsAsync<InvalidOperationException>(reopenAsync);
+        await Assert.ThrowsAsync<InvalidOperationException>(disposeAsync);
+        Assert.Equal(damaged, await scope.ObserveAsync(cancellationToken));
+        await Task.WhenAll(scope.DisposeAsync().AsTask(), scope.DisposeAsync().AsTask());
+        Assert.Equal(scope.Original, await scope.ObserveAsync(cancellationToken));
+        await using var replacement = await corruptAsync(request, cancellationToken);
+        await scope.DisposeAsync();
+        Assert.Equal(damaged, await replacement.ObserveAsync(cancellationToken));
+        await Assert.ThrowsAsync<InvalidOperationException>(disposeAsync);
+        await replacement.DisposeAsync();
+        Assert.Equal<byte>(baseline, MetadataEncoding.Encode(await Read<MetadataRegistry>(store, registry.Selector, cancellationToken)));
+        Assert.Equal<byte>(MetadataEncoding.Encode(receipt), MetadataEncoding.Encode(
+            Assert.IsType<MetadataResolution.Committed>(
+                Success(await store.ReconcileAsync(receipt.Ticket, new(), cancellationToken))).Receipt));
+    }
+
+    public static async Task CaptureConflictAsync(
+        IMetadataStore store, MetadataObservationControl observe,
+        Func<MetadataCorruptionRequest, CancellationToken, ValueTask<IMetadataCorruptionScope>> corruptAsync,
+        bool operation, CancellationToken cancellationToken)
+    {
+        var registry = Registry();
+        await Commit(store, cancellationToken, new MetadataMutation.PutRegistry(registry, new ExpectedRevision.Absent()));
+        registry = await Read<MetadataRegistry>(store, registry.Selector, cancellationToken);
+        var ticket = await Ticket(store, cancellationToken);
+        var foreign = await Ticket(store, cancellationToken);
+        var captured = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var observation = await observe(MetadataObservationPoint.CorruptionCaptured, () =>
+        {
+            captured.TrySetResult();
+            return new(release.Task);
+        }, cancellationToken);
+        MetadataCorruptionRequest request = operation
+            ? new MetadataCorruptionRequest.Operation(ticket, MetadataOperationCorruption.InvalidState, foreign)
+            : new MetadataCorruptionRequest.Record(registry.Selector, MetadataRecordCorruption.NullLabel);
+        var corrupting = corruptAsync(request, cancellationToken).AsTask();
+        var updated = registry with { Label = new("intervening committed registry"), Revision = new(Guid.NewGuid()) };
+        Exception? error = null;
+        try
+        {
+            await captured.Task.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+            Success(await store.CommitAsync(Batch(ticket,
+                new MetadataMutation.PutRegistry(updated, new ExpectedRevision.Match(registry.Revision))), new(), cancellationToken));
+            updated = await Read<MetadataRegistry>(store, registry.Selector, cancellationToken);
+        }
+        finally
+        {
+            release.TrySetResult();
+            error = await Record.ExceptionAsync(async () => { await using var scope = await corrupting; });
+        }
+        Assert.Equal<byte>(MetadataEncoding.Encode(updated),
+            MetadataEncoding.Encode(await Read<MetadataRegistry>(store, registry.Selector, cancellationToken)));
+        Assert.IsType<MetadataResolution.Committed>(Success(await store.ReconcileAsync(ticket, new(), cancellationToken)));
+        Assert.Equal("FaultControl.Conflict", Assert.IsType<InvalidOperationException>(error).Message);
+    }
+
+    public static async Task ClosureAdmissionAsync(
+        IMetadataStore store, MetadataObservationControl observe,
+        Func<MetadataCorruptionRequest, CancellationToken, ValueTask<IMetadataCorruptionScope>> corruptAsync,
+        Func<Task> closeAsync, CancellationToken cancellationToken)
+    {
+        var registry = Registry();
+        await Commit(store, cancellationToken, new MetadataMutation.PutRegistry(registry, new ExpectedRevision.Absent()));
+        registry = await Read<MetadataRegistry>(store, registry.Selector, cancellationToken);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var observation = await observe(MetadataObservationPoint.MutationApplied, () =>
+        {
+            entered.TrySetResult();
+            return new(release.Task);
+        }, cancellationToken);
+        var updated = registry with { Label = new("held registry"), Revision = new(Guid.NewGuid()) };
+        var committing = store.CommitAsync(Batch(await Ticket(store, cancellationToken),
+            new MetadataMutation.PutRegistry(updated, new ExpectedRevision.Match(registry.Revision))), new(), cancellationToken).AsTask();
+        Task? closing = null;
+        try
+        {
+            await entered.Task.WaitAsync(TimeSpan.FromSeconds(5), cancellationToken);
+            closing = closeAsync();
+            await Assert.ThrowsAsync<InvalidOperationException>(() => corruptAsync(
+                new MetadataCorruptionRequest.Record(registry.Selector, MetadataRecordCorruption.NullLabel),
+                cancellationToken).AsTask().WaitAsync(TimeSpan.FromSeconds(1), cancellationToken));
+        }
+        finally
+        {
+            release.TrySetResult();
+            await committing;
+            if (closing is not null) { await closing; }
+        }
+    }
+
+    public static async Task CancelledApplicationAsync(
+        IMetadataStore store, MetadataObservationControl observe,
+        Func<MetadataCorruptionRequest, CancellationToken, ValueTask<IMetadataCorruptionScope>> corruptAsync,
+        bool operation, CancellationToken cancellationToken)
+    {
+        var registry = Registry();
+        var receipt = await Commit(store, cancellationToken,
+            new MetadataMutation.PutRegistry(registry, new ExpectedRevision.Absent()));
+        var baseline = MetadataEncoding.Encode(await Read<MetadataRegistry>(store, registry.Selector, cancellationToken));
+        var foreign = await Ticket(store, cancellationToken);
+        using var cancelled = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        var calls = 0;
+        await using var observation = await observe(MetadataObservationPoint.PayloadChanged, () =>
+        {
+            if (Interlocked.Increment(ref calls) == 1) { cancelled.Cancel(); }
+            return ValueTask.CompletedTask;
+        }, cancellationToken);
+        MetadataCorruptionRequest request = operation
+            ? new MetadataCorruptionRequest.Operation(receipt.Ticket, MetadataOperationCorruption.MissingReceipt, foreign)
+            : new MetadataCorruptionRequest.Record(registry.Selector, MetadataRecordCorruption.NullLabel);
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => corruptAsync(request, cancelled.Token).AsTask());
+        Assert.Equal(2, calls);
+        Assert.Equal<byte>(baseline, MetadataEncoding.Encode(await Read<MetadataRegistry>(store, registry.Selector, cancellationToken)));
+        Assert.IsType<MetadataResolution.Committed>(Success(await store.ReconcileAsync(receipt.Ticket, new(), cancellationToken)));
+        await using var replacement = await corruptAsync(request, cancellationToken);
+    }
+
+    public static async Task FailedRestorationAsync(
+        IMetadataStore store, MetadataObservationControl observe,
+        Func<MetadataCorruptionRequest, CancellationToken, ValueTask<IMetadataCorruptionScope>> corruptAsync,
+        Func<CancellationToken, ValueTask> restoreAsync, Func<Task> disposeAsync,
+        bool operation, CancellationToken cancellationToken)
+    {
+        var registry = Registry();
+        var receipt = await Commit(store, cancellationToken,
+            new MetadataMutation.PutRegistry(registry, new ExpectedRevision.Absent()));
+        var baseline = MetadataEncoding.Encode(await Read<MetadataRegistry>(store, registry.Selector, cancellationToken));
+        var foreign = await Ticket(store, cancellationToken);
+        var calls = 0;
+        await using var observation = await observe(MetadataObservationPoint.PayloadChanged, () =>
+        {
+            if (Interlocked.Increment(ref calls) <= 2)
+            { throw new InvalidOperationException("Synthetic payload observation failure."); }
+            return ValueTask.CompletedTask;
+        }, cancellationToken);
+        MetadataCorruptionRequest request = operation
+            ? new MetadataCorruptionRequest.Operation(receipt.Ticket, MetadataOperationCorruption.MissingReceipt, foreign)
+            : new MetadataCorruptionRequest.Record(registry.Selector, MetadataRecordCorruption.NullLabel);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => corruptAsync(request, cancellationToken).AsTask());
+        await Assert.ThrowsAsync<InvalidOperationException>(disposeAsync);
+        await restoreAsync(cancellationToken);
+        Assert.Equal(3, calls);
+        Assert.Equal<byte>(baseline, MetadataEncoding.Encode(await Read<MetadataRegistry>(store, registry.Selector, cancellationToken)));
+        Assert.IsType<MetadataResolution.Committed>(Success(await store.ReconcileAsync(receipt.Ticket, new(), cancellationToken)));
+    }
+
     public static async Task AbsenceAndCorruptGroupsAsync(
         IMetadataStore store,
         Func<MetadataSelector, CancellationToken, ValueTask<MetadataResult<MetadataId>>> corruptRecordAsync,

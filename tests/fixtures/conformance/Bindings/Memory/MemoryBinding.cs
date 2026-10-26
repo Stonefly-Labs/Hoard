@@ -67,7 +67,7 @@ public sealed class MemoryBinding : IMetadataConformanceBinding
 
         private bool IsClosing()
         {
-            lock (gate) { return settlement is not null; }
+            lock (gate) { return settlement is not null || faults.CorruptionsClosing; }
         }
 
         public async ValueTask<IMetadataConformanceSession> ReopenAsync(CancellationToken cancellationToken)
@@ -77,6 +77,7 @@ public sealed class MemoryBinding : IMetadataConformanceBinding
             try
             {
                 if (reopened) { throw new InvalidOperationException("BindingInvalid"); }
+                faults.BeginCorruptionClosure();
                 if (reopenImage is null)
                 {
                     await faults.AwaitSettlementAsync(cancellationToken);
@@ -100,6 +101,7 @@ public sealed class MemoryBinding : IMetadataConformanceBinding
             {
                 if (disposal is null || disposal.IsFaulted || disposal.IsCanceled)
                 {
+                    faults.BeginCorruptionClosure();
                     var disposing = store.DisposeAsync().AsTask();
                     settlement ??= store.ObserveWorkSettlementForTest();
                     cleanup = context.Resources.ReleaseAsync(resource, settlement, CancellationToken.None).AsTask();

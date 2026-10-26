@@ -10088,6 +10088,44 @@ boundary and finds remaining metadata corruption ownership/CAS and artifact
 payload/progress gaps. These are implementation work, not waived acceptance
 criteria or a final T081 review. Tasks/checklists remain unchanged.
 
+### Actual metadata corruption ownership and closure
+
+The interim metadata findings are repaired with one provider-neutral,
+source-linked ownership helper, not shared storage mechanisms. Each adapter
+registers a record or exact epoch/operation target before capture and keeps it
+owned through application/restoration. Closure admission and target admission
+share one gate. Scope disposal serializes restoration, checks the original
+fingerprint and removes only its own owner. Both adapters use their existing
+compare-exchange primitives and applied callbacks: a stale capture releases
+without restoring over a newer commit. Cancellation after mutation restores
+with an uncanceled control path. A restoration failure retains its owner for
+explicit `RestoreCorruptionsAsync`; still-applying work rejects that recovery.
+Typed `CorruptionCaptured` and `PayloadChanged` observations remain adapter-side.
+Fractional-state damage now supports a reserved operation without requiring a
+committed receipt; the capture race commits that same operation before the
+compare-exchange attempt.
+
+The four original record/operation ownership regressions first fail at the
+shared assertion through freshly packed actual bindings. Twenty final rows
+cover scope overlap/concurrent restoration, record/operation capture conflicts,
+cancel-after-mutation, failed-restoration recovery and reopen/disposal admission
+while real candidate work is held. The closed metadata scope grows from 132 to
+152, requiring 172 typed origins/1,032 role-image/archive correspondences.
+A fresh fourteen-package replay passes all 210 selected Consumer rows without
+skips. Its first green attempt fails the two reserved-operation capture cases
+before the missing primitive is repaired; that failed workspace is retained.
+
+For each provider, all six record/closure rows and all six original wrappers
+pass with identical SDK bytes. Changing only the SDK replacement-ownership
+assertion gives each family exactly one named `ScopeOwnershipAsync` failure/
+five passes; Consumer/wrapper sources remain unchanged. Tooling passes 444
+tests with 19 native skips; SDK contracts pass 133 without skips. Changed-source
+whitespace and Git whitespace checks pass. These are local results, not a new
+native/category admission. Artifact payload/progress controls, complete
+extraction and later stages remain unfinished; no checklist/task marker advances.
+Examples, deployment instructions and diagrams are unaffected by these
+test-only controls; no product API or infrastructure is changed.
+
 ### Native source-sealing and shared-consumer admission history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

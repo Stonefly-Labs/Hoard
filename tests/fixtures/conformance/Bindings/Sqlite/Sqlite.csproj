@@ -7,6 +7,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="../Shared/FixturePublicationAuthority.cs" Link="FixturePublicationAuthority.cs" />
+    <Compile Include="../Shared/MetadataCorruptionOwnership.cs" Link="MetadataCorruptionOwnership.cs" />
     <PackageReference Include="Hoard.Testing.Conformance" />
     <PackageReference Include="Hoard.Fixtures.Metadata.Sqlite" />
   </ItemGroup>

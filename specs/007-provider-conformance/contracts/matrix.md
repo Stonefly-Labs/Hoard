@@ -52,7 +52,7 @@ Runtime source witnesses/completion/proofs are sealed only after child
 settlement and rechecking their captured bytes; unsealed, changed or live-child
 transport cannot substitute for the required readonly originals.
 
-Metadata additionally executes all 132 exact F-07 common-consumer rows in a
+Metadata additionally executes all 152 exact F-07 common-consumer rows in a
 fresh qualification-input private source scope covering both actual bindings.
 Their original `full-metadata-binding` context, exact origin counts and typed
 image/descriptor/reopen correspondence are independently reconstructed with
@@ -63,6 +63,13 @@ map. These rows are not public QC-02 witnesses or replacements for frozen MP/con
 parity. QC-02 remains `Incomplete`, the 128-witness bound is unchanged, and
 fresh Linux admission of this control is pending. The older MP-47 marker
 Consumer retains its distinct purpose.
+
+Twenty corruption convergence rows extend, rather than replace, the earlier
+132 identities. Both bindings cover record/operation overlap, capture conflicts,
+cancel-after-mutation and retained restoration recovery; held-candidate closure
+covers both reopen and disposal. The scope requires 172 typed origins, including
+the two additional actual reopen edges. Local original-wrapper/shared-assertion
+parity does not establish full QC-02 or fresh native admission.
 
 The existing metadata `admission` and artifact `PublicationBoundary` Consumer
 rows additionally require every mandatory logical hook omission to reject

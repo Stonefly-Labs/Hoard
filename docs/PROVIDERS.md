@@ -15,6 +15,17 @@ certification. Its artifact test-only fault drivers now distinguish explicit
 only the exact registered injected exception is expected; other exceptions
 continue to fault ownership settlement.
 
+Metadata test-only corruption controls now retain per-record or exact
+epoch/operation ownership through application and verified restoration. Scope
+overlap and reopen/disposal reject while a target is owned; once closure is
+admitted, later corruption rejects before touching the store. Both adapters use
+their own compare-exchange primitives. `CorruptionCaptured` and `PayloadChanged`
+are typed observation points, not provider strings in shared assertions.
+Cancellation after a mutation restores before releasing the target.
+`RestoreCorruptionsAsync` explicitly retries failed restoration, while an
+applying owner still rejects recovery and closure. No private database image
+type enters the SDK; Memory gains no durability.
+
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run

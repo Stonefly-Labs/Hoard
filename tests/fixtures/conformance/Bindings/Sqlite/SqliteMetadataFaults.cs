@@ -51,6 +51,8 @@ internal sealed partial class SqliteMetadataFaults(
             MetadataObservationPoint.BeforeCommitDecision => "M0",
             MetadataObservationPoint.AfterCommitDecision => "M1",
             MetadataObservationPoint.MutationApplied => "mutation.applied",
+            MetadataObservationPoint.CorruptionCaptured => "corruption.captured",
+            MetadataObservationPoint.PayloadChanged => "sqlite.persisted.changed",
             MetadataObservationPoint.ReadItem => "read.item",
             MetadataObservationPoint.BeforeReconciliationDecision => "reconcile.before_decision",
             MetadataObservationPoint.BeforeSchemaUpgrade => "U0",

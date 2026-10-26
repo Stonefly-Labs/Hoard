@@ -2426,6 +2426,21 @@ The older missing-exclusion catalog attack rejected during SDK initialization,
 not a named assertion. The updated structurally valid unauthorized-durability
 claim now produces four actual catalog assertion failures.
 
+The metadata ownership/CAS findings are now repaired locally. Both actual
+bindings own each record or epoch/operation target through application and exact
+restoration, reject overlapping scopes and closure, and fence later corruption
+once closure is admitted. Memory now uses its real compare-exchange controls;
+conflicted captures never restore stale bytes over an intervening commit.
+Canceled applications restore before releasing ownership; failed restoration
+retains an explicitly recoverable owner. Twenty new actual-binding rows extend
+the closed metadata scope to 152; fresh packages pass all 210 selected
+metadata/artifact Consumer rows. Each provider's six-row record/closure family
+and original wrappers pass with identical SDK bytes; an isolated SDK assertion
+mutation produces the same one named failure/five passes in all four families.
+These are local repairs and assertion parity, not native admission or complete
+QC-02/QC-03. Artifact payload/progress extraction and the remaining stage tasks
+are still unfinished.
+
 Exact `58a9495`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
 passes all three Linux jobs: 331 native foundations without skips and

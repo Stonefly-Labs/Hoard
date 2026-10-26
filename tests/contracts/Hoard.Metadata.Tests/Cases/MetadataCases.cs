@@ -184,6 +184,13 @@ internal static class MetadataCases
                 MetadataObservationPoint.BeforeCommitDecision => "M0",
                 MetadataObservationPoint.AfterCommitDecision => "M1",
                 MetadataObservationPoint.MutationApplied => "mutation.applied",
+                MetadataObservationPoint.CorruptionCaptured => "corruption.captured",
+                MetadataObservationPoint.PayloadChanged => fixture.Provider switch
+                {
+                    "memory" => "memory.persisted.changed",
+                    "sqlite" => "sqlite.persisted.changed",
+                    _ => throw new InvalidOperationException("Unknown metadata fixture provider.")
+                },
                 MetadataObservationPoint.ReadItem => "read.item",
                 MetadataObservationPoint.BeforeReconciliationDecision => "reconcile.before_decision",
                 _ => throw new ArgumentOutOfRangeException(nameof(point))

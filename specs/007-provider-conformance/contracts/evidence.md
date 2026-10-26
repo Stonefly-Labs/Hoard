@@ -103,7 +103,7 @@ be admitted or silently copied into replacement authority.
 
 The metadata qualification-input batch also executes a distinct fresh F-07
 package-only common Consumer as private source transport. Its immutable
-132-row selection, both binding identities and exact origin counts are not
+152-row selection, both binding identities and exact origin counts are not
 caller-provided. Session contexts stay `full-metadata-binding`, not QC-02.
 Independent admission reconstructs the complete six-image/package manifest
 and original readonly runtime transport with independent typed role assignments,
@@ -115,11 +115,19 @@ The Consumer and frozen metadata wrappers must use identical SDK image bytes
 from the same admitted SDK package, and the wrapper SDK must be pinned in
 the original native command input map. Matching package labels alone cannot
 substitute for this byte-level correspondence.
-The retained graph is separate from the old MP-47 marker Consumer. These 132
+The retained graph is separate from the old MP-47 marker Consumer. These 152
 rows are private source evidence, not public case witnesses: the 128-witness
 bound is unchanged. QC-02 remains incomplete pending full extraction/parity
 and composition, and local modeled rejection checks do not claim native
 admission of this new control.
+
+The twenty added corruption convergence rows preserve the original 132
+identities and extend the required origin count to 172. Their typed controls
+must retain exact-target ownership through restoration, reject closure/late
+admission, protect an intervening committed image on CAS conflict, restore
+canceled applications and explicitly recover failed restoration. Two actual
+reopen rows add parent edges; neither a successful local package replay nor a
+shared-assertion mutation pair substitutes for fresh native source admission.
 
 Within the existing metadata `admission` and artifact `PublicationBoundary`
 Consumer rows, every mandatory logical hook omission must reject through

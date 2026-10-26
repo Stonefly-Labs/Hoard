@@ -12,6 +12,99 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("memory", false, "capture")]
+    [InlineData("memory", true, "capture")]
+    [InlineData("memory", false, "cancel")]
+    [InlineData("memory", true, "cancel")]
+    [InlineData("memory", false, "restore")]
+    [InlineData("memory", true, "restore")]
+    [InlineData("sqlite", false, "capture")]
+    [InlineData("sqlite", true, "capture")]
+    [InlineData("sqlite", false, "cancel")]
+    [InlineData("sqlite", true, "cancel")]
+    [InlineData("sqlite", false, "restore")]
+    [InlineData("sqlite", true, "restore")]
+    public async Task Observed_corruption_application_preserves_actual_commits_and_recoverable_ownership(
+        string provider, bool operation, string consumer)
+    {
+        await using var resources = new SqliteBindingTests.RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-metadata-binding",
+            new MetadataConformanceClock(new(1_800_000_000_000)), resources, new ConformanceEvidenceBuffer());
+        await using var session = await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default);
+        Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Success>(
+            await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        var origin = session.CaptureOrigin();
+        await (consumer switch
+        {
+            "capture" => MetadataCorruptionAssertions.CaptureConflictAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, session.Faults.CorruptAsync, operation, default),
+            "cancel" => MetadataCorruptionAssertions.CancelledApplicationAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, session.Faults.CorruptAsync, operation, default),
+            "restore" => MetadataCorruptionAssertions.FailedRestorationAsync(
+                session.Store, session.Faults.ObserveBoundaryAsync, session.Faults.CorruptAsync,
+                session.Faults.RestoreCorruptionsAsync, () => session.DisposeAsync().AsTask(), operation, default),
+            _ => throw new ArgumentException("BindingInvalid")
+        });
+        ConformanceSessionOriginOutput.Write(output, origin);
+    }
+
+    [Theory]
+    [InlineData("memory", false)]
+    [InlineData("memory", true)]
+    [InlineData("sqlite", false)]
+    [InlineData("sqlite", true)]
+    public async Task Observed_corruption_closure_fences_later_scopes_while_actual_work_is_held(
+        string provider, bool reopen)
+    {
+        await using var resources = new SqliteBindingTests.RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-metadata-binding",
+            new MetadataConformanceClock(new(1_800_000_000_000)), resources, new ConformanceEvidenceBuffer());
+        var original = await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default);
+        IMetadataConformanceSession current = original;
+        try
+        {
+            Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Success>(
+                await original.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+            var origin = original.CaptureOrigin();
+            await MetadataCorruptionAssertions.ClosureAdmissionAsync(
+                original.Store, original.Faults.ObserveBoundaryAsync, original.Faults.CorruptAsync,
+                async () =>
+                {
+                    if (reopen) { current = await original.ReopenAsync(default); }
+                    else { await original.DisposeAsync(); }
+                }, default);
+            ConformanceSessionOriginOutput.Write(output, origin);
+            if (reopen)
+            {
+                var reopened = Assert.IsType<ConformanceObservedMetadataSession>(current).CaptureOrigin();
+                Assert.Equal(origin.SessionId, reopened.ParentSessionId);
+                ConformanceSessionOriginOutput.Write(output, reopened);
+            }
+        }
+        finally { await current.DisposeAsync(); }
+    }
+
+    [Theory]
+    [InlineData("memory", false)]
+    [InlineData("memory", true)]
+    [InlineData("sqlite", false)]
+    [InlineData("sqlite", true)]
+    public async Task Observed_corruption_scopes_preserve_actual_target_and_closure_ownership(
+        string provider, bool operation)
+    {
+        await using var resources = new SqliteBindingTests.RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-metadata-binding",
+            new MetadataConformanceClock(new(1_800_000_000_000)), resources, new ConformanceEvidenceBuffer());
+        await using var session = await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default);
+        Assert.IsType<MetadataResult<MetadataSchemaAdmission>.Success>(
+            await session.Schema.PrepareAsync(new MetadataSchemaRequest.CreateIfEmpty(), new(), default));
+        await MetadataCorruptionAssertions.ScopeOwnershipAsync(session.Store, session.Faults.CorruptAsync,
+            async () => { await using var unexpected = await session.ReopenAsync(default); },
+            () => session.DisposeAsync().AsTask(), operation, default);
+        ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+    }
+
+    [Theory]
     [InlineData("memory", MetadataContinuationCorruption.Null)]
     [InlineData("memory", MetadataContinuationCorruption.Omitted)]
     [InlineData("memory", MetadataContinuationCorruption.WrongType)]

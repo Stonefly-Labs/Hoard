@@ -81,6 +81,19 @@ def metadata_common_consumer_origin_counts():
             "CacheAuthorization", "AggregateAuthorization", "AggregateStart", "AggregateEnd", "LeaseResource")})
     epoch = prefix + "Observed_continuations_reject_foreign_actual_store_epochs"
     identities.update({f'{epoch}(provider: "{provider}")': 2 for provider in ("memory", "sqlite")})
+    ownership = prefix + "Observed_corruption_scopes_preserve_actual_target_and_closure_ownership"
+    identities.update({
+        f'{ownership}(provider: "{provider}", operation: {operation})': 1
+        for provider in ("memory", "sqlite") for operation in ("False", "True")})
+    application = prefix + "Observed_corruption_application_preserves_actual_commits_and_recoverable_ownership"
+    identities.update({
+        f'{application}(provider: "{provider}", operation: {operation}, consumer: "{consumer}")': 1
+        for provider in ("memory", "sqlite") for operation in ("False", "True")
+        for consumer in ("capture", "cancel", "restore")})
+    closure = prefix + "Observed_corruption_closure_fences_later_scopes_while_actual_work_is_held"
+    identities.update({
+        f'{closure}(provider: "{provider}", reopen: {reopen})': 2 if reopen == "True" else 1
+        for provider in ("memory", "sqlite") for reopen in ("False", "True")})
     return MappingProxyType(identities)
 
 

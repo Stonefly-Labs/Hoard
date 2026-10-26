@@ -4004,7 +4004,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             consumer_images = {entry["path"]: entry["sha256"] for entry in self.manifest["assemblies"]}
             selected = catalog.hook_admission_tests(profile) if hooks else catalog.metadata_common_consumer_tests()
             counts = ({identity: 1 for identity in selected} if hooks else catalog.metadata_common_consumer_origin_counts())
-            self.assertEqual(len(selected), 2 if hooks else 132)
+            self.assertEqual(len(selected), 2 if hooks else 152)
             self.assertEqual({binding for binding, _ in selected.values()},
                              {"memory", "sqlite"} if profile == "metadata" else {"local", "object"})
             transport = self.category_transport(None, selections=selected)
@@ -4099,7 +4099,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
             admitted = admit()
             self.assertEqual(set(admitted["sourceProofs"]), set(originals))
-            self.assertEqual(len(witnesses), 2 if hooks else 132)
+            self.assertEqual(len(witnesses), 2 if hooks else 152)
             self.assertEqual(set(admitted["controls"]),
                              {"hook-admission-sdk-consumer", *catalog.obligation_controls(5)} if hooks
                              else {"shared-metadata-sdk-consumer"})

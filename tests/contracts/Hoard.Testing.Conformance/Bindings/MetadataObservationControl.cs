@@ -3,7 +3,7 @@ namespace Hoard.Testing.Conformance.Bindings;
 public enum MetadataObservationPoint
 {
     BeforeCommitDecision, AfterCommitDecision, MutationApplied, ReadItem, BeforeReconciliationDecision,
-    BeforeSchemaUpgrade, SchemaCandidatePrepared
+    BeforeSchemaUpgrade, SchemaCandidatePrepared, CorruptionCaptured, PayloadChanged
 }
 
 public delegate ValueTask<IAsyncDisposable> MetadataObservationControl(

@@ -3925,6 +3925,19 @@ class SdkDiagnosticTests(unittest.TestCase):
         epoch = ("Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
                  "Observed_continuations_reject_foreign_actual_store_epochs")
         expected.update(f'{epoch}(provider: "{provider}")' for provider in ("memory", "sqlite"))
+        ownership = ("Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
+                     "Observed_corruption_scopes_preserve_actual_target_and_closure_ownership")
+        expected.update(f'{ownership}(provider: "{provider}", operation: {operation})'
+                        for provider in ("memory", "sqlite") for operation in ("False", "True"))
+        application = ("Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
+                       "Observed_corruption_application_preserves_actual_commits_and_recoverable_ownership")
+        expected.update(f'{application}(provider: "{provider}", operation: {operation}, consumer: "{consumer}")'
+                        for provider in ("memory", "sqlite") for operation in ("False", "True")
+                        for consumer in ("capture", "cancel", "restore"))
+        closure = ("Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
+                   "Observed_corruption_closure_fences_later_scopes_while_actual_work_is_held")
+        expected.update(f'{closure}(provider: "{provider}", reopen: {reopen})'
+                        for provider in ("memory", "sqlite") for reopen in ("False", "True"))
         scenario, = checks.full_metadata_binding_scenarios()
         self.assertEqual(scenario, ("full-metadata-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"

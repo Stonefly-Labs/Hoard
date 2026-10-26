@@ -546,6 +546,12 @@ cases. The next native request is 215 foundations and 95 scopes/942 observations
 not yet admitted. Schema run `40158238921` at `9399c3c` passed all three jobs,
 215 foundations without skips and 95 scopes/876 observations with every
 prerequisite; it predates controls/cursor increments, not full qualification.
+The later corruption-control extension requires 152 metadata rows/172 origins/
+1,032 role-image/archive matches. It adds twenty actual-binding record/operation
+and closure regressions without replacing earlier identities. A fresh local
+package replay passes 210 selected Consumer rows; per-provider six-row
+actual/original assertion parity includes an SDK-only named failure/repair.
+These diagnostics do not establish new native or complete category admission.
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

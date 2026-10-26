@@ -7167,6 +7167,35 @@ approval; no task/checklist marker advances. README/DEVELOPMENT, provider and
 harness/evidence/matrix guidance are updated; production API/deployment/examples/
 diagrams are unaffected by this test-only contract extension.
 
+### Actual metadata corruption ownership repair
+
+Both actual metadata adapters now use the same source-linked target/lifecycle
+ledger while retaining independent provider capture, compare-exchange and
+restoration. Record selectors and exact operation epoch/IDs identify owners,
+independent of corruption shape. A single admission gate prevents scope overlap
+and closure/application races. Applied callbacks distinguish actual mutation
+from CAS conflict, so stale capture cannot trigger stale restoration.
+Restoration joins real work, verifies the original fingerprint and releases
+only the exact owner. Failed restoration remains recoverable through the typed
+`RestoreCorruptionsAsync`; an applying owner rejects recovery/closure.
+`CorruptionCaptured` and `PayloadChanged` bridge only adapter-owned boundaries.
+Reserved operation state corruption no longer requires a committed receipt.
+
+Four fresh-package scope-ownership rows first fail at the shared assertion.
+The complete twenty-row repair covers both record/operation kinds plus held
+candidate closure, extending the closed metadata control from 132 to 152
+identities/172 required origins/1,032 role-image/archive correspondences.
+The first green attempt fails two reserved-operation capture rows before their
+primitive repair; the retained fresh second attempt passes all 210 selected
+Consumer rows without skips. Six actual record/closure rows per provider and
+the same six original wrappers pass with identical SDK bytes; an SDK-only
+replacement-ownership assertion mutation yields exactly one named
+`ScopeOwnershipAsync` failure/five passes in each of the four families.
+Tooling passes 444 with 19 native skips, SDK contracts 133 with none, and
+changed-source whitespace/Git checks pass. No native admission, complete
+QC-02/QC-03 or final T081 review is implied. Artifact payload/progress and
+remaining stage work continue; tasks/checklists remain unchanged.
+
 ### Exact native admission of earlier repaired source controls history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

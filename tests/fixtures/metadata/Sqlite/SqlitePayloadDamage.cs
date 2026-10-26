@@ -29,6 +29,7 @@ public static class SqlitePayloadDamage
     public static SqliteOperationTestImage Operation(
         SqliteOperationTestImage original, string shape, MetadataOperationTicket foreign, string canary)
     {
+        if (shape == "fractional-state") { return original with { State = 1.5 }; }
         var receipt = Object(original.Receipt ?? throw new ArgumentException("BindingInvalid"));
         var damaged = original;
         switch (shape)
@@ -48,7 +49,6 @@ public static class SqlitePayloadDamage
             case "text-fingerprint": damaged = damaged with { FingerprintHex = null, FingerprintText = new string('x', 32) }; break;
             case "reserved-receipt": damaged = damaged with { State = 0 }; break;
             case "abandoned-receipt": damaged = damaged with { State = 2 }; break;
-            case "fractional-state": damaged = damaged with { State = 1.5 }; break;
             case "malformed" or "oversized-payload" or "missing-receipt": break;
             default: throw new ArgumentException("BindingInvalid");
         }

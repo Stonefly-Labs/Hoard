@@ -9,6 +9,7 @@ public static class MemoryPayloadDamage
     public static MemoryOperationTestImage Operation(
         MemoryOperationTestImage original, string shape, MetadataOperationTicket foreign, string canary)
     {
+        if (shape == "fractional-state") { return original with { State = 1.5 }; }
         var payload = Object(original.Receipt ?? throw new ArgumentException("BindingInvalid"));
         var damaged = original;
         switch (shape)
@@ -28,7 +29,6 @@ public static class MemoryPayloadDamage
             case "invalid-fingerprint": damaged = damaged with { Fingerprint = new string('z', 64) }; break;
             case "reserved-receipt": damaged = damaged with { State = 0 }; break;
             case "abandoned-receipt": damaged = damaged with { State = 2 }; break;
-            case "fractional-state": damaged = damaged with { State = 1.5 }; break;
             case "malformed" or "oversized-payload" or "missing-receipt": break;
             default: throw new ArgumentException("BindingInvalid");
         }

@@ -1444,6 +1444,14 @@ correspondences. Fresh preparation/replay pass 311 artifact, 235 Consumer and
 95 scopes/876 exact observations and every prerequisite. It does not verify
 the later controls/cursor increments or establish complete qualification.
 
+The later corruption convergence extension preserves those 132 identities and
+requires 152 rows/172 origins (156 creates/16 reopens), with 1,032 role/image/
+archive correspondences. Twenty actual rows cover record/operation ownership,
+capture conflicts, cancel-after-mutation, retained restoration recovery and
+held-candidate reopen/disposal admission. The original wrappers use the same
+SDK assertions through typed capture/payload-change controls. Local package and
+assertion-mutation parity do not establish complete extraction/native admission.
+
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or
 ownership consumers. Reduced/foreign scopes reject before launch; routing

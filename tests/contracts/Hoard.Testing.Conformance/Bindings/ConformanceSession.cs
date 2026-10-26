@@ -98,6 +98,7 @@ public interface IMetadataConformanceFaultDriver : IConformanceFaultDriver
         MetadataObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken);
     ValueTask<IMetadataCorruptionScope> CorruptAsync(
         MetadataCorruptionRequest request, CancellationToken cancellationToken);
+    ValueTask RestoreCorruptionsAsync(CancellationToken cancellationToken);
     ValueTask<MetadataResult<MetadataReadSnapshot>> ObserveIndependentSnapshotAsync(
         MetadataReadGroup request, CancellationToken cancellationToken);
     ValueTask<IAsyncDisposable> HoldWriterAsync(CancellationToken cancellationToken);

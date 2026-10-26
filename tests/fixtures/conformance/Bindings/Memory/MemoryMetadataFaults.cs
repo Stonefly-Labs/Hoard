@@ -51,6 +51,8 @@ internal sealed partial class MemoryMetadataFaults(
             MetadataObservationPoint.BeforeCommitDecision => "M0",
             MetadataObservationPoint.AfterCommitDecision => "M1",
             MetadataObservationPoint.MutationApplied => "mutation.applied",
+            MetadataObservationPoint.CorruptionCaptured => "corruption.captured",
+            MetadataObservationPoint.PayloadChanged => "memory.persisted.changed",
             MetadataObservationPoint.ReadItem => "read.item",
             MetadataObservationPoint.BeforeReconciliationDecision => "reconcile.before_decision",
             MetadataObservationPoint.BeforeSchemaUpgrade or MetadataObservationPoint.SchemaCandidatePrepared => "memory.upgrade.before_decision",

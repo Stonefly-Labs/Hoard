@@ -78,6 +78,7 @@ public sealed class SqliteBinding : IMetadataConformanceBinding
             {
                 if (ownership.Closing || !ReferenceEquals(ownership.Current, this))
                 { throw new InvalidOperationException("BindingInvalid"); }
+                faults.BeginCorruptionClosure();
                 Volatile.Write(ref closing, 1);
                 await CloseStore().WaitAsync(ownership.Context.ControlBudget, cancellationToken);
                 await faults.DisposeControlsAsync();
@@ -99,6 +100,7 @@ public sealed class SqliteBinding : IMetadataConformanceBinding
                 if (!ReferenceEquals(ownership.Current, this)) { return; }
                 if (ownership.Disposal is null || ownership.Disposal.IsFaulted || ownership.Disposal.IsCanceled)
                 {
+                    faults.BeginCorruptionClosure();
                     ownership.Closing = true;
                     Volatile.Write(ref closing, 1);
                     var disposing = CloseStore();
