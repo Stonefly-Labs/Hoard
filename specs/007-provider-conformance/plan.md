@@ -6838,6 +6838,33 @@ All four public reports remain `Incomplete`; no first-failure cause is
 established. This does not admit the newer QC-04 source path.
 Exact `426511a`/run40246023608 is now executing that replay.
 
+### Fresh metadata common-consumer native source transport
+
+Qualification-input metadata batches now execute a distinct fresh F-07
+package-only shared Consumer, not the older F-05 marker Consumer retained for
+MP-47. The shared immutable catalog selects all 132 exact parameter identities,
+both actual bindings and their per-row origin counts. A closed private scope
+preserves the C# `full-metadata-binding` session context and captures the six
+Consumer/SDK/provider/binding images in the original native command input map.
+
+Independent reconstruction admits only the complete expected manifest and
+original readonly logger witnesses/proofs/completion, with independently
+selected role/image assignments, actual package/descriptor correspondence,
+exact origin counts and instance/reopen consistency. Original held and readonly
+native records must agree with the current owner, immutable inputs, execution
+receipt, fixed settings/argv/cwd, successful settled exit and command/witness
+bounds. Coherently rehashed replacement commands, wrong/missing roles, sessions,
+rows and case contexts reject. The producer immediately invokes the same
+independent admission that category history uses.
+
+The graph remains private source evidence, surfaced in the metadata diagnostic
+summary as `sharedConsumerSourcesSha256`. It does not add 132 public QC-02
+witnesses or change the 128-witness bound. Full frozen-wrapper extraction/parity
+and QC-02 composition remain unfinished; QC-02 is still `Incomplete`.
+All 439 tooling checks pass with 19 native skips, plus frozen inventory,
+embedded catalog and whitespace checks. Fresh Linux control admission remains
+pending. No C# or tracked lock changes, task/checklist advances or stage finish.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

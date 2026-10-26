@@ -9730,6 +9730,40 @@ All four public reports remain `Incomplete`. The unchanged MP-46 row passes on
 retry; no timing or other cause is established. This does not admit the newer
 QC-04 path at `426511a`/run40246023608, whose native replay is in progress.
 
+### Fresh shared metadata SDK consumer source control
+
+Metadata qualification-input batches additionally execute the current F-07
+package-only Consumer under a closed private `metadata/shared-consumer` scope.
+The immutable catalog selects all 132 exact rows and expected origin counts;
+both actual bindings retain their original `full-metadata-binding` case context.
+The older F-05 metadata Consumer remains a separate MP-47 control.
+
+The launcher captures all six Consumer/SDK/provider/binding images as immutable
+command inputs. Independent source admission reconstructs the complete manifest
+and re-ingests original readonly logger witnesses, proofs and completion using
+independently selected role/image assignments. Exact per-row origin counts,
+binding descriptors, loaded packages, instance consistency and reopen lineage
+must match. The original executor-held record and readonly native record,
+execution receipt, owner, full input map, fixed settings/argv/cwd and settled
+command/witness bounds must agree; rehashing a replacement record is not authority.
+The retained graph is `proofs/qualification-metadata-shared-consumer-native-executions.json`,
+also exposed as `sharedConsumerSourcesSha256` in the metadata diagnostic summary.
+
+These 132 rows remain private source-control transport, not public category
+witnesses. The 128-witness case bound is unchanged. QC-02 stays `Incomplete`
+pending complete frozen-wrapper/common-consumer extraction and parity evidence;
+source presence or a passing marker Consumer cannot substitute.
+`python3 -m unittest discover -s tests/tooling -v` passes 439 checks with 19
+explicit native skips. The full source producer/factory regression rejects
+coherently rehashed missing origins, foreign descriptors/images, wrong case
+contexts, duplicate sessions, missing rows, relabeled manifests and replaced
+or incorrectly scoped commands/settings. Frozen inventory, embedded catalog and
+whitespace checks pass. Fresh Linux admission of this new control is pending.
+No C# or lock changes; source SDK results above remain from the prior checkpoint.
+README, plan and evidence/matrix contracts are updated. Other guides, examples
+and diagrams are unaffected: no public API, supported command, production
+dependency or deployment changes. All unchecked tasks/checklists stay unchanged.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three jobs: 291 native foundations without failures/

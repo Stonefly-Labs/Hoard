@@ -38,20 +38,23 @@ from conformance_case_catalog import (
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
     authority_integration_witnesses, catalog_admission_witnesses, category_cases, category_execution_partitions,
     category_mutation_witnesses, category_runtime_cases, category_runtime_packages, expected_cases,
+    metadata_common_consumer_origin_counts, metadata_common_consumer_tests,
     original_witness_parents, original_witness_policy,
 )
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_sources import (
-    METADATA_RECOVERY_SCENARIOS, NativeCategorySources, admit_owned_command, admit_recovery_barrier,
+    METADATA_COMMON_CONSUMER_NAMESPACE, METADATA_RECOVERY_SCENARIOS,
+    NativeCategorySources, admit_owned_command, admit_recovery_barrier,
     admit_sqlite_noncooperation, admit_transfer_measurement, admit_artifact_transfer_producer,
     admit_artifact_noncooperation, admit_original_artifact_crash, admit_original_artifact_retention,
     artifact_original_child_sources, artifact_category_transfer_namespace, authority_integration_observations,
-    category_mutation_images, category_mutation_observations,
+    category_consumer_images, category_mutation_observations,
     admit_artifact_transfer_namespace as _admit_transfer_namespace,
     artifact_source_context, artifact_source_observations, artifact_source_output_seal,
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
     metadata_inventory_arguments, metadata_inventory_context, metadata_inventory_observations,
     metadata_inventory_source_inputs, native_metadata_inventory_controls, native_artifact_transfer_source,
+    metadata_common_consumer_manifest, metadata_common_consumer_origin_inputs, native_metadata_common_consumer_control,
     native_artifact_transfer_controls,
     native_control_record, native_metadata_binary_control, native_metadata_ownership_control,
     native_metadata_package_consumer_control,
@@ -1455,41 +1458,34 @@ def full_metadata_binding_scenarios():
 
 
 def full_metadata_binding_origin_counts():
-    method = (FULL_METADATA_CONSUMER_PREFIX
-              + "Observed_factories_execute_unchanged_common_consumers_with_actual_origins")
-    identities = {
-        f'{method}(provider: "{provider}", consumer: "{consumer}")': 1
-        for provider in ("memory", "sqlite") for consumer in (
-            "capacity", "writer", "publication", "entities", "graph", "independent",
-            "atomic", "grouped", "lease-generation", "lease-fences",
-            "lease-renew", "lease-release", "lease-guard",
-            "text", "registry", "authorization", "references", "reference-aba", "telemetry",
-            "create-race", "revision-race", "reconcile-writer", "reconcile-io",
-            "reconcile-ack", "contributions", "receipts", "layout-empty", "layout-partial",
-            "bounds", "scopes", "page-kinds", "page-size", "page-datasets",
-            "time-ticket", "time-lease", "cancel", "queue", "exceptions", "ledger", "diagnostics",
-            "evidence", "publication-replay", "publication-orphan", "corrupt-groups", "corrupt-pages",
-            "admission", "invalid-budget", "incomplete-cleanup", "disposal")}
-    reopen = FULL_METADATA_CONSUMER_PREFIX + "Observed_reopen_preserves_public_state_and_fences_stale_controls"
-    identities.update({f'{reopen}(provider: "{provider}")': 2 for provider in ("memory", "sqlite")})
-    schema = FULL_METADATA_CONSUMER_PREFIX + "Observed_schema_consumers_preserve_actual_reopen_lineage"
-    identities.update({
-        f'{schema}(provider: "{provider}", consumer: "{consumer}")': count
-        for provider in ("memory", "sqlite") for consumer, count in (
-            ("upgrade", 3), ("upgrade-invalid", 2), ("upgrade-exclusive", 2), ("future-corrupt", 4))})
-    cursor = FULL_METADATA_CONSUMER_PREFIX + "Observed_continuation_corruption_preserves_actual_pages"
-    identities.update({
-        f'{cursor}(provider: "{provider}", corruption: {corruption})': 1
-        for provider in ("memory", "sqlite") for corruption in (
-            "Null", "Omitted", "WrongType", "Empty", "OddHex", "InvalidHex")})
-    dimensions = FULL_METADATA_CONSUMER_PREFIX + "Observed_query_corruption_preserves_actual_dimensions"
-    identities.update({
-        f'{dimensions}(provider: "{provider}", corruption: {corruption})': 1
-        for provider in ("memory", "sqlite") for corruption in (
-            "CacheAuthorization", "AggregateAuthorization", "AggregateStart", "AggregateEnd", "LeaseResource")})
-    epoch = FULL_METADATA_CONSUMER_PREFIX + "Observed_continuations_reject_foreign_actual_store_epochs"
-    identities.update({f'{epoch}(provider: "{provider}")': 2 for provider in ("memory", "sqlite")})
-    return identities
+    return metadata_common_consumer_origin_counts()
+
+
+def metadata_common_consumer_diagnostics(run, inputs):
+    if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    manifest = metadata_common_consumer_manifest(run, inputs, str(uuid.uuid4()))
+    assembly = run.root / manifest["assemblies"][0]["path"]
+    require_sqlite_environment(inputs, assembly, run.root)
+    write_new(run.root / manifest["runInputsPath"], evidence.canonical_bytes(inputs))
+    packages = category_runtime_packages(inputs, ("memory", "sqlite"))
+    tests = {identity: (binding, "none") for identity, (binding, _) in metadata_common_consumer_tests().items()}
+    started_ms = time.monotonic() * 1000
+    result, observed, transport, _ = _execute_runtime_transport(
+        run, inputs, assembly, manifest, tests, {
+            "category_scope": ("metadata", "shared-consumer"),
+            "metadata_packages": {package["packageId"]: package["sha256"] for package in packages.values()}},
+        origin_inputs=metadata_common_consumer_origin_inputs(run, inputs))
+    validate_observation(observed, result, tuple(tests), "None", "Passed", 0, transport["proofs"], "None")
+    validate_full_binding_origins(observed, inputs, metadata_common_consumer_origin_counts())
+    write_new(run.root / f"proofs/{METADATA_COMMON_CONSUMER_NAMESPACE}-native-executions.json",
+              evidence.canonical_bytes({
+                  "schemaVersion": 1, "qualification": False, "runId": run.run_id,
+                  "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
+                  "attemptId": manifest["attemptId"], "commandSequence": run.command_sequence,
+                  "executionRecordSha256": result.execution_record_sha256}))
+    return native_metadata_common_consumer_control(
+        run, inputs, started_ms=started_ms, ended_ms=time.monotonic() * 1000)
 
 
 def validate_full_binding_origins(ingested, inputs, counts):
@@ -2650,7 +2646,8 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
                            or tuple(runtime_options["category_scope"]) in (
                                ("artifacts", "controller"), ("artifacts", "original-integration"))
                            or runtime_options["category_scope"][1] in (
-                               "recovery-controller", "inventory-controller", "mutation-faulty", "mutation-repair")))
+                               "recovery-controller", "inventory-controller", "mutation-faulty", "mutation-repair",
+                               "shared-consumer")))
     ingest = evidence.inspect_runtime_attempt if inspect_source else evidence.ingest_runtime_attempt
     ingested = ingest(
         inputs=inputs, expected_tests=expected, **data,
@@ -2908,6 +2905,7 @@ def _category_record(run, inputs, history, scopes, code=None):
                                 ("nativeSourcesSha256", "qualification-sqlite-native-noncooperation"),
                                 ("ownershipSourcesSha256", "qualification-sqlite-ownership"),
                                 ("consumerSourcesSha256", "qualification-metadata-package-consumer"),
+                                ("sharedConsumerSourcesSha256", METADATA_COMMON_CONSUMER_NAMESPACE),
                                 ("binarySourcesSha256", "qualification-metadata-frozen-binary"),
                                 ("inventorySourcesSha256", "qualification-metadata-inventory")):
             path = f"proofs/{namespace}-native-executions.json"
@@ -3021,6 +3019,7 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
                 metadata_recovery_diagnostics(run, inputs, candidate, namespace="qualification-sqlite-recovery")
                 metadata_ownership_diagnostics(run, inputs, candidate)
                 metadata_package_consumer_diagnostics(run, inputs, candidate)
+                metadata_common_consumer_diagnostics(run, inputs)
                 metadata_binary_diagnostics(run, inputs, candidate)
                 metadata_inventory_diagnostics(run, inputs, candidate)
             else:
@@ -3151,7 +3150,7 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
                 raise evidence.ConformanceError("InputChanged")
             manifest["assemblies"].append({"id": f"binding-component-{index}", "path": path, "sha256": hashed})
     if mutation:
-        images = category_mutation_images(run, inputs)
+        images = category_consumer_images(run, inputs)
         manifest["assemblies"].extend(
             {"id": f"mutation-component-{index}", "path": path, "sha256": hashed}
             for index, (path, hashed) in enumerate(images.items()) if path != assembly_path)
@@ -3235,6 +3234,10 @@ def _category_scope_tests(category_scope):
     if not isinstance(category_scope, (tuple, list)) or len(category_scope) != 2:
         raise evidence.ConformanceError("WitnessMissing")
     profile, scope_id = category_scope
+    if scope_id == "shared-consumer":
+        if profile != "metadata":
+            raise evidence.ConformanceError("WitnessMissing")
+        return dict(metadata_common_consumer_tests())
     if scope_id == "mutation-faulty":
         return {identity: (binding, "QC-04") for identity, binding in category_mutation_witnesses(
             profile, corrected=False).items()}
@@ -3254,7 +3257,7 @@ def _category_manifest_tests(category_scope, manifest):
             or any((entry["bindingId"], entry["caseId"]) != tests[entry["testIdentity"]]
                    or entry["fullyQualifiedName"] != entry["testIdentity"].split("(")[0] for entry in expected)):
         raise evidence.ConformanceError("WitnessMissing")
-    if category_scope[1] in ("mutation-faulty", "mutation-repair") and any(
+    if category_scope[1] in ("mutation-faulty", "mutation-repair", "shared-consumer") and any(
             entry["assertionSymbol"] != (CATEGORY_MUTATION_METHODS[category_scope[0]][2]
                                         if category_scope[1] == "mutation-faulty" else None) for entry in expected):
         raise evidence.ConformanceError("WitnessMissing")
@@ -3474,9 +3477,9 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
         scope_tests = _category_manifest_tests(category_scope, manifest)
         category_scope = tuple(category_scope)
         profile, scope_id = category_scope
-        mutation = scope_id in ("mutation-faulty", "mutation-repair")
-        if (not mutation and (artifact_packages is not None or metadata_packages is not None)
-                or mutation and (metadata_packages is None if profile == "metadata" else artifact_packages is None)
+        package_consumer = scope_id in ("mutation-faulty", "mutation-repair", "shared-consumer")
+        if (not package_consumer and (artifact_packages is not None or metadata_packages is not None)
+                or package_consumer and (metadata_packages is None if profile == "metadata" else artifact_packages is None)
                 or inspection_literals != scope_id.startswith("inspection-literals-")
                 or (inspection_cases is not None) != scope_id.startswith("inspection-prepared-")
                 or (inspection_configurations is not None) != scope_id.startswith("inspection-prepared-")
@@ -3687,7 +3690,7 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             f"runtime-input-{attempt_id}.json", "runtime-owner.json", manifest["runInputsPath"],
             settings.relative_to(run.root).as_posix(), assembly.relative_to(run.root).as_posix()]
         if category_scope == ("artifacts", "original-integration") or category_scope[1] in (
-                "mutation-faulty", "mutation-repair"):
+                "mutation-faulty", "mutation-repair", "shared-consumer"):
             execution_inputs.extend(entry["path"] for entry in manifest["assemblies"]
                                     if entry["path"] != assembly.relative_to(run.root).as_posix())
         if not discovery and (inspection_literals or inspection_cases is not None):

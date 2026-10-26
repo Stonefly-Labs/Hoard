@@ -20,6 +20,7 @@ from conformance_case_catalog import (
     ORIGINAL_ARTIFACT_PROOF_SOURCES,
     ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES,
     category_execution_partitions, category_mutation_witnesses, category_runtime_cases, category_runtime_packages,
+    metadata_common_consumer_origin_counts, metadata_common_consumer_tests,
 )
 from conformance_execution import OwnedRun, no_symlinks
 
@@ -37,6 +38,8 @@ METADATA_INVENTORY_SOURCE_FILES = (
     "scripts/metadata_evidence.py", "scripts/foundation_evidence.py", "scripts/lifecycle_evidence.py",
     "tests/tooling/test_metadata_evidence.py",
 )
+
+METADATA_COMMON_CONSUMER_NAMESPACE = "qualification-metadata-shared-consumer"
 
 
 def read_bounded(path, limit):
@@ -108,12 +111,12 @@ def authority_integration_observations(run, inputs, manifest, observed):
     return observations
 
 
-def category_mutation_images(run, inputs):
+def category_consumer_images(run, inputs):
     assembly_path, assembly = _control_assembly(
         run, inputs, "/tests/fixtures/conformance/Consumer/bin/package-diagnostic/Release/net10.0/"
         "Hoard.Fixtures.Conformance.Consumer.dll")
-    selected = category_runtime_packages(inputs, category_mutation_witnesses(
-        inputs["profileId"], corrected=True).values())
+    selected = category_runtime_packages(
+        inputs, {binding for profile, binding, _, _ in CATEGORY_BINDING_SLOTS if profile == inputs["profileId"]})
     images = {assembly_path: inputs["runtimeAssemblies"][assembly_path]}
     packages = ("Hoard.Testing.Conformance",
                 *(package["packageId"] for package in selected.values()),
@@ -130,9 +133,9 @@ def category_mutation_images(run, inputs):
     return images
 
 
-def category_mutation_environment(inputs):
-    packages = category_runtime_packages(inputs, category_mutation_witnesses(
-        inputs["profileId"], corrected=True).values())
+def category_consumer_environment(inputs):
+    packages = category_runtime_packages(
+        inputs, {binding for profile, binding, _, _ in CATEGORY_BINDING_SLOTS if profile == inputs["profileId"]})
     family = "METADATA" if inputs["profileId"] == "metadata" else "ARTIFACT"
     names = {"memory": "MEMORY", "sqlite": "SQLITE", "local": "LOCAL", "object": "OBJECT"}
     return {**{f"HOARD_{family}_{names[binding]}_PACKAGE_SHA256": package["sha256"]
@@ -140,11 +143,172 @@ def category_mutation_environment(inputs):
             "HOARD_ORIGIN_RUN_ID": inputs["runId"]}
 
 
+def metadata_common_consumer_origin_inputs(run, inputs):
+    if inputs["profileId"] != "metadata":
+        raise evidence.ConformanceError("WitnessMissing")
+    images = category_consumer_images(run, inputs)
+    directory = Path(next(iter(images))).parent
+    return {
+        binding: {
+            role: ((directory / (package + ".dll")).as_posix(), package)
+            for role, package in (
+                *((role, "Hoard.Fixtures.Conformance.Bindings." + adapter)
+                  for role in ("factory", "session", "faults", "authority")),
+                *((role, "Hoard.Fixtures.Metadata." + adapter) for role in ("store", "schema")))}
+        for binding, adapter in (("memory", "Memory"), ("sqlite", "Sqlite"))}
+
+
+def metadata_common_consumer_manifest(run, inputs, attempt_id):
+    if inputs["profileId"] != "metadata" or inputs["mode"] != "qualification":
+        raise evidence.ConformanceError("WitnessMissing")
+    images = category_consumer_images(run, inputs)
+    packages = category_runtime_packages(inputs, ("memory", "sqlite"))
+    return {
+        "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "attemptId": evidence._uuid(attempt_id), "attemptSequence": 1, "purpose": "execution",
+        "inputSha256": evidence.digest(inputs),
+        "runInputsPath": f"proofs/{METADATA_COMMON_CONSUMER_NAMESPACE}-native-inputs.json",
+        "assemblies": [
+            {"id": f"consumer-component-{index}", "path": path, "sha256": hashed}
+            for index, (path, hashed) in enumerate(images.items())],
+        "packages": [{
+            "id": package["packageId"],
+            "path": f'feed/candidate/{package["packageId"]}.{package["version"]}.nupkg',
+            "sha256": package["sha256"]} for package in packages.values()],
+        "expected": [{
+            "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+            "assemblyId": "consumer-component-0", "packageId": packages[binding]["packageId"],
+            "bindingId": binding, "matrixId": "none", "assertionSymbol": None, "caseId": case_id}
+            for identity, (binding, case_id) in sorted(metadata_common_consumer_tests().items())]}
+
+
+def native_metadata_common_consumer_control(run, inputs, *, started_ms, ended_ms):
+    if type(run) is not OwnedRun:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    inputs = evidence.admit_entity("RunInputs", inputs)
+    started_ms, ended_ms = evidence._number(started_ms), evidence._number(ended_ms)
+    if (inputs["profileId"] != "metadata" or inputs["mode"] != "qualification"
+            or inputs["runId"] != run.run_id or ended_ms < started_ms):
+        raise evidence.ConformanceError("InputChanged")
+    graph_path = f"proofs/{METADATA_COMMON_CONSUMER_NAMESPACE}-native-executions.json"
+    graph_raw = _readonly(run.root / graph_path, 64 * 1024)
+    graph = evidence._runtime_json(graph_raw, {
+        "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
+        "runId": evidence._constant(run.run_id),
+        "invocationGroupId": evidence._constant(inputs["invocationGroupId"]),
+        "inputsSha256": evidence._constant(evidence.digest(inputs)),
+        "attemptId": evidence._uuid, "commandSequence": evidence._integer,
+        "executionRecordSha256": evidence.sha256,
+    }, limit=64 * 1024)
+    attempt, sequence = graph["attemptId"], graph["commandSequence"]
+    if not 0 < sequence <= run.command_sequence:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    manifest_path = f"runtime-input-{attempt}.json"
+    manifest_raw = _readonly(run.root / manifest_path, 1024 * 1024)
+    manifest = metadata_common_consumer_manifest(run, inputs, attempt)
+    owner_path = "runtime-owner.json"
+    owner_raw = _readonly(run.root / owner_path, 64 * 1024)
+    owner = {
+        "schemaVersion": 1, "runId": run.run_id, "invocationGroupId": inputs["invocationGroupId"],
+        "rootId": run.root_id, "rootPathSha256": hashlib.sha256(str(run.root).encode()).hexdigest()}
+    input_raw = _readonly(run.root / manifest["runInputsPath"], 16 * 1024 * 1024)
+    if (manifest_raw != evidence.canonical_bytes(manifest) or owner_raw != evidence.canonical_bytes(owner)
+            or input_raw != evidence.canonical_bytes(inputs)):
+        raise evidence.ConformanceError("InputChanged")
+    output = f"runtime-{attempt}"
+    lines_path, completion_path = f"{output}/witnesses.jsonl", f"{output}/completion.json"
+    lines_raw = _readonly(run.root / lines_path, 1024 * 1024)
+    identities = metadata_common_consumer_tests()
+    if len(lines_raw.splitlines()) != len(identities):
+        raise evidence.ConformanceError("ProofMismatch")
+    proofs = {}
+    for line in lines_raw.splitlines():
+        witness = evidence.load_json(line)
+        if not isinstance(witness, dict):
+            raise evidence.ConformanceError("ProofMismatch")
+        filename = f'proof-{evidence._uuid(witness.get("executionId"))}.json'
+        if filename in proofs:
+            raise evidence.ConformanceError("ProofMismatch")
+        proofs[filename] = _readonly(run.root / output / filename, 64 * 1024)
+    completion_raw = _readonly(run.root / completion_path, 64 * 1024)
+    observed = evidence.inspect_runtime_attempt(
+        inputs=inputs, manifest_data=manifest_raw, owner_data=owner_raw, witnesses_data=lines_raw,
+        proofs=proofs, completion_data=completion_raw,
+        expected_tests={identity: (binding, "none") for identity, (binding, _) in identities.items()},
+        manifest_sha256=hashlib.sha256(manifest_raw).hexdigest(), owner_sha256=hashlib.sha256(owner_raw).hexdigest(),
+        started_ms=started_ms, ended_ms=ended_ms,
+        origin_inputs=metadata_common_consumer_origin_inputs(run, inputs))["observation"]
+    witnesses = source_witnesses(inputs, manifest, observed, identities)
+    descriptors = {row["bindingId"]: row["descriptorSha256"] for row in inputs["bindings"]}
+    counts = metadata_common_consumer_origin_counts()
+    for identity, row in witnesses.items():
+        origins = observed["sessionOrigins"][row["executionId"]]
+        if (row["bindingId"] != identities[identity][0] or len(origins) != counts[identity]
+                or observed["originalObservations"][row["executionId"]]
+                or any(origin["descriptorSha256"] != descriptors[row["bindingId"]] for origin in origins)):
+            raise evidence.ConformanceError("ProofMismatch")
+    record_raw = run.read_execution_record(sequence)
+    record = evidence.load_json(record_raw)
+    fields = {"schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",
+              "exitCode", "diagnosticCode", "groupState", "scope"}
+    if not isinstance(record, dict) or set(record) != fields | {
+            "runId", "rootId", "argvSha256", "cwdSha256", "inputFiles"}:
+        raise evidence.ConformanceError("OwnershipInvalid")
+    admit_owned_command({key: record[key] for key in fields}, sequence,
+                        scope="ordinary", detail=None, exit_code=0, max_duration=180000)
+    assembly = run.root / manifest["assemblies"][0]["path"]
+    settings_path = f"stores/settings-{attempt}.runsettings"
+    settings_raw = _readonly(run.root / settings_path, 256 * 1024)
+    environment = "<EnvironmentVariables>" + "".join(
+        f"<{key}>{escape(value)}</{key}>" for key, value in category_consumer_environment(inputs).items()
+    ) + "</EnvironmentVariables>"
+    execution_path = f"proofs/category-command-{attempt}-execution.json"
+    execution_raw = _readonly(run.root / execution_path, 64 * 1024)
+    native_path = f"proofs/execution-command-{sequence:04}.json"
+    images = {row["path"]: row["sha256"] for row in manifest["assemblies"]}
+    if (run.live_children() or record["runId"] != run.run_id or record["rootId"] != run.root_id
+            or not 1 < record["childPid"] <= 2**31 - 1
+            or not started_ms <= record["startedMs"] <= record["endedMs"] <= ended_ms
+            or any(not record["startedMs"] <= row["startedMs"] <= row["endedMs"] <= record["endedMs"]
+                   for row in witnesses.values())
+            or settings_raw != runtime_settings(run.root, assembly, attempt, evidence.digest(manifest),
+                                                hashlib.sha256(owner_raw).hexdigest(), environment)
+            or record["argvSha256"] != evidence.digest(runtime_arguments(
+                assembly, run.root / settings_path, [row["testIdentity"] for row in manifest["expected"]]))
+            or record["cwdSha256"] != hashlib.sha256(str(assembly.parent.absolute()).encode()).hexdigest()
+            or record["inputFiles"] != {
+                manifest_path: hashlib.sha256(manifest_raw).hexdigest(),
+                owner_path: hashlib.sha256(owner_raw).hexdigest(),
+                manifest["runInputsPath"]: evidence.digest(inputs),
+                settings_path: hashlib.sha256(settings_raw).hexdigest(), **images}
+            or any(hashlib.sha256(_readonly(run.root / path, 16 * 1024 * 1024)).hexdigest() != hashed
+                   for path, hashed in images.items())
+            or _readonly(run.root / native_path, 64 * 1024) != record_raw
+            or hashlib.sha256(record_raw).hexdigest() != graph["executionRecordSha256"]
+            or execution_raw != evidence.canonical_bytes({
+                "schemaVersion": 1, "qualification": False, "nativeContainment": True,
+                "runId": run.run_id, "rootId": run.root_id, "invocationGroupId": inputs["invocationGroupId"],
+                "attemptId": attempt, "purpose": "execution", "commandSequence": sequence,
+                "inputsSha256": evidence.digest(inputs), "executionRecordSha256": hashlib.sha256(record_raw).hexdigest(),
+                "manifestSha256": evidence.digest(manifest),
+                "settingsSha256": hashlib.sha256(settings_raw).hexdigest()})):
+        raise evidence.ConformanceError("ProofMismatch")
+    packets = {
+        graph_path: graph_raw, manifest_path: manifest_raw, owner_path: owner_raw,
+        manifest["runInputsPath"]: input_raw, lines_path: lines_raw, completion_path: completion_raw,
+        settings_path: settings_raw, execution_path: execution_raw, native_path: record_raw,
+        **{f"{output}/{path}": raw for path, raw in proofs.items()}}
+    return MappingProxyType({
+        "controls": MappingProxyType({
+            "shared-metadata-sdk-consumer": tuple(hashlib.sha256(raw).hexdigest() for raw in packets.values())}),
+        "sourceProofs": MappingProxyType(packets)})
+
+
 def category_mutation_observations(run, inputs, manifest, observed, *, sequence, started_ms, ended_ms):
     profile = inputs["profileId"]
     corrected = category_mutation_witnesses(profile, corrected=True)
     witnesses = source_witnesses(inputs, manifest, observed, corrected)
-    images = category_mutation_images(run, inputs)
+    images = category_consumer_images(run, inputs)
     if (len(manifest["assemblies"]) != len(images)
             or {row["path"]: row["sha256"] for row in manifest["assemblies"]} != images
             or manifest["assemblies"][0]["path"] != next(iter(images))
@@ -233,7 +397,7 @@ def category_mutation_observations(run, inputs, manifest, observed, *, sequence,
     settings_path = f"stores/settings-{faulty_attempt}.runsettings"
     settings = run.root / settings_path
     environment = "<EnvironmentVariables>" + "".join(
-        f"<{key}>{escape(value)}</{key}>" for key, value in category_mutation_environment(inputs).items()
+        f"<{key}>{escape(value)}</{key}>" for key, value in category_consumer_environment(inputs).items()
     ) + "</EnvironmentVariables>"
     settings_raw = _readonly(settings, 256 * 1024)
     execution_path = f"proofs/category-command-{faulty_attempt}-execution.json"
@@ -1477,7 +1641,8 @@ class NativeCategorySources:
         collected = {"controls": {}, "sourceProofs": {}}
         for authority in (native_metadata_recovery_controls, native_metadata_noncooperation_control,
                           native_metadata_ownership_control, native_metadata_package_consumer_control,
-                          native_metadata_binary_control, native_metadata_inventory_controls):
+                          native_metadata_binary_control, native_metadata_inventory_controls,
+                          native_metadata_common_consumer_control):
             observed = authority(self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
             for key, target in collected.items():
                 if set(target) & set(observed[key]):
@@ -1630,7 +1795,7 @@ class NativeCategorySources:
                 variables[variable] = str(path)
                 configuration_hashes[path.relative_to(run.root).as_posix()] = hashed
         if mutation:
-            variables = category_mutation_environment(inputs)
+            variables = category_consumer_environment(inputs)
         elif integration:
             variables["HOARD_ORIGINAL_CONTEXT"] = base64.b64encode(evidence.canonical_bytes(expected_context)).decode()
         else:

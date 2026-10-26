@@ -2260,6 +2260,19 @@ four corrected passes and four faulty failures, each at its fixed shared
 assertion frame. This local non-native check does not admit source parents.
 No task/checklist advances.
 
+Metadata qualification-input diagnostics now execute a fresh F-07 package-only
+shared consumer, separately from the older metadata marker consumer retained
+for MP-47. Its closed private scope requires all 132 exact rows, both actual
+bindings, original `full-metadata-binding` session context and six loaded
+images. Independent reconstruction re-ingests every original readonly proof,
+checks per-row typed session origins and their image/descriptor/lineage
+correspondence, and joins the original held native command, owner, settings,
+argv/cwd, full input map and settled bounds. The source control remains private
+evidence, not 132 public QC witnesses or completed QC-02 extraction parity.
+Local tooling passes 439 checks with 19 explicit native skips; fresh Linux
+admission of this additional control remains pending. No C# or tracked lock
+changes, task/checklist advances or qualification claims.
+
 Exact `a83380c`, [run40240608803](https://github.com/Stonefly-Labs/Hoard/actions/runs/40240608803),
 independently admits the four public `Incomplete` category reports: all three
 Linux jobs pass, with 319 native foundations without skips and 135 aggregate

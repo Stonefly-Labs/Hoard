@@ -46,6 +46,51 @@ def category_mutation_witnesses(profile, *, corrected):
         for category, binding, _, _ in CATEGORY_BINDING_SLOTS if category == profile})
 
 
+def metadata_common_consumer_origin_counts():
+    prefix = "Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
+    method = prefix + "Observed_factories_execute_unchanged_common_consumers_with_actual_origins"
+    identities = {
+        f'{method}(provider: "{provider}", consumer: "{consumer}")': 1
+        for provider in ("memory", "sqlite") for consumer in (
+            "capacity", "writer", "publication", "entities", "graph", "independent",
+            "atomic", "grouped", "lease-generation", "lease-fences",
+            "lease-renew", "lease-release", "lease-guard",
+            "text", "registry", "authorization", "references", "reference-aba", "telemetry",
+            "create-race", "revision-race", "reconcile-writer", "reconcile-io",
+            "reconcile-ack", "contributions", "receipts", "layout-empty", "layout-partial",
+            "bounds", "scopes", "page-kinds", "page-size", "page-datasets",
+            "time-ticket", "time-lease", "cancel", "queue", "exceptions", "ledger", "diagnostics",
+            "evidence", "publication-replay", "publication-orphan", "corrupt-groups", "corrupt-pages",
+            "admission", "invalid-budget", "incomplete-cleanup", "disposal")}
+    reopen = prefix + "Observed_reopen_preserves_public_state_and_fences_stale_controls"
+    identities.update({f'{reopen}(provider: "{provider}")': 2 for provider in ("memory", "sqlite")})
+    schema = prefix + "Observed_schema_consumers_preserve_actual_reopen_lineage"
+    identities.update({
+        f'{schema}(provider: "{provider}", consumer: "{consumer}")': count
+        for provider in ("memory", "sqlite") for consumer, count in (
+            ("upgrade", 3), ("upgrade-invalid", 2), ("upgrade-exclusive", 2), ("future-corrupt", 4))})
+    cursor = prefix + "Observed_continuation_corruption_preserves_actual_pages"
+    identities.update({
+        f'{cursor}(provider: "{provider}", corruption: {corruption})': 1
+        for provider in ("memory", "sqlite") for corruption in (
+            "Null", "Omitted", "WrongType", "Empty", "OddHex", "InvalidHex")})
+    dimensions = prefix + "Observed_query_corruption_preserves_actual_dimensions"
+    identities.update({
+        f'{dimensions}(provider: "{provider}", corruption: {corruption})': 1
+        for provider in ("memory", "sqlite") for corruption in (
+            "CacheAuthorization", "AggregateAuthorization", "AggregateStart", "AggregateEnd", "LeaseResource")})
+    epoch = prefix + "Observed_continuations_reject_foreign_actual_store_epochs"
+    identities.update({f'{epoch}(provider: "{provider}")': 2 for provider in ("memory", "sqlite")})
+    return MappingProxyType(identities)
+
+
+def metadata_common_consumer_tests():
+    return MappingProxyType({
+        identity: (binding, "full-metadata-binding")
+        for identity in metadata_common_consumer_origin_counts() for binding in ("memory", "sqlite")
+        if f'(provider: "{binding}"' in identity})
+
+
 ORIGINAL_INSPECTION_LITERAL_WITNESSES = tuple(sorted(
     "Hoard.Architecture.Tests.MetadataBoundaryTests." + method for method in (
         "Native_only_packages_cannot_hide_managed_assets",

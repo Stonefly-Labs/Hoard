@@ -28,6 +28,53 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_shared_metadata_scope_requires_complete_actual_consumer_families_and_all_images(self):
+        tests = checks._category_scope_tests(("metadata", "shared-consumer"))
+        self.assertEqual(set(tests), set(checks.full_metadata_binding_origin_counts()))
+        self.assertEqual({binding for binding, _ in tests.values()}, {"memory", "sqlite"})
+        with self.assertRaises(checks.evidence.ConformanceError):
+            checks._category_scope_tests(("artifacts", "shared-consumer"))
+        manifest = {
+            "purpose": "execution", "attemptId": str(uuid.uuid4()), "runId": str(uuid.uuid4()),
+            "runInputsPath": "proofs/shared-consumer-inputs.json",
+            "inputSha256": "a" * 64, "expected": [{
+                "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
+                "bindingId": binding, "caseId": case_id, "assertionSymbol": None}
+                for identity, (binding, case_id) in tests.items()],
+            "assemblies": [{"path": "candidate/Consumer.dll"}, {"path": "candidate/SDK.dll"}]}
+        packages = {}
+        feed = self.directory / "feed/candidate"
+        feed.mkdir(parents=True)
+        for provider in ("Memory", "Sqlite"):
+            name = "Hoard.Fixtures.Metadata." + provider
+            archive = feed / (name + ".0.1.0.nupkg")
+            archive.write_bytes(name.encode())
+            packages[name] = checks.evidence.file_sha256(archive)
+        (self.directory / "stores").mkdir()
+        checks.write_new(self.directory / "runtime-owner.json", b"owner")
+        assembly = self.directory / "candidate/Hoard.Fixtures.Conformance.Consumer.dll"
+        run = SimpleNamespace(root=self.directory)
+        with patch.object(run, "command", create=True, side_effect=checks.evidence.ConformanceError(
+                "PrerequisiteMissing")) as command:
+            with self.assertRaisesRegex(checks.evidence.ConformanceError, "PrerequisiteMissing"):
+                checks.runtime_command(run, assembly, manifest, metadata_packages=packages,
+                                       category_scope=("metadata", "shared-consumer"))
+        self.assertTrue(command.call_args.kwargs["record_execution"])
+        self.assertTrue({"candidate/Consumer.dll", "candidate/SDK.dll"} <=
+                        set(command.call_args.kwargs["execution_inputs"]))
+        for defect in ("missing", "foreign", "category"):
+            changed = {**manifest, "attemptId": str(uuid.uuid4()),
+                       "expected": [dict(entry) for entry in manifest["expected"]]}
+            if defect == "missing":
+                changed["expected"].pop()
+            elif defect == "foreign":
+                changed["expected"][0]["testIdentity"] += ".foreign"
+            else:
+                changed["expected"][0]["caseId"] = "QC-02"
+            with self.subTest(defect=defect), self.assertRaises(checks.evidence.ConformanceError):
+                checks.runtime_command(run, assembly, changed, metadata_packages=packages,
+                                       category_scope=("metadata", "shared-consumer"))
+
     def test_qualified_mutation_launches_named_failure_before_unchanged_repair_and_records_all_images(self):
         for profile in ("metadata", "artifacts"):
             with self.subTest(profile=profile), tempfile.TemporaryDirectory(dir=self.directory) as temporary:
@@ -67,7 +114,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 result = SimpleNamespace(exit_code=0)
                 failed = SimpleNamespace(exit_code=1)
                 with patch.object(checks, "NativeCategorySources", Sources), patch.object(
-                        checks, "category_mutation_images", return_value=images), patch.object(
+                        checks, "category_consumer_images", return_value=images), patch.object(
                         checks, "require_sqlite_environment") as sqlite, patch.object(
                         checks, "_execute_runtime_transport", side_effect=(
                             (failed, {}, {"proofs": {}, "completion_data": b"{}"}, "a" * 64),
@@ -348,7 +395,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         self._assert_category_batch("artifacts", 227)
 
     def test_qualification_stall_and_recovery_are_fresh_inside_joint_attempt_before_scopes(self):
-        for failed in (None, "stall", "recovery", "ownership", "consumer", "binary", "inventory"):
+        for failed in (None, "stall", "recovery", "ownership", "consumer", "shared-consumer", "binary", "inventory"):
             root = self.directory / str(failed)
             (root / "proofs").mkdir(parents=True)
             run = SimpleNamespace(root=root)
@@ -363,10 +410,10 @@ class SdkDiagnosticTests(unittest.TestCase):
             history.finish_joint.side_effect = lambda **options: calls.append("finish")
 
             def controls(name, namespace):
-                def execute(actual_run, actual_inputs, actual_candidate, **options):
+                def execute(actual_run, actual_inputs, actual_candidate=None, **options):
                     self.assertIs(actual_run, run)
                     self.assertIs(actual_inputs, inputs)
-                    self.assertEqual(actual_candidate, candidate)
+                    self.assertEqual(actual_candidate, None if name == "shared-consumer" else candidate)
                     self.assertEqual(options, {} if namespace is None else {"namespace": namespace})
                     calls.append(name)
                     if failed == name:
@@ -386,6 +433,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                         "recovery", "qualification-sqlite-recovery")), patch.object(
                     checks, "metadata_ownership_diagnostics", side_effect=controls("ownership", None)), patch.object(
                     checks, "metadata_package_consumer_diagnostics", side_effect=controls("consumer", None)), patch.object(
+                    checks, "metadata_common_consumer_diagnostics", side_effect=controls("shared-consumer", None)), patch.object(
                     checks, "metadata_binary_diagnostics", side_effect=controls("binary", None)), patch.object(
                     checks, "metadata_inventory_diagnostics", side_effect=controls("inventory", None)), patch.object(
                     checks, "category_attempt", side_effect=scope), patch.object(
@@ -393,12 +441,14 @@ class SdkDiagnosticTests(unittest.TestCase):
                 options = {"inspection_cases": {}, "inspection_configurations": {}, "native_sources": sources}
                 if failed is None:
                     self.assertFalse(checks.category_diagnostics(run, inputs, candidate, **options)["qualification"])
-                    self.assertEqual(calls, ["begin", "stall", "recovery", "ownership", "consumer", "binary", "inventory", "scope", "finish"])
+                    self.assertEqual(calls, [
+                        "begin", "stall", "recovery", "ownership", "consumer", "shared-consumer",
+                        "binary", "inventory", "scope", "finish"])
                     history.interrupt_joint.assert_not_called()
                 else:
                     with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
                         checks.category_diagnostics(run, inputs, candidate, **options)
-                    expected = ["begin", "stall", "recovery", "ownership", "consumer", "binary", "inventory"]
+                    expected = ["begin", "stall", "recovery", "ownership", "consumer", "shared-consumer", "binary", "inventory"]
                     self.assertEqual(calls, expected[:expected.index(failed) + 1])
                     history.interrupt_joint.assert_called_once_with("ProofMismatch")
                     history.finish_joint.assert_not_called()

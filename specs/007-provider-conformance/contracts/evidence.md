@@ -96,6 +96,22 @@ requires both current corrected rows and one common source parent, never
 missing rows/parents or borrowed previous-attempt executions. Implementation
 and modeled rejection checks do not claim fresh Linux pair admission.
 
+The metadata qualification-input batch also executes a distinct fresh F-07
+package-only common Consumer as private source transport. Its immutable
+132-row selection, both binding identities and exact origin counts are not
+caller-provided. Session contexts stay `full-metadata-binding`, not QC-02.
+Independent admission reconstructs the complete six-image/package manifest
+and original readonly runtime transport with independent typed role assignments,
+descriptor/image/instance/reopen correspondence and exact per-row origin counts.
+It joins the original held command and readonly native record to the current
+owner, input closure, fixed settings/argv/cwd, successful exit and settled
+command/witness bounds; a rehashed replacement record cannot substitute.
+The retained graph is separate from the old MP-47 marker Consumer. These 132
+rows are private source evidence, not public case witnesses: the 128-witness
+bound is unchanged. QC-02 remains incomplete pending full extraction/parity
+and composition, and local modeled rejection checks do not claim native
+admission of this new control.
+
 The implemented category batch history derives each binding's entire frozen
 runtime union from the independent catalog and requires both category package
 options. The primary execution context for a shared runtime witness is its
