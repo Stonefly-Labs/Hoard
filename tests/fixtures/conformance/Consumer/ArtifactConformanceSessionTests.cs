@@ -13,6 +13,60 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local", ArtifactAdmissionProbe.Complete)]
+    [InlineData("local", ArtifactAdmissionProbe.Version)]
+    [InlineData("local", ArtifactAdmissionProbe.Publication)]
+    [InlineData("local", ArtifactAdmissionProbe.Deletion)]
+    [InlineData("local", ArtifactAdmissionProbe.Recovery)]
+    [InlineData("local", ArtifactAdmissionProbe.Fencing)]
+    [InlineData("local", ArtifactAdmissionProbe.Readers)]
+    [InlineData("local", ArtifactAdmissionProbe.Streaming)]
+    [InlineData("local", ArtifactAdmissionProbe.ForeignAuthority)]
+    [InlineData("object", ArtifactAdmissionProbe.Complete)]
+    [InlineData("object", ArtifactAdmissionProbe.Version)]
+    [InlineData("object", ArtifactAdmissionProbe.Publication)]
+    [InlineData("object", ArtifactAdmissionProbe.Deletion)]
+    [InlineData("object", ArtifactAdmissionProbe.Recovery)]
+    [InlineData("object", ArtifactAdmissionProbe.Fencing)]
+    [InlineData("object", ArtifactAdmissionProbe.Readers)]
+    [InlineData("object", ArtifactAdmissionProbe.Streaming)]
+    [InlineData("object", ArtifactAdmissionProbe.ForeignAuthority)]
+    public async Task Observed_initial_admission_preserves_actual_capabilities_and_no_io_rejection(
+        string provider, ArtifactAdmissionProbe probe)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var limits = probe == ArtifactAdmissionProbe.Complete
+            ? new ArtifactLimits(artifactBytes: 1024, stagingBytes: 2048, transferSlots: 1, waitingCalls: 0)
+            : new ArtifactLimits();
+        var session = await ConformanceObservedArtifactSession.OpenAsync(
+            Binding(provider, limits, admissionProbe: probe), context, default);
+        try
+        {
+            if (probe == ArtifactAdmissionProbe.Complete)
+            {
+                await ArtifactCapabilityAssertions.CompleteProfileAsync(
+                    session.Lifetime, session.Identity, session.Authority,
+                    () => session.Faults.ObserveInitialization().Ready, default);
+            }
+            else
+            {
+                var gap = probe == ArtifactAdmissionProbe.ForeignAuthority
+                    ? "authority" : probe.ToString().ToLowerInvariant();
+                await ArtifactCapabilityAssertions.MissingGuaranteeAsync(session.Lifetime,
+                    new(ArtifactInitializationMode.CreateEmpty, session.Identity, session.Authority), gap,
+                    () => session.Faults.ObserveInitialization().RootExists,
+                    () => session.Faults.ObserveInitialization().Ready, default);
+            }
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local", false)]
     [InlineData("local", true)]
     [InlineData("object", false)]
@@ -1124,7 +1178,8 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
     }
 
     private static IArtifactConformanceBinding Binding(string provider, ArtifactLimits? limits = null,
-        Func<ArtifactStamp, CancellationToken, ValueTask<ArtifactReferenceObservation>>? references = null)
+        Func<ArtifactStamp, CancellationToken, ValueTask<ArtifactReferenceObservation>>? references = null,
+        ArtifactAdmissionProbe admissionProbe = ArtifactAdmissionProbe.None)
     {
         var variable = provider switch
         {
@@ -1134,7 +1189,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         };
         var sha256 = Environment.GetEnvironmentVariable(variable)
             ?? throw new InvalidOperationException("PrerequisiteMissing");
-        var options = new ArtifactAssertionOptions(limits, references: references ?? ((_, _) =>
+        var options = new ArtifactAssertionOptions(admissionProbe, limits, references: references ?? ((_, _) =>
             ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
         return provider == "local" ? new LocalBinding(sha256, options: options)
             : new ObjectSemanticsBinding(sha256, options: options);

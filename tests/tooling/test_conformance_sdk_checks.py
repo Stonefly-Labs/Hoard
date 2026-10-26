@@ -4283,6 +4283,11 @@ class SdkDiagnosticTests(unittest.TestCase):
         expected.update(prefix + "Observed_validation_first_quarantine_survives_actual_restoration_and_reopen"
                         + f'(provider: "{provider}", missing: {missing})'
                         for provider in ("local", "object") for missing in ("False", "True"))
+        expected.update(prefix + "Observed_initial_admission_preserves_actual_capabilities_and_no_io_rejection"
+                        + f'(provider: "{provider}", probe: {probe})'
+                        for provider in ("local", "object") for probe in (
+                            "Complete", "Version", "Publication", "Deletion", "Recovery", "Fencing",
+                            "Readers", "Streaming", "ForeignAuthority"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"

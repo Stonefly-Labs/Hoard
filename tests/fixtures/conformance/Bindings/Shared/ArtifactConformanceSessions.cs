@@ -63,6 +63,7 @@ internal sealed class ArtifactConformanceFaults(
     public ImmutableArray<ConformanceFault> SupportedFaults =>
         ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Artifacts);
     public int WaitingAuthorityAdmissions => session.WaitingAuthorityAdmissions;
+    public ArtifactInitializationObservation ObserveInitialization() => session.ObserveInitialization();
     public IArtifactBorrowedStream BorrowedSource => Borrowed(ConformanceFault.SourceNonCooperation);
     public IArtifactBorrowedStream BorrowedDestination => Borrowed(ConformanceFault.SinkNonCooperation);
 

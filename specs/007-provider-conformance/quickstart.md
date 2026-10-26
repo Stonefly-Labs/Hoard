@@ -667,6 +667,20 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen argument maps
 three Linux jobs/341 native foundations pass without skips. Pairing/newer
 artifact native admission and full qualification remain outstanding.
 
+The current artifact190 scope adds all eighteen original admission parameters
+through genuinely uninitialized owned lifetimes. Ordinary creation remains
+initialized; closed typed probes retain original limits and change only the
+selected capability or actual foreign scope. Root/readiness observations are
+raw provider facts. Fresh fourteen-package replay passes 346 consumers; both
+eighteen-row families pass. SDK-only no-I/O/range assertion mutants produce
+sixteen/two named failures per family with matching runtime/archive images.
+Safe-logger replay validates 190 witnesses/196 origins and six reopen edges.
+Exact `f4e53b4`/run40297863544 now independently admits artifact166 and metadata
+QC-02 pairing: all three Linux jobs/343 foundations pass without skips,
+metadata 93 Passed/0 Incomplete/9 NotApplicable/0 Failed. The overall report
+remains `Incomplete`, qualification false. Artifact190 and full QC-03 remain
+unadmitted; this is not feature completion.
+
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

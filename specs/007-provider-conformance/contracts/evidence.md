@@ -353,6 +353,22 @@ passes unchanged checks. Exact `e39b2ce`/run40293145453 admits earlier frozen
 metadata argument maps with three Linux jobs/341 native foundations passing
 without skips, not QC-02 pairing/newer artifact scopes or full qualification.
 
+The current artifact190 scope adds eighteen original initial-admission
+parameters with genuine uninitialized owned stores, raw root/readiness facts,
+original default/configured limits and actual foreign-authority scope. Default
+creation remains initialized. Fresh fourteen-package replay passes 346
+consumers. Both eighteen-row families pass; SDK-only no-I/O/range assertion
+mutants produce sixteen/two named failures per family with identical
+runtime/archive SDK images. Safe-logger replay independently checks 190
+witnesses/196 origins, all six reopen edges, exact per-witness counts and
+all role/image/archive correspondence.
+
+Exact `f4e53b4`/run40297863544 now independently admits artifact166 and metadata
+QC-02 pairing: all three Linux jobs/343 native foundations pass without skips;
+metadata 93 Passed/0 Incomplete/9 NotApplicable/0 Failed. The overall report
+stays `Incomplete`, qualification false. This does not admit artifact190,
+complete QC-03 or complete the implementation stage.
+
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,

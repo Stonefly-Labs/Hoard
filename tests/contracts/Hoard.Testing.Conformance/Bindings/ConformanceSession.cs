@@ -178,6 +178,7 @@ public interface IArtifactAssertionSession : IAsyncDisposable
     IArtifactCoordinationAuthority Authority { get; }
     ArtifactStoreIdentity Identity { get; }
     bool Ready { get; }
+    ArtifactInitializationObservation ObserveInitialization();
     int WaitingAuthorityAdmissions { get; }
     /// <summary>Reopens Local compatibly; Object simulation restarts empty with a fresh epoch and authority.</summary>
     ValueTask<IArtifactAssertionSession> ReopenAsync(CancellationToken cancellationToken);
@@ -232,6 +233,7 @@ public interface IArtifactConformanceSession : IAsyncDisposable
 
 public interface IArtifactConformanceFaultDriver : IConformanceFaultDriver
 {
+    ArtifactInitializationObservation ObserveInitialization();
     int WaitingAuthorityAdmissions { get; }
     IArtifactBorrowedStream BorrowedSource { get; }
     IArtifactBorrowedStream BorrowedDestination { get; }

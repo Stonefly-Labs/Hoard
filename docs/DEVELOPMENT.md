@@ -10406,6 +10406,26 @@ QC-02 pairing/newer artifact native confirmation and full acceptance remain open
 Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 
+The current artifact190 extension preserves all eighteen original admission
+parameters with genuine uninitialized lifetimes and raw root/readiness facts.
+Default creation is unchanged; explicit typed probes preserve unrelated
+capabilities, original default/configured limits, actual foreign scope and
+owned shutdown. Fresh fourteen-package replay passes 346 selected consumers.
+Both eighteen-row actual/original families pass. SDK-only no-I/O and optional-
+range assertion mutants yield sixteen/two named failures per family, with
+matching runtime/archive SDK images. Safe-logger replay admits 190 witnesses/
+196 origins, six reopen edges and exact role/image/archive correspondence.
+Scoped architecture review finds no actionable issues, not final T081.
+Tooling452/19 native skips and source contracts152/zero skips pass.
+
+Exact `f4e53b4`/run40297863544 now independently passes all three Linux jobs,
+343 native foundations without failures/errors/skips, artifact166 source
+admission and metadata QC-02 pairing. Metadata has 93 Passed/0 Incomplete/
+9 NotApplicable/0 Failed, but the overall report remains `Incomplete`,
+qualification false. Artifact190, full QC-03 and feature acceptance remain
+unfinished. Examples, diagrams, production dependencies and infrastructure
+are unaffected by this test-only admission extension.
+
 Fresh fourteen-package replay passes 318 selected consumers. Complete
 152 shared/63 memory-original/63 SQLite-original safe-logger families pass
 without skips and contain exactly 32/16/16 distinct source-bound argument

@@ -2588,6 +2588,26 @@ argument maps on Linux: three jobs/341 native foundations pass without skips.
 QC-02 pairing and the newer artifact scopes still await native observation;
 full qualification and the implementation stage remain unfinished.
 
+The current artifact190 scope also preserves all eighteen original initial-
+admission parameters. Explicit typed probes construct genuinely uninitialized
+Local/Object stores, expose actual root/readiness observations, and retain
+owned cleanup; ordinary sessions still initialize normally. Missing guarantees
+use the original default limits, complete profiles the original configured
+limits, and foreign authority uses a genuinely different scope. Fresh fourteen-
+package replay passes 346 selected consumers. Both eighteen-row actual/original
+families pass; SDK-only no-I/O and optional-range assertion mutants produce
+sixteen and two named failures respectively in each family with identical
+runtime/archive SDK images. Safe-logger replay validates 190 witnesses/
+196 actual origins, retaining all six reopen edges.
+
+Exact `f4e53b4`/
+[run40297863544](https://github.com/Stonefly-Labs/Hoard/actions/runs/40297863544)
+now passes independent Linux admission: all three jobs and 343 native
+foundations pass without failures/errors/skips. It admits artifact166 and the
+metadata QC-02 pairing (93 Passed/0 Incomplete/9 NotApplicable/0 Failed).
+The overall report remains `Incomplete`, qualification false. Artifact190,
+complete QC-03 and the implementation stage remain unfinished.
+
 Fresh fourteen-package replay passes 318 selected consumers. The safe logger
 then passes all 152 shared/63 memory-original/63 SQLite-original witnesses,
 with exactly 32/16/16 source-bound argument calls and identical SDK/archive

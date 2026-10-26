@@ -11,6 +11,23 @@ internal enum ArtifactAssertionRestart { Compatible, FreshEpoch }
 internal sealed record ArtifactAssertionGeneration(
     ArtifactStoreIdentity Identity, ArtifactCoordinationAuthority Authority, string DirectoryPath, ArtifactLimits Limits);
 
+internal static class ArtifactAdmissionCapabilities
+{
+    public static ArtifactCapabilities Apply(ArtifactCapabilities value, ArtifactAdmissionProbe probe)
+    {
+        if (!Enum.IsDefined(probe)) { throw new ArgumentException("BindingInvalid"); }
+        return new(probe == ArtifactAdmissionProbe.Version ? 2 : value.Version,
+            value.Durability, value.Enumeration, value.Limits,
+            conditionalPublication: value.ConditionalPublication && probe != ArtifactAdmissionProbe.Publication,
+            conditionalDeletion: value.ConditionalDeletion && probe != ArtifactAdmissionProbe.Deletion,
+            stagingRecovery: value.StagingRecovery && probe != ArtifactAdmissionProbe.Recovery,
+            ownerFencing: value.OwnerFencing && probe != ArtifactAdmissionProbe.Fencing,
+            readerProtection: value.ReaderProtection && probe != ArtifactAdmissionProbe.Readers,
+            boundedStreaming: value.BoundedStreaming && probe != ArtifactAdmissionProbe.Streaming,
+            rangeReads: value.RangeReads, sha512: value.Sha512);
+    }
+}
+
 internal sealed class ArtifactAssertionOwnership
 {
     private readonly string providerId;
@@ -53,26 +70,30 @@ internal sealed class ArtifactAssertionOwnership
         ArgumentNullException.ThrowIfNull(options);
         var resource = await context.Resources.AllocateDirectoryAsync(cancellationToken);
         var ownership = new ArtifactAssertionOwnership(context, resource, providerId, restart, options, create);
-        var admitted = false;
+        var handedOff = false;
         try
         {
             var session = ownership.CreateSession(ownership.CreateGeneration("store"));
             ownership.Current = session;
-            await session.InitializeAsync(ArtifactInitializationMode.CreateEmpty, cancellationToken);
-            admitted = true;
+            if (options.AdmissionProbe == ArtifactAdmissionProbe.None)
+            { await session.InitializeAsync(ArtifactInitializationMode.CreateEmpty, cancellationToken); }
+            cancellationToken.ThrowIfCancellationRequested();
+            handedOff = true;
             return session;
         }
         finally
         {
-            if (!admitted) { await ownership.DisposeAsync(); }
+            if (!handedOff) { await ownership.DisposeAsync(); }
         }
     }
 
     private ArtifactAssertionGeneration CreateGeneration(string child)
     {
         var identity = new ArtifactStoreIdentity(providerId, instanceId, Guid.NewGuid());
+        var scope = options.AdmissionProbe == ArtifactAdmissionProbe.ForeignAuthority
+            ? new ArtifactStoreIdentity(providerId, Guid.NewGuid(), Guid.NewGuid()) : identity;
         var generation = new ArtifactAssertionGeneration(identity,
-            new(identity, Context.Clock, options.References is null ? null : QueryReferencesAsync),
+            new(scope, Context.Clock, options.References is null ? null : QueryReferencesAsync),
             Path.Combine(Resource.DirectoryPath, child), options.Limits);
         generations.Add(generation);
         return generation;
@@ -262,6 +283,17 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
                     && ownership.Transition is not { IsCompleted: false }
                     && ownership.ObserverFailures.IsEmpty && ProviderReady;
             }
+        }
+    }
+
+    public ArtifactInitializationObservation ObserveInitialization()
+    {
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false })
+            { throw new InvalidOperationException("BindingInvalid"); }
+            return new(Directory.Exists(Generation.DirectoryPath), ProviderReady);
         }
     }
 

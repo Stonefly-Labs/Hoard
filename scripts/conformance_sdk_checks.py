@@ -1510,6 +1510,11 @@ def full_artifact_binding_scenarios():
     identities.update(prefix + "Observed_validation_first_quarantine_survives_actual_restoration_and_reopen"
                       + f'(provider: "{provider}", missing: {missing})'
                       for provider in ("local", "object") for missing in ("False", "True"))
+    identities.update(prefix + "Observed_initial_admission_preserves_actual_capabilities_and_no_io_rejection"
+                      + f'(provider: "{provider}", probe: {probe})'
+                      for provider in ("local", "object") for probe in (
+                          "Complete", "Version", "Publication", "Deletion", "Recovery", "Fencing",
+                          "Readers", "Streaming", "ForeignAuthority"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 

@@ -14,16 +14,19 @@ public static class ObjectArtifactAssertionSessions
     public static ValueTask<IArtifactAssertionSession> CreateAsync(
         ConformanceRunContext context, ArtifactAssertionOptions options, CancellationToken cancellationToken) =>
         ArtifactAssertionOwnership.CreateAsync(context, "fixture.artifact.object", ArtifactAssertionRestart.FreshEpoch, options,
-            (ownership, generation) => new Session(ownership, generation), cancellationToken);
+            (ownership, generation) => new Session(ownership, generation, options.AdmissionProbe), cancellationToken);
 
     private sealed class Session : ArtifactAssertionSession
     {
         private readonly ObjectArtifactStore store;
         private readonly ObjectFaultControls controls = new();
 
-        public Session(ArtifactAssertionOwnership ownership, ArtifactAssertionGeneration generation)
-            : base(ownership, generation) =>
+        public Session(ArtifactAssertionOwnership ownership, ArtifactAssertionGeneration generation,
+            ArtifactAdmissionProbe admissionProbe) : base(ownership, generation)
+        {
+            controls.CapabilitiesForAdmission = value => ArtifactAdmissionCapabilities.Apply(value, admissionProbe);
             store = new(generation.DirectoryPath, ownership.Context.Clock, controls);
+        }
 
         public override IArtifactStore Store => store;
         public override IArtifactEvidenceValidator Validator => store;

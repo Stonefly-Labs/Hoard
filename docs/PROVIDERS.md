@@ -168,6 +168,23 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen metadata
 argument maps with all three Linux jobs/341 native foundations passing without
 skips. QC-02 pairing/newer artifact scopes and complete QC-03 remain unadmitted.
 
+The current artifact190 scope adds all eighteen original admission rows through
+genuinely uninitialized owned stores, not stopped initialized ones. Closed
+typed probes change only the selected capability or actual authority scope;
+raw root/readiness observations remain provider facts. Ordinary creation still
+initializes. Original default/configured limits and actual settlement are
+preserved. Fresh fourteen-package replay passes 346 selected consumers; both
+eighteen-row families pass, with SDK-only no-I/O/range mutants producing
+sixteen/two named failures per family and matching SDK/archive images.
+Safe-logger replay admits 190 witnesses/196 origins and all six reopen edges.
+Scoped architecture review finds no actionable issues, not final T081.
+
+Exact `f4e53b4`/run40297863544 now passes all three Linux jobs and 343 native
+foundations without failures/errors/skips. Independent admission includes
+artifact166 and metadata QC-02 pairing: 93 Passed/0 Incomplete/9 NotApplicable/
+0 Failed. The overall report is still `Incomplete`, qualification false;
+artifact190, full QC-03 and feature acceptance remain unfinished.
+
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run

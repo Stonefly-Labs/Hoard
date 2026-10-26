@@ -7556,6 +7556,40 @@ Metadata remains 92 Passed/1 Incomplete/9 NotApplicable/0 Failed, report
 `Incomplete`, qualification false. Pairing/newer artifact scopes remain pending;
 no tasks, reviewer-owned checklists or stage markers advance here.
 
+The current artifact190 increment preserves all eighteen initial-admission
+rows through genuinely uninitialized owned Local/Object lifetimes. Closed
+typed probes alter only the selected capability/version or genuine authority
+scope; raw root/readiness observations do not encode a verdict. Default session
+creation still initializes. Missing-guarantee rows retain original default
+limits; complete rows retain 1024-byte artifacts/2048-byte staging/one transfer/
+zero waiting slots. Failed handoff, cancellation and final disposal retain
+the original actual store/authority settlement ownership.
+
+Fresh fourteen-package replay passes 346 selected consumers at source
+`42705f853b9427469a8eccaf54e81904919afdb20af3803cae0ea9ae5a82290a`,
+SDK archive `6c391047ac257e17fcc94c55c19d4cb1248eaac654dc7d56bddaee8e252f368d`.
+Both complete eighteen-row actual/original families pass. SDK-only no-I/O
+and optional-range assertion mutants produce sixteen named
+`MissingGuaranteeAsync` and two named `CompleteProfileAsync` failures per
+family respectively, with identical loaded SDK/archive images. The first
+private parity attempt found the probe's wrong runtime-output path after
+successful tests; a fresh corrected probe passes without changing repository
+behavior. Safe-logger replay independently validates 190 witnesses/196 origins,
+all six reopen edges, exact counts and every role/image/archive correspondence.
+Tooling452/19 native skips and source contracts152/zero skips pass. Scoped
+architecture review reports no actionable findings, not final T081.
+
+Exact `f4e53b4d7ab966a9f147df6fc865a9efb5202e60`/
+[run40297863544](https://github.com/Stonefly-Labs/Hoard/actions/runs/40297863544)
+now independently passes all three Linux jobs and 343 native foundations
+without failures/errors/skips. The admitted artifact scope is 166. Metadata
+QC-02 pairing is now observed: 93 Passed/0 Incomplete/9 NotApplicable/0 Failed,
+ten scopes/141 public executions/ten source parents and one quality source.
+Its report stays `Incomplete`, qualification false; the quality source digest
+is `199aa3c09dd1962d9c3adb8c23d51c78b5a488b5c98874556a9acff3696c43af`.
+The newer artifact190 scope, complete QC-03 and feature acceptance remain
+unfinished. No tasks, reviewer-owned checklists or stage markers advance.
+
 Exact earlier `831b00c3999e94958bc3afecb77bf9d99a3cb9fa`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),
 passes all three Linux jobs and strict source admission: 336 native foundations/

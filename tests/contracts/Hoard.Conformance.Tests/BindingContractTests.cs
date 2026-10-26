@@ -538,6 +538,7 @@ public sealed class BindingContractTests
     private sealed class ArtifactProbe : IArtifactStore, IArtifactEvidenceValidator, IArtifactMaintenance,
         IArtifactStoreLifetime, IArtifactCoordinationAuthority, IArtifactConformanceFaultDriver
     {
+        public ArtifactInitializationObservation ObserveInitialization() => throw new NotSupportedException();
         public ImmutableArray<ConformanceFault> SupportedFaults { get; set; } =
             ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Artifacts);
         public ArtifactCapabilities Capabilities => throw new NotSupportedException();

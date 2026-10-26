@@ -1593,6 +1593,23 @@ Object has no borrowed durable restart. Exact `e39b2ce`/run40293145453 admits
 earlier frozen argument maps on Linux: three jobs/341 native foundations pass
 without skips. Pairing/newer artifact scopes remain unadmitted natively.
 
+The current artifact190 scope includes eighteen initial-admission parameters.
+Explicit typed probes create genuinely uninitialized owned stores; `None`
+preserves ordinary initialized creation. Root existence/readiness are observed
+from the actual provider generation. Capability probes preserve unrelated
+fields and original limits; foreign authority has a genuinely distinct scope.
+Unsuccessful handoff/cancellation/disposal retain actual settlement ownership.
+Fresh fourteen-package replay passes 346 consumers; both eighteen-row families
+pass. SDK-only no-I/O/range assertion mutants give sixteen/two named failures
+per family with matching SDK/archive images. Safe-logger replay admits all
+190 witnesses/196 origins and six reopen edges, with exact counts and images.
+Scoped architecture review finds no actionable issues, not final T081.
+
+Exact `f4e53b4`/run40297863544 now independently admits artifact166 and metadata
+QC-02 pairing. Three Linux jobs/343 foundations pass without skips; metadata
+is 93 Passed/0 Incomplete/9 NotApplicable/0 Failed. The overall report remains
+`Incomplete`, qualification false. Artifact190 and full QC-03 remain unfinished.
+
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or
 ownership consumers. Reduced/foreign scopes reject before launch; routing

@@ -245,6 +245,19 @@ correspondence; missing, extra and foreign validation origins reject. Exact
 jobs/341 native foundations passing without skips. Pairing/newer artifact native
 admission and complete QC-03 remain outstanding.
 
+The current artifact190 scope includes all eighteen original initial-admission
+parameters. Explicit typed probes create genuine uninitialized owned stores;
+ordinary creation still initializes. Root/readiness observations are actual
+provider facts; original limits and genuine foreign scope are preserved.
+Fresh fourteen-package replay passes 346 consumers. Both eighteen-row families
+pass; SDK-only no-I/O/range assertion mutants give sixteen/two named failures
+per family with matching SDK/archive images. Safe-logger replay validates all
+190 witnesses/196 origins and six reopen edges, with exact counts and images.
+Exact `f4e53b4`/run40297863544 now independently admits artifact166 and metadata
+QC-02 pairing: three Linux jobs/343 foundations pass without skips; metadata
+93 Passed/0 Incomplete/9 NotApplicable/0 Failed. The overall report remains
+`Incomplete`, qualification false. Artifact190/full QC-03 remain unfinished.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported
