@@ -9903,6 +9903,32 @@ without skips. Consumer source hashes are unchanged across trials. Scoped C#
 whitespace, frozen inventory, SDK catalog and patch whitespace checks pass.
 No public SDK/provider contract, tracked lock or task/checklist marker changes.
 
+### Packaged durability-exclusion admission controls
+
+The admission helper now independently checks both complete 48-case binding
+sets per category, `none` matrix identities and exact catalog exclusions.
+Only memory MP-36/38..45 may use `non-durable fixture`; only ObjectSemantics
+AS-41..44 may use `simulation: no durable restart`. All other category and QC
+entries must remain unexcluded. Provider capabilities cannot select these
+expectations. These checks run before opening a session in the existing
+admission rows and dedicated families; runtime identities and origin counts
+are unchanged. SDK/provider contracts and embedded/frozen catalogs are unchanged.
+
+A fresh-package intended-red replay packs all 14 dependencies and independently
+changes only the SDK catalog to add a logical exclusion, exclude a durable
+provider case or remove an authorized non-durable exclusion. Each mutation
+incorrectly passes all four dedicated rows before the Consumer repair.
+A separate fresh 14-package replay after repair rejects each mutation with
+exactly four failures at `BindingAdmissionAssertions.CatalogDurability`,
+zero passes/skips; the unchanged SDK passes all 160 original-plus-dedicated
+rows without skips. Consumer sources are identical across trials within each
+phase. Bounded readonly receipts retain hashes/counts, not raw child output.
+Scoped C# whitespace, frozen inventory, embedded catalog and patch whitespace
+checks pass. These are local diagnostics, not native admission or public QC-05
+composition. No task/checklist markers advance; other provider/contributor/
+deployment guides, examples and diagrams are unaffected because no public API,
+supported command, production dependency or deployment behavior changes.
+
 ### Native source-sealing and shared-consumer admission
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

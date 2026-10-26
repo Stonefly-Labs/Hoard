@@ -2348,6 +2348,18 @@ tooling tests now pass with 19 explicit native skips. Production capacity
 checks and actual observed free-space reporting are unchanged; real artifact
 runs still require adequate local scratch. No retained evidence was deleted.
 
+Packaged admission also independently checks both complete 48-case category
+binding sets and exact durability exclusions: only the nine frozen memory
+cases and four ObjectSemantics restart cases may be excluded, with their exact
+rules. Every other category/QC entry must remain unexcluded. These expectations
+are owned by the Consumer, not selected from provider capabilities.
+Fresh-package intended-red controls show three SDK-catalog mutations previously
+passed all four dedicated rows: logical exclusions, durable-provider
+reclassification and removal of authorized exclusions. The strengthened
+Consumer rejects each with four named catalog assertion failures and no skips;
+the unchanged SDK passes all 160 rows. This is local diagnostic evidence;
+new native admission and public QC-05 composition remain pending.
+
 Exact `58a9495`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
 passes all three Linux jobs: 331 native foundations without skips and

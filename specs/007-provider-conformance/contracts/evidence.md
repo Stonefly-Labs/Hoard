@@ -143,6 +143,16 @@ original packets under existing proof limits. This wiring awaits exact Linux
 admission and does not provide public QC-05 source parents, durability-exclusion
 coverage or completed QC-05 composition.
 
+The packaged admission Consumer additionally owns the complete 48-case
+binding sets and fixed durability policy: only memory MP-36/38..45 and
+ObjectSemantics AS-41..44 may carry their exact frozen exclusion rules.
+All other category/QC entries remain unexcluded. Provider capabilities
+cannot choose expected exclusions or reclassify a durable provider.
+Three SDK-catalog-only mutations reject at the named Consumer catalog
+assertion after an observed intended-red replay; the unchanged full 160-row
+Consumer still passes. This local diagnostic evidence does not itself admit
+a native source parent or complete public QC-05.
+
 The implemented category batch history derives each binding's entire frozen
 runtime union from the independent catalog and requires both category package
 options. The primary execution context for a shared runtime witness is its

@@ -6945,6 +6945,22 @@ and full qualification remain incomplete. No task/checklist markers advance.
 
 ### Private native hook-source controls (admission pending)
 
+The subsequent Consumer-only durability-policy increment independently checks
+both complete 48-case category binding sets, `none` matrices and exactly nine
+memory/four ObjectSemantics durability exclusions with their frozen rules.
+All other category/QC entries must remain unexcluded; provider capabilities
+cannot choose the expected policy. Fresh intended-red SDK-catalog mutations
+for logical exclusion, durable-provider reclassification and removal of an
+authorized exclusion each pass all four dedicated rows before repair.
+After repair, a separate fresh 14-package replay rejects each mutant with
+four named `BindingAdmissionAssertions.CatalogDurability` failures, zero
+passes/skips, while unchanged SDK passes all 160 rows. Consumer sources are
+identical across trials in each phase. Scoped C# whitespace, frozen inventory,
+embedded catalog and patch whitespace checks pass. SDK/provider contracts,
+catalog bytes, runtime identities and origin counts are unchanged. This local
+diagnostic evidence does not complete native admission/public QC-05
+composition or advance task/checklist markers.
+
 The subsequent hook-source increment wires both complete two-row families
 into qualification-input preludes and independently reconstructed private
 controls. Original readonly native graphs include all six images, exact

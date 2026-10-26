@@ -81,6 +81,15 @@ commands. History retains these packets within existing quotas; exact Linux
 admission is pending. No public QC-05 witness, complete source composition or
 durability-exclusion qualification follows.
 
+Packaged admission now also checks the complete 48-case sets for both
+bindings and the exact nine memory/four ObjectSemantics exclusions, with all
+other category/QC entries unexcluded. These expectations are independently
+owned by the Consumer, not derived from binding capability claims.
+Local SDK-catalog mutations for logical exclusion, durable reclassification
+and missing authorized exclusions fail named catalog assertions; unchanged
+Consumer rows pass. Public QC-05 composition and native admission remain
+separate unfinished gates.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

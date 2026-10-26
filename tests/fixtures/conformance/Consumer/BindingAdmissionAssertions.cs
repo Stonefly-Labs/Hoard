@@ -1,4 +1,5 @@
 using Hoard.Testing.Conformance.Bindings;
+using Hoard.Testing.Conformance.Catalog;
 
 namespace Hoard.Fixtures.Conformance.Consumer;
 
@@ -7,6 +8,9 @@ internal static class BindingAdmissionAssertions
     internal static async Task MetadataAsync(
         ConformanceBindingDeclaration declaration, ConformanceRunContext context)
     {
+        CatalogDurability("metadata", "MP", ["memory", "sqlite"], "memory",
+            ["MP-36", "MP-38", "MP-39", "MP-40", "MP-41", "MP-42", "MP-43", "MP-44", "MP-45"],
+            "non-durable fixture");
         Assert.Equal("binding", (await Assert.ThrowsAsync<ArgumentNullException>(() =>
             ConformanceObservedMetadataSession.OpenAsync(null!, context, default).AsTask())).ParamName);
         Assert.Equal("binding", (await Assert.ThrowsAsync<ArgumentNullException>(() =>
@@ -33,6 +37,8 @@ internal static class BindingAdmissionAssertions
     internal static async Task ArtifactsAsync(
         ConformanceBindingDeclaration declaration, ConformanceRunContext context)
     {
+        CatalogDurability("artifacts", "AS", ["local", "object"], "object",
+            ["AS-41", "AS-42", "AS-43", "AS-44"], "simulation: no durable restart");
         Assert.Equal("binding", (await Assert.ThrowsAsync<ArgumentNullException>(() =>
             ConformanceObservedArtifactSession.OpenAsync(null!, context, default).AsTask())).ParamName);
         ConformanceFault[] required = [
@@ -47,6 +53,29 @@ internal static class BindingAdmissionAssertions
             Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<ArgumentException>(() =>
                 ConformanceObservedArtifactSession.OpenAsync(rejected, context, default).AsTask())).Message);
             Assert.Equal(0, rejected.FactoryCalls);
+        }
+    }
+
+    private static void CatalogDurability(
+        string profile, string prefix, string[] bindings, string nonDurableBinding,
+        string[] exclusions, string rule)
+    {
+        var catalog = ConformanceCatalog.Expand(profile);
+        Assert.Equal<string>(bindings.Order(StringComparer.Ordinal),
+            catalog.Where(entry => entry.BindingId != "none").Select(entry => entry.BindingId)
+                .Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal));
+        foreach (var binding in bindings)
+        {
+            var rows = catalog.Where(entry => entry.BindingId == binding).ToArray();
+            Assert.Equal<string>(Enumerable.Range(1, 48).Select(number => $"{prefix}-{number:00}"),
+                rows.Select(entry => entry.CaseId).Order(StringComparer.Ordinal));
+            Assert.All(rows, entry => Assert.Equal("none", entry.MatrixId));
+        }
+        foreach (var entry in catalog)
+        {
+            var excluded = entry.BindingId == nonDurableBinding
+                && exclusions.Contains(entry.CaseId, StringComparer.Ordinal);
+            Assert.Equal(excluded ? rule : null, entry.Exclusion);
         }
     }
 
