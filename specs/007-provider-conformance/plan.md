@@ -7872,6 +7872,57 @@ unaffected by the scanner's malformed-input guard and test coverage. Keep the
 stage running, reviewer checklists untouched and the PR draft: 42/86 tasks
 are now checked.
 
+### Shared ownership callbacks and complete fault parameters
+
+T044 continuation moves the repeated cooperative/noncooperative
+entered/release/settled callbacks into the separately packaged Host's
+`OwnershipFixtures.cs`. Source mode explicitly compile-links the same source;
+package mode consumes only the Host archive. CP-15 observes caller cancellation
+without callback settlement, CP-16 distinguishes finite failed startup/root
+retention from actual underlying-task settlement, and CP-17 retains the frozen
+incomplete stop after ordinary/noncooperative/late-fault shutdown. Existing
+readiness/admission, unsafe-activity, disposal and sanitization assertions remain
+in place; CP-16 additionally observes the shared callback's settlement directly.
+Package-mode CP-15 asserts the callback's actual Host assembly owner.
+
+Exact packaged discovery exposes an independent catalog defect: CP-16's theory
+is listed as an unparameterized fact, and CP-17 omits noncooperative-fault.
+The new source-owned parameter regression reproduces both failures, then passes
+after explicit Boolean False/True and all three shutdown variants are named.
+Regenerate only the canonical SDK catalog through its exclusive-create tool:
+an initial `--write-sdk` correctly rejects the existing file; remove that exact
+generated file and recreate it, without weakening the writer or frozen inherited
+inventory. The catalog's case keys/applicability are unchanged; its runtime
+witness inventory is corrected, not reduced.
+
+All seven source-mode ownership rows pass. Fresh seventeen-package construction,
+both ordinary baseline/replacement rows and independent fresh-cache locked build
+pass. The seven actual package rows then match the corrected catalog and
+discovered/result identities exactly, all pass with unchanged consumer bytes,
+and verify the packaged callback owner. Diagnostic receipt:
+source `bdd494d78dfc7489775b860ce61cfe15958c6f85a6725a219e6df1e64f2c4740`,
+consumer `40424ce1f4649210e6f9f9dbd5b858945288a2152d4f783faea07b3a7972a533`,
+Host archive `9c5e704bec2e07b98257f36b93638d3fe98e1673d3df490215f210a629760a29`,
+seven-identity set `7c8dfd294b508baaf23dca915b2c2e9c14616b93767e14ee06752e32eddecf07`.
+The selection is `FullyQualifiedName~CP15_|FullyQualifiedName~CP16_|FullyQualifiedName~CP17_`;
+package result checking uses the exact independently selected parameter identities,
+not count alone or unparameterized method names.
+
+Both packaged baseline/replacement rows also pass fresh independent safe
+snapshot ingestion again: six snapshots, diagnostic inputs
+`53a31616d1af601350e8d3f8d93eb3dc0d9d349b826786ebc6209284db4e6eef`,
+manifest `5fe13446c2c38d73b34d56a0b9a8b765f785c91ce57171938ea4835d63f814e4`,
+proofs `604cc7252833dc7b769723a35af791e302b293fa4a0e0fb94965aff73d9c982d`
+and `5c26ef03fefe28f02098c061ab38927dc5f9bf6ddd9dbd5f46a77388c2a929ed`.
+Full tooling passes 487 tests with nineteen native skips; all 86 runtime logger
+cases pass. Frozen inventory, generated SDK catalog, focused C# formatting and
+`git diff --check` pass. Ordinary ownership output is still unstructured and
+not admitted as safe profile evidence; no Linux OwnedRun/exact-child containment,
+full T044/T046 or qualification is claimed. Keep 46/86 tasks checked, draft PR
+and running checkpoint. README, development/provider and CustomHost guidance
+record this finite scope; production dependencies/APIs and architecture,
+governance, predecessor baselines, infrastructure, releases and UI are unchanged.
+
 ### Packaged composition snapshots: diagnostic transport increment
 
 The two existing CP-01/02 package-only rows now emit closed chunked

@@ -201,6 +201,25 @@ class ConformanceAdmissionTests(unittest.TestCase):
                 self.assertRegex(name, r'axis: "(?:host|abstractions|required|optional)", row: "[a-z0-9-]+"')
                 self.assertIn(name.split('row: "')[1].rstrip('")'), rows)
 
+    def test_composition_ownership_catalog_preserves_every_declared_fault_parameter(self):
+        import conformance_case_catalog as catalog
+        source = (ROOT / "tests/integration/Hoard.Composition.Tests/ConformanceMatrixTests.cs").read_text()
+        for case_id, method, parameter in (
+                ("CP-16", "CP16_noncooperative_initializer_returns_finitely_but_retains_owner_until_real_settlement",
+                 "lateFault"),
+                ("CP-17", "CP17_shutdown_fault_or_retention_never_claims_complete_cleanup", "variant")):
+            with self.subTest(case_id=case_id):
+                attributes = source.split("public async Task " + method + "(")[0].rsplit("[Theory]", 1)[1]
+                values = [json.loads(value) for value in re.findall(r"\[InlineData\(([^)]+)\)\]", attributes)]
+                prefix = "Hoard.Composition.Tests.ConformanceMatrixTests." + method
+                expected = {
+                    prefix + f"({parameter}: {str(value) if isinstance(value, bool) else json.dumps(value)})"
+                    for value in values}
+                selected = [name for case in catalog.expected_cases("composition") if case.case_id == case_id
+                            for name in case.witnesses]
+                self.assertEqual(set(selected), expected)
+                self.assertEqual(len(selected), len(expected))
+
     def test_architecture_catalog_preserves_all_existing_rule_and_inspection_parameters(self):
         import conformance_case_catalog as catalog
         source = (ROOT / "tests/architecture/Hoard.Architecture.Tests/ArchitectureRuleTests.cs").read_text()

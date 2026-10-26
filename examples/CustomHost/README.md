@@ -149,3 +149,6 @@ qualifying composition CLI. The two rows now emit bounded, owner-linked safe
 snapshots with independent input/image/stage validation; this diagnostic check
 does not complete remaining composition transport, inherited inventories or
 profile evaluation.
+Shared packaged ownership callbacks additionally cover cancellation, retained
+initialization and shutdown late faults, without treating finite caller return
+or eventual callback settlement as a released lifecycle root.

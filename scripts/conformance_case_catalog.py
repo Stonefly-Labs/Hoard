@@ -889,7 +889,6 @@ def composition_witnesses(case_id, variant):
     facts = {
         ("CP-03", "multiple"): "CP03_explicit_multiple_protocols_and_identity_schemes_start_and_stop",
         ("CP-11", "route-conflict"): "CP11_actual_route_ambiguity_rejects_before_publication_and_repair_starts",
-        ("CP-16", "late-initialization"): "CP16_noncooperative_initializer_returns_finitely_but_retains_owner_until_real_settlement",
         ("CP-18", "recovery-failed"): "CP18_real_local_recovery_rejects_corrupt_manifest_without_fallback_and_exact_repair_recovers",
         ("CP-20", "settled-restart"): "CP20_active_selection_is_immutable_and_only_fresh_settled_restart_changes_owner",
         ("CP-20", "active-config"): "CP20_active_configuration_is_fixed_until_a_fresh_explicit_restart",
@@ -915,10 +914,14 @@ def composition_witnesses(case_id, variant):
             'CP15_cancelled_caller_does_not_admit_or_release_pending_shared_work(phase: "initialize")',),
         ("CP-15", "cancel-readiness"): (
             'CP15_cancelled_caller_does_not_admit_or_release_pending_shared_work(phase: "readiness")',),
+        ("CP-16", "late-initialization"): (
+            'CP16_noncooperative_initializer_returns_finitely_but_retains_owner_until_real_settlement(lateFault: False)',
+            'CP16_noncooperative_initializer_returns_finitely_but_retains_owner_until_real_settlement(lateFault: True)'),
         ("CP-17", "stop-fault"): (
             'CP17_shutdown_fault_or_retention_never_claims_complete_cleanup(variant: "fault")',),
         ("CP-17", "late-stop"): (
-            'CP17_shutdown_fault_or_retention_never_claims_complete_cleanup(variant: "noncooperative")',),
+            'CP17_shutdown_fault_or_retention_never_claims_complete_cleanup(variant: "noncooperative")',
+            'CP17_shutdown_fault_or_retention_never_claims_complete_cleanup(variant: "noncooperative-fault")'),
         ("CP-19", "authority-mismatch"): (
             'CP19_actual_store_admission_rejects_before_io_and_paired_repair_admits(variant: "authority-identity")',),
         ("CP-19", "missing-guarantee"): (

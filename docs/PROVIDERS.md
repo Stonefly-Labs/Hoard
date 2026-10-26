@@ -61,6 +61,11 @@ repairs, mapping ambiguity, optional-target inactivity and capability denial,
 all four version axes, independent prerelease flags and finite inherited
 classifications. Policy-only release classifications remain policy-only;
 these component passes do not widen declared ranges or qualify a profile.
+The packaged Host also owns shared controlled callbacks for all seven
+CP-15/16/17 rows. Both initializer `lateFault` parameters and all three shutdown
+variants are now mandatory catalog witnesses, with exact package discovery/
+result parity. Finite caller return still does not mean callback settlement or
+root release; native containment and safe ownership-profile import remain open.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.

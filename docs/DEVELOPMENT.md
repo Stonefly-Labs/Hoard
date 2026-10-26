@@ -4691,6 +4691,19 @@ integration or qualifying profile evidence. No additional task is checked.
 Exact earlier native run40407642140 at `d604993` also passes all five existing
 diagnostic jobs; it does not verify this later snapshot increment.
 
+T044 continuation moves the shared cooperative/noncooperative callbacks into
+the packaged Host's `OwnershipFixtures.cs`, preserving existing cancellation,
+underlying-task and frozen incomplete-stop assertions. Exact packaged discovery
+exposes a separate catalog gap: CP-16 lacks both Boolean parameters and CP-17
+omits the late-fault shutdown variant. Two tests-first subcases reproduce the
+omissions; regenerated SDK data now requires all seven actual CP-15/16/17
+identities. All seven source and packaged rows pass, with exact catalog/
+discovery/result equality and the packaged callback-owner assertion. Fresh
+seventeen-archive and locked replay pass, as do the two safe baseline/replacement
+rows again. Full tooling passes 487 tests with nineteen native skips. Native
+exact-child containment, safe conversion of ownership output and remaining
+T044 obligations are still open; 46/86 remains unchanged.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

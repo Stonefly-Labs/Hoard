@@ -70,6 +70,10 @@ Partial failed attempts retain their original proofs without claiming success.
 Complete component replay passes all 155 discovered packaged composition/version
 rows, alongside 148 source-mode rows; declaration, optional-target and version
 fixture implementation is verified without claiming profile qualification.
+Shared packaged Host callbacks now exercise all seven cancellation/retained/
+late-fault ownership rows. The catalog explicitly includes both initializer
+fault parameters and all three shutdown variants; native containment and full
+ownership/profile acceptance remain unfinished.
 
 ## ✨ The idea
 
