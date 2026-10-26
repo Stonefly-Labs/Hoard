@@ -106,6 +106,10 @@ descriptor/image/instance/reopen correspondence and exact per-row origin counts.
 It joins the original held command and readonly native record to the current
 owner, input closure, fixed settings/argv/cwd, successful exit and settled
 command/witness bounds; a rehashed replacement record cannot substitute.
+The Consumer and frozen metadata wrappers must use identical SDK image bytes
+from the same admitted SDK package, and the wrapper SDK must be pinned in
+the original native command input map. Matching package labels alone cannot
+substitute for this byte-level correspondence.
 The retained graph is separate from the old MP-47 marker Consumer. These 132
 rows are private source evidence, not public case witnesses: the 128-witness
 bound is unchanged. QC-02 remains incomplete pending full extraction/parity

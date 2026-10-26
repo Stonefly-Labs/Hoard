@@ -9746,6 +9746,11 @@ binding descriptors, loaded packages, instance consistency and reopen lineage
 must match. The original executor-held record and readonly native record,
 execution receipt, owner, full input map, fixed settings/argv/cwd and settled
 command/witness bounds must agree; rehashing a replacement record is not authority.
+Both the Consumer and frozen metadata wrappers must use identical shared SDK
+image bytes with correspondence to the same admitted SDK archive. The wrapper
+SDK is additionally captured in the original native input map; a changed or
+unpinned wrapper SDK rejects. An explicit intended-red regression reproduced
+the earlier missing check before the source and command-boundary repair.
 The retained graph is `proofs/qualification-metadata-shared-consumer-native-executions.json`,
 also exposed as `sharedConsumerSourcesSha256` in the metadata diagnostic summary.
 

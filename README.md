@@ -2267,7 +2267,10 @@ bindings, original `full-metadata-binding` session context and six loaded
 images. Independent reconstruction re-ingests every original readonly proof,
 checks per-row typed session origins and their image/descriptor/lineage
 correspondence, and joins the original held native command, owner, settings,
-argv/cwd, full input map and settled bounds. The source control remains private
+argv/cwd, full input map and settled bounds. The Consumer and frozen metadata
+wrappers must use identical SDK image bytes from the admitted package; the
+wrapper SDK is also pinned in the native command input map.
+The source control remains private
 evidence, not 132 public QC witnesses or completed QC-02 extraction parity.
 Local tooling passes 439 checks with 19 explicit native skips; fresh Linux
 admission of this additional control remains pending. No C# or tracked lock

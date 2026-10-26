@@ -6856,6 +6856,11 @@ receipt, fixed settings/argv/cwd, successful settled exit and command/witness
 bounds. Coherently rehashed replacement commands, wrong/missing roles, sessions,
 rows and case contexts reject. The producer immediately invokes the same
 independent admission that category history uses.
+The shared Consumer and frozen metadata wrappers must also load identical SDK
+image bytes from the same admitted package. The wrapper SDK is pinned alongside
+the six Consumer images in the original native command input map. A focused
+intended-red regression first reproduced acceptance of a changed wrapper SDK;
+the repair now rejects changed bytes and coherently rehashed missing input pins.
 
 The graph remains private source evidence, surfaced in the metadata diagnostic
 summary as `sharedConsumerSourcesSha256`. It does not add 132 public QC-02

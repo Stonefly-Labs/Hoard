@@ -3927,8 +3927,12 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         assembly_path = (directory / "Hoard.Fixtures.Conformance.Consumer.dll").as_posix()
         packages = ("Hoard.Testing.Conformance", "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite",
                     "Hoard.Fixtures.Conformance.Bindings.Memory", "Hoard.Fixtures.Conformance.Bindings.Sqlite")
+        wrapper_sdk = (
+            "snapshot/tests/contracts/Hoard.Metadata.Tests/bin/wrapper-diagnostic/Release/net10.0/"
+            "Hoard.Testing.Conformance.dll")
         image_data = {assembly_path: b"consumer", **{
-            (directory / (package + ".dll")).as_posix(): package.encode() for package in packages}}
+            (directory / (package + ".dll")).as_posix(): package.encode() for package in packages},
+            wrapper_sdk: b"Hoard.Testing.Conformance"}
         images = {path: hashlib.sha256(raw).hexdigest() for path, raw in image_data.items()}
         self.inputs["runtimeAssemblies"] = images
         captured = {row["packageId"]: row for row in self.inputs["packages"]}
@@ -3959,6 +3963,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             self.proof["ownerSha256"] = evidence.digest(self.owner)
             self.proof["assemblySha256"] = self.witness["assemblySha256"] = images[assembly_path]
             self.manifest = sources.metadata_common_consumer_manifest(run, self.inputs, self.attempt)
+            consumer_images = {entry["path"]: entry["sha256"] for entry in self.manifest["assemblies"]}
             selected = catalog.metadata_common_consumer_tests()
             transport = self.category_transport(None, selections=selected)
             self.assertEqual(evidence.load_json(transport["manifest_data"]), self.manifest)
@@ -4014,7 +4019,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 "inputFiles": {f"runtime-input-{attempt}.json": evidence.digest(self.manifest),
                                "runtime-owner.json": evidence.digest(self.owner),
                                self.manifest["runInputsPath"]: evidence.digest(self.inputs),
-                               settings_path: hashlib.sha256(settings).hexdigest(), **images}}
+                               settings_path: hashlib.sha256(settings).hexdigest(), **consumer_images,
+                               wrapper_sdk: images[wrapper_sdk]}}
             original_record = evidence.canonical_bytes(record)
             run.read_execution_record = lambda sequence: original_record
             graph_path = f"proofs/{sources.METADATA_COMMON_CONSUMER_NAMESPACE}-native-executions.json"
@@ -4067,7 +4073,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             self.assertEqual(launch.call_args.kwargs["origin_inputs"], origins)
             self.assertEqual(launch.call_args.args[5]["category_scope"], ("metadata", "shared-consumer"))
             for defect in ("missing-origins", "wrong-case", "borrowed-role", "foreign-descriptor", "duplicate-session",
-                           "missing-row", "relabeled-manifest", "argv", "inputs", "replaced-record", "settings"):
+                           "missing-row", "relabeled-manifest", "argv", "inputs", "replaced-record", "settings",
+                           "wrapper-sdk", "unpinned-wrapper-sdk"):
                 with self.subTest(defect=defect):
                     changed_record = copy.deepcopy(record)
                     first = witnesses[0]
@@ -4102,9 +4109,11 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         manifest = copy.deepcopy(self.manifest)
                         manifest["expected"][0]["caseId"] = "QC-02"
                         write(root / f"runtime-input-{attempt}.json", evidence.canonical_bytes(manifest))
-                    if defect in ("argv", "inputs", "replaced-record"):
+                    if defect in ("argv", "inputs", "replaced-record", "unpinned-wrapper-sdk"):
                         if defect == "argv":
                             changed_record["argvSha256"] = "b" * 64
+                        elif defect == "unpinned-wrapper-sdk":
+                            changed_record["inputFiles"].pop(wrapper_sdk)
                         else:
                             changed_record["inputFiles"].pop(next(iter(images)))
                         changed_raw = evidence.canonical_bytes(changed_record)
@@ -4117,11 +4126,14 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                             **execution, "executionRecordSha256": hashlib.sha256(changed_raw).hexdigest()}))
                     if defect == "settings":
                         write(root / settings_path, settings.replace(b"PACKAGE_SHA256", b"FOREIGN_SHA256"))
+                    if defect == "wrapper-sdk":
+                        write(root / wrapper_sdk, b"foreign-shared-assertions")
                     with self.assertRaises(evidence.ConformanceError):
                         admit()
                     run.read_execution_record = lambda sequence: original_record
                     for path, raw in originals.items():
                         write(root / path, raw)
+                    write(root / wrapper_sdk, image_data[wrapper_sdk])
 
     def test_native_mutation_pairs_require_exact_named_failures_and_same_current_images(self):
         import conformance_case_catalog as catalog

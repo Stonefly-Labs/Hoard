@@ -53,8 +53,10 @@ Metadata additionally executes all 132 exact F-07 common-consumer rows in a
 fresh qualification-input private source scope covering both actual bindings.
 Their original `full-metadata-binding` context, exact origin counts and typed
 image/descriptor/reopen correspondence are independently reconstructed with
-the six-image manifest and original native command/input closure. These source
-rows are not public QC-02 witnesses or replacements for frozen MP/convergence
+the six-image manifest and original native command/input closure. Admission
+also requires identical admitted SDK image bytes in the shared Consumer
+and frozen metadata wrappers, with the wrapper SDK pinned in the native input
+map. These rows are not public QC-02 witnesses or replacements for frozen MP/convergence
 parity. QC-02 remains `Incomplete`, the 128-witness bound is unchanged, and
 fresh Linux admission of this control is pending. The older MP-47 marker
 Consumer retains its distinct purpose.

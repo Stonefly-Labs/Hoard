@@ -34,6 +34,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual({binding for binding, _ in tests.values()}, {"memory", "sqlite"})
         with self.assertRaises(checks.evidence.ConformanceError):
             checks._category_scope_tests(("artifacts", "shared-consumer"))
+        assembly = self.directory / "candidate" / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / (
+            "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
         manifest = {
             "purpose": "execution", "attemptId": str(uuid.uuid4()), "runId": str(uuid.uuid4()),
             "runInputsPath": "proofs/shared-consumer-inputs.json",
@@ -52,7 +54,6 @@ class SdkDiagnosticTests(unittest.TestCase):
             packages[name] = checks.evidence.file_sha256(archive)
         (self.directory / "stores").mkdir()
         checks.write_new(self.directory / "runtime-owner.json", b"owner")
-        assembly = self.directory / "candidate/Hoard.Fixtures.Conformance.Consumer.dll"
         run = SimpleNamespace(root=self.directory)
         with patch.object(run, "command", create=True, side_effect=checks.evidence.ConformanceError(
                 "PrerequisiteMissing")) as command:
@@ -62,6 +63,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertTrue(command.call_args.kwargs["record_execution"])
         self.assertTrue({"candidate/Consumer.dll", "candidate/SDK.dll"} <=
                         set(command.call_args.kwargs["execution_inputs"]))
+        self.assertIn(checks.metadata_common_consumer_sdk_paths(assembly.relative_to(self.directory).as_posix())[1],
+                      command.call_args.kwargs["execution_inputs"])
         for defect in ("missing", "foreign", "category"):
             changed = {**manifest, "attemptId": str(uuid.uuid4()),
                        "expected": [dict(entry) for entry in manifest["expected"]]}

@@ -55,6 +55,7 @@ from conformance_sources import (
     metadata_inventory_arguments, metadata_inventory_context, metadata_inventory_observations,
     metadata_inventory_source_inputs, native_metadata_inventory_controls, native_artifact_transfer_source,
     metadata_common_consumer_manifest, metadata_common_consumer_origin_inputs, native_metadata_common_consumer_control,
+    metadata_common_consumer_sdk_images, metadata_common_consumer_sdk_paths,
     native_artifact_transfer_controls,
     native_control_record, native_metadata_binary_control, native_metadata_ownership_control,
     native_metadata_package_consumer_control,
@@ -1465,6 +1466,7 @@ def metadata_common_consumer_diagnostics(run, inputs):
     if type(run) is not OwnedRun:
         raise evidence.ConformanceError("OwnershipInvalid")
     manifest = metadata_common_consumer_manifest(run, inputs, str(uuid.uuid4()))
+    metadata_common_consumer_sdk_images(run, inputs)
     assembly = run.root / manifest["assemblies"][0]["path"]
     require_sqlite_environment(inputs, assembly, run.root)
     write_new(run.root / manifest["runInputsPath"], evidence.canonical_bytes(inputs))
@@ -3693,6 +3695,9 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
                 "mutation-faulty", "mutation-repair", "shared-consumer"):
             execution_inputs.extend(entry["path"] for entry in manifest["assemblies"]
                                     if entry["path"] != assembly.relative_to(run.root).as_posix())
+        if category_scope == ("metadata", "shared-consumer"):
+            execution_inputs.append(metadata_common_consumer_sdk_paths(
+                assembly.relative_to(run.root).as_posix())[1])
         if not discovery and (inspection_literals or inspection_cases is not None):
             execution_inputs.append(f"stores/inspection-context-{attempt_id}.json")
             if inspection_cases is not None:

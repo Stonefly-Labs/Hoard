@@ -158,6 +158,30 @@ def metadata_common_consumer_origin_inputs(run, inputs):
         for binding, adapter in (("memory", "Memory"), ("sqlite", "Sqlite"))}
 
 
+def metadata_common_consumer_sdk_paths(consumer_path):
+    path = evidence.relative_path(consumer_path)
+    suffix = ("tests/fixtures/conformance/Consumer/bin/package-diagnostic/Release/net10.0/"
+              "Hoard.Fixtures.Conformance.Consumer.dll")
+    if not path.endswith("/" + suffix):
+        raise evidence.ConformanceError("InputChanged")
+    return ((Path(path).parent / "Hoard.Testing.Conformance.dll").as_posix(),
+            path.removesuffix(suffix) + (
+                "tests/contracts/Hoard.Metadata.Tests/bin/wrapper-diagnostic/Release/net10.0/"
+                "Hoard.Testing.Conformance.dll"))
+
+
+def metadata_common_consumer_sdk_images(run, inputs):
+    images = category_consumer_images(run, inputs)
+    paths = metadata_common_consumer_sdk_paths(next(iter(images)))
+    expected = images[paths[0]]
+    for path in paths:
+        if (inputs["runtimeAssemblies"].get(path) != expected
+                or hashlib.sha256(_readonly(run.root / path, 16 * 1024 * 1024)).hexdigest() != expected):
+            raise evidence.ConformanceError("InputChanged")
+        evidence._runtime_bytes_correspondence(inputs, expected, path, "Hoard.Testing.Conformance")
+    return {path: expected for path in paths}
+
+
 def metadata_common_consumer_manifest(run, inputs, attempt_id):
     if inputs["profileId"] != "metadata" or inputs["mode"] != "qualification":
         raise evidence.ConformanceError("WitnessMissing")
@@ -266,6 +290,7 @@ def native_metadata_common_consumer_control(run, inputs, *, started_ms, ended_ms
     execution_raw = _readonly(run.root / execution_path, 64 * 1024)
     native_path = f"proofs/execution-command-{sequence:04}.json"
     images = {row["path"]: row["sha256"] for row in manifest["assemblies"]}
+    shared_sdk_images = metadata_common_consumer_sdk_images(run, inputs)
     if (run.live_children() or record["runId"] != run.run_id or record["rootId"] != run.root_id
             or not 1 < record["childPid"] <= 2**31 - 1
             or not started_ms <= record["startedMs"] <= record["endedMs"] <= ended_ms
@@ -280,7 +305,7 @@ def native_metadata_common_consumer_control(run, inputs, *, started_ms, ended_ms
                 manifest_path: hashlib.sha256(manifest_raw).hexdigest(),
                 owner_path: hashlib.sha256(owner_raw).hexdigest(),
                 manifest["runInputsPath"]: evidence.digest(inputs),
-                settings_path: hashlib.sha256(settings_raw).hexdigest(), **images}
+                settings_path: hashlib.sha256(settings_raw).hexdigest(), **images, **shared_sdk_images}
             or any(hashlib.sha256(_readonly(run.root / path, 16 * 1024 * 1024)).hexdigest() != hashed
                    for path, hashed in images.items())
             or _readonly(run.root / native_path, 64 * 1024) != record_raw
