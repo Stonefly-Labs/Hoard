@@ -7298,6 +7298,27 @@ Both trials use SDK archive
 The original failed runs and intended-red workspace remain retained. Fresh
 Linux runtime admission is pending; no task/checklist marker advances.
 
+### Actual artifact budget, failure, reference and history consumers
+
+Seventeen additional observed rows execute eight unchanged SDK methods.
+Original limits/reference callbacks and Local-only reclaimed-incarnation scope
+are preserved; the coherent clock only advances to the original forward expiry.
+The closed-scope test first fails, then passes after all seventeen identities
+are required. The artifact diagnostic scope grows from 92 to 109.
+
+Fresh fourteen-package replay passes 265 selected Consumer rows without skips
+at source snapshot
+`68d891a89bd226fd586b9538d457a9fce20ff9bd2d9b48a624b253eb00ec5cdf`,
+SDK archive
+`66aa7ad770eaef7651f053fb0e8fb2f7ffc62a9a5876c17f1929c9a9418d8477`.
+Complete seventeen-row actual/frozen-wrapper families pass using identical SDK
+bytes. Changing only the shared capacity assertion produces exactly two named
+`CapCrossingAsync` failures/fifteen passes in each family, no skips, without
+changing either consumer source. The mutant archive is
+`fca3137ba3d19ecb82773eefd5468fa115403394fb78029545cdd87810cca250`.
+This remains local parity, not native/category admission or stage completion.
+Task/checklist markers remain unchanged.
+
 ### Exact native admission of earlier repaired source controls history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

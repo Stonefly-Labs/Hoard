@@ -53,6 +53,13 @@ original one-byte artifact/staging limits, not a substituted ticket-count limit.
 Every added row requires its actual origin and settled owned resources; local
 thirty-row wrapper/assertion parity does not grant native qualification.
 
+Seventeen further observed rows extend that diagnostic scope to 109, retaining
+original authority/cancellation/capacity limits, sanitized storage errors,
+live/unavailable reference decisions and reclaimed-history bounds. The original
+reclaimed-incarnation case remains Local-only. Each row requires its genuine
+origin and settled resources; complete seventeen-row wrapper parity and named
+SDK-only capacity assertion negatives are local diagnostics, not qualification.
+
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run

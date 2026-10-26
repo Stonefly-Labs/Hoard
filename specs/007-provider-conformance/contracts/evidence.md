@@ -228,6 +228,13 @@ providers. Complete local actual/frozen-wrapper assertion parity preserves
 identical SDK bytes and original setup, but is not complete/native QC-03
 evidence or a replacement for inherited recovery/transfer sources.
 
+The budget/failure/reference/history extension retains all 92 identities and
+adds seventeen, for 109 total. Every new row requires one actual origin;
+the inherited reclaimed-incarnation row remains Local-only. Complete local
+actual/frozen-wrapper parity uses identical SDK bytes and unchanged consumers;
+named SDK capacity assertion negatives do not substitute for native admission,
+faulty-provider qualification or the remaining inherited source obligations.
+
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,

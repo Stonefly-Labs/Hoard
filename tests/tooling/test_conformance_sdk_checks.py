@@ -4206,6 +4206,13 @@ class SdkDiagnosticTests(unittest.TestCase):
         expected.update(prefix + "Observed_cancelled_descriptors_preserve_actual_current_ownership"
                         + f'(provider: "{provider}", alteration: "{alteration}")'
                         for provider in ("local", "object") for alteration in ("completion", "handle", "renewed"))
+        expected.update(prefix + "Observed_budget_failures_and_references_preserve_actual_binding_guarantees"
+                        + f'(provider: "{provider}", consumer: "{consumer}")'
+                        for provider in ("local", "object") for consumer in (
+                            "authority-deadline", "cancel-before", "cancel-waiting", "cap-crossing",
+                            "cooperative-cancel", "storage-failures", "live-references", "reclaimed-identities"))
+        expected.add(prefix + "Observed_budget_failures_and_references_preserve_actual_binding_guarantees"
+                     + '(provider: "local", consumer: "reclaimed-incarnations")')
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"

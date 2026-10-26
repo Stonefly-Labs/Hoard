@@ -2471,6 +2471,12 @@ interface member. A fresh package-mode build reproduces the exact missing
 member, then passes after the probe explicitly rejects its unsupported use.
 The SDK archive is unchanged between trials. New native admission is pending.
 
+Seventeen further observed budget, cancellation, sanitized-storage-failure,
+live-reference and reclaimed-history rows extend the artifact scope to 109.
+Fresh packages pass 265 selected Consumer rows. Both complete seventeen-row
+actual/frozen-wrapper families pass; a shared SDK-only capacity assertion
+mutation gives each two named failures. These remain local diagnostics.
+
 Exact `58a9495`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
 passes all three Linux jobs: 331 native foundations without skips and

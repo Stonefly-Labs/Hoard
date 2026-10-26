@@ -1473,6 +1473,14 @@ one-byte artifact/staging limits remain required for ownerless-reservation
 expiry; a ticket-count limit is not equivalent setup. Complete local wrapper
 parity/assertion negatives are not a native source parent.
 
+Seventeen budget/failure/reference/history rows extend that complete selection
+to 109. Authority deadlines, canceled commits, capacity crossing, cooperative
+cancellation, sanitized failures and live/unavailable reference denial retain
+the original harness options. Reclaimed histories retain their original
+one-identity budget and forward expiry; the incarnation case is Local-only.
+Each requires a genuine typed origin and settled resources. Complete local
+wrapper parity and SDK capacity assertion negatives are not native admission.
+
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or
 ownership consumers. Reduced/foreign scopes reject before launch; routing

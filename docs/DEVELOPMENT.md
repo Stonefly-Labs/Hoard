@@ -10218,6 +10218,25 @@ it does not pretend to restore owned corruption. The same package-mode build
 passes afterward using identical SDK archive bytes. This fixes compilation,
 not native runtime admission; fresh Linux completion remains pending.
 
+### Actual artifact budget, failure and reference consumers
+
+Seventeen further observed rows reuse eight unchanged SDK methods for authority
+deadlines, both canceled-commit admission shapes, capacity crossing, cooperative
+cancellation, sanitized storage failures, live/unavailable reference denial and
+bounded reclaimed identity/incarnation history. Limits and reference callbacks
+preserve each original wrapper's setup; only the original Local incarnation
+case is selected. Forward history expiry advances the coherent controlled clock
+without adding rollback behavior.
+
+The closed-scope regression first fails before wiring. Fresh fourteen-package
+replay passes all 265 selected Consumer rows without skips; the artifact
+selection is now 109. Complete seventeen-row actual/frozen-wrapper families
+pass with identical SDK bytes. An SDK-only capacity assertion mutation gives
+each exactly two named `CapCrossingAsync` failures/fifteen passes, no skips,
+with both consumer sources unchanged. This is local extraction parity, not
+native admission, complete QC-03 or stage completion. Examples, diagrams and
+deployment remain unaffected by this package-only test wiring.
+
 ### Native source-sealing and shared-consumer admission history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

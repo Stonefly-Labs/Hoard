@@ -141,6 +141,13 @@ origin per row. Local snapshot versus Object incomplete enumeration remains an
 explicit harness-owned expectation. Full local wrapper parity is diagnostic,
 not native source admission, full QC-03 or qualification.
 
+Seventeen budget/failure/reference/history rows extend the preserved artifact
+selection to 109. Sixteen execute on both providers; the original reclaimed
+incarnation case remains Local-only. Original limits/reference observations
+and forward-expiry setup are unchanged. Every new row requires one actual
+origin. Identical-SDK local wrapper parity and named capacity assertion
+negatives remain diagnostic, not native admission or complete QC-03.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

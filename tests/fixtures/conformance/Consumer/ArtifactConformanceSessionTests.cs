@@ -13,6 +13,72 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local", "authority-deadline")]
+    [InlineData("local", "cancel-before")]
+    [InlineData("local", "cancel-waiting")]
+    [InlineData("local", "cap-crossing")]
+    [InlineData("local", "cooperative-cancel")]
+    [InlineData("local", "storage-failures")]
+    [InlineData("local", "live-references")]
+    [InlineData("local", "reclaimed-identities")]
+    [InlineData("local", "reclaimed-incarnations")]
+    [InlineData("object", "authority-deadline")]
+    [InlineData("object", "cancel-before")]
+    [InlineData("object", "cancel-waiting")]
+    [InlineData("object", "cap-crossing")]
+    [InlineData("object", "cooperative-cancel")]
+    [InlineData("object", "storage-failures")]
+    [InlineData("object", "live-references")]
+    [InlineData("object", "reclaimed-identities")]
+    public async Task Observed_budget_failures_and_references_preserve_actual_binding_guarantees(
+        string provider, string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        var clock = new ControlledClock();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", clock,
+            resources, new ConformanceEvidenceBuffer());
+        var limits = consumer switch
+        {
+            "cap-crossing" => new ArtifactLimits(10, 10, 1),
+            "reclaimed-identities" or "reclaimed-incarnations" =>
+                new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, committedIdentities: 1),
+            _ => null
+        };
+        long liveReferences = consumer == "live-references" ? 1 : 0;
+        var referencesAvailable = true;
+        var binding = Binding(provider, limits, (_, _) => ValueTask.FromResult(
+            new ArtifactReferenceObservation(referencesAvailable, liveReferences, Guid.NewGuid())));
+        var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
+        try
+        {
+            Task WhenIdle() => session.Faults.AwaitSettlementAsync(default).AsTask();
+            void AdvanceTo(long timestamp) =>
+                clock.Advance(DateTimeOffset.FromUnixTimeMilliseconds(timestamp) - clock.GetUtcNow());
+            await (consumer switch
+            {
+                "authority-deadline" => ArtifactBudgetAssertions.AuthorityDeadlineAsync(
+                    session.Store, session.Authority, session.Identity, default),
+                "cancel-before" or "cancel-waiting" => ArtifactBudgetAssertions.CancelledCommitFencingAsync(
+                    session.Store, session.Authority, session.Identity, WhenIdle, consumer == "cancel-before", default),
+                "cap-crossing" => ArtifactBudgetAssertions.CapCrossingAsync(session.Store, default),
+                "cooperative-cancel" => ArtifactBudgetAssertions.CooperativeCancellationAsync(session.Store, default),
+                "storage-failures" => ArtifactFailureAssertions.StorageFailuresAsync(session.Store, default),
+                "live-references" => ArtifactDeletionAssertions.LiveReferencesAsync(
+                    session.Store, count => liveReferences = count, available => referencesAvailable = available, default),
+                "reclaimed-identities" => ArtifactHistoryAssertions.ReclaimedIdentityExpiryAsync(
+                    session.Store, session.Maintenance, session.Identity, AdvanceTo, default),
+                "reclaimed-incarnations" => ArtifactHistoryAssertions.ReclaimedIncarnationBudgetAsync(
+                    session.Store, AdvanceTo, default),
+                _ => throw new ArgumentException("BindingInvalid")
+            });
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local", "receipts")]
     [InlineData("local", "recovery-pages")]
     [InlineData("local", "sequential-recovery")]
@@ -500,7 +566,8 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         return runId;
     }
 
-    private static IArtifactConformanceBinding Binding(string provider, ArtifactLimits? limits = null)
+    private static IArtifactConformanceBinding Binding(string provider, ArtifactLimits? limits = null,
+        Func<ArtifactStamp, CancellationToken, ValueTask<ArtifactReferenceObservation>>? references = null)
     {
         var variable = provider switch
         {
@@ -510,8 +577,8 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         };
         var sha256 = Environment.GetEnvironmentVariable(variable)
             ?? throw new InvalidOperationException("PrerequisiteMissing");
-        var options = new ArtifactAssertionOptions(limits, references: (_, _) =>
-            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid())));
+        var options = new ArtifactAssertionOptions(limits, references: references ?? ((_, _) =>
+            ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid()))));
         return provider == "local" ? new LocalBinding(sha256, options: options)
             : new ObjectSemanticsBinding(sha256, options: options);
     }

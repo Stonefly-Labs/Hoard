@@ -570,6 +570,12 @@ rows; complete thirty-row actual/frozen-wrapper parity includes the same two
 named recovery-page assertion failures under an SDK-only mutation. The
 ownerless-expiry setup preserves the original one-byte artifact/staging limits.
 No native admission, complete QC-03 or implementation completion is implied.
+Seventeen budget/failure/reference/history rows extend the artifact scope to
+109, preserving original options and the Local-only incarnation case. Fresh
+packages pass all 265 selected Consumer rows. Both complete seventeen-row
+actual/frozen-wrapper families pass with identical SDK bytes; an SDK-only
+capacity assertion mutation gives each two named failures/fifteen passes,
+no skips. This remains local diagnostic parity, not complete extraction.
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

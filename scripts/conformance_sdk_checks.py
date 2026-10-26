@@ -1464,6 +1464,13 @@ def full_artifact_binding_scenarios():
     identities.update(prefix + "Observed_cancelled_descriptors_preserve_actual_current_ownership"
                       + f'(provider: "{provider}", alteration: "{alteration}")'
                       for provider in ("local", "object") for alteration in ("completion", "handle", "renewed"))
+    identities.update(prefix + "Observed_budget_failures_and_references_preserve_actual_binding_guarantees"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "authority-deadline", "cancel-before", "cancel-waiting", "cap-crossing",
+                          "cooperative-cancel", "storage-failures", "live-references", "reclaimed-identities"))
+    identities.add(prefix + "Observed_budget_failures_and_references_preserve_actual_binding_guarantees"
+                   + '(provider: "local", consumer: "reclaimed-incarnations")')
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
