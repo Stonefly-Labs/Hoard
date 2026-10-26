@@ -54,6 +54,11 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", clock,
             resources, new ConformanceEvidenceBuffer());
         var binding = Binding(provider);
+        if (fault == ConformanceFault.PublicationBoundary)
+        {
+            await BindingAdmissionAssertions.ArtifactsAsync(binding.Declaration, context);
+            Assert.Empty(resources.Settlements);
+        }
         var session = await ConformanceObservedArtifactSession.OpenAsync(binding, context, default);
         try
         {

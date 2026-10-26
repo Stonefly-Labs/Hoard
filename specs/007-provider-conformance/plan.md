@@ -6883,6 +6883,35 @@ All 439 tooling checks pass with 19 native skips, plus frozen inventory,
 embedded catalog and whitespace checks. Fresh Linux control admission remains
 pending. No C# or tracked lock changes, task/checklist advances or stage finish.
 
+### Actual package-only missing-hook dispatch controls
+
+The existing metadata `admission` and artifact `PublicationBoundary` rows now
+exercise every mandatory logical hook omission through the packaged observed
+session entry point. Independent expected fault lists drive declaration copies
+with only one hook removed; a probe factory throws a different exception if
+called. Each negative must reject with exact `BindingInvalid` argument
+classification, zero factory calls and no resource allocation. Both current
+and legacy metadata opening are checked.
+
+The same row then opens its unchanged actual binding and executes the existing
+common assertion, retaining its original typed origin. The 132 metadata/
+24 artifact identities and all origin counts remain unchanged. No SDK/public
+API, provider package or tracked lock changes are introduced. This strengthens
+actual package-only admission coverage, not completed QC-05 composition,
+extraction parity, full profile acceptance or any task/checklist marker.
+
+A fresh isolated local replay packs all 14 Consumer dependencies from the
+current snapshot. A private SDK-only mandatory-fault guard mutation produces
+four exact named admission assertion failures and 114 other selected passes,
+without skips/setup failures. The unchanged SDK then passes all 156 binding
+rows without skips, with the same Consumer sources. Earlier reused artifact
+binding archives lacked the current release-core implementation and failed
+the two existing concurrent-release rows; repacking all current dependencies
+corrects those diagnostic inputs without assertion/budget/source changes.
+These are local non-native controls, not public qualification or native parent
+admission. Focused complete-scope/source reconstruction tests, scoped C#
+whitespace, frozen inventory, embedded catalog and patch whitespace pass.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

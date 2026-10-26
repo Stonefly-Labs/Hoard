@@ -64,6 +64,13 @@ parity. QC-02 remains `Incomplete`, the 128-witness bound is unchanged, and
 fresh Linux admission of this control is pending. The older MP-47 marker
 Consumer retains its distinct purpose.
 
+The existing metadata `admission` and artifact `PublicationBoundary` Consumer
+rows additionally require every mandatory logical hook omission to reject
+before factory dispatch/allocation, then run the unchanged actual binding's
+common assertion and original typed origin. Metadata covers ordinary and
+legacy opening. Neither the 132/24-row selections nor origin counts change.
+This coverage is not a public QC-05 witness or completed QC-05 qualification.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

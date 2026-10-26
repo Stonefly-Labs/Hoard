@@ -257,7 +257,13 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
         var clock = new MetadataConformanceClock(new(1_800_000_000_000));
         var context = new ConformanceRunContext(RunId(), "full-metadata-binding",
             clock, resources, new ConformanceEvidenceBuffer());
-        await using var session = await ConformanceObservedMetadataSession.OpenAsync(Binding(provider), context, default);
+        var binding = Binding(provider);
+        if (consumer == "admission")
+        {
+            await BindingAdmissionAssertions.MetadataAsync(binding.Declaration, context);
+            Assert.Empty(resources.Settlements);
+        }
+        await using var session = await ConformanceObservedMetadataSession.OpenAsync(binding, context, default);
         var origin = session.CaptureOrigin();
         if (consumer is not ("layout-empty" or "layout-partial" or "admission" or "invalid-budget"))
         {

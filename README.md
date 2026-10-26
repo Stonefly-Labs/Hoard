@@ -2283,7 +2283,23 @@ The source control remains private
 evidence, not 132 public QC witnesses or completed QC-02 extraction parity.
 Local tooling passes 439 checks with 19 explicit native skips; fresh Linux
 admission of this additional control remains pending. No C# or tracked lock
-changes, task/checklist advances or qualification claims.
+changes were needed for that source-control checkpoint; no task/checklist
+advances or qualification claims followed.
+
+The existing metadata `admission` and artifact `PublicationBoundary` Consumer
+rows now also remove each mandatory logical hook from the actual binding's
+declaration and require rejection before any factory dispatch or resource
+allocation. Metadata checks both ordinary and legacy opening. Each row then
+opens its unchanged actual binding and executes the existing common assertion,
+retaining its original typed origin. These are stronger checks within the
+existing 132 metadata/24 artifact rows, not new public witnesses or completed
+QC-05 qualification. SDK/public contracts, provider sources and tracked locks
+are unchanged.
+An isolated local replay freshly packs all 14 Consumer dependencies from the
+current source. Removing the SDK admission guard produces four named assertion
+failures; restoring it passes all 156 metadata/artifact binding rows without
+skips, with unchanged Consumer sources. This is non-native diagnostic evidence,
+not completed category qualification.
 
 Exact `a83380c`, [run40240608803](https://github.com/Stonefly-Labs/Hoard/actions/runs/40240608803),
 independently admits the four public `Incomplete` category reports: all three

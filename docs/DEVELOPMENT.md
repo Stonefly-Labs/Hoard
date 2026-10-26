@@ -9779,10 +9779,54 @@ coherently rehashed missing origins, foreign descriptors/images, wrong case
 contexts, duplicate sessions, missing rows, relabeled manifests and replaced
 or incorrectly scoped commands/settings. Frozen inventory, embedded catalog and
 whitespace checks pass. Fresh Linux admission of this new control is pending.
-No C# or lock changes; source SDK results above remain from the prior checkpoint.
+That source-control checkpoint needed no C# or lock changes; source SDK results
+above remain from the prior checkpoint.
 README, plan and evidence/matrix contracts are updated. Other guides, examples
 and diagrams are unaffected: no public API, supported command, production
 dependency or deployment changes. All unchecked tasks/checklists stay unchanged.
+
+### Package-only hook rejection before factory dispatch
+
+The existing metadata `admission` rows and artifact `PublicationBoundary` rows
+exercise missing-hook admission through the actual packaged observed-session
+entry points, not only direct declaration validation. For each mandatory
+logical hook, a probe copies the actual binding declaration except that hook;
+its factory throws a different exception if dispatched. The row requires the
+exact `BindingInvalid` argument rejection, zero factory calls and no allocated
+resource. Metadata tests both ordinary and legacy entry points.
+
+After all negatives, the same row opens the unchanged actual binding and runs
+its existing common consumer with its original typed origin. The independent
+test expectation lists mandatory faults rather than obtaining them from the
+provider or the admission implementation. No identities, origin counts,
+132/24-row source selections, public witnesses, SDK contract or provider
+package changes are needed. These checks do not complete extraction parity or
+QC-05 composition/native admission, and no task/checklist markers advance.
+
+An isolated local source snapshot freshly packs all 14 Consumer dependencies.
+A private SDK-only mutation removes mandatory-fault admission while preserving
+the category check. The unchanged Consumer sources produce exactly four named
+admission assertion failures (114 other selected rows pass, no skips), rather
+than build/setup failures. Restoring the unchanged SDK passes all 132 metadata
+and 24 artifact binding rows with zero skips. Both trials retain identical
+Consumer source hashes and separate package caches/derived locks. This is
+non-native diagnostic evidence, not source-parent or category qualification.
+
+An earlier local attempt reused older artifact binding archives: both existing
+concurrent-release rows rejected them, and neither archive contained the
+current `ReleaseCoreAsync` implementation symbol. Rebuilding all dependencies
+from the current snapshot fixes that diagnostic-input mismatch; no source
+assertion, release implementation or budget is changed.
+
+Focused `test_conformance_sdk_checks.py -k full_` passes six tests and
+`test_conformance_evidence.py -k native_shared_metadata` passes its independent
+source reconstruction/forgery test. Scoped C# whitespace, frozen inventory,
+embedded catalog and `git diff --check` pass. The 439-check full tooling run and
+133 source SDK tests above remain prior-checkpoint results, not newly repeated
+checks. README, active plan and evidence/matrix contracts are updated; other
+provider/contributor/deployment guides, examples and diagrams are unaffected
+because no public API, supported command, product dependency or deployment
+behavior changes.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

@@ -121,6 +121,16 @@ bound is unchanged. QC-02 remains incomplete pending full extraction/parity
 and composition, and local modeled rejection checks do not claim native
 admission of this new control.
 
+Within the existing metadata `admission` and artifact `PublicationBoundary`
+Consumer rows, every mandatory logical hook omission must reject through
+observed-session opening before factory dispatch or resource allocation.
+Metadata includes both ordinary and legacy opening. The unchanged actual
+binding then executes the existing common assertion in the same row and emits
+its original typed origin. Probe declarations copy actual package identity and
+capabilities but cannot choose expected faults. These checks retain the
+132/24-row identities and origin counts; they do not establish QC-05 source
+composition or substitute for full extraction/parity/native admission.
+
 The implemented category batch history derives each binding's entire frozen
 runtime union from the independent catalog and requires both category package
 options. The primary execution context for a shared runtime witness is its
