@@ -1565,8 +1565,11 @@ def _ingest_original_observations(inputs, observations, *, original_inputs, entr
     category, kind, roles = policy
     binding_id = entry["bindingId"]
     binding = next((item for item in inputs["bindings"] if item["bindingId"] == binding_id), None)
-    if (binding is None or binding["category"] != category
-            or binding_id not in {slot[1] for slot in CATEGORY_BINDING_SLOTS if slot[0] == category}):
+    if category == "composition":
+        if inputs["profileId"] != "composition" or binding_id != "none":
+            raise ConformanceError("BindingInvalid")
+    elif (binding is None or binding["category"] != category
+          or binding_id not in {slot[1] for slot in CATEGORY_BINDING_SLOTS if slot[0] == category}):
         raise ConformanceError("BindingInvalid")
     witnesses = original_inputs.get(binding_id) if isinstance(original_inputs, Mapping) else None
     assignments = witnesses.get(entry["testIdentity"]) if isinstance(witnesses, Mapping) else None
@@ -1615,6 +1618,8 @@ def _ingest_original_observations(inputs, observations, *, original_inputs, entr
             assignment = assignments[len(observed)][role]
             if not isinstance(assignment, tuple) or len(assignment) != 2:
                 raise ConformanceError("EvidenceIncomplete")
+            if category == "composition" and assignment[1] != "Hoard.Fixtures.Conformance.Host":
+                raise ConformanceError("ProofMismatch")
             if (kind == "original-instance" and role in ("store", "schema", "validator", "maintenance", "lifetime")
                     and (assignment[1] is None
                          or assignment[1].casefold() != binding["package"]["packageId"].casefold())):
@@ -1707,6 +1712,52 @@ def _ingest_metadata_arguments(inputs, raw, origins, originals, prior_ids, bindi
     return tuple(result)
 
 
+def _ingest_composition_observations(raw, originals, prior_ids, *, require_success):
+    def counter(value):
+        value = _integer(value)
+        if value > 1_000_000:
+            raise ConformanceError("OutputLimitExceeded")
+        return value
+
+    fields = _record({
+        "schemaVersion": _constant(1), "observationId": _uuid, "sourceId": _uuid,
+        "stage": _one_of("before-initialization", "ready", "stopped"),
+        "counters": _record({name: counter for name in (
+            "metadataSingletons", "artifactSingletons", "metadataReady", "artifactReady", "ready", "admission",
+            "disabledRoots", "protocolRequests", "identityRequests", "stopComplete", "unsafeActivities")}),
+    })
+    owners = {origin["observationId"] for origin in originals if origin["kind"] == "original-owner"}
+    stages = set()
+    admitted = []
+    for value in raw:
+        observation = fields(value)
+        identity, source = observation["observationId"], observation["sourceId"]
+        key = source, observation["stage"]
+        if identity in prior_ids or source not in owners or identity == source or key in stages:
+            raise ConformanceError("ProofMismatch")
+        prior_ids.add(identity)
+        stages.add(key)
+        expected = {name: 0 for name in observation["counters"]}
+        expected.update(metadataSingletons=1, artifactSingletons=1)
+        if observation["stage"] == "ready":
+            expected.update(metadataReady=1, artifactReady=1, ready=1, admission=1)
+        if observation["stage"] in ("ready", "stopped"):
+            expected.update(protocolRequests=1, identityRequests=1)
+        if observation["stage"] == "stopped":
+            expected["stopComplete"] = 1
+        if require_success and observation["counters"] != expected:
+            raise ConformanceError("ProofMismatch")
+        admitted.append(observation)
+    if not admitted:
+        return ()
+    for source in owners:
+        actual = tuple(row["stage"] for row in admitted if row["sourceId"] == source)
+        expected_stages = ("before-initialization", "ready", "stopped")
+        if actual != (expected_stages if require_success else expected_stages[:len(actual)]):
+            raise ConformanceError("WitnessMissing")
+    return tuple(admitted)
+
+
 def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, proofs,
                           completion_data, expected_tests, manifest_sha256, owner_sha256,
                           started_ms, ended_ms, origin_inputs=None, original_inputs=None):
@@ -1748,7 +1799,9 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
     session_origins = {}
     original_observations = {}
     metadata_arguments = {}
+    composition_observations = {}
     prior_arguments = set()
+    prior_compositions = set()
     prior_sessions = {}
     prior_observations = {}
     prior_instances = {}
@@ -1764,11 +1817,13 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
         raw = load_json(proof_data)
         version = raw.get("schemaVersion") if isinstance(raw, Mapping) else None
         fields = proof_fields
-        if version in (2, 3):
+        if version in (2, 3, 4):
             fields = {**proof_fields, "schemaVersion": _constant(version),
                       "originalObservations": _list(lambda value: value, 128, minimum=0)}
             if version == 3:
                 fields["metadataArguments"] = _list(lambda value: value, 128, minimum=1)
+            elif version == 4:
+                fields["compositionObservations"] = _list(lambda value: value, 128, minimum=1)
         proof = _record(fields)(raw)
         proof_hashes[path] = hashlib.sha256(proof_data).hexdigest()
         if (proof_hashes[path] != witness["proofSha256"]
@@ -1800,13 +1855,26 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
             raise ConformanceError("ProofMismatch")
         arguments = _ingest_metadata_arguments(
             inputs, proof.get("metadataArguments", ()), origins, originals, prior_arguments, entry["bindingId"])
-        if len(origins) + len(originals) + len(arguments) > 128:
+        compositions = _ingest_composition_observations(
+            proof.get("compositionObservations", ()), originals, prior_compositions,
+            require_success=witness["status"] == "Passed")
+        if compositions and inputs["profileId"] != "composition":
+            raise ConformanceError("ProofMismatch")
+        if inputs["profileId"] == "composition":
+            from conformance_case_catalog import original_witness_policy
+            policy = original_witness_policy(entry["testIdentity"])
+            if (witness["status"] == "Passed" and policy is not None and policy[0] == "composition"
+                    and (not originals or len(compositions) != 3)):
+                raise ConformanceError("WitnessMissing")
+        if len(origins) + len(originals) + len(arguments) + len(compositions) > 128:
             raise ConformanceError("OutputLimitExceeded")
-        if prior_arguments & (set(prior_sessions) | set(prior_observations)):
+        if (prior_arguments & (set(prior_sessions) | set(prior_observations))
+                or prior_compositions & (set(prior_sessions) | set(prior_observations) | prior_arguments)):
             raise ConformanceError("ProofMismatch")
         session_origins[witness["executionId"]] = origins
         original_observations[witness["executionId"]] = originals
         metadata_arguments[witness["executionId"]] = arguments
+        composition_observations[witness["executionId"]] = compositions
         if ((witness["status"] == "Passed" and (proof["failureKind"] != "None" or proof["assertionSymbol"] is not None))
                 or (witness["status"] == "Incomplete"
                     and (proof["failureKind"] != "SkippedOrUnknown" or proof["assertionSymbol"] is not None))
@@ -1838,6 +1906,7 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
         "sessionOrigins": MappingProxyType(session_origins),
         "originalObservations": MappingProxyType(original_observations),
         "metadataArguments": MappingProxyType(metadata_arguments),
+        "compositionObservations": MappingProxyType(composition_observations),
         "caseIds": tuple(sorted({entry["caseId"] for entry in expected.values()})),
     })
 
@@ -2170,8 +2239,10 @@ def _runtime_provenance_state(observed, used, prior_instances):
         (origin["observationId"], origin) for origins in observed["originalObservations"].values() for origin in origins)]
     calls = tuple(argument["callId"] for arguments in observed.get("metadataArguments", {}).values()
                   for argument in arguments)
-    ids = frozenset((*[identity for identity, _ in observations], *calls))
-    if len(ids) != len(observations) + len(calls) or ids & used:
+    compositions = tuple(row["observationId"] for rows in observed.get("compositionObservations", {}).values()
+                         for row in rows)
+    ids = frozenset((*[identity for identity, _ in observations], *calls, *compositions))
+    if len(ids) != len(observations) + len(calls) + len(compositions) or ids & used:
         raise ConformanceError("ProofMismatch")
     instances = dict(prior_instances)
     for _, origin in observations:
@@ -2190,6 +2261,7 @@ class RuntimeCaseHistory:
         self._session_origins = MappingProxyType({})
         self._original_observations = MappingProxyType({})
         self._metadata_arguments = MappingProxyType({})
+        self._composition_observations = MappingProxyType({})
         self._used_sessions = frozenset()
         self._instances = {}
         self._origin_inputs = _origin_input_assignments(origin_inputs)
@@ -2237,6 +2309,10 @@ class RuntimeCaseHistory:
     @property
     def metadata_arguments(self):
         return self._metadata_arguments
+
+    @property
+    def composition_observations(self):
+        return self._composition_observations
 
     def begin(self, attempt_id):
         attempt_id = _uuid(attempt_id)
@@ -2300,6 +2376,8 @@ class RuntimeCaseHistory:
                 **self._original_observations, **observed["originalObservations"]})
             self._metadata_arguments = MappingProxyType({
                 **self._metadata_arguments, **observed["metadataArguments"]})
+            self._composition_observations = MappingProxyType({
+                **self._composition_observations, **observed["compositionObservations"]})
             self._used_sessions = self._used_sessions | sessions
             self._instances = instances
         except ConformanceError as error:

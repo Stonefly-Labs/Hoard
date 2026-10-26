@@ -11,7 +11,8 @@ internal static class RuntimeOriginOutput
     private sealed record Pending(string Prefix, int Count, string Digest, List<string> Parts);
     internal readonly record struct ComponentIdentity(string Assembly, Guid Module, string Type);
 
-    internal static (JsonElement[] Origins, JsonElement[] OriginalObservations, JsonElement[] MetadataArguments, bool Unknown,
+    internal static (JsonElement[] Origins, JsonElement[] OriginalObservations, JsonElement[] MetadataArguments,
+        JsonElement[] CompositionObservations, bool Unknown,
         Dictionary<Guid, ComponentIdentity> Instances) Read(
         TestResult result, RuntimeInput input, RuntimeExpectedTest expected, HashSet<Guid> priorSessions,
         IReadOnlyDictionary<Guid, ComponentIdentity> priorInstances)
@@ -33,7 +34,8 @@ internal static class RuntimeOriginOutput
                 var line = span.ToString();
                 if (!line.StartsWith(ConformanceSessionOriginOutput.Prefix + ":", StringComparison.Ordinal)
                     && !line.StartsWith(ConformanceOriginalObservationOutput.Prefix + ":", StringComparison.Ordinal)
-                    && !line.StartsWith(ConformanceMetadataArgumentOutput.Prefix + ":", StringComparison.Ordinal))
+                    && !line.StartsWith(ConformanceMetadataArgumentOutput.Prefix + ":", StringComparison.Ordinal)
+                    && !line.StartsWith(ConformanceCompositionObservationOutput.Prefix + ":", StringComparison.Ordinal))
                 { unknown = true; continue; }
                 var fields = line.Split(':');
                 RuntimeSafety.Require(fields.Length == 6, "ProofMismatch");
@@ -61,6 +63,7 @@ internal static class RuntimeOriginOutput
         var origins = new List<JsonElement>();
         var originals = new List<JsonElement>();
         var arguments = new List<JsonElement>();
+        var compositions = new List<JsonElement>();
         var instances = new Dictionary<Guid, ComponentIdentity>();
         foreach (var (id, packet) in pending)
         {
@@ -74,6 +77,26 @@ internal static class RuntimeOriginOutput
                 && RuntimeSafety.Hash(bytes) == packet.Digest, "ProofMismatch");
             using var document = JsonDocument.Parse(bytes, new JsonDocumentOptions { MaxDepth = 8 });
             var origin = document.RootElement;
+            if (packet.Prefix == ConformanceCompositionObservationOutput.Prefix)
+            {
+                Keys(origin, "schemaVersion", "observationId", "sourceId", "stage", "counters");
+                RuntimeSafety.Require(origin.GetProperty("schemaVersion").GetInt32() == 1
+                    && Uuid(origin.GetProperty("observationId").GetString()!) == id
+                    && origin.GetProperty("stage").GetString()
+                        is "before-initialization" or "ready" or "stopped", "ProofMismatch");
+                var counters = origin.GetProperty("counters");
+                Keys(counters, "metadataSingletons", "artifactSingletons", "metadataReady", "artifactReady",
+                    "ready", "admission", "disabledRoots", "protocolRequests", "identityRequests",
+                    "stopComplete", "unsafeActivities");
+                foreach (var counter in counters.EnumerateObject())
+                {
+                    RuntimeSafety.Require(counter.Value.ValueKind == JsonValueKind.Number
+                        && counter.Value.TryGetInt32(out var value) && value is >= 0 and <= 1_000_000,
+                        "ProofMismatch");
+                }
+                compositions.Add(origin.Clone());
+                continue;
+            }
             if (packet.Prefix == ConformanceMetadataArgumentOutput.Prefix)
             {
                 Keys(origin, "schemaVersion", "runId", "caseId", "callId", "sourceKind", "sourceId",
@@ -180,7 +203,17 @@ internal static class RuntimeOriginOutput
                 && Uuid(argument.GetProperty("componentInstanceId").GetString()!)
                     == Uuid(components.GetProperty(role).GetProperty("instanceId").GetString()!), "ProofMismatch");
         }
-        return (origins.ToArray(), originals.ToArray(), arguments.ToArray(), unknown, instances);
+        var stages = new HashSet<(Guid Source, string Stage)>();
+        foreach (var composition in compositions)
+        {
+            var source = Uuid(composition.GetProperty("sourceId").GetString()!);
+            RuntimeSafety.Require(originals.Count(original =>
+                Uuid(original.GetProperty("observationId").GetString()!) == source
+                    && original.GetProperty("kind").GetString() == "original-owner") == 1
+                && stages.Add((source, composition.GetProperty("stage").GetString()!)), "ProofMismatch");
+        }
+        RuntimeSafety.Require(compositions.Count == 0 || arguments.Count == 0, "ProofMismatch");
+        return (origins.ToArray(), originals.ToArray(), arguments.ToArray(), compositions.ToArray(), unknown, instances);
     }
 
     private static void Keys(JsonElement value, params string[] expected)

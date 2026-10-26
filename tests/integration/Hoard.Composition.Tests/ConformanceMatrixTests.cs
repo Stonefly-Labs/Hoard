@@ -16,6 +16,7 @@ using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
 using Hoard.Fixtures.Artifacts.Local;
 using Hoard.Fixtures.Metadata.Hosting;
+using Hoard.Testing.Conformance.Evidence;
 #endif
 using static Hoard.Fixtures.Conformance.Host.CompositionFixtures;
 
@@ -861,10 +862,18 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         await using var lease = await fixture.Builder.ComposeHoardModulesAsync(evaluation.Configuration!);
         var app = await fixture.Web.BuildHoardApplicationAsync(lease);
         await app.MapHoardModulesAsync(lease);
-        var metadataModule = Assert.Single(app.Services.GetServices<MetadataFixtureModule>());
-        var artifactModule = Assert.Single(app.Services.GetServices<ArtifactFixtureModule>());
-        Assert.False((await metadataModule.CheckReadinessAsync(default)).Ready);
-        Assert.False((await artifactModule.CheckReadinessAsync(default)).Ready);
+        var metadataModules = app.Services.GetServices<MetadataFixtureModule>().ToArray();
+        var artifactModules = app.Services.GetServices<ArtifactFixtureModule>().ToArray();
+        var metadataModule = Assert.Single(metadataModules);
+        var artifactModule = Assert.Single(artifactModules);
+        var identity = $"{typeof(ConformanceMatrixTests).FullName}.{nameof(Packaged_baseline_and_replacement_use_the_identical_consumer)}" +
+            $"(id: \"{id}\", metadata: \"{metadata}\", artifact: \"{artifact}\", metadataAssembly: \"{metadataAssembly}\", artifactAssembly: \"{artifactAssembly}\")";
+        var owner = ConformanceOriginalObservationOutput.WriteIfRequested(output, identity, "none",
+            "original-owner", null, null, ("owner", fixture));
+        var metadataReady = (await metadataModule.CheckReadinessAsync(default)).Ready;
+        var artifactReady = (await artifactModule.CheckReadinessAsync(default)).Ready;
+        Assert.False(metadataReady);
+        Assert.False(artifactReady);
         Assert.False(lease.Lifecycle.Snapshot.StartupAdmission);
         Assert.All(fixture.Probes.Values, probe =>
         {
@@ -878,10 +887,13 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         Assert.False(File.Exists(fixture.DatabasePath));
         Assert.False(Directory.Exists(fixture.ArtifactRoot));
         Assert.False(Directory.Exists(fixture.DisabledRoot));
+        Snapshot("before-initialization", metadataReady, artifactReady);
         await app.StartAsync();
         Assert.True(lease.Lifecycle.Snapshot.Ready);
-        Assert.True((await metadataModule.CheckReadinessAsync(default)).Ready);
-        Assert.True((await artifactModule.CheckReadinessAsync(default)).Ready);
+        metadataReady = (await metadataModule.CheckReadinessAsync(default)).Ready;
+        artifactReady = (await artifactModule.CheckReadinessAsync(default)).Ready;
+        Assert.True(metadataReady);
+        Assert.True(artifactReady);
         Assert.Equal(metadataAssembly, metadataModule.Session.Store.GetType().Assembly.GetName().Name);
         Assert.Equal(artifactAssembly, artifactModule.Session.Store.GetType().Assembly.GetName().Name);
         var inspected = Assert.IsType<MetadataResult<MetadataSchemaInspection>.Success>(
@@ -900,17 +912,42 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             Assert.Equal(1, probe.Requests);
         });
         Assert.False(Directory.Exists(fixture.DisabledRoot));
+        Snapshot("ready", metadataReady, artifactReady);
         await lease.DisposeAsync();
         Assert.True(lease.StopResult!.Complete);
-        Assert.False((await metadataModule.CheckReadinessAsync(default)).Ready);
+        metadataReady = (await metadataModule.CheckReadinessAsync(default)).Ready;
+        Assert.False(metadataReady);
         Assert.False(artifactModule.Session.Ready);
         Assert.All(fixture.Probes.Values, probe =>
         {
             Assert.Equal(1, probe.Stops);
             Assert.Equal(1, probe.Disposals);
         });
-        output.WriteLine($"{id}/{metadata}/{artifact}: metadata-singletons=1; artifact-singletons=1; schema-compatible=1; " +
-            "initial-admission=0; ready-after-initialize=1; protocol-requests=1; identity-requests=1; disabled-roots=0; stop-complete=1");
+        Snapshot("stopped", metadataReady, artifactModule.Session.Ready);
+        if (owner is null)
+        {
+            output.WriteLine($"{id}/{metadata}/{artifact}: metadata-singletons=1; artifact-singletons=1; schema-compatible=1; " +
+                "initial-admission=0; ready-after-initialize=1; protocol-requests=1; identity-requests=1; disabled-roots=0; stop-complete=1");
+        }
+
+        void Snapshot(string stage, bool metadataIsReady, bool artifactIsReady)
+        {
+            if (owner is null) { return; }
+            ConformanceCompositionObservationOutput.Write(output, owner, stage, new Dictionary<string, int>(StringComparer.Ordinal)
+            {
+                ["metadataSingletons"] = metadataModules.Length,
+                ["artifactSingletons"] = artifactModules.Length,
+                ["metadataReady"] = metadataIsReady ? 1 : 0,
+                ["artifactReady"] = artifactIsReady ? 1 : 0,
+                ["ready"] = lease.Lifecycle.Snapshot.Ready ? 1 : 0,
+                ["admission"] = lease.Lifecycle.Snapshot.StartupAdmission ? 1 : 0,
+                ["disabledRoots"] = Directory.Exists(fixture.DisabledRoot) ? 1 : 0,
+                ["protocolRequests"] = fixture.Probes["protocol"].Requests,
+                ["identityRequests"] = fixture.Probes["identity"].Requests,
+                ["stopComplete"] = lease.StopResult?.Complete == true ? 1 : 0,
+                ["unsafeActivities"] = lease.StopResult?.UnsafeActivities.Length ?? 0
+            });
+        }
     }
 
     [Theory]

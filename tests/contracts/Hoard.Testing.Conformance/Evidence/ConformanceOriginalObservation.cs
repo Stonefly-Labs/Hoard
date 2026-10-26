@@ -54,7 +54,7 @@ public sealed class ConformanceOriginalObservation
         string[] roles = kind switch
         {
             "loaded-contract" when parent is null => ["contract"],
-            "original-owner" when parent is null && bindingId is "sqlite" or "memory" or "local" or "object" =>
+            "original-owner" when parent is null && bindingId is "sqlite" or "memory" or "local" or "object" or "none" =>
                 ["owner"],
             "original-instance" when bindingId is "sqlite" or "memory" =>
                 ["owner", "store", "schema", "authority", "controls"],

@@ -4673,8 +4673,23 @@ version identities with exact result-set equality and unchanged consumer bytes.
 Source-mode checks pass 148 rows. This verifies the existing declaration/
 mapping probes, optional-target cases and explicit version fixtures, closing
 T042/T043/T053 without changing the runtime validator or widening ranges.
-Ownership/controller, inherited-profile and safe structured transport work
+Ownership/controller, inherited-profile and remaining structured transport work
 remain unfinished. The stage remains `implement / running`, 46/86 checked.
+
+The two packaged CP-01/02 rows now emit bounded owner-linked snapshots rather
+than unstructured text when explicitly requested by the safe controller. Fresh
+seventeen-package execution independently admits both actual schema4 proofs and
+six observed before-initialization/ready/stopped snapshots. Missing stages,
+changed images/context, false ready/cleanup counters and cross-attempt snapshot
+replay reject. A scoped review found that an earlier decoder lost genuine
+partial-failure proofs; reproduced zero/one/two-stage controls now retain the
+original failed witness, safe diagnostic and available observations. Full tooling
+passes 486 tests with nineteen explicit native skips; all 86 runtime logger cases
+and focused formatting pass. This remains a macOS diagnostic component, with
+filesystem/native SQLite explicitly unobserved, not Linux containment, full T046
+integration or qualifying profile evidence. No additional task is checked.
+Exact earlier native run40407642140 at `d604993` also passes all five existing
+diagnostic jobs; it does not verify this later snapshot increment.
 
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
@@ -4688,7 +4703,7 @@ Source-mode composition/version regressions pass all 148 selected tests after
 restoring a missing test dependency. The complete native diagnostic run40405035306
 at `ef82218` now passes all five existing jobs, including full SDK diagnostics;
 these remain component jobs, not qualifying five-profile CI.
-The component run does not qualify a composition profile: the strict safe
+That preceding component run does not qualify a composition profile: the strict safe
 logger rejects the existing unstructured observation output as
 `UnknownDiagnostic`, leaving safe transport for T046. That preceding T041
 checkpoint recorded 43/86 tasks checked.

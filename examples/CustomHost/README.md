@@ -145,5 +145,7 @@ Memory/ObjectSemantics using one unchanged consumer image and TestServer.
 These component rows observe initialization, readiness, in-process declaration/
 lifecycle probes, disabled-store inactivity and complete stop. They do not
 certify providers, implement a production protocol/identity system, or supply a
-qualifying composition CLI. Existing strict output admission still rejects the
-unstructured observations; safe profile transport/evaluation remain unfinished.
+qualifying composition CLI. The two rows now emit bounded, owner-linked safe
+snapshots with independent input/image/stage validation; this diagnostic check
+does not complete remaining composition transport, inherited inventories or
+profile evaluation.

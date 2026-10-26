@@ -12,6 +12,138 @@ namespace Hoard.Conformance.Tests;
 public sealed class RuntimeLoggerTests
 {
     [Theory]
+    [InlineData("memory")]
+    [InlineData("none")]
+    public void Composition_snapshots_remain_bound_to_the_actual_owner_and_test(string binding)
+    {
+        using var owned = new OwnedInput(binding: binding);
+        var owner = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", owned.Input.Expected[0].TestIdentity, binding,
+            "original-owner", [("owner", new OriginalProbe())]);
+        var result = owned.Result(0);
+        var lines = ConformanceOriginalObservationOutput.Render(owner).Concat(
+            new[] { "before-initialization", "ready", "stopped" }.SelectMany(stage =>
+                CompositionPacket(owner.ObservationId, stage)));
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, string.Join('\n', lines)));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        Assert.Equal(4, proof.RootElement.GetProperty("schemaVersion").GetInt32());
+        var snapshots = proof.RootElement.GetProperty("compositionObservations").EnumerateArray().ToArray();
+        Assert.Equal(["before-initialization", "ready", "stopped"],
+            snapshots.Select(snapshot => snapshot.GetProperty("stage").GetString()!).ToArray());
+        Assert.All(snapshots, snapshot =>
+            Assert.Equal(owner.ObservationId, snapshot.GetProperty("sourceId").GetGuid()));
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
+    [InlineData("foreign-source")]
+    [InlineData("unknown-stage")]
+    [InlineData("unknown-counter")]
+    [InlineData("missing-counter")]
+    [InlineData("negative-counter")]
+    [InlineData("oversize-counter")]
+    [InlineData("duplicate-counter")]
+    [InlineData("duplicate-packet")]
+    [InlineData("duplicate-stage")]
+    [InlineData("boolean-counter")]
+    [InlineData("string-counter")]
+    public void Composition_snapshots_reject_foreign_unbounded_and_duplicate_observations(string mutation)
+    {
+        using var owned = new OwnedInput();
+        var owner = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", owned.Input.Expected[0].TestIdentity, "memory",
+            "original-owner", [("owner", new OriginalProbe())]);
+        var packets = CompositionPacket(owner.ObservationId, "ready", mutation);
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory,
+            string.Join('\n', ConformanceOriginalObservationOutput.Render(owner).Concat(packets))));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.NotEqual(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        Assert.Empty(Directory.GetFiles(owned.Output, "proof-*.json"));
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
+    [InlineData("stage")]
+    [InlineData("counter-name")]
+    [InlineData("negative")]
+    [InlineData("oversize")]
+    public void Composition_producer_rejects_unsafe_values_before_any_output(string mutation)
+    {
+        using var owned = new OwnedInput();
+        var owner = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", owned.Input.Expected[0].TestIdentity, "memory",
+            "original-owner", [("owner", new OriginalProbe())]);
+        var counters = CompositionCounters();
+        if (mutation == "counter-name") { counters.Add("canary-unbounded-value", 0); }
+        if (mutation == "negative") { counters["ready"] = -1; }
+        if (mutation == "oversize") { counters["ready"] = 1_000_001; }
+        var output = new CapturedOutput();
+        var error = Assert.Throws<ArgumentException>(() => ConformanceCompositionObservationOutput.Write(
+            output, owner, mutation == "stage" ? "canary-unbounded-value" : "ready", counters));
+        Assert.Equal("ProofMismatch", error.Message);
+        Assert.Empty(output.Lines);
+    }
+
+    private static IEnumerable<string> CompositionPacket(Guid source, string stage, string? mutation = null)
+    {
+        var counters = CompositionCounters();
+        if (mutation == "unknown-counter") { counters.Add("canary-unbounded-value", 0); }
+        if (mutation == "missing-counter") { counters.Remove("admission"); }
+        if (mutation == "negative-counter") { counters["protocolRequests"] = -1; }
+        if (mutation == "oversize-counter") { counters["protocolRequests"] = 1_000_001; }
+        var id = Guid.NewGuid();
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(new
+        {
+            schemaVersion = 1,
+            observationId = id,
+            sourceId = mutation == "foreign-source" ? Guid.NewGuid() : source,
+            stage = mutation == "unknown-stage" ? "canary-unbounded-value" : stage,
+            counters
+        });
+        if (mutation == "duplicate-counter")
+        {
+            bytes = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(bytes).Replace(
+                "\"admission\":0", "\"admission\":0,\"admission\":0", StringComparison.Ordinal));
+        }
+        if (mutation is "boolean-counter" or "string-counter")
+        {
+            bytes = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(bytes).Replace(
+                "\"admission\":0", mutation == "boolean-counter" ? "\"admission\":true" : "\"admission\":\"0\"",
+                StringComparison.Ordinal));
+        }
+        var result = ConformanceEvidencePacket.Render("hoard-composition-v1", id, bytes).AsEnumerable();
+        if (mutation == "duplicate-packet") { result = result.Concat(result.ToArray()); }
+        if (mutation == "duplicate-stage") { result = result.Concat(CompositionPacket(source, stage)); }
+        return result;
+    }
+
+    private static Dictionary<string, int> CompositionCounters() => new(StringComparer.Ordinal)
+    {
+        ["metadataSingletons"] = 1,
+        ["artifactSingletons"] = 1,
+        ["metadataReady"] = 0,
+        ["artifactReady"] = 0,
+        ["ready"] = 0,
+        ["admission"] = 0,
+        ["disabledRoots"] = 0,
+        ["protocolRequests"] = 0,
+        ["identityRequests"] = 0,
+        ["stopComplete"] = 0,
+        ["unsafeActivities"] = 0
+    };
+
+    [Theory]
     [InlineData(false)]
     [InlineData(true)]
     public void Metadata_arguments_follow_actual_component_sources_even_when_output_precedes_the_assertion(bool before)
@@ -111,10 +243,16 @@ public sealed class RuntimeLoggerTests
         var call = Guid.NewGuid();
         var argument = JsonSerializer.SerializeToNode(new
         {
-            schemaVersion = 1, runId = owned.Input.RunId, caseId = "runtime", callId = call,
-            sourceKind = "original-observation", sourceId = observation.ObservationId,
-            componentRole = "store", componentInstanceId = observation.Components["store"].InstanceId,
-            argumentKind = "lease-expiry", argumentValue = "Renew"
+            schemaVersion = 1,
+            runId = owned.Input.RunId,
+            caseId = "runtime",
+            callId = call,
+            sourceKind = "original-observation",
+            sourceId = observation.ObservationId,
+            componentRole = "store",
+            componentInstanceId = observation.Components["store"].InstanceId,
+            argumentKind = "lease-expiry",
+            argumentValue = "Renew"
         })!.AsObject();
         if (mutation is "sourceId" or "componentInstanceId" or "runId") { argument[mutation] = Guid.NewGuid(); }
         else if (mutation == "componentRole") { argument[mutation] = "schema"; }
@@ -828,7 +966,7 @@ public sealed class RuntimeLoggerTests
         private string ownerHash;
         private string manifestHash;
 
-        internal OwnedInput(int count = 1, string purpose = "execution")
+        internal OwnedInput(int count = 1, string purpose = "execution", string binding = "memory")
         {
             Directory.CreateDirectory(Root);
             if (!OperatingSystem.IsWindows())
@@ -850,7 +988,7 @@ public sealed class RuntimeLoggerTests
                 [new("tests", "tests.dll", Hash(File.ReadAllBytes(AssemblyPath)))],
                 [new("fixture", "fixture.nupkg", Hash(File.ReadAllBytes(Path.Combine(Root, "fixture.nupkg"))))],
                 Enumerable.Range(0, count).Select(index => new RuntimeExpectedTest(
-                    $"Hoard.Frozen.Check(value: {index})", "Hoard.Frozen.Check", "tests", "fixture", "memory", "matrix",
+                    $"Hoard.Frozen.Check(value: {index})", "Hoard.Frozen.Check", "tests", "fixture", binding, "matrix",
                     "Hoard.Testing.Conformance.FrozenAssertion.Check", "runtime")).ToArray(), purpose);
             var manifest = JsonSerializer.SerializeToUtf8Bytes(Input, Json);
             File.WriteAllBytes(ManifestPath, manifest);

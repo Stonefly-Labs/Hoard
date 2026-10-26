@@ -631,6 +631,8 @@ ORIGINAL_ARTIFACT_FORESTS = MappingProxyType({
 
 def original_witness_policy(identity):
     """Select original instance/contract attribution, distinct from non-session proofs."""
+    if identity in (*composition_witnesses("CP-01", "baseline"), *composition_witnesses("CP-02", "replacement")):
+        return "composition", "original-owner", ("owner",)
     contracts = (*ORIGINAL_ARTIFACT_CONTRACT_WITNESSES,
                  "Hoard.Artifacts.Tests.ArtifactValueTests.Identity_bounds_preserve_empty_and_reject_overflow_negative_or_null")
     if identity in ORIGINAL_METADATA_WITNESSES:

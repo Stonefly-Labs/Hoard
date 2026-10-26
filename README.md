@@ -63,7 +63,10 @@ edge orders. Malformed scan entries now produce the expected inspection error.
 The two baseline/replacement composition component rows now consume the separately
 packed test Host, rather than compiling its source into the consumer. Both pass
 with one unchanged consumer image and fresh-cache locked build replay. This
-does not yet provide a qualifying composition profile or safe observation import.
+does not yet provide a qualifying composition profile. These two rows now emit
+bounded snapshots bound to the actual packaged Host owner; independent ingestion
+admits their six observed stages and rejects false readiness/cleanup or replay.
+Partial failed attempts retain their original proofs without claiming success.
 Complete component replay passes all 155 discovered packaged composition/version
 rows, alongside 148 source-mode rows; declaration, optional-target and version
 fixture implementation is verified without claiming profile qualification.

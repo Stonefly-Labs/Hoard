@@ -47,10 +47,14 @@ source mode. Both real SQLite/Local and Memory/ObjectSemantics rows run from the
 same consumer image, check initialization before readiness, make in-process
 protocol/identity probe requests, leave the disabled store untouched and observe
 complete stop. The loaded Host image matches its local archive, and independent
-fresh-cache default locked restore/build passes. These are component checks:
-the safe runtime logger still rejects the rows' unstructured observation output
-as `UnknownDiagnostic`. No output guard is relaxed; safe composition transport
-and independent profile evaluation remain unfinished.
+fresh-cache default locked restore/build passes. These two rows now emit closed,
+bounded before-initialization/ready/stopped snapshots linked to the actual Host
+owner and loaded archive bytes. Independent ingestion admits six actual snapshots,
+requires successful stage invariants, and rejects omitted/replayed observations
+or false readiness/cleanup. Genuine failed attempts retain available ordered
+snapshots and original proofs, never an inferred pass. No output guard is relaxed.
+This is diagnostic component evidence: remaining composition output conversion,
+inherited inventories and independent full-profile evaluation remain unfinished.
 Complete component replay additionally passes all 155 discovered packaged
 composition/version rows and 148 source-mode rows: declaration rejection/
 repairs, mapping ambiguity, optional-target inactivity and capability denial,

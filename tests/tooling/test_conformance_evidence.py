@@ -1196,6 +1196,113 @@ class ConformanceInputTests(unittest.TestCase):
 
 
 class ConformanceRuntimeIngestionTests(unittest.TestCase):
+    def composition_transport(self):
+        import conformance_case_catalog as catalog
+        self.identity = catalog.composition_witnesses("CP-01", "baseline")[0]
+        self.inputs.update(profileId="composition", mode="diagnostic", bindings=[], invocation=["profile", "composition"])
+        self.inputs["budgets"]["profileSeconds"] = 3600
+        self.inputs["runtimeAssemblies"]["host/Hoard.Fixtures.Conformance.Host.dll"] = "d" * 64
+        package = copy.deepcopy(self.inputs["packages"][0])
+        package.update(packageId="Hoard.Fixtures.Conformance.Host",
+                       runtimeAssemblies={"lib/net10.0/Hoard.Fixtures.Conformance.Host.dll": "d" * 64})
+        self.inputs["packages"].append(package)
+        entry = self.manifest["expected"][0]
+        entry.update(testIdentity=self.identity, fullyQualifiedName=self.identity.split("(")[0],
+                     bindingId="none", caseId="CP-01")
+        owner = {
+            "schemaVersion": 1, "runId": self.inputs["runId"], "caseId": "CP-01",
+            "testIdentity": self.identity, "bindingId": "none", "observationId": str(uuid.uuid4()),
+            "parentObservationId": None, "kind": "original-owner", "operation": "create",
+            "runtimeVersion": self.inputs["environment"]["runtime"], "processArchitecture": "x64",
+            "components": {"owner": {"instanceId": str(uuid.uuid4()), "assemblySha256": "d" * 64,
+                                     "moduleVersionId": str(uuid.uuid4()), "typeSha256": "d" * 64}}}
+        counters = {name: 0 for name in (
+            "metadataSingletons", "artifactSingletons", "metadataReady", "artifactReady", "ready", "admission",
+            "disabledRoots", "protocolRequests", "identityRequests", "stopComplete", "unsafeActivities")}
+        snapshots = [{
+            "schemaVersion": 1, "observationId": str(uuid.uuid4()), "sourceId": owner["observationId"],
+            "stage": stage, "counters": dict(counters)}
+            for stage in ("before-initialization", "ready", "stopped")]
+        for snapshot in snapshots:
+            snapshot["counters"].update(metadataSingletons=1, artifactSingletons=1)
+        snapshots[1]["counters"].update(metadataReady=1, artifactReady=1, ready=1, admission=1,
+                                        protocolRequests=1, identityRequests=1)
+        snapshots[2]["counters"].update(protocolRequests=1, identityRequests=1, stopComplete=1)
+        self.proof.update(schemaVersion=4, testIdentity=self.identity, bindingId="none", caseId="CP-01",
+                          inputSha256=evidence.digest(self.inputs), manifestSha256=evidence.digest(self.manifest),
+                          originalObservations=[owner], compositionObservations=snapshots)
+        self.manifest["inputSha256"] = evidence.digest(self.inputs)
+        self.proof["manifestSha256"] = evidence.digest(self.manifest)
+        self.witness.update(testIdentity=self.identity, bindingId="none", inputSha256=evidence.digest(self.inputs),
+                            proofSha256=evidence.digest(self.proof))
+        self.completion.update(inputSha256=evidence.digest(self.inputs), manifestSha256=evidence.digest(self.manifest))
+        return snapshots, {"original_inputs": {"none": {self.identity: {
+            "owner": ("host/Hoard.Fixtures.Conformance.Host.dll", "Hoard.Fixtures.Conformance.Host")}}},
+            "expected_tests": {self.identity: ("none", "none")}}
+
+    def test_composition_snapshots_bind_exact_owner_images_without_qualifying_claims(self):
+        snapshots, options = self.composition_transport()
+        observed = self.ingest(**options)
+        self.assertEqual(tuple(observed["compositionObservations"][self.execution]), tuple(snapshots))
+        with self.assertRaises(TypeError):
+            observed["compositionObservations"][self.execution][0]["counters"]["ready"] = 1
+        snapshots[0]["counters"]["ready"] = 1
+        self.assertEqual(observed["compositionObservations"][self.execution][0]["counters"]["ready"], 0)
+
+    def test_composition_snapshots_reject_changed_context_foreign_stages_and_unsafe_counters(self):
+        mutations = (
+            lambda rows: rows.clear(),
+            lambda rows: rows.append(copy.deepcopy(rows[0])),
+            lambda rows: rows[0].update(sourceId=str(uuid.uuid4())),
+            lambda rows: rows[0].update(observationId=rows[0]["sourceId"]),
+            lambda rows: rows[0].update(stage="canary-unbounded-value"),
+            lambda rows: rows[1].update(stage=rows[0]["stage"]),
+            lambda rows: rows[0]["counters"].update(ready=True),
+            lambda rows: rows[0]["counters"].update(ready=-1),
+            lambda rows: rows[0]["counters"].update(ready=1_000_001),
+            lambda rows: rows[0]["counters"].update({"canary-unbounded-value": 0}),
+            lambda rows: rows[0]["counters"].pop("admission"),
+            lambda rows: rows[0].update(unexpected=True),
+            lambda rows: rows[0]["counters"].update(ready=1),
+            lambda rows: rows[0]["counters"].update(stopComplete=1),
+            lambda rows: rows[0]["counters"].update(metadataSingletons=2),
+            lambda rows: rows[1]["counters"].update(disabledRoots=1),
+            lambda rows: rows[2]["counters"].update(admission=1),
+            lambda rows: rows.pop(),
+        )
+        for index, mutate in enumerate(mutations):
+            with self.subTest(mutation=index):
+                self.setUp()
+                rows, options = self.composition_transport()
+                mutate(rows)
+                self.witness["proofSha256"] = evidence.digest(self.proof)
+                with self.assertRaises(evidence.ConformanceError):
+                    self.ingest(**options)
+
+    def test_composition_snapshot_envelopes_cannot_omit_or_borrow_the_packaged_host_origin(self):
+        for mutation in ("missing-packets", "missing-owner", "wrong-run", "wrong-case", "source-package", "reorder", "replay"):
+            with self.subTest(mutation=mutation):
+                self.setUp()
+                rows, options = self.composition_transport()
+                if mutation == "missing-packets":
+                    self.proof["schemaVersion"] = 2
+                    del self.proof["compositionObservations"]
+                elif mutation == "missing-owner":
+                    self.proof["originalObservations"] = []
+                elif mutation == "wrong-run":
+                    self.proof["originalObservations"][0]["runId"] = str(uuid.uuid4())
+                elif mutation == "wrong-case":
+                    self.proof["originalObservations"][0]["caseId"] = "CP-02"
+                elif mutation == "source-package":
+                    options["original_inputs"]["none"][self.identity]["owner"] = ("consumer/Hoard.Tests.dll", None)
+                elif mutation == "reorder":
+                    rows[0], rows[1] = rows[1], rows[0]
+                else:
+                    rows[1]["observationId"] = rows[0]["observationId"]
+                self.witness["proofSha256"] = evidence.digest(self.proof)
+                with self.assertRaises(evidence.ConformanceError):
+                    self.ingest(**options)
+
     def test_native_artifact_controller_joins_original_children_transfers_packets_and_explicit_execution(self):
         import conformance_sources as sources
         from conformance_case_catalog import ORIGINAL_ARTIFACT_PROOF_SOURCES
@@ -2070,6 +2177,9 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
     def history(self, *, max_attempts=1, origin_inputs=None):
         import conformance_case_catalog as catalog
         case = next(case for case in catalog.expected_cases("composition") if case.case_id == "CP-01")
+        bindings = self.inputs["bindings"]
+        _, composition_options = self.composition_transport()
+        self.inputs["bindings"] = bindings
         self.inputs.update(profileId="composition", invocation=["profile", "composition"])
         self.inputs["budgets"]["profileSeconds"] = 3600
         self.identity = case.witnesses[0]
@@ -2085,7 +2195,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.completion.update(inputSha256=evidence.digest(self.inputs), manifestSha256=evidence.digest(self.manifest))
         return evidence.RuntimeCaseHistory(self.inputs, binding_id=case.binding_id,
                                            matrix_id=case.matrix_id, case_id=case.case_id,
-                                           max_attempts=max_attempts, origin_inputs=origin_inputs)
+                                           max_attempts=max_attempts, origin_inputs=origin_inputs,
+                                           original_inputs=composition_options["original_inputs"])
 
     def finish_history(self, history):
         options = self.transport()
@@ -5722,6 +5833,11 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.proof.update(attemptId=self.attempt, attemptSequence=2, executionId=self.execution,
                           status="Passed", failureKind="None", assertionSymbol=None,
                           manifestSha256=evidence.digest(self.manifest))
+        owner = self.proof["originalObservations"][0]
+        owner["observationId"] = str(uuid.uuid4())
+        owner["components"]["owner"]["instanceId"] = str(uuid.uuid4())
+        for snapshot in self.proof["compositionObservations"]:
+            snapshot.update(observationId=str(uuid.uuid4()), sourceId=owner["observationId"])
         self.witness.update(executionId=self.execution, status="Passed", startedMs=21, endedMs=22,
                             proofSha256=evidence.digest(self.proof))
         self.completion.update(attemptId=self.attempt, attemptSequence=2,
@@ -5745,6 +5861,65 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             history.proofs["invented"] = "a" * 64
         with self.assertRaises(evidence.ConformanceError):
             history.begin(str(uuid.uuid4()))
+
+    def test_composition_failure_retains_original_proofs_and_available_snapshots_without_claiming_success(self):
+        for count in range(3):
+            with self.subTest(snapshots=count):
+                self.setUp()
+                history = self.history()
+                del self.proof["compositionObservations"][count:]
+                if not count:
+                    self.proof.update(schemaVersion=2)
+                    del self.proof["compositionObservations"]
+                self.proof.update(status="Failed", failureKind="Unknown", assertionSymbol=None)
+                self.witness.update(status="Failed", proofSha256=evidence.digest(self.proof))
+                self.completion.update(diagnosticCode="UnknownDiagnostic", complete=False)
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+                    history.begin(self.attempt)
+                with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+                    result = self.finish_history(history)
+                self.assertNotEqual(result["status"], "Passed")
+                self.assertEqual(result["attempts"][0]["diagnosticCode"], "UnknownDiagnostic")
+                self.assertEqual(result["attempts"][0]["witnessIds"], (self.execution,))
+                self.assertEqual(result["attempts"][0]["proofSha256"], (evidence.digest(self.proof),))
+                self.assertEqual(len(history.composition_observations[self.execution]), count)
+                self.assertEqual(history.witnesses[0]["status"], "Failed")
+
+    def test_composition_snapshots_cannot_replay_under_fresh_owner_and_execution_ids(self):
+        history = self.history(max_attempts=2)
+        self.proof.update(status="Failed", failureKind="Unknown")
+        self.witness.update(status="Failed", proofSha256=evidence.digest(self.proof))
+        self.completion.update(diagnosticCode="UnknownDiagnostic", complete=False)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.009):
+            history.begin(self.attempt)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.012):
+            self.finish_history(history)
+        previous = dict(history.proofs)
+        self.attempt, self.execution = str(uuid.uuid4()), str(uuid.uuid4())
+        self.manifest.update(attemptId=self.attempt, attemptSequence=2)
+        owner = self.proof["originalObservations"][0]
+        owner["observationId"] = str(uuid.uuid4())
+        owner["components"]["owner"]["instanceId"] = str(uuid.uuid4())
+        for snapshot in self.proof["compositionObservations"]:
+            snapshot["sourceId"] = owner["observationId"]
+        self.proof.update(attemptId=self.attempt, attemptSequence=2, executionId=self.execution,
+                          status="Passed", failureKind="None", manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(executionId=self.execution, status="Passed", startedMs=21, endedMs=22,
+                            proofSha256=evidence.digest(self.proof))
+        self.completion.update(attemptId=self.attempt, attemptSequence=2, diagnosticCode="None",
+                               complete=True, manifestSha256=evidence.digest(self.manifest))
+        self.assertEqual(self.ingest(
+            expected_tests={self.identity: ("none", "baseline.observe")}, started_ms=20, ended_ms=23,
+            original_inputs={"none": {self.identity: {"owner": (
+                "host/Hoard.Fixtures.Conformance.Host.dll", "Hoard.Fixtures.Conformance.Host")}}})[
+                    "witnesses"][0]["status"], "Passed")
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.020):
+            history.begin(self.attempt)
+        with mock.patch.object(evidence.time, "monotonic", return_value=0.023), \
+                self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+            self.finish_history(history)
+        self.assertEqual(dict(history.proofs), previous)
+        self.assertEqual(history.result()["attempts"][1]["witnessIds"], ())
 
     def test_case_execution_rejects_overlap_and_closes_invalid_provenance_without_inventing_witnesses(self):
         history = self.history()

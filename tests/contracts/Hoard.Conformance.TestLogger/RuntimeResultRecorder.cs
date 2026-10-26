@@ -216,7 +216,7 @@ public sealed class RuntimeResultRecorder : IDisposable
                 var kind = FailureKind(result, entry);
                 if (result.Outcome == TestOutcome.Failed) { CorrelateFailureMessages(result); }
                 RuntimeSafety.Require(diagnostic == ConformanceDiagnosticCode.None, diagnostic.ToString());
-                var (sessionOrigins, originalObservations, metadataArguments, unknownOutput, instances) =
+                var (sessionOrigins, originalObservations, metadataArguments, compositionObservations, unknownOutput, instances) =
                     RuntimeOriginOutput.Read(result, input, entry, seenSessions, seenInstances);
                 if (unknownOutput || (result.Outcome == TestOutcome.Passed
                     && (!string.IsNullOrEmpty(result.ErrorMessage) || !string.IsNullOrEmpty(result.ErrorStackTrace))))
@@ -251,13 +251,15 @@ public sealed class RuntimeResultRecorder : IDisposable
                     status = status.ToString(),
                     sessionOrigins
                 }, RuntimeSafety.Json);
-                if (originalObservations.Length > 0 || metadataArguments.Length > 0)
+                if (originalObservations.Length > 0 || metadataArguments.Length > 0 || compositionObservations.Length > 0)
                 {
                     var extended = JsonNode.Parse(proof)!.AsObject();
-                    extended["schemaVersion"] = metadataArguments.Length > 0 ? 3 : 2;
+                    extended["schemaVersion"] = compositionObservations.Length > 0 ? 4 : metadataArguments.Length > 0 ? 3 : 2;
                     extended["originalObservations"] = JsonSerializer.SerializeToNode(originalObservations);
                     if (metadataArguments.Length > 0)
                     { extended["metadataArguments"] = JsonSerializer.SerializeToNode(metadataArguments); }
+                    if (compositionObservations.Length > 0)
+                    { extended["compositionObservations"] = JsonSerializer.SerializeToNode(compositionObservations); }
                     proof = JsonSerializer.SerializeToUtf8Bytes(extended, RuntimeSafety.Json);
                 }
                 RuntimeSafety.Require(proof.Length <= 64 * 1024, "OutputLimitExceeded");
@@ -276,6 +278,8 @@ public sealed class RuntimeResultRecorder : IDisposable
                 { seenSessions.Add(original.GetProperty("observationId").GetGuid()); }
                 foreach (var argument in metadataArguments)
                 { seenSessions.Add(argument.GetProperty("callId").GetGuid()); }
+                foreach (var observation in compositionObservations)
+                { seenSessions.Add(observation.GetProperty("observationId").GetGuid()); }
                 foreach (var (id, componentIdentity) in instances) { seenInstances.TryAdd(id, componentIdentity); }
                 if (status == ConformanceWitnessStatus.Incomplete) { incomplete = true; }
                 else if (status == ConformanceWitnessStatus.Failed)

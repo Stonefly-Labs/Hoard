@@ -7872,6 +7872,80 @@ unaffected by the scanner's malformed-input guard and test coverage. Keep the
 stage running, reviewer checklists untouched and the PR draft: 42/86 tasks
 are now checked.
 
+### Packaged composition snapshots: diagnostic transport increment
+
+The two existing CP-01/02 package-only rows now emit closed chunked
+`hoard-composition-v1` observations when an explicit original context is present.
+The before-initialization/ready/stopped counters come from the actual singleton
+instances, provider readiness, lifecycle admission, disabled directory, request
+probes and stop result. The SDK stays provider/Hosting-free; an original-owner
+observation may be binding-neutral, but independent policy admits only the exact
+two frozen identities and requires the actual `Hoard.Fixtures.Conformance.Host`
+owner image to match the separately packed archive. Ordinary component output is
+preserved when no context is requested.
+
+Actual fresh execution first exposes the accidental void overload and the SDK's
+missing neutral-owner support. A focused neutral-owner regression reproduces the
+latter rejection before repair. With both repaired, a final seventeen-archive
+build, both ordinary rows and independent fresh-cache default locked build pass.
+The safe logger emits schema4 proofs with original ownership and three closed
+snapshots per row. Independent Python ingestion requires exact input/manifest/
+owner/consumer/package provenance, observed runtime/architecture and ordered
+success-stage invariants, not labels or provider-selected expectations.
+The same consumer image remains unchanged across both selections.
+
+Actual final diagnostic receipt:
+
+| Input/proof | SHA-256 |
+| --- | --- |
+| Source snapshot | `d99b2240db3ba9e1db96614e10109db074ae113157f967c8a3fe1b38cd7c2f28` |
+| Consumer image | `a209483e598a89a089453da602c320e9873d5121404d76dd8d8372460f22b3e6` |
+| Host archive | `753e6180f32563e8748d34f67e97f20761247c36db3f45ea986c7ad5dd166681` |
+| Diagnostic RunInputs | `1ded1d04cffc7fd35c0b3abb005a08ef1d65b41cee7d48cbe95f5d8e84e30c94` |
+| Runtime manifest | `c1842f763d35cbe3b89e90c055c5aa4cb9f076b40c97c2d7c7e59ebadda04d14` |
+| CP-01 runtime proof | `9d9fea35440c7967d3b04b9e54c9bb86740408af4978dced6014e0cf65c2f864` |
+| CP-02 runtime proof | `b289ce93629f4efb34afe875d36dbb34c101b0a67f7148046b4d670a19bbcfa5` |
+
+Both safe witnesses pass and all six snapshots admit. This is diagnostic only,
+on macOS arm64, SDK10.0.203/runtime10.0.7. Native SQLite/filesystem are explicitly
+unobserved, not invented qualification measurements. The private transient
+controller uses bounded legacy process-group capture, not Linux OwnedRun/native
+containment. Retained private inputs/proofs/settings stay outside Git and are
+not indiscriminately uploaded. No full composition profile, inherited inventory,
+support expansion or Linux acceptance is inferred.
+
+Tests-first logger challenges reproduce ten runtime failures before strict
+chunk/shape/source/duplicate decoding. Python success-state challenges reproduce
+five optimistic-state admissions before independent counter invariants.
+Scoped `hoard-architecture-review` identifies one medium issue: requiring complete
+successful snapshots from failed executions loses real partial-failure evidence.
+Zero/one/two-stage failure controls reproduce three missing-witness errors.
+The repaired decoder retains provenance-valid failed/incomplete ordered prefixes
+and original proofs/codes, while full correct triplets remain mandatory for
+passes. A cross-attempt control admits a freshly resealed retry in isolation but
+rejects reused snapshot IDs against append-only history despite fresh owner,
+instance, attempt and execution IDs. This is not final T081 review.
+
+`python3 -m unittest discover -s tests/tooling -q` passes 486 tests with nineteen
+explicit native skips. All 86 `RuntimeLoggerTests` pass using the private
+component cache and `dotnet test ... --no-restore --filter
+'FullyQualifiedName~RuntimeLoggerTests' --verbosity quiet
+-p:UseSharedCompilation=false -nodeReuse:false`.
+`python3 tests/fixtures/conformance/baselines/freeze_inventory.py --check`,
+`python3 scripts/conformance_case_catalog.py --check-sdk`, focused
+`dotnet format whitespace ... --no-restore --verify-no-changes` and
+`git diff --check` pass. The earlier complete155 package/148 source component
+replay remains separate evidence, not a replay of every row after this increment.
+Run40407642140 at exact `d604993216132ae57f5f9c6face9064d9796cadd`
+also finishes successfully in all five existing diagnostic jobs, not later inputs.
+
+README, DEVELOPMENT, PROVIDERS and CustomHost now distinguish delivered two-row
+transport from still-open T044/T045 ownership/controller, full T046 integration,
+T047 acceptance and complete T048 challenges. Keep 46/86 tasks checked and
+`implement / running`; no reviewer checklist is modified. Production contracts,
+charter/product/architecture/ADR/diagrams, governance, baseline/predecessor
+artifacts, IaC, release and UI are unaffected by this test-only evidence channel.
+
 ### Actual package-only Host consumption
 
 The corrected complete package-component replay passes all 155 independently
