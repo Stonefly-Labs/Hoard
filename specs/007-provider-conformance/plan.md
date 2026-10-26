@@ -6959,6 +6959,17 @@ pending. The full local suite reaches the unchanged 24 GiB artifact-scratch
 preflight with only about 22 GiB free; no guard is bypassed or retained evidence
 deleted.
 
+The subsequent ownership-fixture repair removes that unit-suite dependency
+without changing production capacity admission. Small owned-process/resource
+unit fixtures explicitly select the harness profile instead of defaulting to
+baseline; artifact filesystem/parent-race tests model adequate capacity to
+reach their intended controls. An intended-red fixture regression reproduces
+the baseline dependency. New direct allocation cases reject both artifact and
+baseline roots below 24 GiB before creation and admit exactly 24 GiB.
+All 56 execution tests and all 443 tooling tests pass with 19 explicit native
+skips. Modeled unit inputs are not real scratch evidence; native artifact
+execution retains the unchanged real-capacity preflight.
+
 Exact `97b6d0b`, run40252743943, passes 332 native foundations and locked replay
 but fails one existing SQLite/Local lost-metadata-acknowledgment row after the
 hook diagnostics, with `UnknownDiagnostic` and 182 Passed/1 Failed in the

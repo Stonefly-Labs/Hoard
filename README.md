@@ -2337,10 +2337,16 @@ diagnostics. Its ordinary SDK diagnostic summary has 111 scopes and 1,327
 discoveries/executions; all four public category reports remain `Incomplete`.
 The unchanged-runtime success does not establish the earlier failure's cause
 or admit the newer private hook-source wiring at `93e5fe6`.
-The current source-control increment passes all 124 evidence and
-147 SDK tooling checks; the full local suite encounters the existing 24 GiB
-artifact-scratch gate with only about 22 GiB free. No capacity guard is bypassed
-and no retained evidence is deleted.
+The source-control increment passes all 124 evidence and 147 SDK tooling
+checks. An earlier full-suite attempt hit the real 24 GiB artifact-scratch gate
+with about 22 GiB free because small ownership unit fixtures defaulted to the
+full baseline profile. Those fixtures now explicitly use the harness profile;
+artifact capacity, filesystem and parent-race tests model their own capacity
+inputs, retaining below-threshold rejection before root creation and exact
+24 GiB admission checks for both artifact/baseline profiles. All 443 local
+tooling tests now pass with 19 explicit native skips. Production capacity
+checks and actual observed free-space reporting are unchanged; real artifact
+runs still require adequate local scratch. No retained evidence was deleted.
 
 Exact `58a9495`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),

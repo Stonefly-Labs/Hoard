@@ -10,6 +10,7 @@ import sys
 import tempfile
 import threading
 import time
+from types import SimpleNamespace
 import unittest
 from unittest import mock
 
@@ -27,7 +28,33 @@ class ConformanceExecutionTests(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.parent)
 
     def workspace(self):
-        return execution.OwnedRun.allocate(self.parent / "run", ROOT)
+        return execution.OwnedRun.allocate(self.parent / "run", ROOT, profile="harness")
+
+    def test_ownership_controls_do_not_require_artifact_transfer_capacity(self):
+        with mock.patch.object(execution.shutil, "disk_usage", return_value=SimpleNamespace(free=0)):
+            run = self.workspace()
+        preflight = json.loads((run.root / "proofs/preflight.json").read_bytes())
+        self.assertEqual(preflight["freeBytes"], 0)
+        run.transition("Settling")
+        run.release()
+
+    def test_artifact_and_baseline_capacity_preflight_prevents_root_creation(self):
+        required = 24 * 1024**3
+        for profile in ("artifacts", "baseline"):
+            for free in (required - 1, required):
+                destination = self.parent / f"{profile}-{free}"
+                with self.subTest(profile=profile, free=free), mock.patch.object(
+                        execution.shutil, "disk_usage", return_value=SimpleNamespace(free=free)):
+                    if free < required:
+                        with self.assertRaisesRegex(ConformanceError, "InsufficientCapacity"):
+                            execution.OwnedRun.allocate(destination, ROOT, profile=profile)
+                        self.assertFalse(destination.exists())
+                    else:
+                        run = execution.OwnedRun.allocate(destination, ROOT, profile=profile)
+                        preflight = json.loads((run.root / "proofs/preflight.json").read_bytes())
+                        self.assertEqual(preflight["freeBytes"], required)
+                        run.transition("Settling")
+                        run.release()
 
     def test_frozen_metadata_marker_output_projects_only_its_exact_original_line(self):
         for ending in (b"", b"\n", b"\r", b"\r\n"):
@@ -102,7 +129,7 @@ class ConformanceExecutionTests(unittest.TestCase):
                          {"ownership.json", "stores", "feed", "cache", "diagnostics", "proofs"})
         preflight = json.loads((run.root / "proofs/preflight.json").read_bytes())
         self.assertFalse(preflight["qualification"])
-        self.assertGreaterEqual(preflight["freeBytes"], 24 * 1024**3)
+        self.assertGreaterEqual(preflight["freeBytes"], 0)
         self.assertGreaterEqual(preflight["durationMs"], 0)
         if NATIVE_CONTAINMENT:
             self.assertNotEqual(preflight["filesystem"], "unobserved")
@@ -1062,6 +1089,8 @@ else:
     def test_remote_or_unknown_artifact_scratch_rejects_before_workspace_creation(self):
         for filesystem in (b"nfs\n", b"cifs\n", b"unknown\n"):
             with self.subTest(filesystem=filesystem), \
+                    mock.patch.object(execution.shutil, "disk_usage",
+                                      return_value=SimpleNamespace(free=24 * 1024**3)), \
                     mock.patch.object(execution, "native_execution_supported", return_value=True), \
                     mock.patch.object(execution, "capture_control", return_value=(0, filesystem)), \
                     self.assertRaisesRegex(ConformanceError, "PrerequisiteMissing"):
@@ -1069,7 +1098,6 @@ else:
             self.assertFalse((self.parent / "rejected").exists())
 
     def test_preflight_parent_swap_cannot_create_a_workspace_under_an_outside_sentinel(self):
-        disk_usage = execution.shutil.disk_usage
         mkdir = execution.os.mkdir
         for stage in ("preflight", "root-created"):
             with self.subTest(stage=stage):
@@ -1086,10 +1114,9 @@ else:
                     private.rename(scope / "moved")
                     private.symlink_to(outside, target_is_directory=True)
                 def swapped_parent(parent):
-                    capacity = disk_usage(parent)
                     if stage == "preflight":
                         swap()
-                    return capacity
+                    return SimpleNamespace(free=24 * 1024**3)
                 def swapped_creation(path, *args, **kwargs):
                     result = mkdir(path, *args, **kwargs)
                     if stage == "root-created" and path == "run":

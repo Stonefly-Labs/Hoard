@@ -9877,8 +9877,20 @@ parent, full composition or completed durability-exclusion coverage.
 All 124 evidence and 147 SDK tooling tests pass, including both original graph
 producers/factories, history retention/quota checks and mandatory prelude
 failure propagation. Frozen inventory, embedded catalog and patch whitespace
-checks pass. The full local suite is blocked by the existing 24 GiB artifact
-scratch preflight on a volume with about 22 GiB free; the guard is unchanged.
+checks pass. The earlier full local suite hit the existing 24 GiB artifact
+scratch preflight on a volume with about 22 GiB free. Small ownership unit
+fixtures now explicitly use the harness profile rather than the default
+baseline profile; they observe real available capacity but do not need
+artifact transfer space. Artifact filesystem/parent-race unit tests provide
+explicit adequate-capacity inputs so their intended controls are reached.
+An intended-red zero-capacity ownership-fixture regression reproduces the
+accidental baseline dependency. After repair, all 56 execution tests pass
+with 19 native skips, and all 443 tooling tests pass with those same skips.
+New direct allocation tests retain below-threshold rejection before root
+creation and exact 24 GiB admission for both artifact/baseline profiles.
+These are modeled unit capacity inputs, not native artifact scratch evidence.
+Production preflight, actual-run capacity reporting and transfer budgets are
+unchanged; real artifact execution still needs adequate local scratch.
 No C# source, tracked lock, public catalog or task/checklist marker changes.
 
 An intended-red selector regression fails before the scopes exist. After
