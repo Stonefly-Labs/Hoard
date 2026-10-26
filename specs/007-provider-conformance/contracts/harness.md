@@ -1593,7 +1593,16 @@ Object has no borrowed durable restart. Exact `e39b2ce`/run40293145453 admits
 earlier frozen argument maps on Linux: three jobs/341 native foundations pass
 without skips. Pairing/newer artifact scopes remain unadmitted natively.
 
-The current artifact217 scope owns real permission/directory access faults with
+The current artifact221 scope includes four release-cancellation controls.
+Already delivered access scopes survive subsequent observer cancellation under
+the unchanged supervisor rule. Closure restores their actual payload access,
+then preserves the exact ordinary exception in faulted settlement and reports
+`CleanupIncomplete`. Fresh fourteen-package replay passes 377 consumers;
+safe-logger replay checks 221 witnesses/231 origins and ten reopen edges.
+Initial private expectations that cancellation discard delivered success were
+incorrect, not proven ownership bugs. Native/full qualification remains open.
+
+The preceding artifact217 scope owns real permission/directory access faults with
 opaque exact-stamp scopes. Pending registration precedes application; native
 handle capture precedes release observers. Read protection persists through
 physical restoration, so deletion cannot reclaim/resurrect restricted bytes.

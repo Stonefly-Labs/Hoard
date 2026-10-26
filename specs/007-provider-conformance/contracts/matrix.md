@@ -245,7 +245,14 @@ correspondence; missing, extra and foreign validation origins reject. Exact
 jobs/341 native foundations passing without skips. Pairing/newer artifact native
 admission and complete QC-03 remain outstanding.
 
-The current artifact217 scope adds four original validation-access parameters
+The current artifact221 scope adds four release-cancellation rows. Existing
+supervisors preserve already delivered success; closure still restores genuine
+payload access and retains the exact ordinary callback exception in faulted
+settlement. Fresh fourteen-package replay passes 377 consumers; safe-logger
+replay checks 221 witnesses/231 origins and ten reopen edges. Native admission
+and complete qualification remain unfinished.
+
+The preceding artifact217 scope adds four original validation-access parameters
 and twelve actual shutdown/deletion/release-error controls. Real Unix permission
 and directory faults retain exact-stamp deletion protection until restoration;
 pending ownership captures the actual handle before release callbacks. Ordinary

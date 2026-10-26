@@ -60,15 +60,27 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
     [InlineData("object", false)]
     [InlineData("object", true)]
     public async Task Ordinary_access_release_errors_restore_actual_payload_before_faulted_settlement(
-        string provider, bool unavailable)
+        string provider, bool unavailable) =>
+        await AccessReleaseErrorAsync(provider, unavailable, new IOException("Ordinary access release failure"));
+
+    [Theory]
+    [InlineData("local", false)]
+    [InlineData("local", true)]
+    [InlineData("object", false)]
+    [InlineData("object", true)]
+    public async Task Ordinary_access_release_cancellation_restores_actual_payload_before_faulted_settlement(
+        string provider, bool unavailable) =>
+        await AccessReleaseErrorAsync(provider, unavailable, new OperationCanceledException("Ordinary access release cancellation"));
+
+    private async Task AccessReleaseErrorAsync(string provider, bool unavailable, Exception failure)
     {
         await using var resources = new RecordingDirectories(allowFailedSettlement: true);
         var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
             resources, new ConformanceEvidenceBuffer());
         var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
         var bytes = "payload access restoration after a release observer exception"u8.ToArray();
-        var failure = new IOException("Ordinary access release failure");
         IAsyncDisposable? observation = null;
+        IAsyncDisposable? access = null;
         Exception? disposalFailure = null;
         try
         {
@@ -76,8 +88,13 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
             var receipt = await ArtifactPublicationAssertions.PublishAsync(session.Store, source, new(1024), default);
             observation = await session.Faults.ObserveBoundaryAsync(ArtifactObservationPoint.OperationReleased,
                 () => ValueTask.FromException(failure), default);
-            Assert.Same(failure, await Record.ExceptionAsync(
-                () => session.Faults.RestrictPayloadAccessAsync(receipt.Stamp, unavailable, default).AsTask()));
+            if (failure is OperationCanceledException)
+            { access = await session.Faults.RestrictPayloadAccessAsync(receipt.Stamp, unavailable, default); }
+            else
+            {
+                Assert.Same(failure, await Record.ExceptionAsync(
+                    () => session.Faults.RestrictPayloadAccessAsync(receipt.Stamp, unavailable, default).AsTask()));
+            }
             await observation.DisposeAsync();
             ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
         }
@@ -85,6 +102,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         {
             if (observation is not null) { await observation.DisposeAsync(); }
             disposalFailure = await Record.ExceptionAsync(() => session.DisposeAsync().AsTask());
+            if (access is not null) { await access.DisposeAsync(); }
         }
         Assert.Equal("CleanupIncomplete", Assert.IsType<InvalidOperationException>(disposalFailure).Message);
         var settlement = Assert.Single(resources.Settlements).Value;

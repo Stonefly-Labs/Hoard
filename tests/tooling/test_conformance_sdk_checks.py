@@ -4314,7 +4314,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                         for provider in ("local", "object") for unavailable in ("False", "True"))
         expected.update(prefix + method + f'(provider: "{provider}", unavailable: {unavailable})'
                         for method in ("Observed_access_scope_protects_actual_incarnation_until_restoration",
-                                       "Ordinary_access_release_errors_restore_actual_payload_before_faulted_settlement")
+                                       "Ordinary_access_release_errors_restore_actual_payload_before_faulted_settlement",
+                                       "Ordinary_access_release_cancellation_restores_actual_payload_before_faulted_settlement")
                         for provider in ("local", "object") for unavailable in ("False", "True"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))

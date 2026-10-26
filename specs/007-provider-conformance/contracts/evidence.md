@@ -353,7 +353,17 @@ passes unchanged checks. Exact `e39b2ce`/run40293145453 admits earlier frozen
 metadata argument maps with three Linux jobs/341 native foundations passing
 without skips, not QC-02 pairing/newer artifact scopes or full qualification.
 
-The current artifact217 scope preserves all four original validation-access
+The current artifact221 scope adds four release-cancellation controls, preserving
+already delivered scope success under unchanged supervisor semantics. The exact
+ordinary observer exception remains in faulted settlement after physical access
+restoration. Fresh fourteen-package replay passes 377 consumers; independent
+safe-logger replay checks 221 witnesses/231 origins and ten reopen edges.
+The artifact217 parity/mutant receipt below belongs to its own source/package,
+not this later snapshot. Earlier private discarded-success expectations are
+invalid, not evidence of an ownership defect. Native/full qualification stays
+unfinished.
+
+The preceding artifact217 scope preserves all four original validation-access
 parameters and twelve actual ownership controls. Permission/directory faults are
 genuine private I/O mutations; the SDK gets an opaque exact-stamp scope, never a
 payload path or synthetic verdict. Its native read guard survives restoration.

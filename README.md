@@ -2588,7 +2588,14 @@ argument maps on Linux: three jobs/341 native foundations pass without skips.
 QC-02 pairing and the newer artifact scopes still await native observation;
 full qualification and the implementation stage remain unfinished.
 
-The current artifact217 scope preserves all four original validation-access
+The current artifact221 scope additionally checks release-observer cancellation
+for both providers/access modes. Already delivered scopes remain delivered, as
+required by existing supervisor semantics; the exact ordinary callback error
+still faults settlement after actual restoration. No supervisor behavior changes.
+Fresh fourteen-package replay passes 377 consumers; safe-logger replay checks
+221 witnesses/231 origins and ten reopen edges. Full qualification remains open.
+
+The preceding artifact217 scope preserves all four original validation-access
 cases through real Unix permission denial and payload-directory removal.
 Opaque, exact-stamp scopes retain deletion protection until restoration;
 pending ownership captures the actual handle before release observers can fail.

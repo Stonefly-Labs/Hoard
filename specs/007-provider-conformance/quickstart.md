@@ -667,7 +667,14 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen argument maps
 three Linux jobs/341 native foundations pass without skips. Pairing/newer
 artifact native admission and full qualification remain outstanding.
 
-The current artifact217 scope runs genuine payload-access faults and all four
+The current artifact221 scope also checks release-observer cancellation for
+both providers/access modes. Already delivered scope success survives, while
+the exact ordinary error still faults settlement after actual restoration.
+Supervisor semantics are unchanged. Fresh fourteen-package replay passes 377
+consumers; safe-logger replay checks 221 witnesses/231 origins and ten reopen
+edges. Native/full qualification remains unfinished.
+
+The preceding artifact217 scope runs genuine payload-access faults and all four
 original validation parameters. Exact-stamp scopes hold deletion protection
 until real restoration, and pending ownership captures handles before release
 observers run. Concurrent shutdown cannot hand off a stale scope or release

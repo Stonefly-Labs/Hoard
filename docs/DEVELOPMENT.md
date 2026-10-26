@@ -10406,7 +10406,17 @@ QC-02 pairing/newer artifact native confirmation and full acceptance remain open
 Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 
-The current artifact217 extension owns real Unix payload permission/directory
+The current artifact221 extension adds four release-cancellation controls.
+Existing supervisors preserve an already delivered scope rather than discarding
+it for a later observer cancellation. The exact ordinary callback exception
+remains in faulted settlement; closure restores the real payload before reporting
+`CleanupIncomplete`. No supervisor implementation changes. Fresh fourteen-package
+replay passes 377 consumers; safe-logger replay checks 221 witnesses/231 origins
+and ten reopen edges. Tooling452/19 native skips passes. Earlier private probes
+incorrectly expected cancellation to discard delivered success; they are not
+ownership-defect evidence. Native/full feature qualification remains unfinished.
+
+The preceding artifact217 extension owns real Unix payload permission/directory
 access faults through application, restoration and closure. Exact-stamp guards
 prevent physical deletion until restoration; capturing the native scope before
 release callbacks closes the reviewed failed-result handoff gap. Four rows each

@@ -168,7 +168,15 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen metadata
 argument maps with all three Linux jobs/341 native foundations passing without
 skips. QC-02 pairing/newer artifact scopes and complete QC-03 remain unadmitted.
 
-The current artifact217 scope preserves original validation access failures with
+The current artifact221 scope also preserves the existing settled-success rule
+under release-observer cancellation: a delivered access scope remains delivered,
+but the exact ordinary callback error still faults settlement after physical
+restoration. Four actual rows cover both providers/access modes without changing
+their supervisors. Fresh fourteen-package replay passes 377 consumers;
+safe-logger replay checks 221 witnesses/231 origins and ten reopen edges.
+Native/full qualification remains unfinished.
+
+The preceding artifact217 scope preserves original validation access failures with
 real Unix mode changes/directory removal, not synthetic result codes. Opaque
 exact-stamp scopes retain read protection until restoration, preventing deletion
 or payload resurrection. Their pending owner captures the actual native scope

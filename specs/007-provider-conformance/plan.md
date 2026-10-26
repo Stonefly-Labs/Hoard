@@ -7556,7 +7556,24 @@ Metadata remains 92 Passed/1 Incomplete/9 NotApplicable/0 Failed, report
 `Incomplete`, qualification false. Pairing/newer artifact scopes remain pending;
 no tasks, reviewer-owned checklists or stage markers advance here.
 
-The current artifact217 increment extracts all four original validation-access
+The current artifact221 increment adds four release-cancellation controls for
+the new access scopes. Existing supervisor semantics intentionally return already
+delivered success despite subsequent cancellation; no supervisor change is made.
+Closure still restores actual payload access and retains the exact ordinary
+observer exception in faulted settlement with `CleanupIncomplete`. Initial
+private probes expecting discarded success were invalid expectations, not
+evidence of an ownership defect.
+
+Fresh fourteen-package replay passes 377 consumers/zero skips at source
+`196f3c8eaca008123683dd087340252920fec1112fb7c7f31223b01b860ab7ce`,
+SDK archive
+`b592b23eb05bc4b99648e6b0652417298104cab673e73f7ff50d51c61f4f7c11`.
+Safe-logger replay checks 221 witnesses/231 origins and ten reopen edges;
+tooling452/19 native skips passes. Native admission, QC-03 and stage tasks remain
+unfinished. The preceding artifact217 assertion parity receipt retains its own
+source/package identity, not this later snapshot.
+
+The preceding artifact217 increment extracts all four original validation-access
 parameters through an awaited overload retaining the synchronous wrapper and
 every original assertion. Actual private Unix permission/directory faults expose
 only an opaque disposable scope. A pending owner is installed before application;
