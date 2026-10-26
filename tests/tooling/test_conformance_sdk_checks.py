@@ -192,6 +192,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     archive.write_bytes(name.encode())
                     packages[name] = checks.evidence.file_sha256(archive)
                 (self.directory / "stores").mkdir(exist_ok=True)
+                (self.directory / "proofs").mkdir(exist_ok=True)
                 owner = self.directory / "runtime-owner.json"
                 if not owner.exists():
                     checks.write_new(owner, b"owner")
@@ -247,7 +248,8 @@ class SdkDiagnosticTests(unittest.TestCase):
             archive = feed / (name + ".0.1.0.nupkg")
             archive.write_bytes(name.encode())
             packages[name] = checks.evidence.file_sha256(archive)
-        (self.directory / "stores").mkdir()
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
         checks.write_new(self.directory / "runtime-owner.json", b"owner")
         run = SimpleNamespace(root=self.directory)
         options = {"metadata_packages" if profile == "metadata" else "artifact_packages": packages,
@@ -339,8 +341,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                             checks.runtime_command(run, assembly, manifest, **call.args[5])
                     self.assertEqual(set(command.call_args.kwargs["execution_inputs"]), {
                         f'runtime-input-{manifest["attemptId"]}.json', "runtime-owner.json", path,
-                        f'stores/settings-{manifest["attemptId"]}.runsettings', *images})
-                    settings = ET.parse(root / f'stores/settings-{manifest["attemptId"]}.runsettings')
+                        f'proofs/settings-{manifest["attemptId"]}.runsettings', *images})
+                    settings = ET.parse(root / f'proofs/settings-{manifest["attemptId"]}.runsettings')
                     variables = settings.find(".//EnvironmentVariables")
                     expected = {
                         **{variable: package["sha256"] for package, variable in zip(
@@ -409,8 +411,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                                        original_observations=True)
         self.assertEqual(set(command.call_args.kwargs["execution_inputs"]), {
             f'runtime-input-{manifest["attemptId"]}.json', "runtime-owner.json", path,
-            f'stores/settings-{manifest["attemptId"]}.runsettings', *images})
-        settings = ET.parse(run.root / f'stores/settings-{manifest["attemptId"]}.runsettings')
+            f'proofs/settings-{manifest["attemptId"]}.runsettings', *images})
+        settings = ET.parse(run.root / f'proofs/settings-{manifest["attemptId"]}.runsettings')
         context = settings.findtext(".//EnvironmentVariables/HOARD_ORIGINAL_CONTEXT")
         self.assertEqual(checks.evidence.load_json(base64.b64decode(context)), {
             "schemaVersion": 1, "runId": inputs["runId"],
@@ -533,7 +535,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         shutil.rmtree(self.directory)
 
     def test_category_command_parent_joins_exact_owned_invocation_without_raw_arguments(self):
-        (self.directory / "proofs").mkdir()
+        (self.directory / "proofs").mkdir(exist_ok=True)
         run = SimpleNamespace(
             root=self.directory, run_id=str(uuid.uuid4()), root_id=str(uuid.uuid4()),
             command_sequence=7, live_children=lambda: ())
@@ -542,8 +544,9 @@ class SdkDiagnosticTests(unittest.TestCase):
             "attemptId": str(uuid.uuid4()), "purpose": "execution", "inputSha256": "a" * 64}
         arguments = ["dotnet", "vstest", "synthetic-private-path-canary"]
         settings = b"<RunSettings/>"
-        (self.directory / "stores").mkdir()
-        (self.directory / f'stores/settings-{manifest["attemptId"]}.runsettings').write_bytes(settings)
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
+        (self.directory / f'proofs/settings-{manifest["attemptId"]}.runsettings').write_bytes(settings)
         record = {
             "schemaVersion": 1, "sequence": 7, "childPid": 123,
             "childStartSha256": "b" * 64, "startedMs": 2, "endedMs": 3,
@@ -597,7 +600,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         with self.assertRaises(checks.evidence.ConformanceError):
             checks.category_command_proof(run, result, **options)
         path.chmod(0o400)
-        settings_path = self.directory / f'stores/settings-{manifest["attemptId"]}.runsettings'
+        settings_path = self.directory / f'proofs/settings-{manifest["attemptId"]}.runsettings'
         settings_path.write_bytes(b"<Changed/>")
         with self.assertRaises(checks.evidence.ConformanceError):
             checks.category_command_proof(run, result, **options)
@@ -874,7 +877,8 @@ class SdkDiagnosticTests(unittest.TestCase):
 
     def test_category_runtime_scopes_preserve_exact_catalog_binding_and_case_assignments(self):
         from conformance_case_catalog import category_execution_partitions, category_runtime_cases
-        (self.directory / "stores").mkdir()
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
         (self.directory / "runtime-owner.json").write_bytes(b"{}")
         runner = self.directory / "Hoard.Fixtures.Artifacts.CrashRunner.dll"
         runner.write_bytes(b"runner")
@@ -942,7 +946,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                         self.assertTrue({entry["path"] for entry in manifest["assemblies"]} <= set(
                             launches[-1][1]["execution_inputs"]))
                     if scope_id == "controller":
-                        settings = ET.fromstring((self.directory / "stores" / (
+                        settings = ET.fromstring((self.directory / "proofs" / (
                             "settings-" + manifest["attemptId"] + ".runsettings")).read_bytes())
                         self.assertEqual(
                             settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_ARTIFACT_TRANSFER_PROOFS"),
@@ -1073,7 +1077,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     run.run_id, run.root_id = inputs["runId"], str(uuid.uuid4())
                     run.command_sequence, run.live_children = 1, lambda: ()
                     arguments, settings = ["dotnet", "vstest", "synthetic-source-command-canary"], b"<RunSettings/>"
-                    settings_path = self.directory / f'stores/settings-{manifest["attemptId"]}.runsettings'
+                    settings_path = self.directory / f'proofs/settings-{manifest["attemptId"]}.runsettings'
                     settings_path.write_bytes(settings)
                     record = {
                         "schemaVersion": 1, "sequence": 1, "childPid": 123, "childStartSha256": "b" * 64,
@@ -1302,7 +1306,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             "proofs": {f'proof-{row["executionId"]}.json': row["proofSha256"] for row in witnesses}}
         capture = self.directory / "stores" / ("original-inspection-" + manifest["attemptId"])
         capture.mkdir(parents=True)
-        (self.directory / "proofs").mkdir()
+        (self.directory / "proofs").mkdir(exist_ok=True)
         packets = {}
         for identity in scenario[1]:
             path = capture / ("inspection-" + hashlib.sha256(identity.encode()).hexdigest() + ".json")
@@ -1355,7 +1359,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         factory = getattr(checks, "original_inspection_literal_scenarios", None)
         self.assertTrue(callable(factory), "Inspection context must be independently allocated per execution.")
         scenario, = factory()
-        (self.directory / "stores").mkdir()
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
         (self.directory / "runtime-owner.json").write_bytes(b"{}")
         commands = []
         def execute(args, **options):
@@ -1380,7 +1385,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 self.assertEqual(actual["cases"], {identity: {} for identity in scenario[1]})
                 self.assertEqual(Path(actual["outputDirectory"]),
                                  self.directory / "stores" / ("original-inspection-" + attempt))
-                settings = ET.parse(self.directory / "stores" / ("settings-" + attempt + ".runsettings"))
+                settings = ET.parse(self.directory / "proofs" / ("settings-" + attempt + ".runsettings"))
                 self.assertEqual(settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_INSPECTION_CONTEXT"),
                                  str(context))
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
@@ -1446,7 +1451,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertFalse(receipt.exists())
 
     def test_prepared_inspection_runtime_allocates_exact_execution_context_without_discovery_capture(self):
-        (self.directory / "stores").mkdir()
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
         (self.directory / "runtime-owner.json").write_bytes(b"{}")
         identities = tuple(identity for identity in checks.ORIGINAL_INSPECTION_WITNESSES
                            if identity not in checks.ORIGINAL_INSPECTION_LITERAL_WITNESSES)
@@ -1471,7 +1477,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             checks.runtime_command(run, assembly, manifest,
                                    inspection_cases=cases, inspection_configurations=configurations)
             context = self.directory / "stores" / ("inspection-context-" + manifest["attemptId"] + ".json")
-            settings = ET.parse(self.directory / "stores" / ("settings-" + manifest["attemptId"] + ".runsettings"))
+            settings = ET.parse(self.directory / "proofs" / ("settings-" + manifest["attemptId"] + ".runsettings"))
             if purpose == "discovery":
                 self.assertFalse(context.exists())
                 self.assertIsNone(settings.find("./RunConfiguration/EnvironmentVariables"))
@@ -1492,7 +1498,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         scenario, = checks.original_inspection_prepared_scenarios()
         candidate = self.directory / "current"
         assembly = candidate / checks.ARCHITECTURE_TESTS / "bin/Release/net10.0/Hoard.Architecture.Tests.dll"
-        (self.directory / "stores").mkdir()
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
         (self.directory / "feed/candidate").mkdir(parents=True)
         (self.directory / "stores/candidate.NuGet.Config").write_bytes(
             checks.evidence.synthetic_nuget_configuration(self.directory / "feed/candidate"))
@@ -1590,7 +1597,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 checks.inspection_reference_roots()
 
     def test_missing_inspection_projects_use_locked_builds_without_extending_the_package_feed(self):
-        (self.directory / "proofs").mkdir()
+        (self.directory / "proofs").mkdir(exist_ok=True)
         candidate = self.directory / "current"
         feed, config = self.directory / "feed", self.directory / "candidate.NuGet.Config"
         receipts = []
@@ -1642,7 +1649,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                         "Prepared graphs must not invoke the predecessor raw-output runner.")
         project = self.directory / "Actual.csproj"
         project.write_text("<Project/>")
-        (self.directory / "stores").mkdir()
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
         calls = []
         selected = {
             "Properties": {"TargetPath": str(self.directory / "Actual.Output.dll"),
@@ -2018,7 +2026,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         inputs = {"runId": run_id, "invocationGroupId": group, "environment": {"runtime": "10.0.7"}}
         capture = self.directory / "stores" / ("original-artifact-" + attempt)
         capture.mkdir(parents=True)
-        (self.directory / "proofs").mkdir()
+        (self.directory / "proofs").mkdir(exist_ok=True)
         paths = {}
         for identity, (kind, provider, parameter) in sources.items():
             if kind == "crash":
@@ -2816,7 +2824,7 @@ class SdkDiagnosticTests(unittest.TestCase):
     def test_native_recovery_command_checks_the_actual_command_result_record_digest(self):
         from conformance_execution import CommandResult
 
-        (self.directory / "proofs").mkdir()
+        (self.directory / "proofs").mkdir(exist_ok=True)
         command = {
             "schemaVersion": 1, "sequence": 1, "childPid": 200,
             "childStartSha256": "a" * 64, "startedMs": 1000, "endedMs": 1200,
@@ -3664,7 +3672,8 @@ class SdkDiagnosticTests(unittest.TestCase):
             "packages": [{"packageId": "Hoard.Testing.Conformance", "sha256": "b" * 64}],
             "bindings": [{"bindingId": binding} for binding in assignments],
         }
-        (self.directory / "stores").mkdir()
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
         (self.directory / "runtime-owner.json").write_bytes(b"{}")
         run = SimpleNamespace(root=self.directory)
         scenarios = checks.original_observation_scenarios()
@@ -3816,7 +3825,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                         checks.runtime_command(run, assembly, manifest, **{
                             "original_observations": True, **({"metadata_provider": provider} if metadata else {})})
                     settings = ET.fromstring((
-                        self.directory / "stores" / f"settings-{manifest['attemptId']}.runsettings").read_bytes())
+                        self.directory / "proofs" / f"settings-{manifest['attemptId']}.runsettings").read_bytes())
                     encoded = settings.find("./RunConfiguration/EnvironmentVariables/HOARD_ORIGINAL_CONTEXT").text
                     context = checks.evidence.load_json(base64.b64decode(encoded))
                     self.assertEqual(context, {"schemaVersion": 1, "runId": inputs["runId"], "cases": {
@@ -4172,7 +4181,8 @@ class SdkDiagnosticTests(unittest.TestCase):
             archive = feed / (package + ".0.1.0.nupkg")
             archive.write_bytes(package.encode())
             packages[package] = checks.evidence.file_sha256(archive)
-        (self.directory / "stores").mkdir()
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
         (self.directory / "runtime-owner.json").write_bytes(b"{}")
         inputs = {
             "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
@@ -4214,7 +4224,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertIn("--ListTests", arguments)
                     self.assertIn("--TestCaseFilter:FullyQualifiedName=" + scenario[1][0].split("(")[0], arguments)
                     settings = ET.fromstring((
-                        self.directory / "stores" / f"settings-{manifest['attemptId']}.runsettings").read_bytes())
+                        self.directory / "proofs" / f"settings-{manifest['attemptId']}.runsettings").read_bytes())
                     variables = settings.find("./RunConfiguration/EnvironmentVariables")
                     self.assertEqual({item.tag: item.text for item in variables}, {
                         "HOARD_ORIGIN_RUN_ID": inputs["runId"],
@@ -5149,7 +5159,8 @@ class SdkDiagnosticTests(unittest.TestCase):
     def test_native_artifact_capture_context_is_bound_to_category_inputs_but_not_legacy_or_discovery(self):
         from test_conformance_evidence import ConformanceAdmissionTests
         inputs = {**ConformanceAdmissionTests().inputs(), "profileId": "artifacts", "mode": "diagnostic"}
-        (self.directory / "stores").mkdir()
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
         (self.directory / "proofs/category-artifact-transfers").mkdir(parents=True)
         (self.directory / "proofs/qualification-artifact-transfers").mkdir()
         (self.directory / "proofs/artifact-transfers").mkdir()
@@ -5183,7 +5194,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             with self.subTest(kind=kind), patch.object(checks, "category_command_proof"):
                 checks.runtime_command(run, assembly, selected, artifact_runner=runner, **(
                     {} if kind == "legacy" else {"category_scope": ("artifacts", "controller")}))
-                settings = ET.fromstring((self.directory / f'stores/settings-{selected["attemptId"]}.runsettings').read_bytes())
+                settings = ET.fromstring((self.directory / f'proofs/settings-{selected["attemptId"]}.runsettings').read_bytes())
                 context_path = settings.findtext("./RunConfiguration/EnvironmentVariables/HOARD_ARTIFACT_SOURCE_CONTEXT")
                 namespace = ("qualification-artifact-transfers" if kind.startswith("qualification")
                              else "category-artifact-transfers")
@@ -5199,7 +5210,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                         self.directory / f'stores/artifact-source-capture-{selected["attemptId"]}'))
                     expected = {
                         f'runtime-input-{selected["attemptId"]}.json', "runtime-owner.json",
-                        "proofs/category-inputs.json", f'stores/settings-{selected["attemptId"]}.runsettings',
+                        "proofs/category-inputs.json", f'proofs/settings-{selected["attemptId"]}.runsettings',
                         "Hoard.Artifacts.Tests.dll", f'stores/artifact-source-context-{selected["attemptId"]}.json',
                         runner.name, f"proofs/{namespace}.json",
                         *(f"proofs/{namespace}/transfer-{provider}-{size}/proof.json"
@@ -5214,7 +5225,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertFalse((self.directory / f'stores/artifact-source-context-{selected["attemptId"]}.json').exists())
 
     def test_external_artifact_settings_bind_the_actual_runner_current_run_and_parent_transfer_proofs(self):
-        (self.directory / "stores").mkdir()
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
         (self.directory / "proofs/artifact-transfers").mkdir(parents=True)
         (self.directory / "runtime-owner.json").write_bytes(b"{}")
         runner = self.directory / "Hoard.Fixtures.Artifacts.CrashRunner.dll"
@@ -5244,7 +5256,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         self.assertEqual(len(received), 1)
 
     def test_original_provider_selection_is_closed_and_reaches_the_actual_test_host_settings(self):
-        (self.directory / "stores").mkdir()
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
         (self.directory / "runtime-owner.json").write_bytes(b"{}")
         received = []
 
@@ -5780,7 +5793,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         canonicalize.assert_called_once_with(feed / "Hoard.Fixtures.Metadata.Memory.0.1.0.nupkg")
 
     def test_capture_recomputes_added_runtime_and_locks_and_rejects_remapped_sources(self):
-        (self.directory / "stores").mkdir()
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
         (self.directory / "feed").mkdir()
         run = SimpleNamespace(root=self.directory, run_id=str(uuid.uuid4()), _check_ledger=lambda: None)
         config, feed = checks.baselines._config(run, "candidate")
@@ -5902,8 +5916,9 @@ class SdkDiagnosticTests(unittest.TestCase):
             capture(before["invocationGroupId"])
 
     def test_attempt_uses_exact_identities_disabled_console_and_ingestion(self):
-        (self.directory / "proofs").mkdir()
-        (self.directory / "stores").mkdir()
+        (self.directory / "proofs").mkdir(exist_ok=True)
+        (self.directory / "stores").mkdir(exist_ok=True)
+        (self.directory / "proofs").mkdir(exist_ok=True)
         owner = self.directory / "runtime-owner.json"
         owner.write_bytes(b"owner")
         candidate = self.directory / "stores/candidate"
@@ -5923,7 +5938,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             self.assertEqual(args[-1], "--TestCaseFilter:FullyQualifiedName=" +
                              checks.SMOKE + "Parameter")
             settings = ET.parse(args[-2].removeprefix("--Settings:")).getroot()
-            self.assertEqual(Path(args[-2].removeprefix("--Settings:")).parent, self.directory / "stores")
+            self.assertEqual(Path(args[-2].removeprefix("--Settings:")).parent, self.directory / "proofs")
             loggers = settings.findall("./LoggerRunSettings/Loggers/Logger")
             self.assertEqual([(item.attrib["friendlyName"], item.attrib["enabled"]) for item in loggers],
                              [("console", "False"), ("HoardSafe", "True")])
@@ -5980,9 +5995,14 @@ class SdkDiagnosticTests(unittest.TestCase):
             with self.assertRaisesRegex(checks.evidence.ConformanceError, "EvidenceIncomplete"):
                 checks.test_attempt(run, inputs, candidate, scenario)
             execution.assert_not_called()
+        settings = self.directory / f'proofs/settings-{manifest["attemptId"]}.runsettings'
+        before_cleanup = checks.evidence.file_sha256(settings)
+        shutil.rmtree(self.directory / "stores")
+        self.assertEqual(checks.evidence.file_sha256(settings), before_cleanup)
+        self.assertEqual(settings.stat().st_mode & 0o777, 0o400)
 
     def test_environment_forwards_only_allowlisted_actual_runner_image(self):
-        (self.directory / "proofs").mkdir()
+        (self.directory / "proofs").mkdir(exist_ok=True)
         observed = []
 
         def command(args, **kwargs):
@@ -6005,7 +6025,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 self.assertLessEqual(observed[-1]["timeout"], 30)
 
     def test_admission_and_completion_capture_distinct_environment_observations(self):
-        (self.directory / "proofs").mkdir()
+        (self.directory / "proofs").mkdir(exist_ok=True)
         observed = []
         def command(args, **kwargs):
             with Path(args[-1]).open("xb") as target:

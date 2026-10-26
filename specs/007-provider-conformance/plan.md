@@ -7720,6 +7720,23 @@ release. Complete SDK/evidence tooling-file suites pass:
 APIs/provider mechanisms, package graph, examples, diagrams, charter/architecture/
 ADRs, infrastructure and release behavior are unchanged.
 
+### Isolated cleanup proof-retention repair
+
+Linux run `40341286948` passes its three foundation jobs but fails both isolated
+category jobs with `InputChanged` at post-cleanup proof admission. Hook/common
+consumer proof registries include their generated runsettings; those settings
+were incorrectly placed in disposable `stores/`. Move generated settings to
+`proofs/`, retaining actual read-only bytes and keeping all creator, native
+command input hashes and independent source-admission paths consistent.
+Do not weaken cleanup or replace missing proofs with success-shaped receipts.
+The runtime-attribution regression now removes stores and verifies the actual
+settings hash and `0400` permissions survive. Tooling validation passes
+`python3 -m unittest discover -s tests/tooling -q` (473 tests, 19 explicit native
+skips), frozen inventory, SDK catalog, shell syntax and `git diff --check`.
+Fresh native confirmation remains pending; task/checklist/stage markers do not
+advance. Product APIs, provider mechanisms, package graph, examples, diagrams,
+charter/architecture/ADRs, infrastructure and releases are unaffected.
+
 ### Tests-first category and composition checkpoint
 
 Mark T019/T020 complete from the existing frozen-case/parameter/control parity

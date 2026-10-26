@@ -2910,6 +2910,15 @@ Earlier parameterized run
 at `ed235ee` is now admitted: all three jobs, 230 foundations and
 105 scopes/1,108 observations with every prerequisite, not these later sources.
 
+Isolated category run
+[40341286948](https://github.com/Stonefly-Labs/Hoard/actions/runs/40341286948)
+passed the three foundation jobs but failed both category reports after cleanup:
+their proof registries still referenced deleted synthetic-store runsettings.
+Generated runtime settings now live in the retained read-only proof directory;
+creation, native command attribution and independent source admission agree on
+that location. Fresh native confirmation remains pending; this is not profile
+qualification or implementation-stage completion.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

@@ -4048,7 +4048,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 "HOARD_ARTIFACT_SOURCE_CONTEXT": str(root / context_path)}
             environment = "<EnvironmentVariables>" + "".join(
                 f"<{key}>{escape(value)}</{key}>" for key, value in variables.items()) + "</EnvironmentVariables>"
-            settings = root / "stores" / f"settings-{self.attempt}.runsettings"
+            settings = root / "proofs" / f"settings-{self.attempt}.runsettings"
             settings_raw = sources.runtime_settings(
                 root, root / assembly_path, self.attempt, evidence.digest(manifest), evidence.digest(self.owner), environment)
             write(settings, settings_raw)
@@ -4237,7 +4237,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             environment = ("<EnvironmentVariables><HOARD_ORIGINAL_CONTEXT>"
                            + base64.b64encode(evidence.canonical_bytes(context)).decode()
                            + "</HOARD_ORIGINAL_CONTEXT></EnvironmentVariables>")
-            assembly, settings = root / assembly_path, root / "stores" / f"settings-{self.attempt}.runsettings"
+            assembly, settings = root / assembly_path, root / "proofs" / f"settings-{self.attempt}.runsettings"
             settings_raw = sources.runtime_settings(
                 root, assembly, self.attempt, evidence.digest(manifest), evidence.digest(self.owner), environment)
             write(settings, settings_raw)
@@ -4701,7 +4701,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                        + base64.b64encode(evidence.canonical_bytes(context)).decode()
                        + "</HOARD_ORIGINAL_CONTEXT></EnvironmentVariables>")
         assembly = run.root / manifest["assemblies"][0]["path"]
-        settings = run.root / "stores" / f"settings-{self.attempt}.runsettings"
+        settings = run.root / "proofs" / f"settings-{self.attempt}.runsettings"
         settings_raw = sources.runtime_settings(
             run.root, assembly, self.attempt, evidence.digest(manifest), evidence.digest(self.owner), environment)
         write(settings, settings_raw)
@@ -4937,7 +4937,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 started_ms=9, ended_ms=12)["observation"]
             attempt = self.attempt
             assembly = root / assembly_path
-            settings_path = f"stores/settings-{attempt}.runsettings"
+            settings_path = f"proofs/settings-{attempt}.runsettings"
             environment = "<EnvironmentVariables>" + "".join(
                 f"<{key}>{escape(value)}</{key}>" for key, value in sources.category_consumer_environment(
                     self.inputs).items()) + "</EnvironmentVariables>"
@@ -5294,7 +5294,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     f"<{key}>{escape(value)}</{key}>" for key, value in sources.category_consumer_environment(
                         self.inputs).items()) + "</EnvironmentVariables>"
                 assembly = root / assembly_path
-                settings_path = f"stores/settings-{faulty_id}.runsettings"
+                settings_path = f"proofs/settings-{faulty_id}.runsettings"
                 settings = root / settings_path
                 settings_raw = sources.runtime_settings(
                     root, assembly, faulty_id, evidence.digest(faulty_manifest), evidence.digest(self.owner), environment)
@@ -5339,7 +5339,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 self.assertEqual({row["sourceProofSha256"] for row in facts}, {row["proofSha256"] for row in failed})
                 self.assertIn(f"proofs/execution-command-0001.json", packets)
                 write(root / f"runtime-input-{corrected_id}.json", transport["manifest_data"])
-                current_settings = root / "stores" / f"settings-{corrected_id}.runsettings"
+                current_settings = root / "proofs" / f"settings-{corrected_id}.runsettings"
                 current_settings_raw = sources.runtime_settings(
                     root, assembly, corrected_id, evidence.digest(manifest), evidence.digest(self.owner), environment)
                 write(current_settings, current_settings_raw)
@@ -5519,7 +5519,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 "inputsSha256": evidence.digest(self.inputs), "outputDirectory": str(capture),
                 "cases": {identity: {} for identity in expected}}))
             assembly = root / assembly_path
-            settings = root / "stores" / f"settings-{self.attempt}.runsettings"
+            settings = root / "proofs" / f"settings-{self.attempt}.runsettings"
             environment = "<EnvironmentVariables><HOARD_INSPECTION_CONTEXT>" + escape(str(context)) + (
                 "</HOARD_INSPECTION_CONTEXT></EnvironmentVariables>")
             settings_data = sources.runtime_settings(

@@ -10482,6 +10482,14 @@ two explicitly non-qualifying isolated extraction jobs. Native admission of
 these new paths is pending; public `validate-conformance.sh` profile, verify and
 aggregate execution is not inferred.
 
+Run `40341286948` passed the three foundation jobs but exposed `InputChanged`
+in both isolated category jobs: cleanup removed runsettings that their proof
+registries still required. Generated settings now use
+`proofs/settings-<attempt>.runsettings`, with the same exact native-command input
+hashes and source admission; cleanup still removes synthetic stores/feed/cache.
+A regression verifies settings remain read-only and byte-identical after store
+deletion. Fresh native confirmation is pending; no qualification is inferred.
+
 Tests-first CP-01..20 coverage reuses `ConformanceMatrixTests.cs`, preserving the
 existing catalog/runtime identities instead of introducing duplicate test types.
 Source matrix/version and related lifecycle/configuration/discovery regressions

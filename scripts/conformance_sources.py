@@ -561,7 +561,7 @@ def _native_category_consumer_control(run, inputs, *, started_ms, ended_ms, hook
     admit_owned_command({key: record[key] for key in fields}, sequence,
                         scope="ordinary", detail=None, exit_code=0, max_duration=180000)
     assembly = run.root / manifest["assemblies"][0]["path"]
-    settings_path = f"stores/settings-{attempt}.runsettings"
+    settings_path = f"proofs/settings-{attempt}.runsettings"
     settings_raw = _readonly(run.root / settings_path, 256 * 1024)
     environment = "<EnvironmentVariables>" + "".join(
         f"<{key}>{escape(value)}</{key}>" for key, value in category_consumer_environment(inputs).items()
@@ -703,7 +703,7 @@ def category_mutation_observations(run, inputs, manifest, observed, *, sequence,
             or record["runId"] != run.run_id or record["rootId"] != run.root_id):
         raise evidence.ConformanceError("OwnershipInvalid")
     assembly = run.root / next(iter(images))
-    settings_path = f"stores/settings-{faulty_attempt}.runsettings"
+    settings_path = f"proofs/settings-{faulty_attempt}.runsettings"
     settings = run.root / settings_path
     environment = "<EnvironmentVariables>" + "".join(
         f"<{key}>{escape(value)}</{key}>" for key, value in category_consumer_environment(inputs).items()
@@ -2257,7 +2257,7 @@ class NativeCategorySources:
                       if metadata else "HOARD_INSPECTION_CONTEXT"] = str(context)
         environment = "<EnvironmentVariables>" + "".join(
             f"<{key}>{escape(value)}</{key}>" for key, value in variables.items()) + "</EnvironmentVariables>"
-        settings = run.root / "stores" / f"settings-{attempt}.runsettings"
+        settings = run.root / "proofs" / f"settings-{attempt}.runsettings"
         settings_raw = _readonly(settings, 256 * 1024)
         if settings_raw != runtime_settings(
                 run.root, assembly, attempt, evidence.digest(manifest), hashlib.sha256(owner_data).hexdigest(), environment):

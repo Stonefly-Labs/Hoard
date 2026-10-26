@@ -207,6 +207,12 @@ inputs and release synthetic resources before reporting actual ownership.
 The report remains `Incomplete`/non-qualifying; independent public profile
 evaluation and native confirmation of this isolated path are still pending.
 
+The first isolated native run failed report admission after actual cleanup
+because generated runsettings were still stored among disposable synthetic
+resources. Settings now belong to retained read-only input proofs, and native
+command/source attribution uses that exact location. Cleanup is not weakened,
+and fresh native success is not presumed.
+
 CP-01..20 tests now cover declaration rejection/repair, disabled effects,
 late-fault sanitization, retained ownership, refusal of unsafe restart and
 active-request drain/admission. Focused package-only CP-01/02/18/19 cases pass
