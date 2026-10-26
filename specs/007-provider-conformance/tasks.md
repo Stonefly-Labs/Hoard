@@ -74,8 +74,8 @@ crash proof and real transfers remain mandatory; this is not the full baseline.
 
 ### Tests first
 
-- [ ] T019 [P] [US1] Add extraction-parity and hook-admission tests in `tests/contracts/Hoard.Conformance.Tests/MetadataBindingTests.cs` from frozen inventory, including all inherited convergence regressions; fail when either provider misses a parameterized witness or supplies its own expected result (FR-002..004; QC-02,05..08).
-- [ ] T020 [P] [US1] Add extraction-parity, streaming/authority and durability-scope tests in `tests/contracts/Hoard.Conformance.Tests/ArtifactBindingTests.cs`; fail for missing AS subproofs or simulation borrowing Local recovery (FR-002,003,005; QC-03,05,09..12).
+- [X] T019 [P] [US1] Add extraction-parity and hook-admission tests in `tests/contracts/Hoard.Conformance.Tests/MetadataBindingTests.cs` from frozen inventory, including all inherited convergence regressions; fail when either provider misses a parameterized witness or supplies its own expected result (FR-002..004; QC-02,05..08).
+- [X] T020 [P] [US1] Add extraction-parity, streaming/authority and durability-scope tests in `tests/contracts/Hoard.Conformance.Tests/ArtifactBindingTests.cs`; fail for missing AS subproofs or simulation borrowing Local recovery (FR-002,003,005; QC-03,05,09..12).
 
 ### Implementation
 
@@ -111,8 +111,8 @@ a composition row.
 
 ### Tests first
 
-- [ ] T039 [P] [US2] Add complete CP-01..13 theory rows and assertion-level rejection/repair pairs in `tests/integration/Hoard.Composition.Tests/ConformanceCompositionTests.cs`, including reordered cycles, both zero/two singleton cases and independent disabled effects (FR-006..008,010,019; QC-13..16,20).
-- [ ] T040 [P] [US2] Add CP-14..20 controlled failure/cancellation/non-cooperation/restart tests in `tests/integration/Hoard.Composition.Tests/ConformanceOwnershipTests.cs`; distinguish finite return from actual release and inject unsafe error canaries (FR-006,009,016,022; QC-17..19,21).
+- [X] T039 [P] [US2] Add complete CP-01..13 theory rows and assertion-level rejection/repair pairs in `tests/integration/Hoard.Composition.Tests/ConformanceCompositionTests.cs`, including reordered cycles, both zero/two singleton cases and independent disabled effects (FR-006..008,010,019; QC-13..16,20).
+- [X] T040 [P] [US2] Add CP-14..20 controlled failure/cancellation/non-cooperation/restart tests in `tests/integration/Hoard.Composition.Tests/ConformanceOwnershipTests.cs`; distinguish finite return from actual release and inject unsafe error canaries (FR-006,009,016,022; QC-17..19,21).
 
 ### Implementation
 

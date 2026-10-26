@@ -8,6 +8,7 @@ using Hoard.Hosting.Lifecycle;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Xunit.Abstractions;
 #if CONFORMANCE_PROVIDER_PACKAGES
 using Hoard.Abstractions.Metadata;
@@ -56,6 +57,13 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
     {
         LifecycleFixtures.AssertSafe(diagnostics);
         Assert.DoesNotContain("conformance-secret", JsonSerializer.Serialize(diagnostics));
+    }
+
+    private static void SafeFailure(LifecycleTestHarness logs, params object?[] observations)
+    {
+        var text = string.Join("\n", logs.Logs) + JsonSerializer.Serialize(observations);
+        foreach (var canary in new[] { "conformance-secret", "seeded-secret", "unsafe.example", "/private/conformance" })
+        { Assert.DoesNotContain(canary, text); }
     }
 
     public static IEnumerable<object[]> Rejections()
@@ -187,6 +195,10 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         {
             if (!accepted.Composition.EnabledModuleIds.Contains(module)) { Inactive(probe); continue; }
             Assert.Equal(1, probe.Constructors);
+            Assert.Equal(1, probe.Services);
+            Assert.Equal(1, probe.Maps);
+            Assert.Equal(1, probe.Initializations);
+            Assert.Equal(1, probe.Assessments);
             Assert.Equal(1, probe.Connections);
             Assert.Equal(1, probe.Workers);
             Assert.Equal(1, probe.Stops);
@@ -206,6 +218,8 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         var composition = registry.Validate(Selection("protocol", "protocol-other", "identity", "identity-other")).Composition;
         Assert.NotNull(composition);
         Assert.Equal(6, composition.EnabledModuleIds.Length);
+        Assert.Equal("metadata", composition.MetadataModuleId);
+        Assert.Equal("artifact", composition.ArtifactModuleId);
         await using var running = await registry.BuildAsync(composition);
         await running.StartAsync();
         using var client = running.App.GetTestClient();
@@ -216,7 +230,13 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         Assert.All(registry.Probes.Values, probe =>
         {
             Assert.Equal(1, probe.Constructors);
+            Assert.Equal(1, probe.Services);
+            Assert.Equal(1, probe.Maps);
             Assert.Equal(1, probe.Requests);
+            Assert.Equal(1, probe.Initializations);
+            Assert.Equal(1, probe.Assessments);
+            Assert.Equal(1, probe.Connections);
+            Assert.Equal(1, probe.Workers);
             Assert.Equal(1, probe.Stops);
             Assert.Equal(1, probe.Disposals);
         });
@@ -295,6 +315,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                     Assert.Equal(1, probe.Constructors);
                     Assert.Equal(1, probe.Maps);
                     Assert.Equal(0, probe.Initializations);
+                    Assert.Equal(0, probe.Assessments);
                     Assert.Equal(0, probe.Requests);
                     Assert.Equal(0, probe.Connections);
                     Assert.Equal(0, probe.Workers);
@@ -303,6 +324,84 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             await running.DisposeAsync();
             Assert.True(running.Lease.StopResult!.Complete);
             Observe($"CP-11/route-conflict.{(repaired ? "repair" : "reject")}", registry, running.Lease);
+        }
+    }
+
+    [Theory]
+    [InlineData("absent")]
+    [InlineData("registered-disabled")]
+    [InlineData("enabled-compatible")]
+    [InlineData("enabled-incompatible")]
+    public async Task CP12_CP13_optional_target_policy_is_unchanged_by_selection(string target)
+    {
+        foreach (var repaired in target == "enabled-incompatible" ? new[] { false, true } : new[] { false })
+        {
+            var registry = new Registry();
+            registry.Replace("metadata", declaration => declaration with { Dependencies = [Dependency("protocol", true)] });
+            var enabled = target.StartsWith("enabled-", StringComparison.Ordinal);
+            if (target != "absent")
+            {
+                registry.Protocol(Declaration("protocol", ModuleCategory.Protocol) with
+                {
+                    Version = target == "enabled-incompatible" && !repaired ? "9.0.0" : "0.1.0",
+                    Capabilities = [new() { Id = "integration", Version = "0.1.0", Description = "Enabled optional integration." }]
+                });
+            }
+            var selection = enabled ? Selection("protocol") : Selection();
+            var validation = registry.Validate(selection);
+            Assert.All(registry.Probes.Values, Inactive);
+            if (target == "enabled-incompatible" && !repaired)
+            {
+                Assert.Null(validation.Composition);
+                Assert.Contains(validation.Diagnostics, diagnostic => diagnostic.RuleCode == "UnsupportedDependency");
+                Safe(validation.Diagnostics);
+                Observe($"CP-13/{target}/rejected", registry);
+                continue;
+            }
+            var composition = validation.Composition;
+            Assert.NotNull(composition);
+            Assert.Empty(validation.Diagnostics);
+            Assert.Equal(enabled ? 1 : 0, composition.ActiveEdges.Length);
+            if (enabled)
+            {
+                var edge = Assert.Single(composition.ActiveEdges);
+                Assert.True(edge.Optional);
+                Assert.Equal("protocol", edge.PrerequisiteId);
+                Assert.Equal("metadata", edge.DependentId);
+                Assert.Equal("[0.1.0,0.2.0)", edge.VersionRange);
+            }
+            var demand = registry.Validate(selection with
+            { RequiredCapabilities = [new("protocol", "integration", "[0.1.0]", false)] });
+            Assert.Equal(enabled, demand.Composition is not null);
+            if (enabled) { Assert.Single(demand.Composition!.SatisfiedCapabilities); }
+            else
+            {
+                Assert.Empty(composition.SatisfiedCapabilities);
+                Assert.Contains(demand.Diagnostics, diagnostic => diagnostic.RuleCode == "UnsupportedCapability");
+                Safe(demand.Diagnostics);
+            }
+            await using var running = await registry.BuildAsync(composition);
+            await running.StartAsync();
+            Assert.True(running.Lease.Lifecycle.Snapshot.StartupAdmission);
+            Assert.True(running.Lease.Lifecycle.Snapshot.Ready);
+            using var client = running.App.GetTestClient();
+            using var response = await client.GetAsync("/protocol");
+            Assert.Equal(enabled ? HttpStatusCode.OK : HttpStatusCode.NotFound, response.StatusCode);
+            await LifecycleTestHarness.Until(() => composition.EnabledModuleIds.All(id => registry.Probes[id].Workers == 1));
+            await running.DisposeAsync();
+            Assert.True(running.Lease.StopResult!.Complete);
+            if (enabled)
+            {
+                var probe = registry.Probes["protocol"];
+                Assert.Equal(1, probe.Constructors);
+                Assert.Equal(1, probe.Maps);
+                Assert.Equal(1, probe.Requests);
+                Assert.Equal(1, probe.Connections);
+                Assert.Equal(1, probe.Workers);
+                Assert.Equal(1, probe.Disposals);
+            }
+            else if (target == "registered-disabled") { Inactive(registry.Probes["protocol"]); }
+            Observe($"CP-12-13/{target}/repaired-{repaired}", registry, running.Lease);
         }
     }
 
@@ -369,12 +468,15 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
     public async Task Required_initialization_failure_has_no_readiness_or_fallback_and_cleans_owner(string id, string phase)
     {
         var registry = new Registry();
+        await using var logs = new LifecycleTestHarness();
+        registry.Web.Logging.AddProvider(logs);
         registry.Probes["artifact-other"] = Add<ArtifactOther>(registry.Builder, Declaration("artifact-other", ModuleCategory.Artifact));
         var entered = Barrier();
         registry.Probes["artifact"].Initialize = _ =>
         {
             entered.TrySetResult();
-            throw new InvalidOperationException("credential=conformance-secret", new Exception("seeded-secret"));
+            throw new InvalidOperationException("credential=conformance-secret; https://unsafe.example/token; /private/conformance",
+                new Exception("seeded-secret"));
         };
         await using var running = await registry.BuildAsync(registry.Validate().Composition!);
         await running.App.MapHoardModulesAsync(running.Lease);
@@ -384,6 +486,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         Assert.False(running.Lease.Lifecycle.Snapshot.StartupAdmission);
         Assert.Contains(result.Diagnostics, item => item.RuleCode == "PhaseFailure" && item.ModuleId == "artifact");
         Safe(result.Diagnostics);
+        SafeFailure(logs, result, running.Lease.Lifecycle.Snapshot);
         Assert.Equal(0, registry.Probes["artifact"].Workers);
         Assert.Equal(0, registry.Probes["artifact"].Assessments);
         Inactive(registry.Probes["artifact-other"]);
@@ -391,6 +494,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         Assert.True(running.Lease.StopResult!.Complete);
         Assert.Equal(1, registry.Probes["artifact"].Stops);
         Assert.Equal(1, registry.Probes["artifact"].Disposals);
+        SafeFailure(logs, running.Lease.StopResult, running.Lease.Lifecycle.Snapshot);
         Observe($"{id}/{phase}", registry, running.Lease);
     }
 
@@ -429,17 +533,21 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         {
             await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
             cancelled.Cancel();
-            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => start);
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => start.WaitAsync(TimeSpan.FromSeconds(5)));
             Assert.False(settled.Task.IsCompleted);
             Assert.False(running.Lease.Lifecycle.Snapshot.Ready);
             Assert.False(running.Lease.Lifecycle.Snapshot.StartupAdmission);
             Assert.Equal(0, registry.Probes["artifact"].Stops);
             Assert.Equal(0, registry.Probes["artifact"].Disposals);
+            Assert.Equal(1, registry.Probes["artifact"].Initializations);
+            Assert.Equal(phase == "initialize" ? 0 : 1, registry.Probes["artifact"].Assessments);
+            Assert.Equal(0, registry.Probes["artifact"].Workers);
             output.WriteLine($"CP-15/{phase}/cancelled-wait: caller-cancelled=1; callback-settled=0; ready=0; admission=0; stops=0; disposals=0");
             var stop = await running.Lease.Lifecycle.StopAsync().WaitAsync(TimeSpan.FromSeconds(5));
             await settled.Task.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.Empty(stop.UnsafeActivities);
             Assert.False(running.Lease.Lifecycle.Snapshot.Ready);
+            Assert.False(running.Lease.Lifecycle.Snapshot.StartupAdmission);
             await running.DisposeAsync();
             Assert.True(running.Lease.StopResult!.Complete);
             Observe($"CP-15/{phase}", registry, running.Lease);
@@ -447,14 +555,24 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         finally { release.TrySetResult(); }
     }
 
-    [Fact]
-    public async Task CP16_noncooperative_initializer_returns_finitely_but_retains_owner_until_real_settlement()
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task CP16_noncooperative_initializer_returns_finitely_but_retains_owner_until_real_settlement(bool lateFault)
     {
         var registry = new Registry();
+        await using var logs = new LifecycleTestHarness();
+        registry.Web.Logging.AddProvider(logs);
         var clock = new LifecycleTestTimeProvider();
         var entered = Barrier();
         var release = Barrier();
-        registry.Probes["artifact"].Initialize = async _ => { entered.TrySetResult(); await release.Task; };
+        registry.Probes["artifact"].Initialize = async _ =>
+        {
+            entered.TrySetResult();
+            await release.Task;
+            if (lateFault)
+            { throw new InvalidOperationException("credential=conformance-secret; https://unsafe.example/token; /private/conformance"); }
+        };
         var composition = registry.Validate(options: new()
         {
             ActivationCallbackTimeout = TimeSpan.FromSeconds(1),
@@ -479,18 +597,35 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             Assert.Equal(new HoardUnsafeActivity("artifact", HoardActivityKind.Phase), Assert.Single(retained.UnsafeActivities));
             Assert.Equal(0, registry.Probes["artifact"].Stops);
             Assert.Equal(0, registry.Probes["artifact"].Disposals);
+            Assert.Equal(1, registry.Probes["artifact"].Initializations);
+            Assert.Equal(0, registry.Probes["artifact"].Assessments);
+            Assert.Equal(0, registry.Probes["artifact"].Workers);
             Assert.False(registry.Probes["artifact"].Settled.Task.IsCompleted);
             Assert.False(running.Lease.Lifecycle.Snapshot.StartupAdmission);
             output.WriteLine($"CP-16/retained: caller-returned=1; callback-settled=0; unsafe={retained.UnsafeActivities.Length}; " +
                 $"root-disposal={(int)retained.RootDisposal}; stops=0; disposals=0; admission=0");
             release.TrySetResult();
             await registry.Probes["artifact"].Settled.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            await registry.Probes["artifact"].InitializationWork!.WaitAsync(TimeSpan.FromSeconds(5));
+            var work = registry.Probes["artifact"].InitializationWork!;
+            if (lateFault)
+            {
+                await Assert.ThrowsAsync<InvalidOperationException>(() => work.WaitAsync(TimeSpan.FromSeconds(5)));
+                await LifecycleTestHarness.Until(() => running.Lease.Lifecycle.Snapshot.Diagnostics.Any(item => item.RuleCode == "LateCallbackFailure"));
+                Assert.Single(running.Lease.Lifecycle.Snapshot.Diagnostics, item => item.RuleCode == "LateCallbackFailure");
+                Assert.DoesNotContain(retained.Diagnostics, item => item.RuleCode == "LateCallbackFailure");
+            }
+            else { await work.WaitAsync(TimeSpan.FromSeconds(5)); }
             Assert.False(running.Lease.Lifecycle.Snapshot.Ready);
             await Assert.ThrowsAsync<HoardLifecycleException>(() => running.DisposeAsync().AsTask());
             Assert.Same(retained, running.Lease.StopResult);
+            Assert.False((await running.Lease.Lifecycle.StartAsync().WaitAsync(TimeSpan.FromSeconds(5))).Ready);
+            Assert.Equal(1, registry.Probes["artifact"].Constructors);
+            Assert.Equal(1, registry.Probes["artifact"].Initializations);
+            Assert.Equal(0, registry.Probes["artifact"].Stops);
+            Assert.Equal(0, registry.Probes["artifact"].Disposals);
             output.WriteLine("CP-16/settled: callback-settled=1; underlying-task-completed=1; frozen-incomplete=1; disposals=0");
             Safe(running.Lease.Lifecycle.Snapshot.Diagnostics);
+            SafeFailure(logs, retained, running.Lease.Lifecycle.Snapshot);
             Observe("CP-16/settled-not-reclassified", registry, running.Lease);
         }
         finally
@@ -504,9 +639,12 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
     [Theory]
     [InlineData("fault")]
     [InlineData("noncooperative")]
+    [InlineData("noncooperative-fault")]
     public async Task CP17_shutdown_fault_or_retention_never_claims_complete_cleanup(string variant)
     {
         var registry = new Registry();
+        await using var logs = new LifecycleTestHarness();
+        registry.Web.Logging.AddProvider(logs);
         var clock = new LifecycleTestTimeProvider();
         var entered = Barrier();
         var release = Barrier();
@@ -518,6 +656,8 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             {
                 if (variant == "fault") { throw new InvalidOperationException("credential=conformance-secret"); }
                 await release.Task;
+                if (variant == "noncooperative-fault")
+                { throw new InvalidOperationException("credential=conformance-secret; https://unsafe.example/token; /private/conformance"); }
             }
             finally { settled.TrySetResult(); }
         };
@@ -528,7 +668,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         try
         {
             await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            if (variant == "noncooperative")
+            if (variant != "fault")
             {
                 await LifecycleTestHarness.Until(() => clock.NextDelay == TimeSpan.FromSeconds(1));
                 clock.Advance(TimeSpan.FromSeconds(1));
@@ -538,8 +678,10 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                 Assert.Single(stopped.Modules, module => module.ModuleId == "artifact").Outcome);
             Assert.False(stopped.Complete);
             Assert.False(running.Lease.Lifecycle.Snapshot.Ready);
+            Assert.False(running.Lease.Lifecycle.Snapshot.StartupAdmission);
+            Assert.Equal(1, registry.Probes["artifact"].Stops);
             await Assert.ThrowsAsync<HoardLifecycleException>(() => running.DisposeAsync().AsTask());
-            if (variant == "noncooperative")
+            if (variant != "fault")
             {
                 Assert.False(settled.Task.IsCompleted);
                 Assert.Equal(0, registry.Probes["artifact"].Disposals);
@@ -551,12 +693,26 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             var frozen = running.Lease.StopResult;
             release.TrySetResult();
             await settled.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            if (variant == "noncooperative")
+            if (variant == "noncooperative-fault")
+            {
+                await Assert.ThrowsAsync<InvalidOperationException>(() =>
+                    registry.Probes["artifact"].ShutdownWork!.WaitAsync(TimeSpan.FromSeconds(5)));
+                await LifecycleTestHarness.Until(() => running.Lease.Lifecycle.Snapshot.Diagnostics.Any(item => item.RuleCode == "LateCallbackFailure"));
+                Assert.Single(running.Lease.Lifecycle.Snapshot.Diagnostics, item => item.RuleCode == "LateCallbackFailure");
+                Assert.DoesNotContain(frozen!.Diagnostics, item => item.RuleCode == "LateCallbackFailure");
+            }
+            else if (variant == "noncooperative")
             { await registry.Probes["artifact"].ShutdownWork!.WaitAsync(TimeSpan.FromSeconds(5)); }
             await Assert.ThrowsAsync<HoardLifecycleException>(() => running.DisposeAsync().AsTask());
             Assert.Same(frozen, running.Lease.StopResult);
+            Assert.False((await running.Lease.Lifecycle.StartAsync().WaitAsync(TimeSpan.FromSeconds(5))).Ready);
+            Assert.Equal(1, registry.Probes["artifact"].Constructors);
+            Assert.Equal(1, registry.Probes["artifact"].Initializations);
+            Assert.Equal(1, registry.Probes["artifact"].Stops);
+            if (variant != "fault") { Assert.Equal(0, registry.Probes["artifact"].Disposals); }
             output.WriteLine($"CP-17/{variant}/settled: callback-settled=1; frozen-incomplete=1");
             Safe(running.Lease.Lifecycle.Snapshot.Diagnostics);
+            SafeFailure(logs, frozen, running.Lease.Lifecycle.Snapshot);
             Observe($"CP-17/{variant}", registry, running.Lease);
         }
         finally
@@ -659,6 +815,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             registry.Probes["metadata"].Request = async () => { entered.TrySetResult(); await release.Task; };
             using var client = app.GetTestClient();
             var request = client.GetStringAsync("/metadata");
+            Task? stopping = null;
             try
             {
                 await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
@@ -668,9 +825,20 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                 Assert.Same(active, registry.Probes["metadata"].Options);
                 Assert.Equal(iteration == 0 ? "first" : "second", active.GetString("label"));
                 Assert.True(lease.Lifecycle.Snapshot.Ready);
+                stopping = app.StopHoardApplicationAsync(lease);
+                await LifecycleTestHarness.Until(() => lease.Lifecycle.Snapshot.Phase == HoardLifecyclePhase.Draining);
+                Assert.False(stopping.IsCompleted);
+                Assert.False(lease.Lifecycle.Snapshot.StartupAdmission);
+                Assert.False(lease.Lifecycle.Snapshot.Ready);
+                Assert.Equal(0, registry.Probes["metadata"].Stops);
+                Assert.Equal(0, registry.Probes["metadata"].Disposals);
+                using var denied = await client.GetAsync("/metadata").WaitAsync(TimeSpan.FromSeconds(5));
+                Assert.Equal(HttpStatusCode.ServiceUnavailable, denied.StatusCode);
+                Assert.Equal(1, registry.Probes["metadata"].Requests);
             }
             finally { release.TrySetResult(); }
             Assert.Equal("conformance", await request.WaitAsync(TimeSpan.FromSeconds(5)));
+            await stopping!.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.Equal(1, registry.Probes["metadata"].Constructors);
             await lease.DisposeAsync();
             Assert.True(lease.StopResult!.Complete);
@@ -697,6 +865,15 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         Assert.False((await metadataModule.CheckReadinessAsync(default)).Ready);
         Assert.False((await artifactModule.CheckReadinessAsync(default)).Ready);
         Assert.False(lease.Lifecycle.Snapshot.StartupAdmission);
+        Assert.All(fixture.Probes.Values, probe =>
+        {
+            Assert.Equal(1, probe.Constructors);
+            Assert.Equal(1, probe.Maps);
+            Assert.Equal(0, probe.Initializations);
+            Assert.Equal(0, probe.Assessments);
+            Assert.Equal(0, probe.Workers);
+            Assert.Equal(0, probe.Connections);
+        });
         Assert.False(File.Exists(fixture.DatabasePath));
         Assert.False(Directory.Exists(fixture.ArtifactRoot));
         Assert.False(Directory.Exists(fixture.DisabledRoot));
@@ -713,11 +890,24 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         using var client = app.GetTestClient();
         Assert.Equal("conformance", await client.GetStringAsync("/protocol"));
         Assert.Equal("conformance", await client.GetStringAsync("/identity"));
+        await LifecycleTestHarness.Until(() => fixture.Probes.Values.All(probe => probe.Workers == 1));
+        Assert.All(fixture.Probes.Values, probe =>
+        {
+            Assert.Equal(1, probe.Initializations);
+            Assert.Equal(1, probe.Assessments);
+            Assert.Equal(1, probe.Connections);
+            Assert.Equal(1, probe.Requests);
+        });
         Assert.False(Directory.Exists(fixture.DisabledRoot));
         await lease.DisposeAsync();
         Assert.True(lease.StopResult!.Complete);
         Assert.False((await metadataModule.CheckReadinessAsync(default)).Ready);
         Assert.False(artifactModule.Session.Ready);
+        Assert.All(fixture.Probes.Values, probe =>
+        {
+            Assert.Equal(1, probe.Stops);
+            Assert.Equal(1, probe.Disposals);
+        });
         output.WriteLine($"{id}/{metadata}/{artifact}: metadata-singletons=1; artifact-singletons=1; schema-compatible=1; " +
             "initial-admission=0; ready-after-initialize=1; protocol-requests=1; identity-requests=1; disabled-roots=0; stop-complete=1");
     }
@@ -839,6 +1029,8 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                 Assert.False(Directory.Exists(directory.ArtifactRoot));
                 Assert.False(store.Ready);
                 Assert.Equal(0, registry.Probes["artifact"].Workers);
+                Assert.Equal(0, registry.Probes["artifact"].Assessments);
+                Assert.Equal(0, registry.Probes["artifact"].Requests);
                 Safe(result.Diagnostics);
             }
             Inactive(registry.Probes["artifact-other"]);

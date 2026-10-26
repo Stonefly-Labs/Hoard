@@ -7720,6 +7720,64 @@ release. Complete SDK/evidence tooling-file suites pass:
 APIs/provider mechanisms, package graph, examples, diagrams, charter/architecture/
 ADRs, infrastructure and release behavior are unchanged.
 
+### Tests-first category and composition checkpoint
+
+Mark T019/T020 complete from the existing frozen-case/parameter/control parity
+and hook-admission regressions, including omitted/foreign provider parameters,
+provider-shortened manifests and Object simulation exclusion borrowing. Command
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --no-restore -c Release --filter 'FullyQualifiedName~MetadataBindingTests|FullyQualifiedName~ArtifactBindingTests' --verbosity quiet -p:UseSharedCompilation=false -nodeReuse:false`
+passes 23 cases without skips. This records tests-first completion, not the
+remaining category implementation/CLI acceptance tasks.
+
+Extend the existing `ConformanceMatrixTests.cs` for T039/T040 rather than add the
+proposed new test-type files: frozen catalog/runtime witness names already bind
+these existing types, so duplicate types would create a second unselected
+inventory. Retain all CP-01..13 declaration/rejection/repair, reordered cycles,
+singleton cardinality, disabled-effect and optional-target rows. Add CP-14..20
+assertions for controlled failure/cancellation/non-cooperation, sanitized late
+faults, frozen retained ownership, restart refusal and active-request drain/503.
+No production or fixture API/dependency changes are needed.
+
+With `P=tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj`:
+
+- `dotnet test "$P" --no-restore --filter 'FullyQualifiedName~ConformanceMatrixTests|FullyQualifiedName~ConformanceVersionTests|FullyQualifiedName~LifecycleOwnershipTests|FullyQualifiedName~LifecycleReadinessTests|FullyQualifiedName~LifecycleRestartTests|FullyQualifiedName~ConfigurationRestartTests|FullyQualifiedName~DiscoveryLifecycleTests' --verbosity quiet`
+  passes 188 source-mode cases without failures/skips.
+- `dotnet test "$P" --no-restore --filter 'FullyQualifiedName~ConformanceMatrixTests.CP16_|FullyQualifiedName~ConformanceMatrixTests.CP17_' --verbosity quiet`
+  passes the final five modified CP-16/17 cases.
+- `dotnet format whitespace "$P" --include tests/integration/Hoard.Composition.Tests/ConformanceMatrixTests.cs --verify-no-changes --no-restore --verbosity quiet`
+  and scoped `git diff --check` pass.
+
+Initial package-mode execution fails because source-mode assets omit Hosting
+references; locked restore against retained archives then correctly fails
+NU1403 rather than silently rewriting tracked lock hashes. Explicit
+`conformance_lock_preparation.prepare_project_lock(..., acceptance=True)` derives
+and verifies a separate lock without changing its package graph. An isolated
+cache locked replay succeeds:
+
+```sh
+LOCK="$PWD/tests/integration/Hoard.Composition.Tests/obj/F07.preparation.acceptance.packages.lock.json"
+dotnet restore "$P" -p:ConformancePackageAcceptance=true "-p:NuGetLockFilePath=$LOCK" --locked-mode --packages .foundation/conformance-composition/focused-package-replay/packages --source .foundation/conformance-composition/feed --source https://api.nuget.org/v3/index.json --verbosity quiet
+dotnet test "$P" -p:ConformancePackageAcceptance=true "-p:NuGetLockFilePath=$LOCK" -c Release --no-restore --filter 'FullyQualifiedName~Packaged_baseline_and_replacement_use_the_identical_consumer|FullyQualifiedName~CP18_real_local_recovery|FullyQualifiedName~CP19_actual_store_admission' --verbosity quiet
+dotnet restore "$P" --locked-mode --verbosity quiet
+```
+
+Restore/test/source-mode restoration pass; package tests observe five passes,
+zero failures/skips. The derivation is reverified and formatting/whitespace pass.
+Result SHA-256 is
+`8ac16622178b995b231185bd5c6ed05f01c10453d6a37697291c0216d6c8a0d0`,
+derivation
+`6d942d34545072955984acdffb393775c967cb86992f6a9c9d0bf5b44a0a6878`,
+original lock
+`7801bc88cac744c9e768920b0a9bf08b30456d9b215381d297d2a0abd1a35330`,
+alternate lock
+`c87e87f7a9b120ac0ab0ab8afe3292ae2770c0cfe892ca05b71b9ba97c935165`.
+This is explicitly retained-archive focused component replay, not fresh-source,
+full composition/profile or five-profile acceptance. T039/T040 tests-first work
+is complete; T041 onward and final acceptance remain unchecked. Custom review
+checklists and the running stage checkpoint are unchanged. Examples, diagrams,
+product/provider APIs, package graph, charter/architecture/ADRs, infrastructure
+and releases are unaffected by assertion-only test changes.
+
 ### Object access-fault boundary repair
 
 Linux `516b6e4` / run `40312172408` fails the prepared Object no-rename witness;

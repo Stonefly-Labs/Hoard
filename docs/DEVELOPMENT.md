@@ -10482,6 +10482,16 @@ two explicitly non-qualifying isolated extraction jobs. Native admission of
 these new paths is pending; public `validate-conformance.sh` profile, verify and
 aggregate execution is not inferred.
 
+Tests-first CP-01..20 coverage reuses `ConformanceMatrixTests.cs`, preserving the
+existing catalog/runtime identities instead of introducing duplicate test types.
+Source matrix/version and related lifecycle/configuration/discovery regressions
+pass (188 cases), as do the final five CP-16/17 assertions. A focused
+Release/net10.0 package replay of CP-01/02/18/19 passes five cases after explicit
+non-qualifying local archive hash rebinding and independent locked restore.
+Tracked locks are unchanged and source-mode assets are restored. This closes
+the tests-first tasks, not fresh-source composition-profile qualification;
+the SDK diagnostic path still does not execute the composition project.
+
 Linux run `40312172408` at `516b6e4` fails the prepared Object no-rename architecture
 witness; its other two jobs pass. The cause is qualification-only directory moves
 introduced inside the Object provider assembly, not its publication mechanism.

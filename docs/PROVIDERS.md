@@ -207,6 +207,12 @@ inputs and release synthetic resources before reporting actual ownership.
 The report remains `Incomplete`/non-qualifying; independent public profile
 evaluation and native confirmation of this isolated path are still pending.
 
+CP-01..20 tests now cover declaration rejection/repair, disabled effects,
+late-fault sanitization, retained ownership, refusal of unsafe restart and
+active-request drain/admission. Focused package-only CP-01/02/18/19 cases pass
+against separately rebound retained archives; that replay is not fresh-source
+profile acceptance and does not change production support claims.
+
 Object's driver-owned access faults now reside in its concrete binding, not the
 provider assembly; native exact-stamp selection/protection and pre-hook handle
 capture are unchanged. The provider has no rename mechanism. The unchanged

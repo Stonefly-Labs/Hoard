@@ -2630,6 +2630,12 @@ before publishing its still-`Incomplete` report. Separate Linux matrix jobs
 exercise these paths; native confirmation is pending. Public conformance
 profile/verify/aggregate commands remain guarded.
 
+Tests-first category parity/hook admission and CP-01..20 composition coverage
+are now recorded complete (T019/T020/T039/T040). Composition source/lifecycle
+regressions pass; a separately derived retained-archive package replay also
+passes the five CP-01/02/18/19 cases. This is component evidence, not a fresh
+composition profile or full feature qualification.
+
 The Object access-fault implementation now lives in its concrete test binding,
 as the original driver-owned fault did. The provider still selects/protects the
 exact stamp and captures the scope before release hooks, but contains no rename
