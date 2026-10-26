@@ -37,7 +37,7 @@ public sealed partial class ObjectArtifactStore
         return OwnedAsync(ArtifactPhase.Maintenance, TimeSpan.FromSeconds(5), cancellationToken,
             token => WithQualificationPayloadAsync(stamp, token, async path =>
             {
-                await using var file = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.None,
+                await using var file = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read,
                     4096, FileOptions.Asynchronous);
                 file.SetLength(0);
                 await file.WriteAsync(snapshot, token);

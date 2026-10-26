@@ -147,6 +147,16 @@ not full QC-03. Exact `b66e6b0`/run40292115062 independently passes three Linux
 jobs/341 native foundations without skips and admits the earlier artifact162/
 metadata152 argument transport, not the later map/pairing/deletion changes.
 
+Two admitted-open quarantine races extend the artifact scope to 168; fresh
+packages pass 324 selected consumers. Awaited shared hooks preserve both
+original wrappers and assertions. Exact-stamp replacement now permits existing
+readers, matching the original fault without releasing actual deletion
+protection or serialized fault ownership. Both actual/original pairs pass; an
+SDK-only final quarantine assertion mutant gives two named failures per family
+with matching runtime SDK/archive images. QC-03 remains unfinished. Pairing
+run40295489832 was canceled before jobs, not admitted; replacement deletion
+run40297863544 awaits independent observation.
+
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run

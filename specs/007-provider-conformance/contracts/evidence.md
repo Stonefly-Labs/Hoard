@@ -330,6 +330,17 @@ independently admits the earlier artifact162/metadata152 argument transport:
 three Linux jobs/341 native foundations pass without skips. The later frozen
 maps, QC-02 pairing and deletion changes remain unadmitted natively.
 
+The next artifact168 scope adds both admitted-open quarantine races. Awaited
+shared hooks and exact-stamp replacement preserve both original wrappers and
+assertions. Reader-compatible replacement retains serialized fault work and
+actual authority-held deletion exclusion. Fresh packages pass 324 selected
+consumers; both actual/original pairs pass. An SDK-only final quarantine
+assertion mutant gives each family exactly two named failures with matching
+runtime SDK/archive images. Initial compilation/control-setup failures are not
+named parity successes. Full QC-03 remains unfinished. Pairing run40295489832
+was canceled before jobs and is not admitted; replacement deletion run40297863544
+awaits independent observation.
+
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,

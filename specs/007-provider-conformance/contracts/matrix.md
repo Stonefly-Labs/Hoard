@@ -225,6 +225,15 @@ Exact `b66e6b0`/run40292115062 admits the earlier artifact162/metadata152 argume
 transport on Linux, with all three jobs/341 native foundations passing without
 skips. It does not admit the later frozen maps, pairing or deletion increment.
 
+Two admitted-open quarantine races extend the artifact scope to 168 and fresh
+package replay to 324 passes. Awaited hooks and exact-stamp replacement preserve
+the original wrappers and assertions. Reader-compatible fault replacement
+retains serialized work and actual deletion exclusion. Both actual/original
+pairs pass; an SDK-only final quarantine assertion mutant gives two named
+failures per family with matching runtime SDK/archive images. QC-03 remains
+unfinished. Pairing run40295489832 was canceled before jobs, not admitted;
+replacement deletion run40297863544 awaits independent observation.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

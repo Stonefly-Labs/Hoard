@@ -7517,6 +7517,23 @@ ten metadata parents. Metadata remains 92 Passed/1 Incomplete/9 NotApplicable/
 0 Failed, report `Incomplete`, qualification false. The later frozen maps,
 QC-02 pairing and artifact166 changes still await native admission.
 
+The following admitted-open quarantine increment extends the artifact scope
+to 168 and fresh fourteen-package replay to 324 passing consumers, zero skips,
+at source `987b757c4b1c377f7d6cfb9ddad5fc1c82dd9c017c1a37f7c31318032b8461b1`,
+SDK archive `2e2e27e555b35749552b8c41593a8bbaf1fea580777eeb90b8227c458e6f7017`.
+Awaited installer/removal and exact-stamp replacement preserve the synchronous
+original wrappers and every assertion. Initial compile-red `CS1503` identifies
+the missing overload only. An initial Local `FaultControl.Unavailable` then
+exposes replacement's overly exclusive file-sharing mode: the original
+fault's existing-reader-compatible sharing is restored without changing real
+read behavior, serialized fault work or authority-held deletion exclusion.
+Both two-row actual/original families pass. An SDK-only final quarantine-code
+assertion mutant gives both families exactly two named
+`AdmittedOpenRechecksQuarantineAsync` failures with identical runtime/archive
+SDK images. Source contracts152/zero skips and tooling451/19 native skips pass.
+Full QC-03 remains open. Pairing run40295489832 was canceled before jobs and is
+not admitted; replacement deletion run40297863544 awaits independent observation.
+
 Exact earlier `831b00c3999e94958bc3afecb77bf9d99a3cb9fa`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),
 passes all three Linux jobs and strict source admission: 336 native foundations/

@@ -2564,6 +2564,17 @@ metadata152 sources and argument transport: all three Linux jobs and 341 native
 foundations pass without skips. Frozen-map/QC-02 pairing native admission is
 still outstanding; no task/checklist/stage completion is implied.
 
+Two admitted-open quarantine races now extend the artifact scope to 168 and
+fresh-package replay to 324 passing selected consumers. Awaited shared hooks
+preserve both original wrappers and assertions. Exact-stamp payload replacement
+allows existing readers, as the original fault did, while retaining serialized
+fault work and actual deletion protection; an initial Local `Unavailable`
+exposed the overly exclusive sharing mode. Both original/actual pairs pass,
+and an SDK-only final quarantine assertion mutant gives exactly two named
+failures per family with matching runtime SDK/archive images. QC-03 remains
+unfinished. QC-02 pairing run40295489832 was canceled before jobs and is not
+admitted; replacement deletion run40297863544 still awaits observation.
+
 Fresh fourteen-package replay passes 318 selected consumers. The safe logger
 then passes all 152 shared/63 memory-original/63 SQLite-original witnesses,
 with exactly 32/16/16 source-bound argument calls and identical SDK/archive

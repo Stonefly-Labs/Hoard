@@ -10382,6 +10382,16 @@ images. This is not complete QC-03. Exact `b66e6b0`/run40292115062 independently
 passes all three Linux jobs and 341 native foundations without skips, admitting
 the earlier artifact162/metadata152 argument-transport snapshot, not the later
 frozen-map/pairing/deletion changes.
+The next two admitted-open quarantine races extend the artifact scope to 168
+and fresh-package replay to 324 passes. Awaited shared hooks preserve the
+original wrappers and assertions. Replacement permits existing readers as the
+original fault did, retaining serialized fault work and actual authority
+protection against deletion. Initial Local `Unavailable` exposed the overly
+exclusive sharing mode, not a named assertion failure. Both original/actual
+pairs pass; an SDK-only final quarantine assertion mutant gives exactly two
+named failures per family, with matching runtime SDK/archive images. Full
+QC-03 remains open. Pairing run40295489832 was canceled before jobs and is not
+admitted; replacement deletion run40297863544 awaits independent observation.
 Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 

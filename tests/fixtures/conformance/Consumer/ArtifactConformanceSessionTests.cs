@@ -13,6 +13,48 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Observed_admitted_open_rechecks_actual_quarantine_before_result_handoff(string provider)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var released = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        IAsyncDisposable? observation = null;
+        try
+        {
+            async ValueTask Observe() => observation = await session.Faults.ObserveBoundaryAsync(
+                provider == "local" ? ArtifactObservationPoint.ReadOpened : ArtifactObservationPoint.DirectVerification,
+                () =>
+                {
+                    entered.TrySetResult();
+                    return new(released.Task.WaitAsync(context.BarrierBudget));
+                }, default);
+            ValueTask Remove() => (observation ?? throw new InvalidOperationException("BindingInvalid")).DisposeAsync();
+            await ArtifactReadAssertions.AdmittedOpenRechecksQuarantineAsync(
+                session.Store, session.Validator, session.Authority, session.Identity,
+                Observe, token => entered.Task.WaitAsync(context.ControlBudget, token), Remove,
+                session.Faults.ReplacePayloadAsync, () => released.TrySetResult(), default);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally
+        {
+            released.TrySetResult();
+            try
+            {
+                await session.Faults.AwaitSettlementAsync(default);
+                if (observation is not null) { await observation.DisposeAsync(); }
+            }
+            finally { await session.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local", "receipt")]
     [InlineData("object", "receipt")]
     [InlineData("local", "read-open")]

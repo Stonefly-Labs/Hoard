@@ -647,6 +647,16 @@ run40292115062 independently passes three Linux jobs/341 native foundations
 without skips, admitting the earlier artifact162/metadata152 argument transport,
 not the later frozen-map/pairing/deletion work.
 
+Two admitted-open quarantine races extend the artifact scope to 168 and fresh
+package replay to 324 passes. Shared awaited hooks preserve both original
+wrappers and assertions. Exact-stamp replacement permits existing readers,
+matching the original fault while retaining serialized fault work and actual
+deletion protection. Both actual/original pairs pass; an SDK-only final
+quarantine assertion mutant produces two named failures per family with
+matching runtime SDK/archive images. This is not complete QC-03. Pairing
+run40295489832 was canceled before jobs and is not admitted; replacement
+deletion run40297863544 awaits observation.
+
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

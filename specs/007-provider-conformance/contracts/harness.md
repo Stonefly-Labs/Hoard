@@ -1570,6 +1570,18 @@ not QC-03 completion. Exact `b66e6b0`/run40292115062 independently admits earlie
 artifact162/metadata152 argument transport with three Linux jobs/341 native
 foundations passing without skips, not the later maps/pairing/deletion work.
 
+The following artifact168 scope adds both admitted-open quarantine races.
+Awaited shared installer/removal and exact-stamp replacement preserve the
+original synchronous wrappers and assertions. Replacement's sharing permits
+existing readers as the original fault did; serialized fault ownership and
+authority-held deletion exclusion remain intact. Initial Local `Unavailable`
+is a control-setup failure, not named parity evidence. Fresh packages pass
+324 selected consumers. Both actual/original pairs pass; an SDK-only final
+quarantine assertion mutant gives each family two named failures with matching
+runtime SDK/archive images. QC-03 remains open. Pairing run40295489832 was
+canceled before jobs, not admitted; replacement deletion run40297863544 awaits
+independent observation.
+
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or
 ownership consumers. Reduced/foreign scopes reject before launch; routing

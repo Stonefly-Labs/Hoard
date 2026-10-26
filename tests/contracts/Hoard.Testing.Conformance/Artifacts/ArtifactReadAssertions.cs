@@ -93,28 +93,40 @@ public static class ArtifactReadAssertions
         Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(await store.ReconcileAsync(ticket, new(), cancellationToken));
     }
 
-    public static async Task AdmittedOpenRechecksQuarantineAsync(
+    public static Task AdmittedOpenRechecksQuarantineAsync(
         IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
         ArtifactStoreIdentity identity, Action observeOpening, Func<CancellationToken, Task> waitForOpening,
-        Action removeObserver, Action<byte[]> replacePayload, Action releaseOpening, CancellationToken cancellationToken)
+        Action removeObserver, Action<byte[]> replacePayload, Action releaseOpening, CancellationToken cancellationToken) =>
+        AdmittedOpenRechecksQuarantineAsync(store, validator, authority, identity,
+            () => { observeOpening(); return ValueTask.CompletedTask; }, waitForOpening,
+            () => { removeObserver(); return ValueTask.CompletedTask; },
+            (_, bytes, _) => { replacePayload(bytes.ToArray()); return ValueTask.CompletedTask; },
+            releaseOpening, cancellationToken);
+
+    public static async Task AdmittedOpenRechecksQuarantineAsync(
+        IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
+        ArtifactStoreIdentity identity, Func<ValueTask> observeOpening, Func<CancellationToken, Task> waitForOpening,
+        Func<ValueTask> removeObserver,
+        Func<ArtifactStamp, ReadOnlyMemory<byte>, CancellationToken, ValueTask> replacePayload,
+        Action releaseOpening, CancellationToken cancellationToken)
     {
         var bytes = "late open cannot bypass quarantine"u8.ToArray();
         using var source = new ShortSource(bytes);
         var receipt = await PublishAsync(store, source, new(1024), cancellationToken);
         var proof = Assert.IsType<ArtifactOption<ArtifactCommitEvidence>.Some>(receipt.Evidence).Value;
-        observeOpening();
+        await observeOpening();
         var opening = store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken).AsTask();
         try
         {
             await waitForOpening(cancellationToken);
-            removeObserver();
-            replacePayload(bytes[..^1]);
+            await removeObserver();
+            await replacePayload(receipt.Stamp, bytes[..^1], cancellationToken);
             await using var guard = Success(await authority.AcquireAsync(new(Guid.NewGuid(),
                 ArtifactProtectionOperation.Reference, identity, receipt.Stamp.Identity.Digest,
                 new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp)), new(), cancellationToken));
             Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(
                 await validator.ValidateAsync(proof, guard, new(), cancellationToken)).Code);
-            replacePayload(bytes);
+            await replacePayload(receipt.Stamp, bytes, cancellationToken);
         }
         finally { releaseOpening(); }
         var result = await opening;

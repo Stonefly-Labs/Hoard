@@ -4256,6 +4256,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                         + f'(provider: "{provider}", point: {point})'
                         for provider in ("local", "object")
                         for point in ("ReadOpened", "ReconciliationVerified", "DeleteRemoved"))
+        expected.update(prefix + "Observed_admitted_open_rechecks_actual_quarantine_before_result_handoff"
+                        + f'(provider: "{provider}")' for provider in ("local", "object"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"

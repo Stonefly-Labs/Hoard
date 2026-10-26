@@ -1505,6 +1505,8 @@ def full_artifact_binding_scenarios():
     identities.update(prefix + "Ordinary_errors_inside_owned_failure_callbacks_still_fault_actual_settlement"
                       + f'(provider: "{provider}", point: {point})'
                       for provider in ("local", "object") for point in ("ReadOpened", "ReconciliationVerified", "DeleteRemoved"))
+    identities.update(prefix + "Observed_admitted_open_rechecks_actual_quarantine_before_result_handoff"
+                      + f'(provider: "{provider}")' for provider in ("local", "object"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
