@@ -11,7 +11,7 @@ internal static class RuntimeOriginOutput
     private sealed record Pending(string Prefix, int Count, string Digest, List<string> Parts);
     internal readonly record struct ComponentIdentity(string Assembly, Guid Module, string Type);
 
-    internal static (JsonElement[] Origins, JsonElement[] OriginalObservations, bool Unknown,
+    internal static (JsonElement[] Origins, JsonElement[] OriginalObservations, JsonElement[] MetadataArguments, bool Unknown,
         Dictionary<Guid, ComponentIdentity> Instances) Read(
         TestResult result, RuntimeInput input, RuntimeExpectedTest expected, HashSet<Guid> priorSessions,
         IReadOnlyDictionary<Guid, ComponentIdentity> priorInstances)
@@ -32,7 +32,8 @@ internal static class RuntimeOriginOutput
                 RuntimeSafety.Require(span.Length <= 1024, "OutputLimitExceeded");
                 var line = span.ToString();
                 if (!line.StartsWith(ConformanceSessionOriginOutput.Prefix + ":", StringComparison.Ordinal)
-                    && !line.StartsWith(ConformanceOriginalObservationOutput.Prefix + ":", StringComparison.Ordinal))
+                    && !line.StartsWith(ConformanceOriginalObservationOutput.Prefix + ":", StringComparison.Ordinal)
+                    && !line.StartsWith(ConformanceMetadataArgumentOutput.Prefix + ":", StringComparison.Ordinal))
                 { unknown = true; continue; }
                 var fields = line.Split(':');
                 RuntimeSafety.Require(fields.Length == 6, "ProofMismatch");
@@ -59,6 +60,7 @@ internal static class RuntimeOriginOutput
         }
         var origins = new List<JsonElement>();
         var originals = new List<JsonElement>();
+        var arguments = new List<JsonElement>();
         var instances = new Dictionary<Guid, ComponentIdentity>();
         foreach (var (id, packet) in pending)
         {
@@ -72,6 +74,17 @@ internal static class RuntimeOriginOutput
                 && RuntimeSafety.Hash(bytes) == packet.Digest, "ProofMismatch");
             using var document = JsonDocument.Parse(bytes, new JsonDocumentOptions { MaxDepth = 8 });
             var origin = document.RootElement;
+            if (packet.Prefix == ConformanceMetadataArgumentOutput.Prefix)
+            {
+                Keys(origin, "schemaVersion", "runId", "caseId", "callId", "sourceKind", "sourceId",
+                    "componentRole", "componentInstanceId", "argumentKind", "argumentValue");
+                RuntimeSafety.Require(origin.GetProperty("schemaVersion").GetInt32() == 1
+                    && Uuid(origin.GetProperty("runId").GetString()!) == input.RunId
+                    && origin.GetProperty("caseId").GetString() == expected.CaseId
+                    && Uuid(origin.GetProperty("callId").GetString()!) == id, "ProofMismatch");
+                arguments.Add(origin.Clone());
+                continue;
+            }
             var original = packet.Prefix == ConformanceOriginalObservationOutput.Prefix;
             if (original)
             {
@@ -138,7 +151,36 @@ internal static class RuntimeOriginOutput
             if (original) { originals.Add(origin.Clone()); }
             else { origins.Add(origin.Clone()); }
         }
-        return (origins.ToArray(), originals.ToArray(), unknown, instances);
+        foreach (var argument in arguments)
+        {
+            var original = argument.GetProperty("sourceKind").GetString() switch
+            {
+                "session-origin" => false,
+                "original-observation" => true,
+                _ => throw RuntimeSafety.Error("ProofMismatch")
+            };
+            var sourceId = Uuid(argument.GetProperty("sourceId").GetString()!);
+            var sources = (original ? originals : origins).Where(source =>
+                Uuid(source.GetProperty(original ? "observationId" : "sessionId").GetString()!) == sourceId).ToArray();
+            RuntimeSafety.Require(sources.Length == 1, "ProofMismatch");
+            var source = sources[0];
+            RuntimeSafety.Require(!original || source.GetProperty("kind").GetString() == "original-instance", "ProofMismatch");
+            var role = (argument.GetProperty("argumentKind").GetString(), argument.GetProperty("argumentValue").GetString()) switch
+            {
+                ("continuation-corruption", "Null" or "Omitted" or "WrongType" or "Empty" or "OddHex" or "InvalidHex") => "store",
+                ("query-corruption", "CacheAuthorization" or "AggregateAuthorization" or "AggregateStart"
+                    or "AggregateEnd" or "LeaseResource") => "store",
+                ("lease-expiry", "Renew" or "Release" or "Guard") => "store",
+                ("schema-layout", "unrelated" or "partial") => "schema",
+                _ => throw RuntimeSafety.Error("ProofMismatch")
+            };
+            var components = source.GetProperty("components");
+            RuntimeSafety.Require(components.TryGetProperty("schema", out _)
+                && argument.GetProperty("componentRole").GetString() == role
+                && Uuid(argument.GetProperty("componentInstanceId").GetString()!)
+                    == Uuid(components.GetProperty(role).GetProperty("instanceId").GetString()!), "ProofMismatch");
+        }
+        return (origins.ToArray(), originals.ToArray(), arguments.ToArray(), unknown, instances);
     }
 
     private static void Keys(JsonElement value, params string[] expected)

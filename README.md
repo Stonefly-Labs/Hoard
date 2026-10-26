@@ -2528,6 +2528,27 @@ six-row frozen parity passes. Three SDK-only assertion mutants each produce
 two named failures in both families, all other rows passing with matching
 runtime SDK/archive images. This remains local, non-qualifying evidence.
 
+Exact `d30271d`,
+[run40286734253](https://github.com/Stonefly-Labs/Hoard/actions/runs/40286734253),
+now passes all three Linux jobs and 337 native foundations without skips,
+admitting artifact162/metadata152 and all ten metadata source parents. This
+does not admit the later argument transport or complete F-07.
+
+The four parameterized metadata assertions now capture closed enum/layout
+arguments against actual store/schema objects. Late output drains each call
+once; early original-schema output uses an explicitly disposed observation
+scope, preserving its original capture order. Runtime proof schema3 binds the
+argument packets to current source/component identities; schema1/2 remain
+supported. Metadata category declarations, not reference-provider names,
+govern argument admission. Overlap, foreign records and replay reject. These receipts alone
+do not establish the still-missing native parameter-quality composition.
+
+Fresh fourteen-package replay passes 318 selected consumers. The safe logger
+then passes all 152 shared/63 memory-original/63 SQLite-original witnesses,
+with exactly 32/16/16 source-bound argument calls and identical SDK/archive
+images. All 64 call UUIDs are distinct. Tooling449/19 native skips and source
+contracts152/zero skips pass. These remain local, non-qualifying diagnostics.
+
 Exact earlier `831b00c`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),
 passed all three Linux jobs and strict admission of the 129-row artifact and

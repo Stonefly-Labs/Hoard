@@ -617,6 +617,20 @@ ordinary callback errors. Complete 314-row actual/six-row frozen parity passes.
 Three SDK-only assertion mutants each give both families two named failures,
 every other row passing with matching SDK/archive images. Native observation
 of this extension and full category qualification remain outstanding.
+
+Exact `d30271d`/run40286734253 independently admits artifact162/metadata152
+and ten metadata parents on Linux; all three jobs/337 native foundations pass
+without skips. The later argument transport is not covered by that head.
+
+Metadata assertions now capture their closed enum/layout arguments on actual
+store/schema instances. Late source output drains calls once; original-schema
+early output uses an explicitly disposed argument scope, preserving capture
+order and joining in-flight output before detachment. Schema3 proof records
+join current source/component identities with independent C#/Python validation,
+closed bounds and cross-scope replay rejection. Metadata category declarations,
+not reference binding names, govern admission. Schema1/2 remain supported.
+This transport does not complete native expected-map/pairing controls or QC-02.
+
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

@@ -10337,6 +10337,40 @@ no skips. Tooling passes 445 checks/19 native skips and source contracts pass
 133/zero skips. Exact-head Linux admission remains outstanding; no tasks or
 reviewer-owned checklists are marked complete.
 
+Exact `d30271d`,
+[run40286734253](https://github.com/Stonefly-Labs/Hoard/actions/runs/40286734253),
+passes all three Linux jobs and 337 native foundations without skips, admitting
+artifact162/metadata152, ten metadata scopes/141 public executions and ten
+metadata source parents. Its metadata report remains `Incomplete`, qualification
+false. The later argument transport still needs its own exact-head result.
+
+Metadata argument capture records only the sixteen closed enum/layout choices
+inside the four common SDK methods, without altering their assertions. Late
+source output drains pending calls once. Original schema observations retain
+their early output and acquire an explicit per-assertion disposable argument
+scope; closure joins in-flight output before releasing either component-role
+owner. Overlap rolls back without replacing existing owners, and later object
+reuse cannot resend old calls or write to a closed helper. Pending/live calls
+remain bounded. Independent C# and Python validation joins the third packet
+prefix to actual source/component identities in runtime proof schema3 and
+rejects foreign contexts, role/value mismatches, unknown fields and replay.
+Argument admission uses the declared metadata category, not reference-provider
+binding names; both logger and parent have contributor-name regressions.
+Legacy schema1/2 transport remains diagnostic-compatible. Case/category
+histories retain immutable argument maps and reject cross-scope call reuse.
+This transport is not the still-unbuilt QC-02 expected-map/native-pairing
+composition. Examples, diagrams, production dependencies and infrastructure
+are unaffected.
+
+Fresh fourteen-package replay passes 318 selected consumers. Complete
+152 shared/63 memory-original/63 SQLite-original safe-logger families pass
+without skips and contain exactly 32/16/16 distinct source-bound argument
+calls. Each loaded SDK matches the same admitted local archive image before
+and after its family; all 64 call UUIDs differ. Tooling449/19 native skips
+and source contracts152/zero skips pass. The scoped architecture follow-up
+finds no actionable issues, but lacks a deterministic selected-receiver/
+closure-race regression and is not final T081 or native admission.
+
 Exact `58a949543ea160b5be21c13db581f01387d33719`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
 independently passes all three Linux jobs: 331 native foundations without

@@ -22,7 +22,8 @@ public sealed class ConformanceObservedComponent
 public sealed class ConformanceSessionOrigin
 {
     internal ConformanceSessionOrigin(ConformanceRunContext context, Guid sessionId, Guid? parentSessionId,
-        string descriptorSha256, ImmutableSortedDictionary<string, ConformanceObservedComponent> components)
+        string descriptorSha256, ImmutableSortedDictionary<string, ConformanceObservedComponent> components,
+        (string Role, object Component)[] observedObjects)
     {
         RunId = context.RunId;
         CaseId = context.CaseId;
@@ -30,6 +31,7 @@ public sealed class ConformanceSessionOrigin
         ParentSessionId = parentSessionId;
         DescriptorSha256 = descriptorSha256;
         Components = components;
+        ObservedObjects = observedObjects;
     }
 
     public int SchemaVersion => 1;
@@ -42,6 +44,7 @@ public sealed class ConformanceSessionOrigin
     public string RuntimeVersion => Environment.Version.ToString();
     public string ProcessArchitecture => RuntimeInformation.ProcessArchitecture.ToString().ToLowerInvariant();
     public ImmutableSortedDictionary<string, ConformanceObservedComponent> Components { get; }
+    internal (string Role, object Component)[] ObservedObjects { get; }
     public override string ToString() => nameof(ConformanceSessionOrigin);
 }
 
@@ -76,7 +79,9 @@ internal sealed class ConformanceSessionOriginTracker(
             foreach (var (role, component) in components) { Add(role, component); }
             ConformanceLoadedAssembly.CheckBudget(started);
             return new(context, sessionId, parentSessionId,
-                Convert.ToHexStringLower(SHA256.HashData(descriptor.AsSpan())), result.ToImmutable());
+                Convert.ToHexStringLower(SHA256.HashData(descriptor.AsSpan())), result.ToImmutable(),
+                result.ContainsKey("schema")
+                    ? components.Where(component => component.Role is "store" or "schema").ToArray() : []);
 
             void Add(string role, object component)
             {

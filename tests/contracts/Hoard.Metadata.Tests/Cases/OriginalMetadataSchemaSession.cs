@@ -23,6 +23,7 @@ internal sealed class OriginalMetadataSchemaSession : IMetadataSchemaAssertionSe
     public IMetadataStore Store => fixture.Store;
     public IMetadataSchemaAdministration Schema => fixture.Schema;
     public IMetadataConformanceAuthority Authority => CommonAuthority(fixture);
+    internal IDisposable? ObserveArguments() => observations?.ObserveArguments(observation);
     public async ValueTask<IMetadataSchemaAssertionSession> ReopenAsync(CancellationToken cancellationToken)
     {
         var reopened = await fixture.ReopenAsync("fixture-sqlite-v2", cancellationToken);

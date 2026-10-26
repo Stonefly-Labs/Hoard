@@ -1636,6 +1636,44 @@ def inspect_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data
         "qualification": False, "inputs": captured, "inputsSha256": digest(captured), "observation": observed})
 
 
+def _ingest_metadata_arguments(inputs, raw, origins, originals, prior_ids, binding_id):
+    if raw and not any(binding["bindingId"] == binding_id and binding["category"] == "metadata"
+                       for binding in inputs["bindings"]):
+        raise ConformanceError("ProofMismatch")
+    sources = {
+        **{("session-origin", source["sessionId"]): source for source in origins},
+        **{("original-observation", source["observationId"]): source for source in originals},
+    }
+    result = []
+    choices = {
+        "continuation-corruption": ("store", ("Null", "Omitted", "WrongType", "Empty", "OddHex", "InvalidHex")),
+        "query-corruption": ("store", ("CacheAuthorization", "AggregateAuthorization", "AggregateStart",
+                                     "AggregateEnd", "LeaseResource")),
+        "lease-expiry": ("store", ("Renew", "Release", "Guard")),
+        "schema-layout": ("schema", ("unrelated", "partial")),
+    }
+    for value in raw:
+        argument = _record({
+            "schemaVersion": _constant(1), "runId": _uuid, "caseId": stable_id, "callId": _uuid,
+            "sourceKind": _one_of("session-origin", "original-observation"), "sourceId": _uuid,
+            "componentRole": _one_of("store", "schema"), "componentInstanceId": _uuid,
+            "argumentKind": _one_of(*choices),
+            "argumentValue": _one_of(*(value for _, values in choices.values() for value in values)),
+        })(value)
+        source = sources.get((argument["sourceKind"], argument["sourceId"]))
+        role, values = choices[argument["argumentKind"]]
+        if (source is None or argument["callId"] in prior_ids or argument["runId"] != inputs["runId"]
+                or argument["caseId"] != source["caseId"] or argument["argumentValue"] not in values
+                or argument["componentRole"] != role or "schema" not in source["components"]
+                or argument["componentInstanceId"] != source["components"][role]["instanceId"]
+                or (argument["sourceKind"] == "original-observation"
+                    and (source["kind"] != "original-instance" or source["bindingId"] not in ("memory", "sqlite")))):
+            raise ConformanceError("ProofMismatch")
+        prior_ids.add(argument["callId"])
+        result.append(argument)
+    return tuple(result)
+
+
 def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, proofs,
                           completion_data, expected_tests, manifest_sha256, owner_sha256,
                           started_ms, ended_ms, origin_inputs=None, original_inputs=None):
@@ -1676,6 +1714,8 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
     proof_hashes = {}
     session_origins = {}
     original_observations = {}
+    metadata_arguments = {}
+    prior_arguments = set()
     prior_sessions = {}
     prior_observations = {}
     prior_instances = {}
@@ -1691,9 +1731,11 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
         raw = load_json(proof_data)
         version = raw.get("schemaVersion") if isinstance(raw, Mapping) else None
         fields = proof_fields
-        if version == 2:
-            fields = {**proof_fields, "schemaVersion": _constant(2),
+        if version in (2, 3):
+            fields = {**proof_fields, "schemaVersion": _constant(version),
                       "originalObservations": _list(lambda value: value, 128, minimum=0)}
+            if version == 3:
+                fields["metadataArguments"] = _list(lambda value: value, 128, minimum=1)
         proof = _record(fields)(raw)
         proof_hashes[path] = hashlib.sha256(proof_data).hexdigest()
         if (proof_hashes[path] != witness["proofSha256"]
@@ -1720,10 +1762,18 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
         originals = _ingest_original_observations(
             inputs, proof.get("originalObservations", ()), original_inputs=original_inputs, entry=entry,
             prior_observations=prior_observations, prior_instances=prior_instances)
-        if set(prior_sessions) & set(prior_observations):
+        if (set(prior_sessions) & set(prior_observations)
+                or prior_arguments & (set(prior_sessions) | set(prior_observations))):
+            raise ConformanceError("ProofMismatch")
+        arguments = _ingest_metadata_arguments(
+            inputs, proof.get("metadataArguments", ()), origins, originals, prior_arguments, entry["bindingId"])
+        if len(origins) + len(originals) + len(arguments) > 128:
+            raise ConformanceError("OutputLimitExceeded")
+        if prior_arguments & (set(prior_sessions) | set(prior_observations)):
             raise ConformanceError("ProofMismatch")
         session_origins[witness["executionId"]] = origins
         original_observations[witness["executionId"]] = originals
+        metadata_arguments[witness["executionId"]] = arguments
         if ((witness["status"] == "Passed" and (proof["failureKind"] != "None" or proof["assertionSymbol"] is not None))
                 or (witness["status"] == "Incomplete"
                     and (proof["failureKind"] != "SkippedOrUnknown" or proof["assertionSymbol"] is not None))
@@ -1754,6 +1804,7 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
         "attemptId": manifest["attemptId"], "diagnosticCode": code,
         "sessionOrigins": MappingProxyType(session_origins),
         "originalObservations": MappingProxyType(original_observations),
+        "metadataArguments": MappingProxyType(metadata_arguments),
         "caseIds": tuple(sorted({entry["caseId"] for entry in expected.values()})),
     })
 
@@ -1971,8 +2022,10 @@ def _runtime_provenance_state(observed, used, prior_instances):
     observations = [*(
         (origin["sessionId"], origin) for origins in observed["sessionOrigins"].values() for origin in origins), *(
         (origin["observationId"], origin) for origins in observed["originalObservations"].values() for origin in origins)]
-    ids = frozenset(identity for identity, _ in observations)
-    if len(ids) != len(observations) or ids & used:
+    calls = tuple(argument["callId"] for arguments in observed.get("metadataArguments", {}).values()
+                  for argument in arguments)
+    ids = frozenset((*[identity for identity, _ in observations], *calls))
+    if len(ids) != len(observations) + len(calls) or ids & used:
         raise ConformanceError("ProofMismatch")
     instances = dict(prior_instances)
     for _, origin in observations:
@@ -1990,6 +2043,7 @@ class RuntimeCaseHistory:
         self._inputs = admit_entity("RunInputs", inputs)
         self._session_origins = MappingProxyType({})
         self._original_observations = MappingProxyType({})
+        self._metadata_arguments = MappingProxyType({})
         self._used_sessions = frozenset()
         self._instances = {}
         self._origin_inputs = _origin_input_assignments(origin_inputs)
@@ -2033,6 +2087,10 @@ class RuntimeCaseHistory:
     @property
     def original_observations(self):
         return self._original_observations
+
+    @property
+    def metadata_arguments(self):
+        return self._metadata_arguments
 
     def begin(self, attempt_id):
         attempt_id = _uuid(attempt_id)
@@ -2094,6 +2152,8 @@ class RuntimeCaseHistory:
             self._session_origins = MappingProxyType({**self._session_origins, **observed["sessionOrigins"]})
             self._original_observations = MappingProxyType({
                 **self._original_observations, **observed["originalObservations"]})
+            self._metadata_arguments = MappingProxyType({
+                **self._metadata_arguments, **observed["metadataArguments"]})
             self._used_sessions = self._used_sessions | sessions
             self._instances = instances
         except ConformanceError as error:
@@ -2158,6 +2218,7 @@ class CategoryRuntimeHistory:
         self._quality_proofs = MappingProxyType({})
         self._session_origins = MappingProxyType({})
         self._original_observations = MappingProxyType({})
+        self._metadata_arguments = MappingProxyType({})
         self._results = {case.key: _catalog_case_result(self._inputs, case, "NotApplicable", ())
                          for case in self._cases if case.exclusion is not None}
 
@@ -2176,6 +2237,10 @@ class CategoryRuntimeHistory:
     @property
     def original_observations(self):
         return self._original_observations
+
+    @property
+    def metadata_arguments(self):
+        return self._metadata_arguments
 
     @property
     def quality_proofs(self):
@@ -2388,13 +2453,14 @@ class CategoryRuntimeHistory:
             plan = {scope_id: {**scope, "tests": {
                 identity: (binding_id, case_id) for identity, case_id in scope["tests"].items()}}
                 for scope_id, scope in self._partitions[binding_id].items()}
-            code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls, proof_bytes = self._ingest_parts(
+            code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls, proof_bytes, arguments = self._ingest_parts(
                 plan, transports, self._active[binding_id][1], ended, self._sequences[binding_id] + 1)
             results = self._append(
                 binding_id, code, ended, witnesses, proofs, source_parents, controls, proof_bytes=proof_bytes)
             self._session_origins = MappingProxyType({**self._session_origins, **origins})
             self._original_observations = MappingProxyType({
                 **self._original_observations, **originals})
+            self._metadata_arguments = MappingProxyType({**self._metadata_arguments, **arguments})
             self._used_sessions = used_sessions
             self._instances = instances
             return results
@@ -2409,6 +2475,7 @@ class CategoryRuntimeHistory:
         fields = {"manifest_data", "owner_data", "witnesses_data", "proofs", "completion_data",
                   "manifest_sha256", "owner_sha256"}
         witnesses, proofs, origins, originals, codes, source_parents = (), {}, {}, {}, [], {}
+        arguments = {}
         used_executions, used_sessions, instances = self._used_executions, self._used_sessions, self._instances
         proof_bytes = self._proof_bytes
         for scope_id, scope in sorted(plan.items()):
@@ -2450,6 +2517,7 @@ class CategoryRuntimeHistory:
                 raise ConformanceError("OutputLimitExceeded")
             origins.update(observed["sessionOrigins"])
             originals.update(observed["originalObservations"])
+            arguments.update(observed.get("metadataArguments", {}))
             codes.append(observed["diagnosticCode"])
         controls = {}
         if self._native_sources is not None:
@@ -2463,14 +2531,14 @@ class CategoryRuntimeHistory:
                 raise ConformanceError("OutputLimitExceeded")
         code = next((code for code in codes if code not in ("None", "AssertionFailed")),
                     "AssertionFailed" if "AssertionFailed" in codes else "None")
-        return code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls, proof_bytes
+        return code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls, proof_bytes, arguments
 
     def finish_joint(self, *, transports):
         plan = self.joint_partitions()
         ended = _number(time.monotonic() * 1000)
         try:
             binding = next(iter(self._bindings))
-            code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls, proof_bytes = self._ingest_parts(
+            code, witnesses, proofs, origins, originals, used_sessions, instances, source_parents, controls, proof_bytes, arguments = self._ingest_parts(
                 plan, transports, self._active[binding][1], ended, self._sequences[binding] + 1)
             results = {key: value for binding in self._bindings
                        for key, value in self._case_results(
@@ -2505,6 +2573,7 @@ class CategoryRuntimeHistory:
             self._quality_proofs = MappingProxyType({**self._quality_proofs, **packets})
             self._session_origins = MappingProxyType({**self._session_origins, **origins})
             self._original_observations = MappingProxyType({**self._original_observations, **originals})
+            self._metadata_arguments = MappingProxyType({**self._metadata_arguments, **arguments})
             self._used_sessions, self._instances = used_sessions, instances
             self._joint_plan = None
             return committed

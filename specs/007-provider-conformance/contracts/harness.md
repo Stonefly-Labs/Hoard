@@ -1535,6 +1535,21 @@ frozen parity passes. Three SDK-only assertion mutants each give both families
 two named failures, all other rows passing with exact runtime SDK/archive
 images and no skips. This extension awaits exact-head native observation.
 
+Exact `d30271d`/run40286734253 passes all three Linux jobs/337 native
+foundations without skips and admits artifact162/metadata152 with ten metadata
+parents, not the later argument transport.
+
+Closed metadata argument packets are recorded inside the four actual SDK
+methods and joined to source/component identities in runtime proof schema3.
+Late output drains calls once. Early original-schema output retains its order
+with an explicit per-assertion observation scope; closure joins output before
+detaching, overlapping owners reject and object reuse does not replay calls.
+Independent logger/parent validation preserves schema1/2 support, existing
+packet/proof bounds and immutable cross-scope replay protection. Metadata category
+declarations, not reference binding names, govern argument admission. This transport
+does not supply expected-map/native-pairing quality composition or complete
+QC-02.
+
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or
 ownership consumers. Reduced/foreign scopes reject before launch; routing

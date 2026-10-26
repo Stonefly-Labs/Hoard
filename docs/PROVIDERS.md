@@ -114,6 +114,20 @@ frozen parity passes, while each of three SDK-only assertion mutants produces
 two named failures in both families and all other rows pass with exact SDK
 image/archive correspondence. These are local diagnostics, not complete QC-03.
 
+Exact `d30271d`/run40286734253 independently admits artifact162/metadata152
+on Linux: all three jobs and 337 native foundations pass without skips, with
+ten metadata parents. The later argument transport is not covered by that head.
+
+Common metadata assertions now record their closed enum/layout arguments
+against the actual component objects. Late output drains each call once;
+early original-schema output has an explicitly owned disposable observation
+scope. Closure joins output before releasing ownership, overlap cannot replace
+an existing owner, and reused objects cannot replay historical calls. The safe
+logger and parent independently validate schema3 argument/source/role joins;
+schema1/2 remain supported. Metadata category declarations, not reference
+binding names, govern argument admission. This is transport, not an independently
+composed native QC-02 control or completed provider qualification.
+
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run

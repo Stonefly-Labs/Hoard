@@ -13,6 +13,7 @@ public static class MetadataPagingAssertions
     {
         ArgumentNullException.ThrowIfNull(corruptAsync);
         if (!Enum.IsDefined(corruption)) { throw new ArgumentException("BindingInvalid"); }
+        Evidence.ConformanceMetadataArgumentOutput.Record(store, "continuation-corruption", corruption.ToString());
         await Commit(store, cancellationToken, Enumerable.Range(1, 3).Select(number =>
             (MetadataMutation)new MetadataMutation.PutRegistry(Registry(number), new ExpectedRevision.Absent())).ToArray());
         var query = Registries(1);

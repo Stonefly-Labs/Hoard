@@ -249,6 +249,7 @@ public static class MetadataCorruptionAssertions
         if (corruption is not (MetadataRecordCorruption.CacheAuthorization or MetadataRecordCorruption.AggregateAuthorization
             or MetadataRecordCorruption.AggregateStart or MetadataRecordCorruption.AggregateEnd or MetadataRecordCorruption.LeaseResource))
         { throw new ArgumentException("BindingInvalid", nameof(corruption)); }
+        Evidence.ConformanceMetadataArgumentOutput.Record(store, "query-corruption", corruption.ToString());
         var (registry, package) = await Seed(store, cancellationToken);
         var first = Entry(package, target: "/a");
         var damaged = Entry(package, target: "/b");

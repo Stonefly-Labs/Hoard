@@ -287,6 +287,27 @@ mutants each give two named failures per family with all other rows passing
 and exact SDK/archive image correspondence. These remain local diagnostics,
 not independent native admission or complete extraction-quality composition.
 
+Exact `d30271d`/run40286734253 subsequently admits artifact162/metadata152 and
+ten metadata source parents on Linux, with all three jobs and 337 native
+foundations passing without skips. It does not admit the later argument
+transport.
+
+Runtime proof schema3 adds a nonempty `metadataArguments` array alongside
+`sessionOrigins` and `originalObservations`; schema1/2 retain their exact
+existing shapes. `hoard-metadata-argument-v1` packets contain only run/case,
+unique call/source/component UUIDs, source kind, component role and closed
+argument kind/value fields. The four SDK assertions capture actual arguments,
+not caller-provided receipts. Late writers drain pending calls once. Early
+original-schema writers use an explicit disposable scope: one owner per
+component/role, rollback on overlap, and joined output before detachment.
+Scope closure and object reuse cannot credit the same call to another source.
+C# and Python independently require current source/role identity, bounded
+values, exact fields and replay-free calls, including cross-scope history.
+Argument admission uses the declared metadata category, not reference binding names.
+Existing 128-packet and 64-KiB proof bounds are unchanged. Schema3 transport
+does not itself require or qualify the full sixteen-choice extraction map;
+independent native pairing and QC-02 composition remain outstanding.
+
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,

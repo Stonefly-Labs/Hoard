@@ -194,6 +194,20 @@ assertion mutants each give two named failures per family, all other rows
 passing with exact SDK/archive image correspondence. These local diagnostics
 do not supply native admission or complete QC-03.
 
+The artifact162/metadata152 scope is now independently admitted at
+`d30271d`/run40286734253: all three Linux jobs and 337 native foundations pass
+without skips, with ten metadata source parents.
+
+The four parameterized metadata SDK methods now emit closed argument records
+bound to actual source/component identities through runtime proof schema3.
+Late output drains calls once; early original-schema output uses an explicit
+disposable scope without changing its original capture order. Overlap, foreign
+role/context/value claims and replay reject; closure joins before detachment
+and object reuse cannot resend old calls. Existing proof bounds and schema1/2
+support remain unchanged. Argument admission uses the declared metadata category
+rather than reference binding names. These records do not independently satisfy any
+QC-02 obligation: exact expected-map/native-pairing composition is still open.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

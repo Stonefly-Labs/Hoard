@@ -40,6 +40,14 @@ public static class ConformanceSessionOriginOutput
     {
         ArgumentNullException.ThrowIfNull(output);
         foreach (var packet in Render(origin)) { output.WriteLine(packet); }
+        if (origin.Components.ContainsKey("schema"))
+        {
+            foreach (var (role, component) in origin.ObservedObjects)
+            {
+                ConformanceMetadataArgumentOutput.Flush(output, origin.RunId, origin.CaseId,
+                    "session-origin", origin.SessionId, role, component, origin.Components[role].InstanceId);
+            }
+        }
     }
 }
 

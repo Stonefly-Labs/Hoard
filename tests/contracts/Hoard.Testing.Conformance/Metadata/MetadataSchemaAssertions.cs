@@ -45,6 +45,7 @@ public static class MetadataSchemaAssertions
         IMetadataSchemaAssertionSession session, bool partial, CancellationToken cancellationToken)
     {
         Success(await session.CreateUnrecognizedLayoutAsync(partial, cancellationToken));
+        Evidence.ConformanceMetadataArgumentOutput.Record(session.Schema, "schema-layout", partial ? "partial" : "unrelated");
         var before = await session.ObserveStateAsync(cancellationToken);
         Assert.Equal(MetadataSchemaState.Incompatible, Success(await session.Schema.InspectAsync(new(), cancellationToken)).State);
         Assert.Equal(MetadataFailureCode.IncompatibleSchema, Failed(await session.Schema.PrepareAsync(

@@ -1663,6 +1663,93 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 self.assertEqual(result["originalObservations"][self.execution][0], observation)
                 self.assertFalse(result["sessionOrigins"][self.execution])
 
+    def metadata_argument_transport(self, original):
+        if original:
+            source, assignments = self.original_transport()
+            options = {"original_inputs": assignments, "expected_tests": {self.identity: ("sqlite", "none")}}
+        else:
+            source, assignments = self.runtime_origin("runtime")
+            self.proof["sessionOrigins"] = [source]
+            options = {"origin_inputs": {"sqlite": assignments}}
+        source_kind, source_key = ("original-observation", "observationId") if original else ("session-origin", "sessionId")
+        arguments = [{
+            "schemaVersion": 1, "runId": self.inputs["runId"], "caseId": "runtime", "callId": str(uuid.uuid4()),
+            "sourceKind": source_kind, "sourceId": source[source_key], "componentRole": role,
+            "componentInstanceId": source["components"][role]["instanceId"], "argumentKind": kind, "argumentValue": value,
+        } for role, kind, value in (("store", "lease-expiry", "Renew"), ("schema", "schema-layout", "partial"))]
+        self.proof.update(schemaVersion=3, metadataArguments=arguments)
+        self.proof.setdefault("originalObservations", [])
+        input_sha = evidence.digest(self.inputs)
+        self.manifest["inputSha256"] = input_sha
+        self.proof.update(inputSha256=input_sha, manifestSha256=evidence.digest(self.manifest))
+        self.witness["inputSha256"] = input_sha
+        self.completion.update(inputSha256=input_sha, manifestSha256=evidence.digest(self.manifest))
+        return options, arguments
+
+    def test_metadata_arguments_bind_current_actual_source_roles_without_qualifying_parameters(self):
+        for original in (False, True):
+            with self.subTest(original=original):
+                self.setUp()
+                options, arguments = self.metadata_argument_transport(original)
+                self.witness["proofSha256"] = evidence.digest(self.proof)
+                observed = self.ingest(**options)
+                self.assertEqual(tuple(observed["metadataArguments"][self.execution]), tuple(arguments))
+                with self.assertRaises(TypeError):
+                    observed["metadataArguments"][self.execution][0]["argumentValue"] = "Release"
+                arguments[0]["argumentValue"] = "Release"
+                self.assertEqual(observed["metadataArguments"][self.execution][0]["argumentValue"], "Renew")
+
+    def test_metadata_arguments_reject_foreign_missing_duplicate_and_unbounded_source_claims(self):
+        mutations = (
+            lambda rows: rows.clear(),
+            lambda rows: rows.append(copy.deepcopy(rows[0])),
+            lambda rows: rows[0].update(runId=str(uuid.uuid4())),
+            lambda rows: rows[0].update(caseId="foreign"),
+            lambda rows: rows[0].update(sourceId=str(uuid.uuid4())),
+            lambda rows: rows[0].update(sourceKind="foreign"),
+            lambda rows: rows[0].update(componentRole="schema"),
+            lambda rows: rows[0].update(componentInstanceId=str(uuid.uuid4())),
+            lambda rows: rows[0].update(argumentKind="foreign"),
+            lambda rows: rows[0].update(argumentValue="canary-unbounded-value"),
+            lambda rows: rows[0].update(argumentValue="partial"),
+            lambda rows: rows[0].update(callId=rows[0]["sourceId"]),
+            lambda rows: rows[0].update(unexpected=True),
+        )
+        for original in (False, True):
+            for index, mutate in enumerate(mutations):
+                with self.subTest(original=original, mutation=index):
+                    self.setUp()
+                    options, arguments = self.metadata_argument_transport(original)
+                    mutate(arguments)
+                    self.witness["proofSha256"] = evidence.digest(self.proof)
+                    with self.assertRaises(evidence.ConformanceError):
+                        self.ingest(**options)
+
+    def test_metadata_argument_call_ids_cannot_be_reused_by_another_scope(self):
+        options, _ = self.metadata_argument_transport(False)
+        self.witness["proofSha256"] = evidence.digest(self.proof)
+        observed = self.ingest(**options)
+        used, instances = evidence._runtime_provenance_state(observed, frozenset(), {})
+        call = observed["metadataArguments"][self.execution][0]["callId"]
+        self.assertIn(call, used)
+        with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+            evidence._runtime_provenance_state(observed, frozenset((call,)), instances)
+
+    def test_metadata_argument_transport_accepts_declared_metadata_not_reference_provider_names(self):
+        options, _ = self.metadata_argument_transport(False)
+        assignments = options["origin_inputs"]["sqlite"]
+        self.inputs["bindings"][0]["bindingId"] = "contributor"
+        self.manifest["expected"][0]["bindingId"] = "contributor"
+        self.proof["bindingId"] = self.witness["bindingId"] = "contributor"
+        input_sha = evidence.digest(self.inputs)
+        self.manifest["inputSha256"] = input_sha
+        self.proof.update(inputSha256=input_sha, manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(inputSha256=input_sha, proofSha256=evidence.digest(self.proof))
+        self.completion.update(inputSha256=input_sha, manifestSha256=evidence.digest(self.manifest))
+        observed = self.ingest(origin_inputs={"contributor": assignments},
+                               expected_tests={self.identity: ("contributor", "none")})
+        self.assertEqual(len(observed["metadataArguments"][self.execution]), 2)
+
     def test_authority_observations_require_both_exact_loaded_provider_images(self):
         import conformance_case_catalog as catalog
         for mutation in (None, "missing", "reversed", "duplicate", "borrowed-image", "foreign-binding", "missing-package"):
@@ -2591,7 +2678,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             proofs.update({"control-" + hashlib.sha256(name.encode()).hexdigest() + ".json": hashes[0]
                            for name, hashes in controls.items()})
             imported = ("AssertionFailed" if failed else "None", tuple(witnesses), proofs, {}, {},
-                        frozenset(), {}, parents, controls, history._proof_bytes + proof_bytes)
+                        frozenset(), {}, parents, controls, history._proof_bytes + proof_bytes, {})
             with mock.patch.object(history, "_ingest_parts", return_value=imported), mock.patch.object(
                     evidence.time, "monotonic", return_value=(start + 3) / 1000):
                 history.finish_joint(transports={})

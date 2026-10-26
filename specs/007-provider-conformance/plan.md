@@ -7439,6 +7439,38 @@ each produce exactly two named failures in both families, all other rows
 passing with zero skips. Tooling445/19 native skips and source contracts133/
 zero skips pass. This remains local evidence, not QC-03 or stage completion.
 
+Exact `d30271d`/run40286734253 passes all three Linux jobs and 337 native
+foundations without skips, admitting artifact162/metadata152 and ten metadata
+source parents. Metadata remains 92 Passed/1 Incomplete/9 NotApplicable/
+0 Failed, report `Incomplete`, qualification false. This head does not
+admit the later argument transport.
+
+The next test-only transport increment records the actual sixteen closed
+metadata enum/layout choices inside their four common SDK methods. Late output
+drains calls once; early original-schema observation order is preserved with
+an explicitly owned per-assertion disposable output scope. One owner per
+component/role, rollback on overlap and joined closure prevent historical
+replay or output to a closed helper when objects are reused. Independent
+logger/parent validators bind argument packets to actual source/component
+identities using runtime proof schema3, retaining exact schema1/2 support,
+existing bounds and immutable cross-scope replay protection. Metadata category
+declarations, not reference-provider binding names, govern argument admission.
+Contributor-name regressions cover both validators. It does not add
+QC-02 controls or quality basis: expected-map/native pairing remains unbuilt,
+and all unfinished tasks/checklists/stage gates remain open.
+
+Fresh fourteen-package replay passes 318 selected consumers at source
+`ed4efe7f838ddec37c19b90bf0e2ac3ca979cd041f7b19678d0b1d79d720e551`,
+SDK archive
+`b42f3a470aabc5689edc0b96c36e93b07401f11739e4f5c2c9d490553a01965a`.
+Complete safe-logger replay passes 152 shared, 63 memory-original and
+63 SQLite-original witnesses with exactly 32/16/16 argument calls, all 64
+UUIDs distinct and each runtime SDK image matching that archive before/after.
+Tooling449/19 native skips and source contracts152/zero skips pass. The interim
+architecture lifecycle finding is corrected; follow-up has no actionable
+findings but notes the missing deterministic selected-receiver/closure-race
+regression. This is not final T081, native admission or QC-02 composition.
+
 Exact earlier `831b00c3999e94958bc3afecb77bf9d99a3cb9fa`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),
 passes all three Linux jobs and strict source admission: 336 native foundations/

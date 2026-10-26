@@ -44,6 +44,7 @@ public static class MetadataLeaseAssertions
         ArgumentNullException.ThrowIfNull(setTime);
         ArgumentNullException.ThrowIfNull(observeAsync);
         if (!Enum.IsDefined(action)) { throw new ArgumentException("BindingInvalid", nameof(action)); }
+        Evidence.ConformanceMetadataArgumentOutput.Record(store, "lease-expiry", action.ToString());
         var resource = new CanonicalText("maintenance");
         await Commit(store, cancellationToken, new MetadataMutation.AcquireLease(resource, Id(1), 1));
         var lease = await Read<MetadataWorkLease>(store, new MetadataSelector.Lease(resource), cancellationToken);

@@ -32,6 +32,8 @@ public sealed class ConformanceOriginalObservation
     public Guid? ParentObservationId { get; }
     public string Operation => Kind == "loaded-contract" ? "contract" : ParentObservationId.HasValue ? "reopen" : "create";
     public ImmutableSortedDictionary<string, ConformanceObservedComponent> Components { get; }
+    internal object ComponentObject(string role) =>
+        instances.Single(pair => pair.Value == Components[role].InstanceId).Key;
     public override string ToString() => nameof(ConformanceOriginalObservation);
 
     public static ConformanceOriginalObservation Capture(Guid runId, string caseId, string testIdentity,

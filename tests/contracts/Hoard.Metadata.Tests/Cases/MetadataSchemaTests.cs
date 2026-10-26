@@ -14,7 +14,9 @@ public sealed class MetadataSchemaTests(ITestOutputHelper output)
         foreach (var partial in new[] { false, true })
         {
             await using var fixture = MetadataFixtureSession.CreateFromEnvironment(new MetadataTestClock());
-            await MetadataSchemaAssertions.UnrecognizedLayoutAsync(new OriginalMetadataSchemaSession(fixture, observations), partial, default);
+            var session = new OriginalMetadataSchemaSession(fixture, observations);
+            using var arguments = session.ObserveArguments();
+            await MetadataSchemaAssertions.UnrecognizedLayoutAsync(session, partial, default);
         }
     }
 

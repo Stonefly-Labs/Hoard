@@ -26,6 +26,9 @@ internal static class MetadataCases
             previous = observation;
             return observation;
         }
+
+        public IDisposable? ObserveArguments(ConformanceOriginalObservation? observation) => observation is null ? null
+            : ConformanceOriginalObservationOutput.ObserveMetadataArguments(output, observation);
     }
 
     public static IMetadataConformanceAuthority CommonAuthority(MetadataFixtureSession fixture) =>

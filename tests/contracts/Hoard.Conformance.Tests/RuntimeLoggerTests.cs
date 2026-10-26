@@ -14,6 +14,275 @@ public sealed class RuntimeLoggerTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    public void Metadata_arguments_follow_actual_component_sources_even_when_output_precedes_the_assertion(bool before)
+    {
+        using var owned = new OwnedInput();
+        var probe = new OriginalProbe();
+        var observation = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", owned.Input.Expected[0].TestIdentity, "memory",
+            "original-instance",
+            [("owner", probe), ("store", probe), ("schema", probe), ("authority", probe), ("controls", probe)]);
+        var output = new CapturedOutput();
+        if (before) { ConformanceOriginalObservationOutput.Write(output, observation); }
+        using var scope = before ? ConformanceOriginalObservationOutput.ObserveMetadataArguments(output, observation) : null;
+        ConformanceMetadataArgumentOutput.Record(probe, "continuation-corruption", "OddHex");
+        ConformanceMetadataArgumentOutput.Record(probe, "schema-layout", "partial");
+        if (!before) { ConformanceOriginalObservationOutput.Write(output, observation); }
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, string.Join('\n', output.Lines)));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        Assert.Equal(3, proof.RootElement.GetProperty("schemaVersion").GetInt32());
+        var arguments = proof.RootElement.GetProperty("metadataArguments").EnumerateArray().ToArray();
+        Assert.Equal(2, arguments.Length);
+        Assert.Equal(2, arguments.Select(argument => argument.GetProperty("callId").GetGuid()).Distinct().Count());
+        Assert.All(arguments, argument =>
+        {
+            Assert.Equal("original-observation", argument.GetProperty("sourceKind").GetString());
+            Assert.Equal(observation.ObservationId, argument.GetProperty("sourceId").GetGuid());
+            var role = argument.GetProperty("componentRole").GetString()!;
+            Assert.Equal(observation.Components[role].InstanceId, argument.GetProperty("componentInstanceId").GetGuid());
+        });
+        Assert.Equal(["schema", "store"], arguments.Select(argument =>
+            argument.GetProperty("componentRole").GetString()!).Order().ToArray());
+        Assert.False(probe.Disposed);
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
+    [InlineData("continuation-corruption", "canary-unbounded-value")]
+    [InlineData("canary-unbounded-kind", "partial")]
+    public void Metadata_argument_capture_rejects_unbounded_diagnostics_before_output(string kind, string value)
+    {
+        var error = Assert.Throws<ArgumentException>(() =>
+            ConformanceMetadataArgumentOutput.Record(new OriginalProbe(), kind, value));
+        Assert.Equal("ProofMismatch", error.Message);
+    }
+
+    [Theory]
+    [InlineData("memory")]
+    [InlineData("contributor")]
+    public async Task Metadata_arguments_bind_actual_factory_origins_without_reference_binding_name_switches(string binding)
+    {
+        using var owned = new OwnedInput();
+        owned.Input.Expected[0] = owned.Input.Expected[0] with { BindingId = binding };
+        owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        var origin = await BindingContractTests.CaptureMetadataOriginAsync(owned.Input.RunId, "runtime");
+        var store = origin.ObservedObjects.Single(component => component.Role == "store").Component;
+        ConformanceMetadataArgumentOutput.Record(store, "query-corruption", "AggregateEnd");
+        var output = new CapturedOutput();
+        ConformanceSessionOriginOutput.Write(output, origin);
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, string.Join('\n', output.Lines)));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        var argument = Assert.Single(proof.RootElement.GetProperty("metadataArguments").EnumerateArray());
+        Assert.Equal("session-origin", argument.GetProperty("sourceKind").GetString());
+        Assert.Equal(origin.SessionId, argument.GetProperty("sourceId").GetGuid());
+        Assert.Equal(origin.Components["store"].InstanceId, argument.GetProperty("componentInstanceId").GetGuid());
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
+    [InlineData("sourceId")]
+    [InlineData("componentInstanceId")]
+    [InlineData("componentRole")]
+    [InlineData("argumentValue")]
+    [InlineData("caseId")]
+    [InlineData("runId")]
+    [InlineData("duplicate")]
+    public void Metadata_argument_packets_reject_foreign_roles_sources_values_and_duplicate_calls(string mutation)
+    {
+        using var owned = new OwnedInput();
+        var probe = new OriginalProbe();
+        var observation = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", owned.Input.Expected[0].TestIdentity, "memory", "original-instance",
+            [("owner", probe), ("store", probe), ("schema", probe), ("authority", probe), ("controls", probe)]);
+        var call = Guid.NewGuid();
+        var argument = JsonSerializer.SerializeToNode(new
+        {
+            schemaVersion = 1, runId = owned.Input.RunId, caseId = "runtime", callId = call,
+            sourceKind = "original-observation", sourceId = observation.ObservationId,
+            componentRole = "store", componentInstanceId = observation.Components["store"].InstanceId,
+            argumentKind = "lease-expiry", argumentValue = "Renew"
+        })!.AsObject();
+        if (mutation is "sourceId" or "componentInstanceId" or "runId") { argument[mutation] = Guid.NewGuid(); }
+        else if (mutation == "componentRole") { argument[mutation] = "schema"; }
+        else if (mutation == "argumentValue") { argument[mutation] = "canary-unbounded-value"; }
+        else if (mutation == "caseId") { argument[mutation] = "foreign"; }
+        var packets = ConformanceEvidencePacket.Render(
+            ConformanceMetadataArgumentOutput.Prefix, call, JsonSerializer.SerializeToUtf8Bytes(argument));
+        var lines = ConformanceOriginalObservationOutput.Render(observation).Concat(packets);
+        if (mutation == "duplicate") { lines = lines.Concat(packets); }
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, string.Join('\n', lines)));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.NotEqual(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        Assert.Empty(Directory.GetFiles(owned.Output, "proof-*.json"));
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Metadata_argument_sources_drain_once_and_release_reused_components(bool deferred)
+    {
+        using var owned = new OwnedInput();
+        var component = new OriginalProbe();
+        var first = ArgumentObservation(owned, component, component);
+        var second = ArgumentObservation(owned, component, component, first);
+        var firstOutput = new CapturedOutput();
+        if (deferred) { ConformanceOriginalObservationOutput.Write(firstOutput, first); }
+        using (var scope = deferred ? ConformanceOriginalObservationOutput.ObserveMetadataArguments(firstOutput, first) : null)
+        { ConformanceMetadataArgumentOutput.Record(component, "lease-expiry", "Renew"); }
+        if (!deferred) { ConformanceOriginalObservationOutput.Write(firstOutput, first); }
+        var firstCount = firstOutput.Lines.Count;
+        var secondOutput = new CapturedOutput();
+        ConformanceMetadataArgumentOutput.Record(component, "lease-expiry", "Release");
+        ConformanceOriginalObservationOutput.Write(secondOutput, second);
+        Assert.Equal(firstCount, firstOutput.Lines.Count);
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory,
+            string.Join('\n', firstOutput.Lines.Concat(secondOutput.Lines))));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        var arguments = proof.RootElement.GetProperty("metadataArguments").EnumerateArray().ToArray();
+        Assert.Equal(2, arguments.Length);
+        Assert.Equal(first.ObservationId, arguments.Single(argument =>
+            argument.GetProperty("argumentValue").GetString() == "Renew").GetProperty("sourceId").GetGuid());
+        Assert.Equal(second.ObservationId, arguments.Single(argument =>
+            argument.GetProperty("argumentValue").GetString() == "Release").GetProperty("sourceId").GetGuid());
+    }
+
+    [Fact]
+    public void Metadata_argument_scope_overlap_rolls_back_without_replacing_either_owner()
+    {
+        using var owned = new OwnedInput();
+        var firstStore = new OriginalProbe();
+        var secondStore = new OriginalProbe();
+        var schema = new OriginalProbe();
+        var first = ArgumentObservation(owned, firstStore, schema);
+        var second = ArgumentObservation(owned, secondStore, schema, first);
+        var firstOutput = new CapturedOutput();
+        var secondOutput = new CapturedOutput();
+        ConformanceOriginalObservationOutput.Write(firstOutput, first);
+        using var scope = ConformanceOriginalObservationOutput.ObserveMetadataArguments(firstOutput, first);
+        var error = Assert.Throws<InvalidOperationException>(() =>
+            ConformanceOriginalObservationOutput.ObserveMetadataArguments(secondOutput, second));
+        Assert.Equal("OwnershipInvalid", error.Message);
+        ConformanceMetadataArgumentOutput.Record(schema, "schema-layout", "partial");
+        ConformanceMetadataArgumentOutput.Record(secondStore, "lease-expiry", "Release");
+        ConformanceOriginalObservationOutput.Write(secondOutput, second);
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory,
+            string.Join('\n', firstOutput.Lines.Concat(secondOutput.Lines))));
+        using var recorder = owned.Open();
+        recorder.Observe(result);
+        recorder.Complete();
+        Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+    }
+
+    [Fact]
+    public async Task Metadata_argument_scope_closure_joins_inflight_output_and_detaches_both_roles()
+    {
+        using var owned = new OwnedInput();
+        var component = new OriginalProbe();
+        var source = ArgumentObservation(owned, component, component);
+        using var entered = new ManualResetEventSlim();
+        using var release = new ManualResetEventSlim();
+        var output = new CapturedOutput(line =>
+        {
+            if (line.StartsWith(ConformanceMetadataArgumentOutput.Prefix + ":", StringComparison.Ordinal))
+            {
+                entered.Set();
+                if (!release.Wait(TimeSpan.FromSeconds(5))) { throw new TimeoutException("OutputLimitExceeded"); }
+            }
+        });
+        ConformanceOriginalObservationOutput.Write(output, source);
+        using var scope = ConformanceOriginalObservationOutput.ObserveMetadataArguments(output, source);
+        var writing = Task.Run(() => ConformanceMetadataArgumentOutput.Record(component, "lease-expiry", "Renew"));
+        Task? closing = null;
+        try
+        {
+            Assert.True(entered.Wait(TimeSpan.FromSeconds(5)));
+            closing = Task.Run(scope.Dispose);
+            Assert.NotSame(closing, await Task.WhenAny(closing, Task.Delay(TimeSpan.FromMilliseconds(100))));
+        }
+        finally
+        {
+            release.Set();
+            await writing.WaitAsync(TimeSpan.FromSeconds(5));
+            if (closing is not null) { await closing.WaitAsync(TimeSpan.FromSeconds(5)); }
+        }
+        var count = output.Lines.Count;
+        ConformanceMetadataArgumentOutput.Record(component, "lease-expiry", "Release");
+        ConformanceMetadataArgumentOutput.Record(component, "schema-layout", "partial");
+        var next = ArgumentObservation(owned, component, component, source);
+        var nextOutput = new CapturedOutput();
+        ConformanceOriginalObservationOutput.Write(nextOutput, next);
+        Assert.Equal(count, output.Lines.Count);
+        Assert.Contains(nextOutput.Lines, line =>
+            line.StartsWith(ConformanceMetadataArgumentOutput.Prefix + ":", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Metadata_argument_buffers_and_live_scopes_have_closed_call_bounds(bool deferred)
+    {
+        using var owned = new OwnedInput();
+        var component = new OriginalProbe();
+        var observation = ArgumentObservation(owned, component, component);
+        using var scope = deferred
+            ? ConformanceOriginalObservationOutput.ObserveMetadataArguments(new CapturedOutput(), observation) : null;
+        for (var index = 0; index < 128; index++)
+        { ConformanceMetadataArgumentOutput.Record(component, "lease-expiry", "Renew"); }
+        var error = Assert.Throws<InvalidOperationException>(() =>
+            ConformanceMetadataArgumentOutput.Record(component, "lease-expiry", "Renew"));
+        Assert.Equal("OutputLimitExceeded", error.Message);
+    }
+
+    private static ConformanceOriginalObservation ArgumentObservation(
+        OwnedInput owned, object store, object schema, ConformanceOriginalObservation? previous = null) =>
+        ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", owned.Input.Expected[0].TestIdentity, "memory", "original-instance",
+            [("owner", new OriginalProbe()), ("store", store), ("schema", schema), ("authority", store), ("controls", store)],
+            parent: null, previous);
+
+    private sealed class CapturedOutput(Action<string>? beforeWrite = null) : Xunit.Abstractions.ITestOutputHelper
+    {
+        internal List<string> Lines { get; } = [];
+        public void WriteLine(string message)
+        {
+            beforeWrite?.Invoke(message);
+            Lines.Add(message);
+        }
+        public void WriteLine(string format, params object[] args) =>
+            WriteLine(string.Format(System.Globalization.CultureInfo.InvariantCulture, format, args));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
     public void Original_observations_are_non_owning_and_distinct_from_typed_session_origins(bool contract)
     {
         using var owned = new OwnedInput();

@@ -89,5 +89,41 @@ public static class ConformanceOriginalObservationOutput
     {
         ArgumentNullException.ThrowIfNull(output);
         foreach (var packet in Render(observation)) { output.WriteLine(packet); }
+        if (observation.Kind == "original-instance" && observation.BindingId is "memory" or "sqlite")
+        {
+            foreach (var role in new[] { "store", "schema" })
+            {
+                ConformanceMetadataArgumentOutput.Flush(output, observation.RunId, observation.CaseId,
+                    "original-observation", observation.ObservationId, role, observation.ComponentObject(role),
+                    observation.Components[role].InstanceId);
+            }
+        }
+
+    }
+
+    public static IDisposable ObserveMetadataArguments(ITestOutputHelper output, ConformanceOriginalObservation observation)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(observation);
+        if (observation.Kind != "original-instance" || observation.BindingId is not ("memory" or "sqlite"))
+        { throw new ArgumentException("BindingInvalid"); }
+        var store = Register("store");
+        try { return new ArgumentScope(store, Register("schema")); }
+        catch { store.Dispose(); throw; }
+
+        IDisposable Register(string role) => ConformanceMetadataArgumentOutput.Observe(
+            output, observation.RunId, observation.CaseId, observation.ObservationId, role,
+            observation.ComponentObject(role), observation.Components[role].InstanceId);
+    }
+
+    private sealed class ArgumentScope(IDisposable store, IDisposable schema) : IDisposable
+    {
+        private int disposed;
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref disposed, 1) != 0) { return; }
+            try { store.Dispose(); }
+            finally { schema.Dispose(); }
+        }
     }
 }
