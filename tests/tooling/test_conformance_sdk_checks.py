@@ -4197,6 +4197,15 @@ class SdkDiagnosticTests(unittest.TestCase):
                         + f'(provider: "{provider}", consumer: "{consumer}")'
                         for provider in ("local", "object") for consumer in (
                             "read-bitflip", "read-truncate", "commit-progress", "exact-payload"))
+        expected.update(prefix + "Observed_recovery_evidence_and_expiry_preserve_actual_binding_guarantees"
+                        + f'(provider: "{provider}", consumer: "{consumer}")'
+                        for provider in ("local", "object") for consumer in (
+                            "receipts", "recovery-pages", "sequential-recovery", "changed-inventory",
+                            "expiry-generation", "ownerless-expiry", "finalized-noncommit", "finalized-mutations",
+                            "idle-read", "cooperative-inactivity", "noncooperative-source", "noncooperative-destination"))
+        expected.update(prefix + "Observed_cancelled_descriptors_preserve_actual_current_ownership"
+                        + f'(provider: "{provider}", alteration: "{alteration}")'
+                        for provider in ("local", "object") for alteration in ("completion", "handle", "renewed"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"

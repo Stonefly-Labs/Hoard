@@ -564,6 +564,12 @@ diagnostics, not complete QC-03 or native category acceptance.
 Payload controls also retain real authority read protection across selection
 and I/O; controlled `PayloadSelected` races observe deletion queued until each
 replacement/capture/removal settles, rather than recreating reclaimed bytes.
+Thirty further actual recovery/evidence/expiry and stream-ownership rows extend
+the complete artifact scope to 92. Fresh packages pass 248 selected Consumer
+rows; complete thirty-row actual/frozen-wrapper parity includes the same two
+named recovery-page assertion failures under an SDK-only mutation. The
+ownerless-expiry setup preserves the original one-byte artifact/staging limits.
+No native admission, complete QC-03 or implementation completion is implied.
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

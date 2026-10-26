@@ -221,6 +221,12 @@ Payload-control deletion races additionally require actual authority queue
 observation while selection/I/O is held, completed reclamation after control
 settlement and rejection of subsequent retired-stamp replacement. A delay or
 sequential stale-stamp check alone is not this exclusion proof.
+The subsequent recovery/evidence/expiry and ownership extension preserves those
+62 identities and adds thirty required rows, for 92 total. Each requires one
+actual origin; every canceled-descriptor shape must be present on both
+providers. Complete local actual/frozen-wrapper assertion parity preserves
+identical SDK bytes and original setup, but is not complete/native QC-03
+evidence or a replacement for inherited recovery/transfer sources.
 
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is

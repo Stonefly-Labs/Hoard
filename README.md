@@ -2456,6 +2456,21 @@ and progress families have matching named SDK-only assertion failures, and
 original negative consumers also reject loss of quarantine after async reopen.
 These remain local diagnostics, not complete QC-03 or stage completion.
 
+Thirty further actual-binding rows now execute unchanged recovery, receipt,
+expiry, cooperative/non-cooperative stream and canceled-descriptor consumers
+against both providers. The artifact diagnostic scope grows to 92; no earlier
+identity is removed. Fresh packages pass 248 selected Consumer rows. The
+complete thirty-row actual/frozen-wrapper families pass with identical SDK
+bytes and share the same two named recovery-page assertion failures under an
+SDK-only mutation. This is additional local extraction parity, not native
+admission or a completed implementation stage.
+
+The latest Linux runs at `9f3035d` and `a3e765e` failed candidate compilation:
+the package-only `MemorySchemaProbe` lacked the new corruption-restoration
+interface member. A fresh package-mode build reproduces the exact missing
+member, then passes after the probe explicitly rejects its unsupported use.
+The SDK archive is unchanged between trials. New native admission is pending.
+
 Exact `58a9495`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
 passes all three Linux jobs: 331 native foundations without skips and

@@ -1465,6 +1465,13 @@ The actual authority's read protection must span payload selection, I/O and
 file disposal. The typed `PayloadSelected` boundary and waiting-admission
 counter corroborate real deletion exclusion; stamp checking alone cannot
 authorize recreating a payload after its incarnation has been reclaimed.
+Thirty recovery/evidence/expiry and stream-ownership rows further extend the
+complete artifact selection to 92. They execute thirteen unchanged SDK entry
+points on both actual bindings, including all completion/handle/renewed
+descriptor shapes, with one typed origin and real settlement per row. Original
+one-byte artifact/staging limits remain required for ownerless-reservation
+expiry; a ticket-count limit is not equivalent setup. Complete local wrapper
+parity/assertion negatives are not a native source parent.
 
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or

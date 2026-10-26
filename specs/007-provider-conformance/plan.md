@@ -7251,6 +7251,53 @@ Linux jobs, 336 native foundations/no skips, locked replay and unchanged native
 obligations. All public reports remain `Incomplete`; this cannot admit later
 boundary, metadata ownership or current artifact changes.
 
+### Actual artifact recovery/expiry and stream-ownership extraction
+
+The complete artifact diagnostic scope extends from 62 to 92 with thirty
+additional actual-binding rows, one genuine typed origin each. Thirteen
+unchanged SDK entry points cover exact receipts, recovery pages/independent
+cursors, changed inventories, generation/ownerless expiry, finalized outcomes,
+idle/cooperative/non-cooperative stream ownership and all three canceled
+descriptor shapes. Expected Local snapshot versus Object incomplete enumeration
+is selected outside common assertions. Original rows/images remain required.
+
+The scope test first fails before selection is expanded. Initial fresh package
+replay passes 28 of the thirty additions; both ownerless-expiry rows reveal an
+incorrect substituted ticket-count limit. Restoring the original one-byte
+artifact/staging configuration fixes setup without changing assertions,
+providers or deadlines. Final fresh fourteen-package replay passes 248 selected
+Consumer rows without skips. Source snapshot:
+`13f19441c1dfbb0441c1ad74367c7747c2df822504e281e67391d17591800bb9`;
+SDK archive:
+`16c476db1f95972c4cbd7959f405191435c93290b74ef2b699d786294dfc2927`.
+
+Complete thirty-row actual/frozen-wrapper families pass with identical SDK
+bytes. An SDK-only recovery-page operation-ID assertion mutation yields exactly
+two named `RecoveryPagesAsync` failures/28 passes in each family, no skips,
+with both consumer sources unchanged. The retained mutant SDK archive is
+`9f8f8cc881063f09eeb1c01ab49075f688bff2a0e3d10dd54e0ed2e1a802f393`.
+These are local extraction/parity diagnostics, not new native admission,
+complete QC-03 or an implementation-stage handoff; markers remain unchanged.
+
+### Package-only schema-probe compilation repair
+
+Runs `40265063925` at `9f3035d` and `40268419876`/`40268421725` at
+`a3e765e` fail SDK diagnostics and lock preparation; native tooling succeeds.
+The latest run's bounded closed projection identifies `CS0535` during
+candidate compilation. Fresh isolated package-mode compilation reproduces
+the exact missing `IMetadataConformanceFaultDriver.RestoreCorruptionsAsync`
+implementation on `MemorySchemaProbe`. Source-mode contracts exclude this
+file and therefore did not cover the failing compilation surface.
+
+The schema-only probe implements that unsupported hook using its existing
+explicit rejection; no successful restoration or admitted binding is claimed.
+Fresh package-mode compilation then passes at source snapshot
+`f0853aec5926f7f09b1a8881c110bfeef05a2df94ad460be6524536fb9ac0ff1`.
+Both trials use SDK archive
+`16c476db1f95972c4cbd7959f405191435c93290b74ef2b699d786294dfc2927`.
+The original failed runs and intended-red workspace remain retained. Fresh
+Linux runtime admission is pending; no task/checklist marker advances.
+
 ### Exact native admission of earlier repaired source controls history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

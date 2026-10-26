@@ -134,6 +134,12 @@ not complete QC-03 extraction, native source admission or qualification.
 Each exact-payload row also exercises controlled replacement/capture/removal
 against actual deletion: authority protection excludes reclamation through
 I/O, and subsequent retired-stamp replacement rejects.
+Thirty further recovery/evidence/expiry and stream-ownership rows bring the
+artifact scope to 92. All original identities remain; both providers execute
+every added consumer and all three canceled-descriptor shapes with one genuine
+origin per row. Local snapshot versus Object incomplete enumeration remains an
+explicit harness-owned expectation. Full local wrapper parity is diagnostic,
+not native source admission, full QC-03 or qualification.
 
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service

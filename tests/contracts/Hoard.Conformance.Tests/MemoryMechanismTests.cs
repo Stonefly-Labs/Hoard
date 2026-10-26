@@ -776,6 +776,7 @@ public sealed class MemoryMechanismTests
         }
         public ValueTask<IMetadataCorruptionScope> CorruptAsync(MetadataCorruptionRequest request, CancellationToken token) =>
             new MemoryCorruptionControl(store).CorruptAsync(request, token);
+        public ValueTask RestoreCorruptionsAsync(CancellationToken token) => throw Unsupported();
         public ValueTask<MetadataResult<MetadataReadSnapshot>> ObserveIndependentSnapshotAsync(
             MetadataReadGroup request, CancellationToken token) => store.ReadAsync(request, new(), token);
         public async ValueTask<IAsyncDisposable> HoldWriterAsync(CancellationToken token)

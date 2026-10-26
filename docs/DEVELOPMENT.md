@@ -10178,6 +10178,46 @@ Linux jobs, 336 foundations without skips, locked replay and unchanged complete
 native obligations pass. All public reports remain `Incomplete`. This does not
 admit later boundary, metadata ownership or payload/progress changes.
 
+### Actual artifact recovery, expiry and stream-ownership consumers
+
+Thirty more actual-binding rows directly call thirteen existing SDK entry
+points without changing their assertions. Both providers execute exact receipt
+validation, recovery pages, 32 independent sequential cursors, changed inventory,
+staging-generation expiry, ownerless expiry, finalized noncommit/mutations,
+idle-read expiry, cooperative inactivity, non-cooperative source/destination
+ownership and the completion/handle/renewed descriptor shapes. Each row emits
+one actual typed origin and requires real settlement, never physical Released.
+The complete artifact scope grows from 62 to 92 and rejects reduced selections.
+
+The closed-scope regression first fails before these families are wired.
+The first fresh package replay exposes two ownerless-expiry setup mismatches:
+using a ticket-count cap changes the retired-ticket result to InvalidInput.
+The adapter setup now preserves the unchanged original test's one-byte artifact
+and staging limits. No provider/assertion/timing behavior is changed; the failed
+workspace is retained. A fresh fourteen-package replay then passes all 248
+selected Consumer rows without skips.
+
+The complete thirty-row actual/frozen-wrapper families both pass with identical
+SDK bytes. An SDK-only recovery-page operation-ID assertion mutation gives
+each exactly two named `RecoveryPagesAsync` failures/28 passes, zero skips,
+without editing either consumer's source. These are local diagnostic results,
+not complete extraction, native source admission or QC-03 completion.
+README, provider and active specification guidance are updated; examples,
+diagrams and deployment remain unaffected by package-only test wiring.
+
+### Package-only schema-probe compilation repair
+
+Linux SDK/preparation runs at `9f3035d` and `a3e765e` fail with `CS0535`
+before category diagnostics: `MemorySchemaProbe` does not implement
+`IMetadataConformanceFaultDriver.RestoreCorruptionsAsync`. Normal source-mode
+SDK tests exclude `MemoryMechanismTests.cs`; they cannot validate this surface.
+A fresh isolated package-mode build reproduces that exact missing member.
+The schema-only probe now explicitly throws its existing unsupported-operation
+error, consistent with its other unsupported full-binding lifecycle hooks;
+it does not pretend to restore owned corruption. The same package-mode build
+passes afterward using identical SDK archive bytes. This fixes compilation,
+not native runtime admission; fresh Linux completion remains pending.
+
 ### Native source-sealing and shared-consumer admission history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

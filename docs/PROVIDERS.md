@@ -43,6 +43,16 @@ quarantine helper remains unchanged, with explicit async-reopen denial negatives
 The 62-row actual artifact selection and local wrapper/assertion parity remain
 diagnostic evidence, not complete extraction or provider certification.
 
+The full artifact diagnostic selection additionally includes thirty unchanged
+recovery/evidence/expiry and stream-ownership consumers, bringing its scope to
+92. Both providers execute exact receipts, bounded/query-bound pages, cursor
+retirement, changed inventories, expired staging generations/reservations,
+finalized outcomes, idle readers, cooperative/non-cooperative streams and all
+three canceled-descriptor shapes. Ownerless reservation expiry preserves the
+original one-byte artifact/staging limits, not a substituted ticket-count limit.
+Every added row requires its actual origin and settled owned resources; local
+thirty-row wrapper/assertion parity does not grant native qualification.
+
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run

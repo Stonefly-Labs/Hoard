@@ -13,6 +13,101 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local", "receipts")]
+    [InlineData("local", "recovery-pages")]
+    [InlineData("local", "sequential-recovery")]
+    [InlineData("local", "changed-inventory")]
+    [InlineData("local", "expiry-generation")]
+    [InlineData("local", "ownerless-expiry")]
+    [InlineData("local", "finalized-noncommit")]
+    [InlineData("local", "finalized-mutations")]
+    [InlineData("local", "idle-read")]
+    [InlineData("local", "cooperative-inactivity")]
+    [InlineData("local", "noncooperative-source")]
+    [InlineData("local", "noncooperative-destination")]
+    [InlineData("object", "receipts")]
+    [InlineData("object", "recovery-pages")]
+    [InlineData("object", "sequential-recovery")]
+    [InlineData("object", "changed-inventory")]
+    [InlineData("object", "expiry-generation")]
+    [InlineData("object", "ownerless-expiry")]
+    [InlineData("object", "finalized-noncommit")]
+    [InlineData("object", "finalized-mutations")]
+    [InlineData("object", "idle-read")]
+    [InlineData("object", "cooperative-inactivity")]
+    [InlineData("object", "noncooperative-source")]
+    [InlineData("object", "noncooperative-destination")]
+    public async Task Observed_recovery_evidence_and_expiry_preserve_actual_binding_guarantees(
+        string provider, string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        var clock = new ControlledClock();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", clock,
+            resources, new ConformanceEvidenceBuffer());
+        var limits = consumer == "ownerless-expiry" ? new ArtifactLimits(artifactBytes: 1, stagingBytes: 1) : null;
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider, limits), context, default);
+        try
+        {
+            Task WhenIdle() => session.Faults.AwaitSettlementAsync(default).AsTask();
+            await (consumer switch
+            {
+                "receipts" => ArtifactEvidenceAssertions.ExactCurrentReceiptsAsync(
+                    session.Store, session.Validator, session.Authority, session.Identity, default),
+                "recovery-pages" => ArtifactRecoveryAssertions.RecoveryPagesAsync(
+                    session.Store, session.Maintenance, session.Identity, default),
+                "sequential-recovery" => ArtifactRecoveryAssertions.SequentialRecoveryAsync(
+                    session.Store, session.Maintenance, session.Identity, clock.Advance,
+                    provider == "local" ? ArtifactEnumerationConsistency.Snapshot : ArtifactEnumerationConsistency.Incomplete,
+                    default),
+                "changed-inventory" => ArtifactRecoveryAssertions.ChangedInventoryAsync(
+                    session.Store, session.Maintenance, session.Identity, default),
+                "expiry-generation" => ArtifactRecoveryAssertions.ExpiryGenerationAsync(
+                    session.Store, session.Maintenance, session.Identity, clock.Advance, default),
+                "ownerless-expiry" => ArtifactRecoveryAssertions.OwnerlessExpiryAsync(session.Store, clock.Advance, default),
+                "finalized-noncommit" => ArtifactRecoveryAssertions.FinalizedNoncommitAsync(
+                    session.Store, session.Maintenance, session.Identity, clock.Advance, default),
+                "finalized-mutations" => ArtifactReconciliationAssertions.FinalizedMutationExpiryAsync(
+                    session.Store, clock.Advance, default),
+                "idle-read" => ArtifactOwnershipAssertions.IdleReadExpiryAsync(session.Store, clock.Advance, default),
+                "cooperative-inactivity" => ArtifactOwnershipAssertions.CooperativeInactivityAsync(
+                    session.Store, WhenIdle, default),
+                "noncooperative-source" => ArtifactOwnershipAssertions.NoncooperativeSourceAsync(session.Store, default),
+                "noncooperative-destination" => ArtifactOwnershipAssertions.NoncooperativeDestinationAsync(session.Store, default),
+                _ => throw new ArgumentException("BindingInvalid")
+            });
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local", "completion")]
+    [InlineData("local", "handle")]
+    [InlineData("local", "renewed")]
+    [InlineData("object", "completion")]
+    [InlineData("object", "handle")]
+    [InlineData("object", "renewed")]
+    public async Task Observed_cancelled_descriptors_preserve_actual_current_ownership(string provider, string alteration)
+    {
+        await using var resources = new RecordingDirectories();
+        var clock = new ControlledClock();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", clock,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        try
+        {
+            await ArtifactOwnershipAssertions.CancelledStagedDescriptorAsync(session.Store, clock.Advance,
+                () => session.Faults.AwaitSettlementAsync(default).AsTask(), alteration, default);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local", "read-bitflip")]
     [InlineData("local", "read-truncate")]
     [InlineData("local", "commit-progress")]
@@ -405,7 +500,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         return runId;
     }
 
-    private static IArtifactConformanceBinding Binding(string provider)
+    private static IArtifactConformanceBinding Binding(string provider, ArtifactLimits? limits = null)
     {
         var variable = provider switch
         {
@@ -415,7 +510,7 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         };
         var sha256 = Environment.GetEnvironmentVariable(variable)
             ?? throw new InvalidOperationException("PrerequisiteMissing");
-        var options = new ArtifactAssertionOptions(references: (_, _) =>
+        var options = new ArtifactAssertionOptions(limits, references: (_, _) =>
             ValueTask.FromResult(new ArtifactReferenceObservation(true, 0, Guid.NewGuid())));
         return provider == "local" ? new LocalBinding(sha256, options: options)
             : new ObjectSemanticsBinding(sha256, options: options);

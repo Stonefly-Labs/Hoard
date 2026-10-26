@@ -1455,6 +1455,15 @@ def full_artifact_binding_scenarios():
                       + f'(provider: "{provider}", consumer: "{consumer}")'
                       for provider in ("local", "object") for consumer in (
                           "read-bitflip", "read-truncate", "commit-progress", "exact-payload"))
+    identities.update(prefix + "Observed_recovery_evidence_and_expiry_preserve_actual_binding_guarantees"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "receipts", "recovery-pages", "sequential-recovery", "changed-inventory",
+                          "expiry-generation", "ownerless-expiry", "finalized-noncommit", "finalized-mutations",
+                          "idle-read", "cooperative-inactivity", "noncooperative-source", "noncooperative-destination"))
+    identities.update(prefix + "Observed_cancelled_descriptors_preserve_actual_current_ownership"
+                      + f'(provider: "{provider}", alteration: "{alteration}")'
+                      for provider in ("local", "object") for alteration in ("completion", "handle", "renewed"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
