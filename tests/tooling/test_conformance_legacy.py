@@ -50,10 +50,29 @@ class LegacyTransportTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "safe projection is missing"):
             metadata.trx_results(path)
 
+    def test_runtime_staging_accepts_a_dotted_apphost_only_with_its_execution_inputs(self):
+        source = self.work / "source"
+        source.mkdir()
+        for name in ("Fixture.Tests", "Fixture.Tests.dll", "Fixture.Tests.runtimeconfig.json"):
+            (source / name).write_bytes(b"synthetic-unit-test-input")
+        mapping = source / ".msCoverageSourceRootsMapping_Fixture.Tests"
+        mapping.write_bytes(b"private-source-path-canary")
+        target = self.work / "target"
+        legacy._copy_runtime(source, target)
+        self.assertEqual({path.name for path in source.iterdir() if path != mapping},
+                         {path.name for path in target.iterdir()})
+        (source / "Fixture.Tests.runtimeconfig.json").unlink()
+        with self.assertRaisesRegex(RuntimeError, "runtime.*input"):
+            legacy._copy_runtime(source, self.work / "rejected")
+
     def test_os_projection_rejects_diagnostic_text_even_with_a_valid_os_prefix(self):
         arguments = ("dotnet", "Hoard.Fixtures.Metadata.CrashRunner.dll")
         with self.assertRaises(ValueError):
             legacy.project_control(arguments, {"os": "Linux private-canary"})
+        with patch.object(legacy.sys, "platform", "darwin"):
+            self.assertEqual({"os": "macos"}, legacy.project_control(arguments, {"os": "macOS 15.6.1"}))
+            with self.assertRaises(ValueError):
+                legacy.project_control(arguments, {"os": "macOS 15.6.1 private-canary"})
 
     def test_barrier_child_output_is_drained_and_rejected_without_persistence(self):
         for count in (1, 1048577):
@@ -64,6 +83,25 @@ class LegacyTransportTests(unittest.TestCase):
                     child.wait(timeout=10)
             self.assertIsNotNone(child.poll())
         self.assertEqual([], list(self.work.iterdir()))
+
+    def test_interactive_exit_settles_descendants_with_closed_or_inherited_output(self):
+        unrelated = subprocess.Popen([sys.executable, "-c", "import time;time.sleep(60)"],
+                                     start_new_session=True)
+        try:
+            for inherited in (False, True):
+                output = "" if inherited else ",stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL"
+                code = ("import subprocess,sys;subprocess.Popen([sys.executable,'-c',"
+                        "'import time;time.sleep(60)']" + output + ")")
+                with self.subTest(inherited=inherited):
+                    with legacy.silent_child([sys.executable, "-c", code]) as child:
+                        self.assertEqual(0, child.wait(timeout=10))
+                        self.assertEqual(len(legacy.process_group(child.pid)), 1)
+                        self.assertIsNone(child._process.returncode)
+                    self.assertEqual((), legacy.process_group(child.pid))
+                    self.assertIsNone(unrelated.poll())
+        finally:
+            unrelated.kill()
+            unrelated.wait(timeout=10)
 
     def test_post_handshake_output_is_drained_and_rejected(self):
         import artifact_evidence as artifact
@@ -83,7 +121,7 @@ class LegacyTransportTests(unittest.TestCase):
                     child.stdout.close()
         self.assertEqual([], list(self.work.iterdir()))
 
-    def packet(self, *, failed=False):
+    def packet(self, *, failed=False, binding="legacy", environment=None):
         identity = "Hoard.Metadata.Tests.MetadataDeadlineTests.MP18_Known_exception_types_after_commit_attempt_are_still_uncertain"
         image = self.work / "test.dll"
         image.write_bytes(b"synthetic-unit-test-image")
@@ -91,12 +129,18 @@ class LegacyTransportTests(unittest.TestCase):
         package.write_bytes(b"synthetic-unit-test-archive")
         run, group, attempt, execution = (str(uuid.uuid4()) for _ in range(4))
         assertion = "Hoard.Testing.Conformance.Metadata.MetadataDeadlineAssertions.KnownExceptionsAsync"
+        images = [{"id": "test-assembly", "path": image.name, "sha256": legacy._hash(image)}]
+        legacy._write(self.work / "legacy-inputs.json", {
+            "schemaVersion": 1, "runId": run, "invocationGroupId": group,
+            "assemblies": images, "packageSha256": legacy._hash(package),
+            "configuration": {"bindingId": binding, "environmentSha256": legacy._environment_sha256(environment)}})
         manifest = {
             "schemaVersion": 1, "runId": run, "invocationGroupId": group, "attemptId": attempt,
-            "attemptSequence": 1, "inputSha256": "b" * 64, "purpose": "execution",
-            "assemblies": [{"id": "test-assembly", "path": image.name, "sha256": legacy._hash(image)}],
+            "attemptSequence": 1, "inputSha256": legacy._hash(self.work / "legacy-inputs.json"),
+            "purpose": "execution", "runInputsPath": "legacy-inputs.json",
+            "assemblies": images,
             "packages": [{"id": "shared-sdk", "path": package.name, "sha256": legacy._hash(package)}],
-            "expected": [{"testIdentity": identity, "bindingId": "legacy", "matrixId": "none", "caseId": "runtime"}]}
+            "expected": [{"testIdentity": identity, "bindingId": binding, "matrixId": "none", "caseId": "runtime"}]}
         legacy._write(self.work / f"runtime-input-{attempt}.json", manifest)
         legacy._write(self.work / "runtime-owner.json", {"schemaVersion": 1})
         output = self.work / f"runtime-{attempt}"
@@ -105,7 +149,7 @@ class LegacyTransportTests(unittest.TestCase):
             "runId", "invocationGroupId", "attemptId", "attemptSequence", "inputSha256")}
         proof = {
             "schemaVersion": 1, **common, "testIdentity": identity, "executionId": execution,
-            "bindingId": "legacy", "matrixId": "none", "caseId": "runtime",
+            "bindingId": binding, "matrixId": "none", "caseId": "runtime",
             "manifestSha256": legacy._hash(self.work / f"runtime-input-{attempt}.json"),
             "ownerSha256": legacy._hash(self.work / "runtime-owner.json"),
             "assemblySha256": legacy._hash(image), "packageSha256": legacy._hash(package),
@@ -129,6 +173,26 @@ class LegacyTransportTests(unittest.TestCase):
         result = subprocess.CompletedProcess([], int(failed), legacy.canonical_bytes(
             {"event": "control", "code": diagnostic, "value": 1}))
         return manifest, result, proof_path, assertion
+
+    def test_projection_replay_requires_the_independently_selected_provider_and_configuration(self):
+        parent = self.work
+        self.work = parent / ("safe-" + uuid.uuid4().hex)
+        self.work.mkdir()
+        environment = {"HOARD_METADATA_PROVIDER": "memory", "HOARD_METADATA_WORKSPACE": str(parent)}
+        manifest, result, _, _ = self.packet(binding="memory", environment=environment)
+        projection = parent / "memory.trx"
+        projection.write_text("<TestRun/>")
+        legacy._write(projection.with_suffix(".runtime.json"), {
+            "schemaVersion": 1, "projectionSha256": legacy._hash(projection), "transport": self.work.name,
+            "attemptId": manifest["attemptId"],
+            "manifestSha256": legacy._hash(self.work / f'runtime-input-{manifest["attemptId"]}.json'),
+            "startedMs": 99, "endedMs": 102, "exitCode": 0, "assertionSymbol": None,
+            "events": [json.loads(result.stdout)]})
+        legacy.verify_projection(projection, expected_binding="memory", expected_environment=environment)
+        for provider, expected in (("sqlite", environment), ("legacy", environment),
+                                   ("memory", {**environment, "HOARD_METADATA_WORKSPACE": str(parent / "foreign")})):
+            with self.subTest(provider=provider), self.assertRaisesRegex(RuntimeError, "configured provider"):
+                legacy.verify_projection(projection, expected_binding=provider, expected_environment=expected)
 
     def test_safe_transport_requires_original_exact_result_proof_and_completion(self):
         manifest, result, proof, _ = self.packet()
@@ -201,6 +265,15 @@ class LegacyTransportTests(unittest.TestCase):
                 legacy.command((sys.executable, "-c", command))
             self.assertNotIn("private-canary", str(caught.exception))
         self.assertEqual([], list(self.work.iterdir()))
+
+    def test_owned_commands_disable_build_servers_even_when_the_parent_enables_them(self):
+        result = legacy.capture(
+            (sys.executable, "-c", "import os,json;print(json.dumps({name:os.environ[name] for name in "
+             "('MSBUILDDISABLENODEREUSE','DOTNET_CLI_USE_MSBUILD_SERVER','UseSharedCompilation')}))"),
+            env={"MSBUILDDISABLENODEREUSE": "0", "DOTNET_CLI_USE_MSBUILD_SERVER": "1",
+                 "UseSharedCompilation": "true"})
+        self.assertEqual({"MSBUILDDISABLENODEREUSE": "1", "DOTNET_CLI_USE_MSBUILD_SERVER": "0",
+                          "UseSharedCompilation": "false"}, json.loads(result.stdout))
 
     def test_interrupt_settles_real_owned_child_before_propagating(self):
         real_selector, real_popen = selectors.DefaultSelector, subprocess.Popen

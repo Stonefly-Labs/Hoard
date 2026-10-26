@@ -4668,6 +4668,26 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+The latest scoped architecture-review repairs extend bounded group settlement
+to interactive legacy children, replace blocking trailing-output reads with
+concurrent bounded drains, and bind metadata safe projections to independently
+selected provider/configuration. Build commands disable reusable compiler/MSBuild
+servers so owned command groups cannot leave such descendants behind. macOS
+runtime OS descriptions admit only a closed numeric grammar, not diagnostic text.
+
+`python3 -m unittest discover -s tests/tooling -q` passes 478 tests with nineteen
+explicit native skips. Frozen inventory and SDK catalog checks pass.
+Fresh `bash scripts/validate-metadata.sh --phase recovery --evidence <fresh-private-path>`
+passes with logical/recovery proof and `qualification: false`.
+With the documented original `HOARD_ARTIFACT_RETAINED_BASELINE`,
+`bash scripts/validate-artifacts.sh --phase recovery --evidence <fresh-private-path>`
+passes 33 recovery tests and all six actual Local SIGKILL/reopen barriers.
+The corresponding `--phase transfers` attempt fails before starting a transfer:
+only approximately 14 GiB is free, below its 16 GiB minimum and the F-07
+24 GiB private-local-scratch preflight. Do not reduce those gates or delete
+retained evidence/user data to force a pass. These results do not complete
+T026/T032 or standalone profile admission.
+
 Explicit maintainer authorization cleared the implementation entry gate without
 self-approving the 40 reviewer-owned checklist markers. The driver remains
 `implement / running`; do not rerun `begin`, call `finish`, start convergence,

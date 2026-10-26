@@ -502,10 +502,11 @@ def recovery_cases(work):
     return cases, crashes, environment
 
 
-def trx_results(path, *, require_safe=True):
+def trx_results(path, *, require_safe=True, provider="legacy", environment=None):
     if path.stat().st_size > 16 * 1024**2:
         raise RuntimeError("Metadata runtime report exceeds its finite bound.")
-    legacy.verify_projection(path, required=require_safe)
+    legacy.verify_projection(path, required=require_safe, expected_binding=provider,
+                             expected_environment=environment)
     namespace = {"t": "http://microsoft.com/schemas/VisualStudio/TeamTest/2010"}
     document = ET.parse(path)
     results = document.findall(".//t:UnitTestResult", namespace)
@@ -535,7 +536,7 @@ def logical_cases(work):
         run("dotnet", "vstest", str(binary), f"/Logger:trx;LogFileName={provider}.trx",
             f"/ResultsDirectory:{work / 'results'}", env=environment)
         proof = f"results/{provider}.trx"
-        tests = trx_results(work / proof, require_safe=True)
+        tests = trx_results(work / proof, require_safe=True, provider=provider, environment=environment)
         cases = {}
         for test in tests:
             match = re.search(r"\bMP(\d{2})_", test["test"])
@@ -703,7 +704,7 @@ def runtime_red_green(work):
         raise RuntimeError("Metadata runtime mutation did not produce its intended assertion failure.")
     shutil.copy2(current / "tests/contracts/Hoard.Metadata.Tests/bin/Release/net10.0" / sqlite, output)
     run(*command[:-1], "/Logger:trx;LogFileName=green.trx", env=environment)
-    if len(trx_results(directory / "green.trx", require_safe=True)) != 1:
+    if len(trx_results(directory / "green.trx", require_safe=True, provider="sqlite", environment=environment)) != 1:
         raise RuntimeError("Metadata runtime mutation green pair was incomplete.")
     evidence = {"id": "post-commit-classification", "test": test, "redExit": red.returncode,
                 "redOutcome": "Failed", "redAssertion": True, "greenOutcome": "Passed",

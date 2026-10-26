@@ -7802,6 +7802,54 @@ explicit native skips; frozen inventory/SDK catalog checks and shell syntax
 also pass. Production references/APIs, examples/diagrams, charter/product/
 architecture/ADR documents, infrastructure and release behavior are unchanged.
 
+### Reviewed legacy ownership and provider attribution
+
+A scoped architecture review identified three remaining legacy-transport gaps:
+interactive child cleanup could release the group leader before descendants,
+transfer completion used an unbounded blocking trailing-output read, and metadata
+projection replay did not independently bind provider/configuration. Interactive
+children now observe exit with `WNOWAIT`, keep the leader unreaped through finite
+group settlement, then reap. Transfer trailing stdout drains concurrently with
+bounded retention. Runtime inputs seal an explicit binding and environment digest;
+metadata replay checks these against the independently selected provider and
+configuration before accepting any witness. Raw configuration values are not
+persisted. Actual Memory MP-18 safe-logger execution/replay passes; relabeling its
+evidence SQLite rejects.
+
+Ordinary build capture disables reusable MSBuild/compiler servers. Strict macOS
+OS-description projection admits numeric runtime versions while rejecting appended
+diagnostics; actual runtime/Python product-version differences are not silently
+replaced. Real process regressions prove settlement of descendants with inherited
+and closed output handles without killing an unrelated process.
+
+Fresh metadata logical/recovery acceptance passes with the reviewed transport and
+unchanged source fingerprint
+`20e88607ca4cd98a2d06f1ab2131b5cb9b6aeafac386f1cdb22562191eae6bbc`.
+Fresh artifact recovery using the original admitted historical baseline passes
+33 tests and all B0/B1/B2/B3/D0/D1 SIGKILL, actual-exit and reopen/readback journeys.
+Both commands are diagnostic phases with `qualification: false`.
+The first artifact attempt correctly rejected a missing historical baseline;
+the successful retry used the documented original, not a rebuilt substitute.
+Actual large-transfer replay then fails closed before execution: the local volume
+has approximately 14 GiB free, below the legacy 16 GiB guard and the F-07
+24 GiB preflight. This session's retained workspaces occupy only about 2.2 GiB;
+deleting them would not satisfy the qualification guard and would destroy proof.
+No scratch threshold, transfer size, deadline or admission rule is weakened.
+
+`python3 -m unittest discover -s tests/tooling -q` passes 478 tests with nineteen
+explicit native skips; frozen inventory, SDK catalog, shell syntax and
+`git diff --check` pass. Exact Linux run40393950351 at `25de15c` passes both
+isolated category cleanup jobs, ownership regressions and fresh locked replay,
+but its complete SDK job fails one of 183 original artifact witnesses:
+`ArtifactNonCooperationTests.Deadline_and_stop_return_while_a_native_io_boundary_holds_provider_state(provider: "object")`.
+The safe witness hash identifies the case, not the underlying failure cause;
+no assertion is weakened and that run is not reported green.
+T026/T032, complete category profiles, independent evaluation, compatibility,
+contributor journey and the final five-profile baseline remain unfinished.
+No implementation checkpoint is advanced. Production contracts/references,
+examples/diagrams, charter/product/architecture/ADR documents, infrastructure,
+governance, releases and deployment are unaffected by these test-only repairs.
+
 ### Tests-first category and composition checkpoint
 
 Mark T019/T020 complete from the existing frozen-case/parameter/control parity

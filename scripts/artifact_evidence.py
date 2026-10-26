@@ -737,18 +737,7 @@ def child_processes(parent):
 
 
 def stop_measured_child(child):
-    if child.poll() is not None:
-        return
-    for pid in sorted(child_processes(child.pid), reverse=True):
-        try:
-            os.kill(pid, signal.SIGKILL)
-        except ProcessLookupError:
-            pass
-    try:
-        child.wait(timeout=10)
-    except subprocess.TimeoutExpired:
-        child.kill()
-        child.wait(timeout=10)
+    child.settle()
 
 
 def read_child_line(child, timeout):
@@ -795,13 +784,13 @@ def measured_transfer(work, provider, size, run_id, expected):
     flag = "-l" if sys.platform == "darwin" else "-v"
     command = ["/usr/bin/time", flag, "dotnet", str(binary), provider,
                str(capture / "store"), str(size), expected, run_id]
-    with legacy.ErrorCapture(allow_output=True) as errors:
-        child = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                 stderr=errors, text=True, bufsize=1, start_new_session=True)
-        errors.start()
-        _workspaces[work].add(child.pid)
+    with legacy.ErrorCapture(allow_output=True) as errors, legacy.ErrorCapture() as trailing:
+        child = legacy.OwnedChild(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                  stderr=errors, text=True, bufsize=1)
         actual_pid = None
         try:
+            errors.start()
+            _workspaces[work].add(child.pid)
             idle = read_child_line(child, 120)
             actual_pid = idle.get("pid")
             if (idle.get("eventName") != "idle" or type(actual_pid) is not int
@@ -823,8 +812,9 @@ def measured_transfer(work, provider, size, run_id, expected):
                         complete = read_child_line(child, max(0.001, deadline - time.monotonic()))
                         break
                     samples.append(process_rss(actual_pid))
+            trailing.start_from(child.stdout)
             child.wait(timeout=max(0.001, deadline - time.monotonic()))
-            if child.stdout.read(1) or child.returncode != 0:
+            if child.returncode != 0:
                 raise RuntimeError("Artifact transfer child failed or emitted unexpected proof.")
         finally:
             stop_measured_child(child)
@@ -892,11 +882,11 @@ def crash_recovery(work, barrier, run_id):
     arguments = [str(capture / "store"), str(state_path), barrier, run_id]
     started = time.monotonic()
     with legacy.ErrorCapture() as errors, legacy.ErrorCapture() as trailing:
-        child = subprocess.Popen(["dotnet", str(binary), "crash", *arguments],
-                                 stdout=subprocess.PIPE, stderr=errors, text=True, start_new_session=True)
-        errors.start()
-        _workspaces[work].add(child.pid)
+        child = legacy.OwnedChild(["dotnet", str(binary), "crash", *arguments],
+                                  stdout=subprocess.PIPE, stderr=errors, text=True)
         try:
+            errors.start()
+            _workspaces[work].add(child.pid)
             handshake = read_child_line(child, 120)
             trailing.start_from(child.stdout)
             if (handshake.get("eventName") != "barrier" or handshake.get("pid") != child.pid
@@ -910,9 +900,7 @@ def crash_recovery(work, barrier, run_id):
             if child.returncode != -signal.SIGKILL:
                 raise RuntimeError("Artifact crash child did not exit from its parent's SIGKILL.")
         finally:
-            if child.poll() is None:
-                child.kill()
-                child.wait(timeout=10)
+            stop_measured_child(child)
             child.stdout.close()
             _workspaces[work].discard(child.pid)
     if errors.data:

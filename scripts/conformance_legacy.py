@@ -26,6 +26,70 @@ from conformance_execution import (
 from conformance_sources import read_bounded, runtime_arguments, runtime_settings
 
 FQN_TERM = re.compile(r"FullyQualifiedName(!~|~|=)([a-zA-Z0-9_.]+)")
+_retained_children = {}
+
+
+def _settle_group(child):
+    deadline = time.monotonic() + 10
+    try:
+        while process_group(child.pid, deadline=deadline):
+            if time.monotonic() >= deadline:
+                raise RuntimeError("Legacy command cleanup incomplete.")
+            try:
+                os.killpg(child.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            time.sleep(0.01)
+        child.wait(timeout=max(0.001, deadline - time.monotonic()))
+    except (OSError, RuntimeError, ConformanceError, subprocess.SubprocessError):
+        _retained_children[child.pid] = child
+        raise RuntimeError("Legacy command cleanup incomplete; private stores retained.") from None
+    _retained_children.pop(child.pid, None)
+
+
+class OwnedChild:
+    """Observe interactive exit without releasing the leader's process-group identity."""
+
+    def __init__(self, args, **kwargs):
+        if not all(hasattr(os, name) for name in ("waitid", "WNOWAIT", "WEXITED", "WNOHANG", "P_PID")):
+            raise RuntimeError("Legacy command PrerequisiteMissing.")
+        kwargs["start_new_session"] = True
+        self._process = subprocess.Popen(args, **kwargs)
+        self.returncode = None
+        self._settled = False
+
+    def __getattr__(self, name):
+        return getattr(self._process, name)
+
+    def poll(self):
+        if self.returncode is None:
+            result = os.waitid(os.P_PID, self.pid, os.WEXITED | os.WNOHANG | os.WNOWAIT)
+            if result is not None:
+                self.returncode = result.si_status if result.si_code == os.CLD_EXITED else -result.si_status
+        return self.returncode
+
+    def wait(self, timeout):
+        deadline = time.monotonic() + timeout
+        while self.poll() is None:
+            if time.monotonic() >= deadline:
+                raise subprocess.TimeoutExpired(self.args, timeout)
+            time.sleep(0.01)
+        return self.returncode
+
+    def kill(self):
+        os.kill(self.pid, signal.SIGKILL)
+
+    def settle(self):
+        if not self._settled:
+            _settle_group(self._process)
+            self.returncode = self._process.returncode
+            self._settled = True
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *unused):
+        self.settle()
 
 
 def capture(args, *, cwd=None, env=None, timeout=600):
@@ -34,6 +98,8 @@ def capture(args, *, cwd=None, env=None, timeout=600):
         raise RuntimeError("Legacy command PrerequisiteMissing.")
     environment = {key: value for key, value in os.environ.items() if not key.startswith("HOARD_")}
     environment.update(env or {})
+    environment.update(MSBUILDDISABLENODEREUSE="1", DOTNET_CLI_USE_MSBUILD_SERVER="0",
+                       UseSharedCompilation="false")
     try:
         child = subprocess.Popen(
             args, cwd=cwd, env=environment, stdout=subprocess.PIPE,
@@ -68,20 +134,7 @@ def capture(args, *, cwd=None, env=None, timeout=600):
         error = caught
     finally:
         child.stdout.close()
-        cleanup = time.monotonic() + 10
-        try:
-            # Keep the leader unreaped until its group is settled, pinning the group identity.
-            while process_group(child.pid, deadline=cleanup):
-                if time.monotonic() >= cleanup:
-                    raise RuntimeError("Legacy command cleanup incomplete.")
-                try:
-                    os.killpg(child.pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-                time.sleep(0.01)
-            child.wait(timeout=max(0.001, cleanup - time.monotonic()))
-        except (OSError, RuntimeError, ConformanceError, subprocess.SubprocessError):
-            raise RuntimeError("Legacy command cleanup incomplete; private stores retained.") from None
+        _settle_group(child)
     if error is not None:
         if isinstance(error, KeyboardInterrupt):
             raise error
@@ -158,8 +211,7 @@ class ErrorCapture:
 def silent_child(args):
     """Drain barrier-only child output concurrently and reject unexpected diagnostics."""
     with ErrorCapture() as output:
-        with subprocess.Popen(args, stdout=output, stderr=subprocess.STDOUT,
-                              start_new_session=True) as child:
+        with OwnedChild(args, stdout=output, stderr=subprocess.STDOUT) as child:
             output.start()
             try:
                 yield child
@@ -256,7 +308,9 @@ def project_control(args, value):
                 description = platform.freedesktop_os_release()["PRETTY_NAME"]
             else:
                 raise ValueError()
-            if value["os"] != description:
+            if (value["os"] != description
+                    and not (sys.platform == "darwin" and isinstance(value["os"], str)
+                             and re.fullmatch(r"macOS [0-9]{1,2}\.[0-9]{1,2}(?:\.[0-9]{1,2})?", value["os"]))):
                 raise ValueError()
             value = {**value, "os": {"darwin": "macos", "linux": "linux"}.get(sys.platform, "unsupported")}
         if "settings" in value:
@@ -385,12 +439,16 @@ def _copy_runtime(source, target):
             total += path.stat().st_size
             if count > 2048 or path.stat().st_size > 64 * 1024**2 or total > 512 * 1024**2:
                 raise RuntimeError("Legacy runtime OutputLimitExceeded.")
+            coverage_prefix = ".msCoverageSourceRootsMapping_"
+            if (path.name.startswith(coverage_prefix)
+                    and path.with_name(path.name.removeprefix(coverage_prefix) + ".dll").is_file()):
+                continue
             if (path.suffix.lower() not in (".dll", ".exe", ".so", ".dylib", ".pdb")
                     and not (path.suffix == ".a" and path.relative_to(source).parts[0] == "runtimes")
                     and not path.name.endswith((".deps.json", ".runtimeconfig.json", ".runtimeconfig.dev.json"))
                     and not (path.suffix == ".xml" and path.with_suffix(".dll").is_file())
-                    and not (not path.suffix and path.with_suffix(".dll").is_file()
-                             and path.with_suffix(".runtimeconfig.json").is_file())):
+                    and not (path.with_name(path.name + ".dll").is_file()
+                             and path.with_name(path.name + ".runtimeconfig.json").is_file())):
                 raise RuntimeError("Legacy runtime contains an unexpected execution input.")
             inputs.append(path)
         elif not path.is_dir():
@@ -417,6 +475,22 @@ def _hash(path):
         for block in iter(lambda: source.read(READ_BYTES), b""):
             digest.update(block)
     return digest.hexdigest()
+
+
+def _environment_sha256(environment):
+    controls = {"HOARD_ORIGINAL_CONTEXT", "HOARD_CONFORMANCE_BINDING_CONTEXT",
+                "HOARD_CONFORMANCE_RUNTIME_CONTEXT"}
+    return hashlib.sha256(canonical_bytes({
+        name: value for name, value in (environment or {}).items()
+        if name.startswith("HOARD_") and name not in controls})).hexdigest()
+
+
+def _runtime_configuration(assembly, environment):
+    provider = (environment or {}).get("HOARD_METADATA_PROVIDER")
+    if (provider not in (None, "sqlite", "memory")
+            or assembly.stem == "Hoard.Metadata.Tests" and provider is None):
+        raise RuntimeError("Legacy runtime requires an explicit supported metadata provider.")
+    return {"bindingId": provider or "legacy", "environmentSha256": _environment_sha256(environment)}
 
 
 def resolve_project(project):
@@ -597,6 +671,7 @@ def test_command(args, *, cwd=None, env=None, assertion=None, allow_failure=Fals
     stage_sdk(package, sdk)
     staged = runtime / assembly.name
     identities = _discovery(staged, selection, env)
+    configuration = _runtime_configuration(assembly, env)
     run_id, group, attempt = (str(uuid.uuid4()) for _ in range(3))
     images = [{"id": "test-assembly" if path == staged else f"component-{index}",
                "path": path.relative_to(root).as_posix(), "sha256": _hash(path)}
@@ -610,7 +685,7 @@ def test_command(args, *, cwd=None, env=None, assertion=None, allow_failure=Fals
         (root / entry["path"]).chmod(0o400)
     package.chmod(0o400)
     inputs = {"schemaVersion": 1, "runId": run_id, "invocationGroupId": group,
-              "assemblies": images, "packageSha256": _hash(package)}
+              "assemblies": images, "packageSha256": _hash(package), "configuration": configuration}
     _write(root / "legacy-inputs.json", inputs)
     _write(root / "runtime-owner.json", {
         "schemaVersion": 1, "runId": run_id, "invocationGroupId": group, "rootId": uuid.uuid4().hex,
@@ -621,7 +696,7 @@ def test_command(args, *, cwd=None, env=None, assertion=None, allow_failure=Fals
         "runInputsPath": "legacy-inputs.json", "assemblies": images,
         "packages": [{"id": "shared-sdk", "path": package.relative_to(root).as_posix(), "sha256": _hash(package)}],
         "expected": [{"testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
-                      "assemblyId": "test-assembly", "packageId": "shared-sdk", "bindingId": "legacy",
+                      "assemblyId": "test-assembly", "packageId": "shared-sdk", "bindingId": configuration["bindingId"],
                       "matrixId": "none", "assertionSymbol": assertion, "caseId": "runtime"}
                      for identity in identities]}
     _write(root / f"runtime-input-{attempt}.json", manifest)
@@ -667,7 +742,7 @@ def test_command(args, *, cwd=None, env=None, assertion=None, allow_failure=Fals
                                        failures)
 
 
-def verify_projection(path, *, required=True):
+def verify_projection(path, *, required=True, expected_binding="legacy", expected_environment=None):
     sidecar = path.with_suffix(".runtime.json")
     if not sidecar.exists():
         if required:
@@ -685,8 +760,27 @@ def verify_projection(path, *, required=True):
     if _hash(manifest_path) != receipt["manifestSha256"]:
         raise RuntimeError("Legacy runtime manifest InputChanged.")
     manifest = load_json(read_bounded(manifest_path, 2 * 1024**2))
-    if manifest["runInputsPath"] != "legacy-inputs.json" or _hash(root / "legacy-inputs.json") != manifest["inputSha256"]:
+    inputs_path = root / "legacy-inputs.json"
+    if manifest["runInputsPath"] != "legacy-inputs.json" or _hash(inputs_path) != manifest["inputSha256"]:
         raise RuntimeError("Legacy runtime input InputChanged.")
+    inputs = load_json(read_bounded(inputs_path, 2 * 1024**2))
+    configuration = inputs.get("configuration") if isinstance(inputs, dict) else None
+    if (not isinstance(inputs, dict) or set(inputs) != {
+                "schemaVersion", "runId", "invocationGroupId", "assemblies", "packageSha256", "configuration"}
+            or not isinstance(configuration, dict)
+            or set(configuration) != {"bindingId", "environmentSha256"}
+            or expected_binding not in ("legacy", "memory", "sqlite")
+            or configuration["bindingId"] != expected_binding
+            or not isinstance(configuration["environmentSha256"], str)
+            or re.fullmatch(r"[0-9a-f]{64}", configuration["environmentSha256"]) is None
+            or expected_environment is not None
+               and configuration["environmentSha256"] != _environment_sha256(expected_environment)
+            or inputs["runId"] != manifest["runId"]
+            or inputs["invocationGroupId"] != manifest["invocationGroupId"]
+            or inputs["assemblies"] != manifest["assemblies"]
+            or inputs["packageSha256"] != manifest["packages"][0]["sha256"]
+            or any(entry["bindingId"] != expected_binding for entry in manifest["expected"])):
+        raise RuntimeError("Legacy runtime configured provider InputChanged.")
     result = subprocess.CompletedProcess([], receipt["exitCode"],
         b"\n".join(canonical_bytes(event) for event in receipt["events"]))
     validate_transport(root, manifest, result, started=receipt["startedMs"], ended=receipt["endedMs"],

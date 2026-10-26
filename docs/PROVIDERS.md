@@ -15,6 +15,17 @@ certification. Its artifact test-only fault drivers now distinguish explicit
 only the exact registered injected exception is expected; other exceptions
 continue to fault ownership settlement.
 
+Legacy interactive runners preserve the unreaped leader until all owned
+descendants settle, including descendants that close or inherit output handles.
+Post-handshake output drains concurrently within bounded retention; it cannot
+block transfer completion indefinitely. Safe metadata replay additionally
+requires the independently selected provider and explicit configuration digest;
+Memory evidence cannot be relabeled SQLite or replayed against another workspace.
+Fresh metadata recovery and six real Local SIGKILL/reopen journeys pass, still
+with `qualification: false`. Required large-transfer replay remains blocked by
+insufficient local scratch; no capacity threshold, transfer size, applicability
+rule or acceptance gate was reduced.
+
 Metadata test-only corruption controls now retain per-record or exact
 epoch/operation ownership through application and verified restoration. Scope
 overlap and reopen/disposal reject while a target is owned; once closure is
