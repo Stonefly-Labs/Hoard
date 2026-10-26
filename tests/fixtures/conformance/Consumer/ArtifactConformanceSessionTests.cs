@@ -13,6 +13,146 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("object")]
+    public async Task Object_record_write_fault_rejects_without_borrowing_actual_deletion(string provider)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        try
+        {
+            Assert.Equal("FaultControl.Unsupported", (await Assert.ThrowsAsync<InvalidOperationException>(
+                () => session.Faults.InjectRecordWriteFailureAsync(3, () => { }, default).AsTask())).Message);
+            using var source = new ArtifactPublicationAssertions.ShortSource("physical deletion stays independently held"u8.ToArray());
+            var receipt = await ArtifactPublicationAssertions.PublishAsync(session.Store, source, new(1024), default);
+            var ticket = Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Success>(
+                await session.Store.ReserveDeleteAsync(new(receipt.Stamp), new(), default)).Value;
+            await session.Faults.ArmAsync(ConformanceFault.NativeNonCooperation, default);
+            var deleting = session.Store.DeleteAsync(ticket, new(), default).AsTask();
+            try
+            {
+                await session.Faults.WaitForBoundaryAsync(ConformanceFault.NativeNonCooperation, default);
+                Assert.False(deleting.IsCompleted);
+                Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<InvalidOperationException>(
+                    () => session.Faults.InjectRecordWriteFailureAsync(3, () => { }, default).AsTask())).Message);
+            }
+            finally { await session.Faults.ReleaseAsync(ConformanceFault.NativeNonCooperation, default); }
+            Assert.Equal(ArtifactReclamation.Reclaimed, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Success>(
+                await deleting).Value.Reclamation);
+            Assert.Equal("FaultControl.Unsupported", (await Assert.ThrowsAsync<InvalidOperationException>(
+                () => session.Faults.InjectRecordWriteFailureAsync(3, () => { }, default).AsTask())).Message);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local", "committed-decision")]
+    [InlineData("local", "durable-receipt")]
+    public async Task Observed_local_durable_reopen_preserves_retired_decisions_and_receipt_release(
+        string provider, string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        var clock = new ControlledClock();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", clock,
+            resources, new ConformanceEvidenceBuffer());
+        var limits = consumer == "committed-decision"
+            ? new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024, liveTickets: 1, committedIdentities: 1)
+            : new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024);
+        IArtifactConformanceSession current = await ConformanceObservedArtifactSession.OpenAsync(
+            Binding(provider, limits, admissionProbe: ArtifactAdmissionProbe.Complete), context, default);
+        var origins = new List<ConformanceSessionOrigin>
+        {
+            Assert.IsType<ConformanceObservedArtifactSession>(current).CaptureOrigin()
+        };
+        IArtifactFaultRegistration? recordFailure = null;
+        var cleanupAllowed = true;
+        try
+        {
+            async ValueTask<(IArtifactStore Store, IArtifactStoreLifetime Lifetime)> Reopen(CancellationToken token)
+            {
+                current = await current.ReopenAsync(token);
+                origins.Add(Assert.IsType<ConformanceObservedArtifactSession>(current).CaptureOrigin());
+                return (current.Store, current.Lifetime);
+            }
+            async ValueTask InjectRecordFailure(int occurrence)
+            {
+                recordFailure = await current.Faults.InjectRecordWriteFailureAsync(
+                    occurrence, () => { }, default);
+                Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<InvalidOperationException>(
+                    () => current.Faults.InjectRecordWriteFailureAsync(occurrence, () => { }, default).AsTask())).Message);
+                Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<InvalidOperationException>(
+                    () => current.Faults.ArmAsync(ConformanceFault.NativeNonCooperation, default).AsTask())).Message);
+            }
+            ValueTask RemoveRecordFailure() =>
+                (recordFailure ?? throw new InvalidOperationException("BindingInvalid")).DisposeAsync();
+            if (consumer == "committed-decision")
+            {
+                await ArtifactRecoveryAssertions.CommittedDecisionRollbackAsync(
+                    current.Store, current.Lifetime, current.Identity, current.Authority, limits,
+                    clock.SetUtc, clock.Advance, Reopen, value => cleanupAllowed = value, () => cleanupAllowed, default);
+            }
+            else
+            {
+                await ArtifactRecoveryAssertions.DurableReceiptReleaseAsync(
+                    current.Store, current.Lifetime, current.Identity, current.Authority, limits,
+                    InjectRecordFailure, RemoveRecordFailure, Reopen, default);
+                Assert.Equal(3, (recordFailure ?? throw new InvalidOperationException("BindingInvalid")).ObservationCount);
+            }
+            foreach (var origin in origins) { ConformanceSessionOriginOutput.Write(output, origin); }
+        }
+        finally
+        {
+            try { if (recordFailure is not null) { await recordFailure.DisposeAsync(); } }
+            finally { await current.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local")]
+    public async Task Ordinary_record_write_callback_errors_still_fault_actual_settlement(string provider)
+    {
+        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        var failure = new IOException("Interrupted reservation release.");
+        Exception? disposalFailure = null;
+        try
+        {
+            await session.Faults.ArmAsync(ConformanceFault.NativeNonCooperation, default);
+            try
+            {
+                Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<InvalidOperationException>(
+                    () => session.Faults.InjectRecordWriteFailureAsync(3, () => { }, default).AsTask())).Message);
+            }
+            finally { await session.Faults.ReleaseAsync(ConformanceFault.NativeNonCooperation, default); }
+            var ticket = Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Success>(
+                await session.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default)).Value;
+            using var source = new ArtifactPublicationAssertions.ShortSource("ordinary record callback ownership"u8.ToArray());
+            var staged = Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Success>(
+                await session.Store.StageAsync(ticket, source, new(), default)).Value;
+            await using var injection = await session.Faults.InjectRecordWriteFailureAsync(3, () => throw failure, default);
+            Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+                await session.Store.CommitAsync(staged, new(), default)).Code);
+            Assert.Equal(3, injection.ObservationCount);
+            await session.Faults.AwaitSettlementAsync(default);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { disposalFailure = await Record.ExceptionAsync(() => session.DisposeAsync().AsTask()); }
+        Assert.Equal("CleanupIncomplete", Assert.IsType<InvalidOperationException>(disposalFailure).Message);
+        var settlement = Assert.Single(resources.Settlements).Value;
+        Assert.True(settlement.IsFaulted);
+        Assert.Contains(failure, settlement.Exception!.InnerExceptions);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local")]
     public async Task Observed_local_reconciliation_cannot_finalize_after_actual_read_quarantine(string provider)
     {

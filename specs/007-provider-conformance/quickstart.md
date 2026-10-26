@@ -667,7 +667,19 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen argument maps
 three Linux jobs/341 native foundations pass without skips. Pairing/newer
 artifact native admission and full qualification remain outstanding.
 
-The current artifact197 scope additionally retains the Local concurrent
+The current artifact201 scope also retains Local committed-decision rollback
+after 105 retired histories and durable-receipt staging-release recovery.
+Awaited compatible reopen preserves original initialization/cleanup, limits
+and assertions. Owned third-record-write interruption rejects hold/duplicate
+overlap and distinguishes ordinary callback failure by exact exception.
+Object rejects this Local-only boundary without borrowing physical deletion;
+restoring the reviewed unsafe alias privately fails the named guard.
+Fresh fourteen-package replay passes 357 consumers. Four actual controls/two
+original wrappers pass; each SDK-only durable assertion mutant gives one named
+failure per family with matching SDK/archive images. Safe-logger replay checks
+201 witnesses/211 origins and ten reopen edges. Full QC-03 remains unfinished.
+
+The preceding artifact197 scope additionally retains the Local concurrent
 quarantine race and six committed-detection parameters. Actual selected stamps
 come from public recovery rows checked against the exact ticket/store/identity;
 awaited overloads retain old wrappers/assertions. Fresh fourteen-package replay

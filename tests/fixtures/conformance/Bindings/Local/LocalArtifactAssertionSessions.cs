@@ -49,6 +49,7 @@ public static class LocalArtifactAssertionSessions
         protected override void SetObserver(string boundary, Func<ValueTask> observer) => controls.SetObserver(boundary, observer);
         protected override void RemoveObserver(string boundary) => controls.RemoveObserver(boundary);
         protected override void SetSynchronousStorageHold(Action? hold) => controls.BeforeRecordWrite = hold;
+        protected override void SetRecordWriteFailure(Action? failure) => controls.BeforeRecordWrite = failure;
         protected override void SetHistoryCandidateObserver(Action<string, string>? observer) =>
             controls.BeforeHistoryCandidate = observer;
 

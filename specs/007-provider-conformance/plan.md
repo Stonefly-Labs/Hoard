@@ -7556,7 +7556,39 @@ Metadata remains 92 Passed/1 Incomplete/9 NotApplicable/0 Failed, report
 `Incomplete`, qualification false. Pairing/newer artifact scopes remain pending;
 no tasks, reviewer-owned checklists or stage markers advance here.
 
-The current artifact197 increment retains the Local read/reconciliation
+The current artifact201 increment retains Local committed-decision rollback
+after all 105 original retired-history cycles and durable-receipt staging
+release. Valid uninitialized setup lets the unchanged common initializer
+run against the actual original store. Awaited compatible reopen returns an
+initialized owned replacement without double initialization; old synchronous
+wrappers preserve raw replacement initialization and failure cleanup.
+Original limits, clock rollback, readback, receipt/capacity and stop assertions
+remain.
+
+An exact-occurrence record-write registration interrupts the third genuine
+Local pre-persistence boundary. It rejects duplicate/hold overlap in both
+directions; only the exact owned exception is intentional, while same-shaped
+ordinary callback exceptions retain faulted resource settlement and explicit
+`CleanupIncomplete`. Scoped architecture review found that the first version
+aliased Object's physical-deletion hold. A separate Local record-write hook now
+makes Object reject `FaultControl.Unsupported` without touching deletion.
+A focused Object row proves rejection before/after a genuinely held deletion;
+privately restoring the unsafe alias causes exactly its named guard failure.
+Follow-up review finds no remaining actionable issues, not final T081.
+
+Fresh fourteen-package replay passes 357 selected consumers at source
+`25172604b2811ea9e1afb2ac17481a619c99d34554d144be08ff1c7195dcee13`,
+SDK archive `3585951ef9175b4b41f9f1092b2eea40b3ebc88c33a7e8c68b43b74f3e73e339`.
+All four actual controls/two original wrappers pass. Separate SDK-only rollback
+readback and durable-reconciliation assertion mutants each produce exactly
+one named shared-method failure per family, with matching runtime/archive
+SDK images. Real safe-logger replay validates 201 witnesses/211 origins,
+all ten reopen edges and exact role/image/archive correspondences.
+Tooling452/19 native skips and source contracts152/zero skips pass. These are
+local diagnostics, not native admission of artifact201 or complete QC-03;
+unfinished tasks, reviewer-owned checklists and stage markers remain unchanged.
+
+The preceding artifact197 increment retains the Local read/reconciliation
 quarantine race and all six committed-detection parameters, including the
 original open/publication/reconciliation distinctions and compatible Local
 reopen. Both common methods gain awaited typed overloads; old synchronous

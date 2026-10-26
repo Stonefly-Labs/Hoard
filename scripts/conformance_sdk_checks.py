@@ -1519,6 +1519,11 @@ def full_artifact_binding_scenarios():
     identities.update(prefix + "Observed_committed_detection_paths_quarantine_actual_restored_bytes"
                       + f'(provider: "{provider}", detection: "{detection}")'
                       for provider in ("local", "object") for detection in ("open", "publication", "reconciliation"))
+    identities.update(prefix + "Observed_local_durable_reopen_preserves_retired_decisions_and_receipt_release"
+                      + f'(provider: "local", consumer: "{consumer}")'
+                      for consumer in ("committed-decision", "durable-receipt"))
+    identities.add(prefix + 'Ordinary_record_write_callback_errors_still_fault_actual_settlement(provider: "local")')
+    identities.add(prefix + 'Object_record_write_fault_rejects_without_borrowing_actual_deletion(provider: "object")')
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
@@ -1527,7 +1532,8 @@ def full_artifact_binding_origin_counts():
     payload = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_payload_and_progress_consumers_preserve_actual_binding_guarantees"
     validation = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_validation_first_quarantine_survives_actual_restoration_and_reopen"
     detection = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_committed_detection_paths_quarantine_actual_restored_bytes"
-    return {identity: 2 if identity.split("(")[0] == reopen or ('(provider: "local"' in identity and (
+    durable = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_local_durable_reopen_preserves_retired_decisions_and_receipt_release"
+    return {identity: 2 if identity.split("(")[0] in (reopen, durable) or ('(provider: "local"' in identity and (
                 identity.split("(")[0] == validation or (identity.split("(")[0] == detection and any(
                     f'detection: "{value}"' in identity for value in ("open", "publication")))
                 or (identity.split("(")[0] == payload and any(

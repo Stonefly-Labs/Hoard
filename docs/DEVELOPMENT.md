@@ -10406,7 +10406,24 @@ QC-02 pairing/newer artifact native confirmation and full acceptance remain open
 Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 
-The current artifact197 extension preserves the Local read/reconciliation
+The current artifact201 extension retains Local committed-decision rollback
+after 105 retired histories and durable-receipt staging-release recovery.
+Original limits, UTC/monotonic distinction, synchronous signatures and assertions
+remain. Awaited reopen uses the genuinely initialized owned replacement; old
+wrappers still initialize raw replacements and preserve initialization-failure
+cleanup. Owned third-record-write interruption rejects duplicate/hold overlap;
+ordinary same-message callbacks fault actual settlement. Scoped review found
+an Object deletion/record alias: a distinct Local-only hook now rejects Object
+explicitly, and a restored-alias private negative fails the named guard.
+Fresh fourteen-package replay passes 357 consumers. Four actual controls/two
+original wrappers pass; each SDK-only durable assertion mutant gives one named
+failure per family with matching runtime/archive SDK images. Safe-logger replay
+admits 201 witnesses/211 origins and ten reopen edges. Tooling452/19 native
+skips and contracts152/zero skips pass. Follow-up review finds no remaining
+actionable issues, not final T081. Full QC-03/stage acceptance remain open;
+examples, diagrams, production dependencies and infrastructure are unchanged.
+
+The preceding artifact197 extension preserves the Local read/reconciliation
 quarantine race and all six committed-detection parameters. Public recovery
 rows supply genuine selected stamps checked against exact ticket/store/
 identity; no incarnation or private payload path is fabricated. Awaited

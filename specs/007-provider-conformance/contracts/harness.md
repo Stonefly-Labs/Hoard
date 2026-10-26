@@ -1593,7 +1593,20 @@ Object has no borrowed durable restart. Exact `e39b2ce`/run40293145453 admits
 earlier frozen argument maps on Linux: three jobs/341 native foundations pass
 without skips. Pairing/newer artifact scopes remain unadmitted natively.
 
-The current artifact197 scope preserves the Local read/reconciliation
+The current artifact201 scope also retains Local committed-decision rollback
+after 105 retired histories and durable-receipt staging release. Awaited owned
+reopen preserves initialization/cleanup and all original assertions/limits.
+Third-record-write interruption has one owner, rejects duplicate/hold overlap
+and preserves same-shaped ordinary callback failures in faulted settlement.
+Object rejects this Local-only boundary explicitly; its genuine physical
+deletion hold stays independent. The reviewed alias is fixed and a restored-
+alias private negative fails the named Object guard. Fresh fourteen-package
+replay passes 357 consumers. Four actual controls/two original wrappers pass;
+each SDK-only durable assertion mutant produces one named failure per family
+with matching runtime/archive SDK images. Safe-logger replay checks all
+201 witnesses/211 origins and ten reopen edges. Full QC-03 remains open.
+
+The preceding artifact197 scope preserves the Local read/reconciliation
 quarantine race and six committed-detection parameters. Awaited typed overloads
 retain original synchronous wrappers/assertions; public recovery rows expose
 genuine selected stamps checked against exact ticket/store/identity before

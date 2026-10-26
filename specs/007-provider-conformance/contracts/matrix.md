@@ -245,7 +245,19 @@ correspondence; missing, extra and foreign validation origins reject. Exact
 jobs/341 native foundations passing without skips. Pairing/newer artifact native
 admission and complete QC-03 remain outstanding.
 
-The current artifact197 scope includes the Local read/reconciliation
+The current artifact201 scope adds Local committed-decision rollback after
+105 retired histories, durable-receipt staging-release recovery, ordinary
+record-callback failure ownership and Object's explicit unsupported-boundary
+guard. Original limits/assertions and genuine compatible reopen remain.
+Third-record-write interruption cannot overwrite the synchronous hold or
+borrow Object physical deletion. Restoring the reviewed unsafe alias privately
+fails the named guard. Fresh fourteen-package replay passes 357 consumers;
+four actual controls/two original wrappers pass. Each SDK-only durable
+assertion mutant yields one named failure per family with matching SDK/archive
+images. Safe-logger replay checks 201 witnesses/211 origins and ten reopen
+edges. Complete QC-03 and feature acceptance remain unfinished.
+
+The preceding artifact197 scope includes the Local read/reconciliation
 quarantine race and all six committed-detection parameters. Awaited overloads
 retain original synchronous wrappers/assertions. Actual public recovery rows
 supply selected stamps checked against exact ticket/store/identity before

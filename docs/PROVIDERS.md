@@ -168,7 +168,20 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen metadata
 argument maps with all three Linux jobs/341 native foundations passing without
 skips. QC-02 pairing/newer artifact scopes and complete QC-03 remain unadmitted.
 
-The current artifact197 scope also preserves the Local concurrent read/
+The current artifact201 scope retains Local committed-decision clock rollback
+after 105 retired histories and durable-receipt staging-release recovery.
+Awaited compatible reopen preserves original assertions and synchronous
+wrappers. Exact-occurrence record interruption is owned and mutually exclusive
+with the synchronous hold; ordinary same-message callback errors retain actual
+faulted settlement. Object explicitly rejects the Local record boundary and
+keeps its independent physical deletion hold. Scoped review's alias finding is
+fixed; restoring the unsafe alias privately fails the focused named guard.
+Fresh fourteen-package replay passes 357 consumers, four actual controls/two
+original wrappers and one named failure per SDK-only durable assertion mutant
+in each family with matching runtime/archive SDK images. Safe-logger replay
+checks 201 witnesses/211 origins and ten reopen edges. Full QC-03 remains open.
+
+The preceding artifact197 scope also preserves the Local concurrent read/
 reconciliation quarantine race and all six committed-detection parameters.
 Public recovery rows supply genuine selected stamps checked against exact
 ticket/store/identity before existing typed damage/restoration controls run.

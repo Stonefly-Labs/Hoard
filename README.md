@@ -2588,7 +2588,19 @@ argument maps on Linux: three jobs/341 native foundations pass without skips.
 QC-02 pairing and the newer artifact scopes still await native observation;
 full qualification and the implementation stage remain unfinished.
 
-The current artifact197 scope additionally preserves the Local read/
+The current artifact201 scope also preserves Local committed-decision rollback
+after 105 retired histories and durable-receipt staging release through genuine
+compatible reopen. An owned third-record-write interruption preserves ordinary
+callback failures and cannot overwrite the synchronous hold. Object explicitly
+rejects this Local-only boundary rather than borrowing physical deletion.
+Fresh fourteen-package replay passes 357 selected consumers; four actual
+controls/two original wrappers pass, with each SDK-only durable assertion mutant
+producing one named failure in both families and matching SDK/archive images.
+Safe-logger replay checks 201 witnesses/211 origins and ten reopen edges.
+Scoped review's Object alias finding is repaired and a restored-alias negative
+fails its named guard. Full QC-03 and feature acceptance remain unfinished.
+
+The preceding artifact197 scope additionally preserves the Local read/
 reconciliation quarantine race and all six committed-detection parameters.
 Awaited overloads keep the original synchronous wrappers/assertions. Actual
 selected stamps come from public recovery rows checked against the exact

@@ -4181,6 +4181,10 @@ class SdkDiagnosticTests(unittest.TestCase):
              + f'(provider: "{provider}", detection: "{detection}")', provider,
              provider == "local" and detection != "reconciliation")
             for provider in ("local", "object") for detection in ("open", "publication", "reconciliation"))
+        cases.extend(
+            ("Observed_local_durable_reopen_preserves_retired_decisions_and_receipt_release"
+             + f'(provider: "local", consumer: "{consumer}")', "local", True)
+            for consumer in ("committed-decision", "durable-receipt"))
         for name, provider, reopens in cases:
             identity = checks.FULL_ARTIFACT_CONSUMER_PREFIX + name
             binding = "fixture.artifact." + provider
@@ -4297,6 +4301,11 @@ class SdkDiagnosticTests(unittest.TestCase):
         expected.update(prefix + "Observed_committed_detection_paths_quarantine_actual_restored_bytes"
                         + f'(provider: "{provider}", detection: "{detection}")'
                         for provider in ("local", "object") for detection in ("open", "publication", "reconciliation"))
+        expected.update(prefix + "Observed_local_durable_reopen_preserves_retired_decisions_and_receipt_release"
+                        + f'(provider: "local", consumer: "{consumer}")'
+                        for consumer in ("committed-decision", "durable-receipt"))
+        expected.add(prefix + 'Ordinary_record_write_callback_errors_still_fault_actual_settlement(provider: "local")')
+        expected.add(prefix + 'Object_record_write_fault_rejects_without_borrowing_actual_deletion(provider: "object")')
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"
