@@ -10450,7 +10450,14 @@ They now use the existing path that checks actual child settlement and unchanged
 captured bytes before sealing logger records and proofs. Regression coverage
 includes all three scopes, live-child/changed-output rejection and unchanged
 diagnostic-mode dispatch. This repairs transport admission, not qualification;
-fresh native execution and the remaining implementation gates are still required.
+exact `5ba30af` / run `40328218160` passes all three Linux jobs, 350 native
+foundation checks without skips, and fresh package/lock replay. Qualification-input
+metadata executes ten scopes/141 witnesses/ten native parents with 93 passes,
+nine exclusions and zero failed/incomplete cases. Artifacts executes nine
+scopes/263 witnesses/nine parents with 99 passes, four exclusions and zero
+failed/incomplete cases. Both category reports remain `Incomplete`,
+qualification false; full CLI/evaluator/cleanup, contributor, composition,
+compatibility and five-profile acceptance are not inferred.
 Other guides/examples, diagrams, product APIs, package dependencies and
 infrastructure are unaffected because this changes only test transport routing.
 

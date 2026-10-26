@@ -7645,8 +7645,23 @@ transport regression to cover every scope, retained live children, changed
 output and unchanged diagnostic dispatch. The focused regression and
 `python3 -m unittest discover -s tests/tooling -q` pass (458 tests, 19 explicit
 native skips on macOS). Frozen inventory, embedded catalog and `git diff --check`
-also pass. Native replay remains required;
-no task, checklist or stage marker advances. Product APIs/provider mechanisms,
+also pass. Exact `5ba30afa70947d1ebf58f098ce303176b2c84f70` /
+[run40328218160](https://github.com/Stonefly-Labs/Hoard/actions/runs/40328218160)
+then passes all three Linux jobs: 350 native foundations without
+failures/errors/skips, fresh lock/package replay and the complete diagnostic
+chain. Qualification-input metadata admits ten scopes/141 witnesses/ten native
+parents, 93 passes/nine exclusions/zero failed or incomplete cases; input/result
+hashes are `1dd0d3d668fc6b4ad065ea4c86862b028b332b93dabd00eb8f3481d583481c8a` /
+`90c20144891483bcee5cdcb26e6503f5a3c27e8c4ae1a1e1d6b8a3a8d4ecea53`.
+Artifacts admits nine scopes/263 witnesses/nine native parents, 99 passes/four
+exclusions/zero failed or incomplete cases; input/result hashes are
+`e06b9a80ffdee715ba7e0b5ed4c1cb4916584bf23f2a128241174669cae9e7f5` /
+`de60211a96b6385b7994073c6cfd6b6d9e859f1d17329f05b0560042fc1ab713`.
+Artifact quality-source count is two, binding the independent QC-03 and QC-09
+bases. Both reports remain `Incomplete`, qualification false, with retained
+private resources; full profile/evaluator/cleanup, contributor, composition,
+compatibility and five-profile acceptance remain unfinished. No task, checklist
+or stage marker advances. Product APIs/provider mechanisms,
 package references, examples, diagrams and infrastructure are unaffected.
 
 ### Object access-fault boundary repair

@@ -2611,8 +2611,12 @@ and the remaining feature work are still pending; this is not qualification.
 Native run `40320966626` rejects the original artifact source because its logger
 proofs were not sealed. Qualification now routes all three original scopes through
 the existing settled, byte-rechecked, read-only inspection path. Diagnostic mode
-is unchanged; live children and changed output still reject. Fresh Linux
-confirmation remains required before QC-03 or stage completion.
+is unchanged; live children and changed output still reject. Exact `5ba30af` /
+[run40328218160](https://github.com/Stonefly-Labs/Hoard/actions/runs/40328218160)
+passes all three Linux jobs. Its qualification-input category batches admit
+93 metadata passes/nine exclusions and 99 artifact passes/four exclusions,
+with zero failed/incomplete cases. Reports remain explicitly `Incomplete`,
+qualification false; full profile/evaluator and remaining stage work are unfinished.
 
 The Object access-fault implementation now lives in its concrete test binding,
 as the original driver-owned fault did. The provider still selects/protects the

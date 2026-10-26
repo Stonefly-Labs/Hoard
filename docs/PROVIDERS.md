@@ -190,8 +190,11 @@ remain pending; no provider guarantee or exclusion is changed.
 Native run `40320966626` rejected writable original-artifact proofs before
 source admission. All three qualification scopes now use the existing
 settlement/byte-check/read-only sealing path; diagnostic mode and provider
-mechanisms are unchanged. Fresh Linux confirmation and full qualification
-remain outstanding.
+mechanisms are unchanged. Exact `5ba30af` / run `40328218160` passes all three
+Linux jobs and admits all current category cases (metadata 93 passes/nine
+exclusions; artifacts 99 passes/four exclusions; no failed/incomplete cases).
+The reports still explicitly remain `Incomplete`, qualification false; this
+is not full provider or five-profile acceptance.
 
 Object's driver-owned access faults now reside in its concrete binding, not the
 provider assembly; native exact-stamp selection/protection and pre-hook handle
