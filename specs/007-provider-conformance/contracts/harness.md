@@ -1593,7 +1593,19 @@ Object has no borrowed durable restart. Exact `e39b2ce`/run40293145453 admits
 earlier frozen argument maps on Linux: three jobs/341 native foundations pass
 without skips. Pairing/newer artifact scopes remain unadmitted natively.
 
-The current artifact190 scope includes eighteen initial-admission parameters.
+The current artifact197 scope preserves the Local read/reconciliation
+quarantine race and six committed-detection parameters. Awaited typed overloads
+retain original synchronous wrappers/assertions; public recovery rows expose
+genuine selected stamps checked against exact ticket/store/identity before
+existing exact-stamp fault controls run. Fresh fourteen-package replay passes
+353 consumers; both seven-row families pass. SDK-only race/detection mutants
+produce one/six named failures per family with matching SDK/archive images.
+Safe-logger replay validates all 197 witnesses/205 origins and eight reopen
+edges. Exact origin policy retains Local open/publication reopen, not Object
+or Local reconciliation; missing, extra and foreign origins reject. This is
+not complete QC-03 or feature acceptance.
+
+The preceding artifact190 scope includes eighteen initial-admission parameters.
 Explicit typed probes create genuinely uninitialized owned stores; `None`
 preserves ordinary initialized creation. Root existence/readiness are observed
 from the actual provider generation. Capability probes preserve unrelated

@@ -2588,7 +2588,19 @@ argument maps on Linux: three jobs/341 native foundations pass without skips.
 QC-02 pairing and the newer artifact scopes still await native observation;
 full qualification and the implementation stage remain unfinished.
 
-The current artifact190 scope also preserves all eighteen original initial-
+The current artifact197 scope additionally preserves the Local read/
+reconciliation quarantine race and all six committed-detection parameters.
+Awaited overloads keep the original synchronous wrappers/assertions. Actual
+selected stamps come from public recovery rows checked against the exact
+ticket/store/identity, never an invented incarnation. Fresh fourteen-package
+replay passes 353 selected consumers. Both seven-row actual/original families
+pass; SDK-only race/detection assertion mutants produce one/six named failures
+per family with matching runtime/archive SDK images. Safe-logger replay
+validates 197 witnesses/205 origins and all eight reopen edges. Local open/
+publication paths retain compatible reopen; Object and Local reconciliation
+do not borrow one. Complete QC-03 and feature acceptance remain unfinished.
+
+The preceding artifact190 scope also preserves all eighteen original initial-
 admission parameters. Explicit typed probes construct genuinely uninitialized
 Local/Object stores, expose actual root/readiness observations, and retain
 owned cleanup; ordinary sessions still initialize normally. Missing guarantees

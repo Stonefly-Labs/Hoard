@@ -10406,7 +10406,21 @@ QC-02 pairing/newer artifact native confirmation and full acceptance remain open
 Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 
-The current artifact190 extension preserves all eighteen original admission
+The current artifact197 extension preserves the Local read/reconciliation
+quarantine race and all six committed-detection parameters. Public recovery
+rows supply genuine selected stamps checked against exact ticket/store/
+identity; no incarnation or private payload path is fabricated. Awaited
+overloads retain synchronous wrappers and every original assertion. Fresh
+fourteen-package replay passes 353 selected consumers. Both seven-row families
+pass; SDK-only race/detection assertion mutants produce one/six named failures
+per family with matching runtime/archive SDK images. Safe-logger replay admits
+197 witnesses/205 origins and eight reopen edges. Exact origin policy requires
+the Local open/publication reopen, not Object or Local reconciliation.
+Tooling452/19 native skips and source contracts152/zero skips pass.
+Complete QC-03 and feature acceptance remain unfinished; examples, diagrams,
+production dependencies and infrastructure are unaffected.
+
+The preceding artifact190 extension preserves all eighteen original admission
 parameters with genuine uninitialized lifetimes and raw root/readiness facts.
 Default creation is unchanged; explicit typed probes preserve unrelated
 capabilities, original default/configured limits, actual foreign scope and

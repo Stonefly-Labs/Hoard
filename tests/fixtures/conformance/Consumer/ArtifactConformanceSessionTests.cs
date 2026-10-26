@@ -13,6 +13,143 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local")]
+    public async Task Observed_local_reconciliation_cannot_finalize_after_actual_read_quarantine(string provider)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        var reading = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var verifying = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseRead = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var releaseReconciliation = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var observations = new List<IAsyncDisposable>();
+        IAsyncDisposable? loss = null;
+        ArtifactStamp? stamp = null;
+        try
+        {
+            async ValueTask LoseAcknowledgment() => loss =
+                await session.Faults.InjectPublicationAcknowledgmentLossAsync(default);
+            ValueTask RestoreAcknowledgment() =>
+                (loss ?? throw new InvalidOperationException("BindingInvalid")).DisposeAsync();
+            async ValueTask Damage(ArtifactStagedWrite staged, CancellationToken token)
+            {
+                stamp = await ObservePublicationStampAsync(session, staged, token);
+                await session.Faults.ArmAsync(ConformanceFault.PayloadDamage, token);
+                try
+                {
+                    await session.Faults.DamagePayloadAsync(stamp, truncate: false, token);
+                    await session.Faults.WaitForBoundaryAsync(ConformanceFault.PayloadDamage, token);
+                }
+                finally { await session.Faults.ReleaseAsync(ConformanceFault.PayloadDamage, default); }
+            }
+            async ValueTask ObserveCopy() => observations.Add(await session.Faults.ObserveBoundaryAsync(
+                ArtifactObservationPoint.ReadCopy, () =>
+                {
+                    reading.TrySetResult();
+                    return new(releaseRead.Task.WaitAsync(context.BarrierBudget));
+                }, default));
+            async ValueTask ObserveReconciliation() => observations.Add(await session.Faults.ObserveBoundaryAsync(
+                ArtifactObservationPoint.ReconciliationVerified, () =>
+                {
+                    verifying.TrySetResult();
+                    return new(releaseReconciliation.Task.WaitAsync(context.BarrierBudget));
+                }, default));
+            ValueTask Restore(ArtifactStagedWrite staged, ReadOnlyMemory<byte> bytes, CancellationToken token) =>
+                session.Faults.ReplacePayloadAsync(stamp ?? throw new InvalidOperationException("BindingInvalid"), bytes, token);
+            await ArtifactReadAssertions.ReconciliationQuarantineRaceAsync(session.Store,
+                LoseAcknowledgment, RestoreAcknowledgment, Damage, ObserveCopy, ObserveReconciliation,
+                token => reading.Task.WaitAsync(context.ControlBudget, token),
+                token => verifying.Task.WaitAsync(context.ControlBudget, token),
+                () => releaseRead.TrySetResult(), () => releaseReconciliation.TrySetResult(), Restore, default);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally
+        {
+            releaseRead.TrySetResult();
+            releaseReconciliation.TrySetResult();
+            try
+            {
+                await session.Faults.AwaitSettlementAsync(default);
+                if (loss is not null) { await loss.DisposeAsync(); }
+                foreach (var observation in observations) { await observation.DisposeAsync(); }
+            }
+            finally { await session.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local", "open")]
+    [InlineData("local", "publication")]
+    [InlineData("local", "reconciliation")]
+    [InlineData("object", "open")]
+    [InlineData("object", "publication")]
+    [InlineData("object", "reconciliation")]
+    public async Task Observed_committed_detection_paths_quarantine_actual_restored_bytes(string provider, string detection)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        IArtifactConformanceSession current = await ConformanceObservedArtifactSession.OpenAsync(
+            Binding(provider), context, default);
+        var origins = new List<ConformanceSessionOrigin>
+        {
+            Assert.IsType<ConformanceObservedArtifactSession>(current).CaptureOrigin()
+        };
+        IAsyncDisposable? publication = null;
+        ArtifactStamp? stamp = null;
+        try
+        {
+            async ValueTask Damage(ArtifactStagedWrite staged, bool truncate, CancellationToken token)
+            {
+                stamp = await ObservePublicationStampAsync(current, staged, token);
+                await current.Faults.ArmAsync(ConformanceFault.PayloadDamage, token);
+                try
+                {
+                    await current.Faults.DamagePayloadAsync(stamp, truncate, token);
+                    await current.Faults.WaitForBoundaryAsync(ConformanceFault.PayloadDamage, token);
+                }
+                finally { await current.Faults.ReleaseAsync(ConformanceFault.PayloadDamage, default); }
+            }
+            async ValueTask ObservePublication(ArtifactStagedWrite staged) =>
+                publication = detection == "reconciliation"
+                    ? await current.Faults.InjectPublicationAcknowledgmentLossAsync(default)
+                    : await current.Faults.ObserveBoundaryAsync(ArtifactObservationPoint.PublicationSelected,
+                        () => Damage(staged, truncate: true, default), default);
+            ValueTask RemovePublication() =>
+                (publication ?? throw new InvalidOperationException("BindingInvalid")).DisposeAsync();
+            ValueTask Restore(ArtifactStagedWrite staged, ReadOnlyMemory<byte> bytes, CancellationToken token) =>
+                current.Faults.ReplacePayloadAsync(stamp ?? throw new InvalidOperationException("BindingInvalid"), bytes, token);
+            async ValueTask<IArtifactStore> Reopen(CancellationToken token)
+            {
+                current = await current.ReopenAsync(token);
+                origins.Add(Assert.IsType<ConformanceObservedArtifactSession>(current).CaptureOrigin());
+                return current.Store;
+            }
+            await ArtifactReadAssertions.CommittedDetectionQuarantineAsync(current.Store, detection,
+                provider == "local" ? ArtifactDurability.LocalProcessCrash : ArtifactDurability.SimulationOnly,
+                current.Faults.RemovePayloadAsync, current.Faults.ReplacePayloadAsync,
+                ObservePublication, RemovePublication, (staged, token) => Damage(staged, truncate: false, token),
+                Restore, default, null, provider == "local" ? Reopen : null);
+            foreach (var origin in origins) { ConformanceSessionOriginOutput.Write(output, origin); }
+        }
+        finally
+        {
+            try
+            {
+                await current.Faults.AwaitSettlementAsync(default);
+                if (publication is not null) { await publication.DisposeAsync(); }
+            }
+            finally { await current.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local", ArtifactAdmissionProbe.Complete)]
     [InlineData("local", ArtifactAdmissionProbe.Version)]
     [InlineData("local", ArtifactAdmissionProbe.Publication)]
@@ -1167,6 +1304,21 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
         }
         finally { await current.DisposeAsync(); }
         Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+    }
+
+    private static async ValueTask<ArtifactStamp> ObservePublicationStampAsync(
+        IArtifactConformanceSession session, ArtifactStagedWrite staged, CancellationToken cancellationToken)
+    {
+        var page = Assert.IsType<ArtifactResult<ArtifactRecoveryPage>.Success>(
+            await session.Maintenance.ObserveAsync(new(session.Identity, ArtifactRecoveryKind.Committed),
+                new(), cancellationToken)).Value;
+        Assert.IsType<ArtifactOption<string>.None>(page.Continuation);
+        var selected = Assert.Single(page.Observations);
+        Assert.Equal(staged.Owner.Ticket.Id, selected.OperationId);
+        var stamp = Assert.IsType<ArtifactOption<ArtifactStamp>.Some>(selected.Stamp).Value;
+        Assert.Equal(session.Identity, stamp.Store);
+        Assert.Equal(staged.Identity, stamp.Identity);
+        return stamp;
     }
 
     private static Guid RunId()

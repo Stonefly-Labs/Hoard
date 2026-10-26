@@ -245,7 +245,18 @@ correspondence; missing, extra and foreign validation origins reject. Exact
 jobs/341 native foundations passing without skips. Pairing/newer artifact native
 admission and complete QC-03 remain outstanding.
 
-The current artifact190 scope includes all eighteen original initial-admission
+The current artifact197 scope includes the Local read/reconciliation
+quarantine race and all six committed-detection parameters. Awaited overloads
+retain original synchronous wrappers/assertions. Actual public recovery rows
+supply selected stamps checked against exact ticket/store/identity before
+typed fault controls run. Fresh fourteen-package replay passes 353 consumers;
+both seven-row families pass. SDK-only race/detection mutants give one/six named
+failures per family with matching SDK/archive images. Safe-logger replay
+validates 197 witnesses/205 origins and eight reopen edges. Local open/
+publication require compatible reopen, not Object or Local reconciliation.
+Full QC-03 and feature acceptance remain unfinished.
+
+The preceding artifact190 scope includes all eighteen original initial-admission
 parameters. Explicit typed probes create genuine uninitialized owned stores;
 ordinary creation still initializes. Root/readiness observations are actual
 provider facts; original limits and genuine foreign scope are preserved.

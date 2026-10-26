@@ -1515,6 +1515,10 @@ def full_artifact_binding_scenarios():
                       for provider in ("local", "object") for probe in (
                           "Complete", "Version", "Publication", "Deletion", "Recovery", "Fencing",
                           "Readers", "Streaming", "ForeignAuthority"))
+    identities.add(prefix + 'Observed_local_reconciliation_cannot_finalize_after_actual_read_quarantine(provider: "local")')
+    identities.update(prefix + "Observed_committed_detection_paths_quarantine_actual_restored_bytes"
+                      + f'(provider: "{provider}", detection: "{detection}")'
+                      for provider in ("local", "object") for detection in ("open", "publication", "reconciliation"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
@@ -1522,8 +1526,11 @@ def full_artifact_binding_origin_counts():
     reopen = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
     payload = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_payload_and_progress_consumers_preserve_actual_binding_guarantees"
     validation = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_validation_first_quarantine_survives_actual_restoration_and_reopen"
+    detection = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_committed_detection_paths_quarantine_actual_restored_bytes"
     return {identity: 2 if identity.split("(")[0] == reopen or ('(provider: "local"' in identity and (
-                identity.split("(")[0] == validation or (identity.split("(")[0] == payload and any(
+                identity.split("(")[0] == validation or (identity.split("(")[0] == detection and any(
+                    f'detection: "{value}"' in identity for value in ("open", "publication")))
+                or (identity.split("(")[0] == payload and any(
                     f'consumer: "{consumer}"' in identity for consumer in ("read-bitflip", "read-truncate")))))
             else 1 for identity in full_artifact_binding_scenarios()[0][1]}
 

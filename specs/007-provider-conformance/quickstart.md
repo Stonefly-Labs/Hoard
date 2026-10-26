@@ -667,7 +667,17 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen argument maps
 three Linux jobs/341 native foundations pass without skips. Pairing/newer
 artifact native admission and full qualification remain outstanding.
 
-The current artifact190 scope adds all eighteen original admission parameters
+The current artifact197 scope additionally retains the Local concurrent
+quarantine race and six committed-detection parameters. Actual selected stamps
+come from public recovery rows checked against the exact ticket/store/identity;
+awaited overloads retain old wrappers/assertions. Fresh fourteen-package replay
+passes 353 consumers. Both seven-row families pass; SDK-only race/detection
+mutants produce one/six named failures per family with matching SDK/archive
+images. Safe-logger replay checks 197 witnesses/205 origins and eight reopen
+edges. Local open/publication require compatible reopen, not Object or Local
+reconciliation. This does not complete QC-03 or feature acceptance.
+
+The preceding artifact190 scope adds all eighteen original admission parameters
 through genuinely uninitialized owned lifetimes. Ordinary creation remains
 initialized; closed typed probes retain original limits and change only the
 selected capability or actual foreign scope. Root/readiness observations are

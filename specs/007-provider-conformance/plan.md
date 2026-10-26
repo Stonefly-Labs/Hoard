@@ -7556,7 +7556,33 @@ Metadata remains 92 Passed/1 Incomplete/9 NotApplicable/0 Failed, report
 `Incomplete`, qualification false. Pairing/newer artifact scopes remain pending;
 no tasks, reviewer-owned checklists or stage markers advance here.
 
-The current artifact190 increment preserves all eighteen initial-admission
+The current artifact197 increment retains the Local read/reconciliation
+quarantine race and all six committed-detection parameters, including the
+original open/publication/reconciliation distinctions and compatible Local
+reopen. Both common methods gain awaited typed overloads; old synchronous
+signatures and all original assertions remain. Selected stamps are observed
+from actual public committed-recovery rows and checked against the exact
+operation ticket/store/identity before existing exact-stamp controls run.
+There is no fabricated incarnation or new private payload-selection seam.
+
+Fresh fourteen-package replay passes 353 selected consumers at source
+`2c30342342f6072b912ed029a777eba6da454c32ae08c05e46fbfa848b8ffdab`,
+SDK archive `94e55d781f80c936ea0f11e9bc8ee630e14a291e87e27a7706b795e9dbf169f9`.
+Both complete seven-row actual/original families pass. SDK-only race/detection
+assertion mutants produce exactly one named `ReconciliationQuarantineRaceAsync`
+and six named `CommittedDetectionQuarantineAsync` failures in each family,
+respectively; every loaded SDK image matches its trial archive. Initial
+CS0407/CS1501/CS1503 establishes only missing awaited overloads. A tooling
+routing failure exposed a parameterless new Consumer row; its explicit sole
+Local parameter now preserves exact binding attribution without weakening
+admission. Independent safe-logger replay validates all 197 witnesses/
+205 origins and eight reopen edges, including exactly two new Local open/
+publication reopen edges. Missing, extra and foreign origins reject; Object
+and Local reconciliation never borrow restart evidence. Tooling452/19 native
+skips and source contracts152/zero skips pass. Full QC-03 and all unfinished
+tasks/stage gates remain open.
+
+The preceding artifact190 increment preserves all eighteen initial-admission
 rows through genuinely uninitialized owned Local/Object lifetimes. Closed
 typed probes alter only the selected capability/version or genuine authority
 scope; raw root/readiness observations do not encode a verdict. Default session

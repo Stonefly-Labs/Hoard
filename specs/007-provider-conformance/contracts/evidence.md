@@ -353,7 +353,19 @@ passes unchanged checks. Exact `e39b2ce`/run40293145453 admits earlier frozen
 metadata argument maps with three Linux jobs/341 native foundations passing
 without skips, not QC-02 pairing/newer artifact scopes or full qualification.
 
-The current artifact190 scope adds eighteen original initial-admission
+The current artifact197 scope also preserves the Local read/reconciliation
+quarantine race and six committed-detection parameters. Public recovery rows
+provide actual selected stamps checked against exact ticket/store/identity;
+awaited overloads retain synchronous wrappers and every original assertion.
+Fresh fourteen-package replay passes 353 consumers. Both seven-row families
+pass; SDK-only race/detection mutants give one/six named failures per family
+with identical runtime/archive SDK images. Safe-logger replay independently
+checks 197 witnesses/205 origins and eight reopen edges. Local open/publication
+require compatible reopen, not Object or Local reconciliation. Exact origin
+admission rejects missing, extra or foreign nodes. These remain diagnostic
+controls, not full QC-03 or feature acceptance.
+
+The preceding artifact190 scope adds eighteen original initial-admission
 parameters with genuine uninitialized owned stores, raw root/readiness facts,
 original default/configured limits and actual foreign-authority scope. Default
 creation remains initialized. Fresh fourteen-package replay passes 346

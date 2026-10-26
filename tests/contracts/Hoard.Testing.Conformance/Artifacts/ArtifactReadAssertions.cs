@@ -5,11 +5,29 @@ namespace Hoard.Testing.Conformance.Artifacts;
 
 public static class ArtifactReadAssertions
 {
-    public static async Task CommittedDetectionQuarantineAsync(
+    public static Task CommittedDetectionQuarantineAsync(
         IArtifactStore store, string detection, ArtifactDurability expectedDurability,
         Action removePayload, Action<byte[]> restoreRemovedPayload, Action observePublicationDecision,
         Action removePublicationObserver, Action damage, Action<byte[]> restorePayload, CancellationToken cancellationToken,
-        ArtifactQuarantineReopen? reopen)
+        ArtifactQuarantineReopen? reopen) =>
+        CommittedDetectionQuarantineAsync(store, detection, expectedDurability,
+            (_, _) => { removePayload(); return ValueTask.CompletedTask; },
+            (_, bytes, _) => { restoreRemovedPayload(bytes.ToArray()); return ValueTask.CompletedTask; },
+            _ => { observePublicationDecision(); return ValueTask.CompletedTask; },
+            () => { removePublicationObserver(); return ValueTask.CompletedTask; },
+            (_, _) => { damage(); return ValueTask.CompletedTask; },
+            (_, bytes, _) => { restorePayload(bytes.ToArray()); return ValueTask.CompletedTask; },
+            cancellationToken, reopen);
+
+    public static async Task CommittedDetectionQuarantineAsync(
+        IArtifactStore store, string detection, ArtifactDurability expectedDurability,
+        Func<ArtifactStamp, CancellationToken, ValueTask> removePayload,
+        Func<ArtifactStamp, ReadOnlyMemory<byte>, CancellationToken, ValueTask> restoreRemovedPayload,
+        Func<ArtifactStagedWrite, ValueTask> observePublicationDecision, Func<ValueTask> removePublicationObserver,
+        Func<ArtifactStagedWrite, CancellationToken, ValueTask> damage,
+        Func<ArtifactStagedWrite, ReadOnlyMemory<byte>, CancellationToken, ValueTask> restorePayload,
+        CancellationToken cancellationToken, ArtifactQuarantineReopen? reopen,
+        Func<CancellationToken, ValueTask<IArtifactStore>>? reopenAsync = null)
     {
         var bytes = "quarantine at each committed detection boundary"u8.ToArray();
         using var source = new ShortSource(bytes);
@@ -19,23 +37,23 @@ public static class ArtifactReadAssertions
         if (detection == "open")
         {
             receipt = Success(await store.CommitAsync(staged, new(), cancellationToken));
-            removePayload();
+            await removePayload(receipt.Stamp, cancellationToken);
             Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
                 await store.OpenReadAsync(new(staged.Identity.Digest), new(), cancellationToken)).Code);
-            restoreRemovedPayload(bytes);
+            await restoreRemovedPayload(receipt.Stamp, bytes, cancellationToken);
         }
         else
         {
-            observePublicationDecision();
+            await observePublicationDecision(staged);
             Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(await store.CommitAsync(staged, new(), cancellationToken));
-            removePublicationObserver();
+            await removePublicationObserver();
             if (detection == "reconciliation")
             {
-                damage();
+                await damage(staged, cancellationToken);
                 Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(
                     await store.ReconcileAsync(ticket, new(), cancellationToken));
             }
-            restorePayload(bytes);
+            await restorePayload(staged, bytes, cancellationToken);
             Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
                 await store.OpenReadAsync(new(staged.Identity.Digest), new(), cancellationToken)).Code);
             if (detection == "reconciliation" || expectedDurability == ArtifactDurability.SimulationOnly)
@@ -53,33 +71,55 @@ public static class ArtifactReadAssertions
             receipt = Assert.IsType<ArtifactResolution.Committed>(
                 Success(await store.ReconcileAsync(ticket, new(), cancellationToken))).Receipt;
         }
-        await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen);
+        if (reopenAsync is not null)
+        {
+            Assert.Null(reopen);
+            await ArtifactEvidenceAssertions.QuarantineAfterCompatibleReopenAsync(
+                store, receipt, bytes, cancellationToken, reopenAsync);
+        }
+        else { await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen); }
     }
 
-    public static async Task ReconciliationQuarantineRaceAsync(
+    public static Task ReconciliationQuarantineRaceAsync(
         IArtifactStore store, Action loseAcknowledgment, Action restoreAcknowledgment, Action damage,
         Action observeCopy, Action observeReconciliation,
         Func<CancellationToken, Task> waitForCopy, Func<CancellationToken, Task> waitForReconciliation,
-        Action releaseCopy, Action releaseReconciliation, Action<byte[]> restore, CancellationToken cancellationToken)
+        Action releaseCopy, Action releaseReconciliation, Action<byte[]> restore, CancellationToken cancellationToken) =>
+        ReconciliationQuarantineRaceAsync(store,
+            () => { loseAcknowledgment(); return ValueTask.CompletedTask; },
+            () => { restoreAcknowledgment(); return ValueTask.CompletedTask; },
+            (_, _) => { damage(); return ValueTask.CompletedTask; },
+            () => { observeCopy(); return ValueTask.CompletedTask; },
+            () => { observeReconciliation(); return ValueTask.CompletedTask; },
+            waitForCopy, waitForReconciliation, releaseCopy, releaseReconciliation,
+            (_, bytes, _) => { restore(bytes.ToArray()); return ValueTask.CompletedTask; }, cancellationToken);
+
+    public static async Task ReconciliationQuarantineRaceAsync(
+        IArtifactStore store, Func<ValueTask> loseAcknowledgment, Func<ValueTask> restoreAcknowledgment,
+        Func<ArtifactStagedWrite, CancellationToken, ValueTask> damage,
+        Func<ValueTask> observeCopy, Func<ValueTask> observeReconciliation,
+        Func<CancellationToken, Task> waitForCopy, Func<CancellationToken, Task> waitForReconciliation,
+        Action releaseCopy, Action releaseReconciliation,
+        Func<ArtifactStagedWrite, ReadOnlyMemory<byte>, CancellationToken, ValueTask> restore, CancellationToken cancellationToken)
     {
         var bytes = "read detection wins before reconciliation settles"u8.ToArray();
         using var source = new ShortSource(bytes);
         var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
         var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
-        loseAcknowledgment();
+        await loseAcknowledgment();
         Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(await store.CommitAsync(staged, new(), cancellationToken));
-        restoreAcknowledgment();
-        damage();
+        await restoreAcknowledgment();
+        await damage(staged, cancellationToken);
         await using var session = Success(await store.OpenReadAsync(new(staged.Identity.Digest), new(), cancellationToken));
-        observeCopy();
-        observeReconciliation();
+        await observeCopy();
+        await observeReconciliation();
         using var destination = new MemoryStream();
         var copying = session.CopyToAsync(destination, new(), cancellationToken).AsTask();
         Task<ArtifactResult<ArtifactResolution>>? reconciling = null;
         try
         {
             await waitForCopy(cancellationToken);
-            restore(bytes);
+            await restore(staged, bytes, cancellationToken);
             reconciling = store.ReconcileAsync(ticket, new(), cancellationToken).AsTask();
             await waitForReconciliation(cancellationToken);
             releaseCopy();

@@ -168,7 +168,19 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen metadata
 argument maps with all three Linux jobs/341 native foundations passing without
 skips. QC-02 pairing/newer artifact scopes and complete QC-03 remain unadmitted.
 
-The current artifact190 scope adds all eighteen original admission rows through
+The current artifact197 scope also preserves the Local concurrent read/
+reconciliation quarantine race and all six committed-detection parameters.
+Public recovery rows supply genuine selected stamps checked against exact
+ticket/store/identity before existing typed damage/restoration controls run.
+Awaited common overloads retain synchronous wrappers and every assertion.
+Fresh fourteen-package replay passes 353 selected consumers; both seven-row
+families pass, and SDK-only race/detection mutants produce one/six named
+failures per family with matching SDK/archive images. Safe-logger replay
+checks 197 witnesses/205 origins and eight reopen edges. Local open/publication
+retain compatible reopen, not Object or Local reconciliation. Full QC-03 and
+feature acceptance remain unfinished.
+
+The preceding artifact190 scope adds all eighteen original admission rows through
 genuinely uninitialized owned stores, not stopped initialized ones. Closed
 typed probes change only the selected capability or actual authority scope;
 raw root/readiness observations remain provider facts. Ordinary creation still
