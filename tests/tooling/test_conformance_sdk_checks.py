@@ -376,7 +376,10 @@ class SdkDiagnosticTests(unittest.TestCase):
                 ("metadata", "qualification", "mutation-faulty", True),
                 ("metadata", "qualification", "shared-consumer", True),
                 ("artifacts", "diagnostic", "controller", False),
-                ("artifacts", "qualification", "original", False)):
+                ("artifacts", "qualification", "original", True),
+                ("artifacts", "qualification", "original-local", True),
+                ("artifacts", "qualification", "original-object", True),
+                ("artifacts", "diagnostic", "original", False)):
             for path in execution.iterdir():
                 path.chmod(0o600)
             with self.subTest(mode=mode, scope=scope), patch.object(checks, "runtime_command", side_effect=(
@@ -400,9 +403,12 @@ class SdkDiagnosticTests(unittest.TestCase):
             else:
                 ordinary.assert_called_once()
                 inspect.assert_not_called()
-        for defect in ("live-child", "changed-output"):
+        for scope, defect in (
+                (scope, defect) for scope in ("shared-consumer", "original", "original-local", "original-object")
+                for defect in ("live-child", "changed-output")):
             for path in execution.iterdir():
                 path.chmod(0o600)
+            (execution / "witnesses.jsonl").write_bytes(b"")
             run.live_children = lambda: (123,) if defect == "live-child" else ()
 
             def inspect_changed(**options):
@@ -410,7 +416,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     (execution / "witnesses.jsonl").write_bytes(b"foreign")
                 return {"observation": observation}
 
-            with self.subTest(defect=defect), patch.object(checks, "runtime_command", side_effect=(
+            with self.subTest(scope=scope, defect=defect), patch.object(checks, "runtime_command", side_effect=(
                     (result, discovery, transport), (result, execution, transport))), patch.object(
                     checks.evidence, "ingest_runtime_discovery", return_value={
                         "diagnosticCode": "None", "discoveries": ({"testIdentity": "Test.Source"},)}), patch.object(
@@ -418,7 +424,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 with self.assertRaises(checks.evidence.ConformanceError):
                     checks._execute_runtime_transport(
                         run, {"mode": "qualification"}, None, {}, {"Test.Source": ("memory", "none")},
-                        {"category_scope": ("metadata", "shared-consumer")})
+                        {"category_scope": ("metadata" if scope == "shared-consumer" else "artifacts", scope)})
                 self.assertTrue(all(path.stat().st_mode & 0o777 == 0o600 for path in execution.iterdir()))
 
     def test_category_failure_locations_are_bounded_static_source_roles_only(self):

@@ -10443,6 +10443,17 @@ are not actual Linux admission or qualification; the implementation stage remain
 running. Examples, diagrams, production dependencies and infrastructure are
 unaffected.
 
+Native run `40320966626` at `c6fdc27` passes foundations and locked replay but
+rejects `artifacts/original` at the read-only proof check. The three original
+artifact scopes were missing from the transport inspection/sealing dispatch.
+They now use the existing path that checks actual child settlement and unchanged
+captured bytes before sealing logger records and proofs. Regression coverage
+includes all three scopes, live-child/changed-output rejection and unchanged
+diagnostic-mode dispatch. This repairs transport admission, not qualification;
+fresh native execution and the remaining implementation gates are still required.
+Other guides/examples, diagrams, product APIs, package dependencies and
+infrastructure are unaffected because this changes only test transport routing.
+
 Linux run `40312172408` at `516b6e4` fails the prepared Object no-rename architecture
 witness; its other two jobs pass. The cause is qualification-only directory moves
 introduced inside the Object provider assembly, not its publication mechanism.

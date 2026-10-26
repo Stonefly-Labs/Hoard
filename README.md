@@ -2608,6 +2608,12 @@ full AS-01..48 basis, retaining actual transfers, Local recovery and the four
 Object exclusions. Tooling458 (19 native skips) passes. Actual native admission
 and the remaining feature work are still pending; this is not qualification.
 
+Native run `40320966626` rejects the original artifact source because its logger
+proofs were not sealed. Qualification now routes all three original scopes through
+the existing settled, byte-rechecked, read-only inspection path. Diagnostic mode
+is unchanged; live children and changed output still reject. Fresh Linux
+confirmation remains required before QC-03 or stage completion.
+
 The Object access-fault implementation now lives in its concrete test binding,
 as the original driver-owned fault did. The provider still selects/protects the
 exact stamp and captures the scope before release hooks, but contains no rename

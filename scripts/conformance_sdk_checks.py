@@ -2611,6 +2611,8 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
                       and (runtime_options["category_scope"][1].startswith("inspection-")
                            or tuple(runtime_options["category_scope"]) in (
                                ("artifacts", "controller"), ("artifacts", "original-integration"),
+                               ("artifacts", "original"), ("artifacts", "original-local"),
+                               ("artifacts", "original-object"),
                                ("metadata", "original-memory"), ("metadata", "original-sqlite"))
                            or runtime_options["category_scope"][1] in (
                                "recovery-controller", "inventory-controller", "mutation-faulty", "mutation-repair",

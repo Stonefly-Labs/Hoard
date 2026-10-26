@@ -7627,6 +7627,28 @@ admission, complete QC-03 acceptance or feature completion. No task/checklist/
 stage marker advances. Examples, diagrams, production dependencies and
 infrastructure are unaffected.
 
+### Original artifact source transport sealing repair
+
+Exact `c6fdc27` / [run40320966626](https://github.com/Stonefly-Labs/Hoard/actions/runs/40320966626)
+passes native foundations and fresh lock replay but rejects the artifact
+qualification `original` scope at `conformance_sources._readonly`: logger proof
+files remain writable. Original artifact scopes were omitted from
+`_execute_runtime_transport`'s existing inspection/sealing dispatch, unlike
+original metadata and controller scopes.
+
+Route `original`, `original-local` and `original-object` through the same
+qualification-only inspection path. Preserve raw transport bytes, actual
+child-settlement checks and pre-seal byte equality; do not weaken independent
+source reconstruction. A focused reproduction gives nine intended assertion
+failures across the three scopes before correction. Extend the existing
+transport regression to cover every scope, retained live children, changed
+output and unchanged diagnostic dispatch. The focused regression and
+`python3 -m unittest discover -s tests/tooling -q` pass (458 tests, 19 explicit
+native skips on macOS). Frozen inventory, embedded catalog and `git diff --check`
+also pass. Native replay remains required;
+no task, checklist or stage marker advances. Product APIs/provider mechanisms,
+package references, examples, diagrams and infrastructure are unaffected.
+
 ### Object access-fault boundary repair
 
 Linux `516b6e4` / run `40312172408` fails the prepared Object no-rename witness;

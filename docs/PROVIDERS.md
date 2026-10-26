@@ -187,6 +187,12 @@ including actual transfers, Local recovery and the four Object exclusions.
 Tooling458 (19 native skips) passes. Native admission and full qualification
 remain pending; no provider guarantee or exclusion is changed.
 
+Native run `40320966626` rejected writable original-artifact proofs before
+source admission. All three qualification scopes now use the existing
+settlement/byte-check/read-only sealing path; diagnostic mode and provider
+mechanisms are unchanged. Fresh Linux confirmation and full qualification
+remain outstanding.
+
 Object's driver-owned access faults now reside in its concrete binding, not the
 provider assembly; native exact-stamp selection/protection and pre-hook handle
 capture are unchanged. The provider has no rename mechanism. The unchanged
