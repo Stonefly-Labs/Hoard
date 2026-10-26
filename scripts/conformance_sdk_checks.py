@@ -1443,6 +1443,14 @@ def full_artifact_binding_scenarios():
                       + f'(provider: "{provider}", consumer: "{consumer}")'
                       for provider in ("local", "object") for consumer in (
                           "destination-failure", "exact-retry", "staged-length", "recreation", "reader-exclusion"))
+    identities.update(prefix + "Observed_boundary_consumers_preserve_actual_binding_guarantees"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider, consumers in (
+                          ("local", ("private-staging", "concurrent-writers", "lost-acknowledgment", "visible-before-ack")),
+                          ("object", ("private-staging", "concurrent-writers", "lost-acknowledgment", "direct-availability")))
+                      for consumer in consumers)
+    identities.update(prefix + "Ordinary_acknowledgment_shaped_observer_errors_still_fault_actual_settlement"
+                      + f'(provider: "{provider}")' for provider in ("local", "object"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 

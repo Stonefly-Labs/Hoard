@@ -13,6 +13,125 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Ordinary_acknowledgment_shaped_observer_errors_still_fault_actual_settlement(string provider)
+    {
+        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        var failure = new IOException("InjectedPublicationAcknowledgmentLoss");
+        try
+        {
+            await using var observer = await session.Faults.ObserveBoundaryAsync(
+                ArtifactObservationPoint.PublicationSelected, () => ValueTask.FromException(failure), default);
+            var ticket = Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Success>(
+                await session.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default)).Value;
+            using var source = new ArtifactPublicationAssertions.ShortSource("unexpected acknowledgment error"u8.ToArray());
+            var staged = Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Success>(
+                await session.Store.StageAsync(ticket, source, new(), default)).Value;
+            Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+                await session.Store.CommitAsync(staged, new(), default)).Code);
+            await session.Faults.AwaitSettlementAsync(default);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await Assert.ThrowsAsync<InvalidOperationException>(() => session.DisposeAsync().AsTask()); }
+        var settlement = Assert.Single(resources.Settlements).Value;
+        Assert.True(settlement.IsFaulted);
+        Assert.Contains(failure, settlement.Exception!.InnerExceptions);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local", "private-staging")]
+    [InlineData("local", "concurrent-writers")]
+    [InlineData("local", "lost-acknowledgment")]
+    [InlineData("local", "visible-before-ack")]
+    [InlineData("object", "private-staging")]
+    [InlineData("object", "concurrent-writers")]
+    [InlineData("object", "lost-acknowledgment")]
+    [InlineData("object", "direct-availability")]
+    public async Task Observed_boundary_consumers_preserve_actual_binding_guarantees(string provider, string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        try
+        {
+            await BoundaryConsumerAsync(session, consumer);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    private static async Task BoundaryConsumerAsync(IArtifactConformanceSession session, string consumer)
+    {
+        if (consumer == "concurrent-writers")
+        {
+            await ObserveAsync(session, ArtifactObservationPoint.PublicationAdmitted,
+                install => ArtifactPublicationAssertions.ConcurrentEquivalentWritersAsync(session.Store, install, default));
+            return;
+        }
+        if (consumer == "lost-acknowledgment")
+        {
+            await using var injection = await session.Faults.InjectPublicationAcknowledgmentLossAsync(default);
+            await ArtifactReconciliationAssertions.LostAcknowledgmentAsync(
+                session.Store, () => Assert.Equal(0, injection.ObservationCount), default);
+            await injection.WaitForEntryAsync(default);
+            Assert.Equal(1, injection.ObservationCount);
+            await session.Faults.AwaitSettlementAsync(default);
+            return;
+        }
+        var point = consumer switch
+        {
+            "private-staging" => ArtifactObservationPoint.StagePrefix,
+            "visible-before-ack" => ArtifactObservationPoint.ReceiptPersisted,
+            "direct-availability" => ArtifactObservationPoint.DirectVerification,
+            _ => throw new ArgumentException("BindingInvalid")
+        };
+        await using var barrier = new ArtifactConformanceBarrier(consumer);
+        await ObserveAsync(session, point, async install =>
+        {
+            void Block() => install(() => new(barrier.HoldAsync()));
+            void Release()
+            {
+                install(static () => ValueTask.CompletedTask);
+                barrier.Release();
+            }
+            if (consumer == "private-staging") { Block(); }
+            try
+            {
+                await (consumer switch
+                {
+                    "private-staging" => ArtifactPublicationAssertions.PrivateStagingAsync(session.Store,
+                        token => barrier.Entered.WaitAsync(token), Release, default),
+                    "visible-before-ack" => ArtifactVisibilityAssertions.VisibleBeforeAcknowledgmentAsync(session.Store,
+                        Block, token => barrier.Entered.WaitAsync(token), Release, default),
+                    "direct-availability" => ArtifactVisibilityAssertions.DirectAvailabilityAsync(
+                        session.Store, session.Maintenance, session.Identity,
+                        Block, token => barrier.Entered.WaitAsync(token), Release, default),
+                    _ => throw new ArgumentException("BindingInvalid")
+                });
+            }
+            finally { Release(); }
+        });
+    }
+
+    private static async Task ObserveAsync(IArtifactConformanceSession session, ArtifactObservationPoint point,
+        Func<Action<Func<ValueTask>>, Task> assertion)
+    {
+        Func<ValueTask>? observer = null;
+        await using var registration = await session.Faults.ObserveBoundaryAsync(point,
+            () => (Volatile.Read(ref observer) ?? throw new InvalidOperationException("BindingInvalid"))(), default);
+        try { await assertion(callback => Volatile.Write(ref observer, callback)); }
+        finally { await session.Faults.AwaitSettlementAsync(default); }
+    }
+
+    [Theory]
     [InlineData("local", "destination-failure")]
     [InlineData("local", "exact-retry")]
     [InlineData("local", "staged-length")]

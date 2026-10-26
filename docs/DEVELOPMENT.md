@@ -10039,6 +10039,55 @@ SDK/provider contracts, frozen catalogs, tracked locks, provider/contributor/
 deployment guides, examples and diagrams are unaffected: no production API,
 dependency, supported command or deployment behavior changes.
 
+### Actual boundary consumers and expected acknowledgment loss
+
+The full artifact diagnostic scope now has 54 rows: eight new actual-binding
+boundary consumers and two ordinary observer-error controls preserve the earlier
+44 identities and six-image pins. Shared private staging, equivalent writers
+and lost acknowledgment run on both bindings; the existing Local
+receipt-before-ack and Object direct-availability assertions retain their
+original provider scope. Held work is released and joined even on assertion
+failure; no synchronous wait adapts asynchronous observer registration.
+
+The first packaged replay passes six boundary rows but fails both acknowledgment
+rows because an ordinary observer exception correctly faults ownership.
+`InjectPublicationAcknowledgmentLossAsync` now explicitly registers one expected
+exception at real publication selection. Only that exact instance is exempt
+from the existing unexpected-observer ledger. Two ordinary observers throwing
+the same exception type/message at that same boundary still require failed
+settlement, the original exception and no authoritative release.
+
+All 190 fresh-package Consumer rows pass without skips. Both complete eight-row
+boundary/frozen-wrapper families pass with identical SDK bytes; an isolated
+shared concurrent-receipt assertion mutation gives each two named
+`ConcurrentEquivalentWritersAsync` failures/six passes. The full 444-test tooling
+suite passes with 19 native skips, SDK contracts pass 133 without skips, and
+changed C# formatting/frozen inventory/embedded catalog/whitespace checks pass.
+
+Correction to earlier catalog-control classification: removing the empty
+memory MP-36 exclusion caused SDK catalog initialization failure, not a named
+consumer assertion. Earlier third-control receipts do not establish that
+assertion negative. The updated attack includes an explicit unauthorized
+durability control so its catalog is structurally valid; all three attacks now
+require both actual assertion text and the fixed catalog assertion frame,
+with four named failures each. Repository catalog/parsing rules are unchanged.
+
+Exact `2f5841ba344b8b1d021dffbca31a3b8fd54a5081`,
+[run40259904782](https://github.com/Stonefly-Labs/Hoard/actions/runs/40259904782),
+independently passes all Linux jobs, 336 foundations/no skips and fresh
+13-lock/18-package replay. Public QC-05 and identical-owner source-packet
+merging are admitted. Metadata qualification-input has ten scopes/141 witnesses/
+eight parents and 92 Passed/1 Incomplete/9 NotApplicable/0 Failed; artifacts has
+nine/263/six and 98/1/4/0. All four public reports remain `Incomplete`.
+The bounded observer initially rejects the guessed foundation count; a fresh
+receipt requires the measured exact 336, without changing any source threshold.
+This head does not admit the later read/retry/deletion or typed fault changes.
+
+The interim `hoard-architecture-review` confirms the new exception identity
+boundary and finds remaining metadata corruption ownership/CAS and artifact
+payload/progress gaps. These are implementation work, not waived acceptance
+criteria or a final T081 review. Tasks/checklists remain unchanged.
+
 ### Native source-sealing and shared-consumer admission history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

@@ -7116,6 +7116,57 @@ unchanged. README, DEVELOPMENT and evidence/matrix contracts are updated;
 provider/contributor/deployment guides, examples and diagrams are unaffected
 because no public API, production dependency or supported command changes.
 
+### Boundary consumers, acknowledgment injection and interim review
+
+The full artifact scope grows from 44 to 54 rows with eight complete boundary
+consumers and two ordinary observer-error controls. Actual bindings execute
+shared private staging, concurrent writers and lost acknowledgment; Local
+receipt-before-ack and Object direct availability retain their original scope.
+The initial replay passes six boundary rows and fails both acknowledgment rows
+at failed ownership settlement. Explicit
+`InjectPublicationAcknowledgmentLossAsync` registration now exempts only its
+exact expected exception instance. Same-type/message ordinary observer failures
+at the same boundary still fault ownership and never claim release.
+
+All 190 fresh-package Consumer rows pass without skips. Both corresponding
+eight-row actual-binding/frozen-wrapper families pass with identical SDK bytes;
+one isolated concurrent-receipt assertion mutation produces the same two named
+failures/six passes in each. Tooling passes all 444 tests with 19 native skips;
+source SDK contracts pass 133 with none. Changed C# formatting, frozen inventory,
+embedded catalog and whitespace checks pass.
+
+Earlier missing-exclusion catalog attacks failed SDK initialization because
+memory MP-36 became obligation-free; their receipts do not prove named
+assertion rejection. The corrected structurally valid attack adds an explicit
+unauthorized durability control. All three attacks now require actual assertion
+text plus the fixed catalog assertion frame, four failures each. Neither the
+repository catalog nor SDK parser is weakened.
+
+Exact `2f5841ba344b8b1d021dffbca31a3b8fd54a5081`, run
+[40259904782](https://github.com/Stonefly-Labs/Hoard/actions/runs/40259904782),
+independently passes all Linux jobs, 336 native foundations without skips and
+13-lock/18-package replay. Public QC-05/source-packet merging is admitted:
+metadata qualification-input is ten scopes/141 witnesses/eight parents,
+92 Passed/1 Incomplete/9 NotApplicable/0 Failed; artifacts is nine/263/six,
+98/1/4/0. All public reports remain `Incomplete`; QC-02/QC-03 remain unfinished.
+Metadata input/result hashes are
+`568c4a42e74abf81e8471f84cc5ce6f5433ba5e270d742bb5fca2f52b01415ef` /
+`3a00c4a8242076b431608c69df11cb4fc731e08ee38d9bbd85e1da8af1063b7f`;
+artifacts are
+`ce523113d83b3cb21314e6383c65e2c88d638e8cfde13d55dd4eabcc67620279` /
+`bfbbce875effa991a0f18ed32d7c56bdf0a134a20dbc47d58c072488ef881f86`.
+The first observer receipt rejects a guessed foundation count; a fresh receipt
+requires the measured exact 336. It does not admit subsequent source changes.
+
+An interim read-only `hoard-architecture-review` confirms the typed injection
+uses exact exception identity and identifies three remaining implementation
+gaps: adapter-owned metadata corruption scopes/closure gates, Memory
+compare-exchange application, and typed artifact payload/progress controls.
+These require repairs and actual binding regressions. This is not final T081
+approval; no task/checklist marker advances. README/DEVELOPMENT, provider and
+harness/evidence/matrix guidance are updated; production API/deployment/examples/
+diagrams are unaffected by this test-only contract extension.
+
 ### Exact native admission of earlier repaired source controls history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

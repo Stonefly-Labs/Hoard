@@ -185,6 +185,8 @@ public interface IArtifactAssertionSession : IAsyncDisposable
     ValueTask<IArtifactFaultRegistration> InjectCapacityFailureAsync(CancellationToken cancellationToken);
     /// <summary>Fails the actual indexed cleanup of a result that was not delivered to its caller.</summary>
     ValueTask<IArtifactFaultRegistration> InjectUnclaimedCleanupFailureAsync(CancellationToken cancellationToken);
+    /// <summary>Loses acknowledgment after real publication selection without treating the injected exception as an unexpected observer failure.</summary>
+    ValueTask<IArtifactFaultRegistration> InjectPublicationAcknowledgmentLossAsync(CancellationToken cancellationToken);
     /// <summary>Holds a real synchronous fixture boundary; reserve the deletion ticket before arming. Not a stalled filesystem syscall.</summary>
     ValueTask<IArtifactSynchronousHold> HoldSynchronousStorageAsync(CancellationToken cancellationToken);
     /// <summary>Damages the exact current payload through owned fixture work; it does not change receipt or quarantine state.</summary>
@@ -224,6 +226,7 @@ public interface IArtifactConformanceFaultDriver : IConformanceFaultDriver
     IArtifactBorrowedStream BorrowedDestination { get; }
     ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
         ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken);
+    ValueTask<IArtifactFaultRegistration> InjectPublicationAcknowledgmentLossAsync(CancellationToken cancellationToken);
     ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken);
     ValueTask AwaitSettlementAsync(CancellationToken cancellationToken);
 }

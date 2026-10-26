@@ -194,6 +194,13 @@ shared-assertion mutation with unchanged Consumer/wrapper sources and identical
 SDK bytes within each trial. This remains local assertion parity, not a native
 QC-03 parent or complete artifact extraction.
 
+The scope now includes eight boundary consumers and two unexpected-observer
+ownership controls, totaling 54 rows. Publication selection uses an explicit
+typed acknowledgment-loss registration; an ordinary same-message exception at
+that boundary must still fault settlement. Local complete boundary-family
+parity retains identical SDK bytes and a paired concurrent-receipt assertion
+mutation. It does not supply missing metadata/artifact extraction controls.
+
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,

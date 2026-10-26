@@ -368,6 +368,13 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
             ArtifactObservationPoint.OperationReclaim, () => ValueTask.FromException(failure), cancellationToken, failure));
     }
 
+    public ValueTask<IArtifactFaultRegistration> InjectPublicationAcknowledgmentLossAsync(CancellationToken cancellationToken)
+    {
+        var failure = new IOException("InjectedPublicationAcknowledgmentLoss");
+        return ValueTask.FromResult<IArtifactFaultRegistration>(RegisterBoundary(
+            ArtifactObservationPoint.PublicationSelected, () => ValueTask.FromException(failure), cancellationToken, failure));
+    }
+
     private Registration RegisterBoundary(
         ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken,
         Exception? expectedFailure = null)

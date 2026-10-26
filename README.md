@@ -2404,6 +2404,28 @@ assertion mutation gives each exactly two named failures/eight passes without
 changing Consumer/wrapper sources. This is bounded local assertion parity,
 not complete extraction, native admission or task completion.
 
+Eight further actual-binding boundary rows now cover private staging, equivalent
+concurrent writers, lost acknowledgments, Local visibility before acknowledgment
+and Object direct availability. Two same-message ordinary observer-error controls
+also preserve failed settlement, taking the diagnostic scope to 54 rows.
+Expected acknowledgment loss uses an explicit typed, exact-exception injection;
+arbitrary observer errors still block successful cleanup. Fresh packages pass
+all 190 Consumer rows. Complete eight-row boundary/frozen-wrapper parity includes
+the same two named concurrent-receipt assertion failures in each family.
+
+Exact `2f5841b`,
+[run40259904782](https://github.com/Stonefly-Labs/Hoard/actions/runs/40259904782),
+independently admits the earlier public QC-05/source-packet repair on Linux:
+336 foundations without skips, locked replay and all SDK diagnostics pass.
+Metadata has 92 Passed/1 Incomplete/9 NotApplicable and artifacts 98/1/4;
+all public reports remain `Incomplete`. It does not admit the subsequent
+read/retry/deletion or boundary-control changes.
+An interim architecture review identifies remaining metadata corruption-scope
+ownership/CAS and artifact payload/progress control gaps; extraction is not done.
+The older missing-exclusion catalog attack rejected during SDK initialization,
+not a named assertion. The updated structurally valid unauthorized-durability
+claim now produces four actual catalog assertion failures.
+
 Exact `58a9495`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
 passes all three Linux jobs: 331 native foundations without skips and

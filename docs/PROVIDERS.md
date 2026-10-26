@@ -10,7 +10,12 @@ Hosting; F-04 adds protected metadata/observations, not provider operations. Sta
 For lifecycle use, see the [package-only lifecycle host](../examples/LifecycleHost/README.md).
 
 F-07 shared conformance is partially implemented, not available as provider
-certification. Its SDK now has 53 executable metadata methods, typed sessions,
+certification. Its artifact test-only fault drivers now distinguish explicit
+`InjectPublicationAcknowledgmentLossAsync` from ordinary boundary observers:
+only the exact registered injected exception is expected; other exceptions
+continue to fault ownership settlement.
+
+Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run
 [40059814134](https://github.com/Stonefly-Labs/Hoard/actions/runs/40059814134)

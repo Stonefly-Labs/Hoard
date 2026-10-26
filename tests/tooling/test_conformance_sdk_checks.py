@@ -4172,6 +4172,14 @@ class SdkDiagnosticTests(unittest.TestCase):
                         + f'(provider: "{provider}", consumer: "{consumer}")'
                         for provider in ("local", "object") for consumer in (
                             "destination-failure", "exact-retry", "staged-length", "recreation", "reader-exclusion"))
+        expected.update(prefix + "Observed_boundary_consumers_preserve_actual_binding_guarantees"
+                        + f'(provider: "{provider}", consumer: "{consumer}")'
+                        for provider, consumers in (
+                            ("local", ("private-staging", "concurrent-writers", "lost-acknowledgment", "visible-before-ack")),
+                            ("object", ("private-staging", "concurrent-writers", "lost-acknowledgment", "direct-availability")))
+                        for consumer in consumers)
+        expected.update(prefix + "Ordinary_acknowledgment_shaped_observer_errors_still_fault_actual_settlement"
+                        + f'(provider: "{provider}")' for provider in ("local", "object"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"
@@ -4229,7 +4237,8 @@ class SdkDiagnosticTests(unittest.TestCase):
                 scenario[0], tuple(identity for identity in scenario[1] if f'consumer: "{consumer}"' not in identity),
                 *scenario[2:]) for consumer in (
                     "empty", "unknown-length", "expectations", "unsupported", "duplicates",
-                    "destination-failure", "exact-retry", "staged-length", "recreation", "reader-exclusion")),
+                    "destination-failure", "exact-retry", "staged-length", "recreation", "reader-exclusion",
+                    "private-staging", "concurrent-writers", "lost-acknowledgment", "visible-before-ack", "direct-availability")),
                         (scenario[0], scenario[1][:-1], *scenario[2:]),
                         (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
                         ("full-artifact-binding-foreign", *scenario[1:])):

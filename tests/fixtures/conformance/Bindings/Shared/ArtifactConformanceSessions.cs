@@ -173,6 +173,9 @@ internal sealed class ArtifactConformanceFaults(
         ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken) =>
         session.ObserveBoundaryAsync(point, observer, cancellationToken);
 
+    public ValueTask<IArtifactFaultRegistration> InjectPublicationAcknowledgmentLossAsync(CancellationToken cancellationToken) =>
+        session.InjectPublicationAcknowledgmentLossAsync(cancellationToken);
+
     public async ValueTask DamagePayloadAsync(
         ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken)
     {

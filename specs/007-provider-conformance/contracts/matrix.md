@@ -111,6 +111,12 @@ six-image requirements preserved. The complete actual-binding and corresponding
 frozen-wrapper families have matching local shared-assertion negative behavior.
 No diagnostic row substitutes for full QC-03 extraction or native qualification.
 
+Eight boundary-consumer rows plus two ordinary observer-error controls extend
+the full scope to 54. Private staging, concurrent writers and lost acknowledgment
+cover both bindings; visibility-before-ack is Local and independent direct
+availability is Object, matching the unchanged shared assertions' original
+scope. Expected fault registration does not excuse arbitrary observer failures.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

@@ -41,6 +41,13 @@ and receipt/recovery boundaries. Observations are corroborated by public reads,
 receipts and independent common assertions, not trusted fault-driver assertions.
 Durable proof is executed by parent-owned child processes outside the session.
 
+Artifact assertion sessions and full fault drivers expose
+`InjectPublicationAcknowledgmentLossAsync`, an owned registration at actual
+publication selection. Its exact injected exception is an expected fault;
+arbitrary observer exceptions, including the same type/message, still poison
+ownership settlement. Registration observations corroborate entry; common
+reconciliation/read/receipt assertions independently establish the outcome.
+
 `ConformanceObservedMetadataSession.OpenAsync` and
 `ConformanceObservedArtifactSession.OpenAsync` actually call the supplied typed
 binding. Put the returned session in `await using` before `CaptureOrigin`.
