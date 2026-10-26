@@ -2253,8 +2253,8 @@ transport and executor-held command, checks the shared six-image/package/input
 closure, ordered settled times and fixed settings/argv, and retains the negative
 proofs under one current corrected source parent. Setup failures, replaced
 records, missing rows and prior-attempt borrowing cannot qualify. Local checks
-pass 437 tooling tests (19 native skips) and 133 source SDK tests; fresh Linux
-admission of these new pairs remains pending. A fresh private package-only
+pass 437 tooling tests (19 native skips) and 133 source SDK tests. Native pair
+admission was pending at that checkpoint; exact `58a9495` now establishes it. A fresh private package-only
 restore with the current SDK also executes all eight actual mutation rows:
 four corrected passes and four faulty failures, each at its fixed shared
 assertion frame. This local non-native check does not admit source parents.
@@ -2267,7 +2267,8 @@ The bounded source locations identify the readonly check; this is not a named
 consumer assertion failure. The supervisor now seals validated runtime source
 bytes only after child settlement, rechecking them before sealing. Live work
 and changed output reject; the independent readonly requirement is unchanged.
-Local regression checks pass; fresh Linux admission of the repair is pending.
+Local regression checks pass; exact `58a9495` now admits the repair on Linux,
+as recorded below.
 
 Metadata qualification-input diagnostics now execute a fresh F-07 package-only
 shared consumer, separately from the older metadata marker consumer retained
@@ -2281,8 +2282,8 @@ wrappers must use identical SDK image bytes from the admitted package; the
 wrapper SDK is also pinned in the native command input map.
 The source control remains private
 evidence, not 132 public QC witnesses or completed QC-02 extraction parity.
-Local tooling passes 439 checks with 19 explicit native skips; fresh Linux
-admission of this additional control remains pending. No C# or tracked lock
+Local tooling passes 439 checks with 19 explicit native skips; exact `58a9495`
+now admits this additional control on Linux. No C# or tracked lock
 changes were needed for that source-control checkpoint; no task/checklist
 advances or qualification claims followed.
 
@@ -2314,6 +2315,18 @@ The existing 132/24-row selections are unchanged. A fresh-package local replay
 rejects all four dedicated rows for each of the three SDK mutations above;
 the unchanged SDK passes all 160 original-plus-dedicated rows without skips.
 These scopes are not yet wired into native QC-05 source-parent composition.
+
+Exact `58a9495`,
+[run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
+passes all three Linux jobs: 331 native foundations without skips and
+13-lock/18-package replay. Independent admission now establishes the settled
+source-sealing repair, fresh metadata/artifact QC-04 pairs and complete
+132-row shared metadata source control with identical wrapper/Consumer SDK
+bytes. Qualification-input metadata has nine scopes/139 witnesses/seven source
+parents and 91 Passed/2 Incomplete/9 NotApplicable/0 Failed; artifacts has eight
+scopes/261 witnesses/five parents and 97/2/4/0. All four public reports remain
+`Incomplete`. This exact older snapshot does not admit the newer packaged
+hook/null/exclusion controls or dedicated hook diagnostic families.
 
 Exact `a83380c`, [run40240608803](https://github.com/Stonefly-Labs/Hoard/actions/runs/40240608803),
 independently admits the four public `Incomplete` category reports: all three

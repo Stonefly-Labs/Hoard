@@ -70,6 +70,32 @@ class SdkDiagnosticTests(unittest.TestCase):
                 self.assertEqual({row["caseId"] for row in manifest["expected"]}, {"QC-05"})
                 self.assertEqual(len(manifest["assemblies"]), 6)
                 self.assertEqual({row["path"] for row in manifest["assemblies"]}, set(inputs["runtimeAssemblies"]))
+                inputs["bindings"] = [
+                    {"bindingId": row["bindingId"], "descriptorSha256": hashlib.sha256(
+                        row["bindingId"].encode()).hexdigest()} for row in manifest["expected"]]
+                for defect in (None, "missing", "duplicate", "foreign"):
+                    witnesses, origins = [], {}
+                    for row, binding in zip(manifest["expected"], inputs["bindings"]):
+                        execution = str(uuid.uuid4())
+                        witnesses.append({
+                            "testIdentity": row["testIdentity"], "bindingId": row["bindingId"],
+                            "executionId": execution})
+                        captured = {"descriptorSha256": binding["descriptorSha256"]}
+                        origins[execution] = ([] if defect == "missing" else
+                                              [captured, captured] if defect == "duplicate" else
+                                              [{"descriptorSha256": "0" * 64}] if defect == "foreign" else [captured])
+                    with patch.object(checks, "require_sqlite_environment"), patch.object(
+                            checks, "validate_observation"), patch.object(
+                            checks, "_execute_runtime_transport", return_value=(
+                                SimpleNamespace(exit_code=0), {"witnesses": witnesses, "sessionOrigins": origins},
+                                {"proofs": {}, "completion_data": b"{}"}, "e" * 64)) as transport:
+                        if defect is None:
+                            self.assertEqual(checks.test_attempt(run, inputs, candidate, scenario)["tests"], 2)
+                        else:
+                            with self.subTest(defect=defect), self.assertRaisesRegex(
+                                    checks.evidence.ConformanceError, "WitnessMissing"):
+                                checks.test_attempt(run, inputs, candidate, scenario)
+                    self.assertEqual(transport.call_args.kwargs["origin_inputs"], origin_inputs)
                 for changed, code in (
                         ({**inputs, "runtimeAssemblies": {
                             path: hashed for path, hashed in inputs["runtimeAssemblies"].items() if path != sdk_path}},

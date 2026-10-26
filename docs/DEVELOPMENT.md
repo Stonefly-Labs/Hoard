@@ -9700,7 +9700,8 @@ native skips. An initial run hit the existing real descendant startup timing
 assertion; its unchanged focused rerun and full rerun pass.
 `dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --no-restore --verbosity quiet`
 passes 133 tests without skips. Frozen inventory, embedded catalog and patch
-whitespace pass. Native pair admission remains pending; no task/checklist
+whitespace pass. Native pair admission was pending at that checkpoint and is
+now established at exact `58a9495`; no task/checklist
 markers advance. A separate fresh private package-only restore against the
 current SDK executes all eight actual mutation rows: four corrected passes and
 four faulty failures, each in its fixed shared assertion frame. This is local
@@ -9742,7 +9743,8 @@ An intended-red regression reproduced the missing seal, then passed the repair,
 including both negative and shared-consumer scopes and live/changed-output
 rejections. The full 439-check tooling run passes with 19 explicit native skips;
 frozen inventory, embedded catalog and whitespace checks pass. Fresh Linux
-repair admission remains pending. No consumer assertions, budgets, C# or locks
+repair admission is now established at exact `58a9495`, recorded below.
+No consumer assertions, budgets, C# or locks
 change, and this observed failure is not attributed to timing.
 
 ### Fresh shared metadata SDK consumer source control
@@ -9778,7 +9780,8 @@ explicit native skips. The full source producer/factory regression rejects
 coherently rehashed missing origins, foreign descriptors/images, wrong case
 contexts, duplicate sessions, missing rows, relabeled manifests and replaced
 or incorrectly scoped commands/settings. Frozen inventory, embedded catalog and
-whitespace checks pass. Fresh Linux admission of this new control is pending.
+whitespace checks pass. Exact `58a9495` now establishes fresh Linux admission
+of this control, recorded below.
 That source-control checkpoint needed no C# or lock changes; source SDK results
 above remain from the prior checkpoint.
 README, plan and evidence/matrix contracts are updated. Other guides, examples
@@ -9856,6 +9859,8 @@ SDK. Missing SDK/component inputs, missing provider archives and reduced or
 foreign identities reject before launch. SQLite admission remains mandatory
 for the metadata family. These private diagnostic scopes do not yet supply
 native QC-05 source parents or complete public qualification.
+The focused routing regression also rejects missing, duplicate and foreign
+binding origins after execution, and checks the independent role assignments.
 
 An intended-red selector regression fails before the scopes exist. After
 wiring, all 147 SDK diagnostic tooling tests pass. A fresh local snapshot packs
@@ -9866,6 +9871,35 @@ zero skips; the unchanged SDK passes all 160 original-plus-dedicated rows
 without skips. Consumer source hashes are unchanged across trials. Scoped C#
 whitespace, frozen inventory, SDK catalog and patch whitespace checks pass.
 No public SDK/provider contract, tracked lock or task/checklist marker changes.
+
+### Native source-sealing and shared-consumer admission
+
+Exact `58a949543ea160b5be21c13db581f01387d33719`,
+[run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
+independently passes all three Linux jobs: 331 native foundations without
+failures/errors/skips and fresh 13-lock/18-package replay. It admits the
+source-sealing repair, both category QC-04 negative/corrected pairs and the
+complete 132-row shared metadata source control, including identical
+wrapper/Consumer SDK image bytes and their original native input pins.
+
+Qualification-input metadata has nine scopes/139 witnesses/seven source
+parents and 91 Passed/2 Incomplete/9 NotApplicable/0 Failed. Artifacts has eight
+scopes/261 witnesses/five source parents and 97/2/4/0. All four public reports
+remain `Incomplete`; metadata QC-02/QC-05 and artifact QC-03/QC-05 are not
+completed by these results. No task/checklist markers advance.
+
+Metadata inputs/results are
+`28496c509c14253a9e231e1932f881878963f79aaeadce0e3bd8ba8403922f8f` /
+`e8969be40b9a620de308b583942e0fc36b29e9542b778ce443472ea351e4e636`;
+its shared-consumer source digest is
+`beb6ea5565bfe0fa55425c903be333298faf60b9931df6d965401b070c26c1a6`.
+Artifact inputs/results are
+`4c1387ad9c652b0cc653642332070a4943f7e0771d6121d25dabb723222918c8` /
+`d1801411c4e00bee34628855a23f1853b97422509e596b49c2df23d1cb3d9fc6`.
+The bounded safe receipt is retained read-only; no raw CI log is retained.
+This older head does not admit the subsequent packaged hook/null/exclusion
+controls or dedicated hook diagnostic families. Their exact `97b6d0b` replay
+is observed separately, without borrowing this snapshot's admission.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

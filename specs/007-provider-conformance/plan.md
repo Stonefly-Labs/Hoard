@@ -6849,7 +6849,8 @@ after child settlement and a byte-for-byte recheck against captured transport.
 Live children and post-inspection changes reject. The independent readonly
 requirement, named assertions and all budgets are unchanged. All 439 tooling
 checks pass with 19 native skips, plus frozen inventory, embedded catalog and
-whitespace checks. Fresh Linux repair admission remains pending.
+whitespace checks. Fresh Linux repair admission is now established at exact
+`58a9495`, recorded below.
 
 ### Fresh metadata common-consumer native source transport
 
@@ -6880,8 +6881,9 @@ summary as `sharedConsumerSourcesSha256`. It does not add 132 public QC-02
 witnesses or change the 128-witness bound. Full frozen-wrapper extraction/parity
 and QC-02 composition remain unfinished; QC-02 is still `Incomplete`.
 All 439 tooling checks pass with 19 native skips, plus frozen inventory,
-embedded catalog and whitespace checks. Fresh Linux control admission remains
-pending. No C# or tracked lock changes, task/checklist advances or stage finish.
+embedded catalog and whitespace checks. Exact `58a9495` now establishes fresh
+Linux control admission, recorded below. No C# or tracked lock changes,
+task/checklist advances or stage finish.
 
 ### Actual package-only missing-hook dispatch controls
 
@@ -6940,6 +6942,31 @@ dedicated rows without skips, with identical Consumer sources across trials.
 Scoped C# whitespace, frozen inventory, embedded catalog and patch whitespace
 pass. These are non-native diagnostics: QC-05 source-parent wiring/composition
 and full qualification remain incomplete. No task/checklist markers advance.
+
+### Exact native admission of repaired source controls
+
+Exact `58a949543ea160b5be21c13db581f01387d33719`,
+[run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
+passes all three Linux jobs with 331 native foundations/no skips and fresh
+13-lock/18-package replay. Independent admission establishes the source-sealing
+repair, both category QC-04 pairs and the complete 132-row shared metadata
+source control with identical wrapper/Consumer SDK bytes and full native pins.
+Metadata qualification-input admission has nine scopes/139 witnesses/seven
+parents and 91 Passed/2 Incomplete/9 NotApplicable/0 Failed; artifacts has eight
+scopes/261 witnesses/five parents and 97/2/4/0. All four public reports remain
+`Incomplete`; complete extraction/parity and QC-05 remain outstanding.
+
+Metadata input/result digests are
+`28496c509c14253a9e231e1932f881878963f79aaeadce0e3bd8ba8403922f8f` /
+`e8969be40b9a620de308b583942e0fc36b29e9542b778ce443472ea351e4e636`;
+shared-consumer source is
+`beb6ea5565bfe0fa55425c903be333298faf60b9931df6d965401b070c26c1a6`.
+Artifact input/result digests are
+`4c1387ad9c652b0cc653642332070a4943f7e0771d6121d25dabb723222918c8` /
+`d1801411c4e00bee34628855a23f1853b97422509e596b49c2df23d1cb3d9fc6`.
+The original bounded safe receipt remains read-only; no raw log is retained.
+This exact older head grants no admission to later packaged hook/null/exclusion
+or dedicated hook-family changes. No task/checklist marker advances.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
