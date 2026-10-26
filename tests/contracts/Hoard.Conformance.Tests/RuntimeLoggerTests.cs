@@ -12,6 +12,50 @@ namespace Hoard.Conformance.Tests;
 public sealed class RuntimeLoggerTests
 {
     [Theory]
+    [InlineData("caller-cancelled")]
+    [InlineData("ownership-retained")]
+    [InlineData("ownership-settled")]
+    [InlineData("ownership-stopped")]
+    public void Ownership_snapshots_preserve_bounded_callback_and_root_observations(string stage)
+    {
+        using var owned = new OwnedInput();
+        var owner = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", owned.Input.Expected[0].TestIdentity, "memory",
+            "original-owner", [("owner", new OriginalProbe())]);
+        var counters = new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["callbackSettled"] = 0,
+            ["workCompleted"] = 0,
+            ["workFaulted"] = 0,
+            ["ready"] = 0,
+            ["admission"] = 0,
+            ["unsafeActivities"] = 1,
+            ["rootDisposal"] = 4,
+            ["stopComplete"] = 0,
+            ["initializations"] = 1,
+            ["assessments"] = 0,
+            ["workers"] = 0,
+            ["stops"] = 0,
+            ["disposals"] = 0
+        };
+        var lines = ConformanceOriginalObservationOutput.Render(owner).Concat(
+            ConformanceCompositionObservationOutput.Render(owner, stage, counters));
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, string.Join('\n', lines)));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        var snapshot = Assert.Single(proof.RootElement.GetProperty("compositionObservations").EnumerateArray());
+        Assert.Equal(stage, snapshot.GetProperty("stage").GetString());
+        Assert.Equal(4, snapshot.GetProperty("counters").GetProperty("rootDisposal").GetInt32());
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
     [InlineData("memory")]
     [InlineData("none")]
     public void Composition_snapshots_remain_bound_to_the_actual_owner_and_test(string binding)

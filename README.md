@@ -72,8 +72,11 @@ rows, alongside 148 source-mode rows; declaration, optional-target and version
 fixture implementation is verified without claiming profile qualification.
 Shared packaged Host callbacks now exercise all seven cancellation/retained/
 late-fault ownership rows. The catalog explicitly includes both initializer
-fault parameters and all three shutdown variants; native containment and full
-ownership/profile acceptance remain unfinished.
+fault parameters and all three shutdown variants. These seven rows now admit
+thirteen owner-linked safe snapshots, preserving actual task faults and retained
+incomplete roots after settlement. Together with both baseline rows, nine safe
+proofs and nineteen snapshots pass independent ingestion. Native containment and
+full ownership/profile acceptance remain unfinished.
 At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
 unchanged-source failed-job retry. The original lock-preparation
 `CleanupIncomplete` remains recorded; this is not full-profile qualification

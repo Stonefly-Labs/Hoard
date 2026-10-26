@@ -631,7 +631,7 @@ ORIGINAL_ARTIFACT_FORESTS = MappingProxyType({
 
 def original_witness_policy(identity):
     """Select original instance/contract attribution, distinct from non-session proofs."""
-    if identity in (*composition_witnesses("CP-01", "baseline"), *composition_witnesses("CP-02", "replacement")):
+    if composition_snapshot_policy(identity) is not None:
         return "composition", "original-owner", ("owner",)
     contracts = (*ORIGINAL_ARTIFACT_CONTRACT_WITNESSES,
                  "Hoard.Artifacts.Tests.ArtifactValueTests.Identity_bounds_preserve_empty_and_reject_overflow_negative_or_null")
@@ -863,6 +863,53 @@ def independent_version_witnesses(name):
         "optional-absent": (f'{optional}(selection: "absent")',),
         "optional-disabled": (f'{optional}(selection: "registered-disabled")',),
     }[name]
+
+
+def composition_snapshot_policy(identity):
+    baseline = (*composition_witnesses("CP-01", "baseline"), *composition_witnesses("CP-02", "replacement"))
+    if identity in baseline:
+        rows = []
+        for stage in ("before-initialization", "ready", "stopped"):
+            counters = {name: 0 for name in (
+                "metadataSingletons", "artifactSingletons", "metadataReady", "artifactReady", "ready", "admission",
+                "disabledRoots", "protocolRequests", "identityRequests", "stopComplete", "unsafeActivities")}
+            counters.update(metadataSingletons=1, artifactSingletons=1)
+            if stage == "ready":
+                counters.update(metadataReady=1, artifactReady=1, ready=1, admission=1)
+            if stage in ("ready", "stopped"):
+                counters.update(protocolRequests=1, identityRequests=1)
+            if stage == "stopped":
+                counters["stopComplete"] = 1
+            rows.append((stage, MappingProxyType(counters)))
+        return tuple(rows)
+    counters = {name: 0 for name in (
+        "callbackSettled", "workCompleted", "workFaulted", "ready", "admission", "unsafeActivities",
+        "rootDisposal", "stopComplete", "initializations", "assessments", "workers", "stops", "disposals")}
+    counters["initializations"] = 1
+    for phase in ("initialization", "readiness"):
+        if identity in composition_witnesses("CP-15", "cancel-" + phase):
+            counters.update(rootDisposal=6, assessments=int(phase == "readiness"))
+            stopped = {**counters, "callbackSettled": 1, "workCompleted": 1, "rootDisposal": 0,
+                       "stopComplete": 1, "stops": 1, "disposals": 1}
+            return (("caller-cancelled", MappingProxyType(counters)),
+                    ("ownership-stopped", MappingProxyType(stopped)))
+    for index, name in enumerate(composition_witnesses("CP-16", "late-initialization")):
+        if identity == name:
+            counters.update(unsafeActivities=1, rootDisposal=4)
+            settled = {**counters, "callbackSettled": 1, "workCompleted": 1, "workFaulted": index}
+            return (("ownership-retained", MappingProxyType(counters)),
+                    ("ownership-settled", MappingProxyType(settled)))
+    counters.update(assessments=1, workers=1, stops=1)
+    if identity in composition_witnesses("CP-17", "stop-fault"):
+        counters.update(callbackSettled=1, workCompleted=1, workFaulted=1, disposals=1)
+        return (("ownership-settled", MappingProxyType(counters)),)
+    for index, name in enumerate(composition_witnesses("CP-17", "late-stop")):
+        if identity == name:
+            counters.update(unsafeActivities=1, rootDisposal=4)
+            settled = {**counters, "callbackSettled": 1, "workCompleted": 1, "workFaulted": index}
+            return (("ownership-retained", MappingProxyType(counters)),
+                    ("ownership-settled", MappingProxyType(settled)))
+    return None
 
 
 def composition_witnesses(case_id, variant):

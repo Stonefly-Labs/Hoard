@@ -1712,7 +1712,13 @@ def _ingest_metadata_arguments(inputs, raw, origins, originals, prior_ids, bindi
     return tuple(result)
 
 
-def _ingest_composition_observations(raw, originals, prior_ids, *, require_success):
+def _ingest_composition_observations(raw, originals, prior_ids, *, require_success, test_identity):
+    from conformance_case_catalog import composition_snapshot_policy
+    policy = composition_snapshot_policy(test_identity)
+    if not raw:
+        return ()
+    if policy is None:
+        raise ConformanceError("WitnessMissing")
     def counter(value):
         value = _integer(value)
         if value > 1_000_000:
@@ -1721,10 +1727,8 @@ def _ingest_composition_observations(raw, originals, prior_ids, *, require_succe
 
     fields = _record({
         "schemaVersion": _constant(1), "observationId": _uuid, "sourceId": _uuid,
-        "stage": _one_of("before-initialization", "ready", "stopped"),
-        "counters": _record({name: counter for name in (
-            "metadataSingletons", "artifactSingletons", "metadataReady", "artifactReady", "ready", "admission",
-            "disabledRoots", "protocolRequests", "identityRequests", "stopComplete", "unsafeActivities")}),
+        "stage": _one_of(*(stage for stage, _ in policy)),
+        "counters": _record({name: counter for name in policy[0][1]}),
     })
     owners = {origin["observationId"] for origin in originals if origin["kind"] == "original-owner"}
     stages = set()
@@ -1737,14 +1741,7 @@ def _ingest_composition_observations(raw, originals, prior_ids, *, require_succe
             raise ConformanceError("ProofMismatch")
         prior_ids.add(identity)
         stages.add(key)
-        expected = {name: 0 for name in observation["counters"]}
-        expected.update(metadataSingletons=1, artifactSingletons=1)
-        if observation["stage"] == "ready":
-            expected.update(metadataReady=1, artifactReady=1, ready=1, admission=1)
-        if observation["stage"] in ("ready", "stopped"):
-            expected.update(protocolRequests=1, identityRequests=1)
-        if observation["stage"] == "stopped":
-            expected["stopComplete"] = 1
+        expected = dict(policy)[observation["stage"]]
         if require_success and observation["counters"] != expected:
             raise ConformanceError("ProofMismatch")
         admitted.append(observation)
@@ -1752,7 +1749,7 @@ def _ingest_composition_observations(raw, originals, prior_ids, *, require_succe
         return ()
     for source in owners:
         actual = tuple(row["stage"] for row in admitted if row["sourceId"] == source)
-        expected_stages = ("before-initialization", "ready", "stopped")
+        expected_stages = tuple(stage for stage, _ in policy)
         if actual != (expected_stages if require_success else expected_stages[:len(actual)]):
             raise ConformanceError("WitnessMissing")
     return tuple(admitted)
@@ -1857,14 +1854,15 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
             inputs, proof.get("metadataArguments", ()), origins, originals, prior_arguments, entry["bindingId"])
         compositions = _ingest_composition_observations(
             proof.get("compositionObservations", ()), originals, prior_compositions,
-            require_success=witness["status"] == "Passed")
+            require_success=witness["status"] == "Passed", test_identity=entry["testIdentity"])
         if compositions and inputs["profileId"] != "composition":
             raise ConformanceError("ProofMismatch")
         if inputs["profileId"] == "composition":
-            from conformance_case_catalog import original_witness_policy
+            from conformance_case_catalog import composition_snapshot_policy, original_witness_policy
             policy = original_witness_policy(entry["testIdentity"])
             if (witness["status"] == "Passed" and policy is not None and policy[0] == "composition"
-                    and (not originals or len(compositions) != 3)):
+                    and (len(originals) != 1
+                         or len(compositions) != len(composition_snapshot_policy(entry["testIdentity"])))):
                 raise ConformanceError("WitnessMissing")
         if len(origins) + len(originals) + len(arguments) + len(compositions) > 128:
             raise ConformanceError("OutputLimitExceeded")

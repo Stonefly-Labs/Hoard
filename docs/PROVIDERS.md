@@ -64,8 +64,12 @@ these component passes do not widen declared ranges or qualify a profile.
 The packaged Host also owns shared controlled callbacks for all seven
 CP-15/16/17 rows. Both initializer `lateFault` parameters and all three shutdown
 variants are now mandatory catalog witnesses, with exact package discovery/
-result parity. Finite caller return still does not mean callback settlement or
-root release; native containment and safe ownership-profile import remain open.
+result parity. All seven now emit bounded owner-linked observations of actual
+callback/task completion and faults, readiness/admission, stop/root outcomes and
+module counters. Independent stage policies reject false settlement/release;
+settled retained roots remain incomplete. Nine actual safe proofs and nineteen
+snapshots pass together with baseline/replacement. Native containment, complete
+ownership/profile integration and qualification remain open.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.

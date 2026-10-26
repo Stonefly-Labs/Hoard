@@ -24,6 +24,51 @@ namespace Hoard.Composition.Tests;
 
 public sealed class ConformanceMatrixTests(ITestOutputHelper output)
 {
+    private sealed class OwnershipObservation
+    {
+        private readonly Action<string, HoardServiceComposition>? write;
+
+        public OwnershipObservation(ITestOutputHelper output, string identity, Registry registry,
+            OwnershipFixtures.ControlledCallback callback)
+        {
+#if CONFORMANCE_PROVIDER_PACKAGES
+            var owner = ConformanceOriginalObservationOutput.WriteIfRequested(
+                output, identity, "none", "original-owner", null, null, ("owner", registry));
+            if (owner is null) { return; }
+            write = (stage, lease) =>
+            {
+                var probe = registry.Probes["artifact"];
+                ConformanceCompositionObservationOutput.Write(output, owner, stage,
+                    new Dictionary<string, int>(StringComparer.Ordinal)
+                    {
+                        ["callbackSettled"] = callback.Settled.IsCompleted ? 1 : 0,
+                        ["workCompleted"] = callback.Work?.IsCompleted == true ? 1 : 0,
+                        ["workFaulted"] = callback.Work?.IsFaulted == true ? 1 : 0,
+                        ["ready"] = lease.Lifecycle.Snapshot.Ready ? 1 : 0,
+                        ["admission"] = lease.Lifecycle.Snapshot.StartupAdmission ? 1 : 0,
+                        ["unsafeActivities"] = lease.StopResult?.UnsafeActivities.Length ?? 0,
+                        ["rootDisposal"] = (int?)(lease.StopResult?.RootDisposal) ?? 6, // No stop result; Completed is zero.
+                        ["stopComplete"] = lease.StopResult?.Complete == true ? 1 : 0,
+                        ["initializations"] = probe.Initializations,
+                        ["assessments"] = probe.Assessments,
+                        ["workers"] = probe.Workers,
+                        ["stops"] = probe.Stops,
+                        ["disposals"] = probe.Disposals
+                    });
+            };
+#else
+            write = null;
+#endif
+        }
+
+        public bool Write(string stage, HoardServiceComposition lease)
+        {
+            if (write is null) { return false; }
+            write(stage, lease);
+            return true;
+        }
+    }
+
     private void Observe(string key, Registry registry, HoardServiceComposition? lease = null)
     {
         foreach (var (id, probe) in registry.Probes)
@@ -506,6 +551,9 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
     {
         var registry = new Registry();
         var callback = new OwnershipFixtures.ControlledCallback(cooperative: true);
+        var observation = new OwnershipObservation(output,
+            $"{typeof(ConformanceMatrixTests).FullName}.{nameof(CP15_cancelled_caller_does_not_admit_or_release_pending_shared_work)}(phase: \"{phase}\")",
+            registry, callback);
 #if CONFORMANCE_PROVIDER_PACKAGES
         Assert.Equal("Hoard.Fixtures.Conformance.Host", callback.GetType().Assembly.GetName().Name);
 #endif
@@ -538,7 +586,10 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             Assert.Equal(1, registry.Probes["artifact"].Initializations);
             Assert.Equal(phase == "initialize" ? 0 : 1, registry.Probes["artifact"].Assessments);
             Assert.Equal(0, registry.Probes["artifact"].Workers);
-            output.WriteLine($"CP-15/{phase}/cancelled-wait: caller-cancelled=1; callback-settled=0; ready=0; admission=0; stops=0; disposals=0");
+            if (!observation.Write("caller-cancelled", running.Lease))
+            {
+                output.WriteLine($"CP-15/{phase}/cancelled-wait: caller-cancelled=1; callback-settled=0; ready=0; admission=0; stops=0; disposals=0");
+            }
             var stop = await running.Lease.Lifecycle.StopAsync().WaitAsync(TimeSpan.FromSeconds(5));
             await callback.Settled.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.Empty(stop.UnsafeActivities);
@@ -546,7 +597,8 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             Assert.False(running.Lease.Lifecycle.Snapshot.StartupAdmission);
             await running.DisposeAsync();
             Assert.True(running.Lease.StopResult!.Complete);
-            Observe($"CP-15/{phase}", registry, running.Lease);
+            if (!observation.Write("ownership-stopped", running.Lease))
+            { Observe($"CP-15/{phase}", registry, running.Lease); }
         }
         finally { callback.Release(); }
     }
@@ -561,6 +613,9 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         registry.Web.Logging.AddProvider(logs);
         var clock = new LifecycleTestTimeProvider();
         var callback = new OwnershipFixtures.ControlledCallback(cooperative: false, failAfterRelease: lateFault);
+        var observation = new OwnershipObservation(output,
+            $"{typeof(ConformanceMatrixTests).FullName}.{nameof(CP16_noncooperative_initializer_returns_finitely_but_retains_owner_until_real_settlement)}(lateFault: {lateFault})",
+            registry, callback);
         registry.Probes["artifact"].Initialize = callback.RunAsync;
         var composition = registry.Validate(options: new()
         {
@@ -592,8 +647,11 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             Assert.False(registry.Probes["artifact"].Settled.Task.IsCompleted);
             Assert.False(callback.Settled.IsCompleted);
             Assert.False(running.Lease.Lifecycle.Snapshot.StartupAdmission);
-            output.WriteLine($"CP-16/retained: caller-returned=1; callback-settled=0; unsafe={retained.UnsafeActivities.Length}; " +
-                $"root-disposal={(int)retained.RootDisposal}; stops=0; disposals=0; admission=0");
+            if (!observation.Write("ownership-retained", running.Lease))
+            {
+                output.WriteLine($"CP-16/retained: caller-returned=1; callback-settled=0; unsafe={retained.UnsafeActivities.Length}; " +
+                    $"root-disposal={(int)retained.RootDisposal}; stops=0; disposals=0; admission=0");
+            }
             callback.Release();
             await registry.Probes["artifact"].Settled.Task.WaitAsync(TimeSpan.FromSeconds(5));
             var work = registry.Probes["artifact"].InitializationWork!;
@@ -614,10 +672,13 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             Assert.Equal(1, registry.Probes["artifact"].Initializations);
             Assert.Equal(0, registry.Probes["artifact"].Stops);
             Assert.Equal(0, registry.Probes["artifact"].Disposals);
-            output.WriteLine("CP-16/settled: callback-settled=1; underlying-task-completed=1; frozen-incomplete=1; disposals=0");
             Safe(running.Lease.Lifecycle.Snapshot.Diagnostics);
             SafeFailure(logs, retained, running.Lease.Lifecycle.Snapshot);
-            Observe("CP-16/settled-not-reclassified", registry, running.Lease);
+            if (!observation.Write("ownership-settled", running.Lease))
+            {
+                output.WriteLine("CP-16/settled: callback-settled=1; underlying-task-completed=1; frozen-incomplete=1; disposals=0");
+                Observe("CP-16/settled-not-reclassified", registry, running.Lease);
+            }
         }
         finally
         {
@@ -639,6 +700,9 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         var clock = new LifecycleTestTimeProvider();
         var callback = new OwnershipFixtures.ControlledCallback(
             cooperative: false, failAfterRelease: variant != "noncooperative");
+        var observation = new OwnershipObservation(output,
+            $"{typeof(ConformanceMatrixTests).FullName}.{nameof(CP17_shutdown_fault_or_retention_never_claims_complete_cleanup)}(variant: \"{variant}\")",
+            registry, callback);
         if (variant == "fault") { callback.Release(); }
         registry.Probes["artifact"].Stop = callback.RunAsync;
         var composition = registry.Validate(options: new() { ModuleCleanupTimeout = TimeSpan.FromSeconds(1) }, clock: clock).Composition!;
@@ -667,8 +731,11 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                 Assert.Equal(0, registry.Probes["artifact"].Disposals);
                 Assert.Equal(HoardRootDisposalOutcome.NotAttemptedUnsafe, running.Lease.StopResult!.RootDisposal);
                 Assert.Equal("artifact", Assert.Single(running.Lease.StopResult.UnsafeActivities).ModuleId);
-                output.WriteLine($"CP-17/noncooperative/retained: caller-returned=1; callback-settled=0; " +
-                    $"unsafe={running.Lease.StopResult.UnsafeActivities.Length}; disposals=0; complete=0");
+                if (!observation.Write("ownership-retained", running.Lease))
+                {
+                    output.WriteLine($"CP-17/noncooperative/retained: caller-returned=1; callback-settled=0; " +
+                        $"unsafe={running.Lease.StopResult.UnsafeActivities.Length}; disposals=0; complete=0");
+                }
             }
             var frozen = running.Lease.StopResult;
             callback.Release();
@@ -690,10 +757,13 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             Assert.Equal(1, registry.Probes["artifact"].Initializations);
             Assert.Equal(1, registry.Probes["artifact"].Stops);
             if (variant != "fault") { Assert.Equal(0, registry.Probes["artifact"].Disposals); }
-            output.WriteLine($"CP-17/{variant}/settled: callback-settled=1; frozen-incomplete=1");
             Safe(running.Lease.Lifecycle.Snapshot.Diagnostics);
             SafeFailure(logs, frozen, running.Lease.Lifecycle.Snapshot);
-            Observe($"CP-17/{variant}", registry, running.Lease);
+            if (!observation.Write("ownership-settled", running.Lease))
+            {
+                output.WriteLine($"CP-17/{variant}/settled: callback-settled=1; frozen-incomplete=1");
+                Observe($"CP-17/{variant}", registry, running.Lease);
+            }
         }
         finally
         {

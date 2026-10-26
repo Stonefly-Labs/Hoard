@@ -1215,6 +1215,93 @@ class ConformanceInputTests(unittest.TestCase):
 
 
 class ConformanceRuntimeIngestionTests(unittest.TestCase):
+    def ownership_transport(self, case_id="CP-16", variant="late-initialization", row=0):
+        import conformance_case_catalog as catalog
+        _, options = self.composition_transport()
+        old_identity = self.identity
+        self.identity = catalog.composition_witnesses(case_id, variant)[row]
+        self.manifest["expected"][0].update(
+            testIdentity=self.identity, fullyQualifiedName=self.identity.split("(")[0], caseId=case_id)
+        owner = self.proof["originalObservations"][0]
+        owner.update(testIdentity=self.identity, caseId=case_id)
+        counters = {
+            "callbackSettled": 0, "workCompleted": 0, "workFaulted": 0, "ready": 0, "admission": 0,
+            "unsafeActivities": 1, "rootDisposal": 4, "stopComplete": 0, "initializations": 1,
+            "assessments": 0, "workers": 0, "stops": 0, "disposals": 0}
+        snapshots = [{
+            "schemaVersion": 1, "observationId": str(uuid.uuid4()), "sourceId": owner["observationId"],
+            "stage": stage, "counters": dict(counters)}
+            for stage in ("ownership-retained", "ownership-settled")]
+        snapshots[1]["counters"].update(callbackSettled=1, workCompleted=1, workFaulted=row)
+        if case_id == "CP-15":
+            snapshots[0]["stage"] = "caller-cancelled"
+            snapshots[1]["stage"] = "ownership-stopped"
+            for snapshot in snapshots:
+                snapshot["counters"].update(unsafeActivities=0, assessments=int(variant == "cancel-readiness"))
+            snapshots[0]["counters"]["rootDisposal"] = 6
+            snapshots[1]["counters"].update(rootDisposal=0, stopComplete=1, stops=1, disposals=1)
+        elif case_id == "CP-17":
+            for snapshot in snapshots:
+                snapshot["counters"].update(assessments=1, workers=1, stops=1)
+            if variant == "stop-fault":
+                snapshots = snapshots[1:]
+                snapshots[0]["counters"].update(workFaulted=1, unsafeActivities=0, rootDisposal=0, disposals=1)
+        self.proof.update(testIdentity=self.identity, caseId=case_id, compositionObservations=snapshots,
+                          manifestSha256=evidence.digest(self.manifest))
+        self.witness.update(testIdentity=self.identity, proofSha256=evidence.digest(self.proof))
+        self.completion["manifestSha256"] = evidence.digest(self.manifest)
+        options["original_inputs"]["none"][self.identity] = options["original_inputs"]["none"].pop(old_identity)
+        options["expected_tests"] = {self.identity: ("none", "none")}
+        return snapshots, options
+
+    def test_retained_ownership_snapshots_require_actual_settlement_without_reclassifying_the_root(self):
+        for row in (0, 1):
+            with self.subTest(late_fault=bool(row)):
+                self.setUp()
+                snapshots, options = self.ownership_transport(row=row)
+                observed = self.ingest(**options)
+                self.assertEqual(tuple(observed["compositionObservations"][self.execution]), tuple(snapshots))
+                self.assertEqual(observed["compositionObservations"][self.execution][1]["counters"]["stopComplete"], 0)
+
+    def test_retained_ownership_snapshots_reject_optimistic_cleanup_and_missing_late_faults(self):
+        for stage, key, value in (
+                (0, "callbackSettled", 1), (0, "workCompleted", 1), (1, "workCompleted", 0),
+                (1, "workFaulted", 0), (1, "rootDisposal", 0), (1, "unsafeActivities", 0),
+                (1, "stopComplete", 1), (1, "disposals", 1), (1, "admission", 1)):
+            with self.subTest(stage=stage, counter=key):
+                self.setUp()
+                snapshots, options = self.ownership_transport(row=1)
+                snapshots[stage]["counters"][key] = value
+                self.witness["proofSha256"] = evidence.digest(self.proof)
+                with self.assertRaises(evidence.ConformanceError):
+                    self.ingest(**options)
+
+    def test_cancellation_and_shutdown_observations_cannot_omit_their_terminal_stage_or_claim_false_release(self):
+        for case_id, variant, row in (
+                ("CP-15", "cancel-initialization", 0), ("CP-15", "cancel-readiness", 0),
+                ("CP-17", "stop-fault", 0), ("CP-17", "late-stop", 0), ("CP-17", "late-stop", 1)):
+            for mutation in (None, "missing-terminal", "false-stop", "false-ready", "false-settlement"):
+                with self.subTest(case_id=case_id, variant=variant, row=row, mutation=mutation):
+                    self.setUp()
+                    snapshots, options = self.ownership_transport(case_id, variant, row)
+                    if mutation == "missing-terminal":
+                        snapshots.pop()
+                        if not snapshots:
+                            self.proof["schemaVersion"] = 2
+                            del self.proof["compositionObservations"]
+                    elif mutation == "false-stop":
+                        snapshots[-1]["counters"]["stopComplete"] ^= 1
+                    elif mutation == "false-ready":
+                        snapshots[-1]["counters"]["ready"] = 1
+                    elif mutation == "false-settlement":
+                        snapshots[-1]["counters"]["workCompleted"] = 0
+                    self.witness["proofSha256"] = evidence.digest(self.proof)
+                    if mutation is None:
+                        self.assertEqual(self.ingest(**options)["witnesses"][0]["status"], "Passed")
+                    else:
+                        with self.assertRaises(evidence.ConformanceError):
+                            self.ingest(**options)
+
     def composition_transport(self):
         import conformance_case_catalog as catalog
         self.identity = catalog.composition_witnesses("CP-01", "baseline")[0]

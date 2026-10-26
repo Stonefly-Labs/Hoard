@@ -7872,6 +7872,62 @@ unaffected by the scanner's malformed-input guard and test coverage. Keep the
 stage running, reviewer checklists untouched and the PR draft: 42/86 tasks
 are now checked.
 
+### Safe cancellation and retained-ownership observations
+
+Continue T044 beyond ordinary component passes: all seven CP-15/16/17 rows now
+emit original-owner-linked safe composition envelopes with a distinct closed
+ownership counter shape. Actual `ControlledCallback.Work` tracks the original
+callback task; its completion/fault is observed separately from the finally
+settlement barrier. The observations retain readiness/admission, unsafe activity,
+frozen root disposal/stop completeness and actual artifact module counts.
+Root-disposal value6 explicitly means no stop result exists; it is not the
+runtime enum's zero/Completed value. Value4 retains NotAttemptedUnsafe after
+callback settlement; no success-shaped cleanup inference is made.
+
+Independent policy is keyed by exact catalog identities, not supplied stages or
+expected counters. Both CP-15 phases require caller-cancelled then actually
+stopped; both CP-16 fault parameters require retained then settled, with incomplete
+root/unsafe/disposal outcomes preserved; CP-17 fault requires settled failed
+cleanup, and both noncooperative variants require retained then settled, including
+the actual late-fault bit. Passed witnesses require complete exact sequences and
+counter values. Failed/incomplete executions may retain provenance-valid ordered
+prefixes and original proofs without acquiring a pass. Existing schema4 envelope,
+source/package byte checks, same-result owner and replay restrictions are reused.
+Ordinary output remains available only when no safe context is requested.
+
+Tests-first independent positive controls reproduce two missing-owner-policy
+failures, and four actual C# stage controls reproduce runtime failures before
+producer/logger support. Added challenges reject falsely completed work,
+suppressed late faults, zeroed unsafe activity, inferred root release/disposal,
+false stop/readiness/admission, omitted terminal stages and schema downgrade.
+All seven source-mode ownership rows pass. All 90 RuntimeLoggerTests pass.
+Full tooling passes 490 tests with nineteen explicit native skips; frozen
+inventory, generated SDK catalog, focused C# formatting and patch whitespace pass.
+
+Fresh actual seventeen-archive build, both ordinary baseline rows and independent
+fresh-cache locked replay pass. One unchanged packaged consumer then executes all
+nine exact safe rows: both baseline selections plus all seven ownership parameters.
+Strict logger and independent ingestion admit nine proofs/nineteen snapshots:
+source `9ae7c46886c5fe020ac8193d0b97804d778f7445170a2a7238e6d0ea89360c6f`,
+consumer `a587917f9203374c91f03ebe315ca344a0730fcb1a113ed1836f92b188cb2653`,
+Host archive `3dede7dc7494f58d9c58d7d80764ac77b078602492d6d1d1691c2ef26650a2fe`,
+diagnostic inputs `5a205952f7a615ddea851ed7de1625b3375bc442fca7fcddc9ce5c05ac4ff388`,
+manifest `d58c3a5aa6bb18d9a4df5d1d8ab4feb6f8a4403538ee190bef02ff4f2013a64b`.
+Original runtime proof bytes/digests stay in private evidence, outside Git.
+MacOS arm64/SDK10.0.203/runtime10.0.7 is actually observed; native SQLite and
+filesystem remain explicitly unobserved, not qualification measurements.
+
+Scoped hoard-architecture-review reports no confirmed provenance, false
+readiness/cleanup/settlement, failed-prefix, SDK-boundary or package/source defect.
+It does not independently execute the receipt or replace T081. This is diagnostic
+component admission, not Linux exact-child containment, full T044/CP-14/18,
+T046 integration, or native qualification. Earlier `22ddff9` Linux results do
+not verify this later input. Keep 46/86 checked and `implement / running`.
+README, DEVELOPMENT, PROVIDERS and CustomHost now distinguish delivered safe
+ownership transport from remaining full-profile work. Production contracts/
+dependencies, architecture/ADR/diagrams, governance, historical baselines,
+infrastructure, release and UI behavior are unaffected.
+
 ### Shared ownership callbacks and complete fault parameters
 
 Exact native run [40415198673](https://github.com/Stonefly-Labs/Hoard/actions/runs/40415198673)

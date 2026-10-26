@@ -10,9 +10,12 @@ public static class OwnershipFixtures
 
         public Task Entered => entered.Task;
         public Task Settled => settled.Task;
+        public Task? Work { get; private set; }
         public void Release() => release.TrySetResult();
 
-        public async Task RunAsync(CancellationToken cancellationToken)
+        public Task RunAsync(CancellationToken cancellationToken) => Work = RunCoreAsync(cancellationToken);
+
+        private async Task RunCoreAsync(CancellationToken cancellationToken)
         {
             entered.TrySetResult();
             try

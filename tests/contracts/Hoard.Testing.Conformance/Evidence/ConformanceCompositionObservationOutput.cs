@@ -10,17 +10,25 @@ public static class ConformanceCompositionObservationOutput
     private static readonly ImmutableHashSet<string> Names =
         ["metadataSingletons", "artifactSingletons", "metadataReady", "artifactReady", "ready", "admission",
          "disabledRoots", "protocolRequests", "identityRequests", "stopComplete", "unsafeActivities"];
+    private static readonly ImmutableHashSet<string> OwnershipNames =
+        ["callbackSettled", "workCompleted", "workFaulted", "ready", "admission", "unsafeActivities",
+         "rootDisposal", "stopComplete", "initializations", "assessments", "workers", "stops", "disposals"];
 
     public static ImmutableArray<string> Render(ConformanceOriginalObservation source, string stage,
         IReadOnlyDictionary<string, int> counters)
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(counters);
-        if (source.Kind != "original-owner"
-            || stage is not ("before-initialization" or "ready" or "stopped"))
+        var names = stage switch
+        {
+            "before-initialization" or "ready" or "stopped" => Names,
+            "caller-cancelled" or "ownership-retained" or "ownership-settled" or "ownership-stopped" => OwnershipNames,
+            _ => throw new ArgumentException("ProofMismatch")
+        };
+        if (source.Kind != "original-owner")
         { throw new ArgumentException("ProofMismatch"); }
         var copied = counters.ToImmutableDictionary(StringComparer.Ordinal);
-        if (!Names.SetEquals(copied.Keys) || copied.Values.Any(value => value is < 0 or > 1_000_000))
+        if (!names.SetEquals(copied.Keys) || copied.Values.Any(value => value is < 0 or > 1_000_000))
         { throw new ArgumentException("ProofMismatch"); }
         var id = Guid.NewGuid();
         var bytes = JsonSerializer.SerializeToUtf8Bytes(new

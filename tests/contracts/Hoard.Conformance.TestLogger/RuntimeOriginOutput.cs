@@ -81,13 +81,22 @@ internal static class RuntimeOriginOutput
             {
                 Keys(origin, "schemaVersion", "observationId", "sourceId", "stage", "counters");
                 RuntimeSafety.Require(origin.GetProperty("schemaVersion").GetInt32() == 1
-                    && Uuid(origin.GetProperty("observationId").GetString()!) == id
-                    && origin.GetProperty("stage").GetString()
-                        is "before-initialization" or "ready" or "stopped", "ProofMismatch");
+                    && Uuid(origin.GetProperty("observationId").GetString()!) == id, "ProofMismatch");
                 var counters = origin.GetProperty("counters");
-                Keys(counters, "metadataSingletons", "artifactSingletons", "metadataReady", "artifactReady",
-                    "ready", "admission", "disabledRoots", "protocolRequests", "identityRequests",
-                    "stopComplete", "unsafeActivities");
+                switch (origin.GetProperty("stage").GetString())
+                {
+                    case "before-initialization" or "ready" or "stopped":
+                        Keys(counters, "metadataSingletons", "artifactSingletons", "metadataReady", "artifactReady",
+                            "ready", "admission", "disabledRoots", "protocolRequests", "identityRequests",
+                            "stopComplete", "unsafeActivities");
+                        break;
+                    case "caller-cancelled" or "ownership-retained" or "ownership-settled" or "ownership-stopped":
+                        Keys(counters, "callbackSettled", "workCompleted", "workFaulted", "ready", "admission",
+                            "unsafeActivities", "rootDisposal", "stopComplete", "initializations", "assessments",
+                            "workers", "stops", "disposals");
+                        break;
+                    default: throw RuntimeSafety.Error("ProofMismatch");
+                }
                 foreach (var counter in counters.EnumerateObject())
                 {
                     RuntimeSafety.Require(counter.Value.ValueKind == JsonValueKind.Number

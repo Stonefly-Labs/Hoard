@@ -4709,6 +4709,21 @@ Attempt1's `CleanupIncomplete` remains recorded; no root cause or cleanup fix
 is inferred from attempt2's successful fresh locked replay. These jobs are not
 full qualifying profiles or native execution of the seven composition rows.
 
+The next T044 increment adds safe observation transport for all seven ownership
+rows. It reuses the bounded composition envelope with a closed stage-specific
+counter shape, not arbitrary event text. Actual callback work completion/faults
+remain distinct from callback barriers and the frozen stop/root result.
+Independent policy requires exact cancellation/retained/settled/stopped sequences
+for every parameter and never reclassifies retained roots as released. Fresh
+seventeen-package execution admits nine passing schema4 proofs and nineteen
+snapshots, including both baseline rows, through the strict logger and independent
+RunInputs/image/owner/stage decoder. All 90 logger cases, seven source ownership
+rows and 490 tooling tests pass (nineteen native skips). Scoped architecture
+review reports no confirmed defect; it is not T081 or native validation. Earlier
+claims that ownership output is unstructured describe the preceding checkpoint.
+Native exact-child containment, CP-14/18 integration and full qualifying profiles
+remain unfinished; no task/checklist status is advanced.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same
