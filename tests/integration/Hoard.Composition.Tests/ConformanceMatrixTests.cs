@@ -853,6 +853,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
     public async Task Packaged_baseline_and_replacement_use_the_identical_consumer(string id, string metadata,
         string artifact, string metadataAssembly, string artifactAssembly)
     {
+        Assert.Equal("Hoard.Fixtures.Conformance.Host", typeof(PackagedComposition).Assembly.GetName().Name);
         await using var fixture = new PackagedComposition();
         await using var evaluation = await fixture.Builder.EvaluateConfigurationAsync(
             new(fixture.Configuration(metadata, artifact)), Versions, new());

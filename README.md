@@ -60,6 +60,10 @@ independent evaluation are separate unfinished gates.
 Architecture regressions additionally exercise every production SDK boundary,
 complete/malformed scan inventories, and actual Identity-to-Core routes in both
 edge orders. Malformed scan entries now produce the expected inspection error.
+The two baseline/replacement composition component rows now consume the separately
+packed test Host, rather than compiling its source into the consumer. Both pass
+with one unchanged consumer image and fresh-cache locked build replay. This
+does not yet provide a qualifying composition profile or safe observation import.
 
 ## ✨ The idea
 

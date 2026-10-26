@@ -137,3 +137,13 @@ There are no migrations, runtime state, infrastructure changes, permissions,
 release tags, or deployments here. Roll back source and matching locks together
 through a reviewed change; the script's feeds, caches, binaries, and manifests
 are temporary and must not be committed.
+
+F-07's separate test-only conformance Host is not this compile-only example.
+Its package-mode consumer explicitly references the packed
+`Hoard.Fixtures.Conformance.Host` and exercises both SQLite/Local and
+Memory/ObjectSemantics using one unchanged consumer image and TestServer.
+These component rows observe initialization, readiness, in-process declaration/
+lifecycle probes, disabled-store inactivity and complete stop. They do not
+certify providers, implement a production protocol/identity system, or supply a
+qualifying composition CLI. Existing strict output admission still rejects the
+unstructured observations; safe profile transport/evaluation remain unfinished.

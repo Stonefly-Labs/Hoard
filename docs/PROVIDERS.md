@@ -41,6 +41,17 @@ and reject malformed entries through the inspection-error boundary. Actual
 direct/helper Identity-to-Core paths remain forbidden in either traversal order
 even with the permitted Identity-to-Hosting-to-Core route present.
 
+The test-only package-mode composition consumer now explicitly references
+`Hoard.Fixtures.Conformance.Host` at `[0.1.0]`; Host source links remain only in
+source mode. Both real SQLite/Local and Memory/ObjectSemantics rows run from the
+same consumer image, check initialization before readiness, make in-process
+protocol/identity probe requests, leave the disabled store untouched and observe
+complete stop. The loaded Host image matches its local archive, and independent
+fresh-cache default locked restore/build passes. These are component checks:
+the safe runtime logger still rejects the rows' unstructured observation output
+as `UnknownDiagnostic`. No output guard is relaxed; safe composition transport
+and independent profile evaluation remain unfinished.
+
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.
 Post-handshake output drains concurrently within bounded retention; it cannot

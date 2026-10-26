@@ -7872,6 +7872,66 @@ unaffected by the scanner's malformed-input guard and test coverage. Keep the
 stage running, reviewer checklists untouched and the PR draft: 42/86 tasks
 are now checked.
 
+### Actual package-only Host consumption
+
+T041 exposed a real package/source gap: the integration project's package mode
+still compiled `CompositionFixtures.cs`/`VersionFixtures.cs` into its own
+assembly. An added assertion in the existing CP-01/02 rows first fails twice:
+expected `Hoard.Fixtures.Conformance.Host`, actual `Hoard.Composition.Tests`.
+A bounded transient VSTest projection independently matches both exact failed
+parameter rows, assertion text and named stack frame; raw output is not saved.
+An initial safe-logger attempt lacked its SDK runtime dependency; staging that
+dependency revealed that ordinary integration assertions are not SDK assertion
+symbols. Neither setup failure is counted as the intended negative.
+
+Move Host source links into source mode only and explicitly pin/reference its
+existing separately packed package in package mode. A fresh current-source
+seventeen-archive build then passes both unchanged baseline/replacement rows.
+One consumer image (`30c2c9bedb456ab00e2bdf9d74105f56b998bb650f6b69aeda1dd33e70cd11a8`)
+selects actual SQLite/Local or Memory/ObjectSemantics packages, checks pre-start
+admission/readiness and compatible schema, sends TestServer-only protocol/
+identity requests, observes no disabled-store allocation, then complete stop.
+Loaded Host bytes match its archive
+`bd87dadf388bfa9b7fa0d71a0c5dea4af0059a6276c2bd35a6bd66561198274a`.
+The source snapshot digest before the generated lock is copied back is
+`ecee76625d08c3309d6dff63d2270653d8c799cd960d0d700e25516a52968a14`.
+Independent fresh-cache default locked restore/build passes against the exact
+prepared lock. Its reviewed graph adds only the Host, SDK and four bindings,
+removes no dependency and changes no resolved version. Copy that intentionally
+generated package-mode lock back; do not change source-mode or predecessor locks.
+
+The first green test execution has two passing witnesses but a strict
+`UnknownDiagnostic`/incomplete completion: existing `ITestOutputHelper` observation
+strings are not admitted safe transport. Do not suppress that output, weaken
+the logger or call these component checks qualifying runtime evidence.
+The bounded ordinary component rerun checks both exact passed names and actual
+archive correspondence without retaining raw output. Safe structured
+composition transport/import remains T046 work.
+
+Bounded `hoard-architecture-review` finds no confirmed defect in the conditional
+source/package boundary, actual fixture dependencies or test-only lifecycle.
+It explicitly does not independently verify archive/build evidence or replace
+the final T081 review. Full tooling passes 481 tests with nineteen explicit
+native skips. Source-mode composition/version checks pass all 148 selected tests
+after explicitly restoring a missing xUnit analyzer package; the initial
+no-restore failure is not called a test failure or pass.
+The broader package helper initially uses an incorrect minimum of 180 results;
+do not infer a provider failure from that helper error. Replace the count proxy
+with exact discovery/result-set equality and repeat before admitting its result.
+A separate 90-second bounded diagnostic attempt expires and reports incomplete
+cleanup; its private workspace remains retained, not reported released.
+Mark T041 complete; complete package-mode regressions remain pending.
+Stage `implement / running`, 43/86 tasks checked.
+README, development/provider guidance and the compile-only custom-host example
+distinguish this separate fixture from product support. Production APIs,
+architecture/ADR diagrams, charter/product scope, governance, infrastructure,
+release and UI behavior are unaffected.
+
+Native run40405035306 at exact `ef82218` subsequently completes successfully,
+including full SDK diagnostics and all other four existing diagnostic jobs.
+This confirms that checkpoint's native component execution, not later changed
+source inputs or the still-undelivered qualifying five-profile baseline.
+
 ### Public native category dispatch and execution-evidence audit
 
 The public shell/CLI now routes complete built-in metadata/artifact invocations

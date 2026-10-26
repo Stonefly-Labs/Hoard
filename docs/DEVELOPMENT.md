@@ -4668,6 +4668,23 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
+instead of compile-linking Host source in package mode. Both existing CP-01/02
+rows first fail the added assembly-owner assertion, then pass with the same
+consumer image after the package-reference repair. A fresh seventeen-archive
+build and independent fresh-cache default locked restore/build pass. The
+intentional package lock expansion adds Host, SDK and four binding dependencies,
+removing none and changing no resolved version. Bounded architecture review
+finds no confirmed issue; this is not the final T081 review.
+Source-mode composition/version regressions pass all 148 selected tests after
+restoring a missing test dependency. The complete native diagnostic run40405035306
+at `ef82218` now passes all five existing jobs, including full SDK diagnostics;
+these remain component jobs, not qualifying five-profile CI.
+The component run does not qualify a composition profile: the strict safe
+logger rejects the existing unstructured observation output as
+`UnknownDiagnostic`, leaving safe transport for T046. The stage remains
+`implement / running`, now 43/86 tasks checked.
+
 At exact `ef82218`, run40405035306's isolated metadata/artifact jobs both pass
 through the public CLI, including complete original/native source admission,
 all real recovery/transfer controls, package-only common consumers and actual
