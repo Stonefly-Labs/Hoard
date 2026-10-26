@@ -7580,6 +7580,26 @@ Actual Linux admission, original artifact parameter pairing and QC-03/full
 acceptance remain pending. No task/checklist/stage marker advances; examples,
 diagrams, production dependencies and infrastructure are unaffected.
 
+### Complete original artifact native source reconstruction
+
+Reconstruct `original`, `original-local` and `original-object` independently with
+the unchanged 183/12/12 witness inventories. Reuse the established original role
+mapper, including Local reopen owner/control transitions, rather than duplicating
+provider assignment rules. Re-admit complete per-node forests against exact role
+images; reread readonly original proofs and images and verify wrapper SDK/archive
+correspondence. Pin every manifest image in the owned command closure. Bound the
+source receipt by its exact scope inventory, retaining per-case limits.
+
+The new native-command fixture first failed `WitnessMissing` before source
+wiring, then exposed missing containment of artifact command timing within the
+current attempt; preserve and extend that check. Tooling455 (19 native skips)
+passes. Focused cases reject missing/foreign rows, wrong cases, missing forests,
+foreign role images, reused instances, SDK mismatch and twelve native-command/
+source mutations per scope. Existing metadata reconstruction still passes.
+These are source-owned reconstruction tests, not actual Linux admission or
+original/shared parameter pairing; QC-03 and stage completion remain pending.
+Examples, diagrams, production dependencies and infrastructure are unaffected.
+
 ### Object access-fault boundary repair
 
 Linux `516b6e4` / run `40312172408` fails the prepared Object no-rename witness;

@@ -251,6 +251,13 @@ reconstructs exact original packets, six runtime/archive images, wrapper SDK
 identity and the owned command closure. Tooling454 (19 native skips) passes;
 actual native admission and full original-parameter/QC-03 pairing remain pending.
 
+Original artifact source admission now independently reconstructs the complete
+183 mixed identities plus twelve repeated identities per provider, preserving
+each scope and per-node forest/role assignment. Wrapper SDK/archive, readonly
+source/image bytes, full owned-command image closure and containing-attempt
+timing are required. Tooling455 (19 native skips) passes; no QC-03 pairing or
+native admission is inferred from these synthetic rejection tests.
+
 Object's access fault scope now resides in the concrete binding rather than its
 provider assembly. The unchanged prepared no-rename witness fails named
 `Assert.Empty` before this repair and passes afterward. Native protection and

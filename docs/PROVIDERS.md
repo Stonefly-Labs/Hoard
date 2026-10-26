@@ -174,6 +174,12 @@ native reconstruction and original proof retention. It requires all 250 witnesse
 original wrappers, plus the executor-held command/input closure. Tooling454
 (19 native skips) passes. Actual native admission and QC-03 pairing remain pending.
 
+Original artifact scopes now reconstruct all 183 mixed and twelve repeated
+witnesses per provider from exact native forests/role images, readonly original
+proofs and wrapper SDK/archive correspondence. The command closure includes all
+manifest images and must fit its containing attempt. Tooling455 (19 native skips)
+passes; this source reconstruction alone is not QC-03 pairing or native admission.
+
 Object's driver-owned access faults now reside in its concrete binding, not the
 provider assembly; native exact-stamp selection/protection and pre-hook handle
 capture are unchanged. The provider has no rename mechanism. The unchanged

@@ -17,10 +17,10 @@ import conformance_evidence as evidence
 from conformance_case_catalog import (
     AUTHORITY_INTEGRATION_ROWS, CATEGORY_BINDING_SLOTS, CATEGORY_MUTATION_METHODS,
     METADATA_INVENTORY_SOURCE_WITNESSES, METADATA_RECOVERY_SOURCE_WITNESS,
-    ORIGINAL_ARTIFACT_PROOF_SOURCES,
+    ORIGINAL_ARTIFACT_PROOF_SOURCES, ORIGINAL_ARTIFACT_REOPENS,
     ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES,
     ORIGINAL_METADATA_FACADE_WITNESSES, ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
-    category_execution_partitions, category_mutation_witnesses, category_runtime_cases, category_runtime_packages,
+    category_cases, category_execution_partitions, category_mutation_witnesses, category_runtime_cases, category_runtime_packages,
     metadata_argument_expectations, metadata_common_consumer_origin_counts, metadata_common_consumer_tests,
     category_common_consumer_origin_counts, category_common_consumer_tests,
     hook_admission_tests, obligation_controls,
@@ -116,6 +116,123 @@ def authority_integration_observations(run, inputs, manifest, observed):
             or len(manifest["assemblies"]) != len(images)
             or {row["path"]: row["sha256"] for row in manifest["assemblies"]} != images):
         raise evidence.ConformanceError("ProofMismatch")
+    return observations
+
+
+def original_observation_inputs(candidate, root, *, include_integrations=False):
+    result = {}
+    for category, provider, _, package in CATEGORY_BINDING_SLOTS:
+        metadata = category == "metadata"
+        folder, output = (Path("tests/contracts/Hoard.Metadata.Tests"), "bin/wrapper-diagnostic") if metadata else (
+            Path("tests/contracts/Hoard.Artifacts.Tests"), "bin/wrapper-diagnostic")
+        runtime = candidate / folder / output / "Release/net10.0"
+        assembly = "Hoard.Metadata.Tests" if metadata else "Hoard.Artifacts.Tests"
+        host = "Hoard.Fixtures." + ("Metadata" if metadata else "Artifacts") + ".HostAdapters"
+        roles = ({"owner": host, "store": package, "schema": package, "authority": None, "controls": host}
+                 if metadata else
+                 {"owner": None, "store": package, "validator": package, "maintenance": package,
+                  "lifetime": package, "authority": host, "controls": package, "contract": "Hoard.Abstractions"})
+        identities = {identity for case in category_cases()
+                      if case.profile_id == category and case.binding_id == provider
+                      for identity in case.witnesses if original_witness_policy(identity) is not None}
+        try:
+            result[provider] = {}
+            for identity in identities:
+                selected = dict(roles)
+                if metadata and identity not in ORIGINAL_METADATA_FACADE_WITNESSES:
+                    selected["authority"] = host
+                if identity in ORIGINAL_METADATA_SCHEMA_WITNESSES:
+                    selected["owner"] = None
+                if not metadata and any(f".{fixture}." in identity for fixture in (
+                        "ArtifactCapabilityTests", "ArtifactAdmissionTests")):
+                    selected["owner"] = package
+                if not metadata and ".Concurrent_close_waits_" in identity:
+                    selected["authority"] = None
+                if original_witness_policy(identity)[1] == "original-owner":
+                    selected["owner"] = host
+                if not metadata and any(f".{fixture}." in identity for fixture in (
+                        "ArtifactMetadataIntegrationTests", "ArtifactCompositionTests")):
+                    selected["owner"] = host
+                result[provider][identity] = {
+                    role: ((runtime / ((package_id or assembly) + ".dll")).relative_to(root).as_posix(), package_id)
+                    for role, package_id in selected.items() if role in original_witness_policy(identity)[2]}
+                if identity in ORIGINAL_ARTIFACT_REOPENS:
+                    reopened = dict(result[provider][identity])
+                    for role in ("owner", "controls"):
+                        reopened[role] = ((runtime / (package + ".dll")).relative_to(root).as_posix(), package)
+                    result[provider][identity] = (result[provider][identity], reopened)
+        except ValueError as error:
+            raise evidence.ConformanceError("InputChanged") from error
+    if include_integrations:
+        runtime = candidate / "tests/fixtures/conformance/Consumer/bin/package-diagnostic" / "Release/net10.0"
+        packages = {(category, binding): package for category, binding, _, package in CATEGORY_BINDING_SLOTS}
+        for identity, (binding, metadata, _) in AUTHORITY_INTEGRATION_ROWS.items():
+            result[binding][identity] = tuple(
+                {"contract": ((runtime / (package + ".dll")).relative_to(root).as_posix(), package)}
+                for package in (packages["metadata", metadata], packages["artifacts", binding],
+                                "Hoard.Fixtures.Artifacts.HostAdapters"))
+    return result
+
+def artifact_original_inputs(run, inputs):
+    if inputs["profileId"] != "artifacts":
+        raise evidence.ConformanceError("WitnessMissing")
+    suffix = ("/tests/contracts/Hoard.Artifacts.Tests/bin/wrapper-diagnostic/Release/net10.0/"
+              "Hoard.Artifacts.Tests.dll")
+    assembly_path, _ = _control_assembly(run, inputs, suffix)
+    candidate = run.root / assembly_path.removesuffix(suffix)
+    return {binding: assignments for binding, assignments in original_observation_inputs(candidate, run.root).items()
+            if binding in ("local", "object")}
+
+
+def artifact_original_observations(run, inputs, manifest, observed, *, scope_id):
+    if (inputs["mode"] != "qualification" or inputs["profileId"] != "artifacts"
+            or scope_id not in ("original", "original-local", "original-object")):
+        raise evidence.ConformanceError("WitnessMissing")
+    assignments = artifact_original_inputs(run, inputs)
+    tests = {identity: (binding, category_runtime_cases("artifacts", binding, mode="qualification")[identity])
+             for binding, identity in category_execution_partitions("artifacts", mode="qualification")[scope_id]}
+    witnesses = source_witnesses(inputs, manifest, observed, tests)
+    if any((entry["bindingId"], entry["caseId"]) != tests[entry["testIdentity"]]
+           or entry["fullyQualifiedName"] != entry["testIdentity"].split("(")[0] for entry in manifest["expected"]):
+        raise evidence.ConformanceError("ProofMismatch")
+    assembly_path, assembly = _control_assembly(
+        run, inputs, "/tests/contracts/Hoard.Artifacts.Tests/bin/wrapper-diagnostic/Release/net10.0/"
+        "Hoard.Artifacts.Tests.dll")
+    sdk = (assembly.parent / "Hoard.Testing.Conformance.dll").relative_to(run.root).as_posix()
+    paths = {assembly_path, sdk}
+    for identity, (binding, _) in tests.items():
+        for node in evidence.original_node_assignments(identity, assignments[binding][identity]):
+            paths.update(path for path, _ in node.values())
+    images = {path: inputs["runtimeAssemblies"].get(path) for path in paths}
+    if (None in images.values() or len(manifest["assemblies"]) != len(images)
+            or manifest["assemblies"][0]["path"] != assembly_path
+            or {row["path"]: row["sha256"] for row in manifest["assemblies"]} != images):
+        raise evidence.ConformanceError("ProofMismatch")
+    evidence._runtime_bytes_correspondence(inputs, images[sdk], sdk, "Hoard.Testing.Conformance")
+    for path, hashed in images.items():
+        if hashlib.sha256(_readonly(run.root / path, 64 * 1024 * 1024)).hexdigest() != hashed:
+            raise evidence.ConformanceError("InputChanged")
+    entries = {entry["testIdentity"]: entry for entry in manifest["expected"]}
+    prior_observations, prior_instances, observations = {}, {}, []
+    for identity, witness in sorted(witnesses.items()):
+        execution = witness["executionId"]
+        if (observed["sessionOrigins"].get(execution) or observed.get("metadataArguments", {}).get(execution)
+                or witness["bindingId"] != tests[identity][0]):
+            raise evidence.ConformanceError("ProofMismatch")
+        raw = _readonly(run.root / f'runtime-{manifest["attemptId"]}/proof-{execution}.json', 64 * 1024)
+        proof = evidence.load_json(raw)
+        if (hashlib.sha256(raw).hexdigest() != witness["proofSha256"] or proof.get("metadataArguments")
+                or evidence.canonical_bytes(proof.get("originalObservations", ())) != evidence.canonical_bytes(
+                    observed["originalObservations"].get(execution, ()))):
+            raise evidence.ConformanceError("ProofMismatch")
+        nodes = evidence._ingest_original_observations(
+            inputs, observed["originalObservations"].get(execution, ()), original_inputs=assignments,
+            entry=entries[identity], prior_observations=prior_observations, prior_instances=prior_instances)
+        if not nodes:
+            raise evidence.ConformanceError("WitnessMissing")
+        observations.append({
+            "testIdentity": identity, "executionId": execution,
+            "runtimeProofSha256": witness["proofSha256"], "sourceProofSha256": evidence.digest(nodes)})
     return observations
 
 
@@ -1823,11 +1940,17 @@ class NativeCategorySources:
 
     def ingest_attempt(self, *, category_scope, **transport):
         original_metadata = category_scope in (("metadata", "original-memory"), ("metadata", "original-sqlite"))
-        if original_metadata:
-            expected = metadata_original_inputs(self._run, transport["inputs"])
+        original_artifact = category_scope in (
+            ("artifacts", "original"), ("artifacts", "original-local"), ("artifacts", "original-object"))
+        if original_metadata or original_artifact:
+            expected = (metadata_original_inputs if original_metadata else artifact_original_inputs)(
+                self._run, transport["inputs"])
             supplied = evidence._original_input_assignments(transport.get("original_inputs"))
             frozen = evidence._original_input_assignments(expected)
-            if supplied is not None and any(supplied.get(binding) != roles for binding, roles in frozen.items()):
+            if supplied is not None and (
+                    any(supplied.get(binding) != roles for binding, roles in frozen.items()) if original_metadata else
+                    any(supplied.get(binding, {}).get(identity) != nodes
+                        for binding, assignments in frozen.items() for identity, nodes in assignments.items())):
                 raise evidence.ConformanceError("ProofMismatch")
             transport["original_inputs"] = expected
         if category_scope == (transport["inputs"]["profileId"], "hook-admission"):
@@ -1836,7 +1959,7 @@ class NativeCategorySources:
                 raise evidence.ConformanceError("ProofMismatch")
             transport["origin_inputs"] = expected_origins
         inspected = evidence.inspect_runtime_attempt(**transport)
-        if original_metadata:
+        if original_metadata or original_artifact:
             attempt = inspected["observation"]["attemptId"]
             for path, raw in {"witnesses.jsonl": transport["witnesses_data"],
                               "completion.json": transport["completion_data"], **transport["proofs"]}.items():
@@ -1935,12 +2058,14 @@ class NativeCategorySources:
         artifact = profile == "artifacts" and scope_id == "controller"
         integration = (profile, scope_id) == ("artifacts", "original-integration")
         original_metadata = profile == "metadata" and scope_id in ("original-memory", "original-sqlite")
+        original_artifact = profile == "artifacts" and scope_id in ("original", "original-local", "original-object")
+        original = original_metadata or original_artifact
         mutation = scope_id == "mutation-repair"
         hooks = scope_id == "hook-admission"
         if (inputs["mode"] != "qualification" or inputs["profileId"] != profile
                 or inputs["runId"] != run.run_id or not isinstance(scope_id, str)
                 or not (scope_id.startswith("inspection-") or metadata or artifact or integration
-                        or original_metadata or mutation or hooks)
+                        or original or mutation or hooks)
                 or scope_id not in partitions):
             raise evidence.ConformanceError("WitnessMissing")
         if hooks:
@@ -1962,7 +2087,7 @@ class NativeCategorySources:
                        or entry["fullyQualifiedName"] != entry["testIdentity"].split("(")[0]
                        for entry in manifest["expected"])
                 or any(observed[name][row["executionId"]]
-                       for name in (("sessionOrigins",) if integration or original_metadata
+                       for name in (("sessionOrigins",) if integration or original
                                     else ("sessionOrigins", "originalObservations"))
                        for row in observed["witnesses"])):
             raise evidence.ConformanceError("ProofMismatch")
@@ -1995,6 +2120,9 @@ class NativeCategorySources:
             packets = {}
         elif original_metadata:
             observations = metadata_original_observations(run, inputs, manifest, observed, scope_id=scope_id)
+            packets = {}
+        elif original_artifact:
+            observations = artifact_original_observations(run, inputs, manifest, observed, scope_id=scope_id)
             packets = {}
         elif metadata:
             metadata_context = (metadata_inventory_context if inventory else metadata_recovery_context)(
@@ -2038,7 +2166,8 @@ class NativeCategorySources:
                 or _readonly(run.root / "runtime-owner.json", 64 * 1024) != owner_data
                 or _readonly(run.root / f"runtime-input-{attempt}.json", 1024 * 1024) != manifest_data
                 or _readonly(run.root / manifest["runInputsPath"], 16 * 1024 * 1024) != evidence.canonical_bytes(inputs)
-                or len(manifest["assemblies"]) != (6 if integration or mutation else 4 if original_metadata else 1)
+                or not original_artifact and len(manifest["assemblies"]) != (
+                    6 if integration or mutation else 4 if original_metadata else 1)
                 or {entry["assemblyId"] for entry in manifest["expected"]} != {manifest["assemblies"][0]["id"]}
                 or len(manifest["packages"]) != len(expected_packages)
                 or {package["id"]: package["sha256"] for package in manifest["packages"]} != expected_packages
@@ -2049,7 +2178,7 @@ class NativeCategorySources:
         if assembly.name != ("Hoard.Fixtures.Conformance.Consumer.dll" if integration or mutation else
                              "Hoard.Metadata.Tests.dll" if original_metadata else
                              "Hoard.Conformance.Tests.dll" if metadata else
-                             "Hoard.Artifacts.Tests.dll" if artifact else "Hoard.Architecture.Tests.dll"):
+                             "Hoard.Artifacts.Tests.dll" if artifact or original_artifact else "Hoard.Architecture.Tests.dll"):
             raise evidence.ConformanceError("ProofMismatch")
         metadata_prefix = "metadata-inventory" if inventory else "metadata-recovery"
         context_prefix = metadata_prefix if metadata else "artifact-source" if artifact else "inspection"
@@ -2057,14 +2186,14 @@ class NativeCategorySources:
         expected_context = {} if mutation else {
             "schemaVersion": 1, "runId": manifest["runId"],
             "cases": {entry["testIdentity"]: {"caseId": entry["caseId"], "bindingId": entry["bindingId"]}
-                      for entry in manifest["expected"]}} if integration or original_metadata else artifact_source_context(
+                      for entry in manifest["expected"]}} if integration or original else artifact_source_context(
             run, inputs, manifest, namespace="qualification-artifact-transfers") if artifact else (
             metadata_inventory_context if inventory else metadata_recovery_context)(
             run, inputs, manifest, ended_ms=record["startedMs"]) if metadata else {
             "schemaVersion": 1, "runId": run.run_id, "attemptId": attempt,
             "inputsSha256": evidence.digest(inputs),
             "outputDirectory": str(run.root / "stores" / ("original-inspection-" + attempt)), "cases": selected}
-        if not (integration or original_metadata or mutation) and _readonly(
+        if not (integration or original or mutation) and _readonly(
                 context, 1024 * 1024) != evidence.canonical_bytes(expected_context):
             raise evidence.ConformanceError("ProofMismatch")
         variables = {}
@@ -2088,7 +2217,7 @@ class NativeCategorySources:
                 configuration_hashes[path.relative_to(run.root).as_posix()] = hashed
         if mutation:
             variables = category_consumer_environment(inputs)
-        elif integration or original_metadata:
+        elif integration or original:
             if original_metadata:
                 variables["HOARD_METADATA_PROVIDER"] = scope_id.removeprefix("original-")
             variables["HOARD_ORIGINAL_CONTEXT"] = base64.b64encode(evidence.canonical_bytes(expected_context)).decode()
@@ -2124,7 +2253,7 @@ class NativeCategorySources:
             settings.relative_to(run.root).as_posix(): hashlib.sha256(settings_raw).hexdigest(),
             **{entry["path"]: inputs["runtimeAssemblies"][entry["path"]] for entry in manifest["assemblies"]},
             **configuration_hashes}
-        if not (integration or original_metadata or mutation):
+        if not (integration or original or mutation):
             input_files[context.relative_to(run.root).as_posix()] = evidence.digest(expected_context)
         if metadata:
             for path in (expected_context["graphPath"],
@@ -2157,7 +2286,7 @@ class NativeCategorySources:
         times = (record["startedMs"], record["endedMs"])
         if (any(type(value) not in (int, float) or not math.isfinite(value) or not 0 <= value <= 2**63 - 1
                 for value in times) or times[1] < times[0]
-                or (integration or original_metadata or mutation) and not started_ms <= times[0] <= times[1] <= ended_ms
+                or (integration or original or mutation) and not started_ms <= times[0] <= times[1] <= ended_ms
                 or any(not times[0] <= row["startedMs"] <= row["endedMs"] <= times[1]
                        for row in observed["witnesses"])):
             raise evidence.ConformanceError("ProofMismatch")

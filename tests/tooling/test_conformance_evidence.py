@@ -4336,6 +4336,164 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     proof_path.chmod(0o400)
                     manifest, observed = changed_manifest, changed_observed
 
+    def test_original_artifact_sources_require_all_scopes_forests_roles_sdk_and_native_commands(self):
+        import conformance_case_catalog as catalog
+        import conformance_sources as sources
+        from types import SimpleNamespace
+
+        self.category_history(profile="artifacts", mode="qualification", distinct_packages=True)
+        assembly_path = ("candidate/tests/contracts/Hoard.Artifacts.Tests/bin/wrapper-diagnostic/Release/net10.0/"
+                         "Hoard.Artifacts.Tests.dll")
+        directory = Path(assembly_path).parent
+        packages = ("Hoard.Fixtures.Artifacts.Local", "Hoard.Fixtures.Artifacts.ObjectSemantics",
+                    "Hoard.Fixtures.Artifacts.HostAdapters", "Hoard.Testing.Conformance", "Hoard.Abstractions")
+        data = {assembly_path: b"wrapper", **{
+            (directory / (package + ".dll")).as_posix(): package.encode() for package in packages}}
+        images = {path: hashlib.sha256(raw).hexdigest() for path, raw in data.items()}
+        self.inputs["runtimeAssemblies"] = images
+        template = self.inputs["packages"][0]
+        captured = {package["packageId"]: package for package in self.inputs["packages"]}
+        self.inputs["packages"] = [
+            {**captured.get(package, template), "packageId": package, "runtimeAssemblies": {
+                "lib/net10.0/" + package + ".dll": images[(directory / (package + ".dll")).as_posix()]}}
+            for package in packages]
+        for binding in self.inputs["bindings"]:
+            binding["package"] = next(package for package in self.inputs["packages"]
+                                      if package["packageId"] == binding["package"]["packageId"])
+        with tempfile.TemporaryDirectory() as temporary:
+            run = SimpleNamespace(root=Path(temporary).resolve())
+            for path, raw in data.items():
+                destination = run.root / path
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.write_bytes(raw)
+                destination.chmod(0o400)
+            (run.root / "feed/candidate").mkdir(parents=True)
+            configuration = run.root / "stores/candidate.NuGet.Config"
+            configuration.parent.mkdir()
+            configuration.write_bytes(evidence.synthetic_nuget_configuration(run.root / "feed/candidate"))
+            selected = {}
+            for family in ("metadata", "artifacts"):
+                path = run.root / "stores" / (family + ".json")
+                path.write_bytes(b"{}")
+                selected.update({
+                    identity: {str(path): hashlib.sha256(b"{}").hexdigest()}
+                    for identity, category in catalog.ORIGINAL_INSPECTION_WITNESSES.items()
+                    if category == family and identity not in catalog.ORIGINAL_INSPECTION_LITERAL_WITNESSES})
+            self.inputs["configurationSha256"] = evidence.configuration_fingerprint(
+                evidence.verify_synthetic_source_mapping(run.root, "stores/candidate.NuGet.Config", "feed/candidate"),
+                inspection_inputs=selected)
+            self.owner["rootPathSha256"] = hashlib.sha256(str(run.root).encode()).hexdigest()
+            assignments = sources.artifact_original_inputs(run, self.inputs)
+            for scope, count in (("original", 183), ("original-local", 12), ("original-object", 12)):
+                tests = {identity: (binding, catalog.category_runtime_cases(
+                    "artifacts", binding, mode="qualification")[identity])
+                    for binding, identity in catalog.category_execution_partitions(
+                        "artifacts", mode="qualification")[scope]}
+                paths = {assembly_path, (directory / "Hoard.Testing.Conformance.dll").as_posix()}
+                for identity, (binding, _) in tests.items():
+                    for node in evidence.original_node_assignments(identity, assignments[binding][identity]):
+                        paths.update(path for path, _ in node.values())
+                self.manifest["assemblies"] = [
+                    {"id": "image-" + str(index), "path": path, "sha256": images[path]}
+                    for index, path in enumerate((assembly_path, *sorted(paths - {assembly_path})))]
+                self.manifest["expected"][0]["assemblyId"] = "image-0"
+                transport = self.category_transport(None, selections=tests)
+                manifest = evidence.load_json(transport["manifest_data"])
+                witnesses = [evidence.load_json(line) for line in transport["witnesses_data"].splitlines()]
+                observed = {"diagnosticCode": "None", "attemptId": self.attempt, "witnesses": witnesses,
+                            "proofs": {}, "sessionOrigins": {}, "originalObservations": {}, "metadataArguments": {}}
+                for witness in witnesses:
+                    identity, binding = witness["testIdentity"], witness["bindingId"]
+                    kind = catalog.original_witness_policy(identity)[1]
+                    nodes = []
+                    roles = evidence.original_node_assignments(identity, assignments[binding][identity])
+                    for index, parent in enumerate(catalog.original_witness_parents(identity)):
+                        nodes.append({
+                            "schemaVersion": 1, "runId": self.inputs["runId"], "caseId": tests[identity][1],
+                            "testIdentity": identity, "bindingId": binding, "observationId": str(uuid.uuid4()),
+                            "parentObservationId": None if parent is None else nodes[parent]["observationId"],
+                            "kind": kind, "operation": "contract" if kind == "loaded-contract" else
+                            "create" if parent is None else "reopen",
+                            "runtimeVersion": self.inputs["environment"]["runtime"], "processArchitecture": "x64",
+                            "components": {role: {
+                                "instanceId": str(uuid.uuid4()), "assemblySha256": images[path],
+                                "moduleVersionId": str(uuid.uuid4()), "typeSha256": "a" * 64}
+                                for role, (path, _) in roles[index].items()}})
+                    execution = witness["executionId"]
+                    observed["originalObservations"][execution] = nodes
+                    observed["sessionOrigins"][execution] = []
+                    observed["metadataArguments"][execution] = []
+                    filename = f"proof-{execution}.json"
+                    proof = evidence.load_json(transport["proofs"][filename])
+                    proof.update(schemaVersion=2, originalObservations=nodes, sessionOrigins=[],
+                                 ownerSha256=evidence.digest(self.owner), assemblySha256=images[assembly_path])
+                    raw = evidence.canonical_bytes(proof)
+                    transport["proofs"][filename] = raw
+                    path = run.root / f"runtime-{self.attempt}" / filename
+                    path.parent.mkdir(parents=True, exist_ok=True)
+                    path.write_bytes(raw)
+                    path.chmod(0o400)
+                    witness.update(proofSha256=hashlib.sha256(raw).hexdigest(), assemblySha256=images[assembly_path])
+                    observed["proofs"][filename] = witness["proofSha256"]
+                transport["witnesses_data"] = b"".join(evidence.canonical_bytes(row) + b"\n" for row in witnesses)
+                completion = evidence.load_json(transport["completion_data"])
+                completion["recordsSha256"] = hashlib.sha256(transport["witnesses_data"]).hexdigest()
+                transport["completion_data"] = evidence.canonical_bytes(completion)
+                for name, raw in (("witnesses.jsonl", transport["witnesses_data"]),
+                                  ("completion.json", transport["completion_data"])):
+                    path = run.root / f"runtime-{self.attempt}" / name
+                    if path.exists():
+                        path.chmod(0o600)
+                    path.write_bytes(raw)
+                    path.chmod(0o400)
+                self.assertEqual(len(sources.artifact_original_observations(
+                    run, self.inputs, manifest, observed, scope_id=scope)), count)
+                if scope == "original":
+                    first = next(witness for witness in witnesses if len(
+                        observed["originalObservations"][witness["executionId"]]) > 1)
+                    execution = first["executionId"]
+                    proof_path = run.root / f"runtime-{self.attempt}/proof-{execution}.json"
+                    original_proof = proof_path.read_bytes()
+                    for mutation in ("missing-row", "case", "foreign-binding", "missing-forest",
+                                     "foreign-role", "reused-instance", "sdk-image"):
+                        changed_manifest, changed_observed = copy.deepcopy(manifest), copy.deepcopy(observed)
+                        changed_inputs = copy.deepcopy(self.inputs)
+                        nodes = changed_observed["originalObservations"][execution]
+                        if mutation == "missing-row":
+                            changed_observed["witnesses"].pop()
+                        elif mutation == "case":
+                            changed_manifest["expected"][0]["caseId"] = "AS-foreign"
+                        elif mutation == "foreign-binding":
+                            changed_observed["witnesses"][0]["bindingId"] = "foreign"
+                        elif mutation == "missing-forest":
+                            nodes.pop()
+                        elif mutation == "foreign-role":
+                            nodes[0]["components"]["authority"]["assemblySha256"] = "0" * 64
+                        elif mutation == "reused-instance":
+                            nodes[1]["components"]["store"]["instanceId"] = nodes[0]["components"]["store"]["instanceId"]
+                        else:
+                            next(package for package in changed_inputs["packages"]
+                                 if package["packageId"] == "Hoard.Testing.Conformance")["runtimeAssemblies"][
+                                     "lib/net10.0/Hoard.Testing.Conformance.dll"] = "0" * 64
+                            changed_manifest["inputSha256"] = evidence.digest(changed_inputs)
+                        if mutation in ("missing-forest", "foreign-role", "reused-instance"):
+                            changed_proof = evidence.load_json(original_proof)
+                            changed_proof["originalObservations"] = nodes
+                            raw = evidence.canonical_bytes(changed_proof)
+                            proof_path.chmod(0o600)
+                            proof_path.write_bytes(raw)
+                            proof_path.chmod(0o400)
+                            next(witness for witness in changed_observed["witnesses"]
+                                 if witness["executionId"] == execution)["proofSha256"] = hashlib.sha256(raw).hexdigest()
+                            changed_observed["proofs"][proof_path.name] = hashlib.sha256(raw).hexdigest()
+                        with self.subTest(scope=scope, mutation=mutation), self.assertRaises(evidence.ConformanceError):
+                            sources.artifact_original_observations(
+                                run, changed_inputs, changed_manifest, changed_observed, scope_id=scope)
+                        proof_path.chmod(0o600)
+                        proof_path.write_bytes(original_proof)
+                        proof_path.chmod(0o400)
+                self.original_metadata_command_fixture(run, manifest, observed, transport, scope, selected)
+
     def original_metadata_command_fixture(self, run, manifest, observed, transport, scope, selected):
         import base64
         import conformance_sdk_checks as checks
@@ -4352,8 +4510,11 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         run.command_sequence, run.live_children = 1, lambda: ()
         native = object.__new__(sources.NativeCategorySources)
         native._run, native._selected = run, selected
-        facts = sources.metadata_original_observations(run, self.inputs, manifest, observed, scope_id=scope)
-        receipt = {"schemaVersion": 1, "qualification": False, "mode": "category-metadata-" + scope,
+        profile = self.inputs["profileId"]
+        original_observations = (sources.metadata_original_observations if profile == "metadata"
+                                 else sources.artifact_original_observations)
+        facts = original_observations(run, self.inputs, manifest, observed, scope_id=scope)
+        receipt = {"schemaVersion": 1, "qualification": False, "mode": "category-" + profile + "-" + scope,
                    "runId": run.run_id, "invocationGroupId": self.inputs["invocationGroupId"],
                    "attemptId": self.attempt, "inputsSha256": evidence.digest(self.inputs), "observations": facts}
         write(run.root / f'proofs/{receipt["mode"]}-{self.attempt}.json', evidence.canonical_bytes(receipt))
@@ -4364,8 +4525,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             entry["testIdentity"]: {"caseId": entry["caseId"], "bindingId": entry["bindingId"]}
             for entry in manifest["expected"]}}
         provider = scope.removeprefix("original-")
-        environment = ("<EnvironmentVariables><HOARD_METADATA_PROVIDER>" + provider
-                       + "</HOARD_METADATA_PROVIDER><HOARD_ORIGINAL_CONTEXT>"
+        environment = ("<EnvironmentVariables>" + ("<HOARD_METADATA_PROVIDER>" + provider
+                       + "</HOARD_METADATA_PROVIDER>" if profile == "metadata" else "") + "<HOARD_ORIGINAL_CONTEXT>"
                        + base64.b64encode(evidence.canonical_bytes(context)).decode()
                        + "</HOARD_ORIGINAL_CONTEXT></EnvironmentVariables>")
         assembly = run.root / manifest["assemblies"][0]["path"]
@@ -4394,14 +4555,14 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             "inputsSha256": evidence.digest(self.inputs), "executionRecordSha256": evidence.digest(record),
             "manifestSha256": evidence.digest(manifest), "settingsSha256": hashlib.sha256(settings_raw).hexdigest()}
         parent = {
-            "schemaVersion": 1, "qualification": False, "nativeContainment": True, "profileId": "metadata",
+            "schemaVersion": 1, "qualification": False, "nativeContainment": True, "profileId": profile,
             "scopeId": scope, "runId": run.run_id, "invocationGroupId": self.inputs["invocationGroupId"],
             "attemptId": self.attempt, "inputsSha256": evidence.digest(self.inputs),
             "manifestSha256": evidence.digest(manifest), "commandSequence": 1,
             "executionParentSha256": evidence.digest(execution), "sourceReceiptSha256": evidence.digest(receipt),
-            "observations": [{**row, "bindingId": provider,
-                              "caseId": next(entry["caseId"] for entry in manifest["expected"]
-                                             if entry["testIdentity"] == row["testIdentity"])} for row in facts]}
+            "observations": [{**row, **next(
+                {key: entry[key] for key in ("bindingId", "caseId")} for entry in manifest["expected"]
+                if entry["testIdentity"] == row["testIdentity"])} for row in facts]}
         execution_path = run.root / f"proofs/category-command-{self.attempt}-execution.json"
         parent_path = run.root / f"proofs/category-source-{self.attempt}.json"
         write(execution_path, evidence.canonical_bytes(execution))
@@ -4411,29 +4572,36 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         with mock.patch.object(checks, "OwnedRun", type(run)):
             produced = checks.category_source_parent(
                 run, self.inputs, manifest, observed,
-                {"sourceExecutions": 63, "originalMetadataProofsSha256": evidence.digest(receipt)},
-                category_scope=("metadata", scope),
+                {"sourceExecutions": len(facts),
+                 "originalMetadataProofsSha256" if profile == "metadata" else
+                 "originalArtifactProofsSha256": evidence.digest(receipt)},
+                category_scope=(profile, scope),
                 result=type(run)(exit_code=0, execution_record_sha256=hashlib.sha256(original).hexdigest()))
         self.assertEqual(produced, evidence.digest(parent))
         self.assertEqual(parent_path.read_bytes(), evidence.canonical_bytes(parent))
 
         def admit():
             return native._corroborate(
-                self.inputs, manifest, observed, category_scope=("metadata", scope),
+                self.inputs, manifest, observed, category_scope=(profile, scope),
                 manifest_data=transport["manifest_data"], owner_data=transport["owner_data"],
                 started_ms=9, ended_ms=12)
 
-        self.assertEqual(len(admit()["sourceParents"]), 63)
+        self.assertEqual(len(admit()["sourceParents"]), len(facts))
         def ingest(**overrides):
             return native.ingest_attempt(
-                inputs=self.inputs, category_scope=("metadata", scope), **{**transport, **overrides},
+                inputs=self.inputs, category_scope=(profile, scope), **{**transport, **overrides},
                 expected_tests={entry["testIdentity"]: (entry["bindingId"], "none") for entry in manifest["expected"]},
                 started_ms=9, ended_ms=12)
 
-        self.assertEqual(len(ingest()["sourceParents"]), 63)
-        wrong_inputs = sources.metadata_original_inputs(run, self.inputs)
-        identity = next(iter(wrong_inputs[provider]))
-        wrong_inputs[provider][identity]["store"] = wrong_inputs[provider][identity]["controls"]
+        self.assertEqual(len(ingest()["sourceParents"]), len(facts))
+        wrong_inputs = (sources.metadata_original_inputs if profile == "metadata" else
+                        sources.artifact_original_inputs)(run, self.inputs)
+        binding = manifest["expected"][0]["bindingId"]
+        identity = manifest["expected"][0]["testIdentity"]
+        stored = wrong_inputs[binding][identity]
+        node = stored if isinstance(stored, dict) else stored[0]
+        role = next(iter(node))
+        node[role] = (node[role][0] + ".foreign", node[role][1])
         with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
             ingest(original_inputs=wrong_inputs)
         for filename in ("witnesses.jsonl", "completion.json"):
@@ -4459,7 +4627,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             elif mutation == "sequence":
                 changed["sequence"] = 2
             elif mutation == "settings":
-                write(settings, settings_raw.replace(provider.encode(), b"foreign"))
+                write(settings, settings_raw.replace(b"HOARD_ORIGINAL_CONTEXT", b"FOREIGN_ORIGINAL_CONTEXT"))
             elif mutation == "unsealed-proof":
                 proof.chmod(0o600)
             elif mutation == "changed-proof":

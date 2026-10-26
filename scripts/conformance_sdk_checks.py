@@ -62,7 +62,8 @@ from conformance_sources import (
     metadata_inventory_source_inputs, native_metadata_inventory_controls, native_artifact_transfer_source,
     metadata_common_consumer_manifest, native_metadata_common_consumer_control,
     metadata_common_consumer_sdk_images, metadata_common_consumer_sdk_paths,
-    metadata_original_observations,
+    metadata_original_observations, artifact_original_observations,
+    original_observation_inputs,
     native_artifact_transfer_controls,
     native_control_record, native_metadata_binary_control, native_metadata_ownership_control,
     native_metadata_package_consumer_control,
@@ -2545,58 +2546,6 @@ def original_observation_scenarios():
     )
 
 
-def original_observation_inputs(candidate, root, *, include_integrations=False):
-    result = {}
-    for category, provider, _, package in CATEGORY_BINDING_SLOTS:
-        metadata = category == "metadata"
-        folder, output = (METADATA_TESTS, METADATA_TEST_OUTPUT) if metadata else (ARTIFACT_TESTS, ARTIFACT_TEST_OUTPUT)
-        runtime = candidate / folder / output / "Release/net10.0"
-        assembly = "Hoard.Metadata.Tests" if metadata else "Hoard.Artifacts.Tests"
-        host = "Hoard.Fixtures." + ("Metadata" if metadata else "Artifacts") + ".HostAdapters"
-        roles = ({"owner": host, "store": package, "schema": package, "authority": None, "controls": host}
-                 if metadata else
-                 {"owner": None, "store": package, "validator": package, "maintenance": package,
-                  "lifetime": package, "authority": host, "controls": package, "contract": "Hoard.Abstractions"})
-        identities = {identity for case in category_cases()
-                      if case.profile_id == category and case.binding_id == provider
-                      for identity in case.witnesses if original_witness_policy(identity) is not None}
-        try:
-            result[provider] = {}
-            for identity in identities:
-                selected = dict(roles)
-                if metadata and identity not in ORIGINAL_METADATA_FACADE_WITNESSES:
-                    selected["authority"] = host
-                if identity in ORIGINAL_METADATA_SCHEMA_WITNESSES:
-                    selected["owner"] = None
-                if not metadata and any(f".{fixture}." in identity for fixture in (
-                        "ArtifactCapabilityTests", "ArtifactAdmissionTests")):
-                    selected["owner"] = package
-                if not metadata and ".Concurrent_close_waits_" in identity:
-                    selected["authority"] = None
-                if original_witness_policy(identity)[1] == "original-owner":
-                    selected["owner"] = host
-                if not metadata and any(f".{fixture}." in identity for fixture in (
-                        "ArtifactMetadataIntegrationTests", "ArtifactCompositionTests")):
-                    selected["owner"] = host
-                result[provider][identity] = {
-                    role: ((runtime / ((package_id or assembly) + ".dll")).relative_to(root).as_posix(), package_id)
-                    for role, package_id in selected.items() if role in original_witness_policy(identity)[2]}
-                if identity in ORIGINAL_ARTIFACT_REOPENS:
-                    reopened = dict(result[provider][identity])
-                    for role in ("owner", "controls"):
-                        reopened[role] = ((runtime / (package + ".dll")).relative_to(root).as_posix(), package)
-                    result[provider][identity] = (result[provider][identity], reopened)
-        except ValueError as error:
-            raise evidence.ConformanceError("InputChanged") from error
-    if include_integrations:
-        runtime = candidate / ARTIFACT_CONSUMER / PACKAGE_TEST_OUTPUT / "Release/net10.0"
-        packages = {(category, binding): package for category, binding, _, package in CATEGORY_BINDING_SLOTS}
-        for identity, (binding, metadata, _) in AUTHORITY_INTEGRATION_ROWS.items():
-            result[binding][identity] = tuple(
-                {"contract": ((runtime / (package + ".dll")).relative_to(root).as_posix(), package)}
-                for package in (packages["metadata", metadata], packages["artifacts", binding],
-                                "Hoard.Fixtures.Artifacts.HostAdapters"))
-    return result
 
 
 def validate_original_observations(ingested):
@@ -3194,7 +3143,7 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
         paths = {path for identity, (binding, _) in tests.items()
                  for node in evidence.original_node_assignments(identity, originals[binding][identity])
                  for path, _ in node.values()}
-        if profile == "metadata" and inputs["mode"] == "qualification":
+        if inputs["mode"] == "qualification" and scope_id != "original-integration":
             paths.add((assembly.parent / "Hoard.Testing.Conformance.dll").relative_to(run.root).as_posix())
         for index, path in enumerate(sorted(paths - {assembly_path})):
             hashed = inputs["runtimeAssemblies"].get(path)
@@ -3248,9 +3197,11 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
     elif scope_id == "controller":
         sources = original_artifact_external_proofs(
             run, inputs, manifest, ingested, category_scope=category_scope)
-    elif scope_id == "original-integration" or profile == "metadata" and original and inputs["mode"] == "qualification":
-        observations = (metadata_original_observations(run, inputs, manifest, ingested, scope_id=scope_id)
-                        if profile == "metadata" else authority_integration_observations(run, inputs, manifest, ingested))
+    elif scope_id == "original-integration" or original and inputs["mode"] == "qualification":
+        observations = (authority_integration_observations(run, inputs, manifest, ingested)
+                        if scope_id == "original-integration" else
+                        (metadata_original_observations if profile == "metadata" else artifact_original_observations)(
+                            run, inputs, manifest, ingested, scope_id=scope_id))
         source = evidence.canonical_bytes({
             "schemaVersion": 1, "qualification": False, "mode": f"category-{profile}-{scope_id}",
             "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
@@ -3258,8 +3209,9 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
             "observations": observations})
         write_new(run.root / f'proofs/category-{profile}-{scope_id}-{manifest["attemptId"]}.json', source)
         sources = {"sourceExecutions": len(observations),
-                   ("originalMetadataProofsSha256" if profile == "metadata" else
-                    "authorityIntegrationProofsSha256"): hashlib.sha256(source).hexdigest()}
+                   ("authorityIntegrationProofsSha256" if scope_id == "original-integration" else
+                    "originalMetadataProofsSha256" if profile == "metadata" else
+                    "originalArtifactProofsSha256"): hashlib.sha256(source).hexdigest()}
     elif mutation:
         observations, _ = category_mutation_observations(
             run, inputs, manifest, ingested, sequence=run.command_sequence,
@@ -3325,8 +3277,10 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
             inputs["mode"] == "qualification" and type(run) is OwnedRun))
             or type(result.exit_code) is not int or result.exit_code != 0):
         raise evidence.ConformanceError("ProofMismatch")
-    if scope_id.startswith("inspection-") or scope_id in ("original-integration", "mutation-repair") or profile == "metadata" and scope_id in (
-            "recovery-controller", "inventory-controller", "original-memory", "original-sqlite"):
+    if (scope_id.startswith("inspection-") or scope_id in ("original-integration", "mutation-repair")
+            or profile == "metadata" and scope_id in (
+                "recovery-controller", "inventory-controller", "original-memory", "original-sqlite")
+            or profile == "artifacts" and scope_id in ("original", "original-local", "original-object")):
         source_key = ("metadataRecoveryProofsSha256" if scope_id == "recovery-controller" else
                       "metadataInventoryProofsSha256" if scope_id == "inventory-controller" else "inspectionProofsSha256")
         if scope_id == "original-integration":
@@ -3335,6 +3289,8 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
             source_key = "mutationProofsSha256"
         elif scope_id in ("original-memory", "original-sqlite"):
             source_key = "originalMetadataProofsSha256"
+        elif scope_id in ("original", "original-local", "original-object"):
+            source_key = "originalArtifactProofsSha256"
         mode = f"category-{profile}-{scope_id}"
         filename = f'{mode}-{manifest["attemptId"]}.json'
         observation_fields = {"sourceProofSha256": evidence.sha256}
@@ -3366,7 +3322,7 @@ def category_source_parent(run, inputs, manifest, ingested, sources, *, category
            if scope_id == "controller" else {}),
         "observations": evidence._list(evidence._record({
             "testIdentity": evidence._runtime_identity, "executionId": evidence._uuid,
-            "runtimeProofSha256": evidence.sha256, **observation_fields}), 128),
+            "runtimeProofSha256": evidence.sha256, **observation_fields}), len(tests)),
     }, limit=512 * 1024)
     if scope_id == "controller" and isinstance(run, OwnedRun):
         consumption_raw, packets = _artifact_source_consumption(
@@ -3748,7 +3704,8 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             settings.relative_to(run.root).as_posix(), assembly.relative_to(run.root).as_posix()]
         if category_scope == ("artifacts", "original-integration") or category_scope[1] in (
                 "mutation-faulty", "mutation-repair", "shared-consumer", "hook-admission") or category_scope in (
-                    ("metadata", "original-memory"), ("metadata", "original-sqlite")):
+                    ("metadata", "original-memory"), ("metadata", "original-sqlite"),
+                    ("artifacts", "original"), ("artifacts", "original-local"), ("artifacts", "original-object")):
             execution_inputs.extend(entry["path"] for entry in manifest["assemblies"]
                                     if entry["path"] != assembly.relative_to(run.root).as_posix())
         if category_scope[1] == "shared-consumer":

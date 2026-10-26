@@ -2594,6 +2594,13 @@ its owned native command, exact 250 witnesses/262 origins and six package images
 The catalog relocation preserves every identity/origin count. Tooling454
 (19 native skips) passes; actual native admission and QC-03 pairing remain pending.
 
+Original artifact source reconstruction now covers all three unchanged scopes:
+183 mixed witnesses and twelve repeated witnesses per provider. It verifies exact
+per-node roles/forests, readonly proof and image bytes, wrapper SDK/archive
+correspondence and the owned native command, including attempt timing. Tooling455
+(19 native skips) passes. This does not complete native admission, QC-03 pairing
+or the feature.
+
 The Object access-fault implementation now lives in its concrete test binding,
 as the original driver-owned fault did. The provider still selects/protects the
 exact stamp and captures the scope before release hooks, but contains no rename

@@ -1602,6 +1602,14 @@ required; catalog identities/counts are unchanged. Tooling454 (19 native skips)
 passes. Actual native admission, original artifact pairing and QC-03 remain pending;
 this source family alone issues no extraction-parity obligation.
 
+The original artifact source path now reconstructs all three unchanged scopes
+(183/12/12 witnesses), independently selecting exact per-node forest/role images
+and rereading readonly original proofs. Wrapper SDK/archive correspondence and
+all manifest images are required in the owned command closure. Its timing must
+fit the current attempt. Scope receipts use exact scope-sized observation bounds
+without changing per-case limits. Tooling455 (19 native skips) passes; native
+admission and original/shared pairing remain pending, with no QC-03 pass issued.
+
 Object payload-access faults are now concrete-binding-owned, matching the
 original driver boundary. Native exact-stamp selection/protection still wraps
 application and transfers the same captured scope before supervisor hooks;

@@ -10419,6 +10419,18 @@ original artifact parameter pairing and full QC-03 remain pending. No budgets,
 task/checklist markers, production dependencies, examples, diagrams or
 infrastructure change.
 
+Original artifact source reconstruction now also covers `original` (183 exact
+witnesses), `original-local` and `original-object` (twelve each). It independently
+selects per-node roles and complete forests, verifies readonly images/proofs and
+wrapper SDK/archive correspondence, and pins every manifest image in the actual
+native command. Scope receipt bounds use the exact inventory, not a per-case
+128-row limit. Command timing must remain inside its containing attempt; the new
+regression exposed and closed that missing artifact check. Tooling455 (19 native
+skips) passes, including missing/foreign rows, forests, roles, reused instances,
+SDK and native-command mutations. Actual Linux admission and parameter pairing
+remain pending; no QC-03, task/checklist or stage completion is claimed.
+Examples, diagrams, production dependencies and infrastructure are unaffected.
+
 Linux run `40312172408` at `516b6e4` fails the prepared Object no-rename architecture
 witness; its other two jobs pass. The cause is qualification-only directory moves
 introduced inside the Object provider assembly, not its publication mechanism.

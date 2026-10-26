@@ -673,6 +673,13 @@ command before unchanged transfer controls. Independent reconstruction checks
 identity and the executor-held command closure. Tooling454 (19 native skips)
 passes; actual native admission and QC-03 parameter pairing remain pending.
 
+The three original artifact source scopes now reconstruct exact 183/12/12
+witness inventories, complete per-node forests/roles, readonly proof/image bytes,
+wrapper SDK/archive correspondence and every executor-held image. Native command
+timing must fit the attempt. Tooling455 (19 native skips) passes; native admission
+and original/shared parameter pairing still remain pending. No new command or
+quality-completion claim is introduced.
+
 Object access faults now execute in the concrete test binding, retaining native
 exact-stamp protection and scope handoff while restoring the provider's no-rename
 boundary. The unchanged prepared architecture witness fails before/passes after.

@@ -362,6 +362,17 @@ arguments reject. Catalog relocation preserves exact identity/count equality.
 Tooling454 (19 native skips) passes. Actual native admission and QC-03 original-
 parameter pairing remain pending; no extraction-quality pass is issued here.
 
+Original artifact source receipts now cover `original`, `original-local` and
+`original-object` with exact 183/12/12 inventories. The source independently
+reconstructs every per-node role/forest, rereads readonly runtime proof/image
+bytes, verifies wrapper SDK/archive correspondence and admits the original owned
+command with all manifest images and attempt-contained timing. Source receipt
+observations are bounded by the exact scope inventory; per-case witness limits
+remain unchanged. Foreign/missing rows, wrong cases/roles, missing forests,
+reused instances, SDK mismatch and native-command mutations reject. Tooling455
+(19 native skips) passes. Native admission and original/shared parameter pairing
+remain pending; these receipts alone issue no QC-03 obligation.
+
 The Object no-rename repair retains the unchanged prepared architecture witness:
 the preceding graph fails named `Assert.Empty`, and the corrected graph passes.
 Only concrete-binding-owned access fault application moves; native exact-stamp
