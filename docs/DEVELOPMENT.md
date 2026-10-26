@@ -4668,6 +4668,14 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+Complete package-component replay now passes all 155 discovered composition/
+version identities with exact result-set equality and unchanged consumer bytes.
+Source-mode checks pass 148 rows. This verifies the existing declaration/
+mapping probes, optional-target cases and explicit version fixtures, closing
+T042/T043/T053 without changing the runtime validator or widening ranges.
+Ownership/controller, inherited-profile and safe structured transport work
+remain unfinished. The stage remains `implement / running`, 46/86 checked.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same
@@ -4682,8 +4690,8 @@ at `ef82218` now passes all five existing jobs, including full SDK diagnostics;
 these remain component jobs, not qualifying five-profile CI.
 The component run does not qualify a composition profile: the strict safe
 logger rejects the existing unstructured observation output as
-`UnknownDiagnostic`, leaving safe transport for T046. The stage remains
-`implement / running`, now 43/86 tasks checked.
+`UnknownDiagnostic`, leaving safe transport for T046. That preceding T041
+checkpoint recorded 43/86 tasks checked.
 
 At exact `ef82218`, run40405035306's isolated metadata/artifact jobs both pass
 through the public CLI, including complete original/native source admission,

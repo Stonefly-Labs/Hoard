@@ -51,6 +51,12 @@ fresh-cache default locked restore/build passes. These are component checks:
 the safe runtime logger still rejects the rows' unstructured observation output
 as `UnknownDiagnostic`. No output guard is relaxed; safe composition transport
 and independent profile evaluation remain unfinished.
+Complete component replay additionally passes all 155 discovered packaged
+composition/version rows and 148 source-mode rows: declaration rejection/
+repairs, mapping ambiguity, optional-target inactivity and capability denial,
+all four version axes, independent prerelease flags and finite inherited
+classifications. Policy-only release classifications remain policy-only;
+these component passes do not widen declared ranges or qualify a profile.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.

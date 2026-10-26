@@ -7874,6 +7874,22 @@ are now checked.
 
 ### Actual package-only Host consumption
 
+The corrected complete package-component replay passes all 155 independently
+discovered identities with exact result-set equality, no failures/skips and an
+unchanged consumer image. Expected identity-set digest:
+`0b8c9ae76913b3a2d3d4d68d2265e2edcbe4fbe7e65715f03e07e1f515c0b02d`.
+This independently executes the existing shared Host probes and declaration/
+single-input repairs, actual route ambiguity before endpoint publication,
+optional-target effects/capability rejection, four-axis version matrix,
+independent prerelease flags and unchanged C-01..23 runtime/policy distinction.
+Together with the 148 source-mode rows, this closes implementation/probe T042,
+T043 and T053. No runtime validator/parser or version range is changed.
+T044/T045 ownership/controller closure, inherited profile inventories, strict
+observation transport and independent qualification remain separate open tasks.
+The complete package replay supersedes the earlier incorrect count guard, not
+the strict logger rejection or the incomplete cleanup of the bounded attempt.
+Stage remains `implement / running`, now 46/86 checked.
+
 T041 exposed a real package/source gap: the integration project's package mode
 still compiled `CompositionFixtures.cs`/`VersionFixtures.cs` into its own
 assembly. An added assertion in the existing CP-01/02 rows first fails twice:
@@ -7920,8 +7936,9 @@ do not infer a provider failure from that helper error. Replace the count proxy
 with exact discovery/result-set equality and repeat before admitting its result.
 A separate 90-second bounded diagnostic attempt expires and reports incomplete
 cleanup; its private workspace remains retained, not reported released.
-Mark T041 complete; complete package-mode regressions remain pending.
-Stage `implement / running`, 43/86 tasks checked.
+The preceding T041 checkpoint marked that task complete with package-mode
+regressions still pending and 43/86 tasks checked; the exact complete replay
+above now resolves that pending check.
 README, development/provider guidance and the compile-only custom-host example
 distinguish this separate fixture from product support. Production APIs,
 architecture/ADR diagrams, charter/product scope, governance, infrastructure,

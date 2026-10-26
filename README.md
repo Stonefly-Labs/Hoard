@@ -64,6 +64,9 @@ The two baseline/replacement composition component rows now consume the separate
 packed test Host, rather than compiling its source into the consumer. Both pass
 with one unchanged consumer image and fresh-cache locked build replay. This
 does not yet provide a qualifying composition profile or safe observation import.
+Complete component replay passes all 155 discovered packaged composition/version
+rows, alongside 148 source-mode rows; declaration, optional-target and version
+fixture implementation is verified without claiming profile qualification.
 
 ## ✨ The idea
 
