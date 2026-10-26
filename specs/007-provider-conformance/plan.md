@@ -6892,6 +6892,15 @@ with only one hook removed; a probe factory throws a different exception if
 called. Each negative must reject with exact `BindingInvalid` argument
 classification, zero factory calls and no resource allocation. Both current
 and legacy metadata opening are checked.
+The same entry points reject a missing binding with the named argument rather
+than dereferencing it. Each hook omission is repeated with a claimed logical
+exclusion; neither metadata `MP-21` nor artifact `AS-15` can bypass admission.
+Fresh-package local mutation controls independently remove mandatory-hook
+validation, bypass validation for claimed exclusions, and remove null-binding
+validation. Each produces four named assertion failures and 114 other passes
+without skips; the unchanged SDK passes all 156 rows without skips. Consumer
+sources are identical across trials. This remains non-native diagnostic
+evidence, not QC-05 composition or source-parent admission.
 
 The same row then opens its unchanged actual binding and executes the existing
 common assertion, retaining its original typed origin. The 132 metadata/

@@ -7,6 +7,10 @@ internal static class BindingAdmissionAssertions
     internal static async Task MetadataAsync(
         ConformanceBindingDeclaration declaration, ConformanceRunContext context)
     {
+        Assert.Equal("binding", (await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            ConformanceObservedMetadataSession.OpenAsync(null!, context, default).AsTask())).ParamName);
+        Assert.Equal("binding", (await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            ConformanceObservedMetadataSession.OpenLegacyAsync(null!, context, default).AsTask())).ParamName);
         ConformanceFault[] required = [
             ConformanceFault.IndependentSnapshot, ConformanceFault.WriterContention,
             ConformanceFault.CommitAcknowledgement, ConformanceFault.PersistedCorruption,
@@ -14,9 +18,9 @@ internal static class BindingAdmissionAssertions
             ConformanceFault.NativeNonCooperation, ConformanceFault.CleanupFailure];
         if (declaration.Capabilities.Contains("durable-local-process-crash"))
         { required = [.. required, ConformanceFault.BackupRestore]; }
-        foreach (var missing in required)
+        foreach (var incomplete in MissingHooks(declaration, required, "exclude:MP-21"))
         {
-            var rejected = new RejectedMetadataBinding(Without(declaration, missing));
+            var rejected = new RejectedMetadataBinding(incomplete);
             Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<ArgumentException>(() =>
                 ConformanceObservedMetadataSession.OpenAsync(rejected, context, default).AsTask())).Message);
             Assert.Equal(0, rejected.FactoryCalls);
@@ -29,25 +33,37 @@ internal static class BindingAdmissionAssertions
     internal static async Task ArtifactsAsync(
         ConformanceBindingDeclaration declaration, ConformanceRunContext context)
     {
+        Assert.Equal("binding", (await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            ConformanceObservedArtifactSession.OpenAsync(null!, context, default).AsTask())).ParamName);
         ConformanceFault[] required = [
             ConformanceFault.PublicationBoundary, ConformanceFault.DirectVisibility,
             ConformanceFault.PayloadDamage, ConformanceFault.Capacity,
             ConformanceFault.NativeNonCooperation, ConformanceFault.CleanupFailure,
             ConformanceFault.GenerationBoundary, ConformanceFault.ReceiptBoundary,
             ConformanceFault.SourceNonCooperation, ConformanceFault.SinkNonCooperation];
-        foreach (var missing in required)
+        foreach (var incomplete in MissingHooks(declaration, required, "exclude:AS-15"))
         {
-            var rejected = new RejectedArtifactBinding(Without(declaration, missing));
+            var rejected = new RejectedArtifactBinding(incomplete);
             Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<ArgumentException>(() =>
                 ConformanceObservedArtifactSession.OpenAsync(rejected, context, default).AsTask())).Message);
             Assert.Equal(0, rejected.FactoryCalls);
         }
     }
 
-    private static ConformanceBindingDeclaration Without(
-        ConformanceBindingDeclaration declaration, ConformanceFault missing) =>
-        new(declaration.BindingId, declaration.Category, declaration.PackageId, declaration.PackageVersion,
-            declaration.PackageSha256, declaration.Capabilities, declaration.Faults.Where(fault => fault != missing));
+    private static IEnumerable<ConformanceBindingDeclaration> MissingHooks(
+        ConformanceBindingDeclaration declaration, IEnumerable<ConformanceFault> required, string logicalExclusion)
+    {
+        foreach (var missing in required)
+        {
+            foreach (var capabilities in new[] {
+                declaration.Capabilities, declaration.Capabilities.Add(logicalExclusion) })
+            {
+                yield return new(declaration.BindingId, declaration.Category, declaration.PackageId,
+                    declaration.PackageVersion, declaration.PackageSha256, capabilities,
+                    declaration.Faults.Where(fault => fault != missing));
+            }
+        }
+    }
 
     private sealed class RejectedMetadataBinding(
         ConformanceBindingDeclaration declaration) : IMetadataConformanceBinding

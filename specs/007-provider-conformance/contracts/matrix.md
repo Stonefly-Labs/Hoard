@@ -68,7 +68,9 @@ The existing metadata `admission` and artifact `PublicationBoundary` Consumer
 rows additionally require every mandatory logical hook omission to reject
 before factory dispatch/allocation, then run the unchanged actual binding's
 common assertion and original typed origin. Metadata covers ordinary and
-legacy opening. Neither the 132/24-row selections nor origin counts change.
+legacy opening. Missing bindings reject before dereference, and claimed
+logical `MP-21`/`AS-15` exclusions cannot bypass any mandatory hook.
+Neither the 132/24-row selections nor origin counts change.
 This coverage is not a public QC-05 witness or completed QC-05 qualification.
 
 Protocol/identity fixtures qualify declarations and lifecycle only. No

@@ -9794,6 +9794,17 @@ logical hook, a probe copies the actual binding declaration except that hook;
 its factory throws a different exception if dispatched. The row requires the
 exact `BindingInvalid` argument rejection, zero factory calls and no allocated
 resource. Metadata tests both ordinary and legacy entry points.
+Missing bindings must reject with the named `binding` argument before
+dereference. Each hook omission runs both with the actual capabilities and
+with a claimed logical exclusion (`exclude:MP-21` or `exclude:AS-15`). These
+claims cannot turn mandatory logical hooks into optional/durability omissions.
+An isolated fresh-package replay verifies three SDK-only mutations: missing
+mandatory-hook validation, an early return for claimed logical exclusions, and
+missing null-binding validation. Each produces exactly four named assertion
+failures and 114 other passes without skips. The unchanged SDK passes all
+156 metadata/artifact binding rows without skips. All trials use identical
+Consumer sources, freshly packed current dependencies and isolated caches/locks;
+these are local diagnostics, not native qualification.
 
 After all negatives, the same row opens the unchanged actual binding and runs
 its existing common consumer with its original typed origin. The independent

@@ -2295,9 +2295,14 @@ retaining its original typed origin. These are stronger checks within the
 existing 132 metadata/24 artifact rows, not new public witnesses or completed
 QC-05 qualification. SDK/public contracts, provider sources and tracked locks
 are unchanged.
+Both entry paths also reject a missing binding explicitly. Every hook omission
+is repeated with a claimed logical exclusion (`MP-21` or `AS-15`); that claim
+must not bypass admission or activate a factory.
 An isolated local replay freshly packs all 14 Consumer dependencies from the
-current source. Removing the SDK admission guard produces four named assertion
-failures; restoring it passes all 156 metadata/artifact binding rows without
+current source. Removing mandatory-hook validation, permitting a claimed logical
+exclusion to bypass it, or removing null-binding validation each produces four
+named assertion failures and 114 other passes without skips. The unchanged SDK
+passes all 156 metadata/artifact binding rows without
 skips, with unchanged Consumer sources. This is non-native diagnostic evidence,
 not completed category qualification.
 

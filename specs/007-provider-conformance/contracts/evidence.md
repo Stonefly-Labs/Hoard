@@ -127,9 +127,11 @@ observed-session opening before factory dispatch or resource allocation.
 Metadata includes both ordinary and legacy opening. The unchanged actual
 binding then executes the existing common assertion in the same row and emits
 its original typed origin. Probe declarations copy actual package identity and
-capabilities but cannot choose expected faults. These checks retain the
-132/24-row identities and origin counts; they do not establish QC-05 source
-composition or substitute for full extraction/parity/native admission.
+capabilities but cannot choose expected faults. Missing bindings must reject
+before dereference; repeating each missing hook with a claimed logical
+`MP-21`/`AS-15` exclusion must still reject before factory dispatch. These checks
+retain the 132/24-row identities and origin counts; they do not establish QC-05
+source composition or substitute for full extraction/parity/native admission.
 
 The implemented category batch history derives each binding's entire frozen
 runtime union from the independent catalog and requires both category package
