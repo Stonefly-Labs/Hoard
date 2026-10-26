@@ -464,7 +464,7 @@ def _native_category_consumer_control(run, inputs, *, started_ms, ended_ms, hook
         control.update({name: (hashlib.sha256(graph_raw).hexdigest(),) for name in obligation_controls(5)})
     return MappingProxyType({
         "controls": MappingProxyType(control), "sourceProofs": MappingProxyType(packets),
-        **({"observation": observed} if hooks else {})})
+        "observation": observed})
 
 
 def category_mutation_observations(run, inputs, manifest, observed, *, sequence, started_ms, ended_ms):
@@ -1819,20 +1819,67 @@ class NativeCategorySources:
                                   started_ms=transport["started_ms"], ended_ms=transport["ended_ms"])
         return MappingProxyType({**inspected["observation"], **graph})
 
-    def metadata_controls(self, inputs, *, started_ms, ended_ms):
+    def metadata_controls(self, inputs, *, started_ms, ended_ms, metadata_scopes=None, sequence=1):
         collected = {"controls": {}, "sourceProofs": {}}
+        shared = None
         for authority in (native_metadata_recovery_controls, native_metadata_noncooperation_control,
                           native_metadata_ownership_control, native_metadata_package_consumer_control,
                           native_metadata_binary_control, native_metadata_inventory_controls,
                           native_metadata_common_consumer_control, native_hook_admission_control):
             observed = authority(self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
+            if authority is native_metadata_common_consumer_control:
+                shared = observed
             for key, target in collected.items():
                 overlap = set(target) & set(observed[key])
                 if overlap and (key != "sourceProofs" or any(target[path] != observed[key][path] for path in overlap)):
                     raise evidence.ConformanceError("ProofMismatch")
                 target.update(observed[key])
+        if metadata_scopes:
+            paired = self._metadata_parameter_controls(
+                inputs, shared, metadata_scopes, sequence=sequence, started_ms=started_ms, ended_ms=ended_ms)
+            for key, target in collected.items():
+                if set(target) & set(paired[key]):
+                    raise evidence.ConformanceError("ProofMismatch")
+                target.update(paired[key])
         return MappingProxyType({
             key: MappingProxyType(value) for key, value in collected.items()})
+
+    def _metadata_parameter_controls(self, inputs, shared, scopes, *, sequence, started_ms, ended_ms):
+        if type(self._run) is not OwnedRun or inputs["runId"] != self._run.run_id:
+            raise evidence.ConformanceError("OwnershipInvalid")
+        if set(scopes) != {"original-memory", "original-sqlite"} or shared is None:
+            raise evidence.ConformanceError("WitnessMissing")
+        proofs = {path: hashlib.sha256(raw).hexdigest() for path, raw in shared["sourceProofs"].items()}
+        used, instances = evidence._runtime_provenance_state(shared["observation"], frozenset(), {})
+        witnesses = []
+        for scope, transport in sorted(scopes.items()):
+            tests = {identity: (binding, "none")
+                     for binding, identity in category_execution_partitions("metadata", mode="qualification")[scope]}
+            observed = self.ingest_attempt(
+                inputs=inputs, **transport, expected_tests=tests, started_ms=started_ms, ended_ms=ended_ms,
+                category_scope=("metadata", scope))
+            if observed["completion"]["attemptSequence"] != sequence:
+                raise evidence.ConformanceError("ProofMismatch")
+            current, instances = evidence._runtime_provenance_state(observed, used, instances)
+            used = used | current
+            witnesses.extend(observed["witnesses"])
+            proofs.update({f'runtime-{observed["attemptId"]}/{path}': hashed
+                           for path, hashed in observed["proofs"].items()})
+            proofs.update({path: hashlib.sha256(raw).hexdigest() for path, raw in observed["sourceProofs"].items()})
+        raw = evidence.metadata_parameter_pairing_material(
+            inputs, witnesses, proofs, sequence=sequence, started_ms=started_ms, ended_ms=ended_ms)
+        path = f"proofs/category-metadata-parameters-{sequence:04}.json"
+        destination = self._run.root / path
+        try:
+            with destination.open("xb") as output:
+                output.write(raw)
+            destination.chmod(0o400)
+        except FileExistsError:
+            if _readonly(destination, 64 * 1024) != raw:
+                raise evidence.ConformanceError("ProofMismatch") from None
+        return MappingProxyType({
+            "controls": MappingProxyType({name: (hashlib.sha256(raw).hexdigest(),) for name in obligation_controls(2)}),
+            "sourceProofs": MappingProxyType({path: raw})})
 
     def artifact_controls(self, inputs, *, started_ms, ended_ms):
         if inputs["profileId"] != "artifacts":

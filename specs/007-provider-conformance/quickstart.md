@@ -631,7 +631,10 @@ closed bounds and cross-scope replay rejection. Metadata category declarations,
 not reference binding names, govern admission. Schema1/2 remain supported.
 Independent source validators now enforce the frozen per-witness argument map
 and original forest-node placement; all 278 retained local SDK proofs match.
-Cross-family native pairing and QC-02 composition remain unfinished.
+Cross-family pairing now re-admits both complete original scopes and joins the
+current shared graph before issuing QC-02 controls. Complete 96-key basis and
+pairing hashes are independently recomputed on report admission. Native
+confirmation of this new code remains pending; no complete baseline is claimed.
 
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions

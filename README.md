@@ -2544,12 +2544,16 @@ govern argument admission. Overlap, foreign records and replay reject. These rec
 do not establish the still-missing native parameter-quality composition.
 Independent source validators now enforce the frozen per-witness argument
 map, including the exact original forest node for each lease/layout choice.
-All 278 retained local SDK proofs match; native cross-family pairing remains open.
+All 278 retained local SDK proofs match. The source authority now independently
+re-admits both complete original scopes and pairs them with the current shared
+graph before issuing QC-02 controls. Its complete 96-key primary basis retains
+the nine authorized exclusions in a compact independently recomputed packet.
+Native confirmation of this new composition is pending; it is not full qualification.
 
 Fresh fourteen-package replay passes 318 selected consumers. The safe logger
 then passes all 152 shared/63 memory-original/63 SQLite-original witnesses,
 with exactly 32/16/16 source-bound argument calls and identical SDK/archive
-images. All 64 call UUIDs are distinct. Tooling449/19 native skips and source
+images. All 64 call UUIDs are distinct. Tooling451/19 native skips and source
 contracts152/zero skips pass. These remain local, non-qualifying diagnostics.
 
 Exact earlier `831b00c`,

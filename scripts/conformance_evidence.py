@@ -589,7 +589,7 @@ def _validate_report_links(report):
                     and result["caseId"] in quality_basis and attempt["witnessIds"]):
                 material = _category_quality_composition(
                         inputs, result["caseId"], results, executions, sequence=attempt["sequence"],
-                        started_ms=attempt["startedMs"], ended_ms=attempt["endedMs"])
+                        started_ms=attempt["startedMs"], ended_ms=attempt["endedMs"], proof_registry=report["proofs"])
                 if (inputs["mode"] != "qualification" or attempt != material["attempt"]
                         or any(report["proofs"].get(path) != hashlib.sha256(raw).hexdigest()
                                for path, raw in material["sourceProofs"].items())):
@@ -1864,11 +1864,60 @@ def _direct_category_quality_composition(inputs, results, witnesses, *, case_id,
     })
 
 
-def _category_quality_composition(inputs, case_id, results, witnesses, *, sequence, started_ms, ended_ms):
+def metadata_parameter_pairing_material(inputs, witnesses, proofs, *, sequence, started_ms, ended_ms):
+    from conformance_case_catalog import ORIGINAL_METADATA_WITNESSES
+
+    started_ms, ended_ms = float(_number(started_ms)), float(_number(ended_ms))
+    if inputs["profileId"] != "metadata" or inputs["mode"] != "qualification":
+        raise ConformanceError("ProofMismatch")
+    shared = "proofs/qualification-metadata-shared-consumer-native-executions.json"
+    if shared not in proofs:
+        raise ConformanceError("WitnessMissing")
+    bindings = []
+    for binding in ("memory", "sqlite"):
+        selected = sorted((row for row in witnesses
+                           if row["bindingId"] == binding and row["testIdentity"] in ORIGINAL_METADATA_WITNESSES
+                           and started_ms <= row["startedMs"] <= row["endedMs"] <= ended_ms),
+                          key=lambda row: row["testIdentity"])
+        if (len(selected) != len(ORIGINAL_METADATA_WITNESSES)
+                or {row["testIdentity"] for row in selected} != set(ORIGINAL_METADATA_WITNESSES)
+                or any(row["status"] != "Passed" for row in selected)):
+            raise ConformanceError("WitnessMissing")
+        attempts = set()
+        for row in selected:
+            paths = [path for path, hashed in proofs.items()
+                     if path.endswith(f'/proof-{row["executionId"]}.json') and hashed == row["proofSha256"]]
+            if len(paths) != 1 or not re.fullmatch(r"runtime-[0-9a-f-]{36}/proof-[0-9a-f-]{36}\.json", paths[0]):
+                raise ConformanceError("ProofMismatch")
+            attempts.add(_uuid(paths[0].split("/")[0].removeprefix("runtime-")))
+        if len(attempts) != 1:
+            raise ConformanceError("ProofMismatch")
+        attempt = next(iter(attempts))
+        parent = f"proofs/category-source-{attempt}.json"
+        receipt = f"proofs/category-metadata-original-{binding}-{attempt}.json"
+        if parent not in proofs or receipt not in proofs:
+            raise ConformanceError("WitnessMissing")
+        bindings.append({
+            "bindingId": binding, "attemptId": attempt, "sourceParentSha256": proofs[parent],
+            "sourceReceiptSha256": proofs[receipt], "witnessesSha256": digest(selected)})
+    if (len({row["attemptId"] for row in bindings}) != 2
+            or len({row["sourceParentSha256"] for row in bindings}) != 2):
+        raise ConformanceError("ProofMismatch")
+    return canonical_bytes({
+        "schemaVersion": 1, "qualification": False, "mode": "metadata-parameter-pairing",
+        "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "inputsSha256": digest(inputs), "sequence": sequence, "startedMs": started_ms, "endedMs": ended_ms,
+        "sharedConsumerSourceSha256": proofs[shared], "bindings": bindings})
+
+
+def _category_quality_composition(inputs, case_id, results, witnesses, *, sequence, started_ms, ended_ms,
+                                  proof_registry=MappingProxyType({})):
     """Compose only the exact current-attempt basis; never relabel its executions."""
     from conformance_case_catalog import (
-        AUTHORITY_INTEGRATION_ROWS, CATEGORY_QUALITY_BASIS, METADATA_RECOVERY_SOURCE_WITNESS,
-        ORIGINAL_ARTIFACT_PROOF_SOURCES, ORIGINAL_INSPECTION_WITNESSES, category_cases, category_mutation_witnesses,
+        AUTHORITY_INTEGRATION_ROWS, CATEGORY_QUALITY_BASIS, METADATA_INVENTORY_SOURCE_WITNESSES,
+        METADATA_RECOVERY_SOURCE_WITNESS,
+        ORIGINAL_ARTIFACT_PROOF_SOURCES, ORIGINAL_INSPECTION_WITNESSES, ORIGINAL_METADATA_WITNESSES,
+        category_cases, category_mutation_witnesses,
         hook_admission_tests,
     )
 
@@ -1889,6 +1938,20 @@ def _category_quality_composition(inputs, case_id, results, witnesses, *, sequen
     complete, failure, executions, proofs = True, None, set(), set()
     basis, packets = [], {}
     authorities = set(ORIGINAL_ARTIFACT_PROOF_SOURCES) | set(ORIGINAL_INSPECTION_WITNESSES)
+    pairing_parents = {}
+    if (profile, case_id) == ("metadata", "QC-02"):
+        pair_path = f"proofs/category-metadata-parameters-{sequence:04}.json"
+        if pair_path not in proof_registry:
+            complete = False
+        else:
+            raw = metadata_parameter_pairing_material(
+                inputs, witnesses.values(), proof_registry, sequence=sequence, started_ms=started_ms, ended_ms=ended_ms)
+            hashed = hashlib.sha256(raw).hexdigest()
+            if proof_registry[pair_path] != hashed:
+                raise ConformanceError("ProofMismatch")
+            proofs.add(hashed)
+            pairing_parents = {row["bindingId"]: row["sourceParentSha256"] for row in load_json(raw)["bindings"]}
+        authorities = {identity for identity in ORIGINAL_METADATA_WITNESSES if ".MP46_" in identity}
     for case in required:
         row = {"key": case.key, "exclusion": case.exclusion, "attempt": None}
         basis.append(row)
@@ -1920,6 +1983,8 @@ def _category_quality_composition(inputs, case_id, results, witnesses, *, sequen
                for witness in observed):
             raise ConformanceError("ProofMismatch")
         expected = set(case.witnesses)
+        if not expected and profile == "metadata" and case.case_id == "MP-48":
+            expected.add(METADATA_INVENTORY_SOURCE_WITNESSES[case.binding_id])
         if not expected and case.binding_id == "sqlite" and (
                 "verified-recovery-walkthrough" in case.controls
                 or any(control.startswith("parent-kill:") for control in case.controls)):
@@ -1931,13 +1996,17 @@ def _category_quality_composition(inputs, case_id, results, witnesses, *, sequen
         if (profile == "artifacts" and expected & authorities and attempt["status"] == "Passed"
                 and not set(attempt["proofSha256"]) - {row["proofSha256"] for row in observed}):
             raise ConformanceError("ProofMismatch")
+        if ((profile, case_id) == ("metadata", "QC-02") and pairing_parents
+                and expected & set(ORIGINAL_METADATA_WITNESSES) and attempt["status"] == "Passed"
+                and pairing_parents[case.binding_id] not in attempt["proofSha256"]):
+            raise ConformanceError("ProofMismatch")
         complete &= attempt["status"] == "Passed"
         if attempt["status"] == "Failed" and failure is None:
             failure = attempt["diagnosticCode"]
         executions.update(attempt["witnessIds"])
         proofs.update(attempt["proofSha256"])
     code = failure or ("None" if complete and executions and proofs else "EvidenceIncomplete")
-    if (profile, case_id) == ("artifacts", "QC-09"):
+    if (profile, case_id) in (("artifacts", "QC-09"), ("metadata", "QC-02")):
         raw = canonical_bytes({
             "schemaVersion": 1, "qualification": False, "mode": "category-quality-basis",
             "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
@@ -2523,7 +2592,10 @@ class CategoryRuntimeHistory:
         if self._native_sources is not None:
             authority = (self._native_sources.metadata_controls if self._inputs["profileId"] == "metadata"
                          else self._native_sources.artifact_controls)
-            recovered = authority(self._inputs, started_ms=started, ended_ms=ended)
+            options = ({"metadata_scopes": {scope: transport for scope, transport in transports.items()
+                                            if scope in ("original-memory", "original-sqlite")},
+                        "sequence": sequence} if self._inputs["profileId"] == "metadata" else {})
+            recovered = authority(self._inputs, started_ms=started, ended_ms=ended, **options)
             controls = recovered["controls"]
             proofs.update({path: hashlib.sha256(raw).hexdigest() for path, raw in recovered["sourceProofs"].items()})
             proof_bytes += sum(len(raw) for raw in recovered["sourceProofs"].values())
@@ -2556,7 +2628,8 @@ class CategoryRuntimeHistory:
                         continue
                     material = _category_quality_composition(
                         self._inputs, case.case_id, basis, executions, sequence=self._sequences["none"] + 1,
-                        started_ms=self._active["none"][1], ended_ms=ended)
+                        started_ms=self._active["none"][1], ended_ms=ended,
+                        proof_registry={**self._proofs, **proofs})
                     attempt = material["attempt"]
                     packets.update(material["sourceProofs"])
                     for path, raw in material["sourceProofs"].items():

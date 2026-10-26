@@ -2645,7 +2645,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                                         distinct_packages=distinct_packages)
 
         def finish(sequence=1, *, failed=None, missing_control=None, missing_parent=None, proof_bytes=0,
-                   missing_integration=None):
+                   missing_integration=None, metadata_pairing=False):
             start = 9 + (sequence - 1) * 4
             with mock.patch.object(evidence.time, "monotonic", return_value=start / 1000):
                 history.begin_joint(str(uuid.uuid4()), partitions=catalog.category_execution_partitions(
@@ -2677,6 +2677,22 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         for control in case.controls if control != missing_control}
             proofs.update({"control-" + hashlib.sha256(name.encode()).hexdigest() + ".json": hashes[0]
                            for name, hashes in controls.items()})
+            if metadata_pairing:
+                for binding in ("sqlite", "memory"):
+                    attempt = str(uuid.uuid4())
+                    parent = hashlib.sha256(("metadata-parent-" + binding + str(sequence)).encode()).hexdigest()
+                    for row in witnesses:
+                        if row["bindingId"] == binding and row["testIdentity"] in catalog.ORIGINAL_METADATA_WITNESSES:
+                            proofs[f'runtime-{attempt}/proof-{row["executionId"]}.json'] = row["proofSha256"]
+                            if (binding, row["testIdentity"]) != missing_parent:
+                                parents[row["executionId"]] = parent
+                    proofs[f"proofs/category-source-{attempt}.json"] = parent
+                    proofs[f"proofs/category-metadata-original-{binding}-{attempt}.json"] = hashlib.sha256(
+                        ("metadata-receipt-" + binding + str(sequence)).encode()).hexdigest()
+                proofs["proofs/qualification-metadata-shared-consumer-native-executions.json"] = "d" * 64
+                raw = evidence.metadata_parameter_pairing_material(
+                    history._inputs, witnesses, proofs, sequence=sequence, started_ms=start, ended_ms=start + 3)
+                proofs[f"proofs/category-metadata-parameters-{sequence:04}.json"] = hashlib.sha256(raw).hexdigest()
             imported = ("AssertionFailed" if failed else "None", tuple(witnesses), proofs, {}, {},
                         frozenset(), {}, parents, controls, history._proof_bytes + proof_bytes, {})
             with mock.patch.object(history, "_ingest_parts", return_value=imported), mock.patch.object(
@@ -2793,6 +2809,106 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         self.assertEqual("Incomplete", qualities["QC-05"]["status"])
         evidence.admit_entity("QualificationReport", self.category_quality_report(history))
 
+    def test_metadata_extraction_quality_requires_complete_paired_sources_and_recomputed_full_basis(self):
+        history, finish = self.category_quality_fixture()
+        quality = finish(metadata_pairing=True)["QC-02"]
+        self.assertEqual(quality["status"], "Passed")
+        self.assertLessEqual(len(quality["attempts"][0]["proofSha256"]), evidence.MAX_WITNESSES)
+        report = evidence.load_json(evidence.canonical_bytes(self.category_quality_report(history)))
+        evidence.admit_entity("QualificationReport", report)
+        for defect in ("pairing", "basis", "host", "source-parent", "exclusion", "private-source"):
+            changed = copy.deepcopy(report)
+            target = next(row for row in changed["results"]
+                          if row["bindingId"] == "sqlite" and row["caseId"] == "MP-46")
+            attempt = target["attempts"][0]
+            if defect == "pairing":
+                changed["proofs"].pop("proofs/category-metadata-parameters-0001.json")
+            elif defect == "basis":
+                changed["proofs"]["proofs/category-metadata-QC-02-basis-0001.json"] = "0" * 64
+            elif defect == "host":
+                target["attempts"][0]["witnessIds"] = []
+                target["attempts"][0].update(status="Incomplete", diagnosticCode="EvidenceIncomplete")
+                target["status"] = "Incomplete"
+            elif defect == "source-parent":
+                execution = attempt["witnessIds"][0]
+                witness = next(row for row in changed["witnesses"] if row["executionId"] == execution)
+                attempt["proofSha256"] = [witness["proofSha256"]]
+                target["proofSha256"] = [witness["proofSha256"]]
+            elif defect == "exclusion":
+                next(row for row in changed["results"] if row["bindingId"] == "memory"
+                     and row["caseId"] == "MP-38")["exclusionRule"] = "simulation-no-durable-restart"
+            else:
+                changed["proofs"]["proofs/qualification-metadata-shared-consumer-native-executions.json"] = "0" * 64
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("QualificationReport", changed)
+
+    def test_metadata_parameter_controls_re_admit_both_original_scopes_and_reject_replay_or_old_attempts(self):
+        import conformance_case_catalog as catalog
+        import conformance_sources as sources
+        from types import SimpleNamespace
+
+        history, finish = self.category_quality_fixture()
+        finish(metadata_pairing=True)
+        call = str(uuid.uuid4())
+        shared = {
+            "sourceProofs": {"proofs/qualification-metadata-shared-consumer-native-executions.json": b"shared"},
+            "observation": {"sessionOrigins": {}, "originalObservations": {},
+                            "metadataArguments": {"shared": [{"callId": call}]}}}
+        observations, transports = {}, {}
+        for binding in ("memory", "sqlite"):
+            rows = [row for row in history.witnesses if row["bindingId"] == binding
+                    and row["testIdentity"] in catalog.ORIGINAL_METADATA_WITNESSES]
+            first = rows[0]
+            path = next(path for path in history.proofs if path.endswith(f'/proof-{first["executionId"]}.json'))
+            attempt = path.split("/")[0].removeprefix("runtime-")
+            scope = "original-" + binding
+            transports[scope] = {"manifest_data": binding.encode()}
+            observations[scope] = {
+                "attemptId": attempt, "completion": {"attemptSequence": 1}, "witnesses": rows,
+                "proofs": {f'proof-{row["executionId"]}.json': row["proofSha256"] for row in rows},
+                "sourceProofs": {
+                    f"proofs/category-source-{attempt}.json": ("metadata-parent-" + binding + "1").encode(),
+                    f"proofs/category-metadata-original-{binding}-{attempt}.json": (
+                        "metadata-receipt-" + binding + "1").encode()},
+                "sessionOrigins": {}, "originalObservations": {}, "metadataArguments": {}}
+        native = object.__new__(sources.NativeCategorySources)
+        root = Path(self.enterContext(tempfile.TemporaryDirectory()))
+        (root / "proofs").mkdir()
+        native._run = SimpleNamespace(root=root, run_id=history._inputs["runId"])
+
+        def ingest(**options):
+            scope = options["category_scope"][1]
+            self.assertEqual(options["manifest_data"], transports[scope]["manifest_data"])
+            self.assertEqual(set(options["expected_tests"]), set(catalog.ORIGINAL_METADATA_WITNESSES))
+            return observations[scope]
+
+        with mock.patch.object(sources, "OwnedRun", SimpleNamespace), mock.patch.object(
+                native, "ingest_attempt", side_effect=ingest) as admitted:
+            paired = native._metadata_parameter_controls(
+                history._inputs, shared, transports, sequence=1, started_ms=9, ended_ms=12)
+            self.assertEqual(admitted.call_count, 2)
+            self.assertEqual(set(paired["controls"]), set(catalog.obligation_controls(2)))
+            self.assertEqual(len(set(paired["controls"].values())), 1)
+            self.assertEqual(len(paired["sourceProofs"]), 1)
+            for path, raw in paired["sourceProofs"].items():
+                self.assertEqual((root / path).read_bytes(), raw)
+                self.assertEqual((root / path).stat().st_mode & 0o777, 0o400)
+            for defect in ("missing-binding", "old-attempt", "missing-row", "replayed-call"):
+                before = copy.deepcopy(observations)
+                selected = dict(transports)
+                if defect == "missing-binding":
+                    selected.pop("original-memory")
+                elif defect == "old-attempt":
+                    observations["original-memory"]["completion"]["attemptSequence"] = 2
+                elif defect == "missing-row":
+                    observations["original-memory"]["witnesses"] = observations["original-memory"]["witnesses"][:-1]
+                else:
+                    observations["original-memory"]["metadataArguments"] = {"original": [{"callId": call}]}
+                with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                    native._metadata_parameter_controls(
+                        history._inputs, shared, selected, sequence=1, started_ms=9, ended_ms=12)
+                observations = before
+
     def test_metadata_quality_diagnostic_missing_control_and_failed_basis_do_not_become_passes(self):
         history, finish = self.category_quality_fixture(mode="diagnostic")
         self.assertTrue(all(row["status"] == "Incomplete" for row in finish().values()))
@@ -2804,6 +2920,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         failed = next(identity for identity in history.expected_runtime_tests("memory")
                       if ".MP15_Lost_acknowledgment_" in identity)
         first = finish(failed=("memory", failed))
+        self.assertEqual("Failed", first["QC-02"]["status"])
         self.assertEqual("Failed", first["QC-07"]["status"])
         self.assertEqual("AssertionFailed", first["QC-07"]["attempts"][0]["diagnosticCode"])
         first_attempt = first["QC-07"]["attempts"][0]

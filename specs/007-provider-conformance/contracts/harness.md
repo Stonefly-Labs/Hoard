@@ -1550,8 +1550,12 @@ declarations, not reference binding names, govern argument admission. This trans
 does not complete QC-02. Independent source admission now requires the frozen
 per-witness parameter map and exact original forest nodes. Original authority
 re-reads and binds argument bytes into its source-proof digest; missing choices,
-wrong valid values and unexpected calls reject. Cross-family native pairing and
-quality composition remain open.
+wrong valid values and unexpected calls reject. Pairing independently re-admits
+both complete original scopes, joins the current shared graph/SDK images and
+rejects cross-family replay or old attempts before sealing one control receipt.
+QC-02 retains all 96 primary keys and authorized exclusions in a compact full
+basis, preserving existing bounds. Report admission independently recomputes
+pairing/basis hashes and native parent coverage. Native confirmation is pending.
 
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or

@@ -310,7 +310,13 @@ source authorities additionally enforce the frozen per-witness map, including
 empty maps and exact original lease/layout forest nodes. Original authority
 re-reads arguments from readonly proofs and includes validated arguments in its
 source-proof digest. Coherently rehashed missing/wrong/unexpected argument facts
-reject. Cross-family native pairing and QC-02 composition remain outstanding.
+reject. Pairing re-admits both complete original scopes, joins the current
+shared graph and admitted SDK images, rejects replay/old attempts, then seals
+one readonly receipt before issuing the four QC-02 controls. QC-02 retains the
+complete MP-01..48 basis for both bindings and authorized exclusions in a compact
+packet, not a truncated witness list. Report admission independently recomputes
+pairing and basis hashes and checks original native parent coverage. Native
+confirmation of the new composition remains pending.
 
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is

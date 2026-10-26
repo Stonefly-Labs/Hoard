@@ -7456,7 +7456,7 @@ identities using runtime proof schema3, retaining exact schema1/2 support,
 existing bounds and immutable cross-scope replay protection. Metadata category
 declarations, not reference-provider binding names, govern argument admission.
 Contributor-name regressions cover both validators. It does not add
-QC-02 controls or quality basis: cross-family native pairing remains unbuilt,
+QC-02 controls or quality basis by itself; the later pairing increment follows below,
 and all unfinished tasks/checklists/stage gates remain open.
 
 Fresh fourteen-package replay passes 318 selected consumers at source
@@ -7466,7 +7466,7 @@ SDK archive
 Complete safe-logger replay passes 152 shared, 63 memory-original and
 63 SQLite-original witnesses with exactly 32/16/16 argument calls, all 64
 UUIDs distinct and each runtime SDK image matching that archive before/after.
-Tooling449/19 native skips and source contracts152/zero skips pass. The interim
+Tooling451/19 native skips and source contracts152/zero skips pass. The interim
 architecture lifecycle finding is corrected; follow-up has no actionable
 findings but notes the missing deterministic selected-receiver/closure-race
 regression. This is not final T081, native admission or QC-02 composition.
@@ -7479,9 +7479,21 @@ commits both observations and arguments into its source-proof digest. Six
 intended-red original missing/value/node trials first demonstrate the old gap;
 both bindings now reject them after coherent rehashing. Shared source tests
 also reject missing, wrong-valid-value and unexpected calls. All 278 retained
-local SDK proofs/64 calls match the new maps. Tooling remains 449 tests/
-19 native skips, no failures/errors. Cross-family pairing, QC-02 basis/report
-recomputation and exact-head native admission of these new checks remain open.
+local SDK proofs/64 calls match the new maps.
+
+The next increment implements cross-family pairing: the native source authority
+independently re-admits both complete original scopes under the current input,
+attempt and held-command closure, joins the complete shared graph and admitted
+SDK images, rejects cross-family call/source replay and seals one readonly
+pairing receipt before issuing the four QC-02 controls. QC-02 composes all 96
+primary MP-01..48 keys, retaining MP-46 host provenance, MP-48 inventory
+controllers and the exact nine catalog exclusions. A compact complete basis
+preserves existing witness/proof bounds rather than truncating evidence.
+Public report admission independently recomputes pairing/basis hashes and
+checks original native parent coverage. Modeled missing pairing/basis/host/
+parent/private-source, wrong-exclusion, replay and old-attempt challenges reject;
+failed basis/history remain failed. Full tooling451/19 native skips passes.
+Exact-head native confirmation and final feature acceptance remain pending.
 
 Exact earlier `831b00c3999e94958bc3afecb77bf9d99a3cb9fa`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),

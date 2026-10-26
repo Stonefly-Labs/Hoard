@@ -949,6 +949,7 @@ QC_CONTROLS = {
 }
 
 METADATA_QUALITY_BASIS = MappingProxyType({
+    "QC-02": tuple(range(1, 49)),
     "QC-04": (),
     "QC-05": (),
     "QC-06": (*range(1, 18), *range(20, 26), *range(28, 32)),

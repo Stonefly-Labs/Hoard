@@ -10363,8 +10363,13 @@ Original authority re-reads argument packets from readonly proofs, independently
 validates their roles/contexts and commits them into the source-proof digest.
 Missing choices, wrong valid values, unexpected calls and wrong original forest
 nodes reject even after coherent rehashing. All 278 retained local SDK proofs
-match the expected source-node maps. Cross-family pairing and QC-02 composition
-remain unbuilt; these local checks are not new native admission.
+match the expected source-node maps. Cross-family pairing now re-admits both
+complete original scopes, requires the current shared graph and SDK image
+correspondence, rejects cross-family replay/old attempts and seals one receipt.
+QC-02 composes all 96 primary keys, including MP-46 host provenance, MP-48
+inventory controllers and the nine authorized exclusions. A compact complete
+basis preserves the 128-witness/proof bounds; public report admission recomputes
+both pairing and basis hashes. These modeled checks are not new native admission.
 Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 
@@ -10372,7 +10377,7 @@ Fresh fourteen-package replay passes 318 selected consumers. Complete
 152 shared/63 memory-original/63 SQLite-original safe-logger families pass
 without skips and contain exactly 32/16/16 distinct source-bound argument
 calls. Each loaded SDK matches the same admitted local archive image before
-and after its family; all 64 call UUIDs differ. Tooling449/19 native skips
+and after its family; all 64 call UUIDs differ. Tooling451/19 native skips
 and source contracts152/zero skips pass. The scoped architecture follow-up
 finds no actionable issues, but lacks a deterministic selected-receiver/
 closure-race regression and is not final T081 or native admission.

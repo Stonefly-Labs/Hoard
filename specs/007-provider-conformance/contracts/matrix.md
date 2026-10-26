@@ -208,7 +208,11 @@ support remain unchanged. Argument admission uses the declared metadata category
 rather than reference binding names. These records do not independently satisfy any
 QC-02 obligation. Independent source authorities enforce the frozen per-witness
 choice map and exact original forest node, including absence on unparameterized
-witnesses. Cross-family native pairing/composition is still open.
+witnesses. Pairing additionally re-admits both complete original scopes under
+the current owned input/attempt, joins the shared graph/SDK images and rejects
+cross-family replay. QC-02 uses every MP-01..48 key for both bindings, preserving
+the nine catalog exclusions. Its compact full basis and pairing are independently
+recomputed on public report admission. New native confirmation remains pending.
 
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service

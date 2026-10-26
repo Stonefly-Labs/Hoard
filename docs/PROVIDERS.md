@@ -129,7 +129,11 @@ binding names, govern argument admission. This is transport, not an independentl
 composed native QC-02 control or completed provider qualification.
 Independent source admission additionally checks the frozen per-witness
 argument map and exact original forest nodes. Original proof digests include
-the independently re-read arguments. Cross-family pairing remains unfinished.
+the independently re-read arguments. Pairing now independently re-admits both
+complete original scopes and joins the current shared graph/SDK images before
+issuing all four QC-02 controls. QC-02 retains the complete 96-key basis and
+authorized exclusions in a compact packet, independently recomputed by report
+admission. Exact-head native confirmation remains pending.
 
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
