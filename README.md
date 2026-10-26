@@ -40,6 +40,8 @@ selected provider/configuration. Fresh metadata recovery and six Local artifact
 crash/reopen journeys pass as non-qualifying diagnostics. Large-transfer replay
 is currently blocked by local scratch capacity; complete profiles and independent
 verification remain unfinished. See the [implementation checkpoint](specs/007-provider-conformance/plan.md#reviewed-legacy-ownership-and-provider-attribution).
+The independent metadata inventory decoder now also requires the actual legacy
+transport input; resealed command graphs cannot omit it.
 
 ## ✨ The idea
 

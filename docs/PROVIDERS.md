@@ -25,6 +25,8 @@ Fresh metadata recovery and six real Local SIGKILL/reopen journeys pass, still
 with `qualification: false`. Required large-transfer replay remains blocked by
 insufficient local scratch; no capacity threshold, transfer size, applicability
 rule or acceptance gate was reduced.
+The independent C# inventory decoder requires the same actual legacy transport
+input as Python; removing it and resealing command hashes cannot bypass admission.
 
 Metadata test-only corruption controls now retain per-record or exact
 epoch/operation ownership through application and verified restoration. Scope

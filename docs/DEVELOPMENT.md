@@ -4668,6 +4668,17 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+Linux run40395540197 exposed an input-set mismatch: Python's inventory producer
+included `conformance_legacy.py`, but the independent C# decoder retained its old
+required source list. Focused regressions reproduce rejection of a complete graph
+and acceptance of a fully resealed graph omitting that helper. The decoder and
+its model fixture now independently require it. Command
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --no-restore --filter FullyQualifiedName~MetadataInventorySourceTests --verbosity quiet -p:UseSharedCompilation=false -nodeReuse:false`
+changes from two intended failures/one pass to three passes. Focused whitespace
+formatting, frozen inventory/catalog checks and `git diff --check` pass.
+This repairs the demonstrated inventory-controller defect, not the separate
+earlier Object native-I/O deadline failure or complete profile qualification.
+
 The latest scoped architecture-review repairs extend bounded group settlement
 to interactive legacy children, replace blocking trailing-output reads with
 concurrent bounded drains, and bind metadata safe projections to independently

@@ -38,6 +38,23 @@ public sealed class MetadataInventorySourceTests
         Assert.Empty(Directory.GetFiles(fixture.Output));
     }
 
+    [Fact]
+    public void Resealed_commands_cannot_omit_the_actual_legacy_transport_input()
+    {
+        using var fixture = new SourceFixture();
+        for (var sequence = 1; sequence <= 3; sequence++)
+        {
+            var path = $"proofs/execution-command-{sequence:D4}.json";
+            var native = JsonNode.Parse(fixture.Read(path))!;
+            Assert.True(native["inputFiles"]!.AsObject().Remove("snapshot/scripts/conformance_legacy.py"));
+            fixture.Write(path, native);
+            fixture.Graph["commands"]![sequence - 1]!["executionSha256"] = fixture.Files[fixture.Absolute(path)];
+        }
+        fixture.SaveContext();
+        Assert.ThrowsAny<Xunit.Sdk.XunitException>(() => MetadataInventorySource.Verify(fixture.ContextPath, "model-only"));
+        Assert.Empty(Directory.GetFiles(fixture.Output));
+    }
+
     private sealed class SourceFixture : IDisposable
     {
         internal const string Prefix = "proofs/qualification-metadata-inventory";
@@ -60,6 +77,7 @@ public sealed class MetadataInventorySourceTests
             var names = new[] { "scripts/conformance_unit_checks.py", "scripts/conformance_sources.py",
                 "scripts/conformance_case_catalog.py", "scripts/conformance_evidence.py",
                 "scripts/conformance_execution.py", "scripts/conformance_lock_preparation.py",
+                "scripts/conformance_legacy.py",
                 "scripts/metadata_evidence.py", "scripts/foundation_evidence.py", "scripts/lifecycle_evidence.py",
                 "tests/tooling/test_metadata_evidence.py" };
             var sources = names.ToDictionary(name => name,

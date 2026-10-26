@@ -7802,6 +7802,31 @@ explicit native skips; frozen inventory/SDK catalog checks and shell syntax
 also pass. Production references/APIs, examples/diagrams, charter/product/
 architecture/ADR documents, infrastructure and release behavior are unchanged.
 
+### Independent inventory decoder input-set repair
+
+Exact Linux run40395540197 at `4474b35` passes native foundation tests, fresh
+locked replay and isolated artifact cleanup, but both SDK and isolated metadata
+jobs fail the two inventory-controller witnesses with `UnknownDiagnostic`.
+The producer now includes `scripts/conformance_legacy.py`; the independent C#
+`MetadataInventorySource` decoder still allowed only its old ten-source set.
+That deterministically rejects actual eleven-source command inputs.
+
+Update the decoder's explicit required set and its independent fixture, retaining
+strict exact-field/hash checks. A new regression removes the helper from all
+three native commands and reseals native/graph/context hashes; the old decoder
+incorrectly accepts it. The ordinary complete-graph control also fails under the
+old decoder. Command
+`dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --no-restore --filter FullyQualifiedName~MetadataInventorySourceTests --verbosity quiet -p:UseSharedCompilation=false -nodeReuse:false`
+first reports two intended failures and one pass, then all three pass after the
+repair. Focused `dotnet format whitespace ... --verify-no-changes --no-restore`
+and frozen inventory/catalog checks pass. Proof inventory size remains fourteen:
+the helper is an actual native command input, not an invented additional output.
+No source, decoder field, witness, fingerprint or assertion is omitted to pass.
+The earlier Object native-I/O failure remains separately undiagnosed. Complete
+profile acceptance and the running implementation checkpoint remain unchanged.
+Production APIs/dependencies, examples/diagrams and product/architecture documents
+are unaffected by this test-only decoder correction.
+
 ### Reviewed legacy ownership and provider attribution
 
 A scoped architecture review identified three remaining legacy-transport gaps:
