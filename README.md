@@ -2550,6 +2550,20 @@ graph before issuing QC-02 controls. Its complete 96-key primary basis retains
 the nine authorized exclusions in a compact independently recomputed packet.
 Native confirmation of this new composition is pending; it is not full qualification.
 
+The subsequent deletion increment extends the artifact scope to 166 rows.
+An awaited injection overload preserves the original pending-reclamation
+assertions and synchronous wrapper. Owned delete-removed failure is identified
+by exception reference; same-type/message ordinary callbacks still fault the
+settlement ledger and retain cleanup ownership. Fresh fourteen-package replay
+passes 322 selected consumers without skips. All fourteen actual observation/
+callback controls and both original deletion wrappers pass; an SDK-only cleanup
+assertion mutant gives both families exactly two named failures, with identical
+runtime SDK/archive images. These are local diagnostics, not complete QC-03.
+Exact `b66e6b0`/run40292115062 independently admits the earlier artifact162/
+metadata152 sources and argument transport: all three Linux jobs and 341 native
+foundations pass without skips. Frozen-map/QC-02 pairing native admission is
+still outstanding; no task/checklist/stage completion is implied.
+
 Fresh fourteen-package replay passes 318 selected consumers. The safe logger
 then passes all 152 shared/63 memory-original/63 SQLite-original witnesses,
 with exactly 32/16/16 source-bound argument calls and identical SDK/archive

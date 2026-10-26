@@ -471,9 +471,12 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(beforeFailure);
-        if (point is not (ArtifactObservationPoint.ReadOpened or ArtifactObservationPoint.ReconciliationVerified))
+        if (point is not (ArtifactObservationPoint.ReadOpened or ArtifactObservationPoint.ReconciliationVerified
+            or ArtifactObservationPoint.DeleteRemoved))
         { throw new ArgumentException("BindingInvalid"); }
-        var failure = new InvalidOperationException("InjectedObservationFailure");
+        Exception failure = point == ArtifactObservationPoint.DeleteRemoved
+            ? new IOException("InjectedDeleteAcknowledgmentLoss")
+            : new InvalidOperationException("InjectedObservationFailure");
         return ValueTask.FromResult<IArtifactFaultRegistration>(RegisterBoundary(point, async () =>
         {
             await beforeFailure();

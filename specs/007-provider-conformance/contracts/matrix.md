@@ -214,6 +214,17 @@ cross-family replay. QC-02 uses every MP-01..48 key for both bindings, preservin
 the nine catalog exclusions. Its compact full basis and pairing are independently
 recomputed on public report admission. New native confirmation remains pending.
 
+The subsequent artifact166 scope includes both pending-reclamation consumers
+and ordinary same-shaped delete-removed callback controls. The shared awaited
+injection overload retains the original synchronous wrapper and assertions.
+Fresh packages pass 322 selected consumers; fourteen actual/two original
+controls pass, with an SDK-only cleanup assertion mutant producing exactly two
+named failures per family and matching SDK/archive images. Ordinary callbacks
+still fault settlement and retain cleanup ownership; full QC-03 remains open.
+Exact `b66e6b0`/run40292115062 admits the earlier artifact162/metadata152 argument
+transport on Linux, with all three jobs/341 native foundations passing without
+skips. It does not admit the later frozen maps, pairing or deletion increment.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

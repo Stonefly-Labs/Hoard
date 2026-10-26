@@ -5,15 +5,23 @@ namespace Hoard.Testing.Conformance.Artifacts;
 
 public static class ArtifactDeletionAssertions
 {
+    public static Task PendingReclamationAsync(
+        IArtifactStore store, IArtifactMaintenance maintenance, ArtifactStoreIdentity identity,
+        Action<Func<ValueTask>> observeLostAcknowledgement, CancellationToken cancellationToken) =>
+        PendingReclamationAsync(store, maintenance, identity, () =>
+        {
+            observeLostAcknowledgement(() => ValueTask.FromException(new IOException(ArtifactFailureAssertions.Canary)));
+            return ValueTask.CompletedTask;
+        }, cancellationToken);
+
     public static async Task PendingReclamationAsync(
         IArtifactStore store, IArtifactMaintenance maintenance, ArtifactStoreIdentity identity,
-        Action<Func<ValueTask>> observeLostAcknowledgement, CancellationToken cancellationToken)
+        Func<ValueTask> injectLostAcknowledgement, CancellationToken cancellationToken)
     {
         using var source = new ShortSource("pending physical reclamation"u8.ToArray());
         var committed = await PublishAsync(store, source, new(1024), cancellationToken);
         var ticket = Success(await store.ReserveDeleteAsync(new(committed.Stamp), new(), cancellationToken));
-        ValueTask LostAck() => ValueTask.FromException(new IOException(ArtifactFailureAssertions.Canary));
-        observeLostAcknowledgement(LostAck);
+        await injectLostAcknowledgement();
         Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
             await store.DeleteAsync(ticket, new(), cancellationToken)).Code);
         var pending = Assert.IsType<ArtifactResolution.Removed>(

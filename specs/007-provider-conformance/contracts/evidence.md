@@ -318,6 +318,18 @@ packet, not a truncated witness list. Report admission independently recomputes
 pairing and basis hashes and checks original native parent coverage. Native
 confirmation of the new composition remains pending.
 
+The subsequent artifact166 scope adds both pending-reclamation consumers and
+same-shaped ordinary delete-removed callback controls. Only the exact injected
+exception is intentional; ordinary errors fault actual settlement and retain
+cleanup ownership with `CleanupIncomplete`. Fresh fourteen-package replay
+passes 322 consumers; fourteen actual/two original controls pass. An SDK-only
+cleanup assertion mutant gives each family exactly two named failures, all
+others passing with matching runtime SDK/archive images. No native or complete
+QC-03 claim follows from these local receipts. Exact `b66e6b0`/run40292115062
+independently admits the earlier artifact162/metadata152 argument transport:
+three Linux jobs/341 native foundations pass without skips. The later frozen
+maps, QC-02 pairing and deletion changes remain unadmitted natively.
+
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,

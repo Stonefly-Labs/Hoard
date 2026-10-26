@@ -636,6 +636,17 @@ current shared graph before issuing QC-02 controls. Complete 96-key basis and
 pairing hashes are independently recomputed on report admission. Native
 confirmation of this new code remains pending; no complete baseline is claimed.
 
+The next artifact increment has 166 rows, adding both pending-reclamation
+consumers and ordinary same-shaped delete-removed callback controls. Fresh
+fourteen-package replay passes 322 selected consumers. Fourteen actual/two
+original controls pass; an SDK-only cleanup assertion mutant gives two named
+failures per family with matching runtime SDK/archive images. Ordinary callback
+failures retain faulted settlement and explicit `CleanupIncomplete`, not false
+release. These are local diagnostics, not full QC-03. Exact `b66e6b0`/
+run40292115062 independently passes three Linux jobs/341 native foundations
+without skips, admitting the earlier artifact162/metadata152 argument transport,
+not the later frozen-map/pairing/deletion work.
+
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

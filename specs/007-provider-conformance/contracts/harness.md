@@ -1557,6 +1557,19 @@ QC-02 retains all 96 primary keys and authorized exclusions in a compact full
 basis, preserving existing bounds. Report admission independently recomputes
 pairing/basis hashes and native parent coverage. Native confirmation is pending.
 
+The next artifact166 increment adds an awaited pending-reclamation injection
+overload without changing the original wrapper or assertions. Typed intentional
+failure additionally supports delete-removed, identified by exact exception
+reference, never type/message. Ordinary same-shaped callbacks fault settlement
+and retain ownership with explicit `CleanupIncomplete`; their control reclaims
+the pending payload before checking failed ownership. Fresh packages pass 322
+selected consumers. Fourteen actual/two original controls pass; an SDK-only
+cleanup assertion mutant gives each family exactly two named failures, all
+others passing with matching SDK/archive images. These are local diagnostics,
+not QC-03 completion. Exact `b66e6b0`/run40292115062 independently admits earlier
+artifact162/metadata152 argument transport with three Linux jobs/341 native
+foundations passing without skips, not the later maps/pairing/deletion work.
+
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or
 ownership consumers. Reduced/foreign scopes reject before launch; routing

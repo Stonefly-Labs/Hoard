@@ -7495,6 +7495,28 @@ parent/private-source, wrong-exclusion, replay and old-attempt challenges reject
 failed basis/history remain failed. Full tooling451/19 native skips passes.
 Exact-head native confirmation and final feature acceptance remain pending.
 
+The next artifact increment preserves pending-reclamation behavior through an
+awaited injection overload while retaining the synchronous original wrapper.
+Both actual consumers and same-shaped ordinary delete-removed callback controls
+extend the closed artifact scope to 166. Ordinary errors retain their exact
+identity in faulted settlement; disposal explicitly reports `CleanupIncomplete`,
+never a false release. After the uncertain delete, the ordinary-error control
+explicitly reclaims pending physical bytes before checking failed ownership.
+Fresh fourteen-package replay passes 322 consumers at source
+`5fc109b94621b7fab4171c8e05fca4a6ef282b51dd5273aeb68e9017c96ca5af`,
+SDK archive `952dc7d9434cf0a22a9cfc11f629cbdfeb80275d5a0660457c229194a536e3ba`.
+All fourteen actual controls/two original wrappers pass. An SDK-only cleanup
+assertion mutant produces exactly two named `PendingReclamationAsync` failures
+in each family, all other rows passing; both loaded SDK images match each
+trial's archive. Source contracts152/zero skips and tooling451/19 native skips
+pass. The initial missing-overload `CS1503` is compilation-red evidence only;
+interim disposal-assertion failures are not behavioral parity passes.
+Exact `b66e6b0`/run40292115062 independently passes all three Linux jobs and
+341 native foundations without skips, admitting artifact162/metadata152 and
+ten metadata parents. Metadata remains 92 Passed/1 Incomplete/9 NotApplicable/
+0 Failed, report `Incomplete`, qualification false. The later frozen maps,
+QC-02 pairing and artifact166 changes still await native admission.
+
 Exact earlier `831b00c3999e94958bc3afecb77bf9d99a3cb9fa`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),
 passes all three Linux jobs and strict source admission: 336 native foundations/

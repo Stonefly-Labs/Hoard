@@ -10370,6 +10370,18 @@ QC-02 composes all 96 primary keys, including MP-46 host provenance, MP-48
 inventory controllers and the nine authorized exclusions. A compact complete
 basis preserves the 128-witness/proof bounds; public report admission recomputes
 both pairing and basis hashes. These modeled checks are not new native admission.
+The subsequent artifact166 increment adds both pending-reclamation consumers
+and same-shaped ordinary delete-removed callback failures. Awaited injection
+preserves the original synchronous wrapper and every cleanup/readback/receipt
+assertion. Ordinary failures remain in the actual settlement ledger, with
+explicit `CleanupIncomplete` and no false release. Fresh fourteen-package
+replay passes 322 selected consumers without skips. Fourteen actual controls/
+two original deletion wrappers pass; an SDK-only cleanup assertion mutant gives
+each family exactly two named failures, with matching runtime SDK/archive
+images. This is not complete QC-03. Exact `b66e6b0`/run40292115062 independently
+passes all three Linux jobs and 341 native foundations without skips, admitting
+the earlier artifact162/metadata152 argument-transport snapshot, not the later
+frozen-map/pairing/deletion changes.
 Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 

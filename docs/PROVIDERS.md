@@ -135,6 +135,18 @@ issuing all four QC-02 controls. QC-02 retains the complete 96-key basis and
 authorized exclusions in a compact packet, independently recomputed by report
 admission. Exact-head native confirmation remains pending.
 
+The subsequent artifact scope has 166 rows: pending physical reclamation and
+ordinary same-shaped delete-removed callback failures run on both bindings.
+The awaited shared injection overload preserves the synchronous original
+wrapper and its assertions; only the exact owned exception is intentional.
+Ordinary callbacks fault actual settlement and retain cleanup ownership.
+Fresh packages pass 322 selected consumers; fourteen actual/two original
+controls pass and an SDK-only cleanup assertion mutant gives exactly two named
+failures per family with matching SDK/archive images. This is local parity,
+not full QC-03. Exact `b66e6b0`/run40292115062 independently passes three Linux
+jobs/341 native foundations without skips and admits the earlier artifact162/
+metadata152 argument transport, not the later map/pairing/deletion changes.
+
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run

@@ -4251,10 +4251,11 @@ class SdkDiagnosticTests(unittest.TestCase):
         expected.update(prefix + "Observed_receipts_and_failed_callbacks_preserve_actual_resource_ownership"
                         + f'(provider: "{provider}", consumer: "{consumer}")'
                         for provider in ("local", "object")
-                        for consumer in ("receipt", "read-open", "verified-reconciliation"))
+                        for consumer in ("receipt", "read-open", "verified-reconciliation", "pending-reclamation"))
         expected.update(prefix + "Ordinary_errors_inside_owned_failure_callbacks_still_fault_actual_settlement"
                         + f'(provider: "{provider}", point: {point})'
-                        for provider in ("local", "object") for point in ("ReadOpened", "ReconciliationVerified"))
+                        for provider in ("local", "object")
+                        for point in ("ReadOpened", "ReconciliationVerified", "DeleteRemoved"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"

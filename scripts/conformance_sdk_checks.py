@@ -1501,10 +1501,10 @@ def full_artifact_binding_scenarios():
     identities.update(prefix + "Observed_receipts_and_failed_callbacks_preserve_actual_resource_ownership"
                       + f'(provider: "{provider}", consumer: "{consumer}")'
                       for provider in ("local", "object")
-                      for consumer in ("receipt", "read-open", "verified-reconciliation"))
+                      for consumer in ("receipt", "read-open", "verified-reconciliation", "pending-reclamation"))
     identities.update(prefix + "Ordinary_errors_inside_owned_failure_callbacks_still_fault_actual_settlement"
                       + f'(provider: "{provider}", point: {point})'
-                      for provider in ("local", "object") for point in ("ReadOpened", "ReconciliationVerified"))
+                      for provider in ("local", "object") for point in ("ReadOpened", "ReconciliationVerified", "DeleteRemoved"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
