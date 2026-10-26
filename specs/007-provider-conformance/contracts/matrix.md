@@ -245,6 +245,12 @@ correspondence; missing, extra and foreign validation origins reject. Exact
 jobs/341 native foundations passing without skips. Pairing/newer artifact native
 admission and complete QC-03 remain outstanding.
 
+The artifact shared-consumer source command now selects all 250 witnesses/
+262 origins unchanged from the relocated catalog. Qualification admission
+reconstructs exact original packets, six runtime/archive images, wrapper SDK
+identity and the owned command closure. Tooling454 (19 native skips) passes;
+actual native admission and full original-parameter/QC-03 pairing remain pending.
+
 Object's access fault scope now resides in the concrete binding rather than its
 provider assembly. The unchanged prepared no-rename witness fails named
 `Assert.Empty` before this repair and passes afterward. Native protection and

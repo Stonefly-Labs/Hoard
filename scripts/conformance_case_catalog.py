@@ -13,6 +13,7 @@ from conformance_evidence import (
 
 
 INVENTORY = Path(__file__).resolve().parents[1] / "tests/fixtures/conformance/baselines/inventory.json"
+FULL_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ArtifactConformanceSessionTests."
 
 CATEGORY_BINDING_SLOTS = (
     ("metadata", "sqlite", "fixture.metadata.sqlite", "Hoard.Fixtures.Metadata.Sqlite"),
@@ -44,6 +45,161 @@ def category_mutation_witnesses(profile, *, corrected):
     return MappingProxyType({
         "Hoard.Conformance.Tests.CategoryMutationTests." + method + f'(provider: "{binding}")': binding
         for category, binding, _, _ in CATEGORY_BINDING_SLOTS if category == profile})
+
+
+def full_artifact_binding_scenarios():
+    prefix = FULL_ARTIFACT_CONSUMER_PREFIX
+    identities = {
+        prefix + "Full_binding_controls_reach_actual_work_and_preserve_borrowed_ownership"
+        + f'(provider: "{provider}", fault: {fault})'
+        for provider in ("local", "object") for fault in (
+            "PublicationBoundary", "DirectVisibility", "PayloadDamage", "Capacity",
+            "NativeNonCooperation", "CleanupFailure", "GenerationBoundary", "ReceiptBoundary",
+            "SourceNonCooperation", "SinkNonCooperation")}
+    identities.update(prefix + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
+                      + f'(provider: "{provider}", retainsPublication: {retained})'
+                      for provider, retained in (("local", "True"), ("object", "False")))
+    identities.update(prefix + "Releasing_native_work_does_not_block_an_independent_release_or_rearming"
+                      + f'(provider: "{provider}")' for provider in ("local", "object"))
+    identities.update(prefix + "Observed_publication_consumers_preserve_actual_binding_guarantees"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "empty", "unknown-length", "expectations", "unsupported", "duplicates"))
+    identities.update(prefix + "Observed_read_reconciliation_and_deletion_preserve_actual_binding_guarantees"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "destination-failure", "exact-retry", "staged-length", "recreation", "reader-exclusion"))
+    identities.update(prefix + "Observed_boundary_consumers_preserve_actual_binding_guarantees"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider, consumers in (
+                          ("local", ("private-staging", "concurrent-writers", "lost-acknowledgment", "visible-before-ack")),
+                          ("object", ("private-staging", "concurrent-writers", "lost-acknowledgment", "direct-availability")))
+                      for consumer in consumers)
+    identities.update(prefix + "Ordinary_acknowledgment_shaped_observer_errors_still_fault_actual_settlement"
+                      + f'(provider: "{provider}")' for provider in ("local", "object"))
+    identities.update(prefix + "Observed_payload_and_progress_consumers_preserve_actual_binding_guarantees"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "read-bitflip", "read-truncate", "commit-progress", "exact-payload"))
+    identities.update(prefix + "Observed_recovery_evidence_and_expiry_preserve_actual_binding_guarantees"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "receipts", "recovery-pages", "sequential-recovery", "changed-inventory",
+                          "expiry-generation", "ownerless-expiry", "finalized-noncommit", "finalized-mutations",
+                          "idle-read", "cooperative-inactivity", "noncooperative-source", "noncooperative-destination"))
+    identities.update(prefix + "Observed_cancelled_descriptors_preserve_actual_current_ownership"
+                      + f'(provider: "{provider}", alteration: "{alteration}")'
+                      for provider in ("local", "object") for alteration in ("completion", "handle", "renewed"))
+    identities.update(prefix + "Observed_budget_failures_and_references_preserve_actual_binding_guarantees"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "authority-deadline", "cancel-before", "cancel-waiting", "cap-crossing",
+                          "cooperative-cancel", "storage-failures", "live-references", "reclaimed-identities"))
+    identities.add(prefix + "Observed_budget_failures_and_references_preserve_actual_binding_guarantees"
+                   + '(provider: "local", consumer: "reclaimed-incarnations")')
+    identities.update(prefix + "Observed_clock_rollback_preserves_expiry_and_monotonic_ownership"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "history", "write-capacity", "delete-capacity"))
+    identities.update(prefix + "Observed_handoff_and_progress_preserve_actual_result_ownership"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "released-cancellation", "successful-ticket", "successful-read",
+                          "unclaimed-ticket", "unclaimed-read", "expired-staging", "progress-cancellation"))
+    identities.update(prefix + "Observed_admitted_work_preserves_history_queue_and_shutdown_ownership"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "delete-history", "transfer-queue", "released-shutdown"))
+    identities.update(prefix + "Observed_reconciliation_and_cleanup_preserve_admitted_generation_ownership"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "settled-replacement", "reconciliation-history", "cleanup-generation"))
+    identities.update(prefix + "Observed_history_candidates_preserve_the_original_page_bounds"
+                      + f'(provider: "{provider}", kind: "{kind}")'
+                      for provider in ("local", "object") for kind in (
+                          ("tickets", "dependencies", "decisions", "reclamation") if provider == "local"
+                          else ("tickets", "dependencies", "decisions")))
+    identities.update(prefix + method + f'(provider: "{provider}")'
+                      for provider in ("local", "object") for method in (
+                          "Observed_history_candidates_resume_after_an_owned_one_shot_failure",
+                          "Ordinary_candidate_shaped_observer_errors_still_fault_actual_settlement"))
+    identities.update(prefix + "Observed_receipts_and_failed_callbacks_preserve_actual_resource_ownership"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object")
+                      for consumer in ("receipt", "read-open", "verified-reconciliation", "pending-reclamation"))
+    identities.update(prefix + "Ordinary_errors_inside_owned_failure_callbacks_still_fault_actual_settlement"
+                      + f'(provider: "{provider}", point: {point})'
+                      for provider in ("local", "object") for point in ("ReadOpened", "ReconciliationVerified", "DeleteRemoved"))
+    identities.update(prefix + "Observed_admitted_open_rechecks_actual_quarantine_before_result_handoff"
+                      + f'(provider: "{provider}")' for provider in ("local", "object"))
+    identities.update(prefix + "Observed_validation_first_quarantine_survives_actual_restoration_and_reopen"
+                      + f'(provider: "{provider}", missing: {missing})'
+                      for provider in ("local", "object") for missing in ("False", "True"))
+    identities.update(prefix + "Observed_initial_admission_preserves_actual_capabilities_and_no_io_rejection"
+                      + f'(provider: "{provider}", probe: {probe})'
+                      for provider in ("local", "object") for probe in (
+                          "Complete", "Version", "Publication", "Deletion", "Recovery", "Fencing",
+                          "Readers", "Streaming", "ForeignAuthority"))
+    identities.add(prefix + 'Observed_local_reconciliation_cannot_finalize_after_actual_read_quarantine(provider: "local")')
+    identities.update(prefix + "Observed_committed_detection_paths_quarantine_actual_restored_bytes"
+                      + f'(provider: "{provider}", detection: "{detection}")'
+                      for provider in ("local", "object") for detection in ("open", "publication", "reconciliation"))
+    identities.update(prefix + "Observed_local_durable_reopen_preserves_retired_decisions_and_receipt_release"
+                      + f'(provider: "local", consumer: "{consumer}")'
+                      for consumer in ("committed-decision", "durable-receipt"))
+    identities.add(prefix + 'Ordinary_record_write_callback_errors_still_fault_actual_settlement(provider: "local")')
+    identities.add(prefix + 'Object_record_write_fault_rejects_without_borrowing_actual_deletion(provider: "object")')
+    identities.add(prefix + 'Observed_failed_quarantine_persistence_retains_actual_ownership_through_retry_and_reopen(provider: "local")')
+    identities.add(prefix + 'Object_record_permissions_reject_without_borrowing_payload_access(provider: "object")')
+    identities.add(prefix + 'Observed_record_permission_application_joins_actual_shutdown_before_resource_settlement(provider: "local")')
+    identities.update(prefix + "Observed_committed_residual_cleanup_preserves_actual_receipt_and_owned_capacity"
+                      + f'(provider: "{provider}")' for provider in ("local", "object"))
+    identities.update(prefix + "Observed_storage_inventory_bounds_all_actual_entries_and_rejects_nonfiles"
+                      + f'(provider: "{provider}", shape: "{shape}")'
+                      for provider in ("local", "object") for shape in ("overflow", "directory", "symlink"))
+    identities.update(prefix + "Observed_failed_prefix_cleanup_and_stop_preserve_actual_ownership_and_fence_replay"
+                      + f'(provider: "{provider}", stop: {stop})'
+                      for provider in ("local", "object") for stop in ("False", "True"))
+    identities.update(prefix + "Observed_object_cleanup_and_stop_preserve_actual_selected_payload"
+                      + f'(provider: "object", stop: {stop})' for stop in ("False", "True"))
+    identities.update(prefix + "Observed_unselected_object_cleanup_preserves_actual_residual_and_blocks_retry"
+                      + f'(provider: "object", point: {point}, cancel: {cancel})'
+                      for point in ("CommitProgress", "BeforePublicationDecision") for cancel in ("False", "True"))
+    identities.update(prefix + "Ordinary_cleanup_boundary_errors_cannot_borrow_intentional_failure_ownership"
+                      + f'(provider: "{provider}", point: {point})'
+                      for provider in ("local", "object") for point in ("StagePrefix", "BeforePublicationDecision", "CommitProgress"))
+    identities.update(prefix + "Ordinary_record_permission_release_errors_restore_actual_mode_before_faulted_settlement"
+                      + f'(provider: "local", cancellation: {cancellation})' for cancellation in ("False", "True"))
+    identities.update(prefix + "Observed_validation_access_failures_preserve_actual_intact_content"
+                      + f'(provider: "{provider}", unavailable: {unavailable})'
+                      for provider in ("local", "object") for unavailable in ("False", "True"))
+    identities.update(prefix + "Observed_access_application_joins_actual_shutdown_before_releasing_owned_resources"
+                      + f'(provider: "{provider}", unavailable: {unavailable})'
+                      for provider in ("local", "object") for unavailable in ("False", "True"))
+    identities.update(prefix + method + f'(provider: "{provider}", unavailable: {unavailable})'
+                      for method in ("Observed_access_scope_protects_actual_incarnation_until_restoration",
+                                     "Ordinary_access_release_errors_restore_actual_payload_before_faulted_settlement",
+                                     "Ordinary_access_release_cancellation_restores_actual_payload_before_faulted_settlement")
+                      for provider in ("local", "object") for unavailable in ("False", "True"))
+    return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
+
+
+def full_artifact_binding_origin_counts():
+    reopen = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
+    payload = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_payload_and_progress_consumers_preserve_actual_binding_guarantees"
+    validation = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_validation_first_quarantine_survives_actual_restoration_and_reopen"
+    detection = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_committed_detection_paths_quarantine_actual_restored_bytes"
+    durable = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_local_durable_reopen_preserves_retired_decisions_and_receipt_release"
+    persistence = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_failed_quarantine_persistence_retains_actual_ownership_through_retry_and_reopen"
+    prefix_stop = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_failed_prefix_cleanup_and_stop_preserve_actual_ownership_and_fence_replay"
+    return {identity: 2 if identity.split("(")[0] in (reopen, durable, persistence) or ('(provider: "local"' in identity and (
+                (identity.split("(")[0] == prefix_stop and "stop: True" in identity) or
+                identity.split("(")[0] == validation or (identity.split("(")[0] == detection and any(
+                    f'detection: "{value}"' in identity for value in ("open", "publication")))
+                or (identity.split("(")[0] == payload and any(
+                    f'consumer: "{consumer}"' in identity for consumer in ("read-bitflip", "read-truncate")))))
+            else 1 for identity in full_artifact_binding_scenarios()[0][1]}
+
 
 
 def metadata_common_consumer_origin_counts():
@@ -101,6 +257,24 @@ def metadata_common_consumer_tests():
     return MappingProxyType({
         identity: (binding, "full-metadata-binding")
         for identity in metadata_common_consumer_origin_counts() for binding in ("memory", "sqlite")
+        if f'(provider: "{binding}"' in identity})
+
+
+def category_common_consumer_origin_counts(profile):
+    if profile == "metadata":
+        return metadata_common_consumer_origin_counts()
+    if profile == "artifacts":
+        return full_artifact_binding_origin_counts()
+    raise ConformanceError("WitnessMissing")
+
+
+def category_common_consumer_tests(profile):
+    providers = {"metadata": ("memory", "sqlite"), "artifacts": ("local", "object")}
+    if profile not in providers:
+        raise ConformanceError("WitnessMissing")
+    return MappingProxyType({
+        identity: (binding, "full-" + ("artifact" if profile == "artifacts" else "metadata") + "-binding")
+        for identity in category_common_consumer_origin_counts(profile) for binding in providers[profile]
         if f'(provider: "{binding}"' in identity})
 
 

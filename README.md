@@ -2588,6 +2588,12 @@ argument maps on Linux: three jobs/341 native foundations pass without skips.
 QC-02 pairing and the newer artifact scopes still await native observation;
 full qualification and the implementation stage remain unfinished.
 
+Artifact qualification now schedules the complete shared-consumer source command,
+pins the same SDK image in Consumer/original wrappers and independently reconstructs
+its owned native command, exact 250 witnesses/262 origins and six package images.
+The catalog relocation preserves every identity/origin count. Tooling454
+(19 native skips) passes; actual native admission and QC-03 pairing remain pending.
+
 The Object access-fault implementation now lives in its concrete test binding,
 as the original driver-owned fault did. The provider still selects/protects the
 exact stamp and captures the scope before release hooks, but contains no rename

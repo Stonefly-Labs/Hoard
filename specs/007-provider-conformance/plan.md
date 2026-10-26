@@ -7556,6 +7556,30 @@ Metadata remains 92 Passed/1 Incomplete/9 NotApplicable/0 Failed, report
 `Incomplete`, qualification false. Pairing/newer artifact scopes remain pending;
 no tasks, reviewer-owned checklists or stage markers advance here.
 
+### Native artifact shared-consumer source admission
+
+The existing metadata source reconstruction now also admits the complete
+artifact shared-consumer source family in qualification mode only. Move the
+unchanged 250 identities/262-origin expectation factory into the shared catalog;
+independent before/after comparison confirms exact equality and twelve reopen
+edges. Preserve native readonly graph/manifest/owner/settings/proof reconstruction,
+six exact consumer/SDK/binding/provider images, archive correspondence, executor-
+held argv/cwd/inputFiles, timing, successful exit/containment and the extra
+original-wrapper SDK image pin. Unexpected metadata arguments reject for artifacts.
+Schedule this source command before real transfer controls without reducing any
+budget, and retain both common/hook original packets with overlap conflict checks.
+
+The initial source-owned scope regression fails `WitnessMissing` before wiring.
+The expanded native reconstruction fixture covers all 250 artifact witnesses and
+missing/duplicate/foreign origins, wrong cases/roles/descriptors, manifest/argv/
+input/record/settings changes and missing/foreign wrapper SDK images. Expanded
+launch/fail-closed orchestration checks and tooling454 (19 native skips) pass.
+Scoped read-only architecture review finds no actionable source-boundary,
+ownership or false-qualification issue; it does not attest execution or final T081.
+Actual Linux admission, original artifact parameter pairing and QC-03/full
+acceptance remain pending. No task/checklist/stage marker advances; examples,
+diagrams, production dependencies and infrastructure are unaffected.
+
 ### Object access-fault boundary repair
 
 Linux `516b6e4` / run `40312172408` fails the prepared Object no-rename witness;

@@ -3950,7 +3950,10 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         return_value={"sourceReceipt": source_raw, "sourceProofs": graph, "sourcePackets": packets}) as authority, \
                         mock.patch.object(sources, "native_hook_admission_control", return_value={
                             "controls": {"hook-admission-sdk-consumer": ("c" * 64,)},
-                            "sourceProofs": {"proofs/isolated-hook-control.json": b"isolated-hook-control"}}) as hooks:
+                            "sourceProofs": {"proofs/isolated-hook-control.json": b"isolated-hook-control"}}) as hooks, \
+                        mock.patch.object(sources, "native_category_common_consumer_control", return_value={
+                            "controls": {"shared-artifacts-sdk-consumer": ("d" * 64,)},
+                            "sourceProofs": {"proofs/isolated-shared-control.json": b"isolated-shared-control"}}) as shared:
                     if defect:
                         with self.assertRaises(evidence.ConformanceError):
                             native.ingest_attempt(category_scope=("artifacts", "controller"), **options)
@@ -3967,8 +3970,11 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         self.assertEqual(set(result[7].values()), {evidence.digest(parent)})
                         self.assertIn(seal_path, result[2])
                         self.assertIn("proofs/isolated-hook-control.json", result[2])
-                        self.assertEqual(result[8], {"hook-admission-sdk-consumer": ("c" * 64,)})
+                        self.assertIn("proofs/isolated-shared-control.json", result[2])
+                        self.assertEqual(result[8], {"hook-admission-sdk-consumer": ("c" * 64,),
+                                                     "shared-artifacts-sdk-consumer": ("d" * 64,)})
                         hooks.assert_called_once_with(run, history._inputs, started_ms=0, ended_ms=20)
+                        shared.assert_called_once_with(run, history._inputs, started_ms=0, ended_ms=20)
                         self.assertEqual(authority.call_args.kwargs,
                                          {"sequence": 17, "started_ms": 0, "ended_ms": 20})
                         run.read_execution_record.assert_called_with(17)
@@ -4481,6 +4487,9 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
     def test_native_shared_metadata_consumer_reconstructs_all_rows_origins_and_original_command(self):
         self.native_consumer_source_fixture(profile="metadata", hooks=False)
 
+    def test_native_shared_artifact_consumer_reconstructs_all_rows_origins_and_original_command(self):
+        self.native_consumer_source_fixture(profile="artifacts", hooks=False)
+
     def test_native_hook_consumers_require_complete_actual_origins_and_original_command(self):
         import conformance_sources as sources
         self.assertTrue(callable(getattr(sources, "native_hook_admission_control", None)),
@@ -4505,7 +4514,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         packages = ("Hoard.Testing.Conformance", *("Hoard.Fixtures." + family + "." + adapter for adapter in adapters),
                     *("Hoard.Fixtures.Conformance.Bindings." + adapter for adapter in adapters))
         wrapper_sdk = (
-            "snapshot/tests/contracts/Hoard.Metadata.Tests/bin/wrapper-diagnostic/Release/net10.0/"
+            f"snapshot/tests/contracts/Hoard.{family}.Tests/bin/wrapper-diagnostic/Release/net10.0/"
             "Hoard.Testing.Conformance.dll")
         image_data = {assembly_path: b"consumer", **{
             (directory / (package + ".dll")).as_posix(): package.encode() for package in packages},
@@ -4539,12 +4548,12 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             self.owner["rootPathSha256"] = hashlib.sha256(str(root).encode()).hexdigest()
             self.proof["ownerSha256"] = evidence.digest(self.owner)
             self.proof["assemblySha256"] = self.witness["assemblySha256"] = images[assembly_path]
-            manifest_factory = sources.hook_admission_manifest if hooks else sources.metadata_common_consumer_manifest
+            manifest_factory = sources.hook_admission_manifest if hooks else sources.category_common_consumer_manifest
             self.manifest = manifest_factory(run, self.inputs, self.attempt)
             consumer_images = {entry["path"]: entry["sha256"] for entry in self.manifest["assemblies"]}
-            selected = catalog.hook_admission_tests(profile) if hooks else catalog.metadata_common_consumer_tests()
-            counts = ({identity: 1 for identity in selected} if hooks else catalog.metadata_common_consumer_origin_counts())
-            self.assertEqual(len(selected), 2 if hooks else 152)
+            selected = catalog.hook_admission_tests(profile) if hooks else catalog.category_common_consumer_tests(profile)
+            counts = ({identity: 1 for identity in selected} if hooks else catalog.category_common_consumer_origin_counts(profile))
+            self.assertEqual(len(selected), 2 if hooks else 152 if profile == "metadata" else 250)
             self.assertEqual({binding for binding, _ in selected.values()},
                              {"memory", "sqlite"} if profile == "metadata" else {"local", "object"})
             transport = self.category_transport(None, selections=selected)
@@ -4558,7 +4567,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 captured_origins = []
                 for index in range(counts[row["testIdentity"]]):
                     origin = {
-                        "schemaVersion": 1, "runId": run.run_id, "caseId": "QC-05" if hooks else "full-metadata-binding",
+                        "schemaVersion": 1, "runId": run.run_id, "caseId": selected[row["testIdentity"]][1],
                         "sessionId": str(uuid.uuid4()),
                         "parentSessionId": None if index == 0 else captured_origins[-1]["sessionId"],
                         "factoryOperation": "create" if index == 0 else "reopen",
@@ -4573,7 +4582,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         origin["components"]["factory"] = copy.deepcopy(captured_origins[0]["components"]["factory"])
                     captured_origins.append(origin)
                 proof["sessionOrigins"] = captured_origins
-                if not hooks:
+                if not hooks and profile == "metadata":
                     arguments = self.metadata_argument_packets(row["testIdentity"], captured_origins, original=False)
                     if arguments:
                         proof.update(schemaVersion=3, originalObservations=[], metadataArguments=arguments)
@@ -4610,7 +4619,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             original_record = evidence.canonical_bytes(record)
             run.read_execution_record = lambda sequence: original_record
             namespace = (sources.HOOK_ADMISSION_NAMESPACES[profile] if hooks
-                         else sources.METADATA_COMMON_CONSUMER_NAMESPACE)
+                         else sources.COMMON_CONSUMER_NAMESPACES[profile])
             graph_path = f"proofs/{namespace}-native-executions.json"
             execution_path = f"proofs/category-command-{attempt}-execution.json"
             graph = {
@@ -4638,15 +4647,15 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             def admit():
                 with mock.patch.object(sources, "OwnedRun", SimpleNamespace):
                     return (sources.native_hook_admission_control if hooks
-                            else sources.native_metadata_common_consumer_control)(
+                            else sources.native_category_common_consumer_control)(
                         run, self.inputs, started_ms=9, ended_ms=12)
 
             admitted = admit()
             self.assertEqual(set(admitted["sourceProofs"]), set(originals))
-            self.assertEqual(len(witnesses), 2 if hooks else 152)
+            self.assertEqual(len(witnesses), 2 if hooks else 152 if profile == "metadata" else 250)
             self.assertEqual(set(admitted["controls"]),
                              {"hook-admission-sdk-consumer", *catalog.obligation_controls(5)} if hooks
-                             else {"shared-metadata-sdk-consumer"})
+                             else {"shared-" + profile + "-sdk-consumer"})
             if hooks:
                 native = object.__new__(sources.NativeCategorySources)
                 native._run = run
@@ -4655,24 +4664,26 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     for name in ("native_metadata_recovery_controls", "native_metadata_noncooperation_control",
                                  "native_metadata_ownership_control", "native_metadata_package_consumer_control",
                                  "native_metadata_binary_control", "native_metadata_inventory_controls",
-                                 "native_metadata_common_consumer_control"):
+                                 "native_metadata_common_consumer_control", "native_category_common_consumer_control"):
                         stack.enter_context(mock.patch.object(
                             sources, name, return_value={"controls": {}, "sourceProofs": {
                                 "runtime-owner.json": originals["runtime-owner.json"]}
-                                if name == "native_metadata_common_consumer_control" else {}}))
+                                if name in ("native_metadata_common_consumer_control", "native_category_common_consumer_control")
+                                else {}}))
                     history = evidence.CategoryRuntimeHistory(self.inputs, native_sources=native)
                     result = history._ingest_parts({}, {}, 9, 12, 1)
                     self.assertEqual(result[8], admitted["controls"])
                     self.assertEqual(result[2], {
                         path: hashlib.sha256(raw).hexdigest() for path, raw in originals.items()})
                     self.assertEqual(result[9], sum(len(raw) for raw in originals.values()))
-                    if profile == "metadata":
+                    if profile in ("metadata", "artifacts"):
                         for conflict in (
                                 {"controls": {}, "sourceProofs": {"runtime-owner.json": b"foreign"}},
                                 {"controls": {"hook-admission-sdk-consumer":
                                               admitted["controls"]["hook-admission-sdk-consumer"]},
                                  "sourceProofs": {}}):
-                            with mock.patch.object(sources, "native_metadata_common_consumer_control",
+                            with mock.patch.object(sources, "native_metadata_common_consumer_control" if profile == "metadata"
+                                                   else "native_category_common_consumer_control",
                                                    return_value=conflict):
                                 with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
                                     history._ingest_parts({}, {}, 9, 12, 1)
@@ -4737,7 +4748,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     run, self.inputs, root / "snapshot", "hook-admission",
                     {"attemptId": attempt, "tests": selected},
                     run_inputs_path=public_inputs, native_sources=native)
-                    if hooks else checks.metadata_common_consumer_diagnostics(run, self.inputs))
+                    if hooks else checks._category_consumer_source_diagnostics(run, self.inputs, hooks=False)["control"])
             if hooks:
                 self.assertEqual(produced["transport"], transport)
                 self.assertEqual(produced["summary"]["sourceParentSha256"],
@@ -4752,12 +4763,12 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                              (profile, "hook-admission" if hooks else "shared-consumer"))
             for defect in ("missing-origins", "wrong-case", "borrowed-role", "foreign-descriptor", "duplicate-session",
                            "missing-row", "relabeled-manifest", "argv", "inputs", "replaced-record", "settings",
-                           *(("wrapper-sdk", "unpinned-wrapper-sdk", "arguments-missing", "arguments-value",
-                              "arguments-unexpected") if not hooks else ())):
+                           *(("wrapper-sdk", "unpinned-wrapper-sdk", "arguments-unexpected") if not hooks else ()),
+                           *(("arguments-missing", "arguments-value") if not hooks and profile == "metadata" else ())):
                 with self.subTest(defect=defect):
                     changed_record = copy.deepcopy(record)
                     first = (next(row for row in witnesses if bool(
-                        catalog.metadata_argument_expectations(original=False)[row["testIdentity"]])
+                        catalog.metadata_argument_expectations(original=False).get(row["testIdentity"], ()))
                                   != (defect == "arguments-unexpected"))
                              if defect.startswith("arguments-") else witnesses[0])
                     filename = f'proof-{first["executionId"]}.json'

@@ -1593,6 +1593,15 @@ Object has no borrowed durable restart. Exact `e39b2ce`/run40293145453 admits
 earlier frozen argument maps on Linux: three jobs/341 native foundations pass
 without skips. Pairing/newer artifact scopes remain unadmitted natively.
 
+The artifact shared-consumer native source path now uses the same owned-command
+reconstruction as metadata, not a copied passing label. It reconstructs readonly
+graph/manifest/settings, every runtime proof/origin and six exact loaded/package
+images, pins the original-wrapper SDK in the execution inputs and retains both
+shared/hook packets with conflict rejection. All 250 witnesses/262 origins remain
+required; catalog identities/counts are unchanged. Tooling454 (19 native skips)
+passes. Actual native admission, original artifact pairing and QC-03 remain pending;
+this source family alone issues no extraction-parity obligation.
+
 Object payload-access faults are now concrete-binding-owned, matching the
 original driver boundary. Native exact-stamp selection/protection still wraps
 application and transfers the same captured scope before supervisor hooks;

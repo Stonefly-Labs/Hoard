@@ -10406,6 +10406,19 @@ QC-02 pairing/newer artifact native confirmation and full acceptance remain open
 Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 
+The artifact shared-consumer source path now reuses the existing metadata native
+reconstruction rather than accepting diagnostic receipts as qualification.
+Its actual command closure pins the extra original-wrapper SDK image; readonly
+graph/manifest/settings, exact 250 witnesses/262 origins, six runtime/package
+images, native execution record and original proof bytes are independently
+reconstructed. It runs before unchanged real transfer controls, and both shared/
+hook source families retain original packets with conflicting overlaps rejected.
+The catalog relocation changes no identity or origin count. Expanded artifact
+source/launch guards and tooling454 (19 native skips) pass; actual Linux admission,
+original artifact parameter pairing and full QC-03 remain pending. No budgets,
+task/checklist markers, production dependencies, examples, diagrams or
+infrastructure change.
+
 Linux run `40312172408` at `516b6e4` fails the prepared Object no-rename architecture
 witness; its other two jobs pass. The cause is qualification-only directory moves
 introduced inside the Object provider assembly, not its publication mechanism.

@@ -353,6 +353,15 @@ passes unchanged checks. Exact `e39b2ce`/run40293145453 admits earlier frozen
 metadata argument maps with three Linux jobs/341 native foundations passing
 without skips, not QC-02 pairing/newer artifact scopes or full qualification.
 
+Artifact shared-consumer qualification source reconstruction now retains original
+graph/manifest/settings/command/runtime-proof bytes and requires the full
+250-witness/262-origin family. Six loaded/package images and the original-wrapper
+SDK image must match; missing/duplicate/foreign origins, wrong roles/cases,
+altered settings/argv/input records, unpinned wrapper SDK and unexpected metadata
+arguments reject. Catalog relocation preserves exact identity/count equality.
+Tooling454 (19 native skips) passes. Actual native admission and QC-03 original-
+parameter pairing remain pending; no extraction-quality pass is issued here.
+
 The Object no-rename repair retains the unchanged prepared architecture witness:
 the preceding graph fails named `Assert.Empty`, and the corrected graph passes.
 Only concrete-binding-owned access fault application moves; native exact-stamp

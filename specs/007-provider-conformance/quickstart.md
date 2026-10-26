@@ -667,6 +667,12 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen argument maps
 three Linux jobs/341 native foundations pass without skips. Pairing/newer
 artifact native admission and full qualification remain outstanding.
 
+Artifact qualification now schedules the full shared-consumer native source
+command before unchanged transfer controls. Independent reconstruction checks
+250 witnesses/262 origins, six runtime/archive images, original-wrapper SDK
+identity and the executor-held command closure. Tooling454 (19 native skips)
+passes; actual native admission and QC-03 parameter pairing remain pending.
+
 Object access faults now execute in the concrete test binding, retaining native
 exact-stamp protection and scope handoff while restoring the provider's no-rename
 boundary. The unchanged prepared architecture witness fails before/passes after.

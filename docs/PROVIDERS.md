@@ -168,6 +168,12 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen metadata
 argument maps with all three Linux jobs/341 native foundations passing without
 skips. QC-02 pairing/newer artifact scopes and complete QC-03 remain unadmitted.
 
+The complete artifact shared-consumer source family now has qualification-only
+native reconstruction and original proof retention. It requires all 250 witnesses/
+262 origins, exact six consumer/SDK/binding/provider images and the same SDK in
+original wrappers, plus the executor-held command/input closure. Tooling454
+(19 native skips) passes. Actual native admission and QC-03 pairing remain pending.
+
 Object's driver-owned access faults now reside in its concrete binding, not the
 provider assembly; native exact-stamp selection/protection and pre-hook handle
 capture are unchanged. The provider has no rename mechanism. The unchanged

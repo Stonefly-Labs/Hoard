@@ -154,11 +154,20 @@ class SdkDiagnosticTests(unittest.TestCase):
                         checks.runtime_command(run, assembly, changed, category_scope=scope, **options)
 
     def test_shared_metadata_scope_requires_complete_actual_consumer_families_and_all_images(self):
-        tests = checks._category_scope_tests(("metadata", "shared-consumer"))
-        self.assertEqual(set(tests), set(checks.full_metadata_binding_origin_counts()))
-        self.assertEqual({binding for binding, _ in tests.values()}, {"memory", "sqlite"})
+        self.shared_consumer_launch_fixture("metadata")
+
+    def test_shared_artifact_scope_requires_complete_actual_consumer_families_and_all_images(self):
+        self.shared_consumer_launch_fixture("artifacts")
+
+    def shared_consumer_launch_fixture(self, profile):
+        tests = checks._category_scope_tests((profile, "shared-consumer"))
+        expected = (checks.full_metadata_binding_origin_counts() if profile == "metadata"
+                    else checks.full_artifact_binding_origin_counts())
+        self.assertEqual(set(tests), set(expected))
+        self.assertEqual({binding for binding, _ in tests.values()},
+                         {"memory", "sqlite"} if profile == "metadata" else {"local", "object"})
         with self.assertRaises(checks.evidence.ConformanceError):
-            checks._category_scope_tests(("artifacts", "shared-consumer"))
+            checks._category_scope_tests(("harness", "shared-consumer"))
         assembly = self.directory / "candidate" / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / (
             "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
         manifest = {
@@ -172,23 +181,24 @@ class SdkDiagnosticTests(unittest.TestCase):
         packages = {}
         feed = self.directory / "feed/candidate"
         feed.mkdir(parents=True)
-        for provider in ("Memory", "Sqlite"):
-            name = "Hoard.Fixtures.Metadata." + provider
+        for provider in (("Memory", "Sqlite") if profile == "metadata" else ("Local", "ObjectSemantics")):
+            name = "Hoard.Fixtures." + profile.title() + "." + provider
             archive = feed / (name + ".0.1.0.nupkg")
             archive.write_bytes(name.encode())
             packages[name] = checks.evidence.file_sha256(archive)
         (self.directory / "stores").mkdir()
         checks.write_new(self.directory / "runtime-owner.json", b"owner")
         run = SimpleNamespace(root=self.directory)
+        options = {"metadata_packages" if profile == "metadata" else "artifact_packages": packages,
+                   "category_scope": (profile, "shared-consumer")}
         with patch.object(run, "command", create=True, side_effect=checks.evidence.ConformanceError(
                 "PrerequisiteMissing")) as command:
             with self.assertRaisesRegex(checks.evidence.ConformanceError, "PrerequisiteMissing"):
-                checks.runtime_command(run, assembly, manifest, metadata_packages=packages,
-                                       category_scope=("metadata", "shared-consumer"))
+                checks.runtime_command(run, assembly, manifest, **options)
         self.assertTrue(command.call_args.kwargs["record_execution"])
         self.assertTrue({"candidate/Consumer.dll", "candidate/SDK.dll"} <=
                         set(command.call_args.kwargs["execution_inputs"]))
-        self.assertIn(checks.metadata_common_consumer_sdk_paths(assembly.relative_to(self.directory).as_posix())[1],
+        self.assertIn(checks.category_common_consumer_sdk_paths(assembly.relative_to(self.directory).as_posix(), profile)[1],
                       command.call_args.kwargs["execution_inputs"])
         for defect in ("missing", "foreign", "category"):
             changed = {**manifest, "attemptId": str(uuid.uuid4()),
@@ -198,10 +208,9 @@ class SdkDiagnosticTests(unittest.TestCase):
             elif defect == "foreign":
                 changed["expected"][0]["testIdentity"] += ".foreign"
             else:
-                changed["expected"][0]["caseId"] = "QC-02"
+                changed["expected"][0]["caseId"] = "QC-02" if profile == "metadata" else "QC-03"
             with self.subTest(defect=defect), self.assertRaises(checks.evidence.ConformanceError):
-                checks.runtime_command(run, assembly, changed, metadata_packages=packages,
-                                       category_scope=("metadata", "shared-consumer"))
+                checks.runtime_command(run, assembly, changed, **options)
 
     def test_qualified_mutation_launches_named_failure_before_unchanged_repair_and_records_all_images(self):
         for profile in ("metadata", "artifacts"):
@@ -615,7 +624,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     history.finish_joint.assert_not_called()
 
     def test_qualification_artifact_transfers_are_fresh_before_scopes_and_fail_closed(self):
-        for failed in (None, "transfers", "hooks", "scope"):
+        for failed in (None, "shared-consumer", "transfers", "hooks", "scope"):
             root = self.directory / str(failed)
             (root / "proofs").mkdir(parents=True)
             run = SimpleNamespace(root=root)
@@ -627,6 +636,14 @@ class SdkDiagnosticTests(unittest.TestCase):
             history.begin_joint.side_effect = lambda *args, **options: calls.append("begin")
             history.joint_partitions.return_value = {"hook-admission": {}, "controller": {}}
             history.finish_joint.side_effect = lambda **options: calls.append("finish")
+
+            def shared(actual_run, actual_inputs, **options):
+                self.assertIs(actual_run, run)
+                self.assertIs(actual_inputs, inputs)
+                self.assertEqual(options, {"hooks": False})
+                calls.append("shared-consumer")
+                if failed == "shared-consumer":
+                    raise checks.evidence.ConformanceError("ProofMismatch")
 
             def transfers(actual_run, actual_inputs, actual_candidate, **options):
                 self.assertIs(actual_run, run)
@@ -649,18 +666,19 @@ class SdkDiagnosticTests(unittest.TestCase):
             with self.subTest(failed=failed), patch.object(
                     checks.evidence, "CategoryRuntimeHistory", return_value=history), patch.object(
                     checks, "original_observation_inputs", return_value={}), patch.object(
+                    checks, "_category_consumer_source_diagnostics", side_effect=shared), patch.object(
                     checks, "artifact_transfer_diagnostics", side_effect=transfers), patch.object(
                     checks, "category_attempt", side_effect=scope), patch.object(
                     checks, "_category_record", return_value={"qualification": False}) as record, contextlib.redirect_stdout(io.StringIO()):
                 options = {"inspection_cases": {}, "inspection_configurations": {}, "native_sources": sources}
                 if failed is None:
                     self.assertFalse(checks.category_diagnostics(run, inputs, candidate, **options)["qualification"])
-                    self.assertEqual(calls, ["begin", "transfers", "hooks", "scope", "finish"])
+                    self.assertEqual(calls, ["begin", "shared-consumer", "transfers", "hooks", "scope", "finish"])
                     history.interrupt_joint.assert_not_called()
                 else:
                     with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
                         checks.category_diagnostics(run, inputs, candidate, **options)
-                    expected = ["begin", "transfers", "hooks", "scope"]
+                    expected = ["begin", "shared-consumer", "transfers", "hooks", "scope"]
                     self.assertEqual(calls, expected[:expected.index(failed) + 1])
                     history.interrupt_joint.assert_called_once_with("ProofMismatch")
                     history.finish_joint.assert_not_called()
