@@ -251,11 +251,20 @@ public sealed class MetadataConformanceSessionTests(ITestOutputHelper output)
     [InlineData("sqlite", "incomplete-cleanup")]
     [InlineData("sqlite", "disposal")]
     public async Task Observed_factories_execute_unchanged_common_consumers_with_actual_origins(
-        string provider, string consumer)
+        string provider, string consumer) =>
+        await RunCommonConsumerAsync(provider, consumer, "full-metadata-binding");
+
+    [Theory]
+    [InlineData("memory")]
+    [InlineData("sqlite")]
+    public async Task Missing_hooks_reject_before_dispatch_and_actual_binding_passes(string provider) =>
+        await RunCommonConsumerAsync(provider, "admission", "QC-05");
+
+    private async Task RunCommonConsumerAsync(string provider, string consumer, string caseId)
     {
         await using var resources = new SqliteBindingTests.RecordingDirectories();
         var clock = new MetadataConformanceClock(new(1_800_000_000_000));
-        var context = new ConformanceRunContext(RunId(), "full-metadata-binding",
+        var context = new ConformanceRunContext(RunId(), caseId,
             clock, resources, new ConformanceEvidenceBuffer());
         var binding = Binding(provider);
         if (consumer == "admission")

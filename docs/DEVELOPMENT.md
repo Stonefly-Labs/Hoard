@@ -9839,6 +9839,34 @@ provider/contributor/deployment guides, examples and diagrams are unaffected
 because no public API, supported command, product dependency or deployment
 behavior changes.
 
+### Independently selectable hook-admission consumers
+
+Both Consumer categories expose
+`Missing_hooks_reject_before_dispatch_and_actual_binding_passes`, with exactly
+two provider rows each. They reuse the existing common consumer/control bodies
+and admission helper rather than copying assertions. Dedicated sessions use
+`QC-05`; the original 132 metadata/24 artifact rows keep their names and
+contexts. This avoids filtering two parameters out of a larger method family:
+the runtime filter selects entire fully qualified methods.
+
+The SDK diagnostic runner admits only the complete fixed
+`hook-admission-metadata` and `hook-admission-artifacts` selections, with one
+actual typed origin per row and six pinned images per category, including the
+SDK. Missing SDK/component inputs, missing provider archives and reduced or
+foreign identities reject before launch. SQLite admission remains mandatory
+for the metadata family. These private diagnostic scopes do not yet supply
+native QC-05 source parents or complete public qualification.
+
+An intended-red selector regression fails before the scopes exist. After
+wiring, all 147 SDK diagnostic tooling tests pass. A fresh local snapshot packs
+all 14 dependencies and runs the four dedicated rows against three SDK-only
+mutations (missing mandatory-hook guard, forged-exclusion bypass and missing
+null-binding guard). Each produces exactly four named assertion failures with
+zero skips; the unchanged SDK passes all 160 original-plus-dedicated rows
+without skips. Consumer source hashes are unchanged across trials. Scoped C#
+whitespace, frozen inventory, SDK catalog and patch whitespace checks pass.
+No public SDK/provider contract, tracked lock or task/checklist marker changes.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three jobs: 291 native foundations without failures/

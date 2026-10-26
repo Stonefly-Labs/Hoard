@@ -47,11 +47,20 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
     [InlineData("object", ConformanceFault.SourceNonCooperation)]
     [InlineData("object", ConformanceFault.SinkNonCooperation)]
     public async Task Full_binding_controls_reach_actual_work_and_preserve_borrowed_ownership(
-        string provider, ConformanceFault fault)
+        string provider, ConformanceFault fault) =>
+        await RunControlAsync(provider, fault, "full-artifact-binding");
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Missing_hooks_reject_before_dispatch_and_actual_binding_passes(string provider) =>
+        await RunControlAsync(provider, ConformanceFault.PublicationBoundary, "QC-05");
+
+    private async Task RunControlAsync(string provider, ConformanceFault fault, string caseId)
     {
         await using var resources = new RecordingDirectories();
         var clock = new ControlledClock();
-        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", clock,
+        var context = new ConformanceRunContext(RunId(), caseId, clock,
             resources, new ConformanceEvidenceBuffer());
         var binding = Binding(provider);
         if (fault == ConformanceFault.PublicationBoundary)

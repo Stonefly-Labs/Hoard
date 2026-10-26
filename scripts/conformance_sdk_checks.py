@@ -1462,6 +1462,17 @@ def full_metadata_binding_origin_counts():
     return metadata_common_consumer_origin_counts()
 
 
+def hook_admission_scenarios():
+    return tuple((
+        "hook-admission-" + family,
+        tuple(sorted(prefix + "Missing_hooks_reject_before_dispatch_and_actual_binding_passes"
+                     + f'(provider: "{provider}")' for provider in providers)),
+        "None", "Passed", 0, "None")
+        for family, prefix, providers in (
+            ("metadata", FULL_METADATA_CONSUMER_PREFIX, ("memory", "sqlite")),
+            ("artifacts", FULL_ARTIFACT_CONSUMER_PREFIX, ("local", "object"))))
+
+
 def metadata_common_consumer_diagnostics(run, inputs):
     if type(run) is not OwnedRun:
         raise evidence.ConformanceError("OwnershipInvalid")
@@ -2672,6 +2683,9 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
 
 def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, inspection_configurations=None):
     name, identities, expected_code, expected_status, expected_exit, failure_kind = scenario
+    hook_admission = name.startswith("hook-admission-")
+    if hook_admission and scenario not in hook_admission_scenarios():
+        raise evidence.ConformanceError("WitnessMissing")
     original_observations = name.startswith("observed-original-")
     inspection_literals = name == "original-inspection-literals"
     inspection_prepared = name == "original-inspection-prepared"
@@ -2690,7 +2704,7 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
         raise evidence.ConformanceError("WitnessMissing")
     if (name == "full-metadata-binding"
             or any(identity.startswith(FULL_METADATA_CONSUMER_PREFIX) for identity in identities)):
-        if scenario not in full_metadata_binding_scenarios():
+        if scenario not in (*full_metadata_binding_scenarios(), *hook_admission_scenarios()):
             raise evidence.ConformanceError("WitnessMissing")
     if (name in ("local-artifact-session", "object-artifact-session", "configured-artifact-session",
                  "payload-artifact-session", "artifact-direct-verification", "artifact-capacity-injection",
@@ -2702,7 +2716,7 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
                             *artifact_direct_verification_scenarios(), *artifact_capacity_injection_scenarios(),
                             *artifact_unclaimed_cleanup_scenarios(), *artifact_synchronous_storage_scenarios(),
                             *full_artifact_binding_scenarios(), *actual_authority_integration_scenarios(),
-                            *category_mutation_scenarios()):
+                            *category_mutation_scenarios(), *hook_admission_scenarios()):
             raise evidence.ConformanceError("WitnessMissing")
     original_metadata = name.startswith(("original-metadata-", "observed-original-metadata-"))
     original_artifacts = name.startswith((
@@ -2739,7 +2753,7 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
         raise evidence.ConformanceError("WitnessMissing")
     binding_tests = all(identity.startswith(BINDING_TEST_PREFIXES) for identity in identities)
     sqlite_tests = (
-        name in ("full-metadata-binding", "actual-authority-integration")
+        name in ("full-metadata-binding", "actual-authority-integration", "hook-admission-metadata")
         or name.startswith("category-mutation-metadata-") or metadata_provider == "sqlite"
         or any('metadataProvider: "sqlite"' in identity for identity in identities)
         or any(identity.startswith((SQLITE_BINDING_PREFIX, SQLITE_MECHANISM_PREFIX)) for identity in identities))
@@ -2794,13 +2808,13 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
         original_cases = {
             identity: category_runtime_cases(original_witness_policy(identity)[0], binding)[identity]
             for identity, (binding, _) in expected.items()}
-    if name == "full-artifact-binding":
+    if name in ("full-artifact-binding", "hook-admission-artifacts"):
         expected = {
             identity: ("fixture.artifact." + provider, "none")
             for provider in ("local", "object") for identity in identities if f'(provider: "{provider}"' in identity}
         if set(expected) != set(identities):
             raise evidence.ConformanceError("WitnessMissing")
-    if name == "full-metadata-binding":
+    if name in ("full-metadata-binding", "hook-admission-metadata"):
         expected = {
             identity: ("fixture.metadata." + provider, "none")
             for provider in ("memory", "sqlite") for identity in identities if f'(provider: "{provider}"' in identity}
@@ -2824,21 +2838,24 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
                 if name == "category-mutation-metadata-faulty" else
                 "Hoard.Testing.Conformance.Artifacts.ArtifactPublicationAssertions.PrivateStagingAsync"
                 if name == "category-mutation-artifacts-faulty" else ASSERTION if name == "assertion" else None),
-            "caseId": original_cases[identity] if original_observations else
+            "caseId": "QC-05" if hook_admission else original_cases[identity] if original_observations else
                 name if inspection or original_tests or name in ("full-artifact-binding", "full-metadata-binding")
                 else "runtime",
         } for identity, (binding, matrix) in expected.items()],
     }
-    if original_observations or name in ("full-artifact-binding", "full-metadata-binding"):
+    if original_observations or name in ("full-artifact-binding", "full-metadata-binding") or hook_admission:
         if original_observations:
             component_assignments = (
                 node for identity, (binding, _) in expected.items()
                 for node in evidence.original_node_assignments(identity, original_inputs[binding][identity]))
         else:
-            origin_inputs = (artifact_origin_inputs(candidate, run.root) if name == "full-artifact-binding"
+            origin_inputs = (artifact_origin_inputs(candidate, run.root) if name in (
+                "full-artifact-binding", "hook-admission-artifacts")
                              else metadata_origin_inputs(candidate, run.root))
             component_assignments = origin_inputs.values()
         component_paths = {path for roles in component_assignments for path, _ in roles.values()}
+        if hook_admission:
+            component_paths.add((assembly.parent / "Hoard.Testing.Conformance.dll").relative_to(run.root).as_posix())
         component_paths.discard(assembly_path)
         for index, path in enumerate(sorted(component_paths)):
             sha256 = inputs["runtimeAssemblies"].get(path)
@@ -2852,13 +2869,13 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
         runtime_options.update(inspection_cases=inspection_cases, inspection_configurations=inspection_configurations)
     if original_observations:
         runtime_options["original_observations"] = True
-    if name == "full-artifact-binding" or name.startswith("category-mutation-artifacts-"):
+    if name in ("full-artifact-binding", "hook-admission-artifacts") or name.startswith("category-mutation-artifacts-"):
         packages = {item["packageId"]: item["sha256"] for item in inputs["packages"]}
         required = ("Hoard.Fixtures.Artifacts.Local", "Hoard.Fixtures.Artifacts.ObjectSemantics")
         if any(package not in packages for package in required):
             raise evidence.ConformanceError("PrerequisiteMissing")
         runtime_options["artifact_packages"] = {package: packages[package] for package in required}
-    if name == "full-metadata-binding" or name.startswith("category-mutation-metadata-"):
+    if name in ("full-metadata-binding", "hook-admission-metadata") or name.startswith("category-mutation-metadata-"):
         packages = {item["packageId"]: item["sha256"] for item in inputs["packages"]}
         required = ("Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite")
         if any(package not in packages for package in required):
@@ -2886,6 +2903,8 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
         counts = (full_metadata_binding_origin_counts() if name == "full-metadata-binding" else
                   {identity: 2 if identity.split("(")[0] == reopen else 1 for identity in identities})
         validate_full_binding_origins(ingested, inputs, counts)
+    if hook_admission:
+        validate_full_binding_origins(ingested, inputs, {identity: 1 for identity in identities})
     if original_observations:
         validate_original_observations(ingested)
     return {"code": expected_code, "tests": len(identities),
@@ -3585,6 +3604,7 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
               else full_metadata_binding_scenarios()),
             *(scenario for scenario in category_mutation_scenarios()
               if scenario[0].startswith(f"category-mutation-{family}-")),
+            *(scenario for scenario in hook_admission_scenarios() if scenario[0] == "hook-admission-" + family),
         )
         if (metadata_provider is not None or artifact_runner is not None
                 or assembly.name != "Hoard.Fixtures.Conformance.Consumer.dll"
@@ -4122,6 +4142,9 @@ def execute(repository, destination):
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "full-metadata-binding"}), flush=True)
         for scenario in full_metadata_binding_scenarios():
+            observations.append(test_attempt(run, inputs, candidate, scenario))
+        print(json.dumps({"qualification": False, "phase": "hook-admission"}), flush=True)
+        for scenario in hook_admission_scenarios():
             observations.append(test_attempt(run, inputs, candidate, scenario))
         print(json.dumps({"qualification": False, "phase": "actual-authority-integration"}), flush=True)
         for scenario in actual_authority_integration_scenarios():

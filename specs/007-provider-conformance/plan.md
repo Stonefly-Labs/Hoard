@@ -6921,6 +6921,26 @@ These are local non-native controls, not public qualification or native parent
 admission. Focused complete-scope/source reconstruction tests, scoped C#
 whitespace, frozen inventory, embedded catalog and patch whitespace pass.
 
+### Dedicated hook-admission diagnostic families
+
+Two fixed provider rows per category now use dedicated
+`Missing_hooks_reject_before_dispatch_and_actual_binding_passes` methods with
+`QC-05` contexts. They delegate to the existing common consumer/control bodies;
+original 132/24-row identities and contexts are unchanged. The two diagnostic
+scopes select complete method families, not parameter subsets, and pin all six
+Consumer/SDK/binding/provider images. Missing SDK images/provider archives and
+reduced/foreign identities reject before launch. Metadata retains actual
+SQLite environment admission and every row requires one typed origin.
+
+The intended-red scope-selection regression now passes; all 147 SDK diagnostic
+tooling tests pass. Fresh current packages reject all four dedicated rows for
+each of three SDK-only guard/exclusion/null mutations at the named admission
+assertions, without skips. The unchanged SDK passes all 160 original-plus-
+dedicated rows without skips, with identical Consumer sources across trials.
+Scoped C# whitespace, frozen inventory, embedded catalog and patch whitespace
+pass. These are non-native diagnostics: QC-05 source-parent wiring/composition
+and full qualification remain incomplete. No task/checklist markers advance.
+
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
 independently passes all three Linux jobs: 291 native foundations without

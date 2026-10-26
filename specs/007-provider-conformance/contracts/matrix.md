@@ -72,6 +72,9 @@ legacy opening. Missing bindings reject before dereference, and claimed
 logical `MP-21`/`AS-15` exclusions cannot bypass any mandatory hook.
 Neither the 132/24-row selections nor origin counts change.
 This coverage is not a public QC-05 witness or completed QC-05 qualification.
+Separate dedicated hook-admission diagnostic families select two provider rows
+per category with `QC-05` contexts, reusing those same assertions. They leave
+the original 132/24-row selections unchanged and do not yet compose QC-05.
 
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service

@@ -2306,6 +2306,15 @@ passes all 156 metadata/artifact binding rows without
 skips, with unchanged Consumer sources. This is non-native diagnostic evidence,
 not completed category qualification.
 
+Dedicated hook-admission theories now expose complete two-provider method
+families per category with `QC-05` session contexts. The diagnostic runner
+selects these four rows separately, pins the SDK plus actual Consumer/binding/
+provider images, and rejects reduced or foreign selections before dispatch.
+The existing 132/24-row selections are unchanged. A fresh-package local replay
+rejects all four dedicated rows for each of the three SDK mutations above;
+the unchanged SDK passes all 160 original-plus-dedicated rows without skips.
+These scopes are not yet wired into native QC-05 source-parent composition.
+
 Exact `a83380c`, [run40240608803](https://github.com/Stonefly-Labs/Hoard/actions/runs/40240608803),
 independently admits the four public `Incomplete` category reports: all three
 Linux jobs pass, with 319 native foundations without skips and 135 aggregate

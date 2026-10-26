@@ -28,6 +28,66 @@ ENVIRONMENT = {
 
 
 class SdkDiagnosticTests(unittest.TestCase):
+    def test_hook_admission_scopes_select_complete_dedicated_families_and_pin_sdk(self):
+        factory = getattr(checks, "hook_admission_scenarios", None)
+        self.assertTrue(callable(factory), "Hook admission needs independently selectable complete method families.")
+        self.assertEqual(len(factory()), 2)
+        for scenario, family, providers, fixture in zip(
+                factory(), ("metadata", "artifacts"), (("memory", "sqlite"), ("local", "object")),
+                ("Metadata", "Artifact")):
+            with self.subTest(family=family):
+                method = ("Hoard.Fixtures.Conformance.Consumer." + fixture
+                          + "ConformanceSessionTests.Missing_hooks_reject_before_dispatch_and_actual_binding_passes")
+                identities = {method + f'(provider: "{provider}")' for provider in providers}
+                self.assertEqual(scenario, ("hook-admission-" + family, tuple(sorted(identities)),
+                                            "None", "Passed", 0, "None"))
+                candidate = self.directory / "candidate"
+                assembly = candidate / checks.ARTIFACT_CONSUMER / checks.PACKAGE_TEST_OUTPUT / (
+                    "Release/net10.0/Hoard.Fixtures.Conformance.Consumer.dll")
+                origin_inputs = (checks.metadata_origin_inputs if family == "metadata"
+                                 else checks.artifact_origin_inputs)(candidate, self.directory)
+                sdk_path = (assembly.parent / "Hoard.Testing.Conformance.dll").relative_to(
+                    self.directory).as_posix()
+                provider_packages = ("Hoard.Fixtures." + family.title() + "." + provider
+                                     for provider in (("Memory", "Sqlite") if family == "metadata"
+                                                      else ("Local", "ObjectSemantics")))
+                inputs = {
+                    "runId": str(uuid.uuid4()), "invocationGroupId": str(uuid.uuid4()),
+                    "runtimeAssemblies": {
+                        assembly.relative_to(self.directory).as_posix(): "a" * 64, sdk_path: "b" * 64,
+                        **{path: "c" * 64 for roles in origin_inputs.values() for path, _ in roles.values()}},
+                    "packages": [{"packageId": package, "sha256": "d" * 64}
+                                 for package in ("Hoard.Testing.Conformance", *provider_packages)]}
+                run = SimpleNamespace(root=self.directory)
+                with patch.object(checks, "require_sqlite_environment") as sqlite, patch.object(
+                        checks, "runtime_command",
+                        side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
+                        checks.test_attempt(run, inputs, candidate, scenario)
+                self.assertEqual(sqlite.call_count, int(family == "metadata"))
+                manifest = launch.call_args.args[2]
+                self.assertEqual({row["testIdentity"] for row in manifest["expected"]}, identities)
+                self.assertEqual({row["caseId"] for row in manifest["expected"]}, {"QC-05"})
+                self.assertEqual(len(manifest["assemblies"]), 6)
+                self.assertEqual({row["path"] for row in manifest["assemblies"]}, set(inputs["runtimeAssemblies"]))
+                for changed, code in (
+                        ({**inputs, "runtimeAssemblies": {
+                            path: hashed for path, hashed in inputs["runtimeAssemblies"].items() if path != sdk_path}},
+                         "InputChanged"),
+                        ({**inputs, "packages": inputs["packages"][:1]}, "PrerequisiteMissing")):
+                    with patch.object(checks, "require_sqlite_environment"), patch.object(
+                            checks, "runtime_command") as launch:
+                        with self.assertRaisesRegex(checks.evidence.ConformanceError, code):
+                            checks.test_attempt(run, changed, candidate, scenario)
+                        launch.assert_not_called()
+                for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+                                (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
+                                (scenario[0] + "-foreign", *scenario[1:])):
+                    with patch.object(checks, "runtime_command") as launch:
+                        with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
+                            checks.test_attempt(run, {}, candidate, changed)
+                        launch.assert_not_called()
+
     def test_shared_metadata_scope_requires_complete_actual_consumer_families_and_all_images(self):
         tests = checks._category_scope_tests(("metadata", "shared-consumer"))
         self.assertEqual(set(tests), set(checks.full_metadata_binding_origin_counts()))
