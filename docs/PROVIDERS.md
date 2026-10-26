@@ -223,6 +223,14 @@ its checked numeric projection retained. These transport changes do not waive
 SQLite/Local recovery, real transfers, independent implementations or the
 thirteen authorized simulation exclusions.
 
+The architecture inspector now identifies `Hoard.Testing.Conformance` by its
+case-insensitive package/assembly identity, not the generic SDK category alone.
+Production module paths to it reject, including transitive paths; ordinary
+vendor-driver SDK permissions are preserved. Misclassifying this test SDK as
+BCL/Abstractions/helper is an inspection failure. Explicit test owners may
+consume it. Controlled declared and compiled graph cases do not replace the
+full required project/package scan inventory.
+
 CP-01..20 tests now cover declaration rejection/repair, disabled effects,
 late-fault sanitization, retained ownership, refusal of unsafe restart and
 active-request drain/admission. Focused package-only CP-01/02/18/19 cases pass

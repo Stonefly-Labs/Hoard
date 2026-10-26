@@ -7775,6 +7775,33 @@ remain separate unchecked execution tasks. Production APIs/dependencies,
 examples/diagrams, governance, architecture documents, infrastructure and
 releases are unchanged.
 
+### Test-only SDK architecture boundary
+
+The generic SDK allowance previously let production Metadata/Artifact/Identity
+and Host paths consume `Hoard.Testing.Conformance`. Graph traversal now passes
+actual target identity to policy. Case-insensitive test-SDK identity requires
+SDK ownership, rejects production consumers with the existing ARCH-001/002/003/
+008 rules and permits only explicit test SDK/helper owners. Ordinary driver SDK
+permissions are unchanged. Wrong BCL/Abstractions/helper classification fails
+inspection rather than bypassing policy.
+
+New `ConformanceArchitectureTests.cs` includes nine production categories,
+case-insensitive identity, permitted driver/test-owner pairs, classification
+failures and actual csproj/restore-assets/PE graphs for declared-unused versus
+compiled direct/transitive paths. No new package dependency is introduced.
+The initial seven policy failures reproduce the boundary gap. Final command
+`dotnet test tests/architecture/Hoard.Architecture.Tests/Hoard.Architecture.Tests.csproj --no-restore --filter 'FullyQualifiedName~ConformanceArchitectureTests|FullyQualifiedName~Only_approved_lifecycle_directions_are_permitted|FullyQualifiedName~Framework_roll_forward_is_not_a_package_identity_bypass|FullyQualifiedName~Configuration_does_not_expand_provider_dependency_directions' --verbosity quiet -p:UseSharedCompilation=false -nodeReuse:false`
+passes 34 cases. Command
+`dotnet format whitespace tests/architecture/Hoard.Architecture.Tests/Hoard.Architecture.Tests.csproj --include tests/architecture/Hoard.Architecture.Tests/ConformanceArchitectureTests.cs tests/architecture/Hoard.Architecture.Tests/DependencyGraphInspector.cs --verify-no-changes --no-restore --verbosity quiet`
+passes. The broader attempted architecture run had two failures because
+historical lifecycle/configuration manifests were not prepared, not waived
+tests. T052 remains unchecked until complete real SDK/package scans and
+inspection-failure/profile integration are verified. Latest tooling command
+`python3 -m unittest discover -s tests/tooling -q` passes 474 tests with nineteen
+explicit native skips; frozen inventory/SDK catalog checks and shell syntax
+also pass. Production references/APIs, examples/diagrams, charter/product/
+architecture/ADR documents, infrastructure and release behavior are unchanged.
+
 ### Tests-first category and composition checkpoint
 
 Mark T019/T020 complete from the existing frozen-case/parameter/control parity

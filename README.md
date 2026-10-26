@@ -2927,6 +2927,12 @@ A real configured memory-provider MP-18 smoke passes with independently
 rechecked attribution. Full recovery/transfer and public-profile acceptance
 remain separate unfinished tasks.
 
+Architecture inspection now distinguishes the test-only conformance SDK from
+ordinary vendor-driver SDKs: production modules cannot consume it directly or
+transitively. Controlled actual project/assets/compiled-assembly graph tests
+preserve permitted driver paths. Complete compatibility-profile scan acceptance
+is still unfinished.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

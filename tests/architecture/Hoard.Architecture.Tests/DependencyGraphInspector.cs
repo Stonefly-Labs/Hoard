@@ -199,7 +199,7 @@ internal static class DependencyGraphInspector
                         continue;
                     }
                     var path = current.Path.Append(edge.Target).ToArray();
-                    var rule = Rule(source.Boundary, target.Boundary, path.Length, viaHosting);
+                    var rule = Rule(source.Boundary, target.Boundary, path.Length, viaHosting, target.Id);
                     if (rule is not null)
                     {
                         result.Add(new(rule, source.Id, target.Id, $"{edge.Kind}: {edge.Location}", string.Join(" -> ", path)));
@@ -211,8 +211,23 @@ internal static class DependencyGraphInspector
         return result;
     }
 
-    internal static string? Rule(BoundaryOwnership source, BoundaryOwnership target, int length, bool viaHosting)
+    internal static string? Rule(BoundaryOwnership source, BoundaryOwnership target, int length, bool viaHosting,
+        string? targetId = null)
     {
+        if (string.Equals(targetId, "Hoard.Testing.Conformance", StringComparison.OrdinalIgnoreCase))
+        {
+            if (target != BoundaryOwnership.Sdk)
+            { throw new InspectionException("Conformance SDK ownership must be test-only."); }
+            if (source is not (BoundaryOwnership.Sdk or BoundaryOwnership.Helper))
+            {
+                return source switch
+                {
+                    BoundaryOwnership.Abstractions => "ARCH-001",
+                    BoundaryOwnership.Core => length == 2 ? "ARCH-002" : "ARCH-003",
+                    _ => "ARCH-008"
+                };
+            }
+        }
         if (target == BoundaryOwnership.Bcl)
         {
             return null;

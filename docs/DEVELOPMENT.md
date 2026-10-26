@@ -10503,6 +10503,13 @@ execution and independent sidecar replay pass; an unconfigured witness fails
 closed rather than becoming evidence. Full legacy entry points and fresh
 recovery/transfers remain acceptance obligations, not inferred passes.
 
+Architecture policy regressions distinguish the test-only conformance SDK from
+permitted vendor-driver SDKs, including declared-unused and compiled
+direct/transitive paths. The focused architecture/policy filter passes 34 cases
+and whitespace formatting passes. Historical lifecycle/configuration graph
+tests still require their prepared manifests; this focused result does not
+claim those full scans or compatibility-profile acceptance.
+
 Tests-first CP-01..20 coverage reuses `ConformanceMatrixTests.cs`, preserving the
 existing catalog/runtime identities instead of introducing duplicate test types.
 Source matrix/version and related lifecycle/configuration/discovery regressions
