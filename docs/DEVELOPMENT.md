@@ -4668,6 +4668,30 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+At exact `ef82218`, run40405035306's isolated metadata/artifact jobs both pass
+through the public CLI, including complete original/native source admission,
+all real recovery/transfer controls, package-only common consumers and actual
+store/feed/cache cleanup. Metadata observes 93 Passed/9 NotApplicable over 102
+rows; artifacts observes 99 Passed/4 NotApplicable over 103. Together these are
+179 inherited applicable passes, thirteen authorized exclusions and thirteen
+category quality passes. Reports remain `Incomplete`, qualification false;
+full independent acceptance/portable retention/evaluation remains unfinished.
+T026/T032/T035/T036 record execution/wiring/consumer completion, not certification.
+
+T052 adds actual declared/compiled SDK paths for all nine production owners and
+permitted test owners, complete/omitted/duplicate/foreign/uninspectable scan
+controls, plus actual direct/helper Identity-to-Core routes alongside the allowed
+Hosting route in both traversal orders. Four malformed entries first fail with
+the wrong exception; the scanner now rejects non-object entries through its
+existing `InspectionException`. Standalone graph checks pass 43 cases, then
+`bash scripts/validate-foundation.sh --phase architecture` passes with prepared
+inputs, including the four new actual Identity paths and unchanged ARCH-001..008.
+An initial direct inherited-test invocation lacked `HOARD_FOUNDATION_EVIDENCE`;
+it is a setup failure, not a rule regression or qualifying pass. Full tooling
+still passes 481 tests with nineteen explicit native skips; scoped formatting,
+frozen inventories/catalogs and whitespace checks pass. The stage remains
+`implement / running`, now 42/86 tasks checked.
+
 Public metadata/artifact commands now dispatch their existing complete native
 category batches rather than reject before execution. Exact full catalog keys
 are rechecked; focused/custom-binding, other-profile and offline modes still

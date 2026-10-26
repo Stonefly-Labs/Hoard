@@ -17,7 +17,7 @@ internal static class ArchitectureInspection
             "provider:Hoard.Fixtures.Identity", "host:One", "host:Two"
         ];
         var entries = graphs.EnumerateArray().ToArray();
-        if (entries.Any(entry => !entry.TryGetProperty("scanId", out var id)
+        if (entries.Any(entry => entry.ValueKind != JsonValueKind.Object || !entry.TryGetProperty("scanId", out var id)
             || id.ValueKind != JsonValueKind.String || string.IsNullOrWhiteSpace(id.GetString())))
         {
             throw new InspectionException("Missing real scan identity.");

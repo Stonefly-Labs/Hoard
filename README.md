@@ -52,6 +52,14 @@ Reports remain non-qualifying and the CLI returns `EvidenceIncomplete` (exit 2)
 until independent evaluation is delivered. Focused/custom-binding runs and the
 other profiles remain guarded; neither a reduced inventory nor another provider
 is substituted.
+At `ef82218`, both isolated Linux public-category jobs pass their complete
+component checks: 179 inherited applicable passes and thirteen authorized
+durability exclusions, plus thirteen category quality checks. Reports remain
+`Incomplete`/non-qualifying; full acceptance, portable proof retention and
+independent evaluation are separate unfinished gates.
+Architecture regressions additionally exercise every production SDK boundary,
+complete/malformed scan inventories, and actual Identity-to-Core routes in both
+edge orders. Malformed scan entries now produce the expected inspection error.
 
 ## ✨ The idea
 

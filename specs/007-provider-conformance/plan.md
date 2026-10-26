@@ -7802,6 +7802,76 @@ explicit native skips; frozen inventory/SDK catalog checks and shell syntax
 also pass. Production references/APIs, examples/diagrams, charter/product/
 architecture/ADR documents, infrastructure and release behavior are unchanged.
 
+### Current native category execution and complete architecture scan controls
+
+At exact `ef822181489b6e8e8cc1f2c2f7d74412ffa393d4`,
+[run40405035306](https://github.com/Stonefly-Labs/Hoard/actions/runs/40405035306)
+passes both isolated public-category jobs, foundation regressions and fresh
+locked replay. The full SDK diagnostic job was still running when these
+completed jobs were inspected; it is not reported green by inference.
+
+| Component | Observed rows | Scopes / executions / native parents | Input SHA-256 | Report SHA-256 |
+| --- | --- | --- | --- | --- |
+| Metadata | 93 Passed, 9 NotApplicable, no Failed/Incomplete | 10 / 141 / 10 | `499325aba6bc8455d4f15e422d3a8cd106754b9af8542151543fb81f38aebec1` | `193333e965f6e71bcb0de3256d4d395ff07c76049926127a32a58c5dcdb08c27` |
+| Artifacts | 99 Passed, 4 NotApplicable, no Failed/Incomplete | 9 / 263 / 9 | `64d0908c3eb22821ffbebf86623a6aaef5fad3f77ed8801d7c8e968c50a8d347` | `ea7b6bfea6c77694aabb0434596a13bc9f7b2f6d7352179ab48f3e15d28ef0ec` |
+
+These jobs invoke the public shell entry, require its honest incomplete exit,
+then independently check full keys, applicable outcomes, original proof bytes,
+actual completion inputs and released resources. All native category sources
+are admitted under the actual owning executor, including all ten SQLite
+schema/backup/restore/recovery barriers, six Local crash/exit/readback barriers
+and serial paced non-seekable 256 MiB/4 GiB transfers on both fixtures with the
+unchanged <=64 MiB incremental OS-peak predicate. Memory has only MP-36/38..45
+non-durable exclusions; ObjectSemantics has only AS-41..44 simulation exclusions.
+The inherited total is 179 applicable passes plus thirteen exclusions; the
+additional thirteen passed quality rows are not extra inherited cases.
+QC-02/QC-03 native source controls admit the actual package-only common consumer,
+same consumer/SDK image bytes across each category's independent bindings,
+original wrapper parity and exact provider/package/runtime correspondence.
+The SDK project references only Abstractions and test dependencies; the consumer
+explicitly references the four separately packed bindings.
+
+Mark execution-only T026/T032 and wiring/consumer T035/T036 complete from these
+fresh actual component jobs, not the earlier historical receipts. Neither
+category report changes from `Incomplete`/qualification false. Complete
+acceptance, independently portable proof retention/replay and final evaluation
+remain separate unfinished gates; no current-source claim is made for subsequent
+architecture edits. Full SDK/contributor native confirmation remains pending.
+The obsolete `ad2d303` run completed with failure before cancellation was
+requested; the request changed nothing. Cancelled pending heads provide no
+passing evidence.
+
+For T052, extend `ConformanceArchitectureTests.cs` with real XML/assets/PE graph
+models for all nine production owner boundaries, explicit permitted test owners,
+complete/missing/duplicate/foreign scan sets and missing/ambiguous inspection
+inputs. Four non-object scan entries (null, array, string, number) first fail
+because `TryGetProperty` leaks `InvalidOperationException` instead of the
+expected inspection error. Validate object kind before property access; no rule
+or successful-inspection policy is relaxed. All 43 standalone graph cases pass.
+Actual prepared direct/helper Identity-to-Core graphs additionally retain the
+allowed Hosting route and prove rejection in both edge orders without blaming
+that allowed route. All established ARCH-001..008 declared-unused/transitive/
+packed/public-surface/IL rejection/permitted pairs remain unchanged.
+
+The first direct inherited selection fails 41 cases because the required
+foundation manifest was not prepared; its 55 passing cases are not called full
+architecture acceptance. The documented command
+`MSBUILDDISABLENODEREUSE=1 DOTNET_CLI_USE_MSBUILD_SERVER=0 UseSharedCompilation=false bash scripts/validate-foundation.sh --phase architecture`
+then passes, and passes again after adding the four actual Identity-path cases.
+This is the documented partial architecture check, not full foundation,
+compatibility-profile or five-profile acceptance. Focused whitespace formatting
+and `git diff --check` pass. Full tooling runs 481 tests successfully with
+nineteen explicit native skips; frozen inventory and SDK catalog checks pass.
+Mark the tests-first T052 complete; final compatibility source/profile and
+architecture-review obligations remain open.
+
+README and development/provider guidance record the evidence and limitations.
+Production contracts/package references, examples, diagrams, charter/product/
+architecture/ADR documents, governance, infrastructure, releases and UI are
+unaffected by the scanner's malformed-input guard and test coverage. Keep the
+stage running, reviewer checklists untouched and the PR draft: 42/86 tasks
+are now checked.
+
 ### Public native category dispatch and execution-evidence audit
 
 The public shell/CLI now routes complete built-in metadata/artifact invocations

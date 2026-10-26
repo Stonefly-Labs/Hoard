@@ -25,6 +25,21 @@ the independent evaluator is unfinished. Unsupported native hosts fail
 `PrerequisiteMissing` before allocation. Focused/custom-binding commands and
 other profiles remain explicitly incomplete, without fallback. This is not yet
 the external contributor entry point or category certification.
+Both built-in jobs at exact `ef82218` now pass complete component execution on
+Linux, including real SQLite schema/backup/recovery, Local abrupt-process
+recovery and both paced 256 MiB/4 GiB transfer sizes on each artifact fixture.
+The 192 inherited entries retain exactly 179 applicable passes and thirteen
+exclusions: Memory MP-36/38..45 and ObjectSemantics AS-41..44. Memory claims
+logical behavior only; ObjectSemantics claims no durable process restart.
+Package-only consumer/source controls use identical consumer/SDK images across
+the respective bindings and independently checked package resolution. Reports
+still do not qualify providers. Protocol/identity fixtures remain declaration/
+lifecycle checks, not native-client or production support.
+Architecture checks additionally keep the test SDK outside all nine production
+owner classes, permit explicit test owners, require complete scan inventories,
+and reject malformed entries through the inspection-error boundary. Actual
+direct/helper Identity-to-Core paths remain forbidden in either traversal order
+even with the permitted Identity-to-Hosting-to-Core route present.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.
