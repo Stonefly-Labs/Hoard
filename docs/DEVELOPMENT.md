@@ -9966,7 +9966,46 @@ markers advance. README, active plan and evidence/matrix contracts are updated;
 provider/contributor/deployment guides, examples and diagrams are unaffected
 because no supported public API, production dependency or deployment changes.
 
-### Native source-sealing and shared-consumer admission
+### Actual artifact-binding publication assertion parity
+
+`ArtifactConformanceSessionTests` now executes the existing shared
+`ArtifactPublicationAssertions` empty/absence, unknown-length/real-EOF,
+complete-expectation, unsupported-checksum/range and verified-duplicate
+consumers through both actual observed bindings. Its complete two-provider
+method family has ten rows, each retaining one original typed origin.
+The full artifact binding diagnostic scope grows from 24 to 34 rows without
+removing existing identities. The manifest now pins the actual SDK alongside
+the Consumer, two providers and two adapters. Reduced/foreign selections,
+missing new consumer families and missing SDK/component images reject before
+launch. Resource settlement/borrowed-ownership checks remain unchanged.
+
+The focused selector first fails because those ten actual-binding rows are
+missing. After wiring, all 147 SDK tooling tests pass; the complete 444-test
+tooling suite passes with 19 native skips. Changed C# whitespace, frozen
+inventory, embedded catalog and patch whitespace checks pass. A fresh isolated
+14-package replay passes all 170 original-plus-expanded Consumer rows and
+retains three catalog mutants with four named failures each, no skips.
+
+A separate bounded parity replay compares the ten actual-binding publication
+rows with their ten corresponding frozen wrapper rows. Both complete families
+pass without skips and load identical SDK image bytes. An isolated SDK-only
+change deliberately falsifies the shared duplicate byte-count expectation:
+both families then have exactly two named failures at
+`ArtifactPublicationAssertions.VerifiedDuplicatesAsync`, eight passes and no
+skips. Consumer/wrapper source hashes remain unchanged across both trials;
+fresh feeds/caches and derived locks are isolated. This tests shared-assertion
+reachability/parity, not a faulty-provider qualification pair. Receipts are
+bounded/read-only and retain hashes/counts, never raw child output.
+
+This is local publication-family parity only; complete artifact extraction,
+native admission, QC-03 and qualifying profiles remain unfinished. SDK/provider
+contracts, frozen/embedded catalogs, tracked locks and task/checklist markers
+are unchanged. README, active plan and evidence/matrix contracts are updated;
+provider/contributor/deployment guides, examples and diagrams are unaffected
+because no public API, supported command, production dependency or deployment
+behavior changes.
+
+### Native source-sealing and shared-consumer admission history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),

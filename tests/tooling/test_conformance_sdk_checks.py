@@ -4164,6 +4164,10 @@ class SdkDiagnosticTests(unittest.TestCase):
                         for provider, retained in (("local", "True"), ("object", "False")))
         expected.update(prefix + "Releasing_native_work_does_not_block_an_independent_release_or_rearming"
                         + f'(provider: "{provider}")' for provider in ("local", "object"))
+        expected.update(prefix + "Observed_publication_consumers_preserve_actual_binding_guarantees"
+                        + f'(provider: "{provider}", consumer: "{consumer}")'
+                        for provider in ("local", "object") for consumer in (
+                            "empty", "unknown-length", "expectations", "unsupported", "duplicates"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"
@@ -4181,6 +4185,8 @@ class SdkDiagnosticTests(unittest.TestCase):
         for roles in components.values():
             for path, _ in roles.values():
                 inputs["runtimeAssemblies"][path] = "e" * 64
+        sdk_path = (assembly.parent / "Hoard.Testing.Conformance.dll").relative_to(self.directory).as_posix()
+        inputs["runtimeAssemblies"][sdk_path] = "f" * 64
         with patch.object(checks, "runtime_command",
                           side_effect=checks.evidence.ConformanceError("ProofMismatch")) as launch:
             with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
@@ -4192,7 +4198,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 "Hoard.Fixtures.Artifacts.Local": "c" * 64,
                 "Hoard.Fixtures.Artifacts.ObjectSemantics": "d" * 64})
             manifest = launch.call_args.args[2]
-            self.assertEqual(len(manifest["assemblies"]), 5)
+            self.assertEqual(len(manifest["assemblies"]), 6)
             self.assertEqual({item["path"] for item in manifest["assemblies"]}, set(inputs["runtimeAssemblies"]))
             self.assertEqual({item["caseId"] for item in manifest["expected"]}, {"full-artifact-binding"})
             self.assertEqual({item["bindingId"] for item in manifest["expected"]},
@@ -4202,18 +4208,23 @@ class SdkDiagnosticTests(unittest.TestCase):
                 checks.test_attempt(SimpleNamespace(root=self.directory),
                                     {**inputs, "packages": inputs["packages"][:1]}, candidate, scenario)
             launch.assert_not_called()
-        with patch.object(checks, "runtime_command") as launch:
-            with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
-                checks.test_attempt(SimpleNamespace(root=self.directory),
-                                    {**inputs, "runtimeAssemblies": {
-                                        assembly.relative_to(self.directory).as_posix(): "a" * 64}}, candidate, scenario)
-            launch.assert_not_called()
+        for images in (
+                {assembly.relative_to(self.directory).as_posix(): "a" * 64},
+                {path: hashed for path, hashed in inputs["runtimeAssemblies"].items() if path != sdk_path}):
+            with patch.object(checks, "runtime_command") as launch:
+                with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
+                    checks.test_attempt(SimpleNamespace(root=self.directory),
+                                        {**inputs, "runtimeAssemblies": images}, candidate, scenario)
+                launch.assert_not_called()
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
             checks.runtime_command(SimpleNamespace(root=self.directory), assembly, manifest,
                                    artifact_packages={**packages, "foreign": "e" * 64})
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "InputChanged"):
             checks.runtime_command(SimpleNamespace(root=self.directory), assembly, manifest, artifact_packages=packages)
-        for changed in ((scenario[0], scenario[1][:-1], *scenario[2:]),
+        for changed in (*((
+                scenario[0], tuple(identity for identity in scenario[1] if f'consumer: "{consumer}"' not in identity),
+                *scenario[2:]) for consumer in ("empty", "unknown-length", "expectations", "unsupported", "duplicates")),
+                        (scenario[0], scenario[1][:-1], *scenario[2:]),
                         (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
                         ("full-artifact-binding-foreign", *scenario[1:])):
             with patch.object(checks, "runtime_command") as launch:

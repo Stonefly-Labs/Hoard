@@ -70,7 +70,7 @@ before factory dispatch/allocation, then run the unchanged actual binding's
 common assertion and original typed origin. Metadata covers ordinary and
 legacy opening. Missing bindings reject before dereference, and claimed
 logical `MP-21`/`AS-15` exclusions cannot bypass any mandatory hook.
-Neither the 132/24-row selections nor origin counts change.
+The original 132 metadata/24 artifact identities and origin counts are preserved.
 This coverage is not a public QC-05 witness or completed QC-05 qualification.
 Separate dedicated hook-admission diagnostic families select two provider rows
 per category with `QC-05` contexts, reusing those same assertions. They leave
@@ -94,6 +94,15 @@ Local SDK-catalog mutations for logical exclusion, durable reclassification
 and missing authorized exclusions fail named catalog assertions; unchanged
 Consumer rows pass. Exact-head native QC-05 admission and complete category
 extraction/parity remain separate unfinished gates.
+
+The full artifact binding diagnostic scope also executes the shared publication
+empty/absence, unknown-length/real-EOF, expectation, unsupported-operation and
+verified-duplicate consumers against both actual bindings. Its complete ten-row
+family extends the preserved 24 rows to 34, with six pinned images including
+the SDK and one actual typed origin per new row. Local complete-family parity
+against the corresponding frozen wrappers includes a paired shared-assertion
+mutation, not a faulty-provider qualification claim. Full QC-03 extraction,
+native source admission and category qualification remain unfinished.
 
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service

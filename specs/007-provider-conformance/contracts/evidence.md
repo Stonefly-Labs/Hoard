@@ -171,6 +171,18 @@ options. The primary execution context for a shared runtime witness is its
 lexicographically first mapped case. Projection retains the original execution
 UUID/proof hash across all explicitly mapped obligations; no transport or proof
 is relabeled. Results cannot omit either binding or any QC/control key.
+
+The package-only full artifact binding diagnostic scope additionally selects
+the complete two-provider publication consumer family: empty/absence,
+unknown-length/real-EOF, all expectations, unsupported checksum/range and
+verified duplicates. Ten actual-binding rows extend the preserved 24 original
+rows to 34; every publication row requires one actual typed origin. All six
+Consumer/SDK/provider/adapter images are pinned, and missing SDK or any selected
+consumer family rejects. A local shared-assertion mutation fails both
+corresponding complete actual-binding and frozen-wrapper families at the same
+named assertion, with identical SDK bytes and unchanged Consumer/wrapper
+sources. This is publication-family parity, not a native QC-03 source parent
+or full category qualification.
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,

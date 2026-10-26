@@ -1435,6 +1435,10 @@ def full_artifact_binding_scenarios():
                       for provider, retained in (("local", "True"), ("object", "False")))
     identities.update(prefix + "Releasing_native_work_does_not_block_an_independent_release_or_rearming"
                       + f'(provider: "{provider}")' for provider in ("local", "object"))
+    identities.update(prefix + "Observed_publication_consumers_preserve_actual_binding_guarantees"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "empty", "unknown-length", "expectations", "unsupported", "duplicates"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
@@ -2868,7 +2872,7 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
                              else metadata_origin_inputs(candidate, run.root))
             component_assignments = origin_inputs.values()
         component_paths = {path for roles in component_assignments for path, _ in roles.values()}
-        if hook_admission:
+        if hook_admission or name == "full-artifact-binding":
             component_paths.add((assembly.parent / "Hoard.Testing.Conformance.dll").relative_to(run.root).as_posix())
         component_paths.discard(assembly_path)
         for index, path in enumerate(sorted(component_paths)):

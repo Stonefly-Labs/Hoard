@@ -13,6 +13,42 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local", "empty")]
+    [InlineData("local", "unknown-length")]
+    [InlineData("local", "expectations")]
+    [InlineData("local", "unsupported")]
+    [InlineData("local", "duplicates")]
+    [InlineData("object", "empty")]
+    [InlineData("object", "unknown-length")]
+    [InlineData("object", "expectations")]
+    [InlineData("object", "unsupported")]
+    [InlineData("object", "duplicates")]
+    public async Task Observed_publication_consumers_preserve_actual_binding_guarantees(
+        string provider, string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        try
+        {
+            await (consumer switch
+            {
+                "empty" => ArtifactPublicationAssertions.EmptyContentAndAbsenceAsync(session.Store, default),
+                "unknown-length" => ArtifactPublicationAssertions.UnknownLengthAndRealEofAsync(session.Store, default),
+                "expectations" => ArtifactPublicationAssertions.EveryExpectationAndEofAsync(session.Store, default),
+                "unsupported" => ArtifactPublicationAssertions.UnsupportedChecksumAndRangeAsync(session.Store, default),
+                "duplicates" => ArtifactPublicationAssertions.VerifiedDuplicatesAsync(session.Store, default),
+                _ => throw new ArgumentException("BindingInvalid")
+            });
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local")]
     [InlineData("object")]
     public async Task Releasing_native_work_does_not_block_an_independent_release_or_rearming(string provider)

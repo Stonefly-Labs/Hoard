@@ -7050,7 +7050,43 @@ No task/checklist markers advance; README, DEVELOPMENT and evidence/matrix
 contracts are updated, while provider/contributor/deployment guides, examples
 and diagrams are unaffected by this test/evidence-only increment.
 
-### Exact native admission of earlier repaired source controls
+### Actual artifact-binding publication consumer parity
+
+The actual full binding Consumer now invokes the five existing shared
+publication consumers for empty/absence, unknown-length/real-EOF, all
+expectations, unsupported checksum/range and verified duplicates. The complete
+two-provider theory family adds ten rows, extending the original full artifact
+binding diagnostic scope from 24 to 34 without removing identities or weakening
+the frozen inventory. Each new row uses the observed binding and emits one
+original typed origin after the unchanged common assertion completes.
+The diagnostic manifest now also pins the SDK, for six actual images total.
+Reduced/foreign selections, omission of any new family and missing SDK/component
+images reject before dispatch.
+
+An intended-red selector regression reproduces the missing ten rows. After
+wiring, all 147 SDK tooling tests pass; the full 444-test tooling suite passes
+with 19 native skips. Scoped C# whitespace, frozen inventory, embedded catalog
+and patch whitespace checks pass. A fresh 14-package replay passes all 170
+metadata/artifact Consumer rows; all three catalog-policy mutations retain four
+named failures each without skips.
+
+An isolated local parity replay separately executes both complete ten-row
+actual-binding and frozen-wrapper publication families with identical SDK
+image bytes. Both pass without skips. Deliberately falsifying the one shared
+duplicate byte-count assertion then gives each family exactly two named
+`ArtifactPublicationAssertions.VerifiedDuplicatesAsync` failures, eight passes
+and no skips. Consumer/wrapper source hashes remain identical across the two
+trials. Feeds/caches/derived locks are isolated and bounded readonly receipts
+retain only hashes/counts. This is shared-assertion parity, not a
+faulty-provider qualification pair or native source admission.
+
+Full artifact extraction, QC-03/category qualification and task/checklist
+completion remain unfinished. SDK/provider contracts, frozen/embedded catalogs
+and tracked locks are unchanged. README, DEVELOPMENT and evidence/matrix
+contracts are updated; provider/contributor/deployment guides, examples and
+diagrams are unaffected by this test-only increment.
+
+### Exact native admission of earlier repaired source controls history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),

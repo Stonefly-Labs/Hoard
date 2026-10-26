@@ -2311,7 +2311,7 @@ Dedicated hook-admission theories now expose complete two-provider method
 families per category with `QC-05` session contexts. The diagnostic runner
 selects these four rows separately, pins the SDK plus actual Consumer/binding/
 provider images, and rejects reduced or foreign selections before dispatch.
-The existing 132/24-row selections are unchanged. A fresh-package local replay
+The existing 132 metadata/24 artifact identities are preserved. A fresh-package local replay
 rejects all four dedicated rows for each of the three SDK mutations above;
 the unchanged SDK passes all 160 original-plus-dedicated rows without skips.
 Qualification-input batches now execute each complete family once in a
@@ -2379,6 +2379,19 @@ tests pass without skips. A fresh 14-package replay with the updated embedded
 catalog rejects all three catalog mutations with four named failures each;
 the unchanged Consumer passes all 160 rows. These are local diagnostics, not
 native admission or full qualification; no task/checklist markers advance.
+
+Actual artifact bindings now also execute the unchanged shared empty/absence,
+unknown-length/real-EOF, complete-expectation, unsupported-operation and verified-
+duplicate consumers. Their complete ten-row family extends the artifact binding
+diagnostic scope from 24 to 34 rows; original identities and frozen inventories
+are preserved, and all six Consumer/SDK/binding/provider images are pinned.
+A fresh 14-package replay passes all 170 metadata/artifact Consumer rows and
+retains all three four-failure catalog controls. Separately, both actual
+bindings and both corresponding frozen wrappers pass all ten publication rows
+with identical loaded SDK bytes. One isolated shared-assertion mutation produces
+the same two named duplicate failures/eight passes in each family without
+editing Consumer/wrapper sources. This establishes local publication assertion
+parity, not full QC-03 extraction or native/category qualification.
 
 Exact `58a9495`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
