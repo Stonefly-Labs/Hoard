@@ -95,6 +95,11 @@ the negative packets; they are not failed public report witnesses. QC-04
 requires both current corrected rows and one common source parent, never
 missing rows/parents or borrowed previous-attempt executions. Implementation
 and modeled rejection checks do not claim fresh Linux pair admission.
+The source supervisor seals inspected runtime witnesses, completion and proof
+files read-only after owned-child settlement, rechecking exact captured bytes
+before sealing. Live children or changed bytes reject. Independent source
+reconstruction still requires readonly originals; writable logger output cannot
+be admitted or silently copied into replacement authority.
 
 The metadata qualification-input batch also executes a distinct fresh F-07
 package-only common Consumer as private source transport. Its immutable

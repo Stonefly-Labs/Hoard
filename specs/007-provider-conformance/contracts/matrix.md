@@ -48,6 +48,9 @@ and held command closure with ordered settled bounds; setup failures and
 previous-attempt borrowing reject. Negative rows are retained source evidence,
 not failed public witnesses. Local/model validation is not fresh Linux
 qualification of these pairs.
+Runtime source witnesses/completion/proofs are sealed only after child
+settlement and rechecking their captured bytes; unsealed, changed or live-child
+transport cannot substitute for the required readonly originals.
 
 Metadata additionally executes all 132 exact F-07 common-consumer rows in a
 fresh qualification-input private source scope covering both actual bindings.

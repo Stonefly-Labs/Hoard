@@ -2260,6 +2260,15 @@ four corrected passes and four faulty failures, each at its fixed shared
 assertion frame. This local non-native check does not admit source parents.
 No task/checklist advances.
 
+Exact `426511a`/run40246023608 passes all 329 native foundations without skips
+and locked replay, but its SDK job fails fresh metadata mutation source
+reconstruction: original logger witness files were not sealed read-only.
+The bounded source locations identify the readonly check; this is not a named
+consumer assertion failure. The supervisor now seals validated runtime source
+bytes only after child settlement, rechecking them before sealing. Live work
+and changed output reject; the independent readonly requirement is unchanged.
+Local regression checks pass; fresh Linux admission of the repair is pending.
+
 Metadata qualification-input diagnostics now execute a fresh F-07 package-only
 shared consumer, separately from the older metadata marker consumer retained
 for MP-47. Its closed private scope requires all 132 exact rows, both actual

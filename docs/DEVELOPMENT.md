@@ -9728,7 +9728,22 @@ Artifact input/result are
 `f940a01b256c543ccdc58fcabc35317d0f2cb70d143400118f0fa5fd9a40dd93`.
 All four public reports remain `Incomplete`. The unchanged MP-46 row passes on
 retry; no timing or other cause is established. This does not admit the newer
-QC-04 path at `426511a`/run40246023608, whose native replay is in progress.
+QC-04 path at `426511a`/run40246023608. That run subsequently passes all 329
+native foundations without skips and locked replay, but its SDK job fails
+fresh metadata mutation source reconstruction at
+`conformance_sources.py:172 -> _readonly:56`: logger witness files were not
+sealed read-only. No new source parent is admitted; no raw CI log is retained.
+
+The supervisor now seals validated runtime source witnesses, completion and
+proof files only after the owned child is settled. Before changing permissions
+it rechecks that file bytes match the already inspected transport. Live
+children or changed bytes reject; the independent readonly guard is not weakened.
+An intended-red regression reproduced the missing seal, then passed the repair,
+including both negative and shared-consumer scopes and live/changed-output
+rejections. The full 439-check tooling run passes with 19 explicit native skips;
+frozen inventory, embedded catalog and whitespace checks pass. Fresh Linux
+repair admission remains pending. No consumer assertions, budgets, C# or locks
+change, and this observed failure is not attributed to timing.
 
 ### Fresh shared metadata SDK consumer source control
 

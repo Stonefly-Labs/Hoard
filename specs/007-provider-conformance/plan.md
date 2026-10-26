@@ -6836,7 +6836,20 @@ parent-set digest is
 `11ffbda9bfed04a1f9c4c2ddb9f3db1067c84966def08ff41fdf674c3e3067e5`.
 All four public reports remain `Incomplete`; no first-failure cause is
 established. This does not admit the newer QC-04 source path.
-Exact `426511a`/run40246023608 is now executing that replay.
+Exact `426511a`/run40246023608 subsequently passes all 329 native foundations
+without skips and locked replay, but its SDK job fails fresh metadata mutation
+source reconstruction. Safe source locations resolve to the original witness
+file readonly check (`conformance_sources.py:172 -> _readonly:56` at that head).
+Logger output was not sealed before independent re-ingestion; no source parent
+is admitted. No raw CI log is retained or timing cause inferred.
+
+An intended-red producer regression reproduces the missing readonly seal.
+The supervisor repair seals inspected source witnesses/completion/proofs only
+after child settlement and a byte-for-byte recheck against captured transport.
+Live children and post-inspection changes reject. The independent readonly
+requirement, named assertions and all budgets are unchanged. All 439 tooling
+checks pass with 19 native skips, plus frozen inventory, embedded catalog and
+whitespace checks. Fresh Linux repair admission remains pending.
 
 ### Fresh metadata common-consumer native source transport
 

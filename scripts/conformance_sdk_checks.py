@@ -2658,6 +2658,15 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
         **({"original_inputs": original_inputs} if original_inputs is not None else {}))
     if inspect_source:
         ingested = ingested["observation"]
+        if run.live_children():
+            raise evidence.ConformanceError("OwnershipInvalid")
+        for filename, raw in {
+                "witnesses.jsonl": data["witnesses_data"], "completion.json": data["completion_data"],
+                **proof_data}.items():
+            path = output / filename
+            if read_bounded(path, len(raw)) != raw:
+                raise evidence.ConformanceError("InputChanged")
+            path.chmod(0o400)
     return result, ingested, MappingProxyType(data), hashlib.sha256(discovery_completion).hexdigest()
 
 
