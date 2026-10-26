@@ -6772,7 +6772,8 @@ observations each, without skips. The native factory model additionally rejects
 changed argv/input map/cwd/exit/sequence/times, rehashed replaced records,
 settings changes, shortened rows and missing/reversed images. Scoped formatting,
 frozen inventory, embedded catalog and whitespace pass. These are local/model
-checks, not fresh native integration source admission. T033 and all other
+checks; the later unchanged-head retry below now admits native integration
+sources. T033 and all other
 unchecked tasks/checklists remain unchanged.
 
 Exact `a5fe97e`/run40238458550 independently passes all three Linux jobs:
@@ -6810,7 +6811,11 @@ All 437 tooling tests pass with 19 native skips; all 133 source SDK tests pass
 without skips. One initial tooling run failed the existing real descendant
 startup timing assertion; both its unchanged focused rerun and full rerun pass.
 Frozen inventory, embedded catalog and patch whitespace pass. These are local/
-modeled checks, not fresh Linux pair admission. T034, all other unchecked tasks
+modeled checks, not fresh Linux pair admission. A separate fresh private
+package-only restore against the current SDK executes all eight mutation rows:
+four corrected passes and four faulty failures, each at its fixed shared
+assertion frame. Its isolated snapshot/lock preserve the earlier authority
+validation workspace. This is still non-native validation. T034, all other unchecked tasks
 and reviewer-owned checklist markers remain unchanged.
 
 Exact `a83380c`/run40240608803 independently admits the four public category
@@ -6819,8 +6824,19 @@ skips, locked replay and 135 aggregate scopes/2,048 witnesses. Metadata remains
 90/3/9/0 and artifacts 95/4/4/0. This predates fresh QC-12 and QC-04 source paths.
 Exact `9a5ebdb`/run40243784950 attempt one passes 325 native foundations and
 locked replay, but SDK diagnostics fail the earlier MP-46 configured-selection
-wrapper with `UnknownDiagnostic`, before fresh QC-12. The unchanged-head failed
-SDK job retry is pending; no cause or successful source admission is inferred.
+wrapper with `UnknownDiagnostic`, before fresh QC-12. Its unchanged-head failed
+SDK job retry now independently passes all three jobs: 325 native foundations
+without skips, 13-lock/18-package replay and 136 aggregate scopes/2,080 witnesses.
+Fresh QC-12 admits the complete 32-row integration scope and one native parent.
+Artifacts now has seven scopes/259 witnesses/four parents and 96/3/4/0; metadata
+remains 90/3/9/0. Artifact input/result are
+`7f0e5b5c7b5e4b9b6b583d9711e35bf38c52812d76bd7b728f5c4732f93cea0a` /
+`f940a01b256c543ccdc58fcabc35317d0f2cb70d143400118f0fa5fd9a40dd93`;
+parent-set digest is
+`11ffbda9bfed04a1f9c4c2ddb9f3db1067c84966def08ff41fdf674c3e3067e5`.
+All four public reports remain `Incomplete`; no first-failure cause is
+established. This does not admit the newer QC-04 source path.
+Exact `426511a`/run40246023608 is now executing that replay.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

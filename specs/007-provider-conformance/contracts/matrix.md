@@ -35,7 +35,8 @@ The fresh qualification-only `original-integration` scope retains all 32 rows
 under their actual Local/Object bindings. Three actual loaded images per row
 and one independently reconstructed native command/source parent form its
 current-attempt basis; no inherited AS row substitutes for a pairing/consumer.
-Its implementation and local execution do not claim a completed Linux matrix.
+Exact `9a5ebdb`/run40243784950's unchanged-head retry now admits all 32 rows
+under one native source parent. This does not complete full profile acceptance.
 
 QC-04 requires two corrected metadata identities and two corrected artifact
 identities across their respective category profiles. A qualification-only

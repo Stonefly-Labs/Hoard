@@ -77,7 +77,9 @@ admitting one parent shared by the complete set. Rehashing a replaced record or
 receipt is not authority. QC-12 requires all current-attempt rows and that parent;
 missing source parents or rows cannot qualify, and prior execution IDs cannot be
 reused in a retry. Local execution and modeled rejection checks do not establish
-fresh Linux source admission, which remains pending.
+fresh Linux source admission by themselves. Exact `9a5ebdb`/run40243784950's
+unchanged-head retry subsequently admits this complete scope and one native
+parent; artifact reports remain `Incomplete`, not full profile qualification.
 
 QC-04 has a separate qualification-only `mutation-repair` scope per category,
 with both corrected binding identities fixed in the independent/SDK catalogs.

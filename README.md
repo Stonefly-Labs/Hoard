@@ -2241,8 +2241,9 @@ source parent for all rows. QC-12 derives only from that current complete set
 and its parent; missing, borrowed or previous-attempt rows cannot qualify.
 Local checks pass 433 tooling tests (19 native skips), 133 source SDK tests and
 32 actual package-only integration rows with all three image observations.
-The latter is non-native validation, not qualification. Fresh Linux admission
-of this scope and full profile/evaluator acceptance remain pending.
+The latter is non-native validation, not qualification. The unchanged-head Linux
+retry recorded below now admits this integration scope, not full profile/
+evaluator acceptance.
 
 QC-04 now has a separate qualification-only `mutation-repair` scope for each
 category. It executes both faulty bindings first, requires the exact named
@@ -2253,7 +2254,11 @@ closure, ordered settled times and fixed settings/argv, and retains the negative
 proofs under one current corrected source parent. Setup failures, replaced
 records, missing rows and prior-attempt borrowing cannot qualify. Local checks
 pass 437 tooling tests (19 native skips) and 133 source SDK tests; fresh Linux
-admission of these new pairs remains pending. No task/checklist advances.
+admission of these new pairs remains pending. A fresh private package-only
+restore with the current SDK also executes all eight actual mutation rows:
+four corrected passes and four faulty failures, each at its fixed shared
+assertion frame. This local non-native check does not admit source parents.
+No task/checklist advances.
 
 Exact `a83380c`, [run40240608803](https://github.com/Stonefly-Labs/Hoard/actions/runs/40240608803),
 independently admits the four public `Incomplete` category reports: all three
@@ -2261,7 +2266,12 @@ Linux jobs pass, with 319 native foundations without skips and 135 aggregate
 scopes/2,048 witnesses. It predates the fresh QC-12/QC-04 scopes.
 The first `9a5ebdb` attempt passes 325 native foundations and locked replay but
 fails an earlier metadata wrapper row before reaching fresh QC-12 admission.
-Its unchanged-head failed-job retry is pending; no cause or success is inferred.
+Its unchanged-head failed-job retry now independently passes all three jobs:
+325 native foundations without skips, 13-lock/18-package replay and 136 aggregate
+scopes/2,080 witnesses. Fresh QC-12 contributes its complete 32-row native source
+parent; artifacts now has 96 Passed/3 Incomplete/4 NotApplicable/0 Failed, with
+seven scopes/259 witnesses/four parents. Metadata remains 90/3/9/0. The first
+failure's cause is not established; this does not admit the newer QC-04 pairs.
 
 Exact `a5fe97e`, [run40238458550](https://github.com/Stonefly-Labs/Hoard/actions/runs/40238458550),
 independently passes all three Linux jobs: 317 native foundations without skips,

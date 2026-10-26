@@ -9661,8 +9661,8 @@ explicit native skips. `dotnet test tests/contracts/Hoard.Conformance.Tests/Hoar
 passes all 133 source SDK tests. Scoped C# whitespace, frozen inventory, embedded
 catalog and whitespace checks pass. A private local package-only restore/run
 executes all 32 actual integration cases with three image observations each:
-all pass without skips. This is non-native validation; fresh Linux integration
-source admission remains pending. No tracked lock, public provider API,
+all pass without skips. This is non-native validation; the unchanged-head Linux
+retry below subsequently admits the integration source path. No tracked lock, public provider API,
 production dependency or supported command changes; provider/contributor/
 deployment guides, examples and diagrams are unaffected.
 
@@ -9701,7 +9701,12 @@ assertion; its unchanged focused rerun and full rerun pass.
 `dotnet test tests/contracts/Hoard.Conformance.Tests/Hoard.Conformance.Tests.csproj --no-restore --verbosity quiet`
 passes 133 tests without skips. Frozen inventory, embedded catalog and patch
 whitespace pass. Native pair admission remains pending; no task/checklist
-markers advance. README, plan and evidence/matrix contracts are updated.
+markers advance. A separate fresh private package-only restore against the
+current SDK executes all eight actual mutation rows: four corrected passes and
+four faulty failures, each in its fixed shared assertion frame. This is local
+non-native validation, not native parent admission. Its snapshot and temporary
+lock are isolated from the earlier authority-check feed/cache/lock.
+README, plan and evidence/matrix contracts are updated.
 Provider/contributor/deployment guides, examples and diagrams are unaffected:
 no public API, dependency, supported command or deployment behavior changes.
 
@@ -9712,8 +9717,18 @@ metadata remains 90/3/9/0 and artifacts 95/4/4/0. This predates fresh QC-12/QC-0
 admission. Exact `9a5ebdb`/run40243784950 attempt one passes 325 foundations and
 locked replay, but its SDK job fails the earlier MP-46 configured-selection
 wrapper with `UnknownDiagnostic` before reaching the new QC-12 scope.
-Only that failed job was retried at the unchanged head; its result is pending.
-The unchanged row passed at `a83380c`; no timing or other cause is established.
+Only that failed job was retried at the unchanged head. Attempt two now
+independently passes all three jobs: 325 foundations without skips, 13 locks/
+18 packages and 136 aggregate scopes/2,080 witnesses. Its fresh QC-12 scope
+admits all 32 actual integration rows with one native parent. Qualification-
+input artifacts now has seven scopes/259 witnesses/four parents and
+96 Passed/3 Incomplete/4 NotApplicable/0 Failed; metadata remains 90/3/9/0.
+Artifact input/result are
+`7f0e5b5c7b5e4b9b6b583d9711e35bf38c52812d76bd7b728f5c4732f93cea0a` /
+`f940a01b256c543ccdc58fcabc35317d0f2cb70d143400118f0fa5fd9a40dd93`.
+All four public reports remain `Incomplete`. The unchanged MP-46 row passes on
+retry; no timing or other cause is established. This does not admit the newer
+QC-04 path at `426511a`/run40246023608, whose native replay is in progress.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),
