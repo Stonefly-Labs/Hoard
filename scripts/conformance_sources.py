@@ -21,7 +21,8 @@ from conformance_case_catalog import (
     ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES,
     ORIGINAL_METADATA_FACADE_WITNESSES, ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
     category_execution_partitions, category_mutation_witnesses, category_runtime_cases, category_runtime_packages,
-    metadata_common_consumer_origin_counts, metadata_common_consumer_tests, hook_admission_tests, obligation_controls,
+    metadata_argument_expectations, metadata_common_consumer_origin_counts, metadata_common_consumer_tests,
+    hook_admission_tests, obligation_controls,
     original_witness_policy,
 )
 from conformance_execution import OwnedRun, no_symlinks
@@ -138,6 +139,15 @@ def metadata_original_inputs(run, inputs):
     return selected
 
 
+def _metadata_argument_parameters(expected, nodes, arguments, *, original):
+    kind, field = ("original-observation", "observationId") if original else ("session-origin", "sessionId")
+    indices = {node[field]: index for index, node in enumerate(nodes)}
+    if (any(argument["sourceKind"] != kind or argument["sourceId"] not in indices for argument in arguments)
+            or sorted((indices[argument["sourceId"]], argument["argumentKind"], argument["argumentValue"])
+                      for argument in arguments) != sorted(expected)):
+        raise evidence.ConformanceError("ProofMismatch")
+
+
 def metadata_original_observations(run, inputs, manifest, observed, *, scope_id):
     if inputs["mode"] != "qualification" or scope_id not in ("original-memory", "original-sqlite"):
         raise evidence.ConformanceError("WitnessMissing")
@@ -167,7 +177,8 @@ def metadata_original_observations(run, inputs, manifest, observed, *, scope_id)
         if hashlib.sha256(_readonly(run.root / path, 64 * 1024 * 1024)).hexdigest() != hashed:
             raise evidence.ConformanceError("InputChanged")
     entries = {entry["testIdentity"]: entry for entry in manifest["expected"]}
-    prior_observations, prior_instances, observations = {}, {}, []
+    prior_observations, prior_instances, observations, prior_arguments = {}, {}, [], set()
+    parameters = metadata_argument_expectations(original=True)
     for identity, witness in sorted(witnesses.items()):
         if observed["sessionOrigins"].get(witness["executionId"]) or witness["bindingId"] != tests[identity][0]:
             raise evidence.ConformanceError("ProofMismatch")
@@ -183,9 +194,17 @@ def metadata_original_observations(run, inputs, manifest, observed, *, scope_id)
             prior_observations=prior_observations, prior_instances=prior_instances)
         if not nodes:
             raise evidence.ConformanceError("WitnessMissing")
+        prior_arguments.update(prior_observations)
+        arguments = evidence._ingest_metadata_arguments(
+            inputs, proof.get("metadataArguments", ()), (), nodes, prior_arguments, witness["bindingId"])
+        if evidence.canonical_bytes(arguments) != evidence.canonical_bytes(
+                observed.get("metadataArguments", {}).get(witness["executionId"], ())):
+            raise evidence.ConformanceError("ProofMismatch")
+        _metadata_argument_parameters(parameters[identity], nodes, arguments, original=True)
         observations.append({
             "testIdentity": identity, "executionId": witness["executionId"],
-            "runtimeProofSha256": witness["proofSha256"], "sourceProofSha256": evidence.digest(nodes)})
+            "runtimeProofSha256": witness["proofSha256"],
+            "sourceProofSha256": evidence.digest({"originalObservations": nodes, "metadataArguments": arguments})})
     return observations
 
 
@@ -376,12 +395,16 @@ def _native_category_consumer_control(run, inputs, *, started_ms, ended_ms, hook
     witnesses = source_witnesses(inputs, manifest, observed, identities)
     descriptors = {row["bindingId"]: row["descriptorSha256"] for row in inputs["bindings"]}
     counts = {identity: 1 for identity in identities} if hooks else metadata_common_consumer_origin_counts()
+    parameters = {} if hooks else metadata_argument_expectations(original=False)
     for identity, row in witnesses.items():
         origins = observed["sessionOrigins"][row["executionId"]]
         if (row["bindingId"] != identities[identity][0] or len(origins) != counts[identity]
                 or observed["originalObservations"][row["executionId"]]
                 or any(origin["descriptorSha256"] != descriptors[row["bindingId"]] for origin in origins)):
             raise evidence.ConformanceError("ProofMismatch")
+        if not hooks:
+            _metadata_argument_parameters(
+                parameters[identity], origins, observed["metadataArguments"][row["executionId"]], original=False)
     record_raw = run.read_execution_record(sequence)
     record = evidence.load_json(record_raw)
     fields = {"schemaVersion", "sequence", "childPid", "childStartSha256", "startedMs", "endedMs",

@@ -104,6 +104,56 @@ def metadata_common_consumer_tests():
         if f'(provider: "{binding}"' in identity})
 
 
+def metadata_argument_expectations(*, original):
+    """Frozen (source-node index, argument kind, argument value) assignments."""
+    if type(original) is not bool:
+        raise ConformanceError("WitnessMissing")
+    identities = ORIGINAL_METADATA_WITNESSES if original else metadata_common_consumer_tests()
+    expected = {identity: () for identity in identities}
+    continuation = (("null", "Null"), ("omitted", "Omitted"), ("wrong-type", "WrongType"),
+                    ("empty", "Empty"), ("odd-hex", "OddHex"), ("invalid-hex", "InvalidHex"))
+    query = (("cache-auth", "CacheAuthorization"), ("aggregate-auth", "AggregateAuthorization"),
+             ("aggregate-start", "AggregateStart"), ("aggregate-end", "AggregateEnd"),
+             ("lease-resource", "LeaseResource"))
+    if original:
+        prefix = "Hoard.Metadata.Tests."
+        for shape, value in continuation:
+            identity = (prefix + "MetadataPagingTests."
+                        "MP08_Malformed_continuation_fields_reject_input_and_preserve_valid_resume"
+                        + f'(shape: "{shape}")')
+            expected[identity] = ((0, "continuation-corruption", value),)
+        for shape, value in query:
+            identity = (prefix + "MetadataFailureTests."
+                        "MP21_Corrupt_query_dimensions_cannot_disappear_behind_page_filters"
+                        + f'(shape: "{shape}")')
+            expected[identity] = ((0, "query-corruption", value),)
+        expected[prefix + "MetadataLeaseTests."
+                 "MP29_Expiry_is_rechecked_at_the_final_decision_for_renew_release_and_guards"] = tuple(
+                     (index, "lease-expiry", value) for index, value in enumerate(("Renew", "Release", "Guard")))
+        expected[prefix + "MetadataSchemaTests."
+                 "MP33_Unrelated_and_partial_layouts_are_not_empty_or_permission_to_create"] = (
+                     (0, "schema-layout", "unrelated"), (1, "schema-layout", "partial"))
+    else:
+        prefix = "Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
+        for provider in ("memory", "sqlite"):
+            for method, kind, values in (
+                    ("Observed_continuation_corruption_preserves_actual_pages", "continuation-corruption",
+                     tuple(value for _, value in continuation)),
+                    ("Observed_query_corruption_preserves_actual_dimensions", "query-corruption",
+                     tuple(value for _, value in query))):
+                for value in values:
+                    expected[prefix + method + f'(provider: "{provider}", corruption: {value})'] = ((0, kind, value),)
+            method = prefix + "Observed_factories_execute_unchanged_common_consumers_with_actual_origins"
+            for consumer, kind, value in (
+                    ("lease-renew", "lease-expiry", "Renew"), ("lease-release", "lease-expiry", "Release"),
+                    ("lease-guard", "lease-expiry", "Guard"), ("layout-empty", "schema-layout", "unrelated"),
+                    ("layout-partial", "schema-layout", "partial")):
+                expected[method + f'(provider: "{provider}", consumer: "{consumer}")'] = ((0, kind, value),)
+    if expected.keys() != set(identities):
+        raise ConformanceError("WitnessMissing")
+    return MappingProxyType(expected)
+
+
 def hook_admission_tests(profile):
     if profile not in ("metadata", "artifacts"):
         raise ConformanceError("WitnessMissing")

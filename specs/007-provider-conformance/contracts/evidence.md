@@ -305,8 +305,12 @@ C# and Python independently require current source/role identity, bounded
 values, exact fields and replay-free calls, including cross-scope history.
 Argument admission uses the declared metadata category, not reference binding names.
 Existing 128-packet and 64-KiB proof bounds are unchanged. Schema3 transport
-does not itself require or qualify the full sixteen-choice extraction map;
-independent native pairing and QC-02 composition remain outstanding.
+does not itself qualify the full sixteen-choice extraction map. Independent
+source authorities additionally enforce the frozen per-witness map, including
+empty maps and exact original lease/layout forest nodes. Original authority
+re-reads arguments from readonly proofs and includes validated arguments in its
+source-proof digest. Coherently rehashed missing/wrong/unexpected argument facts
+reject. Cross-family native pairing and QC-02 composition remain outstanding.
 
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is

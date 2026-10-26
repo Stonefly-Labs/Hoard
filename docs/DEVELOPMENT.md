@@ -10358,8 +10358,14 @@ Argument admission uses the declared metadata category, not reference-provider
 binding names; both logger and parent have contributor-name regressions.
 Legacy schema1/2 transport remains diagnostic-compatible. Case/category
 histories retain immutable argument maps and reject cross-scope call reuse.
-This transport is not the still-unbuilt QC-02 expected-map/native-pairing
-composition. Examples, diagrams, production dependencies and infrastructure
+Both native source authorities now enforce a closed per-witness parameter map.
+Original authority re-reads argument packets from readonly proofs, independently
+validates their roles/contexts and commits them into the source-proof digest.
+Missing choices, wrong valid values, unexpected calls and wrong original forest
+nodes reject even after coherent rehashing. All 278 retained local SDK proofs
+match the expected source-node maps. Cross-family pairing and QC-02 composition
+remain unbuilt; these local checks are not new native admission.
+Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 
 Fresh fourteen-package replay passes 318 selected consumers. Complete

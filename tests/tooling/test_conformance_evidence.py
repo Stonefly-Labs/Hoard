@@ -4025,6 +4025,19 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     observed["originalObservations"][first] = nodes
                 write(settings, settings_raw)
 
+    def metadata_argument_packets(self, identity, nodes, *, original):
+        import conformance_case_catalog as catalog
+        return [{
+            "schemaVersion": 1, "runId": self.inputs["runId"], "caseId": nodes[index]["caseId"],
+            "callId": str(uuid.uuid4()),
+            "sourceKind": "original-observation" if original else "session-origin",
+            "sourceId": nodes[index]["observationId" if original else "sessionId"],
+            "componentRole": "schema" if kind == "schema-layout" else "store",
+            "componentInstanceId": nodes[index]["components"][
+                "schema" if kind == "schema-layout" else "store"]["instanceId"],
+            "argumentKind": kind, "argumentValue": value,
+        } for index, kind, value in catalog.metadata_argument_expectations(original=original)[identity]]
+
     def test_original_metadata_sources_require_complete_forests_exact_roles_and_sdk_image(self):
         import conformance_case_catalog as catalog
         import conformance_sources as sources
@@ -4093,7 +4106,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                             "proofs": {path: hashlib.sha256(raw).hexdigest()
                                        for path, raw in transport["proofs"].items()},
                             "sessionOrigins": {row["executionId"]: () for row in witnesses},
-                            "originalObservations": {}}
+                            "originalObservations": {}, "metadataArguments": {}}
                 for witness in witnesses:
                     identity = witness["testIdentity"]
                     nodes = []
@@ -4113,6 +4126,10 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     proof = evidence.load_json(transport["proofs"][path])
                     proof.update(schemaVersion=2, originalObservations=nodes, sessionOrigins=[],
                                  ownerSha256=evidence.digest(self.owner), assemblySha256=images[assembly_path])
+                    arguments = self.metadata_argument_packets(identity, nodes, original=True)
+                    observed["metadataArguments"][witness["executionId"]] = arguments
+                    if arguments:
+                        proof.update(schemaVersion=3, metadataArguments=arguments)
                     raw = evidence.canonical_bytes(proof)
                     transport["proofs"][path] = raw
                     destination = run.root / f"runtime-{self.attempt}" / path
@@ -4141,9 +4158,14 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
                 self.assertEqual(len(admit()), 63)
                 self.original_metadata_command_fixture(run, manifest, observed, transport, scope, selected)
-                for mutation in ("missing-row", "parameter", "forest", "role", "context", "sdk", "image"):
+                for mutation in ("missing-row", "parameter", "forest", "role", "context", "sdk", "image",
+                                 "arguments-missing", "arguments-value", "arguments-node"):
                     changed_manifest, changed_observed = copy.deepcopy(manifest), copy.deepcopy(observed)
-                    first = witnesses[0]["executionId"]
+                    target = next(row for row in observed["witnesses"] if
+                                  row["testIdentity"].endswith(
+                                      "MP29_Expiry_is_rechecked_at_the_final_decision_for_renew_release_and_guards")
+                                  ) if mutation.startswith("arguments-") else observed["witnesses"][0]
+                    first = target["executionId"]
                     proof_path = run.root / f"runtime-{self.attempt}/proof-{first}.json"
                     proof_raw = proof_path.read_bytes()
                     if mutation == "missing-row":
@@ -4161,16 +4183,28 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     elif mutation == "sdk":
                         manifest["assemblies"] = [row for row in manifest["assemblies"]
                                                   if not row["path"].endswith("/Hoard.Testing.Conformance.dll")]
+                    elif mutation.startswith("arguments-"):
+                        arguments = observed["metadataArguments"][first]
+                        if mutation == "arguments-missing":
+                            arguments.pop()
+                        elif mutation == "arguments-value":
+                            arguments[0]["argumentValue"] = "Release"
+                        else:
+                            node = observed["originalObservations"][first][1]
+                            arguments[0].update(sourceId=node["observationId"],
+                                                componentInstanceId=node["components"]["store"]["instanceId"])
                     else:
                         manifest["assemblies"][-1]["sha256"] = "0" * 64
-                    if mutation in ("forest", "role", "context"):
+                    if mutation in ("forest", "role", "context") or mutation.startswith("arguments-"):
                         changed_proof = evidence.load_json(proof_raw)
                         changed_proof["originalObservations"] = observed["originalObservations"][first]
+                        if mutation.startswith("arguments-"):
+                            changed_proof["metadataArguments"] = observed["metadataArguments"][first]
                         raw = evidence.canonical_bytes(changed_proof)
                         proof_path.chmod(0o600)
                         proof_path.write_bytes(raw)
                         proof_path.chmod(0o400)
-                        observed["witnesses"][0]["proofSha256"] = hashlib.sha256(raw).hexdigest()
+                        target["proofSha256"] = hashlib.sha256(raw).hexdigest()
                         observed["proofs"][proof_path.name] = hashlib.sha256(raw).hexdigest()
                     with self.subTest(provider=provider, mutation=mutation), self.assertRaises(evidence.ConformanceError):
                         admit()
@@ -4422,6 +4456,10 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         origin["components"]["factory"] = copy.deepcopy(captured_origins[0]["components"]["factory"])
                     captured_origins.append(origin)
                 proof["sessionOrigins"] = captured_origins
+                if not hooks:
+                    arguments = self.metadata_argument_packets(row["testIdentity"], captured_origins, original=False)
+                    if arguments:
+                        proof.update(schemaVersion=3, originalObservations=[], metadataArguments=arguments)
                 transport["proofs"][filename] = evidence.canonical_bytes(proof)
                 witnesses.append({**row, "proofSha256": evidence.digest(proof)})
             transport["witnesses_data"] = b"".join(evidence.canonical_bytes(row) + b"\n" for row in witnesses)
@@ -4597,14 +4635,18 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                              (profile, "hook-admission" if hooks else "shared-consumer"))
             for defect in ("missing-origins", "wrong-case", "borrowed-role", "foreign-descriptor", "duplicate-session",
                            "missing-row", "relabeled-manifest", "argv", "inputs", "replaced-record", "settings",
-                           *(("wrapper-sdk", "unpinned-wrapper-sdk") if not hooks else ())):
+                           *(("wrapper-sdk", "unpinned-wrapper-sdk", "arguments-missing", "arguments-value",
+                              "arguments-unexpected") if not hooks else ())):
                 with self.subTest(defect=defect):
                     changed_record = copy.deepcopy(record)
-                    first = witnesses[0]
+                    first = (next(row for row in witnesses if bool(
+                        catalog.metadata_argument_expectations(original=False)[row["testIdentity"]])
+                                  != (defect == "arguments-unexpected"))
+                             if defect.startswith("arguments-") else witnesses[0])
                     filename = f'proof-{first["executionId"]}.json'
                     proof = evidence.load_json(transport["proofs"][filename])
                     if defect in ("missing-origins", "wrong-case", "borrowed-role", "foreign-descriptor",
-                                  "duplicate-session"):
+                                  "duplicate-session") or defect.startswith("arguments-"):
                         if defect == "missing-origins":
                             proof["sessionOrigins"] = []
                         elif defect == "wrong-case":
@@ -4616,9 +4658,32 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                             proof["sessionOrigins"][0]["descriptorSha256"] = next(
                                 binding["descriptorSha256"] for binding in self.inputs["bindings"]
                                 if binding["bindingId"] != first["bindingId"])
-                        else:
+                        elif defect == "duplicate-session":
                             proof["sessionOrigins"].append(copy.deepcopy(proof["sessionOrigins"][0]))
-                        changed_witnesses = [{**first, "proofSha256": evidence.digest(proof)}, *witnesses[1:]]
+                        elif defect == "arguments-missing":
+                            proof.pop("metadataArguments")
+                            proof.pop("originalObservations")
+                            proof["schemaVersion"] = 1
+                        elif defect == "arguments-value":
+                            argument = proof["metadataArguments"][0]
+                            left, right = {
+                                "lease-expiry": ("Renew", "Release"),
+                                "schema-layout": ("unrelated", "partial"),
+                                "continuation-corruption": ("Null", "Omitted"),
+                                "query-corruption": ("CacheAuthorization", "AggregateAuthorization"),
+                            }[argument["argumentKind"]]
+                            argument["argumentValue"] = right if argument["argumentValue"] == left else left
+                        else:
+                            node = proof["sessionOrigins"][0]
+                            proof.update(schemaVersion=3, originalObservations=[], metadataArguments=[{
+                                "schemaVersion": 1, "runId": run.run_id, "caseId": node["caseId"],
+                                "callId": str(uuid.uuid4()), "sourceKind": "session-origin",
+                                "sourceId": node["sessionId"], "componentRole": "store",
+                                "componentInstanceId": node["components"]["store"]["instanceId"],
+                                "argumentKind": "lease-expiry", "argumentValue": "Renew"}])
+                        changed_witnesses = [{**row, "proofSha256": evidence.digest(proof)}
+                                             if row["executionId"] == first["executionId"] else row
+                                             for row in witnesses]
                         write(root / f"runtime-{attempt}/{filename}", evidence.canonical_bytes(proof))
                     else:
                         changed_witnesses = witnesses

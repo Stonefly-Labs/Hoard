@@ -127,6 +127,9 @@ logger and parent independently validate schema3 argument/source/role joins;
 schema1/2 remain supported. Metadata category declarations, not reference
 binding names, govern argument admission. This is transport, not an independently
 composed native QC-02 control or completed provider qualification.
+Independent source admission additionally checks the frozen per-witness
+argument map and exact original forest nodes. Original proof digests include
+the independently re-read arguments. Cross-family pairing remains unfinished.
 
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin

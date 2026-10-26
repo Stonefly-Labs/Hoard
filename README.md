@@ -2542,6 +2542,9 @@ argument packets to current source/component identities; schema1/2 remain
 supported. Metadata category declarations, not reference-provider names,
 govern argument admission. Overlap, foreign records and replay reject. These receipts alone
 do not establish the still-missing native parameter-quality composition.
+Independent source validators now enforce the frozen per-witness argument
+map, including the exact original forest node for each lease/layout choice.
+All 278 retained local SDK proofs match; native cross-family pairing remains open.
 
 Fresh fourteen-package replay passes 318 selected consumers. The safe logger
 then passes all 152 shared/63 memory-original/63 SQLite-original witnesses,

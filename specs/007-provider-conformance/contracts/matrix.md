@@ -206,7 +206,9 @@ role/context/value claims and replay reject; closure joins before detachment
 and object reuse cannot resend old calls. Existing proof bounds and schema1/2
 support remain unchanged. Argument admission uses the declared metadata category
 rather than reference binding names. These records do not independently satisfy any
-QC-02 obligation: exact expected-map/native-pairing composition is still open.
+QC-02 obligation. Independent source authorities enforce the frozen per-witness
+choice map and exact original forest node, including absence on unparameterized
+witnesses. Cross-family native pairing/composition is still open.
 
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service

@@ -1547,8 +1547,11 @@ detaching, overlapping owners reject and object reuse does not replay calls.
 Independent logger/parent validation preserves schema1/2 support, existing
 packet/proof bounds and immutable cross-scope replay protection. Metadata category
 declarations, not reference binding names, govern argument admission. This transport
-does not supply expected-map/native-pairing quality composition or complete
-QC-02.
+does not complete QC-02. Independent source admission now requires the frozen
+per-witness parameter map and exact original forest nodes. Original authority
+re-reads and binds argument bytes into its source-proof digest; missing choices,
+wrong valid values and unexpected calls reject. Cross-family native pairing and
+quality composition remain open.
 
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or

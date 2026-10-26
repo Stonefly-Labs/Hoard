@@ -7456,7 +7456,7 @@ identities using runtime proof schema3, retaining exact schema1/2 support,
 existing bounds and immutable cross-scope replay protection. Metadata category
 declarations, not reference-provider binding names, govern argument admission.
 Contributor-name regressions cover both validators. It does not add
-QC-02 controls or quality basis: expected-map/native pairing remains unbuilt,
+QC-02 controls or quality basis: cross-family native pairing remains unbuilt,
 and all unfinished tasks/checklists/stage gates remain open.
 
 Fresh fourteen-package replay passes 318 selected consumers at source
@@ -7470,6 +7470,18 @@ Tooling449/19 native skips and source contracts152/zero skips pass. The interim
 architecture lifecycle finding is corrected; follow-up has no actionable
 findings but notes the missing deterministic selected-receiver/closure-race
 regression. This is not final T081, native admission or QC-02 composition.
+
+The subsequent source-admission increment now enforces a closed argument map
+for all 152 shared and 63 original identities, including explicitly empty maps
+and exact MP-29/MP-33 forest-node placement. Original authority independently
+re-reads the readonly proof arguments, revalidates source/role/context and
+commits both observations and arguments into its source-proof digest. Six
+intended-red original missing/value/node trials first demonstrate the old gap;
+both bindings now reject them after coherent rehashing. Shared source tests
+also reject missing, wrong-valid-value and unexpected calls. All 278 retained
+local SDK proofs/64 calls match the new maps. Tooling remains 449 tests/
+19 native skips, no failures/errors. Cross-family pairing, QC-02 basis/report
+recomputation and exact-head native admission of these new checks remain open.
 
 Exact earlier `831b00c3999e94958bc3afecb77bf9d99a3cb9fa`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),

@@ -629,7 +629,9 @@ order and joining in-flight output before detachment. Schema3 proof records
 join current source/component identities with independent C#/Python validation,
 closed bounds and cross-scope replay rejection. Metadata category declarations,
 not reference binding names, govern admission. Schema1/2 remain supported.
-This transport does not complete native expected-map/pairing controls or QC-02.
+Independent source validators now enforce the frozen per-witness argument map
+and original forest-node placement; all 278 retained local SDK proofs match.
+Cross-family native pairing and QC-02 composition remain unfinished.
 
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
