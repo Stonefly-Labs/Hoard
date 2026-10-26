@@ -183,6 +183,17 @@ corresponding complete actual-binding and frozen-wrapper families at the same
 named assertion, with identical SDK bytes and unchanged Consumer/wrapper
 sources. This is publication-family parity, not a native QC-03 source parent
 or full category qualification.
+
+A second complete ten-row actual-binding family covers destination failure,
+exact acknowledged retries, conflicting staged length, deletion/recreation
+and held-reader exclusion. The full diagnostic scope is now 44 rows,
+preserving all original identities, one typed origin per added row and all six
+image pins. Missing any new family rejects. Corresponding complete local
+actual-binding/frozen-wrapper parity includes a same-named conflicting-stamp
+shared-assertion mutation with unchanged Consumer/wrapper sources and identical
+SDK bytes within each trial. This remains local assertion parity, not a native
+QC-03 parent or complete artifact extraction.
+
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,

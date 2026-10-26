@@ -4168,6 +4168,10 @@ class SdkDiagnosticTests(unittest.TestCase):
                         + f'(provider: "{provider}", consumer: "{consumer}")'
                         for provider in ("local", "object") for consumer in (
                             "empty", "unknown-length", "expectations", "unsupported", "duplicates"))
+        expected.update(prefix + "Observed_read_reconciliation_and_deletion_preserve_actual_binding_guarantees"
+                        + f'(provider: "{provider}", consumer: "{consumer}")'
+                        for provider in ("local", "object") for consumer in (
+                            "destination-failure", "exact-retry", "staged-length", "recreation", "reader-exclusion"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"
@@ -4223,7 +4227,9 @@ class SdkDiagnosticTests(unittest.TestCase):
             checks.runtime_command(SimpleNamespace(root=self.directory), assembly, manifest, artifact_packages=packages)
         for changed in (*((
                 scenario[0], tuple(identity for identity in scenario[1] if f'consumer: "{consumer}"' not in identity),
-                *scenario[2:]) for consumer in ("empty", "unknown-length", "expectations", "unsupported", "duplicates")),
+                *scenario[2:]) for consumer in (
+                    "empty", "unknown-length", "expectations", "unsupported", "duplicates",
+                    "destination-failure", "exact-retry", "staged-length", "recreation", "reader-exclusion")),
                         (scenario[0], scenario[1][:-1], *scenario[2:]),
                         (scenario[0], (*scenario[1], "Foreign.Test"), *scenario[2:]),
                         ("full-artifact-binding-foreign", *scenario[1:])):

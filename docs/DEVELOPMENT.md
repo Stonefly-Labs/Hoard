@@ -10005,6 +10005,40 @@ provider/contributor/deployment guides, examples and diagrams are unaffected
 because no public API, supported command, production dependency or deployment
 behavior changes.
 
+### Actual artifact-binding read, retry and deletion consumer parity
+
+The next complete two-provider Consumer family invokes unchanged common
+assertions for borrowed destination failure/second-copy rejection, exact
+acknowledged reconciliation/retry, conflicting staged length, deletion and
+recreation with stale-incarnation fencing, and held-reader deletion exclusion.
+Its ten rows use actual observed bindings, emit one original typed origin each,
+and retain resource settlement checks. The closed full artifact binding scope
+grows from 34 to 44 rows; no previous identity or six-image requirement changes.
+Omission of each new consumer family rejects before dispatch.
+
+The focused scope test first fails for the missing ten rows and passes after
+wiring. All 444 tooling tests pass with 19 native skips; scoped C# whitespace,
+frozen inventory, embedded catalog and patch whitespace checks pass.
+A fresh 14-package replay passes all 180 Consumer rows without skips and
+retains all three four-failure catalog-policy controls.
+
+A separate bounded parity replay passes all ten new actual-binding rows and
+their ten frozen-wrapper counterparts with identical loaded SDK bytes.
+An SDK-only mutation reverses the common conflicting-staged-length stamp
+assertion. Both families then have exactly two failures at
+`ArtifactPublicationAssertions.ConflictingStagedLengthAsync`, eight passes and
+no skips. Consumer/wrapper sources stay unchanged across trials. This proves
+local shared-assertion reachability, not a faulty-provider pair or native
+QC-03 parent. An initial private replay rejected a non-unique mutation target;
+a fresh create-new workspace uses the uniquely scoped assertion without
+changing repository assertions or reusing the failed workspace.
+
+Full extraction/category qualification and task/checklist completion remain
+unfinished. README, plan and evidence/matrix contracts are updated.
+SDK/provider contracts, frozen catalogs, tracked locks, provider/contributor/
+deployment guides, examples and diagrams are unaffected: no production API,
+dependency, supported command or deployment behavior changes.
+
 ### Native source-sealing and shared-consumer admission history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

@@ -1439,6 +1439,10 @@ def full_artifact_binding_scenarios():
                       + f'(provider: "{provider}", consumer: "{consumer}")'
                       for provider in ("local", "object") for consumer in (
                           "empty", "unknown-length", "expectations", "unsupported", "duplicates"))
+    identities.update(prefix + "Observed_read_reconciliation_and_deletion_preserve_actual_binding_guarantees"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "destination-failure", "exact-retry", "staged-length", "recreation", "reader-exclusion"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 

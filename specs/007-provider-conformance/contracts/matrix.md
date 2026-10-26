@@ -104,6 +104,13 @@ against the corresponding frozen wrappers includes a paired shared-assertion
 mutation, not a faulty-provider qualification claim. Full QC-03 extraction,
 native source admission and category qualification remain unfinished.
 
+The next complete two-provider family adds ten destination-failure, exact
+retry, conflicting-staged-length, deletion/recreation and held-reader exclusion
+rows, bringing the diagnostic scope to 44 with all original identities and
+six-image requirements preserved. The complete actual-binding and corresponding
+frozen-wrapper families have matching local shared-assertion negative behavior.
+No diagnostic row substitutes for full QC-03 extraction or native qualification.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

@@ -13,6 +13,44 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local", "destination-failure")]
+    [InlineData("local", "exact-retry")]
+    [InlineData("local", "staged-length")]
+    [InlineData("local", "recreation")]
+    [InlineData("local", "reader-exclusion")]
+    [InlineData("object", "destination-failure")]
+    [InlineData("object", "exact-retry")]
+    [InlineData("object", "staged-length")]
+    [InlineData("object", "recreation")]
+    [InlineData("object", "reader-exclusion")]
+    public async Task Observed_read_reconciliation_and_deletion_preserve_actual_binding_guarantees(
+        string provider, string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        try
+        {
+            await (consumer switch
+            {
+                "destination-failure" => ArtifactReadAssertions.DestinationFailureAsync(
+                    session.Store, "Synthetic borrowed destination failure", default),
+                "exact-retry" => ArtifactReconciliationAssertions.AcknowledgedReceiptRetryAsync(session.Store, default),
+                "staged-length" => ArtifactPublicationAssertions.ConflictingStagedLengthAsync(session.Store, default),
+                "recreation" => ArtifactDeletionAssertions.ExactReceiptsAndRecreationAsync(
+                    session.Store, session.Maintenance, session.Identity, default),
+                "reader-exclusion" => ArtifactDeletionAssertions.HeldReaderExcludesDeletionAsync(session.Store, default),
+                _ => throw new ArgumentException("BindingInvalid")
+            });
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local", "empty")]
     [InlineData("local", "unknown-length")]
     [InlineData("local", "expectations")]

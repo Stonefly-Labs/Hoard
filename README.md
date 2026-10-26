@@ -2393,6 +2393,17 @@ the same two named duplicate failures/eight passes in each family without
 editing Consumer/wrapper sources. This establishes local publication assertion
 parity, not full QC-03 extraction or native/category qualification.
 
+The next complete ten-row actual-binding family covers borrowed destination
+failure, exact acknowledged retries, conflicting staged length, safe
+deletion/recreation and held-reader exclusion. It extends the preserved scope
+from 34 to 44 rows, retaining the same six-image pinning and typed origins.
+A fresh 14-package replay passes all 180 Consumer rows and retains the three
+catalog rejection controls. Both new actual-binding and frozen-wrapper families
+pass all ten rows with identical SDK bytes; an isolated shared staged-stamp
+assertion mutation gives each exactly two named failures/eight passes without
+changing Consumer/wrapper sources. This is bounded local assertion parity,
+not complete extraction, native admission or task completion.
+
 Exact `58a9495`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
 passes all three Linux jobs: 331 native foundations without skips and

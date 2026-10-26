@@ -7086,6 +7086,36 @@ and tracked locks are unchanged. README, DEVELOPMENT and evidence/matrix
 contracts are updated; provider/contributor/deployment guides, examples and
 diagrams are unaffected by this test-only increment.
 
+### Actual artifact-binding read, retry and deletion consumer parity
+
+A second complete ten-row actual-binding family now executes the existing
+common destination-failure, exact acknowledged-retry, conflicting-staged-length,
+deletion/recreation and held-reader exclusion assertions. Each local/object
+row retains one original typed origin and settled resources. The diagnostic
+scope grows from 34 to 44 while preserving all previous identities, frozen
+inventories and six-image requirements. Missing each added family rejects.
+
+An intended-red scope regression reproduces the missing rows. After wiring,
+the full tooling suite passes all 444 tests with 19 native skips; scoped C#
+whitespace, frozen inventory, embedded catalog and patch whitespace checks pass.
+A fresh 14-package replay passes all 180 Consumer rows without skips and
+retains all three catalog mutants with four named failures each.
+
+Both complete new actual-binding and frozen-wrapper families independently
+pass ten rows with identical loaded SDK bytes. Reversing the one common
+conflicting-staged-length stamp assertion in an isolated SDK produces exactly
+two `ArtifactPublicationAssertions.ConflictingStagedLengthAsync` failures and
+eight passes in each family, no skips. Consumer/wrapper sources remain unchanged
+across trials. A non-unique private mutation target first rejects; a fresh
+workspace narrows it to the intended common method. Bounded readonly receipts
+retain hashes/counts, not raw child output.
+
+This is local shared-assertion parity, not a faulty-provider pair, native source
+parent, full QC-03 or category qualification. Task/checklist markers are
+unchanged. README, DEVELOPMENT and evidence/matrix contracts are updated;
+provider/contributor/deployment guides, examples and diagrams are unaffected
+because no public API, production dependency or supported command changes.
+
 ### Exact native admission of earlier repaired source controls history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,
