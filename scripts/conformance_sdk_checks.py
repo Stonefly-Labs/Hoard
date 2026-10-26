@@ -1471,6 +1471,15 @@ def full_artifact_binding_scenarios():
                           "cooperative-cancel", "storage-failures", "live-references", "reclaimed-identities"))
     identities.add(prefix + "Observed_budget_failures_and_references_preserve_actual_binding_guarantees"
                    + '(provider: "local", consumer: "reclaimed-incarnations")')
+    identities.update(prefix + "Observed_clock_rollback_preserves_expiry_and_monotonic_ownership"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "history", "write-capacity", "delete-capacity"))
+    identities.update(prefix + "Observed_handoff_and_progress_preserve_actual_result_ownership"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "released-cancellation", "successful-ticket", "successful-read",
+                          "unclaimed-ticket", "unclaimed-read", "expired-staging", "progress-cancellation"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 

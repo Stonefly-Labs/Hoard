@@ -182,9 +182,15 @@ public static class ArtifactOwnershipAssertions
             await ReadAsync(store, receipt.Stamp, cancellationToken));
     }
 
-    public static async Task ProgressRenewalCancellationAsync(
+    public static Task ProgressRenewalCancellationAsync(
         IArtifactStore store, Action<TimeSpan> advanceClock, Func<Task> whenIdle,
         Action<Func<ValueTask>> observeProgress, CancellationToken cancellationToken)
+        => ProgressRenewalCancellationAsync(store, advanceClock, whenIdle,
+            observer => { observeProgress(observer); return ValueTask.CompletedTask; }, cancellationToken);
+
+    public static async Task ProgressRenewalCancellationAsync(
+        IArtifactStore store, Action<TimeSpan> advanceClock, Func<Task> whenIdle,
+        Func<Func<ValueTask>, ValueTask> observeProgress, CancellationToken cancellationToken)
     {
         var bytes = new byte[1048576];
         using var initial = new MemoryStream(bytes, writable: false);
@@ -200,7 +206,7 @@ public static class ArtifactOwnershipAssertions
             if (Interlocked.Increment(ref progress) == 2) { cancellation.Cancel(); }
             return ValueTask.CompletedTask;
         }
-        observeProgress(Advance);
+        await observeProgress(Advance);
         Assert.Equal(ArtifactFailureCode.CancelledBeforeCommit,
             Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
                 await store.CommitAsync(staged, new(), cancellation.Token)).Code);

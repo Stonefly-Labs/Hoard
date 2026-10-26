@@ -5,9 +5,16 @@ namespace Hoard.Testing.Conformance.Artifacts;
 
 public static class ArtifactHandoffAssertions
 {
-    public static async Task ReleasedCancellationAsync(
+    public static Task ReleasedCancellationAsync(
         IArtifactStore store, Action<Func<ValueTask>> observeRelease, Func<Task> holdRelease,
         Func<Task> waitForRelease, Action removeObserver, Action releaseBoundary, CancellationToken cancellationToken)
+        => ReleasedCancellationAsync(store,
+            observer => { observeRelease(observer); return ValueTask.CompletedTask; }, holdRelease, waitForRelease,
+            () => { removeObserver(); return ValueTask.CompletedTask; }, releaseBoundary, cancellationToken);
+
+    public static async Task ReleasedCancellationAsync(
+        IArtifactStore store, Func<Func<ValueTask>, ValueTask> observeRelease, Func<Task> holdRelease,
+        Func<Task> waitForRelease, Func<ValueTask> removeObserver, Action releaseBoundary, CancellationToken cancellationToken)
     {
         var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
         using var source = new ShortSource("released cancellation bookkeeping"u8.ToArray());
@@ -19,12 +26,12 @@ public static class ArtifactHandoffAssertions
             cancellation.Cancel();
             await holdRelease();
         }
-        observeRelease(Observe);
+        await observeRelease(Observe);
         try
         {
             var attempt = store.CommitAsync(invalid, new(), cancellation.Token).AsTask();
             await waitForRelease();
-            removeObserver();
+            await removeObserver();
             var result = Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(await attempt);
             Assert.Equal(ArtifactCleanupState.Released, result.Cleanup);
             Assert.IsType<ArtifactResolution.Pending>(Success(await store.ReconcileAsync(ticket, new(), cancellationToken)));
@@ -32,9 +39,16 @@ public static class ArtifactHandoffAssertions
         finally { releaseBoundary(); }
     }
 
-    public static async Task SuccessfulResultAsync(
+    public static Task SuccessfulResultAsync(
         IArtifactStore store, bool readSession, Action<Func<ValueTask>> observeRelease, Func<Task> holdRelease,
         Func<Task> waitForRelease, Action removeObserver, Action releaseBoundary, CancellationToken cancellationToken)
+        => SuccessfulResultAsync(store, readSession,
+            observer => { observeRelease(observer); return ValueTask.CompletedTask; }, holdRelease, waitForRelease,
+            () => { removeObserver(); return ValueTask.CompletedTask; }, releaseBoundary, cancellationToken);
+
+    public static async Task SuccessfulResultAsync(
+        IArtifactStore store, bool readSession, Func<Func<ValueTask>, ValueTask> observeRelease, Func<Task> holdRelease,
+        Func<Task> waitForRelease, Func<ValueTask> removeObserver, Action releaseBoundary, CancellationToken cancellationToken)
     {
         using var source = new ShortSource("successful result ownership handoff"u8.ToArray());
         var published = readSession ? await PublishAsync(store, source, new(1024), cancellationToken) : null;
@@ -44,14 +58,14 @@ public static class ArtifactHandoffAssertions
             cancellation.Cancel();
             await holdRelease();
         }
-        observeRelease(Observe);
+        await observeRelease(Observe);
         try
         {
             if (published is null)
             {
                 var reserving = store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellation.Token).AsTask();
                 await waitForRelease();
-                removeObserver();
+                await removeObserver();
                 var ticket = Success(await reserving);
                 var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
                 Success(await store.CommitAsync(staged, new(), cancellationToken));
@@ -61,7 +75,7 @@ public static class ArtifactHandoffAssertions
             {
                 var opening = store.OpenReadAsync(new(published.Stamp.Identity.Digest), new(), cancellation.Token).AsTask();
                 await waitForRelease();
-                removeObserver();
+                await removeObserver();
                 await using var read = Success(await opening);
                 using var destination = new MemoryStream();
                 Success(await read.CopyToAsync(destination, new(), cancellationToken));
@@ -71,17 +85,28 @@ public static class ArtifactHandoffAssertions
                 Success(await store.DeleteAsync(deletion, new(), cancellationToken));
             }
         }
-        finally { removeObserver(); releaseBoundary(); }
+        finally
+        {
+            try { await removeObserver(); }
+            finally { releaseBoundary(); }
+        }
     }
 
-    public static async Task UnclaimedResultAsync(
+    public static Task UnclaimedResultAsync(
         IArtifactStore store, bool readSession, Action blockCompletion, Func<Task> waitForCompletion,
         Action releaseCompletion, Func<Task> whenIdle, CancellationToken cancellationToken)
+        => UnclaimedResultAsync(store, readSession,
+            () => { blockCompletion(); return ValueTask.CompletedTask; }, waitForCompletion,
+            () => { releaseCompletion(); return ValueTask.CompletedTask; }, whenIdle, cancellationToken);
+
+    public static async Task UnclaimedResultAsync(
+        IArtifactStore store, bool readSession, Func<ValueTask> blockCompletion, Func<Task> waitForCompletion,
+        Func<ValueTask> releaseCompletion, Func<Task> whenIdle, CancellationToken cancellationToken)
     {
         using var source = new ShortSource("unclaimed result cleanup"u8.ToArray());
         var published = readSession ? await PublishAsync(store, source, new(1024), cancellationToken) : null;
         using var cancellation = new CancellationTokenSource();
-        blockCompletion();
+        await blockCompletion();
         try
         {
             if (published is null)
@@ -101,7 +126,7 @@ public static class ArtifactHandoffAssertions
                     Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(await opening).Cleanup);
             }
         }
-        finally { releaseCompletion(); }
+        finally { await releaseCompletion(); }
         await whenIdle().WaitAsync(TimeSpan.FromSeconds(2));
         if (published is null)
         {
@@ -114,14 +139,21 @@ public static class ArtifactHandoffAssertions
         }
     }
 
-    public static async Task ExpiredStagingAsync(
+    public static Task ExpiredStagingAsync(
         IArtifactStore store, Action<TimeSpan> advanceClock, Action blockCompletion, Func<Task> waitForCompletion,
         Action releaseCompletion, Func<Task> whenIdle, CancellationToken cancellationToken)
+        => ExpiredStagingAsync(store, advanceClock,
+            () => { blockCompletion(); return ValueTask.CompletedTask; }, waitForCompletion,
+            () => { releaseCompletion(); return ValueTask.CompletedTask; }, whenIdle, cancellationToken);
+
+    public static async Task ExpiredStagingAsync(
+        IArtifactStore store, Action<TimeSpan> advanceClock, Func<ValueTask> blockCompletion, Func<Task> waitForCompletion,
+        Func<ValueTask> releaseCompletion, Func<Task> whenIdle, CancellationToken cancellationToken)
     {
         var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
         using var source = new ShortSource("expired unclaimed staging"u8.ToArray());
         using var cancellation = new CancellationTokenSource();
-        blockCompletion();
+        await blockCompletion();
         try
         {
             var staging = store.StageAsync(ticket, source, new(), cancellation.Token).AsTask();
@@ -130,7 +162,7 @@ public static class ArtifactHandoffAssertions
             cancellation.Cancel();
             Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(await staging);
         }
-        finally { releaseCompletion(); }
+        finally { await releaseCompletion(); }
         await whenIdle().WaitAsync(TimeSpan.FromSeconds(2));
         Assert.IsType<ArtifactResolution.NotCommitted>(Success(await store.ReconcileAsync(ticket, new(), cancellationToken)));
         Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));

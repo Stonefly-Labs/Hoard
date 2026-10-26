@@ -13,6 +13,127 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local", "history")]
+    [InlineData("local", "write-capacity")]
+    [InlineData("local", "delete-capacity")]
+    [InlineData("object", "history")]
+    [InlineData("object", "write-capacity")]
+    [InlineData("object", "delete-capacity")]
+    public async Task Observed_clock_rollback_preserves_expiry_and_monotonic_ownership(string provider, string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        var clock = new ControlledClock();
+        var started = clock.GetTimestamp();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", clock,
+            resources, new ConformanceEvidenceBuffer());
+        var limits = consumer == "history" ? null
+            : new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, liveTickets: 4);
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider, limits), context, default);
+        try
+        {
+            await (consumer switch
+            {
+                "history" => ArtifactReconciliationAssertions.ExpiredHistoryRollbackAsync(
+                    session.Store, session.Identity, clock.Advance, clock.SetUtc, default),
+                "write-capacity" or "delete-capacity" => ArtifactHistoryAssertions.TicketExpiryCapacityAsync(
+                    session.Store, session.Maintenance, session.Identity, clock.Advance,
+                    clock.SetUtc, consumer == "delete-capacity", default),
+                _ => throw new ArgumentException("BindingInvalid")
+            });
+            Assert.True(clock.GetTimestamp() > started);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local", "released-cancellation")]
+    [InlineData("local", "successful-ticket")]
+    [InlineData("local", "successful-read")]
+    [InlineData("local", "unclaimed-ticket")]
+    [InlineData("local", "unclaimed-read")]
+    [InlineData("local", "expired-staging")]
+    [InlineData("local", "progress-cancellation")]
+    [InlineData("object", "released-cancellation")]
+    [InlineData("object", "successful-ticket")]
+    [InlineData("object", "successful-read")]
+    [InlineData("object", "unclaimed-ticket")]
+    [InlineData("object", "unclaimed-read")]
+    [InlineData("object", "expired-staging")]
+    [InlineData("object", "progress-cancellation")]
+    public async Task Observed_handoff_and_progress_preserve_actual_result_ownership(string provider, string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        var clock = new ControlledClock();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", clock,
+            resources, new ConformanceEvidenceBuffer());
+        var limits = consumer switch
+        {
+            "successful-ticket" or "successful-read" =>
+                new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024, transferSlots: 1, waitingCalls: 0),
+            "unclaimed-ticket" or "unclaimed-read" =>
+                new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024, transferSlots: 1, waitingCalls: 0, liveTickets: 2),
+            "expired-staging" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024),
+            _ => null
+        };
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider, limits), context, default);
+        try
+        {
+            await using var barrier = new ArtifactConformanceBarrier("actual-result-handoff");
+            IAsyncDisposable? registration = null;
+            var point = consumer switch
+            {
+                "progress-cancellation" => ArtifactObservationPoint.CommitProgress,
+                "unclaimed-ticket" or "unclaimed-read" or "expired-staging" => ArtifactObservationPoint.OperationCompleted,
+                _ => ArtifactObservationPoint.OperationReleased
+            };
+            Func<Func<ValueTask>, ValueTask> observe = async callback =>
+            {
+                registration = await session.Faults.ObserveBoundaryAsync(point, callback, default);
+            };
+            ValueTask Remove() => (registration ?? throw new InvalidOperationException("BindingInvalid")).DisposeAsync();
+            async ValueTask Block() => await observe(() => new(barrier.HoldAsync()));
+            async ValueTask Release()
+            {
+                try { await Remove(); }
+                finally { barrier.Release(); }
+            }
+            Task WhenIdle() => session.Faults.AwaitSettlementAsync(default).AsTask();
+            Task WaitForBoundary() => barrier.Entered.WaitAsync(TimeSpan.FromSeconds(15));
+            try
+            {
+                await (consumer switch
+                {
+                    "released-cancellation" => ArtifactHandoffAssertions.ReleasedCancellationAsync(
+                        session.Store, observe, () => barrier.HoldAsync(), WaitForBoundary, Remove, barrier.Release, default),
+                    "successful-ticket" or "successful-read" => ArtifactHandoffAssertions.SuccessfulResultAsync(
+                        session.Store, consumer == "successful-read", observe, () => barrier.HoldAsync(),
+                        WaitForBoundary, Remove, barrier.Release, default),
+                    "unclaimed-ticket" or "unclaimed-read" => ArtifactHandoffAssertions.UnclaimedResultAsync(
+                        session.Store, consumer == "unclaimed-read", Block, WaitForBoundary, Release, WhenIdle, default),
+                    "expired-staging" => ArtifactHandoffAssertions.ExpiredStagingAsync(
+                        session.Store, clock.Advance, Block, WaitForBoundary, Release, WhenIdle, default),
+                    "progress-cancellation" => ArtifactOwnershipAssertions.ProgressRenewalCancellationAsync(
+                        session.Store, clock.Advance, WhenIdle, observe, default),
+                    _ => throw new ArgumentException("BindingInvalid")
+                });
+            }
+            finally
+            {
+                barrier.Release();
+                try { await session.Faults.AwaitSettlementAsync(default); }
+                finally { if (registration is not null) { await registration.DisposeAsync(); } }
+            }
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local", "authority-deadline")]
     [InlineData("local", "cancel-before")]
     [InlineData("local", "cancel-waiting")]
@@ -586,13 +707,17 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
     private sealed class ControlledClock : TimeProvider
     {
         private long ticks = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero).Ticks;
+        private long elapsedTicks;
         public override DateTimeOffset GetUtcNow() => new(Interlocked.Read(ref ticks), TimeSpan.Zero);
         public override long TimestampFrequency => TimeSpan.TicksPerSecond;
-        public override long GetTimestamp() => Interlocked.Read(ref ticks);
+        public override long GetTimestamp() => Interlocked.Read(ref elapsedTicks);
+        public void SetUtc(long milliseconds) =>
+            Interlocked.Exchange(ref ticks, DateTimeOffset.FromUnixTimeMilliseconds(milliseconds).Ticks);
         public void Advance(TimeSpan amount)
         {
             ArgumentOutOfRangeException.ThrowIfNegative(amount.Ticks);
             Interlocked.Add(ref ticks, amount.Ticks);
+            Interlocked.Add(ref elapsedTicks, amount.Ticks);
         }
     }
 }

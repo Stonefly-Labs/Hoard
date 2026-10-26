@@ -60,6 +60,12 @@ reclaimed-incarnation case remains Local-only. Each row requires its genuine
 origin and settled resources; complete seventeen-row wrapper parity and named
 SDK-only capacity assertion negatives are local diagnostics, not qualification.
 
+Twenty handoff/progress and rollback rows extend this selection to 129.
+Awaited installation/removal preserves existing synchronous consumers and
+common assertions, with genuine provider observations at the requested point.
+UTC rollback does not rewind controlled monotonic time. Complete local wrapper
+parity and successful-read assertion negatives do not establish native admission.
+
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run

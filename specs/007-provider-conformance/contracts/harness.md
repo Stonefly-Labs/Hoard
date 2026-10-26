@@ -1481,6 +1481,13 @@ one-identity budget and forward expiry; the incarnation case is Local-only.
 Each requires a genuine typed origin and settled resources. Complete local
 wrapper parity and SDK capacity assertion negatives are not native admission.
 
+Twenty handoff/progress/rollback rows extend that complete selection to 129.
+Awaited observer installers preserve synchronous entry points and register only
+at the shared assertion's requested stage; removals are awaited and barriers
+release on removal failure. UTC rollback must not rewind monotonic ownership
+time. Every new row requires its actual origin and settlement. Complete local
+wrapper parity/assertion negatives remain non-qualifying diagnostics.
+
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or
 ownership consumers. Reduced/foreign scopes reject before launch; routing

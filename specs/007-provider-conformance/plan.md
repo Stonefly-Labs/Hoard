@@ -7319,6 +7319,29 @@ changing either consumer source. The mutant archive is
 This remains local parity, not native/category admission or stage completion.
 Task/checklist markers remain unchanged.
 
+### Actual artifact handoff, progress cancellation and clock rollback
+
+Twenty observed handoff/progress/rollback rows extend the artifact selection
+from 109 to 129. Awaited observer overloads preserve original synchronous
+wrapper signatures and the same assertion bodies. Removal is awaited at the
+requested point; barrier release remains guaranteed on removal failure.
+Six named Consumer clock failures first reproduce timestamp rollback while
+279 other selected rows pass. Independent monotonic ticks repair that defect.
+
+Fresh fourteen-package replay passes all 285 selected rows at source snapshot
+`7d54a1f8e08571303a2eabf11fb92eb4576a1cedc5b34f8ae933e25ab8b48bf3`,
+SDK archive
+`f2207577366db4877a1a3a84f9d29b5fc690ea7ae816600cb910f0b3732772bd`.
+Complete twenty-row actual/frozen-wrapper parity passes with identical SDK
+bytes; both original discarded-ticket negative consumers also pass. An
+SDK-only successful-read assertion mutation produces exactly two named
+`SuccessfulResultAsync` failures/eighteen passes in each corresponding family,
+no skips; mutant archive
+`91ab32e3a9e9e39be1208d0fdd5648faed822141f439c82e578a599a7515f9a3`.
+Source SDK contracts pass 133 tests, package-only contracts compile, and full
+tooling passes 444 tests/19 native skips. These are local diagnostics, not
+complete extraction or native admission; task/checklist markers are unchanged.
+
 ### Exact native admission of earlier repaired source controls history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

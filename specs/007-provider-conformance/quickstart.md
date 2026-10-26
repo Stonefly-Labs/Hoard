@@ -576,6 +576,12 @@ packages pass all 265 selected Consumer rows. Both complete seventeen-row
 actual/frozen-wrapper families pass with identical SDK bytes; an SDK-only
 capacity assertion mutation gives each two named failures/fifteen passes,
 no skips. This remains local diagnostic parity, not complete extraction.
+Twenty handoff/progress/rollback rows extend the artifact scope to 129 and
+fresh-package replay to 285 passing selected rows. Awaited observer installation
+preserves legacy wrappers; UTC rollback preserves monotonic ownership time.
+Twenty actual and twenty corresponding frozen rows pass, as do two original
+negative consumers. SDK-only successful-read mutation produces two named
+failures per corresponding family. This is still local, non-qualifying parity.
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

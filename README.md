@@ -2465,7 +2465,7 @@ bytes and share the same two named recovery-page assertion failures under an
 SDK-only mutation. This is additional local extraction parity, not native
 admission or a completed implementation stage.
 
-The latest Linux runs at `9f3035d` and `a3e765e` failed candidate compilation:
+Earlier Linux runs at `9f3035d` and `a3e765e` failed candidate compilation:
 the package-only `MemorySchemaProbe` lacked the new corruption-restoration
 interface member. A fresh package-mode build reproduces the exact missing
 member, then passes after the probe explicitly rejects its unsupported use.
@@ -2476,6 +2476,12 @@ live-reference and reclaimed-history rows extend the artifact scope to 109.
 Fresh packages pass 265 selected Consumer rows. Both complete seventeen-row
 actual/frozen-wrapper families pass; a shared SDK-only capacity assertion
 mutation gives each two named failures. These remain local diagnostics.
+
+Twenty handoff/progress and clock-rollback rows extend the artifact scope to
+129; fresh packages pass all 285 selected Consumer rows. Awaited observer
+installers preserve the original synchronous wrapper entry points and common
+assertions. Six intended rollback failures drove separation of UTC from
+monotonic time. Complete local wrapper parity remains non-qualifying.
 
 Exact `58a9495`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),

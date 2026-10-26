@@ -148,6 +148,12 @@ and forward-expiry setup are unchanged. Every new row requires one actual
 origin. Identical-SDK local wrapper parity and named capacity assertion
 negatives remain diagnostic, not native admission or complete QC-03.
 
+Twenty handoff/progress/rollback rows extend this preserved selection to 129:
+both providers execute six history/capacity rollback rows and fourteen
+handoff/progress shapes. Each requires one genuine origin and real settlement.
+Awaited installers preserve original synchronous wrappers; local parity and
+successful-read assertion negatives are not native admission or full QC-03.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

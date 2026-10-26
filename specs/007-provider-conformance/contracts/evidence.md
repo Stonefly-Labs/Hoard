@@ -235,6 +235,12 @@ actual/frozen-wrapper parity uses identical SDK bytes and unchanged consumers;
 named SDK capacity assertion negatives do not substitute for native admission,
 faulty-provider qualification or the remaining inherited source obligations.
 
+Twenty handoff/progress/rollback rows retain those identities and extend the
+selection to 129, with one actual origin per added row. Awaited installers
+and independent monotonic clock observations do not change frozen identities.
+Complete local wrapper parity/assertion negatives remain distinct from native
+source admission and complete QC-03.
+
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,

@@ -4213,6 +4213,15 @@ class SdkDiagnosticTests(unittest.TestCase):
                             "cooperative-cancel", "storage-failures", "live-references", "reclaimed-identities"))
         expected.add(prefix + "Observed_budget_failures_and_references_preserve_actual_binding_guarantees"
                      + '(provider: "local", consumer: "reclaimed-incarnations")')
+        expected.update(prefix + "Observed_clock_rollback_preserves_expiry_and_monotonic_ownership"
+                        + f'(provider: "{provider}", consumer: "{consumer}")'
+                        for provider in ("local", "object") for consumer in (
+                            "history", "write-capacity", "delete-capacity"))
+        expected.update(prefix + "Observed_handoff_and_progress_preserve_actual_result_ownership"
+                        + f'(provider: "{provider}", consumer: "{consumer}")'
+                        for provider in ("local", "object") for consumer in (
+                            "released-cancellation", "successful-ticket", "successful-read",
+                            "unclaimed-ticket", "unclaimed-read", "expired-staging", "progress-cancellation"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"

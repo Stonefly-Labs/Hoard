@@ -10237,6 +10237,25 @@ with both consumer sources unchanged. This is local extraction parity, not
 native admission, complete QC-03 or stage completion. Examples, diagrams and
 deployment remain unaffected by this package-only test wiring.
 
+### Actual artifact handoff, progress cancellation and clock rollback
+
+Twenty additional observed handoff/progress and rollback rows extend the
+artifact selection to 129. Four handoff assertions and progress-renewal
+cancellation gain awaited installer overloads; original synchronous entry
+points forward to the same assertions. Installation/removal occurs exactly
+when requested, after setup publication, without early no-op observers or
+async-void adapters. Actual barriers release even if removal fails.
+
+Six named clock regressions first fail while all 279 other selected rows pass:
+UTC rollback also rewinds the old controlled timestamp. Independent monotonic
+ticks now advance with `Advance` but not `SetUtc`. Fresh packages pass all 285
+selected rows. Complete twenty-row actual/frozen-wrapper parity passes with
+identical SDK bytes, plus both original discarded-ticket negative consumers.
+An SDK-only successful-read assertion mutation gives each corresponding family
+two named failures/eighteen passes, no skips. Source-mode SDK contracts pass
+133 tests; package-only SDK contracts also compile. These remain local
+diagnostics; examples, diagrams and deployment are unaffected.
+
 ### Native source-sealing and shared-consumer admission history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,
