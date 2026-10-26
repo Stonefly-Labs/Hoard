@@ -135,7 +135,13 @@ source composition or substitute for full extraction/parity/native admission.
 Dedicated two-provider hook-admission methods additionally use `QC-05`
 contexts and the same assertion bodies. Their diagnostic selections pin all
 six actual Consumer/SDK/binding/provider images and require one typed origin
-per row. They do not yet provide native QC-05 source parents.
+per row. Qualification-input batches also retain private native hook controls
+for both complete families. Independent reconstruction requires readonly
+original transport/proofs, exact origins, all six images and the original held
+command, settings/argv/cwd and settled bounds. Both histories retain the
+original packets under existing proof limits. This wiring awaits exact Linux
+admission and does not provide public QC-05 source parents, durability-exclusion
+coverage or completed QC-05 composition.
 
 The implemented category batch history derives each binding's entire frozen
 runtime union from the independent catalog and requires both category package

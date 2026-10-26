@@ -1,3 +1,4 @@
+import contextlib
 import copy
 import hashlib
 import json
@@ -3726,7 +3727,10 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 with self.subTest(defect=defect), mock.patch.object(
                         sources, "native_artifact_controller_source",
                         side_effect=evidence.ConformanceError("ProofMismatch") if defect == "source-failure" else None,
-                        return_value={"sourceReceipt": source_raw, "sourceProofs": graph, "sourcePackets": packets}) as authority:
+                        return_value={"sourceReceipt": source_raw, "sourceProofs": graph, "sourcePackets": packets}) as authority, \
+                        mock.patch.object(sources, "native_hook_admission_control", return_value={
+                            "controls": {"hook-admission-sdk-consumer": ("c" * 64,)},
+                            "sourceProofs": {"proofs/isolated-hook-control.json": b"isolated-hook-control"}}) as hooks:
                     if defect:
                         with self.assertRaises(evidence.ConformanceError):
                             native.ingest_attempt(category_scope=("artifacts", "controller"), **options)
@@ -3742,6 +3746,9 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                             {"controller": transport}, 0, 20, 1)
                         self.assertEqual(set(result[7].values()), {evidence.digest(parent)})
                         self.assertIn(seal_path, result[2])
+                        self.assertIn("proofs/isolated-hook-control.json", result[2])
+                        self.assertEqual(result[8], {"hook-admission-sdk-consumer": ("c" * 64,)})
+                        hooks.assert_called_once_with(run, history._inputs, started_ms=0, ended_ms=20)
                         self.assertEqual(authority.call_args.kwargs,
                                          {"sequence": 17, "started_ms": 0, "ended_ms": 20})
                         run.read_execution_record.assert_called_with(17)
@@ -3916,23 +3923,37 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 write(settings, settings_raw)
 
     def test_native_shared_metadata_consumer_reconstructs_all_rows_origins_and_original_command(self):
+        self.native_consumer_source_fixture(profile="metadata", hooks=False)
+
+    def test_native_hook_consumers_require_complete_actual_origins_and_original_command(self):
+        import conformance_sources as sources
+        self.assertTrue(callable(getattr(sources, "native_hook_admission_control", None)),
+                        "Dedicated hook rows require independent native source reconstruction.")
+        for profile in ("metadata", "artifacts"):
+            self.setUp()
+            with self.subTest(profile=profile):
+                self.native_consumer_source_fixture(profile=profile, hooks=True)
+
+    def native_consumer_source_fixture(self, *, profile, hooks):
         import conformance_case_catalog as catalog
         import conformance_sdk_checks as checks
         import conformance_sources as sources
         from types import SimpleNamespace
         from xml.sax.saxutils import escape
 
-        self.category_history(mode="qualification", distinct_packages=True)
+        self.category_history(profile=profile, mode="qualification", distinct_packages=True)
         directory = Path("snapshot/tests/fixtures/conformance/Consumer/bin/package-diagnostic/Release/net10.0")
         assembly_path = (directory / "Hoard.Fixtures.Conformance.Consumer.dll").as_posix()
-        packages = ("Hoard.Testing.Conformance", "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite",
-                    "Hoard.Fixtures.Conformance.Bindings.Memory", "Hoard.Fixtures.Conformance.Bindings.Sqlite")
+        adapters = ("Memory", "Sqlite") if profile == "metadata" else ("Local", "ObjectSemantics")
+        family = profile.title()
+        packages = ("Hoard.Testing.Conformance", *("Hoard.Fixtures." + family + "." + adapter for adapter in adapters),
+                    *("Hoard.Fixtures.Conformance.Bindings." + adapter for adapter in adapters))
         wrapper_sdk = (
             "snapshot/tests/contracts/Hoard.Metadata.Tests/bin/wrapper-diagnostic/Release/net10.0/"
             "Hoard.Testing.Conformance.dll")
         image_data = {assembly_path: b"consumer", **{
             (directory / (package + ".dll")).as_posix(): package.encode() for package in packages},
-            wrapper_sdk: b"Hoard.Testing.Conformance"}
+            **({wrapper_sdk: b"Hoard.Testing.Conformance"} if not hooks else {})}
         images = {path: hashlib.sha256(raw).hexdigest() for path, raw in image_data.items()}
         self.inputs["runtimeAssemblies"] = images
         captured = {row["packageId"]: row for row in self.inputs["packages"]}
@@ -3962,21 +3983,26 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             self.owner["rootPathSha256"] = hashlib.sha256(str(root).encode()).hexdigest()
             self.proof["ownerSha256"] = evidence.digest(self.owner)
             self.proof["assemblySha256"] = self.witness["assemblySha256"] = images[assembly_path]
-            self.manifest = sources.metadata_common_consumer_manifest(run, self.inputs, self.attempt)
+            manifest_factory = sources.hook_admission_manifest if hooks else sources.metadata_common_consumer_manifest
+            self.manifest = manifest_factory(run, self.inputs, self.attempt)
             consumer_images = {entry["path"]: entry["sha256"] for entry in self.manifest["assemblies"]}
-            selected = catalog.metadata_common_consumer_tests()
+            selected = catalog.hook_admission_tests(profile) if hooks else catalog.metadata_common_consumer_tests()
+            counts = ({identity: 1 for identity in selected} if hooks else catalog.metadata_common_consumer_origin_counts())
+            self.assertEqual(len(selected), 2 if hooks else 132)
+            self.assertEqual({binding for binding, _ in selected.values()},
+                             {"memory", "sqlite"} if profile == "metadata" else {"local", "object"})
             transport = self.category_transport(None, selections=selected)
             self.assertEqual(evidence.load_json(transport["manifest_data"]), self.manifest)
-            origins = sources.metadata_common_consumer_origin_inputs(run, self.inputs)
+            origins = sources.category_consumer_origin_inputs(run, self.inputs)
             witnesses = []
             for line in transport["witnesses_data"].splitlines():
                 row = evidence.load_json(line)
                 filename = f'proof-{row["executionId"]}.json'
                 proof = evidence.load_json(transport["proofs"][filename])
                 captured_origins = []
-                for index in range(catalog.metadata_common_consumer_origin_counts()[row["testIdentity"]]):
+                for index in range(counts[row["testIdentity"]]):
                     origin = {
-                        "schemaVersion": 1, "runId": run.run_id, "caseId": "full-metadata-binding",
+                        "schemaVersion": 1, "runId": run.run_id, "caseId": "QC-05" if hooks else "full-metadata-binding",
                         "sessionId": str(uuid.uuid4()),
                         "parentSessionId": None if index == 0 else captured_origins[-1]["sessionId"],
                         "factoryOperation": "create" if index == 0 else "reopen",
@@ -4020,10 +4046,12 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                                "runtime-owner.json": evidence.digest(self.owner),
                                self.manifest["runInputsPath"]: evidence.digest(self.inputs),
                                settings_path: hashlib.sha256(settings).hexdigest(), **consumer_images,
-                               wrapper_sdk: images[wrapper_sdk]}}
+                               **({wrapper_sdk: images[wrapper_sdk]} if not hooks else {})}}
             original_record = evidence.canonical_bytes(record)
             run.read_execution_record = lambda sequence: original_record
-            graph_path = f"proofs/{sources.METADATA_COMMON_CONSUMER_NAMESPACE}-native-executions.json"
+            namespace = (sources.HOOK_ADMISSION_NAMESPACES[profile] if hooks
+                         else sources.METADATA_COMMON_CONSUMER_NAMESPACE)
+            graph_path = f"proofs/{namespace}-native-executions.json"
             execution_path = f"proofs/category-command-{attempt}-execution.json"
             graph = {
                 "schemaVersion": 1, "qualification": False, "runId": run.run_id,
@@ -4049,13 +4077,35 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
             def admit():
                 with mock.patch.object(sources, "OwnedRun", SimpleNamespace):
-                    return sources.native_metadata_common_consumer_control(
+                    return (sources.native_hook_admission_control if hooks
+                            else sources.native_metadata_common_consumer_control)(
                         run, self.inputs, started_ms=9, ended_ms=12)
 
             admitted = admit()
             self.assertEqual(set(admitted["sourceProofs"]), set(originals))
-            self.assertEqual(len(witnesses), 132)
-            self.assertEqual(set(admitted["controls"]), {"shared-metadata-sdk-consumer"})
+            self.assertEqual(len(witnesses), 2 if hooks else 132)
+            self.assertEqual(set(admitted["controls"]),
+                             {"hook-admission-sdk-consumer" if hooks else "shared-metadata-sdk-consumer"})
+            if hooks:
+                native = object.__new__(sources.NativeCategorySources)
+                native._run = run
+                with contextlib.ExitStack() as stack:
+                    stack.enter_context(mock.patch.object(sources, "OwnedRun", SimpleNamespace))
+                    for name in ("native_metadata_recovery_controls", "native_metadata_noncooperation_control",
+                                 "native_metadata_ownership_control", "native_metadata_package_consumer_control",
+                                 "native_metadata_binary_control", "native_metadata_inventory_controls",
+                                 "native_metadata_common_consumer_control"):
+                        stack.enter_context(mock.patch.object(
+                            sources, name, return_value={"controls": {}, "sourceProofs": {}}))
+                    history = evidence.CategoryRuntimeHistory(self.inputs, native_sources=native)
+                    result = history._ingest_parts({}, {}, 9, 12, 1)
+                    self.assertEqual(result[8], admitted["controls"])
+                    self.assertEqual(result[2], {
+                        path: hashlib.sha256(raw).hexdigest() for path, raw in originals.items()})
+                    self.assertEqual(result[9], sum(len(raw) for raw in originals.values()))
+                    history._proof_bytes = evidence.MAX_PROOF_BYTES
+                    with self.assertRaisesRegex(evidence.ConformanceError, "OutputLimitExceeded"):
+                        history._ingest_parts({}, {}, 9, 12, 1)
             (root / graph_path).unlink()
             (root / self.manifest["runInputsPath"]).unlink()
             with mock.patch.object(checks, "OwnedRun", SimpleNamespace), mock.patch.object(
@@ -4065,16 +4115,18 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     checks.time, "monotonic", side_effect=lambda: 0.012 if launch.called else 0.009), mock.patch.object(
                     checks, "_execute_runtime_transport",
                     return_value=(SimpleNamespace(exit_code=0, execution_record_sha256=evidence.digest(record),
-                                                  events=({"event": "control", "code": "None", "value": 132},)),
+                                                  events=({"event": "control", "code": "None", "value": len(selected)},)),
                                   observed, transport, "b" * 64)) as launch:
-                produced = checks.metadata_common_consumer_diagnostics(run, self.inputs)
+                produced = (checks.hook_admission_diagnostics if hooks
+                            else checks.metadata_common_consumer_diagnostics)(run, self.inputs)
             self.assertEqual(produced, admitted)
             self.assertEqual(launch.call_args.args[4], expected)
             self.assertEqual(launch.call_args.kwargs["origin_inputs"], origins)
-            self.assertEqual(launch.call_args.args[5]["category_scope"], ("metadata", "shared-consumer"))
+            self.assertEqual(launch.call_args.args[5]["category_scope"],
+                             (profile, "hook-admission" if hooks else "shared-consumer"))
             for defect in ("missing-origins", "wrong-case", "borrowed-role", "foreign-descriptor", "duplicate-session",
                            "missing-row", "relabeled-manifest", "argv", "inputs", "replaced-record", "settings",
-                           "wrapper-sdk", "unpinned-wrapper-sdk"):
+                           *(("wrapper-sdk", "unpinned-wrapper-sdk") if not hooks else ())):
                 with self.subTest(defect=defect):
                     changed_record = copy.deepcopy(record)
                     first = witnesses[0]
@@ -4088,7 +4140,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                             proof["sessionOrigins"][0]["caseId"] = "QC-02"
                         elif defect == "borrowed-role":
                             proof["sessionOrigins"][0]["components"]["store"]["assemblySha256"] = images[
-                                (directory / "Hoard.Fixtures.Metadata.Sqlite.dll").as_posix()]
+                                (directory / ("Hoard.Fixtures." + family + "." + adapters[1] + ".dll")).as_posix()]
                         elif defect == "foreign-descriptor":
                             proof["sessionOrigins"][0]["descriptorSha256"] = next(
                                 binding["descriptorSha256"] for binding in self.inputs["bindings"]
@@ -4133,7 +4185,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     run.read_execution_record = lambda sequence: original_record
                     for path, raw in originals.items():
                         write(root / path, raw)
-                    write(root / wrapper_sdk, image_data[wrapper_sdk])
+                    if not hooks:
+                        write(root / wrapper_sdk, image_data[wrapper_sdk])
 
     def test_native_mutation_pairs_require_exact_named_failures_and_same_current_images(self):
         import conformance_case_catalog as catalog

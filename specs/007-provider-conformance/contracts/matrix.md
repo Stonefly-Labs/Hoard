@@ -74,7 +74,12 @@ Neither the 132/24-row selections nor origin counts change.
 This coverage is not a public QC-05 witness or completed QC-05 qualification.
 Separate dedicated hook-admission diagnostic families select two provider rows
 per category with `QC-05` contexts, reusing those same assertions. They leave
-the original 132/24-row selections unchanged and do not yet compose QC-05.
+the original 132/24-row selections unchanged. Qualification-input preludes
+retain independently reconstructed private native controls for both families,
+including original readonly transports, typed origins, six images and held
+commands. History retains these packets within existing quotas; exact Linux
+admission is pending. No public QC-05 witness, complete source composition or
+durability-exclusion qualification follows.
 
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service

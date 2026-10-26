@@ -6943,6 +6943,32 @@ Scoped C# whitespace, frozen inventory, embedded catalog and patch whitespace
 pass. These are non-native diagnostics: QC-05 source-parent wiring/composition
 and full qualification remain incomplete. No task/checklist markers advance.
 
+### Private native hook-source controls (admission pending)
+
+The subsequent hook-source increment wires both complete two-row families
+into qualification-input preludes and independently reconstructed private
+controls. Original readonly native graphs include all six images, exact
+typed origins, descriptor/role correspondence, original command/input closure,
+settings/argv/cwd and settled bounds. Both category histories retain the
+packets with existing quotas; public catalogs and QC-05 composition remain
+unchanged/incomplete. All 124 evidence and 147 SDK tooling tests pass, including
+producer/factory coherent-forgery rejection, native scope selection, history
+retention/quota checks and prelude failure propagation. Frozen inventory,
+embedded catalog and whitespace checks pass. Exact Linux admission remains
+pending. The full local suite reaches the unchanged 24 GiB artifact-scratch
+preflight with only about 22 GiB free; no guard is bypassed or retained evidence
+deleted.
+
+Exact `97b6d0b`, run40252743943, passes 332 native foundations and locked replay
+but fails one existing SQLite/Local lost-metadata-acknowledgment row after the
+hook diagnostics, with `UnknownDiagnostic` and 182 Passed/1 Failed in the
+183-row original artifact scope. Three complete unchanged local four-row
+acknowledgment-family trials and one complete 183-row artifact trial pass
+without skips. These do not establish a cause or native admission; assertions,
+budgets and provider code remain unchanged. The exact unchanged-runtime
+successor `b0852b7`/run40253289352 is observed separately.
+No task/checklist marker advances.
+
 ### Exact native admission of repaired source controls
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

@@ -2446,8 +2446,10 @@ class CategoryRuntimeHistory:
             originals.update(observed["originalObservations"])
             codes.append(observed["diagnosticCode"])
         controls = {}
-        if self._native_sources is not None and self._inputs["profileId"] == "metadata":
-            recovered = self._native_sources.metadata_controls(self._inputs, started_ms=started, ended_ms=ended)
+        if self._native_sources is not None:
+            authority = (self._native_sources.metadata_controls if self._inputs["profileId"] == "metadata"
+                         else self._native_sources.artifact_controls)
+            recovered = authority(self._inputs, started_ms=started, ended_ms=ended)
             controls = recovered["controls"]
             proofs.update({path: hashlib.sha256(raw).hexdigest() for path, raw in recovered["sourceProofs"].items()})
             proof_bytes += sum(len(raw) for raw in recovered["sourceProofs"].values())

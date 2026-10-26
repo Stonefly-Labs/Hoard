@@ -9862,6 +9862,25 @@ native QC-05 source parents or complete public qualification.
 The focused routing regression also rejects missing, duplicate and foreign
 binding origins after execution, and checks the independent role assignments.
 
+Qualification-input batches now additionally execute each complete two-row
+family before their public scopes. The private
+`qualification-{metadata,artifacts}-hook-admission-native-executions.json`
+graphs bind the original inputs, exact expected selection and held execution
+record. Independent admission re-ingests readonly witnesses/proofs and checks
+one typed origin per row, descriptor/role/image correspondence, exact settings,
+argv/cwd, all six image pins, ownership and settled command/witness bounds.
+Metadata and artifact histories collect these controls independently and
+retain their original packets under the existing file/byte limits. Reduced or
+foreign selections and substituted contexts/commands reject. This is private
+source-control wiring pending exact Linux admission, not a public QC-05 source
+parent, full composition or completed durability-exclusion coverage.
+All 124 evidence and 147 SDK tooling tests pass, including both original graph
+producers/factories, history retention/quota checks and mandatory prelude
+failure propagation. Frozen inventory, embedded catalog and patch whitespace
+checks pass. The full local suite is blocked by the existing 24 GiB artifact
+scratch preflight on a volume with about 22 GiB free; the guard is unchanged.
+No C# source, tracked lock, public catalog or task/checklist marker changes.
+
 An intended-red selector regression fails before the scopes exist. After
 wiring, all 147 SDK diagnostic tooling tests pass. A fresh local snapshot packs
 all 14 dependencies and runs the four dedicated rows against three SDK-only
@@ -9898,8 +9917,18 @@ Artifact inputs/results are
 `d1801411c4e00bee34628855a23f1853b97422509e596b49c2df23d1cb3d9fc6`.
 The bounded safe receipt is retained read-only; no raw CI log is retained.
 This older head does not admit the subsequent packaged hook/null/exclusion
-controls or dedicated hook diagnostic families. Their exact `97b6d0b` replay
-is observed separately, without borrowing this snapshot's admission.
+controls or dedicated hook diagnostic families. Exact `97b6d0b`,
+[run40252743943](https://github.com/Stonefly-Labs/Hoard/actions/runs/40252743943),
+passes 332 native foundations and locked replay but fails one existing
+`Lost_metadata_acknowledgment_keeps_real_reference_protection_until_physical_settlement`
+SQLite/Local row in the complete 183-row original artifact scope:
+`UnknownDiagnostic`, 182 Passed/1 Failed. The hook diagnostics ran earlier.
+Three complete unchanged local four-row acknowledgment-family trials and one
+complete 183-row artifact trial pass without skips; these do not reproduce
+the failure or establish its cause and do not admit native behavior.
+No assertion, deadline or provider code was changed. Exact `b0852b7`,
+[run40253289352](https://github.com/Stonefly-Labs/Hoard/actions/runs/40253289352),
+is an independently observed successor with unchanged runtime/Consumer bytes.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

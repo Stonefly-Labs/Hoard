@@ -91,6 +91,17 @@ def metadata_common_consumer_tests():
         if f'(provider: "{binding}"' in identity})
 
 
+def hook_admission_tests(profile):
+    if profile not in ("metadata", "artifacts"):
+        raise ConformanceError("WitnessMissing")
+    fixture = "Metadata" if profile == "metadata" else "Artifact"
+    providers = ("memory", "sqlite") if profile == "metadata" else ("local", "object")
+    method = ("Hoard.Fixtures.Conformance.Consumer." + fixture
+              + "ConformanceSessionTests.Missing_hooks_reject_before_dispatch_and_actual_binding_passes")
+    return MappingProxyType({
+        method + f'(provider: "{provider}")': (provider, "QC-05") for provider in providers})
+
+
 ORIGINAL_INSPECTION_LITERAL_WITNESSES = tuple(sorted(
     "Hoard.Architecture.Tests.MetadataBoundaryTests." + method for method in (
         "Native_only_packages_cannot_hide_managed_assets",

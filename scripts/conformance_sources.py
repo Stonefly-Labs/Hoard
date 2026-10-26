@@ -20,7 +20,7 @@ from conformance_case_catalog import (
     ORIGINAL_ARTIFACT_PROOF_SOURCES,
     ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES,
     category_execution_partitions, category_mutation_witnesses, category_runtime_cases, category_runtime_packages,
-    metadata_common_consumer_origin_counts, metadata_common_consumer_tests,
+    metadata_common_consumer_origin_counts, metadata_common_consumer_tests, hook_admission_tests,
 )
 from conformance_execution import OwnedRun, no_symlinks
 
@@ -40,6 +40,8 @@ METADATA_INVENTORY_SOURCE_FILES = (
 )
 
 METADATA_COMMON_CONSUMER_NAMESPACE = "qualification-metadata-shared-consumer"
+HOOK_ADMISSION_NAMESPACES = MappingProxyType({
+    profile: "qualification-" + profile + "-hook-admission" for profile in ("metadata", "artifacts")})
 
 
 def read_bounded(path, limit):
@@ -146,16 +148,26 @@ def category_consumer_environment(inputs):
 def metadata_common_consumer_origin_inputs(run, inputs):
     if inputs["profileId"] != "metadata":
         raise evidence.ConformanceError("WitnessMissing")
+    return category_consumer_origin_inputs(run, inputs)
+
+
+def category_consumer_origin_inputs(run, inputs):
+    profile = inputs["profileId"]
+    if profile not in HOOK_ADMISSION_NAMESPACES:
+        raise evidence.ConformanceError("WitnessMissing")
     images = category_consumer_images(run, inputs)
     directory = Path(next(iter(images))).parent
+    providers = (("memory", "Memory"), ("sqlite", "Sqlite")) if profile == "metadata" else (
+        ("local", "Local"), ("object", "ObjectSemantics"))
+    roles = ("store", "schema") if profile == "metadata" else ("store", "validator", "maintenance", "lifetime")
     return {
         binding: {
             role: ((directory / (package + ".dll")).as_posix(), package)
             for role, package in (
                 *((role, "Hoard.Fixtures.Conformance.Bindings." + adapter)
                   for role in ("factory", "session", "faults", "authority")),
-                *((role, "Hoard.Fixtures.Metadata." + adapter) for role in ("store", "schema")))}
-        for binding, adapter in (("memory", "Memory"), ("sqlite", "Sqlite"))}
+                *((role, "Hoard.Fixtures." + profile.title() + "." + adapter) for role in roles))}
+        for binding, adapter in providers}
 
 
 def metadata_common_consumer_sdk_paths(consumer_path):
@@ -183,15 +195,27 @@ def metadata_common_consumer_sdk_images(run, inputs):
 
 
 def metadata_common_consumer_manifest(run, inputs, attempt_id):
-    if inputs["profileId"] != "metadata" or inputs["mode"] != "qualification":
+    return _category_consumer_manifest(run, inputs, attempt_id, hooks=False)
+
+
+def hook_admission_manifest(run, inputs, attempt_id):
+    return _category_consumer_manifest(run, inputs, attempt_id, hooks=True)
+
+
+def _category_consumer_manifest(run, inputs, attempt_id, *, hooks):
+    profile = inputs["profileId"]
+    if (inputs["mode"] != "qualification" or profile not in HOOK_ADMISSION_NAMESPACES
+            or not hooks and profile != "metadata"):
         raise evidence.ConformanceError("WitnessMissing")
+    tests = hook_admission_tests(profile) if hooks else metadata_common_consumer_tests()
+    namespace = HOOK_ADMISSION_NAMESPACES[profile] if hooks else METADATA_COMMON_CONSUMER_NAMESPACE
     images = category_consumer_images(run, inputs)
-    packages = category_runtime_packages(inputs, ("memory", "sqlite"))
+    packages = category_runtime_packages(inputs, {binding for binding, _ in tests.values()})
     return {
         "schemaVersion": 1, "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
         "attemptId": evidence._uuid(attempt_id), "attemptSequence": 1, "purpose": "execution",
         "inputSha256": evidence.digest(inputs),
-        "runInputsPath": f"proofs/{METADATA_COMMON_CONSUMER_NAMESPACE}-native-inputs.json",
+        "runInputsPath": f"proofs/{namespace}-native-inputs.json",
         "assemblies": [
             {"id": f"consumer-component-{index}", "path": path, "sha256": hashed}
             for index, (path, hashed) in enumerate(images.items())],
@@ -203,18 +227,29 @@ def metadata_common_consumer_manifest(run, inputs, attempt_id):
             "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
             "assemblyId": "consumer-component-0", "packageId": packages[binding]["packageId"],
             "bindingId": binding, "matrixId": "none", "assertionSymbol": None, "caseId": case_id}
-            for identity, (binding, case_id) in sorted(metadata_common_consumer_tests().items())]}
+            for identity, (binding, case_id) in sorted(tests.items())]}
 
 
 def native_metadata_common_consumer_control(run, inputs, *, started_ms, ended_ms):
+    return _native_category_consumer_control(run, inputs, started_ms=started_ms, ended_ms=ended_ms, hooks=False)
+
+
+def native_hook_admission_control(run, inputs, *, started_ms, ended_ms):
+    return _native_category_consumer_control(run, inputs, started_ms=started_ms, ended_ms=ended_ms, hooks=True)
+
+
+def _native_category_consumer_control(run, inputs, *, started_ms, ended_ms, hooks):
     if type(run) is not OwnedRun:
         raise evidence.ConformanceError("OwnershipInvalid")
     inputs = evidence.admit_entity("RunInputs", inputs)
     started_ms, ended_ms = evidence._number(started_ms), evidence._number(ended_ms)
-    if (inputs["profileId"] != "metadata" or inputs["mode"] != "qualification"
+    profile = inputs["profileId"]
+    if (profile not in HOOK_ADMISSION_NAMESPACES or not hooks and profile != "metadata"
+            or inputs["mode"] != "qualification"
             or inputs["runId"] != run.run_id or ended_ms < started_ms):
         raise evidence.ConformanceError("InputChanged")
-    graph_path = f"proofs/{METADATA_COMMON_CONSUMER_NAMESPACE}-native-executions.json"
+    namespace = HOOK_ADMISSION_NAMESPACES[profile] if hooks else METADATA_COMMON_CONSUMER_NAMESPACE
+    graph_path = f"proofs/{namespace}-native-executions.json"
     graph_raw = _readonly(run.root / graph_path, 64 * 1024)
     graph = evidence._runtime_json(graph_raw, {
         "schemaVersion": evidence._constant(1), "qualification": evidence._constant(False),
@@ -229,7 +264,7 @@ def native_metadata_common_consumer_control(run, inputs, *, started_ms, ended_ms
         raise evidence.ConformanceError("OwnershipInvalid")
     manifest_path = f"runtime-input-{attempt}.json"
     manifest_raw = _readonly(run.root / manifest_path, 1024 * 1024)
-    manifest = metadata_common_consumer_manifest(run, inputs, attempt)
+    manifest = _category_consumer_manifest(run, inputs, attempt, hooks=hooks)
     owner_path = "runtime-owner.json"
     owner_raw = _readonly(run.root / owner_path, 64 * 1024)
     owner = {
@@ -242,7 +277,7 @@ def native_metadata_common_consumer_control(run, inputs, *, started_ms, ended_ms
     output = f"runtime-{attempt}"
     lines_path, completion_path = f"{output}/witnesses.jsonl", f"{output}/completion.json"
     lines_raw = _readonly(run.root / lines_path, 1024 * 1024)
-    identities = metadata_common_consumer_tests()
+    identities = hook_admission_tests(profile) if hooks else metadata_common_consumer_tests()
     if len(lines_raw.splitlines()) != len(identities):
         raise evidence.ConformanceError("ProofMismatch")
     proofs = {}
@@ -261,10 +296,10 @@ def native_metadata_common_consumer_control(run, inputs, *, started_ms, ended_ms
         expected_tests={identity: (binding, "none") for identity, (binding, _) in identities.items()},
         manifest_sha256=hashlib.sha256(manifest_raw).hexdigest(), owner_sha256=hashlib.sha256(owner_raw).hexdigest(),
         started_ms=started_ms, ended_ms=ended_ms,
-        origin_inputs=metadata_common_consumer_origin_inputs(run, inputs))["observation"]
+        origin_inputs=category_consumer_origin_inputs(run, inputs))["observation"]
     witnesses = source_witnesses(inputs, manifest, observed, identities)
     descriptors = {row["bindingId"]: row["descriptorSha256"] for row in inputs["bindings"]}
-    counts = metadata_common_consumer_origin_counts()
+    counts = {identity: 1 for identity in identities} if hooks else metadata_common_consumer_origin_counts()
     for identity, row in witnesses.items():
         origins = observed["sessionOrigins"][row["executionId"]]
         if (row["bindingId"] != identities[identity][0] or len(origins) != counts[identity]
@@ -290,7 +325,7 @@ def native_metadata_common_consumer_control(run, inputs, *, started_ms, ended_ms
     execution_raw = _readonly(run.root / execution_path, 64 * 1024)
     native_path = f"proofs/execution-command-{sequence:04}.json"
     images = {row["path"]: row["sha256"] for row in manifest["assemblies"]}
-    shared_sdk_images = metadata_common_consumer_sdk_images(run, inputs)
+    shared_sdk_images = {} if hooks else metadata_common_consumer_sdk_images(run, inputs)
     if (run.live_children() or record["runId"] != run.run_id or record["rootId"] != run.root_id
             or not 1 < record["childPid"] <= 2**31 - 1
             or not started_ms <= record["startedMs"] <= record["endedMs"] <= ended_ms
@@ -325,7 +360,8 @@ def native_metadata_common_consumer_control(run, inputs, *, started_ms, ended_ms
         **{f"{output}/{path}": raw for path, raw in proofs.items()}}
     return MappingProxyType({
         "controls": MappingProxyType({
-            "shared-metadata-sdk-consumer": tuple(hashlib.sha256(raw).hexdigest() for raw in packets.values())}),
+            "hook-admission-sdk-consumer" if hooks else "shared-metadata-sdk-consumer":
+                tuple(hashlib.sha256(raw).hexdigest() for raw in packets.values())}),
         "sourceProofs": MappingProxyType(packets)})
 
 
@@ -1667,7 +1703,7 @@ class NativeCategorySources:
         for authority in (native_metadata_recovery_controls, native_metadata_noncooperation_control,
                           native_metadata_ownership_control, native_metadata_package_consumer_control,
                           native_metadata_binary_control, native_metadata_inventory_controls,
-                          native_metadata_common_consumer_control):
+                          native_metadata_common_consumer_control, native_hook_admission_control):
             observed = authority(self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
             for key, target in collected.items():
                 if set(target) & set(observed[key]):
@@ -1675,6 +1711,11 @@ class NativeCategorySources:
                 target.update(observed[key])
         return MappingProxyType({
             key: MappingProxyType(value) for key, value in collected.items()})
+
+    def artifact_controls(self, inputs, *, started_ms, ended_ms):
+        if inputs["profileId"] != "artifacts":
+            raise evidence.ConformanceError("WitnessMissing")
+        return native_hook_admission_control(self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
 
     def _corroborate(self, inputs, manifest, observed, *, category_scope, manifest_data, owner_data,
                      started_ms, ended_ms):

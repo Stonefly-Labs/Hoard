@@ -38,23 +38,24 @@ from conformance_case_catalog import (
     ORIGINAL_METADATA_SCHEMA_WITNESSES, ORIGINAL_METADATA_WITNESSES,
     authority_integration_witnesses, catalog_admission_witnesses, category_cases, category_execution_partitions,
     category_mutation_witnesses, category_runtime_cases, category_runtime_packages, expected_cases,
-    metadata_common_consumer_origin_counts, metadata_common_consumer_tests,
+    metadata_common_consumer_origin_counts, metadata_common_consumer_tests, hook_admission_tests,
     original_witness_parents, original_witness_policy,
 )
 from conformance_execution import OwnedRun, capture_control, native_execution_supported, no_symlinks
 from conformance_sources import (
-    METADATA_COMMON_CONSUMER_NAMESPACE, METADATA_RECOVERY_SCENARIOS,
+    HOOK_ADMISSION_NAMESPACES, METADATA_COMMON_CONSUMER_NAMESPACE, METADATA_RECOVERY_SCENARIOS,
     NativeCategorySources, admit_owned_command, admit_recovery_barrier,
     admit_sqlite_noncooperation, admit_transfer_measurement, admit_artifact_transfer_producer,
     admit_artifact_noncooperation, admit_original_artifact_crash, admit_original_artifact_retention,
     artifact_original_child_sources, artifact_category_transfer_namespace, authority_integration_observations,
-    category_consumer_images, category_mutation_observations,
+    category_consumer_images, category_consumer_origin_inputs, category_mutation_observations,
+    hook_admission_manifest, native_hook_admission_control,
     admit_artifact_transfer_namespace as _admit_transfer_namespace,
     artifact_source_context, artifact_source_observations, artifact_source_output_seal,
     inspection_observations, metadata_recovery_context, metadata_recovery_observations,
     metadata_inventory_arguments, metadata_inventory_context, metadata_inventory_observations,
     metadata_inventory_source_inputs, native_metadata_inventory_controls, native_artifact_transfer_source,
-    metadata_common_consumer_manifest, metadata_common_consumer_origin_inputs, native_metadata_common_consumer_control,
+    metadata_common_consumer_manifest, native_metadata_common_consumer_control,
     metadata_common_consumer_sdk_images, metadata_common_consumer_sdk_paths,
     native_artifact_transfer_controls,
     native_control_record, native_metadata_binary_control, native_metadata_ownership_control,
@@ -1464,40 +1465,51 @@ def full_metadata_binding_origin_counts():
 
 def hook_admission_scenarios():
     return tuple((
-        "hook-admission-" + family,
-        tuple(sorted(prefix + "Missing_hooks_reject_before_dispatch_and_actual_binding_passes"
-                     + f'(provider: "{provider}")' for provider in providers)),
+        "hook-admission-" + family, tuple(sorted(hook_admission_tests(family))),
         "None", "Passed", 0, "None")
-        for family, prefix, providers in (
-            ("metadata", FULL_METADATA_CONSUMER_PREFIX, ("memory", "sqlite")),
-            ("artifacts", FULL_ARTIFACT_CONSUMER_PREFIX, ("local", "object"))))
+        for family in ("metadata", "artifacts"))
 
 
 def metadata_common_consumer_diagnostics(run, inputs):
+    return _category_consumer_source_diagnostics(run, inputs, hooks=False)
+
+
+def hook_admission_diagnostics(run, inputs):
+    return _category_consumer_source_diagnostics(run, inputs, hooks=True)
+
+
+def _category_consumer_source_diagnostics(run, inputs, *, hooks):
     if type(run) is not OwnedRun:
         raise evidence.ConformanceError("OwnershipInvalid")
-    manifest = metadata_common_consumer_manifest(run, inputs, str(uuid.uuid4()))
-    metadata_common_consumer_sdk_images(run, inputs)
+    manifest = (hook_admission_manifest if hooks else metadata_common_consumer_manifest)(
+        run, inputs, str(uuid.uuid4()))
+    if not hooks:
+        metadata_common_consumer_sdk_images(run, inputs)
     assembly = run.root / manifest["assemblies"][0]["path"]
-    require_sqlite_environment(inputs, assembly, run.root)
+    if inputs["profileId"] == "metadata":
+        require_sqlite_environment(inputs, assembly, run.root)
     write_new(run.root / manifest["runInputsPath"], evidence.canonical_bytes(inputs))
-    packages = category_runtime_packages(inputs, ("memory", "sqlite"))
-    tests = {identity: (binding, "none") for identity, (binding, _) in metadata_common_consumer_tests().items()}
+    selected = hook_admission_tests(inputs["profileId"]) if hooks else metadata_common_consumer_tests()
+    packages = category_runtime_packages(inputs, {binding for binding, _ in selected.values()})
+    tests = {identity: (binding, "none") for identity, (binding, _) in selected.items()}
+    counts = {identity: 1 for identity in selected} if hooks else metadata_common_consumer_origin_counts()
+    namespace = HOOK_ADMISSION_NAMESPACES[inputs["profileId"]] if hooks else METADATA_COMMON_CONSUMER_NAMESPACE
+    family = "metadata" if inputs["profileId"] == "metadata" else "artifact"
     started_ms = time.monotonic() * 1000
     result, observed, transport, _ = _execute_runtime_transport(
         run, inputs, assembly, manifest, tests, {
-            "category_scope": ("metadata", "shared-consumer"),
-            "metadata_packages": {package["packageId"]: package["sha256"] for package in packages.values()}},
-        origin_inputs=metadata_common_consumer_origin_inputs(run, inputs))
+            "category_scope": (inputs["profileId"], "hook-admission" if hooks else "shared-consumer"),
+            family + "_packages": {package["packageId"]: package["sha256"] for package in packages.values()}},
+        origin_inputs=category_consumer_origin_inputs(run, inputs))
     validate_observation(observed, result, tuple(tests), "None", "Passed", 0, transport["proofs"], "None")
-    validate_full_binding_origins(observed, inputs, metadata_common_consumer_origin_counts())
-    write_new(run.root / f"proofs/{METADATA_COMMON_CONSUMER_NAMESPACE}-native-executions.json",
+    validate_full_binding_origins(observed, inputs, counts)
+    write_new(run.root / f"proofs/{namespace}-native-executions.json",
               evidence.canonical_bytes({
                   "schemaVersion": 1, "qualification": False, "runId": run.run_id,
                   "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
                   "attemptId": manifest["attemptId"], "commandSequence": run.command_sequence,
                   "executionRecordSha256": result.execution_record_sha256}))
-    return native_metadata_common_consumer_control(
+    return (native_hook_admission_control if hooks else native_metadata_common_consumer_control)(
         run, inputs, started_ms=started_ms, ended_ms=time.monotonic() * 1000)
 
 
@@ -2660,7 +2672,7 @@ def _execute_runtime_transport(run, inputs, assembly, manifest, expected, runtim
                                ("artifacts", "controller"), ("artifacts", "original-integration"))
                            or runtime_options["category_scope"][1] in (
                                "recovery-controller", "inventory-controller", "mutation-faulty", "mutation-repair",
-                               "shared-consumer")))
+                               "shared-consumer", "hook-admission")))
     ingest = evidence.inspect_runtime_attempt if inspect_source else evidence.ingest_runtime_attempt
     ingested = ingest(
         inputs=inputs, expected_tests=expected, **data,
@@ -3055,6 +3067,7 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
             else:
                 artifact_transfer_diagnostics(
                     run, inputs, candidate, namespace=artifact_category_transfer_namespace(inputs))
+            hook_admission_diagnostics(run, inputs)
         except evidence.ConformanceError as error:
             print(json.dumps({
                 "qualification": False, "phase": "category-control-failure",
@@ -3264,6 +3277,8 @@ def _category_scope_tests(category_scope):
     if not isinstance(category_scope, (tuple, list)) or len(category_scope) != 2:
         raise evidence.ConformanceError("WitnessMissing")
     profile, scope_id = category_scope
+    if scope_id == "hook-admission":
+        return dict(hook_admission_tests(profile))
     if scope_id == "shared-consumer":
         if profile != "metadata":
             raise evidence.ConformanceError("WitnessMissing")
@@ -3287,7 +3302,7 @@ def _category_manifest_tests(category_scope, manifest):
             or any((entry["bindingId"], entry["caseId"]) != tests[entry["testIdentity"]]
                    or entry["fullyQualifiedName"] != entry["testIdentity"].split("(")[0] for entry in expected)):
         raise evidence.ConformanceError("WitnessMissing")
-    if category_scope[1] in ("mutation-faulty", "mutation-repair", "shared-consumer") and any(
+    if category_scope[1] in ("mutation-faulty", "mutation-repair", "shared-consumer", "hook-admission") and any(
             entry["assertionSymbol"] != (CATEGORY_MUTATION_METHODS[category_scope[0]][2]
                                         if category_scope[1] == "mutation-faulty" else None) for entry in expected):
         raise evidence.ConformanceError("WitnessMissing")
@@ -3507,7 +3522,7 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
         scope_tests = _category_manifest_tests(category_scope, manifest)
         category_scope = tuple(category_scope)
         profile, scope_id = category_scope
-        package_consumer = scope_id in ("mutation-faulty", "mutation-repair", "shared-consumer")
+        package_consumer = scope_id in ("mutation-faulty", "mutation-repair", "shared-consumer", "hook-admission")
         if (not package_consumer and (artifact_packages is not None or metadata_packages is not None)
                 or package_consumer and (metadata_packages is None if profile == "metadata" else artifact_packages is None)
                 or inspection_literals != scope_id.startswith("inspection-literals-")
@@ -3721,7 +3736,7 @@ def runtime_command(run, assembly, manifest, *, metadata_provider=None, artifact
             f"runtime-input-{attempt_id}.json", "runtime-owner.json", manifest["runInputsPath"],
             settings.relative_to(run.root).as_posix(), assembly.relative_to(run.root).as_posix()]
         if category_scope == ("artifacts", "original-integration") or category_scope[1] in (
-                "mutation-faulty", "mutation-repair", "shared-consumer"):
+                "mutation-faulty", "mutation-repair", "shared-consumer", "hook-admission"):
             execution_inputs.extend(entry["path"] for entry in manifest["assemblies"]
                                     if entry["path"] != assembly.relative_to(run.root).as_posix())
         if category_scope == ("metadata", "shared-consumer"):

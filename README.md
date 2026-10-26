@@ -2314,7 +2314,26 @@ provider images, and rejects reduced or foreign selections before dispatch.
 The existing 132/24-row selections are unchanged. A fresh-package local replay
 rejects all four dedicated rows for each of the three SDK mutations above;
 the unchanged SDK passes all 160 original-plus-dedicated rows without skips.
-These scopes are not yet wired into native QC-05 source-parent composition.
+Qualification-input batches now execute each complete family before public
+scopes and retain a private hook-source control per category. Independent
+reconstruction checks the original readonly transport, exact typed origins,
+six loaded images and held native command/settings/input closure. History
+retains these original packets within its existing proof bounds. This wiring
+still awaits exact Linux admission; it adds no public QC-05 witness and does
+not complete QC-05 source-parent composition or durability-exclusion checks.
+
+Exact `97b6d0b`,
+[run40252743943](https://github.com/Stonefly-Labs/Hoard/actions/runs/40252743943),
+passes 332 native foundations and locked replay, but its SDK job fails one
+existing SQLite/Local lost-metadata-acknowledgment row in the 183-row original
+artifact scope (`UnknownDiagnostic`, 182 Passed/1 Failed), after the new hook
+diagnostics. Three unchanged local four-row acknowledgment-family replays and
+one complete 183-row artifact replay pass without skips; no cause is
+established and no assertion or budget changes. Exact `b0852b7` is observed
+separately. The current source-control increment passes all 124 evidence and
+147 SDK tooling checks; the full local suite encounters the existing 24 GiB
+artifact-scratch gate with only about 22 GiB free. No capacity guard is bypassed
+and no retained evidence is deleted.
 
 Exact `58a9495`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),

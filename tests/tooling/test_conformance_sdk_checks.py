@@ -113,6 +113,45 @@ class SdkDiagnosticTests(unittest.TestCase):
                         with self.assertRaisesRegex(checks.evidence.ConformanceError, "WitnessMissing"):
                             checks.test_attempt(run, {}, candidate, changed)
                         launch.assert_not_called()
+                scope = (family, "hook-admission")
+                native = {**manifest, "attemptId": str(uuid.uuid4()), "purpose": "execution",
+                          "runInputsPath": "proofs/hook-inputs.json", "inputSha256": "f" * 64,
+                          "expected": [{**row, "bindingId": row["bindingId"].rsplit(".", 1)[1]}
+                                       for row in manifest["expected"]]}
+                self.assertEqual(checks._category_scope_tests(scope), {
+                    row["testIdentity"]: (row["bindingId"], "QC-05") for row in native["expected"]})
+                with self.assertRaises(checks.evidence.ConformanceError):
+                    checks._category_scope_tests(("harness", "hook-admission"))
+                feed = self.directory / "feed/candidate"
+                feed.mkdir(parents=True, exist_ok=True)
+                packages = {}
+                for package in inputs["packages"][1:]:
+                    name = package["packageId"]
+                    archive = feed / (name + ".0.1.0.nupkg")
+                    archive.write_bytes(name.encode())
+                    packages[name] = checks.evidence.file_sha256(archive)
+                (self.directory / "stores").mkdir(exist_ok=True)
+                owner = self.directory / "runtime-owner.json"
+                if not owner.exists():
+                    checks.write_new(owner, b"owner")
+                options = {"metadata_packages" if family == "metadata" else "artifact_packages": packages}
+                with patch.object(run, "command", create=True,
+                                  side_effect=checks.evidence.ConformanceError("PrerequisiteMissing")) as launch:
+                    with self.assertRaisesRegex(checks.evidence.ConformanceError, "PrerequisiteMissing"):
+                        checks.runtime_command(run, assembly, native, category_scope=scope, **options)
+                self.assertTrue(launch.call_args.kwargs["record_execution"])
+                self.assertTrue(set(inputs["runtimeAssemblies"]) <=
+                                set(launch.call_args.kwargs["execution_inputs"]))
+                for defect in ("missing", "foreign", "context"):
+                    changed = {**native, "expected": [dict(row) for row in native["expected"]]}
+                    if defect == "missing":
+                        changed["expected"].pop()
+                    elif defect == "foreign":
+                        changed["expected"][0]["testIdentity"] += ".foreign"
+                    else:
+                        changed["expected"][0]["caseId"] = "full-metadata-binding"
+                    with self.subTest(defect=defect), self.assertRaises(checks.evidence.ConformanceError):
+                        checks.runtime_command(run, assembly, changed, category_scope=scope, **options)
 
     def test_shared_metadata_scope_requires_complete_actual_consumer_families_and_all_images(self):
         tests = checks._category_scope_tests(("metadata", "shared-consumer"))
@@ -513,7 +552,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         self._assert_category_batch("artifacts", 227)
 
     def test_qualification_stall_and_recovery_are_fresh_inside_joint_attempt_before_scopes(self):
-        for failed in (None, "stall", "recovery", "ownership", "consumer", "shared-consumer", "binary", "inventory"):
+        for failed in (None, "stall", "recovery", "ownership", "consumer", "shared-consumer", "binary", "inventory", "hooks"):
             root = self.directory / str(failed)
             (root / "proofs").mkdir(parents=True)
             run = SimpleNamespace(root=root)
@@ -531,7 +570,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                 def execute(actual_run, actual_inputs, actual_candidate=None, **options):
                     self.assertIs(actual_run, run)
                     self.assertIs(actual_inputs, inputs)
-                    self.assertEqual(actual_candidate, None if name == "shared-consumer" else candidate)
+                    self.assertEqual(actual_candidate, None if name in ("shared-consumer", "hooks") else candidate)
                     self.assertEqual(options, {} if namespace is None else {"namespace": namespace})
                     calls.append(name)
                     if failed == name:
@@ -554,6 +593,7 @@ class SdkDiagnosticTests(unittest.TestCase):
                     checks, "metadata_common_consumer_diagnostics", side_effect=controls("shared-consumer", None)), patch.object(
                     checks, "metadata_binary_diagnostics", side_effect=controls("binary", None)), patch.object(
                     checks, "metadata_inventory_diagnostics", side_effect=controls("inventory", None)), patch.object(
+                    checks, "hook_admission_diagnostics", side_effect=controls("hooks", None)), patch.object(
                     checks, "category_attempt", side_effect=scope), patch.object(
                     checks, "_category_record", return_value={"qualification": False}), contextlib.redirect_stdout(io.StringIO()):
                 options = {"inspection_cases": {}, "inspection_configurations": {}, "native_sources": sources}
@@ -561,18 +601,19 @@ class SdkDiagnosticTests(unittest.TestCase):
                     self.assertFalse(checks.category_diagnostics(run, inputs, candidate, **options)["qualification"])
                     self.assertEqual(calls, [
                         "begin", "stall", "recovery", "ownership", "consumer", "shared-consumer",
-                        "binary", "inventory", "scope", "finish"])
+                        "binary", "inventory", "hooks", "scope", "finish"])
                     history.interrupt_joint.assert_not_called()
                 else:
                     with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
                         checks.category_diagnostics(run, inputs, candidate, **options)
-                    expected = ["begin", "stall", "recovery", "ownership", "consumer", "shared-consumer", "binary", "inventory"]
+                    expected = ["begin", "stall", "recovery", "ownership", "consumer", "shared-consumer",
+                                "binary", "inventory", "hooks"]
                     self.assertEqual(calls, expected[:expected.index(failed) + 1])
                     history.interrupt_joint.assert_called_once_with("ProofMismatch")
                     history.finish_joint.assert_not_called()
 
     def test_qualification_artifact_transfers_are_fresh_before_scopes_and_fail_closed(self):
-        for failed in (None, "transfers", "scope"):
+        for failed in (None, "transfers", "hooks", "scope"):
             root = self.directory / str(failed)
             (root / "proofs").mkdir(parents=True)
             run = SimpleNamespace(root=root)
@@ -602,21 +643,30 @@ class SdkDiagnosticTests(unittest.TestCase):
                     raise checks.evidence.ConformanceError("ProofMismatch")
                 return {"transport": {}, "summary": {}}
 
+            def hooks(actual_run, actual_inputs):
+                self.assertIs(actual_run, run)
+                self.assertIs(actual_inputs, inputs)
+                calls.append("hooks")
+                if failed == "hooks":
+                    raise checks.evidence.ConformanceError("ProofMismatch")
+
             with self.subTest(failed=failed), patch.object(
                     checks.evidence, "CategoryRuntimeHistory", return_value=history), patch.object(
                     checks, "original_observation_inputs", return_value={}), patch.object(
                     checks, "artifact_transfer_diagnostics", side_effect=transfers), patch.object(
+                    checks, "hook_admission_diagnostics", side_effect=hooks), patch.object(
                     checks, "category_attempt", side_effect=scope), patch.object(
                     checks, "_category_record", return_value={"qualification": False}) as record, contextlib.redirect_stdout(io.StringIO()):
                 options = {"inspection_cases": {}, "inspection_configurations": {}, "native_sources": sources}
                 if failed is None:
                     self.assertFalse(checks.category_diagnostics(run, inputs, candidate, **options)["qualification"])
-                    self.assertEqual(calls, ["begin", "transfers", "scope", "finish"])
+                    self.assertEqual(calls, ["begin", "transfers", "hooks", "scope", "finish"])
                     history.interrupt_joint.assert_not_called()
                 else:
                     with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
                         checks.category_diagnostics(run, inputs, candidate, **options)
-                    self.assertEqual(calls, ["begin", "transfers"] + (["scope"] if failed == "scope" else []))
+                    expected = ["begin", "transfers", "hooks", "scope"]
+                    self.assertEqual(calls, expected[:expected.index(failed) + 1])
                     history.interrupt_joint.assert_called_once_with("ProofMismatch")
                     history.finish_joint.assert_not_called()
                     self.assertEqual(record.call_args.args[-1], "ProofMismatch")
