@@ -180,6 +180,13 @@ proofs and wrapper SDK/archive correspondence. The command closure includes all
 manifest images and must fit its containing attempt. Tooling455 (19 native skips)
 passes; this source reconstruction alone is not QC-03 pairing or native admission.
 
+Artifact native parameter pairing now re-admits all original scopes alongside
+the shared-consumer source with cross-source execution/origin/instance isolation.
+QC-03 requires readonly pairing material and a recomputed full AS-01..48 basis,
+including actual transfers, Local recovery and the four Object exclusions.
+Tooling458 (19 native skips) passes. Native admission and full qualification
+remain pending; no provider guarantee or exclusion is changed.
+
 Object's driver-owned access faults now reside in its concrete binding, not the
 provider assembly; native exact-stamp selection/protection and pre-hook handle
 capture are unchanged. The provider has no rename mechanism. The unchanged

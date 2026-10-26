@@ -258,6 +258,13 @@ source/image bytes, full owned-command image closure and containing-attempt
 timing are required. Tooling455 (19 native skips) passes; no QC-03 pairing or
 native admission is inferred from these synthetic rejection tests.
 
+Artifact QC-03 now has a source-owned pairing/basis implementation: independently
+re-admit all three original scopes beside the complete shared source; retain
+readonly input/time-bound pairing material and reject cross-source execution,
+origin or instance borrowing. Compose all AS-01..48 keys with unchanged actual
+transfer/Local recovery authority and four Object exclusions. Tooling458
+(19 native skips) passes; actual native admission and qualification remain pending.
+
 Object's access fault scope now resides in the concrete binding rather than its
 provider assembly. The unchanged prepared no-rename witness fails named
 `Assert.Empty` before this repair and passes afterward. Native protection and

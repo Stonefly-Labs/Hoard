@@ -1610,6 +1610,16 @@ fit the current attempt. Scope receipts use exact scope-sized observation bounds
 without changing per-case limits. Tooling455 (19 native skips) passes; native
 admission and original/shared pairing remain pending, with no QC-03 pass issued.
 
+Artifact native parameter pairing now reuses metadata's independently re-admitted
+scope mechanism for all three original scopes alongside the complete shared
+source. Distinct attempts/parents, exact runtime paths, current sequence/timing,
+cross-source execution/origin/component instance isolation and readonly pairing
+material are required before QC-03 obligations are issued. QC-03 reconstructs a
+full AS-01..48 basis packet without shortening case witness inventories; actual
+transfers, Local recovery and four Object exclusions remain unchanged.
+Tooling458 (19 native skips) passes. Actual native admission and full feature
+acceptance remain pending.
+
 Object payload-access faults are now concrete-binding-owned, matching the
 original driver boundary. Native exact-stamp selection/protection still wraps
 application and transfers the same captured scope before supervisor hooks;

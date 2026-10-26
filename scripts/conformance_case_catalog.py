@@ -1134,6 +1134,7 @@ METADATA_QUALITY_BASIS = MappingProxyType({
 CATEGORY_QUALITY_BASIS = MappingProxyType({
     "metadata": METADATA_QUALITY_BASIS,
     "artifacts": MappingProxyType({
+        "QC-03": tuple(range(1, 49)),
         "QC-04": (),
         "QC-05": (),
         "QC-09": tuple(number for number in range(1, 49) if number not in (11, 12, 41, 42, 43, 44)),

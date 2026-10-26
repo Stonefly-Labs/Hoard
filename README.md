@@ -2601,6 +2601,13 @@ correspondence and the owned native command, including attempt timing. Tooling45
 (19 native skips) passes. This does not complete native admission, QC-03 pairing
 or the feature.
 
+Artifact parameter pairing is now source-wired into QC-03: all three original
+scopes are independently re-admitted against the shared-consumer source, with
+replay/instance isolation and readonly pairing material. QC-03 recomputes the
+full AS-01..48 basis, retaining actual transfers, Local recovery and the four
+Object exclusions. Tooling458 (19 native skips) passes. Actual native admission
+and the remaining feature work are still pending; this is not qualification.
+
 The Object access-fault implementation now lives in its concrete test binding,
 as the original driver-owned fault did. The provider still selects/protects the
 exact stamp and captures the scope before release hooks, but contains no rename

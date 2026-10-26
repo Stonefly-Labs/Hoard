@@ -1997,30 +1997,49 @@ class NativeCategorySources:
             key: MappingProxyType(value) for key, value in collected.items()})
 
     def _metadata_parameter_controls(self, inputs, shared, scopes, *, sequence, started_ms, ended_ms):
+        return self._parameter_controls(inputs, shared, scopes, sequence=sequence, started_ms=started_ms,
+                                        ended_ms=ended_ms, profile="metadata")
+
+    def _artifact_parameter_controls(self, inputs, shared, scopes, *, sequence, started_ms, ended_ms):
+        return self._parameter_controls(inputs, shared, scopes, sequence=sequence, started_ms=started_ms,
+                                        ended_ms=ended_ms, profile="artifacts")
+
+    def _parameter_controls(self, inputs, shared, scopes, *, sequence, started_ms, ended_ms, profile):
         if type(self._run) is not OwnedRun or inputs["runId"] != self._run.run_id:
             raise evidence.ConformanceError("OwnershipInvalid")
-        if set(scopes) != {"original-memory", "original-sqlite"} or shared is None:
+        expected_scopes = ({"original-memory", "original-sqlite"} if profile == "metadata" else
+                           {"original", "original-local", "original-object"})
+        if (inputs["profileId"] != profile or inputs["mode"] != "qualification"
+                or set(scopes) != expected_scopes or shared is None):
             raise evidence.ConformanceError("WitnessMissing")
         proofs = {path: hashlib.sha256(raw).hexdigest() for path, raw in shared["sourceProofs"].items()}
         used, instances = evidence._runtime_provenance_state(shared["observation"], frozenset(), {})
+        executions = {row["executionId"] for row in shared["observation"]["witnesses"]}
         witnesses = []
         for scope, transport in sorted(scopes.items()):
             tests = {identity: (binding, "none")
-                     for binding, identity in category_execution_partitions("metadata", mode="qualification")[scope]}
+                     for binding, identity in category_execution_partitions(profile, mode="qualification")[scope]}
             observed = self.ingest_attempt(
                 inputs=inputs, **transport, expected_tests=tests, started_ms=started_ms, ended_ms=ended_ms,
-                category_scope=("metadata", scope))
-            if observed["completion"]["attemptSequence"] != sequence:
+                category_scope=(profile, scope))
+            if (observed["completion"]["attemptSequence"] != sequence
+                    or any(row["executionId"] in executions for row in observed["witnesses"])
+                    or any(captured["instanceId"] in instances
+                           for field in ("sessionOrigins", "originalObservations")
+                           for nodes in observed[field].values() for node in nodes
+                           for captured in node["components"].values())):
                 raise evidence.ConformanceError("ProofMismatch")
             current, instances = evidence._runtime_provenance_state(observed, used, instances)
             used = used | current
+            executions.update(row["executionId"] for row in observed["witnesses"])
             witnesses.extend(observed["witnesses"])
             proofs.update({f'runtime-{observed["attemptId"]}/{path}': hashed
                            for path, hashed in observed["proofs"].items()})
             proofs.update({path: hashlib.sha256(raw).hexdigest() for path, raw in observed["sourceProofs"].items()})
-        raw = evidence.metadata_parameter_pairing_material(
+        raw = (evidence.metadata_parameter_pairing_material if profile == "metadata" else
+               evidence.artifact_parameter_pairing_material)(
             inputs, witnesses, proofs, sequence=sequence, started_ms=started_ms, ended_ms=ended_ms)
-        path = f"proofs/category-metadata-parameters-{sequence:04}.json"
+        path = f"proofs/category-{profile}-parameters-{sequence:04}.json"
         destination = self._run.root / path
         try:
             with destination.open("xb") as output:
@@ -2030,20 +2049,31 @@ class NativeCategorySources:
             if _readonly(destination, 64 * 1024) != raw:
                 raise evidence.ConformanceError("ProofMismatch") from None
         return MappingProxyType({
-            "controls": MappingProxyType({name: (hashlib.sha256(raw).hexdigest(),) for name in obligation_controls(2)}),
+            "controls": MappingProxyType({
+                name: (hashlib.sha256(raw).hexdigest(),) for name in obligation_controls(2 if profile == "metadata" else 3)}),
             "sourceProofs": MappingProxyType({path: raw})})
 
-    def artifact_controls(self, inputs, *, started_ms, ended_ms):
+    def artifact_controls(self, inputs, *, started_ms, ended_ms, artifact_scopes=None, sequence=1):
         if inputs["profileId"] != "artifacts":
             raise evidence.ConformanceError("WitnessMissing")
         collected = {"controls": {}, "sourceProofs": {}}
+        shared = None
         for authority in (native_category_common_consumer_control, native_hook_admission_control):
             observed = authority(self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
+            if authority is native_category_common_consumer_control:
+                shared = observed
             for key, target in collected.items():
                 overlap = set(target) & set(observed[key])
                 if overlap and (key != "sourceProofs" or any(target[path] != observed[key][path] for path in overlap)):
                     raise evidence.ConformanceError("ProofMismatch")
                 target.update(observed[key])
+        if artifact_scopes:
+            paired = self._artifact_parameter_controls(
+                inputs, shared, artifact_scopes, sequence=sequence, started_ms=started_ms, ended_ms=ended_ms)
+            for key, target in collected.items():
+                if set(target) & set(paired[key]):
+                    raise evidence.ConformanceError("ProofMismatch")
+                target.update(paired[key])
         return MappingProxyType({key: MappingProxyType(value) for key, value in collected.items()})
 
     def _corroborate(self, inputs, manifest, observed, *, category_scope, manifest_data, owner_data,

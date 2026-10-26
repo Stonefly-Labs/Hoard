@@ -2645,7 +2645,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                                         distinct_packages=distinct_packages)
 
         def finish(sequence=1, *, failed=None, missing_control=None, missing_parent=None, proof_bytes=0,
-                   missing_integration=None, metadata_pairing=False):
+                   missing_integration=None, metadata_pairing=False, artifact_pairing=False):
             start = 9 + (sequence - 1) * 4
             with mock.patch.object(evidence.time, "monotonic", return_value=start / 1000):
                 history.begin_joint(str(uuid.uuid4()), partitions=catalog.category_execution_partitions(
@@ -2693,6 +2693,23 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                 raw = evidence.metadata_parameter_pairing_material(
                     history._inputs, witnesses, proofs, sequence=sequence, started_ms=start, ended_ms=start + 3)
                 proofs[f"proofs/category-metadata-parameters-{sequence:04}.json"] = hashlib.sha256(raw).hexdigest()
+            if artifact_pairing:
+                for scope in ("original", "original-local", "original-object"):
+                    attempt = str(uuid.uuid4())
+                    parent = hashlib.sha256(("artifact-parent-" + scope + str(sequence)).encode()).hexdigest()
+                    tests = set(catalog.category_execution_partitions("artifacts", mode="qualification")[scope])
+                    for row in witnesses:
+                        if (row["bindingId"], row["testIdentity"]) in tests:
+                            proofs[f'runtime-{attempt}/proof-{row["executionId"]}.json'] = row["proofSha256"]
+                            if (row["bindingId"], row["testIdentity"]) != missing_parent:
+                                parents[row["executionId"]] = parent
+                    proofs[f"proofs/category-source-{attempt}.json"] = parent
+                    proofs[f"proofs/category-artifacts-{scope}-{attempt}.json"] = hashlib.sha256(
+                        ("artifact-receipt-" + scope + str(sequence)).encode()).hexdigest()
+                proofs["proofs/qualification-artifacts-shared-consumer-native-executions.json"] = "d" * 64
+                raw = evidence.artifact_parameter_pairing_material(
+                    history._inputs, witnesses, proofs, sequence=sequence, started_ms=start, ended_ms=start + 3)
+                proofs[f"proofs/category-artifacts-parameters-{sequence:04}.json"] = hashlib.sha256(raw).hexdigest()
             imported = ("AssertionFailed" if failed else "None", tuple(witnesses), proofs, {}, {},
                         frozenset(), {}, parents, controls, history._proof_bytes + proof_bytes, {})
             with mock.patch.object(history, "_ingest_parts", return_value=imported), mock.patch.object(
@@ -2842,34 +2859,131 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
                 evidence.admit_entity("QualificationReport", changed)
 
+    def test_artifact_extraction_quality_requires_complete_paired_scopes_and_recomputed_full_basis(self):
+        import conformance_case_catalog as catalog
+
+        history, finish = self.category_quality_fixture(profile="artifacts", distinct_packages=True)
+        quality = finish(artifact_pairing=True)["QC-03"]
+        self.assertEqual(quality["status"], "Passed")
+        self.assertLessEqual(len(quality["attempts"][0]["proofSha256"]), evidence.MAX_WITNESSES)
+        basis = evidence.load_json(history.quality_proofs["proofs/category-artifacts-QC-03-basis-0001.json"])
+        self.assertEqual({tuple(row["key"]) for row in basis["basis"]}, {
+            case.key for case in catalog.category_cases() if case.profile_id == "artifacts"})
+        self.assertEqual(sum(row["exclusion"] is not None for row in basis["basis"]), 4)
+        report = evidence.load_json(evidence.canonical_bytes(self.category_quality_report(history)))
+        evidence.admit_entity("QualificationReport", report)
+        for defect in ("pairing", "basis", "shared-source", "source-parent", "exclusion", "transfer", "recovery"):
+            changed = copy.deepcopy(report)
+            target = next(row for row in changed["results"]
+                          if row["bindingId"] == "local" and row["caseId"] == "AS-01")
+            if defect == "pairing":
+                changed["proofs"].pop("proofs/category-artifacts-parameters-0001.json")
+            elif defect == "basis":
+                changed["proofs"]["proofs/category-artifacts-QC-03-basis-0001.json"] = "0" * 64
+            elif defect == "shared-source":
+                changed["proofs"]["proofs/qualification-artifacts-shared-consumer-native-executions.json"] = "0" * 64
+            elif defect == "source-parent":
+                attempt = target["attempts"][0]
+                runtime = {row["proofSha256"] for row in changed["witnesses"]
+                           if row["executionId"] in attempt["witnessIds"]}
+                attempt["proofSha256"] = sorted(runtime)
+                target["proofSha256"] = sorted(runtime)
+            elif defect == "exclusion":
+                next(row for row in changed["results"] if row["bindingId"] == "object"
+                     and row["caseId"] == "AS-41")["exclusionRule"] = "non-durable-fixture"
+            else:
+                identity = next(identity for identity, source in catalog.ORIGINAL_ARTIFACT_PROOF_SOURCES.items()
+                                if source[0] == ("transfer" if defect == "transfer" else "crash"))
+                case = next(case for case in history._cases if case.binding_id == "local" and identity in case.witnesses)
+                target = next(row for row in changed["results"] if row["bindingId"] == "local"
+                              and row["caseId"] == case.case_id)
+                target["attempts"][0].update(status="Incomplete", diagnosticCode="EvidenceIncomplete")
+                target["status"] = "Incomplete"
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                evidence.admit_entity("QualificationReport", changed)
+
+    def test_artifact_parameter_material_rejects_missing_foreign_split_and_borrowed_scope_proofs(self):
+        import conformance_case_catalog as catalog
+
+        history, finish = self.category_quality_fixture(profile="artifacts")
+        finish(artifact_pairing=True)
+        original = next(iter(catalog.category_execution_partitions("artifacts", mode="qualification")["original"]))
+        for defect in ("missing-shared", "missing-parent", "missing-receipt", "duplicate-runtime",
+                       "split-scope", "borrowed-scope", "retimed", "foreign-binding", "missing-row"):
+            witnesses, proofs = copy.deepcopy(list(history.witnesses)), dict(history.proofs)
+            row = next(row for row in witnesses if (row["bindingId"], row["testIdentity"]) == original)
+            path = next(path for path in proofs if path.endswith(f'/proof-{row["executionId"]}.json'))
+            attempt = path.split("/")[0].removeprefix("runtime-")
+            if defect == "missing-shared":
+                proofs.pop("proofs/qualification-artifacts-shared-consumer-native-executions.json")
+            elif defect == "missing-parent":
+                proofs.pop(f"proofs/category-source-{attempt}.json")
+            elif defect == "missing-receipt":
+                proofs.pop(f"proofs/category-artifacts-original-{attempt}.json")
+            elif defect in ("duplicate-runtime", "split-scope"):
+                proofs[path.replace(attempt, str(uuid.uuid4()))] = proofs[path]
+                if defect == "split-scope":
+                    proofs.pop(path)
+            elif defect == "borrowed-scope":
+                tests = set(catalog.category_execution_partitions("artifacts", mode="qualification")["original-local"])
+                for repeated in witnesses:
+                    if (repeated["bindingId"], repeated["testIdentity"]) in tests:
+                        old_path = next(path for path in proofs if path.endswith(
+                            f'/proof-{repeated["executionId"]}.json'))
+                        proofs[f'runtime-{attempt}/proof-{repeated["executionId"]}.json'] = proofs.pop(old_path)
+                proofs[f"proofs/category-artifacts-original-local-{attempt}.json"] = "a" * 64
+            elif defect == "retimed":
+                row["startedMs"] = 8
+            elif defect == "foreign-binding":
+                row["bindingId"] = "object" if row["bindingId"] == "local" else "local"
+            else:
+                witnesses.remove(row)
+            with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
+                evidence.artifact_parameter_pairing_material(
+                    history._inputs, witnesses, proofs, sequence=1, started_ms=9, ended_ms=12)
+
     def test_metadata_parameter_controls_re_admit_both_original_scopes_and_reject_replay_or_old_attempts(self):
+        self.parameter_controls_fixture(profile="metadata")
+
+    def test_artifact_parameter_controls_re_admit_all_original_scopes_and_reject_replay_or_old_attempts(self):
+        self.parameter_controls_fixture(profile="artifacts")
+
+    def parameter_controls_fixture(self, *, profile):
         import conformance_case_catalog as catalog
         import conformance_sources as sources
         from types import SimpleNamespace
 
-        history, finish = self.category_quality_fixture()
-        finish(metadata_pairing=True)
+        history, finish = self.category_quality_fixture(profile=profile)
+        finish(metadata_pairing=profile == "metadata", artifact_pairing=profile == "artifacts")
         call = str(uuid.uuid4())
+        session = str(uuid.uuid4())
+        component = {"instanceId": str(uuid.uuid4()), "assemblySha256": "a" * 64,
+                     "moduleVersionId": str(uuid.uuid4()), "typeSha256": "b" * 64}
         shared = {
-            "sourceProofs": {"proofs/qualification-metadata-shared-consumer-native-executions.json": b"shared"},
-            "observation": {"sessionOrigins": {}, "originalObservations": {},
+            "sourceProofs": {f"proofs/qualification-{profile}-shared-consumer-native-executions.json": b"shared"},
+            "observation": {"witnesses": [{"executionId": str(uuid.uuid4())}],
+                            "sessionOrigins": {"shared": [{"sessionId": session, "components": {"store": component}}]},
+                            "originalObservations": {},
                             "metadataArguments": {"shared": [{"callId": call}]}}}
         observations, transports = {}, {}
-        for binding in ("memory", "sqlite"):
-            rows = [row for row in history.witnesses if row["bindingId"] == binding
-                    and row["testIdentity"] in catalog.ORIGINAL_METADATA_WITNESSES]
+        scopes = (("original-memory", "original-sqlite") if profile == "metadata" else
+                  ("original", "original-local", "original-object"))
+        partitions = catalog.category_execution_partitions(profile, mode="qualification")
+        prefix = "metadata" if profile == "metadata" else "artifact"
+        for scope in scopes:
+            tests = set(partitions[scope])
+            rows = [row for row in history.witnesses if (row["bindingId"], row["testIdentity"]) in tests]
             first = rows[0]
             path = next(path for path in history.proofs if path.endswith(f'/proof-{first["executionId"]}.json'))
             attempt = path.split("/")[0].removeprefix("runtime-")
-            scope = "original-" + binding
-            transports[scope] = {"manifest_data": binding.encode()}
+            transports[scope] = {"manifest_data": scope.encode()}
             observations[scope] = {
                 "attemptId": attempt, "completion": {"attemptSequence": 1}, "witnesses": rows,
                 "proofs": {f'proof-{row["executionId"]}.json': row["proofSha256"] for row in rows},
                 "sourceProofs": {
-                    f"proofs/category-source-{attempt}.json": ("metadata-parent-" + binding + "1").encode(),
-                    f"proofs/category-metadata-original-{binding}-{attempt}.json": (
-                        "metadata-receipt-" + binding + "1").encode()},
+                    f"proofs/category-source-{attempt}.json": (prefix + "-parent-" + scope + "1").encode(),
+                    f"proofs/category-{profile}-{scope}-{attempt}.json": (
+                        prefix + "-receipt-" + scope + "1").encode()},
                 "sessionOrigins": {}, "originalObservations": {}, "metadataArguments": {}}
         native = object.__new__(sources.NativeCategorySources)
         root = Path(self.enterContext(tempfile.TemporaryDirectory()))
@@ -2879,33 +2993,47 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         def ingest(**options):
             scope = options["category_scope"][1]
             self.assertEqual(options["manifest_data"], transports[scope]["manifest_data"])
-            self.assertEqual(set(options["expected_tests"]), set(catalog.ORIGINAL_METADATA_WITNESSES))
+            self.assertEqual(options["expected_tests"], {
+                identity: (binding, "none") for binding, identity in partitions[scope]})
             return observations[scope]
 
+        pair = native._metadata_parameter_controls if profile == "metadata" else native._artifact_parameter_controls
         with mock.patch.object(sources, "OwnedRun", SimpleNamespace), mock.patch.object(
                 native, "ingest_attempt", side_effect=ingest) as admitted:
-            paired = native._metadata_parameter_controls(
+            paired = pair(
                 history._inputs, shared, transports, sequence=1, started_ms=9, ended_ms=12)
-            self.assertEqual(admitted.call_count, 2)
-            self.assertEqual(set(paired["controls"]), set(catalog.obligation_controls(2)))
+            self.assertEqual(admitted.call_count, len(scopes))
+            self.assertEqual(set(paired["controls"]), set(catalog.obligation_controls(2 if profile == "metadata" else 3)))
             self.assertEqual(len(set(paired["controls"].values())), 1)
             self.assertEqual(len(paired["sourceProofs"]), 1)
             for path, raw in paired["sourceProofs"].items():
                 self.assertEqual((root / path).read_bytes(), raw)
                 self.assertEqual((root / path).stat().st_mode & 0o777, 0o400)
-            for defect in ("missing-binding", "old-attempt", "missing-row", "replayed-call"):
+            for defect in ("missing-binding", "old-attempt", "missing-row", "replayed-call",
+                           "replayed-origin", "borrowed-instance", "replayed-execution", "foreign-source"):
                 before = copy.deepcopy(observations)
                 selected = dict(transports)
+                target = observations[scopes[0]]
                 if defect == "missing-binding":
-                    selected.pop("original-memory")
+                    selected.pop(scopes[0])
                 elif defect == "old-attempt":
-                    observations["original-memory"]["completion"]["attemptSequence"] = 2
+                    target["completion"]["attemptSequence"] = 2
                 elif defect == "missing-row":
-                    observations["original-memory"]["witnesses"] = observations["original-memory"]["witnesses"][:-1]
+                    target["witnesses"] = target["witnesses"][:-1]
+                elif defect == "replayed-call":
+                    target["metadataArguments"] = {"original": [{"callId": call}]}
+                elif defect in ("replayed-origin", "borrowed-instance"):
+                    target["originalObservations"] = {"original": [{
+                        "observationId": session if defect == "replayed-origin" else str(uuid.uuid4()),
+                        "components": {"store": component} if defect == "borrowed-instance" else {}}]}
+                elif defect == "replayed-execution":
+                    target["witnesses"][0] = {**target["witnesses"][0],
+                                             "executionId": shared["observation"]["witnesses"][0]["executionId"]}
                 else:
-                    observations["original-memory"]["metadataArguments"] = {"original": [{"callId": call}]}
+                    path = next(path for path in target["sourceProofs"] if f"category-{profile}-" in path)
+                    target["sourceProofs"][path + ".foreign"] = target["sourceProofs"].pop(path)
                 with self.subTest(defect=defect), self.assertRaises(evidence.ConformanceError):
-                    native._metadata_parameter_controls(
+                    pair(
                         history._inputs, shared, selected, sequence=1, started_ms=9, ended_ms=12)
                 observations = before
 
@@ -3136,7 +3264,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         history, finish = self.category_quality_fixture(profile="artifacts", max_attempts=2)
         quality = finish()["QC-09"]
         self.assertEqual(quality["status"], "Passed", "Complete artifact logical closure must derive QC-09.")
-        packets = dict(history.quality_proofs)
+        packets = {path: raw for path, raw in history.quality_proofs.items()
+                   if evidence.load_json(raw)["caseId"] == "QC-09"}
         self.assertEqual(len(packets), 1)
         path, raw = next(iter(packets.items()))
         packet = evidence.load_json(raw)
@@ -3155,7 +3284,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
         evidence.admit_entity("QualificationReport", self.category_quality_report(history))
         self.assertEqual(finish(2)["QC-09"]["status"], "Passed")
         self.assertEqual(history.quality_proofs[path], raw)
-        self.assertEqual(len(history.quality_proofs), 2)
+        self.assertEqual(sum(evidence.load_json(raw)["caseId"] == "QC-09"
+                             for raw in history.quality_proofs.values()), 2)
         original = evidence.load_json(evidence.canonical_bytes(self.category_quality_report(history)))
         evidence.admit_entity("QualificationReport", original)
         for defect in ("missing-basis-packet", "changed-basis-packet", "missing-case", "shortened-case",

@@ -373,6 +373,18 @@ reused instances, SDK mismatch and native-command mutations reject. Tooling455
 (19 native skips) passes. Native admission and original/shared parameter pairing
 remain pending; these receipts alone issue no QC-03 obligation.
 
+Artifact parameter pairing now requires all three complete original scopes and
+their distinct attempts/source parents beside the shared-consumer source. Native
+re-admission rejects stale sequences and cross-source execution/origin/component
+instance borrowing before persisting readonly input/time-bound pairing material.
+Scope facts require unique exact runtime-proof paths, complete identity/binding
+sets and matching original source parents/receipts. QC-03 recomputes all AS-01..48
+primary results into a bounded full-basis packet, retaining exact per-original
+parents, actual transfer/Local recovery sources and four Object exclusions.
+Missing or altered pairing/basis/shared packets, source parents, transfers,
+recovery or exclusions cannot yield a passing claim. Tooling458 (19 native skips)
+passes. Actual native admission and complete qualification remain pending.
+
 The Object no-rename repair retains the unchanged prepared architecture witness:
 the preceding graph fails named `Assert.Empty`, and the corrected graph passes.
 Only concrete-binding-owned access fault application moves; native exact-stamp

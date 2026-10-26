@@ -7600,6 +7600,33 @@ These are source-owned reconstruction tests, not actual Linux admission or
 original/shared parameter pairing; QC-03 and stage completion remain pending.
 Examples, diagrams, production dependencies and infrastructure are unaffected.
 
+### Artifact parameter pairing and complete QC-03 basis
+
+Re-admit all three exact original scopes alongside the complete shared artifact
+source using metadata's existing source-owned coordination mechanism. Preserve
+the 183 mixed and twelve repeated identities per provider; do not assume a
+separate full original command per provider. Require current attempt sequence,
+distinct attempt/source-parent hashes and exact unique runtime-proof paths.
+Reject cross-source execution/origin/component instance borrowing, then persist
+readonly input/time-bound pairing material before issuing QC-03 obligations.
+
+Compose QC-03 from all AS-01..48 primary keys and independently recompute a full
+basis packet, as QC-02/QC-09 already do. Retain every direct primary witness,
+original per-parameter source parent, actual 256 MiB/4 GiB transfer and Local
+crash/recovery source; only the four unchanged Object durability rows exclude.
+Missing/altered pairing, basis, shared source, original parents, transfer,
+recovery and exclusions reject; missing evidence remains incomplete.
+
+The new quality fixture first fails because artifact pairing material is absent.
+Tooling458 (19 native skips) passes after implementation, including three-scope
+native re-admission/replay guards, split/borrowed/missing scope proof mutations
+and full report recomputation. Existing metadata pairing and artifact logical,
+transfer and durability tests still pass; QC-09 retains its own independent
+basis packet beside QC-03. These are source/synthetic guards, not actual Linux
+admission, complete QC-03 acceptance or feature completion. No task/checklist/
+stage marker advances. Examples, diagrams, production dependencies and
+infrastructure are unaffected.
+
 ### Object access-fault boundary repair
 
 Linux `516b6e4` / run `40312172408` fails the prepared Object no-rename witness;

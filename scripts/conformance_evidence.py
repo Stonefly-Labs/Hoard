@@ -1864,6 +1864,35 @@ def _direct_category_quality_composition(inputs, results, witnesses, *, case_id,
     })
 
 
+def _parameter_pairing_scope(witnesses, proofs, expected, receipt_prefix, *, started_ms, ended_ms):
+    selected = sorted((row for row in witnesses
+                       if (row["bindingId"], row["testIdentity"]) in expected
+                       and started_ms <= row["startedMs"] <= row["endedMs"] <= ended_ms),
+                      key=lambda row: (row["bindingId"], row["testIdentity"]))
+    if (len(selected) != len(expected)
+            or {(row["bindingId"], row["testIdentity"]) for row in selected} != expected
+            or len({row["executionId"] for row in selected}) != len(selected)
+            or any(row["status"] != "Passed" for row in selected)):
+        raise ConformanceError("WitnessMissing")
+    attempts = set()
+    for row in selected:
+        paths = [path for path, hashed in proofs.items()
+                 if path.endswith(f'/proof-{row["executionId"]}.json') and hashed == row["proofSha256"]]
+        if len(paths) != 1 or not re.fullmatch(r"runtime-[0-9a-f-]{36}/proof-[0-9a-f-]{36}\.json", paths[0]):
+            raise ConformanceError("ProofMismatch")
+        attempts.add(_uuid(paths[0].split("/")[0].removeprefix("runtime-")))
+    if len(attempts) != 1:
+        raise ConformanceError("ProofMismatch")
+    attempt = next(iter(attempts))
+    parent = f"proofs/category-source-{attempt}.json"
+    receipt = f"proofs/category-{receipt_prefix}-{attempt}.json"
+    if parent not in proofs or receipt not in proofs:
+        raise ConformanceError("WitnessMissing")
+    return {
+        "attemptId": attempt, "sourceParentSha256": proofs[parent],
+        "sourceReceiptSha256": proofs[receipt], "witnessesSha256": digest(selected)}
+
+
 def metadata_parameter_pairing_material(inputs, witnesses, proofs, *, sequence, started_ms, ended_ms):
     from conformance_case_catalog import ORIGINAL_METADATA_WITNESSES
 
@@ -1873,33 +1902,13 @@ def metadata_parameter_pairing_material(inputs, witnesses, proofs, *, sequence, 
     shared = "proofs/qualification-metadata-shared-consumer-native-executions.json"
     if shared not in proofs:
         raise ConformanceError("WitnessMissing")
-    bindings = []
-    for binding in ("memory", "sqlite"):
-        selected = sorted((row for row in witnesses
-                           if row["bindingId"] == binding and row["testIdentity"] in ORIGINAL_METADATA_WITNESSES
-                           and started_ms <= row["startedMs"] <= row["endedMs"] <= ended_ms),
-                          key=lambda row: row["testIdentity"])
-        if (len(selected) != len(ORIGINAL_METADATA_WITNESSES)
-                or {row["testIdentity"] for row in selected} != set(ORIGINAL_METADATA_WITNESSES)
-                or any(row["status"] != "Passed" for row in selected)):
-            raise ConformanceError("WitnessMissing")
-        attempts = set()
-        for row in selected:
-            paths = [path for path, hashed in proofs.items()
-                     if path.endswith(f'/proof-{row["executionId"]}.json') and hashed == row["proofSha256"]]
-            if len(paths) != 1 or not re.fullmatch(r"runtime-[0-9a-f-]{36}/proof-[0-9a-f-]{36}\.json", paths[0]):
-                raise ConformanceError("ProofMismatch")
-            attempts.add(_uuid(paths[0].split("/")[0].removeprefix("runtime-")))
-        if len(attempts) != 1:
-            raise ConformanceError("ProofMismatch")
-        attempt = next(iter(attempts))
-        parent = f"proofs/category-source-{attempt}.json"
-        receipt = f"proofs/category-metadata-original-{binding}-{attempt}.json"
-        if parent not in proofs or receipt not in proofs:
-            raise ConformanceError("WitnessMissing")
-        bindings.append({
-            "bindingId": binding, "attemptId": attempt, "sourceParentSha256": proofs[parent],
-            "sourceReceiptSha256": proofs[receipt], "witnessesSha256": digest(selected)})
+    witnesses = tuple(witnesses)
+    bindings = [{
+        "bindingId": binding,
+        **_parameter_pairing_scope(
+            witnesses, proofs, {(binding, identity) for identity in ORIGINAL_METADATA_WITNESSES},
+            "metadata-original-" + binding, started_ms=started_ms, ended_ms=ended_ms)}
+        for binding in ("memory", "sqlite")]
     if (len({row["attemptId"] for row in bindings}) != 2
             or len({row["sourceParentSha256"] for row in bindings}) != 2):
         raise ConformanceError("ProofMismatch")
@@ -1910,6 +1919,33 @@ def metadata_parameter_pairing_material(inputs, witnesses, proofs, *, sequence, 
         "sharedConsumerSourceSha256": proofs[shared], "bindings": bindings})
 
 
+def artifact_parameter_pairing_material(inputs, witnesses, proofs, *, sequence, started_ms, ended_ms):
+    from conformance_case_catalog import category_execution_partitions
+
+    started_ms, ended_ms = float(_number(started_ms)), float(_number(ended_ms))
+    if inputs["profileId"] != "artifacts" or inputs["mode"] != "qualification":
+        raise ConformanceError("ProofMismatch")
+    shared = "proofs/qualification-artifacts-shared-consumer-native-executions.json"
+    if shared not in proofs:
+        raise ConformanceError("WitnessMissing")
+    witnesses = tuple(witnesses)
+    partitions = category_execution_partitions("artifacts", mode="qualification")
+    scopes = [{
+        "scopeId": scope,
+        **_parameter_pairing_scope(
+            witnesses, proofs, set(partitions[scope]), "artifacts-" + scope,
+            started_ms=started_ms, ended_ms=ended_ms)}
+        for scope in ("original", "original-local", "original-object")]
+    if (len({row["attemptId"] for row in scopes}) != 3
+            or len({row["sourceParentSha256"] for row in scopes}) != 3):
+        raise ConformanceError("ProofMismatch")
+    return canonical_bytes({
+        "schemaVersion": 1, "qualification": False, "mode": "artifacts-parameter-pairing",
+        "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
+        "inputsSha256": digest(inputs), "sequence": sequence, "startedMs": started_ms, "endedMs": ended_ms,
+        "sharedConsumerSourceSha256": proofs[shared], "scopes": scopes})
+
+
 def _category_quality_composition(inputs, case_id, results, witnesses, *, sequence, started_ms, ended_ms,
                                   proof_registry=MappingProxyType({})):
     """Compose only the exact current-attempt basis; never relabel its executions."""
@@ -1917,7 +1953,7 @@ def _category_quality_composition(inputs, case_id, results, witnesses, *, sequen
         AUTHORITY_INTEGRATION_ROWS, CATEGORY_QUALITY_BASIS, METADATA_INVENTORY_SOURCE_WITNESSES,
         METADATA_RECOVERY_SOURCE_WITNESS,
         ORIGINAL_ARTIFACT_PROOF_SOURCES, ORIGINAL_INSPECTION_WITNESSES, ORIGINAL_METADATA_WITNESSES,
-        category_cases, category_mutation_witnesses,
+        category_cases, category_execution_partitions, category_mutation_witnesses,
         hook_admission_tests,
     )
 
@@ -1939,19 +1975,27 @@ def _category_quality_composition(inputs, case_id, results, witnesses, *, sequen
     basis, packets = [], {}
     authorities = set(ORIGINAL_ARTIFACT_PROOF_SOURCES) | set(ORIGINAL_INSPECTION_WITNESSES)
     pairing_parents = {}
-    if (profile, case_id) == ("metadata", "QC-02"):
-        pair_path = f"proofs/category-metadata-parameters-{sequence:04}.json"
+    if (profile, case_id) in (("metadata", "QC-02"), ("artifacts", "QC-03")):
+        pair_path = f"proofs/category-{profile}-parameters-{sequence:04}.json"
         if pair_path not in proof_registry:
             complete = False
         else:
-            raw = metadata_parameter_pairing_material(
+            raw = (metadata_parameter_pairing_material if profile == "metadata" else artifact_parameter_pairing_material)(
                 inputs, witnesses.values(), proof_registry, sequence=sequence, started_ms=started_ms, ended_ms=ended_ms)
             hashed = hashlib.sha256(raw).hexdigest()
             if proof_registry[pair_path] != hashed:
                 raise ConformanceError("ProofMismatch")
             proofs.add(hashed)
-            pairing_parents = {row["bindingId"]: row["sourceParentSha256"] for row in load_json(raw)["bindings"]}
-        authorities = {identity for identity in ORIGINAL_METADATA_WITNESSES if ".MP46_" in identity}
+            paired = load_json(raw)
+            if profile == "metadata":
+                pairing_parents = {(row["bindingId"], identity): row["sourceParentSha256"]
+                                   for row in paired["bindings"] for identity in ORIGINAL_METADATA_WITNESSES}
+            else:
+                partitions = category_execution_partitions("artifacts", mode="qualification")
+                pairing_parents = {key: row["sourceParentSha256"] for row in paired["scopes"]
+                                   for key in partitions[row["scopeId"]]}
+        if profile == "metadata":
+            authorities = {identity for identity in ORIGINAL_METADATA_WITNESSES if ".MP46_" in identity}
     for case in required:
         row = {"key": case.key, "exclusion": case.exclusion, "attempt": None}
         basis.append(row)
@@ -1996,9 +2040,9 @@ def _category_quality_composition(inputs, case_id, results, witnesses, *, sequen
         if (profile == "artifacts" and expected & authorities and attempt["status"] == "Passed"
                 and not set(attempt["proofSha256"]) - {row["proofSha256"] for row in observed}):
             raise ConformanceError("ProofMismatch")
-        if ((profile, case_id) == ("metadata", "QC-02") and pairing_parents
-                and expected & set(ORIGINAL_METADATA_WITNESSES) and attempt["status"] == "Passed"
-                and pairing_parents[case.binding_id] not in attempt["proofSha256"]):
+        if (pairing_parents and attempt["status"] == "Passed"
+                and not {pairing_parents[case.binding_id, identity] for identity in expected
+                         if (case.binding_id, identity) in pairing_parents} <= set(attempt["proofSha256"])):
             raise ConformanceError("ProofMismatch")
         complete &= attempt["status"] == "Passed"
         if attempt["status"] == "Failed" and failure is None:
@@ -2006,7 +2050,7 @@ def _category_quality_composition(inputs, case_id, results, witnesses, *, sequen
         executions.update(attempt["witnessIds"])
         proofs.update(attempt["proofSha256"])
     code = failure or ("None" if complete and executions and proofs else "EvidenceIncomplete")
-    if (profile, case_id) in (("artifacts", "QC-09"), ("metadata", "QC-02")):
+    if (profile, case_id) in (("artifacts", "QC-03"), ("artifacts", "QC-09"), ("metadata", "QC-02")):
         raw = canonical_bytes({
             "schemaVersion": 1, "qualification": False, "mode": "category-quality-basis",
             "runId": inputs["runId"], "invocationGroupId": inputs["invocationGroupId"],
@@ -2595,7 +2639,10 @@ class CategoryRuntimeHistory:
                          else self._native_sources.artifact_controls)
             options = ({"metadata_scopes": {scope: transport for scope, transport in transports.items()
                                             if scope in ("original-memory", "original-sqlite")},
-                        "sequence": sequence} if self._inputs["profileId"] == "metadata" else {})
+                        "sequence": sequence} if self._inputs["profileId"] == "metadata" else {
+                            "artifact_scopes": {scope: transport for scope, transport in transports.items()
+                                                if scope in ("original", "original-local", "original-object")},
+                            "sequence": sequence})
             recovered = authority(self._inputs, started_ms=started, ended_ms=ended, **options)
             controls = recovered["controls"]
             proofs.update({path: hashlib.sha256(raw).hexdigest() for path, raw in recovered["sourceProofs"].items()})

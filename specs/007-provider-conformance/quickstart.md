@@ -680,6 +680,13 @@ timing must fit the attempt. Tooling455 (19 native skips) passes; native admissi
 and original/shared parameter pairing still remain pending. No new command or
 quality-completion claim is introduced.
 
+Artifact native parameter pairing is now source-wired: all three original scopes
+must re-admit alongside the shared source without replay/instance borrowing.
+QC-03 recomputes its complete AS-01..48 basis and readonly pairing packet while
+retaining actual transfers, Local recovery and four Object exclusions.
+Tooling458 (19 native skips) passes; actual native admission and full feature
+acceptance remain pending. No new invocation or qualification claim is added.
+
 Object access faults now execute in the concrete test binding, retaining native
 exact-stamp protection and scope handoff while restoring the provider's no-rename
 boundary. The unchanged prepared architecture witness fails before/passes after.

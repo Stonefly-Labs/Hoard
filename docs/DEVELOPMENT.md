@@ -10431,6 +10431,18 @@ SDK and native-command mutations. Actual Linux admission and parameter pairing
 remain pending; no QC-03, task/checklist or stage completion is claimed.
 Examples, diagrams, production dependencies and infrastructure are unaffected.
 
+Artifact parameter pairing is now wired through the native source collector:
+re-admit all three complete original scopes alongside the shared-consumer source,
+reject stale attempts and borrowed execution/origin/component instances across
+sources, then persist readonly input/time-bound pairing material. Reuse the same
+scope-proof reconstruction as metadata. QC-03 now composes every AS-01..48 key,
+recomputing its full basis packet rather than truncating direct proofs; real
+transfer and Local recovery sources and all four Object exclusions remain
+mandatory. Tooling458 (19 native skips) passes. Synthetic/report mutation guards
+are not actual Linux admission or qualification; the implementation stage remains
+running. Examples, diagrams, production dependencies and infrastructure are
+unaffected.
+
 Linux run `40312172408` at `516b6e4` fails the prepared Object no-rename architecture
 witness; its other two jobs pass. The cause is qualification-only directory moves
 introduced inside the Object provider assembly, not its publication mechanism.
