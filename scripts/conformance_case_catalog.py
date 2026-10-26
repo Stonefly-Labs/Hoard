@@ -476,6 +476,8 @@ def category_runtime_cases(profile, binding_id, *, mode="diagnostic"):
     if mode == "qualification":
         selected.update({identity: "QC-04" for identity, binding in category_mutation_witnesses(
             profile, corrected=True).items() if binding == binding_id})
+        selected.update({identity: case_id for identity, (binding, case_id) in hook_admission_tests(profile).items()
+                         if binding == binding_id})
     return MappingProxyType(selected)
 
 
@@ -497,6 +499,8 @@ def category_execution_partitions(profile, *, mode="diagnostic"):
             scope = "original-integration"
         elif identity in category_mutation_witnesses(profile, corrected=True):
             scope = "mutation-repair"
+        elif identity in hook_admission_tests(profile):
+            scope = "hook-admission"
         elif policy is not None and policy[0] == profile:
             scope = "original-" + binding if identity in repeated else "original"
         elif ORIGINAL_INSPECTION_WITNESSES.get(identity) == profile:
@@ -883,6 +887,7 @@ QC_CONTROLS = {
 
 METADATA_QUALITY_BASIS = MappingProxyType({
     "QC-04": (),
+    "QC-05": (),
     "QC-06": (*range(1, 18), *range(20, 26), *range(28, 32)),
     "QC-07": (14, 15, 16, 17, 18, 19, 26, 27, 37),
     "QC-08": (*range(32, 37), *range(38, 46)),
@@ -892,6 +897,7 @@ CATEGORY_QUALITY_BASIS = MappingProxyType({
     "metadata": METADATA_QUALITY_BASIS,
     "artifacts": MappingProxyType({
         "QC-04": (),
+        "QC-05": (),
         "QC-09": tuple(number for number in range(1, 49) if number not in (11, 12, 41, 42, 43, 44)),
         "QC-10": (11, 12),
         "QC-11": (41, 42, 43, 44),
@@ -997,6 +1003,8 @@ def expected_cases(profile):
             witnesses = authority_integration_witnesses()
         elif number == 4:
             witnesses = tuple(sorted(category_mutation_witnesses(profile, corrected=True)))
+        elif number == 5:
+            witnesses = tuple(sorted(hook_admission_tests(profile)))
         cases.append(ExpectedCase(profile, "none", "none", f"QC-{number:02}", witnesses,
                                   obligation_controls(number)))
     if len(cases) > MAX_RESULTS or len({case.key for case in cases}) != len(cases):

@@ -20,7 +20,7 @@ from conformance_case_catalog import (
     ORIGINAL_ARTIFACT_PROOF_SOURCES,
     ORIGINAL_INSPECTION_LITERAL_WITNESSES, ORIGINAL_INSPECTION_WITNESSES,
     category_execution_partitions, category_mutation_witnesses, category_runtime_cases, category_runtime_packages,
-    metadata_common_consumer_origin_counts, metadata_common_consumer_tests, hook_admission_tests,
+    metadata_common_consumer_origin_counts, metadata_common_consumer_tests, hook_admission_tests, obligation_controls,
 )
 from conformance_execution import OwnedRun, no_symlinks
 
@@ -358,11 +358,14 @@ def _native_category_consumer_control(run, inputs, *, started_ms, ended_ms, hook
         manifest["runInputsPath"]: input_raw, lines_path: lines_raw, completion_path: completion_raw,
         settings_path: settings_raw, execution_path: execution_raw, native_path: record_raw,
         **{f"{output}/{path}": raw for path, raw in proofs.items()}}
+    control = {
+        "hook-admission-sdk-consumer" if hooks else "shared-metadata-sdk-consumer":
+            tuple(hashlib.sha256(raw).hexdigest() for raw in packets.values())}
+    if hooks:
+        control.update({name: (hashlib.sha256(graph_raw).hexdigest(),) for name in obligation_controls(5)})
     return MappingProxyType({
-        "controls": MappingProxyType({
-            "hook-admission-sdk-consumer" if hooks else "shared-metadata-sdk-consumer":
-                tuple(hashlib.sha256(raw).hexdigest() for raw in packets.values())}),
-        "sourceProofs": MappingProxyType(packets)})
+        "controls": MappingProxyType(control), "sourceProofs": MappingProxyType(packets),
+        **({"observation": observed} if hooks else {})})
 
 
 def category_mutation_observations(run, inputs, manifest, observed, *, sequence, started_ms, ended_ms):
@@ -1691,6 +1694,11 @@ class NativeCategorySources:
         self._configurations = MappingProxyType(configurations)
 
     def ingest_attempt(self, *, category_scope, **transport):
+        if category_scope == (transport["inputs"]["profileId"], "hook-admission"):
+            expected_origins = category_consumer_origin_inputs(self._run, transport["inputs"])
+            if transport.get("origin_inputs") is not None and transport["origin_inputs"] != expected_origins:
+                raise evidence.ConformanceError("ProofMismatch")
+            transport["origin_inputs"] = expected_origins
         inspected = evidence.inspect_runtime_attempt(**transport)
         graph = self._corroborate(inspected["inputs"], evidence.load_json(transport["manifest_data"]),
                                   inspected["observation"], category_scope=category_scope,
@@ -1706,7 +1714,8 @@ class NativeCategorySources:
                           native_metadata_common_consumer_control, native_hook_admission_control):
             observed = authority(self._run, inputs, started_ms=started_ms, ended_ms=ended_ms)
             for key, target in collected.items():
-                if set(target) & set(observed[key]):
+                overlap = set(target) & set(observed[key])
+                if overlap and (key != "sourceProofs" or any(target[path] != observed[key][path] for path in overlap)):
                     raise evidence.ConformanceError("ProofMismatch")
                 target.update(observed[key])
         return MappingProxyType({
@@ -1729,11 +1738,23 @@ class NativeCategorySources:
         artifact = profile == "artifacts" and scope_id == "controller"
         integration = (profile, scope_id) == ("artifacts", "original-integration")
         mutation = scope_id == "mutation-repair"
+        hooks = scope_id == "hook-admission"
         if (inputs["mode"] != "qualification" or inputs["profileId"] != profile
                 or inputs["runId"] != run.run_id or not isinstance(scope_id, str)
-                or not (scope_id.startswith("inspection-") or metadata or artifact or integration or mutation)
+                or not (scope_id.startswith("inspection-") or metadata or artifact or integration or mutation or hooks)
                 or scope_id not in partitions):
             raise evidence.ConformanceError("WitnessMissing")
+        if hooks:
+            admitted = native_hook_admission_control(run, inputs, started_ms=started_ms, ended_ms=ended_ms)
+            if (admitted["observation"] != observed
+                    or admitted["sourceProofs"].get(f'runtime-input-{manifest["attemptId"]}.json') != manifest_data
+                    or admitted["sourceProofs"].get("runtime-owner.json") != owner_data):
+                raise evidence.ConformanceError("ProofMismatch")
+            parent = hashlib.sha256(admitted["sourceProofs"][
+                f"proofs/{HOOK_ADMISSION_NAMESPACES[profile]}-native-executions.json"]).hexdigest()
+            return MappingProxyType({
+                "sourceParents": MappingProxyType({row["executionId"]: parent for row in observed["witnesses"]}),
+                "sourceProofs": admitted["sourceProofs"]})
         tests = {identity: (binding, category_runtime_cases(profile, binding, mode=inputs["mode"])[identity])
                  for binding, identity in partitions[scope_id]}
         if (len(manifest["expected"]) != len(tests)

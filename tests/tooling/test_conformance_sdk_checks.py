@@ -437,7 +437,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         diagnostic = catalog.category_execution_partitions("metadata")
         qualification = catalog.category_execution_partitions("metadata", mode="qualification")
         self.assertEqual({key: value for key, value in qualification.items()
-                          if key not in ("recovery-controller", "inventory-controller", "mutation-repair")},
+                          if key not in ("recovery-controller", "inventory-controller", "mutation-repair", "hook-admission")},
                          dict(diagnostic))
         self.assertEqual(qualification["recovery-controller"],
                          (("sqlite", catalog.METADATA_RECOVERY_SOURCE_WITNESS),))
@@ -563,7 +563,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             calls = []
             history = unittest.mock.Mock()
             history.begin_joint.side_effect = lambda *args, **options: calls.append("begin")
-            history.joint_partitions.return_value = {"scope": {}}
+            history.joint_partitions.return_value = {"hook-admission": {}, "scope": {}}
             history.finish_joint.side_effect = lambda **options: calls.append("finish")
 
             def controls(name, namespace):
@@ -578,7 +578,10 @@ class SdkDiagnosticTests(unittest.TestCase):
                 return execute
 
             def scope(*args, **options):
-                calls.append("scope")
+                name = "hooks" if args[3] == "hook-admission" else "scope"
+                calls.append(name)
+                if failed == name:
+                    raise checks.evidence.ConformanceError("ProofMismatch")
                 return {"transport": {}, "summary": {}}
 
             with self.subTest(failed=failed), patch.object(
@@ -593,7 +596,6 @@ class SdkDiagnosticTests(unittest.TestCase):
                     checks, "metadata_common_consumer_diagnostics", side_effect=controls("shared-consumer", None)), patch.object(
                     checks, "metadata_binary_diagnostics", side_effect=controls("binary", None)), patch.object(
                     checks, "metadata_inventory_diagnostics", side_effect=controls("inventory", None)), patch.object(
-                    checks, "hook_admission_diagnostics", side_effect=controls("hooks", None)), patch.object(
                     checks, "category_attempt", side_effect=scope), patch.object(
                     checks, "_category_record", return_value={"qualification": False}), contextlib.redirect_stdout(io.StringIO()):
                 options = {"inspection_cases": {}, "inspection_configurations": {}, "native_sources": sources}
@@ -623,7 +625,7 @@ class SdkDiagnosticTests(unittest.TestCase):
             candidate, calls = root / "candidate", []
             history = unittest.mock.Mock()
             history.begin_joint.side_effect = lambda *args, **options: calls.append("begin")
-            history.joint_partitions.return_value = {"controller": {}}
+            history.joint_partitions.return_value = {"hook-admission": {}, "controller": {}}
             history.finish_joint.side_effect = lambda **options: calls.append("finish")
 
             def transfers(actual_run, actual_inputs, actual_candidate, **options):
@@ -638,23 +640,16 @@ class SdkDiagnosticTests(unittest.TestCase):
             def scope(*args, **options):
                 self.assertIs(options["native_sources"], sources)
                 self.assertEqual(options["run_inputs_path"], "proofs/category-artifacts-qualification-run-inputs.json")
-                calls.append("scope")
-                if failed == "scope":
+                name = "hooks" if args[3] == "hook-admission" else "scope"
+                calls.append(name)
+                if failed == name:
                     raise checks.evidence.ConformanceError("ProofMismatch")
                 return {"transport": {}, "summary": {}}
-
-            def hooks(actual_run, actual_inputs):
-                self.assertIs(actual_run, run)
-                self.assertIs(actual_inputs, inputs)
-                calls.append("hooks")
-                if failed == "hooks":
-                    raise checks.evidence.ConformanceError("ProofMismatch")
 
             with self.subTest(failed=failed), patch.object(
                     checks.evidence, "CategoryRuntimeHistory", return_value=history), patch.object(
                     checks, "original_observation_inputs", return_value={}), patch.object(
                     checks, "artifact_transfer_diagnostics", side_effect=transfers), patch.object(
-                    checks, "hook_admission_diagnostics", side_effect=hooks), patch.object(
                     checks, "category_attempt", side_effect=scope), patch.object(
                     checks, "_category_record", return_value={"qualification": False}) as record, contextlib.redirect_stdout(io.StringIO()):
                 options = {"inspection_cases": {}, "inspection_configurations": {}, "native_sources": sources}

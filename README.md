@@ -2314,13 +2314,18 @@ provider images, and rejects reduced or foreign selections before dispatch.
 The existing 132/24-row selections are unchanged. A fresh-package local replay
 rejects all four dedicated rows for each of the three SDK mutations above;
 the unchanged SDK passes all 160 original-plus-dedicated rows without skips.
-Qualification-input batches now execute each complete family before public
-scopes and retain a private hook-source control per category. Independent
+Qualification-input batches now execute each complete family once in a
+predeclared `hook-admission` scope and retain its original native source
+control per category. Independent
 reconstruction checks the original readonly transport, exact typed origins,
 six loaded images and held native command/settings/input closure. History
-retains these original packets within its existing proof bounds. This wiring
-still awaits exact Linux admission; it adds no public QC-05 witness and does
-not complete QC-05 source-parent composition or durability-exclusion checks.
+retains these original packets within its existing proof bounds. Public QC-05
+composition requires both original provider executions, their single native
+graph parent and all four independently reconstructed hook/binding/logical/
+durability obligation controls. Missing rows, parents or controls remain
+`Incomplete`; original execution IDs and runtime proofs are not relabeled.
+This wiring still awaits exact-head Linux admission and does not qualify a
+complete category.
 
 Exact `97b6d0b`,
 [run40252743943](https://github.com/Stonefly-Labs/Hoard/actions/runs/40252743943),
@@ -2358,7 +2363,22 @@ passed all four dedicated rows: logical exclusions, durable-provider
 reclassification and removal of authorized exclusions. The strengthened
 Consumer rejects each with four named catalog assertion failures and no skips;
 the unchanged SDK passes all 160 rows. This is local diagnostic evidence;
-new native admission and public QC-05 composition remain pending.
+new native admission remains pending.
+
+Exact `93e5fe6`,
+[run40255871799](https://github.com/Stonefly-Labs/Hoard/actions/runs/40255871799),
+passes 333 native foundations without skips and locked replay, but metadata
+source aggregation rejects the identical original owner packet retained by
+both shared-consumer and hook controls. An intended-red regression reproduces
+that `ProofMismatch`. Source packets now merge only when overlapping bytes
+are identical; conflicting bytes and duplicate control names still reject.
+The public QC-05 path passes modeled producer/history/composition checks,
+including missing obligations/rows/parents and foreign origin rejection.
+All 444 tooling tests pass with 19 native skips, and all 133 SDK contract
+tests pass without skips. A fresh 14-package replay with the updated embedded
+catalog rejects all three catalog mutations with four named failures each;
+the unchanged Consumer passes all 160 rows. These are local diagnostics, not
+native admission or full qualification; no task/checklist markers advance.
 
 Exact `58a9495`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),

@@ -9862,8 +9862,8 @@ native QC-05 source parents or complete public qualification.
 The focused routing regression also rejects missing, duplicate and foreign
 binding origins after execution, and checks the independent role assignments.
 
-Qualification-input batches now additionally execute each complete two-row
-family before their public scopes. The private
+Qualification-input batches now execute each complete two-row family exactly
+once as a predeclared `hook-admission` scope. The original
 `qualification-{metadata,artifacts}-hook-admission-native-executions.json`
 graphs bind the original inputs, exact expected selection and held execution
 record. Independent admission re-ingests readonly witnesses/proofs and checks
@@ -9871,9 +9871,18 @@ one typed origin per row, descriptor/role/image correspondence, exact settings,
 argv/cwd, all six image pins, ownership and settled command/witness bounds.
 Metadata and artifact histories collect these controls independently and
 retain their original packets under the existing file/byte limits. Reduced or
-foreign selections and substituted contexts/commands reject. This is private
-source-control wiring pending exact Linux admission, not a public QC-05 source
-parent, full composition or completed durability-exclusion coverage.
+foreign selections and substituted contexts/commands reject.
+Public QC-05 composition now consumes those same original executions through
+independent native ingestion, not copied private witness labels. Each retains
+its runtime proof/execution ID; both point to the one original native graph.
+All four missing-hook, missing-binding, logical-exclusion and durability-policy
+obligation controls must be independently reconstructed from that graph.
+Missing rows/parents/controls remain `Incomplete`, and foreign origins or
+attempt/window mismatches reject. The scope uses the planned attempt UUID
+and actual producer time bounds. Its current create-new source graph supports
+one attempt; a repeated attempt explicitly rejects rather than reusing or
+overwriting prior evidence. This is modeled composition wiring pending
+exact-head Linux admission, not complete category qualification.
 All 124 evidence and 147 SDK tooling tests pass, including both original graph
 producers/factories, history retention/quota checks and mandatory prelude
 failure propagation. Frozen inventory, embedded catalog and patch whitespace
@@ -9928,6 +9937,34 @@ checks pass. These are local diagnostics, not native admission or public QC-05
 composition. No task/checklist markers advance; other provider/contributor/
 deployment guides, examples and diagrams are unaffected because no public API,
 supported command, production dependency or deployment behavior changes.
+
+### Public native-hook composition and shared packet admission
+
+Exact `93e5fe6`/run40255871799 passes 333 native foundations without skips and
+fresh 13-lock/18-package replay, but metadata source aggregation fails with
+`ProofMismatch`. Bounded locations identify `metadata_controls` rejecting the
+shared original owner packet retained by both shared-consumer and hook graphs.
+An intended-red regression reproduces that collision. The merger now admits
+overlapping source paths only for identical bytes; a changed owner packet or
+duplicate control name still rejects. No provenance check is weakened.
+
+The public QC-05 increment additionally passes the actual producer branch and
+independent native history/source composition in modeled fixtures for both
+categories. Each missing obligation, missing row/parent, foreign origin and
+changed attempt window fails closed. All 444 tooling tests pass with 19 native
+skips; all 133 source SDK contract tests pass without skips. Frozen inventory,
+regenerated SDK catalog and patch whitespace checks pass.
+
+A new isolated snapshot freshly packs all 14 Consumer dependencies with the
+updated embedded QC-05 witness catalog. The three catalog mutations each
+produce four named `BindingAdmissionAssertions.CatalogDurability` failures,
+zero passes/skips, and the unchanged Consumer passes all 160 rows. Consumer
+sources remain identical across trials. Bounded readonly receipts retain
+hashes/counts, not raw output. These are local diagnostics; exact-head Linux
+admission and complete extraction/parity remain outstanding. No task/checklist
+markers advance. README, active plan and evidence/matrix contracts are updated;
+provider/contributor/deployment guides, examples and diagrams are unaffected
+because no supported public API, production dependency or deployment changes.
 
 ### Native source-sealing and shared-consumer admission
 

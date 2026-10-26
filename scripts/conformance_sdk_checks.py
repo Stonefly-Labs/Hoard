@@ -1471,18 +1471,18 @@ def hook_admission_scenarios():
 
 
 def metadata_common_consumer_diagnostics(run, inputs):
-    return _category_consumer_source_diagnostics(run, inputs, hooks=False)
+    return _category_consumer_source_diagnostics(run, inputs, hooks=False)["control"]
 
 
 def hook_admission_diagnostics(run, inputs):
-    return _category_consumer_source_diagnostics(run, inputs, hooks=True)
+    return _category_consumer_source_diagnostics(run, inputs, hooks=True)["control"]
 
 
-def _category_consumer_source_diagnostics(run, inputs, *, hooks):
+def _category_consumer_source_diagnostics(run, inputs, *, hooks, attempt_id=None):
     if type(run) is not OwnedRun:
         raise evidence.ConformanceError("OwnershipInvalid")
     manifest = (hook_admission_manifest if hooks else metadata_common_consumer_manifest)(
-        run, inputs, str(uuid.uuid4()))
+        run, inputs, str(uuid.uuid4()) if attempt_id is None else attempt_id)
     if not hooks:
         metadata_common_consumer_sdk_images(run, inputs)
     assembly = run.root / manifest["assemblies"][0]["path"]
@@ -1509,8 +1509,10 @@ def _category_consumer_source_diagnostics(run, inputs, *, hooks):
                   "invocationGroupId": inputs["invocationGroupId"], "inputsSha256": evidence.digest(inputs),
                   "attemptId": manifest["attemptId"], "commandSequence": run.command_sequence,
                   "executionRecordSha256": result.execution_record_sha256}))
-    return (native_hook_admission_control if hooks else native_metadata_common_consumer_control)(
-        run, inputs, started_ms=started_ms, ended_ms=time.monotonic() * 1000)
+    ended_ms = time.monotonic() * 1000
+    control = (native_hook_admission_control if hooks else native_metadata_common_consumer_control)(
+        run, inputs, started_ms=started_ms, ended_ms=ended_ms)
+    return {"control": control, "transport": transport, "startedMs": started_ms, "endedMs": ended_ms}
 
 
 def validate_full_binding_origins(ingested, inputs, counts):
@@ -3067,7 +3069,6 @@ def category_diagnostics(run, inputs, candidate, *, inspection_cases, inspection
             else:
                 artifact_transfer_diagnostics(
                     run, inputs, candidate, namespace=artifact_category_transfer_namespace(inputs))
-            hook_admission_diagnostics(run, inputs)
         except evidence.ConformanceError as error:
             print(json.dumps({
                 "qualification": False, "phase": "category-control-failure",
@@ -3115,7 +3116,7 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
     tests = _category_scope_tests(category_scope)
     mutation = scope_id == "mutation-repair"
     if scope_id in (
-            "recovery-controller", "inventory-controller", "original-integration", "mutation-repair"
+            "recovery-controller", "inventory-controller", "original-integration", "mutation-repair", "hook-admission"
     ) and inputs["mode"] != "qualification":
         raise evidence.ConformanceError("WitnessMissing")
     if ((inputs["mode"] != "diagnostic" and not (
@@ -3130,6 +3131,21 @@ def category_attempt(run, inputs, candidate, scope_id, plan, *, run_inputs_path,
         raise evidence.ConformanceError("InputChanged")
     if not {binding for binding, _ in tests.values()} <= {binding["bindingId"] for binding in inputs["bindings"]}:
         raise evidence.ConformanceError("BindingInvalid")
+    if scope_id == "hook-admission":
+        if attempt_sequence != 1 or inspection_cases is not None or inspection_configurations is not None:
+            raise evidence.ConformanceError("WitnessMissing")
+        produced = _category_consumer_source_diagnostics(run, inputs, hooks=True, attempt_id=attempt_id)
+        transport = produced["transport"]
+        observed = native_sources.ingest_attempt(
+            inputs=inputs, **transport,
+            expected_tests={identity: (binding, "none") for identity, (binding, _) in tests.items()},
+            started_ms=produced["startedMs"], ended_ms=produced["endedMs"], category_scope=category_scope)
+        parents = set(observed["sourceParents"].values())
+        if len(parents) != 1:
+            raise evidence.ConformanceError("ProofMismatch")
+        return {"transport": transport, "observation": observed, "summary": {
+            "qualification": False, "code": "None", "tests": len(tests),
+            "sourceParentSha256": next(iter(parents))}}
     inspection = scope_id.startswith("inspection-")
     prepared = scope_id.startswith("inspection-prepared-")
     original = scope_id.startswith("original")

@@ -1795,6 +1795,8 @@ def _direct_category_quality_composition(inputs, results, witnesses, *, case_id,
                    or not started_ms <= row["startedMs"] <= row["endedMs"] <= ended_ms for row in selected)):
         raise ConformanceError("ProofMismatch")
     complete = identities == expected.keys() and all(row["status"] == "Passed" for row in selected)
+    if case_id == "QC-05":
+        complete &= current is not None and current["status"] == "Passed"
     runtime_proofs = {row["proofSha256"] for row in selected}
     parents = set() if current is None else set(current["proofSha256"]) - runtime_proofs
     complete &= len(parents) == 1
@@ -1816,14 +1818,17 @@ def _category_quality_composition(inputs, case_id, results, witnesses, *, sequen
     from conformance_case_catalog import (
         AUTHORITY_INTEGRATION_ROWS, CATEGORY_QUALITY_BASIS, METADATA_RECOVERY_SOURCE_WITNESS,
         ORIGINAL_ARTIFACT_PROOF_SOURCES, ORIGINAL_INSPECTION_WITNESSES, category_cases, category_mutation_witnesses,
+        hook_admission_tests,
     )
 
     profile = inputs["profileId"]
     quality_basis = CATEGORY_QUALITY_BASIS.get(profile, {})
     if inputs["mode"] != "qualification" or case_id not in quality_basis:
         raise ConformanceError("ProofMismatch")
-    if case_id == "QC-04" or profile == "artifacts" and case_id == "QC-12":
+    if case_id in ("QC-04", "QC-05") or profile == "artifacts" and case_id == "QC-12":
         expected = (category_mutation_witnesses(profile, corrected=True) if case_id == "QC-04" else
+                    {identity: binding for identity, (binding, _) in hook_admission_tests(profile).items()}
+                    if case_id == "QC-05" else
                     {identity: row[0] for identity, row in AUTHORITY_INTEGRATION_ROWS.items()})
         return _direct_category_quality_composition(
             inputs, results, witnesses, case_id=case_id, expected=expected,
@@ -2290,7 +2295,7 @@ class CategoryRuntimeHistory:
                 continue
             selected = tuple(witness for witness in witnesses
                              if witness["bindingId"] == binding_id and witness["testIdentity"] in case.witnesses)
-            if binding_id == "none" and (case.case_id == "QC-04"
+            if binding_id == "none" and (case.case_id in ("QC-04", "QC-05")
                                         or self._inputs["profileId"] == "artifacts" and case.case_id == "QC-12"):
                 selected = tuple(witness for witness in witnesses if witness["testIdentity"] in case.witnesses
                                  and (witness["status"] != "Passed"
@@ -2414,7 +2419,7 @@ class CategoryRuntimeHistory:
             source_options = {}
             if self._native_sources is not None and (
                     scope_id.startswith("inspection-")
-                    or scope_id in ("recovery-controller", "inventory-controller", "mutation-repair")
+                    or scope_id in ("recovery-controller", "inventory-controller", "mutation-repair", "hook-admission")
                     or self._inputs["profileId"] == "artifacts" and scope_id in ("controller", "original-integration")):
                 admit_attempt = self._native_sources.ingest_attempt
                 source_options["category_scope"] = self._inputs["profileId"], scope_id

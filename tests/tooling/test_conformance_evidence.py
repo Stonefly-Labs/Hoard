@@ -21,6 +21,22 @@ import conformance_evidence as evidence
 
 
 class ConformanceAdmissionTests(unittest.TestCase):
+    def test_hook_quality_requires_both_exact_native_binding_rows(self):
+        import conformance_case_catalog as catalog
+        for profile in ("metadata", "artifacts"):
+            expected = catalog.hook_admission_tests(profile)
+            case, = (case for case in catalog.expected_cases(profile) if case.case_id == "QC-05")
+            with self.subTest(profile=profile):
+                self.assertEqual(set(case.witnesses), set(expected))
+                self.assertNotIn("hook-admission", catalog.category_execution_partitions(profile))
+                scopes = catalog.category_execution_partitions(profile, mode="qualification")
+                self.assertEqual(set(scopes["hook-admission"]), {
+                    (binding, identity) for identity, (binding, _) in expected.items()})
+                for identity, (binding, case_id) in expected.items():
+                    self.assertEqual(catalog.category_runtime_cases(
+                        profile, binding, mode="qualification")[identity], case_id)
+                    self.assertNotIn(identity, catalog.category_runtime_cases(profile, binding))
+
     def test_qualified_mutation_scope_selects_only_complete_corrected_family_with_fresh_source_policy(self):
         import conformance_case_catalog as catalog
         prefix = "Hoard.Conformance.Tests.CategoryMutationTests."
@@ -4085,7 +4101,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             self.assertEqual(set(admitted["sourceProofs"]), set(originals))
             self.assertEqual(len(witnesses), 2 if hooks else 132)
             self.assertEqual(set(admitted["controls"]),
-                             {"hook-admission-sdk-consumer" if hooks else "shared-metadata-sdk-consumer"})
+                             {"hook-admission-sdk-consumer", *catalog.obligation_controls(5)} if hooks
+                             else {"shared-metadata-sdk-consumer"})
             if hooks:
                 native = object.__new__(sources.NativeCategorySources)
                 native._run = run
@@ -4096,18 +4113,73 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                                  "native_metadata_binary_control", "native_metadata_inventory_controls",
                                  "native_metadata_common_consumer_control"):
                         stack.enter_context(mock.patch.object(
-                            sources, name, return_value={"controls": {}, "sourceProofs": {}}))
+                            sources, name, return_value={"controls": {}, "sourceProofs": {
+                                "runtime-owner.json": originals["runtime-owner.json"]}
+                                if name == "native_metadata_common_consumer_control" else {}}))
                     history = evidence.CategoryRuntimeHistory(self.inputs, native_sources=native)
                     result = history._ingest_parts({}, {}, 9, 12, 1)
                     self.assertEqual(result[8], admitted["controls"])
                     self.assertEqual(result[2], {
                         path: hashlib.sha256(raw).hexdigest() for path, raw in originals.items()})
                     self.assertEqual(result[9], sum(len(raw) for raw in originals.values()))
+                    if profile == "metadata":
+                        for conflict in (
+                                {"controls": {}, "sourceProofs": {"runtime-owner.json": b"foreign"}},
+                                {"controls": {"hook-admission-sdk-consumer":
+                                              admitted["controls"]["hook-admission-sdk-consumer"]},
+                                 "sourceProofs": {}}):
+                            with mock.patch.object(sources, "native_metadata_common_consumer_control",
+                                                   return_value=conflict):
+                                with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+                                    history._ingest_parts({}, {}, 9, 12, 1)
                     history._proof_bytes = evidence.MAX_PROOF_BYTES
                     with self.assertRaisesRegex(evidence.ConformanceError, "OutputLimitExceeded"):
                         history._ingest_parts({}, {}, 9, 12, 1)
+                    history._proof_bytes = 0
+                    plan = {"hook-admission": {"attemptId": attempt, "tests": selected}}
+                    result = history._ingest_parts(plan, {"hook-admission": transport}, 9, 12, 1)
+                    parent = hashlib.sha256(originals[graph_path]).hexdigest()
+                    self.assertEqual(result[7], {row["executionId"]: parent for row in witnesses})
+                    self.assertEqual({row["executionId"] for row in result[1]},
+                                     {row["executionId"] for row in witnesses})
+                    history._active = {binding: (attempt, 9) for binding in history._bindings}
+                    cases = history._case_results("none", "None", 12, result[1], result[7], result[8])
+                    key = (profile, "none", "none", "QC-05")
+                    self.assertEqual(cases[key]["status"], "Passed")
+                    indexed = {row["executionId"]: row for row in witnesses}
+                    quality = evidence._category_quality_composition(
+                        self.inputs, "QC-05", cases, indexed, sequence=1, started_ms=9, ended_ms=12)
+                    self.assertEqual(quality["attempt"]["status"], "Passed")
+                    self.assertEqual(set(quality["attempt"]["witnessIds"]), set(indexed))
+                    for missing in catalog.obligation_controls(5):
+                        incomplete = history._case_results(
+                            "none", "None", 12, result[1], result[7],
+                            {name: proofs for name, proofs in result[8].items() if name != missing})
+                        rejected = evidence._category_quality_composition(
+                            self.inputs, "QC-05", incomplete, indexed, sequence=1, started_ms=9, ended_ms=12)
+                        self.assertEqual(rejected["attempt"]["status"], "Incomplete")
+                        incomplete = history._case_results("none", "None", 12, result[1], {}, result[8])
+                        rejected = evidence._category_quality_composition(
+                            self.inputs, "QC-05", incomplete, indexed, sequence=1, started_ms=9, ended_ms=12)
+                        self.assertEqual(rejected["attempt"]["status"], "Incomplete")
+                        with self.assertRaisesRegex(evidence.ConformanceError, "ProofMismatch"):
+                            evidence._category_quality_composition(
+                                self.inputs, "QC-05", cases, indexed, sequence=1, started_ms=9, ended_ms=13)
+                    incomplete = history._case_results(
+                        "none", "None", 12, result[1][:-1], result[7], result[8])
+                    rejected = evidence._category_quality_composition(
+                        self.inputs, "QC-05", incomplete, indexed, sequence=1, started_ms=9, ended_ms=12)
+                    self.assertEqual(rejected["attempt"]["status"], "Incomplete")
+                    with self.assertRaises(evidence.ConformanceError):
+                        native.ingest_attempt(
+                            inputs=self.inputs, **transport, expected_tests=expected,
+                            started_ms=9, ended_ms=12, category_scope=(profile, "hook-admission"),
+                            origin_inputs={})
             (root / graph_path).unlink()
             (root / self.manifest["runInputsPath"]).unlink()
+            if hooks:
+                public_inputs = f"proofs/category-{profile}-qualification-run-inputs.json"
+                write(root / public_inputs, evidence.canonical_bytes(self.inputs))
             with mock.patch.object(checks, "OwnedRun", SimpleNamespace), mock.patch.object(
                     sources, "OwnedRun", SimpleNamespace), mock.patch.object(
                     checks.uuid, "uuid4", return_value=uuid.UUID(attempt)), mock.patch.object(
@@ -4117,9 +4189,19 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     return_value=(SimpleNamespace(exit_code=0, execution_record_sha256=evidence.digest(record),
                                                   events=({"event": "control", "code": "None", "value": len(selected)},)),
                                   observed, transport, "b" * 64)) as launch:
-                produced = (checks.hook_admission_diagnostics if hooks
-                            else checks.metadata_common_consumer_diagnostics)(run, self.inputs)
-            self.assertEqual(produced, admitted)
+                produced = (checks.category_attempt(
+                    run, self.inputs, root / "snapshot", "hook-admission",
+                    {"attemptId": attempt, "tests": selected},
+                    run_inputs_path=public_inputs, native_sources=native)
+                    if hooks else checks.metadata_common_consumer_diagnostics(run, self.inputs))
+            if hooks:
+                self.assertEqual(produced["transport"], transport)
+                self.assertEqual(produced["summary"]["sourceParentSha256"],
+                                 hashlib.sha256(originals[graph_path]).hexdigest())
+                self.assertEqual(produced["summary"]["tests"], 2)
+                self.assertEqual(admit(), admitted)
+            else:
+                self.assertEqual(produced, admitted)
             self.assertEqual(launch.call_args.args[4], expected)
             self.assertEqual(launch.call_args.kwargs["origin_inputs"], origins)
             self.assertEqual(launch.call_args.args[5]["category_scope"],

@@ -7014,7 +7014,43 @@ artifact input/result digests are
 The original bounded receipt remains read-only.
 No task/checklist marker advances.
 
-### Exact native admission of repaired source controls
+### Public QC-05 native-hook composition (native admission pending)
+
+The complete two-row hook family is now a predeclared qualification-only
+`hook-admission` scope, executed once rather than repeated as a private prelude.
+Its planned attempt UUID reaches the original producer. Independent native
+ingestion reconstructs exact original transport/origins and source packets,
+preserving both execution IDs/runtime proofs and linking them to the one
+original native graph. Four obligation aliases reference only that graph:
+missing mandatory hooks, missing bindings, logical exclusion rejection and
+exact durability exclusions. All controls and rows/parent must exist for
+QC-05 composition; missing evidence stays `Incomplete`. Foreign origins and
+attempt/window mismatch reject. The create-new graph currently supports one
+attempt and rejects retries rather than borrowing or overwriting sources.
+
+The preceding exact `93e5fe6`/run40255871799 passes 333 native foundations
+without skips and 13-lock/18-package replay, but fails metadata source
+aggregation. Bounded locations identify the duplicate-path guard rejecting
+the identical original owner packet retained by both shared-consumer and hook
+controls. An intended-red regression reproduces this `ProofMismatch`.
+Overlapping source paths now merge only for identical bytes; conflicting
+packets and duplicate control names still reject.
+
+All 444 tooling tests pass with 19 native skips, including both actual producer
+branches and independent source/history/composition fixtures. Missing each
+obligation/row/parent, foreign origins, changed windows and conflicting shared
+packets fail closed. All 133 SDK contract tests pass without skips, as do
+frozen inventory, regenerated catalog and patch whitespace checks.
+A fresh 14-package replay with the updated embedded QC-05 witness catalog
+rejects each of the three catalog mutants with four named catalog failures
+and no passes/skips; the unchanged Consumer passes all 160 rows. Consumer
+sources are identical across trials. This is local diagnostic evidence, not
+exact-head native admission, complete extraction/parity or a qualified profile.
+No task/checklist markers advance; README, DEVELOPMENT and evidence/matrix
+contracts are updated, while provider/contributor/deployment guides, examples
+and diagrams are unaffected by this test/evidence-only increment.
+
+### Exact native admission of earlier repaired source controls
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),

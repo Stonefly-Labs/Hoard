@@ -135,13 +135,25 @@ source composition or substitute for full extraction/parity/native admission.
 Dedicated two-provider hook-admission methods additionally use `QC-05`
 contexts and the same assertion bodies. Their diagnostic selections pin all
 six actual Consumer/SDK/binding/provider images and require one typed origin
-per row. Qualification-input batches also retain private native hook controls
-for both complete families. Independent reconstruction requires readonly
+per row. Qualification-input batches execute each complete family once as a
+predeclared `hook-admission` scope and retain original native hook controls.
+Independent reconstruction requires readonly
 original transport/proofs, exact origins, all six images and the original held
 command, settings/argv/cwd and settled bounds. Both histories retain the
-original packets under existing proof limits. This wiring awaits exact Linux
-admission and does not provide public QC-05 source parents, durability-exclusion
-coverage or completed QC-05 composition.
+original packets under existing proof limits. Identical source packets shared
+by independent controls may merge; overlapping paths with different bytes and
+duplicate control names reject.
+
+Public QC-05 composition requires both exact original provider executions and
+their one original native graph parent, plus all four independently reconstructed
+hook/binding/logical-exclusion/durability obligation controls. Missing
+rows/parents/controls remain `Incomplete`; origin, attempt and window mismatch
+reject. Original execution IDs and runtime proof hashes are preserved. The
+producer uses the predeclared UUID and actual execution bounds, never a
+permissive zero start. Current create-new hook graphs support one attempt and
+explicitly reject subsequent attempts rather than reuse earlier sources.
+This wiring has modeled validation but awaits exact-head Linux admission;
+complete category qualification remains unfinished.
 
 The packaged admission Consumer additionally owns the complete 48-case
 binding sets and fixed durability policy: only memory MP-36/38..45 and
