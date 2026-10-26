@@ -10323,6 +10323,20 @@ correspondence. The new scope awaits exact-head Linux observation.
 Examples, diagrams, production dependency boundaries and deployment are
 unaffected; complete extraction and implementation remain unfinished.
 
+Ten subsequent receipt/read-opening/reconciliation rows extend the artifact
+scope to 162. Typed registration restricts intentional failure to the two
+supported observation points and retains the exact private exception filter;
+same-shaped ordinary callback exceptions still fault actual settlement.
+Awaited shared overloads preserve all six original observation cases and the
+one-slot/no-waiter read limits. Receipt observer removal cannot strand its
+held commit if removal fails. Fresh fourteen-package replay passes 318 selected
+consumers. Complete 314-row actual/six-row frozen parity passes; SDK-only
+receipt/read-payload/verified-counter mutants each produce two named failures
+in both families, all other rows passing with matching SDK/archive images and
+no skips. Tooling passes 445 checks/19 native skips and source contracts pass
+133/zero skips. Exact-head Linux admission remains outstanding; no tasks or
+reviewer-owned checklists are marked complete.
+
 Exact `58a949543ea160b5be21c13db581f01387d33719`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
 independently passes all three Linux jobs: 331 native foundations without

@@ -1525,6 +1525,16 @@ also passes; SDK-only bounds/resume mutants give exactly seven/two named
 failures in both families, all other rows passing and actual SDK images
 matching each archive. The extension awaits exact-head native admission.
 
+Ten receipt/read-opening/reconciliation rows extend the artifact scope to 162.
+Typed failure registration accepts only read-opened and verified-reconciliation
+points, with ordinary callback exceptions still faulting settlement rather
+than being reclassified as injected. Awaited shared overloads preserve all
+six original cases, one-slot/no-waiter limits and receipt/readback assertions.
+Fresh packages pass 318 selected consumers; complete 314-row actual/six-row
+frozen parity passes. Three SDK-only assertion mutants each give both families
+two named failures, all other rows passing with exact runtime SDK/archive
+images and no skips. This extension awaits exact-head native observation.
+
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or
 ownership consumers. Reduced/foreign scopes reject before launch; routing

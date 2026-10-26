@@ -13,6 +13,114 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local", "receipt")]
+    [InlineData("object", "receipt")]
+    [InlineData("local", "read-open")]
+    [InlineData("object", "read-open")]
+    [InlineData("local", "verified-reconciliation")]
+    [InlineData("object", "verified-reconciliation")]
+    public async Task Observed_receipts_and_failed_callbacks_preserve_actual_resource_ownership(
+        string provider, string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var limits = consumer == "read-open"
+            ? new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, transferSlots: 1, waitingCalls: 0) : null;
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider, limits), context, default);
+        var registrations = new Dictionary<ArtifactObservationPoint, IAsyncDisposable>();
+        try
+        {
+            async ValueTask Observe(ArtifactObservationPoint point, Func<ValueTask> callback) =>
+                registrations.Add(point, await session.Faults.ObserveBoundaryAsync(point, callback, default));
+            async ValueTask Inject(ArtifactObservationPoint point, Func<ValueTask> callback) =>
+                registrations.Add(point, await session.Faults.InjectObservationFailureAsync(point, callback, default));
+            ValueTask Remove(ArtifactObservationPoint point) => registrations[point].DisposeAsync();
+            async ValueTask LoseAcknowledgment() => registrations.Add(ArtifactObservationPoint.PublicationSelected,
+                await session.Faults.InjectPublicationAcknowledgmentLossAsync(default));
+            async ValueTask RemoveReconciliation()
+            {
+                await Remove(ArtifactObservationPoint.BeforeReconciliation);
+                await Remove(ArtifactObservationPoint.ReconciliationVerified);
+            }
+            await (consumer switch
+            {
+                "receipt" => ArtifactObservationAssertions.ReceiptPersistedAsync(session.Store,
+                    callback => Observe(ArtifactObservationPoint.ReceiptPersisted, callback),
+                    () => Remove(ArtifactObservationPoint.ReceiptPersisted), default),
+                "read-open" => ArtifactObservationAssertions.ReadOpenedFailureAsync(session.Store,
+                    () => Inject(ArtifactObservationPoint.ReadOpened, () => ValueTask.CompletedTask),
+                    () => Remove(ArtifactObservationPoint.ReadOpened), default),
+                "verified-reconciliation" => ArtifactObservationAssertions.ReconciliationVerifiedAsync(session.Store,
+                    LoseAcknowledgment, () => Remove(ArtifactObservationPoint.PublicationSelected),
+                    callback => Observe(ArtifactObservationPoint.BeforeReconciliation, callback),
+                    callback => Inject(ArtifactObservationPoint.ReconciliationVerified, callback),
+                    RemoveReconciliation, default),
+                _ => throw new ArgumentException("BindingInvalid")
+            });
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally
+        {
+            try { foreach (var registration in registrations.Values) { await registration.DisposeAsync(); } }
+            finally { await session.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local", ArtifactObservationPoint.ReadOpened)]
+    [InlineData("object", ArtifactObservationPoint.ReadOpened)]
+    [InlineData("local", ArtifactObservationPoint.ReconciliationVerified)]
+    [InlineData("object", ArtifactObservationPoint.ReconciliationVerified)]
+    public async Task Ordinary_errors_inside_owned_failure_callbacks_still_fault_actual_settlement(
+        string provider, ArtifactObservationPoint point)
+    {
+        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        var failure = new InvalidOperationException("InjectedObservationFailure");
+        try
+        {
+            var ticket = Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Success>(
+                await session.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default)).Value;
+            using var source = new ArtifactPublicationAssertions.ShortSource("ordinary callback ownership"u8.ToArray());
+            var staged = Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Success>(
+                await session.Store.StageAsync(ticket, source, new(), default)).Value;
+            if (point == ArtifactObservationPoint.ReconciliationVerified)
+            {
+                await using var loss = await session.Faults.InjectPublicationAcknowledgmentLossAsync(default);
+                Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+                    await session.Store.CommitAsync(staged, new(), default)).Code);
+            }
+            else { Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Success>(
+                await session.Store.CommitAsync(staged, new(), default)); }
+            await using var injection = await session.Faults.InjectObservationFailureAsync(
+                point, () => ValueTask.FromException(failure), default);
+            if (point == ArtifactObservationPoint.ReadOpened)
+            {
+                Assert.Equal(ArtifactFailureCode.InternalFailure, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+                    await session.Store.OpenReadAsync(new(staged.Identity.Digest), new(), default)).Code);
+            }
+            else
+            {
+                Assert.Equal(ArtifactFailureCode.InternalFailure, Assert.IsType<ArtifactResult<ArtifactResolution>.Failure>(
+                    await session.Store.ReconcileAsync(ticket, new(), default)).Code);
+            }
+            Assert.Equal(1, injection.ObservationCount);
+            await session.Faults.AwaitSettlementAsync(default);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await Assert.ThrowsAsync<InvalidOperationException>(() => session.DisposeAsync().AsTask()); }
+        var settlement = Assert.Single(resources.Settlements).Value;
+        Assert.True(settlement.IsFaulted);
+        Assert.Contains(failure, settlement.Exception!.InnerExceptions);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local", "tickets")]
     [InlineData("object", "tickets")]
     [InlineData("local", "dependencies")]

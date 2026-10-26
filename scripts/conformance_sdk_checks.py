@@ -1498,6 +1498,13 @@ def full_artifact_binding_scenarios():
                       for provider in ("local", "object") for method in (
                           "Observed_history_candidates_resume_after_an_owned_one_shot_failure",
                           "Ordinary_candidate_shaped_observer_errors_still_fault_actual_settlement"))
+    identities.update(prefix + "Observed_receipts_and_failed_callbacks_preserve_actual_resource_ownership"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object")
+                      for consumer in ("receipt", "read-open", "verified-reconciliation"))
+    identities.update(prefix + "Ordinary_errors_inside_owned_failure_callbacks_still_fault_actual_settlement"
+                      + f'(provider: "{provider}", point: {point})'
+                      for provider in ("local", "object") for point in ("ReadOpened", "ReconciliationVerified"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 

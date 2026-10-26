@@ -104,6 +104,16 @@ and resume mutants give both families exactly seven/two named failures,
 respectively, with all other rows passing and identical runtime SDK/archive
 images. Native observation and complete category qualification remain outstanding.
 
+Ten further receipt/read-opening/reconciliation rows extend the artifact scope
+to 162. Owned failure registration admits only read-opened and verified-
+reconciliation points; ordinary callback errors, including the same exception
+type/message, still fault settlement. Awaited overloads preserve all six
+original observation cases and the one-transfer-slot/no-waiter read limits.
+Fresh packages pass 318 selected consumers. Complete 314-row actual/six-row
+frozen parity passes, while each of three SDK-only assertion mutants produces
+two named failures in both families and all other rows pass with exact SDK
+image/archive correspondence. These are local diagnostics, not complete QC-03.
+
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run

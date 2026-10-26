@@ -466,6 +466,21 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
             ArtifactObservationPoint.PublicationSelected, () => ValueTask.FromException(failure), cancellationToken, failure));
     }
 
+    public ValueTask<IArtifactFaultRegistration> InjectObservationFailureAsync(
+        ArtifactObservationPoint point, Func<ValueTask> beforeFailure, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        ArgumentNullException.ThrowIfNull(beforeFailure);
+        if (point is not (ArtifactObservationPoint.ReadOpened or ArtifactObservationPoint.ReconciliationVerified))
+        { throw new ArgumentException("BindingInvalid"); }
+        var failure = new InvalidOperationException("InjectedObservationFailure");
+        return ValueTask.FromResult<IArtifactFaultRegistration>(RegisterBoundary(point, async () =>
+        {
+            await beforeFailure();
+            throw failure;
+        }, cancellationToken, failure));
+    }
+
     private Registration RegisterBoundary(
         ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken,
         Exception? expectedFailure = null)

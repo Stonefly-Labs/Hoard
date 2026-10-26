@@ -7419,6 +7419,26 @@ gives two each. All other rows pass, zero skips, and both actual/frozen runtime
 SDK images match their archive in every trial. Native observation remains
 outstanding.
 
+Ten receipt/read-opening/reconciliation rows further extend the artifact scope
+to 162. Awaited overloads retain all six original observation bodies, their
+public receipt/readback corroboration and one-slot/no-waiter read limits.
+Typed injection accepts only read-opened/verified-reconciliation points;
+ordinary callbacks with the same exception type/message still fault actual
+settlement. Receipt removal releases its held commit even if removal fails.
+Fresh fourteen-package replay passes 318 selected consumers at source
+`d7b4079c692c47e44078a6b55ca7182e0433c8985291fc724d5f1c12920bfd50`,
+SDK `10d6c8974733a3b103bc9d086c939ae0e680e0f03fcdd0524bba9b809d0d14de`.
+Complete 314-row actual/six-row frozen parity passes with matching SDK/archive
+images. Receipt mutant
+`a7ad45a2d5a20a55489830902ef5e71b3f198a8550bac090c62f29b036dd6583`,
+read-payload mutant
+`cdc1aabaaa030079aa5856d2f03377b1b192cdfa80bc93026ff5f56374d04540`,
+and verified-counter mutant
+`9f05fa29f93252435bda6566766b6885b33dc5ecf182fcd6eeb2d33bb228f24d`
+each produce exactly two named failures in both families, all other rows
+passing with zero skips. Tooling445/19 native skips and source contracts133/
+zero skips pass. This remains local evidence, not QC-03 or stage completion.
+
 Exact earlier `831b00c3999e94958bc3afecb77bf9d99a3cb9fa`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),
 passes all three Linux jobs and strict source admission: 336 native foundations/

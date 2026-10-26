@@ -185,6 +185,15 @@ resume mutants give exactly seven/two named failures in both families, with
 every other row passing and exact SDK/archive image correspondence. Exact-head
 native admission of the extension and QC-03 remain outstanding.
 
+Ten receipt/read-opening/reconciliation rows extend the artifact scope to 162,
+retaining all six original observation cases and their original read limits.
+Owned injection at only the two supported callback points does not forgive
+same-shaped ordinary observer failures. Fresh packages pass 318 selected
+consumers; complete 314-row actual/six-row frozen parity passes. Three SDK-only
+assertion mutants each give two named failures per family, all other rows
+passing with exact SDK/archive image correspondence. These local diagnostics
+do not supply native admission or complete QC-03.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

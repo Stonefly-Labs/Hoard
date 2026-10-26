@@ -43,15 +43,24 @@ public static class ArtifactObservationAssertions
         Assert.Equal(bytes, await ReadAsync(session.Store, receipt.Stamp, cancellationToken));
     }
 
-    public static async Task ReceiptPersistedAsync(
+    public static Task ReceiptPersistedAsync(
         IArtifactStore store, Action<Func<ValueTask>> observe, Action remove, CancellationToken cancellationToken)
+        => ReceiptPersistedAsync(store, observer =>
+        {
+            observe(observer);
+            return ValueTask.CompletedTask;
+        }, () => { remove(); return ValueTask.CompletedTask; }, cancellationToken);
+
+    public static async Task ReceiptPersistedAsync(
+        IArtifactStore store, Func<Func<ValueTask>, ValueTask> observe, Func<ValueTask> remove,
+        CancellationToken cancellationToken)
     {
         using var source = new ShortSource("observed publication"u8.ToArray());
         var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
         var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
         var entered = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var release = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        observe(() => { entered.TrySetResult(); return new(release.Task); });
+        await observe(() => { entered.TrySetResult(); return new(release.Task); });
         var committing = store.CommitAsync(staged, new(), cancellationToken).AsTask();
         ArtifactMutationReceipt? persisted = null;
         try
@@ -63,25 +72,36 @@ public static class ArtifactObservationAssertions
         }
         finally
         {
-            remove();
-            release.TrySetResult();
-            Assert.Equal(persisted, Success(await committing));
+            try { await remove(); }
+            finally
+            {
+                release.TrySetResult();
+                Assert.Equal(persisted, Success(await committing));
+            }
         }
     }
 
-    public static async Task ReadOpenedFailureAsync(
+    public static Task ReadOpenedFailureAsync(
         IArtifactStore store, Action<Func<ValueTask>> observe, Action remove, CancellationToken cancellationToken)
+        => ReadOpenedFailureAsync(store, () =>
+        {
+            observe(() => throw new InvalidOperationException("controlled-read-open-failure"));
+            return ValueTask.CompletedTask;
+        }, () => { remove(); return ValueTask.CompletedTask; }, cancellationToken);
+
+    public static async Task ReadOpenedFailureAsync(
+        IArtifactStore store, Func<ValueTask> injectFailure, Func<ValueTask> remove, CancellationToken cancellationToken)
     {
         var bytes = "observed resource opening"u8.ToArray();
         using var source = new ShortSource(bytes);
         var receipt = await PublishAsync(store, source, new(1024), cancellationToken);
-        observe(() => throw new InvalidOperationException("controlled-read-open-failure"));
+        await injectFailure();
         try
         {
             Assert.Equal(ArtifactFailureCode.InternalFailure, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
                 await store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken)).Code);
         }
-        finally { remove(); }
+        finally { await remove(); }
         await using var read = Success(await store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken));
         using var destination = new MemoryStream();
         Success(await read.CopyToAsync(destination, new(), cancellationToken));
@@ -94,28 +114,50 @@ public static class ArtifactObservationAssertions
                 ? failure.Code.ToString() : "Unexpected deletion result.");
     }
 
-    public static async Task ReconciliationVerifiedAsync(
+    public static Task ReconciliationVerifiedAsync(
         IArtifactStore store, Action<Func<ValueTask>> observeSelected, Action removeSelected,
         Action<Func<ValueTask>> observeBefore, Action<Func<ValueTask>> observeVerified, Action removeReconciliation,
         CancellationToken cancellationToken)
+        => ReconciliationVerifiedAsync(store, () =>
+        {
+            observeSelected(() => throw new InvalidOperationException("controlled-selected-failure"));
+            return ValueTask.CompletedTask;
+        }, () => { removeSelected(); return ValueTask.CompletedTask; }, observer =>
+        {
+            observeBefore(observer);
+            return ValueTask.CompletedTask;
+        }, observer =>
+        {
+            observeVerified(async () =>
+            {
+                await observer();
+                throw new InvalidOperationException("controlled-verified-failure");
+            });
+            return ValueTask.CompletedTask;
+        }, () => { removeReconciliation(); return ValueTask.CompletedTask; }, cancellationToken);
+
+    public static async Task ReconciliationVerifiedAsync(
+        IArtifactStore store, Func<ValueTask> injectSelected, Func<ValueTask> removeSelected,
+        Func<Func<ValueTask>, ValueTask> observeBefore, Func<Func<ValueTask>, ValueTask> injectVerified,
+        Func<ValueTask> removeReconciliation, CancellationToken cancellationToken)
     {
         using var source = new ShortSource("observed reconciliation"u8.ToArray());
         var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
         var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
-        observeSelected(() => throw new InvalidOperationException("controlled-selected-failure"));
+        await injectSelected();
         try
         {
             Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
                 await store.CommitAsync(staged, new(), cancellationToken)).Code);
         }
-        finally { removeSelected(); }
+        finally { await removeSelected(); }
         var before = 0;
         var verified = 0;
-        observeBefore(() => { Interlocked.Increment(ref before); return ValueTask.CompletedTask; });
-        observeVerified(() =>
+        await observeBefore(() => { Interlocked.Increment(ref before); return ValueTask.CompletedTask; });
+        await injectVerified(() =>
         {
             Interlocked.Increment(ref verified);
-            throw new InvalidOperationException("controlled-verified-failure");
+            return ValueTask.CompletedTask;
         });
         try
         {
@@ -124,7 +166,7 @@ public static class ArtifactObservationAssertions
             Assert.Equal(1, before);
             Assert.Equal(1, verified);
         }
-        finally { removeReconciliation(); }
+        finally { await removeReconciliation(); }
         var recovered = Assert.IsType<ArtifactResolution.Committed>(
             Success(await store.ReconcileAsync(ticket, new(), cancellationToken))).Receipt;
         Assert.Equal(ticket, recovered.Ticket);

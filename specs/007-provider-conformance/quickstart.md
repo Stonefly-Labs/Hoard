@@ -609,6 +609,14 @@ nine-row frozen history parity passes; SDK-only bounds/resume mutations give
 exactly seven/two named failures in both families, all other rows passing and
 actual SDK images matching each archive. This extension awaits exact-head
 native observation and does not complete F-07.
+Ten additional receipt/read-opening/reconciliation rows extend the artifact
+scope to 162 and fresh-package replay to 318 passing selected consumers.
+Awaited common overloads preserve all six original observation cases and
+one-slot/no-waiter read limits; typed failure registration does not forgive
+ordinary callback errors. Complete 314-row actual/six-row frozen parity passes.
+Three SDK-only assertion mutants each give both families two named failures,
+every other row passing with matching SDK/archive images. Native observation
+of this extension and full category qualification remain outstanding.
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

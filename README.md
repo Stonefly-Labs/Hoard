@@ -2519,6 +2519,15 @@ give exactly seven/two named failures in both families, all other rows passing.
 Actual and frozen SDK images match each corresponding archive. This extension
 awaits exact-head native observation; F-07 is not ready to merge.
 
+Ten receipt/read-opening/reconciliation rows extend the artifact selection to
+162. Typed failure registration owns only the two supported callback points
+and never forgives ordinary callback errors. Awaited shared overloads preserve
+all six frozen observation cases and the original one-slot/no-waiter read
+limits. Fresh packages pass 318 selected consumers; complete 314-row actual/
+six-row frozen parity passes. Three SDK-only assertion mutants each produce
+two named failures in both families, all other rows passing with matching
+runtime SDK/archive images. This remains local, non-qualifying evidence.
+
 Exact earlier `831b00c`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),
 passed all three Linux jobs and strict admission of the 129-row artifact and

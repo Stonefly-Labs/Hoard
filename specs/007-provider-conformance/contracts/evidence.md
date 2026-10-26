@@ -277,6 +277,16 @@ passes; SDK-only bounds/resume mutations give exactly seven/two named failures
 in both families, all remaining rows passing, with exact SDK/archive image
 correspondence. The new scope awaits exact-head native admission.
 
+Ten receipt/read-opening/reconciliation rows extend the artifact scope to 162.
+Private exact-exception injection is restricted to the two supported callback
+points; same-shaped ordinary callback failures still fault owned settlement.
+Awaited overloads preserve the six original observations and their receipt/
+readback assertions. Fresh packages pass 318 selected consumers; complete
+314-row actual/six-row frozen parity passes, and three SDK-only assertion
+mutants each give two named failures per family with all other rows passing
+and exact SDK/archive image correspondence. These remain local diagnostics,
+not independent native admission or complete extraction-quality composition.
+
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,
