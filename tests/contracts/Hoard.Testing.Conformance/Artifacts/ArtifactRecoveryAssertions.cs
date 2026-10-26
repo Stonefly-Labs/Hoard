@@ -122,27 +122,37 @@ public static class ArtifactRecoveryAssertions
         finally { Success(await reopenedLifetime.StopAsync(new(), cancellationToken)); }
     }
 
-    public static async Task SettledReceiptReplacementAsync(
+    public static Task SettledReceiptReplacementAsync(
         IArtifactStore store, Action<long> setUtc, Action loseAcknowledgment, Action restoreAcknowledgment,
         Action<Func<ValueTask>> observeReconciliation, Action removeReconciliation,
+        CancellationToken cancellationToken) =>
+        SettledReceiptReplacementAsync(store, setUtc,
+            () => { loseAcknowledgment(); return ValueTask.CompletedTask; },
+            () => { restoreAcknowledgment(); return ValueTask.CompletedTask; },
+            observer => { observeReconciliation(observer); return ValueTask.CompletedTask; },
+            () => { removeReconciliation(); return ValueTask.CompletedTask; }, cancellationToken);
+
+    public static async Task SettledReceiptReplacementAsync(
+        IArtifactStore store, Action<long> setUtc, Func<ValueTask> loseAcknowledgment, Func<ValueTask> restoreAcknowledgment,
+        Func<Func<ValueTask>, ValueTask> observeReconciliation, Func<ValueTask> removeReconciliation,
         CancellationToken cancellationToken)
     {
         var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
         using var source = new ShortSource("settled receipt survives replacement"u8.ToArray());
         var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
-        loseAcknowledgment();
+        await loseAcknowledgment();
         Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
             await store.CommitAsync(staged, new(), cancellationToken)).Code);
-        restoreAcknowledgment();
+        await restoreAcknowledgment();
         await using var barrier = new ArtifactConformanceBarrier("settled-reconciliation-after-replacement");
-        observeReconciliation(() => new(barrier.HoldAsync()));
+        await observeReconciliation(() => new(barrier.HoldAsync()));
         var held = store.ReconcileAsync(ticket, new(), cancellationToken).AsTask();
         ArtifactMutationReceipt settled;
         ArtifactMutationReceipt replacement;
         try
         {
             await barrier.Entered;
-            removeReconciliation();
+            await removeReconciliation();
             settled = Assert.IsType<ArtifactResolution.Committed>(
                 Success(await store.ReconcileAsync(ticket, new(), cancellationToken))).Receipt;
             var deletion = Success(await store.ReserveDeleteAsync(new(settled.Stamp), new(), cancellationToken));
@@ -187,26 +197,36 @@ public static class ArtifactRecoveryAssertions
         Assert.Equal("different digest awaiting settled history"u8.ToArray(), await ReadAsync(store, current.Stamp, cancellationToken));
     }
 
-    public static async Task AdmittedReconciliationHistoryAsync(
+    public static Task AdmittedReconciliationHistoryAsync(
         IArtifactStore store, Action<long> setUtc, Action loseAcknowledgment, Action restoreAcknowledgment,
         Action<Func<ValueTask>> observeReconciliation, Action removeReconciliation,
+        CancellationToken cancellationToken) =>
+        AdmittedReconciliationHistoryAsync(store, setUtc,
+            () => { loseAcknowledgment(); return ValueTask.CompletedTask; },
+            () => { restoreAcknowledgment(); return ValueTask.CompletedTask; },
+            observer => { observeReconciliation(observer); return ValueTask.CompletedTask; },
+            () => { removeReconciliation(); return ValueTask.CompletedTask; }, cancellationToken);
+
+    public static async Task AdmittedReconciliationHistoryAsync(
+        IArtifactStore store, Action<long> setUtc, Func<ValueTask> loseAcknowledgment, Func<ValueTask> restoreAcknowledgment,
+        Func<Func<ValueTask>, ValueTask> observeReconciliation, Func<ValueTask> removeReconciliation,
         CancellationToken cancellationToken)
     {
         var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
         using var source = new ShortSource("retained reconciliation ownership"u8.ToArray());
         var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
-        loseAcknowledgment();
+        await loseAcknowledgment();
         Assert.Equal(ArtifactFailureCode.Uncertain, Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
             await store.CommitAsync(staged, new(), cancellationToken)).Code);
-        restoreAcknowledgment();
+        await restoreAcknowledgment();
         await using var barrier = new ArtifactConformanceBarrier("reconciliation-owns-expired-history");
-        observeReconciliation(() => new(barrier.HoldAsync()));
+        await observeReconciliation(() => new(barrier.HoldAsync()));
         var held = store.ReconcileAsync(ticket, new(), cancellationToken).AsTask();
         ArtifactMutationReceipt settled;
         try
         {
             await barrier.Entered;
-            removeReconciliation();
+            await removeReconciliation();
             settled = Assert.IsType<ArtifactResolution.Committed>(
                 Success(await store.ReconcileAsync(ticket, new(), cancellationToken))).Receipt;
             setUtc(ticket.Expires.ToUnixTimeMilliseconds());
@@ -219,9 +239,17 @@ public static class ArtifactRecoveryAssertions
         Assert.Equal("retained reconciliation ownership"u8.ToArray(), await ReadAsync(store, settled.Stamp, cancellationToken));
     }
 
-    public static async Task LateCleanupGenerationAsync(
+    public static Task LateCleanupGenerationAsync(
         IArtifactStore store, IArtifactMaintenance maintenance, ArtifactStoreIdentity identity,
         Action<TimeSpan> advanceClock, Action<Func<ValueTask>> observeCleanup, Action removeCleanup,
+        CancellationToken cancellationToken) =>
+        LateCleanupGenerationAsync(store, maintenance, identity, advanceClock,
+            observer => { observeCleanup(observer); return ValueTask.CompletedTask; },
+            () => { removeCleanup(); return ValueTask.CompletedTask; }, cancellationToken);
+
+    public static async Task LateCleanupGenerationAsync(
+        IArtifactStore store, IArtifactMaintenance maintenance, ArtifactStoreIdentity identity,
+        Action<TimeSpan> advanceClock, Func<Func<ValueTask>, ValueTask> observeCleanup, Func<ValueTask> removeCleanup,
         CancellationToken cancellationToken)
     {
         var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
@@ -230,13 +258,13 @@ public static class ArtifactRecoveryAssertions
         advanceClock(TimeSpan.FromSeconds(30));
         var request = new ArtifactCleanupRequest(identity, [new ArtifactCleanupTarget.AbandonedStaging(old.Owner)]);
         await using var barrier = new ArtifactConformanceBarrier("late-generation-cleanup");
-        observeCleanup(() => new(barrier.HoldAsync()));
+        await observeCleanup(() => new(barrier.HoldAsync()));
         var delayed = maintenance.CleanupAsync(request, new(), cancellationToken).AsTask();
         ArtifactStagedWrite replacement;
         try
         {
             await barrier.Entered;
-            removeCleanup();
+            await removeCleanup();
             Assert.Equal(1, Success(await maintenance.CleanupAsync(request, new(), cancellationToken)).Completed);
             using var second = new ShortSource("replacement generation"u8.ToArray());
             replacement = Success(await store.StageAsync(ticket, second, new(), cancellationToken));

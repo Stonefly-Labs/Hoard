@@ -2469,7 +2469,9 @@ Earlier Linux runs at `9f3035d` and `a3e765e` failed candidate compilation:
 the package-only `MemorySchemaProbe` lacked the new corruption-restoration
 interface member. A fresh package-mode build reproduces the exact missing
 member, then passes after the probe explicitly rejects its unsupported use.
-The SDK archive is unchanged between trials. New native admission is pending.
+The SDK archive is unchanged between trials. Exact `ef680f3`,
+[run40270185078](https://github.com/Stonefly-Labs/Hoard/actions/runs/40270185078),
+subsequently passed strict native admission of the 92-row artifact scope.
 
 Seventeen further observed budget, cancellation, sanitized-storage-failure,
 live-reference and reclaimed-history rows extend the artifact scope to 109.
@@ -2482,6 +2484,20 @@ Twenty handoff/progress and clock-rollback rows extend the artifact scope to
 installers preserve the original synchronous wrapper entry points and common
 assertions. Six intended rollback failures drove separation of UTC from
 monotonic time. Complete local wrapper parity remains non-qualifying.
+
+Twelve admitted-history, transfer-queue, shutdown, reconciliation and late-cleanup
+rows now extend the artifact selection to 141. Fresh packages pass 297 selected
+Consumer rows. All twelve actual/frozen-wrapper pairs pass with identical SDK
+bytes; three SDK-only assertion mutations each produce the same two named
+failures in both families. Awaited recovery overloads preserve original wrappers,
+limits, observation boundaries and assertions. This extension remains local.
+
+Exact earlier `831b00c`,
+[run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),
+passed all three Linux jobs and strict admission of the 129-row artifact and
+152-row metadata sources: 336 native foundations without skips. Metadata still
+has 92 Passed/1 Incomplete/9 NotApplicable/0 Failed and remains explicitly
+non-qualifying. Neither that run nor the local extension completes F-07.
 
 Exact `58a9495`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),

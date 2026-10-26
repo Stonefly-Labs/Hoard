@@ -4222,6 +4222,14 @@ class SdkDiagnosticTests(unittest.TestCase):
                         for provider in ("local", "object") for consumer in (
                             "released-cancellation", "successful-ticket", "successful-read",
                             "unclaimed-ticket", "unclaimed-read", "expired-staging", "progress-cancellation"))
+        expected.update(prefix + "Observed_admitted_work_preserves_history_queue_and_shutdown_ownership"
+                        + f'(provider: "{provider}", consumer: "{consumer}")'
+                        for provider in ("local", "object") for consumer in (
+                            "delete-history", "transfer-queue", "released-shutdown"))
+        expected.update(prefix + "Observed_reconciliation_and_cleanup_preserve_admitted_generation_ownership"
+                        + f'(provider: "{provider}", consumer: "{consumer}")'
+                        for provider in ("local", "object") for consumer in (
+                            "settled-replacement", "reconciliation-history", "cleanup-generation"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"

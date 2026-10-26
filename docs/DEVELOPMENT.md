@@ -10258,6 +10258,27 @@ diagnostics; examples, diagrams and deployment are unaffected.
 
 ### Native source-sealing and shared-consumer admission history
 
+The latest independently admitted earlier head is `831b00c`,
+[run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109):
+all three Linux jobs pass, with 336 native foundations/no skips and the full
+129-row artifact/152-row metadata sources. Exact `ef680f3`/run40270185078 also
+passes strict admission of its earlier 92-row artifact scope. Original native
+transfer/recovery obligations are unchanged. Metadata qualification-input
+diagnostics remain 92 Passed/1 Incomplete/9 NotApplicable/0 Failed, report
+`Incomplete`, qualification false; shared-source coverage does not close QC-02.
+
+The current local extension adds twelve admitted deletion-history, transfer-queue,
+released-shutdown, reconciliation-history/replacement and late-cleanup rows:
+141 artifact identities and 297 selected fresh-package Consumer passes, no skips.
+Three awaited recovery overloads forward original synchronous callers into the
+same assertions. Both complete twelve-row actual/frozen-wrapper families pass
+with identical SDK bytes. SDK-only deletion-history, reconciliation-history and
+cleanup-generation mutations each give both families exactly two named failures/
+ten passes, no skips. Tooling passes 444 tests/19 native skips, source SDK
+contracts pass 133/zero skips, and focused whitespace/catalog checks pass.
+This extension is not native admission, complete extraction or stage completion.
+Examples, diagrams, production module boundaries and deployment are unaffected.
+
 Exact `58a949543ea160b5be21c13db581f01387d33719`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
 independently passes all three Linux jobs: 331 native foundations without

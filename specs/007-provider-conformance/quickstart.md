@@ -582,6 +582,14 @@ preserves legacy wrappers; UTC rollback preserves monotonic ownership time.
 Twenty actual and twenty corresponding frozen rows pass, as do two original
 negative consumers. SDK-only successful-read mutation produces two named
 failures per corresponding family. This is still local, non-qualifying parity.
+Twelve admitted-history/queue/shutdown and reconciliation/cleanup rows bring the
+artifact scope to 141 and fresh-package replay to 297 selected passes. Both
+twelve-row actual/frozen-wrapper families pass with identical SDK bytes; three
+SDK-only mutations each give two named failures/ten passes per family. Awaited
+recovery overloads preserve original wrapper signatures, limits and boundaries.
+Earlier `831b00c`/run40271691109 strictly admits artifact129/metadata152 with
+336 native foundations/no skips; it does not admit this extension. Metadata
+remains 92 Passed/1 Incomplete/9 NotApplicable/0 Failed and non-qualifying.
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

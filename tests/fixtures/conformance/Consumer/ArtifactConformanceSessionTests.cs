@@ -13,6 +13,109 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local", "settled-replacement")]
+    [InlineData("local", "reconciliation-history")]
+    [InlineData("local", "cleanup-generation")]
+    [InlineData("object", "settled-replacement")]
+    [InlineData("object", "reconciliation-history")]
+    [InlineData("object", "cleanup-generation")]
+    public async Task Observed_reconciliation_and_cleanup_preserve_admitted_generation_ownership(
+        string provider, string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        var clock = new ControlledClock();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", clock,
+            resources, new ConformanceEvidenceBuffer());
+        var limits = consumer == "reconciliation-history"
+            ? new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1024, liveTickets: 1) : null;
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider, limits), context, default);
+        IArtifactFaultRegistration? acknowledgment = null;
+        IAsyncDisposable? observation = null;
+        try
+        {
+            var point = consumer == "cleanup-generation" ? ArtifactObservationPoint.CleanupCandidate
+                : provider == "local" ? ArtifactObservationPoint.BeforeReconciliation : ArtifactObservationPoint.DirectVerification;
+            async ValueTask LoseAcknowledgment() =>
+                acknowledgment = await session.Faults.InjectPublicationAcknowledgmentLossAsync(default);
+            ValueTask RestoreAcknowledgment() =>
+                (acknowledgment ?? throw new InvalidOperationException("BindingInvalid")).DisposeAsync();
+            async ValueTask Observe(Func<ValueTask> callback) =>
+                observation = await session.Faults.ObserveBoundaryAsync(point, callback, default);
+            ValueTask Remove() => (observation ?? throw new InvalidOperationException("BindingInvalid")).DisposeAsync();
+            await (consumer switch
+            {
+                "settled-replacement" => ArtifactRecoveryAssertions.SettledReceiptReplacementAsync(
+                    session.Store, clock.SetUtc, LoseAcknowledgment, RestoreAcknowledgment, Observe, Remove, default),
+                "reconciliation-history" => ArtifactRecoveryAssertions.AdmittedReconciliationHistoryAsync(
+                    session.Store, clock.SetUtc, LoseAcknowledgment, RestoreAcknowledgment, Observe, Remove, default),
+                "cleanup-generation" => ArtifactRecoveryAssertions.LateCleanupGenerationAsync(
+                    session.Store, session.Maintenance, session.Identity, clock.Advance, Observe, Remove, default),
+                _ => throw new ArgumentException("BindingInvalid")
+            });
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally
+        {
+            try
+            {
+                if (observation is not null) { await observation.DisposeAsync(); }
+                if (acknowledgment is not null) { await acknowledgment.DisposeAsync(); }
+            }
+            finally { await session.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local", "delete-history")]
+    [InlineData("local", "transfer-queue")]
+    [InlineData("local", "released-shutdown")]
+    [InlineData("object", "delete-history")]
+    [InlineData("object", "transfer-queue")]
+    [InlineData("object", "released-shutdown")]
+    public async Task Observed_admitted_work_preserves_history_queue_and_shutdown_ownership(
+        string provider, string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        var clock = new ControlledClock();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", clock,
+            resources, new ConformanceEvidenceBuffer());
+        var limits = consumer switch
+        {
+            "delete-history" => new ArtifactLimits(artifactBytes: 1024, stagingBytes: 4096, committedIdentities: 1),
+            "transfer-queue" => new ArtifactLimits(artifactBytes: 1, stagingBytes: 3, transferSlots: 1, waitingCalls: 1),
+            _ => null
+        };
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider, limits), context, default);
+        try
+        {
+            Task WhenIdle() => session.Faults.AwaitSettlementAsync(default).AsTask();
+            var point = consumer switch
+            {
+                "delete-history" => ArtifactObservationPoint.DeleteRemoved,
+                "transfer-queue" => ArtifactObservationPoint.TransferQueued,
+                "released-shutdown" => ArtifactObservationPoint.OperationReleased,
+                _ => throw new ArgumentException("BindingInvalid")
+            };
+            await ObserveAsync(session, point, observe => consumer switch
+            {
+                "delete-history" => ArtifactRecoveryAssertions.AdmittedDeleteHistoryAsync(
+                    session.Store, session.Maintenance, session.Identity, clock.SetUtc, observe, default),
+                "transfer-queue" => ArtifactBudgetAssertions.TransferQueueAsync(session.Store, observe, default),
+                "released-shutdown" => ArtifactLifecycleAssertions.ReleasedBoundaryOwnershipAsync(
+                    session.Store, observe, WhenIdle, () => session.Lifetime.StopAsync(new(TimeSpan.FromSeconds(5)), default),
+                    default),
+                _ => throw new ArgumentException("BindingInvalid")
+            });
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local", "history")]
     [InlineData("local", "write-capacity")]
     [InlineData("local", "delete-capacity")]

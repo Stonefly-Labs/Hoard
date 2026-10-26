@@ -1480,6 +1480,14 @@ def full_artifact_binding_scenarios():
                       for provider in ("local", "object") for consumer in (
                           "released-cancellation", "successful-ticket", "successful-read",
                           "unclaimed-ticket", "unclaimed-read", "expired-staging", "progress-cancellation"))
+    identities.update(prefix + "Observed_admitted_work_preserves_history_queue_and_shutdown_ownership"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "delete-history", "transfer-queue", "released-shutdown"))
+    identities.update(prefix + "Observed_reconciliation_and_cleanup_preserve_admitted_generation_ownership"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "settled-replacement", "reconciliation-history", "cleanup-generation"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 

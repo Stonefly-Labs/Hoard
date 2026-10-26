@@ -66,6 +66,17 @@ common assertions, with genuine provider observations at the requested point.
 UTC rollback does not rewind controlled monotonic time. Complete local wrapper
 parity and successful-read assertion negatives do not establish native admission.
 
+Twelve admitted-work/reconciliation/cleanup rows extend the selection to 141.
+They retain the original one-identity deletion-history budget, one-slot/one-waiter
+transfer queue, five-second shutdown allowance and one-ticket reconciliation
+budget. Original Local before-resolution versus Object direct-verification
+boundaries remain explicit adapter choices. Recovery installation/removal is
+awaited, and intentional acknowledgment loss uses the owned typed injection;
+ordinary observer failures are not forgiven. Twelve-row identical-SDK wrapper
+parity and three named assertion negatives remain local, non-qualifying evidence.
+Strict native run40271691109 at `831b00c` admits the earlier 129/152 artifact/
+metadata sources, not this 141-row extension or complete category qualification.
+
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run

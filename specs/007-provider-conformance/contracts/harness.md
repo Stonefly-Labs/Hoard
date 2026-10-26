@@ -1488,6 +1488,18 @@ release on removal failure. UTC rollback must not rewind monotonic ownership
 time. Every new row requires its actual origin and settlement. Complete local
 wrapper parity/assertion negatives remain non-qualifying diagnostics.
 
+Twelve admitted-work/reconciliation/cleanup rows extend the selection to 141,
+preserving original deletion-history/transfer/reconciliation limits and the
+five-second shutdown allowance. Local before-resolution and Object direct-
+verification observations remain the original provider-specific choices.
+Recovery installation/removal and acknowledgment-loss registration disposal
+are awaited, with original synchronous wrappers forwarding to the same assertions.
+Every row requires its actual origin and settlement. Complete twelve-row local
+parity and three named SDK-only assertion negatives do not qualify a provider.
+Exact earlier `831b00c`/run40271691109 strictly admits artifact129/metadata152:
+336 foundations/no skips, unchanged native transfer/recovery obligations.
+It does not admit this extension or complete QC-02/QC-03.
+
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or
 ownership consumers. Reduced/foreign scopes reject before launch; routing

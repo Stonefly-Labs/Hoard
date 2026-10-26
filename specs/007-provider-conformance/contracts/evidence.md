@@ -241,6 +241,16 @@ and independent monotonic clock observations do not change frozen identities.
 Complete local wrapper parity/assertion negatives remain distinct from native
 source admission and complete QC-03.
 
+Twelve admitted-history/queue/shutdown and reconciliation/cleanup rows extend
+the artifact selection to 141 without removing an earlier identity. Each
+requires one actual origin and real owned settlement. Recovery overloads await
+installation/removal at the original assertion's requested point; typed
+acknowledgment-loss injection does not forgive arbitrary observer exceptions.
+Complete twelve-row actual/frozen-wrapper parity and three shared-assertion
+negative controls remain local diagnostics, not complete QC-03. Strict native
+run40271691109 at `831b00c` admits the earlier artifact129/metadata152 sources
+only; its metadata report remains explicitly `Incomplete`, qualification false.
+
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,

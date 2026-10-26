@@ -7344,6 +7344,38 @@ complete extraction or native admission; task/checklist markers are unchanged.
 
 ### Exact native admission of earlier repaired source controls history
 
+Current local extraction adds twelve admitted-work/reconciliation/cleanup rows,
+preserving all 129 previous identities for 141 total. Original limits,
+acknowledgment-loss injection and provider-specific observation boundaries remain
+unchanged. Three awaited recovery overloads preserve the synchronous signatures
+and assertion bodies. Fresh fourteen-package replay passes 297 selected rows/
+zero skips at source
+`c40f40ec5cb287cc2231019db1514f74662a117d47fa5462d7aef93941e877d8`,
+SDK archive
+`274f543fb026d7b75e64466673a9cda74376c3dd3af85af1869f46958ad21c90`.
+Both complete twelve-row actual/frozen-wrapper families pass with identical
+SDK bytes. Three SDK-only mutations each produce two named failures/ten passes
+in both families: deletion-history
+`8666aea60163855fbfa0974b5cc214f1e1694e8c59a8b8c44e025e8f1d79b77f`,
+reconciliation-history
+`1d5d6da2005cd6d826ea51afd3535947dd72f711f049553f9dc765806c028ce9`,
+and late-cleanup generation
+`40585fe1903dc02f722fb7ab114e8eb9afbfad04dfa41a952754fba2544e24c4`.
+Source SDK contracts pass 133 tests/zero skips; tooling passes 444 tests/19
+native skips, with focused whitespace/catalog checks passing. This remains
+local diagnostic parity; task/checklist markers do not advance.
+
+Exact earlier `831b00c3999e94958bc3afecb77bf9d99a3cb9fa`,
+[run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),
+passes all three Linux jobs and strict source admission: 336 native foundations/
+zero skips, artifact129/metadata152, unchanged original transfer/recovery
+obligations. Exact `ef680f323440bc1f6231c57d5fe729e7bcb41a47`/
+run40270185078 independently admits its earlier artifact92/metadata152 sources.
+Metadata diagnostics at `831b00c` remain 92 Passed/1 Incomplete/9 NotApplicable/
+0 Failed, ten scopes/141 public executions/eight source parents. Its report
+stays `Incomplete`, qualification false. This does not close QC-02, admit the
+new 141-row artifact extension, or complete the implementation stage.
+
 Exact `58a949543ea160b5be21c13db581f01387d33719`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
 passes all three Linux jobs with 331 native foundations/no skips and fresh

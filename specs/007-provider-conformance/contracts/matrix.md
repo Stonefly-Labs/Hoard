@@ -154,6 +154,15 @@ handoff/progress shapes. Each requires one genuine origin and real settlement.
 Awaited installers preserve original synchronous wrappers; local parity and
 successful-read assertion negatives are not native admission or full QC-03.
 
+Twelve admitted-work/reconciliation/cleanup rows preserve all preceding
+identities and extend the selection to 141. Both providers execute deletion
+history retention, bounded transfer queuing, released-work shutdown joining,
+settled-receipt replacement, admitted reconciliation history and generation-safe
+late cleanup. Every row requires one genuine origin and actual settlement.
+Original limits and Local/Object observation boundaries remain unchanged.
+Identical-SDK local wrapper parity and three assertion negatives do not grant
+QC-03 or native admission of the new scope.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported
