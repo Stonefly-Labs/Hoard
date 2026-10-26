@@ -7380,9 +7380,44 @@ wrapper/provider/host/SDK images and independently verifies held command
 argv/cwd/input closure, provider/context settings and current attempt parents.
 Closed-scope, forest, role, context, SDK, command, parent and sealing controls
 pass in modeled tooling: 445 tests discovered, 19 native skips, no failures.
-This source-admission change awaits actual Linux observation. QC-02 composition
-and complete category acceptance are still unbuilt; no task/checklist markers
-or implementation stage advance.
+Exact `74cf619a8c33dc440891130c69bd9fab6453542e`/
+run40279501756 now passes all three Linux jobs and 337 foundations/no skips,
+admitting both original metadata source parents: ten scopes/141 public
+executions/ten parents. Earlier `bc8509471c5f0a69bf34a582e18932f9e7731bd9`/
+run40276791513 independently admits artifact141/metadata152 with 336 foundations
+and eight metadata parents. Both retain original native transfer/recovery
+obligations and metadata 92 Passed/1 Incomplete/9 NotApplicable/0 Failed,
+report `Incomplete`, qualification false. QC-02 composition and complete
+category acceptance remain unbuilt; no task/checklist/stage markers advance.
+
+All sixteen individual metadata parameter choices now have SDK-only local
+negative parity: six continuation shapes, five query dimensions, three lease
+actions and both layout booleans. Every trial executes the complete 152/63/63
+families, requiring exactly 2/1/1 named failures and every other row passing,
+without skips. The source remains the retained
+`c40f40ec5cb287cc2231019db1514f74662a117d47fa5462d7aef93941e877d8`,
+not the later native head. These diagnostics do not supply an independently
+admitted native exact-parameter control.
+
+Eleven history-candidate rows extend the artifact scope to 152. Original
+synchronous common-consumer entry points forward to awaited installers without
+changing the seven bounds parameters or the two resume assertion bodies.
+The actual binding owns observation and one-shot ticket-candidate injection
+separately, rejects duplicate registrations and records ordinary observer
+exceptions before injection. Same-shaped ordinary errors still fault
+settlement. Fresh fourteen-package replay passes 308 selected Consumer rows/
+zero skips at source
+`6c23f1a18cc2ec27a4ef09a92c8f9f10d3cf3876b62c33b95743880d9736d185`,
+SDK `1de014b797575028efb931b87acf4491781aca176eced9d1ee7caa8bec5df9b5`.
+Complete subsequent parity includes duplicate-registration assertions at source
+`0d5e51d9f1316ecc2fcde5e4d9e75a4e20a020749dff3e85057d261a7ec9f48e`:
+304 actual and nine frozen history rows pass unchanged. SDK-only bounds mutant
+`eccc1db7020d70da7af07afa6b2f74b1d97da0a3af2004488fec2ab05e3b0af9`
+gives seven named failures in each family; resume mutant
+`3d5a6e8faf719248248dc6a3938e76f9bd7bfa34f3f4e225f85e2cd245bdec3c`
+gives two each. All other rows pass, zero skips, and both actual/frozen runtime
+SDK images match their archive in every trial. Native observation remains
+outstanding.
 
 Exact earlier `831b00c3999e94958bc3afecb77bf9d99a3cb9fa`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),

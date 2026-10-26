@@ -1489,6 +1489,15 @@ def full_artifact_binding_scenarios():
                       + f'(provider: "{provider}", consumer: "{consumer}")'
                       for provider in ("local", "object") for consumer in (
                           "settled-replacement", "reconciliation-history", "cleanup-generation"))
+    identities.update(prefix + "Observed_history_candidates_preserve_the_original_page_bounds"
+                      + f'(provider: "{provider}", kind: "{kind}")'
+                      for provider in ("local", "object") for kind in (
+                          ("tickets", "dependencies", "decisions", "reclamation") if provider == "local"
+                          else ("tickets", "dependencies", "decisions")))
+    identities.update(prefix + method + f'(provider: "{provider}")'
+                      for provider in ("local", "object") for method in (
+                          "Observed_history_candidates_resume_after_an_owned_one_shot_failure",
+                          "Ordinary_candidate_shaped_observer_errors_still_fault_actual_settlement"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 

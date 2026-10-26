@@ -168,7 +168,22 @@ identical-SDK replay, including corresponding named failures under continuation,
 query-dimension and lease-expiry SDK mutations. Qualification-input original
 memory/SQLite scopes now require independently reconstructed role forests and
 held-command parents with sealed transport and exact SDK/provider/host/wrapper
-pins. This is not complete QC-02 or native admission of the extension.
+pins. Exact `74cf619`/run40279501756 now admits both original metadata parents:
+all three Linux jobs and 337 foundations/no skips, ten metadata parents.
+Earlier `bc85094`/run40276791513 admits artifact141/metadata152. Sixteen
+individual local parameter mutations yield exact 2/1/1 named failures across
+complete 152/63/63 families, all other rows passing. They are not admitted
+native parameter-quality controls and do not complete QC-02.
+
+Eleven further history-candidate rows extend the artifact scope to 152:
+the seven original bounds parameters, both resume cases and two ordinary-
+observer failure controls. Owned observations and one-shot ticket-candidate
+injection remain separate; same-shaped ordinary errors still fault settlement
+with injection armed. Fresh packages pass 308 selected Consumer rows without
+skips. Complete 304-row actual/nine-row frozen parity passes; SDK-only bounds/
+resume mutants give exactly seven/two named failures in both families, with
+every other row passing and exact SDK/archive image correspondence. Exact-head
+native admission of the extension and QC-03 remain outstanding.
 
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service

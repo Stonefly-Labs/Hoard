@@ -259,7 +259,23 @@ Source parents bind the original argv, cwd, complete held input closure, provide
 and original-context settings, execution receipt and current attempt. Missing,
 foreign, unsealed or borrowed sources reject. Complete local 152/63/63 parity
 and three SDK-only negative controls do not themselves grant QC-02; actual
-Linux observation and complete extraction-quality composition remain outstanding.
+Linux run40279501756 at exact `74cf619` now admits both original metadata
+parents: all three jobs and 337 native foundations/no skips, ten metadata
+parents, qualification false. Earlier `bc85094`/run40276791513 independently
+admits artifact141/metadata152. Sixteen individual local parameter mutations
+give exact 2/1/1 named failures across complete 152/63/63 families, all other
+rows passing, but are not admitted native exact-parameter controls. Complete
+extraction-quality composition remains outstanding.
+
+Eleven history-candidate observations extend the artifact scope to 152:
+seven original bounds parameters, both resume cases and two ordinary-observer
+failure controls. Owned one-shot injection follows observation; an ordinary
+same-shaped exception still faults settlement and does not count as injected.
+Every row requires its actual origin. Fresh-package replay passes 308 selected
+Consumer rows without skips. Complete 304-row actual/nine-row frozen parity
+passes; SDK-only bounds/resume mutations give exactly seven/two named failures
+in both families, all remaining rows passing, with exact SDK/archive image
+correspondence. The new scope awaits exact-head native admission.
 
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is

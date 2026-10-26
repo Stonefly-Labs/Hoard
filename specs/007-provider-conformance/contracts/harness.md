@@ -1506,8 +1506,24 @@ packets and SDK/provider/host/wrapper image pins. Their source parents are
 reconstructed from actual held command inputs, provider/context settings,
 argv/cwd and current-attempt execution receipts, not caller-provided role maps.
 Complete local 152/63/63 metadata replay and three SDK-only mutations pass;
-445 tooling tests/19 native skips cover source substitutions. Native observation
-of this extension and QC-02 composition remain outstanding.
+445 tooling tests/19 native skips cover source substitutions. Exact
+`74cf619`/run40279501756 now passes all three Linux jobs, 337 foundations/
+no skips and independent admission of both original metadata parents (ten
+total). Earlier `bc85094`/run40276791513 admits artifact141/metadata152.
+Sixteen individual local parameter mutations require exact 2/1/1 named
+failures across complete 152/63/63 families, all other rows passing. These
+are not admitted native exact-parameter controls; QC-02 remains incomplete.
+
+Eleven history-candidate rows extend the artifact scope to 152. Awaited
+observation installers retain the synchronous original common entry points,
+seven bounds parameters and two resume cases. Adapters own observation and
+one-shot ticket-candidate injection separately, rejecting duplicate owners.
+Ordinary observer exceptions fault settlement before injection is considered,
+including the same exception type/message. Fresh packages pass 308 selected
+Consumer rows without skips. Complete 304-row actual/nine-row frozen parity
+also passes; SDK-only bounds/resume mutants give exactly seven/two named
+failures in both families, all other rows passing and actual SDK images
+matching each archive. The extension awaits exact-head native admission.
 
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or

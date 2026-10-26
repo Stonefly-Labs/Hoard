@@ -13,6 +13,110 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local", "tickets")]
+    [InlineData("object", "tickets")]
+    [InlineData("local", "dependencies")]
+    [InlineData("object", "dependencies")]
+    [InlineData("local", "decisions")]
+    [InlineData("object", "decisions")]
+    [InlineData("local", "reclamation")]
+    public async Task Observed_history_candidates_preserve_the_original_page_bounds(string provider, string kind)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var limits = new ArtifactLimits(artifactBytes: 1024, stagingBytes: 1048576, committedIdentities: 128);
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider, limits), context, default);
+        IAsyncDisposable? observation = null;
+        try
+        {
+            async ValueTask Observe(Action<string, string> callback) =>
+                observation = await session.Faults.ObserveHistoryCandidatesAsync(callback, default);
+            await ArtifactHistoryAssertions.CandidateBoundsAsync(session.Store, kind, Observe, default);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally
+        {
+            try { if (observation is not null) { await observation.DisposeAsync(); } }
+            finally { await session.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Observed_history_candidates_resume_after_an_owned_one_shot_failure(string provider)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        IAsyncDisposable? observation = null;
+        IArtifactFaultRegistration? injection = null;
+        try
+        {
+            async ValueTask Observe(Action<string, string> callback)
+            {
+                observation = await session.Faults.ObserveHistoryCandidatesAsync(callback, default);
+                Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<InvalidOperationException>(
+                    () => session.Faults.ObserveHistoryCandidatesAsync(callback, default).AsTask())).Message);
+            }
+            async ValueTask Inject()
+            {
+                injection = await session.Faults.InjectHistoryCandidateFailureAsync(default);
+                Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<InvalidOperationException>(
+                    () => session.Faults.InjectHistoryCandidateFailureAsync(default).AsTask())).Message);
+            }
+            await ArtifactHistoryAssertions.CandidateResumeAsync(session.Store, Observe, Inject, default);
+            Assert.Equal(1, (injection ?? throw new InvalidOperationException("BindingInvalid")).ObservationCount);
+            await injection.WaitForEntryAsync(default);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally
+        {
+            try
+            {
+                if (injection is not null) { await injection.DisposeAsync(); }
+                if (observation is not null) { await observation.DisposeAsync(); }
+            }
+            finally { await session.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Ordinary_candidate_shaped_observer_errors_still_fault_actual_settlement(string provider)
+    {
+        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        var failure = new InvalidOperationException("InjectedHistoryCandidateFailure");
+        try
+        {
+            Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Success>(
+                await session.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default));
+            await using var injection = await session.Faults.InjectHistoryCandidateFailureAsync(default);
+            await using var observation = await session.Faults.ObserveHistoryCandidatesAsync((_, _) => throw failure, default);
+            Assert.Equal(ArtifactFailureCode.InternalFailure, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
+                await session.Store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), default)).Code);
+            Assert.Equal(0, injection.ObservationCount);
+            await session.Faults.AwaitSettlementAsync(default);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await Assert.ThrowsAsync<InvalidOperationException>(() => session.DisposeAsync().AsTask()); }
+        var settlement = Assert.Single(resources.Settlements).Value;
+        Assert.True(settlement.IsFaulted);
+        Assert.Contains(failure, settlement.Exception!.InnerExceptions);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local", "settled-replacement")]
     [InlineData("local", "reconciliation-history")]
     [InlineData("local", "cleanup-generation")]

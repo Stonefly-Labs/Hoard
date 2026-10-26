@@ -83,7 +83,26 @@ expiry SDK mutations fail the corresponding named assertions in all families.
 Qualification-input original memory/SQLite scopes now independently reconstruct
 role/creation/reopen attribution and require sealed original runtime packets,
 the exact SDK/provider/host/wrapper images and their held command inputs.
-This does not yet establish native admission of this change or complete QC-02.
+Exact `74cf619`/run40279501756 admits these original metadata parents on Linux:
+all three jobs pass, 337 native foundations without skips and ten metadata
+parents. Earlier `bc85094`/run40276791513 admits artifact141/metadata152.
+The metadata report remains `Incomplete`, qualification false. All sixteen
+individual parameter mutations also produce exact 2/1/1 actual/memory/SQLite
+named failures across complete 152/63/63 families, but these local diagnostics
+do not supply an admitted native exact-parameter control or complete QC-02.
+
+Eleven further history-candidate rows extend the artifact scope to 152.
+The adapter owns candidate observations and a one-shot ticket-candidate
+failure separately; duplicate registrations reject without replacing the
+current owner. All seven frozen bounds parameters and both resume cases
+retain their shared assertions. Ordinary observer exceptions are recorded
+before the private injection runs and still fault settlement, even if their
+type/message matches the injection. Fresh fourteen-package replay passes
+308 selected metadata/artifact consumers. Complete 304-row actual/nine-row
+frozen replay passes, including duplicate-registration guards; SDK-only bounds
+and resume mutants give both families exactly seven/two named failures,
+respectively, with all other rows passing and identical runtime SDK/archive
+images. Native observation and complete category qualification remain outstanding.
 
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin

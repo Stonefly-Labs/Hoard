@@ -565,6 +565,8 @@ public sealed class BindingContractTests
         public int WaitingAuthorityAdmissions => throw new NotSupportedException();
         public IArtifactBorrowedStream BorrowedDestination => throw new NotSupportedException();
         public ValueTask<IAsyncDisposable> ObserveBoundaryAsync(ArtifactObservationPoint p, Func<ValueTask> o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<IAsyncDisposable> ObserveHistoryCandidatesAsync(Action<string, string> o, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<IArtifactFaultRegistration> InjectHistoryCandidateFailureAsync(CancellationToken t) => throw new NotSupportedException();
         public ValueTask<IArtifactFaultRegistration> InjectPublicationAcknowledgmentLossAsync(CancellationToken t) => throw new NotSupportedException();
         public ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken t) => throw new NotSupportedException();
         public ValueTask<byte[]> CapturePayloadAsync(ArtifactStamp stamp, int maximumBytes, CancellationToken t) => throw new NotSupportedException();

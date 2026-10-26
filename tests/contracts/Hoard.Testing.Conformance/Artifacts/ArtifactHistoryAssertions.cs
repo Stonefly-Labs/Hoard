@@ -48,8 +48,17 @@ public static class ArtifactHistoryAssertions
         Assert.Equal("new digest after retained history"u8.ToArray(), await ReadAsync(store, current.Stamp, cancellationToken));
     }
 
-    public static async Task CandidateBoundsAsync(
+    public static Task CandidateBoundsAsync(
         IArtifactStore store, string kind, Action<Action<string, string>> observeCandidate,
+        CancellationToken cancellationToken) =>
+        CandidateBoundsAsync(store, kind, observer =>
+        {
+            observeCandidate(observer);
+            return ValueTask.CompletedTask;
+        }, cancellationToken);
+
+    public static async Task CandidateBoundsAsync(
+        IArtifactStore store, string kind, Func<Action<string, string>, ValueTask> observeCandidate,
         CancellationToken cancellationToken)
     {
         for (var index = 0; index < 105; index++)
@@ -73,13 +82,30 @@ public static class ArtifactHistoryAssertions
             if (observed == kind && Interlocked.Increment(ref examined) > 100)
             { throw new InvalidOperationException("History maintenance exceeded its candidate page."); }
         }
-        observeCandidate(Observe);
+        await observeCandidate(Observe);
         Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), cancellationToken));
         Assert.InRange(examined, 0, 100);
     }
 
-    public static async Task CandidateResumeAsync(
+    public static Task CandidateResumeAsync(
         IArtifactStore store, Action<Action<string, string>> observeCandidate, CancellationToken cancellationToken)
+    {
+        var fail = true;
+        return CandidateResumeAsync(store, observer =>
+        {
+            observeCandidate((kind, id) =>
+            {
+                observer(kind, id);
+                if (kind == "tickets" && fail)
+                { fail = false; throw new InvalidOperationException("Injected candidate failure."); }
+            });
+            return ValueTask.CompletedTask;
+        }, () => ValueTask.CompletedTask, cancellationToken);
+    }
+
+    public static async Task CandidateResumeAsync(
+        IArtifactStore store, Func<Action<string, string>, ValueTask> observeCandidate,
+        Func<ValueTask> injectCandidateFailure, CancellationToken cancellationToken)
     {
         var original = new HashSet<string>();
         for (var index = 0; index < 105; index++)
@@ -89,15 +115,14 @@ public static class ArtifactHistoryAssertions
         }
         var visited = new HashSet<string>();
         var examined = 0;
-        var fail = true;
         void Observe(string kind, string id)
         {
             if (kind != "tickets") { return; }
             visited.Add(id);
             examined++;
-            if (fail) { fail = false; throw new InvalidOperationException("Injected candidate failure."); }
         }
-        observeCandidate(Observe);
+        await observeCandidate(Observe);
+        await injectCandidateFailure();
         Assert.Equal(ArtifactFailureCode.InternalFailure, Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Failure>(
             await store.ReserveWriteAsync(new(new ArtifactExpectations(1)), new(), cancellationToken)).Code);
         visited.Clear();

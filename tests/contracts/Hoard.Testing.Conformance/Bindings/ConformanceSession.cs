@@ -183,6 +183,9 @@ public interface IArtifactAssertionSession : IAsyncDisposable
     ValueTask<IArtifactAssertionSession> ReopenAsync(CancellationToken cancellationToken);
     ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
         ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken);
+    ValueTask<IAsyncDisposable> ObserveHistoryCandidatesAsync(
+        Action<string, string> observer, CancellationToken cancellationToken);
+    ValueTask<IArtifactFaultRegistration> InjectHistoryCandidateFailureAsync(CancellationToken cancellationToken);
     /// <summary>Injects an ENOSPC-shaped storage exception after a real staging prefix write, not actual disk exhaustion.</summary>
     ValueTask<IArtifactFaultRegistration> InjectCapacityFailureAsync(CancellationToken cancellationToken);
     /// <summary>Fails the actual indexed cleanup of a result that was not delivered to its caller.</summary>
@@ -232,6 +235,9 @@ public interface IArtifactConformanceFaultDriver : IConformanceFaultDriver
     IArtifactBorrowedStream BorrowedDestination { get; }
     ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
         ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken);
+    ValueTask<IAsyncDisposable> ObserveHistoryCandidatesAsync(
+        Action<string, string> observer, CancellationToken cancellationToken);
+    ValueTask<IArtifactFaultRegistration> InjectHistoryCandidateFailureAsync(CancellationToken cancellationToken);
     ValueTask<IArtifactFaultRegistration> InjectPublicationAcknowledgmentLossAsync(CancellationToken cancellationToken);
     ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken);
     ValueTask<byte[]> CapturePayloadAsync(ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken);

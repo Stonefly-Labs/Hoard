@@ -177,6 +177,13 @@ internal sealed class ArtifactConformanceFaults(
     public ValueTask<IArtifactFaultRegistration> InjectPublicationAcknowledgmentLossAsync(CancellationToken cancellationToken) =>
         session.InjectPublicationAcknowledgmentLossAsync(cancellationToken);
 
+    public ValueTask<IAsyncDisposable> ObserveHistoryCandidatesAsync(
+        Action<string, string> observer, CancellationToken cancellationToken) =>
+        session.ObserveHistoryCandidatesAsync(observer, cancellationToken);
+
+    public ValueTask<IArtifactFaultRegistration> InjectHistoryCandidateFailureAsync(CancellationToken cancellationToken) =>
+        session.InjectHistoryCandidateFailureAsync(cancellationToken);
+
     public async ValueTask DamagePayloadAsync(
         ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken)
     {

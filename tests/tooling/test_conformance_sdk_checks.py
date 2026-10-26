@@ -4239,6 +4239,15 @@ class SdkDiagnosticTests(unittest.TestCase):
                         + f'(provider: "{provider}", consumer: "{consumer}")'
                         for provider in ("local", "object") for consumer in (
                             "settled-replacement", "reconciliation-history", "cleanup-generation"))
+        expected.update(prefix + "Observed_history_candidates_preserve_the_original_page_bounds"
+                        + f'(provider: "{provider}", kind: "{kind}")'
+                        for provider, kinds in (
+                            ("local", ("tickets", "dependencies", "decisions", "reclamation")),
+                            ("object", ("tickets", "dependencies", "decisions"))) for kind in kinds)
+        expected.update(prefix + method + f'(provider: "{provider}")'
+                        for provider in ("local", "object") for method in (
+                            "Observed_history_candidates_resume_after_an_owned_one_shot_failure",
+                            "Ordinary_candidate_shaped_observer_errors_still_fault_actual_settlement"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"

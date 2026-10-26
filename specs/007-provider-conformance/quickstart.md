@@ -595,7 +595,20 @@ identical SDK archives; three SDK-only mutations produce corresponding named
 failures without skips. Qualification-input originals now require independent
 native source/command parents, sealed runtime transport, exact role forests and
 SDK/provider/host/wrapper image pins. Tooling passes 445 tests/19 native skips;
-Linux observation of this extension and QC-02 composition remain outstanding.
+Exact `74cf619`/run40279501756 now passes all three Linux jobs and 337 native
+foundations/no skips, admitting both original metadata parents (ten total).
+Earlier `bc85094`/run40276791513 admits artifact141/metadata152. Sixteen
+individual metadata parameter mutations also yield exact 2/1/1 named failures
+across complete 152/63/63 families, with every other row passing. These local
+diagnostics are not a native parameter control; QC-02 remains outstanding.
+Eleven owned history-candidate rows extend the artifact scope to 152 and
+fresh-package replay to 308 selected passes. Seven original bounds parameters
+and two resume cases retain common assertions; ordinary same-shaped observer
+errors still fault settlement with injection armed. Complete 304-row actual/
+nine-row frozen history parity passes; SDK-only bounds/resume mutations give
+exactly seven/two named failures in both families, all other rows passing and
+actual SDK images matching each archive. This extension awaits exact-head
+native observation and does not complete F-07.
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

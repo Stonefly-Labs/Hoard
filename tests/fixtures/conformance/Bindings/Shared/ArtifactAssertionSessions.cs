@@ -230,6 +230,8 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
 {
     private readonly ArtifactAssertionOwnership ownership;
     private readonly Dictionary<ArtifactObservationPoint, Registration> observations = [];
+    private HistoryRegistration? historyObservation;
+    private HistoryRegistration? historyFailure;
     private SynchronousHold? synchronousHold;
     private readonly object stopGate = new();
     private Task<ArtifactResult<ArtifactShutdown>>? stopping;
@@ -376,6 +378,53 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
     protected abstract void SetObserver(string boundary, Func<ValueTask> observer);
     protected abstract void RemoveObserver(string boundary);
     protected abstract void SetSynchronousStorageHold(Action? hold);
+    protected abstract void SetHistoryCandidateObserver(Action<string, string>? observer);
+
+    public ValueTask<IAsyncDisposable> ObserveHistoryCandidatesAsync(
+        Action<string, string> observer, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(observer);
+        return ValueTask.FromResult<IAsyncDisposable>(RegisterHistory(observer, cancellationToken));
+    }
+
+    public ValueTask<IArtifactFaultRegistration> InjectHistoryCandidateFailureAsync(CancellationToken cancellationToken) =>
+        ValueTask.FromResult<IArtifactFaultRegistration>(RegisterHistory(null, cancellationToken));
+
+    private HistoryRegistration RegisterHistory(Action<string, string>? observer, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false }
+                || (observer is null ? historyFailure is not null : historyObservation is not null))
+            { throw new InvalidOperationException("BindingInvalid"); }
+            var registration = new HistoryRegistration(this, observer);
+            if (observer is null) { historyFailure = registration; }
+            else { historyObservation = registration; }
+            SetHistoryCandidateObserver(ObserveHistoryCandidate);
+            return registration;
+        }
+    }
+
+    private void ObserveHistoryCandidate(string kind, string id)
+    {
+        HistoryRegistration? observation;
+        HistoryRegistration? failure;
+        lock (ownership.Gate)
+        {
+            observation = historyObservation;
+            failure = historyFailure;
+        }
+        try { observation?.Invoke(kind, id); }
+        catch (Exception error)
+        {
+            ownership.ObserverFailures.Enqueue(error);
+            throw;
+        }
+        if (kind == "tickets" && failure is not null && failure.TryInject())
+        { throw failure.ExpectedFailure; }
+    }
 
     public ValueTask<IArtifactSynchronousHold> HoldSynchronousStorageAsync(CancellationToken cancellationToken)
     {
@@ -451,12 +500,49 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
         {
             foreach (var registration in observations.Values) { RemoveObserver(registration.Boundary); }
             observations.Clear();
+            SetHistoryCandidateObserver(null);
+            historyObservation = null;
+            historyFailure = null;
             if (synchronousHold is not null)
             {
                 SetSynchronousStorageHold(null);
                 synchronousHold.Release();
                 synchronousHold = null;
             }
+        }
+    }
+
+    private sealed class HistoryRegistration(
+        ArtifactAssertionSession session, Action<string, string>? observer) : IArtifactFaultRegistration
+    {
+        private readonly TaskCompletionSource entered = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        private long observationCount;
+        public InvalidOperationException ExpectedFailure { get; } = new("InjectedHistoryCandidateFailure");
+        public long ObservationCount => Interlocked.Read(ref observationCount);
+        public ValueTask WaitForEntryAsync(CancellationToken cancellationToken) =>
+            new(entered.Task.WaitAsync(session.ownership.Context.ControlBudget, cancellationToken));
+        public void Invoke(string kind, string id)
+        {
+            Interlocked.Increment(ref observationCount);
+            entered.TrySetResult();
+            (observer ?? throw new InvalidOperationException("BindingInvalid"))(kind, id);
+        }
+        public bool TryInject()
+        {
+            if (Interlocked.CompareExchange(ref observationCount, 1, 0) != 0) { return false; }
+            entered.TrySetResult();
+            return true;
+        }
+        public ValueTask DisposeAsync()
+        {
+            lock (session.ownership.Gate)
+            {
+                if (ReferenceEquals(session.historyObservation, this)) { session.historyObservation = null; }
+                if (ReferenceEquals(session.historyFailure, this)) { session.historyFailure = null; }
+                if (session.historyObservation is null && session.historyFailure is null)
+                { session.SetHistoryCandidateObserver(null); }
+            }
+            return ValueTask.CompletedTask;
         }
     }
 

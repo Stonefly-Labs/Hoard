@@ -2497,8 +2497,27 @@ Complete local metadata parity now passes all 152 actual rows and both
 mutations produce the expected named failures in every family. Qualification-
 input memory/SQLite originals now require independent native command parents,
 exact role forests, sealed runtime packets and a pinned SDK image. Tooling
-passes 445 tests with 19 native skips. This source-admission extension awaits
-Linux observation; QC-02 and implementation remain incomplete.
+passes 445 tests with 19 native skips. Exact `74cf619`,
+[run40279501756](https://github.com/Stonefly-Labs/Hoard/actions/runs/40279501756),
+passes all three Linux jobs and 337 native foundations without skips, admitting
+both original metadata parents (ten total). Earlier `bc85094`/
+run40276791513 independently admits artifact141/metadata152. QC-02 and
+implementation remain incomplete.
+
+All sixteen individual metadata parameter mutations now produce exactly two
+actual/one memory/one SQLite named failures each across the complete 152/63/63
+families; all remaining rows pass. This local diagnostic is not a native
+parameter-quality control.
+
+Eleven history-candidate rows extend the artifact selection to 152. Owned
+observation and one-shot ticket-candidate failure preserve all seven original
+page-bound parameters and both resume cases. Ordinary same-shaped observer
+errors still fault settlement, even with injection armed. Fresh packages pass
+308 selected metadata/artifact consumers without skips. Full 304-row actual
+and nine-row frozen history parity also passes; SDK-only bounds/resume mutants
+give exactly seven/two named failures in both families, all other rows passing.
+Actual and frozen SDK images match each corresponding archive. This extension
+awaits exact-head native observation; F-07 is not ready to merge.
 
 Exact earlier `831b00c`,
 [run40271691109](https://github.com/Stonefly-Labs/Hoard/actions/runs/40271691109),

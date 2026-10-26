@@ -10292,8 +10292,36 @@ role image/creation/reopen forest, checks sealed runtime packets against actual
 transport bytes, pins SDK/provider/host/wrapper images and reconstructs exact
 provider/context settings plus held argv/cwd/input closure and current attempt
 parents. Modeled substitutions and the full tooling suite pass: 445 tests,
-19 native skips. This extension has not yet been observed on Linux and does
-not grant QC-02 or advance any task/checklist/stage marker.
+19 native skips. Exact `74cf619a8c33dc440891130c69bd9fab6453542e`,
+[run40279501756](https://github.com/Stonefly-Labs/Hoard/actions/runs/40279501756),
+now passes all three Linux jobs and 337 native foundations/no skips. Its
+metadata report retains ten scopes/141 public executions and now ten source
+parents, with 92 Passed/1 Incomplete/9 NotApplicable/0 Failed. Earlier
+`bc8509471c5f0a69bf34a582e18932f9e7731bd9`/run40276791513 passes all three
+jobs and 336 foundations, admitting artifact141/metadata152 with eight parents.
+Both retain original native transfer/recovery obligations and qualification
+false; neither grants QC-02 or advances task/checklist/stage markers.
+
+Complete local metadata replay now separately targets each of six continuation
+shapes, five query dimensions, three lease actions and two layout booleans.
+All sixteen SDK-only mutations produce exactly 2/1/1 named failures in the
+complete 152/63/63 actual/memory/SQLite families; every other row passes, with
+zero skips. These historical-source diagnostics do not grant native parameter
+quality or borrow source identities from a later head.
+
+Eleven history-candidate rows extend the artifact scope to 152. Awaited common
+assertion overloads retain synchronous original wrappers and all seven frozen
+page-bound parameters/two resume cases. The adapters separately own observations
+and one-shot ticket-candidate injection; duplicate registrations reject, and
+same-shaped ordinary observer exceptions still fault actual settlement while
+injection is armed. Fresh fourteen-package replay passes 308 selected Consumer
+rows without skips. Subsequent complete parity includes the duplicate-owner
+guards: 304 actual rows and all nine corresponding frozen history rows pass;
+SDK-only bounds/resume mutations give exactly seven/two named failures in both
+families, with every other row passing, zero skips and exact SDK/archive image
+correspondence. The new scope awaits exact-head Linux observation.
+Examples, diagrams, production dependency boundaries and deployment are
+unaffected; complete extraction and implementation remain unfinished.
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),
