@@ -144,8 +144,7 @@ public sealed class ArtifactRecoveryTests(ITestOutputHelper output)
         var clock = new ArtifactTestClock();
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider, clock);
         await ArtifactRecoveryAssertions.ProgressingCommitAsync(
-            driver.Store, clock.Advance,
-            observe => SetObserver(driver, "publish.progress", "object.commit-progress", observe), default);
+            driver.Store, clock.Advance, driver.ObserveCommitProgress, default);
         driver.ObserveOriginal(output, nameof(ArtifactRecoveryTests));
     }
 

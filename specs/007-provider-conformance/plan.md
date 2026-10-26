@@ -7196,6 +7196,61 @@ changed-source whitespace/Git checks pass. No native admission, complete
 QC-02/QC-03 or final T081 review is implied. Artifact payload/progress and
 remaining stage work continue; tasks/checklists remain unchanged.
 
+### Actual artifact payload/progress repair
+
+Local and Object independently provide tracked, five-second, exact-current-stamp
+capture/replacement/removal with a 64 KiB bound and copied buffers. Shared
+consumers receive stamps and typed delegates, never paths. New actual-binding
+checks cover limits, forged/stale stamps, missing payloads, snapshot independence,
+untouched independent content, immutable receipts and real delete/recreate ABA.
+Two damaged-read variants per provider retain the original permanent-quarantine
+body/checksum; Local additionally performs genuine observed-session compatible
+reopen, while Object remains non-durable. Typed `CommitProgress` maps to the
+independent real provider boundaries.
+
+The initial replay exposes both progress cases. Monotonic clock advancement
+repairs Local; Object's setup publication still triggers an observer installed
+before the SDK requests it, faulting settlement. An awaited installer overload
+now performs registration at that exact point, preserving all shared assertions
+and the existing wrapper entry point. Original negative consumers additionally
+reject async-reopen denial loss and accept unchanged Local, preserving runtime
+identities. A failed intermediate wrapper replay exposes an inaccessible SDK
+helper; using the existing wrapper helper repairs compilation.
+
+An interim architecture review exposes a check/I/O race: replacement could
+recreate retired bytes after deletion reports reclamation. The controlled
+two-provider regression first fails at the named
+`PayloadControlsExcludeDeletionAsync` assertion. Both providers now hold
+genuine authority read protection through selection, I/O and file disposal.
+Typed `PayloadSelected` and the actual waiting-admission counter prove that
+deletion queues across replacement, capture and removal, then reclaims after
+control settlement. The first race probes fail boundary setup/capture cleanup;
+only the corrected replacement-first probe supplies the named red evidence.
+No timing-only pass or changed reclamation expectation substitutes for this.
+
+Final source snapshot:
+`7a96e399735b3269e8a6325aea935a194b939070f499218ff27a0270055062a3`.
+Fresh fourteen-package replay: 218 selected Consumer passes, zero skips.
+SDK archive:
+`65e4951d9144e2387f9a1c9defdb1333b3811ca59ae1238709d9e950a4d3e671`.
+Both complete families pass with identical SDK bytes: eight actual rows and
+six corresponding frozen wrappers, plus seven passing original negative
+consumers. SDK-only damaged-read assertion mutation yields four named
+`DamagedReadAsync` failures in each family; progress mutation yields two named
+`ProgressingCommitAsync` failures in each. Consumer/wrapper sources stay fixed.
+The complete artifact diagnostic scope grows from 54 to 62 and preserves all
+previous identities and image requirements. Tooling, 133 SDK contracts, C#
+whitespace, frozen inventory/SDK catalog and Git whitespace pass. No new native
+admission, QC-03 completion, task/checklist advancement or final T081 approval
+is implied; remaining implementation continues.
+
+Exact `e192af0fe5ae1be1d8f89ff0c595cb22266b5613`,
+[run40260447361](https://github.com/Stonefly-Labs/Hoard/actions/runs/40260447361),
+independently admits the older read/deletion source checkpoint with all three
+Linux jobs, 336 native foundations/no skips, locked replay and unchanged native
+obligations. All public reports remain `Incomplete`; this cannot admit later
+boundary, metadata ownership or current artifact changes.
+
 ### Exact native admission of earlier repaired source controls history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

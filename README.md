@@ -2438,8 +2438,23 @@ metadata/artifact Consumer rows. Each provider's six-row record/closure family
 and original wrappers pass with identical SDK bytes; an isolated SDK assertion
 mutation produces the same one named failure/five passes in all four families.
 These are local repairs and assertion parity, not native admission or complete
-QC-02/QC-03. Artifact payload/progress extraction and the remaining stage tasks
-are still unfinished.
+QC-02/QC-03. Complete extraction and the remaining stage tasks are unfinished.
+
+The artifact payload/progress control gap is now repaired locally. Both
+providers independently implement bounded exact-stamp capture, replacement and
+removal, without exposing private paths. Eight additional actual-binding rows
+cover damaged reads, permanent quarantine, progressing commits and payload
+target/capacity/ABA controls; the artifact scope grows to 62 rows. Local damaged
+reads include genuine compatible reopen; Object remains simulation-only.
+The progress observer is installed when the common assertion requests it,
+after setup publication, and the controlled clock advances monotonically.
+Payload controls retain the actual authority's read protection across stamp
+selection and I/O; controlled races require deletion to wait, preventing
+replacement from resurrecting already-reclaimed bytes.
+Fresh packages pass all 218 selected Consumer rows. Actual/frozen damaged-read
+and progress families have matching named SDK-only assertion failures, and
+original negative consumers also reject loss of quarantine after async reopen.
+These remain local diagnostics, not complete QC-03 or stage completion.
 
 Exact `58a9495`,
 [run40249387122](https://github.com/Stonefly-Labs/Hoard/actions/runs/40249387122),

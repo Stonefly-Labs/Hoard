@@ -209,6 +209,19 @@ that boundary must still fault settlement. Local complete boundary-family
 parity retains identical SDK bytes and a paired concurrent-receipt assertion
 mutation. It does not supply missing metadata/artifact extraction controls.
 
+Eight payload/progress rows extend the complete artifact selection to 62.
+They preserve every earlier identity/image requirement. Local bitflip/truncated
+read rows require a genuine compatible-reopen child origin in addition to
+their parent; Object rows have no durable-reopen claim. Exact payload controls
+must reject stale stamps after actual deletion/recreation and preserve
+independent public content/receipts. Matching local SDK-only assertion
+negatives and original async-reopen denial negatives remain diagnostic parity,
+not native QC-03 source admission or complete category execution.
+Payload-control deletion races additionally require actual authority queue
+observation while selection/I/O is held, completed reclamation after control
+settlement and rejection of subsequent retired-stamp replacement. A delay or
+sequential stale-stamp check alone is not this exclusion proof.
+
 Before launch, the complete map can be partitioned into copied immutable,
 nonempty disjoint scopes with independent child attempt UUIDs. Admission is
 atomic across exactly those scopes and preserves their actual proof bytes,

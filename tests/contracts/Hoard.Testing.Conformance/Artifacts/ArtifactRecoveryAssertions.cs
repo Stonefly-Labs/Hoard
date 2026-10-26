@@ -250,8 +250,17 @@ public static class ArtifactRecoveryAssertions
         Assert.Equal("replacement generation"u8.ToArray(), await ReadAsync(store, receipt.Stamp, cancellationToken));
     }
 
-    public static async Task ProgressingCommitAsync(
+    public static Task ProgressingCommitAsync(
         IArtifactStore store, Action<TimeSpan> advanceClock, Action<Func<ValueTask>> observeProgress,
+        CancellationToken cancellationToken) =>
+        ProgressingCommitAsync(store, advanceClock, callback =>
+        {
+            observeProgress(callback);
+            return ValueTask.CompletedTask;
+        }, cancellationToken);
+
+    public static async Task ProgressingCommitAsync(
+        IArtifactStore store, Action<TimeSpan> advanceClock, Func<Func<ValueTask>, ValueTask> observeProgress,
         CancellationToken cancellationToken)
     {
         var bytes = new byte[1048576];
@@ -267,7 +276,7 @@ public static class ArtifactRecoveryAssertions
             Interlocked.Increment(ref progress);
             return ValueTask.CompletedTask;
         }
-        observeProgress(Advance);
+        await observeProgress(Advance);
         var receipt = Success(await store.CommitAsync(staged, new(), cancellationToken));
         Assert.True(progress >= 4);
         Assert.Equal(ArtifactMutationOutcome.AlreadyPresentVerified, receipt.Outcome);

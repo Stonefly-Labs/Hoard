@@ -4193,6 +4193,10 @@ class SdkDiagnosticTests(unittest.TestCase):
                         for consumer in consumers)
         expected.update(prefix + "Ordinary_acknowledgment_shaped_observer_errors_still_fault_actual_settlement"
                         + f'(provider: "{provider}")' for provider in ("local", "object"))
+        expected.update(prefix + "Observed_payload_and_progress_consumers_preserve_actual_binding_guarantees"
+                        + f'(provider: "{provider}", consumer: "{consumer}")'
+                        for provider in ("local", "object") for consumer in (
+                            "read-bitflip", "read-truncate", "commit-progress", "exact-payload"))
         scenario, = factory()
         self.assertEqual(scenario, ("full-artifact-binding", tuple(sorted(expected)), "None", "Passed", 0, "None"))
         candidate = self.directory / "candidate"

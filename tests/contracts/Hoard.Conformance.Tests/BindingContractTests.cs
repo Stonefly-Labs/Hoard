@@ -562,10 +562,14 @@ public sealed class BindingContractTests
         public ValueTask ReleaseAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
         public ValueTask<ConformanceFaultObservation> ObserveAsync(ConformanceFault f, CancellationToken t) => throw new NotSupportedException();
         public IArtifactBorrowedStream BorrowedSource => throw new NotSupportedException();
+        public int WaitingAuthorityAdmissions => throw new NotSupportedException();
         public IArtifactBorrowedStream BorrowedDestination => throw new NotSupportedException();
         public ValueTask<IAsyncDisposable> ObserveBoundaryAsync(ArtifactObservationPoint p, Func<ValueTask> o, CancellationToken t) => throw new NotSupportedException();
         public ValueTask<IArtifactFaultRegistration> InjectPublicationAcknowledgmentLossAsync(CancellationToken t) => throw new NotSupportedException();
         public ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask<byte[]> CapturePayloadAsync(ArtifactStamp stamp, int maximumBytes, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask ReplacePayloadAsync(ArtifactStamp stamp, ReadOnlyMemory<byte> payload, CancellationToken t) => throw new NotSupportedException();
+        public ValueTask RemovePayloadAsync(ArtifactStamp stamp, CancellationToken t) => throw new NotSupportedException();
         public ValueTask AwaitSettlementAsync(CancellationToken t) => throw new NotSupportedException();
     }
 }

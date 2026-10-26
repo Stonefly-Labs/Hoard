@@ -62,6 +62,7 @@ internal sealed class ArtifactConformanceFaults(
 
     public ImmutableArray<ConformanceFault> SupportedFaults =>
         ConformanceBindingAdmission.RequiredFaults(ConformanceCategory.Artifacts);
+    public int WaitingAuthorityAdmissions => session.WaitingAuthorityAdmissions;
     public IArtifactBorrowedStream BorrowedSource => Borrowed(ConformanceFault.SourceNonCooperation);
     public IArtifactBorrowedStream BorrowedDestination => Borrowed(ConformanceFault.SinkNonCooperation);
 
@@ -186,6 +187,15 @@ internal sealed class ArtifactConformanceFaults(
 
     public ValueTask AwaitSettlementAsync(CancellationToken cancellationToken) =>
         session.AwaitSettlementAsync(cancellationToken);
+
+    public ValueTask<byte[]> CapturePayloadAsync(ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken) =>
+        session.CapturePayloadAsync(stamp, maximumBytes, cancellationToken);
+
+    public ValueTask ReplacePayloadAsync(ArtifactStamp stamp, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken) =>
+        session.ReplacePayloadAsync(stamp, payload, cancellationToken);
+
+    public ValueTask RemovePayloadAsync(ArtifactStamp stamp, CancellationToken cancellationToken) =>
+        session.RemovePayloadAsync(stamp, cancellationToken);
 
     internal async ValueTask DisposeAfterSettlementAsync()
     {

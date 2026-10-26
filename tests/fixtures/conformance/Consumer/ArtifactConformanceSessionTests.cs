@@ -13,6 +13,90 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local", "read-bitflip")]
+    [InlineData("local", "read-truncate")]
+    [InlineData("local", "commit-progress")]
+    [InlineData("local", "exact-payload")]
+    [InlineData("object", "read-bitflip")]
+    [InlineData("object", "read-truncate")]
+    [InlineData("object", "commit-progress")]
+    [InlineData("object", "exact-payload")]
+    public async Task Observed_payload_and_progress_consumers_preserve_actual_binding_guarantees(
+        string provider, string consumer)
+    {
+        await using var resources = new RecordingDirectories();
+        var clock = new ControlledClock();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", clock,
+            resources, new ConformanceEvidenceBuffer());
+        var original = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        IArtifactConformanceSession current = original;
+        var origins = new List<ConformanceSessionOrigin> { original.CaptureOrigin() };
+        try
+        {
+            if (consumer == "commit-progress")
+            {
+                IAsyncDisposable? progress = null;
+                try
+                {
+                    Func<Func<ValueTask>, ValueTask> observe = async callback =>
+                    {
+                        progress = await current.Faults.ObserveBoundaryAsync(
+                            ArtifactObservationPoint.CommitProgress, callback, default);
+                    };
+                    await ArtifactRecoveryAssertions.ProgressingCommitAsync(current.Store, clock.Advance, observe, default);
+                }
+                finally
+                {
+                    try { await current.Faults.AwaitSettlementAsync(default); }
+                    finally { if (progress is not null) { await progress.DisposeAsync(); } }
+                }
+            }
+            else if (consumer == "exact-payload")
+            {
+                await ArtifactReadAssertions.ExactPayloadControlsAsync(current.Store,
+                    current.Faults.CapturePayloadAsync, current.Faults.ReplacePayloadAsync,
+                    current.Faults.RemovePayloadAsync, default);
+                await ArtifactReadAssertions.PayloadControlsExcludeDeletionAsync(current.Store,
+                    current.Faults.CapturePayloadAsync, current.Faults.ReplacePayloadAsync,
+                    current.Faults.RemovePayloadAsync, () => current.Faults.WaitingAuthorityAdmissions,
+                    (callback, token) => current.Faults.ObserveBoundaryAsync(
+                        ArtifactObservationPoint.PayloadSelected, callback, token), default);
+            }
+            else
+            {
+                if (consumer is not ("read-bitflip" or "read-truncate")) { throw new ArgumentException("BindingInvalid"); }
+                await ArtifactReadAssertions.DamagedReadAsync(
+                    current.Store, current.Validator, current.Authority, current.Identity, consumer == "read-truncate",
+                    (stamp, token) => current.Faults.CapturePayloadAsync(stamp, 1024, token),
+                    async (stamp, truncate, token) =>
+                    {
+                        await current.Faults.ArmAsync(ConformanceFault.PayloadDamage, token);
+                        var damaging = current.Faults.DamagePayloadAsync(stamp, truncate, token).AsTask();
+                        try { await current.Faults.WaitForBoundaryAsync(ConformanceFault.PayloadDamage, token); }
+                        finally
+                        {
+                            await current.Faults.ReleaseAsync(ConformanceFault.PayloadDamage, default);
+                            await damaging;
+                        }
+                    }, current.Faults.ReplacePayloadAsync, default, null,
+                    provider == "local" ? async token =>
+                    {
+                        current = await current.ReopenAsync(token);
+                        var reopened = Assert.IsType<ConformanceObservedArtifactSession>(current).CaptureOrigin();
+                        Assert.Equal(origins[0].SessionId, reopened.ParentSessionId);
+                        origins.Add(reopened);
+                        return current.Store;
+                    }
+                : null);
+            }
+            foreach (var origin in origins) { ConformanceSessionOriginOutput.Write(output, origin); }
+        }
+        finally { await current.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local")]
     [InlineData("object")]
     public async Task Ordinary_acknowledgment_shaped_observer_errors_still_fault_actual_settlement(string provider)
@@ -341,6 +425,12 @@ public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
     {
         private long ticks = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero).Ticks;
         public override DateTimeOffset GetUtcNow() => new(Interlocked.Read(ref ticks), TimeSpan.Zero);
-        public void Advance(TimeSpan amount) => Interlocked.Add(ref ticks, amount.Ticks);
+        public override long TimestampFrequency => TimeSpan.TicksPerSecond;
+        public override long GetTimestamp() => Interlocked.Read(ref ticks);
+        public void Advance(TimeSpan amount)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(amount.Ticks);
+            Interlocked.Add(ref ticks, amount.Ticks);
+        }
     }
 }

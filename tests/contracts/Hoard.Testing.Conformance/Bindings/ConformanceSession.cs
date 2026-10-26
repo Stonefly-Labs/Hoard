@@ -165,7 +165,7 @@ public enum ArtifactObservationPoint
     PublicationSelected, ReceiptPersisted, ReadOpened, ReadCopy, DeleteRemoved,
     DeleteReclaimed, CleanupCandidate, TransferQueued, BeforeReconciliation,
     ReconciliationVerified, OperationReleased, OperationCompleted, OperationReclaim, PayloadDamage,
-    DirectVerification
+    DirectVerification, CommitProgress, PayloadSelected
 }
 
 /// <summary>An owned assertion projection, not admission as a complete artifact category binding.</summary>
@@ -178,6 +178,7 @@ public interface IArtifactAssertionSession : IAsyncDisposable
     IArtifactCoordinationAuthority Authority { get; }
     ArtifactStoreIdentity Identity { get; }
     bool Ready { get; }
+    int WaitingAuthorityAdmissions { get; }
     /// <summary>Reopens Local compatibly; Object simulation restarts empty with a fresh epoch and authority.</summary>
     ValueTask<IArtifactAssertionSession> ReopenAsync(CancellationToken cancellationToken);
     ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
@@ -192,6 +193,9 @@ public interface IArtifactAssertionSession : IAsyncDisposable
     ValueTask<IArtifactSynchronousHold> HoldSynchronousStorageAsync(CancellationToken cancellationToken);
     /// <summary>Damages the exact current payload through owned fixture work; it does not change receipt or quarantine state.</summary>
     ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken);
+    ValueTask<byte[]> CapturePayloadAsync(ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken);
+    ValueTask ReplacePayloadAsync(ArtifactStamp stamp, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken);
+    ValueTask RemovePayloadAsync(ArtifactStamp stamp, CancellationToken cancellationToken);
     /// <summary>Joins current provider workers; this does not close authority admission or release owned roots.</summary>
     ValueTask AwaitSettlementAsync(CancellationToken cancellationToken);
     ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken cancellationToken);
@@ -223,12 +227,16 @@ public interface IArtifactConformanceSession : IAsyncDisposable
 
 public interface IArtifactConformanceFaultDriver : IConformanceFaultDriver
 {
+    int WaitingAuthorityAdmissions { get; }
     IArtifactBorrowedStream BorrowedSource { get; }
     IArtifactBorrowedStream BorrowedDestination { get; }
     ValueTask<IAsyncDisposable> ObserveBoundaryAsync(
         ArtifactObservationPoint point, Func<ValueTask> observer, CancellationToken cancellationToken);
     ValueTask<IArtifactFaultRegistration> InjectPublicationAcknowledgmentLossAsync(CancellationToken cancellationToken);
     ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken);
+    ValueTask<byte[]> CapturePayloadAsync(ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken);
+    ValueTask ReplacePayloadAsync(ArtifactStamp stamp, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken);
+    ValueTask RemovePayloadAsync(ArtifactStamp stamp, CancellationToken cancellationToken);
     ValueTask AwaitSettlementAsync(CancellationToken cancellationToken);
 }
 

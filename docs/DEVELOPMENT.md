@@ -10126,6 +10126,58 @@ extraction and later stages remain unfinished; no checklist/task marker advances
 Examples, deployment instructions and diagrams are unaffected by these
 test-only controls; no product API or infrastructure is changed.
 
+### Actual artifact payload and progress controls
+
+Independent Local/Object controls now capture, replace and remove only the
+exact current stamp, through real tracked work with a five-second budget and
+64 KiB bound. They preserve receipts/quarantine, copy submitted and captured
+bytes, reject missing targets and prevent stale-incarnation ABA edits.
+Eight new actual-binding rows extend the artifact scope from 54 to 62.
+Local damaged-read rows genuinely reopen and contribute parent/child origins;
+Object retains simulation-only scope. The original permanent-quarantine body
+and its frozen checksum are unchanged. Additional original negative-consumer
+checks reject lost quarantine denial after asynchronous compatible reopen and
+accept the genuine reopened store, without changing runtime identities.
+
+The first payload replay exposes both progress rows; coherent monotonic clock
+advancement fixes Local, while Object still records failed settlement because
+the observer was registered during setup publication. An awaited SDK installer
+now registers at the assertion's actual installation point. It preserves the
+legacy wrapper entry point and unchanged progress/receipt assertions.
+A later negative-consumer replay catches an inaccessible internal SDK helper;
+the wrapper now uses its existing local helper. Failed workspaces are retained.
+
+The interim architecture review additionally finds a check/I/O deletion race:
+replacement can recreate retired bytes after deletion reports reclamation.
+Controlled actual-binding regressions reproduce two named
+`PayloadControlsExcludeDeletionAsync` failures before repair. Both providers
+now acquire the existing authority's read protection inside tracked work and
+hold it through selection, payload I/O and disposal. At the typed
+`PayloadSelected` boundary, the regression observes genuine queued deletion,
+not an arbitrary sleep, across replacement, capture and removal; deletion
+completes with reclamation only after each control settles. The initial race
+probes fail setup/cleanup and are not counted as named assertion evidence.
+
+The final fresh fourteen-package replay passes all 218 selected Consumer rows,
+zero skips. Eight actual payload/progress rows and thirteen original rows
+(six corresponding wrappers plus seven deliberate-negative consumers) pass
+with identical SDK bytes. SDK-only damaged-read assertion mutation gives four
+named failures in each corresponding family; the progress mutation gives two.
+No Consumer/wrapper source changes occur within a mutation trial. Full tooling,
+133 SDK contracts, changed C# whitespace, frozen inventory, embedded catalog
+and Git whitespace checks pass. These are local diagnostics, not new native
+admission, QC-03 completion or a completed implementation stage.
+README, provider guidance and active plan/quickstart/contracts are updated.
+Examples, diagrams and deployment guides are unaffected: no product API,
+deployment behavior, infrastructure or dependency boundary changes.
+
+Exact `e192af0fe5ae1be1d8f89ff0c595cb22266b5613`,
+[run40260447361](https://github.com/Stonefly-Labs/Hoard/actions/runs/40260447361),
+independently admits the older read/deletion source checkpoint: all three
+Linux jobs, 336 foundations without skips, locked replay and unchanged complete
+native obligations pass. All public reports remain `Incomplete`. This does not
+admit later boundary, metadata ownership or payload/progress changes.
+
 ### Native source-sealing and shared-consumer admission history
 
 Exact `58a949543ea160b5be21c13db581f01387d33719`,

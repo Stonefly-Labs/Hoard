@@ -552,6 +552,18 @@ and closure regressions without replacing earlier identities. A fresh local
 package replay passes 210 selected Consumer rows; per-provider six-row
 actual/original assertion parity includes an SDK-only named failure/repair.
 These diagnostics do not establish new native or complete category admission.
+Eight additional actual artifact rows cover bitflip/truncated reads, progressing
+commits and bounded exact-stamp payload controls. The full artifact selection
+is now 62; Local damaged-read rows genuinely reopen, while Object remains
+simulation-only. Fresh packages pass 218 selected Consumer rows. Identical-SDK
+actual/frozen read/progress parity includes named assertion negatives; original
+negative consumers additionally reject lost async-reopen quarantine denial.
+The observer installs at the shared assertion's requested point and the
+controlled clock advances both UTC and monotonic time. These remain local
+diagnostics, not complete QC-03 or native category acceptance.
+Payload controls also retain real authority read protection across selection
+and I/O; controlled `PayloadSelected` races observe deletion queued until each
+replacement/capture/removal settles, rather than recreating reclaimed bytes.
 The source-linked `AuthorityIntegrationTests.cs` runs in the package-only
 Consumer, not the ordinary SDK contract assembly: all four actual compositions
 and eight consumers produce 32 exact passing rows. Actual bridge/authority/

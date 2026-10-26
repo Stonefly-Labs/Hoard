@@ -105,20 +105,11 @@ public sealed class ArtifactReadVerificationTests(ITestOutputHelper output)
         await using var driver = await ArtifactProviderDriver.CreateAsync(provider);
         var observations = new ArtifactProviderDriver.OriginalObservationSequence(
             output, nameof(ArtifactReadVerificationTests), parameter: $"truncate: {truncate}");
-        string? path = null;
         await ArtifactReadAssertions.DamagedReadAsync(
             driver.Store, driver.Validator, driver.Authority, driver.Identity, truncate,
-            () =>
-            {
-                path = Directory.GetFiles(driver.PayloadDirectory).Single();
-                return ValueTask.FromResult(File.ReadAllBytes(path));
-            },
-            damage => { driver.DamageOnlyPayload(damage); return ValueTask.CompletedTask; },
-            bytes =>
-            {
-                File.WriteAllBytes(path ?? throw new InvalidOperationException("Payload was not captured."), bytes);
-                return ValueTask.CompletedTask;
-            }, default, ArtifactEvidenceTests.QuarantineReopen(driver, observations));
+            (stamp, token) => driver.CapturePayloadAsync(stamp, 1024, token),
+            driver.DamagePayloadAsync, driver.ReplacePayloadAsync,
+            default, ArtifactEvidenceTests.QuarantineReopen(driver, observations));
         observations.Observe(driver);
     }
 

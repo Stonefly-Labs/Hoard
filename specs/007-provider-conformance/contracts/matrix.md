@@ -124,6 +124,17 @@ cover both bindings; visibility-before-ack is Local and independent direct
 availability is Object, matching the unchanged shared assertions' original
 scope. Expected fault registration does not excuse arbitrary observer failures.
 
+Eight further payload/progress rows extend the full artifact scope to 62,
+retaining all preceding identities. Both providers exercise bitflip/truncated
+reads, genuine commit progress and bounded exact-stamp capture/replace/remove,
+including stale-incarnation ABA rejection. Local damaged reads require genuine
+compatible-reopen parent/child origins; Object remains simulation-only.
+Identical-SDK wrapper parity and assertion negatives are local diagnostics,
+not complete QC-03 extraction, native source admission or qualification.
+Each exact-payload row also exercises controlled replacement/capture/removal
+against actual deletion: authority protection excludes reclamation through
+I/O, and subsequent retired-stamp replacement rejects.
+
 Protocol/identity fixtures qualify declarations and lifecycle only. No
 operational case inventory is invented for them. There are no remote-service
 profiles in the initial catalog; requesting one is an explicit unsupported

@@ -1451,6 +1451,10 @@ def full_artifact_binding_scenarios():
                       for consumer in consumers)
     identities.update(prefix + "Ordinary_acknowledgment_shaped_observer_errors_still_fault_actual_settlement"
                       + f'(provider: "{provider}")' for provider in ("local", "object"))
+    identities.update(prefix + "Observed_payload_and_progress_consumers_preserve_actual_binding_guarantees"
+                      + f'(provider: "{provider}", consumer: "{consumer}")'
+                      for provider in ("local", "object") for consumer in (
+                          "read-bitflip", "read-truncate", "commit-progress", "exact-payload"))
     return (("full-artifact-binding", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
@@ -2930,8 +2934,12 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
         raise evidence.ConformanceError("WitnessMissing")
     if name in ("full-artifact-binding", "full-metadata-binding"):
         reopen = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_full_binding_reopens_actual_components_and_fences_stale_controls"
+        payload_reopen = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_payload_and_progress_consumers_preserve_actual_binding_guarantees"
         counts = (full_metadata_binding_origin_counts() if name == "full-metadata-binding" else
-                  {identity: 2 if identity.split("(")[0] == reopen else 1 for identity in identities})
+                  {identity: 2 if identity.split("(")[0] == reopen or (
+                      identity.split("(")[0] == payload_reopen and '(provider: "local"' in identity
+                      and any(f'consumer: "{consumer}"' in identity for consumer in ("read-bitflip", "read-truncate")))
+                   else 1 for identity in identities})
         validate_full_binding_origins(ingested, inputs, counts)
     if hook_admission:
         validate_full_binding_origins(ingested, inputs, {identity: 1 for identity in identities})

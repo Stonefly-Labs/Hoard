@@ -248,6 +248,7 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
     public abstract IArtifactStoreLifetime Lifetime { get; }
     protected abstract bool ProviderReady { get; }
     public IArtifactCoordinationAuthority Authority => Generation.Authority;
+    public int WaitingAuthorityAdmissions => Generation.Authority.WaitingAdmissions;
     public ArtifactStoreIdentity Identity => Generation.Identity;
     public bool Ready
     {
@@ -303,6 +304,47 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
 
     protected abstract ValueTask<ArtifactResult<long>> DamageProviderPayloadAsync(
         ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken);
+    protected abstract ValueTask<ArtifactResult<byte[]>> CaptureProviderPayloadAsync(
+        ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken);
+    protected abstract ValueTask<ArtifactResult<long>> ReplaceProviderPayloadAsync(
+        ArtifactStamp stamp, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken);
+    protected abstract ValueTask<ArtifactResult<long>> RemoveProviderPayloadAsync(
+        ArtifactStamp stamp, CancellationToken cancellationToken);
+
+    public ValueTask<byte[]> CapturePayloadAsync(ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken) =>
+        PayloadControlAsync(stamp, () => CaptureProviderPayloadAsync(stamp, maximumBytes, cancellationToken), cancellationToken);
+
+    public async ValueTask ReplacePayloadAsync(ArtifactStamp stamp, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken) =>
+        _ = await PayloadControlAsync(stamp, () => ReplaceProviderPayloadAsync(stamp, payload, cancellationToken), cancellationToken);
+
+    public async ValueTask RemovePayloadAsync(ArtifactStamp stamp, CancellationToken cancellationToken) =>
+        _ = await PayloadControlAsync(stamp, () => RemoveProviderPayloadAsync(stamp, cancellationToken), cancellationToken);
+
+    private ValueTask<T> PayloadControlAsync<T>(
+        ArtifactStamp stamp, Func<ValueTask<ArtifactResult<T>>> operation, CancellationToken cancellationToken) where T : notnull
+    {
+        ArgumentNullException.ThrowIfNull(stamp);
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false })
+            { throw new InvalidOperationException("BindingInvalid"); }
+            return InvokeAsync();
+        }
+
+        async ValueTask<T> InvokeAsync()
+        {
+            var result = await operation();
+            cancellationToken.ThrowIfCancellationRequested();
+            return result switch
+            {
+                ArtifactResult<T>.Success success => success.Value,
+                ArtifactResult<T>.Failure failure => throw new InvalidOperationException("FaultControl." + failure.Code),
+                _ => throw new InvalidOperationException("BindingInvalid")
+            };
+        }
+    }
 
     public ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken)
     {

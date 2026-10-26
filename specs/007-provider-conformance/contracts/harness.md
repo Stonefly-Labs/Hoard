@@ -1452,6 +1452,20 @@ held-candidate reopen/disposal admission. The original wrappers use the same
 SDK assertions through typed capture/payload-change controls. Local package and
 assertion-mutation parity do not establish complete extraction/native admission.
 
+The artifact payload/progress extension preserves the preceding 54 rows and
+requires eight more: bitflip/truncated reads, progressing commits and exact
+payload controls on each binding. Capture/replacement/removal use bounded
+copied buffers and the exact current stamp, never private paths. Local damaged
+reads perform genuine compatible reopen and require both actual origins;
+Object remains simulation-only. The typed progress observer registers when
+the SDK requests it, after setup publication. The unchanged quarantine helper
+and additional async-reopen denial check remain mandatory. Local assertion
+parity/negative controls are not a complete QC-03 or native source parent.
+The actual authority's read protection must span payload selection, I/O and
+file disposal. The typed `PayloadSelected` boundary and waiting-admission
+counter corroborate real deletion exclusion; stamp checking alone cannot
+authorize recreating a payload after its incarnation has been reclaimed.
+
 The separate `actual-authority-integration` diagnostic scope requires all
 32 exact rows: four actual compositions times eight unchanged/common or
 ownership consumers. Reduced/foreign scopes reject before launch; routing

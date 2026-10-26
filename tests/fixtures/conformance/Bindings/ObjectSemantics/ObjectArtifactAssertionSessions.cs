@@ -34,6 +34,15 @@ public static class ObjectArtifactAssertionSessions
         protected override ValueTask<ArtifactResult<long>> DamageProviderPayloadAsync(
             ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken) =>
             store.DamagePayloadForQualificationAsync(stamp, truncate, cancellationToken);
+        protected override ValueTask<ArtifactResult<byte[]>> CaptureProviderPayloadAsync(
+            ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken) =>
+            store.CapturePayloadForQualificationAsync(stamp, maximumBytes, cancellationToken);
+        protected override ValueTask<ArtifactResult<long>> ReplaceProviderPayloadAsync(
+            ArtifactStamp stamp, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken) =>
+            store.ReplacePayloadForQualificationAsync(stamp, payload, cancellationToken);
+        protected override ValueTask<ArtifactResult<long>> RemoveProviderPayloadAsync(
+            ArtifactStamp stamp, CancellationToken cancellationToken) =>
+            store.RemovePayloadForQualificationAsync(stamp, cancellationToken);
         protected override void SetObserver(string boundary, Func<ValueTask> observer) => controls.SetObserver(boundary, observer);
         protected override void RemoveObserver(string boundary) => controls.RemoveObserver(boundary);
         protected override void SetSynchronousStorageHold(Action? hold) => controls.BeforeObjectDelete = hold;
@@ -59,6 +68,8 @@ public static class ObjectArtifactAssertionSessions
             ArtifactObservationPoint.OperationReclaim => "object.operation-reclaim",
             ArtifactObservationPoint.PayloadDamage => "object.payload-damage",
             ArtifactObservationPoint.DirectVerification => "object.direct",
+            ArtifactObservationPoint.CommitProgress => "object.commit-progress",
+            ArtifactObservationPoint.PayloadSelected => "object.qualification-payload-selected",
             _ => throw new ArgumentException("BindingInvalid")
         };
     }

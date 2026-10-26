@@ -34,6 +34,15 @@ public static class LocalArtifactAssertionSessions
         protected override ValueTask<ArtifactResult<long>> DamageProviderPayloadAsync(
             ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken) =>
             store.DamagePayloadForQualificationAsync(stamp, truncate, cancellationToken);
+        protected override ValueTask<ArtifactResult<byte[]>> CaptureProviderPayloadAsync(
+            ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken) =>
+            store.CapturePayloadForQualificationAsync(stamp, maximumBytes, cancellationToken);
+        protected override ValueTask<ArtifactResult<long>> ReplaceProviderPayloadAsync(
+            ArtifactStamp stamp, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken) =>
+            store.ReplacePayloadForQualificationAsync(stamp, payload, cancellationToken);
+        protected override ValueTask<ArtifactResult<long>> RemoveProviderPayloadAsync(
+            ArtifactStamp stamp, CancellationToken cancellationToken) =>
+            store.RemovePayloadForQualificationAsync(stamp, cancellationToken);
         protected override void SetObserver(string boundary, Func<ValueTask> observer) => controls.SetObserver(boundary, observer);
         protected override void RemoveObserver(string boundary) => controls.RemoveObserver(boundary);
         protected override void SetSynchronousStorageHold(Action? hold) => controls.BeforeRecordWrite = hold;
@@ -59,6 +68,8 @@ public static class LocalArtifactAssertionSessions
             ArtifactObservationPoint.OperationReclaim => "operation.reclaim",
             ArtifactObservationPoint.PayloadDamage => "payload.damage",
             ArtifactObservationPoint.DirectVerification => "publish.direct",
+            ArtifactObservationPoint.CommitProgress => "publish.progress",
+            ArtifactObservationPoint.PayloadSelected => "qualification.payload-selected",
             _ => throw new ArgumentException("BindingInvalid")
         };
     }

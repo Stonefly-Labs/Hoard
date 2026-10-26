@@ -19,17 +19,8 @@ public sealed class ArtifactEvidenceConsumerTests
             {
                 return ArtifactReadAssertions.DamagedReadAsync(
                     driver.Store, driver.Validator, driver.Authority, driver.Identity, false,
-                    () =>
-                    {
-                        path = Directory.GetFiles(driver.PayloadDirectory).Single();
-                        return ValueTask.FromResult(File.ReadAllBytes(path));
-                    },
-                    truncate => { driver.DamageOnlyPayload(truncate); return ValueTask.CompletedTask; },
-                    bytes =>
-                    {
-                        File.WriteAllBytes(path ?? throw new InvalidOperationException("Payload was not captured."), bytes);
-                        return ValueTask.CompletedTask;
-                    }, default, reopen);
+                    (stamp, token) => driver.CapturePayloadAsync(stamp, 1024, token),
+                    driver.DamagePayloadAsync, driver.ReplacePayloadAsync, default, reopen);
             }
             if (consumer == "committed-detection")
             {
@@ -88,6 +79,47 @@ public sealed class ArtifactEvidenceConsumerTests
             Assert.Equal(1, created);
             Assert.True(driver.Ready);
         }
+        if (consumer != "damaged-read") { return; }
+        foreach (var loseDenial in new[] { true, false })
+        {
+            await using var driver = await ArtifactProviderDriver.CreateAsync("local");
+            LocalArtifactStore? reopened = null;
+            LostReopenDenial? mutation = null;
+            try
+            {
+                async ValueTask<IArtifactStore> ReopenAsync(CancellationToken token)
+                {
+                    ArtifactPublicationTests.Success(
+                        await ((IArtifactStoreLifetime)driver.Store).StopAsync(new(), token));
+                    reopened = new LocalArtifactStore(Path.GetDirectoryName(driver.PayloadDirectory)!);
+                    ArtifactPublicationTests.Success(await reopened.InitializeAsync(
+                        new(ArtifactInitializationMode.ReopenCompatible, driver.Identity, driver.Authority), new(), token));
+                    if (!loseDenial) { return reopened; }
+                    mutation = new LostReopenDenial(reopened);
+                    return mutation;
+                }
+                var checking = ArtifactReadAssertions.DamagedReadAsync(
+                    driver.Store, driver.Validator, driver.Authority, driver.Identity, false,
+                    (stamp, token) => driver.CapturePayloadAsync(stamp, 1024, token),
+                    driver.DamagePayloadAsync, driver.ReplacePayloadAsync, default, null, ReopenAsync);
+                if (loseDenial)
+                {
+                    await Assert.ThrowsAsync<Xunit.Sdk.EqualException>(() => checking);
+                    Assert.NotNull(mutation);
+                    Assert.Equal(1, mutation.ActualCorruptFailures);
+                }
+                else { await checking; }
+                Assert.NotNull(reopened);
+            }
+            finally
+            {
+                if (reopened is not null)
+                { ArtifactPublicationTests.Success(await reopened.StopAsync(new(), default)); }
+                ArtifactPublicationTests.Success(await ((IArtifactStoreLifetime)driver.Store).InitializeAsync(
+                    new(ArtifactInitializationMode.ReopenCompatible, driver.Identity, driver.Authority), new(), default));
+            }
+            Assert.True(driver.Ready);
+        }
     }
 
     [Theory]
@@ -118,20 +150,10 @@ public sealed class ArtifactEvidenceConsumerTests
     {
         static Task CheckAsync(ArtifactProviderDriver driver, IArtifactEvidenceValidator validator)
         {
-            string? path = null;
             return ArtifactReadAssertions.DamagedReadAsync(
                 driver.Store, validator, driver.Authority, driver.Identity, false,
-                () =>
-                {
-                    path = Directory.GetFiles(driver.PayloadDirectory).Single();
-                    return ValueTask.FromResult(File.ReadAllBytes(path));
-                },
-                truncate => { driver.DamageOnlyPayload(truncate); return ValueTask.CompletedTask; },
-                bytes =>
-                {
-                    File.WriteAllBytes(path ?? throw new InvalidOperationException("Payload was not captured."), bytes);
-                    return ValueTask.CompletedTask;
-                }, default, null);
+                (stamp, token) => driver.CapturePayloadAsync(stamp, 1024, token),
+                driver.DamagePayloadAsync, driver.ReplacePayloadAsync, default, null);
         }
 
         await using (var driver = await ArtifactProviderDriver.CreateAsync(provider))

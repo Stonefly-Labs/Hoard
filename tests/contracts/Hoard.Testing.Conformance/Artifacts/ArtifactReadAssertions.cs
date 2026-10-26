@@ -124,14 +124,15 @@ public static class ArtifactReadAssertions
 
     public static async Task DamagedReadAsync(
         IArtifactStore store, IArtifactEvidenceValidator validator, IArtifactCoordinationAuthority authority,
-        ArtifactStoreIdentity identity, bool truncate, Func<ValueTask<byte[]>> capture,
-        Func<bool, ValueTask> damage, Func<byte[], ValueTask> restore, CancellationToken cancellationToken,
-        ArtifactQuarantineReopen? reopen)
+        ArtifactStoreIdentity identity, bool truncate, Func<ArtifactStamp, CancellationToken, ValueTask<byte[]>> capture,
+        Func<ArtifactStamp, bool, CancellationToken, ValueTask> damage,
+        Func<ArtifactStamp, ReadOnlyMemory<byte>, CancellationToken, ValueTask> restore, CancellationToken cancellationToken,
+        ArtifactQuarantineReopen? reopen, Func<CancellationToken, ValueTask<IArtifactStore>>? reopenAsync = null)
     {
         using var source = new ShortSource("detect stored corruption"u8.ToArray());
         var receipt = await PublishAsync(store, source, new(1024), cancellationToken);
-        var bytes = await capture();
-        await damage(truncate);
+        var bytes = await capture(receipt.Stamp, cancellationToken);
+        await damage(receipt.Stamp, truncate, cancellationToken);
         var proof = Assert.IsType<ArtifactOption<ArtifactCommitEvidence>.Some>(receipt.Evidence).Value;
         await using (var session = Success(await store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken)))
         {
@@ -146,9 +147,130 @@ public static class ArtifactReadAssertions
             identity, receipt.Stamp.Identity.Digest, new ArtifactOption<ArtifactStamp>.Some(receipt.Stamp));
         await using var guard = Success(await authority.AcquireAsync(scope, new(), cancellationToken));
         Assert.IsType<ArtifactResult<ArtifactStamp>.Failure>(await validator.ValidateAsync(proof, guard, new(), cancellationToken));
-        await restore(bytes);
+        await restore(receipt.Stamp, bytes, cancellationToken);
         await guard.DisposeAsync();
-        await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen);
+        if (reopenAsync is not null)
+        {
+            Assert.Null(reopen);
+            await ArtifactEvidenceAssertions.QuarantineAfterCompatibleReopenAsync(
+                store, receipt, bytes, cancellationToken, reopenAsync);
+        }
+        else { await ArtifactEvidenceAssertions.QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, reopen); }
+    }
+
+    public static async Task ExactPayloadControlsAsync(
+        IArtifactStore store, Func<ArtifactStamp, int, CancellationToken, ValueTask<byte[]>> capture,
+        Func<ArtifactStamp, ReadOnlyMemory<byte>, CancellationToken, ValueTask> replace,
+        Func<ArtifactStamp, CancellationToken, ValueTask> remove, CancellationToken cancellationToken)
+    {
+        var bytes = "exact bounded payload"u8.ToArray();
+        using var source = new ShortSource(bytes);
+        var receipt = await PublishAsync(store, source, new(1024), cancellationToken);
+        var controlBytes = "independent control"u8.ToArray();
+        using var controlSource = new ShortSource(controlBytes);
+        var control = await PublishAsync(store, controlSource, new(1024), cancellationToken);
+        var copy = await capture(receipt.Stamp, 1024, cancellationToken);
+        Assert.Equal(bytes, copy);
+        copy[0] ^= 0xff;
+        Assert.Equal(bytes, await capture(receipt.Stamp, 1024, cancellationToken));
+        Assert.Equal("FaultControl.Capacity", (await Assert.ThrowsAsync<InvalidOperationException>(
+            () => capture(receipt.Stamp, bytes.Length - 1, cancellationToken).AsTask())).Message);
+        Assert.Equal("FaultControl.InvalidInput", (await Assert.ThrowsAsync<InvalidOperationException>(
+            () => capture(receipt.Stamp, 65537, cancellationToken).AsTask())).Message);
+        Assert.Equal("FaultControl.InvalidInput", (await Assert.ThrowsAsync<InvalidOperationException>(
+            () => replace(receipt.Stamp, new byte[65537], cancellationToken).AsTask())).Message);
+        var stale = new ArtifactStamp(receipt.Stamp.Store, receipt.Stamp.Identity, Guid.NewGuid());
+        foreach (var action in new Func<Task>[]
+        {
+            () => capture(stale, 1024, cancellationToken).AsTask(),
+            () => replace(stale, bytes, cancellationToken).AsTask(),
+            () => remove(stale, cancellationToken).AsTask()
+        })
+        {
+            Assert.Equal("FaultControl.Conflict", (await Assert.ThrowsAsync<InvalidOperationException>(action)).Message);
+        }
+        var changing = "changed"u8.ToArray();
+        var replacing = replace(receipt.Stamp, changing, cancellationToken);
+        changing[0] ^= 0xff;
+        await replacing;
+        Assert.Equal("changed"u8.ToArray(), await capture(receipt.Stamp, 1024, cancellationToken));
+        Assert.Equal(controlBytes, await ReadAsync(store, control.Stamp, cancellationToken));
+        await remove(receipt.Stamp, cancellationToken);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => capture(receipt.Stamp, 1024, cancellationToken).AsTask());
+        await Assert.ThrowsAsync<InvalidOperationException>(() => remove(receipt.Stamp, cancellationToken).AsTask());
+        await replace(receipt.Stamp, bytes, cancellationToken);
+        await replace(receipt.Stamp, Array.Empty<byte>(), cancellationToken);
+        Assert.Empty(await capture(receipt.Stamp, 0, cancellationToken));
+        await replace(receipt.Stamp, bytes, cancellationToken);
+        Assert.Equal(bytes, await ReadAsync(store, receipt.Stamp, cancellationToken));
+        Assert.Equal(receipt, Assert.IsType<ArtifactResolution.Committed>(
+            Success(await store.ReconcileAsync(receipt.Ticket, new(), cancellationToken))).Receipt);
+        Assert.Equal(controlBytes, await ReadAsync(store, control.Stamp, cancellationToken));
+        var deletion = Success(await store.ReserveDeleteAsync(new(receipt.Stamp), new(), cancellationToken));
+        Success(await store.DeleteAsync(deletion, new(), cancellationToken));
+        using var replacementSource = new ShortSource(bytes);
+        var replacement = await PublishAsync(store, replacementSource, new(1024), cancellationToken);
+        Assert.NotEqual(receipt.Stamp, replacement.Stamp);
+        foreach (var action in new Func<Task>[]
+        {
+            () => capture(receipt.Stamp, 1024, cancellationToken).AsTask(),
+            () => replace(receipt.Stamp, bytes, cancellationToken).AsTask(),
+            () => remove(receipt.Stamp, cancellationToken).AsTask()
+        })
+        {
+            Assert.Equal("FaultControl.Conflict", (await Assert.ThrowsAsync<InvalidOperationException>(action)).Message);
+        }
+        Assert.Equal(bytes, await ReadAsync(store, replacement.Stamp, cancellationToken));
+    }
+
+    public static async Task PayloadControlsExcludeDeletionAsync(
+        IArtifactStore store, Func<ArtifactStamp, int, CancellationToken, ValueTask<byte[]>> capture,
+        Func<ArtifactStamp, ReadOnlyMemory<byte>, CancellationToken, ValueTask> replace,
+        Func<ArtifactStamp, CancellationToken, ValueTask> remove, Func<int> waitingAdmissions,
+        Func<Func<ValueTask>, CancellationToken, ValueTask<IAsyncDisposable>> observeSelected,
+        CancellationToken cancellationToken)
+    {
+        for (var operation = 0; operation < 3; operation++)
+        {
+            var bytes = new byte[] { 41, 42, (byte)operation };
+            using var source = new ShortSource(bytes);
+            var receipt = await PublishAsync(store, source, new(1024), cancellationToken);
+            var ticket = Success(await store.ReserveDeleteAsync(new(receipt.Stamp), new(), cancellationToken));
+            await using var barrier = new ArtifactConformanceBarrier("payload-control-delete");
+            await using var observation = await observeSelected(() => new(barrier.HoldAsync()), cancellationToken);
+            using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            budget.CancelAfter(TimeSpan.FromSeconds(15));
+            Task control = operation switch
+            {
+                0 => replace(receipt.Stamp, bytes, budget.Token).AsTask(),
+                1 => capture(receipt.Stamp, 1024, budget.Token).AsTask(),
+                _ => remove(receipt.Stamp, budget.Token).AsTask()
+            };
+            Task<ArtifactResult<ArtifactMutationReceipt>>? deleting = null;
+            try
+            {
+                await barrier.Entered.WaitAsync(budget.Token);
+                deleting = store.DeleteAsync(ticket, new(), budget.Token).AsTask();
+                while (waitingAdmissions() == 0 && !deleting.IsCompleted)
+                { await Task.Delay(1, budget.Token); }
+                Assert.False(deleting.IsCompleted);
+                Assert.Equal(1, waitingAdmissions());
+            }
+            finally
+            {
+                barrier.Release();
+                try { await control; }
+                finally { if (deleting is not null) { await deleting; } }
+            }
+            Assert.NotNull(deleting);
+            var removed = Success(await deleting);
+            Assert.Equal(ArtifactMutationOutcome.Removed, removed.Outcome);
+            Assert.Equal(ArtifactReclamation.Reclaimed, removed.Reclamation);
+            Assert.Equal(ArtifactFailureCode.NotFound, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+                await store.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken)).Code);
+            Assert.Equal("FaultControl.Conflict", (await Assert.ThrowsAsync<InvalidOperationException>(
+                () => replace(receipt.Stamp, bytes, cancellationToken).AsTask())).Message);
+        }
     }
 
     public static async Task DestinationFailureAsync(

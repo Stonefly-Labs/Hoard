@@ -165,6 +165,17 @@ public static class ArtifactEvidenceAssertions
         }
     }
 
+    public static async Task QuarantineAfterCompatibleReopenAsync(
+        IArtifactStore store, ArtifactMutationReceipt receipt, byte[] bytes, CancellationToken cancellationToken,
+        Func<CancellationToken, ValueTask<IArtifactStore>> reopenAsync)
+    {
+        ArgumentNullException.ThrowIfNull(reopenAsync);
+        await QuarantineIsPermanentAsync(store, receipt, bytes, cancellationToken, null);
+        var reopened = await reopenAsync(cancellationToken);
+        Assert.Equal(ArtifactFailureCode.CorruptContent, Assert.IsType<ArtifactResult<IArtifactReadSession>.Failure>(
+            await reopened.OpenReadAsync(new(receipt.Stamp.Identity.Digest), new(), cancellationToken)).Code);
+    }
+
     private sealed class CopiedGuard(ArtifactProtectionGrant grant) : IArtifactProtectionGuard
     {
         public ArtifactProtectionGrant Grant => grant;

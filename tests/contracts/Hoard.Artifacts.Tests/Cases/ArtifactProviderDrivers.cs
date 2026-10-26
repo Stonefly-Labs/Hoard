@@ -124,6 +124,44 @@ internal sealed class ArtifactProviderDriver : IArtifactProviderDriver
         file.Flush(flushToDisk: true);
     }
 
+    public async ValueTask<byte[]> CapturePayloadAsync(ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken) =>
+        PayloadValue(await (lifetime switch
+        {
+            LocalArtifactStore local => local.CapturePayloadForQualificationAsync(stamp, maximumBytes, cancellationToken),
+            ObjectArtifactStore objects => objects.CapturePayloadForQualificationAsync(stamp, maximumBytes, cancellationToken),
+            _ => throw new InvalidOperationException("Unknown artifact fixture.")
+        }));
+
+    public async ValueTask DamagePayloadAsync(ArtifactStamp stamp, bool truncate, CancellationToken cancellationToken) =>
+        _ = PayloadValue(await (lifetime switch
+        {
+            LocalArtifactStore local => local.DamagePayloadForQualificationAsync(stamp, truncate, cancellationToken),
+            ObjectArtifactStore objects => objects.DamagePayloadForQualificationAsync(stamp, truncate, cancellationToken),
+            _ => throw new InvalidOperationException("Unknown artifact fixture.")
+        }));
+
+    public async ValueTask ReplacePayloadAsync(ArtifactStamp stamp, ReadOnlyMemory<byte> payload, CancellationToken cancellationToken) =>
+        _ = PayloadValue(await (lifetime switch
+        {
+            LocalArtifactStore local => local.ReplacePayloadForQualificationAsync(stamp, payload, cancellationToken),
+            ObjectArtifactStore objects => objects.ReplacePayloadForQualificationAsync(stamp, payload, cancellationToken),
+            _ => throw new InvalidOperationException("Unknown artifact fixture.")
+        }));
+
+    public void ObserveCommitProgress(Func<ValueTask> observer)
+    {
+        if (LocalControls is { } local) { local.SetObserver("publish.progress", observer); }
+        else if (ObjectControls is { } objects) { objects.SetObserver("object.commit-progress", observer); }
+        else { throw new InvalidOperationException("Unknown artifact fixture."); }
+    }
+
+    private static T PayloadValue<T>(ArtifactResult<T> result) where T : notnull => result switch
+    {
+        ArtifactResult<T>.Success success => success.Value,
+        ArtifactResult<T>.Failure failure => throw new InvalidOperationException("FaultControl." + failure.Code),
+        _ => throw new InvalidOperationException("Unknown artifact outcome.")
+    };
+
     public static async Task<ArtifactProviderDriver> CreateAsync(string providerId, TimeProvider? clock = null,
         ArtifactLimits? limits = null,
         Func<ArtifactStamp, CancellationToken, ValueTask<ArtifactReferenceDecision>>? references = null,

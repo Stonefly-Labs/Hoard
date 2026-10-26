@@ -26,6 +26,23 @@ Cancellation after a mutation restores before releasing the target.
 applying owner still rejects recovery and closure. No private database image
 type enters the SDK; Memory gains no durability.
 
+Artifact fault drivers additionally expose bounded exact-stamp payload capture,
+replacement and removal. Each provider executes its own tracked controls,
+rejects stale incarnations and enforces a 64 KiB qualification-payload limit;
+capture and replacement copy caller-owned bytes. Controls do not fabricate
+receipts or clear quarantine. They hold genuine authority read protection
+through target selection, I/O and file disposal, excluding concurrent deletion.
+`PayloadSelected` observes that actual check/I/O boundary; the waiting-admission
+counter corroborates genuine deletion blocking without a timing-only assertion.
+`CommitProgress` maps independently to each
+provider's genuine progress boundary. Registration occurs at the common
+assertion's requested installation point, not during its setup publication.
+Local damaged-read consumers preserve compatible-reopen quarantine through the
+observed session; Object does not claim durable reopen. The original permanent
+quarantine helper remains unchanged, with explicit async-reopen denial negatives.
+The 62-row actual artifact selection and local wrapper/assertion parity remain
+diagnostic evidence, not complete extraction or provider certification.
+
 Its initial SDK checkpoint has 53 executable metadata methods, typed sessions,
 an identity-pinned allocator, bounded runtime logger and exact discovery/origin
 transport. Native run
