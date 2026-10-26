@@ -42,6 +42,10 @@ is currently blocked by local scratch capacity; complete profiles and independen
 verification remain unfinished. See the [implementation checkpoint](specs/007-provider-conformance/plan.md#reviewed-legacy-ownership-and-provider-attribution).
 The independent metadata inventory decoder now also requires the actual legacy
 transport input; resealed command graphs cannot omit it.
+The separate forwarding contributor package now demonstrates good/faulty/corrected
+execution of one unchanged metadata assertion, plus genuine legacy/reopen controls.
+It wraps Memory and is not a third provider; the full CLI contributor journey
+and complete applicable-suite acceptance remain unfinished.
 
 ## ✨ The idea
 

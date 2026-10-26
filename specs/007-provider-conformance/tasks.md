@@ -167,11 +167,11 @@ a third independent implementation.
 
 ### Tests first
 
-- [ ] T062 [P] [US4] Add package-only contributor good/faulty/corrected journey tests in `tests/contracts/Hoard.Conformance.Tests/ContributorJourneyTests.cs`, asserting intended stale conditional-operation failure, unchanged platform/provider/assertion bytes and explicit category validation (FR-015,019; QC-30,31).
+- [X] T062 [P] [US4] Add package-only contributor good/faulty/corrected journey tests in `tests/contracts/Hoard.Conformance.Tests/ContributorJourneyTests.cs`, asserting intended stale conditional-operation failure, unchanged platform/provider/assertion bytes and explicit category validation (FR-015,019; QC-30,31).
 
 ### Implementation
 
-- [ ] T063 [US4] Implement good and selectable faulty forwarding bindings in `tests/fixtures/conformance/Contributor/`, using typed setup/fault/cleanup seams over one existing fixture; faulty adapter returns stale conditional result, never changes shared expected outcomes or pretends to be an independent provider (FR-015,019; QC-30,31).
+- [X] T063 [US4] Implement good and selectable faulty forwarding bindings in `tests/fixtures/conformance/Contributor/`, using typed setup/fault/cleanup seams over one existing fixture; faulty adapter returns stale conditional result, never changes shared expected outcomes or pretends to be an independent provider (FR-015,019; QC-30,31).
 - [ ] T064 [US4] Wire explicit `--binding-project` build/pack/category admission in `scripts/conformance_evidence.py` and `tests/fixtures/conformance/Consumer/`, using complete applicable common catalog and exact new package hashes, no reflection/directory loading or provider-chosen case omissions (FR-015,018; QC-30).
 - [ ] T065 [US4] Write clean-checkout reproduction and owned-recovery guide in `examples/ProviderConformance/README.md` covering dependency restore, private scratch, explicit package resolution, good/faulty/corrected commands, exclusions, safe diagnostics, changed-input reruns and unavailable service scope; no undocumented/cloud/credential requirement (FR-015..017,023,024; QC-32,35..37).
 - [ ] T066 [US4] Execute guide verbatim from an isolated clean source snapshot via `scripts/validate-conformance.sh`, recording separate good/red/corrected runs, actual unchanged consumer/assertion hashes and intended assertion failure with corrected package-only behavior (FR-015,019,024; QC-30..32).

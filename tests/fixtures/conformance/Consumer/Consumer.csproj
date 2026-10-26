@@ -7,6 +7,7 @@
   <ItemGroup>
     <Compile Remove="SqliteEnvironmentProbe.cs;SqliteNativeOwnershipProbe.cs" />
     <Compile Include="../../../contracts/Hoard.Conformance.Tests/AuthorityIntegrationTests.cs" Link="AuthorityIntegrationTests.cs" />
+    <Compile Include="../../../contracts/Hoard.Conformance.Tests/ContributorJourneyTests.cs" Link="ContributorJourneyTests.cs" />
     <Compile Include="../../../contracts/Hoard.Conformance.Tests/CategoryMutationTests.cs" Link="CategoryMutationTests.cs"
              Condition="'$(ConformanceCategoryMutations)' == 'true'" />
     <Compile Include="../Bindings/Mutations/*.cs" Link="Mutations/%(Filename)%(Extension)"
@@ -17,6 +18,7 @@
     <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Memory" />
     <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.Local" />
     <PackageReference Include="Hoard.Fixtures.Conformance.Bindings.ObjectSemantics" />
+    <PackageReference Include="Hoard.Fixtures.Conformance.Contributor" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" PrivateAssets="all" />
     <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
     <Using Include="Xunit" />

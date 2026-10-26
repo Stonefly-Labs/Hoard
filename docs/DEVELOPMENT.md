@@ -4668,6 +4668,20 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+T062/T063 now supply a separately packed Memory-forwarding contributor adapter
+and package-only good/faulty/corrected controls. Two actual safe-logger witnesses
+pass from an isolated source/feed/cache. The faulty state triggers the intended
+shared assertion; good/corrected states use the same compiled consumer and six
+unchanged platform/provider/adapter/assertion images. All fifteen consumer runtime
+package images match their actual local archives. Fresh-cache default locked
+restore/build also passes, and its generated consumer lock is retained in Git.
+Focused C# whitespace formatting passes; tooling remains 478 passes with
+nineteen explicit native skips. Native SDK diagnostics now explicitly select both
+contributor controls and pack the contributor before its consumer. Native
+admission is pending; the isolated component check does not complete T064..T067
+or the public CLI/guide journey. The stage remains `implement / running` with
+37/86 tasks checked.
+
 Linux run40395540197 exposed an input-set mismatch: Python's inventory producer
 included `conformance_legacy.py`, but the independent C# decoder retained its old
 required source list. Focused regressions reproduce rejection of a complete graph

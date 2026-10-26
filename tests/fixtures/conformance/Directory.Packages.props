@@ -14,5 +14,6 @@
     <PackageVersion Include="Hoard.Fixtures.Conformance.Bindings.Memory" Version="[0.1.0]" />
     <PackageVersion Include="Hoard.Fixtures.Conformance.Bindings.Local" Version="[0.1.0]" />
     <PackageVersion Include="Hoard.Fixtures.Conformance.Bindings.ObjectSemantics" Version="[0.1.0]" />
+    <PackageVersion Include="Hoard.Fixtures.Conformance.Contributor" Version="[0.1.0]" />
   </ItemGroup>
 </Project>

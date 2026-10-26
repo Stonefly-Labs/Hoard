@@ -100,15 +100,17 @@ PAYLOAD_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.Artifact
 FULL_METADATA_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.MetadataConformanceSessionTests."
 AUTHORITY_INTEGRATION_PREFIX = "Hoard.Conformance.Tests.AuthorityIntegrationTests."
 CATEGORY_MUTATION_PREFIX = "Hoard.Conformance.Tests.CategoryMutationTests."
+CONTRIBUTOR_JOURNEY_PREFIX = "Hoard.Conformance.Tests.ContributorJourneyTests."
 ARTIFACT_CONSUMER_PREFIXES = (
     ARTIFACT_CONSUMER_PREFIX, OBJECT_ARTIFACT_CONSUMER_PREFIX, CONFIGURED_ARTIFACT_CONSUMER_PREFIX,
     PAYLOAD_ARTIFACT_CONSUMER_PREFIX, FULL_ARTIFACT_CONSUMER_PREFIX, AUTHORITY_INTEGRATION_PREFIX,
-    CATEGORY_MUTATION_PREFIX)
+    CATEGORY_MUTATION_PREFIX, CONTRIBUTOR_JOURNEY_PREFIX)
 ARTIFACT_CONSUMER_PACKAGES = (
     "Hoard.Abstractions", "Hoard.Testing.Conformance",
     "Hoard.Fixtures.Metadata.Memory", "Hoard.Fixtures.Metadata.Sqlite",
     "Hoard.Fixtures.Artifacts.Local", "Hoard.Fixtures.Artifacts.ObjectSemantics",
     "Hoard.Core", "Hoard.Hosting", "Hoard.Fixtures.Metadata.HostAdapters", "Hoard.Fixtures.Artifacts.HostAdapters",
+    "Hoard.Fixtures.Conformance.Contributor",
     *(f"Hoard.Fixtures.Conformance.Bindings.{name}" for name in ("Memory", "Sqlite", "Local", "ObjectSemantics")),
 )
 LOCAL_PACKAGES = (
@@ -735,6 +737,13 @@ def build_artifact_assertion_consumer(run, candidate, config, feed):
             verify_project_lock(record, candidate, feed)
             write_new(run.root / f"proofs/artifact-binding-{name}-lock-derivation.json",
                       evidence.canonical_bytes(record))
+    project = candidate / "tests/fixtures/conformance/Contributor/Contributor.csproj"
+    lock, record = prepare_project_lock(project, candidate, feed, "candidate")
+    build(run, project, config, "contributor-binding-package", lock=lock, feed=feed,
+          package_id="Hoard.Fixtures.Conformance.Contributor")
+    if record is not None:
+        verify_project_lock(record, candidate, feed)
+        write_new(run.root / "proofs/contributor-binding-lock-derivation.json", evidence.canonical_bytes(record))
     project = candidate / ARTIFACT_CONSUMER / "Consumer.csproj"
     lock, record = prepare_project_lock(project, candidate, feed, "candidate")
     build(run, project, config, "artifact-consumer-locked-replay", lock=lock,
@@ -1427,6 +1436,13 @@ def configured_artifact_session_scenarios():
     return (("configured-artifact-session", tuple(sorted(identities)), "None", "Passed", 0, "None"),)
 
 
+
+
+def contributor_journey_scenarios():
+    return (("contributor-journey", tuple(CONTRIBUTOR_JOURNEY_PREFIX + name for name in (
+        "Good_faulty_and_corrected_packages_use_the_same_common_assertion_and_provider",
+        "Forwarding_preserves_legacy_reopen_and_fault_ownership")),
+        "None", "Passed", 0, "None"),)
 
 
 def category_mutation_scenarios():
@@ -2672,7 +2688,8 @@ def test_attempt(run, inputs, candidate, scenario, *, inspection_cases=None, ins
                             *artifact_direct_verification_scenarios(), *artifact_capacity_injection_scenarios(),
                             *artifact_unclaimed_cleanup_scenarios(), *artifact_synchronous_storage_scenarios(),
                             *full_artifact_binding_scenarios(), *actual_authority_integration_scenarios(),
-                            *category_mutation_scenarios(), *hook_admission_scenarios()):
+                            *category_mutation_scenarios(), *hook_admission_scenarios(),
+                            *contributor_journey_scenarios()):
             raise evidence.ConformanceError("WitnessMissing")
     original_metadata = name.startswith(("original-metadata-", "observed-original-metadata-"))
     original_artifacts = name.startswith((
@@ -4033,7 +4050,8 @@ def execute(repository, destination, *, category=None):
             print(json.dumps(summary, sort_keys=True))
             return 0
         observations = []
-        for scenario in (*SCENARIOS, *original_metadata_scenarios(), *original_artifact_publication_scenarios(),
+        for scenario in (*SCENARIOS, *contributor_journey_scenarios(),
+                         *original_metadata_scenarios(), *original_artifact_publication_scenarios(),
                          *original_artifact_read_delete_scenarios(), *original_artifact_evidence_scenarios()):
             print(json.dumps({"qualification": False, "phase": "runtime-tests",
                               "completedScenarios": len(observations)}), flush=True)

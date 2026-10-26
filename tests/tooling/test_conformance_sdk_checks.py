@@ -3381,12 +3381,14 @@ class SdkDiagnosticTests(unittest.TestCase):
         projects = [
             candidate / f"tests/fixtures/conformance/Bindings/{name}/{name}.csproj"
             for name in ("Local", "ObjectSemantics")]
+        projects.append(candidate / "tests/fixtures/conformance/Contributor/Contributor.csproj")
         projects.append(candidate / checks.ARTIFACT_CONSUMER / "Consumer.csproj")
         self.assertEqual([call.args[0] for call in prepare.call_args_list], projects)
         self.assertEqual([call.args[1] for call in build.call_args_list], projects)
         for call, name in zip(build.call_args_list[:2], ("Local", "ObjectSemantics")):
             self.assertEqual(call.kwargs["feed"], feed)
             self.assertEqual(call.kwargs["package_id"], "Hoard.Fixtures.Conformance.Bindings." + name)
+        self.assertEqual(build.call_args_list[2].kwargs["package_id"], "Hoard.Fixtures.Conformance.Contributor")
         consumer = build.call_args_list[-1]
         self.assertEqual(consumer.args[3], "artifact-consumer-locked-replay")
         self.assertEqual(consumer.kwargs["properties"], (
@@ -3397,7 +3399,8 @@ class SdkDiagnosticTests(unittest.TestCase):
 
     def test_incomplete_or_foreign_owned_local_vectors_never_launch(self):
         for scenario in (*checks.local_artifact_session_scenarios(), *checks.object_artifact_session_scenarios(),
-                         *checks.configured_artifact_session_scenarios(), *checks.payload_artifact_session_scenarios()):
+                         *checks.configured_artifact_session_scenarios(), *checks.payload_artifact_session_scenarios(),
+                         *checks.contributor_journey_scenarios()):
             name, identities, *outcome = scenario
             for invalid in (identities[:-1], identities + ("Foreign.Test",),
                             ("Foreign.Test", *identities[1:])):
@@ -5882,7 +5885,7 @@ class SdkDiagnosticTests(unittest.TestCase):
         with self.assertRaisesRegex(checks.evidence.ConformanceError, "ProofMismatch"):
             capture(before["invocationGroupId"])
         foreign_native.unlink()
-        self.assertEqual(len(before["packages"]), 15)
+        self.assertEqual(len(before["packages"]), 16)
         self.assertNotIn(str(self.directory).encode(), checks.evidence.canonical_bytes(before))
         inspection = self.directory / "stores/inspection.xml"
         inspection.write_bytes(b"selected before execution")

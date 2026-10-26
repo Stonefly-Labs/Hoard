@@ -28,6 +28,21 @@ rule or acceptance gate was reduced.
 The independent C# inventory decoder requires the same actual legacy transport
 input as Python; removing it and resealing command hashes cannot bypass admission.
 
+The test-only `Hoard.Fixtures.Conformance.Contributor` package now exposes
+`ForwardingMetadataBinding(providerPackageSha256, injectStaleReplay: false)`.
+It explicitly forwards Memory setup, schema, authority, faults, reopen and
+actual cleanup ownership. Its declaration identifies a non-durable forwarding
+example, retaining the real underlying provider package identity. Setting
+`injectStaleReplay: true` selects the existing isolated stale-replay decorator;
+it returns an old successful receipt after expiry, so unchanged
+`MetadataTimeAssertions.TicketExpiryAndRollbackAsync` rejects it at the intended
+assertion. Switching only that flag back repairs behavior without changing
+platform, provider, adapter, assertion or consumer image bytes.
+Package-only tests also execute actual legacy upgrade/reopen and reject artifact
+category admission. The package is not published, an independent implementation,
+complete conformance, or a substitute for the still-unbuilt public contributor
+CLI/guide journey.
+
 Metadata test-only corruption controls now retain per-record or exact
 epoch/operation ownership through application and verified restoration. Scope
 overlap and reopen/disposal reject while a target is owned; once closure is

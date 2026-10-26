@@ -7802,6 +7802,55 @@ explicit native skips; frozen inventory/SDK catalog checks and shell syntax
 also pass. Production references/APIs, examples/diagrams, charter/product/
 architecture/ADR documents, infrastructure and release behavior are unchanged.
 
+### Package-only forwarding contributor component
+
+T062/T063 now add `ForwardingMetadataBinding` to the existing separately
+packable contributor project. It explicitly wraps Memory's typed current and
+legacy factories, shared authority, actual fault driver, reopen and settlement.
+Its distinct declaration retains the underlying Memory package identity and
+non-durable capabilities plus `forwarding-example`; it is not a third provider.
+The selectable stale-replay behavior reuses the existing isolated mutation
+decorator, rather than duplicating common assertions or changing expected
+outcomes. Good and corrected behavior differ from faulty behavior only by the
+explicit constructor flag.
+
+Package-only `ContributorJourneyTests` runs three fresh identities through
+unchanged `MetadataTimeAssertions.TicketExpiryAndRollbackAsync`. The faulty
+adapter returns an old success after ticket expiry and triggers the exact
+`IsTypeException` in that named shared assertion. Good/corrected calls pass.
+Hashes of Abstractions, SDK, Memory binding/provider, contributor and consumer
+images stay unchanged across all three runtime selections. A second test
+executes genuine legacy upgrade/reopen and independently rejects artifact-category
+admission. The ordinary contract-only test project excludes these package-only
+tests; the package consumer explicitly references the contributor and its pinned
+central version. No production reference changes.
+
+An isolated macOS source/feed/cache builds all four bindings and the contributor,
+then executes both observed witnesses with an explicit safe logger manifest;
+completion/proof/image attribution passes with exit zero, qualification false.
+All fifteen package runtime images independently match their actual archives.
+An additional fresh-cache default locked consumer restore/build passes before
+publishing its generated lock. This is locked graph replay, not a claim that
+separately rebuilt debug identities have identical bytes; unchanged image bytes
+are checked across the actual good/faulty/corrected invocations.
+The initial restore correctly rejected a missing contributor central version
+with NU1010; adding the explicit pin repairs it. A legacy-only discovery helper
+correctly rejected this foreign consumer assembly, so component execution uses
+the general safe-logger protocol without widening legacy admission.
+
+Native SDK diagnostics now pack the contributor before the consumer, verify its
+runtime image against its archive and independently select the exact two-test
+scope; omitted/foreign scope vectors reject before launch. Tooling passes all
+478 checks with nineteen explicit native skips. Focused contributor/consumer
+whitespace formatting and frozen inventory/SDK catalog checks pass. Native
+execution of these new controls remains pending. This completes the two bounded
+test/adapter tasks, not T064..T067's public binding-project integration, complete
+applicable inventory, clean-checkout guide or actual three-report journey.
+The implementation remains running with 37/86 tasks checked. README and affected
+provider/development guidance are updated; no existing product host example,
+architecture diagram, public API, production dependency, governance, release or
+deployment behavior changes.
+
 ### Independent inventory decoder input-set repair
 
 Exact Linux run40395540197 at `4474b35` passes native foundation tests, fresh
