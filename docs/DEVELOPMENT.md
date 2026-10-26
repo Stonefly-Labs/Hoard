@@ -10461,6 +10461,14 @@ compatibility and five-profile acceptance are not inferred.
 Other guides/examples, diagrams, product APIs, package dependencies and
 infrastructure are unaffected because this changes only test transport routing.
 
+Category report publication also retains `proofs/category-<profile>-<mode>-completion-inputs.json`
+with the actual completion inputs and `0400` permissions. Its hash is the report's
+`postInputSha256`; bounded descriptor-based verification rechecks that packet and
+the existing immutable-input comparison before report publication. Free-space
+variation is not hidden by rewriting either measurement or hash. Missing,
+writable, altered, foreign-input, malformed and symlink packets reject. This
+does not change the CLI guard, release resources or qualify a category.
+
 Linux run `40312172408` at `516b6e4` fails the prepared Object no-rename architecture
 witness; its other two jobs pass. The cause is qualification-only directory moves
 introduced inside the Object provider assembly, not its publication mechanism.

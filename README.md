@@ -2618,6 +2618,11 @@ passes all three Linux jobs. Its qualification-input category batches admit
 with zero failed/incomplete cases. Reports remain explicitly `Incomplete`,
 qualification false; full profile/evaluator and remaining stage work are unfinished.
 
+Category reports now retain the actual completion `RunInputs` as a bounded,
+read-only, hash-linked proof packet. Independent recomputation permits only the
+existing free-space measurement variation; it never replaces the completion
+hash with the admission hash. This adds inspectable evidence, not qualification.
+
 The Object access-fault implementation now lives in its concrete test binding,
 as the original driver-owned fault did. The provider still selects/protects the
 exact stamp and captures the scope before release hooks, but contains no rename

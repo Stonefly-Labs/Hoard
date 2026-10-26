@@ -196,6 +196,11 @@ exclusions; artifacts 99 passes/four exclusions; no failed/incomplete cases).
 The reports still explicitly remain `Incomplete`, qualification false; this
 is not full provider or five-profile acceptance.
 
+Actual completion inputs are retained as read-only category proof packets, bound
+to `postInputSha256` and independently rechecked against admission inputs. Free
+space may vary as a measurement; immutable provider/source/environment inputs
+may not. The reports remain non-qualifying.
+
 Object's driver-owned access faults now reside in its concrete binding, not the
 provider assembly; native exact-stamp selection/protection and pre-hook handle
 capture are unchanged. The provider has no rename mechanism. The unchanged

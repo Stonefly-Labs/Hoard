@@ -2924,6 +2924,7 @@ def _category_record(run, inputs, history, scopes, code=None):
 
 def _category_report(run, inputs, post_inputs, summary):
     inputs = evidence.admit_entity("RunInputs", inputs)
+    post_inputs = evidence.admit_entity("RunInputs", post_inputs)
     evidence.verify_input_recomputation(inputs, post_inputs)
     if inputs["profileId"] not in ("metadata", "artifacts"):
         raise evidence.ConformanceError("UnsupportedProfile")
@@ -2943,10 +2944,16 @@ def _category_report(run, inputs, post_inputs, summary):
             or record["inputsSha256"] != evidence.digest(inputs)
             or record["resultsSha256"] != evidence.digest(record["results"])):
         raise evidence.ConformanceError("ProofMismatch")
+    completion_path = prefix + "-completion-inputs.json"
+    completion_raw = evidence.canonical_bytes(post_inputs)
+    if completion_path in record["proofs"]:
+        raise evidence.ConformanceError("ProofMismatch")
+    write_new(run.root / completion_path, completion_raw)
     report = evidence.admit_entity("QualificationReport", {
         "schemaVersion": 1, "catalogRevision": evidence.CATALOG_REVISION, "inputs": inputs,
         "postInputSha256": evidence.digest(post_inputs), "results": record["results"],
-        "witnesses": record["witnesses"], "resources": [], "proofs": record["proofs"],
+        "witnesses": record["witnesses"], "resources": [],
+        "proofs": {**record["proofs"], completion_path: hashlib.sha256(completion_raw).hexdigest()},
         "state": "Incomplete", "qualification": False, "scope": ["category-runtime-diagnostic"]})
     cases = {case.key: case for case in expected_cases(inputs["profileId"])}
     results = {(row["profileId"], row["bindingId"], row["matrixId"], row["caseId"]): row
@@ -2957,6 +2964,7 @@ def _category_report(run, inputs, post_inputs, summary):
         raise evidence.ConformanceError("ProofMismatch")
     if report["proofs"] and evidence.input_manifest(run.root, list(report["proofs"])) != report["proofs"]:
         raise evidence.ConformanceError("ProofMismatch")
+    evidence.verify_completion_inputs(run.root, report)
     raw = evidence.canonical_bytes(report)
     write_new(run.root / (prefix + "-report.json"), raw)
     return {**summary, "reportState": "Incomplete", "reportSha256": hashlib.sha256(raw).hexdigest()}

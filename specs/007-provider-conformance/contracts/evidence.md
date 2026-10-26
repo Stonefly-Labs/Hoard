@@ -818,6 +818,12 @@ emits four Incomplete/non-qualifying category reports with explicit state/hash,
 never resource-release or full-profile claims. Changed inputs, histories,
 inventories and proof bytes reject before publication. Admissible free-space
 variation retains its actual post-input hash, not a fabricated equal snapshot.
+The actual completion `RunInputs` is retained in
+`proofs/category-<profile>-<mode>-completion-inputs.json` with `0400` permissions.
+The report registers that packet under `postInputSha256`. Before publication,
+bounded independent reads verify its bytes, schema and immutable-input
+recomputation, including the existing free-space measurement exception.
+This packet does not establish resource release or full profile qualification.
 
 `hoard-original-v1` packets use bounded sequential chunks and a complete digest,
 with exact run/case/test/binding and hash-only component roles. A private

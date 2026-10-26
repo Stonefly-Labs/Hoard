@@ -767,6 +767,27 @@ def verify_input_recomputation(before, after):
     return digest(before)
 
 
+def verify_completion_inputs(root, report):
+    """Verify retained actual completion measurements without rewriting free space."""
+    report = admit_entity("QualificationReport", report)
+    inputs = report["inputs"]
+    path = f'proofs/category-{inputs["profileId"]}-{inputs["mode"]}-completion-inputs.json'
+    if report["proofs"].get(path) != report["postInputSha256"]:
+        raise ConformanceError("ProofMismatch")
+    contents = io.BytesIO()
+    with _input_root(root) as (_, descriptor):
+        with _input_parent(descriptor, path) as (parent, name):
+            if stat.S_IMODE(os.stat(name, dir_fd=parent, follow_symlinks=False).st_mode) != 0o400:
+                raise ConformanceError("ProofMismatch")
+        hashed, _ = _source_file(descriptor, path, remaining=MAX_REPORT_BYTES,
+                                 deadline=time.monotonic() + 5, target=contents)
+    if hashed != report["postInputSha256"]:
+        raise ConformanceError("ProofMismatch")
+    completion = admit_entity("RunInputs", load_json(contents.getvalue()))
+    verify_input_recomputation(inputs, completion)
+    return completion
+
+
 _BINDING_REQUIRED_FAULTS = {
     "metadata": frozenset((
         "IndependentSnapshot", "WriterContention", "CommitAcknowledgement", "PersistedCorruption",

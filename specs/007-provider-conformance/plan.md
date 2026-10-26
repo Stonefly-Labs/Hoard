@@ -7664,6 +7664,34 @@ compatibility and five-profile acceptance remain unfinished. No task, checklist
 or stage marker advances. Product APIs/provider mechanisms,
 package references, examples, diagrams and infrastructure are unaffected.
 
+### Retained actual completion inputs
+
+Category reports previously retained an actual `postInputSha256` but not the
+completion input document needed to recompute it independently after the run.
+Preserve the original admission inputs and the actual completion measurements:
+write a bounded `0400` completion-input packet, register its exact hash in the
+report proof map, and independently re-read/admit/recompute it before publication.
+The existing free-space-only measurement exception remains; no measurements or
+hashes are rewritten to manufacture equality. Cached qualification remains false.
+
+The extended existing native-category publication test first reproduces four
+missing-packet failures across metadata/artifacts and unchanged/free-space-varied
+completion inputs. Focused completion-packet challenges reject missing proof
+registration, writable/changed bytes, wrong hash, changed immutable source,
+unknown schema fields and symlinks. Commands
+`python3 -m unittest discover -s tests/tooling -p test_conformance_evidence.py -k completion_packet -v`
+and
+`python3 -m unittest discover -s tests/tooling -p test_conformance_evidence.py -k native_category_reports -v`
+pass. Complete evidence and SDK tooling-file regressions also pass:
+`python3 -m unittest discover -s tests/tooling -p test_conformance_evidence.py -q`
+(138 tests) and
+`python3 -m unittest discover -s tests/tooling -p test_conformance_sdk_checks.py -q`
+(149 tests), both without failures/errors/skips; `git diff --check` passes.
+These are tooling/diagnostic evidence, not a standalone evaluator, CLI
+profile, resource-release or full-stage pass. No task/checklist/flow marker is
+advanced. Product APIs, package graph, examples, diagrams, charter, architecture,
+ADRs, infrastructure and release behavior are unaffected.
+
 ### Object access-fault boundary repair
 
 Linux `516b6e4` / run `40312172408` fails the prepared Object no-rename witness;

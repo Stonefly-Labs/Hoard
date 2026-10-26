@@ -451,6 +451,42 @@ class ConformanceAdmissionTests(unittest.TestCase):
             "state": "Complete", "qualification": False, "scope": ["common-logical"],
         }
 
+    def test_completion_packet_preserves_actual_measurements_and_rejects_rewritten_inputs(self):
+        for defect in (None, "missing", "mutable", "bytes", "digest", "immutable-input", "schema", "symlink"):
+            with self.subTest(defect=defect), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                (root / "proofs").mkdir()
+                report = self.report()
+                completion = copy.deepcopy(report["inputs"])
+                completion["environment"]["freeBytes"] += 1
+                completion["environmentSha256"] = evidence.digest(completion["environment"])
+                if defect == "immutable-input":
+                    completion["sourceRevision"] = "f" * 40
+                if defect == "schema":
+                    completion["unexpected"] = True
+                raw = evidence.canonical_bytes(completion)
+                relative = f'proofs/category-metadata-{report["inputs"]["mode"]}-completion-inputs.json'
+                packet = root / relative
+                packet.write_bytes(raw if defect != "bytes" else b"{}")
+                packet.chmod(0o400 if defect != "mutable" else 0o600)
+                report["postInputSha256"] = hashlib.sha256(raw).hexdigest()
+                if defect != "missing":
+                    report["proofs"][relative] = report["postInputSha256"]
+                if defect == "digest":
+                    report["postInputSha256"] = "f" * 64
+                    report["proofs"][relative] = report["postInputSha256"]
+                if defect == "symlink":
+                    target = root / "outside.json"
+                    packet.rename(target)
+                    packet.symlink_to(target)
+                if defect is not None:
+                    with self.assertRaises(evidence.ConformanceError):
+                        evidence.verify_completion_inputs(root, report)
+                else:
+                    self.assertEqual(evidence.canonical_bytes(evidence.verify_completion_inputs(root, report)), raw)
+                    self.assertNotEqual(report["postInputSha256"], evidence.digest(report["inputs"]))
+                    self.assertFalse(report["qualification"])
+
     def test_exclusions_and_interruption_do_not_invent_runtime_executions(self):
         excluded = self.result()
         excluded.update(bindingId="memory", caseId="MP-36", status="NotApplicable",
@@ -2805,7 +2841,12 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         self.assertFalse(report["qualification"])
                         self.assertEqual(report["postInputSha256"], evidence.digest(post))
                         self.assertEqual(len(report["witnesses"]), len(history.witnesses))
-                        self.assertEqual(dict(report["proofs"]), dict(history.proofs))
+                        completion_path = f"proofs/category-{profile}-qualification-completion-inputs.json"
+                        self.assertEqual(report["proofs"][completion_path], evidence.digest(post))
+                        self.assertEqual(evidence.load_json((root / completion_path).read_bytes()), post)
+                        self.assertEqual((root / completion_path).stat().st_mode & 0o777, 0o400)
+                        self.assertEqual(dict(report["proofs"]), {
+                            **history.proofs, completion_path: evidence.digest(post)})
 
     def test_metadata_quality_reuses_complete_same_attempt_runtime_and_controller_provenance(self):
         history, finish = self.category_quality_fixture()
