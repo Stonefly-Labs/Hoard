@@ -10406,6 +10406,21 @@ QC-02 pairing/newer artifact native confirmation and full acceptance remain open
 Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 
+Linux run `40312172408` at `516b6e4` fails the prepared Object no-rename architecture
+witness; its other two jobs pass. The cause is qualification-only directory moves
+introduced inside the Object provider assembly, not its publication mechanism.
+Move that access-fault scope back to its concrete test binding, matching original
+driver ownership; do not exempt qualification code or weaken the scan. Native
+selection/protection, capture-before-hook and restoration-before-guard-release
+remain. The unchanged prepared witness gives a named `Assert.Empty` failure on
+the prior graph and passes on the corrected graph. Fresh fourteen-package replay
+passes 406 consumers; 16 actual/four original access cases pass, and their SDK-only
+negative gives four named failures per family with matching runtime/archive
+images. Safe-logger replay checks 250 witnesses/262 origins. Contracts152/
+tooling452 (19 native skips) pass. Scoped implementation review has no actionable
+findings, not final T081. Native admission remains pending. Examples, diagrams,
+production dependencies and infrastructure remain unchanged.
+
 The current artifact250 extension preserves every retained prefix/object cleanup
 and stop assertion through awaited overloads while keeping synchronous callers.
 Native storage facts remain immutable/path-free, root-owned through explicit

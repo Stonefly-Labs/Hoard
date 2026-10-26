@@ -245,6 +245,13 @@ correspondence; missing, extra and foreign validation origins reject. Exact
 jobs/341 native foundations passing without skips. Pairing/newer artifact native
 admission and complete QC-03 remain outstanding.
 
+Object's access fault scope now resides in the concrete binding rather than its
+provider assembly. The unchanged prepared no-rename witness fails named
+`Assert.Empty` before this repair and passes afterward. Native protection and
+pre-hook handoff are unchanged. Fresh replay passes 406 consumers, 16 actual/
+four original access cases and their SDK-only negative; safe-logger replay
+checks 250 witnesses/262 origins. Native admission remains pending.
+
 The current artifact250 scope adds 24 actual cases: ten retained prefix/object
 cleanup/stop parameters, two committed residual rows, six bounded inventory guards
 and six ordinary cleanup-boundary error controls. Twelve original wrappers pass

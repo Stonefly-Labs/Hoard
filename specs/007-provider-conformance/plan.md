@@ -7556,6 +7556,32 @@ Metadata remains 92 Passed/1 Incomplete/9 NotApplicable/0 Failed, report
 `Incomplete`, qualification false. Pairing/newer artifact scopes remain pending;
 no tasks, reviewer-owned checklists or stage markers advance here.
 
+### Object access-fault boundary repair
+
+Linux `516b6e4` / run `40312172408` fails the prepared Object no-rename witness;
+its native regression and lock-replay jobs pass. Qualification-only directory
+moves had entered the Object provider assembly. Move only that access-fault
+scope into its concrete binding, matching original driver ownership; preserve
+the architecture scan unchanged. Native exact-stamp selection/protection,
+capture-before-hooks, same-scope undelivered cleanup, retryable restoration and
+restoration-before-guard-release remain. No provider-to-binding reference or
+SDK path exposure is introduced. Scoped implementation review finds no actionable
+issues, not final T081.
+
+Unchanged prepared architecture replay fails named `Assert.Empty` on the old
+graph and passes on the repair. Fresh fourteen-package replay passes
+406 consumers/zero skips at source
+`82326c9676bf0099cf9ea45dd1f872df7bb4047e0f7535be7fb95fc48d552abb`,
+SDK archive
+`56fc4787cfb34e0f142bfe405f40688867f9a8c39686f121645db438715492d6`.
+Sixteen actual/four original access cases pass; their SDK-only failure-code mutant
+gives four named shared-assertion failures per family, all other cases passing,
+with matching loaded/archive images. Safe-logger replay checks 250 witnesses/
+262 origins/twelve reopen edges. Contracts152/tooling452 (19 native skips) pass.
+Native admission remains pending; prior cleanup receipts keep their source
+identities. Examples, diagrams, production dependencies and infrastructure are
+unaffected. No task/checklist/stage marker advances.
+
 The current artifact250 increment extracts all retained cleanup/stop families:
 failed prefix, failed-prefix stop, reused object, all four unselected-object
 cancel/failure boundaries, retained-object stop and committed residual staging.

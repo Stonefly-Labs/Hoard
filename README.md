@@ -2588,6 +2588,14 @@ argument maps on Linux: three jobs/341 native foundations pass without skips.
 QC-02 pairing and the newer artifact scopes still await native observation;
 full qualification and the implementation stage remain unfinished.
 
+The Object access-fault implementation now lives in its concrete test binding,
+as the original driver-owned fault did. The provider still selects/protects the
+exact stamp and captures the scope before release hooks, but contains no rename
+mechanism. The unchanged prepared architecture witness fails before this repair
+and passes afterward. Fresh fourteen-package replay passes 406 consumers;
+16 actual/four original access cases and their SDK-only negative pass, with
+250 witnesses/262 origins checked independently. Native admission remains pending.
+
 The current artifact250 scope extracts retained prefix/object cleanup and stop
 retries without changing the original assertions or synchronous APIs. Native
 storage facts expose only opaque file IDs/lengths under the root owner; enumeration

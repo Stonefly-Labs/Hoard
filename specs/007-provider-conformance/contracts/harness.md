@@ -1593,6 +1593,17 @@ Object has no borrowed durable restart. Exact `e39b2ce`/run40293145453 admits
 earlier frozen argument maps on Linux: three jobs/341 native foundations pass
 without skips. Pairing/newer artifact scopes remain unadmitted natively.
 
+Object payload-access faults are now concrete-binding-owned, matching the
+original driver boundary. Native exact-stamp selection/protection still wraps
+application and transfers the same captured scope before supervisor hooks;
+restoration precedes guard release. The Object provider contains no rename calls.
+The unchanged prepared architecture witness gives a named pre-fix `Assert.Empty`
+failure and passes after correction. Fresh fourteen-package replay passes
+406 consumers; 16 actual/four original access cases and an SDK-only negative
+retain exact assertion/image parity. Safe-logger replay checks 250 witnesses/
+262 origins. Scoped implementation review has no actionable findings, not final
+T081. Native admission remains pending.
+
 The current artifact250 scope adds root-owned synchronous native facts mapped
 to immutable opaque file IDs/lengths, including after explicit native stop.
 Bound all filesystem entries before filtering; reject overflow, directories and

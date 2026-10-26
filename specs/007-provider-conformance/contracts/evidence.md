@@ -353,6 +353,16 @@ passes unchanged checks. Exact `e39b2ce`/run40293145453 admits earlier frozen
 metadata argument maps with three Linux jobs/341 native foundations passing
 without skips, not QC-02 pairing/newer artifact scopes or full qualification.
 
+The Object no-rename repair retains the unchanged prepared architecture witness:
+the preceding graph fails named `Assert.Empty`, and the corrected graph passes.
+Only concrete-binding-owned access fault application moves; native exact-stamp
+protection, pre-hook scope capture and physical-restoration-before-release remain.
+Fresh fourteen-package replay passes 406 consumers; 16 actual/four original
+access cases pass, and their SDK-only negative gives four named failures per
+family with matching loaded/archive images. Independent safe-logger replay
+checks 250 witnesses/262 origins. These are new-source diagnostics, not native
+admission; preceding cleanup-mutant receipts retain their own source identities.
+
 The current artifact250 scope retains every cleanup/stop assertion and original
 synchronous API, using real bounded storage facts and permission scopes.
 Fresh fourteen-package replay passes 406 consumers. All 24 actual controls/

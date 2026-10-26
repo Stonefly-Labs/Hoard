@@ -109,44 +109,32 @@ public sealed partial class ObjectArtifactStore
     }
 
     public ValueTask<ArtifactResult<IAsyncDisposable>> RestrictPayloadAccessForQualificationAsync(
-        ArtifactStamp stamp, bool unavailable, Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken)
+        ArtifactStamp stamp, Func<string, IArtifactProtectionGuard, IAsyncDisposable> restrictPayload,
+        Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(stamp);
+        ArgumentNullException.ThrowIfNull(restrictPayload);
         ArgumentNullException.ThrowIfNull(ownScope);
         return OwnedAsync(ArtifactPhase.Maintenance, TimeSpan.FromSeconds(5), cancellationToken,
             token => WithQualificationPayloadAsync<IAsyncDisposable>(stamp, token, async (path, protection) =>
             {
-                var access = QualificationPayloadAccess.Create(path, unavailable, protection);
+                var access = restrictPayload(path, protection);
                 try { ownScope(access); return access; }
                 catch { await access.DisposeAsync(); throw; }
             }, transferProtection: true),
             undelivered: access => access.DisposeAsync());
     }
 
-    private sealed class QualificationPayloadAccess(
-        string path, string directory, bool unavailable, UnixFileMode originalMode,
-        IArtifactProtectionGuard? protection) : IAsyncDisposable
+    private sealed class QualificationPayloadAccess(string path, UnixFileMode originalMode) : IAsyncDisposable
     {
         private readonly SemaphoreSlim gate = new(1, 1);
         private bool restored;
-        private bool released;
         public static QualificationPayloadAccess RestrictDirectoryWrites(string directory)
         {
             if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
             var mode = File.GetUnixFileMode(directory);
-            var access = new QualificationPayloadAccess(directory, directory, false, mode, null);
+            var access = new QualificationPayloadAccess(directory, mode);
             File.SetUnixFileMode(directory, mode & ~(UnixFileMode.UserWrite | UnixFileMode.GroupWrite | UnixFileMode.OtherWrite));
-            return access;
-        }
-        public static QualificationPayloadAccess Create(
-            string path, bool unavailable, IArtifactProtectionGuard protection)
-        {
-            if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
-            var directory = Path.GetDirectoryName(path) ?? throw new InvalidOperationException("BindingInvalid");
-            var access = new QualificationPayloadAccess(path, directory, unavailable,
-                unavailable ? default : File.GetUnixFileMode(path), protection);
-            if (unavailable) { Directory.Move(directory, directory + "-qualification-offline"); }
-            else { File.SetUnixFileMode(path, UnixFileMode.UserWrite); }
             return access;
         }
         public async ValueTask DisposeAsync()
@@ -155,15 +143,11 @@ public sealed partial class ObjectArtifactStore
             await gate.WaitAsync();
             try
             {
-                if (released) { return; }
                 if (!restored)
                 {
-                    if (unavailable) { Directory.Move(directory + "-qualification-offline", directory); }
-                    else { File.SetUnixFileMode(path, originalMode); }
+                    File.SetUnixFileMode(path, originalMode);
                     restored = true;
                 }
-                if (protection is not null) { await protection.DisposeAsync(); }
-                released = true;
             }
             finally { gate.Release(); }
         }

@@ -168,6 +168,14 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen metadata
 argument maps with all three Linux jobs/341 native foundations passing without
 skips. QC-02 pairing/newer artifact scopes and complete QC-03 remain unadmitted.
 
+Object's driver-owned access faults now reside in its concrete binding, not the
+provider assembly; native exact-stamp selection/protection and pre-hook handle
+capture are unchanged. The provider has no rename mechanism. The unchanged
+prepared architecture witness fails on the preceding graph and passes on the
+repair. Fresh fourteen-package replay passes 406 consumers; 16 actual/four
+original access cases and the SDK-only negative retain exact assertion parity.
+Safe-logger replay checks 250 witnesses/262 origins. Native admission is pending.
+
 The current artifact250 scope preserves retained prefix, reused/unselected object,
 committed residual and failed-stop cleanup through actual storage facts and mode
 restrictions. Facts contain opaque file IDs/lengths only, stay root-owned even

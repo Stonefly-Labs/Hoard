@@ -48,7 +48,8 @@ public static class ObjectArtifactAssertionSessions
             store.RemovePayloadForQualificationAsync(stamp, cancellationToken);
         protected override ValueTask<ArtifactResult<IAsyncDisposable>> RestrictProviderPayloadAccessAsync(
             ArtifactStamp stamp, bool unavailable, Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken) =>
-            store.RestrictPayloadAccessForQualificationAsync(stamp, unavailable, ownScope, cancellationToken);
+            store.RestrictPayloadAccessForQualificationAsync(
+                stamp, (path, protection) => PayloadAccess.Create(path, unavailable, protection), ownScope, cancellationToken);
         protected override ArtifactResult<(KeyValuePair<string, long>[] Staging, KeyValuePair<string, long>[] Payloads)>
             ObserveProviderStorage() => store.ObserveStorageForQualification();
         protected override ValueTask<ArtifactResult<IAsyncDisposable>> RestrictProviderStorageCleanupAsync(
@@ -85,5 +86,44 @@ public static class ObjectArtifactAssertionSessions
             ArtifactObservationPoint.PayloadSelected => "object.qualification-payload-selected",
             _ => throw new ArgumentException("BindingInvalid")
         };
+    }
+
+    private sealed class PayloadAccess(
+        string path, string directory, bool unavailable, UnixFileMode originalMode,
+        IArtifactProtectionGuard protection) : IAsyncDisposable
+    {
+        private readonly SemaphoreSlim gate = new(1, 1);
+        private bool restored;
+        private bool released;
+
+        public static PayloadAccess Create(string path, bool unavailable, IArtifactProtectionGuard protection)
+        {
+            if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
+            var directory = Path.GetDirectoryName(path) ?? throw new InvalidOperationException("BindingInvalid");
+            var access = new PayloadAccess(path, directory, unavailable,
+                unavailable ? default : File.GetUnixFileMode(path), protection);
+            if (unavailable) { Directory.Move(directory, directory + "-qualification-offline"); }
+            else { File.SetUnixFileMode(path, UnixFileMode.UserWrite); }
+            return access;
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
+            await gate.WaitAsync();
+            try
+            {
+                if (released) { return; }
+                if (!restored)
+                {
+                    if (unavailable) { Directory.Move(directory + "-qualification-offline", directory); }
+                    else { File.SetUnixFileMode(path, originalMode); }
+                    restored = true;
+                }
+                await protection.DisposeAsync();
+                released = true;
+            }
+            finally { gate.Release(); }
+        }
     }
 }

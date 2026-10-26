@@ -667,6 +667,13 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen argument maps
 three Linux jobs/341 native foundations pass without skips. Pairing/newer
 artifact native admission and full qualification remain outstanding.
 
+Object access faults now execute in the concrete test binding, retaining native
+exact-stamp protection and scope handoff while restoring the provider's no-rename
+boundary. The unchanged prepared architecture witness fails before/passes after.
+Fresh fourteen-package replay passes 406 consumers; 16 actual/four original
+access cases and their SDK-only negative pass. Safe-logger replay checks
+250 witnesses/262 origins. Native admission remains pending.
+
 The current artifact250 scope adds all retained cleanup/stop families using
 genuine bounded storage facts and directory permission scopes. Existing synchronous
 assertions remain supported. Facts expose opaque IDs/lengths, never private paths;
