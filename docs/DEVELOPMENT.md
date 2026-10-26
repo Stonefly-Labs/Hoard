@@ -4703,6 +4703,11 @@ seventeen-archive and locked replay pass, as do the two safe baseline/replacemen
 rows again. Full tooling passes 487 tests with nineteen native skips. Native
 exact-child containment, safe conversion of ownership output and remaining
 T044 obligations are still open; 46/86 remains unchanged.
+Native run40415198673 at exact `22ddff9` now succeeds in all five existing
+diagnostic jobs after retrying only failed lock preparation on unchanged source.
+Attempt1's `CleanupIncomplete` remains recorded; no root cause or cleanup fix
+is inferred from attempt2's successful fresh locked replay. These jobs are not
+full qualifying profiles or native execution of the seven composition rows.
 
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02

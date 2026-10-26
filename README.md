@@ -74,6 +74,10 @@ Shared packaged Host callbacks now exercise all seven cancellation/retained/
 late-fault ownership rows. The catalog explicitly includes both initializer
 fault parameters and all three shutdown variants; native containment and full
 ownership/profile acceptance remain unfinished.
+At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
+unchanged-source failed-job retry. The original lock-preparation
+`CleanupIncomplete` remains recorded; this is not full-profile qualification
+or evidence that its underlying cleanup cause was fixed.
 
 ## ✨ The idea
 

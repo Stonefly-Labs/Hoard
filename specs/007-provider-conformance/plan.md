@@ -7874,6 +7874,19 @@ are now checked.
 
 ### Shared ownership callbacks and complete fault parameters
 
+Exact native run [40415198673](https://github.com/Stonefly-Labs/Hoard/actions/runs/40415198673)
+at `22ddff92c1c7e42bf622706f5559b2062d70483b` now succeeds after a
+failed-job-only unchanged-source retry. Attempt1 passes native ownership
+regressions, SDK/logger diagnostics and both isolated category jobs, but lock
+preparation returns `Incomplete`/`CleanupIncomplete` after approximately thirty
+seconds. It uploads no prepared-lock evidence and is not a successful attempt.
+Attempt2 reruns only that failed preparation job and passes, retaining the
+reviewable lock artifact. The original failure remains visible; its underlying
+cause is not established, and success on retry does not prove a cleanup fix or
+erase that history. All five existing diagnostic jobs are now successful for
+this exact source, not a qualifying five-profile baseline or actual native
+execution of the seven composition ownership rows.
+
 T044 continuation moves the repeated cooperative/noncooperative
 entered/release/settled callbacks into the separately packaged Host's
 `OwnershipFixtures.cs`. Source mode explicitly compile-links the same source;
