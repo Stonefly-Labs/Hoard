@@ -9928,7 +9928,21 @@ complete 183-row artifact trial pass without skips; these do not reproduce
 the failure or establish its cause and do not admit native behavior.
 No assertion, deadline or provider code was changed. Exact `b0852b7`,
 [run40253289352](https://github.com/Stonefly-Labs/Hoard/actions/runs/40253289352),
-is an independently observed successor with unchanged runtime/Consumer bytes.
+independently passes all three Linux jobs with unchanged runtime/Consumer
+bytes: 332 native foundations without failures/errors/skips and fresh
+13-lock/18-package replay. Both complete two-row hook diagnostic families
+pass, as does the complete 183-row original artifact scope. The ordinary SDK
+diagnostic summary has 111 scopes and 1,327 discoveries/executions; this is
+not a combined total for the additional category source graphs.
+Qualification-input metadata remains nine scopes/139 witnesses/seven parents,
+91 Passed/2 Incomplete/9 NotApplicable/0 Failed; artifacts remains eight
+scopes/261 witnesses/five parents and 97/2/4/0. All four public reports remain
+`Incomplete`. The original bounded receipt is retained read-only.
+This independently admits the packaged hook/null/exclusion guards and
+dedicated diagnostic families, not the newer private native hook-source
+reconstruction at `93e5fe6`/run40255871799. The unchanged-runtime success
+does not establish the earlier failure's cause or advance task/checklist
+markers.
 
 Exact `b1bbbb63fb5687fb709c029902ba7c9caf5f28d2`,
 [run40220115471](https://github.com/Stonefly-Labs/Hoard/actions/runs/40220115471),

@@ -6966,7 +6966,25 @@ hook diagnostics, with `UnknownDiagnostic` and 182 Passed/1 Failed in the
 acknowledgment-family trials and one complete 183-row artifact trial pass
 without skips. These do not establish a cause or native admission; assertions,
 budgets and provider code remain unchanged. The exact unchanged-runtime
-successor `b0852b7`/run40253289352 is observed separately.
+successor `b0852b7`/run40253289352 now independently passes all three Linux
+jobs: 332 native foundations without failures/errors/skips, fresh
+13-lock/18-package replay and both complete hook diagnostic families. The
+ordinary SDK summary has 111 scopes/1,327 discoveries/executions, including
+the complete 183-row original artifact scope. It is not a combined total for
+the additional category source graphs.
+Qualification-input metadata has nine scopes/139 witnesses/seven parents and
+91 Passed/2 Incomplete/9 NotApplicable/0 Failed; artifacts has eight
+scopes/261 witnesses/five parents and 97/2/4/0. All four public reports remain
+`Incomplete`. The unchanged-runtime success does not establish the earlier
+failure's cause and does not admit the newer private native hook-source
+wiring at `93e5fe6`/run40255871799.
+Metadata input/result digests are
+`41dd8b816cd03ee76e9a709baa9f767ae8035033d448035be3b5f3efdca9d954` /
+`a02b4d806783f8f3c4fc8619e8fb13eb894f1154895481feb0f4adac932776b0`;
+artifact input/result digests are
+`dfa09edc7d3b2ddbc3fe4369c4179389c95327b064f6dbf7a3d189bc6e6757a9` /
+`6cebc585ea22e5d4ddbe46db250310d3fb7d0a34a1416dab10490e010a4289c3`.
+The original bounded receipt remains read-only.
 No task/checklist marker advances.
 
 ### Exact native admission of repaired source controls
