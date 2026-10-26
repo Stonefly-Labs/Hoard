@@ -1,4 +1,6 @@
 using Hoard.Abstractions.Storage;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Hoard.Fixtures.Artifacts.Local;
 
@@ -6,6 +8,50 @@ public sealed partial class LocalArtifactStore
 {
     private const int MaximumQualificationPayloadBytes = 65536;
     private readonly SemaphoreSlim qualificationPayload = new(1, 1);
+
+    public ArtifactResult<(KeyValuePair<string, long>[] Staging, KeyValuePair<string, long>[] Payloads)> ObserveStorageForQualification()
+    {
+        try
+        {
+            return new ArtifactResult<(KeyValuePair<string, long>[], KeyValuePair<string, long>[])>.Success(
+                (ObserveQualificationFiles("staging"), ObserveQualificationFiles("data")));
+        }
+        catch (Exception error)
+        {
+            return Failed<(KeyValuePair<string, long>[], KeyValuePair<string, long>[])>(
+                FailureCode(error, CancellationToken.None), ArtifactPhase.Maintenance);
+        }
+    }
+
+    private KeyValuePair<string, long>[] ObserveQualificationFiles(string child)
+    {
+        var directory = new DirectoryInfo(Path.Combine(Path.GetFullPath(configuredRoot), child));
+        if (directory.LinkTarget is not null) { throw new LocalStateException(ArtifactFailureCode.InvalidInput); }
+        var files = directory.EnumerateFileSystemInfos().Take(1025).ToArray();
+        if (files.Length > 1024) { throw new LocalStateException(ArtifactFailureCode.Capacity); }
+        return files.Select(file =>
+        {
+            if (file.LinkTarget is not null || file is not FileInfo regular)
+            { throw new LocalStateException(ArtifactFailureCode.InvalidInput); }
+            return new KeyValuePair<string, long>(
+                Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(file.Name))), regular.Length);
+        }).OrderBy(file => file.Key, StringComparer.Ordinal).ToArray();
+    }
+
+    public async ValueTask<ArtifactResult<IAsyncDisposable>> RestrictStorageCleanupForQualificationAsync(
+        bool payloads, Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(ownScope);
+        await qualificationPayload.WaitAsync(cancellationToken);
+        try
+        {
+            var access = QualificationPayloadAccess.RestrictDirectoryWrites(
+                Path.Combine(Path.GetFullPath(configuredRoot), payloads ? "data" : "staging"));
+            try { ownScope(access); return new ArtifactResult<IAsyncDisposable>.Success(access); }
+            catch { await access.DisposeAsync(); throw; }
+        }
+        finally { qualificationPayload.Release(); }
+    }
 
     public ValueTask<ArtifactResult<byte[]>> CapturePayloadForQualificationAsync(
         ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken)

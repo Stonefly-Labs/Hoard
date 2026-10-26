@@ -667,7 +667,17 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen argument maps
 three Linux jobs/341 native foundations pass without skips. Pairing/newer
 artifact native admission and full qualification remain outstanding.
 
-The current artifact226 scope adds real Local record-directory permission denial
+The current artifact250 scope adds all retained cleanup/stop families using
+genuine bounded storage facts and directory permission scopes. Existing synchronous
+assertions remain supported. Facts expose opaque IDs/lengths, never private paths;
+overflow/directories/symlinks fail explicitly. Six ordinary callback errors remain
+faulted ownership. Fresh fourteen-package replay passes 406 consumers; 24 actual
+controls/12 original wrappers pass. Six SDK-only mutants give matching
+2/2/1/4/1/2 named failures per family with matching SDK/archive images. Safe-logger
+replay checks 250 witnesses/262 origins and twelve reopen edges. Scoped enumeration
+findings are repaired; native/full QC-03, final T081 and feature acceptance remain open.
+
+The preceding artifact226 scope adds real Local record-directory permission denial
 and the original failed-quarantine stop/retry/reopen sequence. The shared pending
 access owner restores actual original modes before shutdown; Object explicitly
 rejects unsupported record permissions before allocation. Ordinary release errors/

@@ -219,6 +219,10 @@ internal sealed class ArtifactConformanceFaults(
 
     public ValueTask<IAsyncDisposable> RestrictRecordWritesAsync(CancellationToken cancellationToken) =>
         session.RestrictRecordWritesAsync(cancellationToken);
+    public ValueTask<IAsyncDisposable> RestrictStorageCleanupAsync(ArtifactStorageArea area, CancellationToken cancellationToken) =>
+        session.RestrictStorageCleanupAsync(area, cancellationToken);
+    public ValueTask<ArtifactStorageObservation> ObserveStorageAsync(CancellationToken cancellationToken) =>
+        session.ObserveStorageAsync(cancellationToken);
 
     internal async ValueTask DisposeAfterSettlementAsync()
     {

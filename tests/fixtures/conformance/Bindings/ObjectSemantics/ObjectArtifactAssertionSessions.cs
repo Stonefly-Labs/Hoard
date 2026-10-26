@@ -49,6 +49,11 @@ public static class ObjectArtifactAssertionSessions
         protected override ValueTask<ArtifactResult<IAsyncDisposable>> RestrictProviderPayloadAccessAsync(
             ArtifactStamp stamp, bool unavailable, Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken) =>
             store.RestrictPayloadAccessForQualificationAsync(stamp, unavailable, ownScope, cancellationToken);
+        protected override ArtifactResult<(KeyValuePair<string, long>[] Staging, KeyValuePair<string, long>[] Payloads)>
+            ObserveProviderStorage() => store.ObserveStorageForQualification();
+        protected override ValueTask<ArtifactResult<IAsyncDisposable>> RestrictProviderStorageCleanupAsync(
+            ArtifactStorageArea area, Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken) =>
+            store.RestrictStorageCleanupForQualificationAsync(area == ArtifactStorageArea.Payloads, ownScope, cancellationToken);
         protected override void SetObserver(string boundary, Func<ValueTask> observer) => controls.SetObserver(boundary, observer);
         protected override void RemoveObserver(string boundary) => controls.RemoveObserver(boundary);
         protected override void SetSynchronousStorageHold(Action? hold) => controls.BeforeObjectDelete = hold;

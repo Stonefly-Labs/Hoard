@@ -7556,7 +7556,35 @@ Metadata remains 92 Passed/1 Incomplete/9 NotApplicable/0 Failed, report
 `Incomplete`, qualification false. Pairing/newer artifact scopes remain pending;
 no tasks, reviewer-owned checklists or stage markers advance here.
 
-The current artifact226 increment also extracts Local failed-quarantine
+The current artifact250 increment extracts all retained cleanup/stop families:
+failed prefix, failed-prefix stop, reused object, all four unselected-object
+cancel/failure boundaries, retained-object stop and committed residual staging.
+Awaited overloads preserve all original assertions and synchronous APIs. Native
+facts expose immutable opaque file IDs/lengths, never paths, under the current
+root owner even after explicit stop. Actual permission scopes share pending
+application/restoration ownership and avoid nested transfer admission in callbacks.
+The scoped review found file-only enumeration did not bound directory entries;
+both independent providers now bound all entries before rejecting overflow,
+directories and symlinks explicitly. Restoring only the old enumeration in a
+private snapshot yields four named inventory guard failures.
+
+Fresh fourteen-package replay passes 406 consumers/zero skips at source
+`72b09748b9c85d5851138b504153aad257306254dac29670676fe22c6e6ae7dd`,
+SDK archive
+`3bb6b7bd6c4f8b43747a93a0e01ade91805617af45975b0ee6d146cc30139e4e`.
+All 24 actual controls/12 original wrappers pass. Six SDK-only mutants give
+matching 2/2/1/4/1/2 named shared-assertion failures per family, other rows passing,
+with every loaded SDK image matching its archive. Safe-logger replay checks
+250 witnesses/262 origins/twelve reopen edges and exact role/image/archive
+ownership. Six ordinary same-type/message cleanup callback controls retain exact
+faulted settlement. Their first Local progress probe missed the native
+reused-payload boundary; corrected setup first publishes the same payload and
+does not weaken assertions. Contracts152/tooling452 (19 native skips) pass.
+Follow-up scoped review has no actionable findings, not final T081. Native/full
+QC-03 and all unfinished stage tasks remain open. Examples, diagrams, production
+dependencies and infrastructure are unaffected; no reviewer or stage marker advances.
+
+The preceding artifact226 increment also extracts Local failed-quarantine
 persistence through genuine decisions-directory mode denial. The generalized
 single pending access registration captures native handles before release
 callbacks and restores the exact original mode before closure. Object rejects

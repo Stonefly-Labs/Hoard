@@ -168,6 +168,11 @@ public enum ArtifactObservationPoint
     DirectVerification, CommitProgress, PayloadSelected
 }
 
+public enum ArtifactStorageArea { Staging, Payloads }
+public sealed record ArtifactStorageFile(string Id, long Length);
+public sealed record ArtifactStorageObservation(
+    ImmutableArray<ArtifactStorageFile> Staging, ImmutableArray<ArtifactStorageFile> Payloads);
+
 /// <summary>An owned assertion projection, not admission as a complete artifact category binding.</summary>
 public interface IArtifactAssertionSession : IAsyncDisposable
 {
@@ -208,6 +213,8 @@ public interface IArtifactAssertionSession : IAsyncDisposable
     ValueTask<IAsyncDisposable> RestrictPayloadAccessAsync(
         ArtifactStamp stamp, bool unavailable, CancellationToken cancellationToken);
     ValueTask<IAsyncDisposable> RestrictRecordWritesAsync(CancellationToken cancellationToken);
+    ValueTask<IAsyncDisposable> RestrictStorageCleanupAsync(ArtifactStorageArea area, CancellationToken cancellationToken);
+    ValueTask<ArtifactStorageObservation> ObserveStorageAsync(CancellationToken cancellationToken);
     /// <summary>Joins current provider workers; this does not close authority admission or release owned roots.</summary>
     ValueTask AwaitSettlementAsync(CancellationToken cancellationToken);
     ValueTask<ConformanceCleanupObservation> ObserveCleanupAsync(CancellationToken cancellationToken);
@@ -260,6 +267,8 @@ public interface IArtifactConformanceFaultDriver : IConformanceFaultDriver
     ValueTask<IAsyncDisposable> RestrictPayloadAccessAsync(
         ArtifactStamp stamp, bool unavailable, CancellationToken cancellationToken);
     ValueTask<IAsyncDisposable> RestrictRecordWritesAsync(CancellationToken cancellationToken);
+    ValueTask<IAsyncDisposable> RestrictStorageCleanupAsync(ArtifactStorageArea area, CancellationToken cancellationToken);
+    ValueTask<ArtifactStorageObservation> ObserveStorageAsync(CancellationToken cancellationToken);
     ValueTask AwaitSettlementAsync(CancellationToken cancellationToken);
 }
 

@@ -2588,7 +2588,20 @@ argument maps on Linux: three jobs/341 native foundations pass without skips.
 QC-02 pairing and the newer artifact scopes still await native observation;
 full qualification and the implementation stage remain unfinished.
 
-The current artifact226 scope also preserves Local failed-quarantine persistence
+The current artifact250 scope extracts retained prefix/object cleanup and stop
+retries without changing the original assertions or synchronous APIs. Native
+storage facts expose only opaque file IDs/lengths under the root owner; enumeration
+is bounded across all entries and rejects directories/symlinks explicitly.
+Actual directory-mode denial uses the existing pending restoration owner.
+Fresh fourteen-package replay passes 406 consumers. All 24 new actual controls/
+12 original wrappers pass; six SDK-only mutants give matching named failures
+in both families (2/2/1/4/1/2), with verified runtime/archive SDK images.
+Safe-logger replay checks 250 witnesses/262 origins and twelve reopen edges.
+Six ordinary same-message callback errors remain faulted ownership, not expected
+injections. Scoped review's enumeration finding is repaired; final T081,
+native admission and full QC-03/feature acceptance remain unfinished.
+
+The preceding artifact226 scope also preserves Local failed-quarantine persistence
 through real decisions-directory permission denial, failed stop, permission
 restoration, stop retry and compatible reopen. It shares the existing pending
 access owner; Object rejects this Local-only control before allocating an owner.

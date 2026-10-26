@@ -245,7 +245,17 @@ correspondence; missing, extra and foreign validation origins reject. Exact
 jobs/341 native foundations passing without skips. Pairing/newer artifact native
 admission and complete QC-03 remain outstanding.
 
-The current artifact226 scope adds five actual record-permission controls:
+The current artifact250 scope adds 24 actual cases: ten retained prefix/object
+cleanup/stop parameters, two committed residual rows, six bounded inventory guards
+and six ordinary cleanup-boundary error controls. Twelve original wrappers pass
+unchanged shared assertions, with old synchronous signatures retained.
+Fresh fourteen-package replay passes 406 consumers. Six SDK-only mutants produce
+2/2/1/4/1/2 matching named failures per family with verified SDK/archive images.
+Safe-logger replay checks 250 witnesses/262 origins/twelve reopen edges. Local
+prefix-stop requires a real compatible child; Object never borrows that reopen.
+Scoped enumeration findings are repaired; native/full QC-03 and final T081 remain open.
+
+The preceding artifact226 scope adds five actual record-permission controls:
 Local failed-quarantine persistence, unsupported Object, pending application/
 shutdown and ordinary release error/cancellation. Genuine Local directory mode
 denial uses the same access owner. Original synchronous assertions, failed stop,

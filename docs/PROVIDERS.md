@@ -168,7 +168,19 @@ Exact `e39b2ce`/run40293145453 independently admits earlier frozen metadata
 argument maps with all three Linux jobs/341 native foundations passing without
 skips. QC-02 pairing/newer artifact scopes and complete QC-03 remain unadmitted.
 
-The current artifact226 scope also owns genuine Local decisions-directory write
+The current artifact250 scope preserves retained prefix, reused/unselected object,
+committed residual and failed-stop cleanup through actual storage facts and mode
+restrictions. Facts contain opaque file IDs/lengths only, stay root-owned even
+after explicit stop, and fail explicitly on overflow/directories/symlinks.
+Enumeration now bounds all entries, repairing the scoped architecture finding.
+Fresh fourteen-package replay passes 406 consumers; 24 actual controls/12 original
+wrappers pass. Six SDK-only mutants cause matching 2/2/1/4/1/2 named failures per
+family with matching loaded SDK/archive images. Six ordinary same-message callback
+errors retain exact faulted settlement. Safe-logger replay checks 250 witnesses/
+262 origins and twelve reopen edges, including Local prefix-stop replacement,
+never Object restart. Native/full QC-03 and final T081 remain unfinished.
+
+The preceding artifact226 scope also owns genuine Local decisions-directory write
 denial. Original failed-quarantine assertions retain failed stop, payload/mode
 restoration, retry and same-lifetime compatible initialization before owned reopen.
 The same single pending access owner captures handles before release callbacks

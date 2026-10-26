@@ -353,7 +353,22 @@ passes unchanged checks. Exact `e39b2ce`/run40293145453 admits earlier frozen
 metadata argument maps with three Linux jobs/341 native foundations passing
 without skips, not QC-02 pairing/newer artifact scopes or full qualification.
 
-The current artifact226 scope preserves Local failed-quarantine persistence with
+The current artifact250 scope retains every cleanup/stop assertion and original
+synchronous API, using real bounded storage facts and permission scopes.
+Fresh fourteen-package replay passes 406 consumers. All 24 actual controls/
+12 original wrappers pass. SDK-only mutants for failed-prefix, prefix-stop,
+reused-object, unselected-object, retained-object-stop and committed-residual
+assertions produce exactly 2/2/1/4/1/2 named failures in both families; every
+loaded SDK image matches its trial archive and other rows pass. Independent
+safe-logger replay checks 250 witnesses/262 origins, twelve reopen edges and all
+component/archive ownership. A restored file-only enumeration mutant separately
+fails four named inventory guards. The first ordinary Local progress probe missed
+the native reused-payload boundary; its failed expectations are not product-defect
+evidence. Corrected setup reaches that boundary and preserves exact ordinary
+errors in faulted settlement. Native/full QC-03 and final T081 remain unfinished;
+prior receipts retain their own source identities.
+
+The preceding artifact226 scope preserves Local failed-quarantine persistence with
 genuine record-directory write denial, failed stop, payload/mode restoration,
 retry and compatible initialization/reopen. The same pending access owner retains
 application/restoration; Object rejects unsupported record permissions before

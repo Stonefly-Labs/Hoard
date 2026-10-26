@@ -51,6 +51,11 @@ public static class LocalArtifactAssertionSessions
             store.RestrictPayloadAccessForQualificationAsync(stamp, unavailable, ownScope, cancellationToken);
         public override ValueTask<IAsyncDisposable> RestrictRecordWritesAsync(CancellationToken cancellationToken) =>
             RestrictAccessAsync(store.RestrictRecordWritesForQualificationAsync, cancellationToken);
+        protected override ArtifactResult<(KeyValuePair<string, long>[] Staging, KeyValuePair<string, long>[] Payloads)>
+            ObserveProviderStorage() => store.ObserveStorageForQualification();
+        protected override ValueTask<ArtifactResult<IAsyncDisposable>> RestrictProviderStorageCleanupAsync(
+            ArtifactStorageArea area, Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken) =>
+            store.RestrictStorageCleanupForQualificationAsync(area == ArtifactStorageArea.Payloads, ownScope, cancellationToken);
         protected override void SetObserver(string boundary, Func<ValueTask> observer) => controls.SetObserver(boundary, observer);
         protected override void RemoveObserver(string boundary) => controls.RemoveObserver(boundary);
         protected override void SetSynchronousStorageHold(Action? hold) => controls.BeforeRecordWrite = hold;

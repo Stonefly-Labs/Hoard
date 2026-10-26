@@ -543,6 +543,10 @@ public sealed class BindingContractTests
             ArtifactStamp stamp, bool unavailable, CancellationToken cancellationToken) => throw new NotSupportedException();
         public ValueTask<IAsyncDisposable> RestrictRecordWritesAsync(CancellationToken cancellationToken) =>
             throw new NotSupportedException();
+        public ValueTask<IAsyncDisposable> RestrictStorageCleanupAsync(
+            ArtifactStorageArea area, CancellationToken cancellationToken) => throw new NotSupportedException();
+        public ValueTask<ArtifactStorageObservation> ObserveStorageAsync(CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
         public ValueTask<IArtifactFaultRegistration> InjectRecordWriteFailureAsync(
             int occurrence, Action beforeFailure, CancellationToken cancellationToken) => throw new NotSupportedException();
         public ImmutableArray<ConformanceFault> SupportedFaults { get; set; } =

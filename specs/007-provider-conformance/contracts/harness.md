@@ -1593,7 +1593,21 @@ Object has no borrowed durable restart. Exact `e39b2ce`/run40293145453 admits
 earlier frozen argument maps on Linux: three jobs/341 native foundations pass
 without skips. Pairing/newer artifact scopes remain unadmitted natively.
 
-The current artifact226 scope adds Local record-write permission ownership through
+The current artifact250 scope adds root-owned synchronous native facts mapped
+to immutable opaque file IDs/lengths, including after explicit native stop.
+Bound all filesystem entries before filtering; reject overflow, directories and
+symlinks explicitly. This repairs the reviewed file-only enumeration gap.
+Directory permission scopes reuse pending access ownership; native application
+serializes directly rather than reacquiring a transfer slot inside an owned
+callback. Awaited cleanup/stop overloads retain original assertions/synchronous
+callers. Exact intentional injections do not forgive six same-message ordinary
+callback errors; settlement remains faulted. Fresh fourteen-package replay passes
+406 consumers; 24 actual controls/12 original wrappers pass. Six SDK-only mutants
+give matching 2/2/1/4/1/2 named failures per family with verified loaded/archive
+SDK images. Safe-logger replay checks 250 witnesses/262 origins/twelve reopen
+edges. Scoped review findings are repaired; native/full QC-03 and final T081 remain open.
+
+The preceding artifact226 scope adds Local record-write permission ownership through
 the same pending access registration, capturing the native scope before release
 callbacks and restoring the exact original directory mode before closure. Object
 rejects this Local-only control before registration. Original failed-quarantine

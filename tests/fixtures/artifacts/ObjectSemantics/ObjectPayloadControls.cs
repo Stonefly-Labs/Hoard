@@ -1,4 +1,6 @@
 using Hoard.Abstractions.Storage;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace Hoard.Fixtures.Artifacts.ObjectSemantics;
 
@@ -6,6 +8,50 @@ public sealed partial class ObjectArtifactStore
 {
     private const int MaximumQualificationPayloadBytes = 65536;
     private readonly SemaphoreSlim qualificationPayload = new(1, 1);
+
+    public ArtifactResult<(KeyValuePair<string, long>[] Staging, KeyValuePair<string, long>[] Payloads)> ObserveStorageForQualification()
+    {
+        try
+        {
+            return new ArtifactResult<(KeyValuePair<string, long>[], KeyValuePair<string, long>[])>.Success(
+                (ObserveQualificationFiles("multipart"), ObserveQualificationFiles("objects")));
+        }
+        catch (Exception error)
+        {
+            return Rejected<(KeyValuePair<string, long>[], KeyValuePair<string, long>[])>(
+                MapError(error, CancellationToken.None), ArtifactPhase.Maintenance);
+        }
+    }
+
+    private KeyValuePair<string, long>[] ObserveQualificationFiles(string child)
+    {
+        var directory = new DirectoryInfo(Path.Combine(Path.GetFullPath(configuredRoot), child));
+        if (directory.LinkTarget is not null) { throw new ObjectOperationException(ArtifactFailureCode.InvalidInput); }
+        var files = directory.EnumerateFileSystemInfos().Take(1025).ToArray();
+        if (files.Length > 1024) { throw new ObjectOperationException(ArtifactFailureCode.Capacity); }
+        return files.Select(file =>
+        {
+            if (file.LinkTarget is not null || file is not FileInfo regular)
+            { throw new ObjectOperationException(ArtifactFailureCode.InvalidInput); }
+            return new KeyValuePair<string, long>(
+                Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(file.Name))), regular.Length);
+        }).OrderBy(file => file.Key, StringComparer.Ordinal).ToArray();
+    }
+
+    public async ValueTask<ArtifactResult<IAsyncDisposable>> RestrictStorageCleanupForQualificationAsync(
+        bool payloads, Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(ownScope);
+        await qualificationPayload.WaitAsync(cancellationToken);
+        try
+        {
+            var access = QualificationPayloadAccess.RestrictDirectoryWrites(
+                Path.Combine(Path.GetFullPath(configuredRoot), payloads ? "objects" : "multipart"));
+            try { ownScope(access); return new ArtifactResult<IAsyncDisposable>.Success(access); }
+            catch { await access.DisposeAsync(); throw; }
+        }
+        finally { qualificationPayload.Release(); }
+    }
 
     public ValueTask<ArtifactResult<byte[]>> CapturePayloadForQualificationAsync(
         ArtifactStamp stamp, int maximumBytes, CancellationToken cancellationToken)
@@ -79,11 +125,19 @@ public sealed partial class ObjectArtifactStore
 
     private sealed class QualificationPayloadAccess(
         string path, string directory, bool unavailable, UnixFileMode originalMode,
-        IArtifactProtectionGuard protection) : IAsyncDisposable
+        IArtifactProtectionGuard? protection) : IAsyncDisposable
     {
         private readonly SemaphoreSlim gate = new(1, 1);
         private bool restored;
         private bool released;
+        public static QualificationPayloadAccess RestrictDirectoryWrites(string directory)
+        {
+            if (OperatingSystem.IsWindows()) { throw new PlatformNotSupportedException("Private Unix permission proof required."); }
+            var mode = File.GetUnixFileMode(directory);
+            var access = new QualificationPayloadAccess(directory, directory, false, mode, null);
+            File.SetUnixFileMode(directory, mode & ~(UnixFileMode.UserWrite | UnixFileMode.GroupWrite | UnixFileMode.OtherWrite));
+            return access;
+        }
         public static QualificationPayloadAccess Create(
             string path, bool unavailable, IArtifactProtectionGuard protection)
         {
@@ -108,7 +162,7 @@ public sealed partial class ObjectArtifactStore
                     else { File.SetUnixFileMode(path, originalMode); }
                     restored = true;
                 }
-                await protection.DisposeAsync();
+                if (protection is not null) { await protection.DisposeAsync(); }
                 released = true;
             }
             finally { gate.Release(); }

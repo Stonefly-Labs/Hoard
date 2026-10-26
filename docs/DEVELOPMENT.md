@@ -10406,7 +10406,27 @@ QC-02 pairing/newer artifact native confirmation and full acceptance remain open
 Examples, diagrams, production dependencies and infrastructure
 are unaffected.
 
-The current artifact226 extension adds genuine Local decisions-directory write
+The current artifact250 extension preserves every retained prefix/object cleanup
+and stop assertion through awaited overloads while keeping synchronous callers.
+Native storage facts remain immutable/path-free, root-owned through explicit
+stop and bounded across all filesystem entries. Unexpected directories/symlinks
+or capacity overflow fail explicitly, never become empty successful observations.
+This repairs the scoped file-only enumeration finding; its private restored
+mutant causes four named guard failures. Real directory permission restrictions
+share pending application/restoration ownership and avoid nested transfer admission
+inside callbacks. Ordinary same-type/message errors retain exact faulted settlement.
+The first Local commit-progress error probe never reached that native boundary;
+its corrected setup first publishes the identical payload, without weakening
+any error assertions. Fresh fourteen-package replay passes 406 consumers;
+24 actual controls/12 original wrappers pass. Six SDK-only assertion mutants give
+2/2/1/4/1/2 named failures in each family, all other cases passing, with matching
+runtime/archive SDK images. Safe-logger replay checks 250 witnesses/262 origins/
+twelve reopen edges. Contracts152/tooling452 (19 native skips) pass. Scoped review
+findings are repaired, not final T081. Native/full QC-03 and remaining stage work
+stay unfinished; examples, diagrams, production dependencies and infrastructure
+are unaffected.
+
+The preceding artifact226 extension adds genuine Local decisions-directory write
 denial through the same pending access owner, not synthetic validator failures.
 The original failed-quarantine test retains failed stop, payload restoration,
 permission restoration, stop retry and same-lifetime compatible initialization

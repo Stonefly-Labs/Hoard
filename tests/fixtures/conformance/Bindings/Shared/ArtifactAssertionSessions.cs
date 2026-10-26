@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using Hoard.Abstractions.Storage;
 using Hoard.Fixtures.Artifacts.HostAdapters;
@@ -361,6 +362,39 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
     public virtual ValueTask<IAsyncDisposable> RestrictRecordWritesAsync(CancellationToken cancellationToken) =>
         throw new InvalidOperationException("FaultControl.Unsupported");
 
+    protected abstract ArtifactResult<(KeyValuePair<string, long>[] Staging, KeyValuePair<string, long>[] Payloads)> ObserveProviderStorage();
+    protected abstract ValueTask<ArtifactResult<IAsyncDisposable>> RestrictProviderStorageCleanupAsync(
+        ArtifactStorageArea area, Action<IAsyncDisposable> ownScope, CancellationToken cancellationToken);
+
+    public ValueTask<IAsyncDisposable> RestrictStorageCleanupAsync(
+        ArtifactStorageArea area, CancellationToken cancellationToken)
+    {
+        if (!Enum.IsDefined(area)) { throw new ArgumentException("BindingInvalid"); }
+        return RestrictAccessAsync((capture, token) =>
+            RestrictProviderStorageCleanupAsync(area, capture, token), cancellationToken);
+    }
+
+    public ValueTask<ArtifactStorageObservation> ObserveStorageAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        lock (ownership.Gate)
+        {
+            if (!ReferenceEquals(ownership.Current, this) || ownership.Closing
+                || ownership.Transition is { IsCompleted: false })
+            { throw new InvalidOperationException("BindingInvalid"); }
+            return ObserveProviderStorage() switch
+            {
+                ArtifactResult<(KeyValuePair<string, long>[] Staging, KeyValuePair<string, long>[] Payloads)>.Success observed =>
+                    ValueTask.FromResult(new ArtifactStorageObservation(
+                        observed.Value.Staging.Select(file => new ArtifactStorageFile(file.Key, file.Value)).ToImmutableArray(),
+                        observed.Value.Payloads.Select(file => new ArtifactStorageFile(file.Key, file.Value)).ToImmutableArray())),
+                ArtifactResult<(KeyValuePair<string, long>[], KeyValuePair<string, long>[])>.Failure failure =>
+                    throw new InvalidOperationException("FaultControl." + failure.Code),
+                _ => throw new InvalidOperationException("BindingInvalid")
+            };
+        }
+    }
+
     protected ValueTask<IAsyncDisposable> RestrictAccessAsync(
         Func<Action<IAsyncDisposable>, CancellationToken, ValueTask<ArtifactResult<IAsyncDisposable>>> apply,
         CancellationToken cancellationToken)
@@ -549,10 +583,13 @@ internal abstract class ArtifactAssertionSession : IArtifactAssertionSession
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentNullException.ThrowIfNull(beforeFailure);
         if (point is not (ArtifactObservationPoint.ReadOpened or ArtifactObservationPoint.ReconciliationVerified
-            or ArtifactObservationPoint.DeleteRemoved))
+            or ArtifactObservationPoint.DeleteRemoved or ArtifactObservationPoint.StagePrefix
+            or ArtifactObservationPoint.BeforePublicationDecision or ArtifactObservationPoint.CommitProgress))
         { throw new ArgumentException("BindingInvalid"); }
-        Exception failure = point == ArtifactObservationPoint.DeleteRemoved
-            ? new IOException("InjectedDeleteAcknowledgmentLoss")
+        Exception failure = point is ArtifactObservationPoint.DeleteRemoved or ArtifactObservationPoint.StagePrefix
+            or ArtifactObservationPoint.BeforePublicationDecision or ArtifactObservationPoint.CommitProgress
+            ? new IOException(point == ArtifactObservationPoint.DeleteRemoved
+                ? "InjectedDeleteAcknowledgmentLoss" : "InjectedCleanupFailure")
             : new InvalidOperationException("InjectedObservationFailure");
         return ValueTask.FromResult<IArtifactFaultRegistration>(RegisterBoundary(point, async () =>
         {

@@ -5,18 +5,28 @@ namespace Hoard.Testing.Conformance.Artifacts;
 
 public static class ArtifactRecoveryAssertions
 {
-    public static async Task RetainedObjectStopAsync(
+    public static Task RetainedObjectStopAsync(
         IArtifactStore store, Func<ArtifactCleanupOptions, ValueTask<ArtifactResult<ArtifactShutdown>>> stop,
         Func<string[]> objectFiles, Func<string[]> stagingFiles, Action observeReadOnlyObjects,
-        Action restoreObjects, CancellationToken cancellationToken)
+        Action restoreObjects, CancellationToken cancellationToken) =>
+        RetainedObjectStopAsync(store, stop, _ => ValueTask.FromResult(objectFiles()),
+            _ => ValueTask.FromResult(stagingFiles()),
+            () => { observeReadOnlyObjects(); return ValueTask.CompletedTask; },
+            () => { restoreObjects(); return ValueTask.CompletedTask; }, cancellationToken);
+
+    public static async Task RetainedObjectStopAsync(
+        IArtifactStore store, Func<ArtifactCleanupOptions, ValueTask<ArtifactResult<ArtifactShutdown>>> stop,
+        Func<CancellationToken, ValueTask<string[]>> objectFiles,
+        Func<CancellationToken, ValueTask<string[]>> stagingFiles, Func<ValueTask> observeReadOnlyObjects,
+        Func<ValueTask> restoreObjects, CancellationToken cancellationToken)
     {
         using var control = new ShortSource("selected control through stop"u8.ToArray());
         await PublishAsync(store, control, new(1024), cancellationToken);
-        var selected = Assert.Single(objectFiles());
+        var selected = Assert.Single(await objectFiles(cancellationToken));
         var ticket = Success(await store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), cancellationToken));
         using var source = new ShortSource("unselected assembly through stop"u8.ToArray());
         var staged = Success(await store.StageAsync(ticket, source, new(), cancellationToken));
-        observeReadOnlyObjects();
+        await observeReadOnlyObjects();
         try
         {
             Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(await store.CommitAsync(staged, new(), cancellationToken));
@@ -26,14 +36,14 @@ public static class ArtifactRecoveryAssertions
                     await stop(new(TimeSpan.FromSeconds(1))));
                 Assert.Equal(ArtifactFailureCode.CleanupIncomplete, stopped.Code);
                 Assert.Equal(ArtifactCleanupState.RetainedLiveOwnership, stopped.Cleanup);
-                Assert.Equal(2, objectFiles().Length);
+                Assert.Equal(2, (await objectFiles(cancellationToken)).Length);
                 Assert.False(source.WasDisposed);
             }
         }
-        finally { restoreObjects(); }
+        finally { await restoreObjects(); }
         Assert.Equal(ArtifactCleanupState.Released, Success(await stop(new())).State);
-        Assert.Equal(selected, Assert.Single(objectFiles()));
-        Assert.Empty(stagingFiles());
+        Assert.Equal(selected, Assert.Single(await objectFiles(cancellationToken)));
+        Assert.Empty(await stagingFiles(cancellationToken));
     }
 
     public static Task CommittedDecisionRollbackAsync(

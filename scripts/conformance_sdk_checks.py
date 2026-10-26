@@ -1527,6 +1527,22 @@ def full_artifact_binding_scenarios():
     identities.add(prefix + 'Observed_failed_quarantine_persistence_retains_actual_ownership_through_retry_and_reopen(provider: "local")')
     identities.add(prefix + 'Object_record_permissions_reject_without_borrowing_payload_access(provider: "object")')
     identities.add(prefix + 'Observed_record_permission_application_joins_actual_shutdown_before_resource_settlement(provider: "local")')
+    identities.update(prefix + "Observed_committed_residual_cleanup_preserves_actual_receipt_and_owned_capacity"
+                      + f'(provider: "{provider}")' for provider in ("local", "object"))
+    identities.update(prefix + "Observed_storage_inventory_bounds_all_actual_entries_and_rejects_nonfiles"
+                      + f'(provider: "{provider}", shape: "{shape}")'
+                      for provider in ("local", "object") for shape in ("overflow", "directory", "symlink"))
+    identities.update(prefix + "Observed_failed_prefix_cleanup_and_stop_preserve_actual_ownership_and_fence_replay"
+                      + f'(provider: "{provider}", stop: {stop})'
+                      for provider in ("local", "object") for stop in ("False", "True"))
+    identities.update(prefix + "Observed_object_cleanup_and_stop_preserve_actual_selected_payload"
+                      + f'(provider: "object", stop: {stop})' for stop in ("False", "True"))
+    identities.update(prefix + "Observed_unselected_object_cleanup_preserves_actual_residual_and_blocks_retry"
+                      + f'(provider: "object", point: {point}, cancel: {cancel})'
+                      for point in ("CommitProgress", "BeforePublicationDecision") for cancel in ("False", "True"))
+    identities.update(prefix + "Ordinary_cleanup_boundary_errors_cannot_borrow_intentional_failure_ownership"
+                      + f'(provider: "{provider}", point: {point})'
+                      for provider in ("local", "object") for point in ("StagePrefix", "BeforePublicationDecision", "CommitProgress"))
     identities.update(prefix + "Ordinary_record_permission_release_errors_restore_actual_mode_before_faulted_settlement"
                       + f'(provider: "local", cancellation: {cancellation})' for cancellation in ("False", "True"))
     identities.update(prefix + "Observed_validation_access_failures_preserve_actual_intact_content"
@@ -1550,7 +1566,9 @@ def full_artifact_binding_origin_counts():
     detection = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_committed_detection_paths_quarantine_actual_restored_bytes"
     durable = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_local_durable_reopen_preserves_retired_decisions_and_receipt_release"
     persistence = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_failed_quarantine_persistence_retains_actual_ownership_through_retry_and_reopen"
+    prefix_stop = FULL_ARTIFACT_CONSUMER_PREFIX + "Observed_failed_prefix_cleanup_and_stop_preserve_actual_ownership_and_fence_replay"
     return {identity: 2 if identity.split("(")[0] in (reopen, durable, persistence) or ('(provider: "local"' in identity and (
+                (identity.split("(")[0] == prefix_stop and "stop: True" in identity) or
                 identity.split("(")[0] == validation or (identity.split("(")[0] == detection and any(
                     f'detection: "{value}"' in identity for value in ("open", "publication")))
                 or (identity.split("(")[0] == payload and any(

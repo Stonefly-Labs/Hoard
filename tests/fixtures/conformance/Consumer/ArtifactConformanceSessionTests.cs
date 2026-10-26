@@ -13,6 +13,337 @@ namespace Hoard.Fixtures.Conformance.Consumer;
 public sealed class ArtifactConformanceSessionTests(ITestOutputHelper output)
 {
     [Theory]
+    [InlineData("local", ArtifactObservationPoint.StagePrefix)]
+    [InlineData("local", ArtifactObservationPoint.BeforePublicationDecision)]
+    [InlineData("local", ArtifactObservationPoint.CommitProgress)]
+    [InlineData("object", ArtifactObservationPoint.StagePrefix)]
+    [InlineData("object", ArtifactObservationPoint.BeforePublicationDecision)]
+    [InlineData("object", ArtifactObservationPoint.CommitProgress)]
+    public async Task Ordinary_cleanup_boundary_errors_cannot_borrow_intentional_failure_ownership(
+        string provider, ArtifactObservationPoint point)
+    {
+        await using var resources = new RecordingDirectories(allowFailedSettlement: true);
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        var failure = new IOException("InjectedCleanupFailure");
+        Exception? disposalFailure = null;
+        try
+        {
+            var bytes = "ordinary cleanup callback remains an error"u8.ToArray();
+            if (point == ArtifactObservationPoint.CommitProgress)
+            {
+                using var control = new ArtifactPublicationAssertions.ShortSource(bytes);
+                await ArtifactPublicationAssertions.PublishAsync(session.Store, control, new(1024), default);
+            }
+            var ticket = Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Success>(
+                await session.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default)).Value;
+            using var source = new ArtifactPublicationAssertions.ShortSource(bytes);
+            if (point == ArtifactObservationPoint.StagePrefix)
+            {
+                await using var injection = await session.Faults.InjectObservationFailureAsync(point,
+                    () => ValueTask.FromException(failure), default);
+                Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Failure>(
+                    await session.Store.StageAsync(ticket, source, new(), default));
+            }
+            else
+            {
+                var staged = Assert.IsType<ArtifactResult<ArtifactStagedWrite>.Success>(
+                    await session.Store.StageAsync(ticket, source, new(), default)).Value;
+                await using var injection = await session.Faults.InjectObservationFailureAsync(point,
+                    () => ValueTask.FromException(failure), default);
+                Assert.IsType<ArtifactResult<ArtifactMutationReceipt>.Failure>(
+                    await session.Store.CommitAsync(staged, new(), default));
+            }
+            Assert.False(source.WasDisposed);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { disposalFailure = await Record.ExceptionAsync(() => session.DisposeAsync().AsTask()); }
+        Assert.Equal("CleanupIncomplete", Assert.IsType<InvalidOperationException>(disposalFailure).Message);
+        var settlement = Assert.Single(resources.Settlements).Value;
+        Assert.True(settlement.IsFaulted);
+        Assert.Contains(failure, settlement.Exception!.InnerExceptions);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
+    [InlineData("local", false)]
+    [InlineData("local", true)]
+    [InlineData("object", false)]
+    [InlineData("object", true)]
+    public async Task Observed_failed_prefix_cleanup_and_stop_preserve_actual_ownership_and_fence_replay(string provider, bool stop)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var current = await ConformanceObservedArtifactSession.OpenAsync(
+            Binding(provider, new(artifactBytes: 1024, stagingBytes: 1024)), context, default);
+        IAsyncDisposable? restriction = null;
+        IAsyncDisposable? observation = null;
+        try
+        {
+            async ValueTask Arm() => observation = await current.Faults.InjectObservationFailureAsync(
+                ArtifactObservationPoint.StagePrefix, async () => restriction =
+                    await current.Faults.RestrictStorageCleanupAsync(ArtifactStorageArea.Staging, default), default);
+            async ValueTask Restore()
+            {
+                if (restriction is not null) { await restriction.DisposeAsync(); }
+                if (observation is not null) { await observation.DisposeAsync(); }
+            }
+            var assertions = CleanupAssertions(current);
+            if (stop)
+            {
+                var ticket = Assert.IsType<ArtifactResult<ArtifactOperationTicket>.Success>(
+                    await current.Store.ReserveWriteAsync(new(new ArtifactExpectations(1024)), new(), default)).Value;
+                using var source = new ArtifactPublicationAssertions.ShortSource("prefix retained through stop"u8.ToArray());
+                await Arm();
+                await assertions.FailedPrefixStopAsync(ticket, source,
+                    options => current.Lifetime.StopAsync(options, default), Restore, default);
+                if (provider == "local")
+                {
+                    ConformanceSessionOriginOutput.Write(output, current.CaptureOrigin());
+                    current = Assert.IsType<ConformanceObservedArtifactSession>(await current.ReopenAsync(default));
+                    await ArtifactCleanupAssertions.ReopenedAfterPrefixStopAsync(current.Store,
+                        () => current.Faults.ObserveInitialization().Ready, ticket, default);
+                }
+            }
+            else { await assertions.FailedPrefixAsync(Arm, Restore, default); }
+            ConformanceSessionOriginOutput.Write(output, current.CaptureOrigin());
+        }
+        finally
+        {
+            try
+            {
+                if (restriction is not null) { await restriction.DisposeAsync(); }
+                if (observation is not null) { await observation.DisposeAsync(); }
+            }
+            finally { await current.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+    }
+
+    [Theory]
+    [InlineData("object", false)]
+    [InlineData("object", true)]
+    public async Task Observed_object_cleanup_and_stop_preserve_actual_selected_payload(string provider, bool stop)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(
+            Binding(provider, new(artifactBytes: 1024, stagingBytes: 1024)), context, default);
+        IAsyncDisposable? restriction = null;
+        IAsyncDisposable? observation = null;
+        try
+        {
+            async ValueTask Restrict() => restriction =
+                await session.Faults.RestrictStorageCleanupAsync(ArtifactStorageArea.Payloads, default);
+            async ValueTask Observe()
+            {
+                observation = stop ? await session.Faults.InjectObservationFailureAsync(
+                    ArtifactObservationPoint.BeforePublicationDecision, Restrict, default)
+                    : await session.Faults.ObserveBoundaryAsync(ArtifactObservationPoint.DirectVerification, Restrict, default);
+            }
+            async ValueTask Remove()
+            {
+                if (observation is not null) { await observation.DisposeAsync(); }
+            }
+            async ValueTask Restore()
+            {
+                if (restriction is not null) { await restriction.DisposeAsync(); }
+            }
+            if (stop)
+            {
+                await ArtifactRecoveryAssertions.RetainedObjectStopAsync(session.Store,
+                    options => session.Lifetime.StopAsync(options, default),
+                    token => StorageIdsAsync(session, ArtifactStorageArea.Payloads, token),
+                    token => StorageIdsAsync(session, ArtifactStorageArea.Staging, token), Observe,
+                    async () => { await Restore(); await Remove(); }, default);
+            }
+            else
+            {
+                await CleanupAssertions(session).ReusedObjectAsync(
+                    token => StorageIdsAsync(session, ArtifactStorageArea.Payloads, token),
+                    Observe, Remove, Restore, default);
+            }
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally
+        {
+            try
+            {
+                if (restriction is not null) { await restriction.DisposeAsync(); }
+                if (observation is not null) { await observation.DisposeAsync(); }
+            }
+            finally { await session.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+    }
+
+    [Theory]
+    [InlineData("object", ArtifactObservationPoint.CommitProgress, false)]
+    [InlineData("object", ArtifactObservationPoint.BeforePublicationDecision, false)]
+    [InlineData("object", ArtifactObservationPoint.CommitProgress, true)]
+    [InlineData("object", ArtifactObservationPoint.BeforePublicationDecision, true)]
+    public async Task Observed_unselected_object_cleanup_preserves_actual_residual_and_blocks_retry(
+        string provider, ArtifactObservationPoint point, bool cancel)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        const int length = 512 * 1024;
+        var session = await ConformanceObservedArtifactSession.OpenAsync(
+            Binding(provider, new(artifactBytes: length, stagingBytes: length)), context, default);
+        IAsyncDisposable? restriction = null;
+        IAsyncDisposable? observation = null;
+        try
+        {
+            async ValueTask Observe(CancellationTokenSource cancellation)
+            {
+                async ValueTask Restrict() => restriction =
+                    await session.Faults.RestrictStorageCleanupAsync(ArtifactStorageArea.Payloads, default);
+                observation = cancel ? await session.Faults.ObserveBoundaryAsync(point, async () =>
+                {
+                    await Restrict();
+                    cancellation.Cancel();
+                }, default) : await session.Faults.InjectObservationFailureAsync(point, Restrict, default);
+            }
+            async ValueTask Remove()
+            {
+                if (observation is not null) { await observation.DisposeAsync(); }
+            }
+            async ValueTask Restore()
+            {
+                if (restriction is not null) { await restriction.DisposeAsync(); }
+            }
+            await CleanupAssertions(session).UnselectedObjectAsync(point == ArtifactObservationPoint.CommitProgress,
+                token => StorageIdsAsync(session, ArtifactStorageArea.Payloads, token),
+                async (id, token) => Assert.Single((await session.Faults.ObserveStorageAsync(token)).Payloads,
+                    file => file.Id == id).Length,
+                () => session.Faults.AwaitSettlementAsync(default).AsTask(),
+                Observe, Remove, Restore, async () => { await Restore(); await Remove(); }, default);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally
+        {
+            try
+            {
+                if (restriction is not null) { await restriction.DisposeAsync(); }
+                if (observation is not null) { await observation.DisposeAsync(); }
+            }
+            finally { await session.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+    }
+
+    private static ArtifactCleanupAssertions CleanupAssertions(IArtifactConformanceSession session) =>
+        new(session.Store, session.Maintenance, session.Identity, () => session.Faults.ObserveInitialization().Ready,
+            token => StorageIdsAsync(session, ArtifactStorageArea.Staging, token));
+
+    private static async ValueTask<string[]> StorageIdsAsync(
+        IArtifactConformanceSession session, ArtifactStorageArea area, CancellationToken cancellationToken)
+    {
+        var observed = await session.Faults.ObserveStorageAsync(cancellationToken);
+        return (area == ArtifactStorageArea.Staging ? observed.Staging : observed.Payloads).Select(file => file.Id).ToArray();
+    }
+
+    [Theory]
+    [InlineData("local", "overflow")]
+    [InlineData("local", "directory")]
+    [InlineData("local", "symlink")]
+    [InlineData("object", "overflow")]
+    [InlineData("object", "directory")]
+    [InlineData("object", "symlink")]
+    public async Task Observed_storage_inventory_bounds_all_actual_entries_and_rejects_nonfiles(string provider, string shape)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(Binding(provider), context, default);
+        var root = Assert.Single(resources.Directories).DirectoryPath;
+        var staging = Path.Combine(root, "store", provider == "local" ? "staging" : "multipart");
+        var entries = new List<string>();
+        var sentinel = Path.Combine(root, "owned-inventory-sentinel");
+        await File.WriteAllBytesAsync(sentinel, [41]);
+        try
+        {
+            try
+            {
+                if (shape == "symlink")
+                {
+                    var link = Path.Combine(staging, "unexpected-link");
+                    File.CreateSymbolicLink(link, sentinel);
+                    entries.Add(link);
+                }
+                else
+                {
+                    for (var index = 0; index < (shape == "overflow" ? 1025 : 1); index++)
+                    {
+                        var directory = Path.Combine(staging, "unexpected-" + index);
+                        Directory.CreateDirectory(directory);
+                        entries.Add(directory);
+                    }
+                }
+                Assert.Equal(shape == "overflow" ? "FaultControl.Capacity" : "FaultControl.InvalidInput",
+                    (await Assert.ThrowsAsync<InvalidOperationException>(
+                        () => session.Faults.ObserveStorageAsync(default).AsTask())).Message);
+            }
+            finally
+            {
+                foreach (var entry in entries)
+                {
+                    if (shape == "symlink") { File.Delete(entry); }
+                    else { Directory.Delete(entry); }
+                }
+            }
+            var observed = await session.Faults.ObserveStorageAsync(default);
+            Assert.Empty(observed.Staging);
+            Assert.Empty(observed.Payloads);
+            Assert.Equal(new byte[] { 41 }, await File.ReadAllBytesAsync(sentinel));
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally { await session.DisposeAsync(); }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+    }
+
+    [Theory]
+    [InlineData("local")]
+    [InlineData("object")]
+    public async Task Observed_committed_residual_cleanup_preserves_actual_receipt_and_owned_capacity(string provider)
+    {
+        await using var resources = new RecordingDirectories();
+        var context = new ConformanceRunContext(RunId(), "full-artifact-binding", TimeProvider.System,
+            resources, new ConformanceEvidenceBuffer());
+        var session = await ConformanceObservedArtifactSession.OpenAsync(
+            Binding(provider, new(artifactBytes: 1024, stagingBytes: 1024)), context, default);
+        IAsyncDisposable? restriction = null;
+        try
+        {
+            async ValueTask<string[]> Staging(CancellationToken token) =>
+                (await session.Faults.ObserveStorageAsync(token)).Staging.Select(file => file.Id).ToArray();
+            var assertions = new ArtifactCleanupAssertions(session.Store, session.Maintenance, session.Identity,
+                () => session.Faults.ObserveInitialization().Ready, Staging);
+            async ValueTask Deny()
+            {
+                restriction = await session.Faults.RestrictStorageCleanupAsync(ArtifactStorageArea.Staging, default);
+                Assert.Equal("BindingInvalid", (await Assert.ThrowsAsync<InvalidOperationException>(
+                    () => session.Faults.RestrictStorageCleanupAsync(ArtifactStorageArea.Staging, default).AsTask())).Message);
+            }
+            ValueTask Restore() =>
+                (restriction ?? throw new InvalidOperationException("BindingInvalid")).DisposeAsync();
+            await assertions.CommittedResidualAsync(Deny, Restore, default);
+            ConformanceSessionOriginOutput.Write(output, session.CaptureOrigin());
+        }
+        finally
+        {
+            try { if (restriction is not null) { await restriction.DisposeAsync(); } }
+            finally { await session.DisposeAsync(); }
+        }
+        Assert.True(Assert.Single(resources.Settlements).Value.IsCompletedSuccessfully);
+        Assert.DoesNotContain(resources.Observations, item => item.State == ConformanceOwnershipState.Released);
+    }
+
+    [Theory]
     [InlineData("local")]
     public async Task Observed_failed_quarantine_persistence_retains_actual_ownership_through_retry_and_reopen(string provider)
     {
