@@ -15,6 +15,17 @@ certification. Its artifact test-only fault drivers now distinguish explicit
 only the exact registered injected exception is expected; other exceptions
 continue to fault ownership settlement.
 
+The public `scripts/validate-conformance.sh --profile metadata|artifacts
+--evidence <fresh-private-path>` entry now dispatches the complete built-in
+category batch on supported Linux hosts. It preserves independently selected
+case keys, exact native source/witness admission, immutable applicability and
+actual resource cleanup. Even a successful component batch retains an
+`Incomplete`, non-qualifying report and returns exit 2 (`EvidenceIncomplete`):
+the independent evaluator is unfinished. Unsupported native hosts fail
+`PrerequisiteMissing` before allocation. Focused/custom-binding commands and
+other profiles remain explicitly incomplete, without fallback. This is not yet
+the external contributor entry point or category certification.
+
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.
 Post-handshake output drains concurrently within bounded retention; it cannot

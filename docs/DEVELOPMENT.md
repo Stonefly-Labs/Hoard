@@ -4668,6 +4668,25 @@ infrastructure operation, repository-setting change, deployment or merge occurs.
 
 ### F-07 partial implementation checkpoint
 
+Public metadata/artifact commands now dispatch their existing complete native
+category batches rather than reject before execution. Exact full catalog keys
+are rechecked; focused/custom-binding, other-profile and offline modes still
+reject without allocating or substituting a built-in agreement. Native failures
+retain their safe code. A completed batch remains non-qualifying and returns
+exit 2 (`EvidenceIncomplete`) until independent evaluation is implemented.
+The native backend currently requires Linux x86_64/aarch64; unsupported hosts
+reject before allocating. Existing isolated Linux diagnostic jobs now use the
+public shell entry and require a complete all-applicable-pass report, original
+proof bytes, actual completion inputs and released resources after that expected
+exit. A missing report or unrelated incomplete failure cannot make the job pass.
+These are component diagnostics, not the future five-profile qualification CI.
+
+Three routing regressions first expose nine intended failures, then all nine CLI
+tests pass. Full tooling runs 481 tests successfully with nineteen explicit
+native skips; frozen inventory, SDK catalog, shell syntax and whitespace checks
+pass. Current-source native CLI execution is pending. No additional task/checklist
+or stage marker is completed by routing tests or historical receipts.
+
 T062/T063 now supply a separately packed Memory-forwarding contributor adapter
 and package-only good/faulty/corrected controls. Two actual safe-logger witnesses
 pass from an isolated source/feed/cache. The faulty state triggers the intended

@@ -1,4 +1,5 @@
 import contextlib
+from dataclasses import replace
 import io
 import json
 from pathlib import Path
@@ -93,12 +94,57 @@ class ConformanceCliTests(unittest.TestCase):
             self.parent.chmod(0o700)
         self.assertFalse(self.destination.exists())
 
+    def test_builtin_category_dispatch_executes_only_its_complete_native_batch(self):
+        for profile in ("metadata", "artifacts"):
+            invocation = evidence.admit_invocation(ROOT, [
+                "--profile", profile, "--evidence", str(self.destination)])
+            with self.subTest(profile=profile), patch(
+                    "conformance_sdk_checks.execute", return_value=0) as execute:
+                with self.assertRaisesRegex(evidence.ConformanceError, "EvidenceIncomplete"):
+                    evidence.dispatch_invocation(invocation)
+                execute.assert_called_once_with(ROOT, self.destination, category=profile)
+            self.assertFalse(self.destination.exists())
+
+    def test_category_dispatch_never_substitutes_a_builtin_or_reduced_agreement(self):
+        invocation = evidence.admit_invocation(ROOT, [
+            "--profile", "metadata", "--evidence", str(self.destination)])
+        unsupported = (
+            replace(invocation, case_keys=invocation.case_keys[:-1]),
+            replace(invocation, case_keys=(*invocation.case_keys, invocation.case_keys[0])),
+            replace(invocation, mode="diagnostic"),
+            replace(invocation, binding_project=ROOT / "tests/fixtures/conformance/Contributor/Contributor.csproj"),
+            replace(invocation, profiles=("metadata", "artifacts")),
+            replace(invocation, profiles=("composition",)),
+        )
+        with patch("conformance_sdk_checks.execute") as execute:
+            for changed in unsupported:
+                with self.subTest(mode=changed.mode, profiles=changed.profiles):
+                    with self.assertRaises(evidence.ConformanceError):
+                        evidence.dispatch_invocation(changed)
+            execute.assert_not_called()
+        self.assertFalse(self.destination.exists())
+
+    def test_category_dispatch_preserves_native_failures_and_never_qualifies_a_successful_batch(self):
+        invocation = evidence.admit_invocation(ROOT, [
+            "--profile", "metadata", "--evidence", str(self.destination)])
+        for code in ("AssertionFailed", "InsufficientCapacity", "CleanupIncomplete"):
+            with self.subTest(code=code), patch(
+                    "conformance_sdk_checks.execute", side_effect=evidence.ConformanceError(code)) as execute:
+                with self.assertRaisesRegex(evidence.ConformanceError, code):
+                    evidence.dispatch_invocation(invocation)
+                execute.assert_called_once_with(ROOT, self.destination, category="metadata")
+        for result in (1, 2, None, False):
+            with self.subTest(result=result), patch("conformance_sdk_checks.execute", return_value=result):
+                with self.assertRaisesRegex(evidence.ConformanceError, "CommandFailed"):
+                    evidence.dispatch_invocation(invocation)
+
     def test_cli_rejects_private_unknown_input_without_persistence_or_false_success(self):
         import conformance_cli
         for arguments, code in (
                 (["--private-canary-value"], "EvidenceSchemaInvalid"),
                 (["--profile", "private-canary-service", "--evidence", str(self.destination)], "UnsupportedProfile"),
-                (["--profile", "metadata", "--evidence", str(self.destination)], "EvidenceIncomplete")):
+                (["--profile", "metadata", "--filter", "MP-01",
+                  "--evidence", str(self.destination)], "EvidenceIncomplete")):
             output = io.StringIO()
             with self.subTest(arguments=arguments), contextlib.redirect_stdout(output):
                 status = conformance_cli.main(arguments)

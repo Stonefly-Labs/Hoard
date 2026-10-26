@@ -7802,6 +7802,67 @@ explicit native skips; frozen inventory/SDK catalog checks and shell syntax
 also pass. Production references/APIs, examples/diagrams, charter/product/
 architecture/ADR documents, infrastructure and release behavior are unchanged.
 
+### Public native category dispatch and execution-evidence audit
+
+The public shell/CLI now routes complete built-in metadata/artifact invocations
+to the existing native category executor. Dispatch independently rechecks the
+entire ordered frozen key selection before execution. It cannot turn a reduced,
+duplicated, filtered or external-binding selection into a built-in full run.
+Native errors preserve their safe failure code; an invalid executor return
+rejects `CommandFailed`. Even successful history admission still returns
+`EvidenceIncomplete` (exit 2), retaining the existing non-qualifying public report.
+Independent qualification evaluation, focused/custom-binding execution, other
+profiles and offline verification/aggregation remain unfinished.
+
+The existing isolated Linux matrix now executes the public shell entry. After
+its expected exit 2, it requires the exact full category catalog, all applicable
+passes, no qualifying claim, actual released resources, original proof hashes
+and unchanged retained completion measurements. Missing reports, other incomplete
+errors and shortened results cannot satisfy this diagnostic job. This is not
+five-profile qualification CI or replacement of the independent evaluator.
+The executor still requires Linux x86_64/aarch64; unsupported native hosts reject
+before allocating.
+
+`python3 -m unittest discover -s tests/tooling -p test_conformance_cli.py -v`
+first records nine intended subcase failures for missing dispatch/error
+propagation, then passes all nine tests after the implementation.
+`python3 -m unittest discover -s tests/tooling -q` runs 481 tests successfully
+with nineteen explicit native skips. Frozen inventory, SDK catalog, shell syntax
+and `git diff --check` pass. Current-source native CLI execution remains pending;
+these routing checks do not mark T035 or acceptance tasks complete.
+Workflow YAML, its extracted Bash body and embedded Python compile successfully.
+Actual `bash scripts/validate-conformance.sh --profile metadata --evidence
+<fresh-private-path>` on this macOS host returns the expected qualification-mode
+`Incomplete`/`PrerequisiteMissing`, exit 2, without creating the evidence root.
+An initial parent under macOS's symlinked temporary path is correctly rejected
+`OwnershipInvalid`; retry uses its canonical owner-private parent.
+
+Separately audit successful Linux
+[run40339757894](https://github.com/Stonefly-Labs/Hoard/actions/runs/40339757894)
+at exact `92ed4ff683ec998aadb7c5215396f5b943ba3620`: all three jobs pass.
+Its bound SDK receipt records all ten SQLite barrier/exit/readback journeys,
+the backup/restore walkthrough, six Local barrier/exit/readback journeys and
+all four actual paced Local/Object 256 MiB/4 GiB transfers. Each transfer passes
+the unchanged OS-peak/buffer/pacing predicate and retains producer/controller/
+proof hashes; SDK inputs are
+`3f9fe1974c63a0e72545d18c2ee1eb66305dd780b95ff854eb107cb6bd38c3ff`.
+Qualification-input metadata has 93 Passed/0 Incomplete/9 NotApplicable;
+artifacts has 99 Passed/0 Incomplete/4 NotApplicable. Both reports deliberately
+remain `Incomplete`, qualification false. AST comparisons confirm the seven
+recovery/transfer execution and admission functions are unchanged at this
+checkpoint; native process/cleanup and CrashRunner/TransferRunner sources are
+also unchanged. This is historical component execution evidence, not a fresh
+current-input run or independently downloadable/replayable full proof set.
+Do not promote old digests into new reports. T026/T032 stay unchecked pending
+closure of retained/current acceptance evidence. Local scratch limits remain
+unchanged and unrelated data/evidence is preserved.
+
+README, development/provider guidance and this feature plan describe the new
+entry-point behavior. Product APIs/dependency boundaries, host/contributor
+examples, diagrams, charter/product/architecture/ADR documents, governance,
+infrastructure, release and UI guidance are unaffected. The stage remains
+`implement / running`, with reviewer checklist markers untouched.
+
 ### Package-only forwarding contributor component
 
 T062/T063 now add `ForwardingMetadataBinding` to the existing separately

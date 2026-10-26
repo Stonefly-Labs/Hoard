@@ -46,6 +46,12 @@ The separate forwarding contributor package now demonstrates good/faulty/correct
 execution of one unchanged metadata assertion, plus genuine legacy/reopen controls.
 It wraps Memory and is not a third provider; the full CLI contributor journey
 and complete applicable-suite acceptance remain unfinished.
+The public `--profile metadata` and `--profile artifacts` commands now execute
+their complete built-in native category batches on supported Linux hosts.
+Reports remain non-qualifying and the CLI returns `EvidenceIncomplete` (exit 2)
+until independent evaluation is delivered. Focused/custom-binding runs and the
+other profiles remain guarded; neither a reduced inventory nor another provider
+is substituted.
 
 ## ✨ The idea
 

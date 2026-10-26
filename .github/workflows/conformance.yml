@@ -118,6 +118,32 @@ jobs:
           set -euo pipefail
           private_parent="$(dirname "$GITHUB_WORKSPACE")/category-extraction-${CONFORMANCE_CATEGORY}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mkdir -m 700 "$private_parent"
-          python3 scripts/conformance_sdk_checks.py \
-            --root "$GITHUB_WORKSPACE" --evidence "$private_parent/run" \
-            --category "$CONFORMANCE_CATEGORY"
+          status=0
+          bash scripts/validate-conformance.sh \
+            --profile "$CONFORMANCE_CATEGORY" --evidence "$private_parent/run" || status=$?
+          test "$status" -eq 2
+          python3 - "$private_parent/run" "$CONFORMANCE_CATEGORY" <<'PY'
+          from pathlib import Path
+          import sys
+          sys.path.insert(0, "scripts")
+          import conformance_evidence as evidence
+          from conformance_case_catalog import expected_cases
+          from conformance_sources import read_bounded
+
+          root, profile = Path(sys.argv[1]), sys.argv[2]
+          path = root / f"proofs/category-{profile}-qualification-report.json"
+          report = evidence.admit_entity(
+              "QualificationReport", evidence.load_json(read_bounded(path, evidence.MAX_REPORT_BYTES)))
+          expected = {case.key for case in expected_cases(profile)}
+          observed = {(row["profileId"], row["bindingId"], row["matrixId"], row["caseId"])
+                      for row in report["results"]}
+          if (report["inputs"]["profileId"] != profile or report["inputs"]["mode"] != "qualification"
+                  or report["state"] != "Incomplete" or report["qualification"]
+                  or observed != expected
+                  or any(row["status"] not in ("Passed", "NotApplicable") for row in report["results"])
+                  or not report["resources"] or any(row["state"] != "Released" for row in report["resources"])
+                  or evidence.input_manifest(root, list(report["proofs"])) != report["proofs"]):
+              raise evidence.ConformanceError("EvidenceIncomplete")
+          evidence.verify_completion_inputs(root, report)
+          print('{"qualification":false,"code":"None","mode":"category-cli-diagnostic"}')
+          PY
