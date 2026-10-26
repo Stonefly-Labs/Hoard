@@ -2919,6 +2919,14 @@ creation, native command attribution and independent source admission agree on
 that location. Fresh native confirmation remains pending; this is not profile
 qualification or implementation-stage completion.
 
+Legacy metadata/artifact commands now use bounded transient output and the
+shared safe logger instead of retaining raw TRX/error/profiler text. Replays
+require their exact runtime sidecars; runtime staging rejects unexpected
+diagnostic files, and barrier children drain and reject unexpected output.
+A real configured memory-provider MP-18 smoke passes with independently
+rechecked attribution. Full recovery/transfer and public-profile acceptance
+remain separate unfinished tasks.
+
 The [shared checkpoint](.specify/hoard-flow.json) records the next authorized
 stage; constitution and specification artifacts are not product implementation.
 

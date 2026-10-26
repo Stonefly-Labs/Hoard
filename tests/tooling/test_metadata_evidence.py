@@ -243,10 +243,10 @@ class MetadataEvidenceTests(unittest.TestCase):
 
     def test_subprocess_failure_and_timeout_are_sanitized_and_explicit(self):
         module = self.load()
-        for result in (subprocess.CompletedProcess([], 7, "private-canary"),
-                       subprocess.TimeoutExpired("fixture", 600)):
+        for result in (subprocess.CompletedProcess([], 7, b"private-canary"),
+                       RuntimeError("Legacy command exceeded its finite deadline.")):
             with self.subTest(result=type(result).__name__):
-                with patch.object(module.subprocess, "run",
+                with patch.object(module.legacy, "capture",
                                   side_effect=result if isinstance(result, Exception) else None,
                                   return_value=result):
                     with self.assertRaisesRegex(RuntimeError, "command") as caught:

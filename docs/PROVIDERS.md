@@ -213,6 +213,16 @@ resources. Settings now belong to retained read-only input proofs, and native
 command/source attribution uses that exact location. Cleanup is not weakened,
 and fresh native success is not presumed.
 
+Legacy metadata/artifact imports now require original safe-logger attribution,
+actual SDK package/image correspondence and exact per-parameter results, not
+TRX labels alone. Unknown/oversized child diagnostics fail without raw spooling;
+barrier output and post-handshake crash output are drained through termination.
+Runtime staging rejects preexisting logs/reports/dumps before copying any
+execution input. OS peak RSS remains an actual profiler measurement, with only
+its checked numeric projection retained. These transport changes do not waive
+SQLite/Local recovery, real transfers, independent implementations or the
+thirteen authorized simulation exclusions.
+
 CP-01..20 tests now cover declaration rejection/repair, disabled effects,
 late-fault sanitization, retained ownership, refusal of unsafe restart and
 active-request drain/admission. Focused package-only CP-01/02/18/19 cases pass

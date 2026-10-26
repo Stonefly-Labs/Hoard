@@ -10490,6 +10490,19 @@ hashes and source admission; cleanup still removes synthetic stores/feed/cache.
 A regression verifies settings remain read-only and byte-identical after store
 deletion. Fresh native confirmation is pending; no qualification is inferred.
 
+Legacy metadata/artifact validation now invokes the existing `HoardSafe` logger
+through `conformance_legacy.py`. It bounds transient output, retains only closed
+safe projections, stages bounded allowlisted execution inputs, checks actual
+loaded SDK/archive byte agreement and requires `.runtime.json` attribution on
+replay. Recovery/barrier output is concurrently drained and rejected when
+unexpected, including trailing artifact crash output; profiler text is admitted
+only by its exact OS grammar before numeric RSS projection. The ordinary
+command transport keeps its group leader unreaped until owned group settlement,
+preventing PID/group reuse during cleanup. Real configured memory MP-18
+execution and independent sidecar replay pass; an unconfigured witness fails
+closed rather than becoming evidence. Full legacy entry points and fresh
+recovery/transfers remain acceptance obligations, not inferred passes.
+
 Tests-first CP-01..20 coverage reuses `ConformanceMatrixTests.cs`, preserving the
 existing catalog/runtime identities instead of introducing duplicate test types.
 Source matrix/version and related lifecycle/configuration/discovery regressions

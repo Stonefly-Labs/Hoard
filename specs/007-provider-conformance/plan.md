@@ -7737,6 +7737,44 @@ Fresh native confirmation remains pending; task/checklist/stage markers do not
 advance. Product APIs, provider mechanisms, package graph, examples, diagrams,
 charter/architecture/ADRs, infrastructure and releases are unaffected.
 
+### Extraction implementation audit and legacy safe transport
+
+Record T021..024, T027..030, T033/T034 and T050 from delivered implementation,
+not planned APIs. The SDK's nineteen metadata and twenty-three artifact shared
+assertion files have no concrete-provider references/switches; its project
+references only Abstractions and xUnit. Four bindings retain independent
+provider mechanisms. Original wrappers delegate to unchanged common assertions;
+four authority-integration combinations and isolated stale-operation/visibility
+mutation pairs retain their frozen witnesses. Exact earlier Linux admission is
+component evidence, not qualification of the current source. Focused binding,
+authority and mutation tests previously pass 23 cases; version/runtime-policy
+tests pass all 114 rows using the existing validator/classifier.
+
+T025/T031 replace legacy raw command/TRX/error/profiler persistence with the
+existing safe logger and bounded in-memory transport. Require original safe
+runtime sidecars on production replay, verify actual SDK archive/loaded bytes,
+and retain exact frozen per-parameter/assertion witnesses. Runtime staging
+validates a bounded execution-input allowlist before copying anything, rejecting
+preexisting diagnostic files. Metadata barrier children concurrently drain and
+reject output; artifact crash children also classify trailing stdout through
+termination. Only fixed OS-profiler grammar becomes numeric RSS evidence.
+The ordinary command supervisor retains an unreaped leader through group
+settlement, preventing group-identity reuse. Metadata inventory inputs now
+include the actual legacy helper source. The frozen artifact catalog and
+inventory remain unchanged.
+
+A real configured memory MP-18 execution passes one witness through the new
+logger; independent `.runtime.json` replay passes. The initial unconfigured
+execution correctly fails with a safe unknown-failure classification and no
+green report. Unit challenges cover missing sidecars, diagnostic-contaminated
+runtime staging, bounded/concurrent output, trailing crash diagnostics, real
+assertion-negative proof admission, actual Python assertion failure and
+output/interrupt containment. Full legacy
+recovery/transfer commands, standalone category profiles and the final baseline
+remain separate unchecked execution tasks. Production APIs/dependencies,
+examples/diagrams, governance, architecture documents, infrastructure and
+releases are unchanged.
+
 ### Tests-first category and composition checkpoint
 
 Mark T019/T020 complete from the existing frozen-case/parameter/control parity

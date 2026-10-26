@@ -26,6 +26,7 @@ from artifact_case_catalog import required_runtime_tests
 import foundation_evidence as foundation
 import lifecycle_evidence as lifecycle
 import metadata_evidence as metadata
+import conformance_legacy as legacy
 from conformance_lock_preparation import prepare_project_lock, verify_project_lock
 
 BASELINE = "830972f24795ffaaaa18cb35138db7da59022313"
@@ -59,36 +60,9 @@ def sha256(path):
 
 
 def run(*args, cwd=None, env=None):
-    child = subprocess.Popen(
-        args, cwd=cwd, env={**os.environ, **(env or {})}, text=True,
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT, start_new_session=True)
-    try:
-        output, _ = child.communicate(timeout=COMMAND_TIMEOUT_SECONDS)
-    except (subprocess.SubprocessError, OSError, UnicodeError, KeyboardInterrupt) as error:
-        deadline = time.monotonic() + 10
-        try:
-            for pid in sorted(command_processes(child.pid, deadline=deadline), reverse=True):
-                try:
-                    os.kill(pid, signal.SIGKILL)
-                except ProcessLookupError:
-                    pass
-            child.communicate(timeout=max(0.001, deadline - time.monotonic()))
-            while command_processes(child.pid, deadline=deadline):
-                if time.monotonic() >= deadline:
-                    raise subprocess.TimeoutExpired("owned artifact command", 10)
-                time.sleep(0.01)
-        except (OSError, subprocess.SubprocessError):
-            raise RuntimeError("Artifact command cleanup incomplete; private evidence retained.") from None
-        if isinstance(error, KeyboardInterrupt):
-            raise
-        if isinstance(error, subprocess.TimeoutExpired):
-            raise RuntimeError("Artifact command exceeded its finite deadline.") from None
-        raise RuntimeError("Artifact command output capture failed; private evidence retained.") from None
-    if child.returncode:
-        codes = sorted(set(re.findall(r"error (?:CS|NU|MSB)\d+|error WHITESPACE", output)))
-        suffix = " [" + ", ".join(codes[:10]) + "]" if codes else ""
-        raise RuntimeError(f"Artifact command failed: {Path(args[0]).name}{suffix}.")
-    return output
+    if args[:2] in (("dotnet", "test"), ("dotnet", "vstest")):
+        return legacy.test_command(args, cwd=cwd, env=env).stdout.decode()
+    return legacy.command(args, cwd=cwd, env=env, timeout=COMMAND_TIMEOUT_SECONDS)
 
 
 def command_processes(session, deadline=None):
@@ -366,10 +340,8 @@ def verify_execution_proofs(evidence, work):
         path = proof_file(work, measurement.get("proof"))
         if path.stat().st_size > 16384 or sha256(path) != measurement.get("sha256"):
             raise RuntimeError("Artifact OS measurement capture is missing or altered.")
-        pattern = (r"^\s*(\d+)\s+maximum resident set size\s*$" if proof["osPeakMethod"] == "time-l"
-                   else r"Maximum resident set size \(kbytes\):\s*(\d+)")
-        matched = re.search(pattern, path.read_text(), re.MULTILINE)
-        if (not matched or int(matched[1]) * (1 if proof["osPeakMethod"] == "time-l" else 1024) != proof["osPeakRssBytes"]
+        measured = json.loads(path.read_text())
+        if (measured != {"maximumResidentBytes": proof["osPeakRssBytes"]}
                 or proof["expectedSha256"] != expected_transfer_hash(proof["size"])
                 or proof["runtime"] != evidence["environment"]["runtime"]):
             raise RuntimeError("Artifact transfer peak, digest or runtime disagrees with its actual inputs.")
@@ -392,15 +364,22 @@ def verify_execution_proofs(evidence, work):
                 raise RuntimeError("Artifact mutation execution proof was altered.")
             results = ElementTree.parse(red).findall(".//{*}UnitTestResult")
             result = next((result for result in results if result.get("testName") == pair["test"]), None)
+            if not red.with_suffix(".runtime.json").is_file():
+                raise RuntimeError("Artifact mutation pair is missing safe runtime assertion attribution.")
+            legacy.verify_projection(red)
+            receipt = json.loads(red.with_suffix(".runtime.json").read_text())
             if (result is None or result.get("outcome") != "Failed"
-                    or "Assert." not in result.findtext(".//{*}Message", "")
+                    or receipt["assertionSymbol"] !=
+                        "Hoard.Testing.Conformance.Artifacts.ArtifactCapabilityAssertions.MissingGuaranteeAsync"
                     or pair["test"] not in {result["test"] for result in metadata.trx_results(green)}):
                 raise RuntimeError("Artifact mutation pair lacks its exact failed assertion and green execution.")
         else:
             capture = read_proof(work, pair.get("execution"))
             if (capture.get("redExit") != pair["redExit"] or capture.get("greenExit") != 0
-                    or f"FAIL: {pair['test']}" not in capture.get("redOutput", "")
-                    or "AssertionError" not in capture["redOutput"]):
+                    or not isinstance(capture.get("redOutput"), dict)
+                    or not any(item.get("test", "").endswith("." + pair["test"])
+                               and item.get("kind") == "Assertion"
+                               for item in capture["redOutput"].get("failures", []))):
                 raise RuntimeError("Artifact verifier mutation did not execute its intended assertion.")
     if {pair["id"] for pair in evidence["redGreen"]} != {
             "local-capability-admission", "object-capability-admission", "case-context-binding"}:
@@ -701,7 +680,7 @@ def package_checks(root, work):
     os.environ["NUGET_PACKAGES"] = str(work / "cache")
     try:
         for scan, inputs in projects:
-            graph = foundation.inspection_graph(inputs, ownership)
+            graph = foundation.inspection_graph(inputs, ownership, resolve=legacy.resolve_project)
             graph["scanId"] = scan
             for project in graph["projects"]:
                 if project["id"] in ("Local", "ObjectSemantics", "HostAdapters", "Consumer",
@@ -773,14 +752,24 @@ def stop_measured_child(child):
 
 
 def read_child_line(child, timeout):
+    deadline = time.monotonic() + timeout
+    line = bytearray()
     with selectors.DefaultSelector() as selection:
         selection.register(child.stdout, selectors.EVENT_READ)
-        if not selection.select(timeout):
-            raise RuntimeError("Artifact measured child missed its bounded handshake.")
-        line = child.stdout.readline(16385)
-    if not line or len(line) > 16384:
-        raise RuntimeError("Artifact measured child emitted no bounded proof.")
-    return json.loads(line)
+        while len(line) <= 16384:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0 or not selection.select(remaining):
+                raise RuntimeError("Artifact measured child missed its bounded handshake.")
+            byte = os.read(child.stdout.fileno(), 1)
+            if not byte:
+                raise RuntimeError("Artifact measured child emitted no bounded proof.")
+            line.extend(byte)
+            if byte == b"\n":
+                try:
+                    return legacy.load_json(bytes(line))
+                except ValueError:
+                    raise RuntimeError("Artifact measured child UnknownDiagnostic.") from None
+    raise RuntimeError("Artifact measured child emitted no bounded proof.")
 
 
 @functools.lru_cache(maxsize=2)
@@ -806,9 +795,10 @@ def measured_transfer(work, provider, size, run_id, expected):
     flag = "-l" if sys.platform == "darwin" else "-v"
     command = ["/usr/bin/time", flag, "dotnet", str(binary), provider,
                str(capture / "store"), str(size), expected, run_id]
-    with (capture / "time.txt").open("w") as errors:
+    with legacy.ErrorCapture(allow_output=True) as errors:
         child = subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                                  stderr=errors, text=True, bufsize=1, start_new_session=True)
+        errors.start()
         _workspaces[work].add(child.pid)
         actual_pid = None
         try:
@@ -826,10 +816,11 @@ def measured_transfer(work, provider, size, run_id, expected):
             with selectors.DefaultSelector() as selection:
                 selection.register(child.stdout, selectors.EVENT_READ)
                 while True:
+                    errors.check()
                     if time.monotonic() >= deadline:
                         raise RuntimeError("Artifact transfer child exceeded its 40-minute deadline.")
                     if selection.select(0.05):
-                        complete = json.loads(child.stdout.readline(16385))
+                        complete = read_child_line(child, max(0.001, deadline - time.monotonic()))
                         break
                     samples.append(process_rss(actual_pid))
             child.wait(timeout=max(0.001, deadline - time.monotonic()))
@@ -842,16 +833,20 @@ def measured_transfer(work, provider, size, run_id, expected):
             _workspaces[work].discard(child.pid)
             if actual_pid is not None:
                 _workspaces[work].discard(actual_pid)
-    raw = (capture / "time.txt").read_text()
-    pattern = r"^\s*(\d+)\s+maximum resident set size\s*$" if sys.platform == "darwin" else r"Maximum resident set size \(kbytes\):\s*(\d+)"
-    matched = re.search(pattern, raw, re.MULTILINE)
-    if not matched:
-        raise RuntimeError("Artifact OS peak resident-memory capture is missing.")
-    proof = {**complete, "baselineRssBytes": baseline, "osPeakRssBytes": int(matched[1]) * (1 if sys.platform == "darwin" else 1024),
+    peak = legacy.peak_rss(bytes(errors.data), darwin=sys.platform == "darwin", arguments=command[2:])
+    proof = {**complete, "baselineRssBytes": baseline, "osPeakRssBytes": peak,
              "sampledPeakRssBytes": max(samples), "samples": len(samples), "rssUnits": "bytes",
              "osPeakMethod": "time-l" if sys.platform == "darwin" else "time-v", "exitCode": child.returncode}
-    (capture / "proof.json").write_text(json.dumps(proof, indent=2) + "\n")
     verify_transfer(proof, provider, size, run_id)
+    allowed = {
+        "eventName", "provider", "runId", "pid", "size", "written", "read", "expectedSha256",
+        "sourceSha256", "sinkSha256", "runtime", "sourcePaced", "sinkPaced", "nonSeekable", "generated",
+        "independentExpectedHash", "warmupComplete", "bufferBytes", "providerBufferLimit", "slots"}
+    if (set(complete) != allowed or complete["eventName"] != "complete"
+            or re.fullmatch(r"\.NET [0-9]{1,2}\.[0-9]{1,2}\.[0-9]{1,4}", complete["runtime"]) is None):
+        raise RuntimeError("Artifact transfer UnknownDiagnostic.")
+    (capture / "time.txt").write_text(json.dumps({"maximumResidentBytes": peak}) + "\n")
+    (capture / "proof.json").write_text(json.dumps(proof, indent=2) + "\n")
     return proof
 
 
@@ -896,12 +891,14 @@ def crash_recovery(work, barrier, run_id):
     state_path = capture / "state.json"
     arguments = [str(capture / "store"), str(state_path), barrier, run_id]
     started = time.monotonic()
-    with (capture / "crash-errors.txt").open("w") as errors:
+    with legacy.ErrorCapture() as errors, legacy.ErrorCapture() as trailing:
         child = subprocess.Popen(["dotnet", str(binary), "crash", *arguments],
                                  stdout=subprocess.PIPE, stderr=errors, text=True, start_new_session=True)
+        errors.start()
         _workspaces[work].add(child.pid)
         try:
             handshake = read_child_line(child, 120)
+            trailing.start_from(child.stdout)
             if (handshake.get("eventName") != "barrier" or handshake.get("pid") != child.pid
                     or handshake.get("runId") != run_id or handshake.get("barrier") != barrier
                     or handshake.get("acknowledged") is not (barrier == "B3")
@@ -918,27 +915,25 @@ def crash_recovery(work, barrier, run_id):
                 child.wait(timeout=10)
             child.stdout.close()
             _workspaces[work].discard(child.pid)
-    with (capture / "reopen-errors.txt").open("w") as errors:
-        reopened = subprocess.Popen(["dotnet", str(binary), "recover", *arguments],
-                                    stdout=subprocess.PIPE, stderr=errors, text=True, start_new_session=True)
-        _workspaces[work].add(reopened.pid)
-        try:
-            output, _ = reopened.communicate(timeout=120)
-            (capture / "reopen-output.txt").write_text(output)
-            if reopened.returncode or len(output) > 16384 or sha256(state_path) != before:
-                raise RuntimeError("Artifact fresh-process reopen failed or changed its original ticket proof.")
-            observed = json.loads(output)
-            state = json.loads(state_path.read_text())
-            validate_recovery_readback(observed, state, barrier, run_id, reopened.pid)
-        finally:
-            if reopened.poll() is None:
-                reopened.kill()
-                reopened.wait(timeout=10)
-            reopened.stdout.close()
-            _workspaces[work].discard(reopened.pid)
+    if errors.data:
+        raise RuntimeError("Artifact crash child UnknownDiagnostic.")
+    reopened = legacy.capture(["dotnet", str(binary), "recover", *arguments], timeout=120)
+    if reopened.returncode or len(reopened.stdout) > 16384 or sha256(state_path) != before:
+        raise RuntimeError("Artifact fresh-process reopen failed or changed its original ticket proof.")
+    observed = json.loads(reopened.stdout)
+    state = json.loads(state_path.read_text())
+    validate_recovery_readback(observed, state, barrier, run_id, reopened.child_pid)
+    if (set(handshake) != {"eventName", "pid", "runId", "barrier", "stateSha256", "acknowledged"}
+            or set(observed) != {
+                "eventName", "provider", "qualification", "pid", "runId", "barrier", "controlReadback",
+                "controlReceipt", "exactReceipt", "contentReadback", "ownerFenced", "reconstructed", "reclamation",
+                "noDuplicateEffect", "contentSha256", "contentLength", "controlSha256", "controlLength",
+                "outcome", "receiptId"}
+            or str(uuid.UUID(observed["receiptId"])) != observed["receiptId"]):
+        raise RuntimeError("Artifact recovery UnknownDiagnostic.")
     proof = {
         "provider": "local", "barrier": barrier, "runId": run_id, "signal": "SIGKILL",
-        "pid": child.pid, "reopenPid": reopened.pid, "exitCode": child.returncode,
+        "pid": child.pid, "reopenPid": reopened.child_pid, "exitCode": child.returncode,
         "exitConfirmed": True, "handshake": True, "stateCompared": before == sha256(state_path),
         "receiptCompared": observed["exactReceipt"] and observed["controlReceipt"],
         "controlReadback": observed["controlReadback"], "newReadback": observed["contentReadback"],
@@ -985,16 +980,11 @@ def mutation_pairs(root, work):
         method = "Missing_mandatory_guarantees_versions_or_authority_reject_before_io"
         command = ["dotnet", "vstest", str(output / "Hoard.Artifacts.Tests.dll"),
                    f"/TestCaseFilter:FullyQualifiedName~{method}", f"/ResultsDirectory:{directory}"]
-        red = subprocess.run([*command, "/Logger:trx;LogFileName=red.trx"], text=True,
-                             stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=600,
-                             env={**os.environ, **environment})
-        (directory / "red.txt").write_text(red.stdout)
+        assertion = "Hoard.Testing.Conformance.Artifacts.ArtifactCapabilityAssertions.MissingGuaranteeAsync"
+        red = legacy.test_command([*command, "/Logger:trx;LogFileName=red.trx"],
+                                  env=environment, assertion=assertion, allow_failure=True)
         test = next(name for name in required_runtime_tests(provider, "AS-38") if 'gap: "streaming"' in name)
-        document = ElementTree.parse(directory / "red.trx")
-        result = next((result for result in document.findall(".//{*}UnitTestResult")
-                       if result.get("testName") == test), None)
-        if (red.returncode <= 0 or result is None or result.get("outcome") != "Failed"
-                or "Assert.IsType" not in result.findtext(".//{*}Message", "")):
+        if red.returncode <= 0 or test not in red.stderr:
             raise RuntimeError("Artifact runtime mutation missed its intended assertion.")
         shutil.copy2(tests / assembly, output)
         run(*command, "/Logger:trx;LogFileName=green.trx", env=environment)
@@ -1026,20 +1016,23 @@ def mutation_pairs(root, work):
     mutation = directory / "mutation.py"
     shutil.copy2(implementation, mutation)
     command = [sys.executable, "-m", "unittest", "discover", "-s", "tests/tooling", "-p", "test_artifact_evidence.py", "-v"]
-    red = subprocess.run(command, cwd=directory, text=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=600)
+    red_exit, red_result = legacy.python_tests(command, cwd=directory)
     test = "test_matching_outer_and_inner_bindings_cannot_replace_actual_inputs"
-    if (red.returncode <= 0 or f"FAIL: {test}" not in red.stdout or "AssertionError" not in red.stdout
-            or "ImportError" in red.stdout or "SyntaxError" in red.stdout):
+    if (red_exit <= 0 or not any(item["test"].endswith("." + test) and item["kind"] == "Assertion"
+                                for item in red_result["failures"])
+            or any(item["kind"] != "Assertion" for item in red_result["failures"])):
         raise RuntimeError("Artifact verifier mutation missed its intended assertion.")
     implementation.write_text(original)
-    green = run(*command, cwd=directory)
+    green_exit, green = legacy.python_tests(command, cwd=directory)
+    if green_exit:
+        raise RuntimeError("Artifact verifier repair did not pass.")
     pairs.append({
-        "id": "case-context-binding", "kind": "verifier", "test": test, "redExit": red.returncode,
+        "id": "case-context-binding", "kind": "verifier", "test": test, "redExit": red_exit,
         "redOutcome": "Failed", "redAssertion": True, "greenOutcome": "Passed",
         "baseline": baseline.relative_to(work).as_posix(), "baselineSha256": sha256(baseline),
         "mutation": mutation.relative_to(work).as_posix(), "mutationSha256": sha256(mutation),
         "execution": write_proof(work, "mutation-verifier/execution.json", {
-            "command": command, "redExit": red.returncode, "greenExit": 0, "redOutput": red.stdout, "greenOutput": green})})
+            "command": command, "redExit": red_exit, "greenExit": 0, "redOutput": red_result, "greenOutput": green})})
     verify_red_green(pairs)
     return pairs
 
@@ -1071,7 +1064,7 @@ def qualification_cases(work, run_id, bindings):
     executions = {}
     for name in ("artifacts", "transfer-proofs", "artifact-boundaries"):
         reference = f"results/{name}.trx"
-        for result in metadata.trx_results(work / reference):
+        for result in metadata.trx_results(work / reference, require_safe=True):
             if result["test"] in executions:
                 raise RuntimeError("Artifact qualification has ambiguous duplicate runtime witnesses.")
             executions[result["test"]] = {**result, "proof": reference}

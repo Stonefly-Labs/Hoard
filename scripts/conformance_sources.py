@@ -39,6 +39,7 @@ METADATA_INVENTORY_SOURCE_FILES = (
     "scripts/conformance_unit_checks.py", "scripts/conformance_sources.py",
     "scripts/conformance_case_catalog.py", "scripts/conformance_evidence.py",
     "scripts/conformance_execution.py", "scripts/conformance_lock_preparation.py",
+    "scripts/conformance_legacy.py",
     "scripts/metadata_evidence.py", "scripts/foundation_evidence.py", "scripts/lifecycle_evidence.py",
     "tests/tooling/test_metadata_evidence.py",
 )
