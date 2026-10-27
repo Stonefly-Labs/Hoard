@@ -1,5 +1,6 @@
 """Run foundational regressions without retaining raw framework diagnostics."""
 
+import argparse
 import contextlib
 import hashlib
 import importlib.util
@@ -21,7 +22,7 @@ class SafeResult(unittest.TestResult):
         root = Path(__file__).resolve().parents[1]
         self.source_roles = {
             str(path): path.relative_to(root).as_posix()
-            for folder, pattern in (("scripts", "conformance_*.py"), ("tests/tooling", "test_conformance_*.py"))
+            for folder, pattern in (("scripts", "*.py"), ("tests/tooling", "test_*.py"))
             for path in (root / folder).glob(pattern)}
         self.locations = {}
 
@@ -157,19 +158,25 @@ def metadata_inventory_main(arguments):
     return packet["exitCode"]
 
 
-def main():
+def main(arguments=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--all-tooling", action="store_true")
+    args = parser.parse_args(arguments)
     root = Path(__file__).resolve().parents[1]
     diagnostics = DiagnosticBoundary()
     with contextlib.redirect_stdout(diagnostics), contextlib.redirect_stderr(diagnostics):
-        suite = unittest.defaultTestLoader.discover(str(root / "tests/tooling"), pattern="test_conformance_*.py")
+        suite = unittest.defaultTestLoader.discover(
+            str(root / "tests/tooling"), pattern="test_*.py" if args.all_tooling else "test_conformance_*.py")
         result = SafeResult()
         suite.run(result)
     code = ("AssertionFailed" if result.failures or result.errors else
             "EvidenceIncomplete" if result.skipped or not result.testsRun else
             "UnknownDiagnostic" if diagnostics.bytes else "None")
     print(json.dumps({"mode": "diagnostic", "qualification": False, "code": code,
+                      "scope": "tooling" if args.all_tooling else "conformance",
                       "tests": result.testsRun, "failures": len(result.failures), "errors": len(result.errors),
                       "skipped": len(result.skipped), "failedTests": failed_tests(result),
+                      "unexpectedDiagnosticBytes": diagnostics.bytes,
                       "freeScratchBytes": shutil.disk_usage(root).free}))
     return 0 if code == "None" else 2 if code in ("EvidenceIncomplete", "UnknownDiagnostic") else 1
 

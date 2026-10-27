@@ -173,6 +173,17 @@ native confirmation remains pending. Whole-solution native formatting,
 unprepared foundation architecture/breaking fixtures, full tooling and mutation
 obligations remain open; no qualification flag or task marker is advanced.
 
+The repaired Linux safe-unit wrapper is now independently green at `8f46a2c`,
+run40465825259/job122064084083: all 433 tests execute with zero failures,
+errors or skips and code `None`. Locked replay and both category diagnostic
+jobs also pass at that exact checkpoint; the separate SDK job is not inferred
+green. The next wrapper change adds explicit `--all-tooling` selection of every
+`test_*.py` file and CI uses this complete scope. A focused red/green control
+proves that both selection modes still reject skips and unexpected output.
+Local full-scope execution observes 548 tests, zero failures/errors/unexpected
+diagnostic bytes and twenty native skips, returning 2 honestly. Fresh Linux
+full-scope execution and input-bound controller tooling acceptance are pending.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

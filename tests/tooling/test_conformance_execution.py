@@ -105,6 +105,38 @@ class ConformanceExecutionTests(unittest.TestCase):
         self.assertIs(type(failures[0]["locations"][-1]["line"]), int)
         self.assertLessEqual(len(failures[0]["locations"]), 4)
 
+    def test_projected_tooling_runner_selects_full_suite_without_accepting_skips_or_output(self):
+        import contextlib
+        import io
+        import conformance_unit_checks as checks
+
+        class Case(unittest.TestCase):
+            def runTest(self):
+                if outcome == "skip":
+                    self.skipTest("private-canary")
+                if outcome == "output":
+                    print("private-canary")
+
+        for full in (False, True):
+            for outcome in ("pass", "skip", "output"):
+                with self.subTest(full=full, outcome=outcome):
+                    output = io.StringIO()
+                    with mock.patch.object(
+                            unittest.defaultTestLoader, "discover",
+                            return_value=unittest.TestSuite([Case()])) as discover, \
+                            contextlib.redirect_stdout(output):
+                        code = checks.main(["--all-tooling"] if full else [])
+                    packet = json.loads(output.getvalue())
+                    self.assertNotIn("private-canary", output.getvalue())
+                    self.assertEqual("test_*.py" if full else "test_conformance_*.py",
+                                     discover.call_args.kwargs["pattern"])
+                    self.assertEqual("tooling" if full else "conformance", packet["scope"])
+                    self.assertEqual(0 if outcome == "pass" else 2, code)
+                    self.assertEqual({"pass": "None", "skip": "EvidenceIncomplete",
+                                      "output": "UnknownDiagnostic"}[outcome], packet["code"])
+                    self.assertEqual(len("private-canary\n") if outcome == "output" else 0,
+                                     packet["unexpectedDiagnosticBytes"])
+
     def test_rejects_existing_foreign_symlink_and_nonprivate_roots(self):
         sentinel = self.parent / "sentinel"
         sentinel.mkdir()

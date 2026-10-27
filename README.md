@@ -209,6 +209,12 @@ Prepared-project formatter commands now require individual native receipts and
 unchanged generated NuGet imports/assets as well as the full private input map.
 Their native confirmation is pending; solution-wide formatting and the remaining
 full-controller obligations are not inferred from prepared-project formatting.
+The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
+zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
+selects that complete scope instead of only `test_conformance_*.py`.
+Local full-scope execution observes 548 tests, no failures/errors or unexpected
+diagnostic bytes, and twenty explicit native skips; fresh full-scope Linux
+confirmation remains pending and these skips are not acceptance.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and

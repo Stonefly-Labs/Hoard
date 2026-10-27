@@ -5259,6 +5259,19 @@ command receipt for every selected project. Local receipt/input-drift controls
 pass; native confirmation is pending. This does not establish whole-solution
 native formatting, full controller/tooling/mutation acceptance or qualification.
 
+The safe-unit wrapper at `8f46a2c` is independently green in run40465825259,
+job122064084083: 433 tests, zero failures/errors/skips and code `None`.
+The same checkpoint's locked-replay, metadata and artifact diagnostic jobs pass;
+the separate SDK diagnostic is not inferred to have passed.
+`python3 scripts/conformance_unit_checks.py --all-tooling` now selects the
+documented complete `test_*.py` tooling scope while retaining the same strict
+output projection and rejection of skips/unexpected stdout. CI uses this mode.
+It reports the selected scope and unexpected diagnostic byte count without
+retaining raw framework output. Locally it observes 548 tests, no failures/errors,
+zero unexpected diagnostic bytes and twenty explicit native skips, returning 2.
+This is not a full-controller tooling proof; fresh Linux full-scope execution
+and attributable integration into controller acceptance remain pending.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged
