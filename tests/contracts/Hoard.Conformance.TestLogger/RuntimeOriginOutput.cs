@@ -111,6 +111,15 @@ internal static class RuntimeOriginOutput
                             "workers", "inactiveEffects", "requests", "requestPending", "requestSettled",
                             "configurationFixed", "identityChanged");
                         break;
+                    case "declaration-rejected" or "declaration-ready" or "declaration-stopped"
+                        or "multiple-ready" or "multiple-stopped" or "mapping-rejected" or "mapping-denial-stopped"
+                        or "mapping-ready" or "mapping-stopped" or "optional-unavailable" or "optional-unavailable-stopped"
+                        or "optional-enabled" or "optional-enabled-stopped":
+                        Keys(counters, "constructors", "services", "maps", "requests", "connections", "initializations",
+                            "assessments", "workers", "stops", "disposals", "disabledEffects", "ready", "admission",
+                            "stopComplete", "rootDisposal", "unsafeActivities", "ruleCount", "activeEdges",
+                            "satisfiedCapabilities", "publishedRoutes");
+                        break;
                     default: throw RuntimeSafety.Error("ProofMismatch");
                 }
                 foreach (var counter in counters.EnumerateObject())

@@ -41,6 +41,40 @@ unaffected by these test-only controls.
 
 ### CP-19/20 safe transport continuation
 
+The expanded seventeen-row Linux scope now passes at exact
+`cb8d6eb94b348152cd0265b7a5aa72b1ca2f7252` in
+run40430393637/job121946361759. All fifty-one snapshots, immutable inputs,
+native child execution, independent admission and real process release pass.
+Its input digest is
+`826e9ef3af84f1ad71987e4725cfc1eec2133b0aa7db11b52d41c79c914fc9d7`;
+owned command parent:
+`1b6eeb886f7da789c6cce07260486b9dfeaeffd03a7a3f21583cfe01c8c4265e`.
+SQLite provenance, complete profile and qualification remain explicitly absent.
+
+The next matrix increment covers all CP-01..20 identities with independently
+checked constructor/service/route/request/connection/worker/stop/disposal,
+disabled effects, edge/capability and lifecycle observations. Four logger and
+eleven independent declaration positives first reject missing policy. An actual
+all-CP attempt first fails `WitnessMissing`: method-level VSTest filtering also
+selects four endpoint-declaration theory parameters. The catalog/manifest now
+include those CP-11 witnesses explicitly. The write-once SDK generator refuses
+an existing file; the catalog is regenerated from its existing `sdk_document`
+function and byte-checked, not manually edited or made overwrite-permissive.
+The next actual attempt exposes two incorrect mapping assumptions: rollback
+stops already equal three before public root disposal, but unmaterialized
+fixture services have zero disposal callbacks even after complete root stop.
+Exact policy and independent omission/optimistic-disposal challenges preserve
+these separate observations.
+
+Fresh seventeen-package construction/fresh-cache locked replay independently
+admits thirty-six exact parameter identities and 110 snapshots at source digest
+`c20e7866360adf26418ebbaf0a40aad3d95e40cb1aff21b493bda6c32286c7b4`,
+consumer `cf86b2ec64a45c37c680d8492f1235fd27321b9004d1d426986de6e3abd79862`.
+All 34 source matrix cases, 112 logger cases and 500 tooling tests pass
+(nineteen native skips). Focused formatting and frozen inventories pass.
+Native replay of this larger scope remains pending; T046 remains unchecked,
+48/86, until inherited inventories and full profile integration are complete.
+
 Closed store snapshots preserve actual pre-root/admitted I/O counters, selected
 store readiness, inactive alternate effects and lifecycle outcomes. Restart
 snapshots preserve actual pending/settled request/task observations, enabled

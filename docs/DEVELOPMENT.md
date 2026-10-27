@@ -4834,6 +4834,26 @@ snapshot and compiles/passes. T046 remains unchecked, 48/86. Expanded Linux
 replay is pending; inherited inventories, all CP transport and full qualification
 remain unfinished.
 
+All CP-01..20 rows now emit safe matrix observations for preconstruction
+rejection, repair readiness/stop, disabled effects, optional edges/capabilities,
+multiplicity and mapping publication. Four logger matrix controls and eleven
+independent declaration controls first fail. The first all-CP attempt discovers
+that selecting the declaration theory includes four endpoint-declaration
+parameters missing from its manifest. These now belong explicitly to CP-11's
+catalog witnesses; the method-level selector is not relaxed. Actual execution
+also rejects an incorrect mapping policy: rollback has already stopped all
+three modules before the rejected snapshot, while their unmaterialized fixture
+services receive zero disposal callbacks. Independent challenges reject erased
+rollback and invented disposal. Fresh seventeen-package construction/fresh-cache
+locked replay then admits thirty-six exact identities/110 snapshots.
+All 34 source matrix cases, 112 logger cases and 500 tooling tests pass
+(nineteen native skips); focused formatting/catalog/inventory checks pass.
+Exact `cb8d6eb`, run40430393637/job121946361759, separately passes the prior
+seventeen-row/fifty-one-snapshot native scope with actual process release.
+Its success does not qualify the later thirty-six-row scope. T046 remains
+unchecked, 48/86, pending complete inherited lifecycle/configuration/discovery
+integration and profile evaluation.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

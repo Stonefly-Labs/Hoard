@@ -22,6 +22,10 @@ public static class ConformanceCompositionObservationOutput
     private static readonly ImmutableHashSet<string> RestartNames =
         ["ready", "admission", "stopComplete", "rootDisposal", "unsafeActivities", "workers", "inactiveEffects",
          "requests", "requestPending", "requestSettled", "configurationFixed", "identityChanged"];
+    private static readonly ImmutableHashSet<string> MatrixNames =
+        ["constructors", "services", "maps", "requests", "connections", "initializations", "assessments",
+         "workers", "stops", "disposals", "disabledEffects", "ready", "admission", "stopComplete",
+         "rootDisposal", "unsafeActivities", "ruleCount", "activeEdges", "satisfiedCapabilities", "publishedRoutes"];
 
     public static ImmutableArray<string> Render(ConformanceOriginalObservation source, string stage,
         IReadOnlyDictionary<string, int> counters)
@@ -39,6 +43,10 @@ public static class ConformanceCompositionObservationOutput
             "selection-fixed" or "selection-stopped" or "selection-restarted" or "configuration-active"
                 or "configuration-draining" or "configuration-stopped" or "configuration-restarted"
                 or "restart-draining" or "restart-stopped" => RestartNames,
+            "declaration-rejected" or "declaration-ready" or "declaration-stopped"
+                or "multiple-ready" or "multiple-stopped" or "mapping-rejected" or "mapping-denial-stopped"
+                or "mapping-ready" or "mapping-stopped" or "optional-unavailable" or "optional-unavailable-stopped"
+                or "optional-enabled" or "optional-enabled-stopped" => MatrixNames,
             _ => throw new ArgumentException("ProofMismatch")
         };
         if (source.Kind != "original-owner")

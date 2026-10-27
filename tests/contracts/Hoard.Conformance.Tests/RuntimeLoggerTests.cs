@@ -12,6 +12,58 @@ namespace Hoard.Conformance.Tests;
 public sealed class RuntimeLoggerTests
 {
     [Theory]
+    [InlineData("declaration-rejected")]
+    [InlineData("multiple-ready")]
+    [InlineData("mapping-rejected")]
+    [InlineData("optional-enabled")]
+    public void Matrix_snapshots_preserve_preconstruction_and_disabled_effects(string stage)
+    {
+        using var owned = new OwnedInput();
+        var owner = ConformanceOriginalObservation.Capture(
+            owned.Input.RunId, "runtime", owned.Input.Expected[0].TestIdentity, "memory",
+            "original-owner", [("owner", new OriginalProbe())]);
+        var counters = new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["constructors"] = 0,
+            ["services"] = 0,
+            ["maps"] = 0,
+            ["requests"] = 0,
+            ["connections"] = 0,
+            ["initializations"] = 0,
+            ["assessments"] = 0,
+            ["workers"] = 0,
+            ["stops"] = 0,
+            ["disposals"] = 0,
+            ["disabledEffects"] = 0,
+            ["ready"] = 0,
+            ["admission"] = 0,
+            ["stopComplete"] = 0,
+            ["rootDisposal"] = 6,
+            ["unsafeActivities"] = 0,
+            ["ruleCount"] = 1,
+            ["activeEdges"] = 0,
+            ["satisfiedCapabilities"] = 0,
+            ["publishedRoutes"] = 0
+        };
+        var lines = ConformanceOriginalObservationOutput.Render(owner).Concat(
+            ConformanceCompositionObservationOutput.Render(owner, stage, counters));
+        var result = owned.Result(0);
+        result.Messages.Add(new(TestResultMessage.StandardOutCategory, string.Join('\n', lines)));
+        using (var recorder = owned.Open())
+        {
+            recorder.Observe(result);
+            recorder.Complete();
+            Assert.Equal(ConformanceDiagnosticCode.None, recorder.Diagnostic);
+        }
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Directory.GetFiles(owned.Output, "proof-*.json").Single()));
+        var snapshot = Assert.Single(proof.RootElement.GetProperty("compositionObservations").EnumerateArray());
+        Assert.Equal(stage, snapshot.GetProperty("stage").GetString());
+        Assert.Equal(0, snapshot.GetProperty("counters").GetProperty("disabledEffects").GetInt32());
+        Assert.Equal(1, snapshot.GetProperty("counters").GetProperty("ruleCount").GetInt32());
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
     [InlineData("selection-fixed")]
     [InlineData("selection-stopped")]
     [InlineData("selection-restarted")]

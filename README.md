@@ -106,6 +106,12 @@ CP-19/20 now also emit safe owner-bound store/request/restart observations.
 Fresh package execution independently admits seventeen proofs/fifty-one
 snapshots; optimistic I/O, hot replacement, lost requests and reused repair/
 restart owners reject. Native replay of this expanded scope is pending.
+Exact `cb8d6eb` subsequently passes the seventeen-row Linux replay with all
+fifty-one snapshots and actual process-resource release. Safe component scope
+now covers every CP-01..20 row: thirty-six actual parameter identities and
+110 snapshots pass fresh package replay/independent ingestion. Four previously
+omitted endpoint-declaration parameters are now explicit in the catalog.
+Full inherited/profile acceptance and expanded native replay remain open.
 At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
 unchanged-source failed-job retry. The original lock-preparation
 `CleanupIncomplete` remains recorded; this is not full-profile qualification

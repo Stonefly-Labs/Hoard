@@ -89,6 +89,62 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         probe.Constructors + probe.Services + probe.Maps + probe.Requests + probe.Connections
         + probe.Initializations + probe.Assessments + probe.Workers + probe.Stops + probe.Disposals;
 
+    private sealed class MatrixObservation
+    {
+        private readonly Action<string, HoardValidatedComposition?, Running?, int>? write;
+
+        public MatrixObservation(ITestOutputHelper output, string identity, Registry registry)
+        {
+#if CONFORMANCE_PROVIDER_PACKAGES
+            var owner = ConformanceOriginalObservationOutput.WriteIfRequested(
+                output, identity, "none", "original-owner", null, null, ("owner", registry));
+            if (owner is null) { return; }
+            write = (stage, composition, running, ruleCount) =>
+            {
+                var probes = registry.Probes.Values;
+                var lease = running?.Lease;
+                ConformanceCompositionObservationOutput.Write(output, owner, stage,
+                    new Dictionary<string, int>(StringComparer.Ordinal)
+                    {
+                        ["constructors"] = probes.Sum(probe => probe.Constructors),
+                        ["services"] = probes.Sum(probe => probe.Services),
+                        ["maps"] = probes.Sum(probe => probe.Maps),
+                        ["requests"] = probes.Sum(probe => probe.Requests),
+                        ["connections"] = probes.Sum(probe => probe.Connections),
+                        ["initializations"] = probes.Sum(probe => probe.Initializations),
+                        ["assessments"] = probes.Sum(probe => probe.Assessments),
+                        ["workers"] = probes.Sum(probe => probe.Workers),
+                        ["stops"] = probes.Sum(probe => probe.Stops),
+                        ["disposals"] = probes.Sum(probe => probe.Disposals),
+                        ["disabledEffects"] = registry.Probes.Where(pair =>
+                            composition?.EnabledModuleIds.Contains(pair.Key) != true).Sum(pair => Effects(pair.Value)),
+                        ["ready"] = lease?.Lifecycle.Snapshot.Ready == true ? 1 : 0,
+                        ["admission"] = lease?.Lifecycle.Snapshot.StartupAdmission == true ? 1 : 0,
+                        ["stopComplete"] = lease?.StopResult?.Complete == true ? 1 : 0,
+                        ["rootDisposal"] = (int?)(lease?.StopResult?.RootDisposal) ?? 6,
+                        ["unsafeActivities"] = lease?.StopResult?.UnsafeActivities.Length ?? 0,
+                        ["ruleCount"] = ruleCount,
+                        ["activeEdges"] = composition?.ActiveEdges.Length ?? 0,
+                        ["satisfiedCapabilities"] = composition?.SatisfiedCapabilities.Length ?? 0,
+                        ["publishedRoutes"] = running is null ? 0
+                            : ((Microsoft.AspNetCore.Routing.IEndpointRouteBuilder)running.App)
+                                .DataSources.Sum(source => source.Endpoints.Count)
+                    });
+            };
+#else
+            write = null;
+#endif
+        }
+
+        public bool Write(string stage, HoardValidatedComposition? composition = null, Running? running = null,
+            int ruleCount = 0)
+        {
+            if (write is null) { return false; }
+            write(stage, composition, running, ruleCount);
+            return true;
+        }
+    }
+
     private sealed class RestartObservation
     {
         private readonly Action<string, HoardServiceComposition, bool, bool, Task?>? write;
@@ -255,7 +311,9 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
     [MemberData(nameof(Rejections))]
     public async Task Declaration_rejection_and_single_input_repair(string id, string variant, string rule)
     {
+        var identity = $"{typeof(ConformanceMatrixTests).FullName}.{nameof(Declaration_rejection_and_single_input_repair)}(id: \"{id}\", variant: \"{variant}\", rule: \"{rule}\")";
         var (invalid, badSelection) = DeclarationCase(variant, false);
+        var rejectedObservation = new MatrixObservation(output, identity, invalid);
         var rejected = invalid.Validate(badSelection);
         Assert.Null(rejected.Composition);
         Assert.Contains(rejected.Diagnostics, item => item.RuleCode == rule);
@@ -267,9 +325,12 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         }
         Safe(rejected.Diagnostics);
         Assert.All(invalid.Probes.Values, Inactive);
-        Observe($"{id}/{variant}/rejection", invalid);
+        if (!rejectedObservation.Write("declaration-rejected",
+            ruleCount: rejected.Diagnostics.Count(item => item.RuleCode == rule)))
+        { Observe($"{id}/{variant}/rejection", invalid); }
 
         var (valid, goodSelection) = DeclarationCase(variant, true);
+        var repairedObservation = new MatrixObservation(output, identity, valid);
         var accepted = valid.Validate(goodSelection);
         Assert.NotNull(accepted.Composition);
         Assert.Empty(accepted.Diagnostics);
@@ -281,6 +342,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         using var client = running.App.GetTestClient();
         Assert.Equal("conformance", await client.GetStringAsync("/metadata"));
         await LifecycleTestHarness.Until(() => accepted.Composition.EnabledModuleIds.All(module => valid.Probes[module].Workers == 1));
+        repairedObservation.Write("declaration-ready", accepted.Composition, running);
         await running.App.StopHoardApplicationAsync(running.Lease);
         await running.DisposeAsync();
         Assert.True(running.Lease.StopResult!.Complete);
@@ -297,17 +359,20 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             Assert.Equal(1, probe.Stops);
             Assert.Equal(1, probe.Disposals);
         }
-        Observe($"{id}/{variant}/repair", valid, running.Lease);
+        if (!repairedObservation.Write("declaration-stopped", accepted.Composition, running))
+        { Observe($"{id}/{variant}/repair", valid, running.Lease); }
     }
 
     [Fact]
     public async Task CP03_explicit_multiple_protocols_and_identity_schemes_start_and_stop()
     {
+        var identity = $"{typeof(ConformanceMatrixTests).FullName}.{nameof(CP03_explicit_multiple_protocols_and_identity_schemes_start_and_stop)}";
         var registry = new Registry();
         registry.Protocol();
         registry.Probes["protocol-other"] = Add<ProtocolOther>(registry.Builder, Declaration("protocol-other", ModuleCategory.Protocol));
         registry.Probes["identity"] = Add<Identity>(registry.Builder, Declaration("identity", ModuleCategory.Identity));
         registry.Probes["identity-other"] = Add<IdentityOther>(registry.Builder, Declaration("identity-other", ModuleCategory.Identity));
+        var observation = new MatrixObservation(output, identity, registry);
         var composition = registry.Validate(Selection("protocol", "protocol-other", "identity", "identity-other")).Composition;
         Assert.NotNull(composition);
         Assert.Equal(6, composition.EnabledModuleIds.Length);
@@ -318,6 +383,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         using var client = running.App.GetTestClient();
         foreach (var id in composition.EnabledModuleIds) { Assert.Equal("conformance", await client.GetStringAsync("/" + id)); }
         await LifecycleTestHarness.Until(() => registry.Probes.Values.All(probe => probe.Workers == 1));
+        observation.Write("multiple-ready", composition, running);
         await running.DisposeAsync();
         Assert.True(running.Lease.StopResult!.Complete);
         Assert.All(registry.Probes.Values, probe =>
@@ -333,7 +399,8 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             Assert.Equal(1, probe.Stops);
             Assert.Equal(1, probe.Disposals);
         });
-        Observe("CP-03/multiplicity", registry, running.Lease);
+        if (!observation.Write("multiple-stopped", composition, running))
+        { Observe("CP-03/multiplicity", registry, running.Lease); }
     }
 
     [Fact]
@@ -379,9 +446,12 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
     [Fact]
     public async Task CP11_actual_route_ambiguity_rejects_before_publication_and_repair_starts()
     {
+        var identity = $"{typeof(ConformanceMatrixTests).FullName}.{nameof(CP11_actual_route_ambiguity_rejects_before_publication_and_repair_starts)}";
         foreach (var repaired in new[] { false, true })
         {
             var registry = new Registry();
+            var observation = new MatrixObservation(output, identity, registry);
+            var ruleCount = 0;
             var protocol = registry.Protocol();
             protocol.Path = repaired ? "/protocol" : "/metadata";
             var validated = registry.Validate(Selection("protocol"));
@@ -394,11 +464,14 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                 Assert.Equal("conformance", await client.GetStringAsync("/metadata"));
                 Assert.Equal("conformance", await client.GetStringAsync("/protocol"));
                 Assert.True(running.Lease.Lifecycle.Snapshot.Ready);
+                await LifecycleTestHarness.Until(() => registry.Probes.Values.All(probe => probe.Workers == 1));
+                observation.Write("mapping-ready", validated.Composition, running);
             }
             else
             {
                 var failure = await Assert.ThrowsAsync<HoardLifecycleException>(() => running.App.MapHoardModulesAsync(running.Lease));
                 Assert.Contains(failure.Diagnostics, item => item.RuleCode == "AmbiguousRoute");
+                ruleCount = failure.Diagnostics.Count(item => item.RuleCode == "AmbiguousRoute");
                 Safe(failure.Diagnostics);
                 Assert.False(running.Lease.Lifecycle.Snapshot.Ready);
                 Assert.False(running.Lease.Lifecycle.Snapshot.StartupAdmission);
@@ -413,10 +486,13 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                     Assert.Equal(0, probe.Connections);
                     Assert.Equal(0, probe.Workers);
                 });
+                observation.Write("mapping-rejected", validated.Composition, running, ruleCount);
             }
             await running.DisposeAsync();
             Assert.True(running.Lease.StopResult!.Complete);
-            Observe($"CP-11/route-conflict.{(repaired ? "repair" : "reject")}", registry, running.Lease);
+            if (!observation.Write(repaired ? "mapping-stopped" : "mapping-denial-stopped",
+                validated.Composition, running, ruleCount))
+            { Observe($"CP-11/route-conflict.{(repaired ? "repair" : "reject")}", registry, running.Lease); }
         }
     }
 
@@ -503,6 +579,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
     [InlineData("registered-disabled")]
     public async Task CP12_disabled_effects_and_unavailable_optional_integration(string target)
     {
+        var identity = $"{typeof(ConformanceMatrixTests).FullName}.{nameof(CP12_disabled_effects_and_unavailable_optional_integration)}(target: \"{target}\")";
         var registry = new Registry();
         var disabled = registry.Protocol();
         registry.Replace("metadata", declaration => declaration with { Dependencies = [Dependency("identity", true)] });
@@ -515,6 +592,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                     Capabilities = [new() { Id = "integration", Version = "0.1.0", Description = "Only enabled targets supply this." }]
                 });
         }
+        var observation = new MatrixObservation(output, identity, registry);
         var validated = registry.Validate();
         Assert.NotNull(validated.Composition);
         Assert.Empty(validated.Composition.ActiveEdges);
@@ -533,16 +611,20 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         if (target == "registered-disabled") { Inactive(registry.Probes["identity"]); }
         Assert.Equal(HoardModuleStatus.Disabled, Assert.Single(running.Lease.Lifecycle.Snapshot.Modules,
             module => module.ModuleId == "protocol").Status);
+        await LifecycleTestHarness.Until(() => validated.Composition.EnabledModuleIds.All(id => registry.Probes[id].Workers == 1));
+        observation.Write("optional-unavailable", validated.Composition, running);
         await running.DisposeAsync();
         Inactive(disabled);
         Assert.True(running.Lease.StopResult!.Complete);
-        Observe($"CP-12/{target}", registry, running.Lease);
+        if (!observation.Write("optional-unavailable-stopped", validated.Composition, running))
+        { Observe($"CP-12/{target}", registry, running.Lease); }
 
         var repair = new Registry();
         repair.Protocol();
         repair.Replace("metadata", declaration => declaration with { Dependencies = [Dependency("identity", true)] });
         repair.Probes["identity"] = Add<Identity>(repair.Builder, Declaration("identity", ModuleCategory.Identity) with
         { Capabilities = [new() { Id = "integration", Version = "0.1.0", Description = "Enabled target supplies this." }] });
+        var repairObservation = new MatrixObservation(output, identity, repair);
         var repaired = repair.Validate(Selection("identity") with
         { RequiredCapabilities = [new("identity", "integration", "[0.1.0]", false)] }).Composition!;
         Assert.Single(repaired.ActiveEdges);
@@ -551,9 +633,12 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
         await available.StartAsync();
         Assert.True(available.Lease.Lifecycle.Snapshot.Ready);
         Inactive(repair.Probes["protocol"]);
+        await LifecycleTestHarness.Until(() => repaired.EnabledModuleIds.All(id => repair.Probes[id].Workers == 1));
+        repairObservation.Write("optional-enabled", repaired, available);
         await available.DisposeAsync();
         Assert.True(available.Lease.StopResult!.Complete);
-        Observe($"CP-12/{target}/explicit-repair", repair, available.Lease);
+        if (!repairObservation.Write("optional-enabled-stopped", repaired, available))
+        { Observe($"CP-12/{target}/explicit-repair", repair, available.Lease); }
     }
 
     [Theory]

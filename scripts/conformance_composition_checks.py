@@ -13,7 +13,7 @@ import uuid
 import conformance_baselines as baselines
 import conformance_evidence as evidence
 import conformance_legacy as legacy
-from conformance_case_catalog import composition_snapshot_policy, composition_witnesses
+from conformance_case_catalog import COMPOSITIONS, composition_snapshot_policy, composition_witnesses
 from conformance_execution import OwnedRun, native_execution_supported
 from conformance_lock_preparation import verify_project_lock
 from conformance_prepare import PREREQUISITES, Project, build_project
@@ -28,19 +28,13 @@ LOGGER = "Hoard.Conformance.TestLogger"
 
 
 def expected_rows():
-    return [{
+    rows = [{
         "testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
         "assemblyId": "test-assembly", "packageId": SDK, "bindingId": "none",
         "matrixId": matrix + ".observe", "caseId": case, "assertionSymbol": None,
-    } for case, matrix in (
-        ("CP-01", "baseline"), ("CP-02", "replacement"),
-        ("CP-14", "initializer-failed"),
-        ("CP-15", "cancel-initialization"), ("CP-15", "cancel-readiness"),
-        ("CP-16", "late-initialization"), ("CP-17", "stop-fault"), ("CP-17", "late-stop"),
-        ("CP-18", "recovery-failed"),
-        ("CP-19", "authority-mismatch"), ("CP-19", "missing-guarantee"),
-        ("CP-20", "settled-restart"), ("CP-20", "active-config"),
-    ) for identity in composition_witnesses(case, matrix)]
+    } for case, variants in COMPOSITIONS for matrix in variants
+      for identity in composition_witnesses(case, matrix)]
+    return list({row["testIdentity"]: row for row in rows}.values())
 
 
 def _runtime(run, repository, source, sources, config, feed, records, replay):

@@ -869,6 +869,52 @@ def independent_version_witnesses(name):
 
 
 def composition_snapshot_policy(identity):
+    def matrix(stage, modules, *, ready=False, stopped=False, requests=0, edges=0, capabilities=0,
+               rule_count=0, initialized=True, routes=None):
+        return stage, MappingProxyType({
+            "constructors": modules, "services": modules, "maps": modules, "requests": requests,
+            "connections": modules if initialized else 0, "initializations": modules if initialized else 0,
+            "assessments": modules if initialized else 0, "workers": modules if initialized else 0,
+            "stops": modules if stopped else 0, "disposals": modules if stopped else 0,
+            "disabledEffects": 0, "ready": int(ready), "admission": int(ready), "stopComplete": int(stopped),
+            "rootDisposal": 0 if stopped else 6, "unsafeActivities": 0, "ruleCount": rule_count,
+            "activeEdges": edges, "satisfiedCapabilities": capabilities,
+            "publishedRoutes": modules if routes is None else routes,
+        })
+
+    endpoint_rows = composition_witnesses("CP-11", "route-conflict")[1:]
+    if identity in endpoint_rows:
+        modules = 3 if endpoint_rows.index(identity) % 2 == 0 else 2
+        return (matrix("declaration-rejected", 0, rule_count=1),
+                matrix("declaration-ready", modules, ready=True, requests=1),
+                matrix("declaration-stopped", modules, stopped=True, requests=1))
+    for case, variant, modules, edges, capabilities in (
+            ("CP-04", "duplicate", 2, 0, 0), ("CP-05", "unknown", 2, 0, 0),
+            ("CP-06", "missing-required", 3, 1, 0), ("CP-07", "cycle-forward", 2, 1, 0),
+            ("CP-07", "cycle-reversed", 2, 1, 0), ("CP-08", "missing-capability", 2, 0, 1),
+            ("CP-09", "metadata-zero", 2, 0, 0), ("CP-09", "metadata-two", 2, 0, 0),
+            ("CP-10", "artifacts-zero", 2, 0, 0), ("CP-10", "artifacts-two", 2, 0, 0),
+            ("CP-13", "optional-incompatible", 3, 1, 0)):
+        if identity in composition_witnesses(case, variant):
+            return (matrix("declaration-rejected", 0, rule_count=1),
+                    matrix("declaration-ready", modules, ready=True, requests=1, edges=edges, capabilities=capabilities),
+                    matrix("declaration-stopped", modules, stopped=True, requests=1, edges=edges, capabilities=capabilities))
+    if identity in composition_witnesses("CP-03", "multiple"):
+        return (matrix("multiple-ready", 6, ready=True, requests=6),
+                matrix("multiple-stopped", 6, stopped=True, requests=6))
+    if identity == composition_witnesses("CP-11", "route-conflict")[0]:
+        rejected = matrix("mapping-rejected", 3, initialized=False, routes=0, rule_count=1)
+        stopped = matrix("mapping-denial-stopped", 3, initialized=False, routes=0, rule_count=1, stopped=True)
+        return ((rejected[0], MappingProxyType({**rejected[1], "stops": 3})),
+                (stopped[0], MappingProxyType({**stopped[1], "disposals": 0})),
+                matrix("mapping-ready", 3, ready=True, requests=2),
+                matrix("mapping-stopped", 3, stopped=True, requests=2))
+    if identity in (*composition_witnesses("CP-12", "optional-absent"),
+                    *composition_witnesses("CP-12", "optional-disabled")):
+        return (matrix("optional-unavailable", 2, ready=True),
+                matrix("optional-unavailable-stopped", 2, stopped=True),
+                matrix("optional-enabled", 3, ready=True, edges=1, capabilities=1),
+                matrix("optional-enabled-stopped", 3, stopped=True, edges=1, capabilities=1))
     for variant, stages in (
             ("settled-restart", ("selection-fixed", "selection-stopped", "selection-restarted", "restart-stopped")),
             ("active-config", ("configuration-active", "configuration-draining", "configuration-stopped",
@@ -967,6 +1013,10 @@ def composition_snapshot_owner_indices(identity):
     policy = composition_snapshot_policy(identity)
     if policy is None:
         return None
+    if policy[0][0] == "declaration-rejected":
+        return 0, 1, 1
+    if policy[0][0] in ("mapping-rejected", "optional-unavailable"):
+        return 0, 0, 1, 1
     if policy[0][0] == "selection-fixed":
         return 0, 0, 1, 1
     if policy[0][0] == "configuration-active":
@@ -1003,7 +1053,13 @@ def composition_witnesses(case_id, variant):
         ("CP-20", "active-config"): "CP20_active_configuration_is_fixed_until_a_fresh_explicit_restart",
     }
     if key in facts:
-        return (prefix + facts[key],)
+        witnesses = (prefix + facts[key],)
+        if key == ("CP-11", "route-conflict"):
+            witnesses += tuple(prefix + "Declaration_rejection_and_single_input_repair"
+                + f'(id: "endpoint-declaration", variant: "{variant}", rule: "MalformedRegistry")'
+                for variant in ("malformed-endpoint-enabled", "malformed-endpoint-disabled",
+                                "duplicate-endpoint-enabled", "duplicate-endpoint-disabled"))
+        return witnesses
     methods = {
         ("CP-01", "baseline"): (
             'Packaged_baseline_and_replacement_use_the_identical_consumer(id: "CP-01", metadata: "sqlite", '

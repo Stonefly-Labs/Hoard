@@ -1215,6 +1215,112 @@ class ConformanceInputTests(unittest.TestCase):
 
 
 class ConformanceRuntimeIngestionTests(unittest.TestCase):
+    def test_route_mapping_requires_observed_rollback_without_inventing_disposal(self):
+        import conformance_case_catalog as catalog
+        for mutation in (None, "erased-rollback", "invented-disposal", "published-denial", "early-initialization"):
+            with self.subTest(mutation=mutation):
+                self.setUp()
+                _, options = self.admission_transport()
+                old_identity = self.identity
+                self.identity = catalog.composition_witnesses("CP-11", "route-conflict")[0]
+                self.manifest["expected"][0].update(
+                    testIdentity=self.identity, fullyQualifiedName=self.identity.split("(")[0], caseId="CP-11")
+                for owner in self.proof["originalObservations"]:
+                    owner.update(testIdentity=self.identity, caseId="CP-11")
+                snapshots = []
+                for index, stage in enumerate(("mapping-rejected", "mapping-denial-stopped", "mapping-ready", "mapping-stopped")):
+                    repaired, stopped = index >= 2, index % 2 == 1
+                    snapshots.append({
+                        "schemaVersion": 1, "observationId": str(uuid.uuid4()),
+                        "sourceId": self.proof["originalObservations"][int(repaired)]["observationId"],
+                        "stage": stage, "counters": {
+                            "constructors": 3, "services": 3, "maps": 3, "requests": 2 if repaired else 0,
+                            "connections": 3 if repaired else 0, "initializations": 3 if repaired else 0,
+                            "assessments": 3 if repaired else 0, "workers": 3 if repaired else 0,
+                            "stops": 3 if stopped or not repaired else 0, "disposals": 3 if index == 3 else 0,
+                            "disabledEffects": 0, "ready": int(index == 2), "admission": int(index == 2),
+                            "stopComplete": int(stopped), "rootDisposal": 0 if stopped else 6,
+                            "unsafeActivities": 0, "ruleCount": 0 if repaired else 1, "activeEdges": 0,
+                            "satisfiedCapabilities": 0, "publishedRoutes": 3 if repaired else 0}})
+                if mutation == "erased-rollback":
+                    snapshots[0]["counters"]["stops"] = 0
+                elif mutation == "invented-disposal":
+                    snapshots[1]["counters"]["disposals"] = 3
+                elif mutation == "published-denial":
+                    snapshots[0]["counters"]["publishedRoutes"] = 1
+                elif mutation == "early-initialization":
+                    snapshots[0]["counters"]["initializations"] = 1
+                self.proof.update(testIdentity=self.identity, caseId="CP-11", compositionObservations=snapshots,
+                                  manifestSha256=evidence.digest(self.manifest))
+                self.witness.update(testIdentity=self.identity, proofSha256=evidence.digest(self.proof))
+                self.completion["manifestSha256"] = evidence.digest(self.manifest)
+                options["original_inputs"]["none"][self.identity] = options["original_inputs"]["none"].pop(old_identity)
+                options["expected_tests"] = {self.identity: ("none", "none")}
+                if mutation is None:
+                    self.assertEqual(self.ingest(**options)["witnesses"][0]["status"], "Passed")
+                else:
+                    with self.assertRaises(evidence.ConformanceError):
+                        self.ingest(**options)
+
+    def test_declaration_rejection_precedes_all_effects_and_repair_preserves_the_graph(self):
+        import conformance_case_catalog as catalog
+        rows = (("CP-04", "duplicate", 2, 0, 0), ("CP-05", "unknown", 2, 0, 0),
+                ("CP-06", "missing-required", 3, 1, 0), ("CP-07", "cycle-forward", 2, 1, 0),
+                ("CP-07", "cycle-reversed", 2, 1, 0), ("CP-08", "missing-capability", 2, 0, 1),
+                ("CP-09", "metadata-zero", 2, 0, 0), ("CP-09", "metadata-two", 2, 0, 0),
+                ("CP-10", "artifacts-zero", 2, 0, 0), ("CP-10", "artifacts-two", 2, 0, 0),
+                ("CP-13", "optional-incompatible", 3, 1, 0))
+        for case, variant, modules, edges, capabilities in rows:
+            for mutation in (None, "early-construction", "disabled-effects", "false-ready", "lost-edge", "missing-stop"):
+                with self.subTest(case=case, variant=variant, mutation=mutation):
+                    self.setUp()
+                    _, options = self.admission_transport()
+                    old_identity = self.identity
+                    self.identity = catalog.composition_witnesses(case, variant)[0]
+                    self.manifest["expected"][0].update(
+                        testIdentity=self.identity, fullyQualifiedName=self.identity.split("(")[0], caseId=case)
+                    for owner in self.proof["originalObservations"]:
+                        owner.update(testIdentity=self.identity, caseId=case)
+                    snapshots = []
+                    for index, stage in enumerate(("declaration-rejected", "declaration-ready", "declaration-stopped")):
+                        counters = dict.fromkeys(("constructors", "services", "maps", "requests", "connections",
+                            "initializations", "assessments", "workers", "stops", "disposals", "disabledEffects",
+                            "ready", "admission", "stopComplete", "rootDisposal", "unsafeActivities", "ruleCount",
+                            "activeEdges", "satisfiedCapabilities", "publishedRoutes"), 0)
+                        counters.update(rootDisposal=0 if index == 2 else 6, ruleCount=int(index == 0))
+                        if index:
+                            counters.update({name: modules for name in (
+                                "constructors", "services", "maps", "connections", "initializations", "assessments", "workers")})
+                            counters.update(requests=1, ready=int(index == 1), admission=int(index == 1),
+                                stopComplete=int(index == 2), stops=modules if index == 2 else 0,
+                                disposals=modules if index == 2 else 0, activeEdges=edges,
+                                satisfiedCapabilities=capabilities, publishedRoutes=modules)
+                        snapshots.append({
+                            "schemaVersion": 1, "observationId": str(uuid.uuid4()),
+                            "sourceId": self.proof["originalObservations"][int(index > 0)]["observationId"],
+                            "stage": stage, "counters": counters})
+                    if mutation == "early-construction":
+                        snapshots[0]["counters"]["constructors"] = 1
+                    elif mutation == "disabled-effects":
+                        snapshots[-1]["counters"]["disabledEffects"] = 1
+                    elif mutation == "false-ready":
+                        snapshots[0]["counters"]["ready"] = 1
+                    elif mutation == "lost-edge":
+                        snapshots[1]["counters"]["activeEdges"] ^= 1
+                    elif mutation == "missing-stop":
+                        snapshots.pop()
+                    self.proof.update(testIdentity=self.identity, caseId=case, compositionObservations=snapshots,
+                                      manifestSha256=evidence.digest(self.manifest))
+                    self.witness.update(testIdentity=self.identity, proofSha256=evidence.digest(self.proof))
+                    self.completion["manifestSha256"] = evidence.digest(self.manifest)
+                    options["original_inputs"]["none"][self.identity] = options["original_inputs"]["none"].pop(old_identity)
+                    options["expected_tests"] = {self.identity: ("none", "none")}
+                    if mutation is None:
+                        self.assertEqual(self.ingest(**options)["witnesses"][0]["status"], "Passed")
+                    else:
+                        with self.assertRaises(evidence.ConformanceError):
+                            self.ingest(**options)
+
     def restart_transport(self, variant):
         import conformance_case_catalog as catalog
         _, options = self.admission_transport()

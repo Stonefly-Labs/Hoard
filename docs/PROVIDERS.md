@@ -99,6 +99,13 @@ repair and CP-20 fixed configuration, request drain and distinct fresh restart.
 Independent challenges reject optimistic cleanup, hidden fallback, premature
 request settlement and hot replacement. This is diagnostic component evidence,
 not complete profile qualification; expanded native replay remains pending.
+The seventeen-row native replay subsequently passes at exact `cb8d6eb`.
+All CP-01..20 safe component rows now independently admit thirty-six actual
+identities/110 snapshots, including every declaration-theory parameter.
+Route-conflict observations preserve the real early rollback stops and zero
+disposal callbacks for unmaterialized fixture services; complete root stop
+does not invent module disposal. Inherited inventories/full-profile acceptance
+and native replay of the larger scope remain unfinished.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.

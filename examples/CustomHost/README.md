@@ -174,3 +174,8 @@ The selected CP-19/20 safe component now passes independent ingestion as part of
 seventeen proofs/fifty-one snapshots, retaining actual store I/O, request drain
 and distinct restart owners. Complete inherited/profile integration and native
 replay of the expanded scope remain open.
+Exact `cb8d6eb` subsequently passes the seventeen-row native replay. The full
+CP-01..20 safe component now admits thirty-six exact package identities/110
+snapshots; declaration rejection/repair, disabled effects and route publication
+remain separate observations. Full inherited/profile acceptance and native
+replay of the larger scope remain open.
