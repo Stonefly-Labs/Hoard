@@ -47,6 +47,13 @@ The Linux unit job's 433 tests have no failures/errors/skips, but its wrapper
 rejects expected test progress. The test now captures/asserts those exact
 events; a twenty-test safe replay emits zero unexpected bytes. Fresh Linux
 wrapper confirmation is still required.
+Native checkpoint `cd91029` passes
+[run40463591718](https://github.com/Stonefly-Labs/Hoard/actions/runs/40463591718),
+job122053635177: historical/four-family preparation, real reference consumer,
+CP36/110, inherited525/58, all 2,022 unchanged bound inputs and process release.
+Expected exit 2 remains explicitly non-qualifying. The next closure repair
+adds owned ancestor build/package/SDK files and project locks; its twenty
+inherited and seven parent tests pass, with native replay still required.
 Full controller/mutation acceptance and independent profile evaluation remain open.
 Focused/custom composition selection, compatibility/harness, verify/aggregate
 and the complete five-profile workflow are not delivered by this increment.

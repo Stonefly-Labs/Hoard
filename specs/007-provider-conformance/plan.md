@@ -125,6 +125,34 @@ T046 remains unchecked, 48/86, implement/running. Production boundaries,
 provider contracts, architecture diagrams, governance, examples, infrastructure
 and release behavior are unaffected by the test-only dependency/setup repair.
 
+## Verified native inherited execution and build-context closure
+
+The latest verified native checkpoint is exact
+`cd9102977d47ecc486332cf44044bcea6c98d20d`, run40463591718,
+job122053635177 (passed). It executes historical and all four controller
+preparations, including the actual standalone reference consumer, CP36/110
+and all inherited525/58; all 2,022 bound inputs remain unchanged, actual
+process release and post-release historical-seal verification pass.
+Source `fc4b90c522e7367c405ac3075173d3721d7352903e3c5ef6fac983b653b34658`;
+CP input `d509132b7634cb8a0ca3b60eca4a65e4c3de32f81207b4f76f2fc79453f41dba`;
+historical seal `98d511349486967d04fe3dc9db9e082d63798787f9e66d5817122c5565d29453`;
+scope admission `a7832195257c87d73c873512ab2f2946570388d4c7e9d7ae1da0e03fa6f6f623`.
+Historical native parent
+`d72c6caa44e37df544d586eb1c7c86f125c49d4fb689bae342c8c1b05e6f4c37`;
+controller native parent
+`988ca72a6c4a791ad587ff2e557d6cc05fb2e323c0793400792e4e08242a6c1e`.
+The expected exit remains 2; full-controller/profile qualification flags
+remain false and T046 is unchecked.
+
+The next input-closure red control exposes missing owned ancestor
+`Directory.Build.props`, `Directory.Build.targets`, `Directory.Packages.props`,
+`global.json` and project `packages.lock.json`. Those files now enter the
+bounded frozen read-input map. Each changed file changes that map; symlinked
+context rejects without touching the outside sentinel. All twenty inherited
+and seven native-parent tests pass; fresh native confirmation of the enlarged
+closure remains pending. Product/provider/governance/architecture/example/
+infrastructure/release contracts are unaffected by this test-only repair.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

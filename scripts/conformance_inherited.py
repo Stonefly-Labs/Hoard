@@ -592,6 +592,20 @@ def controller_read_inputs(owner, manifests, *, extra=()):
             if len(files) >= 50000 or size > 256 * 1024**2:
                 raise ConformanceError("OutputLimitExceeded")
             files[relative] = file_sha256(path)
+        if path.suffix in (".csproj", ".slnx"):
+            for directory in path.parents:
+                if not directory.is_relative_to(owner):
+                    break
+                names = ["Directory.Build.props", "Directory.Build.targets", "Directory.Packages.props", "global.json"]
+                if directory == path.parent and path.suffix == ".csproj":
+                    names.extend(("packages.lock.json", "PackageAcceptance/packages.lock.json",
+                                  "obj/F07.preparation.packages.lock.json",
+                                  "obj/F07.preparation.acceptance.packages.lock.json"))
+                for name in names:
+                    context = directory / name
+                    legacy.no_symlinks(context)
+                    if context.exists():
+                        bind(context)
 
     def collect(value):
         if isinstance(value, dict):

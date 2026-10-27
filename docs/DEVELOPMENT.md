@@ -5250,6 +5250,20 @@ unknown output. The three inherited inspector checks also confirm opaque
 coverage remains accepted by both original CFG and D case verifiers.
 Fresh Linux wrapper confirmation remains pending.
 
+Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
+job122053635177, passes historical/four-family batch preparation, actual BCL
+consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged
+bound inputs, process release and retained historical-seal verification.
+Configuration retains nine journeys/thirteen graphs/five publication barriers;
+discovery retains nine journeys/seven observations/eighteen graphs and the
+real reference consumer; lifecycle retains seven journeys/ten graphs.
+The expected public exit remains 2, not qualification or full-controller
+acceptance. Formatting/tooling, mutation and remaining provenance obligations
+remain open. The next input-closure regression exposes omitted owned ancestor
+MSBuild props/targets, central package/SDK files and per-project locks. Binding
+those files makes changes observable; symlinked context rejects without touching
+an outside sentinel. All twenty inherited and seven parent tests pass.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

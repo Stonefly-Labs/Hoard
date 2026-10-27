@@ -194,6 +194,14 @@ All 545 tooling tests pass with twenty native skips; Linux replay is pending.
 The Linux unit job executes 433 tests without failures, errors or skips but
 rejects uncaptured expected progress from a test. That test now captures and
 asserts the exact events; the safe runner's output rejection is unchanged.
+Native checkpoint `cd91029` now passes
+[run40463591718](https://github.com/Stonefly-Labs/Hoard/actions/runs/40463591718):
+historical and four-family preparation (including the real JSON consumer),
+CP36/110, all 525 inherited parameters/58 scopes, 2,022 unchanged bound inputs
+and actual process release. The command still exits 2 as explicitly incomplete;
+full-controller, mutation and qualification gates remain open.
+The next closure repair also binds owned ancestor MSBuild/central-package/SDK
+files and project lockfiles; changed metadata and symlinked context reject.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and

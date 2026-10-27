@@ -328,6 +328,11 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
             inputs = {
                 project / "Example.cs": b"class Example {}",
                 project / "Example.csproj": b"<Project/>",
+                project / "packages.lock.json": b"{}",
+                owner / "Directory.Build.props": b"<Project/>",
+                owner / "Directory.Build.targets": b"<Project/>",
+                owner / "Directory.Packages.props": b"<Project/>",
+                owner / "global.json": b"{}",
                 owner / "Example.dll": b"assembly",
                 cache / "hoard.example.0.1.0.nupkg": b"archive",
                 cache / ".nupkg.metadata": b"metadata",
@@ -336,6 +341,10 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                 path.write_bytes(raw)
             (project / "obj").mkdir()
             (project / "obj/Generated.cs").write_bytes(b"not a source input")
+            for name in ("F07.preparation.packages.lock.json", "F07.preparation.acceptance.packages.lock.json"):
+                path = project / "obj" / name
+                inputs[path] = b"{}"
+                path.write_bytes(inputs[path])
             assets = project / "obj/project.assets.json"
             assets.write_bytes(canonical_bytes({
                 "libraries": {"Hoard.Example/0.1.0": {"type": "package", "path": "hoard.example/0.1.0"}},
@@ -353,6 +362,14 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
             observed = inherited.controller_read_inputs(
                 owner, {"HOARD_FOUNDATION_EVIDENCE": str(manifest)}, extra=(extra,))
             self.assertEqual(expected, observed)
+            for path in (project / "packages.lock.json", project / "obj/F07.preparation.packages.lock.json",
+                         project / "obj/F07.preparation.acceptance.packages.lock.json", owner / "Directory.Build.props",
+                         owner / "Directory.Build.targets", owner / "Directory.Packages.props", owner / "global.json"):
+                with self.subTest(path=path.name):
+                    path.write_bytes(b"changed")
+                    self.assertNotEqual(observed, inherited.controller_read_inputs(
+                        owner, {"HOARD_FOUNDATION_EVIDENCE": str(manifest)}, extra=(extra,)))
+                    path.write_bytes(inputs[path])
             (cache / ".nupkg.metadata").write_bytes(b"changed")
             self.assertNotEqual(observed, inherited.controller_read_inputs(
                 owner, {"HOARD_FOUNDATION_EVIDENCE": str(manifest)}, extra=(extra,)))
@@ -372,6 +389,13 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
             manifest.write_bytes(canonical_bytes({"assembly": str(alias)}))
             with self.assertRaises(ConformanceError):
                 inherited.controller_read_inputs(owner, {"HOARD_FOUNDATION_EVIDENCE": str(manifest)})
+            project = owner / "Owned.csproj"
+            project.write_bytes(b"<Project/>")
+            manifest.write_bytes(canonical_bytes({"project": str(project)}))
+            (owner / "Directory.Build.props").symlink_to(foreign)
+            with self.assertRaises(ConformanceError):
+                inherited.controller_read_inputs(owner, {"HOARD_FOUNDATION_EVIDENCE": str(manifest)})
+            self.assertEqual(b"{}", foreign.read_bytes())
 
     def test_controller_preparation_rejects_foreign_source_before_running_borrowed_code(self):
         import foundation_evidence as foundation
