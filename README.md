@@ -231,10 +231,17 @@ Actual local, non-native mutation execution now exposes and repairs an opaque
 adapter-headline correlation defect: only the hash of an admitted actual failed
 result's display can discharge its `[FAIL]` headline, in either event order.
 The original `catalog-bound` mutation then produces all seven intended assertion
-failures with complete safe transport. `source-identity` still rejects with an
-unknown runtime failure; its frozen wrapper dereferences `Failure!.Code` before
-asserting that capture failed. It is not counted as assertion evidence.
-Remaining mutations/repairs and native full-controller acceptance remain open.
+failures with complete safe transport. The two original `source-identity` and
+`path-protection` negatives dereference missing failure/header state before an
+assertion. Their exact method/matrix/binding scopes now admit distinct `Guard`
+failures: failed, incomplete, never assertion or passing evidence. Unknown
+messages still reject. All twelve real local negatives and twelve repairs now
+execute through the reusable controller (29 parameters each), retaining original
+sources, sealed mutant bytes and staged runtime inputs with final revalidation.
+Historical read maps are distinguished from retained immutable inputs; restored
+mutable source paths are not claimed unchanged. The native mutation phase and
+strict completeness checks are integrated, with Linux confirmation pending.
+Native full-controller acceptance and T046 remain open.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

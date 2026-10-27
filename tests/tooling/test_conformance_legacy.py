@@ -454,6 +454,46 @@ assert legacy._borrowed_group() is None
         with self.assertRaisesRegex(RuntimeError, "UnknownDiagnostic"):
             legacy.validate_transport(self.work, manifest, result, started=99, ended=102, assertion=assertion)
 
+    def test_original_guard_projection_cannot_be_borrowed_as_an_assertion_or_unknown_failure(self):
+        manifest, result, path, _ = self.packet(failed=True, binding="none")
+        method = ("Hoard.Composition.Tests.DiscoveryBoundsTests."
+                  "Cancellation_deadline_and_inconsistent_authority_never_become_successful_observations")
+        manifest["expected"][0].update(
+            testIdentity=method, fullyQualifiedName=method, assertionSymbol=method,
+            matrixId="inherited.discovery.mutation", caseId="inherited-discovery-guard-source-identity")
+        manifest_path = self.work / f'runtime-input-{manifest["attemptId"]}.json'
+        manifest_path.chmod(0o600)
+        manifest_path.write_bytes(legacy.canonical_bytes(manifest))
+        proof = json.loads(path.read_bytes())
+        proof.update(testIdentity=method, matrixId="inherited.discovery.mutation",
+                     caseId="inherited-discovery-guard-source-identity",
+                     manifestSha256=legacy._hash(manifest_path), failureKind="Guard", assertionSymbol=None)
+        path.write_bytes(legacy.canonical_bytes(proof))
+        witnesses = path.parent / "witnesses.jsonl"
+        row = json.loads(witnesses.read_bytes())
+        row.update(testIdentity=method, matrixId=proof["matrixId"], proofSha256=legacy._hash(path))
+        witnesses.write_bytes(legacy.canonical_bytes(row) + b"\n")
+        completion_path = path.parent / "completion.json"
+        completion = json.loads(completion_path.read_bytes())
+        completion.update(manifestSha256=legacy._hash(manifest_path),
+                          recordsSha256=hashlib.sha256(witnesses.read_bytes()).hexdigest(),
+                          diagnosticCode="EvidenceIncomplete", complete=False)
+        completion_path.write_bytes(legacy.canonical_bytes(completion))
+        result.stdout = legacy.canonical_bytes({"event": "control", "code": "EvidenceIncomplete", "value": 1})
+        _, failures = legacy.validate_transport(self.work, manifest, result, started=99, ended=102)
+        self.assertEqual([method], failures)
+        with self.assertRaises(RuntimeError):
+            legacy.validate_transport(self.work, manifest, result, started=99, ended=102, assertion=method)
+        for kind in ("Unknown", "Assertion"):
+            proof["failureKind"] = kind
+            path.write_bytes(legacy.canonical_bytes(proof))
+            row["proofSha256"] = legacy._hash(path)
+            witnesses.write_bytes(legacy.canonical_bytes(row) + b"\n")
+            completion["recordsSha256"] = hashlib.sha256(witnesses.read_bytes()).hexdigest()
+            completion_path.write_bytes(legacy.canonical_bytes(completion))
+            with self.subTest(kind=kind), self.assertRaises(RuntimeError):
+                legacy.validate_transport(self.work, manifest, result, started=99, ended=102)
+
     def test_shared_sdk_loaded_image_must_match_the_actual_package_not_version_labels(self):
         package, image = self.work / "sdk.nupkg", self.work / "Hoard.Testing.Conformance.dll"
         with zipfile.ZipFile(package, "w") as contents:

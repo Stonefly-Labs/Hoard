@@ -981,6 +981,7 @@ def validate_transport(root, manifest, result, *, started, ended, assertion=None
     files = {"completion.json", "witnesses.jsonl"}
     observed = []
     failures = []
+    guards = []
     for row in rows:
         entry = expected[row["testIdentity"]]
         name = f'proof-{row["executionId"]}.json'
@@ -1009,17 +1010,24 @@ def validate_transport(root, manifest, result, *, started, ended, assertion=None
                 or abs(row["endedMs"] - row["startedMs"] - proof["durationMs"]) > 1):
             raise RuntimeError("Legacy runtime ProofMismatch.")
         if row["status"] == "Failed":
-            if assertion is None or proof["failureKind"] != "Assertion" or proof["assertionSymbol"] != assertion:
+            from conformance_evidence import _inherited_guard_entry
+            guard = (assertion is None and _inherited_guard_entry(entry)
+                     and proof["failureKind"] == "Guard" and proof["assertionSymbol"] is None)
+            if not guard and (
+                    assertion is None or proof["failureKind"] != "Assertion" or proof["assertionSymbol"] != assertion):
                 raise RuntimeError("Legacy runtime did not produce its named assertion failure.")
+            if guard:
+                guards.append(row["testIdentity"])
             failures.append(row["testIdentity"])
         elif (row["status"] != "Passed" or proof["failureKind"] != "None" or proof["assertionSymbol"] is not None):
             raise RuntimeError("Legacy runtime has a skipped or unknown witness.")
         observed.append({"test": row["testIdentity"], "durationMs": proof["durationMs"], "outcome": row["status"]})
-    diagnostic = "AssertionFailed" if failures else "None"
+    diagnostic = "EvidenceIncomplete" if guards else "AssertionFailed" if failures else "None"
     wanted = {
         "schemaVersion": 1, **common, "purpose": "execution",
         "manifestSha256": manifest_sha, "recordsSha256": hashlib.sha256(raw).hexdigest(),
-        "diagnosticCode": diagnostic, "observedCount": len(expected), "expectedCount": len(expected), "complete": True}
+        "diagnosticCode": diagnostic, "observedCount": len(expected), "expectedCount": len(expected),
+        "complete": not guards}
     if (completion != wanted or any(type(completion.get(key)) is not type(value) for key, value in wanted.items())
             or {path.name for path in output.iterdir()} != files
             or (result.returncode > 0) != bool(failures) or result.returncode < 0):
@@ -1034,7 +1042,7 @@ def validate_transport(root, manifest, result, *, started, ended, assertion=None
 
 
 def test_command(args, *, cwd=None, env=None, assertion=None, allow_failure=False,
-                 sdk_package=None, logger_path=None):
+                 sdk_package=None, logger_path=None, discover=None, guard_case=None):
     """Replace a legacy TRX invocation with the existing pre-persistence safe logger."""
     args = tuple(map(str, args))
     options = {}
@@ -1081,7 +1089,7 @@ def test_command(args, *, cwd=None, env=None, assertion=None, allow_failure=Fals
         command(("dotnet", "build", str(project), "-c", "Release", "--no-restore", "-v", "quiet"))
     if not logger.is_file():
         raise RuntimeError("Legacy runtime safe logger prerequisite is missing.")
-    shutil.copy2(logger, runtime / logger.name)
+    shutil.copy2(logger, runtime / "Hoard.Conformance.TestLogger.dll")
     sdk = runtime / "Hoard.Testing.Conformance.dll"
     if sdk_package is None:
         feed = next((parent / "feed" for parent in (destination.parent, *assembly.parents)
@@ -1098,8 +1106,15 @@ def test_command(args, *, cwd=None, env=None, assertion=None, allow_failure=Fals
     shutil.copy2(archive, package)
     stage_sdk(package, sdk)
     staged = runtime / assembly.name
-    identities = _discovery(staged, selection, env)
+    identities = _discovery(staged, selection, env) if discover is None else discover(staged, selection, env)
     configuration = _runtime_configuration(assembly, env)
+    if guard_case is not None:
+        from conformance_case_catalog import INHERITED_GUARD_FAILURES
+        policy = INHERITED_GUARD_FAILURES.get(guard_case)
+        if (assertion is not None or policy is None or not identities
+                or any(identity.split("(")[0] != policy[0] for identity in identities)):
+            raise RuntimeError("Legacy runtime guard policy ProofMismatch.")
+        configuration = {**configuration, "bindingId": policy[2]}
     run_id, group, attempt = (str(uuid.uuid4()) for _ in range(3))
     images = [{"id": "test-assembly" if path == staged else f"component-{index}",
                "path": path.relative_to(root).as_posix(), "sha256": _hash(path)}
@@ -1125,7 +1140,9 @@ def test_command(args, *, cwd=None, env=None, assertion=None, allow_failure=Fals
         "packages": [{"id": "shared-sdk", "path": package.relative_to(root).as_posix(), "sha256": _hash(package)}],
         "expected": [{"testIdentity": identity, "fullyQualifiedName": identity.split("(")[0],
                       "assemblyId": "test-assembly", "packageId": "shared-sdk", "bindingId": configuration["bindingId"],
-                      "matrixId": "none", "assertionSymbol": assertion, "caseId": "runtime"}
+                      "matrixId": "none" if guard_case is None else policy[1],
+                      "assertionSymbol": assertion if guard_case is None else policy[0],
+                      "caseId": "runtime" if guard_case is None else guard_case}
                      for identity in identities]}
     _write(root / f"runtime-input-{attempt}.json", manifest)
     environment = dict(env or {})
@@ -1160,11 +1177,12 @@ def test_command(args, *, cwd=None, env=None, assertion=None, allow_failure=Fals
     projection = destination / match[1]
     with projection.open("xb") as output:
         output.write(ET.tostring(document, encoding="utf-8", xml_declaration=True))
+    completion = load_json(read_bounded(root / ("runtime-" + attempt) / "completion.json", 64 * 1024))
     _write(projection.with_suffix(".runtime.json"), {
         "schemaVersion": 1, "projectionSha256": _hash(projection), "transport": root.name,
         "attemptId": attempt, "manifestSha256": _hash(root / f"runtime-input-{attempt}.json"),
         "startedMs": started, "endedMs": ended, "exitCode": result.returncode,
-        "assertionSymbol": assertion, "events": [{"event": "control", "code": "AssertionFailed" if failures else "None",
+        "assertionSymbol": assertion, "events": [{"event": "control", "code": completion["diagnosticCode"],
                                                 "value": len(observed)}]})
     return subprocess.CompletedProcess(args, result.returncode, canonical_bytes({"tests": len(observed), "failed": len(failures)}),
                                        failures)
@@ -1188,6 +1206,8 @@ def verify_projection(path, *, required=True, expected_binding="legacy", expecte
     if _hash(manifest_path) != receipt["manifestSha256"]:
         raise RuntimeError("Legacy runtime manifest InputChanged.")
     manifest = load_json(read_bounded(manifest_path, 2 * 1024**2))
+    from conformance_evidence import _inherited_guard_entry
+    guarded = bool(manifest["expected"]) and all(_inherited_guard_entry(entry) for entry in manifest["expected"])
     inputs_path = root / "legacy-inputs.json"
     if manifest["runInputsPath"] != "legacy-inputs.json" or _hash(inputs_path) != manifest["inputSha256"]:
         raise RuntimeError("Legacy runtime input InputChanged.")
@@ -1197,7 +1217,7 @@ def verify_projection(path, *, required=True, expected_binding="legacy", expecte
                 "schemaVersion", "runId", "invocationGroupId", "assemblies", "packageSha256", "configuration"}
             or not isinstance(configuration, dict)
             or set(configuration) != {"bindingId", "environmentSha256"}
-            or expected_binding not in ("legacy", "memory", "sqlite")
+            or expected_binding not in (("legacy", "memory", "sqlite", "none") if guarded else ("legacy", "memory", "sqlite"))
             or configuration["bindingId"] != expected_binding
             or not isinstance(configuration["environmentSha256"], str)
             or re.fullmatch(r"[0-9a-f]{64}", configuration["environmentSha256"]) is None

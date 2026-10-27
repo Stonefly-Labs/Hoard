@@ -213,10 +213,12 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import conformance_composition_checks as checks
         import conformance_evidence as evidence
         from conformance_execution import CommandResult
-        for mutation in ("none", "changed-output", "missing-phase", "retained-process", "child-failed"):
-            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+        for phase, mutation in ((phase, mutation) for phase in ("historical", "mutations")
+                                for mutation in ("none", "changed-output", "missing-phase", "retained-process", "child-failed")):
+            with self.subTest(phase=phase, mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
+                (root / "proofs/composition-inputs.json").write_bytes(b"{}")
                 source = root / "stores/source"
                 (source / "scripts").mkdir(parents=True)
                 (source / "scripts/conformance_inherited.py").write_bytes(b"frozen controller")
@@ -227,7 +229,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     request = Path(arguments[arguments.index("--request") + 1])
                     output = Path(arguments[arguments.index("--output") + 1])
                     raw = evidence.canonical_bytes({
-                        "schemaVersion": 1, "qualification": False, "phase": "historical",
+                        "schemaVersion": 1, "qualification": False, "phase": phase,
                         "runId": "run", "rootId": "root", "result": {"seal": "bound"},
                     })
                     output.write_bytes(raw + b"\n" if mutation == "changed-output" else raw)
@@ -241,9 +243,14 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     )
                     self.assertIn(request.relative_to(root).as_posix(), kwargs["execution_inputs"])
                     self.assertEqual((output.relative_to(root).as_posix(),), kwargs["execution_outputs"])
+                    if phase == "mutations":
+                        self.assertIn("proofs/composition-inputs.json", kwargs["execution_inputs"])
                     run.command_sequence = 1
+                    ordinals = (2, 3, 4, 0) if phase == "historical" else (*range(1, 25), 0)
+                    if mutation == "missing-phase":
+                        ordinals = (*ordinals[:1], *ordinals[2:])
                     events = tuple({"event": "control", "code": "None", "value": number}
-                                   for number in ((2, 4, 0) if mutation == "missing-phase" else (2, 3, 4, 0)))
+                                   for number in ordinals)
                     if mutation == "child-failed":
                         events = (*events[:2], MappingProxyType({
                             "event": "control", "code": "OutputLimitExceeded", "value": 0}))
@@ -252,7 +259,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 run.command = mock.Mock(side_effect=command)
                 run.read_execution_record = mock.Mock(side_effect=lambda sequence: evidence.canonical_bytes(record))
                 if mutation == "none":
-                    result, parent = checks._controller_phase(run, ROOT, source, "historical")
+                    result, parent = checks._controller_phase(run, ROOT, source, phase)
                     self.assertEqual({"seal": "bound"}, result)
                     self.assertEqual(evidence.digest(record), parent)
                 else:
@@ -260,9 +267,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     with contextlib.redirect_stdout(output), self.assertRaisesRegex(
                             evidence.ConformanceError, "OutputLimitExceeded" if mutation == "child-failed"
                             else "ProofMismatch"):
-                        checks._controller_phase(run, ROOT, source, "historical")
+                        checks._controller_phase(run, ROOT, source, phase)
                     if mutation == "child-failed":
-                        self.assertEqual([2, 3, 0], [event["value"] for event in
+                        self.assertEqual(([2, 3, 0] if phase == "historical" else [1, 2, 0]), [event["value"] for event in
                                                    evidence.load_json(output.getvalue().encode())["events"]])
 
     def test_workflow_checks_retained_historical_seal_after_stores_are_released(self):
@@ -272,7 +279,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
         workflow = (ROOT / ".github/workflows/conformance-composition.yml").read_text()
         script = workflow.split("<<'PY'\n", 1)[1].split("\n          PY", 1)[0]
         code = compile(textwrap.dedent(script), "<composition-workflow>", "exec")
-        for mutation in ("none", "changed-bytes", "resealed-foreign-root", "false-qualification"):
+        for mutation in ("none", "changed-bytes", "resealed-foreign-root", "false-qualification",
+                         "missing-mutation", "missing-repair", "mutation-qualification"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -313,6 +321,12 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         "fullControllerAcceptance": False, "historicalBinariesPreparedBeforeCandidate": True,
                         "historicalBaselineSealSha256": hashlib.sha256(raw).hexdigest(),
                         "passedParameters": 525, "scopes": 58, "commands": [{}] * 58,
+                        "discoveryMutations": {
+                            "qualification": mutation == "mutation-qualification",
+                            "mutations": 11 if mutation == "missing-mutation" else 12,
+                            "negativeParameters": 29,
+                            "repairedParameters": 28 if mutation == "missing-repair" else 29,
+                        },
                     },
                 }
                 (root / inherited.CONTROLLER_BASELINES).write_bytes(

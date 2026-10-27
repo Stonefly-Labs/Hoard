@@ -1286,6 +1286,14 @@ def _assertion_symbol(value):
     return value
 
 
+def _inherited_guard_entry(entry):
+    from conformance_case_catalog import INHERITED_GUARD_FAILURES
+    policy = INHERITED_GUARD_FAILURES.get(entry["caseId"])
+    return (policy is not None
+            and policy == (entry["fullyQualifiedName"], entry["matrixId"], entry["bindingId"])
+            and entry["assertionSymbol"] == entry["fullyQualifiedName"])
+
+
 def _runtime_json(data, fields, *, limit=2 * 1024 * 1024):
     if not isinstance(data, bytes) or not 0 < len(data) <= limit:
         raise ConformanceError("OutputLimitExceeded")
@@ -1897,7 +1905,7 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
         "inputSha256": sha256, "manifestSha256": sha256, "ownerSha256": sha256,
         "assemblySha256": sha256, "packageSha256": sha256,
         "clock": _constant("system-monotonic-ms"), "durationMs": _number,
-        "failureKind": _one_of("None", "Assertion", "Unknown", "SkippedOrUnknown"),
+        "failureKind": _one_of("None", "Assertion", "Guard", "Unknown", "SkippedOrUnknown"),
         "assertionSymbol": _assertion_symbol, "status": _executed_state,
         "caseId": stable_id, "sessionOrigins": _list(lambda value: value, 128, minimum=0),
     }
@@ -1912,6 +1920,7 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
     prior_observations = {}
     prior_instances = {}
     unknown_failure = False
+    guard_failure = False
     for witness in witnesses:
         entry = expected.get(witness["testIdentity"])
         if entry is None:
@@ -1987,12 +1996,15 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
                 or (witness["status"] == "Incomplete"
                     and (proof["failureKind"] != "SkippedOrUnknown" or proof["assertionSymbol"] is not None))
                 or (witness["status"] == "Failed" and (
-                    proof["failureKind"] not in ("Assertion", "Unknown")
+                    proof["failureKind"] not in ("Assertion", "Guard", "Unknown")
                     or (proof["failureKind"] == "Assertion" and (
                         entry["assertionSymbol"] is None or proof["assertionSymbol"] != entry["assertionSymbol"]))
+                    or (proof["failureKind"] == "Guard" and (
+                        not _inherited_guard_entry(entry) or proof["assertionSymbol"] is not None))
                     or (proof["failureKind"] == "Unknown" and proof["assertionSymbol"] is not None)))):
             raise ConformanceError("ProofMismatch")
         unknown_failure |= proof["failureKind"] == "Unknown"
+        guard_failure |= proof["failureKind"] == "Guard"
     completion = _runtime_completion(completion_data, "execution", witnesses_data)
     code = completion["diagnosticCode"]
     inventory_complete = {item["testIdentity"] for item in witnesses} == set(expected)
@@ -2005,6 +2017,7 @@ def _read_runtime_attempt(*, inputs, manifest_data, owner_data, witnesses_data, 
             or completion["complete"] != (inventory_complete and code in ("None", "AssertionFailed"))
             or (completion["complete"] and completion["observedCount"] != len(witnesses))
             or (code == "None" and (not inventory_complete or any(item["status"] != "Passed" for item in witnesses)))
+            or (guard_failure and code not in ("EvidenceIncomplete", "UnknownDiagnostic"))
             or (code == "AssertionFailed" and (not inventory_complete or not failed or unknown_failure
                 or any(item["status"] == "Incomplete" for item in witnesses)))):
         raise ConformanceError("EvidenceIncomplete")

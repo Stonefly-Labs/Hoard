@@ -285,6 +285,208 @@ def admit_discovery(data, methods, *, assembly):
     return sorted(admitted, key=lambda row: row["testIdentity"])
 
 
+def discover_inherited_method(assembly, entry, driver_source, sdk, environment):
+    import conformance_legacy as legacy
+    from conformance_evidence import canonical_bytes, input_manifest
+    from conformance_execution import capture_control
+    from conformance_sources import read_bounded
+
+    assembly = Path(assembly)
+    root = assembly.parents[2]
+    legacy.no_symlinks(root)
+    method = entry["fullyQualifiedName"]
+    if (assembly.name != "Hoard.Composition.Tests.dll"
+            or assembly.parent != root / "resources/assembly"
+            or not method.startswith("Hoard.Composition.Tests.")):
+        raise ConformanceError("OwnershipInvalid")
+    code, installed = capture_control(["dotnet", "--list-sdks"], limit=16384, timeout=5)
+    matches = re.findall(r"^" + re.escape(sdk) + r" \[([^\r\n]+)\]$",
+                         installed.decode("utf-8", errors="strict"), re.MULTILINE)
+    if code or len(matches) != 1:
+        raise ConformanceError("PrerequisiteMissing")
+    vstest = Path(matches[0]) / sdk / "vstest.console.dll"
+    legacy.no_symlinks(vstest)
+    if not vstest.is_file():
+        raise ConformanceError("PrerequisiteMissing")
+    driver = root / "resources/discovery"
+    legacy._copy_runtime(driver_source, driver)
+    images = [path for folder in (assembly.parent, driver) for path in folder.rglob("*")
+              if path.is_file() and (path.suffix in (".dll", ".so", ".dylib")
+                                     or path.name.endswith((".deps.json", ".runtimeconfig.json")))]
+    files = dict(input_manifest(root, [path.relative_to(root).as_posix() for path in images]))
+    request = {
+        "methods": [method],
+        "assemblies": [{"id": "test-assembly" if path == assembly else f"image-{index}",
+                        "path": path.relative_to(root).as_posix(),
+                        "sha256": files[path.relative_to(root).as_posix()]}
+                       for index, path in enumerate(images)]}
+    request_path = root / "discovery-request.json"
+    legacy._write(request_path, request)
+    result = legacy.capture(
+        ["dotnet", str(driver / "Hoard.Fixtures.Conformance.Discovery.dll"), str(root), str(vstest),
+         request_path.name, digest(request), "discovered.json"],
+        cwd=assembly.parent, env=environment, timeout=120)
+    if result.returncode:
+        raise ConformanceError("CommandFailed")
+    rows = admit_discovery(read_bounded(root / "discovered.json", 2 * 1024**2),
+                           {method: entry}, assembly="Hoard.Composition.Tests")
+    event = load_json(result.stdout)
+    if (event != {"event": "control", "code": "None", "value": len(rows)}
+            or type(event["value"]) is not int
+            or dict(input_manifest(root, list(files))) != files
+            or read_bounded(request_path, 65536) != canonical_bytes(request)):
+        raise ConformanceError("InputChanged")
+    return tuple(row["testIdentity"] for row in rows)
+
+
+def run_discovery_mutations(repository, owner, source, sources, sdk, *, sdk_package, logger_path):
+    import conformance_legacy as legacy
+    import discovery_evidence as discovery
+    from conformance_case_catalog import INHERITED_GUARD_FAILURES
+    from conformance_evidence import canonical_bytes, input_manifest
+    from conformance_sources import read_bounded
+
+    owner, source = Path(owner), Path(source)
+    methods = inventory(read_bounded(source / INVENTORY_PATH, 2 * 1024**2), sources)
+    original_files = {(source / name).relative_to(owner).as_posix(): hashed for name, hashed in sources.items()}
+    if dict(input_manifest(owner, list(original_files))) != original_files:
+        raise ConformanceError("InputChanged")
+    work = owner / "stores/inherited-discovery-mutations"
+    work.mkdir(mode=0o700)
+    recipes, selected = {}, {}
+    for identity, relative, original, replacement, method in discovery.MUTATIONS:
+        matches = [row for name, row in methods.items()
+                   if name.endswith("." + method) and row["group"] == "discovery"]
+        raw = read_bounded(source / relative, 1024**2)
+        if (identity in recipes or len(matches) != 1
+                or raw.decode("utf-8").count(original) != 1):
+            raise ConformanceError("WitnessMissing")
+        recipes[identity] = relative, raw, raw.decode("utf-8").replace(original, replacement).encode("utf-8")
+        selected[identity] = matches[0]
+    root_files = ("Directory.Build.props", "Directory.Packages.props", "global.json", "Hoard.slnx")
+    cloned = {name: hashed for name, hashed in sources.items()
+              if name.startswith(("src/", "tests/", "specs/", "examples/")) or name in root_files}
+    project = work / "mutations/tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csproj"
+    driver = source / "tests/fixtures/conformance/Discovery/bin/Release/net10.0"
+    observations = {}
+    with controller_transport(repository, owner, sdk_package=sdk_package, logger_path=logger_path) as controls:
+        controls["phase"] = "discovery"
+        original_run = discovery.run
+
+        def command(*arguments, cwd=None, env=None, input=None):
+            if arguments[:2] != ("dotnet", "test"):
+                return original_run(*arguments, cwd=cwd, env=env, input=input)
+            if "--results-directory" not in arguments or "--logger" not in arguments:
+                raise ConformanceError("OwnershipInvalid")
+            directory = Path(arguments[arguments.index("--results-directory") + 1])
+            identity = directory.name
+            phase = {"mutation-results": "red", "repair-results": "repair"}.get(directory.parent.name)
+            if identity not in recipes or phase is None:
+                raise ConformanceError("OwnershipInvalid")
+            method = selected[identity]["fullyQualifiedName"]
+            expected_arguments = (
+                "dotnet", "test", str(project), "-c", "Release", "--no-restore",
+                "--filter", "FullyQualifiedName~" + method.rsplit(".", 1)[-1],
+                "--logger", "trx;LogFileName=" + phase + ".trx",
+                "--results-directory", str(work / directory.parent.name / identity), "-v", "minimal")
+            if (arguments != expected_arguments or cwd is not None or input is not None
+                    or env != {"HOARD_DISCOVERY_MUTATION": "active"} or (identity, phase) in observations):
+                raise ConformanceError("ProofMismatch")
+            relative, original, mutant = recipes[identity]
+            files = {(work / "mutations" / name).relative_to(owner).as_posix(): hashed
+                     for name, hashed in cloned.items()}
+            files[(work / "mutations" / relative).relative_to(owner).as_posix()] = hashlib.sha256(
+                mutant if phase == "red" else original).hexdigest()
+            if dict(input_manifest(owner, list(files))) != files:
+                raise ConformanceError("InputChanged")
+            mutant_path = owner / f"proofs/inherited-mutation-{identity}-source.cs"
+            if phase == "red":
+                with mutant_path.open("xb") as output:
+                    output.write(mutant)
+                mutant_path.chmod(0o400)
+            guard = "inherited-discovery-guard-" + identity
+            guard = guard if guard in INHERITED_GUARD_FAILURES else None
+            captured = {}
+
+            def discover(assembly, selection, environment):
+                if selection != expected_arguments[7]:
+                    raise ConformanceError("ProofMismatch")
+                identities = discover_inherited_method(assembly, selected[identity], driver, sdk, environment)
+                captured.update(controller_read_inputs(owner, {}, extra=(
+                    project, sdk_package, logger_path, assembly.parents[2] / "discovery-request.json")))
+                captured.update(input_manifest(owner, [
+                    path.relative_to(owner).as_posix() for folder in (assembly.parent, assembly.parents[1] / "discovery")
+                    for path in folder.rglob("*")
+                    if path.is_file()]))
+                return identities
+
+            print(json.dumps({"qualification": False, "phase": "inherited-discovery-mutation",
+                              "ordinal": len(observations) + 1}), flush=True)
+            result = legacy.test_command(
+                arguments, env=env, assertion=None if guard else method, guard_case=guard,
+                allow_failure=True, sdk_package=sdk_package, logger_path=logger_path, discover=discover)
+            frozen = {**files, **captured}
+            if dict(input_manifest(owner, list(frozen))) != frozen:
+                raise ConformanceError("InputChanged")
+            projection = directory / (phase + ".trx")
+            legacy.verify_projection(projection, expected_binding="none" if guard else "legacy",
+                                     expected_environment=env)
+            summary = load_json(result.stdout)
+            if (summary["tests"] != selected[identity]["parameterCount"]
+                    or (phase == "red" and (result.returncode <= 0 or summary["failed"] <= 0))
+                    or (phase == "repair" and (result.returncode != 0 or summary["failed"] != 0))):
+                raise ConformanceError("WitnessMissing")
+            descriptor = owner / f"proofs/inherited-mutation-{identity}-{phase}-inputs.json"
+            retained = {**original_files, **captured,
+                        mutant_path.relative_to(owner).as_posix(): hashlib.sha256(mutant).hexdigest()}
+            document = {
+                "schemaVersion": 1, "qualification": False, "mutation": identity, "phase": phase,
+                "sourcePath": relative, "originalSha256": hashlib.sha256(original).hexdigest(),
+                "mutantSha256": hashlib.sha256(mutant).hexdigest(),
+                "readInputs": frozen, "retainedInputs": retained,
+            }
+            legacy._write(descriptor, document)
+            observations[identity, phase] = {
+                "projection": str(projection), "projectionSha256": legacy._hash(projection),
+                "inputDescriptor": str(descriptor), "inputSha256": digest(document),
+                "parameters": summary["tests"], "failedParameters": summary["failed"],
+                "failureKind": "None" if phase == "repair" else "Guard" if guard else "Assertion",
+            }
+            if phase == "red":
+                raise RuntimeError("Intended discovery negative observed.")
+            return result.stdout.decode("utf-8")
+
+        discovery.run = command
+        try:
+            negatives = discovery.mutations(source, work)
+            for negative in negatives:
+                identity = negative["id"]
+                command(
+                    "dotnet", "test", str(project), "-c", "Release", "--no-restore",
+                    "--filter", "FullyQualifiedName~" + selected[identity]["fullyQualifiedName"].rsplit(".", 1)[-1],
+                    "--logger", "trx;LogFileName=repair.trx",
+                    "--results-directory", str(work / "repair-results" / identity), "-v", "minimal",
+                    env={"HOARD_DISCOVERY_MUTATION": "active"})
+        finally:
+            discovery.run = original_run
+    if (set(observations) != {(identity, phase) for identity in recipes for phase in ("red", "repair")}
+            or dict(input_manifest(owner, list(original_files))) != original_files):
+        raise ConformanceError("InputChanged")
+    for observation in observations.values():
+        document = load_json(read_bounded(Path(observation["inputDescriptor"]), 2 * 1024**2))
+        projection = Path(observation["projection"])
+        guard = "inherited-discovery-guard-" + document["mutation"] in INHERITED_GUARD_FAILURES
+        legacy.verify_projection(projection, expected_binding="none" if guard else "legacy",
+                                 expected_environment={"HOARD_DISCOVERY_MUTATION": "active"})
+        if (digest(document) != observation["inputSha256"]
+                or legacy._hash(projection) != observation["projectionSha256"]
+                or dict(input_manifest(owner, list(document["retainedInputs"]))) != document["retainedInputs"]):
+            raise ConformanceError("InputChanged")
+    return {"qualification": False, "mutations": [
+        {**row, "negative": observations[row["id"], "red"], "repair": observations[row["id"], "repair"]}
+        for row in negatives]}
+
+
 def execution_scopes(discoveries, methods):
     if not isinstance(discoveries, dict) or set(discoveries) != ASSEMBLIES:
         raise ConformanceError("WitnessMissing")
@@ -675,7 +877,12 @@ class ControllerProgress(io.TextIOBase):
                 controllers = ("foundation", "lifecycle", "configuration", "discovery")
                 if not isinstance(value, dict) or value.get("qualification") is not False:
                     raise ConformanceError("UnknownDiagnostic")
-                if value.get("phase") == "inherited-controller-failure":
+                if value.get("phase") == "inherited-discovery-mutation":
+                    if (set(value) != {"qualification", "phase", "ordinal"}
+                            or type(value["ordinal"]) is not int or not 1 <= value["ordinal"] <= 24):
+                        raise ConformanceError("UnknownDiagnostic")
+                    event = {"event": "control", "code": "None", "value": value["ordinal"]}
+                elif value.get("phase") == "inherited-controller-failure":
                     if (set(value) != {"qualification", "phase", "controller", "commandSequence", "operation", "code"}
                             or value["controller"] not in (*controllers, "preparation")
                             or type(value["commandSequence"]) is not int
@@ -716,7 +923,7 @@ def controller_child_main(argv=None):
                 "schemaVersion", "phase", "owner", "repository", "runId", "rootId", "source",
                 "baselineSeal", "sdkPackage", "loggerPath"}
                 or type(request["schemaVersion"]) is not int or request["schemaVersion"] != 1
-                or request["phase"] not in ("historical", "controllers")
+                or request["phase"] not in ("historical", "controllers", "mutations")
                 or not isinstance(request["runId"], str)
                 or str(uuid.UUID(request["runId"])) != request["runId"]):
             raise ConformanceError("EvidenceSchemaInvalid")
@@ -744,12 +951,25 @@ def controller_child_main(argv=None):
                 if any(request[key] is not None for key in ("baselineSeal", "sdkPackage", "loggerPath")):
                     raise ConformanceError("EvidenceSchemaInvalid")
                 result = prepare_controller_baselines(repository, run)
-            else:
+            elif request["phase"] == "controllers":
                 prepared = verify_controller_baselines(run, request["baselineSeal"])
                 result = prepare_controller_evidence(
                     repository, owner, owner / relative_path(request["source"]),
                     sdk_package=owner / relative_path(request["sdkPackage"]),
                     logger_path=owner / relative_path(request["loggerPath"]), prepared_baselines=prepared)
+                verify_controller_baselines(run, request["baselineSeal"])
+            else:
+                from conformance_evidence import admit_entity
+                verify_controller_baselines(run, request["baselineSeal"])
+                inputs = admit_entity("RunInputs", load_json(read_bounded(
+                    owner / "proofs/composition-inputs.json", 2 * 1024**2)))
+                if inputs["runId"] != run.run_id or inputs["profileId"] != "composition":
+                    raise ConformanceError("ProofMismatch")
+                result = run_discovery_mutations(
+                    repository, owner, owner / relative_path(request["source"]),
+                    inputs["sourceManifest"], inputs["environment"]["sdk"],
+                    sdk_package=owner / relative_path(request["sdkPackage"]),
+                    logger_path=owner / relative_path(request["loggerPath"]))
                 verify_controller_baselines(run, request["baselineSeal"])
         if progress.pending:
             raise ConformanceError("UnknownDiagnostic")

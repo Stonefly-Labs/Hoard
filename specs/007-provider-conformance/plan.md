@@ -230,7 +230,7 @@ All 550 tooling tests pass locally, with twenty explicit native skips.
 Full foundation fixtures, actual mutation red/repair runs and attributable
 controller-tooling obligations remain open; T046 remains unchecked.
 
-### Actual discovery failure-headline correlation and remaining guard semantics
+### Actual discovery failure-headline correlation and typed guard evidence
 
 Local actual execution of the unchanged mutation recipe exposes an opaque
 adapter headline that is not discharged by the original literal-identity check.
@@ -240,13 +240,25 @@ then all 135 logger cases pass, including foreign/passing/unknown/null-reference
 rejection; focused formatting and 29 legacy controls pass (one native skip).
 The original `catalog-bound` red run produces all seven actual assertion
 failures with complete safe transport. This is local/non-native/nonqualifying.
-`source-identity` then reaches one failed actual witness but correctly remains
-`UnknownDiagnostic`/incomplete: the frozen wrapper dereferences `Failure!.Code`
-before the assertion, while the intended mutant permits success. It must not
-be optimistically classified as an assertion failure. Remaining red/repair
-runs and native integration remain open. Preserving the frozen baseline needs
-a separate narrowly typed guard-failure receipt; revising that baseline needs
-explicit approval. No task or controller/profile completion flag advances.
+`source-identity` and `path-protection` expose frozen wrappers that dereference
+missing failure/header state before assertions. The unchanged wrappers and
+recipes are preserved. Distinct `Guard` evidence admits only their exact finite
+method/matrix/binding scopes, null-reference prefix and stack frame. These
+witnesses remain failed/incomplete, never assertion, passing or complete;
+unknown diagnostics still reject first. All 145 logger cases pass.
+
+The reusable repository controller now executes all twelve actual local
+negatives and all twelve original-source repairs (29 parameters each), with
+actual opaque discovery and independently re-admitted safe projections.
+Historical read maps are retained separately from final immutable inputs:
+original source snapshots, exclusive sealed mutant bytes, staged runtime/driver
+images and build context are revalidated after every repair completes. Actual
+reusable execution with final revalidation passes locally, non-native and
+nonqualifying. The native mutation worker binds composition inputs and exact
+24-event progress; parent/CI completeness challenges reject omitted scopes,
+missing repairs and false qualification. Linux confirmation remains pending.
+Full-controller tooling/provenance obligations remain open. No task or
+controller/profile completion flag advances; T046 remains unchecked.
 
 ## Shared authority admission and explicit restart controls
 

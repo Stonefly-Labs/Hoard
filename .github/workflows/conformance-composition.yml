@@ -55,6 +55,7 @@ jobs:
           baseline_raw = read_bounded(root / CONTROLLER_BASELINES, 16 * 1024**2)
           baseline = evidence.load_json(baseline_raw)
           inherited = summary["inheritedRuntime"]
+          mutations = inherited["discoveryMutations"]
           if (summary["qualification"] is not False or summary["profileComplete"] is not False
                   or summary["passedComponents"] != 36 or summary["admittedSnapshots"] != 110
                   or summary["processResourcesReleased"] is not True
@@ -71,6 +72,8 @@ jobs:
                   or inherited["controllerNativeContainment"] is not False
                   or inherited["fullControllerAcceptance"] is not False
                   or inherited["historicalBinariesPreparedBeforeCandidate"] is not True
+                  or mutations["qualification"] is not False or mutations["mutations"] != 12
+                  or mutations["negativeParameters"] != 29 or mutations["repairedParameters"] != 29
                   or inherited["passedParameters"] != 525 or inherited["scopes"] != 58
                   or len(inherited["commands"]) != 58):
               raise SystemExit("WitnessMissing")

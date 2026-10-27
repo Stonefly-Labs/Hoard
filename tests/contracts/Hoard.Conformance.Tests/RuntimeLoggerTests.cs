@@ -1060,6 +1060,7 @@ public sealed class RuntimeLoggerTests
     [Theory]
     [InlineData("Assert.True() Failure")]
     [InlineData("Assert.IsType() Failure")]
+    [InlineData("Assert.InRange() Failure")]
     public void Assertion_proof_requires_both_frozen_symbol_and_xunit_prefix_and_never_retains_raw_text(
         string assertionPrefix)
     {
@@ -1123,6 +1124,58 @@ public sealed class RuntimeLoggerTests
             Directory.GetFiles(owned.Output, "proof-*.json"))));
         Assert.Equal(matched ? "Assertion" : "Unknown", proof.RootElement.GetProperty("failureKind").GetString());
         Assert.Equal(matched ? method : null, proof.RootElement.GetProperty("assertionSymbol").GetString());
+        AssertSafe(owned.Output);
+    }
+
+    [Theory]
+    [InlineData("matching")]
+    [InlineData("ordinary-case")]
+    [InlineData("path-protection")]
+    [InlineData("wrong-matrix")]
+    [InlineData("wrong-method")]
+    [InlineData("wrong-frame")]
+    [InlineData("wrong-exception")]
+    [InlineData("unknown-message")]
+    [InlineData("unknown-adapter-message")]
+    public void Frozen_guard_failure_is_typed_but_never_an_assertion_or_complete_attempt(string mutation)
+    {
+        using var owned = new OwnedInput(binding: "none");
+        var method = mutation == "path-protection"
+            ? "Hoard.Composition.Tests.DiscoveryAuthorizationTests.Both_literal_routes_require_the_same_policy_without_disclosure"
+            : "Hoard.Composition.Tests.DiscoveryBoundsTests."
+                + "Cancellation_deadline_and_inconsistent_authority_never_become_successful_observations";
+        var selected = mutation == "wrong-method" ? method + "Other" : method;
+        owned.Input.Expected[0] = owned.Input.Expected[0] with
+        {
+            TestIdentity = selected,
+            FullyQualifiedName = selected,
+            AssertionSymbol = selected,
+            MatrixId = mutation == "wrong-matrix" ? "none" : "inherited.discovery.mutation",
+            CaseId = mutation == "ordinary-case" ? "runtime" : mutation == "path-protection"
+                ? "inherited-discovery-guard-path-protection" : "inherited-discovery-guard-source-identity"
+        };
+        owned.RewriteManifest(JsonSerializer.Serialize(owned.Input, Json));
+        using var recorder = owned.Open();
+        var result = owned.Result(0, TestOutcome.Failed);
+        result.ErrorMessage = mutation switch
+        {
+            "wrong-exception" => "System.InvalidOperationException : private-canary",
+            "unknown-message" => "private-canary",
+            _ => "System.NullReferenceException : private-canary"
+        };
+        result.ErrorStackTrace = "   at " + (mutation == "wrong-frame" ? method + "Other" : selected) + "()";
+        if (mutation == "unknown-adapter-message") { recorder.ObserveMessage("private-canary"); }
+        recorder.Observe(result);
+        recorder.Complete();
+        Assert.Equal(mutation is "matching" or "path-protection" ? ConformanceDiagnosticCode.EvidenceIncomplete
+            : ConformanceDiagnosticCode.UnknownDiagnostic, recorder.Diagnostic);
+        using var proof = JsonDocument.Parse(File.ReadAllBytes(Assert.Single(
+            Directory.GetFiles(owned.Output, "proof-*.json"))));
+        Assert.Equal(mutation is "matching" or "path-protection" or "unknown-adapter-message" ? "Guard" : "Unknown",
+            proof.RootElement.GetProperty("failureKind").GetString());
+        Assert.Equal(JsonValueKind.Null, proof.RootElement.GetProperty("assertionSymbol").ValueKind);
+        using var completion = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(owned.Output, "completion.json")));
+        Assert.False(completion.RootElement.GetProperty("complete").GetBoolean());
         AssertSafe(owned.Output);
     }
 

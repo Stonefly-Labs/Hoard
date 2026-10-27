@@ -26,6 +26,46 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_selected_mutation_discovery_requires_actual_complete_unchanged_images(self):
+        import conformance_legacy as legacy
+        method = "Hoard.Composition.Tests.DiscoveryBoundsTests.Check"
+        entry = {"fullyQualifiedName": method, "parameterCount": 2, "group": "discovery"}
+        for mutation in ("none", "missing-parameter", "changed-image", "failed", "unknown-output"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                assembly = root / "resources/assembly/Hoard.Composition.Tests.dll"
+                assembly.parent.mkdir(parents=True)
+                assembly.write_bytes(b"synthetic-image")
+                driver_source = root / "prepared-driver"
+                driver_source.mkdir()
+                (driver_source / "Hoard.Fixtures.Conformance.Discovery.dll").write_bytes(b"synthetic-driver")
+                sdk = root / "sdk"
+                (sdk / "10.0.203").mkdir(parents=True)
+                (sdk / "10.0.203/vstest.console.dll").write_bytes(b"vstest")
+
+                def execute(arguments, **kwargs):
+                    request = json.loads((root / "discovery-request.json").read_bytes())
+                    self.assertEqual([method], request["methods"])
+                    count = 1 if mutation == "missing-parameter" else 2
+                    (root / "discovered.json").write_bytes(canonical_bytes([
+                        {"testIdentity": method + '(testCaseSha256: "' + str(index) * 64 + '")',
+                         "fullyQualifiedName": method} for index in range(count)]))
+                    if mutation == "changed-image":
+                        assembly.write_bytes(b"changed")
+                    return subprocess.CompletedProcess(arguments, int(mutation == "failed"),
+                        b"private-canary" if mutation == "unknown-output" else canonical_bytes(
+                            {"event": "control", "code": "None", "value": count}))
+
+                with patch("conformance_execution.capture_control", return_value=(
+                        0, f"10.0.203 [{sdk}]\n".encode())), patch.object(legacy, "capture", side_effect=execute):
+                    if mutation == "none":
+                        rows = inherited.discover_inherited_method(
+                            assembly, entry, driver_source, "10.0.203", {})
+                        self.assertEqual(2, len(rows))
+                    else:
+                        with self.assertRaises(ConformanceError):
+                            inherited.discover_inherited_method(assembly, entry, driver_source, "10.0.203", {})
+
     def test_isolated_controller_entry_rejects_bad_request_without_import_traceback(self):
         with tempfile.TemporaryDirectory() as temporary:
             owner = Path(temporary).resolve()

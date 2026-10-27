@@ -52,7 +52,7 @@ def _controller_incomplete(phase, code, lines):
 
 
 def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk_package=None, logger_path=None):
-    if phase not in ("historical", "controllers"):
+    if phase not in ("historical", "controllers", "mutations"):
         raise evidence.ConformanceError("EvidenceSchemaInvalid")
     if phase == "historical" and (run.command_sequence != 0 or (run.root / "feed/candidate").exists()):
         raise evidence.ConformanceError("InputChanged")
@@ -71,6 +71,8 @@ def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk
     if baseline_seal is not None:
         paths.append(run.root / baseline_seal["path"])
     paths.extend(path for path in (sdk_package, logger_path) if path is not None)
+    if phase == "mutations":
+        paths.append(run.root / "proofs/composition-inputs.json")
     for path in paths:
         path.chmod(0o400)
     inputs = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path) for path in paths}
@@ -90,8 +92,9 @@ def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk
     if failures:
         _controller_incomplete(phase, failures[-1], [evidence.canonical_bytes(dict(event)) for event in result.events])
         raise evidence.ConformanceError(failures[-1])
-    expected_events = [{"event": "control", "code": "None", "value": number}
-                       for number in ((2, 3, 4, 0) if phase == "historical" else (1, 2, 3, 4, 0))]
+    ordinals = ((2, 3, 4, 0) if phase == "historical" else
+                (*range(1, 25), 0) if phase == "mutations" else (1, 2, 3, 4, 0))
+    expected_events = [{"event": "control", "code": "None", "value": number} for number in ordinals]
     if (result.exit_code or list(result.events) != expected_events
             or record["runId"] != run.run_id or record["rootId"] != run.root_id
             or record["argvSha256"] != evidence.digest(arguments)
@@ -469,6 +472,13 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     write_new(run.root / "proofs/inherited-scope-admission.json", evidence.canonical_bytes(admitted))
     discovery_evidence.verify_performance(evidence.load_json(read_bounded(
         root / "performance/performance.json", 65536)), run.run_id)
+    mutations, mutation_parent = _controller_phase(
+        run, repository, source, "mutations", baseline_seal=baseline_seal,
+        sdk_package=feed / f"{SDK}.0.1.0.nupkg", logger_path=logger)
+    if (mutations.get("qualification") is not False
+            or {row["id"] for row in mutations["mutations"]} != {row[0] for row in discovery_evidence.MUTATIONS}
+            or len(mutations["mutations"]) != len(discovery_evidence.MUTATIONS)):
+        raise evidence.ConformanceError("WitnessMissing")
     if dict(evidence.source_manifest(repository)) != dict(sources):
         raise evidence.ConformanceError("InputChanged")
     verify_controller_baselines(run, baseline_seal)
@@ -482,6 +492,12 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
         "controllerPreparationParentSha256": controller_parent,
         "commands": commands, "discoveries": discovered, "controllerPreparation": controllers["phases"],
         "preparedFormatting": formatting,
+        "discoveryMutations": {
+            "qualification": False, "parentSha256": mutation_parent, "resultSha256": evidence.digest(mutations),
+            "mutations": len(mutations["mutations"]),
+            "negativeParameters": sum(row["negative"]["parameters"] for row in mutations["mutations"]),
+            "repairedParameters": sum(row["repair"]["parameters"] for row in mutations["mutations"]),
+        },
     }
 
 

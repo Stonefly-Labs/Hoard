@@ -15,6 +15,17 @@ from conformance_evidence import (
 INVENTORY = Path(__file__).resolve().parents[1] / "tests/fixtures/conformance/baselines/inventory.json"
 FULL_ARTIFACT_CONSUMER_PREFIX = "Hoard.Fixtures.Conformance.Consumer.ArtifactConformanceSessionTests."
 
+INHERITED_GUARD_FAILURES = MappingProxyType({
+    "inherited-discovery-guard-source-identity": (
+        "Hoard.Composition.Tests.DiscoveryBoundsTests."
+        "Cancellation_deadline_and_inconsistent_authority_never_become_successful_observations",
+        "inherited.discovery.mutation", "none"),
+    "inherited-discovery-guard-path-protection": (
+        "Hoard.Composition.Tests.DiscoveryAuthorizationTests."
+        "Both_literal_routes_require_the_same_policy_without_disclosure",
+        "inherited.discovery.mutation", "none"),
+})
+
 CATEGORY_BINDING_SLOTS = (
     ("metadata", "sqlite", "fixture.metadata.sqlite", "Hoard.Fixtures.Metadata.Sqlite"),
     ("metadata", "memory", "fixture.metadata.memory", "Hoard.Fixtures.Metadata.Memory"),

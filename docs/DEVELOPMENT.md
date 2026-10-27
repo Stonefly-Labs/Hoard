@@ -5314,15 +5314,25 @@ remain absent from evidence; foreign headlines, passing results and unknown
 exceptions cannot become assertion evidence. Both event-order controls first
 fail, then all 135 logger cases and focused formatting pass. All 29 legacy
 tooling controls pass with one explicit native skip.
-The original `catalog-bound` mutation now produces all seven actual assertion
-failures with complete safe transport. The next original `source-identity`
-mutation produces one actual failed witness but remains `UnknownDiagnostic`/
-incomplete: its frozen wrapper reads `Failure!.Code` before asserting failure,
-while the intended mutant returns a successful observation with no failure.
-No remaining mutation, repair, native containment or qualification is inferred.
-Resolving this needs either distinct typed expected guard-failure evidence or
-an explicitly approved revision of the frozen wrapper baseline, not relabeling
-an unknown exception as an assertion. T046 remains unchecked.
+The original `catalog-bound` mutation produces all seven actual assertion
+failures with complete safe transport. The original `source-identity` and
+`path-protection` wrappers instead dereference missing failure/header state
+before asserting. Their unchanged recipes now have finite typed `Guard` scopes,
+requiring the exact method, matrix, binding, null-reference prefix and stack
+frame. These witnesses remain failed with `EvidenceIncomplete`, never assertion,
+passing or complete evidence; unknown adapter messages still reject first.
+All twelve actual local negatives and twelve repairs execute through
+`run_discovery_mutations`, covering 29 parameters each. Each scope independently
+admits actual opaque discovery, logger transport and projection. Retained
+original source maps, sealed mutant bytes and staged runtime/driver inputs are
+revalidated after all repairs, separately from historical mutable read maps.
+The native worker now binds this phase to composition inputs and requires all
+24 progress ordinals. Workflow challenges first expose missing mutation/repair
+and false-qualification checks, then pass after strict completeness admission.
+The 145 logger cases and local real executions pass; Linux integration is
+pending. Full-controller tooling/provenance obligations and T046 remain open.
+Provider contracts, public examples and architecture diagrams are unaffected:
+this increment changes private evidence execution, not provider behavior.
 
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL

@@ -296,7 +296,8 @@ public sealed class RuntimeResultRecorder : IDisposable
                     // Retain subsequent actual results; an assertion failure is not an ingestion failure.
                     // The completion record records the failure independently from inventory completeness.
                     failed = true;
-                    if (kind != "Assertion") { unknownDiagnostic = true; }
+                    if (kind == "Guard") { guardFailed = true; }
+                    else if (kind != "Assertion") { unknownDiagnostic = true; }
                 }
             }
             catch (Exception error) { Fail(SafeCode(error)); }
@@ -304,6 +305,7 @@ public sealed class RuntimeResultRecorder : IDisposable
     }
 
     private bool failed;
+    private bool guardFailed;
     private bool incomplete;
     private bool unknownDiagnostic;
 
@@ -391,13 +393,26 @@ public sealed class RuntimeResultRecorder : IDisposable
         var assertion = new[] { "Assert.True() Failure", "Assert.False() Failure", "Assert.Equal() Failure",
             "Assert.NotEqual() Failure", "Assert.IsType() Failure", "Assert.Null() Failure", "Assert.NotNull() Failure",
             "Assert.Contains() Failure", "Assert.DoesNotContain() Failure", "Assert.Throws() Failure",
-            "Assert.Fail() Failure" }.Any(prefix => result.ErrorMessage.StartsWith(prefix, StringComparison.Ordinal));
+            "Assert.InRange() Failure", "Assert.Fail() Failure" }.Any(prefix => result.ErrorMessage.StartsWith(prefix, StringComparison.Ordinal));
+        var guardMethod = entry.CaseId switch
+        {
+            "inherited-discovery-guard-source-identity" => "Hoard.Composition.Tests.DiscoveryBoundsTests."
+                + "Cancellation_deadline_and_inconsistent_authority_never_become_successful_observations",
+            "inherited-discovery-guard-path-protection" => "Hoard.Composition.Tests.DiscoveryAuthorizationTests."
+                + "Both_literal_routes_require_the_same_policy_without_disclosure",
+            _ => null
+        };
+        var guard = guardMethod is not null
+            && entry.MatrixId == "inherited.discovery.mutation" && entry.BindingId == "none"
+            && entry.FullyQualifiedName == guardMethod
+            && entry.AssertionSymbol == entry.FullyQualifiedName
+            && result.ErrorMessage.StartsWith("System.NullReferenceException : ", StringComparison.Ordinal);
         var frame = "at " + entry.AssertionSymbol + "(";
-        if (assertion)
+        if (assertion || guard)
         {
             foreach (var line in result.ErrorStackTrace.AsSpan().EnumerateLines())
             {
-                if (line.TrimStart().StartsWith(frame, StringComparison.Ordinal)) { return "Assertion"; }
+                if (line.TrimStart().StartsWith(frame, StringComparison.Ordinal)) { return assertion ? "Assertion" : "Guard"; }
             }
         }
         return "Unknown";
@@ -423,6 +438,7 @@ public sealed class RuntimeResultRecorder : IDisposable
                 VerifyInputs();
                 if (aborted || incomplete || seen.Count != expected.Count) { Fail(ConformanceDiagnosticCode.EvidenceIncomplete); }
                 if (unknownDiagnostic || unmatchedMessages.Count > 0) { Fail(ConformanceDiagnosticCode.UnknownDiagnostic); }
+                if (guardFailed) { Fail(ConformanceDiagnosticCode.EvidenceIncomplete); }
                 if (failed && diagnostic == ConformanceDiagnosticCode.None) { Fail(ConformanceDiagnosticCode.AssertionFailed); }
                 var bytes = JsonSerializer.SerializeToUtf8Bytes(new
                 {

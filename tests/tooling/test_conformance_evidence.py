@@ -6953,6 +6953,43 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     with self.assertRaises(evidence.ConformanceError):
                         self.ingest()
 
+    def test_typed_frozen_guard_remains_failed_incomplete_and_exactly_scoped(self):
+        method = ("Hoard.Composition.Tests.DiscoveryBoundsTests."
+                  "Cancellation_deadline_and_inconsistent_authority_never_become_successful_observations")
+        for mutation in ("none", "wrong-method", "wrong-case", "foreign-guard", "wrong-matrix", "wrong-binding",
+                         "borrowed-symbol", "assertion-completion", "passing-status", "complete"):
+            with self.subTest(mutation=mutation):
+                self.setUp()
+                self.identity = method + ("Other" if mutation == "wrong-method" else "")
+                binding = "sqlite" if mutation == "wrong-binding" else "none"
+                matrix = "none" if mutation == "wrong-matrix" else "inherited.discovery.mutation"
+                case = "runtime" if mutation == "wrong-case" else "inherited-discovery-guard-source-identity"
+                if mutation == "foreign-guard":
+                    case = "inherited-discovery-guard-path-protection"
+                self.manifest["expected"][0].update(
+                    testIdentity=self.identity, fullyQualifiedName=self.identity, assertionSymbol=self.identity,
+                    bindingId=binding, matrixId=matrix, caseId=case)
+                self.proof.update(
+                    testIdentity=self.identity, bindingId=binding, matrixId=matrix, caseId=case,
+                    status="Passed" if mutation == "passing-status" else "Failed", failureKind="Guard",
+                    assertionSymbol=self.identity if mutation == "borrowed-symbol" else None,
+                    manifestSha256=evidence.digest(self.manifest))
+                self.witness.update(testIdentity=self.identity, bindingId=binding, matrixId=matrix,
+                                    status=self.proof["status"], proofSha256=evidence.digest(self.proof))
+                self.completion.update(
+                    diagnosticCode="AssertionFailed" if mutation == "assertion-completion" else "EvidenceIncomplete",
+                    complete=mutation in ("assertion-completion", "complete"),
+                    manifestSha256=evidence.digest(self.manifest))
+                options = self.transport(expected_tests={self.identity: (binding, matrix)})
+                if mutation == "none":
+                    observed = evidence.ingest_runtime_attempt(**options)
+                    self.assertEqual("EvidenceIncomplete", observed["diagnosticCode"])
+                    self.assertEqual("Failed", observed["witnesses"][0]["status"])
+                    self.assertFalse(observed["completion"]["complete"])
+                else:
+                    with self.assertRaises(evidence.ConformanceError):
+                        evidence.ingest_runtime_attempt(**options)
+
     def test_unknown_or_missing_results_retain_only_safe_attributed_prefix(self):
         self.completion.update(diagnosticCode="WitnessMissing", complete=False, observedCount=2)
         result = self.ingest()
