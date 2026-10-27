@@ -35,6 +35,9 @@
     <Project Path="tests/fixtures/conformance/Contributor/Contributor.csproj">
       <Build Project="false" />
     </Project>
+    <Project Path="tests/fixtures/conformance/Discovery/Discovery.csproj">
+      <Build Project="false" />
+    </Project>
     <Project Path="tests/fixtures/conformance/Host/Host.csproj">
       <Build Project="false" />
     </Project>

@@ -119,6 +119,10 @@ those displays into only twelve unique names, opaque identities bind both
 the actual adapter case ID and display; changed IDs/arguments and ambiguous
 literal aliases reject. Complete inherited inventories/profile acceptance
 remain open; these component checks do not qualify a profile.
+The committed safe discovery client now independently admits all 509 inherited
+composition parameters against an immutable F-06 source/count catalog. Six
+additional architecture methods/16 parameters and prepared controller journeys
+remain separate, required obligations; discovery is not test execution.
 At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
 unchanged-source failed-job retry. The original lock-preparation
 `CleanupIncomplete` remains recorded; this is not full-profile qualification

@@ -109,6 +109,38 @@ Retained safe records contain none of the private canaries. This experiment uses
 a private discovery client and is not a committed complete inherited controller,
 native containment receipt, public profile result or T046 completion.
 
+### Complete inherited discovery catalog
+
+The committed `Hoard.Fixtures.Conformance.Discovery` executable now uses a locked
+test-only TranslationLayer dependency and the logger's bounded typed collector.
+Unknown diagnostics reject; output is create-exclusive and bounded. Actual
+execution first reports an unknown warning because the translation API expects
+an exact adapter DLL, not a directory. Supplying the staged xUnit adapter fixes
+the warning; existing nested banner classification is reused, not broadened.
+
+A separate create-exclusive baseline generator freezes all F-06 composition
+sources and the three inherited boundary suites. The independent catalog has
+203 methods/525 parameters, CFG-01..36/D01..40 exact method assignments and the
+LC-01..40/controller obligations, without raw argument values. A fully resealed
+changed parameter count initially passes; pinning canonical catalog digest
+`9b45196787d57b0437c14e73345b1a0ba4b1544a41d95f7fca3ea32b7635de50`
+closes that substitution. Missing/duplicate/foreign/raw/extra-key discovery and
+changed source/missing case/incorrect expansion controls reject.
+
+Actual committed-driver discovery independently admits all 509 composition
+parameters: 172 lifecycle, 201 configuration and 136 discovery; retained safe
+output SHA-256
+`af0eda09828e74516e388236860a4a6e8eedf1c1b99af917055c1ddb41685f24`.
+The original assertion/helper sources remain byte-identical to F-06. The six
+additional boundary methods/16 parameters and fresh prepared controller journeys
+are explicitly not executed by this increment. Native diagnostics now schedule
+the full discovery as an owned child with sealed method/source/runtime inputs
+and exact output-byte binding; that new Linux replay remains pending. Discovery
+alone is not runtime execution, full profile integration or T046 completion.
+All 132 logger/discovery tests and 505 tooling tests pass (nineteen native
+skips). The new test-tool lock replays in locked mode; formatting and both frozen
+inventory checks pass. T046 stays unchecked and the task count stays 48/86.
+
 Closed store snapshots preserve actual pre-root/admitted I/O counters, selected
 store readiness, inactive alternate effects and lifecycle outcomes. Restart
 snapshots preserve actual pending/settled request/task observations, enabled

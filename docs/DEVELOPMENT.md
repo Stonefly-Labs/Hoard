@@ -4875,6 +4875,32 @@ experiment is not a complete inherited inventory/controller or native profile
 receipt. T046 remains unchecked, 48/86; production APIs, architecture diagrams,
 governance, infrastructure and release behavior are unaffected.
 
+The safe discovery experiment is now a committed, locked test-only executable at
+`tests/fixtures/conformance/Discovery/`, using typed VSTest discovery events.
+It writes only opaque case projections to a create-exclusive bounded output and
+prints closed control events. Unknown warnings/messages fail closed. An actual
+run exposes an incorrect extension-directory argument; passing the exact staged
+xUnit adapter DLL fixes the warning rather than allowing it. Nested adapter
+banners use the existing logger classifier.
+
+`python3 tests/fixtures/conformance/baselines/freeze_composition_inventory.py --check`
+reconstructs the new immutable catalog from F-06 Git objects without modifying
+the existing metadata/artifact inventory. It covers 203 methods/525 parameters,
+including the lifecycle/configuration/discovery boundary suites, every CFG/D
+method assignment and all forty LC/controller obligations. Actual assertion and
+helper source files remain byte-identical to F-06. Independent admission pins
+the full canonical catalog digest; a fully resealed changed parameter count first
+passes incorrectly, then fails after the pin is enforced. Missing/duplicate/
+foreign/raw/extra-key discoveries and changed sources also reject.
+
+Actual committed-client discovery admits all 509 composition parameters
+(172 lifecycle, 201 configuration, 136 discovery). This is not execution;
+the six architecture methods/16 parameters and prepared controller journeys
+remain required. The native composition diagnostic now attempts this discovery
+as an additional owned child with sealed runtime/source/method inputs and exact
+output-byte hashes. Native replay of this increment is pending. T046 remains
+unchecked; the public qualifying composition profile remains unfinished.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

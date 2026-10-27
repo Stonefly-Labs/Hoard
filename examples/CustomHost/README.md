@@ -185,3 +185,7 @@ safe runtime admission in a bounded source-mode experiment; private argument
 displays remain in memory and adapter case IDs disambiguate truncated names.
 This compile-only example is unaffected; complete inherited/profile acceptance
 remains open.
+Committed safe discovery subsequently admits all 509 inherited composition
+parameters from an independent frozen source/count catalog. Six architecture
+methods/16 parameters and prepared controller journeys remain required; this
+is discovery, not full execution or profile acceptance, and adds no host behavior.

@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import time
 import uuid
@@ -14,7 +15,8 @@ import conformance_baselines as baselines
 import conformance_evidence as evidence
 import conformance_legacy as legacy
 from conformance_case_catalog import COMPOSITIONS, composition_snapshot_policy, composition_witnesses
-from conformance_execution import OwnedRun, native_execution_supported
+from conformance_execution import OwnedRun, capture_control, native_execution_supported
+from conformance_inherited import INVENTORY_PATH, admit_discovery, inventory
 from conformance_lock_preparation import verify_project_lock
 from conformance_prepare import PREREQUISITES, Project, build_project
 from conformance_sdk_checks import BUDGETS, category_command_proof, environment, write_new
@@ -25,6 +27,7 @@ PROJECT = "tests/integration/Hoard.Composition.Tests/Hoard.Composition.Tests.csp
 HOST = "Hoard.Fixtures.Conformance.Host"
 SDK = "Hoard.Testing.Conformance"
 LOGGER = "Hoard.Conformance.TestLogger"
+DISCOVERY_PROJECT = "tests/fixtures/conformance/Discovery/Discovery.csproj"
 
 
 def expected_rows():
@@ -35,6 +38,72 @@ def expected_rows():
     } for case, variants in COMPOSITIONS for matrix in variants
       for identity in composition_witnesses(case, matrix)]
     return list({row["testIdentity"]: row for row in rows}.values())
+
+
+def _inherited_discovery(run, source, sources, config, feed, observed_environment):
+    print(json.dumps({"qualification": False, "phase": "inherited-source-build"}), flush=True)
+    methods = inventory(read_bounded(source / INVENTORY_PATH, 2 * 1024 * 1024), sources)
+    properties = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet"]
+    for relative in (PROJECT, DISCOVERY_PROJECT):
+        project = source / relative
+        for arguments in (
+                ["dotnet", "restore", str(project), "--locked-mode", "--configfile", str(config)],
+                ["dotnet", "build", str(project), "-c", "Release", "--no-restore"]):
+            baselines._command(run, [*arguments, *properties], cwd=source, cache_id="inherited-discovery")
+    runtime = (source / PROJECT).parent / "bin/Release/net10.0"
+    driver = (source / DISCOVERY_PROJECT).parent / "bin/Release/net10.0"
+    for name in ("Hoard.Abstractions", "Hoard.Core", "Hoard.Hosting", "Hoard.Application"):
+        package = evidence.package_identity(feed, name, "0.1.0")
+        if evidence.file_sha256(runtime / f"{name}.dll") not in package["runtimeAssemblies"].values():
+            raise evidence.ConformanceError("PackageMismatch")
+    code, installed = capture_control(["dotnet", "--list-sdks"], limit=16384, timeout=5)
+    if code:
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    sdks = re.findall(r"^" + re.escape(observed_environment["sdk"]) + r" \[([^\r\n]+)\]$",
+                      installed.decode("utf-8", errors="strict"), re.MULTILINE)
+    if len(sdks) != 1:
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    vstest = Path(sdks[0]) / observed_environment["sdk"] / "vstest.console.dll"
+    if not vstest.is_file():
+        raise evidence.ConformanceError("PrerequisiteMissing")
+    selected = sorted(name for name in methods if name.startswith("Hoard.Composition.Tests."))
+    methods_path = run.root / "proofs/inherited-discovery-methods.json"
+    output_path = run.root / "proofs/inherited-discovery-cases.json"
+    write_new(methods_path, evidence.canonical_bytes(selected))
+    inputs = [source / INVENTORY_PATH, methods_path]
+    for folder in (runtime, driver):
+        inputs.extend(path for path in folder.rglob("*") if path.is_file()
+                      and (path.suffix in (".dll", ".so", ".dylib")
+                           or path.name.endswith((".deps.json", ".runtimeconfig.json"))))
+    for path in inputs:
+        path.chmod(0o400)
+    bound = {path.relative_to(run.root).as_posix(): evidence.file_sha256(path) for path in inputs}
+    print(json.dumps({"qualification": False, "phase": "inherited-exact-discovery"}), flush=True)
+    result = run.command(
+        ["dotnet", str(driver / "Hoard.Fixtures.Conformance.Discovery.dll"), str(vstest),
+         str(runtime / "Hoard.Composition.Tests.dll"), str(methods_path), str(output_path)],
+        cwd=runtime, cache_id="inherited-discovery", timeout=180, record_execution=True,
+        execution_inputs=tuple(bound), execution_outputs=(output_path.relative_to(run.root).as_posix(),))
+    if result.exit_code:
+        raise evidence.ConformanceError("WitnessMissing")
+    record = evidence.load_json(run.read_execution_record(run.command_sequence))
+    raw = read_bounded(output_path, 2 * 1024 * 1024)
+    rows = admit_discovery(raw, methods, assembly="Hoard.Composition.Tests")
+    if (record.get("inputFiles") != bound
+            or record.get("outputFiles") != {
+                output_path.relative_to(run.root).as_posix(): hashlib.sha256(raw).hexdigest()}
+            or any(evidence.file_sha256(run.root / path) != hashed for path, hashed in bound.items())):
+        raise evidence.ConformanceError("InputChanged")
+    return {
+        "qualification": False, "profileComplete": False, "executionComplete": False,
+        "methods": len(selected), "exactParameters": len(rows),
+        "groups": {group: sum(row["matrixId"] == "inherited." + group for row in rows)
+                   for group in ("lifecycle", "configuration", "discovery")},
+        "inventorySha256": evidence.file_sha256(source / INVENTORY_PATH),
+        "discoverySha256": evidence.file_sha256(output_path),
+        "commandSha256": evidence.digest(record),
+        "boundarySuitesExecuted": False, "controllersExecuted": False,
+    }
 
 
 def _runtime(run, repository, source, sources, config, feed, records, replay):
@@ -230,6 +299,8 @@ def execute(repository, destination):
         evidence.verify_snapshot(replay, prepared_sources)
         write_new(run.root / "proofs/composition-lock-derivations.json", evidence.canonical_bytes(records))
         summary = _runtime(run, repository, source, sources, config, feed, records, replay)
+        summary["inheritedDiscovery"] = _inherited_discovery(
+            run, source, sources, config, feed, summary["environment"])
         evidence.verify_snapshot(source, prepared_sources)
         evidence.verify_snapshot(replay, prepared_sources)
         for record in records:

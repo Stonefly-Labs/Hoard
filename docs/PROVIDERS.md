@@ -114,6 +114,12 @@ display in memory; hashing display alone is insufficient because xUnit truncates
 twenty cases into twelve distinct names. Private arguments are not retained,
 and changed case IDs/displays or duplicate literal aliases reject. This does
 not yet integrate complete inherited inventories or qualify a profile.
+The subsequent committed discovery tool has a locked test-only TranslationLayer
+dependency, bounded typed events and closed diagnostics. The independently pinned
+F-06 catalog covers 203 methods/525 parameters: all 509 composition parameters
+are discovered and admitted, while six architecture methods/16 parameters and
+prepared distribution/controller journeys remain unexecuted in this increment.
+Neither discovery nor an observed count substitutes for those runtime obligations.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.
