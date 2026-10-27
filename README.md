@@ -185,6 +185,12 @@ Legacy transport now checks closed logger admission failures before requiring
 completion, preserving the actual safe failure code instead of masking it as
 an output limit. A real local single-boundary transport passes; the Linux
 failure and complete controller acceptance remain unresolved.
+Run40462305943 preserves the logger's `EvidenceIncomplete` with zero observations.
+Controller preparation now prepares lifecycle graphs without duplicating
+boundary execution inside that batch. The complete native runtime still
+requires all sixteen unchanged architecture parameters; standalone lifecycle
+validation still executes and validates its nine boundary parameters.
+All 545 tooling tests pass with twenty native skips; Linux replay is pending.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and

@@ -37,6 +37,12 @@ but the underlying Linux failure remains unresolved pending replay.
 The retained inherited scope proof now includes complete parameter-derived
 CFG/D case rows. Failed/incomplete scopes remain non-passing; those rows
 do not establish full-controller acceptance or qualification.
+Run40462305943 exposes the nested logger's zero-observation `EvidenceIncomplete`.
+Lifecycle graph preparation now leaves boundary execution to the complete
+native sixteen-parameter architecture inventory, without reporting an
+unexecuted count. Standalone lifecycle validation keeps its original nine
+boundary parameters and result checks. Full tooling passes 545 tests (twenty
+native skips); Linux replay and complete controller acceptance remain pending.
 Full controller/mutation acceptance and independent profile evaluation remain open.
 Focused/custom composition selection, compatibility/harness, verify/aggregate
 and the complete five-profile workflow are not delivered by this increment.

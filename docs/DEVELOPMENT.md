@@ -5226,6 +5226,19 @@ controls catch both absent case coverage and optimistic cases from incomplete
 scopes; all three focused inherited inspector tests pass. Case coverage joins
 the retained scope-admission proof, not a full-controller/qualification claim.
 
+Run40462305943 at `b1b985e` exposes the nested legacy logger's
+`EvidenceIncomplete` with zero observations. Its receipt remains failed.
+Lifecycle graph preparation is now a separate helper: the inherited preparer
+retains actual graphs, not an optimistic boundary count, while mandatory
+native runtime execution still independently requires the complete sixteen
+unchanged architecture parameters (including all nine lifecycle parameters).
+The standalone lifecycle entry point reuses graph preparation and still runs
+and validates its original boundary command. Both separation/preservation
+controls fail before implementation and pass afterward.
+`python3 -m unittest discover -s tests/tooling -v`: passed, 545 tests with twenty
+native skips. Linux replay and complete controller acceptance remain pending;
+no assertions, catalog entries, guard policies or budgets are relaxed.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

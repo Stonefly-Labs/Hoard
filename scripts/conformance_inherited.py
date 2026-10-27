@@ -511,11 +511,10 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
                     source, target, config, False,
                     prepared=None if prepared_baselines is None else prepared_baselines["registration"])
                 journeys, hosts = lifecycle.host_journeys(source, target, config, False)
-                boundaries = lifecycle.lifecycle_graphs(source, target, providers, hosts, registration)
+                graphs = lifecycle.prepare_lifecycle_graphs(source, target, providers, hosts, registration)
                 manifest = Path(os.environ["HOARD_LIFECYCLE_EVIDENCE"])
                 document = load_json(read_bounded(manifest, 16 * 1024**2))
-                summary = {"providerPackages": len(providers), "journeys": journeys,
-                           "boundaryParameters": boundaries}
+                summary = {"providerPackages": len(providers), "journeys": journeys, "graphs": len(graphs)}
             else:
                 module = configuration if phase == "configuration" else discovery
                 retained = (module.prepare_baseline(source, target, False) if prepared_baselines is None

@@ -104,6 +104,16 @@ the pinned method map and complete actual parameter union. Failed or incomplete
 contributing scopes cannot yield passed cases; the three focused inherited
 inspector tests pass after red omission/optimistic-scope controls. This does
 not satisfy the remaining full-controller obligations or complete T046.
+Run40462305943 at `b1b985e` reports the nested logger's `EvidenceIncomplete`
+with zero observations. The preparer now calls a graph-only helper rather than
+duplicating boundary execution; it reports graphs, never unexecuted boundary
+parameters. The complete native runtime still requires all sixteen unchanged
+architecture parameters, including the nine lifecycle parameters. Standalone
+lifecycle validation retains its original boundary command and result check.
+Red/green separation/preservation tests and all 545 tooling tests pass (twenty
+native skips). A separate isolated-environment local probe rejects unknown
+discovery output and is not counted as successful execution. Linux replay
+remains required; no assertion, inventory, containment or deadline is weakened.
 T046 remains unchecked, 48/86, implement/running. Production boundaries,
 provider contracts, architecture diagrams, governance, examples, infrastructure
 and release behavior are unaffected by the test-only dependency/setup repair.

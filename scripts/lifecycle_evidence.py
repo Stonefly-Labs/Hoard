@@ -259,7 +259,7 @@ def registration_compatibility(root, work, config, update, baseline_directory="b
     return project
 
 
-def lifecycle_graphs(root, work, proofs, hosts, registration):
+def prepare_lifecycle_graphs(root, work, proofs, hosts, registration):
     ownership = {
         "Hoard.Abstractions": "Abstractions", "Hoard.Core": "Core", "Hoard.Hosting": "Hosting",
         "Hoard.Application": "Application", "NuGet.Versioning": "Versioning",
@@ -283,6 +283,11 @@ def lifecycle_graphs(root, work, proofs, hosts, registration):
     manifest = work / "lifecycle-evidence.json"
     manifest.write_text(json.dumps({"graphs": graphs}, indent=2))
     os.environ["HOARD_LIFECYCLE_EVIDENCE"] = str(manifest)
+    return graphs
+
+
+def lifecycle_graphs(root, work, proofs, hosts, registration):
+    prepare_lifecycle_graphs(root, work, proofs, hosts, registration)
     architecture = root / "tests/architecture/Hoard.Architecture.Tests/Hoard.Architecture.Tests.csproj"
     run("dotnet", "test", str(architecture), "-c", "Release", "--no-build", "--no-restore",
         "--filter", "FullyQualifiedName~LifecycleBoundaryTests", "--logger", "trx;LogFileName=architecture.trx",
