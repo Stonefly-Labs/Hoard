@@ -5098,6 +5098,14 @@ profile evaluation and qualification remain incomplete. T046 is unchecked.
 These are tooling changes; product contracts, examples, diagrams, infrastructure
 and release behavior are unaffected.
 
+The workflow's retained-seal check must run after actual store release. A
+focused replay first reproduces `InputChanged` when that check tries to rehash
+already-deleted historical project files. Runtime still verifies all live
+historical bytes before cleanup; afterward CI checks the retained descriptor's
+exact digest, run/root identity, baseline and nonqualifying mode instead of
+requiring deleted stores to exist. Changed bytes, resealed foreign ownership
+and false qualification reject. Native confirmation remains pending.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same
