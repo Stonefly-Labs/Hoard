@@ -35,5 +35,31 @@ jobs:
           set -euo pipefail
           private_parent="$(dirname "$GITHUB_WORKSPACE")/composition-diagnostic-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
           mkdir -m 700 "$private_parent"
-          python3 scripts/conformance_composition_checks.py \
-            --root "$GITHUB_WORKSPACE" --evidence "$private_parent/run"
+          status=0
+          bash scripts/validate-conformance.sh \
+            --profile composition --evidence "$private_parent/run" || status=$?
+          test "$status" -eq 2
+          python3 - "$private_parent/run" "$GITHUB_SHA" <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0, "scripts")
+          import conformance_evidence as evidence
+          from conformance_sources import read_bounded
+          root = Path(sys.argv[1])
+          summary = evidence.load_json(read_bounded(root / "proofs/composition-diagnostic-summary.json", 65536))
+          inputs = evidence.admit_entity("RunInputs", evidence.load_json(read_bounded(
+              root / "proofs/composition-inputs.json", 2 * 1024**2)))
+          inherited = summary["inheritedRuntime"]
+          if (summary["qualification"] is not False or summary["profileComplete"] is not False
+                  or summary["passedComponents"] != 36 or summary["admittedSnapshots"] != 110
+                  or summary["processResourcesReleased"] is not True
+                  or inputs["sourceRevision"] != sys.argv[2] or inputs["sourceState"] != "clean-ci"
+                  or inputs["mode"] != "diagnostic" or inputs["profileId"] != "composition"
+                  or summary["inputSha256"] != evidence.digest(inputs)
+                  or inherited["qualification"] is not False or inherited["profileComplete"] is not False
+                  or inherited["executionComplete"] is not True or inherited["nativeContainment"] is not True
+                  or inherited["passedParameters"] != 525 or inherited["scopes"] != 58
+                  or len(inherited["commands"]) != 58):
+              raise SystemExit("WitnessMissing")
+          print('{"qualification":false,"status":"Incomplete","code":"EvidenceIncomplete"}')
+          PY

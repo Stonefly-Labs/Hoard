@@ -290,6 +290,26 @@ and rejecting foreign/changed inputs. No checkout-local logger build is needed.
 Existing standalone lookup remains unchanged without overrides. Native replay
 is pending; no earlier failed receipt becomes successful.
 
+Exact Linux run40451900182 at `f319b77` subsequently passes four preparation
+families, CP36/110 and all 525 inherited parameters in 58 exact native class
+scopes/parent receipts. All 696 private fixture inputs remain unchanged and
+process resources release. Source digest
+`a56adf5f1ccd482639deb73ee825172659db21dbcb71b15a712f8f406d569471`;
+CP input `ec0fb1cecac743e1491dd2063a80ec4f5393728c721adae3a7a47b6388f03c3e`;
+whole inherited admission
+`40984cc223e9e7387aa741329284b614c77d4a753a1a6024cb55d03434f8b562`.
+Borrowed controller/native/full-profile qualification flags stay false.
+
+The public complete-catalog composition route now invokes that same executor
+and still returns `EvidenceIncomplete`/exit 2 after success. Tests first expose
+missing dispatch/failure propagation, then cover complete selection, omitted/
+duplicate/focused/custom/mixed rejection, native failure codes and safe borrowed
+exceptions. CI now runs the public shell entry and checks expected incomplete
+exit plus completed native summary/source/input/release evidence; an early exit
+2 cannot pass alone. Public-entry Linux replay is pending. Full controller/
+mutation acceptance, historical pre-candidate sealing and independent profile
+evaluation remain open. No task/checklist marker advances.
+
 Closed store snapshots preserve actual pre-root/admitted I/O counters, selected
 store readiness, inactive alternate effects and lifecycle outcomes. Restart
 snapshots preserve actual pending/settled request/task observations, enabled

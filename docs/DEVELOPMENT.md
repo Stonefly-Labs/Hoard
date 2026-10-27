@@ -5044,6 +5044,33 @@ the logger helper from building an implicit checkout-local copy. Existing
 standalone callers retain their original lookup when no override is supplied.
 Native replay of this binding repair is pending; earlier failures remain failed.
 
+Exact Linux run40451900182 at `f319b77` now passes all four preparation families,
+36 CP proofs/110 snapshots and all 525 inherited parameters in 58 actual owned
+class scopes. Each scope has a native command-parent receipt; all 696 private
+fixture inputs remain unchanged and actual process resources release. Source:
+`a56adf5f1ccd482639deb73ee825172659db21dbcb71b15a712f8f406d569471`;
+CP input:
+`ec0fb1cecac743e1491dd2063a80ec4f5393728c721adae3a7a47b6388f03c3e`;
+complete inherited scope admission:
+`40984cc223e9e7387aa741329284b614c77d4a753a1a6024cb55d03434f8b562`.
+Native containment describes those runtime children, not borrowed controller
+commands. `controllerNativeContainment`, `fullControllerAcceptance`,
+`profileComplete` and `qualification` remain false.
+
+The public entry now routes an unchanged complete composition catalog selection
+to that same native executor:
+`bash scripts/validate-conformance.sh --profile composition --evidence /fresh/private/path`.
+Like the metadata/artifact routes, successful observations still end with
+`Incomplete`/`EvidenceIncomplete`, exit 2, until independent full acceptance is
+delivered. Omitted/duplicate keys, focused/custom/mixed selections cannot launch
+a substituted batch; known native failures keep their codes and borrowed runtime
+exceptions produce a safe incomplete result. The composition diagnostic workflow
+now exercises this public entry and requires its expected nonqualifying exit,
+completed native summary, exact CI source/input agreement and released resources.
+An early incomplete failure cannot pass just by returning 2. Public-entry Linux
+replay is pending. Historical pre-candidate sealing, full controller/mutation
+acceptance, portable independent evaluation and T046 remain unfinished.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

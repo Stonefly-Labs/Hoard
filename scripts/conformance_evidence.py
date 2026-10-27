@@ -78,9 +78,9 @@ class _Arguments(argparse.ArgumentParser):
 
 def invocation_parser():
     parser = _Arguments(
-        description="Conformance admission and native metadata/artifact category execution. "
-                    "Category reports remain non-qualifying; independent evaluation, focused/custom "
-                    "bindings, other profiles and verify/aggregate remain incomplete.",
+        description="Conformance admission and native metadata/artifact/composition execution. "
+                    "Reports remain non-qualifying; independent evaluation, full controller acceptance, "
+                    "focused/custom bindings, compatibility/harness and verify/aggregate remain incomplete.",
         add_help=False, allow_abbrev=False)
     parser.add_argument("--profile", metavar="PROFILE",
                         help="baseline (default), metadata, artifacts, composition, compatibility, harness")
@@ -183,14 +183,21 @@ def dispatch_invocation(invocation):
     if invocation.action == "preparation":
         from conformance_prepare import execute
         return execute(invocation.repository, invocation.evidence)
-    if (invocation.action == "run" and invocation.profiles in (("metadata",), ("artifacts",))
+    if (invocation.action == "run" and invocation.profiles in (("metadata",), ("artifacts",), ("composition",))
             and invocation.mode == "qualification" and invocation.binding_project is None):
         from conformance_case_catalog import expected_cases
-        from conformance_sdk_checks import execute
         profile = invocation.profiles[0]
         if invocation.case_keys != tuple(case.key for case in expected_cases(profile)):
             raise ConformanceError("WitnessMissing")
-        result = execute(invocation.repository, invocation.evidence, category=profile)
+        if profile == "composition":
+            from conformance_composition_checks import execute
+            try:
+                result = execute(invocation.repository, invocation.evidence)
+            except RuntimeError:
+                raise ConformanceError("EvidenceIncomplete") from None
+        else:
+            from conformance_sdk_checks import execute
+            result = execute(invocation.repository, invocation.evidence, category=profile)
         if type(result) is not int or result != 0:
             raise ConformanceError("CommandFailed")
         # Native history admission is not the independent qualification evaluator.

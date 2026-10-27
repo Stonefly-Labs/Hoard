@@ -135,14 +135,18 @@ independently admits all 509 inherited composition parameters and 16 boundary
 parameters in 58 exact class scopes, preserving the two-minute child timeout.
 The committed native diagnostic now stages both inherited assemblies, prepares
 all four borrowed controller families and attempts the complete 525-parameter
-union through exact owned class scopes. Native replay of this extension is
-pending; borrowed controller preparation is not native controller acceptance.
+union through exact owned class scopes. Exact `f319b77` passes Linux
+run40451900182: 525 parameters/58 native parent receipts, 696 unchanged private
+inputs, CP36/110 and actual process release. Borrowed preparation is still not
+native controller acceptance.
 Borrowed recipes use writable owned copies, leaving immutable source snapshots
 sealed; the native-only read-only-copy regression is reproduced and repaired.
 Controller boundary checks explicitly bind the prepared SDK archive and logger,
 rather than discovering an unrelated parent feed or building in the checkout.
-Complete controller/mutation acceptance and public profile integration remain
-open; T046 is still unchecked.
+The public `--profile composition` route now attempts these same observations,
+but still returns `Incomplete`/`EvidenceIncomplete` (exit 2), never qualification.
+Its public-entry Linux replay is pending. Complete controller/mutation acceptance,
+historical sealing and profile evaluation remain open; T046 is still unchecked.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and

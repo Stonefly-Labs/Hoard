@@ -4,6 +4,16 @@
 The SDK, focused tests, fixture project manifests, preparation command and
 CLI admission and fifty-three initial executable metadata consumers now exist; complete profile execution,
 shared suites, complete adapters, contributor journey and CI qualification do not.
+The current public metadata, artifacts and composition routes execute native
+observations on supported Linux hosts; they deliberately remain
+`Incomplete`/`EvidenceIncomplete` (exit 2) even after successful execution.
+`bash scripts/validate-conformance.sh --profile composition --evidence /fresh/private/path`
+now attempts CP36/110 and all 525 inherited parameters, not qualification.
+Exact standalone Linux run40451900182 at `f319b77` passes that native scope;
+the public-entry replay is pending. Full controller/mutation acceptance,
+pre-candidate historical sealing and independent profile evaluation remain open.
+Focused/custom composition selection, compatibility/harness, verify/aggregate
+and the complete five-profile workflow are not delivered by this increment.
 The initial concrete Memory adapter has explicit current/legacy factories,
 typed controls, independent committed reads, atomic logical reopen and genuine
 settlement-ledger integration. Its twenty focused adapter rows pass against
