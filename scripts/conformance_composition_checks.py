@@ -116,21 +116,23 @@ def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk
         raise evidence.ConformanceError("ProofMismatch")
     value = evidence.load_json(raw)
     if (not isinstance(value, dict) or set(value) != {
-            "schemaVersion", "qualification", "phase", "runId", "rootId", "result", "invocations"}
-            or type(value["schemaVersion"]) is not int or value["schemaVersion"] != 2
+            "schemaVersion", "qualification", "phase", "runId", "rootId", "result", "invocations", "inputSnapshots"}
+            or type(value["schemaVersion"]) is not int or value["schemaVersion"] != 3
             or value["qualification"] is not False or value["phase"] != phase
             or value["runId"] != run.run_id or value["rootId"] != run.root_id
             or not isinstance(value["result"], dict)):
         raise evidence.ConformanceError("ProofMismatch")
     legacy.verify_borrowed_invocations(
         value["invocations"], group_pid=record["childPid"], group_start_sha256=record["childStartSha256"])
+    legacy.verify_borrowed_input_snapshots(value["inputSnapshots"], len(value["invocations"]))
     if phase == "reference" and value["invocations"] != [value["result"].get("invocation")]:
         raise evidence.ConformanceError("ProofMismatch")
     return value["result"], result.execution_record_sha256, {
         "qualification": False, "nativeContainment": True, "inputClosureComplete": False,
         "scope": "borrowed-launch-observations", "count": len(value["invocations"]),
         "sha256": evidence.digest(value["invocations"]), "sequence": run.command_sequence,
-        "parentSha256": result.execution_record_sha256}
+        "parentSha256": result.execution_record_sha256,
+        "inputSnapshotsSha256": evidence.digest(value["inputSnapshots"])}
 
 
 def _native_reference_consumer(run, repository, source, controllers, baseline_seal):

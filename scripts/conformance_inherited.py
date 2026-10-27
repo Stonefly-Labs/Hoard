@@ -1066,12 +1066,77 @@ def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, 
             "formatting": {"path": formatting.relative_to(owner).as_posix(), "sha256": legacy._hash(formatting)}}
 
 
+def controller_command_read_inputs(owner, arguments, *, cwd=None, env=None):
+    """Capture selected declared inputs, not a complete native I/O trace."""
+    import conformance_legacy as legacy
+    from conformance_sources import read_bounded
+
+    owner = Path(owner).resolve(strict=True)
+    if (not isinstance(arguments, (list, tuple)) or not arguments
+            or any(not isinstance(argument, str) for argument in arguments)):
+        raise ConformanceError("OwnershipInvalid")
+    extra, mutable = set(), set()
+    dotnet = Path(arguments[0]).name == "dotnet"
+    restoring = (dotnet and len(arguments) > 1 and (arguments[1] == "restore"
+                 or arguments[1] in ("build", "pack", "format") and "--no-restore" not in arguments))
+    directory = Path(cwd or os.getcwd()).resolve(strict=True)
+    for argument in arguments[1:]:
+        for prefix in ("--Settings:", "-p:NuGetLockFilePath="):
+            if argument.startswith(prefix):
+                argument = argument[len(prefix):]
+                break
+        path = Path(argument)
+        if not path.is_absolute():
+            if path.suffix not in (".dll", ".csproj", ".slnx", ".json", ".runsettings", ".config"):
+                continue
+            path = directory / path
+        if not path.is_relative_to(owner):
+            if dotnet and path.suffix in (".dll", ".csproj", ".slnx"):
+                raise ConformanceError("OwnershipInvalid")
+            continue
+        legacy.no_symlinks(path)
+        if not path.is_file():
+            continue
+        extra.add(path)
+        if path.suffix in (".csproj", ".slnx"):
+            extra.update(item for item in path.parent.rglob("*.cs")
+                         if not {"bin", "obj"}.intersection(item.relative_to(path.parent).parts))
+            if restoring:
+                mutable.update(path.parent / name for name in (
+                    "obj/project.assets.json", f"obj/{path.name}.nuget.g.props", f"obj/{path.name}.nuget.g.targets"))
+                if "--locked-mode" not in arguments:
+                    mutable.add(path.parent / "packages.lock.json")
+        elif path.suffix == ".dll":
+            extra.update(item for item in path.parent.iterdir() if item.is_file())
+        elif path.name == "NuGet.Config":
+            try:
+                configuration = ET.fromstring(read_bounded(path, 65536))
+            except ET.ParseError:
+                raise ConformanceError("EvidenceSchemaInvalid") from None
+            for entry in configuration.findall("./packageSources/add"):
+                feed = Path(entry.get("value", ""))
+                if feed.is_absolute():
+                    legacy.no_symlinks(feed)
+                    if not feed.resolve(strict=True).is_relative_to(owner):
+                        raise ConformanceError("OwnershipInvalid")
+                    extra.update(feed.glob("*.nupkg"))
+    for key in ("HOARD_FOUNDATION_EVIDENCE", "HOARD_LIFECYCLE_EVIDENCE",
+                "HOARD_CONFIGURATION_EVIDENCE", "HOARD_DISCOVERY_EVIDENCE"):
+        environment = os.environ if env is None else env
+        if key in environment:
+            extra.add(Path(environment[key]))
+    files = controller_read_inputs(owner, {}, extra=sorted(extra))
+    for path in mutable:
+        files.pop(path.relative_to(owner).as_posix(), None)
+    return files
+
+
 def verify_controller_invocations(owner, summary, phase, run_id, root_id):
     import conformance_legacy as legacy
     from conformance_sources import read_bounded
 
     fields = {"qualification", "nativeContainment", "inputClosureComplete", "scope",
-              "count", "sha256", "parentSha256", "sequence"}
+              "count", "sha256", "parentSha256", "sequence", "inputSnapshotsSha256"}
     if (phase not in ("historical", "controllers", "mutations", "reference")
             or not isinstance(summary, dict) or set(summary) != fields
             or summary["qualification"] is not False or summary["nativeContainment"] is not True
@@ -1086,8 +1151,9 @@ def verify_controller_invocations(owner, summary, phase, run_id, root_id):
     output_raw = read_bounded(owner / output_name, 16 * 1024**2)
     parent, output = load_json(parent_raw), load_json(output_raw)
     if (not isinstance(parent, dict) or not isinstance(output, dict)
-            or set(output) != {"schemaVersion", "qualification", "phase", "runId", "rootId", "result", "invocations"}
-            or type(output["schemaVersion"]) is not int or output["schemaVersion"] != 2
+            or set(output) != {"schemaVersion", "qualification", "phase", "runId", "rootId", "result",
+                               "invocations", "inputSnapshots"}
+            or type(output["schemaVersion"]) is not int or output["schemaVersion"] != 3
             or output["qualification"] is not False or output["phase"] != phase
             or output["runId"] != run_id or output["rootId"] != root_id or not isinstance(output["result"], dict)
             or parent.get("runId") != run_id or parent.get("rootId") != root_id
@@ -1097,10 +1163,12 @@ def verify_controller_invocations(owner, summary, phase, run_id, root_id):
             or parent.get("outputFiles") != {output_name: hashlib.sha256(output_raw).hexdigest()}
             or hashlib.sha256(parent_raw).hexdigest() != summary["parentSha256"]
             or not isinstance(output["invocations"], list)
-            or len(output["invocations"]) != summary["count"] or digest(output["invocations"]) != summary["sha256"]):
+            or len(output["invocations"]) != summary["count"] or digest(output["invocations"]) != summary["sha256"]
+            or digest(output["inputSnapshots"]) != summary["inputSnapshotsSha256"]):
         raise ConformanceError("ProofMismatch")
     legacy.verify_borrowed_invocations(
         output["invocations"], group_pid=parent.get("childPid"), group_start_sha256=parent.get("childStartSha256"))
+    legacy.verify_borrowed_input_snapshots(output["inputSnapshots"], len(output["invocations"]))
     if phase == "reference" and output["invocations"] != [output["result"].get("invocation")]:
         raise ConformanceError("ProofMismatch")
 
@@ -1272,7 +1340,11 @@ def controller_child_main(argv=None):
         authorized_output = True
         run = SimpleNamespace(root=owner, run_id=request["runId"], root_id=request["rootId"], command_sequence=0)
         progress = ControllerProgress(stream)
-        with legacy.native_preparation_group(header) as invocations, redirect_stdout(progress):
+        def read_inputs(arguments, **kwargs):
+            return controller_command_read_inputs(owner, arguments, **kwargs)
+
+        with legacy.native_preparation_group(
+                header, input_owner=owner, input_reader=read_inputs) as observations, redirect_stdout(progress):
             if request["phase"] == "historical":
                 if any(request[key] is not None for key in ("baselineSeal", "sdkPackage", "loggerPath")):
                     raise ConformanceError("EvidenceSchemaInvalid")
@@ -1306,8 +1378,9 @@ def controller_child_main(argv=None):
         if progress.pending:
             raise ConformanceError("UnknownDiagnostic")
         legacy._write(args.output, {
-            "schemaVersion": 2, "qualification": False, "phase": request["phase"],
-            "runId": run.run_id, "rootId": run.root_id, "result": result, "invocations": invocations,
+            "schemaVersion": 3, "qualification": False, "phase": request["phase"],
+            "runId": run.run_id, "rootId": run.root_id, "result": result,
+            "invocations": observations["invocations"], "inputSnapshots": observations["inputSnapshots"],
         })
         stream.write('{"event":"control","code":"None","value":0}\n')
         return 0

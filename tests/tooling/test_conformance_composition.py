@@ -216,7 +216,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
         for phase, mutation in ((phase, mutation) for phase in ("historical", "mutations", "reference")
                                 for mutation in ("none", "changed-output", "missing-phase", "retained-process",
                                                  "child-failed", "missing-invocation", "foreign-invocation",
-                                                 "duplicate-invocation")):
+                                                 "duplicate-invocation", "missing-input-snapshot",
+                                                 "changed-input-snapshot")):
             with self.subTest(phase=phase, mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -247,10 +248,17 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     invocations = ([] if mutation == "missing-invocation" else
                                    [invocation] * (2 if mutation == "duplicate-invocation" else 1))
                     child_result = {"seal": "bound", **({"invocation": invocation} if phase == "reference" else {})}
+                    snapshot = {
+                        "qualification": False, "inputClosureComplete": False, "scope": "selected-declared-inputs",
+                        "files": {"stores/input": "e" * 64}, "sha256": evidence.digest({"stores/input": "e" * 64})}
+                    if mutation == "changed-input-snapshot":
+                        snapshot["sha256"] = "0" * 64
                     raw = evidence.canonical_bytes({
-                        "schemaVersion": 2, "qualification": False, "phase": phase,
+                        "schemaVersion": 3, "qualification": False, "phase": phase,
                         "runId": "run", "rootId": "root", "result": child_result,
                         "invocations": invocations,
+                        "inputSnapshots": [] if mutation == "missing-input-snapshot" else
+                        [snapshot for _ in invocations],
                     })
                     output.write_bytes(raw + b"\n" if mutation == "changed-output" else raw)
                     record.update(
@@ -318,7 +326,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
                          "reference-parent", "reference-output", "reference-child-owner",
                          "reference-child-start", "reference-child-live", "reference-child-input",
                          "native-invocation-omitted", "native-invocation-output",
-                         "native-invocation-count", "native-invocation-closure"):
+                         "native-invocation-count", "native-invocation-closure", "native-input-digest",
+                         "native-input-closure", "native-input-path"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -383,9 +392,11 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     "exitCode": 0, "argvSha256": reference["argvSha256"], "cwdSha256": reference["cwdSha256"],
                     "stdinSha256": "0" * 64 if mutation == "reference-child-input" else reference["responseSha256"]}
                 reference_output = evidence.canonical_bytes({
-                    "schemaVersion": 2, "qualification": False, "phase": "reference",
+                    "schemaVersion": 3, "qualification": False, "phase": "reference",
                     "runId": "run", "rootId": "root", "result": dict(reference),
-                    "invocations": [reference["invocation"]]})
+                    "invocations": [reference["invocation"]], "inputSnapshots": [{
+                        "qualification": False, "inputClosureComplete": False, "scope": "selected-declared-inputs",
+                        "files": {}, "sha256": evidence.digest({})}]})
                 reference_parent = {
                     "runId": "foreign" if mutation == "reference-parent" else "run",
                     "rootId": "root", "sequence": 1, "groupState": "Exited",
@@ -400,13 +411,22 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 (root / "proofs/inherited-reference-result.json").write_bytes(reference_output)
                 (root / "proofs/inherited-reference-inputs.json").write_bytes(reference_inputs)
                 observation_summaries = {}
+                snapshots = [{"qualification": False, "inputClosureComplete": False,
+                              "scope": "selected-declared-inputs", "files": {}, "sha256": evidence.digest({})}]
                 for phase, sequence in (("reference", 1), ("historical", 2), ("controllers", 3), ("mutations", 4)):
                     invocation = {**reference["invocation"], "groupPid": 100, "groupStartSha256": "f" * 64}
                     rows = [] if phase == "controllers" and mutation == "native-invocation-omitted" else [invocation]
+                    packet_snapshots = json.loads(json.dumps(snapshots))
+                    if phase == "controllers" and mutation == "native-input-closure":
+                        packet_snapshots[0]["inputClosureComplete"] = True
+                    if phase == "controllers" and mutation == "native-input-path":
+                        packet_snapshots[0]["files"] = {"../escape": "e" * 64}
+                        packet_snapshots[0]["sha256"] = evidence.digest(packet_snapshots[0]["files"])
                     if phase != "reference":
                         packet = evidence.canonical_bytes({
-                            "schemaVersion": 2, "qualification": False, "phase": phase,
-                            "runId": "run", "rootId": "root", "result": {}, "invocations": rows})
+                            "schemaVersion": 3, "qualification": False, "phase": phase,
+                            "runId": "run", "rootId": "root", "result": {}, "invocations": rows,
+                            "inputSnapshots": packet_snapshots})
                         command = {**reference_parent, "runId": "run", "sequence": sequence, "outputFiles": {
                             f"proofs/inherited-{phase}-result.json": hashlib.sha256(packet).hexdigest()}}
                         if phase == "controllers" and mutation == "native-invocation-output":
@@ -423,6 +443,9 @@ class CompositionDiagnosticTests(unittest.TestCase):
                         "scope": "borrowed-launch-observations",
                         "count": 0 if phase == "controllers" and mutation == "native-invocation-count" else 1,
                         "sha256": evidence.digest(rows), "sequence": sequence,
+                        "inputSnapshotsSha256": ("0" * 64 if phase == "controllers" and
+                                                 mutation == "native-input-digest" else
+                                                 evidence.digest(packet_snapshots)),
                         "parentSha256": hashlib.sha256(parent_bytes).hexdigest()}
                 reference.update(nativeContainment=mutation != "reference-native",
                                  sequence=1, parentSha256=hashlib.sha256(parent_raw).hexdigest(),

@@ -5676,6 +5676,45 @@ incomplete exit 2. Native journal confirmation remains pending; T046 remains
 unchecked, 52/86, implement/running. Provider contracts, examples, diagrams,
 infrastructure and governance are unaffected.
 
+Exact `42115be5cccb5ac757ed01a5ebd14f3932815974` now confirms the actual
+reference-child/group receipt in
+[run40581441462](https://github.com/Stonefly-Labs/Hoard/actions/runs/40581441462),
+job122470521931. All six foundations jobs in run40581441420 also pass.
+Exact `c72ba970e7bb1292bffe425554c4e2899c4b9fb4` subsequently confirms
+the four original launch journals in
+[run40584775906](https://github.com/Stonefly-Labs/Hoard/actions/runs/40584775906),
+job122483743130: historical45/controllers230/reference1/mutations73. Independent
+CI re-admits their original output/native-parent bindings after stores release.
+CP36/110, inherited525/58, all twelve original negative/repair pairs, discovery
+137/four adapters/ten suites, 571 tooling tests, 41 formatters, 3,216 unchanged
+inputs and actual process/cache/store release pass. These are schema-v2 launch
+receipts, not confirmation of the subsequent selected-input extension.
+
+Internal success transport v3 adds one selected-declared-input snapshot per
+actual launch. The trusted selector captures owned project/source/ancestor
+configuration, available assets, runtime images/sidecars, explicit file arguments,
+local feed archives and supplied evidence manifests. Relative file arguments use
+the actual working directory; omitted environments use the actual inherited
+environment. Mutable restore outputs are not treated as immutable inputs.
+The launcher independently rehashes the selected map before starting the child
+and after actual settlement, rejecting changed inputs. Both original parent
+admission and independent CI require aligned snapshot counts, valid relative
+paths/content hashes, exact map/array digests and original native output linkage.
+Unknown schemas, changed snapshot digests, escaped paths and optimistic closure
+claims reject. The Linux transport control preserves original staging-before-kill
+ordering and checks actual post-launch mutation and pre-launch rejection.
+
+Snapshots retain `inputClosureComplete=false` and
+`scope=selected-declared-inputs`: this is not a complete transitive/imported
+compiler or runtime read set. `python3 scripts/conformance_unit_checks.py
+--all-tooling`: 572 tests, zero failures/errors/unexpected diagnostic bytes,
+twenty explicit native macOS skips, expected incomplete exit 2. Focused inherited/
+composition/legacy regressions: 66 tests, zero failures, one Linux-only skip.
+Native v3 confirmation remains pending; T046 stays unchecked, 52/86,
+implement/running, all full-controller/profile/qualification flags false.
+Provider contracts, examples, diagrams, infrastructure and governance are
+unaffected by this test-transport continuation.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

@@ -26,6 +26,58 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_controller_command_read_inputs_bind_selected_sources_imports_runtime_and_configuration(self):
+        for operation in ("build", "implicit-build", "restore", "runtime", "relative", "environment", "foreign"):
+            with self.subTest(operation=operation), tempfile.TemporaryDirectory() as temporary:
+                root = Path(temporary).resolve()
+                project = root / "stores/project/Fixture.csproj"
+                project.parent.mkdir(parents=True)
+                project.write_bytes(b"<Project />")
+                code = project.parent / "Program.cs"
+                code.write_bytes(b"fixture source")
+                properties = root / "stores/Directory.Build.props"
+                properties.write_bytes(b"<Project />")
+                assets = project.parent / "obj/project.assets.json"
+                assets.parent.mkdir()
+                assets.write_bytes(b'{"libraries":{}}')
+                assembly = project.parent / "bin/Release/net10.0/Fixture.dll"
+                assembly.parent.mkdir(parents=True)
+                assembly.write_bytes(b"fixture image")
+                sidecar = assembly.with_suffix(".deps.json")
+                sidecar.write_bytes(b"{}")
+                original = root / "stores/original.json"
+                original.write_bytes(b"unchanged original")
+                arguments = (["dotnet", str(assembly), str(original)] if operation == "runtime"
+                             else ["dotnet", operation, str(project)])
+                if operation == "build":
+                    arguments.append("--no-restore")
+                elif operation == "implicit-build":
+                    arguments[1] = "build"
+                elif operation == "relative":
+                    arguments = ["dotnet", "build", project.name, "--no-restore"]
+                elif operation == "environment":
+                    arguments = ["dotnet", "build", str(project), "--no-restore"]
+                if operation == "foreign":
+                    arguments = ["dotnet", str(root.parent / "Foreign.dll")]
+                    with self.assertRaises(ConformanceError):
+                        inherited.controller_command_read_inputs(root, arguments)
+                    continue
+                environment = {"HOARD_DISCOVERY_EVIDENCE": str(original)} if operation == "environment" else {}
+                observed = inherited.controller_command_read_inputs(
+                    root, arguments, cwd=project.parent, env=environment)
+                if operation == "environment":
+                    self.assertIn(original.relative_to(root).as_posix(), observed)
+                self.assertEqual(observed, {
+                    path: file_sha256(root / path) for path in observed})
+                if operation == "runtime":
+                    self.assertTrue({path.relative_to(root).as_posix() for path in (assembly, sidecar, original)}
+                                    <= set(observed))
+                else:
+                    self.assertTrue({path.relative_to(root).as_posix() for path in (project, code, properties)}
+                                    <= set(observed))
+                    self.assertEqual(operation not in ("restore", "implicit-build"),
+                                     assets.relative_to(root).as_posix() in observed)
+
     def test_native_reference_replay_requires_unchanged_complete_inputs_and_actual_original_consumer(self):
         import hashlib
         import conformance_legacy as legacy
@@ -321,7 +373,8 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
 
                 output = io.StringIO()
                 with redirect_stdout(output), patch("conformance_legacy.native_preparation_group",
-                                                     return_value=nullcontext([])), patch.object(
+                                                     return_value=nullcontext({
+                                                         "invocations": [], "inputSnapshots": []})), patch.object(
                         inherited, "prepare_controller_baselines", side_effect=prepare):
                     code = inherited.controller_child_main(["--request", str(request), "--output", str(result)])
                 self.assertEqual(2 if failure else 0, code)

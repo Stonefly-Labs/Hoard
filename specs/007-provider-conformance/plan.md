@@ -700,6 +700,49 @@ incomplete exit 2. Native journal confirmation is pending. T046 remains
 unchecked, 52/86, implement/running. Product/provider contracts, examples,
 diagrams, infrastructure and governance are unaffected.
 
+### T046 native launch confirmation and selected-input continuation
+
+Exact `42115be5cccb5ac757ed01a5ebd14f3932815974` passes
+[run40581441462](https://github.com/Stonefly-Labs/Hoard/actions/runs/40581441462),
+job122470521931, corroborating the original actual reference-child/group receipt.
+All six run40581441420 foundations jobs pass. Exact
+`c72ba970e7bb1292bffe425554c4e2899c4b9fb4` then passes
+[run40584775906](https://github.com/Stonefly-Labs/Hoard/actions/runs/40584775906),
+job122483743130, with original historical45/controllers230/reference1/mutations73
+launches independently bound to settled native parents and original outputs.
+Their journal digests are respectively
+`ba8a5fc1a00d9b18344ff8f1087ac9bb7792440036a0060b032c227e75ea5fca`,
+`97e27b89e4b2ffe54186b4581898c23a5a6ab5c661bab40fa72e502ff587371f`,
+`7faf50fe5c6ff51f46e05cee834baf7ca51f1d82ead9a6da8fc0ac7e9c717fb5`,
+`40cfdf59e154a58c45d652e666fc2224463173c23fce7c4138176dddec954ad3`.
+Scope admission:
+`25dc00f9180696b2fb5f0ab2897a0b3e1570b2f21192e3812eb219e7e2d81ba9`.
+CP36/110, inherited525/58, all twelve original negative/repair pairs, discovery
+137/four adapters/ten suites, 571 tooling tests, 41 formatters, 3,216 unchanged
+inputs and actual process/cache/store release also pass. These confirm v2,
+not the new v3 selected-input snapshots.
+
+Internal transport v3 pairs actual launch observations with maps of selected
+owned declared inputs, hashed before launch and after actual settlement.
+It covers selected project/source/ancestor configuration, available assets,
+runtime images/sidecars, file arguments, local feed archives and evidence
+manifests. Actual cwd/inherited environment determine relative file inputs;
+mutable restore outputs are excluded. Parent and independent workflow validate
+one snapshot per launch, closed schema, canonical map/array hashes, safe relative
+paths and original native parent/output bindings. Actual guarded Linux controls
+check unchanged capture/interactive settlement, post-launch mutation rejection
+and rejection before another child starts; original staging-before-kill
+assertions stay unchanged.
+
+These are explicitly partial selected declarations, not complete transitive
+compiler/import/runtime I/O closure: `inputClosureComplete=false` throughout.
+Full safe tooling: 572 tests, zero failures/errors/unexpected diagnostic bytes,
+twenty native macOS skips, expected incomplete exit 2. Focused regressions: 66
+tests, zero failures, one Linux skip. Native v3 confirmation remains pending.
+T046 remains unchecked, 52/86, implement/running; full-controller/profile/
+qualification flags remain false. Product/provider contracts, examples,
+diagrams, infrastructure and governance are unaffected.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

@@ -28,6 +28,7 @@ class LegacyTransportTests(unittest.TestCase):
     def test_native_preparation_borrows_guarded_group_without_attempting_a_new_session(self):
         program = """
 import os, sys
+from pathlib import Path
 sys.path.insert(0, sys.argv[1])
 import conformance_legacy as legacy
 from conformance_process import install_group_guard
@@ -40,7 +41,14 @@ else:
     raise AssertionError("unguarded legacy launch unexpectedly succeeded")
 pid = os.getpid()
 header = {"groups": [pid], "children": {str(pid): legacy.process_identity(pid)}}
-with legacy.native_preparation_group(header) as invocations:
+owner = Path(sys.argv[2])
+tracked = owner / "tracked-input"
+tracked.write_bytes(b"unchanged")
+expected = legacy._hash(tracked)
+def read_inputs(args, **kwargs):
+    return {"tracked-input": expected}
+with legacy.native_preparation_group(header, input_owner=owner, input_reader=read_inputs) as journal:
+    invocations = journal["invocations"]
     result = legacy.capture([sys.executable, "-c", "print('closed')"])
     assert result.returncode == 0 and result.stdout == b"closed\\n"
     observed = result.native_invocation
@@ -65,10 +73,30 @@ with legacy.native_preparation_group(header) as invocations:
     assert len(invocations) == 3 and invocations[-1] == owned.native_invocation
     assert invocations[-1]["exitCode"] == -legacy.signal.SIGKILL
     legacy.verify_borrowed_invocations(invocations, group_pid=pid, group_start_sha256=header["children"][str(pid)])
+    legacy.verify_borrowed_input_snapshots(journal["inputSnapshots"], 3)
+    assert all(snapshot["files"] == {"tracked-input": legacy._hash(tracked)}
+               for snapshot in journal["inputSnapshots"])
+    try:
+        legacy.capture([sys.executable, "-c", "from pathlib import Path;Path(" + repr(str(tracked)) +
+                        ").write_bytes(b'changed')"])
+    except legacy.ConformanceError as error:
+        assert str(error) == "InputChanged"
+    else:
+        raise AssertionError("changed native input was admitted")
+    sentinel = owner / "must-not-launch"
+    try:
+        legacy.capture([sys.executable, "-c", "from pathlib import Path;Path(" + repr(str(sentinel)) +
+                        ").touch()"])
+    except legacy.ConformanceError as error:
+        assert str(error) == "InputChanged"
+    else:
+        raise AssertionError("changed input was admitted before launch")
+    assert not sentinel.exists()
+    assert len(invocations) == len(journal["inputSnapshots"]) == 3
 assert legacy._borrowed_group() is None
 """
         result = subprocess.run(
-            [sys.executable, "-I", "-S", "-c", program, str(ROOT / "scripts")],
+            [sys.executable, "-I", "-S", "-c", program, str(ROOT / "scripts"), str(self.work)],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True, timeout=20, check=False)
         self.assertEqual(0, result.returncode, result.stderr.decode("utf-8", errors="replace"))
         self.assertEqual(b"", result.stdout)

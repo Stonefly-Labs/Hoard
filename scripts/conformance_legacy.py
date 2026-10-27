@@ -22,7 +22,7 @@ import uuid
 import xml.etree.ElementTree as ET
 import zipfile
 
-from conformance_evidence import ConformanceError, admit_entity, canonical_bytes, load_json
+from conformance_evidence import ConformanceError, admit_entity, canonical_bytes, input_manifest, load_json
 from conformance_execution import (
     FIXTURE_HOST_ENVIRONMENT, READ_BYTES, TRANSIENT_BYTES, no_symlinks, process_group, process_identity,
     project_build_line, project_test_line,
@@ -81,21 +81,30 @@ DISCOVERY_SHAPES = {
 _retained_children = {}
 _preparation_group = ContextVar("preparation_group", default=None)
 _preparation_invocations = ContextVar("preparation_invocations", default=None)
+_preparation_input_context = ContextVar("preparation_input_context", default=None)
 
 
 @contextmanager
-def native_preparation_group(header):
+def native_preparation_group(header, *, input_owner=None, input_reader=None):
     """Borrow only this admitted native leader's guarded group, never create an escaping session."""
     pid = os.getpid()
     if (sys.platform != "linux" or os.getpgrp() != pid or pid not in header.get("groups", ())
             or header.get("children", {}).get(str(pid)) != process_identity(pid)):
         raise ConformanceError("OwnershipInvalid")
+    if (input_owner is None) != (input_reader is None) or input_reader is not None and not callable(input_reader):
+        raise ConformanceError("OwnershipInvalid")
+    if input_owner is not None:
+        no_symlinks(input_owner)
+        input_owner = Path(input_owner).resolve(strict=True)
     token = _preparation_group.set(pid)
-    invocations = []
+    invocations, input_snapshots = [], []
     observations = _preparation_invocations.set(invocations)
+    inputs = _preparation_input_context.set(
+        None if input_reader is None else (input_owner, input_reader, input_snapshots))
     try:
-        yield invocations
+        yield {"invocations": invocations, "inputSnapshots": input_snapshots}
     finally:
+        _preparation_input_context.reset(inputs)
         _preparation_invocations.reset(observations)
         _preparation_group.reset(token)
 
@@ -152,6 +161,24 @@ def verify_borrowed_invocations(values, *, group_pid, group_start_sha256):
         children.add(key)
 
 
+def verify_borrowed_input_snapshots(values, count):
+    from conformance_evidence import relative_path, sha256
+
+    if not isinstance(values, list) or len(values) != count:
+        raise ConformanceError("ProofMismatch")
+    for value in values:
+        if (not isinstance(value, dict) or set(value) != {
+                "qualification", "inputClosureComplete", "scope", "files", "sha256"}
+                or value["qualification"] is not False or value["inputClosureComplete"] is not False
+                or value["scope"] != "selected-declared-inputs" or not isinstance(value["files"], dict)
+                or len(value["files"]) > 50000
+                or hashlib.sha256(canonical_bytes(value["files"])).hexdigest() != value["sha256"]):
+            raise ConformanceError("ProofMismatch")
+        for path, hashed in value["files"].items():
+            relative_path(path)
+            sha256(hashed)
+
+
 def _native_invocation_start(args, cwd, input):
     group = _borrowed_group()
     if group is None:
@@ -178,13 +205,32 @@ def _native_invocation_child(invocation, child, *, deadline=None):
         invocation.update(childPid=child.pid, childStartSha256=identity)
 
 
-def _native_invocation_complete(invocation, exit_code):
+def _native_input_snapshot(args, cwd, env):
+    context = _preparation_input_context.get()
+    if context is None:
+        return None
+    owner, reader, _ = context
+    files = reader(tuple(args), cwd=cwd, env=env)
+    if not isinstance(files, dict) or dict(input_manifest(owner, list(files))) != files:
+        raise ConformanceError("InputChanged")
+    return files
+
+
+def _native_invocation_complete(invocation, exit_code, files):
     if invocation is None:
         return None
     observation = {**invocation, "childState": "Exited", "exitCode": exit_code}
     journal = _preparation_invocations.get()
     if journal is None or len(journal) >= 10000:
         raise ConformanceError("OutputLimitExceeded")
+    context = _preparation_input_context.get()
+    if context is not None:
+        owner, _, snapshots = context
+        if not isinstance(files, dict) or dict(input_manifest(owner, list(files))) != files:
+            raise ConformanceError("InputChanged")
+        snapshots.append({
+            "qualification": False, "inputClosureComplete": False, "scope": "selected-declared-inputs",
+            "files": files, "sha256": hashlib.sha256(canonical_bytes(files)).hexdigest()})
     journal.append(observation)
     return observation
 
@@ -221,6 +267,7 @@ class OwnedChild:
             raise RuntimeError("Legacy command PrerequisiteMissing.")
         kwargs["start_new_session"] = _borrowed_group() is None
         self._native_invocation = _native_invocation_start(args, kwargs.get("cwd"), None)
+        self._native_inputs = _native_input_snapshot(args, kwargs.get("cwd"), kwargs.get("env"))
         if self._native_invocation is not None:
             args = tuple(args)
         self._process = subprocess.Popen(args, **kwargs)
@@ -258,7 +305,8 @@ class OwnedChild:
             _settle_group(self._process)
             self.returncode = self._process.returncode
             self._settled = True
-            self.native_invocation = _native_invocation_complete(self._native_invocation, self.returncode)
+            self.native_invocation = _native_invocation_complete(
+                self._native_invocation, self.returncode, self._native_inputs)
 
     def __enter__(self):
         return self
@@ -351,6 +399,7 @@ def capture(args, *, cwd=None, env=None, timeout=600, input=None):
                        UseSharedCompilation="false")
     group = _borrowed_group()
     invocation = _native_invocation_start(args, cwd, input)
+    input_snapshot = _native_input_snapshot(args, cwd, environment)
     if invocation is not None:
         args = tuple(args)
     try:
@@ -416,7 +465,7 @@ def capture(args, *, cwd=None, env=None, timeout=600, input=None):
     result = subprocess.CompletedProcess(args, child.returncode, bytes(data))
     result.child_pid = child.pid
     if invocation is not None:
-        result.native_invocation = _native_invocation_complete(invocation, child.returncode)
+        result.native_invocation = _native_invocation_complete(invocation, child.returncode, input_snapshot)
     return result
 
 

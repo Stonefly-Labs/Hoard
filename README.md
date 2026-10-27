@@ -357,6 +357,18 @@ actual bounded and interactive launches across the native controller phases,
 binding the closed observations to their original parent/output packets.
 Publication still inspects staging before killing the original child.
 Per-command input closure and T046/full-profile acceptance remain unfinished.
+Exact `42115be` now confirms the actual reference-child/group receipt in
+[run40581441462](https://github.com/Stonefly-Labs/Hoard/actions/runs/40581441462).
+Exact `c72ba97` also confirms all four bounded native launch journals in
+[run40584775906](https://github.com/Stonefly-Labs/Hoard/actions/runs/40584775906):
+45 historical, 230 controller, one reference and 73 mutation launches, independently
+bound to original parent/output records with actual release.
+The next internal transport version pairs each launch with selected declared
+file hashes checked before launch and after settlement. It rejects changed inputs
+but explicitly does not claim complete compiler/runtime I/O closure. Local safe
+tooling observes 572 tests with no failures/errors or unexpected diagnostic bytes;
+twenty native macOS skips remain incomplete, not acceptance. Linux confirmation
+of these new selected-input snapshots is pending; T046 remains unchecked, 52/86.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

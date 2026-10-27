@@ -114,9 +114,10 @@ jobs:
                   or reference["inputMapSha256"] != hashlib.sha256(reference_inputs).hexdigest()
                   or reference["parentSha256"] != hashlib.sha256(reference_parent_raw).hexdigest()
                   or set(reference_observation) != {
-                      "schemaVersion", "qualification", "phase", "runId", "rootId", "result", "invocations"}
+                      "schemaVersion", "qualification", "phase", "runId", "rootId", "result",
+                      "invocations", "inputSnapshots"}
                   or type(reference_observation["schemaVersion"]) is not int
-                  or reference_observation["schemaVersion"] != 2
+                  or reference_observation["schemaVersion"] != 3
                   or reference_observation["qualification"] is not False
                   or reference_observation["phase"] != "reference"
                   or reference_observation["runId"] != inputs["runId"]
