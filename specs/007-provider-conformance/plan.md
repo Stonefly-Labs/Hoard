@@ -10,6 +10,33 @@ assertion extraction, five-profile workflow, custom checklist approval or qualif
 result is delivered. Public product contracts and required outcomes remain
 unchanged; necessary fixture-private controls are extended as recorded below.
 
+## Shared authority admission and explicit restart controls
+
+T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the
+existing Local store with either a mismatched coordination identity or missing
+mandatory bounded-streaming guarantee, and their independently repaired inputs.
+No provider behavior is reimplemented. Actual admission and shutdown results,
+pre-root I/O observations and unchanged lifecycle assertions remain visible.
+CP-20 uses the shared noncooperative request barrier directly, preserving drain,
+denied new requests, immutable active configuration and explicit fresh restart.
+
+Three package assembly-owner assertions first fail against consumer-local
+delegates while the unchanged selection/restart control passes. Fresh seventeen-
+archive construction and fresh-cache locked replay then pass all four CP-19/20
+cases with Host archive
+`751b88330fffee3a22566e21d3fa81cc3dcba1df31e603fc02b26b647019cb3a`
+and consumer
+`46c5c2b5dac95bc42ee41017ba5782fc2197054c2261884b22002cf76d029339`.
+The red transcript repeats the three diagnostics in both adapter and console
+output; the initial transcript-count assertion fails, not a fourth product case.
+Both source CP-20 cases and thirteen safe proofs/thirty-three snapshots pass.
+All 496 tooling tests pass (nineteen native skips); focused formatting and frozen
+catalog/inventory checks pass. T045 is checked, 48/86, implement/running.
+Ordinary CP-19/20 package assertions are not safe transport/native qualification.
+T046 and all other unchecked tasks remain required. Production contracts,
+architecture diagrams, governance, infrastructure and release behavior are
+unaffected by these test-only controls.
+
 ## Native composition diagnostic continuation
 
 A dedicated non-qualifying executor now builds the seventeen fixture/provider/

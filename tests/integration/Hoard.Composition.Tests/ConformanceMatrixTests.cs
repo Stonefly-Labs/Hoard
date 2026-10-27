@@ -861,15 +861,18 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             await app.StartAsync();
             var active = registry.Probes["metadata"].Options!;
             Assert.Equal(iteration == 0 ? "first" : "second", active.GetString("label"));
-            var entered = Barrier();
-            var release = Barrier();
-            registry.Probes["metadata"].Request = async () => { entered.TrySetResult(); await release.Task; };
+            var callback = new OwnershipFixtures.ControlledCallback(cooperative: false);
+            registry.Probes["metadata"].Request = callback.RunAsync;
+#if CONFORMANCE_PROVIDER_PACKAGES
+            Assert.Equal("Hoard.Fixtures.Conformance.Host",
+                registry.Probes["metadata"].Request!.Method.DeclaringType!.Assembly.GetName().Name);
+#endif
             using var client = app.GetTestClient();
             var request = client.GetStringAsync("/metadata");
             Task? stopping = null;
             try
             {
-                await entered.Task.WaitAsync(TimeSpan.FromSeconds(5));
+                await callback.Entered.WaitAsync(TimeSpan.FromSeconds(5));
                 await using var changed = await registry.Builder.EvaluateConfigurationAsync(new(Document("second")), Versions, new());
                 Assert.Equal(HoardConfigurationOutcome.Validated, changed.Outcome);
                 Assert.False(request.IsCompleted);
@@ -887,7 +890,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
                 Assert.Equal(HttpStatusCode.ServiceUnavailable, denied.StatusCode);
                 Assert.Equal(1, registry.Probes["metadata"].Requests);
             }
-            finally { release.TrySetResult(); }
+            finally { callback.Release(); }
             Assert.Equal("conformance", await request.WaitAsync(TimeSpan.FromSeconds(5)));
             await stopping!.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.Equal(1, registry.Probes["metadata"].Constructors);
@@ -1115,26 +1118,15 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             await using var directory = new PackagedComposition();
             var registry = new Registry();
             registry.Probes["artifact-other"] = Add<ArtifactOther>(registry.Builder, Declaration("artifact-other", ModuleCategory.Artifact));
-            var identity = new ArtifactStoreIdentity("fixture.artifact.local", Guid.NewGuid(), Guid.NewGuid());
-            var authorityIdentity = variant == "authority-identity" && !repaired
-                ? new ArtifactStoreIdentity(identity.ProviderModuleId, identity.InstanceId, Guid.NewGuid()) : identity;
-            var authority = new ArtifactCoordinationAuthority(authorityIdentity);
-            var controls = new LocalFaultControls();
-            if (variant == "mandatory-guarantee" && !repaired)
-            {
-                controls.CapabilitiesForAdmission = capabilities => new(1, capabilities.Durability,
-                    capabilities.Enumeration, capabilities.Limits, boundedStreaming: false);
-            }
-            var store = new LocalArtifactStore(directory.ArtifactRoot, controls: controls);
-            ArtifactResult<ArtifactAdmission>? observed = null;
-            ArtifactResult<ArtifactShutdown>? shutdown = null;
-            registry.Probes["artifact"].Initialize = async token =>
-            {
-                observed = await store.InitializeAsync(new(ArtifactInitializationMode.CreateEmpty, identity, authority), new(), token);
-                if (observed is not ArtifactResult<ArtifactAdmission>.Success)
-                { throw new InvalidOperationException("Selected store admission failed."); }
-            };
-            registry.Probes["artifact"].Stop = async token => { shutdown = await store.StopAsync(new(), token); };
+            var admission = new OwnershipFixtures.ControlledAdmission(directory.ArtifactRoot, variant, repaired);
+            var controls = admission.Controls;
+            var store = admission.Store;
+            registry.Probes["artifact"].Initialize = admission.InitializeAsync;
+            registry.Probes["artifact"].Stop = admission.StopAsync;
+            Assert.Equal("Hoard.Fixtures.Conformance.Host",
+                registry.Probes["artifact"].Initialize!.Method.DeclaringType!.Assembly.GetName().Name);
+            Assert.Equal("Hoard.Fixtures.Conformance.Host",
+                registry.Probes["artifact"].Stop!.Method.DeclaringType!.Assembly.GetName().Name);
             await using var running = await registry.BuildAsync(registry.Validate().Composition!);
             await running.App.MapHoardModulesAsync(running.Lease);
             var result = await running.Lease.Lifecycle.StartAsync();
@@ -1142,13 +1134,13 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             Assert.Equal(repaired, running.Lease.Lifecycle.Snapshot.StartupAdmission);
             if (repaired)
             {
-                Assert.IsType<ArtifactResult<ArtifactAdmission>.Success>(observed);
+                Assert.IsType<ArtifactResult<ArtifactAdmission>.Success>(admission.Admission);
                 Assert.Contains("initialize.before-root", controls.Observed);
                 Assert.True(store.Ready);
             }
             else
             {
-                var denied = Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(observed);
+                var denied = Assert.IsType<ArtifactResult<ArtifactAdmission>.Failure>(admission.Admission);
                 Assert.Equal(variant == "authority-identity" ? ArtifactFailureCode.Denied : ArtifactFailureCode.Unsupported, denied.Code);
                 Assert.DoesNotContain("initialize.before-root", controls.Observed);
                 Assert.False(Directory.Exists(directory.ArtifactRoot));
@@ -1161,7 +1153,7 @@ public sealed class ConformanceMatrixTests(ITestOutputHelper output)
             Inactive(registry.Probes["artifact-other"]);
             await running.DisposeAsync();
             Assert.True(running.Lease.StopResult!.Complete);
-            Assert.Equal(ArtifactCleanupState.Released, Assert.IsType<ArtifactResult<ArtifactShutdown>.Success>(shutdown).Value.State);
+            Assert.Equal(ArtifactCleanupState.Released, Assert.IsType<ArtifactResult<ArtifactShutdown>.Success>(admission.Shutdown).Value.State);
             Observe($"CP-19/{variant}/repaired-{repaired}", registry, running.Lease);
             output.WriteLine($"CP-19/{variant}/repaired-{repaired}: store-before-root={controls.Observed.Count(point => point == "initialize.before-root")}; " +
                 $"store-admitted={controls.Observed.Count(point => point == "initialize.admitted")}; store-ready={(store.Ready ? 1 : 0)}; alternate-constructors=0");

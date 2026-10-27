@@ -166,4 +166,7 @@ custom-host example is unchanged. The separate short native diagnostic workflow
 does not qualify SQLite provenance, which remains explicitly unobserved.
 Exact `f6e9db4` passes all thirteen selected native cases with actual
 process-resource release, closing bounded T044 probes, not the qualifying
-composition profile or remaining authority/restart integration.
+composition profile. Shared Host authority/guarantee admission and active-request
+controls now pass all four CP-19/20 package cases, preserving denial before store
+I/O and settled explicit restart. Their safe transport/full-profile integration
+remains open; this compile-only custom-host example is unaffected.

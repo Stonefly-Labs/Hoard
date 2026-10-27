@@ -97,8 +97,11 @@ SQLite version/provenance remains explicitly unobserved in this component scope;
 the platform and component environment files are separately bound inputs.
 The independent Linux replay at exact `f6e9db4` verifies this environment/input
 boundary and all thirteen cases with actual process-resource release, closing
-T044. Implementation remains in progress at 47/86 tasks; authority/restart,
-inherited inventories and complete profile acceptance remain unfinished.
+T044. Shared packaged Host admission/request controls now close T045: actual
+authority/guarantee denials precede store I/O, and active requests drain before
+explicit restart. Three assembly-owner checks first fail, then all four package
+cases pass. Implementation remains in progress at 48/86 tasks; complete safe
+composition transport, inherited inventories and profile acceptance remain open.
 At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
 unchanged-source failed-job retry. The original lock-preparation
 `CleanupIncomplete` remains recorded; this is not full-profile qualification

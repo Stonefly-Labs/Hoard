@@ -4807,6 +4807,17 @@ pretend the setup action's requested SDK10.0.203 is the selected SDK under
 to T045. This closes bounded CP-14..18 probes, not full profile qualification,
 portable evidence retention or final architecture review.
 
+T045 now moves actual Local-store authority/guarantee admission and active-request
+callbacks into `OwnershipFixtures` in the packaged Host. Three assembly-owner
+assertions first fail against consumer-local delegates; the unchanged selection/
+restart control passes. Fresh seventeen-package construction and fresh-cache
+locked replay then pass all four CP-19/20 cases. Both source-mode CP-20 cases and
+the thirteen-proof/thirty-three-snapshot safe regression pass. All 496 tooling
+tests pass with nineteen explicit native skips; catalog/inventory and focused
+format checks pass. T045 is checked, 48/86. These ordinary package assertions
+do not establish new safe CP-19/20 transport, native evidence or qualification;
+T046 continues the complete composition/inherited-profile integration.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

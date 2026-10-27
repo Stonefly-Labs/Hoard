@@ -88,7 +88,11 @@ unobserved rather than claiming the platform-only probe measured that library.
 Exact `f6e9db4` passes this independent native workflow with all thirteen proofs/
 thirty-three snapshots and real process-resource release. This closes the
 bounded CP-14..18 probe implementation (T044), not complete provider or
-composition qualification; CP-19/20 integration and inherited inventories remain.
+composition qualification. CP-19 authority/guarantee admission and CP-20 active
+request controls now execute from the shared Host package, preserving real
+Local-store pre-I/O denial and explicit settled restart. All four package cases
+pass after three intended consumer-local ownership failures. Safe CP-19/20
+transport, inherited inventories and full profile integration remain unfinished.
 
 Legacy interactive runners preserve the unreaped leader until all owned
 descendants settle, including descendants that close or inherit output handles.
