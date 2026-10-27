@@ -133,8 +133,12 @@ CustomHost evidence, retained binaries, lifecycle/configuration/discovery
 journeys and graph scans without raw diagnostic persistence. A local diagnostic
 independently admits all 509 inherited composition parameters and 16 boundary
 parameters in 58 exact class scopes, preserving the two-minute child timeout.
-Native inherited execution, complete controller/mutation acceptance and public
-profile integration remain open; T046 is still unchecked.
+The committed native diagnostic now stages both inherited assemblies, prepares
+all four borrowed controller families and executes the complete 525-parameter
+union through exact owned class scopes. Native replay of this extension is
+pending; borrowed controller preparation is not native controller acceptance.
+Complete controller/mutation acceptance and public profile integration remain
+open; T046 is still unchecked.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and
@@ -145,6 +149,9 @@ framework configuration watchers consume the observation budget. Conformance
 children now disable unused framework appsettings reload; the same unmodified
 baseline/custom host binaries then pass in about 150 ms. This does not disable
 Hoard configuration/restart checks or turn the earlier receipt into a fresh run.
+Fresh execution at `5359f57` subsequently passes all four preparation families,
+all 36 CP proofs/110 snapshots in one scope, and all 525 inherited parameters.
+That local run is non-native; its complete scope union is independently admitted.
 At exact `22ddff9`, all five existing Linux diagnostic jobs pass after an
 unchanged-source failed-job retry. The original lock-preparation
 `CleanupIncomplete` remains recorded; this is not full-profile qualification

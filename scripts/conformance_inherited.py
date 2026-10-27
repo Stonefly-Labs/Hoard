@@ -210,3 +210,151 @@ def execution_scopes(discoveries, methods):
             key = (assembly, row["fullyQualifiedName"].rsplit(".", 1)[0])
             scopes.setdefault(key, []).append(row)
     return {key: tuple(rows) for key, rows in sorted(scopes.items())}
+
+
+def prepare_controller_evidence(repository, owner, source):
+    """Prepare fresh borrowed evidence, without claiming full controller acceptance."""
+    import configuration_evidence as configuration
+    import discovery_evidence as discovery
+    import foundation_evidence as foundation
+    import lifecycle_evidence as lifecycle
+    import conformance_legacy as legacy
+    from conformance_sources import read_bounded
+
+    owner, source = Path(owner), Path(source)
+    legacy.no_symlinks(owner)
+    legacy.no_symlinks(source)
+    owner, source = Path(owner).resolve(strict=True), Path(source).resolve(strict=True)
+    if source == owner or not source.is_relative_to(owner):
+        raise ConformanceError("OwnershipInvalid")
+    manifests, phases = {}, {}
+    with controller_transport(repository, owner) as controls:
+        for phase in ("foundation", "lifecycle", "configuration", "discovery"):
+            target = owner / "stores" / ("inherited-controller-" + phase)
+            target.mkdir(mode=0o700)
+            if phase == "foundation":
+                core, providers, config = foundation.packages(source, target, False)
+                document = {
+                    "core": core, "providers": providers, "localFeed": str(target / "feed"),
+                    "sourceHashesBefore": foundation.source_hashes(source),
+                }
+                document["hosts"] = foundation.hosts(source, target, config, False)
+                document["sourceHashesAfter"] = foundation.source_hashes(source)
+                summary = {"providerPackages": len(providers), "customHosts": len(document["hosts"])}
+            elif phase == "lifecycle":
+                config, providers = lifecycle.prepare_packages(source, target, False)
+                registration = lifecycle.registration_compatibility(source, target, config, False)
+                journeys, hosts = lifecycle.host_journeys(source, target, config, False)
+                boundaries = lifecycle.lifecycle_graphs(source, target, providers, hosts, registration)
+                manifest = Path(os.environ["HOARD_LIFECYCLE_EVIDENCE"])
+                document = load_json(read_bounded(manifest, 16 * 1024**2))
+                summary = {"providerPackages": len(providers), "journeys": journeys,
+                           "boundaryParameters": boundaries}
+            else:
+                module = configuration if phase == "configuration" else discovery
+                retained = module.prepare_baseline(source, target, False)
+                config, providers = lifecycle.prepare_packages(source, target, False)
+                if phase == "configuration":
+                    provider, consumer = configuration.compatibility(source, target, config, retained, False)
+                    registration = lifecycle.registration_compatibility(
+                        source, target, config, False, "registration-baseline")
+                    hosts, journeys = configuration.configured_journeys(source, target, config, retained, False)
+                    conversion, publication = configuration.interrupted_publication(source, target, config, False)
+                    graphs = configuration.configuration_graphs(
+                        source, target, providers, hosts, provider, consumer, registration, conversion)
+                    document = {"graphs": graphs, "journeys": journeys, "oldBinaries": retained,
+                                "publication": publication, "packages": providers}
+                    summary = {"retainedBinaries": len(retained), "journeys": len(journeys),
+                               "graphs": len(graphs), "publicationBarriers": len(publication["barriers"])}
+                else:
+                    old = next(entry for entry in retained if entry["name"] == "LegacyOptions")
+                    old_provider = Path(old["assembly"]).parents[3] / "LegacyOptions.csproj"
+                    discovery.run("dotnet", "pack", str(old_provider), "-c", "Release", "--no-build",
+                                  "--no-restore", "-o", str(target / "feed"), "-v", "quiet")
+                    foundation.canonicalize_acceptance_archive(
+                        target / "feed/Hoard.Fixtures.Configuration.LegacyOptions.0.1.0.nupkg")
+                    consumers = discovery.compatibility(source, target, config, retained, False)
+                    hosts, journeys, observations, bodies = discovery.package_journeys(
+                        source, target, config, retained, False)
+                    registration = lifecycle.registration_compatibility(
+                        source, target, config, False, "registration-baseline")
+                    graphs = discovery.graphs(
+                        source, target, config, providers, hosts, consumers, old_provider, registration, False)
+                    document = {"graphs": graphs, "journeys": journeys, "observations": observations,
+                                "responseBodies": bodies, "oldBinaries": retained, "packages": providers}
+                    summary = {"retainedBinaries": len(retained), "journeys": len(journeys),
+                               "observations": len(observations), "graphs": len(graphs)}
+            if phase != "lifecycle":
+                manifest = target / (phase + "-evidence.json")
+                legacy._write(manifest, document)
+            variable = "HOARD_" + phase.upper() + "_EVIDENCE"
+            manifests[variable] = str(manifest)
+            phases[phase] = {
+                **summary, "manifestPath": manifest.relative_to(owner).as_posix(),
+                "manifestSha256": legacy._hash(manifest),
+            }
+        legacy._write(owner / "proofs/inherited-controller-lock-derivations.json", controls["lockDerivations"])
+        legacy._write(owner / "proofs/inherited-controller-command-inputs.json", controls["inputFiles"])
+    return {"qualification": False, "fullControllerAcceptance": False, "nativeContainment": False,
+            "manifests": manifests, "phases": phases}
+
+
+def controller_read_inputs(owner, manifests, *, extra=()):
+    """Bind private fixture inputs; this is not a native controller I/O trace."""
+    import conformance_legacy as legacy
+    from conformance_evidence import file_sha256
+    from conformance_sources import read_bounded
+
+    owner = Path(owner).resolve(strict=True)
+    files, size = {}, 0
+
+    def bind(path):
+        nonlocal size
+        path = Path(path)
+        legacy.no_symlinks(path)
+        if not path.is_file() or not path.resolve(strict=True).is_relative_to(owner):
+            raise ConformanceError("OwnershipInvalid")
+        path = path.resolve(strict=True)
+        relative = path.relative_to(owner).as_posix()
+        if relative not in files:
+            size += path.stat().st_size
+            if len(files) >= 50000 or size > 256 * 1024**2:
+                raise ConformanceError("OutputLimitExceeded")
+            files[relative] = file_sha256(path)
+
+    def collect(value):
+        if isinstance(value, dict):
+            for child in value.values():
+                collect(child)
+        elif isinstance(value, list):
+            for child in value:
+                collect(child)
+        elif isinstance(value, str) and value.startswith("/"):
+            path = Path(value)
+            # Manifests also contain route literals and SDK paths, not private fixture inputs.
+            if not path.is_relative_to(owner):
+                return
+            legacy.no_symlinks(path)
+            if not path.resolve().is_relative_to(owner):
+                raise ConformanceError("OwnershipInvalid")
+            if path.is_file():
+                bind(path)
+                if path.name == "project.assets.json":
+                    assets = load_json(read_bounded(path, 16 * 1024**2))
+                    for identity, entry in assets["libraries"].items():
+                        if identity.startswith("Hoard.") and entry["type"] == "package":
+                            for cache in assets["packageFolders"]:
+                                for item in (Path(cache) / entry["path"]).glob("*"):
+                                    if item.is_file():
+                                        bind(item)
+            elif path.is_dir():
+                for item in path.rglob("*"):
+                    if (item.is_file() and item.suffix in (".cs", ".csproj")
+                            and not {"bin", "obj"}.intersection(item.relative_to(path).parts)):
+                        bind(item)
+
+    for path in (*manifests.values(), *extra):
+        bind(path)
+    for path in manifests.values():
+        collect(load_json(read_bounded(Path(path), 16 * 1024**2)))
+    return dict(sorted(files.items()))

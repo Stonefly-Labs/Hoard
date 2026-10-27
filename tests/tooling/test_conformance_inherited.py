@@ -19,10 +19,72 @@ FREEZE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(FREEZE)
 sys.path.insert(0, str(ROOT / "scripts"))
 import conformance_inherited as inherited
-from conformance_evidence import ConformanceError, canonical_bytes
+from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_controller_input_closure_binds_private_sources_assets_and_package_inputs(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            owner = Path(temporary).resolve()
+            project = owner / "project"
+            project.mkdir()
+            cache = owner / "cache/hoard.example/0.1.0"
+            cache.mkdir(parents=True)
+            inputs = {
+                project / "Example.cs": b"class Example {}",
+                project / "Example.csproj": b"<Project/>",
+                owner / "Example.dll": b"assembly",
+                cache / "hoard.example.0.1.0.nupkg": b"archive",
+                cache / ".nupkg.metadata": b"metadata",
+            }
+            for path, raw in inputs.items():
+                path.write_bytes(raw)
+            (project / "obj").mkdir()
+            (project / "obj/Generated.cs").write_bytes(b"not a source input")
+            assets = project / "obj/project.assets.json"
+            assets.write_bytes(canonical_bytes({
+                "libraries": {"Hoard.Example/0.1.0": {"type": "package", "path": "hoard.example/0.1.0"}},
+                "packageFolders": {str(owner / "cache"): {}},
+            }))
+            manifest = owner / "manifest.json"
+            manifest.write_bytes(canonical_bytes({
+                "source": str(project), "assembly": str(owner / "Example.dll"),
+                "assets": str(assets), "route": "/health",
+            }))
+            extra = owner / "openapi.json"
+            extra.write_bytes(b"{}")
+            expected = {path.relative_to(owner).as_posix(): file_sha256(path)
+                        for path in (*inputs, assets, manifest, extra)}
+            observed = inherited.controller_read_inputs(
+                owner, {"HOARD_FOUNDATION_EVIDENCE": str(manifest)}, extra=(extra,))
+            self.assertEqual(expected, observed)
+            (cache / ".nupkg.metadata").write_bytes(b"changed")
+            self.assertNotEqual(observed, inherited.controller_read_inputs(
+                owner, {"HOARD_FOUNDATION_EVIDENCE": str(manifest)}, extra=(extra,)))
+
+    def test_controller_input_closure_rejects_foreign_manifests_and_private_symlinks(self):
+        with tempfile.TemporaryDirectory() as temporary, tempfile.TemporaryDirectory() as outside:
+            owner = Path(temporary).resolve()
+            foreign = Path(outside) / "manifest.json"
+            foreign.write_bytes(b"{}")
+            with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                inherited.controller_read_inputs(owner, {"HOARD_FOUNDATION_EVIDENCE": str(foreign)})
+            original = owner / "image.dll"
+            original.write_bytes(b"image")
+            alias = owner / "alias.dll"
+            alias.symlink_to(original)
+            manifest = owner / "manifest.json"
+            manifest.write_bytes(canonical_bytes({"assembly": str(alias)}))
+            with self.assertRaises(ConformanceError):
+                inherited.controller_read_inputs(owner, {"HOARD_FOUNDATION_EVIDENCE": str(manifest)})
+
+    def test_controller_preparation_rejects_foreign_source_before_running_borrowed_code(self):
+        import foundation_evidence as foundation
+        with tempfile.TemporaryDirectory() as temporary, patch.object(foundation, "packages") as prepare:
+            with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                inherited.prepare_controller_evidence(ROOT, temporary, ROOT)
+            prepare.assert_not_called()
+
     def test_controller_evidence_is_explicitly_forwarded_bound_and_owned(self):
         import lifecycle_evidence as lifecycle
         import conformance_legacy as legacy

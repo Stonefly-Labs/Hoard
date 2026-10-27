@@ -4989,6 +4989,33 @@ selection and fresh restart paths remain enabled and required. This is a
 test-harness environment setting, not a product host behavior change or a
 waiver of fresh controller/native/profile acceptance.
 
+Fresh clean-commit `5359f57` validation then passes seventeen-package construction,
+fresh-cache locked replay, all 36 CP proofs/110 snapshots without partitioning,
+all four real controller preparations, and all 525 inherited parameters in 58
+class scopes. The independent scope admission digest is
+`d1233b0a4d0e4dafba44bb5dd23dd3c094d688779499fb661c0448b0c1fe7ba8`;
+695 private controller inputs remain unchanged. An earlier attempt correctly
+rejects an assets-file change because driver restore/build followed input
+freezing. Completing preparation before freezing fixes the ordering, not the
+input check. Linux run40447989258 passes at exact `5359f57`, still with the older
+36-CP/509-discovery-only native scope.
+
+The committed diagnostic executor now promotes the complete execution path:
+build both inherited assemblies and the discovery driver, prepare all four
+borrowed controller families, stage the normative contract at the frozen
+repository-relative location, and discover both exact staged assemblies.
+Each of the 58 complete class scopes uses a fresh logger manifest and native
+owned command receipt with independently checked argv/cwd/input agreement.
+A sealed private fixture-input descriptor keeps the direct-file bound at
+thirteen; private inputs and runtime images are rehashed around each child.
+The existing whole-inventory inspector independently admits the final union.
+Native replay of this extension is pending. Borrowed preparation retains
+`controllerNativeContainment=false` and `fullControllerAcceptance=false`;
+its input descriptor is not a native I/O trace. Historical sealing before
+candidate builds, complete controller/mutation obligations, public composition
+profile integration and T046 remain unfinished. No budget or frozen assertion
+changes, and no new qualification claim follows.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

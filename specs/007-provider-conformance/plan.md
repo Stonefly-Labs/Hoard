@@ -244,6 +244,29 @@ appsettings reload scenario in these synthetic hosts; Hoard configuration,
 publication, immutable selection and explicit restart checks are not disabled.
 Fresh controller/native/profile acceptance remains a separate required gate.
 
+Fresh clean-commit `5359f57` execution subsequently passes seventeen-package
+construction/locked replay, all 36 CP proofs/110 snapshots in one scope, all
+four real controller preparations, and all 525 inherited parameters in 58 class
+scopes. All 695 bound controller inputs remain unchanged; independent complete
+scope admission:
+`d1233b0a4d0e4dafba44bb5dd23dd3c094d688779499fb661c0448b0c1fe7ba8`.
+The first execution rejects driver preparation changing an already-frozen
+assets file; finishing all builds before freezing repairs the ordering without
+weakening freshness. Exact Linux run40447989258 passes the older native
+36-CP/509-discovery scope at `5359f57`.
+
+The committed native executor now extends that scope to independently discovered
+525-parameter execution across both staged assemblies, using the existing
+58-class partition, fresh logger manifests, native parent receipts and complete
+union inspector. Private controller inputs are frozen only after all preparation,
+with a sealed descriptor preserving thirteen direct command inputs. Both
+runtime images and private inputs are checked around execution. Fresh native
+replay is pending. Borrowed controller preparation is explicitly not native
+controller acceptance; its descriptor is not a complete native I/O trace.
+Historical pre-candidate binary sealing, complete controller/mutation acceptance
+and public-profile integration remain open. T046 is unchecked, 48/86,
+implement/running; no timeout, assertion, contract or qualification gate changes.
+
 Closed store snapshots preserve actual pre-root/admitted I/O counters, selected
 store readiness, inactive alternate effects and lifecycle outcomes. Restart
 snapshots preserve actual pending/settled request/task observations, enabled
