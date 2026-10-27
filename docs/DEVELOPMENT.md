@@ -5274,6 +5274,18 @@ zero unexpected diagnostic bytes and twenty explicit native skips, returning 2.
 This is not a full-controller tooling proof; fresh Linux full-scope execution
 and attributable integration into controller acceptance remain pending.
 
+Prepared-project formatting now passes natively at exact `78a8486`,
+run40467841673/job122069149790: forty individually admitted commands
+(foundation7/lifecycle9/configuration12/discovery12), CP36/110,
+inherited525/58, 2,281 unchanged bound inputs and actual release. The complete
+tooling scope also passes independently at exact `7ff5499`,
+run40468960470/job122073676284: 548 tests, zero failures/errors/skips or
+unexpected diagnostic bytes. Neither receipt claims full-controller acceptance.
+The next whole-solution formatting increment restores missing assets in locked
+mode, including `Build=false` projects, adds the needed private contributor
+package and freezes every tracked source input. Its native confirmation and
+controller-bound tooling/mutation obligations remain pending.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

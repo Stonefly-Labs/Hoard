@@ -211,12 +211,24 @@ Their native confirmation is pending; solution-wide formatting and the remaining
 full-controller obligations are not inferred from prepared-project formatting.
 Formatter rehashing reuses the bounded descriptor-relative input reader;
 same-byte symlink substitutions reject instead of borrowing an unbound file.
+At exact `78a8486`, [run40467841673](https://github.com/Stonefly-Labs/Hoard/actions/runs/40467841673)
+now verifies all forty prepared formatter commands (7/9/12/12 by family),
+CP36/110, inherited525/58, 2,281 unchanged bound inputs and actual release.
+The next increment prepares missing solution-project assets in locked mode,
+includes the previously unbuilt contributor package in the private candidate
+feed, and binds every tracked source input before a separate whole-solution
+native formatter command. Native confirmation of that increment is pending.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.
 Local full-scope execution observes 548 tests, no failures/errors or unexpected
 diagnostic bytes, and twenty explicit native skips; fresh full-scope Linux
 confirmation remains pending and these skips are not acceptance.
+The full tooling scope is now independently green at exact `7ff5499`,
+[run40468960470](https://github.com/Stonefly-Labs/Hoard/actions/runs/40468960470),
+job122073676284: all 548 tests execute with zero failures/errors/skips or
+unexpected diagnostic bytes. This does not yet supply controller-bound
+tooling acceptance or complete T046.
 The internal inherited-runtime inspector now re-admits raw logger transport
 against both complete discovery inventories and exact class partitions. It
 rejects omitted boundaries/theory parameters, replayed attempts/executions and

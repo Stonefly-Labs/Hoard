@@ -18,7 +18,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
         import time
         import conformance_composition_checks as checks
         import conformance_evidence as evidence
-        for mutation in ("none", "foreign-root", "argv", "cwd", "inputs", "sequence", "hash",
+        for mutation in ("none", "solution", "unbound-solution", "foreign-root", "argv", "cwd", "inputs", "sequence", "hash",
                          "retained", "live-child", "failed", "changed-source", "changed-closure", "symlink",
                          "duplicate", "missing-phase", "missing-assets"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
@@ -40,6 +40,13 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 outside = root / "not-bound.cs"
                 outside.write_bytes(source.read_bytes())
                 files[source.name] = evidence.file_sha256(source)
+                solution = None
+                if mutation in ("solution", "unbound-solution"):
+                    solution = root / "source/Hoard.slnx"
+                    solution.parent.mkdir()
+                    solution.write_bytes(b"<Solution/>")
+                    if mutation == "solution":
+                        files[solution.relative_to(root).as_posix()] = evidence.file_sha256(solution)
                 if mutation == "duplicate":
                     projects["foundation"] *= 2
                 elif mutation == "missing-phase":
@@ -61,7 +68,7 @@ class CompositionDiagnosticTests(unittest.TestCase):
                     self.assertEqual(["dotnet", "format"], arguments[:2])
                     self.assertEqual(["--verify-no-changes", "--no-restore", "-v", "quiet"], arguments[3:])
                     self.assertEqual(Path(arguments[2]).parent, kwargs["cwd"])
-                    self.assertEqual(4, len(kwargs["execution_inputs"]))
+                    self.assertEqual(3 if arguments[2].endswith(".slnx") else 4, len(kwargs["execution_inputs"]))
                     run.command_sequence += 1
                     now = time.monotonic() * 1000
                     record.update(
@@ -91,18 +98,20 @@ class CompositionDiagnosticTests(unittest.TestCase):
                 run.command = mock.Mock(side_effect=command)
                 run.read_execution_record = mock.Mock(side_effect=lambda sequence: evidence.canonical_bytes(record))
                 run.live_children = mock.Mock(return_value=[1] if mutation == "live-child" else [])
-                if mutation == "none":
+                if mutation in ("none", "solution"):
                     output = io.StringIO()
                     with contextlib.redirect_stdout(output):
-                        observed = checks._format_prepared_controllers(run, controllers, files, closure)
+                        observed = checks._format_prepared_controllers(
+                            run, controllers, files, closure, solution=solution)
                     self.assertFalse(observed["qualification"])
-                    self.assertFalse(observed["solutionFormatting"])
-                    self.assertEqual(list(projects), [row["controller"] for row in observed["commands"]])
-                    self.assertEqual(4, run.command.call_count)
+                    self.assertEqual(solution is not None, observed["solutionFormatting"])
+                    scopes = [*projects, *(("solution",) if solution else ())]
+                    self.assertEqual(scopes, [row["controller"] for row in observed["commands"]])
+                    self.assertEqual(len(scopes), run.command.call_count)
                     self.assertEqual([
                         {"qualification": False, "phase": "inherited-prepared-formatting",
                          "controller": phase, "command": number}
-                        for number, phase in enumerate(projects, 1)
+                        for number, phase in enumerate(scopes, 1)
                     ], [evidence.load_json(line.encode()) for line in output.getvalue().splitlines()])
                 else:
                     code = ("InputChanged" if mutation.startswith("changed-") or mutation == "symlink" else
@@ -110,9 +119,46 @@ class CompositionDiagnosticTests(unittest.TestCase):
                             "EvidenceSchemaInvalid" if mutation == "missing-phase" else "ProofMismatch")
                     with contextlib.redirect_stdout(io.StringIO()), self.assertRaisesRegex(
                             evidence.ConformanceError, code):
-                        checks._format_prepared_controllers(run, controllers, files, closure)
-                    if mutation in ("duplicate", "missing-phase", "missing-assets"):
+                        checks._format_prepared_controllers(run, controllers, files, closure, solution=solution)
+                    if mutation in ("duplicate", "missing-phase", "missing-assets", "unbound-solution"):
                         run.command.assert_not_called()
+
+    def test_solution_formatter_preparation_restores_missing_projects_with_locked_inputs(self):
+        import conformance_composition_checks as checks
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            source = root / "source"
+            source.mkdir()
+            (root / "proofs").mkdir()
+            (source / "Hoard.slnx").write_text(
+                '<Solution><Project Path="One/One.csproj"/><Project Path="Two/Two.csproj">'
+                '<Build Project="false"/></Project></Solution>')
+            original = b'{"version":1,"dependencies":{"net10.0":{}}}'
+            for name in ("One", "Two"):
+                directory = source / name
+                directory.mkdir()
+                (directory / (name + ".csproj")).write_bytes(b"<Project/>")
+                (directory / "packages.lock.json").write_bytes(original)
+            (source / "One/obj").mkdir()
+            (source / "One/obj/project.assets.json").write_bytes(b"existing")
+            run = SimpleNamespace(root=root)
+            config, feed = root / "NuGet.Config", root / "feed"
+            feed.mkdir()
+
+            def restore(owner, arguments, **kwargs):
+                self.assertIs(run, owner)
+                self.assertEqual(["dotnet", "restore", str(source / "Two/Two.csproj"),
+                                  "--locked-mode", "--configfile", str(config)], arguments[:6])
+                self.assertNotIn("--force-evaluate", arguments)
+                directory = source / "Two/obj"
+                directory.mkdir()
+                (directory / "project.assets.json").write_bytes(b"fresh")
+
+            with mock.patch.object(checks.baselines, "_command", side_effect=restore) as command:
+                checks._prepare_solution_formatting(run, source, config, feed)
+            self.assertEqual(1, command.call_count)
+            for name in ("One", "Two"):
+                self.assertEqual(original, (source / name / "packages.lock.json").read_bytes())
 
     def test_controller_failure_exposes_only_revalidated_closed_progress(self):
         import conformance_composition_checks as checks

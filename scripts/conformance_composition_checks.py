@@ -11,6 +11,7 @@ import shutil
 import sys
 import time
 import uuid
+import xml.etree.ElementTree as ET
 from xml.sax.saxutils import escape
 
 import conformance_baselines as baselines
@@ -22,7 +23,7 @@ from conformance_inherited import (
     CONTROLLER_ERROR_SOURCES, INVENTORY_PATH, admit_discovery, controller_read_inputs, execution_scopes, inventory,
     verify_controller_baselines,
 )
-from conformance_lock_preparation import verify_project_lock
+from conformance_lock_preparation import prepare_project_lock, verify_project_lock
 from conformance_prepare import PREREQUISITES, Project, build_project
 from conformance_sdk_checks import BUDGETS, category_command_proof, environment, write_new
 from conformance_sources import read_bounded, runtime_arguments, runtime_settings
@@ -114,7 +115,40 @@ def _controller_phase(run, repository, source, phase, *, baseline_seal=None, sdk
     return value["result"], result.execution_record_sha256
 
 
-def _format_prepared_controllers(run, controllers, files, closure_path):
+def _prepare_solution_formatting(run, source, config, feed):
+    try:
+        solution = ET.fromstring(read_bounded(source / "Hoard.slnx", 65536))
+    except ET.ParseError:
+        raise evidence.ConformanceError("EvidenceSchemaInvalid") from None
+    projects = [evidence.relative_path(node.get("Path")) for node in solution.findall(".//Project")]
+    if solution.tag != "Solution" or not 1 <= len(projects) <= 128 or len(set(projects)) != len(projects):
+        raise evidence.ConformanceError("EvidenceSchemaInvalid")
+    records = []
+    for relative in projects:
+        project = source / relative
+        legacy.no_symlinks(project)
+        if project.suffix != ".csproj" or not project.is_file():
+            raise evidence.ConformanceError("InputChanged")
+        assets = project.parent / "obj/project.assets.json"
+        legacy.no_symlinks(assets)
+        if assets.is_file():
+            continue
+        alternate, record = prepare_project_lock(project, source, feed, "candidate")
+        properties = ["-p:UseSharedCompilation=false", "-nodeReuse:false", "-v", "quiet"]
+        if alternate is not None:
+            properties.append("-p:NuGetLockFilePath=" + str(alternate))
+        baselines._command(
+            run, ["dotnet", "restore", str(project), "--locked-mode", "--configfile", str(config), *properties],
+            cwd=source, cache_id="inherited-discovery")
+        if not assets.is_file():
+            raise evidence.ConformanceError("EvidenceIncomplete")
+        if record is not None:
+            verify_project_lock(record, source, feed)
+            records.append(record)
+    write_new(run.root / "proofs/inherited-solution-lock-derivations.json", evidence.canonical_bytes(records))
+
+
+def _format_prepared_controllers(run, controllers, files, closure_path, *, solution=None):
     descriptor = controllers["formatting"]
     path = run.root / evidence.relative_path(descriptor["path"])
     raw = read_bounded(path, 1024**2)
@@ -139,6 +173,12 @@ def _format_prepared_controllers(run, controllers, files, closure_path):
                 raise evidence.ConformanceError("ProofMismatch")
             seen.add(relative)
             selected.append((phase, project, assets))
+    if solution is not None:
+        legacy.no_symlinks(solution)
+        if (not solution.is_absolute() or not solution.is_relative_to(run.root)
+                or solution.name != "Hoard.slnx" or solution.relative_to(run.root).as_posix() not in files):
+            raise evidence.ConformanceError("ProofMismatch")
+        selected.append(("solution", solution, None))
     frozen = {**files, path.relative_to(run.root).as_posix(): descriptor["sha256"],
               closure_path.relative_to(run.root).as_posix(): evidence.digest(files)}
     if read_bounded(closure_path, 2 * 1024**2) != evidence.canonical_bytes(files):
@@ -157,7 +197,8 @@ def _format_prepared_controllers(run, controllers, files, closure_path):
         print(json.dumps({"qualification": False, "phase": "inherited-prepared-formatting",
                           "controller": phase, "command": len(commands) + 1}), flush=True)
         bound = dict(evidence.input_manifest(run.root, [
-            item.relative_to(run.root).as_posix() for item in (path, closure_path, project, assets)]))
+            item.relative_to(run.root).as_posix()
+            for item in (path, closure_path, project, *((assets,) if assets is not None else ()))]))
         arguments = ["dotnet", "format", str(project), "--verify-no-changes", "--no-restore", "-v", "quiet"]
         sequence = run.command_sequence + 1
         started = time.monotonic() * 1000
@@ -183,7 +224,7 @@ def _format_prepared_controllers(run, controllers, files, closure_path):
             raise evidence.ConformanceError("ProofMismatch")
         commands.append({"controller": phase, "projectSha256": files[project.relative_to(run.root).as_posix()],
                          "parentSha256": result.execution_record_sha256})
-    return {"qualification": False, "solutionFormatting": False, "commands": commands}
+    return {"qualification": False, "solutionFormatting": solution is not None, "commands": commands}
 
 
 def expected_rows():
@@ -290,6 +331,7 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     controllers, controller_parent = _controller_phase(
         run, repository, source, "controllers", baseline_seal=baseline_seal,
         sdk_package=feed / f"{SDK}.0.1.0.nupkg", logger_path=logger)
+    _prepare_solution_formatting(run, source, config, feed)
     historical = verify_controller_baselines(run, baseline_seal)
     root = run.root / "stores/inherited-runtime"
     root.mkdir(mode=0o700)
@@ -301,10 +343,12 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
     files = controller_read_inputs(
         run.root, controllers["manifests"],
         extra=(normative, run.root / controllers["formatting"]["path"], run.root / baseline_seal["path"],
+               run.root / "proofs/inherited-solution-lock-derivations.json",
+               *(source / name for name in sources),
                *(run.root / name for name in historical["files"])))
     closure_path = run.root / "proofs/inherited-controller-read-inputs.json"
     write_new(closure_path, evidence.canonical_bytes(files))
-    formatting = _format_prepared_controllers(run, controllers, files, closure_path)
+    formatting = _format_prepared_controllers(run, controllers, files, closure_path, solution=source / "Hoard.slnx")
     prior = evidence.load_json(read_bounded(run.root / "proofs/composition-inputs.json", 2 * 1024**2))
     owner_raw = read_bounded(run.root / "runtime-owner.json", 65536)
     owner = evidence.load_json(owner_raw)
@@ -605,6 +649,8 @@ def execute(repository, destination):
             *(Project(f"tests/fixtures/conformance/Bindings/{name}/{name}.csproj",
                       f"Hoard.Fixtures.Conformance.Bindings.{name}")
               for name in ("Sqlite", "Memory", "Local", "ObjectSemantics")),
+            Project("tests/fixtures/conformance/Contributor/Contributor.csproj",
+                    "Hoard.Fixtures.Conformance.Contributor"),
             Project("tests/fixtures/conformance/Host/Host.csproj", HOST),
         )
         records = []

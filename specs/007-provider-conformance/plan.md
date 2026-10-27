@@ -189,6 +189,30 @@ Local full-scope execution observes 548 tests, zero failures/errors/unexpected
 diagnostic bytes and twenty native skips, returning 2 honestly. Fresh Linux
 full-scope execution and input-bound controller tooling acceptance are pending.
 
+### Native formatter and complete tooling confirmation
+
+Exact `78a8486` passes run40467841673/job122069149790: forty individually
+admitted native formatter commands (foundation7/lifecycle9/configuration12/
+discovery12), CP36/110, inherited525/58, all 2,281 unchanged bound inputs and
+actual release. Solution formatting remains false at this checkpoint.
+CP input `601c5b8e81f68d9585b45419677e1d4ada3838d8273f4649c0d84060857e6db2`;
+scope admission `75e47b81dbbb66d2f51b93770538da1d7764595fe34b6d96fbf36ead5764a32c`;
+historical seal `f7037a4d0471ccee063b089f921f4f44281323a5ff9bb35cfd0b30cf9c88a2bc`.
+Exact `7ff5499` independently passes the full tooling scope in
+run40468960470/job122073676284: all 548 tests execute, with zero failures,
+errors, skips or unexpected diagnostic bytes. This is not yet a
+controller-bound tooling proof or full-controller qualification.
+
+The next formatting increment includes a distinct whole-source-solution native
+command. Missing assets are prepared with locked restores, including projects
+marked `Build=false`; the private candidate feed now also builds the contributor
+package needed by the solution's consumer. Original source locks remain
+unchanged; any local-archive lock rebinding retains its derivation. Every
+tracked source input joins the frozen read closure before formatting.
+Nine parent/solution tests and all 437 conformance tooling tests pass locally
+(twenty explicit native skips). Native confirmation is pending; full foundation
+fixtures, mutation and attributable controller-tooling obligations remain open.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the
