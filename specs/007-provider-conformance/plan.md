@@ -282,6 +282,14 @@ bytes. The outside sentinel remains unchanged. Native confirmation is pending;
 closed failure locations identify only allowlisted script names/line numbers,
 never raw exception messages or paths.
 
+Run40451074081 at `85b8917` confirms the foundation copy repair and reaches
+lifecycle boundary tests, where implicit parent-feed lookup cannot find the
+native `feed/candidate` SDK archive. Borrowed transport now explicitly binds
+that owned archive and the already-prepared logger, rehashing both around use
+and rejecting foreign/changed inputs. No checkout-local logger build is needed.
+Existing standalone lookup remains unchanged without overrides. Native replay
+is pending; no earlier failed receipt becomes successful.
+
 Closed store snapshots preserve actual pre-root/admitted I/O counters, selected
 store readiness, inactive alternate effects and lifecycle outcomes. Restart
 snapshots preserve actual pending/settled request/task observations, enabled

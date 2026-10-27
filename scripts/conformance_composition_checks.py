@@ -133,7 +133,9 @@ def _inherited_runtime(run, repository, source, sources, config, feed):
                 ["dotnet", "build", str(source / relative), "-c", "Release", "--no-restore"]):
             baselines._command(run, [*arguments, *properties], cwd=source, cache_id="inherited-discovery")
     print(json.dumps({"qualification": False, "phase": "inherited-controller-preparation"}), flush=True)
-    controllers = prepare_controller_evidence(repository, run.root, source)
+    controllers = prepare_controller_evidence(
+        repository, run.root, source, sdk_package=feed / f"{SDK}.0.1.0.nupkg",
+        logger_path=source / f"tests/contracts/{LOGGER}/bin/Release/net10.0/{LOGGER}.dll")
     root = run.root / "stores/inherited-runtime"
     root.mkdir(mode=0o700)
     normative = root / "specs/004-module-discovery/contracts/openapi.json"

@@ -5035,6 +5035,15 @@ copying. Native confirmation of this repair is pending. Failure output also
 retains only allowlisted repository script names/line numbers, not raw exception
 messages, paths or child diagnostics.
 
+Run40451074081 at `85b8917` confirms foundation preparation now passes, then
+fails the lifecycle boundary transport at its parent-directory SDK-feed lookup.
+The native feed is `feed/candidate`, not the private helper's former `feed`
+layout. Borrowed boundary invocations now receive explicit owned SDK-archive
+and prepared logger paths, checked before/after execution. This also prevents
+the logger helper from building an implicit checkout-local copy. Existing
+standalone callers retain their original lookup when no override is supplied.
+Native replay of this binding repair is pending; earlier failures remain failed.
+
 T041 now consumes the separately packed `Hoard.Fixtures.Conformance.Host`
 instead of compile-linking Host source in package mode. Both existing CP-01/02
 rows first fail the added assembly-owner assertion, then pass with the same

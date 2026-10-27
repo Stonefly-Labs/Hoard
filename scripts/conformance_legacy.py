@@ -545,7 +545,8 @@ def composition_control(args, value):
     return value
 
 
-def composition_controller_command(args, *, cwd=None, env=None, expected=None, input=None):
+def composition_controller_command(args, *, cwd=None, env=None, expected=None, input=None,
+                                   sdk_package=None, logger_path=None):
     """Project borrowed controller diagnostics before they can become retained evidence."""
     if not isinstance(args, (tuple, list)) or len(args) < 2:
         raise RuntimeError("Legacy composition command PrerequisiteMissing.")
@@ -553,7 +554,7 @@ def composition_controller_command(args, *, cwd=None, env=None, expected=None, i
         if (len(args) < 3 or Path(args[2]).name != "Hoard.Architecture.Tests.csproj"
                 or expected is not None or input is not None):
             raise RuntimeError("Legacy composition command PrerequisiteMissing.")
-        tested = test_command(args, cwd=cwd, env=env)
+        tested = test_command(args, cwd=cwd, env=env, sdk_package=sdk_package, logger_path=logger_path)
         return subprocess.CompletedProcess(args, tested.returncode, tested.stdout.decode("utf-8", errors="strict"))
     if not (args[0] == "git" and args[1] in ("rev-parse", "archive", "merge-base", "hash-object")
             or args[0] == "dotnet" and (args[1] in ("restore", "build", "pack", "format", "--version")
@@ -928,7 +929,8 @@ def validate_transport(root, manifest, result, *, started, ended, assertion=None
     return observed, failures
 
 
-def test_command(args, *, cwd=None, env=None, assertion=None, allow_failure=False):
+def test_command(args, *, cwd=None, env=None, assertion=None, allow_failure=False,
+                 sdk_package=None, logger_path=None):
     """Replace a legacy TRX invocation with the existing pre-persistence safe logger."""
     args = tuple(map(str, args))
     options = {}
@@ -966,8 +968,9 @@ def test_command(args, *, cwd=None, env=None, assertion=None, allow_failure=Fals
     runtime = resources / "assembly"
     _copy_runtime(assembly.parent, runtime)
     logger_output = Path(__file__).resolve().parents[1] / "tests/contracts/Hoard.Conformance.TestLogger/bin/Release/net10.0"
-    logger = logger_output / "Hoard.Conformance.TestLogger.dll"
-    if not logger.is_file():
+    logger = Path(logger_path) if logger_path is not None else logger_output / "Hoard.Conformance.TestLogger.dll"
+    no_symlinks(logger)
+    if not logger.is_file() and logger_path is None:
         project = logger_output.parents[2] / "Hoard.Conformance.TestLogger.csproj"
         if not (project.parent / "obj/project.assets.json").is_file():
             command(("dotnet", "restore", str(project), "--locked-mode", "-v", "quiet"))
@@ -976,11 +979,14 @@ def test_command(args, *, cwd=None, env=None, assertion=None, allow_failure=Fals
         raise RuntimeError("Legacy runtime safe logger prerequisite is missing.")
     shutil.copy2(logger, runtime / logger.name)
     sdk = runtime / "Hoard.Testing.Conformance.dll"
-    feed = next((parent / "feed" for parent in (destination.parent, *assembly.parents)
-                 if (parent / "feed/Hoard.Testing.Conformance.0.1.0.nupkg").is_file()), None)
-    if feed is None:
-        raise RuntimeError("Legacy runtime requires its actual shared SDK package.")
-    archive = feed / "Hoard.Testing.Conformance.0.1.0.nupkg"
+    if sdk_package is None:
+        feed = next((parent / "feed" for parent in (destination.parent, *assembly.parents)
+                     if (parent / "feed/Hoard.Testing.Conformance.0.1.0.nupkg").is_file()), None)
+        if feed is None:
+            raise RuntimeError("Legacy runtime requires its actual shared SDK package.")
+        archive = feed / "Hoard.Testing.Conformance.0.1.0.nupkg"
+    else:
+        archive = Path(sdk_package)
     no_symlinks(archive)
     if archive.stat().st_size > 64 * 1024**2:
         raise RuntimeError("Legacy runtime OutputLimitExceeded.")

@@ -20,7 +20,7 @@ ASSEMBLIES = frozenset(("Hoard.Composition.Tests", "Hoard.Architecture.Tests"))
 
 
 @contextmanager
-def controller_transport(repository, owner):
+def controller_transport(repository, owner, *, sdk_package=None, logger_path=None):
     import configuration_evidence as configuration
     import discovery_evidence as discovery
     import foundation_evidence as foundation
@@ -40,6 +40,18 @@ def controller_transport(repository, owner):
                    if key.startswith("HOARD_") or key == "NUGET_PACKAGES"}
     preparations = {}
     state = {"lockDerivations": [], "inputFiles": {}, "phase": "preparation", "commandSequence": 0}
+    runtime_inputs = {}
+    if sdk_package is not None or logger_path is not None:
+        if sdk_package is None or logger_path is None:
+            raise ConformanceError("PrerequisiteMissing")
+        for path in (sdk_package, logger_path):
+            path = Path(path)
+            legacy.no_symlinks(path)
+            if (not path.is_absolute() or not path.is_file()
+                    or not path.resolve(strict=True).is_relative_to(owner)
+                    or not 0 < path.stat().st_size <= 64 * 1024**2):
+                raise ConformanceError("OwnershipInvalid")
+            runtime_inputs[path] = legacy._hash(path)
 
     def command(*arguments, cwd=None, env=None, expected=None, input=None):
         if not arguments or any(not isinstance(argument, str) for argument in arguments):
@@ -48,6 +60,14 @@ def controller_transport(repository, owner):
         arguments = list(arguments)
         effective = dict(env or {})
         bound = {}
+        runtime = {}
+        if arguments[:2] == ["dotnet", "test"] and runtime_inputs:
+            bound.update(runtime_inputs)
+            runtime = {"sdk_package": sdk_package, "logger_path": logger_path}
+            for path, hashed in runtime_inputs.items():
+                if legacy._hash(path) != hashed:
+                    raise ConformanceError("InputChanged")
+                state["inputFiles"][path.relative_to(owner).as_posix()] = hashed
         for key in ("HOARD_FOUNDATION_EVIDENCE", "HOARD_LIFECYCLE_EVIDENCE",
                     "HOARD_CONFIGURATION_EVIDENCE", "HOARD_DISCOVERY_EVIDENCE"):
             if key not in effective and key in os.environ:
@@ -87,7 +107,7 @@ def controller_transport(repository, owner):
         try:
             return legacy.composition_controller_command(
                 arguments, cwd=repository if arguments[0] == "git" else cwd,
-                env=effective, expected=expected, input=input)
+                env=effective, expected=expected, input=input, **runtime)
         except RuntimeError as error:
             codes = ("CommandFailed", "UnknownDiagnostic", "PrerequisiteMissing", "OutputLimitExceeded")
             code = next((code for code in codes
@@ -262,7 +282,7 @@ def execution_scopes(discoveries, methods):
     return {key: tuple(rows) for key, rows in sorted(scopes.items())}
 
 
-def prepare_controller_evidence(repository, owner, source):
+def prepare_controller_evidence(repository, owner, source, *, sdk_package=None, logger_path=None):
     """Prepare fresh borrowed evidence, without claiming full controller acceptance."""
     import configuration_evidence as configuration
     import discovery_evidence as discovery
@@ -278,7 +298,7 @@ def prepare_controller_evidence(repository, owner, source):
     if source == owner or not source.is_relative_to(owner):
         raise ConformanceError("OwnershipInvalid")
     manifests, phases = {}, {}
-    with controller_transport(repository, owner) as controls:
+    with controller_transport(repository, owner, sdk_package=sdk_package, logger_path=logger_path) as controls:
         for phase in ("foundation", "lifecycle", "configuration", "discovery"):
             controls["phase"] = phase
             print(json.dumps({"qualification": False, "phase": "inherited-controller-preparation",

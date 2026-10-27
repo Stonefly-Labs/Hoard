@@ -25,6 +25,32 @@ from conformance_evidence import ConformanceError, canonical_bytes, file_sha256
 
 
 class FrozenCompositionInventoryTests(unittest.TestCase):
+    def test_controller_runtime_inputs_are_explicit_owned_and_immutable(self):
+        import lifecycle_evidence as lifecycle
+        import conformance_legacy as legacy
+        with tempfile.TemporaryDirectory() as temporary:
+            owner = Path(temporary).resolve()
+            package, logger = owner / "sdk.nupkg", owner / "logger.dll"
+            package.write_bytes(b"package")
+            logger.write_bytes(b"logger")
+            with inherited.controller_transport(
+                    ROOT, owner, sdk_package=package, logger_path=logger) as controls, patch.object(
+                    legacy, "composition_controller_command",
+                    return_value=subprocess.CompletedProcess([], 0, "")) as command:
+                lifecycle.run("dotnet", "test", "Hoard.Architecture.Tests.csproj")
+                self.assertEqual(package, command.call_args.kwargs["sdk_package"])
+                self.assertEqual(logger, command.call_args.kwargs["logger_path"])
+                self.assertEqual({package.name: file_sha256(package), logger.name: file_sha256(logger)},
+                                 controls["inputFiles"])
+                package.write_bytes(b"changed")
+                with self.assertRaisesRegex(ConformanceError, "InputChanged"):
+                    lifecycle.run("dotnet", "test", "Hoard.Architecture.Tests.csproj")
+                self.assertEqual(1, command.call_count)
+            with self.assertRaisesRegex(ConformanceError, "OwnershipInvalid"):
+                with inherited.controller_transport(
+                        ROOT, owner, sdk_package=package, logger_path=ROOT / "global.json"):
+                    self.fail("Foreign runtime input was admitted")
+
     def test_native_preparation_failure_location_cannot_persist_exception_text_or_paths(self):
         import conformance_composition_checks as checks
         for error in (RuntimeError("private-canary"), PermissionError(13, "private-canary", "/private-canary")):
