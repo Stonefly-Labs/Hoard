@@ -6,7 +6,7 @@ using Microsoft.VisualStudio.TestPlatform.ObjectModel.Logging;
 
 namespace Hoard.Conformance.TestLogger;
 
-public sealed record RuntimeDiscoveredCase(string TestIdentity, string FullyQualifiedName);
+public sealed record RuntimeDiscoveredCase(string TestIdentity, string FullyQualifiedName, Guid TestCaseId);
 public sealed record RuntimeDiscoveryRequest(string[] Methods, RuntimeFile[] Assemblies);
 
 public sealed class RuntimeCaseDiscovery : ITestDiscoveryEventsHandler
@@ -46,6 +46,7 @@ public sealed class RuntimeCaseDiscovery : ITestDiscoveryEventsHandler
     private readonly string assemblySha256;
     private readonly HashSet<string> methods;
     private readonly Dictionary<string, RuntimeDiscoveredCase> cases = new(StringComparer.Ordinal);
+    private readonly HashSet<Guid> caseIds = [];
     private int observed;
     private bool completed;
 
@@ -81,7 +82,8 @@ public sealed class RuntimeCaseDiscovery : ITestDiscoveryEventsHandler
                 var identity = test.FullyQualifiedName + "(testCaseSha256: \""
                     + RuntimeSafety.Hash(new UTF8Encoding(false, true).GetBytes(
                         test.Id.ToString("D") + "\n" + test.DisplayName)) + "\")";
-                RuntimeSafety.Require(cases.TryAdd(identity, new(identity, test.FullyQualifiedName)),
+                RuntimeSafety.Require(caseIds.Add(test.Id)
+                    && cases.TryAdd(identity, new(identity, test.FullyQualifiedName, test.Id)),
                     "EvidenceIncomplete");
             }
         }

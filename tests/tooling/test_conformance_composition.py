@@ -280,7 +280,8 @@ class CompositionDiagnosticTests(unittest.TestCase):
         script = workflow.split("<<'PY'\n", 1)[1].split("\n          PY", 1)[0]
         code = compile(textwrap.dedent(script), "<composition-workflow>", "exec")
         for mutation in ("none", "changed-bytes", "resealed-foreign-root", "false-qualification",
-                         "missing-mutation", "missing-repair", "mutation-qualification"):
+                         "missing-mutation", "missing-repair", "mutation-qualification",
+                         "missing-adapter", "missing-discovery-suite"):
             with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
                 root = Path(temporary).resolve()
                 (root / "proofs").mkdir()
@@ -326,6 +327,11 @@ class CompositionDiagnosticTests(unittest.TestCase):
                             "mutations": 11 if mutation == "missing-mutation" else 12,
                             "negativeParameters": 29,
                             "repairedParameters": 28 if mutation == "missing-repair" else 29,
+                        },
+                        "discoveryScenarios": {
+                            "qualification": False, "parameters": 137,
+                            "adapterScenarios": 3 if mutation == "missing-adapter" else 4,
+                            "suites": 9 if mutation == "missing-discovery-suite" else 10,
                         },
                     },
                 }

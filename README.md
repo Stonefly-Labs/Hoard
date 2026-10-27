@@ -242,6 +242,14 @@ Historical read maps are distinguished from retained immutable inputs; restored
 mutable source paths are not claimed unchanged. The native mutation phase and
 strict completeness checks are integrated, with Linux confirmation pending.
 Native full-controller acceptance and T046 remain open.
+Opaque discovery now also retains each actual VSTest case GUID. The four
+mandatory adapter scenarios are corroborated by recomputing the existing
+GUID/display hash from their frozen literal displays, without persisting raw
+displays or deriving invented labels. Actual local discovery confirms all four;
+the inherited inspector joins all 137 discovery parameters, every original
+suite class across ten groups and D01..D40 to independently admitted witnesses.
+Missing/substituted case GUIDs, duplicate parameters and failed scopes reject
+or remain incomplete. Native confirmation of this increment is pending.
 The repaired Linux safe-unit wrapper also passes at `8f46a2c`: 433 tests,
 zero failures/errors/skips. The wrapper now supports `--all-tooling`, and CI
 selects that complete scope instead of only `test_conformance_*.py`.

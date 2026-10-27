@@ -9,6 +9,27 @@ namespace Hoard.Conformance.Tests;
 
 public sealed class RuntimeDiscoveryTests
 {
+    [Fact]
+    public void Opaque_identity_binds_actual_case_id_without_retaining_private_display()
+    {
+        using var owned = new RuntimeLoggerTests.OwnedInput();
+        const string method = "Hoard.Frozen.Check";
+        var test = new TestCase(method, new Uri("executor://xunit/VsTestRunner2/netcore/"), owned.AssemblyPath)
+        { Id = Guid.NewGuid(), DisplayName = method + "(value: \"/private/canary\")" };
+        var collector = new RuntimeCaseDiscovery(owned.AssemblyPath, [method]);
+        collector.HandleDiscoveredTests([test]);
+        collector.HandleDiscoveryComplete(1, null, false);
+        var observed = Assert.Single(collector.Cases);
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(observed, RuntimeLoggerTests.Json);
+        using var document = JsonDocument.Parse(bytes);
+        Assert.Equal(test.Id, document.RootElement.GetProperty("testCaseId").GetGuid());
+        var digest = Convert.ToHexStringLower(SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(test.Id.ToString("D") + "\n" + test.DisplayName)));
+        Assert.Equal(method + "(testCaseSha256: \"" + digest + "\")", observed.TestIdentity);
+        Assert.DoesNotContain("private", System.Text.Encoding.UTF8.GetString(bytes), StringComparison.Ordinal);
+        Assert.DoesNotContain("canary", System.Text.Encoding.UTF8.GetString(bytes), StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("none")]
     [InlineData("changed-image")]
@@ -45,6 +66,7 @@ public sealed class RuntimeDiscoveryTests
     [InlineData("none", ConformanceDiagnosticCode.None)]
     [InlineData("missing-method", ConformanceDiagnosticCode.WitnessMissing)]
     [InlineData("duplicate", ConformanceDiagnosticCode.EvidenceIncomplete)]
+    [InlineData("duplicate-id", ConformanceDiagnosticCode.EvidenceIncomplete)]
     [InlineData("aborted", ConformanceDiagnosticCode.EvidenceIncomplete)]
     [InlineData("wrong-count", ConformanceDiagnosticCode.EvidenceIncomplete)]
     [InlineData("foreign-source", ConformanceDiagnosticCode.ProofMismatch)]
@@ -60,6 +82,8 @@ public sealed class RuntimeDiscoveryTests
             new Uri("executor://xunit/VsTestRunner2/netcore/"), owned.AssemblyPath)
         { Id = Guid.NewGuid(), DisplayName = method + "(value: \"/private/canary\"...)" }).ToArray();
         if (mutation == "duplicate") { tests[1].Id = tests[0].Id; }
+        if (mutation == "duplicate-id")
+        { tests[1].Id = tests[0].Id; tests[1].DisplayName = method + "(value: \"other\")"; }
         if (mutation == "foreign-source") { tests[1].Source = owned.OwnerPath; }
         collector.HandleDiscoveredTests(tests);
         if (mutation == "changed-assembly") { File.AppendAllText(owned.AssemblyPath, "changed"); }

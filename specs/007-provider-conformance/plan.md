@@ -260,6 +260,23 @@ missing repairs and false qualification. Linux confirmation remains pending.
 Full-controller tooling/provenance obligations remain open. No task or
 controller/profile completion flag advances; T046 remains unchecked.
 
+### Complete discovery scenario and suite attribution
+
+The actual discovery driver additionally emits each VSTest case GUID. The
+inspector independently recomputes the existing GUID/display hash for all four
+mandatory original adapter literals and joins those opaque identities to
+admitted witnesses. It retains neither private raw displays nor unsalted
+private-display hashes and does not invent textual parameter labels. Actual
+local driver execution corroborates all four parameters. Complete discovery
+coverage includes the frozen 137 parameters, every original suite class across
+ten groups and D01..D40; successful coverage passes the unchanged original
+case/suite verifiers. Missing/substituted GUIDs, duplicate parameters, failed
+adapter scopes and omitted CI adapter/suite counts have focused controls.
+The new logger identity control and two workflow omissions first fail before
+their repairs. All fifteen discovery logger cases pass, as do the focused
+inherited controls. Linux replay and controller-bound tooling remain pending;
+this increment does not close T046 or advance qualification.
+
 ## Shared authority admission and explicit restart controls
 
 T045 adds a package-only `OwnershipFixtures.ControlledAdmission` that calls the

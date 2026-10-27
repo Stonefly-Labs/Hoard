@@ -492,6 +492,12 @@ def _inherited_runtime(run, repository, source, sources, config, feed, baseline_
         "controllerPreparationParentSha256": controller_parent,
         "commands": commands, "discoveries": discovered, "controllerPreparation": controllers["phases"],
         "preparedFormatting": formatting,
+        "discoveryScenarios": {
+            "qualification": False, "sha256": evidence.digest(admitted["discoveryCoverage"]),
+            "parameters": len(admitted["discoveryCoverage"]["scenarios"]),
+            "adapterScenarios": len(admitted["discoveryCoverage"]["adapterScenarios"]),
+            "suites": len(admitted["discoveryCoverage"]["suites"]),
+        },
         "discoveryMutations": {
             "qualification": False, "parentSha256": mutation_parent, "resultSha256": evidence.digest(mutations),
             "mutations": len(mutations["mutations"]),

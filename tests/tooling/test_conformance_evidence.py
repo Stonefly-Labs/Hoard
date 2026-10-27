@@ -4326,6 +4326,7 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
 
     def inherited_transports(self, defect=None):
         import conformance_inherited as inherited
+        import discovery_evidence as discovery
 
         raw = (ROOT / inherited.INVENTORY_PATH).read_bytes()
         frozen = evidence.load_json(raw)
@@ -4342,10 +4343,21 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                         "fullyQualifiedName": name,
                         "testIdentity": name + '(testCaseSha256: "' + f"{index:064x}" + '")',
                     } for index in range(entry["parameterCount"]))
+            for name in {scenario.split("(")[0] for scenario in discovery.REQUIRED_ADAPTER_SCENARIOS}:
+                if not name.startswith(assembly + "."):
+                    continue
+                selected = [row for row in discovered if row["fullyQualifiedName"] == name]
+                scenarios = [scenario for scenario in discovery.REQUIRED_ADAPTER_SCENARIOS
+                             if scenario.split("(")[0] == name]
+                for row, scenario in zip(selected, scenarios, strict=True):
+                    case_id = str(uuid.uuid4())
+                    row.update(testCaseId=case_id, testIdentity=name + '(testCaseSha256: "' + hashlib.sha256(
+                        (case_id + "\n" + scenario).encode()).hexdigest() + '")')
             discoveries[assembly] = evidence.canonical_bytes(discovered)
             for row in discovered:
                 scopes.setdefault((assembly, row["fullyQualifiedName"].rsplit(".", 1)[0]), []).append({
-                    **row, "assemblyId": "test-assembly", "packageId": "Hoard.Testing.Conformance",
+                    **{key: row[key] for key in ("testIdentity", "fullyQualifiedName")},
+                    "assemblyId": "test-assembly", "packageId": "Hoard.Testing.Conformance",
                     "bindingId": "none", "matrixId": "inherited." + groups[row["fullyQualifiedName"]],
                     "caseId": "inherited-" + groups[row["fullyQualifiedName"]], "assertionSymbol": None,
                 })
@@ -4383,7 +4395,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
             for row_index, row in enumerate(expected):
                 execution = (reused_execution if defect == "reused-execution" and row_index == 0
                              else str(uuid.uuid4()))
-                failed = defect == "failed" and scope_index == row_index == 0
+                failed = (defect == "failed" and scope_index == row_index == 0
+                          or defect == "failed-adapter" and ".DiscoveryKestrelAdapterTests." in row["fullyQualifiedName"])
                 proof = {
                     **self.proof, "executionId": execution, "attemptId": attempt_id,
                     "testIdentity": row["testIdentity"], "bindingId": "none", "matrixId": row["matrixId"],
@@ -4398,7 +4411,8 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     "status": proof["status"], "proofSha256": evidence.digest(proof),
                 })
             witnesses = b"".join(evidence.canonical_bytes(row) + b"\n" for row in records)
-            failed = defect in ("failed", "incomplete-scope") and scope_index == 0
+            failed = (defect in ("failed", "incomplete-scope") and scope_index == 0
+                      or defect == "failed-adapter" and test_class.endswith(".DiscoveryKestrelAdapterTests"))
             completion = {
                 **self.completion, "attemptId": attempt_id, "inputSha256": evidence.digest(local),
                 "manifestSha256": evidence.digest(manifest), "recordsSha256": hashlib.sha256(witnesses).hexdigest(),
@@ -4453,6 +4467,36 @@ class ConformanceRuntimeIngestionTests(unittest.TestCase):
                     options["discoveries"].pop("Hoard.Architecture.Tests")
                 with self.assertRaises(evidence.ConformanceError):
                     evidence.inspect_inherited_runtime_attempts(**options)
+
+    def test_inherited_discovery_scenarios_bind_actual_case_ids_not_invented_parameter_labels(self):
+        for defect in ("none", "wrong-case-id", "missing-case-id", "duplicate-parameter"):
+            with self.subTest(defect=defect):
+                options = self.inherited_transports()
+                assembly = "Hoard.Composition.Tests"
+                rows = evidence.load_json(options["discoveries"][assembly])
+                selected = [row for row in rows if "testCaseId" in row]
+                if defect == "wrong-case-id":
+                    selected[0]["testCaseId"] = str(uuid.uuid4())
+                elif defect == "missing-case-id":
+                    selected[0].pop("testCaseId")
+                elif defect == "duplicate-parameter":
+                    selected[1]["testCaseId"] = selected[0]["testCaseId"]
+                options["discoveries"][assembly] = evidence.canonical_bytes(rows)
+                if defect == "none":
+                    inspected = evidence.inspect_inherited_runtime_attempts(**options)
+                    coverage = inspected["discoveryCoverage"]
+                    self.assertEqual(4, len(coverage["adapterScenarios"]))
+                    self.assertEqual(10, len(coverage["suites"]))
+                    self.assertTrue(all(row["passed"] for row in coverage["suites"]))
+                    self.assertTrue(set(coverage["adapterScenarios"]) <= set(coverage["scenarios"]))
+                    self.assertTrue(all("(testCaseSha256:" in identity for identity in coverage["scenarios"]))
+                else:
+                    with self.assertRaises(evidence.ConformanceError):
+                        evidence.inspect_inherited_runtime_attempts(**options)
+        failed = evidence.inspect_inherited_runtime_attempts(**self.inherited_transports("failed-adapter"))
+        self.assertFalse(failed["executionComplete"])
+        self.assertFalse(next(row["passed"] for row in failed["discoveryCoverage"]["suites"]
+                              if row["id"] == "adapters"))
 
     def test_inherited_case_coverage_uses_complete_actual_parameters_and_preserves_failures(self):
         for defect in (None, "failed", "incomplete-scope"):

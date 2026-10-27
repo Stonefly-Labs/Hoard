@@ -5334,6 +5334,20 @@ pending. Full-controller tooling/provenance obligations and T046 remain open.
 Provider contracts, public examples and architecture diagrams are unaffected:
 this increment changes private evidence execution, not provider behavior.
 
+Opaque discovery records now carry the actual VSTest case GUID in addition to
+their existing opaque identity and selected method. A GUID alone never proves a
+scenario: the inherited inspector recomputes the identity's existing hash using
+each original mandatory adapter display and requires exactly one matching
+actual case. No raw display is retained, no unsalted private-display digest is
+introduced, and no literal label is invented from an opaque hash. A real local
+driver run corroborates all four adapter parameters. Complete discovery joins
+137 parameters, all ten original suites/classes and D01..D40 to their admitted
+runtime witnesses; failed scopes cannot produce passed suites. The original
+case/suite verifiers still run for successful coverage. Missing/substituted
+GUIDs, duplicate parameters, and omitted adapter/suite summaries reject in
+focused red/green controls. This is diagnostic provenance, not native or
+full-controller qualification; Linux confirmation remains pending.
+
 Native run40463591718 at exact `cd9102977d47ecc486332cf44044bcea6c98d20d`,
 job122053635177, passes historical/four-family batch preparation, actual BCL
 consumer presentation admission, CP36/110, inherited525/58, all 2,022 unchanged

@@ -255,6 +255,8 @@ def inventory(data, sources):
 
 
 def admit_discovery(data, methods, *, assembly):
+    from conformance_evidence import _uuid
+
     if assembly not in ASSEMBLIES:
         raise ConformanceError("WitnessMissing")
     expected = {name: entry for name, entry in methods.items() if name.startswith(assembly + ".")}
@@ -262,21 +264,29 @@ def admit_discovery(data, methods, *, assembly):
     if not expected or not isinstance(rows, list) or not 1 <= len(rows) <= 10000:
         raise ConformanceError("WitnessMissing")
     seen = set()
+    case_ids = set()
     counts = Counter()
     admitted = []
     for row in rows:
-        if (not isinstance(row, dict) or set(row) != {"testIdentity", "fullyQualifiedName"}
+        if (not isinstance(row, dict) or set(row) not in (
+                {"testIdentity", "fullyQualifiedName"}, {"testIdentity", "fullyQualifiedName", "testCaseId"})
                 or not isinstance(row["fullyQualifiedName"], str) or row["fullyQualifiedName"] not in expected
                 or not isinstance(row["testIdentity"], str)
                 or re.fullmatch(re.escape(row["fullyQualifiedName"])
                                 + r'\(testCaseSha256: "[0-9a-f]{64}"\)', row["testIdentity"]) is None
                 or row["testIdentity"] in seen):
             raise ConformanceError("WitnessMissing")
+        if "testCaseId" in row:
+            case_id = _uuid(row["testCaseId"])
+            if case_id in case_ids:
+                raise ConformanceError("WitnessMissing")
+            case_ids.add(case_id)
         seen.add(row["testIdentity"])
         counts[row["fullyQualifiedName"]] += 1
         entry = expected[row["fullyQualifiedName"]]
         admitted.append({
-            **row, "assemblyId": "test-assembly", "packageId": "Hoard.Testing.Conformance",
+            **{key: row[key] for key in ("testIdentity", "fullyQualifiedName")},
+            "assemblyId": "test-assembly", "packageId": "Hoard.Testing.Conformance",
             "bindingId": "none", "matrixId": "inherited." + entry["group"],
             "caseId": "inherited-" + entry["group"], "assertionSymbol": None,
         })

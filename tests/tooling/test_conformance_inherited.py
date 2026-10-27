@@ -565,7 +565,8 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                  "testIdentity": name + '(testCaseSha256: "' + f"{index:064x}" + '")'}
                 for name, entry in methods.items() if name.startswith("Hoard.Composition.Tests.")
                 for index in range(entry["parameterCount"])]
-        for mutation in ("none", "missing", "duplicate", "changed-method", "raw-display", "extra-key"):
+        for mutation in ("none", "missing", "duplicate", "changed-method", "raw-display", "extra-key",
+                         "case-id", "invalid-case-id", "duplicate-case-id"):
             altered = copy.deepcopy(rows)
             if mutation == "missing":
                 altered.pop()
@@ -577,8 +578,14 @@ class FrozenCompositionInventoryTests(unittest.TestCase):
                 altered[-1]["testIdentity"] = altered[-1]["fullyQualifiedName"] + '(value: "canary")'
             elif mutation == "extra-key":
                 altered[-1]["privateDisplay"] = "canary"
+            elif mutation in ("case-id", "invalid-case-id", "duplicate-case-id"):
+                altered[-1]["testCaseId"] = "10000000-0000-0000-0000-000000000001"
+                if mutation == "invalid-case-id":
+                    altered[-1]["testCaseId"] = "private-canary"
+                elif mutation == "duplicate-case-id":
+                    altered[0]["testCaseId"] = altered[-1]["testCaseId"]
             with self.subTest(mutation=mutation):
-                if mutation == "none":
+                if mutation in ("none", "case-id"):
                     self.assertEqual(len(rows), len(inherited.admit_discovery(
                         canonical_bytes(altered), methods, assembly="Hoard.Composition.Tests")))
                 else:

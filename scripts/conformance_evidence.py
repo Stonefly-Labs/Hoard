@@ -1703,7 +1703,8 @@ def inspect_inherited_runtime_attempts(*, inventory_data, sources, discoveries, 
     from conformance_inherited import execution_scopes, inventory
 
     sources = _hash_map(sources)
-    scopes = execution_scopes(discoveries, inventory(inventory_data, sources))
+    methods = inventory(inventory_data, sources)
+    scopes = execution_scopes(discoveries, methods)
     inventory_sha = hashlib.sha256(inventory_data).hexdigest()
     discovery_hashes = MappingProxyType({
         assembly: hashlib.sha256(raw).hexdigest() for assembly, raw in discoveries.items()})
@@ -1773,12 +1774,42 @@ def inspect_inherited_runtime_attempts(*, inventory_data, sources, discoveries, 
     witnesses = {row["testIdentity"]: (row["status"], scope["observation"]["diagnosticCode"])
                  for scope in admitted for row in scope["observation"]["witnesses"]}
     coverage = {}
-    for case, methods in load_json(inventory_data)["caseMethods"].items():
-        identities = tuple(sorted(identity for identity in witnesses if identity.split("(")[0] in methods))
+    for case, required_methods in load_json(inventory_data)["caseMethods"].items():
+        identities = tuple(sorted(identity for identity in witnesses if identity.split("(")[0] in required_methods))
         if not identities:
             raise ConformanceError("WitnessMissing")
         coverage[case] = MappingProxyType({
             "tests": identities, "passed": all(witnesses[identity] == ("Passed", "None") for identity in identities)})
+    import discovery_evidence as discovery
+    discovery_methods = {name for name, row in methods.items() if row["group"] == "discovery"}
+    discovery_rows = [row for raw in discoveries.values() for row in load_json(raw)
+                      if row["fullyQualifiedName"] in discovery_methods]
+    scenarios = tuple(sorted(row["testIdentity"] for row in discovery_rows))
+    adapters = []
+    for display in discovery.REQUIRED_ADAPTER_SCENARIOS:
+        method = display.split("(")[0]
+        matched = [row["testIdentity"] for row in discovery_rows
+                   if row["fullyQualifiedName"] == method and "testCaseId" in row
+                   and row["testIdentity"] == method + '(testCaseSha256: "' + hashlib.sha256(
+                       (row["testCaseId"] + "\n" + display).encode("utf-8")).hexdigest() + '")']
+        if len(matched) != 1:
+            raise ConformanceError("WitnessMissing")
+        adapters.extend(matched)
+    suites = []
+    for suite, classes in discovery.SUITE_CLASSES.items():
+        selected = tuple(identity for identity in scenarios if identity.split("(")[0].rsplit(".", 2)[1] in classes)
+        if {identity.split("(")[0].rsplit(".", 2)[1] for identity in selected} != set(classes):
+            raise ConformanceError("WitnessMissing")
+        suites.append(MappingProxyType({
+            "id": suite, "tests": len(selected),
+            "passed": all(witnesses[identity] == ("Passed", "None") for identity in selected)}))
+    if all(row["passed"] for row in suites):
+        try:
+            discovery.verify_suites([dict(row) for row in suites])
+            discovery.verify_cases([{"id": case, "passed": row["passed"], "tests": list(row["tests"])}
+                                    for case, row in coverage.items() if case.startswith("D")])
+        except RuntimeError:
+            raise ConformanceError("WitnessMissing") from None
     return MappingProxyType({
         "qualification": False, "profileComplete": False,
         "executionComplete": observed_count == passed_count == expected_count
@@ -1786,6 +1817,8 @@ def inspect_inherited_runtime_attempts(*, inventory_data, sources, discoveries, 
         "expectedParameters": expected_count, "observedParameters": observed_count,
         "passedParameters": passed_count, "scopes": tuple(admitted),
         "caseCoverage": MappingProxyType(coverage),
+        "discoveryCoverage": MappingProxyType({
+            "scenarios": scenarios, "adapterScenarios": tuple(adapters), "suites": tuple(suites)}),
         "inventorySha256": inventory_sha, "discoverySha256": discovery_hashes,
     })
 
